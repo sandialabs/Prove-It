@@ -1,6 +1,6 @@
 from proveit import (Judgment, Expression, Literal, maybe_fenced_latex, 
                      Function, ExprTuple, InnerExpr, USE_DEFAULTS,
-                     UnsatisfiedPrerequisites)
+                     UnsatisfiedPrerequisites, equivalence_prover)
 from proveit import TransRelUpdater
 from proveit import a, b, c, m, n, w, x, y, z
 from proveit.numbers import NumberOperation
@@ -63,26 +63,28 @@ class Div(NumberOperation):
             return 'frac'  # use a different constructor if using the fraction style
         return Operation.remake_constructor(self)
 
-    def do_reduced_simplification(self, assumptions=USE_DEFAULTS, **kwargs):
+    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, **defaults_config):
         '''
-        Perform simplifications of a Divide expression after the
-        operands have individually been simplified.
-        Cancels common factors...
+        Returns a proven simplification equation for this Divide
+        expression assuming the operands have been simplified.
+
+        Specifically, cancels common factors and eliminates ones.
         '''
         from proveit.numbers import one
         expr = self
         # for convenience updating our equation
-        eq = TransRelUpdater(expr, assumptions)
+        eq = TransRelUpdater(expr)
 
         # perform cancelations where possible
-        expr = eq.update(expr.cancelations(assumptions))
+        expr = eq.update(expr.cancelations())
         if not isinstance(expr, Div):
             # complete cancelation.
             return eq.relation
 
         if self.denominator == one:
             # eliminate division by one
-            eq.update(expr.eliminate_divide_by_one(assumptions))
+            eq.update(expr.eliminate_divide_by_one())
             return eq.relation  # no more division simplifications.
 
         return eq.relation
@@ -102,7 +104,8 @@ class Div(NumberOperation):
         raise Exception('Unable to combine exponents of this fraction')
     """
 
-    def cancelations(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('all_canceled', 'all_cancel')
+    def cancelations(self, **defaults_config):
         '''
         Deduce and return an equality between self and a form in which
         all simple division cancellations are performed.
@@ -112,7 +115,7 @@ class Div(NumberOperation):
 
         # A convenience to allow successive update to the equation via transitivities.
         # (starting with self=self).
-        eq = TransRelUpdater(self, assumptions)
+        eq = TransRelUpdater(self)
 
         numer_factors = (self.numerator.operands if
                          isinstance(self.numerator, Mult) else
@@ -124,12 +127,13 @@ class Div(NumberOperation):
 
         for numer_factor in numer_factors:
             if numer_factor in denom_factors_set:
-                expr = eq.update(expr.cancelation(numer_factor, assumptions))
+                expr = eq.update(expr.cancelation(numer_factor))
                 denom_factors_set.remove(numer_factor)
 
         return eq.relation
 
-    def cancelation(self, term_to_cancel, assumptions=USE_DEFAULTS):
+    @equivalence_prover('canceled', 'cancel')
+    def cancelation(self, term_to_cancel, **defaults_config):
         '''
         Deduce and return an equality between self and a form in which
         the given operand has been canceled on the numerator and
@@ -139,13 +143,13 @@ class Div(NumberOperation):
         '''
         from proveit.numbers import Mult
         expr = self
-        eq = TransRelUpdater(expr, assumptions)
+        eq = TransRelUpdater(expr)
 
         if self.numerator == self.denominator == term_to_cancel:
             # x/x = 1
             from . import frac_cancel_complete
             return frac_cancel_complete.instantiate(
-                {x: term_to_cancel}).checked(assumptions)
+                {x: term_to_cancel}).checked()
 
         if term_to_cancel != self.numerator:
             if (not isinstance(self.numerator, Mult) or
@@ -154,8 +158,7 @@ class Div(NumberOperation):
                                  % (term_to_cancel, self))
             # Factor the term_to_cancel from the numerator to the left.
             expr = eq.update(expr.inner_expr().numerator.factorization(
-                term_to_cancel, group_factor=True, group_remainder=True,
-                assumptions=assumptions))
+                term_to_cancel, group_factor=True, group_remainder=True))
         if term_to_cancel != self.denominator:
             if (not isinstance(self.denominator, Mult) or
                     term_to_cancel not in self.denominator.operands):
@@ -163,31 +166,28 @@ class Div(NumberOperation):
                                  % (term_to_cancel, self))
             # Factor the term_to_cancel from the denominator to the left.
             expr = eq.update(expr.inner_expr().denominator.factorization(
-                term_to_cancel, group_factor=True, group_remainder=True,
-                assumptions=assumptions))
+                term_to_cancel, group_factor=True, group_remainder=True))
         if term_to_cancel == self.numerator:
             from . import frac_cancel_numer_left
             assert expr.denominator.operands.is_double(), "Should be grouped"
             expr = eq.update(frac_cancel_numer_left.instantiate(
-                {x: term_to_cancel, y: expr.denominator.operands[1]},
-                assumptions=assumptions))
+                {x: term_to_cancel, y: expr.denominator.operands[1]}))
             return eq.relation
         elif term_to_cancel == self.denominator:
             from . import frac_cancel_denom_left
             assert expr.numerator.operands.is_double(), "Should be grouped"
             expr = eq.update(frac_cancel_denom_left.instantiate(
-                {x: term_to_cancel, y: expr.numerator.operands[1]},
-                assumptions=assumptions))
+                {x: term_to_cancel, y: expr.numerator.operands[1]}))
             return eq.relation
         else:
             from . import frac_cancel_left
             expr = eq.update(frac_cancel_left.instantiate(
                 {x: term_to_cancel, y: expr.numerator.operands[1],
-                 z: expr.denominator.operands[1]},
-                assumptions=assumptions))
+                 z: expr.denominator.operands[1]}))
             return eq.relation
 
-    def deep_one_eliminations(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('deep_eliminated_ones', 'deep_eliminate_ones')
+    def deep_one_eliminations(self, **defaults_config):
         '''
         Eliminate ones from the numerator, the denominator,
         and as a division by one.
@@ -197,15 +197,15 @@ class Div(NumberOperation):
 
         # A convenience to allow successive update to the equation
         # via transitivities (starting with self=self).
-        eq = TransRelUpdater(self, assumptions)
+        eq = TransRelUpdater(self)
 
         for _i, operand in enumerate(self.operands):
             if hasattr(operand, 'deep_one_eliminations'):
                 expr = eq.update(expr.inner_expr().operands[_i].
-                                 deep_one_eliminations(assumptions))
+                                 deep_one_eliminations())
 
         if expr.denominator == one:
-            expr = eq.update(expr.eliminate_divide_by_one(assumptions))
+            expr = eq.update(expr.eliminate_divide_by_one())
         return eq.relation
 
     def eliminate_divide_by_one(self, assumptions=USE_DEFAULTS):
@@ -217,9 +217,10 @@ class Div(NumberOperation):
         return frac_one_denom.instantiate({x: self.numerator},
                                           assumptions=assumptions)
 
+    @equivalence_prover('factorized', 'factor')
     def factorization(self, the_factor, pull="left",
                       group_factor=True, group_remainder=True,
-                      assumptions=USE_DEFAULTS):
+                      **defaults_config):
         '''
         Return the proven factorization (equality with the factored
         form) from pulling "the_factor" from this division to the "left"
@@ -248,7 +249,7 @@ class Div(NumberOperation):
         from proveit.numbers import one, Mult
         from . import mult_frac_left, mult_frac_right, prod_of_fracs
         expr = self
-        eq = TransRelUpdater(expr, assumptions)
+        eq = TransRelUpdater(expr)
         if the_factor == self:
             return eq.relation # self = self
         if isinstance(the_factor, Div):
@@ -265,8 +266,7 @@ class Div(NumberOperation):
             if the_factor_numer not in (one, expr.numerator):
                 expr = eq.update(expr.inner_expr().numerator.factorization(
                         the_factor.numerator, pull=pull,
-                        group_factor=True, group_remainder=True,
-                    assumptions=assumptions))
+                        group_factor=True, group_remainder=True))
             if pull == 'left':
                 # factor (x*y)/z into (x/z)*y
                 thm = mult_frac_left
@@ -274,8 +274,7 @@ class Div(NumberOperation):
                     # factor y/z into (1/z)*y
                     _x = one
                     _y = expr.numerator
-                    reductions.append(Mult(_x, _y).one_elimination(
-                            0, assumptions))
+                    reductions.append(Mult(_x, _y).one_elimination(0))
             else:
                 # factor (x*y)/z into x*(y/z)
                 thm = mult_frac_right
@@ -283,23 +282,21 @@ class Div(NumberOperation):
                     # factor x/z into x*(1/z)
                     _x = expr.numerator
                     _y = one
-                    reductions.append(Mult(_x, _y).one_elimination(
-                            1, assumptions))
+                    reductions.append(Mult(_x, _y).one_elimination(1))
             if the_factor_numer != one:
                 assert expr.numerator.operands.num_entries() == 2
                 _x = expr.numerator.operands.entries[0]
                 _y = expr.numerator.operands.entries[1]
             _z = expr.denominator
             eq.update(thm.instantiate({x:_x, y:_y, z:_z},
-                                      reductions=reductions,
-                                      assumptions=assumptions))
+                                      reductions=reductions))
         else:
             # Factor (x*y)/(z*w) into (x/z)*(y/w).
             thm = prod_of_fracs
             if the_factor_denom not in (one, expr.denominator):
                 expr = eq.update(expr.inner_expr().denominator.factorization(
                         the_factor_denom, pull=pull,
-                        group_factor=True, assumptions=assumptions))
+                        group_factor=True))
                 assert expr.denominator.operands.num_entries() == 2
                 _z = expr.denominator.operands.entries[0]
                 _w = expr.denominator.operands.entries[1]
@@ -307,20 +304,17 @@ class Div(NumberOperation):
                 # Factor (x*y)/w into x*(y/w).
                 _z = one
                 _w = expr.denominator
-                reductions.append(Mult(_z, _w).one_elimination(
-                        0, assumptions))
+                reductions.append(Mult(_z, _w).one_elimination(0))
             else:
                 # Factor (x*y)/z into (x/z)*y.
                 _z = expr.denominator
                 _w = one
-                reductions.append(Mult(_z, _w).one_elimination(
-                        1, assumptions))
+                reductions.append(Mult(_z, _w).one_elimination(1))
             # Factor the numerator parts unless there is a 1 numerator.
             if the_factor_numer not in (one, expr.numerator):
                 expr = eq.update(expr.inner_expr().numerator.factorization(
                         the_factor.numerator, pull=pull,
-                        group_factor=True, group_remainder=True,
-                        assumptions=assumptions))
+                        group_factor=True, group_remainder=True))
                 assert expr.numerator.operands.num_entries() == 2
                 # Factor (x*y)/(z*w) into (x/z)*(y/w)
                 _x = expr.numerator.operands.entries[0]
@@ -329,17 +323,14 @@ class Div(NumberOperation):
                 # Factor y/(z*w) into (1/z)*(y/w)
                 _x = one
                 _y = expr.numerator
-                reductions.append(Mult(_x, _y).one_elimination(
-                        0, assumptions))
+                reductions.append(Mult(_x, _y).one_elimination(0))
             else:
                 # Factor x/(y*z) into (x/y)*(1/z)
                 _x = expr.numerator
                 _y = one
-                reductions.append(Mult(_x, _y).one_elimination(
-                        1, assumptions))      
+                reductions.append(Mult(_x, _y).one_elimination(1))      
             eq.update(thm.instantiate({x:_x, y:_y, z:_z, w:_w},
-                                      reductions=reductions,
-                                      assumptions=assumptions))
+                                      reductions=reductions))
         
         return eq.relation
 
@@ -381,8 +372,9 @@ class Div(NumberOperation):
                 "Unsupported operand type to distribute over: " +
                 self.numerator.__class__)
 
+    @equivalence_prover('combined_exponents', 'combine_exponents')
     def exponent_combination(self, start_idx=None, end_idx=None,
-                             assumptions=USE_DEFAULTS):
+                             **defaults_config):
         '''
         Equates $a^m/a^n$ to $a^{m-n} or
         $a^c/b^c$ to $(a/b)^c$.
@@ -406,7 +398,7 @@ class Div(NumberOperation):
                 for exponent in exponents:
                     while len(possible_exponent_types) > 1:
                         exponent_type = possible_exponent_types[0]
-                        if InSet(exponent, exponent_type).proven(assumptions):
+                        if InSet(exponent, exponent_type).proven():
                             # This type is known for this exponent.
                             break
                         # We've eliminated a type from being known.
@@ -416,7 +408,7 @@ class Div(NumberOperation):
                 if known_exponent_type == NaturalPos:
                     _m, _n = exponents
                     return quotient_of_posnat_powers.instantiate(
-                        {a: same_base, m: _m, n: _n}, assumptions=assumptions)
+                        {a: same_base, m: _m, n: _n})
                 else:
                     _b, _c = exponents
                     if known_exponent_type == RealPos:
@@ -425,8 +417,7 @@ class Div(NumberOperation):
                         thm = quotient_of_real_powers
                     else:  # Complex is the default
                         thm = quotient_of_complex_powers
-                    thm.instantiate({a: same_base, b: _b, c: _c},
-                                    assumptions=assumptions)
+                    thm.instantiate({a: same_base, b: _b, c: _c})
 
             elif self.numerator.exponent == self.denominator.exponent:
                 # Same exponent: (a^c/b^c) = (a/b)^c
@@ -436,8 +427,7 @@ class Div(NumberOperation):
                 # of disibuting an exponent.
                 quotient = Div(*bases).with_matching_style(self)
                 exp = Exp(quotient, same_exponent)
-                return exp.distribution(
-                    assumptions).derive_reversed(assumptions)
+                return exp.distribution().derive_reversed()
         else:
             raise NotImplementedError("Need to implement degenerate cases "
                                       "of a^b/a and a/a^b.")
@@ -644,23 +634,3 @@ class Div(NumberOperation):
 
 def frac(numer, denom):
     return Div(numer, denom)
-
-
-# Register these expression equivalence methods:
-InnerExpr.register_equivalence_method(
-    Div,
-    'deep_one_eliminations',
-    'deep_eliminated_ones',
-    'deep_eliminate_ones')
-InnerExpr.register_equivalence_method(
-    Div,
-    'exponent_combination',
-    'combined_exponents',
-    'combine_exponents')
-InnerExpr.register_equivalence_method(
-    Div, 'factorization', 'factorized', 'factor')
-InnerExpr.register_equivalence_method(
-    Div,
-    'cancelation',
-    'canceled',
-    'cancel')

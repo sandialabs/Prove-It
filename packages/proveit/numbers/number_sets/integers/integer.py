@@ -14,11 +14,10 @@ class IntegerSet(NumberSet):
         Yield side-effects when proving 'n in Integer' for a given n.
         '''
         member = judgment.element
-        yield lambda assumptions: self.deduce_member_in_rational(
-                member, assumptions)
+        yield lambda: self.deduce_member_in_rational(member)
         # Added but commented the following out while we debate the
         # wisdom of further side-effects
-        # yield lambda assumptions: self.deduce_member_in_real(member, assumptions)
+        # yield lambda: self.deduce_member_in_real(member)
 
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
         from . import int_membership_is_bool
@@ -52,12 +51,9 @@ class IntegerNonZeroSet(NumberSet):
         Yield side-effects when proving 'n in Integer' for a given n.
         '''
         member = judgment.element
-        yield lambda assumptions: self.deduce_member_not_zero(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_integer(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_rational_nonzero(
-                member, assumptions)
+        yield lambda: self.deduce_member_not_zero(member)
+        yield lambda: self.deduce_member_in_integer(member)
+        yield lambda: self.deduce_member_in_rational_nonzero(member)
     
     def deduce_member_not_zero(self, member, assumptions=USE_DEFAULTS):
         from . import nonzero_if_in_nonzero_int
@@ -96,16 +92,11 @@ class IntegerNegSet(NumberSet):
         Yield side-effects when proving 'n in Integer' for a given n.
         '''
         member = judgment.element
-        yield lambda assumptions: self.deduce_member_upper_bound(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_integer(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_integer_non_zero(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_integer_non_pos(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_rational_neg(
-                member, assumptions)
+        yield lambda: self.deduce_member_upper_bound(member)
+        yield lambda: self.deduce_member_in_integer(member)
+        yield lambda: self.deduce_member_in_integer_non_zero(member)
+        yield lambda: self.deduce_member_in_integer_non_pos(member)
+        yield lambda: self.deduce_member_in_rational_neg(member)
     
     def deduce_member_upper_bound(self, member, assumptions=USE_DEFAULTS):
         from . import negative_if_in_neg_int
@@ -154,12 +145,9 @@ class IntegerNonPosSet(NumberSet):
         Yield side-effects when proving 'n in Integer' for a given n.
         '''
         member = judgment.element
-        yield lambda assumptions: self.deduce_member_upper_bound(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_integer(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_rational_nonpos(
-                member, assumptions)
+        yield lambda: self.deduce_member_upper_bound(member)
+        yield lambda: self.deduce_member_in_integer(member)
+        yield lambda: self.deduce_member_in_rational_nonpos(member)
     
     def deduce_member_upper_bound(self, member, assumptions=USE_DEFAULTS):
         from . import nonpos_if_in_nonpos_int

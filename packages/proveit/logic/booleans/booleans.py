@@ -1,4 +1,5 @@
-from proveit import Function, Literal, USE_DEFAULTS, ProofFailure
+from proveit import (Function, Literal, USE_DEFAULTS, ProofFailure,
+                     defaults, equivalence_prover, prover)
 from proveit.logic.irreducible_value import IrreducibleValue
 from proveit.logic.sets.membership import Membership, Nonmembership
 from proveit import A, C, P, Q
@@ -16,11 +17,11 @@ class BooleanSet(Literal):
     def nonmembership_object(self, element):
         return BooleanNonmembership(element)
 
-    def forall_evaluation(self, forall_stmt, assumptions=USE_DEFAULTS):
+    @prover
+    def forall_evaluation(self, forall_stmt, **defaults_config):
         '''
-        Given a forall statement over the BOOLEAN domain, evaluate to TRUE or FALSE
-        if possible.
-        updated by JML 6/28/19
+        Given a forall statement over the BOOLEAN domain, evaluate to 
+        TRUE or FALSE if possible.
         '''
         from proveit.logic import Forall, Equals, SimplificationError
         from . import false_eq_false, true_eq_true
@@ -31,57 +32,59 @@ class BooleanSet(Literal):
                ), "May only apply forall_evaluation method of BOOLEAN to a forall statement"
         assert(forall_stmt.domain ==
                Boolean), "May only apply forall_evaluation method of BOOLEAN to a forall statement with the BOOLEAN domain"
-        instance_list = list(forall_stmt.instance_param_lists())
-        instance_var = instance_list[0][0]
-        instance_expr = forall_stmt.instance_expr
-        P_op = Function(P, instance_var)
-        true_instance = instance_expr.replaced({instance_var: TRUE})
-        false_instance = instance_expr.replaced({instance_var: FALSE})
-        if true_instance == TRUE and false_instance == FALSE:
-            # special case of Forall_{A in BOOLEAN} A
-            false_eq_false  # FALSE = FALSE
-            true_eq_true  # TRUE = TRUE
-            return forall_bool_eval_false_via_t_f.instantiate(
-                {P_op: instance_expr}).derive_conclusion()
-        else:
-            # must evaluate for the TRUE and FALSE case separately
-            eval_true_instance = true_instance.evaluation(assumptions)
-            eval_false_instance = false_instance.evaluation(assumptions)
-            if not isinstance(
-                    eval_true_instance.expr,
-                    Equals) or not isinstance(
-                    eval_false_instance.expr,
-                    Equals):
-                raise SimplificationError(
-                    'Quantified instances must produce equalities as evaluations')
-            # proper evaluations for both cases (TRUE and FALSE)
-            true_case_val = eval_true_instance.rhs
-            false_case_val = eval_false_instance.rhs
-            if true_case_val == TRUE and false_case_val == TRUE:
-                # both cases are TRUE, so the forall over the boolean set is
-                # TRUE
-                compose([eval_true_instance.derive_via_boolean_equality(
-                ), eval_false_instance.derive_via_boolean_equality()], assumptions)
-                forall_bool_eval_true.instantiate(
-                    {P_op: instance_expr, A: instance_var})
-                return forall_bool_eval_true.instantiate(
-                    {P_op: instance_expr, A: instance_var}, assumptions=assumptions).derive_conclusion(assumptions)
+        with defaults.temporary() as temp_defaults:
+            temp_defaults.preserve_exprs.add(forall_stmt.expr)
+            instance_list = list(forall_stmt.instance_param_lists())
+            instance_var = instance_list[0][0]
+            instance_expr = forall_stmt.instance_expr
+            P_op = Function(P, instance_var)
+            true_instance = instance_expr.replaced({instance_var: TRUE})
+            false_instance = instance_expr.replaced({instance_var: FALSE})
+            if true_instance == TRUE and false_instance == FALSE:
+                # special case of Forall_{A in BOOLEAN} A
+                false_eq_false  # FALSE = FALSE
+                true_eq_true  # TRUE = TRUE
+                return forall_bool_eval_false_via_t_f.instantiate(
+                    {P_op: instance_expr}).derive_conclusion()
             else:
-                # one case is FALSE, so the forall over the boolean set is
-                # FALSE
-                compose([eval_true_instance, eval_false_instance], assumptions)
-                if true_case_val == FALSE and false_case_val == FALSE:
-                    return forall_bool_eval_false_via_f_f.instantiate(
-                        {P_op: instance_expr, A: instance_var}, assumptions=assumptions).derive_conclusion(assumptions)
-                elif true_case_val == FALSE and false_case_val == TRUE:
-                    return forall_bool_eval_false_via_f_t.instantiate(
-                        {P_op: instance_expr, A: instance_var}, assumptions=assumptions).derive_conclusion(assumptions)
-                elif true_case_val == TRUE and false_case_val == FALSE:
-                    return forall_bool_eval_false_via_t_f.instantiate(
-                        {P_op: instance_expr, A: instance_var}, assumptions=assumptions).derive_conclusion(assumptions)
-                else:
+                # must evaluate for the TRUE and FALSE case separately
+                eval_true_instance = true_instance.evaluation()
+                eval_false_instance = false_instance.evaluation()
+                if not isinstance(
+                        eval_true_instance.expr,
+                        Equals) or not isinstance(
+                        eval_false_instance.expr,
+                        Equals):
                     raise SimplificationError(
-                        'Quantified instance evaluations must be TRUE or FALSE')
+                        'Quantified instances must produce equalities as '
+                        'evaluations')
+                # proper evaluations for both cases (TRUE and FALSE)
+                true_case_val = eval_true_instance.rhs
+                false_case_val = eval_false_instance.rhs
+                if true_case_val == TRUE and false_case_val == TRUE:
+                    # both cases are TRUE, so the forall over the
+                    # boolean set is TRUE
+                    compose([eval_true_instance.derive_via_boolean_equality(), 
+                             eval_false_instance.derive_via_boolean_equality()])
+                    return forall_bool_eval_true.instantiate(
+                            {P_op: instance_expr, A: instance_var})
+                else:
+                    # one case is FALSE, so the forall over the boolean set is
+                    # FALSE
+                    compose([eval_true_instance, eval_false_instance])
+                    if true_case_val == FALSE and false_case_val == FALSE:
+                        impl = forall_bool_eval_false_via_f_f.instantiate(
+                            {P_op: instance_expr, A: instance_var})
+                    elif true_case_val == FALSE and false_case_val == TRUE:
+                        impl = forall_bool_eval_false_via_f_t.instantiate(
+                            {P_op: instance_expr, A: instance_var})
+                    elif true_case_val == TRUE and false_case_val == FALSE:
+                        impl = forall_bool_eval_false_via_t_f.instantiate(
+                            {P_op: instance_expr, A: instance_var})
+                    else:
+                        raise SimplificationError(
+                            'Quantified instance evaluations must be TRUE or FALSE')
+                    return impl.derive_conclusion()
 
     def unfold_forall(self, forall_stmt, assumptions=USE_DEFAULTS):
         '''
@@ -143,7 +146,8 @@ class BooleanMembership(Membership):
     '''
 
     def __init__(self, element):
-        Membership.__init__(self, element)
+        from . import Boolean
+        Membership.__init__(self, element, Boolean)
 
     def side_effects(self, judgment):
         '''
@@ -160,7 +164,8 @@ class BooleanMembership(Membership):
         if unfold_is_bool.is_usable():
             yield self.unfold
 
-    def conclude(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude(self, **defaults_config):
         '''
         Try to deduce that the given element is in the Boolean set under the given assumptions.
         '''
@@ -169,29 +174,30 @@ class BooleanMembership(Membership):
         # if the element is already proven or disproven, use in_bool_if_true or
         # in_bool_if_false
         try:
-            element.prove(assumptions=assumptions, automation=False)
-            return in_bool_if_true.instantiate(
-                {A: element}, assumptions=assumptions)
+            element.prove(automation=False)
+            return in_bool_if_true.instantiate({A: element})
         except ProofFailure:
             pass
         try:
-            element.disprove(assumptions=assumptions, automation=False)
-            return in_bool_if_false.instantiate(
-                {A: element}, assumptions=assumptions)
+            element.disprove(automation=False)
+            return in_bool_if_false.instantiate({A: element})
         except ProofFailure:
             pass
         # Use 'deduce_in_bool' if the element has that method.
         if hasattr(element, 'deduce_in_bool'):
-            return element.deduce_in_bool(assumptions=assumptions)
-        raise ProofFailure(in_bool(element), assumptions, str(
+            return element.deduce_in_bool()
+        raise ProofFailure(in_bool(element), defaults.assumptions, str(
             element) + ' not proven to be equal to TRUE or FALSE.')
 
-    def equivalence(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('defined', 'define')
+    def definition(self, **defaults_config):
         '''
-        Deduce [(element in Boolean) = [(element = TRUE) or (element = FALSE)].
+        Deduce [(element in Boolean) = 
+                [(element = TRUE) or (element = FALSE)].
         '''
         from . import in_bool_def
-        return in_bool_def.instantiate({A: self.element})
+        return in_bool_def.instantiate({A: self.element},
+                                       auto_simplify=False)
 
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
@@ -251,7 +257,8 @@ class TrueLiteral(Literal, IrreducibleValue):
         Literal.__init__(self, string_format='TRUE', latex_format=r'\top',
                          styles=styles)
 
-    def conclude(self, assumptions):
+    @prover
+    def conclude(self, **defaults_config):
         from . import true_axiom
         return true_axiom
 
@@ -293,7 +300,8 @@ class FalseLiteral(Literal, IrreducibleValue):
         elif other == TRUE:
             return false_not_true.unfold().equate_negated_to_false()
 
-    def conclude_negation(self, assumptions):
+    @prover
+    def conclude_negation(self, **defaults_config):
         from proveit.logic.booleans.negation import not_false
         return not_false  # the negation of FALSE
 

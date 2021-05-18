@@ -1,8 +1,8 @@
 import inspect
+from proveit.decorators import equivalence_prover
 from proveit._core_.expression.expr import Expression, ImproperReplacement
 from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_.defaults import defaults, USE_DEFAULTS
-
 
 class Operation(Expression):
     # Map _operator_ Literals to corresponding Operation classes.
@@ -475,8 +475,8 @@ class Operation(Expression):
                 formatted_str += ')' if format_type == 'string' else r'\right)'
             return formatted_str
 
-    def _replaced(self, repl_map, allow_relabeling, reduction_map,
-                  assumptions, requirements, equality_repl_requirements):
+    def basic_replaced(self, repl_map, *, 
+                       allow_relabeling=False, requirements=None):
         '''
         Returns this expression with sub-expressions substituted
         according to the replacement map (repl_map) dictionary.
@@ -511,13 +511,13 @@ class Operation(Expression):
 
         # Perform substitutions for the operator(s) and operand(s).
         subbed_operator = \
-            self.operator.replaced(
-                    repl_map, allow_relabeling, reduction_map,
-                    assumptions, requirements, equality_repl_requirements)
+            self.operator.basic_replaced(
+                    repl_map, allow_relabeling=allow_relabeling,
+                    requirements=requirements)
         subbed_operands = \
-            self.operands.replaced(
-                    repl_map, allow_relabeling, reduction_map, 
-                    assumptions, requirements, equality_repl_requirements)
+            self.operands.basic_replaced(
+                    repl_map, allow_relabeling=allow_relabeling,
+                    requirements=requirements)
 
         # Check if the operator is being substituted by a Lambda map in
         # which case we should perform full operation substitution.
@@ -535,9 +535,7 @@ class Operation(Expression):
                     % (self.operator, subbed_operator))
             return Lambda._apply(
                 subbed_operator.parameters, subbed_operator.body,
-                *subbed_operands.entries, assumptions=assumptions,
-                requirements=requirements,
-                equality_repl_requirements=equality_repl_requirements)
+                *subbed_operands.entries, requirements=requirements)
         
         # If the operator is a literal operator of
         # an Operation class defined via an "_operator_" class
@@ -549,20 +547,88 @@ class Operation(Expression):
                 # the same manner in the setting of the new
                 # operation.
                 subbed_sub_exprs = (subbed_operator, subbed_operands)
-                substituted = op_class._checked_make(
+                return op_class._checked_make(
                     ['Operation'], sub_expressions=subbed_sub_exprs,
                     style_preferences=self._style_data.styles)
-                return substituted._reduced(
-                    reduction_map, assumptions, requirements,
-                    equality_repl_requirements)
         
         subbed_sub_exprs = (subbed_operator,
                             subbed_operands)
-        substituted = self.__class__._checked_make(
+        return self.__class__._checked_make(
             self._core_info, subbed_sub_exprs, 
             style_preferences=self._style_data.styles)
-        return substituted._reduced(reduction_map, assumptions, requirements,
-                                    equality_repl_requirements)
+
+    @equivalence_prover('evaluated', 'evaluate')
+    def evaluation(self, **defaults_config):
+        '''
+        If possible, return a Judgment of this expression equal to an
+        irreducible value.  This Operation.evaluation version
+        tries Expression.evaluation; if that fails, it simplifies
+        the operands and calls "shallow_evaluation".
+        '''
+        from proveit.logic import EvaluationError
+        try:
+            # First try default, generic Expression strategies.
+            return Expression.evaluation(self)
+        except (EvaluationError, NotImplementedError):
+            pass
+        
+        # If the default didn't work, try to simplify the operands
+        # first.
+        reduction = self.inner_expr().simplification_of_operands()
+        
+        # After making sure the operands have been simplified,
+        # try 'shallow_evaluation'.
+        evaluation = reduction.rhs.shallow_evaluation()
+        return reduction.apply_transitivity(evaluation)
+
+    @equivalence_prover('simplified', 'simplify')
+    def simplification(self, **defaults_config):
+        '''
+        If possible, return a Judgment of this expression equal to a
+        simplified form (according to strategies specified in 
+        proveit.defaults). 
+        
+        This Operation.simplification version tries calling
+        "evaluation" (which is the best possible simplification, when
+        simplifying to an irreducible value).  If that fails, it
+        simplifies the operands and calls "shallow_simplification".
+        '''
+        from proveit.logic import EvaluationError
+        try:
+            # First try to perform an evaluation (which is the best
+            # possible simplification).
+            return self.evaluation()
+        except EvaluationError:
+            pass
+
+        # If evaluation didn't work, try to simplify the operands
+        # first.
+        reduction = self.inner_expr().simplification_of_operands()
+
+        # After making sure the operands have been simplified,
+        # try 'shallow_simplification'.
+        # Use the 'reduction' as a replacement in case it is needed.
+        # For example, consider 
+        #       1*b + 3*b
+        #   It's reduction is
+        #       1*b + 3*b = b + 3*b
+        #   But in the shallow simplification, we'll do a factorization
+        #   that will exploit the "reduction" fact which wouldn't
+        #   otherwise be used because (1*b + 3*b) is a preserved
+        #   expression inse simplification is an @equivalence_prover.
+        simplification = reduction.rhs.shallow_simplification(
+                replacements=[reduction])
+        return reduction.apply_transitivity(simplification)
+    
+    def operands_are_irreducible(self):
+        '''
+        Return True iff all of the operands of this Operation are
+        irreducible.
+        '''
+        from proveit.logic import is_irreducible_value
+        return all(is_irreducible_value(operand) for operand
+                   in self.operands.entries)
+
 
 class OperationError(Exception):
     def __init__(self, message):

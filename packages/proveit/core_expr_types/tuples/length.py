@@ -1,6 +1,7 @@
 from proveit import (Expression, Lambda, Operation, Literal, safe_dummy_var,
                      single_or_composite_expression, ExprTuple,
-                     ExprRange, InnerExpr, defaults, USE_DEFAULTS)
+                     ExprRange, InnerExpr, defaults, USE_DEFAULTS,
+                     equivalence_prover)
 from proveit import a, b, c, d, e, f, g, h, i, j, k, n, x, y
 
 
@@ -41,7 +42,8 @@ class Len(Operation):
     def latex(self, **kwargs):
         return '|' + self.operand.latex() + '|'
 
-    def computation(self, assumptions=USE_DEFAULTS, simplify=True):
+    @equivalence_prover('computed', 'compute')
+    def computation(self, **defaults_config):
         '''
         Compute this Len expression, returning the equality
         between self and the expression for its computed value.
@@ -53,18 +55,6 @@ class Len(Operation):
         In the last case, the 'x' represents an unknown tuple,
         so there is not anything we can do to compute it.
         '''
-        # Calling 'replaced' with no repl_map will just perform
-        # automatic reductions (if enabled).
-        reduced_operand = self.operand.replaced({})
-        # Don't auto-reduce ExprRanges on the left side if
-        # 'self' is not reduced itself.
-        disable_range_reduction = (reduced_operand != self.operand)
-        return self._tested_equality(
-            self._computation, assumptions,
-            disable_range_reduction=disable_range_reduction,
-            simplify=simplify)
-
-    def _computation(self, assumptions=USE_DEFAULTS, must_evaluate=False):
         # Currently not doing anything with must_evaluate
         # What it should do is make sure it evaluates to a number
         # and can circumvent any attempt that will not evaluate to
@@ -91,12 +81,11 @@ class Len(Operation):
                 from proveit.core_expr_types.tuples import \
                     range_from1_len
                 return range_from1_len.instantiate(
-                    {f: lambda_map, i: end_index}, assumptions=assumptions)
+                    {f: lambda_map, i: end_index})
             else:
                 from proveit.core_expr_types.tuples import range_len
                 return range_len.instantiate(
-                    {f: lambda_map, i: start_index, j: end_index},
-                    assumptions=assumptions)
+                    {f: lambda_map, i: start_index, j: end_index})
         elif not has_range:
             # Case of all non-range entries.
             if len(entries) == 0:
@@ -126,12 +115,11 @@ class Len(Operation):
                 from proveit.logic import Equals
 
                 eq = tuple_len_incr.instantiate({i: num(
-                    len(entries) - 1), a: entries[:-1], b: entries[-1]}, assumptions=assumptions)
+                    len(entries) - 1), a: entries[:-1], b: entries[-1]})
 
-                rhs_simp = eq.rhs._integerBinaryEval(assumptions=assumptions)
+                rhs_simp = eq.rhs._integerBinaryEval()
 
-                return rhs_simp.sub_right_side_into(
-                    eq, assumptions=assumptions)
+                return rhs_simp.sub_right_side_into(eq)
                 # return Equals(eq.lhs, eq.rhs._integerBinaryEval(assumptions=assumptions).rhs).prove(assumptions=assumptions)
                 # raise NotImplementedError("Can't handle length computation "
                 #                         ">= 10 for %s"%self)
@@ -147,13 +135,11 @@ class Len(Operation):
             range_end = entries[0].end_index
             if range_start == one:
                 return extended_range_from1_len.instantiate(
-                    {f: range_lambda, b: entries[1], i: range_end},
-                    assumptions=assumptions)
+                    {f: range_lambda, b: entries[1], i: range_end})
             else:
                 return extended_range_len.instantiate(
                     {f: range_lambda, b: entries[1],
-                     i: range_start, j: range_end},
-                    assumptions=assumptions)
+                     i: range_start, j: range_end})
         else:
             # Handle the general cases via general_len_val,
             # len_of_ranges_with_repeated_indices,
@@ -204,7 +190,7 @@ class Len(Operation):
                         return entry.end_index
                 return one  # for individual elements, use start=end=1
 
-            def empty_range(_i, _j, _f, assumptions):
+            def empty_range(_i, _j, _f):
                 # If the start and end are literal ints and form an
                 # empty range, then it should be straightforward to
                 # prove that the range is empty.
@@ -217,7 +203,7 @@ class Len(Operation):
                 if is_literal_int(_m) and is_literal_int(_n):
                     if _n.as_int() + 1 == _m.as_int():
                         empty_req.prove()
-                if empty_req.proven(assumptions):
+                if empty_req.proven():
                     _f = Lambda(
                         (entries[0].parameter,
                          entries[0].body.parameter),
@@ -225,12 +211,12 @@ class Len(Operation):
                     _i = entry_map(_i)
                     _j = entry_map(_j)
                     return len_of_empty_range_of_ranges.instantiate(
-                        {m: _m, n: _n, f: _f, i: _i, j: _j}, assumptions=assumptions)
+                        {m: _m, n: _n, f: _f, i: _i, j: _j})
 
             _f = [entry_map(entry) for entry in entries]
             _i = [entry_start(entry) for entry in entries]
             _j = [entry_end(entry) for entry in entries]
-            _n = Len(_i).computed(assumptions=assumptions, simplify=False)
+            _n = Len(_i).computed()
 
             from proveit.numbers import is_literal_int
             if len(entries) == 1 and isinstance(entries[0], ExprRange):
@@ -238,7 +224,7 @@ class Len(Operation):
                         is_literal_int(entries[0].end_index)):
                     if (entries[0].end_index.as_int() + 1 
                             == entries[0].start_index.as_int()):
-                        return empty_range(_i[0], _j[0], _f, assumptions)
+                        return empty_range(_i[0], _j[0], _f)
 
             if all(_ == _i[0] for _ in _i) and all(_ == _j[0] for _ in _j):
                 if isinstance(_i[0], ExprRange):
@@ -257,18 +243,17 @@ class Len(Operation):
                     if _i[0] == one:
                         thm = len_of_ranges_with_repeated_indices_from_1
                         return thm.instantiate(
-                            {n: _n, f: _f, i: _j[0]},
-                            assumptions=assumptions)
+                            {n: _n, f: _f, i: _j[0]})
                     else:
                         thm = len_of_ranges_with_repeated_indices
                         return thm.instantiate(
-                            {n: _n, f: _f, i: _i[0], j: _j[0]},
-                            assumptions=assumptions)
+                            {n: _n, f: _f, i: _i[0], j: _j[0]})
 
             return general_len.instantiate(
-                {n: _n, f: _f, i: _i, j: _j}, assumptions=assumptions)
+                {n: _n, f: _f, i: _i, j: _j})
 
-    def typical_eq(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('typical_form', 'typify')
+    def typical_eq(self, **defaults_config):
         '''
         Attempt to prove that this Len expression is equal to
         something of the form |(i, ..., j)|.
@@ -280,10 +265,6 @@ class Len(Operation):
         These are typically useful equalities for proving matching
         length requirements when instantiating a range of parameters.
         '''
-        return self._tested_equality(self._typical_eq, assumptions,
-                                     simplify=False)
-
-    def _typical_eq(self, assumptions=USE_DEFAULTS):
         from proveit.numbers import one
         if not isinstance(self.operand, ExprTuple):
             raise ValueError("Len.typical_eq may only be performed "
@@ -304,13 +285,12 @@ class Len(Operation):
                 from proveit.core_expr_types.tuples import \
                     range_from1_len_typical_eq
                 return range_from1_len_typical_eq.instantiate(
-                    {f: lambda_map, i: end_index}, assumptions=assumptions)
+                    {f: lambda_map, i: end_index})
             else:
                 from proveit.core_expr_types.tuples import \
                     range_len_typical_eq
                 return range_len_typical_eq.instantiate(
-                    {f: lambda_map, i: start_index, j: end_index},
-                    assumptions=assumptions)
+                    {f: lambda_map, i: start_index, j: end_index})
         elif not any(isinstance(entry, ExprRange) for entry in entries):
             if len(entries) == 0:
                 from proveit.core_expr_types.tuples import \
@@ -342,48 +322,14 @@ class Len(Operation):
             range_end = entries[0].end_index
             if range_start == one:
                 return extended_range_from1_len_typical_eq.instantiate(
-                    {f: range_lambda, b: entries[1], i: range_end},
-                    assumptions=assumptions)
+                    {f: range_lambda, b: entries[1], i: range_end})
             else:
                 return extended_range_len_typical_eq.instantiate(
                     {f: range_lambda, b: entries[1],
-                     i: range_start, j: range_end},
-                    assumptions=assumptions)
+                     i: range_start, j: range_end})
         raise NotImplementedError("Len.typical_eq not implemented for "
                                   "this case: %s.  Try Len.deduce_equality "
                                   "instead." % self)
-
-    def _tested_equality(self, eq_fn, assumptions=USE_DEFAULTS,
-                         simplify=True, disable_range_reduction=True):
-        '''
-        Execute a function to get an equality, making sure that the
-        result is a proper equality, a Judgment for an
-        Equals expression with the lhs being self.  If
-        disable_range_reduction, then disable range reduction while
-        deriving the equality to ensure it does not get reduced to
-        a different form.
-        '''
-        from proveit import Judgment
-        from proveit.logic import Equals
-        was_range_reduction_disabled = (
-            ExprRange in defaults.disabled_auto_reduction_types)
-        try:
-            if disable_range_reduction:
-                # Disable ExprRange reduction while applying the
-                # eq_fn function (to make sure the right side
-                # is not reduced).
-                defaults.disabled_auto_reduction_types.add(ExprRange)
-            eq = eq_fn(assumptions)
-        finally:
-            # Restore 'defaults'.
-            if disable_range_reduction and not was_range_reduction_disabled:
-                defaults.disabled_auto_reduction_types.remove(ExprRange)
-        if simplify:
-            eq = eq.inner_expr().rhs.simplify(assumptions=assumptions)
-        assert isinstance(eq, Judgment)
-        assert isinstance(eq.expr, Equals)
-        assert eq.lhs == self, ("%s differs from %s" % (eq.lhs, self))
-        return eq
 
     def deduce_equality(self, equality, assumptions=USE_DEFAULTS,
                         minimal_automation=False):
@@ -434,15 +380,25 @@ class Len(Operation):
             return lhs_computation.apply_transitivity(
                 eq, assumptions=assumptions)
 
-    def simplification(self, assumptions=USE_DEFAULTS, automation=True):
-        if not automation:
-            return Expression.simplification(
-                self, assumptions, automation=False)
-        from proveit.relation import TransRelUpdater
-        eq = TransRelUpdater(self, assumptions)
-        expr = eq.update(self.computation(assumptions))
-        expr = eq.update(expr.simplification(assumptions))
-        return eq.relation
+    @equivalence_prover('evaluated', 'evaluate')
+    def evaluation(self, **defaults_config):
+        '''
+        Returns a proven evaluations equation for this Len
+        expression assuming.  Performs the "computation" of the
+        Len expression and then evaluates the right side.
+        '''
+        computation = self.computation()
+        return computation.inner_expr().rhs.evaluate()
+
+    @equivalence_prover('simplified', 'simplify')
+    def simplification(self, **defaults_config):
+        '''
+        Returns a proven simplification equation for this Len
+        expression assuming.  Performs the "computation" of the
+        Len expression and then simplifies the right side.
+        '''
+        computation = self.computation()
+        return computation.inner_expr().rhs.simplify()
 
     def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
         from proveit.core_expr_types.tuples import (
@@ -466,24 +422,3 @@ class Len(Operation):
                         {f: range_lambda, i: range_start, j: range_end},
                         assumptions=assumptions)
 
-    def do_reduced_simplification(self, assumptions=USE_DEFAULTS, **kwargs):
-        '''
-        A simplification of a Len operation computes the length as a sum
-        of the lengths of each item of the ExprTuple operand, returning
-        the equality between the Len expression and this computation,
-        simplified to the extent possible.  An item may be a singular element
-        (contribution 1 to the length) or an iteration contributing its length.
-        '''
-        return self._computation(must_evaluate=False, assumptions=assumptions)
-
-    def do_reduced_evaluation(self, assumptions=USE_DEFAULTS, **kwargs):
-        '''
-        Return the evaluation of the length which equates that Len expression
-        to an irreducible result.
-        '''
-        return self._computation(must_evaluate=True, assumptions=assumptions)
-
-
-# Register these expression equivalence methods:
-InnerExpr.register_equivalence_method(
-    Len, 'computation', 'computed', 'compute')

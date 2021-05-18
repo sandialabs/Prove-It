@@ -2,7 +2,7 @@
 
 from .expression import (
     Expression, traverse_inner_expressions, used_vars,
-    possibly_free_var_ranges, free_vars, attempt_to_simplify,
+    possibly_free_var_ranges, free_vars,
     expression_depth, MakeNotImplemented,
     ImproperReplacement,
     InnerExpr, generate_inner_expressions,
@@ -21,7 +21,8 @@ from .expression import (
     StyleOptions, maybe_fenced_string,
     maybe_fenced_latex, maybe_fenced)
 from .judgment import Judgment, as_expression, as_expressions
-from .defaults import defaults, USE_DEFAULTS, InvalidAssumptions
+from .defaults import (defaults, USE_DEFAULTS, InvalidAssumptions,
+                       SimplificationDirectives)
 from .theory import Theory, TheoryException
 from .proof import (Proof, Assumption, Axiom, Theorem, ModusPonens,
                     Deduction, Instantiation, Generalization)

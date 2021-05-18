@@ -8,6 +8,7 @@ with possibly fewer assumptions, suffices).
 
 from proveit._core_.expression import Expression
 from proveit._core_._unique_data import meaning_data, style_data
+from proveit.decorators import prover
 from .defaults import defaults, USE_DEFAULTS
 import re
 from copy import copy
@@ -200,7 +201,7 @@ class Judgment:
         obj_ids = re.split(r";|\[|,|\]", unique_rep)
         return [obj_id for obj_id in obj_ids if len(obj_id) > 0]
 
-    def derive_side_effects(self, assumptions):
+    def derive_side_effects(self):
         '''
         Derive any side-effects that are obvious consequences arising 
         from this truth.  Called after the corresponding Proof is 
@@ -212,10 +213,9 @@ class Judgment:
         # Sort the assumptions according to hash key so that sets of
         # assumptions are unique for determining which side-effects have
         # been processed already.
+        assumptions = defaults.assumptions
         sorted_assumptions = tuple(
-            sorted(
-                assumptions,
-                key=lambda expr: hash(expr)))
+            sorted(assumptions, key=lambda expr: hash(expr)))
         if (self.expr, sorted_assumptions) in Judgment.sideeffect_processed:
             return  # has already been processed
         if self not in Judgment.in_progress_to_derive_sideeffects:
@@ -231,7 +231,7 @@ class Judgment:
                         # use the default assumptions which are 
                         # temporarily set to the assumptions utilized
                         # in the last derivation step.
-                        side_effect(assumptions=assumptions)
+                        side_effect()
                     except ProofFailure:
                         pass
                     except Exception as e:
@@ -356,13 +356,15 @@ class Judgment:
         proof = self.proof()
         return proof is not None and proof.is_usable()
 
-    def is_sufficient(self, assumptions):
+    def is_applicable(self, assumptions=USE_DEFAULTS):
         '''
-        Return True iff the given assumptions satisfy the Judgment;
-        the Judgment is usable and requires a subset of the given 
-        assumptions.
+        Return True iff this Judgment is usable and applicable under 
+        the default assumptions.
         '''
-        return self.is_usable() and self.assumptions_set.issubset(assumptions)
+        if assumptions is USE_DEFAULTS:
+            assumptions = defaults.assumptions
+        return (self.is_usable() and 
+                self.assumptions_set.issubset(assumptions))
 
     def as_theorem_or_axiom(self):
         '''
@@ -641,8 +643,14 @@ class Judgment:
                     return self.with_matching_styles(new_style_expr, [])
                 return call_method_for_new_style
             argspec = inspect.getfullargspec(attr)
+
+            # TODO: Revisit this after we have switched to using
+            # @prover or @equivalence_prover for all the methods.
+            # This is more complicated than necessary for backward
+            # compatibility.
             if ('assumptions' in argspec.args
-                    or 'assumptions' in argspec.kwonlyargs):
+                    or 'assumptions' in argspec.kwonlyargs
+                    or  argspec.varkw == 'defaults_config'):
                 # The attribute is a callable function with
                 # 'assumptions' as an argument.
                 # Automatically include the Judgment assumptions.
@@ -786,8 +794,9 @@ class Judgment:
         return self._checkedTruth(Specialization(self, num_forall_eliminations=0, relabel_map=relabel_map, assumptions=self.assumptions))
     """
 
+    @prover
     def instantiate(self, repl_map=None, *, num_forall_eliminations=None,
-                    reductions=None, assumptions=USE_DEFAULTS):
+                    **defaults_config):
         '''
         Performs an instantiation derivation step to be proven under the 
         given assumptions, in addition to the assumptions of the 
@@ -811,12 +820,12 @@ class Judgment:
         Replacements are made simultaneously.  For example, the 
         {x:y, y:x} mapping will swap x and y variables.
         
-        If 'reductions' are provided, these are equality judgments
-        in which each occurrence of the left hand sides will be replaced
-        by the right hand sides during the instantiation.  There
-        may also be "auto-reductions" that work in a similar matter
-        via calling 'auto_reduction' on expressions as they are
-        generated during the instantiation.
+        If equality 'replacements' are specified or 'auto_simplify'
+        is True (in proveit.defaults which may be temporarily set
+        via keyword arguments), equality replacements may be made
+        in the process via equality judgements where the left-hand-side
+        is the expression being replaced and the right-hand-side is the
+        replacement.
         
         Returns the proven instantiated Judgment, or throws an exception
         if the proof fails.  For the proof to succeed, all conditions of
@@ -831,30 +840,17 @@ class Judgment:
                              ExprTuple, ExprRange, IndexedVar)
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             get_param_var
-        from proveit.logic import Forall, Equals
+        from proveit.logic import Forall
         from .proof import Theorem, Instantiation, ProofFailure
         
-        reduction_map = dict()
-        if reductions is not None:
-            for reduction in reductions:
-                if not isinstance(reduction, Judgment):
-                    raise TypeError("The 'reductions' must be Judgments")
-                if not isinstance(reduction.expr, Equals):
-                    raise TypeError(
-                            "The 'reductions' must be equality Judgments")
-                if reduction.expr.lhs == reduction.expr.rhs:
-                    # Don't bother with reflexive (x=x) reductions.
-                    continue
-                reduction_map[reduction.expr.lhs] = reduction
-
         if not self.is_usable():
             # If this Judgment is not usable, see if there is an alternate
             # under the set of assumptions that is usable.
             try:
-                alternate = self.expr.prove(assumptions, automation=False)
+                alternate = self.expr.prove(automation=False)
             except ProofFailure:
                 self.raise_unusable_proof()
-            return alternate.instantiate(repl_map, assumptions)
+            return alternate.instantiate(repl_map)
         _proof = self.proof()
         if isinstance(_proof, Theorem):
             Theorem.all_used_theorems.add(_proof)
@@ -864,10 +860,6 @@ class Judgment:
         # (mapping instance variables to themselves)
         if repl_map is None:
             repl_map = {ivar: ivar for ivar in self.explicit_instance_vars()}
-
-        # Include the Judgment assumptions along with any provided 
-        # assumptions
-        assumptions = defaults.checked_assumptions(assumptions)
 
         # For any entrys in repl_map with Operation keys, convert
         # them to corresponding operator keys with Lambda substitutions.
@@ -983,13 +975,25 @@ class Judgment:
                         # default is to map instance variables to
                         # themselves
                         processed_repl_map[iparam_var] = iparam_var
-        return self._checkedTruth(
-            Instantiation(self,
-                          num_forall_eliminations=num_forall_eliminations,
-                          repl_map=processed_repl_map,
-                          equiv_alt_expansions=equiv_alt_expansions,
-                          reduction_map=reduction_map,
-                          assumptions=assumptions))
+        temporarily_preserved_exprs = set()
+        try:
+            # Preserve all replacement expressions -- don't simplify
+            # them given the directive to specifically use them.
+            temporarily_preserved_exprs = (
+                    set(processed_repl_map.values()) - 
+                    defaults.preserved_exprs)
+            defaults.preserved_exprs.update(temporarily_preserved_exprs)
+
+            return self._checkedTruth(
+                Instantiation(self,
+                              num_forall_eliminations=num_forall_eliminations,
+                              repl_map=processed_repl_map,
+                              equiv_alt_expansions=equiv_alt_expansions,
+                              assumptions=defaults.assumptions))
+        finally:
+            # Revert the preserve_exprs set back to what it was.
+            defaults.preserved_exprs.difference_update(
+                    temporarily_preserved_exprs)
 
     def generalize(self, forall_var_or_vars_or_var_lists,
                    domain_lists=None, domain=None, conditions=tuple()):

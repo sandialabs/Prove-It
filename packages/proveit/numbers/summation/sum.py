@@ -1,7 +1,7 @@
 from proveit import (Literal, Lambda, Function, Operation, 
                      OperationOverInstances, InnerExpr,
                      Judgment, free_vars, maybe_fenced, USE_DEFAULTS, 
-                     ProofFailure, defaults)
+                     ProofFailure, defaults, equivalence_prover)
 from proveit import a, b, c, f, i, j, k, x, P, Q, S
 from proveit.logic import Forall, InSet
 from proveit.numbers import one, Add, Neg, subtract
@@ -110,8 +110,12 @@ class Sum(OperationOverInstances):
         else:
             return OperationOverInstances._formatted(self, format_type, fence)
 
-    def do_reduced_simplification(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, **defaults_config):
         '''
+        Returns a proven simplification equation for this Sum
+        expression assuming the operands have been simplified.
+        
         For the trivial case of summing over only one item (currently
         implemented just for a Interval where the endpoints are equal),
         derive and return this summation expression equated the
@@ -132,17 +136,6 @@ class Sum(OperationOverInstances):
             "Sum simplification only implemented for a summation over an "
             "integer Interval of one instance variable where the upper "
             "and lower bound is the same.")
-
-    def simplified(self, assumptions=frozenset()):
-        '''
-        For the trivial case of summing over only one item (currently
-        implemented just for a Interval where the endpoints are equal),
-        derive and return this summation expression equated the
-        simplified form of the single term.
-        Assumptions may be necessary to deduce necessary conditions
-        for the simplification.
-        '''
-        return self.simplification(assumptions).rhs
 
     def geom_sum_reduction(self, assumptions=frozenset()):
         r'''
@@ -575,13 +568,9 @@ class Sum(OperationOverInstances):
                 "index or indices {} and domain {}."
                 .format(self, self.indices, self.domain))
 
-    def factorization(
-            self,
-            the_factor,
-            pull="left",
-            group_factor=True,
-            group_remainder=None,
-            assumptions=USE_DEFAULTS):
+    @equivalence_prover('factorized', 'factor')
+    def factorization(self, the_factor, pull="left", group_factor=True,
+                      group_remainder=None, **defaults_config):
         '''
         If group_factor is True and the_factor is a product, it will be grouped together as a
         sub-product.  group_remainder is not relevant kept for compatibility with other factor
@@ -599,11 +588,10 @@ class Sum(OperationOverInstances):
                 'out of a summation')
         expr = self
         # for convenience updating our equation
-        eq = TransRelUpdater(expr, assumptions)
+        eq = TransRelUpdater(expr)
         
-        assumptions = defaults.checked_assumptions(assumptions)
         # We may need to factor the summand within the summation
-        summand_assumptions = assumptions + self.conditions.entries
+        summand_assumptions = defaults.assumptions + self.conditions.entries
         summand_factorization = self.summand.factorization(
             the_factor,
             pull,
@@ -612,8 +600,7 @@ class Sum(OperationOverInstances):
             assumptions=summand_assumptions)
         gen_summand_factorization = summand_factorization.generalize(
                 self.instance_params, conditions=self.conditions)
-        expr = eq.update(expr.instance_substitution(gen_summand_factorization,
-                                                    assumptions=assumptions))
+        expr = eq.update(expr.instance_substitution(gen_summand_factorization))
         if isinstance(the_factor, Mult):
             factors = the_factor.factors
         else:
@@ -630,21 +617,19 @@ class Sum(OperationOverInstances):
             raise ValueError("'pull' must be 'left' or 'right', not %s"
                              %pull)
         _b = self.instance_params
-        _i = _a.num_elements(assumptions)
-        _j = _b.num_elements(assumptions)
-        _k = _c.num_elements(assumptions)
+        _i = _a.num_elements()
+        _j = _b.num_elements()
+        _k = _c.num_elements()
         _P = Lambda(expr.instance_params, summand_remainder)
         _Q = Lambda(expr.instance_params, expr.condition)
         a_1_to_i = ExprTuple(var_range(a, one, _i))
         b_1_to_j = ExprTuple(var_range(b, one, _j))
         c_1_to_k = ExprTuple(var_range(c, one, _k))
         _impl = distribute_through_summation.instantiate(
-                {i: _i, j: _j, k: _k, P:_P, Q:_Q, b_1_to_j: _b},
-                assumptions=assumptions)
-        quantified_eq = _impl.derive_consequent(assumptions)  
+                {i: _i, j: _j, k: _k, P:_P, Q:_Q, b_1_to_j: _b})
+        quantified_eq = _impl.derive_consequent()  
         eq.update(quantified_eq.instantiate(
-                {a_1_to_i: _a, b_1_to_j:_b, c_1_to_k: _c}, 
-                assumptions=assumptions))
+                {a_1_to_i: _a, b_1_to_j:_b, c_1_to_k: _c}))
         
         return eq.relation
     
@@ -702,6 +687,3 @@ class Sum(OperationOverInstances):
         if summand_lambda == greater_lambda:
             return sum_relation.with_direction_reversed()
         return sum_relation
-
-InnerExpr.register_equivalence_method(
-    Sum, 'factorization', 'factorized', 'factor')

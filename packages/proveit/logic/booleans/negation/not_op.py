@@ -1,4 +1,5 @@
-from proveit import Literal, Operation, USE_DEFAULTS, ProofFailure
+from proveit import (Literal, Operation, USE_DEFAULTS, ProofFailure,
+                     defaults, prover, equivalence_prover)
 from proveit.logic.booleans.booleans import in_bool
 from proveit import A, x, y, S
 
@@ -11,6 +12,7 @@ class Not(Operation):
         theory=__file__)
 
     def __init__(self, A, *, styles=None):
+        from proveit import ExprTuple
         Operation.__init__(self, Not._operator_, A, styles=styles)
 
     def side_effects(self, judgment):
@@ -53,25 +55,24 @@ class Not(Operation):
         '''
         return in_bool(self).prove(assumptions=assumptions)
 
-    def conclude(self, assumptions):
+    @prover
+    def conclude(self, **defaults_config):
         '''
         Try to automatically conclude this negation via evaluation reductions
         or double negation.
         '''
-        from proveit.logic import SimplificationError
+        from proveit.logic import EvaluationError
         # as a last resort (conclude_negation on the operand should have been
         # tried first), conclude negation via evaluating the operand as false.
         try:
-            self.operand.evaluation(assumptions=assumptions)
-        except SimplificationError:
-            raise ProofFailure(
-                self,
-                assumptions,
-                "Unable to evaluate %s" % str(
-                    self.operand))
-        return self.conclude_via_falsified_negation(assumptions=assumptions)
+            self.operand.evaluation()
+        except EvaluationError:
+            raise ProofFailure(self, defaults.assumptions,
+                               "Unable to evaluate %s" % str(self.operand))
+        return self.conclude_via_falsified_negation()
 
-    def conclude_negation(self, assumptions):
+    @prover
+    def conclude_negation(self, **defaults_config):
         '''
         Try to conclude the negation of this negation via double negation.  That
         is, conclude not(not(A)), where self=not(A), via proving A.
@@ -79,9 +80,9 @@ class Not(Operation):
         not(not(A)) directly.
         '''
         try:
-            return Not(self).conclude_via_double_negation(assumptions)
+            return Not(self).conclude_via_double_negation()
         except BaseException:
-            return Not(self).conclude(assumptions)
+            return Not(self).conclude()
 
     def latex(self, fence=False, **kwargs):
         out_str = ''
@@ -92,8 +93,8 @@ class Not(Operation):
             out_str += ')'
         return out_str
 
-    def evaluation(self, assumptions=USE_DEFAULTS, *, automation=True,
-                   **kwargs):
+    @equivalence_prover('evaluated', 'evaluate')
+    def evaluation(self, **defaults_config):
         '''
         Given an operand that evaluates to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE.
@@ -101,83 +102,100 @@ class Not(Operation):
         from . import not_t, not_f  # load in truth-table evaluations
         from proveit.logic.booleans import TRUE
         from proveit.logic.booleans.negation import falsified_negation_intro
-        if self.operand.proven(assumptions) and self.operand != TRUE:
+        if self.operand.proven() and self.operand != TRUE:
             # evaluate to FALSE via falsified_negation_intro
-            return falsified_negation_intro.instantiate(
-                {A: self.operand}, assumptions=assumptions)
-        return Operation.evaluation(self, assumptions, automation=automation)
+            return falsified_negation_intro.instantiate({A: self.operand})
+        return Operation.evaluation(self)
 
-    def substitute_in_false(self, lambda_map, assumptions=USE_DEFAULTS):
+    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    def shallow_evaluation(self, **defaults_config):
+        from proveit.logic import TRUE, FALSE, EvaluationError
+        from . import not_t, not_f  # load in truth-table evaluations
+        if self.operand == TRUE:
+            return not_t
+        elif self.operand == FALSE:
+            return not_f
+        raise EvaluationError(self)
+
+    @prover
+    def substitute_in_false(self, lambda_map, **defaults_config):
         '''
-        Given not(A), derive P(False) from P(A).
+        Given not(A), derive P(FALSE) from P(A).
         '''
         from proveit.logic.equality import substitute_in_false
         from proveit.logic import Equals
         from proveit import P
         Plambda = Equals._lambda_expr(lambda_map, self.operand)
         return substitute_in_false.instantiate(
-            {x: self.operand, P: Plambda}, assumptions=assumptions)
+            {x: self.operand, P: Plambda})
 
-    def substitute_falsehood(self, lambda_map, assumptions=USE_DEFAULTS):
+    @prover
+    def substitute_falsehood(self, lambda_map, **defaults_config):
         '''
-        Given not(A), derive P(A) from P(False).
+        Given not(A), derive P(A) from P(FALSE).
         '''
         from proveit.logic.equality import substitute_falsehood
         from proveit.logic import Equals
         from proveit.common import P
         Plambda = Equals._lambda_expr(lambda_map, self.operand)
         return substitute_falsehood.instantiate(
-            {x: self.operand, P: Plambda}, assumptions=assumptions)
+            {x: self.operand, P: Plambda})
 
-    def deduce_in_bool(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_in_bool(self, **defaults_config):
         '''
-        Attempt to deduce, then return, that this 'not' expression is in the set of BOOLEANS.
+        Attempt to deduce, then return, that this 'not' expression is 
+        in the set of BOOLEANS.
         '''
         from . import closure, double_neg_closure
         if isinstance(self.operand, Not):
             return double_neg_closure.instantiate(
-                {A: self.operand.operand}, assumptions=assumptions)
-        return closure.instantiate({A: self.operand}, assumptions=assumptions)
+                    {A: self.operand.operand})
+        return closure.instantiate({A: self.operand})
 
-    def deduce_operand_in_bool(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_operand_in_bool(self, **defaults_config):
         '''
-        Attempt to deduce, then return, that the negated operand is in the set of BOOLEANS.
+        Attempt to deduce, then return, that the negated operand is in 
+        the set of BOOLEANS.
         '''
         from . import operand_is_bool
-        return operand_is_bool.instantiate(
-            {A: self.operand}, assumptions=assumptions)
+        return operand_is_bool.instantiate({A: self.operand})
 
-    def equate_negated_to_false(self, assumptions=USE_DEFAULTS):
+    @prover
+    def equate_negated_to_false(self, **defaults_config):
         r'''
         From not(A), derive and return A = FALSE.
-        Note, see Equals.derive_via_boolean_equality for the reverse process.
+        Note, see Equals.derive_via_boolean_equality for the reverse 
+        process.
         '''
         from . import negation_elim
-        return negation_elim.instantiate(
-            {A: self.operand}, assumptions=assumptions)
+        return negation_elim.instantiate({A: self.operand})
 
-    def derive_untrue(self, assumptions=USE_DEFAULTS):
+    @prover
+    def derive_untrue(self, **defaults_config):
         r'''
         From not(A), derive and return A != TRUE.
         '''
         from . import untrue_from_negation
-        return untrue_from_negation.instantiate(
-            {A: self.operand}, assumptions=assumptions)
+        return untrue_from_negation.instantiate({A: self.operand})
 
-    def double_negation_equivalence(self, assumptions=USE_DEFAULTS):
+    @prover
+    def double_negation_equivalence(self, **defaults_config):
         r'''
         Given not(not(A)), deduce and return not(not(A)) = A.
         '''
         from . import double_negation_equiv
         if isinstance(self.operand, Not):
             return double_negation_equiv.instantiate(
-                {A: self.operand.operand}, assumptions=assumptions)
+                {A: self.operand.operand})
         raise ValueError(
             "double_negation_equivalence does not apply to " +
             str(self) +
             " which is not of the form not(not(A))")
 
-    def derive_via_double_negation(self, assumptions=USE_DEFAULTS):
+    @prover
+    def derive_via_double_negation(self, **defaults_config):
         r'''
         From not(not(A)), derive and return A.
         Note, see Equals.derive_via_boolean_equality for the reverse process.
@@ -185,13 +203,14 @@ class Not(Operation):
         from . import double_negation_elim
         if isinstance(self.operand, Not):
             return double_negation_elim.instantiate(
-                {A: self.operand.operand}, assumptions=assumptions)
+                {A: self.operand.operand})
         raise ValueError(
             "derive_via_double_negation does not apply to " +
             str(self) +
             " which is not of the form not(not(A))")
 
-    def conclude_via_double_negation(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude_via_double_negation(self, **defaults_config):
         r'''
         Prove and return self of the form not(not(A)) assuming A.
         Also see version in NotEquals for A != FALSE.
@@ -199,47 +218,51 @@ class Not(Operation):
         from . import double_negation_intro
         if isinstance(self.operand, Not):
             stmt = self.operand.operand
-            return double_negation_intro.instantiate(
-                {A: stmt}, assumptions=assumptions)
+            return double_negation_intro.instantiate({A: stmt})
 
-    def conclude_via_falsified_negation(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude_via_falsified_negation(self, **defaults_config):
         r'''
         Prove and return self of the form not(A) assuming A=FALSE.
         '''
         from . import negation_intro
-        return negation_intro.instantiate(
-            {A: self.operand}, assumptions=assumptions)
+        return negation_intro.instantiate({A: self.operand})
 
-    def derive_contradiction(self, assumptions=USE_DEFAULTS):
+    @prover
+    def derive_contradiction(self, **defaults_config):
         r'''
         From not(A), and assuming A, derive and return FALSE.
         '''
         from . import negation_contradiction
-        return negation_contradiction.instantiate(
-            {A: self.operand}, assumptions=assumptions)
+        return negation_contradiction.instantiate({A: self.operand})
 
-    def affirm_via_contradiction(self, conclusion, assumptions=USE_DEFAULTS):
+    @prover
+    def affirm_via_contradiction(self, conclusion, **defaults_config):
         '''
-        From not(A), derive the conclusion provided that the negated conclusion
-        implies both not(A) as well as A, and the conclusion is a Boolean.
+        From not(A), derive the conclusion provided that the negated 
+        conclusion implies both not(A) as well as A, and the conclusion 
+        is a Boolean.
         '''
         from proveit.logic.booleans.implication import affirm_via_contradiction
-        return affirm_via_contradiction(self, conclusion, assumptions)
+        return affirm_via_contradiction(self, conclusion)
 
-    def deny_via_contradiction(self, conclusion, assumptions=USE_DEFAULTS):
+    @prover
+    def deny_via_contradiction(self, conclusion, **defaults_config):
         '''
-        From not(A), derive the negated conclusion provided that the conclusion
-        implies both not(A) as well as A, and the conclusion is a Boolean.
+        From not(A), derive the negated conclusion provided that the 
+        conclusion implies both not(A) as well as A, and the conclusion 
+        is a Boolean.
         '''
         from proveit.logic.booleans.implication import deny_via_contradiction
-        return deny_via_contradiction(self, conclusion, assumptions)
+        return deny_via_contradiction(self, conclusion)
 
-    def deduce_double_negation_equiv(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_double_negation_equiv(self, **defaults_config):
         '''
-        For some not(not(A)), derive and return A = not(not(A)) assuming A in Boolean.
+        For some not(not(A)), derive and return A = not(not(A)) 
+        assuming A in Boolean.
         '''
         from . import double_negation_equiv
         if isinstance(self.operand, Not):
             Asub = self.operand.operand
-            return double_negation_equiv.instantiate(
-                {A: Asub}, assumptions=assumptions)
+            return double_negation_equiv.instantiate({A: Asub})

@@ -35,7 +35,8 @@ class TransRelUpdater:
         if assumptions is None:
             assumptions = self.assumptions
         relation_reversed = relation.is_reversed()
-        self.relation = self.relation.apply_transitivity(relation, assumptions)
+        self.relation = self.relation.apply_transitivity(
+                relation, assumptions=assumptions)
         if relation.lhs == self.expr:
             self.expr = relation.rhs
         elif relation.rhs == self.expr:

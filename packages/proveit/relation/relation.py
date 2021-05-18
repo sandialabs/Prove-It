@@ -1,6 +1,7 @@
 from collections import deque
 from proveit import Expression, Operation, StyleOptions
-from proveit import defaults, USE_DEFAULTS, Judgment, ProofFailure
+from proveit import (defaults, USE_DEFAULTS, Judgment, ProofFailure,
+                     prover)
 from .sorter import TransitivitySorter
 
 
@@ -87,26 +88,9 @@ class Relation(Operation):
                 operator_or_operators=operator_str, operands=operands,
                 wrap_positions=wrap_positions, 
                 justification=justification)
-            
-    def _simplify_both_sides(self, *, simplify, assumptions=USE_DEFAULTS):
-        '''
-        Simplify both sides iff 'simplify' is True.
-        '''
-        if simplify:
-            return self.simplify_both_sides(assumptions)
-        return self
 
-    def simplify_both_sides(self, assumptions=USE_DEFAULTS):
-        '''
-        Simplify both sides of the relation under the give assumptions
-        and return the new relation.
-        '''
-        relation = self
-        relation = relation.inner_expr().lhs.simplify(assumptions)
-        relation = relation.inner_expr().rhs.simplify(assumptions)
-        return relation
-
-    def do_something_on_both_sides(self, assumptions=USE_DEFAULTS):
+    @prover
+    def do_something_on_both_sides(self, **defaults_config):
         '''
         The entire purpose of this method is this docstring to be
         informative.  There may be on-the-fly methods created
@@ -172,7 +156,7 @@ class Relation(Operation):
                     # is proven under the default assumptions, but
                     # we will try those ones first (the ones at the
                     # end will be popped off first).
-                    if known_membership.is_sufficient(defaults.assumptions):
+                    if known_membership.is_applicable(defaults.assumptions):
                         domain_methods.append((domain, domain_attr))
                     else:
                         domain_methods.insert(0, (domain, domain_attr))

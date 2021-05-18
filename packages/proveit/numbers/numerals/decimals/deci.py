@@ -1,4 +1,5 @@
-from proveit import Literal, USE_DEFAULTS, Operation, ExprRange, defaults
+from proveit import (Literal, USE_DEFAULTS, Operation, ExprRange, defaults,
+                     prover, equivalence_prover)
 from proveit import a, b, c, d, k, m, n, x
 from proveit.numbers.number_sets.number_set import NumberSet, NumberMembership
 from proveit.numbers.numerals.numeral import NumeralSequence, Numeral
@@ -18,20 +19,18 @@ class DecimalSequence(NumeralSequence):
                 raise Exception(
                     'A DecimalSequence may only be composed of 0-9 digits')
 
-    def auto_reduction(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, **defaults_config):
         """
-        Tries to reduce each value in the Numeral Sequence to a single digit
+        If the DecimalSequence contains an ExprRange representing a
+        repeated digit, expand it appropriately.
         """
         from proveit import ExprRange
-        from proveit.numbers import Add
         for digit in self.digits:
-            if isinstance(digit, Add):
-                # if at least one digit is an addition object, we can use the
-                # evaluate_add_digit method
-                return self.evaluate_add_digit(assumptions=assumptions)
             if isinstance(digit, ExprRange):
-                # if at least one digit is an ExprRange, we can try to reduce it to an ExprTuple
-                return self.reduce_exprRange(assumptions=assumptions)
+                # if at least one digit is an ExprRange, we can try to 
+                # reduce it to an ExprTuple
+                return self.digit_repetition_reduction()
 
     def as_int(self):
         return int(self.formatted('string'))
@@ -88,7 +87,8 @@ class DecimalSequence(NumeralSequence):
         #                        "Cannot prove %d in NaturalPos" % self.n)
         # return Numeral._inNaturalPosStmts[self.n]
 
-    def reduce_exprRange(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('digit_repetition_reduced', 'digit_repetition_reduce')
+    def digit_repetition_reduction(self, **defaults_config):
         '''
         Tries to reduce a decimal sequence containing an ExprRange.
         For example, reduce #(3 4 2 .. 4 repeats .. 2 3) to 3422223
@@ -97,13 +97,10 @@ class DecimalSequence(NumeralSequence):
         from proveit.core_expr_types.tuples import n_repeats_reduction
         from proveit.numbers.numerals.decimals import deci_sequence_reduction_ER
 
-        was_range_reduction_disabled = (
-                ExprRange in defaults.disabled_auto_reduction_types)
-
         expr = self
         # A convenience to allow successive update to the equation via transitivities.
         # (starting with self=self).
-        eq = TransRelUpdater(self, assumptions)
+        eq = TransRelUpdater(self)
 
         idx = 0
         for i, digit in enumerate(self.digits):
@@ -123,9 +120,9 @@ class DecimalSequence(NumeralSequence):
                 # _b = digit.body
                 # _d = expr.digits[i + 1:]
 
-                _m = eq.relation.rhs.digits[:idx].num_elements(assumptions)
+                _m = eq.relation.rhs.digits[:idx].num_elements()
                 _n = digit.end_index
-                _k = expr.digits[i + 1:].num_elements(assumptions)
+                _k = expr.digits[i + 1:].num_elements()
                 _a = eq.relation.rhs.digits[:idx]
                 _b = digit.body
                 _d = expr.digits[i + 1:]
@@ -139,11 +136,10 @@ class DecimalSequence(NumeralSequence):
                 while _n.as_int() > 9:
                     _x = digit.body
 
-                    _c = n_repeats_reduction.instantiate(
-                        {n: _n, x: _x}, assumptions=assumptions).rhs
+                    _c = n_repeats_reduction.instantiate({n: _n, x: _x}).rhs
 
                     eq.update(deci_sequence_reduction_ER.instantiate(
-                        {m: _m, n: _n, k: _k, a: _a, b: _b, c: _c, d: _d}, assumptions=assumptions))
+                        {m: _m, n: _n, k: _k, a: _a, b: _b, c: _c, d: _d}))
                     _n = num(_n.as_int() - 1)
                     idx += 1
 
@@ -152,24 +148,12 @@ class DecimalSequence(NumeralSequence):
                     .__getattr__('reduce_%s_repeats' % _n)
                 _x = digit.body
 
-                _c = len_thm.instantiate({x: _x}, assumptions=assumptions).rhs
+                _c = len_thm.instantiate({x: _x}).rhs
 
                 idx += _n.as_int()
 
-                if _n == one:
-                    # we have to disable ExprRange reduction in this instance
-                    # because Prove-It knows that an ExprRange of one element is just that element
-                    # but we need to preserve the left hand side of the equation without this reduction
-                    defaults.disabled_auto_reduction_types.add(ExprRange)
-                    eq.update(deci_sequence_reduction_ER.instantiate(
-                        {m: _m, n: _n, k: _k, a: _a, b: _b, c: _c, d: _d}, assumptions=assumptions))
-
-                    if not was_range_reduction_disabled:
-                        defaults.disabled_auto_reduction_types.remove(ExprRange)
-
-                else:
-                    eq.update(deci_sequence_reduction_ER.instantiate(
-                        {m: _m, n: _n, k: _k, a: _a, b: _b, c: _c, d: _d}, assumptions=assumptions))
+                eq.update(deci_sequence_reduction_ER.instantiate(
+                    {m: _m, n: _n, k: _k, a: _a, b: _b, c: _c, d: _d}))
             else:
                 idx += 1
 
@@ -229,6 +213,8 @@ class DecimalSequence(NumeralSequence):
         return eq.inner_expr(
         ).rhs.operands[-1].evaluate(assumptions=assumptions)
 
+    '''
+    # Shouldn't be needed given new auto-simplification approach.
     def evaluate_add_digit(self, assumptions=USE_DEFAULTS):
         """
         Evaluates each addition within the DecimalSequence
@@ -261,6 +247,7 @@ class DecimalSequence(NumeralSequence):
                     {m: _m, n: _n, k: _k, a: _a, b: _b, c: _c, d: _d}, assumptions=assumptions))
 
         return eq.relation
+    '''
 
     def _formatted(self, format_type, operator=None, **kwargs):
         from proveit import ExprRange, var_range
@@ -308,8 +295,8 @@ class DigitSet(NumberSet):
         Yield side-effects when proving 'n in Natural' for a given n.
         '''
         member = judgment.element
-        yield lambda assumptions: self.deduce_member_lower_bound(member, assumptions)
-        yield lambda assumptions: self.deduce_member_upper_bound(member, assumptions)
+        yield lambda: self.deduce_member_lower_bound(member)
+        yield lambda: self.deduce_member_upper_bound(member)
 
     def membership_object(self, element):
         return DeciMembership(element, self)

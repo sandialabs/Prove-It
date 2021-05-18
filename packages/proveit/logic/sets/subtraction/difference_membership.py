@@ -1,4 +1,4 @@
-from proveit import USE_DEFAULTS
+from proveit import USE_DEFAULTS, equivalence_prover
 from proveit.logic import Membership, Nonmembership
 from proveit import m, x, y, A, B, S
 
@@ -8,8 +8,7 @@ class DifferenceMembership(Membership):
     '''
 
     def __init__(self, element, domain):
-        Membership.__init__(self, element)
-        self.domain = domain
+        Membership.__init__(self, element, domain)
 
     def side_effects(self, judgment):
         '''
@@ -37,16 +36,16 @@ class DifferenceMembership(Membership):
                     assumptions=assumptions)
         return membership_folding.instantiate(
             {x: self.element, A: _A, B: _B}, assumptions=assumptions)
-    
-    def equivalence(self, assumptions=USE_DEFAULTS):
+
+    @equivalence_prover('defined', 'define')
+    def definition(self, **defaults_config):
         '''
         Deduce and return something of the form
         [x ∈ (A - B)] = [(x ∈ A) and (x ∉ B).
         '''
         from . import difference_def
         _A, _B = self.domain.operands.entries
-        return difference_def.instantiate(
-            {x: self.element, A: _A, B: _B}, assumptions=assumptions)
+        return difference_def.instantiate({x: self.element, A: _A, B: _B})
 
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
@@ -76,8 +75,7 @@ class DifferenceNonmembership(Nonmembership):
     '''
 
     def __init__(self, element, domain):
-        Nonmembership.__init__(self, element)
-        self.domain = domain
+        Nonmembership.__init__(self, element, domain)
 
     def side_effects(self, judgment):
         '''
@@ -105,7 +103,8 @@ class DifferenceNonmembership(Nonmembership):
         return nonmembership_folding.instantiate(
             {x: self.element, A: _A, B: _B}, assumptions=assumptions)
 
-    def equivalence(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('defined', 'define')
+    def definition(self, **defaults_config):
         '''
         Deduce and return something of the form 
         [x ∉ (A - B)] = [(x ∉ A) or (x ∈ B)].
@@ -113,7 +112,7 @@ class DifferenceNonmembership(Nonmembership):
         from . import nonmembership_equiv
         _A, _B = self.domain.operands.entries
         return nonmembership_equiv.instantiate(
-            {x: self.element, A: _A, B: _B}, assumptions=assumptions)
+            {x: self.element, A: _A, B: _B})
 
     def unfold(self, assumptions=USE_DEFAULTS):
         '''

@@ -20,8 +20,7 @@ class RationalSet(NumberSet):
         Yield side-effects when proving 'q in Rational' for a given q.
         '''
         member = judgment.element
-        yield lambda assumptions: self.deduce_member_in_real(
-                member, assumptions)
+        yield lambda: self.deduce_member_in_real(member)
 
     def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
         from . import rational_membership_is_bool
@@ -52,12 +51,9 @@ class RationalNonZeroSet(NumberSet):
         for a given q.
         '''
         member = judgment.element
-        yield lambda assumptions: self.deduce_member_notzero(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_rational(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_real_nonzero(
-                member, assumptions)
+        yield lambda: self.deduce_member_notzero(member)
+        yield lambda: self.deduce_member_in_rational(member)
+        yield lambda: self.deduce_member_in_real_nonzero(member)
 
     def deduce_member_notzero(self, member, assumptions=USE_DEFAULTS):
         from . import nonzero_if_in_rational_nonzero
@@ -99,16 +95,11 @@ class RationalPosSet(NumberSet):
         for a given q.
         '''
         member = judgment.element
-        yield lambda assumptions: self.deduce_member_lower_bound(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_rational(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_rational_nonzero(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_rational_nonneg(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_real_pos(
-                member, assumptions)
+        yield lambda: self.deduce_member_lower_bound(member)
+        yield lambda: self.deduce_member_in_rational(member)
+        yield lambda: self.deduce_member_in_rational_nonzero(member)
+        yield lambda: self.deduce_member_in_rational_nonneg(member)
+        yield lambda: self.deduce_member_in_real_pos(member)
 
     def deduce_member_lower_bound(self, member, assumptions=USE_DEFAULTS):
         from . import positive_if_in_rational_pos
@@ -162,18 +153,12 @@ class RationalNegSet(NumberSet):
         for a given q.
         '''
         member = judgment.element
-        yield lambda assumptions: self.deduce_member_upper_bound(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_rational(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_rational_nonzero(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_rational_nonpos(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_rational_nonpos(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_real_neg(
-                member, assumptions)
+        yield lambda: self.deduce_member_upper_bound(member)
+        yield lambda: self.deduce_member_in_rational(member)
+        yield lambda: self.deduce_member_in_rational_nonzero(member)
+        yield lambda: self.deduce_member_in_rational_nonpos(member)
+        yield lambda: self.deduce_member_in_rational_nonpos(member)
+        yield lambda: self.deduce_member_in_real_neg(member)
 
     def deduce_member_upper_bound(self, member, assumptions=USE_DEFAULTS):
         from . import negative_if_in_rational_neg
@@ -227,12 +212,9 @@ class RationalNonNegSet(NumberSet):
         for a given q.
         '''
         member = judgment.element
-        yield lambda assumptions: self.deduce_member_lower_bound(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_rational(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_real_nonneg(
-                member, assumptions)
+        yield lambda: self.deduce_member_lower_bound(member)
+        yield lambda: self.deduce_member_in_rational(member)
+        yield lambda: self.deduce_member_in_real_nonneg(member)
 
     def deduce_member_lower_bound(self, member, assumptions=USE_DEFAULTS):
         from . import nonneg_if_in_rational_nonneg
@@ -274,12 +256,9 @@ class RationalNonPosSet(NumberSet):
         for a given q.
         '''
         member = judgment.element
-        yield lambda assumptions: self.deduce_member_upper_bound(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_rational(
-                member, assumptions)
-        yield lambda assumptions: self.deduce_member_in_real_nonpos(
-                member, assumptions)
+        yield lambda: self.deduce_member_upper_bound(member)
+        yield lambda: self.deduce_member_in_rational(member)
+        yield lambda: self.deduce_member_in_real_nonpos(member)
 
     def deduce_member_upper_bound(self, member, assumptions=USE_DEFAULTS):
         from . import nonpos_if_in_rational_nonpos

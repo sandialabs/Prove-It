@@ -1,4 +1,5 @@
-from proveit import defaults, USE_DEFAULTS, ExprTuple
+from proveit import (defaults, USE_DEFAULTS, ExprTuple,
+                     prover, equivalence_prover)
 from proveit.logic import Membership, Nonmembership
 from proveit.numbers import num
 from proveit import a, b, c, m, n, x, y
@@ -10,8 +11,7 @@ class EnumMembership(Membership):
     '''
 
     def __init__(self, element, domain):
-        Membership.__init__(self, element)
-        self.domain = domain
+        Membership.__init__(self, element, domain)
 
     def side_effects(self, judgment):
         '''
@@ -47,7 +47,8 @@ class EnumMembership(Membership):
                 return fold.instantiate({n: _n, x: self.element, y:_y}, 
                                         assumptions=assumptions)
 
-    def equivalence(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('defined', 'define')
+    def definition(self, **defaults_config):
         '''
         From the EnumMembership object [element in {a, ..., n}],
         deduce and return:
@@ -59,12 +60,11 @@ class EnumMembership(Membership):
 
         if enum_elements.is_single():
             return singleton_def.instantiate(
-                {x: self.element, y: enum_elements[0]}, assumptions=assumptions)
+                {x: self.element, y: enum_elements[0]})
         else:
             _y = enum_elements
-            _n = _y.num_elements(assumptions=assumptions)
-            return enum_set_def.instantiate({n: _n, x: self.element, y: _y}, 
-                                            assumptions=assumptions)
+            _n = _y.num_elements()
+            return enum_set_def.instantiate({n: _n, x: self.element, y: _y})
 
     def derive_in_singleton(self, expression, assumptions=USE_DEFAULTS):
         # implemented by JML 6/28/19
@@ -112,8 +112,7 @@ class EnumNonmembership(Nonmembership):
     '''
 
     def __init__(self, element, domain):
-        Nonmembership.__init__(self, element)
-        self.domain = domain
+        Nonmembership.__init__(self, element, domain)
 
     def side_effects(self, judgment):
         '''
@@ -121,7 +120,8 @@ class EnumNonmembership(Nonmembership):
         '''
         yield self.unfold
 
-    def equivalence(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('defined', 'define')
+    def definition(self, **defaults_config):
         '''
         Deduce and return
         |– [element not in {a, ..., n}] =
@@ -135,10 +135,9 @@ class EnumNonmembership(Nonmembership):
                 {x: self.element, y: enum_elements})
         else:
             _y = enum_elements
-            _n = _y.num_elements(assumptions=assumptions)
+            _n = _y.num_elements()
             return nonmembership_equiv.instantiate(
-                    {n: _n, x: self.element, y: _y}, 
-                    assumptions=assumptions)
+                    {n: _n, x: self.element, y: _y})
 
     def conclude(self, assumptions=USE_DEFAULTS):
         '''

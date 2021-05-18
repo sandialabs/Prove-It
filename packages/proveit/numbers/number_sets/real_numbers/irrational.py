@@ -1,4 +1,4 @@
-from proveit import Literal, USE_DEFAULTS
+from proveit import Literal, USE_DEFAULTS, prover
 from proveit.logic import IrreducibleValue, Equals, NotEquals, InSet
 
 
@@ -11,7 +11,10 @@ class IrrationalLiteral(IrreducibleValue, Literal):
         Literal.__init__(self, string_format, latex_format, 
                          theory=__file__, styles=styles)
 
-    def eval_equality(self, other, assumptions=USE_DEFAULTS):
+    @prover
+    def eval_equality(self, other, **defaults_config):
         if other == self:
             return Equals(self, self).prove()
-        pass  # need axioms/theorems to prove inequality amongst different numerals
+        raise NotImplementedError("'eval_equality' not implemented for "
+                                  "%s to compare with %s"
+                                  %(self, other))

@@ -1,5 +1,5 @@
 from .expr import (Expression, traverse_inner_expressions, used_vars,
-                   possibly_free_var_ranges, free_vars, attempt_to_simplify,
+                   possibly_free_var_ranges, free_vars,
                    expression_depth, MakeNotImplemented,
                    ImproperReplacement)
 from .style_options import StyleOptions
@@ -19,15 +19,3 @@ from .composite import (
     var_range, RangeInstanceError)
 from .label import (Label, Literal, Variable, DuplicateLiteralError,
                     safe_dummy_var, safe_dummy_vars, safe_default_or_dummy_var)
-
-InnerExpr.register_equivalence_method(
-    ExprRange, 'partition', 'partitioned', 'split')
-InnerExpr.register_equivalence_method(ExprTuple, 'merger', 'merged', 'merge')
-
-InnerExpr.register_equivalence_method(
-    Lambda,  'substitution', 'substituted', 'substitute')
-
-InnerExpr.register_equivalence_method(
-    OperationOverInstances, 
-    'instance_substitution', 'instance_substituted', 
-    'instance_substitute')

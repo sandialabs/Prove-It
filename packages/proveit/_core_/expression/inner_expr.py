@@ -232,14 +232,6 @@ class InnerExpr:
             equiv_method_type, equiv_method_name = \
                 getattr(cur_inner_expr.__class__, '_equiv_method_%s_' % attr)
             equiv_method = getattr(cur_inner_expr, equiv_method_name)
-            # Find out which argument is the 'assumptions' argument:
-            try:
-                argspec = inspect.getfullargspec(equiv_method)
-                assumptions_index = argspec.args.index('assumptions') - 1
-            except ValueError:
-                raise Exception(
-                    "Expecting method, %s, to have 'assumptions' argument." %
-                    str(equiv_method))
             repl_lambda = self.repl_lambda()
             if (isinstance(cur_inner_expr, ExprTuple)
                     and len(self.expr_hierarchy) > 2
@@ -249,32 +241,18 @@ class InnerExpr:
                 repl_lambda = self[:].repl_lambda()
 
             def inner_equiv(*args, **kwargs):
-                if 'assumptions' in kwargs:
-                    assumptions = kwargs['assumptions']
-                elif len(args) > assumptions_index:
-                    assumptions = args[assumptions_index]
-                else:
-                    assumptions = USE_DEFAULTS
+                assumptions = kwargs.get('assumptions', 
+                                         defaults.assumptions)
                 equivalence = equiv_method(*args, **kwargs)
-                # We need to disable the auto-reduction as we
-                # are making this substitution to ensure we do not
-                # much with anything other than the specific
-                # "inner expression".
-                was_auto_reduce_enabled = defaults.auto_reduce
-                try:
-                    defaults.auto_reduce = False
-                    if equiv_method_type == 'equiv':
-                        return equivalence.substitution(
-                            repl_lambda, assumptions)
-                    elif equiv_method_type == 'rhs':
-                        return equivalence.substitution(
-                            repl_lambda, assumptions).rhs
-                    elif equiv_method_type == 'action':
-                        return equivalence.sub_right_side_into(
-                            repl_lambda, assumptions)
-                finally:
-                    # Restore the 'auto_reduction' default.
-                    defaults.auto_reduce = was_auto_reduce_enabled
+                if equiv_method_type == 'equiv':
+                    return equivalence.substitution(
+                        repl_lambda, assumptions=assumptions)
+                elif equiv_method_type == 'rhs':
+                    return equivalence.substitution(
+                        repl_lambda, assumptions=assumptions).rhs
+                elif equiv_method_type == 'action':
+                    return equivalence.sub_right_side_into(
+                        repl_lambda, assumptions=assumptions)
             if equiv_method_type == 'equiv':
                 inner_equiv.__doc__ = "Generate an equivalence of the top-level expression with a new form by replacing the inner expression via '%s'." % equiv_method_name
             elif equiv_method_type == 'rhs':
@@ -328,6 +306,7 @@ class InnerExpr:
         # Expression object of the sub-expression
         return inner_attr_val
 
+    """
     @staticmethod
     def register_equivalence_method(
             expr_class,
@@ -379,6 +358,7 @@ class InnerExpr:
         equiv_rhs.__name__ = past_tense_name
         equiv_rhs.__doc__ = "Return an equivalent form of this expression derived via '%s'." % equiv_method
         setattr(expr_class, past_tense_name, equiv_rhs)
+    """
 
     def repl_lambda(self):
         '''
@@ -447,7 +427,11 @@ class InnerExpr:
             '''
         # Build the expression with replacement parameters from
         # the inside out.
-        lambda_body = self._rebuild(lambda_body)
+        with defaults.temporary() as temp_defaults:
+            # Don't auto-simplify anything when creating the replacement
+            # map.
+            temp_defaults.auto_simplify = False
+            lambda_body = self._rebuild(lambda_body)
         return Lambda(lambda_params, lambda_body)
 
     def _rebuild(self, inner_expr_replacement):
@@ -553,16 +537,39 @@ class InnerExpr:
                          self.inner_expr_path + (k,),
                          assumptions=self.assumptions)
 
+    def simplification_of_operands(self, assumptions=USE_DEFAULTS):
+        '''
+        Returns a proven equality between the top-level expression
+        and a form in which the operands at the inner-expression
+        level have been simplified.
+        '''
+        return _inner_operands_simplification(self, in_place=False)
+
+    def evaluation_of_operands(self, assumptions=USE_DEFAULTS):
+        '''
+        Returns a proven equality between the top-level expression
+        and a form in which the operands at the inner-expression
+        level have been evaluated.
+        '''
+        return _inner_operands_simplification(self, in_place=False,
+                                              must_evaluate=True)
+
     def simplify_operands(self, assumptions=USE_DEFAULTS):
-        from proveit.logic import default_simplification
-        return default_simplification(self, in_place=True, operands_only=True,
-                                      assumptions=assumptions)
+        '''
+        Returns a proven equivalent form of the top-level expression
+        in which the operands at the inner-expression level have been 
+        simplified.
+        '''
+        return _inner_operands_simplification(self, in_place=True)
 
     def evaluate_operands(self, assumptions=USE_DEFAULTS):
-        from proveit.logic import default_simplification
-        return default_simplification(
-            self, in_place=True, must_evaluate=True, operands_only=True,
-            assumptions=assumptions)
+        '''
+        Returns a proven equivalent form of the top-level expression
+        in which the operands at the inner-expression level have been 
+        evaluated.
+        '''
+        return _inner_operands_simplification(self, in_place=True, 
+                                              must_evaluate=True)
 
     def _repr_html_(self):
         return self._expr_rep()._repr_html_()
@@ -590,11 +597,66 @@ def generate_inner_expressions(expr, inner):
             next_inner_exprs.append(next_inner_expr.sub_expr(k))
 
 
-# Register these generic expression equivalence methods:
-InnerExpr.register_equivalence_method(
-    Expression,
-    'simplification',
-    'simplified',
-    'simplify')
-InnerExpr.register_equivalence_method(
-    Expression, 'evaluation', 'evaluated', 'evaluate')
+def _inner_operands_simplification(inner_expr, *, in_place=True, 
+                                   must_evaluate=False):
+    '''
+    Returns a simplification (or proven simplified form if "in_place"
+    is True) of the top-level of inner_expr (an InnerExpr object)
+    in which the operands at the inner-expression level have been
+    simplified.  If must_evaluate is True, then the operands at
+    the inner-expression level must simplify to irreducible values
+    (evaluations).
+    
+    This is invoked from InnerExpr.simplification_of_operands,
+    InnerExpr.evaluation_of_operands, InnerExpr.simplify_operands,
+    InnerExpr.evaluate_operands.
+    '''
+    # Any of the operands that can be simplified must be replaced with
+    # their simplification.
+    from proveit import InnerExpr, ExprRange
+    from proveit.logic import is_irreducible_value
+    from proveit.relation import TransRelUpdater
+    assert isinstance(inner_expr, InnerExpr), \
+        "Expecting 'inner_expr' to be of type 'InnerExpr'"
+    top_level = inner_expr.expr_hierarchy[0]
+    inner = inner_expr.expr_hierarchy[-1]
+    
+    eq = TransRelUpdater(top_level)
+    while True:
+        all_reduced = True
+        for operand in inner.operands:
+            if (#not operand.is_simplified() and
+                    not is_irreducible_value(operand) and
+                    not isinstance(operand, ExprRange)):
+                # The operand isn't already irreducible, so try to
+                # simplify it.
+                if must_evaluate:
+                    operand_eval = operand.evaluation()
+                else:
+                    operand_eval = operand.simplification()
+                if operand_eval.lhs != operand_eval.rhs:
+                    # Compose map to replace all instances of the
+                    # operand within the inner expression.
+                    global_repl = Lambda.global_repl(inner, operand)
+                    lambda_map = inner_expr.repl_lambda().compose(global_repl)
+                    # substitute in the evaluated value
+                    if in_place:
+                        subbed = operand_eval.sub_right_side_into(lambda_map)
+                        inner_expr = InnerExpr(
+                            subbed, inner_expr.inner_expr_path)
+                    else:
+                        sub = operand_eval.substitution(lambda_map)
+                        inner_expr = InnerExpr(
+                            sub.rhs, inner_expr.inner_expr_path)
+                        eq.update(sub)
+                    all_reduced = False
+                    # Start over since there may have been multiple
+                    # substitutions:
+                    break
+        if all_reduced:
+            break  # done!
+        inner = inner_expr.expr_hierarchy[-1]
+        
+    if in_place:
+        return inner_expr.expr_hierarchy[0].prove(automation=False)
+    return eq.relation

@@ -1,5 +1,5 @@
 from proveit import (defaults, Literal, Operation, ExprRange, InnerExpr,
-                     ProofFailure, USE_DEFAULTS)
+                     ProofFailure, USE_DEFAULTS, equivalence_prover)
 from proveit import a, b, c, n, r, x, theta
 from proveit.logic import InSet
 from proveit.logic.sets import ProperSubset, SubsetEq
@@ -35,8 +35,8 @@ class Abs(NumberOperation):
         return abs_is_non_neg.instantiate(
             {a: self.operand}, assumptions=assumptions)
 
-    def distribution(self, assumptions=USE_DEFAULTS,
-                     reductions=USE_DEFAULTS):
+    @equivalence_prover('distributed', 'distribute')
+    def distribution(self, **defaults_config):
         '''
         Equate this absolute value with its distribution over a product
         or fraction.
@@ -45,25 +45,21 @@ class Abs(NumberOperation):
         from proveit import n, x
         from proveit.numbers import Neg, Div, Mult
         if isinstance(self.operand, Neg):
-            return abs_even.instantiate({x: self.operand.operand},
-                                        assumptions=assumptions,
-                                        reductions=reductions)
+            return abs_even.instantiate({x: self.operand.operand})
         elif isinstance(self.operand, Div):
             return abs_frac.instantiate(
-                {a: self.operand.numerator, b: self.operand.denominator},
-                assumptions=assumptions, reductions=reductions)
+                {a: self.operand.numerator, b: self.operand.denominator})
         elif isinstance(self.operand, Mult):
             _x = self.operand.operands
-            _n = _x.num_elements(assumptions)
-            return abs_prod.instantiate(
-                {n: _n, x: _x},
-                assumptions=assumptions, reductions=reductions)
+            _n = _x.num_elements()
+            return abs_prod.instantiate({n: _n, x: _x})
         else:
             raise ValueError(
                 'Unsupported operand type for Abs.distribution() '
                 'method: ', str(self.operand.__class__))
 
-    def abs_elimination(self, operand_type=None, assumptions=USE_DEFAULTS):
+    @equivalence_prover('abs_eliminated', 'abs_eliminate')
+    def abs_elimination(self, operand_type=None, **defaults_config):
         '''
         For some |x| expression, deduce either |x| = x (the default) OR
         |x| = -x (for operand_type = 'negative'). Assumptions may be
@@ -72,11 +68,9 @@ class Abs(NumberOperation):
         from . import abs_non_neg_elim, abs_neg_elim
         # deduce_non_neg(self.operand, assumptions) # NOT YET IMPLEMENTED
         if operand_type is None or operand_type == 'non-negative':
-            return abs_non_neg_elim.instantiate({x: self.operand},
-                                                assumptions=assumptions)
+            return abs_non_neg_elim.instantiate({x: self.operand})
         elif operand_type == 'negative':
-            return abs_neg_elim.instantiate({x: self.operand},
-                                            assumptions=assumptions)
+            return abs_neg_elim.instantiate({x: self.operand})
         else:
             raise ValueError(
                 "Unsupported operand type for Abs.abs_elimination() "
@@ -98,10 +92,11 @@ class Abs(NumberOperation):
                                            assumptions=assumptions,
                                            reductions=reductions)
 
-    def do_reduced_simplification(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, **defaults_config):
         '''
-        Returns a proven simplification equation for this absolute
-        value expression if a simplification is known.
+        Returns a proven simplification equation for this Abs
+        expression assuming the operand has been simplified.
         
         Handles a number of absolute value simplifications:
             1. ||x|| = |x| given x is complex
@@ -123,7 +118,6 @@ class Abs(NumberOperation):
         from proveit.numbers import zero, RealNonNeg, RealNonPos
         # among other things, convert any assumptions=None
         # to assumptions=() (thus averting len(None) errors)
-        assumptions = defaults.checked_assumptions(assumptions)
 
         # Check if we can establish the relationship between
         # self.operand and zero.
@@ -132,17 +126,14 @@ class Abs(NumberOperation):
             # be fairly efficient, as long as there aren't too
             # many known relationship directly or indirectly involving
             # self.operand or zero.
-            relation_with_zero = LessEq.sort([zero, self.operand],
-                                             assumptions=assumptions)
+            relation_with_zero = LessEq.sort([zero, self.operand])
             if relation_with_zero.normal_lhs == zero:
                 # x ≥ 0 so that |x| = x
-                return self.abs_elimination(operand_type='non-negative',
-                                            assumptions=assumptions)
+                return self.abs_elimination(operand_type='non-negative')
             else:
                 # x ≤ 0 so that |x| = -x
                 assert relation_with_zero.normal_rhs == zero
-                return self.abs_elimination(operand_type='negative',
-                                            assumptions=assumptions)
+                return self.abs_elimination(operand_type='negative')
         except ProofFailure:
             # We don't know whether self.operand is less than
             # or greater than zero.  Carry on.
@@ -150,24 +141,15 @@ class Abs(NumberOperation):
         
         if isinstance(self.operand, Abs):
             # Double absolute-value.  We can remove one of them.
-            return self.double_abs_elimination(assumptions=assumptions)
+            return self.double_abs_elimination()
 
         # Distribute over a product or division.
         if (isinstance(self.operand, Mult) or isinstance(self.operand, Div)
                 or isinstance(self.operand, Neg)):
             # Let's distribute the absolute values over the product
-            # or division, simplifying the absolute value of the 
-            # fatcors/components seperately.
-            reductions = set()
-            for component in self.operand.operands:
-                reductions.add(Abs(component).simplification(
-                        assumptions=assumptions))
-            # Update with the distribution.
-            distribution = self.distribution(reductions=reductions,
-                                     assumptions=assumptions)
-            # Try a shallow simplification now.  TODO
-            return distribution.inner_expr().rhs.simplify(
-                    assumptions=assumptions) # shallow=True
+            # or division (the absolute value of the factors/components
+            # will be simplified seperately if auto_simplify is True).
+            return self.distribution()
 
         # |exp(i a)| = 1
         if isinstance(self.operand, Exp) and self.operand.base == e:
@@ -175,8 +157,7 @@ class Abs(NumberOperation):
                 # Grab the polar coordinate angle without automation so we 
                 # don't waste time if it isn't in a unit complex polar form
                 # (or obviously equivalent to this form).
-                return self.unit_length_simplification(
-                        assumptions=assumptions, automation=False)
+                return self.unit_length_simplification(automation=False)
             except ValueError:
                 # Not in a complex polar form.
                 pass
@@ -188,8 +169,7 @@ class Abs(NumberOperation):
                 # Grab polar coordinates without automation so we don't
                 # waste time if it isn't in a complex polar form (or 
                 # obviously equivalent to this form).
-                return self.chord_length_simplification(
-                        assumptions=assumptions, automation=False)
+                return self.chord_length_simplification(automation=False)
             except ValueError:
                 # Not in a complex polar form.
                 pass
@@ -204,23 +184,24 @@ class Abs(NumberOperation):
                 # Note that "not proven" is not the same as "disproven".
                 # Not proven means there is something we do not know.
                 # Disproven means that we do know the converse.
-                if all_nonneg and not LessEq(zero, term).proven(assumptions):
+                if all_nonneg and not LessEq(zero, term).proven():
                     all_nonneg = False
-                if all_nonpos and not LessEq(term, zero).proven(assumptions):
+                if all_nonpos and not LessEq(term, zero).proven():
                     all_nonpos = False
             if all_nonpos:
-                InSet(self.operand, RealNonPos).prove(assumptions)
+                InSet(self.operand, RealNonPos).prove()
             elif all_nonneg:
-                InSet(self.operand, RealNonNeg).prove(assumptions)
+                InSet(self.operand, RealNonNeg).prove()
             if all_nonpos or all_nonneg:
                 # Do another pass now that we know the sign of
                 # the operand.
-                return self.do_reduced_simplification(assumptions)
+                return self.do_reduced_simplification()
 
         # Default is no simplification.
-        return Equals(self, self).prove(assumptions)
-    
-    def difference_reversal(self, assumptions=USE_DEFAULTS):
+        return Equals(self, self).prove()
+
+    @equivalence_prover('reversed_difference', 'reverse_difference')
+    def difference_reversal(self, **defaults_config):
         '''
         Derive |a - b| = |b - a|.
         '''
@@ -234,8 +215,7 @@ class Abs(NumberOperation):
                              %self)
         _a = self.operand.operands[0]
         _b = self.operand.operands[1].operand
-        return abs_diff_reversal.instantiate({a:_a, b:_b},
-                                             assumptions=assumptions)
+        return abs_diff_reversal.instantiate({a:_a, b:_b})
     
     def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
         '''
@@ -321,8 +301,8 @@ class Abs(NumberOperation):
                 {theta:_theta}, reductions=reductions,
                 assumptions=assumptions)
 
-    def chord_length_simplification(
-            self, assumptions=USE_DEFAULTS, automation=True):
+    @equivalence_prover('chord_length_simplified', 'chord_length_simplify')
+    def chord_length_simplification(self, **defaults_config):
         '''
         |r exp(i a) - r exp(i b)| = 2 r sin(|a - b|/2)   or
         |x exp(i a) - x exp(i b)| = 2 |x| sin(|a - b|/2)
@@ -354,25 +334,25 @@ class Abs(NumberOperation):
             term2 = term2.operand
         else:
             term2 = Neg(term2)
-            reductions.add(Neg(term2).double_neg_simplification(assumptions))
+            reductions.add(Neg(term2).double_neg_simplification())
+        automation = defaults.automation
         _r1, _theta1 = complex_polar_coordinates(
-                term1, assumptions=assumptions,
-                automation=automation, simplify=True, reductions=reductions)
+                term1, automation=automation, simplify=True, 
+                reductions=reductions)
         _r2, _theta2 = complex_polar_coordinates(
-                term2, assumptions=assumptions,
-                automation=automation, simplify=True, reductions=reductions)
+                term2, automation=automation, simplify=True,
+                reductions=reductions)
         if _r1 == _r2:
             # Only applicable if the magnitudes are the same.
             angle = Div(Abs(subtract(_theta1, _theta2)), two)
-            reductions.add(angle.simplification(assumptions=assumptions))
+            reductions.add(angle.simplification())
             if _r1 == one:
                 return complex_unit_circle_chord_length.instantiate(
-                        {a:_theta1, b:_theta2}, 
-                        reductions=reductions, assumptions=assumptions)
+                        {a:_theta1, b:_theta2}, reductions=reductions)
             else:
                 return complex_circle_chord_length.instantiate(
                         {r: _r1, a:_theta1, b:_theta2}, 
-                        reductions=reductions, assumptions=assumptions)
+                        reductions=reductions)
         raise_not_valid_form()
 
     def deduce_triangle_bound(self, assumptions=USE_DEFAULTS,
@@ -472,22 +452,3 @@ def is_equal_to_or_subset_eq_of(
             if ProperSubset(number_set, temp_set).proven(assumptions):
                 return True
     return False
-
-
-InnerExpr.register_equivalence_method(
-    Abs,
-    'chord_length_simplification',
-    'chord_length_simplified',
-    'chord_length_simplify')
-
-InnerExpr.register_equivalence_method(
-    Abs,
-    'distribution',
-    'distributed',
-    'distribute')
-
-InnerExpr.register_equivalence_method(
-    Abs,
-    'difference_reversal',
-    'reversed_difference',
-    'reverse_difference')

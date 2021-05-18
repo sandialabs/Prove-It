@@ -3,10 +3,10 @@ if sys.version_info[0] < 3:
     raise Exception("Must use Python 3")
 
 from ._core_ import (
-    defaults, USE_DEFAULTS, InvalidAssumptions, Theory,
-    TheoryException,
+    defaults, USE_DEFAULTS, InvalidAssumptions, SimplificationDirectives,
+    Theory, TheoryException,
     Expression, traverse_inner_expressions, used_vars,
-    possibly_free_var_ranges, free_vars, attempt_to_simplify,
+    possibly_free_var_ranges, free_vars,
     InnerExpr, generate_inner_expressions, expression_depth,
     Operation, IndexedVar, Function,
     OperationOverInstances, bundle, unbundle, OperationError,
@@ -27,6 +27,11 @@ from ._core_ import (
     ModusPonensFailure, InstantiationFailure, GeneralizationFailure,
     UnsatisfiedPrerequisites,
     StyleOptions, maybe_fenced_string, maybe_fenced_latex, maybe_fenced)
+
+# @prover and @equivalence_prover are useful decorators for many
+# Expression class methods:
+from .decorators import prover, equivalence_prover
+
 from .relation import (
     TransitiveRelation,
     TransitivityException,
@@ -47,7 +52,6 @@ from .relation import (
 # %begin_axioms, %end_axioms, %begin_theorems, %end_theorems, %begin_proof, and %display_assignment
 # from . import _core_.magics
 from . import magics
-
 
 def reset():
     '''

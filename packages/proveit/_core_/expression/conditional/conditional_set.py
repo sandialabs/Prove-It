@@ -1,6 +1,8 @@
+from proveit.decorators import equivalence_prover
 from proveit._core_.expression.label.literal import Literal
 from proveit._core_.expression.operation import Operation
 from proveit._core_.defaults import defaults, USE_DEFAULTS
+from proveit._core_.proof import UnsatisfiedPrerequisites
 
 
 class ConditionalSet(Operation):
@@ -13,10 +15,11 @@ class ConditionalSet(Operation):
                            styles=styles)
         self.conditionals = self.operands
 
-    def auto_reduction(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, **defaults_config):
         '''
-        Automatically reduce a conditional set with one and only one TRUE condition
-        where the other conditions are FALSE.
+        Reduce a conditional set with one and only one TRUE condition
+        where the other conditions are FALSE if applicable.
         '''
         return self.reduce_to_true_case(assumptions=assumptions)
 
@@ -38,11 +41,13 @@ class ConditionalSet(Operation):
                 _b = item.value
                 index = i
             else:
-                assert item.condition == FALSE
-        _a = ExprTuple(*[con.value for con in self.conditionals[:index].entries])
-        _c = ExprTuple(*[con.value for con in self.conditionals[index+1:].entries])
-        _m = _a.num_elements(assumptions)
-        _n = _c.num_elements(assumptions)
+                if item.condition != FALSE:
+                    raise UnsatisfiedPrerequisites(
+                            "All conditions must be FALSE except one")
+        _a = [con.value for con in self.conditionals[:index]]
+        _c = [con.value for con in self.conditionals[index+1:]]
+        _m = self.conditionals[:index].num_elements(assumptions)
+        _n = self.conditionals[index+1:].num_elements(assumptions)
         return true_case_reduction.instantiate({m: _m, n: _n, a: _a, b: _b, c: _c}, assumptions=assumptions)
 
     def string(self, **kwargs):

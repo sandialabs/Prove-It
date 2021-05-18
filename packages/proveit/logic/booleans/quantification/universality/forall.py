@@ -1,6 +1,7 @@
 from proveit import (Literal, Function, Lambda, OperationOverInstances,
                      ExprTuple, ExprRange, IndexedVar,
-                     defaults, USE_DEFAULTS, ProofFailure)
+                     defaults, USE_DEFAULTS, ProofFailure,
+                     prover, equivalence_prover)
 from proveit import k, n, x, A, B, P, S
 from proveit._core_.proof import Generalization
 
@@ -49,7 +50,8 @@ class Forall(OperationOverInstances):
         Forall.known_instance_maps.setdefault(
                 instance_map, set()).add(judgment)
 
-    def conclude(self, assumptions):
+    @prover
+    def conclude(self, **defaults_config):
         '''
         If the instance expression, or some instance expression of
         nested universal quantifiers, is known to be true, conclude
@@ -58,12 +60,10 @@ class Forall(OperationOverInstances):
         via 'conclude_as_folded'.
         '''
         from proveit.logic import SubsetEq
-        assumptions = defaults.checked_assumptions(assumptions)
         
         # first try to prove via generalization without automation
         try:
-            return self.conclude_via_generalization(assumptions, 
-                                                    automation=False)
+            return self.conclude_via_generalization(automation=False)
         except ProofFailure:
             pass
         
@@ -81,20 +81,20 @@ class Forall(OperationOverInstances):
                     if (known_forall.has_domain() 
                             and known_forall.instance_params.is_single()
                             and known_forall.conditions.is_single()):
-                        if known_forall.is_sufficient(assumptions):
+                        if known_forall.is_applicable():
                             known_domains.add(known_forall.domain)
             if len(known_domains) > 0 and domain in SubsetEq.known_left_sides:
                 # We know this quantification in other domain(s).
                 # Do any of those include this domain?
                 for known_inclusion in SubsetEq.known_left_sides[domain]:
-                    if known_inclusion.is_sufficient(assumptions):
+                    if known_inclusion.is_applicable():
                         superset = known_inclusion.superset
                         if superset in known_domains:
                             # We know the quantification over a s
                             # uperset.  We can use 
                             # inclusive_universal_quantification.
                             return self.conclude_via_domain_inclusion(
-                                    superset, assumptions=assumptions)
+                                    superset)
         
         # The next 2 'ifs', one for prove_by_cases and one for
         # conclude_as_folded can eventually be merged as we eliminate the
@@ -103,9 +103,9 @@ class Forall(OperationOverInstances):
 
         if self.has_domain() and hasattr(self.first_domain(), 'prove_by_cases'):
             try:
-                return self.conclude_by_cases(assumptions)
+                return self.conclude_by_cases()
             except Exception:
-                raise ProofFailure(self, assumptions,
+                raise ProofFailure(self, defaults.assumptions,
                                    "Unable to conclude automatically; the "
                                    "prove_by_cases method on the domain "
                                    "has failed. :o( ")
@@ -114,7 +114,7 @@ class Forall(OperationOverInstances):
         if self.has_domain() and hasattr(self.first_domain(), 'fold_as_forall'):
             # try fold_as_forall first
             try:
-                return self.conclude_as_folded(assumptions)
+                return self.conclude_as_folded()
             except Exception:
                 raise ProofFailure(self, assumptions,
                                    "Unable to conclude automatically; "
@@ -125,8 +125,7 @@ class Forall(OperationOverInstances):
             # attempt a different non-trivial strategy of proving
             # via generalization with automation.
             try:
-                return self.conclude_via_generalization(assumptions, 
-                                                        automation=True)
+                return self.conclude_via_generalization(automation=True)
             except ProofFailure:
                 raise ProofFailure(self, assumptions,
                                    "Unable to conclude automatically; "
@@ -139,7 +138,8 @@ class Forall(OperationOverInstances):
                            "is not known to be true and the domain has "
                            "no 'fold_as_forall' method.")
 
-    def unfold(self, assumptions=USE_DEFAULTS):
+    @prover
+    def unfold(self, **defaults_config):
         '''
         From this forall statement, derive an "unfolded" version
         dependent upon the domain of the forall, calling unfold_forall
@@ -149,15 +149,15 @@ class Forall(OperationOverInstances):
         '''
         assert self.has_domain(), (
             "Cannot unfold a forall statement with no domain")
-        return self.domain.unfold_forall(self, assumptions)
+        return self.domain.unfold_forall(self)
 
     """
     def equate_with_unfolded(self):
         pass
     """
-    
-    def conclude_via_generalization(self, assumptions=USE_DEFAULTS,
-                                    automation=USE_DEFAULTS):
+
+    @prover
+    def conclude_via_generalization(self, **defaults_config):
         '''
         Conclude this universal quantification by proving the instance
         expression with assumptions that include the conditions of the
@@ -167,32 +167,36 @@ class Forall(OperationOverInstances):
         we will attempt to prove the innermost instance expression,
         under appropriate assumptions, via automation if necessary.
         '''
-        assumptions = defaults.checked_assumptions(assumptions)
-        if automation is USE_DEFAULTS:
-            automation = defaults.automation
+        automation = defaults.automation
         expr = self
         instance_param_lists = []
         conditions = []
+        proven_inst_expr = None
         while isinstance(expr, Forall):
             new_params = expr.explicit_instance_params()
             instance_param_lists.append(list(new_params))
             conditions += list(expr.conditions.entries)
             expr = expr.instance_expr
-            new_assumptions = assumptions + tuple(conditions)
-            if automation and not isinstance(expr, Forall):
-                expr.prove(assumptions=assumptions + tuple(conditions))
-            if expr.proven(assumptions=assumptions + tuple(conditions)):
-                proven_inst_expr = expr.prove(new_assumptions)
-                return proven_inst_expr.generalize(instance_param_lists,
-                                                   conditions=conditions)            
-        raise ProofFailure(self, assumptions,
+            with defaults.temporary() as temp_defaults:
+                temp_defaults.assumptions = (defaults.assumptions + 
+                                             tuple(conditions))
+                if automation and not isinstance(expr, Forall):
+                    expr.prove()
+                if expr.proven():
+                    proven_inst_expr = expr.prove()
+                    break
+        if proven_inst_expr is not None:
+            return proven_inst_expr.generalize(instance_param_lists,
+                                               conditions=conditions)            
+        raise ProofFailure(self, defaults.assumptions,
                 "Unable to 'conclude_via_generalization' without automation.")
 
     # Eventually the conclude_by_cases() method will replace the
     # conclude_as_folded() method. Maintaining both temporarily to
     # ensure continued compatibility across the system.
 
-    def conclude_by_cases(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude_by_cases(self, **defaults_config):
         '''
         Conclude this forall statement from an "unfolded" version
         dependent upon the domain of the forall, calling prove_by_cases
@@ -207,12 +211,13 @@ class Forall(OperationOverInstances):
             # When there are more than one instance variables, we
             # must conclude the unbundled form first and then
             # derive the bundled form from that.
-            unbundled = self.unbundle_equality(assumptions=assumptions).rhs
-            unbundled = unbundled.conclude_by_cases(assumptions)
-            return unbundled.bundle(assumptions=assumptions)
-        return self.domain.prove_by_cases(self, assumptions)
+            unbundled = self.unbundle_equality().rhs
+            unbundled = unbundled.conclude_by_cases()
+            return unbundled.bundle()
+        return self.domain.prove_by_cases(self)
 
-    def conclude_as_folded(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude_as_folded(self, **defaults_config):
         '''
         Conclude this forall statement from an "unfolded" version
         dependent upon the domain of the forall,
@@ -226,13 +231,14 @@ class Forall(OperationOverInstances):
             # When there are more than one instance variables, we
             # must conclude the unbundled form first and the
             # derive the bundled form from that.
-            unbundled = self.unbundle_equality(assumptions=assumptions).rhs
-            unbundled = unbundled.conclude_as_folded(assumptions)
-            return unbundled.bundle(assumptions=assumptions)
-        return self.domain.fold_as_forall(self, assumptions)
+            unbundled = self.unbundle_equality().rhs
+            unbundled = unbundled.conclude_as_folded()
+            return unbundled.bundle()
+        return self.domain.fold_as_forall(self)
     
+    @prover
     def conclude_via_domain_inclusion(self, superset_domain,
-                                      assumptions=USE_DEFAULTS):
+                                      **defaults_config):
         '''
         Conclude this forall statement from a similar forall statement
         over a broader domain.  For example, conclude
@@ -249,8 +255,8 @@ class Forall(OperationOverInstances):
         _x = self.instance_param
         P_op, _P_op = Function(P, _x), self.instance_expr
         return inclusive_universal_quantification.instantiate(
-                {x:_x, P_op:_P_op, A:superset_domain, B:self.domain},
-                assumptions=assumptions).derive_consequent(assumptions)
+                {x:_x, P_op:_P_op, A:superset_domain, B:self.domain}
+                ).derive_consequent()
 
     def bundle(self, num_levels=2, *, assumptions=USE_DEFAULTS):
         '''
@@ -325,18 +331,19 @@ class Forall(OperationOverInstances):
             self, bundling, num_param_entries=num_param_entries,
             assumptions=assumptions)
 
-    def instantiate(self, repl_map=None, assumptions=USE_DEFAULTS):
+    @prover
+    def instantiate(self, repl_map=None, **defaults_config):
         '''
         First attempt to prove that this Forall statement is true under
         the assumptions, and then call instantiate on the Judgment.
         '''
-        return self.prove(assumptions).instantiate(
-            repl_map, assumptions=assumptions)
+        return self.prove().instantiate(repl_map)
     
-    def do_reduced_evaluation(self, assumptions=USE_DEFAULTS, **kwargs):
+    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    def shallow_evaluation(self, **defaults_config):
         '''
         From this forall statement, evaluate it to TRUE or FALSE if
-        possible by calling the condition's forall_evaluation method
+        possible by calling the domain's forall_evaluation method
         '''
         assert self.has_domain(), ("Cannot automatically evaluate a forall "
                                    "statement with no domain")
@@ -344,14 +351,15 @@ class Forall(OperationOverInstances):
         if len(list(self.instance_param_lists())) == 1:
             if hasattr(self.domain, 'forall_evaluation'):
                 # Use the domain's forall_evaluation method
-                return self.domain.forall_evaluation(self, assumptions)
+                return self.domain.forall_evaluation(self)
         else:
             # Evaluate an unravelled version
             unravelled_equiv = self.derive_unraveled_equiv(
                 [var for var in (list(self.instance_var_lists()))])
-            return unravelled_equiv.rhs.evaluation(assumptions)
+            return unravelled_equiv.rhs.evaluation()
 
-    def deduce_in_bool(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_in_bool(self, **defaults_config):
         '''
         Attempt to deduce, then return, that this forall expression
         is in the set of BOOLEANS, as all forall expressions are
@@ -361,8 +369,7 @@ class Forall(OperationOverInstances):
         from . import forall_in_bool
         _x = self.instance_params
         P_op, _P_op = Function(P, _x), self.instance_expr
-        _n = _x.num_elements(assumptions)
+        _n = _x.num_elements()
         x_1_to_n = ExprTuple(ExprRange(k, IndexedVar(x, k), one, _n))
         return forall_in_bool.instantiate(
-            {n: _n, P_op: _P_op, x_1_to_n: _x},
-            assumptions=assumptions)
+            {n: _n, P_op: _P_op, x_1_to_n: _x}, preserve_expr=self)

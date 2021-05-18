@@ -1,5 +1,5 @@
 from proveit import (defaults, ExprTuple, Function, InnerExpr, Literal,
-                     Function, var_range, USE_DEFAULTS)
+                     var_range, USE_DEFAULTS, prover, equivalence_prover)
 from proveit.abstract_algebra.generic_methods import (
     apply_commutation_thm, generic_permutation)
 
@@ -39,7 +39,8 @@ class Set(Function):
     def latex(self, **kwargs):
         return r'\left\{' + self.elements.latex(fence=False) + r'\right\}'
 
-    def prove_by_cases(self, forall_stmt, assumptions=USE_DEFAULTS):
+    @prover
+    def prove_by_cases(self, forall_stmt, **defaults_config):
         '''
         For the enumerated set S = {x1, x2, ..., xn} (i.e. self),
         and given a universal quantification over the set S of the form
@@ -83,7 +84,7 @@ class Set(Function):
                 condition = And(*forall_stmt.conditions[1:])
 
             # Cardinality of the domain:
-            n_sub = forall_stmt.domain.operands.num_elements(assumptions)
+            n_sub = forall_stmt.domain.operands.num_elements()
 
             # Domain elements to substitute
             # Notice the n_sub is already a Numeral and not an int
@@ -105,7 +106,7 @@ class Set(Function):
             return true_for_each_then_true_for_all_conditioned.instantiate(
                 {n: n_sub, ExprTuple(var_range_update): var_range_sub,
                  x: x_sub, Px: Px_sub, Qx: Qx_sub},
-                num_forall_eliminations=3, assumptions=assumptions)
+                num_forall_eliminations=3)
 
         else:
             # forall_{x in A} P(x), assuming/knowing P(x) for each x
@@ -113,7 +114,7 @@ class Set(Function):
             # is the domain specification
 
             # Cardinality of the domain:
-            n_sub = forall_stmt.domain.operands.num_elements(assumptions)
+            n_sub = forall_stmt.domain.operands.num_elements()
 
             # Domain elements to substitute
             # Notice the n_sub is already a Numeral and not an int
@@ -131,11 +132,11 @@ class Set(Function):
 
             return true_for_each_then_true_for_all.instantiate(
                 {n: n_sub, ExprTuple(var_range_update): var_range_sub,
-                 x: x_sub, Px: Px_sub}, num_forall_eliminations=3,
-                assumptions=assumptions)
+                 x: x_sub, Px: Px_sub}, num_forall_eliminations=3)
 
+    @equivalence_prover('moved', 'move')
     def permutation_move(self, init_idx=None, final_idx=None,
-                         assumptions=USE_DEFAULTS):
+                         **defaults_config):
         '''
         Deduce that this Set expression is equal to a Set
         in which the element at index init_idx has been moved to
@@ -149,10 +150,10 @@ class Set(Function):
                                  rightward_permutation)
         return apply_commutation_thm(
             self, init_idx, final_idx, binary_permutation,
-            leftward_permutation, rightward_permutation, assumptions)
+            leftward_permutation, rightward_permutation)
 
-    def permutation_swap(self, idx01=None, idx02=None,
-                         assumptions=USE_DEFAULTS):
+    @equivalence_prover('swapped', 'swap')
+    def permutation_swap(self, idx01=None, idx02=None, **defaults_config):
         '''
         Deduce that this Set expression is equal to a Set in which the
         elements at indices idx01 and idx02 have swapped locations.
@@ -175,10 +176,10 @@ class Set(Function):
         new_order = list(range(0, self.operands.num_entries()))
         new_order[idx01], new_order[idx02] = new_order[idx02], new_order[idx01]
 
-        return self.permutation(new_order=new_order, assumptions=assumptions)
+        return self.permutation(new_order=new_order)
 
-    def permutation(self, new_order=None, cycles=None,
-                    assumptions=USE_DEFAULTS):
+    @equivalence_prover('permuted', 'permute')
+    def permutation(self, new_order=None, cycles=None, **defaults_config):
         '''
         Deduce that this Set expression is equal to a Set in which
         the elements at indices 0, 1, …, n-1 have been reordered as
@@ -189,7 +190,7 @@ class Set(Function):
             {a, b, c, d}.permutation_general(cycles=[(1, 2, 3)])
         would both return |- {a, b, c, d} = {a, c, d, b}.
         '''
-        return generic_permutation(self, new_order, cycles, assumptions)
+        return generic_permutation(self, new_order, cycles)
 
     def deduce_enum_subset_eq(self, subset_indices=None, subset=None,
                               assumptions=USE_DEFAULTS):
@@ -652,7 +653,8 @@ class Set(Function):
 
         return orig_subset_of_orig_superset
 
-    def reduction(self, assumptions=USE_DEFAULTS):
+    @equivalence_prover('reduced', 'reduce')
+    def reduction(self, **defaults_config):
         '''
         Deduce that this enum Set expression is equal to the Set's
         support -- i.e. equal to a Set with all multiplicities reduced
@@ -662,14 +664,14 @@ class Set(Function):
         reduction_elem() method until no further reduction is possible.
         '''
         from proveit import TransRelUpdater
-        eq = TransRelUpdater(self, assumptions)
+        eq = TransRelUpdater(self)
         # the following does not preserve the order, but we really
         # just want the size of the support set
         desired_operands = set(self.operands.entries)
         desired_num_operands = len(desired_operands)
         expr = self
         while expr.operands.num_entries() > desired_num_operands:
-            expr = eq.update(expr.reduction_elem(assumptions=assumptions))
+            expr = eq.update(expr.reduction_elem())
 
         return eq.relation
 
@@ -892,8 +894,9 @@ class Set(Function):
             {m: m_sub, n: n_sub, aa: aa_sub, b: b_sub, cc: cc_sub, d: d_sub},
             assumptions=assumptions)
 
+    @equivalence_prover('elem_substituted', 'elem_substitute')
     def elem_substitution(self, elem=None, sub_elem=None,
-                          assumptions=USE_DEFAULTS):
+                          **defaults_config):
         '''
         Deduce that this enum Set expression is equal to the Set
         obtained when every instance of elem in self is replaced by the
@@ -931,12 +934,12 @@ class Set(Function):
         num_elems_to_replace = self.operands.entries.count(elem)
 
         from proveit import TransRelUpdater
-        eq = TransRelUpdater(self, assumptions)
+        eq = TransRelUpdater(self)
 
         expr = self
         while num_elems_to_replace > 0:
             expr = eq.update(expr.single_elem_substitution(
-                elem=elem, sub_elem=sub_elem, assumptions=assumptions))
+                elem=elem, sub_elem=sub_elem))
             num_elems_to_replace -= 1
 
         return eq.relation
@@ -1017,12 +1020,3 @@ class Set(Function):
                              "proper subset (too many elements).")
 
 
-# Register these expression equivalence methods:
-InnerExpr.register_equivalence_method(
-    Set, 'permutation', 'permuted', 'permute')
-InnerExpr.register_equivalence_method(
-    Set, 'permutation_move', 'moved', 'move')
-InnerExpr.register_equivalence_method(
-    Set, 'permutation_swap', 'swapped', 'swap')
-InnerExpr.register_equivalence_method(
-    Set, 'reduction', 'reduced', 'reduce')

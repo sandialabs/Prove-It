@@ -1,4 +1,5 @@
-from proveit import Lambda, Conditional, OperationOverInstances, Judgment
+from proveit import (Lambda, Conditional, OperationOverInstances, Judgment,
+                     prover)
 from proveit import defaults, Literal, Function, ExprTuple, USE_DEFAULTS
 from proveit import n, x, A, B, P, Q, R, S, Px
 
@@ -33,8 +34,9 @@ class Exists(OperationOverInstances):
             self, Exists._operator_, instance_param_or_params, instance_expr,
             domain=domain, domains=domains, condition=condition,
             conditions=conditions, _lambda_map=_lambda_map, styles=styles)
-    
-    def conclude(self, assumptions):
+
+    @prover
+    def conclude(self, **defaults_config):
         from proveit.logic import SubsetEq
         if (self.has_domain() and self.instance_params.is_single 
                 and self.conditions.is_single()):
@@ -51,20 +53,20 @@ class Exists(OperationOverInstances):
                     if (known_forall.has_domain() 
                             and known_forall.instance_params.is_single()
                             and known_forall.conditions.is_single()):
-                        if known_forall.is_sufficient(assumptions):
+                        if known_forall.is_applicable():
                             known_domains.add(known_forall.domain)
             if len(known_domains) > 0 and domain in SubsetEq.known_left_sides:
                 # We know this quantification in other domain(s).
                 # Does our domain include any of those?
                 for known_inclusion in SubsetEq.known_right_sides[domain]:
-                    if known_inclusion.is_sufficient(assumptions):
+                    if known_inclusion.is_applicable():
                         subset = known_inclusion.subset
                         if subset in known_domains:
                             # We know the quantification over a s
                             # uperset.  We can use 
                             # inclusive_universal_quantification.
                             return self.conclude_via_domain_inclusion(
-                                    subset, assumptions=assumptions)
+                                    subset)
         
     
     def side_effects(self, judgment):
@@ -125,7 +127,8 @@ class Exists(OperationOverInstances):
         return ExprTuple(*Q_skolem.entries, P_skolem)
 
     @staticmethod
-    def eliminate(skolem_constants, judgment, assumptions=USE_DEFAULTS):
+    @prover
+    def eliminate(skolem_constants, judgment, **defaults_config):
         '''
         For the provided judgment of the form S |– alpha and the tuple
         of Skolem constants skolem_constants that had been specified
@@ -154,41 +157,44 @@ class Exists(OperationOverInstances):
         existential = Exists.skolem_consts_to_existential[skolem_constants]
         skolem_assumptions = set(existential.choose(
             *skolem_constants, print_message=False))
-        assumptions = defaults.checked_assumptions(assumptions)
-        assumptions = [assumption for assumption in assumptions
-                       if assumption not in skolem_assumptions]
+        with defaults.temporary as temp_defaults:
+            temp_defaults.assumptions = (
+                    assumption for assumption in defaults.assumptions
+                    if assumption not in skolem_assumptions)
+            temp_defaults.preserve_expr(judgment.expr)
 
-        _P = Lambda(
-            existential.instance_params, existential.instance_expr)
-        if hasattr(existential, 'condition'):
-            _Q = Lambda(existential.instance_params, existential.condition)
-        else:
-            # there is no condition but we still need to provide
-            # something for _Q so we provide an empty conjunction And()
-            _Q = Lambda(
-                existential.instance_params, And())
-        _alpha = judgment
-        _n = existential.instance_params.num_elements(assumptions)
-        x_1_to__n = ExprTuple(x_1_to_n.replaced({n: _n}))
-        y_1_to__n = ExprTuple(y_1_to_n.replaced({n: _n}))
+            _P = Lambda(
+                existential.instance_params, existential.instance_expr)
+            if hasattr(existential, 'condition'):
+                _Q = Lambda(existential.instance_params, existential.condition)
+            else:
+                # There is no condition but we still need to provide
+                # something for _Q so we provide an empty conjunction,
+                # And().
+                _Q = Lambda(
+                    existential.instance_params, And())
+            _alpha = judgment
+            _n = existential.instance_params.num_elements()
+            x_1_to__n = ExprTuple(x_1_to_n.replaced({n: _n}))
+            y_1_to__n = ExprTuple(y_1_to_n.replaced({n: _n}))
+    
+            # express the judgment as an implication to match details of
+            # the skolem_elim theorem being instantiated further below
+            P_implies_alpha = _alpha.as_implication(
+                hypothesis=_P.apply(*skolem_constants))
+            # the generalization to further match theorem details
+            # can be handled through automation
+            # P_implies_alpha.generalize(
+            #         skolem_constants,
+            #         conditions=[_Q.apply(*skolem_constants)])
+    
+            return skolem_elim.instantiate(
+                {n: _n, P: _P, Q: _Q, alpha: _alpha,
+                 x_1_to__n: skolem_constants,
+                 y_1_to__n: existential.instance_params}).derive_consequent()
 
-        # express the judgment as an implication to match details of
-        # the skolem_elim theorem being instantiated further below
-        P_implies_alpha = _alpha.as_implication(
-            hypothesis=_P.apply(*skolem_constants))
-        # the generalization to further match theorem details
-        # can be handled through automation
-        # P_implies_alpha.generalize(
-        #         skolem_constants,
-        #         conditions=[_Q.apply(*skolem_constants)])
-
-        return skolem_elim.instantiate(
-            {n: _n, P: _P, Q: _Q, alpha: _alpha,
-             x_1_to__n: skolem_constants,
-             y_1_to__n: existential.instance_params},
-            assumptions=assumptions).derive_consequent(assumptions)
-
-    def unfold(self, assumptions=USE_DEFAULTS):
+    @prover
+    def unfold(self, **defaults_config):
         '''
         From this existential quantifier, derive the "unfolded"
         version according to its definition (the negation of
@@ -196,14 +202,14 @@ class Exists(OperationOverInstances):
         '''
         from proveit.logic.booleans.quantification.existence \
             import exists_unfolding
-        _n = self.instance_params.num_elements(assumptions)
+        _n = self.instance_params.num_elements()
         _P = Lambda(self.instance_params, self.operand.body.value)
         _Q = Lambda(self.instance_params, self.operand.body.condition)
         return exists_unfolding.instantiate(
-            {n: _n, P: _P, Q: _Q}, assumptions=assumptions). \
-            derive_consequent(assumptions)
+            {n: _n, P: _P, Q: _Q}).derive_consequent()
 
-    def definition(self, assumptions=USE_DEFAULTS):
+    @prover
+    def definition(self, **defaults_config):
         '''
         Return definition of this existential quantifier as an
         equation with this existential quantifier on the left
@@ -211,13 +217,14 @@ class Exists(OperationOverInstances):
         '''
         from proveit.logic.booleans.quantification.existence \
             import exists_def
-        _n = self.instance_params.num_elements(assumptions)
+        _n = self.instance_params.num_elements()
         _P = Lambda(self.instance_params, self.operand.body.value)
         _Q = Lambda(self.instance_params, self.operand.body.condition)
         return exists_def.instantiate(
-            {n: _n, P: _P, Q: _Q}, assumptions=assumptions)
+            {n: _n, P: _P, Q: _Q}, preserve_expr=self)
 
-    def deduce_not_exists(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_not_exists(self, **defaults_config):
         r'''
         Deduce notexists_{x | Q(x) P(x) assuming not(exists_{x | Q(x) P(x)),
         where self is exists_{x | Q(x) P(x).
@@ -229,11 +236,14 @@ class Exists(OperationOverInstances):
             self.instance_expr,
             domain=self.domain,
             conditions=self.conditions)
-        return not_exists_expr.conclude_as_folded(assumptions)
+        return not_exists_expr.conclude_as_folded()
 
     def conclude_via_example(self, example_instance, assumptions=USE_DEFAULTS):
         '''
-        Conclude and return this [exists_{..y.. in S | ..Q(..x..)..} P(..y..)] from P(..x..) and Q(..x..) and ..x.. in S, where ..x.. is the given example_instance.
+        Conclude and return this
+        [exists_{..y.. in S | ..Q(..x..)..} P(..y..)] 
+        from P(..x..) and Q(..x..) and ..x.. in S,
+        where ..x.. is the given example_instance.
         '''
         raise NotImplementedError("Need to update")
         from . import existence_by_example
@@ -243,7 +253,8 @@ class Exists(OperationOverInstances):
                     example_instance.num_entries() != 
                     self.instance_vars.num_entries())):
             raise Exception(
-                'Number in example_instance list must match number of instance variables in the Exists expression')
+                'Number in example_instance list must match number of '
+                'instance variables in the Exists expression')
         P_op, P_op_sub = Function(P, self.instance_vars), self.instance_expr
         Q_op, Q_op_sub = Function(Qmulti, self.instance_vars), self.conditions
         # P(..x..) where ..x.. is the given example_instance
@@ -272,8 +283,9 @@ class Exists(OperationOverInstances):
                 y_multi: self.instance_vars}).derive_consequent(
             assumptions=assumptions)
 
+    @prover
     def conclude_via_domain_inclusion(self, subset_domain,
-                                      assumptions=USE_DEFAULTS):
+                                      **defaults_config):
         '''
         Conclude this exists statement from a similar exists statement
         over a narrower domain.  For example, conclude
@@ -290,13 +302,15 @@ class Exists(OperationOverInstances):
         _x = self.instance_param
         P_op, _P_op = Function(P, _x), self.instance_expr
         return inclusive_existential_quantification.instantiate(
-                {x:_x, P_op:_P_op, A:subset_domain, B:self.domain},
-                assumptions=assumptions).derive_consequent(assumptions)        
+                {x:_x, P_op:_P_op, A:subset_domain, B:self.domain}
+                ).derive_consequent()        
 
     def derive_negated_forall(self, assumptions=USE_DEFAULTS):
         '''
-        From [exists_{x | Q(x)} Not(P(x))], derive and return Not(forall_{x | Q(x)} P(x)).
-        From [exists_{x | Q(x)} P(x)], derive and return Not(forall_{x | Q(x)} (P(x) != TRUE)).
+        From [exists_{x | Q(x)} Not(P(x))], derive and 
+        return Not(forall_{x | Q(x)} P(x)).
+        From [exists_{x | Q(x)} P(x)], derive and 
+        return Not(forall_{x | Q(x)} (P(x) != TRUE)).
         '''
         raise NotImplementedError("Need to update")
         from . import exists_def

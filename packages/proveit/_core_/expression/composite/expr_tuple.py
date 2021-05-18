@@ -2,8 +2,9 @@ import types
 from .composite import Composite
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.proof import ProofFailure
-from proveit._core_.defaults import USE_DEFAULTS
+from proveit._core_.defaults import defaults, USE_DEFAULTS
 from proveit._core_.expression.style_options import StyleOptions
+from proveit.decorators import equivalence_prover
 
 
 class ExprTuple(Composite, Expression):
@@ -330,7 +331,7 @@ class ExprTuple(Composite, Expression):
         Expression.  This includes the extent of all contained ranges.
         '''
         from proveit.core_expr_types import Len
-        return Len(self).computed(assumptions)
+        return Len(self).computed(assumptions=assumptions)
 
     def has_matching_ranges(self, other_tuple):
         '''
@@ -354,8 +355,8 @@ class ExprTuple(Composite, Expression):
                     return False  # end indices don't match
         return True  # everything matches.
 
-    def _replaced(self, repl_map, allow_relabeling, reduction_map,
-                  assumptions, requirements, equality_repl_requirements):
+    def basic_replaced(self, repl_map, *,
+                       allow_relabeling=False, requirements=None):
         '''
         Returns this expression with sub-expressions replaced
         according to the replacement map (repl_map) dictionary.
@@ -376,25 +377,71 @@ class ExprTuple(Composite, Expression):
             # The full expression is to be replaced.
             return repl_map[self]
 
-        subbed_exprs = []
-        for expr in self.entries:
-            if isinstance(expr, ExprRange):
+        subbed_entries = []
+        for entry in self.entries:
+            if isinstance(entry, ExprRange):
                 # ExprRange.replaced is a generator that yields items
                 # to be embedded into the tuple.
-                subbed_exprs.extend(expr._replaced_entries(
-                    repl_map, allow_relabeling, reduction_map, assumptions,
-                    requirements, equality_repl_requirements))
+                subbed_entries.extend(entry._replaced_entries(
+                    repl_map, allow_relabeling, requirements))
             else:
-                subbed_expr = expr.replaced(
-                        repl_map, allow_relabeling, reduction_map,
-                        assumptions, requirements, equality_repl_requirements)
-                subbed_exprs.append(subbed_expr)
+                subbed_entry = entry.basic_replaced(
+                        repl_map, allow_relabeling=allow_relabeling, 
+                        requirements=requirements)
+                subbed_entries.append(subbed_entry)
+
+        if (len(subbed_entries) == len(self.entries) and 
+                all(subbed_entry._style_id == entry._style_id for
+                    subbed_entry, entry in 
+                    zip(subbed_entries, self.entries))):
+            # Nothing change, so don't remake anything.
+            return self
 
         return self.__class__._checked_make(
-            self._core_info, subbed_exprs, 
+            self._core_info, subbed_entries, 
             style_preferences=self._style_data.styles)
 
-    def merger(self, assumptions=USE_DEFAULTS):
+    def _equality_replaced_sub_exprs(self, equality_repl_map, requirements, 
+                                     equality_repl_requirements):
+        '''
+        Recursive helper method for equality_replaced.  Handles
+        ExprRange reductions which can't be implemented via
+        simplification because the equations must wrap the
+        ExprRanges in ExprTuples rather than directly equating
+        the ExprRanges themselves (which would be impossible since
+        an ExprRange can represent any number of operands and we
+        need to distinguish the two operands of the equality).
+        '''
+        # Recurse into the sub-expressions.
+        from .expr_range import ExprRange
+        subbed_entries = []
+        for entry in self.entries:
+            if isinstance(entry, ExprRange):
+                # ExprRange._possibly_reduced_range_entries is a 
+                # generator that yields items to be embedded into the 
+                # ExprTuple.
+                subbed_entries.extend(entry._possibly_reduced_range_entries(
+                    requirements))
+            else:
+                subbed_entry = entry._equality_replaced(
+                        equality_repl_map, requirements,
+                        equality_repl_requirements,
+                        auto_simplify_top_level=defaults.auto_simplify)
+                subbed_entries.append(subbed_entry)
+
+        if (len(subbed_entries) == len(self.entries) and 
+                all(subbed_entry._style_id == entry._style_id for
+                    subbed_entry, entry in 
+                    zip(subbed_entries, self.entries))):
+            # Nothing change, so don't remake anything.
+            return self
+
+        return self.__class__._checked_make(
+            self._core_info, subbed_entries,
+            style_preferences=self._style_data.styles)
+
+    @equivalence_prover('merged', 'merge')
+    def merger(self, **defaults_config):
         '''
         If this is an tuple of expressions that can be directly merged
         together into a single ExprRange, return this proven
@@ -413,7 +460,7 @@ class ExprTuple(Composite, Expression):
 
         # A convenience to allow successive update to the equation via
         # transitivities (starting with self=self).
-        eq = TransRelUpdater(self, assumptions)
+        eq = TransRelUpdater(self)
 
         # Determine the position of the first ExprRange item and get the
         # lambda map.
@@ -438,18 +485,14 @@ class ExprTuple(Composite, Expression):
             if len(front_singles.entries) == 2:
                 # Merge a pair of singular items.
                 front_merger = merge_pair.instantiate(
-                    {f: lambda_map, i: i_sub, j: j_sub},
-                    assumptions=assumptions)
+                    {f: lambda_map, i: i_sub, j: j_sub})
             else:
                 # Merge a series of singular items in one shot.
                 front_merger = merge_series.instantiate(
-                    {f: lambda_map, x: front_singles, i: i_sub, j: j_sub},
-                    assumptions=assumptions)
+                    {f: lambda_map, x: front_singles, i: i_sub, j: j_sub})
             eq.update(
                 front_merger.substitution(
-                    self.inner_expr()[
-                        :first_range_pos],
-                    assumptions=assumptions))
+                    self.inner_expr()[:first_range_pos]))
 
         if eq.expr.num_entries() == 1:
             # We have accomplished a merger down to one item.
@@ -471,35 +514,32 @@ class ExprTuple(Composite, Expression):
                     _i, _j = eq.expr[0].start_index, eq.expr[0].end_index
                     _k, _l = eq.expr[1].start_index, eq.expr[1].end_index
                     merger = \
-                        merge.instantiate({f: lambda_map, i: _i, j: _j, k: _k, l: _l},
-                                          assumptions=assumptions)
+                        merge.instantiate(
+                                {f: lambda_map, i: _i, j: _j, k: _k, l: _l})
                 else:
                     # Merge an ExprRange and a singular item.
                     _i, _j = eq.expr[0].start_index, eq.expr[0].end_index
                     _k = lambda_map.extract_argument(eq.expr[1])
                     if _k == Add(_j, one):
                         merger = merge_extension.instantiate(
-                            {f: lambda_map, i: _i, j: _j},
-                            assumptions=assumptions)
+                            {f: lambda_map, i: _i, j: _j})
                     else:
                         merger = merge_back.instantiate(
-                            {f: lambda_map, i: _i, j: _j, k: _k},
-                            assumptions=assumptions)
+                            {f: lambda_map, i: _i, j: _j, k: _k})
             else:
                 # Merge a singular item and ExprRange.
                 i_sub = lambda_map.extract_argument(eq.expr[0])
                 j_sub, k_sub = eq.expr[1].start_index, eq.expr[1].end_index
                 merger = \
-                    merge_front.instantiate({f: lambda_map, i: i_sub, j: j_sub,
-                                             k: k_sub}, assumptions=assumptions)
+                    merge_front.instantiate({f: lambda_map, i: i_sub, 
+                                             j: j_sub, k: k_sub})
             eq.update(merger)
             return eq.relation
 
         while eq.expr.num_entries() > 1:
-            front_merger = ExprTuple(*eq.expr[:2].entries).merger(assumptions)
+            front_merger = ExprTuple(*eq.expr[:2].entries).merger()
             eq.update(front_merger.substitution(
-                eq.expr.inner_expr(assumptions)[:2],
-                assumptions=assumptions))
+                eq.expr.inner_expr()[:2]))
         return eq.relation
 
     def deduce_equality(self, equality, assumptions=USE_DEFAULTS,

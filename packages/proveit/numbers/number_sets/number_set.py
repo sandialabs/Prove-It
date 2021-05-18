@@ -22,7 +22,7 @@ class NumberSet(Literal):
 
 class NumberMembership(Membership):
     def __init__(self, element, number_set):
-        Membership.__init__(self, element)
+        Membership.__init__(self, element, number_set)
         self.number_set = number_set
 
     def side_effects(self, judgment):

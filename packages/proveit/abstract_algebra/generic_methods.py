@@ -1,8 +1,9 @@
-from proveit import USE_DEFAULTS, single_or_composite_expression
+from proveit import (USE_DEFAULTS, single_or_composite_expression,
+                     prover)
 
-
+@prover
 def apply_commutation_thm(expr, init_idx, final_idx, binary_thm, leftward_thm,
-                          rightward_thm, assumptions=USE_DEFAULTS):
+                          rightward_thm, **defaults_config):
 
     from proveit.logic import Equals, Set, SetEquiv
     from proveit.numbers import num
@@ -47,7 +48,7 @@ def apply_commutation_thm(expr, init_idx, final_idx, binary_thm, leftward_thm,
     if expr.operands.num_entries() == 2 and set([init_idx, final_idx]) == {0, 1}:
         A, B = binary_thm.all_instance_vars()
         return binary_thm.instantiate(
-            {A: expr.operands[0], B: expr.operands[1]}, assumptions=assumptions)
+            {A: expr.operands[0], B: expr.operands[1]})
 
     # number of operands is ≥ 3
     if init_idx < final_idx:
@@ -56,30 +57,23 @@ def apply_commutation_thm(expr, init_idx, final_idx, binary_thm, leftward_thm,
         _A, _B, _C, _D = (
             expr.operands[:init_idx], expr.operands[init_idx],
             expr.operands[init_idx + 1:final_idx + 1], expr.operands[final_idx + 1:])
-        _l = _A.num_elements(assumptions)
-        _m = _C.num_elements(assumptions)
-        _n = _D.num_elements(assumptions)
+        _l = _A.num_elements()
+        _m = _C.num_elements()
+        _n = _D.num_elements()
     else:
         thm = leftward_thm
         l, m, n, A, B, C, D = thm.all_instance_vars()
         _A, _B, _C, _D = (
             expr.operands[:final_idx], expr.operands[final_idx:init_idx],
             expr.operands[init_idx], expr.operands[init_idx + 1:])
-        _l = _A.num_elements(assumptions)
-        _m = _B.num_elements(assumptions)
-        _n = _D.num_elements(assumptions)
+        _l = _A.num_elements()
+        _m = _B.num_elements()
+        _n = _D.num_elements()
     return thm.instantiate(
-        {l: _l, m: _m, n: _n, A: _A, B: _B, C: _C, D: _D},
-        assumptions=assumptions)
+        {l: _l, m: _m, n: _n, A: _A, B: _B, C: _C, D: _D})
 
-
-def apply_association_thm(
-        expr,
-        start_idx,
-        length,
-        thm,
-        assumptions=USE_DEFAULTS):
-    from proveit import ExprTuple
+@prover
+def apply_association_thm(expr, start_idx, length, thm, **defaults_config):
     from proveit.logic import Equals
     beg = start_idx
     if beg < 0:
@@ -95,15 +89,16 @@ def apply_association_thm(
     _A = expr.operands[:beg]
     _B = expr.operands[beg:end]
     _C = expr.operands[end:]
-    _i = _A.num_elements(assumptions)
-    _j = _B.num_elements(assumptions)
-    _k = _C.num_elements(assumptions)
-    return thm.instantiate({i: _i, j: _j, k: _k, A: _A, B: _B, C: _C},
-                           assumptions=assumptions)
+    _i = _A.num_elements()
+    _j = _B.num_elements()
+    _k = _C.num_elements()
+    with expr.__class__.temporary_simplification_directives() as \
+            tmp_directives:
+        tmp_directives.ungroup = False
+        return thm.instantiate({i: _i, j: _j, k: _k, A: _A, B: _B, C: _C})
 
-
-def apply_disassociation_thm(expr, idx, thm=None, assumptions=USE_DEFAULTS):
-    from proveit import ExprTuple
+@prover
+def apply_disassociation_thm(expr, idx, thm=None, **defaults_config):
     if idx < 0:
         idx = expr.operands.num_entries() + idx  # use wrap-around indexing
     if idx >= expr.operands.num_entries():
@@ -116,20 +111,15 @@ def apply_disassociation_thm(expr, idx, thm=None, assumptions=USE_DEFAULTS):
     _A = expr.operands[:idx]
     _B = expr.operands[idx].operands
     _C = expr.operands[idx + 1:]
-    _i = _A.num_elements(assumptions)
-    _j = _B.num_elements(assumptions)
-    _k = _C.num_elements(assumptions)
-    return thm.instantiate({i: _i, j: _j, k: _k, A: _A, B: _B, C: _C},
-                           assumptions=assumptions)
+    _i = _A.num_elements()
+    _j = _B.num_elements()
+    _k = _C.num_elements()
+    return thm.instantiate({i: _i, j: _j, k: _k, A: _A, B: _B, C: _C})
 
 
-def group_commutation(
-        expr,
-        init_idx,
-        final_idx,
-        length,
-        disassociate=True,
-        assumptions=USE_DEFAULTS):
+@prover
+def group_commutation(expr, init_idx, final_idx, length, disassociate=True,
+                      **defaults_config):
     '''
     Derive a commutation equivalence on a group of multiple operands by
     associating them together first.  If 'dissassociate' is true, the
@@ -154,22 +144,16 @@ def group_commutation(
     if final_idx < 0:
         final_idx = expr.operands.num_entries() + final_idx  # wrap
     if length == 1:
-        return expr.commutation(init_idx, final_idx, assumptions=assumptions)
+        return expr.commutation(init_idx, final_idx)
 
     # for convenience while updating our equation:
-    eq = TransRelUpdater(expr, assumptions)
+    eq = TransRelUpdater(expr)
     expr = eq.update(
-        expr.association(
-            init_idx,
-            length,
-            assumptions=assumptions))
-    expr = eq.update(expr.commutation(init_idx, final_idx,
-                                      assumptions=assumptions))
+        expr.association(init_idx, length))
+    expr = eq.update(expr.commutation(init_idx, final_idx))
     if disassociate:
         expr = eq.update(
-            expr.disassociation(
-                final_idx,
-                assumptions=assumptions))
+            expr.disassociation(final_idx))
     return eq.relation
 
 
@@ -194,30 +178,41 @@ def group_commute(expr, init_idx, final_idx, length, disassociate=True,
         expr = expr.disassociate(final_idx, assumptions=assumptions)
     return expr
 
-
-def pairwise_evaluation(expr, assumptions):
+@prover
+def pairwise_evaluation(expr, **defaults_config):
     '''
     Evaluation routine applicable to associative operations in which
     operands at the beginning are paired and evaluated sequentially.
     '''
     from proveit import TransRelUpdater
+    from proveit.logic import is_irreducible_value
     # successively evaluate and replace the operation performed on
     # the first two operands
 
     # for convenience while updating our equation:
-    eq = TransRelUpdater(expr, assumptions)
+    eq = TransRelUpdater(expr)
+
+    if is_irreducible_value(expr):
+        # The expression is already irreducible, so we are done.
+        return eq.relation
 
     if expr.operands.num_entries() == 2:
         raise ValueError("pairwise_evaluation may only be used when there "
                          "are more than 2 operands.")
+
+    # While there are more than 2 operands, associate the first 2
+    # and auto-simplify.
     while expr.operands.num_entries() > 2:
-        expr = eq.update(
-            expr.association(
-                0,
-                length=2,
-                assumptions=assumptions))
-        expr = eq.update(expr.inner_expr().operands[0].evaluation(assumptions))
-    eq.update(expr.evaluation(assumptions=assumptions))
+        expr = eq.update(expr.association(0, length=2, auto_simplify=True))
+        if is_irreducible_value(expr):
+            # The new expression is irreducible, so we are done.
+            return eq.relation
+        elif not is_irreducible_value(expr.operands[0]):
+            # Auto-simplication failed to convert the first operand
+            # to an irreducible value, so break out of this loop
+            # and generate an appropriate error by trying to
+            # evaluate it directly.
+            expr = eq.update(expr.inner_expr().operands[0].evaluate())
     return eq.relation
 
 
@@ -331,7 +326,7 @@ def generic_permutation(expr, new_order=None, cycles=None,
     # the eq.relation will hold this for us
 
     # for convenience while updating our equation
-    eq = TransRelUpdater(expr, assumptions)
+    eq = TransRelUpdater(expr)
 
     while current_order != desired_order:
 
