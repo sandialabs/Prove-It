@@ -1,5 +1,4 @@
 from proveit import Literal, Function
-# from proveit.linalg import SU, TensorExp
 from proveit.linear_algebra import SU, TensorExp
 from proveit.numbers import num, Complex, Exp
 
