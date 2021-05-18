@@ -232,8 +232,8 @@ class Or(Operation):
     def derive_via_singular_dilemma(
             self, conclusion, assumptions=USE_DEFAULTS):
         '''
-        From (A or B) as self, and assuming A => C, B => C, and A and B are Boolean,
-        derive and return the conclusion, C.  Self is (A or B).
+        From (A or B) as self, and assuming A => C, B => C, and A and B
+        are Boolean, derive and return the conclusion, C.
         '''
         from . import singular_constructive_dilemma, singular_constructive_multi_dilemma
         if self.operands.is_double():
@@ -246,8 +246,9 @@ class Or(Operation):
 
     def derive_via_multi_dilemma(self, conclusion, assumptions=USE_DEFAULTS):
         '''
-        From (A or B) as self, and assuming A => C, B => D, and A, B, C, and D are Boolean,
-        derive and return the conclusion, C or D.
+        From (A or B) as self, and assuming A => C, B => D,
+        and A, B, C, and D are Boolean, derive and return the
+        conclusion, C or D.
         '''
         from . import constructive_dilemma, destructive_dilemma, constructive_multi_dilemma, destructive_multi_dilemma
         from proveit.logic import Not, Or
@@ -303,9 +304,9 @@ class Or(Operation):
 
     def derive_via_dilemma(self, conclusion, assumptions=USE_DEFAULTS):
         '''
-        If the conclusion is also an Or operation with the same number of operands as
-        self, try derive_via_multi_dilemma.  Otherwise, or if that fails, try
-        derive_via_singular_dilemma.
+        If the conclusion is also an Or operation with the same number
+        of operands as self, try derive_via_multi_dilemma.  Otherwise,
+        or if that fails, try derive_via_singular_dilemma.
         '''
         if (isinstance(conclusion, Or) and 
                 (conclusion.operands.num_entries() ==
@@ -385,27 +386,6 @@ class Or(Operation):
         left_operand, right_operand = self.operands
         return not_right_if_neither.instantiate(
             {A: left_operand, B: right_operand}, assumptions=assumptions)
-
-    def derive_common_conclusion(self, conclusion, assumptions=USE_DEFAULTS):
-        '''
-        From (A or B) derive and return the provided conclusion C assuming A=>C, B=>C, A,B,C in BOOLEANS.
-        '''
-        from . import hypothetical_disjunction
-        from proveit.logic import Implies, compose
-        # forall_{A in Bool, B in Bool, C in Bool} (A=>C and B=>C) => ((A or B)
-        # => C)
-        assert self.operands.is_double()
-        left_operand, right_operand = self.operands
-        left_impl_conclusion = Implies(left_operand, conclusion)
-        right_impl_conclusion = Implies(right_operand, conclusion)
-        # (A=>C and B=>C) assuming A=>C, B=>C
-        compose([left_impl_conclusion, right_impl_conclusion], assumptions)
-        return hypothetical_disjunction.instantiate(
-            {
-                A: left_operand,
-                B: right_operand,
-                C: conclusion},
-            assumptions=assumptions).derive_conclusion(assumptions).derive_conclusion(assumptions)
 
     def evaluation(self, assumptions=USE_DEFAULTS, *, automation=True,
                    minimal_automation=False, **kwargs):
