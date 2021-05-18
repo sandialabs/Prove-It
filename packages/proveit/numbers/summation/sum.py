@@ -114,7 +114,7 @@ class Sum(OperationOverInstances):
         '''
         For the trivial case of summing over only one item (currently
         implemented just for a Interval where the endpoints are equal),
-        derive and return this summation expression equated the
+        derive and return this summation expression equated with the
         simplified form of the single term.
         Assumptions may be necessary to deduce necessary conditions
         for the simplification.
@@ -124,14 +124,16 @@ class Sum(OperationOverInstances):
         from . import sum_single
         if (isinstance(self.domain,Interval) and
             self.domain.lower_bound == self.domain.upper_bound):
-            if self.instance_vars.is_single():
+            # if self.instance_vars.is_single():
+            # if self.index.is_single():
+            if hasattr(self, 'index'):
                 return sum_single.instantiate(
-                    {Operation(f, self.instance_vars): self.summand,
+                    {Operation(f, self.index): self.summand,
                      a: self.domain.lower_bound})
         raise SimplificationError(
             "Sum simplification only implemented for a summation over an "
             "integer Interval of one instance variable where the upper "
-            "and lower bound is the same.")
+            "and lower bounds are the same.")
 
     def simplified(self, assumptions=frozenset()):
         '''
@@ -185,10 +187,9 @@ class Sum(OperationOverInstances):
         and returning the equivalence of this summation with the
         index-shifted version. When the simplify_X args are True, a
         shallow simplification is applied to the shifted indices and/or
-        shifted summand. Eventual planned to accept and act on user-
-        supplied reductions as well, but not implemented at this time.
-        This shift() method is implemented only for a Sum with a single
-        index and only when the domain is an integer Interval.
+        shifted summand. Accepts and acts on user-supplied reductions
+        as well. This shift() method is implemented only for a Sum with
+        a single index and only when the domain is an integer Interval.
         Eventually this should also be implemented for domains of
         Natural, NaturalPos, etc.
         Example: Let S = Sum(i, i+2, Interval(0, 10)). Then S.shift(one)
