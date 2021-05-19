@@ -148,7 +148,8 @@ class Implies(TransitiveRelation):
                                "transitive implication relations, try "
                                "'conclude_via_transitivity'.")
 
-    def conclude_negation(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude_negation(self, **defaults_config):
         '''
         Try to conclude True when Not(TRUE => FALSE) is called.
         implemented by JML on 6/18/19
@@ -157,6 +158,7 @@ class Implies(TransitiveRelation):
         try:
             if self.antecedent == TRUE and self.consequent == FALSE:
                 from . import true_implies_false_negated
+                return true_implies_false_negated
         except BaseException:
             pass
 
@@ -181,60 +183,66 @@ class Implies(TransitiveRelation):
         self.antecedent.prove()
         return ModusPonens(self, defaults.assumptions).proven_truth
 
-    def derive_iff(self, assumptions=USE_DEFAULTS):
+    @prover
+    def derive_iff(self, **defaults_config):
         r'''
         From A => B derive and return A <=> B assuming B => A.
         '''
         from proveit.logic import Iff
         return Iff(self.A, self.B).conclude_via_definition()
 
-    def deduce_negated_right_impl(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_negated_right_impl(self, **defaults_config):
         r'''
         From Not(A => B) derive and return Not(A <=> B).
         implemented by JML on 6/18/19
         '''
         from . import not_iff_via_not_right_impl
         return not_iff_via_not_right_impl.instantiate(
-            {A: self.antecedent, B: self.consequent}, assumptions=assumptions)
+            {A: self.antecedent, B: self.consequent})
 
-    def deduce_negated_left_impl(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_negated_left_impl(self, **defaults_config):
         r'''
         From Not(B => A) derive and return Not(A <=> B).
         implemented by JML on 6/18/19
         '''
         from . import not_iff_via_not_left_impl
         return not_iff_via_not_left_impl.instantiate(
-            {B: self.antecedent, A: self.consequent}, assumptions=assumptions)
+            {B: self.antecedent, A: self.consequent})
 
-    def deduce_negated_reflex(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_negated_reflex(self, **defaults_config):
         # implemented by JML on 6/18/19
         from . import negated_reflex
         return negated_reflex.instantiate(
-            {A: self.antecedent, B: self.consequent}, assumptions=assumptions)
+            {A: self.antecedent, B: self.consequent})
 
-    def deny_antecedent(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deny_antecedent(self, **defaults_config):
         '''
         From A => B, derive and return Not(A) assuming Not(B).
         '''
         from . import modus_tollens_affirmation, modus_tollens_denial
         if isinstance(self.antecedent, Not):
             return modus_tollens_affirmation.instantiate(
-                {A: self.antecedent.operand, B: self.consequent}, assumptions=assumptions)
+                {A: self.antecedent.operand, B: self.consequent})
         else:
             return modus_tollens_denial.instantiate(
-                {A: self.antecedent, B: self.consequent}, assumptions=assumptions)
+                {A: self.antecedent, B: self.consequent})
 
-    def apply_transitivity(self, other_impl, assumptions=USE_DEFAULTS):
+    @prover
+    def apply_transitivity(self, other_impl, **defaults_config):
         '''
-        From :math:`A \Rightarrow B` (self) and a given :math:`B \Rightarrow C` (other_impl), derive and return :math:`A \Rightarrow C`.
+        From A => B (self) and a given B => C (other_impl), derive and return A => C.
         '''
         from . import implication_transitivity
         if self.consequent == other_impl.antecedent:
             return implication_transitivity.instantiate(
-                {A: self.antecedent, B: self.consequent, C: other_impl.consequent}, assumptions=assumptions)
+                {A: self.antecedent, B: self.consequent, C: other_impl.consequent})
         elif self.antecedent == other_impl.consequent:
             return implication_transitivity.instantiate(
-                {A: other_impl.antecedent, B: self.antecedent, C: self.consequent}, assumptions=assumptions)
+                {A: other_impl.antecedent, B: self.antecedent, C: self.consequent})
 
     @prover
     def derive_via_contradiction(self, **defaults_config):
@@ -261,22 +269,24 @@ class Implies(TransitiveRelation):
                 return not_true_via_contradiction.instantiate(
                     {A: self.antecedent})
 
-    def conclude_self_implication(self):
+    @prover
+    def conclude_self_implication(self, **defaults_config):
         from . import self_implication
         if self.antecedent != self.consequent:
             raise ValueError(
                 'May only conclude a self implementation when the antecedent and consequent are the same')
         return self_implication.instantiate({A: self.antecedent})
 
-    def generalize(self, forall_vars, domain=None, conditions=tuple()):
+    @prover
+    def generalize(self, forall_vars, domain=None, conditions=tuple(), **defaults_config):
         r'''
         This makes a generalization of this expression, prepending Forall
         operations according to new_forall_vars and new_conditions and/or new_domain
         that will bind 'arbitrary' free variables.  This overrides the expr
         version to absorb antecedent into conditions if they match.  For example,
-        :math:`[A(x) \Rightarrow [B(x, y) \Rightarrow P(x, y)]]` generalized
-        forall :math:`x, y` such that :math:`A(x), B(x, y)`
-        becomes :math:`\forall_{x, y | A(x), B(x, y)} P(x, y)`,
+        [A(x) => [B(x, y) => P(x, y)]] generalized
+        forall x, y such that A(x), B(x, y)
+        becomes forall_{x, y | A(x), B(x, y)} P(x, y).
         '''
         from proveit.logic import InSet
         hypothesized_conditions = set()
@@ -295,15 +305,16 @@ class Implies(TransitiveRelation):
         return expr.generalize(expr, forall_vars, domain, conditions)
         # return Forall(new_forall_vars, expr, new_conditions)
 
-    def contrapose(self, assumptions=USE_DEFAULTS):
+    @prover
+    def contrapose(self, **defaults_config):
         '''
         Depending upon the form of self with respect to negation of the antecedent and/or consequent,
         will derive from self and return as follows:
 
-        * From :math:`[\lnot A  \Rightarrow \lnot B]`, derive :math:`[B \Rightarrow A]` assuming :math:`A \in \mathcal{B}`.
-        * From :math:`[\lnot A \Rightarrow B]`, derive :math:`[\lnot B \Rightarrow A]` assuming :math:`A \in \mathcal{B}`, :math:`B \in \mathcal{B}`.
-        * From :math:`[A  \Rightarrow \lnot B]`, derive :math:`[B \Rightarrow \lnot A]` assuming :math:`A \in \mathcal{B}`.
-        * From :math:`[A  \Rightarrow B]`, derive :math:`[\lnot B \Rightarrow \lnot A]` assuming :math:`A \in \mathcal{B}`, :math:`B \in \mathcal{B}`.
+        * From [not(A) => not(B)], derive [B => A] assuming A in \mathcal{B}.
+        * From [not(A) => B], derive [not(B) => A] assuming A in \mathcal{B}, B in \mathcal{B}.
+        * From [A => not(B)], derive [B => not(A)] assuming A in \mathcal{B}.
+        * From [A => B], derive [not(B) => not(A)]` assuming A in \mathcal{B}, B in \mathcal{B}.
         '''
         from . import from_contraposition, to_contraposition, contrapose_neg_consequent, contrapose_neg_antecedent
         from proveit.logic import Not
@@ -313,19 +324,21 @@ class Implies(TransitiveRelation):
                 self.consequent,
                 Not):
             return from_contraposition.instantiate(
-                {B: self.antecedent.operand, A: self.consequent.operand}, assumptions=assumptions)
+                {B: self.antecedent.operand, A: self.consequent.operand})
         elif isinstance(self.antecedent, Not):
             return contrapose_neg_antecedent.instantiate(
-                {A: self.antecedent.operand, B: self.consequent}, assumptions=assumptions)
+                {A: self.antecedent.operand, B: self.consequent})
         elif isinstance(self.consequent, Not):
             return contrapose_neg_consequent.instantiate(
-                {A: self.antecedent, B: self.consequent.operand}, assumptions=assumptions)
+                {A: self.antecedent, B: self.consequent.operand})
         else:
             return to_contraposition.instantiate(
-                {A: self.antecedent, B: self.consequent}, assumptions=assumptions)
+                {A: self.antecedent, B: self.consequent})
 
     @equivalence_prover('evaluated', 'evaluate')
     def evaluation(self, **defaults_config):
+        # @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+        # def shallow_evaluation(self, **defaults_config):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE.
@@ -333,15 +346,23 @@ class Implies(TransitiveRelation):
         # load in truth-table evaluations
         from . import implies_t_f
         from . import implies_t_t, implies_f_t, implies_f_f
-        return Operation.evaluation(self)
+        from proveit.logic import EvaluationError
+        # return Operation.shallow_evaluation(self)
+        try:
+            return Operation.evaluation(self)
+        except NotImplementedError:
+            # Should have been able to do the evaluation from the loaded truth table.
+            # If it can't we are unable to evaluate it.
+            raise EvaluationError(self)
 
-    def deduce_in_bool(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_in_bool(self, **defaults_config):
         '''
         Attempt to deduce, then return, that this implication expression is in the set of BOOLEANS.
         '''
         from . import implication_closure
         return implication_closure.instantiate(
-            {A: self.antecedent, B: self.consequent}, assumptions=assumptions)
+            {A: self.antecedent, B: self.consequent})
 
 
 @prover
@@ -385,6 +406,7 @@ def conclude_via_implication(consequent, **defaults_config):
         defaults.assumptions,
         'Unable to conclude via implications')
 
+
 @prover
 def affirm_via_contradiction(contradictory_expr, conclusion, 
                              **defaults_config):
@@ -402,6 +424,7 @@ def affirm_via_contradiction(contradictory_expr, conclusion,
         temp_defaults.preserve_expr(contradictory_expr)
         impl = contradiction.as_implication(Not(conclusion))
         return impl.derive_via_contradiction()
+
 
 @prover
 def deny_via_contradiction(contradictory_expr, conclusion, 
