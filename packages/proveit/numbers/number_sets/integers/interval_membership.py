@@ -13,7 +13,7 @@ class IntervalMembership(Membership):
     '''
 
     def __init__(self, element, domain):
-        Membership.__init__(self, element)
+        Membership.__init__(self, element, domain)
         self.domain = domain
 
     def side_effects(self, judgment):
@@ -268,7 +268,7 @@ class IntervalNonmembership(Nonmembership):
     '''
 
     def __init__(self, element, domain):
-        Nonmembership.__init__(self, element)
+        Nonmembership.__init__(self, element, domain)
         self.domain = domain
 
     def side_effects(self, judgment):
