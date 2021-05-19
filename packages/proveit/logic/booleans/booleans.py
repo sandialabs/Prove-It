@@ -86,7 +86,8 @@ class BooleanSet(Literal):
                             'Quantified instance evaluations must be TRUE or FALSE')
                     return impl.derive_conclusion()
 
-    def unfold_forall(self, forall_stmt, assumptions=USE_DEFAULTS):
+    @prover
+    def unfold_forall(self, forall_stmt, **defaults_config):
         '''
         Given forall_{A in Boolean} P(A), derive and return [P(TRUE) and P(FALSE)].
         '''
@@ -101,9 +102,10 @@ class BooleanSet(Literal):
         _Px = forall_stmt.instance_expr
         _A = forall_stmt.instance_var
         return unfold_forall_over_bool.instantiate(
-            {Px: _Px, A: _A}, assumptions=assumptions)
+            {Px: _Px, A: _A})
 
-    def fold_as_forall(self, forall_stmt, assumptions=USE_DEFAULTS):
+    @prover
+    def fold_as_forall(self, forall_stmt, **defaults_config):
         '''
         Given forall_{A in Boolean} P(A), conclude and return it from
         [P(TRUE) and P(FALSE)].
@@ -126,16 +128,14 @@ class BooleanSet(Literal):
             _Px = forall_stmt.instance_expr
             _A = forall_stmt.instance_param
             return fold_conditioned_forall_over_bool.instantiate(
-                {Qx: _Qx, Px: _Px, A: _A}, num_forall_eliminations=1,
-                assumptions=assumptions)
+                {Qx: _Qx, Px: _Px, A: _A}, num_forall_eliminations=1)
         else:
             # forall_{A in Boolean} P(A), assuming P(TRUE) and P(FALSE)
             Px = Function(P, forall_stmt.instance_param)
             _Px = forall_stmt.instance_expr
             _A = forall_stmt.instance_param
             return fold_forall_over_bool.instantiate(
-                {Px: _Px, A: _A}, num_forall_eliminations=1,
-                assumptions=assumptions)
+                {Px: _Px, A: _A}, num_forall_eliminations=1)
 
 
 class BooleanMembership(Membership):
@@ -199,7 +199,8 @@ class BooleanMembership(Membership):
         return in_bool_def.instantiate({A: self.element},
                                        auto_simplify=False)
 
-    def unfold(self, assumptions=USE_DEFAULTS):
+    @prover
+    def unfold(self, **defaults_config):
         '''
         From in_bool(Element), derive and return [element or not(element)] if
         unfold_is_bool is usable.  It it is not, instead try to derive and return
@@ -209,13 +210,14 @@ class BooleanMembership(Membership):
         if unfold_is_bool.is_usable():
             #  [element or not(element)] assuming in_bool(element)
             return unfold_is_bool.instantiate(
-                {A: self.element}, assumptions=assumptions)
+                {A: self.element})
         else:
             #  [(element = TRUE) or (element = FALSE)] assuming in_bool(element)
             return unfold_is_bool_explicit.instantiate(
-                {A: self.element}, assumptions=assumptions)
+                {A: self.element})
 
-    def fold(self, assumptions=USE_DEFAULTS):
+    @prover
+    def fold(self, **defaults_config):
         '''
         From [(element=TRUE) or (element=FALSE)], derive in_bool(Element).
         Created by JML on 6/27/19 for fold_is_bool side_effect
@@ -223,18 +225,20 @@ class BooleanMembership(Membership):
         from . import fold_is_bool
         if fold_is_bool.is_usable():
             return fold_is_bool.instantiate(
-                {A: self.element}, assumptions=assumptions)
+                {A: self.element})
 
-    def derive_via_excluded_middle(self, consequent, assumptions=USE_DEFAULTS):
+    @prover
+    def derive_via_excluded_middle(self, consequent, **defaults_config):
         '''
         Derive the consequent from (element in Boolean)
         given element => consequent and Not(element) => consequent.
         '''
         from . import from_excluded_middle
         return from_excluded_middle.instantiate(
-            {A: self.element, C: consequent}, assumptions=assumptions)
+            {A: self.element, C: consequent})
 
-    def deduce_in_bool(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_in_bool(self, **defaults_config):
         from . import in_bool_is_bool
         return in_bool_is_bool.instantiate({A: self.element})
 
@@ -244,7 +248,8 @@ class BooleanNonmembership(Nonmembership):
     def __init__(self, element):
         Nonmembership.__init__(self)
 
-    def equivalence(self, element, assumptions=USE_DEFAULTS):
+    @equivalence_prover("defined", "define")
+    def definition(self, element, **defaults_config):
         '''
         Derive [(element not in Boolean) = [(element != TRUE) and (element != FALSE)].
         '''
