@@ -246,6 +246,7 @@ class Lambda(Expression):
             # canonical version.  Also, don't apply "consistent
             # styles" -- we need use "canonical" styles.
             temp_defaults.automation = False
+            temp_defaults.auto_simplify = False
             temp_defaults.assumptions = tuple()
             #temp_defaults.use_consistent_styles = False
             # Canonical Lambda styles are always empty.
