@@ -564,7 +564,7 @@ class ExpSetMembership(Membership):
     '''
 
     def __init__(self, element, domain):
-        Membership.__init__(self, element)
+        Membership.__init__(self, element, domain)
         self.domain = domain
 
     def conclude(self, assumptions=USE_DEFAULTS):
