@@ -25,15 +25,18 @@ class BooleanSet(Literal):
         '''
         from proveit.logic import Forall, Equals, SimplificationError
         from . import false_eq_false, true_eq_true
-        from . import forall_bool_eval_true, forall_bool_eval_false_via_t_f, forall_bool_eval_false_via_f_f, forall_bool_eval_false_via_f_t
+        from . import forall_bool_eval_true, forall_bool_eval_false_via_t_f, \
+            forall_bool_eval_false_via_f_f, forall_bool_eval_false_via_f_t
         from . import TRUE, FALSE, Boolean
         from .conjunction import compose
         assert(isinstance(forall_stmt, Forall)
                ), "May only apply forall_evaluation method of BOOLEAN to a forall statement"
         assert(forall_stmt.domain ==
-               Boolean), "May only apply forall_evaluation method of BOOLEAN to a forall statement with the BOOLEAN domain"
+               Boolean), "May only apply forall_evaluation method of BOOLEAN to a forall " \
+                         "statement with the BOOLEAN domain"
         with defaults.temporary() as temp_defaults:
-            temp_defaults.preserve_exprs.add(forall_stmt.expr)
+            #temp_defaults.preserve_expr(forall_stmt.inner_expr())
+            temp_defaults.preserved_exprs = defaults.preserved_exprs.union([forall_stmt.inner_expr])
             instance_list = list(forall_stmt.instance_param_lists())
             instance_var = instance_list[0][0]
             instance_expr = forall_stmt.instance_expr
@@ -267,7 +270,8 @@ class TrueLiteral(Literal, IrreducibleValue):
         from . import true_axiom
         return true_axiom
 
-    def eval_equality(self, other, assumptions=USE_DEFAULTS):
+    @prover
+    def eval_equality(self, other, **defaults_config):
         from . import true_eq_true, true_not_false
         from . import TRUE, FALSE
         if other == TRUE:
@@ -275,7 +279,8 @@ class TrueLiteral(Literal, IrreducibleValue):
         elif other == FALSE:
             return true_not_false.unfold().equate_negated_to_false()
 
-    def not_equal(self, other, assumptions=USE_DEFAULTS):
+    @prover
+    def not_equal(self, other, **defaults_config):
         from . import true_not_false
         from . import TRUE, FALSE
         if other == FALSE:
@@ -286,7 +291,8 @@ class TrueLiteral(Literal, IrreducibleValue):
         raise ProofFailure(
             "Inequality between TRUE and a non-boolean not defined")
 
-    def deduce_in_bool(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_in_bool(self, **defaults_config):
         from . import true_is_bool
         return true_is_bool
 
@@ -296,7 +302,8 @@ class FalseLiteral(Literal, IrreducibleValue):
         Literal.__init__(self, string_format='FALSE', latex_format=r'\bot',
                          styles=styles)
 
-    def eval_equality(self, other, assumptions=USE_DEFAULTS):
+    @prover
+    def eval_equality(self, other, **defaults_config):
         from . import false_not_true
         from . import false_eq_false
         from . import TRUE, FALSE
@@ -310,7 +317,8 @@ class FalseLiteral(Literal, IrreducibleValue):
         from proveit.logic.booleans.negation import not_false
         return not_false  # the negation of FALSE
 
-    def not_equal(self, other, assumptions=USE_DEFAULTS):
+    @prover
+    def not_equal(self, other, **defaults_config):
         from _.theorems_ import false_not_true
         from . import TRUE, FALSE
         if other == TRUE:
@@ -321,11 +329,13 @@ class FalseLiteral(Literal, IrreducibleValue):
         raise ProofFailure(
             "Inequality between FALSE and a non-boolean not defined")
 
-    def deduce_in_bool(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_in_bool(self, **defaults_config):
         from . import false_is_bool
         return false_is_bool
 
-    def deny_assumption(self, assumption_to_deny, assumptions=USE_DEFAULTS):
+    @prover
+    def deny_assumption(self, assumption_to_deny, **defaults_config):
         '''
         If FALSE can be proven under a set of assumptions, any one
         of those assumptions may be proven untrue given the other
