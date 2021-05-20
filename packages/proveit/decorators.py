@@ -202,7 +202,6 @@ def equivalence_prover(past_tense, present_tense):
             # 'preserve' the 'self' expression so it will be on the 
             # left side without simplification.
             _self = args[0]
-            kwargs['preserve_expr'] = _self
             proven_truth = None
             if is_simplification_method or is_evaluation_method:
                 from proveit.logic import (is_irreducible_value,
@@ -210,7 +209,14 @@ def equivalence_prover(past_tense, present_tense):
                 # See if there is a known evaluation (or if one may
                 # be derived via known equalities if defaults.automation
                 # is enabled).
-                known_evaluation = Equals.get_known_evaluation(_self)
+                if 'assumptions' in kwargs:
+                    # Use new assumptions temporarily.
+                    with defaults.temporary() as tmp_defaults:
+                        tmp_defaults.assumptions = kwargs.get('assumptions')
+                        known_evaluation = Equals.get_known_evaluation(_self)
+                else:
+                    known_evaluation = Equals.get_known_evaluation(_self)
+
                 if known_evaluation is None:
                     if is_irreducible_value(_self):
                         # Already irreducible.
@@ -227,6 +233,7 @@ def equivalence_prover(past_tense, present_tense):
                     """
                 else:
                     proven_truth = known_evaluation
+            kwargs['preserve_expr'] = _self
             if proven_truth is None:
                 proven_truth = decorated_prover(*args, **kwargs)
             proven_expr = proven_truth.expr
