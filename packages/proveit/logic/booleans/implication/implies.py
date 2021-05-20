@@ -420,10 +420,8 @@ def affirm_via_contradiction(contradictory_expr, conclusion,
     extended_assumptions = defaults.assumptions + (Not(conclusion),)
     contradiction = contradictory_expr.derive_contradiction(
             assumptions=extended_assumptions)
-    with defaults.temparary() as temp_defaults:
-        temp_defaults.preserve_expr(contradictory_expr)
-        impl = contradiction.as_implication(Not(conclusion))
-        return impl.derive_via_contradiction()
+    impl = contradiction.as_implication(Not(conclusion))
+    return impl.derive_via_contradiction(preserve_expr=contradictory_expr)
 
 
 @prover
@@ -438,7 +436,5 @@ def deny_via_contradiction(contradictory_expr, conclusion,
     extended_assumptions = defaults.assumptions + (conclusion,)
     contradiction = contradictory_expr.derive_contradiction(
             assumptions=extended_assumptions)
-    with defaults.temparary() as temp_defaults:
-        temp_defaults.preserve_expr(contradictory_expr)
-        impl = contradiction.as_implication(conclusion)
-        return impl.derive_via_contradiction()
+    impl = contradiction.as_implication(conclusion)
+    return impl.derive_via_contradiction(preserve_expr=contradictory_expr)
