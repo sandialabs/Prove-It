@@ -171,9 +171,7 @@ class Defaults:
 
         assumptions = tuple(self._checkAssumptions(assumptions))
         sorted_assumptions = tuple(
-            sorted(
-                assumptions,
-                key=lambda expr: hash(expr)))
+            sorted(assumptions, key=lambda expr: hash(expr)))
 
         # avoid infinite recursion and extra work
         if sorted_assumptions not in Defaults.considered_assumption_sets:

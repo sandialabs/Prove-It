@@ -12,6 +12,7 @@ from proveit.decorators import prover
 from .defaults import defaults, USE_DEFAULTS
 import re
 from copy import copy
+from inspect import signature, Parameter
 
 
 class _ExprProofs:
@@ -621,7 +622,6 @@ class Judgment:
         included.
         '''
         from proveit import defaults, USE_DEFAULTS
-        import inspect
 
         # called only if the attribute does not exist in Judgment 
         # directly
@@ -639,41 +639,22 @@ class Judgment:
                     new_style_expr = attr.__call__(*args, **kwargs)
                     return self.with_matching_styles(new_style_expr, [])
                 return call_method_for_new_style
-            argspec = inspect.getfullargspec(attr)
-
-            # TODO: Revisit this after we have switched to using
-            # @prover or @equivalence_prover for all the methods.
-            # This is more complicated than necessary for backward
-            # compatibility.
-            if ('assumptions' in argspec.args
-                    or 'assumptions' in argspec.kwonlyargs
-                    or  argspec.varkw == 'defaults_config'):
+            sig = signature(attr)
+            if ('defaults_config' in sig.parameters and
+                    (sig.parameters['defaults_config'].kind 
+                     == Parameter.VAR_KEYWORD)):
                 # The attribute is a callable function with
-                # 'assumptions' as an argument.
+                # 'defaults_config' as an argument (e.g., a prover).
                 # Automatically include the Judgment assumptions.
-
-                # note, index zero is self.
-                if 'assumptions' in argspec.args:
-                    assumptions_idx = argspec.args.index('assumptions') - 1
-                else:
-                    assumptions_idx = None  # 'assumptions' is kwonly
-
-                def call_method_with_judgment_assumptions(*args, **kwargs):
-                    if (assumptions_idx is not None and
-                            len(args) > assumptions_idx):
-                        args = list(args)
-                        assumptions = args[assumptions_idx]
-                        assumptions = defaults.checked_assumptions(assumptions)
-                        assumptions += self.assumptions
-                        args[assumptions_idx] = \
-                            defaults.checked_assumptions(assumptions)
-                    else:
-                        assumptions = kwargs.get('assumptions', USE_DEFAULTS)
-                        assumptions = defaults.checked_assumptions(assumptions)
-                        assumptions = tuple(assumptions) + self.assumptions
-                        kwargs['assumptions'] = \
-                            defaults.checked_assumptions(assumptions)
-                    return attr.__call__(*args, **kwargs)
+                def call_method_with_judgment_assumptions(
+                        *args, **defaults_config):
+                    assumptions = defaults_config.get('assumptions',
+                                                      USE_DEFAULTS)
+                    assumptions = defaults.checked_assumptions(assumptions)
+                    assumptions = tuple(assumptions) + self.assumptions
+                    defaults_config['assumptions'] = \
+                        defaults.checked_assumptions(assumptions)
+                    return attr.__call__(*args, **defaults_config)
                 return call_method_with_judgment_assumptions
 
         return attr
@@ -1093,7 +1074,7 @@ class Judgment:
         Judgment.
         '''
         from proveit.logic import evaluate_truth
-        return evaluate_truth(self.expr, self.assumptions)
+        return evaluate_truth(self.expr, assumptions=self.assumptions)
 
     def as_impl(self, hypothesis):
         '''

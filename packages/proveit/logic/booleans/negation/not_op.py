@@ -35,7 +35,7 @@ class Not(Operation):
                 pass
         except BaseException:
             pass  # no contradiction
-        yield self.derive_in_bool  # [Not(A) in Boolean] given Not(A)
+        yield self.deduce_in_bool  # [Not(A) in Boolean] given Not(A)
         if hasattr(self.operand, 'negation_side_effects'):
             # derive negation side-effects for the specific type of
             # expression being negated.
@@ -48,12 +48,6 @@ class Not(Operation):
         From not(A) in Boolean deduce A in Boolean, where self is not(A).
         '''
         yield self.deduce_operand_in_bool
-
-    def derive_in_bool(self, assumptions=USE_DEFAULTS):
-        '''
-        From Not(A) derive [Not(A) in Boolean].
-        '''
-        return in_bool(self).prove(assumptions=assumptions)
 
     @prover
     def conclude(self, **defaults_config):
