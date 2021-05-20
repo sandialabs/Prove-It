@@ -35,7 +35,6 @@ class BooleanSet(Literal):
                Boolean), "May only apply forall_evaluation method of BOOLEAN to a forall " \
                          "statement with the BOOLEAN domain"
         with defaults.temporary() as temp_defaults:
-            #temp_defaults.preserve_expr(forall_stmt.inner_expr())
             temp_defaults.preserved_exprs = defaults.preserved_exprs.union([forall_stmt.inner_expr])
             instance_list = list(forall_stmt.instance_param_lists())
             instance_var = instance_list[0][0]
@@ -43,6 +42,7 @@ class BooleanSet(Literal):
             P_op = Function(P, instance_var)
             true_instance = instance_expr.replaced({instance_var: TRUE})
             false_instance = instance_expr.replaced({instance_var: FALSE})
+            temp_defaults.auto_simplify = False
             if true_instance == TRUE and false_instance == FALSE:
                 # special case of Forall_{A in BOOLEAN} A
                 false_eq_false  # FALSE = FALSE
@@ -131,7 +131,7 @@ class BooleanSet(Literal):
             _Px = forall_stmt.instance_expr
             _A = forall_stmt.instance_param
             return fold_conditioned_forall_over_bool.instantiate(
-                {Qx: _Qx, Px: _Px, A: _A}, num_forall_eliminations=1)
+                {Qx: _Qx, Px: _Px, A: _A}, num_forall_eliminations=1, auto_simplify=False)
         else:
             # forall_{A in Boolean} P(A), assuming P(TRUE) and P(FALSE)
             Px = Function(P, forall_stmt.instance_param)
@@ -228,7 +228,7 @@ class BooleanMembership(Membership):
         from . import fold_is_bool
         if fold_is_bool.is_usable():
             return fold_is_bool.instantiate(
-                {A: self.element})
+                {A: self.element}, auto_simplify=False)
 
     @prover
     def derive_via_excluded_middle(self, consequent, **defaults_config):
@@ -238,7 +238,7 @@ class BooleanMembership(Membership):
         '''
         from . import from_excluded_middle
         return from_excluded_middle.instantiate(
-            {A: self.element, C: consequent})
+            {A: self.element, C: consequent}, auto_simplify=False)
 
     @prover
     def deduce_in_bool(self, **defaults_config):
