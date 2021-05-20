@@ -103,7 +103,7 @@ class NotEquals(Relation):
         if self.rhs == FALSE:
             return not_equals_false.instantiate({A: self.lhs})
 
-    @prover
+    @equivalence_prover('defined', 'define')
     def definition(self, **defaults_config):
         '''
         Return (x != y) = Not(x=y) where self represents (x != y).
@@ -117,7 +117,12 @@ class NotEquals(Relation):
         From (x != y), derive and return Not(x=y).
         '''
         from . import unfold_not_equals
-        return unfold_not_equals.instantiate({x: self.lhs, y: self.rhs})
+        # Don't auto-simplify.  If (x=y) has a known evaluation,
+        # unfolding to obtain prove TRUE or FALSE would never
+        # be a desired behavior -- for FALSE, call derive_contradiction
+        # instead.
+        return unfold_not_equals.instantiate({x: self.lhs, y: self.rhs},
+                                             auto_simplify=False)
 
     @prover
     def conclude_as_folded(self, **defaults_config):
