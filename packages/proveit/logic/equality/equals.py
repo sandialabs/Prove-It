@@ -255,8 +255,7 @@ class Equals(TransitiveRelation):
         return Equals(self.rhs, self.lhs)
 
     @staticmethod
-    def yield_known_equal_expressions(expr, *, assumptions=USE_DEFAULTS,
-                                      exceptions=None):
+    def yield_known_equal_expressions(expr, *, exceptions=None):
         '''
         Yield everything known to be equal to the given expression
         under the given assumptions directly or indirectly through 
@@ -264,7 +263,7 @@ class Equals(TransitiveRelation):
         If 'exceptions' are provided, disregard known equalities
         with expressions in the 'exceptions' set.
         '''
-        assumptions = defaults.checked_assumptions(assumptions)
+        assumptions = defaults.assumptions
         to_process = {expr}
         processed = set()
         while len(to_process) > 0:
@@ -685,7 +684,7 @@ class Equals(TransitiveRelation):
         raise EvaluationError(self) 
 
     @staticmethod
-    def get_known_evaluation(expr, automation=USE_DEFAULTS):
+    def get_known_evaluation(expr, *, automation=USE_DEFAULTS):
         '''
         Return an applicable evaluation (under current defaults) for 
         the given expression if one is known; otherwise return None.
@@ -695,22 +694,21 @@ class Equals(TransitiveRelation):
         expressions (in defaults.preserved_exprs) whose evaluations
         are to be disregarded.
         '''
-        try:
+        if expr in Equals.known_evaluation_sets:
             evaluations = Equals.known_evaluation_sets[expr]
-        except KeyError:
-            return None
-        candidates = []
-        assumptions_set = set(defaults.assumptions)
-        for judgment in evaluations:
-            if judgment.is_applicable(assumptions_set):
-                # Found existing evaluation suitable for the
-                # assumptions
-                candidates.append(judgment)
-        if len(candidates) >= 1:
-            # Return the "best" candidate with respect to fewest number
-            # of steps.
-            def min_key(judgment): return judgment.proof().num_steps()
-            return min(candidates, key=min_key)
+            candidates = []
+            assumptions = defaults.assumptions
+            assumptions_set = set(assumptions)
+            for judgment in evaluations:
+                if judgment.is_applicable(assumptions_set):
+                    # Found existing evaluation suitable for the
+                    # assumptions
+                    candidates.append(judgment)
+            if len(candidates) >= 1:
+                # Return the "best" candidate with respect to fewest number
+                # of steps.
+                def min_key(judgment): return judgment.proof().num_steps()
+                return min(candidates, key=min_key)
         if automation is USE_DEFAULTS:
             automation = defaults.automation
         if automation:
