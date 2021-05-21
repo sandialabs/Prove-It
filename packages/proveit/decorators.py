@@ -150,10 +150,10 @@ def _make_decorated_relation_prover(func):
         if 'preserve_expr' in kwargs:
             if 'preserved_exprs' in kwargs:
                 kwargs['preserved_exprs'] = (
-                        kwargs['preserved_exprs'].union(expr))
+                        kwargs['preserved_exprs'].union([expr]))
             else:
                 kwargs['preserved_exprs'] = (
-                       defaults.preserved_exprs.union(expr))
+                       defaults.preserved_exprs.union([expr]))
         else:
             kwargs['preserve_expr'] = expr
         
