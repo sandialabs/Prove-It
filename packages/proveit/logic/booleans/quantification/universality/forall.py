@@ -116,7 +116,7 @@ class Forall(OperationOverInstances):
             try:
                 return self.conclude_as_folded()
             except Exception:
-                raise ProofFailure(self, assumptions,
+                raise ProofFailure(self, defaults.assumptions,
                                    "Unable to conclude automatically; "
                                    "the 'fold_as_forall' method on the "
                                    "domain failed.")
@@ -127,12 +127,12 @@ class Forall(OperationOverInstances):
             try:
                 return self.conclude_via_generalization(automation=True)
             except ProofFailure:
-                raise ProofFailure(self, assumptions,
+                raise ProofFailure(self, defaults.assumptions,
                                    "Unable to conclude automatically; "
                                    "the domain has no 'fold_as_forall' method "
                                    "and automated generalization failed.")
 
-        raise ProofFailure(self, assumptions,
+        raise ProofFailure(self, defaults.assumptions,
                            "Unable to conclude automatically; a "
                            "universally quantified instance expression "
                            "is not known to be true and the domain has "
