@@ -728,8 +728,8 @@ def compose(*expressions, **defaults_config):
     if expressions.is_double():
         from . import and_if_both
         return and_if_both.instantiate(
-            {A: expressions[0], B: expressions[1]})
+            {A: expressions[0], B: expressions[1]}, auto_simplify=False)
     else:
         from . import and_if_all
         _m = expressions.num_elements()
-        return and_if_all.instantiate({m: _m, A: expressions})
+        return and_if_all.instantiate({m: _m, A: expressions}, auto_simplify=False)
