@@ -1,8 +1,8 @@
-from proveit import (Literal, Operation, defaults, USE_DEFAULTS,
+from proveit import (Literal, defaults, USE_DEFAULTS,
                      prover, equality_prover)
+from proveit.relation import Relation
 
-
-class InSet(Operation):
+class InSet(Relation):
     # operator of the InSet operation
     _operator_ = Literal(string_format='in',
                          latex_format=r'\in',
@@ -16,8 +16,8 @@ class InSet(Operation):
     inset_expressions = dict()
 
     def __init__(self, element, domain, *, styles=None):
-        Operation.__init__(self, InSet._operator_, (element, domain),
-                           styles=styles)
+        Relation.__init__(self, InSet._operator_, element, domain,
+                          styles=styles)
         self.element = self.operands[0]
         self.domain = self.operands[1]
         InSet.inset_expressions[(self.element, self.domain)] = self
@@ -48,6 +48,16 @@ class InSet(Operation):
         if 'membership_object' in self.__dict__:
             return getattr(self.membership_object, attr)
         raise AttributeError
+
+    @staticmethod
+    def reversed_operator_str(formatType):
+        '''
+        Reversing \in gives \ni.  Reversing "in" gives "contains".
+        '''
+        if formatType=='latex':
+            return '\ni'
+        else:
+            return 'contains'
 
     def side_effects(self, judgment):
         '''
