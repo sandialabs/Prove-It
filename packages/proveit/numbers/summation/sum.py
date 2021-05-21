@@ -1,7 +1,7 @@
 from proveit import (Literal, Lambda, Function, Operation, 
                      OperationOverInstances, InnerExpr,
                      Judgment, free_vars, maybe_fenced, USE_DEFAULTS, 
-                     ProofFailure, defaults, equivalence_prover)
+                     ProofFailure, defaults, equality_prover)
 from proveit import a, b, c, f, i, j, k, x, P, Q, S
 from proveit.logic import Forall, InSet
 from proveit.numbers import one, Add, Neg, subtract
@@ -110,7 +110,7 @@ class Sum(OperationOverInstances):
         else:
             return OperationOverInstances._formatted(self, format_type, fence)
 
-    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, **defaults_config):
         '''
         Returns a proven simplification equation for this Sum
@@ -568,7 +568,7 @@ class Sum(OperationOverInstances):
                 "index or indices {} and domain {}."
                 .format(self, self.indices, self.domain))
 
-    @equivalence_prover('factorized', 'factor')
+    @equality_prover('factorized', 'factor')
     def factorization(self, the_factor, pull="left", group_factor=True,
                       group_remainder=None, **defaults_config):
         '''

@@ -1,5 +1,5 @@
 from proveit import (as_expression, defaults, USE_DEFAULTS, ProofFailure,
-                     equivalence_prover)
+                     equality_prover)
 from proveit import Literal, Operation, Lambda, ArgumentExtractionError
 from proveit import TransitiveRelation, TransitivityException
 from proveit import prover
@@ -449,7 +449,7 @@ class Equals(TransitiveRelation):
                                  "%s as 'lambda_map'" % lambda_map)
         return lambda_map
 
-    @prover # Note: this should NOT be an @equivalence_prover.
+    @prover # Note: this should NOT be an @equality_prover.
     def substitution(self, lambda_map, **defaults_config):
         '''
         From x = y, and given f(x), derive f(x)=f(y).
@@ -667,7 +667,7 @@ class Equals(TransitiveRelation):
         from . import equality_in_bool
         return equality_in_bool.instantiate({x: self.lhs, y: self.rhs})
 
-    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    @equality_prover('shallow_evaluated', 'shallow_evaluate')
     def shallow_evaluation(self, **defaults_config):
         '''
         Given equality operands that are the same or are irreducible

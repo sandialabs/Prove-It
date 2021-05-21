@@ -8,7 +8,7 @@ from proveit._core_.expression.composite import (
     composite_expression, ExprRange)
 from proveit._core_.expression.conditional import Conditional
 from proveit._core_.defaults import USE_DEFAULTS
-from proveit.decorators import equivalence_prover
+from proveit.decorators import equality_prover
 from .operation import Operation, OperationError
 from .function import Function
 
@@ -842,7 +842,7 @@ class OperationOverInstances(Operation):
                     count += len(entry.formatted(format_type, fence=fence))
         return out_str
 
-    @equivalence_prover('instance_substituted', 'instance_substitute')
+    @equality_prover('instance_substituted', 'instance_substitute')
     def instance_substitution(self, universal_eq, **defaults_config):
         '''
         Equate this OperationOverInstances, 

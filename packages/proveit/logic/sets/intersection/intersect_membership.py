@@ -1,4 +1,4 @@
-from proveit import USE_DEFAULTS, equivalence_prover
+from proveit import USE_DEFAULTS, equality_prover
 from proveit.logic import Membership, Nonmembership
 from proveit.numbers import num
 from proveit import m, x, A
@@ -18,7 +18,7 @@ class IntersectMembership(Membership):
         '''
         yield self.unfold
 
-    @equivalence_prover('defined', 'define')
+    @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
         '''
         Deduce and return 
@@ -75,7 +75,7 @@ class IntersectNonmembership(Nonmembership):
         return
         yield
 
-    @equivalence_prover('defined', 'define')
+    @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
         '''
         Deduce and return 

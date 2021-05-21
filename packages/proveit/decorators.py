@@ -6,7 +6,7 @@ from proveit._core_.defaults import defaults
 def _make_decorated_prover(func):
     '''
     Use for decorating 'prover' methods 
-    (@prover or @equivalence_prover).
+    (@prover or @equality_prover).
     This allows for extra keyword arguments for temporarily altering
     any attributes of the Prove-It 'defaults' (e.g., 
     defaults.assumptions) before calling the decorated method.
@@ -151,12 +151,12 @@ def prover(func):
 
 # Keep track of equivalence provers so we may register them during
 # Expression class construction (see ExprType.__init__ in expr.py).
-_equiv_prover_fn_to_tenses = dict()
-_equiv_prover_name_to_tenses = dict()
+_equality_prover_fn_to_tenses = dict()
+_equality_prover_name_to_tenses = dict()
 
-def equivalence_prover(past_tense, present_tense):
+def equality_prover(past_tense, present_tense):
     '''
-    @equivalence_prover works the same way as the @prover decorator
+    @equality_prover works the same way as the @prover decorator
     except that it also registers the "equivalence method" in
     InnerExpr with the past tense and present tense names.  The method
     name itself should be a noun form and return the proven equivalence
@@ -173,20 +173,20 @@ def equivalence_prover(past_tense, present_tense):
     
     def wrapper_maker(func):
         '''
-        Make the wrapper for the equivalence_prover decorator.
+        Make the wrapper for the equality_prover decorator.
         '''
         name = func.__name__
-        if name in _equiv_prover_name_to_tenses:
+        if name in _equality_prover_name_to_tenses:
             # This name was used before; make sure past and present
             # tenses are consistent.
             previous_tenses = (
-                _equiv_prover_name_to_tenses[name])
+                _equality_prover_name_to_tenses[name])
             current_tenses = (past_tense, present_tense)
             if (previous_tenses != current_tenses):
                 raise InconsistentTenseNames(func, previous_tenses, 
                                              current_tenses)
         else:
-            _equiv_prover_name_to_tenses[name] = (
+            _equality_prover_name_to_tenses[name] = (
                     past_tense, present_tense)
         is_simplification_method = (name == 'simplification')
         is_evaluation_method = (name == 'evaluation')
@@ -195,7 +195,7 @@ def equivalence_prover(past_tense, present_tense):
 
         def wrapper(*args, **kwargs):   
             '''
-            The wrapper for the equivalence_prover decorator.
+            The wrapper for the equality_prover decorator.
             '''
             from proveit._core_.expression.expr import Expression
             from proveit.relation import TransitiveRelation
@@ -239,7 +239,7 @@ def equivalence_prover(past_tense, present_tense):
             proven_expr = proven_truth.expr
             if not isinstance(proven_expr, TransitiveRelation):
                 raise TypeError(
-                        "@equivalence_prover, %s, expected to prove a "
+                        "@equality_prover, %s, expected to prove a "
                         "TranstiveRelation expression (more "
                         "specifically, the EquivalenceClass type "
                         "of relation), not %s of type %s."
@@ -247,7 +247,7 @@ def equivalence_prover(past_tense, present_tense):
             if not isinstance(proven_expr, 
                               proven_expr.__class__.EquivalenceClass()):
                 raise TypeError(
-                        "@equivalence_prover, %s, expected to prove a "
+                        "@equality_prover, %s, expected to prove a "
                         "TranstiveRelation of the EquivalenceClass, "
                         "not %s of type %s."
                         %(func, proven_expr, proven_expr.__class__))
@@ -256,12 +256,12 @@ def equivalence_prover(past_tense, present_tense):
             elif hasattr(_self, 'expr'):
                 expr = _self.expr
             else:
-                raise TypeError("@equivalence_prover, %s, expected to be "
+                raise TypeError("@equality_prover, %s, expected to be "
                                 "a method for an Expression type or it "
                                 "must have an 'expr' attribute."%func)
             if proven_expr.lhs != expr:
                 raise TypeError(
-                        "@equivalence_prover, %s, expected to prove an "
+                        "@equality_prover, %s, expected to prove an "
                         "equivalence relation with %s on its left side "
                         "('lhs').  %s does not satisfy this "
                         "requirement."%(func, expr, proven_expr))
@@ -301,15 +301,15 @@ def equivalence_prover(past_tense, present_tense):
                             %(_self, func, proven_expr.rhs))
             return proven_truth
 
-        _equiv_prover_fn_to_tenses[wrapper] = (past_tense, present_tense)
+        _equality_prover_fn_to_tenses[wrapper] = (past_tense, present_tense)
         return _wraps(func, wrapper)
 
     return wrapper_maker
 
 """
-def equivalence_prover(past_tense, present_tense):
+def equality_prover(past_tense, present_tense):
     '''
-    @equivalence_prover works the same way as the @prover decorator
+    @equality_prover works the same way as the @prover decorator
     except that it also registers the "equivalence method" in
     InnerExpr with the past tense and present tense names.  The method
     name itself should be a noun form and return the proven equivalence
@@ -346,19 +346,19 @@ def equivalence_prover(past_tense, present_tense):
             proven_truth = _make_decorated_prover(self.func)(*args, **kwargs)
             proven_expr = proven_truth.expr
             if not isinstance(proven_expr, TransitiveRelation):
-                raise TypeError("@equivalence_prover expected to prove a "
+                raise TypeError("@equality_prover expected to prove a "
                                 "TranstiveRelation expression (more "
                                 "specifically, the EquivalenceClass type of "
                                 "relation), not %s of type %s"
                                 %(proven_expr, proven_expr.__class__))
             if not isinstance(proven_expr, 
                               proven_expr.__class__.EquivalenceClass()):
-                raise TypeError("@equivalence_prover expected to prove a "
+                raise TypeError("@equality_prover expected to prove a "
                                 "TranstiveRelation of the EquivalenceClass, "
                                 "not %s of type %s"
                                 %(proven_expr, proven_expr.__class__))
             if proven_expr.lhs != self.func.__self__:
-                raise TypeError("@equivalence_prover expected to prove an "
+                raise TypeError("@equality_prover expected to prove an "
                                 "equivalence relation with 'self', %s, on "
                                 "its left side ('lhs').  %s does not satisfy "
                                 "this requirement"%(self, proven_expr))

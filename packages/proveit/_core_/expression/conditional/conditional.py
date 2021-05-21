@@ -1,4 +1,4 @@
-from proveit.decorators import prover, equivalence_prover
+from proveit.decorators import prover, equality_prover
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.expression.composite import is_single
 from proveit._core_.defaults import defaults, USE_DEFAULTS
@@ -136,7 +136,7 @@ class Conditional(Expression):
     '''
 
 
-    @equivalence_prover('simplified', 'simplify')
+    @equality_prover('simplified', 'simplify')
     def simplification(self, **defaults_config):
         from proveit.relation import TransRelUpdater
         from proveit.logic import And
@@ -163,7 +163,7 @@ class Conditional(Expression):
         
         return eq.relation
 
-    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, **defaults_config):
         '''
         Handles various Conditional reductions:

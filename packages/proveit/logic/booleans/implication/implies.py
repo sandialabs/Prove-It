@@ -1,6 +1,6 @@
 from proveit import (Literal, Operation, defaults, USE_DEFAULTS, 
                      composite_expression, ProofFailure,
-                     prover, equivalence_prover)
+                     prover, equality_prover)
 from proveit.logic.booleans.negation import Not
 from proveit import A, B, C
 from proveit import TransitiveRelation
@@ -335,9 +335,9 @@ class Implies(TransitiveRelation):
             return to_contraposition.instantiate(
                 {A: self.antecedent, B: self.consequent})
 
-    @equivalence_prover('evaluated', 'evaluate')
+    @equality_prover('evaluated', 'evaluate')
     def evaluation(self, **defaults_config):
-        # @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+        # @equality_prover('shallow_evaluated', 'shallow_evaluate')
         # def shallow_evaluation(self, **defaults_config):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and

@@ -1,5 +1,5 @@
 from proveit import (Literal, Operation, defaults, USE_DEFAULTS,
-                     prover, equivalence_prover)
+                     prover, equality_prover)
 
 
 class InSet(Operation):
@@ -181,7 +181,7 @@ class InSet(Operation):
                 if known_membership.is_applicable(assumptions):
                     yield known_membership
 
-    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    @equality_prover('shallow_evaluated', 'shallow_evaluate')
     def shallow_evaluation(self, **defaults_config):
         '''
         Attempt to evaluate whether some x ∊ S is TRUE or FALSE
@@ -235,7 +235,7 @@ class Membership:
             "Membership object, %s, has no 'conclude' method implemented" % str(
                 self.__class__))
 
-    @equivalence_prover('defined', 'define')
+    @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
         raise NotImplementedError(
             "Membership object, %s, has no 'definition' method implemented" % str(

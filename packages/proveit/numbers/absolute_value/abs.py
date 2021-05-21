@@ -1,5 +1,5 @@
 from proveit import (defaults, Literal, Operation, ExprRange, InnerExpr,
-                     ProofFailure, USE_DEFAULTS, equivalence_prover)
+                     ProofFailure, USE_DEFAULTS, equality_prover)
 from proveit import a, b, c, n, r, x, theta
 from proveit.logic import InSet
 from proveit.logic.sets import ProperSubset, SubsetEq
@@ -35,7 +35,7 @@ class Abs(NumberOperation):
         return abs_is_non_neg.instantiate(
             {a: self.operand}, assumptions=assumptions)
 
-    @equivalence_prover('distributed', 'distribute')
+    @equality_prover('distributed', 'distribute')
     def distribution(self, **defaults_config):
         '''
         Equate this absolute value with its distribution over a product
@@ -58,7 +58,7 @@ class Abs(NumberOperation):
                 'Unsupported operand type for Abs.distribution() '
                 'method: ', str(self.operand.__class__))
 
-    @equivalence_prover('abs_eliminated', 'abs_eliminate')
+    @equality_prover('abs_eliminated', 'abs_eliminate')
     def abs_elimination(self, operand_type=None, **defaults_config):
         '''
         For some |x| expression, deduce either |x| = x (the default) OR
@@ -92,7 +92,7 @@ class Abs(NumberOperation):
                                            assumptions=assumptions,
                                            reductions=reductions)
 
-    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, **defaults_config):
         '''
         Returns a proven simplification equation for this Abs
@@ -200,7 +200,7 @@ class Abs(NumberOperation):
         # Default is no simplification.
         return Equals(self, self).prove()
 
-    @equivalence_prover('reversed_difference', 'reverse_difference')
+    @equality_prover('reversed_difference', 'reverse_difference')
     def difference_reversal(self, **defaults_config):
         '''
         Derive |a - b| = |b - a|.
@@ -301,7 +301,7 @@ class Abs(NumberOperation):
                 {theta:_theta}, reductions=reductions,
                 assumptions=assumptions)
 
-    @equivalence_prover('chord_length_simplified', 'chord_length_simplify')
+    @equality_prover('chord_length_simplified', 'chord_length_simplify')
     def chord_length_simplification(self, **defaults_config):
         '''
         |r exp(i a) - r exp(i b)| = 2 r sin(|a - b|/2)   or

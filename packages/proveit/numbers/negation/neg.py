@@ -1,6 +1,6 @@
 from proveit import (Literal, Operation, maybe_fenced_string, 
                      maybe_fenced_latex, InnerExpr, defaults, USE_DEFAULTS, 
-                     ProofFailure, equivalence_prover)
+                     ProofFailure, equality_prover)
 from proveit.logic import is_irreducible_value
 from proveit.numbers.number_sets import (
         Natural, NaturalPos, 
@@ -102,7 +102,7 @@ class Neg(NumberOperation):
         raise NotImplementedError(
             "No negation closure theorem for set %s" %str(number_set))
 
-    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    @equality_prover('shallow_evaluated', 'shallow_evaluate')
     def shallow_evaluation(self, **defaults_config):
         '''
         Returns a proven evaluation equation for this Neg
@@ -122,7 +122,7 @@ class Neg(NumberOperation):
             return self.double_neg_simplification()
         raise EvaluationError(self)
 
-    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, **defaults_config):
         '''
         Returns a proven simplification equation for this Neg
@@ -143,7 +143,7 @@ class Neg(NumberOperation):
             expr = eq.update(expr.simplification())
         return eq.relation
 
-    @equivalence_prover('double_neg_simplified', 'double_neg_simplify')
+    @equality_prover('double_neg_simplified', 'double_neg_simplify')
     def double_neg_simplification(self, **defaults_config):
         from . import double_negation
         assert isinstance(
@@ -194,7 +194,7 @@ class Neg(NumberOperation):
                 fence=True),
             **kwargs)
 
-    @equivalence_prover('distributed', 'distribute')
+    @equality_prover('distributed', 'distribute')
     def distribution(self, **defaults_config):
         '''
         Distribute negation through a sum, deducing and returning
@@ -239,7 +239,7 @@ class Neg(NumberOperation):
             raise Exception(
                 'Only negation distribution through a sum or subtract is implemented')
 
-    @equivalence_prover('factorized', 'factor')
+    @equality_prover('factorized', 'factor')
     def factorization(self, the_factor, pull="left", group_factor=None,
                       group_remainder=None, **defaults_config):
         '''
@@ -286,7 +286,7 @@ class Neg(NumberOperation):
             return thm.instantiate(
                 {x: self.operand}).derive_reversed()
 
-    @equivalence_prover('inner_neg_mult_simplified',
+    @equality_prover('inner_neg_mult_simplified',
                         'inner_neg_mult_simplify')
     def inner_neg_mult_simplification(self, idx, **defaults_config):
         '''

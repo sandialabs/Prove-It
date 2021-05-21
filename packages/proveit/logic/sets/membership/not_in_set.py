@@ -1,4 +1,4 @@
-from proveit import Literal, Operation, defaults, USE_DEFAULTS, equivalence_prover
+from proveit import Literal, Operation, defaults, USE_DEFAULTS, equality_prover
 from proveit import x, S
 
 
@@ -152,7 +152,7 @@ class NotInSet(Operation):
         return fold_not_in_set.instantiate(
             {x: self.element, S: self.domain}, assumptions=assumptions)
 
-    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    @equality_prover('shallow_evaluated', 'shallow_evaluate')
     def shallow_evaluation(self, **defaults_config):
         '''
         Attempt to evaluate whether some x ∉ S is TRUE or FALSE
@@ -207,7 +207,7 @@ class Nonmembership:
         raise NotImplementedError(
             "Nonmembership object has no 'conclude' method implemented")
 
-    @equivalence_prover('defined', 'define')
+    @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
         raise NotImplementedError(
             "Nonmembership object has no 'definition' method implemented")

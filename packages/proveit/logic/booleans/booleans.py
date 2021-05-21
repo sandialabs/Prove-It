@@ -1,5 +1,5 @@
 from proveit import (Function, Literal, USE_DEFAULTS, ProofFailure,
-                     defaults, equivalence_prover, prover)
+                     defaults, equality_prover, prover)
 from proveit.logic.irreducible_value import IrreducibleValue
 from proveit.logic.sets.membership import Membership, Nonmembership
 from proveit import A, C, P, Q
@@ -192,7 +192,7 @@ class BooleanMembership(Membership):
         raise ProofFailure(in_bool(element), defaults.assumptions, str(
             element) + ' not proven to be equal to TRUE or FALSE.')
 
-    @equivalence_prover('defined', 'define')
+    @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
         '''
         Deduce [(element in Boolean) = 
@@ -251,7 +251,7 @@ class BooleanNonmembership(Nonmembership):
     def __init__(self, element):
         Nonmembership.__init__(self)
 
-    @equivalence_prover("defined", "define")
+    @equality_prover("defined", "define")
     def definition(self, element, **defaults_config):
         '''
         Derive [(element not in Boolean) = [(element != TRUE) and (element != FALSE)].

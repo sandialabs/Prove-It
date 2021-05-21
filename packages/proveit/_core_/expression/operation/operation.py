@@ -1,5 +1,5 @@
 import inspect
-from proveit.decorators import equivalence_prover
+from proveit.decorators import equality_prover
 from proveit._core_.expression.expr import Expression, ImproperReplacement
 from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_.defaults import defaults, USE_DEFAULTS
@@ -559,7 +559,7 @@ class Operation(Expression):
             self._core_info, subbed_sub_exprs, 
             style_preferences=self._style_data.styles)
 
-    @equivalence_prover('evaluated', 'evaluate')
+    @equality_prover('evaluated', 'evaluate')
     def evaluation(self, **defaults_config):
         '''
         If possible, return a Judgment of this expression equal to an
@@ -583,7 +583,7 @@ class Operation(Expression):
         evaluation = reduction.rhs.shallow_evaluation()
         return reduction.apply_transitivity(evaluation)
 
-    @equivalence_prover('simplified', 'simplify')
+    @equality_prover('simplified', 'simplify')
     def simplification(self, **defaults_config):
         '''
         If possible, return a Judgment of this expression equal to a
@@ -617,7 +617,7 @@ class Operation(Expression):
         #   But in the shallow simplification, we'll do a factorization
         #   that will exploit the "reduction" fact which wouldn't
         #   otherwise be used because (1*b + 3*b) is a preserved
-        #   expression inse simplification is an @equivalence_prover.
+        #   expression inse simplification is an @equality_prover.
         simplification = reduction.rhs.shallow_simplification(
                 replacements=[reduction])
         return reduction.apply_transitivity(simplification)

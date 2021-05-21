@@ -1,6 +1,6 @@
 from proveit import (Expression, Literal, Operation, Conditional,
                      defaults, USE_DEFAULTS, ProofFailure, InnerExpr,
-                     prover, equivalence_prover)
+                     prover, equality_prover)
 from proveit.logic.equality import SimplificationError
 from proveit import j, k, l, m, n, A, B, C, D, E, F, G
 from proveit.logic.booleans.booleans import in_bool
@@ -326,7 +326,7 @@ class And(Operation):
                 'derive_right only applicable for binary conjunction operations')
         return self.derive_any(1)
 
-    @equivalence_prover('unary_reduced', 'unary_reduce')
+    @equality_prover('unary_reduced', 'unary_reduce')
     def unary_reduction(self, **defaults_config):
         from proveit.logic.booleans.conjunction import \
             unary_and_reduction
@@ -461,7 +461,7 @@ class And(Operation):
         return redundant_conjunction.instantiate(
             {n: self.operands[0].end_index, A: _A})
 
-    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    @equality_prover('shallow_evaluated', 'shallow_evaluate')
     def shallow_evaluation(self, **defaults_config):
         '''
         Attempt to determine whether this conjunction, with
@@ -500,7 +500,7 @@ class And(Operation):
 
     
     """
-    @equivalence_prover('evaluated', 'evaluate')
+    @equality_prover('evaluated', 'evaluate')
     def evaluation(self, **defaults_config):
         '''
         Attempt to determine whether this conjunction evaluates
@@ -575,7 +575,7 @@ class And(Operation):
         return Operation.evaluation(self, automation=False)
     """
     
-    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, **defaults_config):
         '''
         Return the "And(a) = a" simplification if applicable,
@@ -600,7 +600,7 @@ class And(Operation):
         _m = _A.num_elements()
         return closure.instantiate({m: _m, A: _A})
 
-    @equivalence_prover('commuted', 'commute')
+    @equality_prover('commuted', 'commute')
     def commutation(self, init_idx=None, final_idx=None,
                     **defaults_config):
         '''
@@ -618,7 +618,7 @@ class And(Operation):
             leftward_commutation,
             rightward_commutation)
 
-    @equivalence_prover('group_commuted', 'group_commute')
+    @equality_prover('group_commuted', 'group_commute')
     def group_commutation(self, init_idx, final_idx, length,
                           disassociate=True, **defaults_config):
         '''
@@ -661,7 +661,7 @@ class And(Operation):
         return group_commute(
             self, init_idx, final_idx, length, disassociate)
 
-    @equivalence_prover('associated', 'associate')
+    @equality_prover('associated', 'associate')
     def association(self, start_idx, length, **defaults_config):
         '''
         Given Boolean operands, deduce that this expression is equal to 
@@ -687,7 +687,7 @@ class And(Operation):
         return apply_association_thm(
             self, start_idx, length, associate)
 
-    @equivalence_prover('disassociated', 'disassociate')
+    @equality_prover('disassociated', 'disassociate')
     def disassociation(self, idx, **defaults_config):
         '''
         Given Boolean operands, deduce that this expression is equal to

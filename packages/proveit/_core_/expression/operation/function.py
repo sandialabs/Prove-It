@@ -1,4 +1,4 @@
-from proveit.decorators import equivalence_prover
+from proveit.decorators import equality_prover
 from .operation import Operation
 
 
@@ -25,7 +25,7 @@ class Function(Operation):
         assert first[0]=='operation'
         return options
 
-    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    @equality_prover('shallow_evaluated', 'shallow_evaluate')
     def shallow_evaluation(self, **defaults_config):
         '''
         For a generic Function expression (e.g., "f(x)"), there is

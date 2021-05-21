@@ -1,5 +1,5 @@
 from proveit import (Literal, Operation, USE_DEFAULTS, 
-                     UnsatisfiedPrerequisites, prover, equivalence_prover)
+                     UnsatisfiedPrerequisites, prover, equality_prover)
 from .equals import Equals
 from proveit.logic.irreducible_value import is_irreducible_value
 from proveit import x, y, A, X
@@ -103,7 +103,7 @@ class NotEquals(Relation):
         if self.rhs == FALSE:
             return not_equals_false.instantiate({A: self.lhs})
 
-    @equivalence_prover('defined', 'define')
+    @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
         '''
         Return (x != y) = Not(x=y) where self represents (x != y).
@@ -133,7 +133,7 @@ class NotEquals(Relation):
         return fold_not_equals.instantiate(
             {x: self.lhs, y: self.rhs})
 
-    @equivalence_prover('evaluated', 'evaluate')
+    @equality_prover('evaluated', 'evaluate')
     def evaluation(self, **defaults_config):
         '''
         Evaluate A ≠ B via evaluating ￢(A = B), 

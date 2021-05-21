@@ -1,5 +1,5 @@
 from proveit import (Literal, Operation, USE_DEFAULTS, 
-                     prover, equivalence_prover)
+                     prover, equality_prover)
 from proveit.logic.booleans.conjunction import compose
 from .implies import Implies
 from proveit import A, B, C
@@ -160,7 +160,7 @@ class Iff(TransitiveRelation):
             assert False, ('transitivity cannot be applied unless there '
                            'is something in common in the equalities')
 
-    @equivalence_prover("defined", "define")
+    @equality_prover("defined", "define")
     def definition(self, **defaults_config):
         '''
         Return (A <=> B) = [(A => B) and (B => A)] where self represents (A <=> B).
@@ -176,7 +176,7 @@ class Iff(TransitiveRelation):
         from . import iff_intro
         return iff_intro.instantiate({A: self.A, B: self.B})
 
-    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    @equality_prover('shallow_evaluated', 'shallow_evaluate')
     def shallow_evaluation(self, **defaults_config):
         # def evaluation(self, **defaults_config):
         '''

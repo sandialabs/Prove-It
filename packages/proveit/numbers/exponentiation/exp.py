@@ -1,6 +1,6 @@
 from proveit import (Literal, Function, ExprTuple, InnerExpr, ProofFailure,
                      maybe_fenced_string, USE_DEFAULTS, defaults,
-                     StyleOptions, equivalence_prover)
+                     StyleOptions, equality_prover)
 from proveit.logic import InSet, Membership
 import proveit
 from proveit import a, b, c, k, m, n, x, S
@@ -88,7 +88,7 @@ class Exp(NumberOperation):
         elif number_set == Complex:
             return complex.theorems.pow_closure
 
-    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    @equality_prover('shallow_evaluated', 'shallow_evaluate')
     def shallow_evaluation(self, **defaults_config):
         '''
         Returns a proven evaluation equation for this Exp
@@ -140,7 +140,7 @@ class Exp(NumberOperation):
                                   '(zero or one for the base or exponent).',
                                   assumptions)
 
-    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, **defaults_config):
         '''
         Returns a proven simplification equation for this Exp
@@ -286,7 +286,7 @@ class Exp(NumberOperation):
             kwargs['force_fence'] if 'force_fence' in kwargs else False)
         return maybe_fenced_string(inner_str, **kwargs)
 
-    @equivalence_prover('distributed', 'distribute')
+    @equality_prover('distributed', 'distribute')
     def distribution(self, **defaults_config):
         '''
         Equate this exponential to a form in which the exponent

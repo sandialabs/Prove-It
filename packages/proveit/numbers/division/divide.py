@@ -1,6 +1,6 @@
 from proveit import (Judgment, Expression, Literal, maybe_fenced_latex, 
                      Function, ExprTuple, InnerExpr, USE_DEFAULTS,
-                     UnsatisfiedPrerequisites, equivalence_prover)
+                     UnsatisfiedPrerequisites, equality_prover)
 from proveit import TransRelUpdater
 from proveit import a, b, c, m, n, w, x, y, z
 from proveit.numbers import NumberOperation
@@ -63,7 +63,7 @@ class Div(NumberOperation):
             return 'frac'  # use a different constructor if using the fraction style
         return Operation.remake_constructor(self)
 
-    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, **defaults_config):
         '''
         Returns a proven simplification equation for this Divide
@@ -104,7 +104,7 @@ class Div(NumberOperation):
         raise Exception('Unable to combine exponents of this fraction')
     """
 
-    @equivalence_prover('all_canceled', 'all_cancel')
+    @equality_prover('all_canceled', 'all_cancel')
     def cancelations(self, **defaults_config):
         '''
         Deduce and return an equality between self and a form in which
@@ -132,7 +132,7 @@ class Div(NumberOperation):
 
         return eq.relation
 
-    @equivalence_prover('canceled', 'cancel')
+    @equality_prover('canceled', 'cancel')
     def cancelation(self, term_to_cancel, **defaults_config):
         '''
         Deduce and return an equality between self and a form in which
@@ -186,7 +186,7 @@ class Div(NumberOperation):
                  z: expr.denominator.operands[1]}))
             return eq.relation
 
-    @equivalence_prover('deep_eliminated_ones', 'deep_eliminate_ones')
+    @equality_prover('deep_eliminated_ones', 'deep_eliminate_ones')
     def deep_one_eliminations(self, **defaults_config):
         '''
         Eliminate ones from the numerator, the denominator,
@@ -217,7 +217,7 @@ class Div(NumberOperation):
         return frac_one_denom.instantiate({x: self.numerator},
                                           assumptions=assumptions)
 
-    @equivalence_prover('factorized', 'factor')
+    @equality_prover('factorized', 'factor')
     def factorization(self, the_factor, pull="left",
                       group_factor=True, group_remainder=True,
                       **defaults_config):
@@ -372,7 +372,7 @@ class Div(NumberOperation):
                 "Unsupported operand type to distribute over: " +
                 self.numerator.__class__)
 
-    @equivalence_prover('combined_exponents', 'combine_exponents')
+    @equality_prover('combined_exponents', 'combine_exponents')
     def exponent_combination(self, start_idx=None, end_idx=None,
                              **defaults_config):
         '''
