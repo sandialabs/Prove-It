@@ -1,8 +1,9 @@
-from proveit import Literal, Operation, defaults, USE_DEFAULTS, equivalence_prover
+from proveit import Literal, defaults, USE_DEFAULTS, equality_prover
 from proveit import x, S
+from proveit.relation import Relation
 
 
-class NotInSet(Operation):
+class NotInSet(Relation):
     # operator of the NotInSet operation
     _operator_ = Literal(string_format='not-in',
                          latex_format=r'\notin',
@@ -16,8 +17,8 @@ class NotInSet(Operation):
     notinset_expressions = dict()
 
     def __init__(self, element, domain, *, styles=None):
-        Operation.__init__(self, NotInSet._operator_, (element, domain),
-                           styles=styles)
+        Relation.__init__(self, NotInSet._operator_, element, domain,
+                          styles=styles)
         self.element = self.operands[0]
         self.domain = self.operands[1]
         NotInSet.notinset_expressions[(self.element, self.domain)] = self
@@ -152,7 +153,7 @@ class NotInSet(Operation):
         return fold_not_in_set.instantiate(
             {x: self.element, S: self.domain}, assumptions=assumptions)
 
-    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    @equality_prover('shallow_evaluated', 'shallow_evaluate')
     def shallow_evaluation(self, **defaults_config):
         '''
         Attempt to evaluate whether some x ∉ S is TRUE or FALSE
@@ -207,7 +208,7 @@ class Nonmembership:
         raise NotImplementedError(
             "Nonmembership object has no 'conclude' method implemented")
 
-    @equivalence_prover('defined', 'define')
+    @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
         raise NotImplementedError(
             "Nonmembership object has no 'definition' method implemented")

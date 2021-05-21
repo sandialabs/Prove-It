@@ -1,5 +1,5 @@
 from proveit import (defaults, USE_DEFAULTS, ExprTuple,
-                     prover, equivalence_prover)
+                     prover, equality_prover)
 from proveit.logic import Membership, Nonmembership
 from proveit.numbers import num
 from proveit import a, b, c, m, n, x, y
@@ -47,7 +47,7 @@ class EnumMembership(Membership):
                 return fold.instantiate({n: _n, x: self.element, y:_y}, 
                                         assumptions=assumptions)
 
-    @equivalence_prover('defined', 'define')
+    @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
         '''
         From the EnumMembership object [element in {a, ..., n}],
@@ -120,7 +120,7 @@ class EnumNonmembership(Nonmembership):
         '''
         yield self.unfold
 
-    @equivalence_prover('defined', 'define')
+    @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
         '''
         Deduce and return

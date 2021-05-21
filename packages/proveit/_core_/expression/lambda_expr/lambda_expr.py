@@ -5,7 +5,7 @@ from proveit._core_.expression.expr import (Expression, MakeNotImplemented,
 from proveit._core_.expression.label.var import safe_dummy_var, safe_dummy_vars
 from proveit._core_.expression.composite import is_single
 from proveit._core_.defaults import defaults, USE_DEFAULTS
-from proveit.decorators import equivalence_prover
+from proveit.decorators import equality_prover
 
 def get_param_var(parameter, *, _required_indices=None):
     '''
@@ -1018,7 +1018,7 @@ class Lambda(Expression):
                 return Lambda(lambda1.parameters,
                               lambda1.body.replaced(lambda1_expr_sub_map))
     
-    @equivalence_prover('substituted', 'substitute')
+    @equality_prover('substituted', 'substitute')
     def substitution(self, universal_eq, **defaults_config):
         '''
         Equate this Lambda, 

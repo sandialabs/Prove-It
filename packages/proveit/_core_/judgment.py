@@ -969,7 +969,7 @@ class Judgment:
                               equiv_alt_expansions=equiv_alt_expansions,
                               assumptions=defaults.assumptions))
         finally:
-            # Revert the preserve_exprs set back to what it was.
+            # Revert the preserved_exprs set back to what it was.
             defaults.preserved_exprs.difference_update(
                     temporarily_preserved_exprs)
 

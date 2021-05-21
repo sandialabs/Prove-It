@@ -1,7 +1,7 @@
 from proveit import (Literal, Function, Lambda, OperationOverInstances,
                      ExprTuple, ExprRange, IndexedVar,
                      defaults, USE_DEFAULTS, ProofFailure,
-                     prover, equivalence_prover)
+                     prover, equality_prover)
 from proveit import k, n, x, A, B, P, S
 from proveit._core_.proof import Generalization
 
@@ -339,7 +339,7 @@ class Forall(OperationOverInstances):
         '''
         return self.prove().instantiate(repl_map)
     
-    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    @equality_prover('shallow_evaluated', 'shallow_evaluate')
     def shallow_evaluation(self, **defaults_config):
         '''
         From this forall statement, evaluate it to TRUE or FALSE if

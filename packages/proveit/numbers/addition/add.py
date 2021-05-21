@@ -1,6 +1,6 @@
 from proveit import (Expression, Judgment, Literal, Operation, ExprTuple,
                      ExprRange, defaults, USE_DEFAULTS, StyleOptions, 
-                     prover, equivalence_prover,
+                     prover, equality_prover,
                      maybe_fenced_latex, ProofFailure, InnerExpr,
                      UnsatisfiedPrerequisites,
                      SimplificationDirectives)
@@ -294,7 +294,7 @@ class Add(NumberOperation):
             auto_simplify=False)
         return deduction
 
-    @equivalence_prover('multiplied', 'multiply')
+    @equality_prover('multiplied', 'multiply')
     def conversion_to_multiplication(self, **defaults_config):
         '''
         From the addition of the same values, derive and return
@@ -322,7 +322,7 @@ class Add(NumberOperation):
         _x = self.operands[1]
         return mult_def_rev.instantiate({n: _n, a: _a, x: _x})
 
-    @equivalence_prover('all_canceled', 'all_cancel')
+    @equality_prover('all_canceled', 'all_cancel')
     def cancelations(self, **defaults_config):
         '''
         Deduce and return an equality between self and a form in which
@@ -369,7 +369,7 @@ class Add(NumberOperation):
                         _i - i_shift, _j - j_shift, auto_simplify=False))
         return eq.relation
 
-    @equivalence_prover('canceled', 'cancel')
+    @equality_prover('canceled', 'cancel')
     def cancelation(self, idx1, idx2, **defaults_config):
         '''
         Attempt a simple cancelation between operands at index i and j.
@@ -433,7 +433,7 @@ class Add(NumberOperation):
                     *[update_pos(p) for p in sub_positions])
             return spec
 
-    @equivalence_prover('eliminated_zeros', 'eliminate_zeros')   
+    @equality_prover('eliminated_zeros', 'eliminate_zeros')   
     def zero_eliminations(self, **defaults_config):
         '''
         Derive and return this Add expression equal to a form in which
@@ -458,7 +458,7 @@ class Add(NumberOperation):
 
         return eq.relation
 
-    @equivalence_prover('eliminated_zero', 'eliminate_zero')
+    @equality_prover('eliminated_zero', 'eliminate_zero')
     def zero_elimination(self, idx, **defaults_config):
         '''
         Derive and return this Add expression equal to a form in which
@@ -626,7 +626,7 @@ class Add(NumberOperation):
 
         return hold, order
 
-    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    @equality_prover('shallow_evaluated', 'shallow_evaluate')
     def shallow_evaluation(self, **defaults_config):
         '''
         Returns a proven evaluation equation for this Add
@@ -678,7 +678,7 @@ class Add(NumberOperation):
 
         raise EvaluationError(self)
 
-    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, **defaults_config):
         '''
         Returns a proven simplification equation for this Add
@@ -1124,7 +1124,7 @@ class Add(NumberOperation):
                 raise ValueError("Term is absent!")
         return (idx, num) if also_return_num else idx
 
-    @equivalence_prover('factorized', 'factor')
+    @equality_prover('factorized', 'factor')
     def factorization(self, the_factor, pull="left", group_factor=True,
                       **defaults_config):
         '''
@@ -1197,7 +1197,7 @@ class Add(NumberOperation):
         eq.update(distribution.derive_reversed())
         return eq.relation
 
-    @equivalence_prover('commuted', 'commute')
+    @equality_prover('commuted', 'commute')
     def commutation(self, init_idx=None, final_idx=None, 
                     **defaults_config):
         '''
@@ -1222,7 +1222,7 @@ class Add(NumberOperation):
         '''
         return eq
 
-    @equivalence_prover('group_commuted', 'group_commute')
+    @equality_prover('group_commuted', 'group_commute')
     def group_commutation(self, init_idx, final_idx, length,
                           disassociate=True, **defaults_config):
         '''
@@ -1236,7 +1236,7 @@ class Add(NumberOperation):
         return group_commutation(
             self, init_idx, final_idx, length, disassociate=disassociate)
 
-    @equivalence_prover('associated', 'associate')
+    @equality_prover('associated', 'associate')
     def association(self, start_idx, length, **defaults_config):
         '''
         Given numerical operands, deduce that this expression is equal 
@@ -1262,7 +1262,7 @@ class Add(NumberOperation):
         '''
         return eq
 
-    @equivalence_prover('disassociated', 'disassociate')
+    @equality_prover('disassociated', 'disassociate')
     def disassociation(self, idx, **defaults_config):
         '''
         Given numerical operands, deduce that this expression is equal 

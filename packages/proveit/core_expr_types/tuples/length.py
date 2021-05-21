@@ -1,7 +1,7 @@
 from proveit import (Expression, Lambda, Operation, Literal, safe_dummy_var,
                      single_or_composite_expression, ExprTuple,
                      ExprRange, InnerExpr, defaults, USE_DEFAULTS,
-                     equivalence_prover)
+                     equality_prover)
 from proveit import a, b, c, d, e, f, g, h, i, j, k, n, x, y
 
 
@@ -42,7 +42,7 @@ class Len(Operation):
     def latex(self, **kwargs):
         return '|' + self.operand.latex() + '|'
 
-    @equivalence_prover('computed', 'compute')
+    @equality_prover('computed', 'compute')
     def computation(self, **defaults_config):
         '''
         Compute this Len expression, returning the equality
@@ -252,7 +252,7 @@ class Len(Operation):
             return general_len.instantiate(
                 {n: _n, f: _f, i: _i, j: _j})
 
-    @equivalence_prover('typical_form', 'typify')
+    @equality_prover('typical_form', 'typify')
     def typical_eq(self, **defaults_config):
         '''
         Attempt to prove that this Len expression is equal to
@@ -380,7 +380,7 @@ class Len(Operation):
             return lhs_computation.apply_transitivity(
                 eq, assumptions=assumptions)
 
-    @equivalence_prover('evaluated', 'evaluate')
+    @equality_prover('evaluated', 'evaluate')
     def evaluation(self, **defaults_config):
         '''
         Returns a proven evaluations equation for this Len
@@ -390,7 +390,7 @@ class Len(Operation):
         computation = self.computation()
         return computation.inner_expr().rhs.evaluate()
 
-    @equivalence_prover('simplified', 'simplify')
+    @equality_prover('simplified', 'simplify')
     def simplification(self, **defaults_config):
         '''
         Returns a proven simplification equation for this Len

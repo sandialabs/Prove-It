@@ -1,5 +1,5 @@
 from proveit import (Literal, Operation, USE_DEFAULTS, 
-                     equivalence_prover, prover)
+                     equality_prover, prover)
 from .set_equiv import SetEquiv
 # from .equals import Equals
 from proveit.logic.irreducible_value import is_irreducible_value
@@ -99,7 +99,7 @@ class SetNotEquiv(Operation):
     # return not_equals_false.instantiate({A:self.lhs},
     # assumptions=assumptions)
 
-    @equivalence_prover('defined', 'define')
+    @equality_prover('defined', 'define')
     def definition(self,  **defaults_config):
         '''
         Return (A not_equiv B) = Not(A equiv B) where self represents

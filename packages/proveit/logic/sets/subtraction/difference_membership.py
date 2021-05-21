@@ -1,4 +1,4 @@
-from proveit import USE_DEFAULTS, equivalence_prover
+from proveit import USE_DEFAULTS, equality_prover
 from proveit.logic import Membership, Nonmembership
 from proveit import m, x, y, A, B, S
 
@@ -37,7 +37,7 @@ class DifferenceMembership(Membership):
         return membership_folding.instantiate(
             {x: self.element, A: _A, B: _B}, assumptions=assumptions)
 
-    @equivalence_prover('defined', 'define')
+    @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
         '''
         Deduce and return something of the form
@@ -103,7 +103,7 @@ class DifferenceNonmembership(Nonmembership):
         return nonmembership_folding.instantiate(
             {x: self.element, A: _A, B: _B}, assumptions=assumptions)
 
-    @equivalence_prover('defined', 'define')
+    @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
         '''
         Deduce and return something of the form 

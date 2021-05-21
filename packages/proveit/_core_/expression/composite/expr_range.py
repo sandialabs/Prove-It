@@ -9,7 +9,7 @@ from proveit._core_.expression.composite import singular_expression, ExprTuple
 from proveit._core_.expression.conditional import Conditional
 from proveit._core_.proof import ProofFailure
 from proveit._core_.defaults import defaults, USE_DEFAULTS
-from proveit.decorators import equivalence_prover
+from proveit.decorators import equality_prover
 
 class ExprRange(Expression):
     '''
@@ -1155,7 +1155,7 @@ class ExprRange(Expression):
         return nested_range(parameters, new_inner_body, start_indices,
                             end_indices)
 
-    @equivalence_prover('partitioned', 'partition')
+    @equality_prover('partitioned', 'partition')
     def partition(self, before_split_idx, **defaults_config):
         '''
         Return the equation between this range within an ExprTuple

@@ -1,5 +1,5 @@
 from proveit import (defaults, ExprTuple, Function, InnerExpr, Literal,
-                     var_range, USE_DEFAULTS, prover, equivalence_prover)
+                     var_range, USE_DEFAULTS, prover, equality_prover)
 from proveit.abstract_algebra.generic_methods import (
     apply_commutation_thm, generic_permutation)
 
@@ -134,7 +134,7 @@ class Set(Function):
                 {n: n_sub, ExprTuple(var_range_update): var_range_sub,
                  x: x_sub, Px: Px_sub}, num_forall_eliminations=3)
 
-    @equivalence_prover('moved', 'move')
+    @equality_prover('moved', 'move')
     def permutation_move(self, init_idx=None, final_idx=None,
                          **defaults_config):
         '''
@@ -152,7 +152,7 @@ class Set(Function):
             self, init_idx, final_idx, binary_permutation,
             leftward_permutation, rightward_permutation)
 
-    @equivalence_prover('swapped', 'swap')
+    @equality_prover('swapped', 'swap')
     def permutation_swap(self, idx01=None, idx02=None, **defaults_config):
         '''
         Deduce that this Set expression is equal to a Set in which the
@@ -178,7 +178,7 @@ class Set(Function):
 
         return self.permutation(new_order=new_order)
 
-    @equivalence_prover('permuted', 'permute')
+    @equality_prover('permuted', 'permute')
     def permutation(self, new_order=None, cycles=None, **defaults_config):
         '''
         Deduce that this Set expression is equal to a Set in which
@@ -653,7 +653,7 @@ class Set(Function):
 
         return orig_subset_of_orig_superset
 
-    @equivalence_prover('reduced', 'reduce')
+    @equality_prover('reduced', 'reduce')
     def reduction(self, **defaults_config):
         '''
         Deduce that this enum Set expression is equal to the Set's
@@ -894,7 +894,7 @@ class Set(Function):
             {m: m_sub, n: n_sub, aa: aa_sub, b: b_sub, cc: cc_sub, d: d_sub},
             assumptions=assumptions)
 
-    @equivalence_prover('elem_substituted', 'elem_substitute')
+    @equality_prover('elem_substituted', 'elem_substitute')
     def elem_substitution(self, elem=None, sub_elem=None,
                           **defaults_config):
         '''

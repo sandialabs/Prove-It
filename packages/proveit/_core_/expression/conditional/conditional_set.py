@@ -1,4 +1,4 @@
-from proveit.decorators import equivalence_prover
+from proveit.decorators import equality_prover
 from proveit._core_.expression.label.literal import Literal
 from proveit._core_.expression.operation import Operation
 from proveit._core_.defaults import defaults, USE_DEFAULTS
@@ -15,7 +15,7 @@ class ConditionalSet(Operation):
                            styles=styles)
         self.conditionals = self.operands
 
-    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, **defaults_config):
         '''
         Reduce a conditional set with one and only one TRUE condition

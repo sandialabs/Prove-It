@@ -4,7 +4,7 @@ from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.proof import ProofFailure
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 from proveit._core_.expression.style_options import StyleOptions
-from proveit.decorators import equivalence_prover
+from proveit.decorators import equality_prover
 
 
 class ExprTuple(Composite, Expression):
@@ -440,7 +440,7 @@ class ExprTuple(Composite, Expression):
             self._core_info, subbed_entries,
             style_preferences=self._style_data.styles)
 
-    @equivalence_prover('merged', 'merge')
+    @equality_prover('merged', 'merge')
     def merger(self, **defaults_config):
         '''
         If this is an tuple of expressions that can be directly merged

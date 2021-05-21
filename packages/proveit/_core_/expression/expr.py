@@ -7,8 +7,8 @@ from proveit._core_.defaults import (defaults, USE_DEFAULTS,
 from proveit._core_.theory import Theory
 from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_._unique_data import meaning_data, style_data
-from proveit.decorators import (prover, equivalence_prover,
-                                _equiv_prover_fn_to_tenses)
+from proveit.decorators import (prover, equality_prover,
+                                _equality_prover_fn_to_tenses)
 import sys
 import re
 import inspect
@@ -93,16 +93,16 @@ class ExprType(type):
                 styles_param.default not in (None, inspect.Parameter.empty)):
             raise_invalid_styles_init_arg()
         
-        # Register @equivalence_prover methods.
+        # Register @equality_prover methods.
         for attr, val in list(cls.__dict__.items()):
-            if callable(val) and val in _equiv_prover_fn_to_tenses:
+            if callable(val) and val in _equality_prover_fn_to_tenses:
                 fn = val
-                past_tense, present_tense = _equiv_prover_fn_to_tenses[fn]
-                cls._register_equivalence_method(
+                past_tense, present_tense = _equality_prover_fn_to_tenses[fn]
+                cls._register_equality_method(
                         fn, past_tense, present_tense)
 
-    def _register_equivalence_method(
-            cls, equiv_method, past_tense_name, present_tense_name):
+    def _register_equality_method(
+            cls, equality_method, past_tense_name, present_tense_name):
         '''
         Register a method of an expression class that is used to derive
         and return (as a Judgment) the equivalence of that expression 
@@ -118,14 +118,14 @@ class ExprType(type):
         as a method to the given expression class with an appropriate
         doc string.
         '''
-        if not isinstance(equiv_method, str):
+        if not isinstance(equality_method, str):
             # can be a string or a function:
-            equiv_method = equiv_method.__name__
-        if not hasattr(cls, equiv_method):
+            equality_method = equality_method.__name__
+        if not hasattr(cls, equality_method):
             raise Exception(
                 "Must have '%s' method defined in class '%s' in order to "
                 "register it as an equivalence method in InnerExpr." %
-                (equiv_method, str(cls)))
+                (equality_method, str(cls)))
     
         # Store information in the Expression class that will enable 
         # calling InnerExpr methods when an expression of that type
@@ -133,13 +133,13 @@ class ExprType(type):
         # performing in-place replacements.
         setattr(
             cls, '_equiv_method_%s_' %
-            equiv_method, ('equiv', equiv_method))
+            equality_method, ('equiv', equality_method))
         setattr(
             cls, '_equiv_method_%s_' %
-            past_tense_name, ('rhs', equiv_method))
+            past_tense_name, ('rhs', equality_method))
         setattr(
             cls, '_equiv_method_%s_' %
-            present_tense_name, ('action', equiv_method))
+            present_tense_name, ('action', equality_method))
     
         # Automatically create the "past-tense" equivalence method for
         # the expression class which returns the right side.
@@ -155,11 +155,11 @@ class ExprType(type):
         """
     
         def equiv_rhs(expr, *args, **kwargs):
-            return getattr(expr, equiv_method)(*args, **kwargs).rhs
+            return getattr(expr, equality_method)(*args, **kwargs).rhs
         equiv_rhs.__name__ = past_tense_name
         equiv_rhs.__doc__ = (
                 "Return an equivalent form of this expression derived "
-                "via '%s'."% equiv_method)
+                "via '%s'."% equality_method)
         setattr(cls, past_tense_name, equiv_rhs)
 
 
@@ -1211,11 +1211,11 @@ class Expression(metaclass=ExprType):
         from proveit._core_.expression.label.var import safe_dummy_vars
         return safe_dummy_vars(n, self)
     
-    @equivalence_prover('evaluated', 'evaluate')
+    @equality_prover('evaluated', 'evaluate')
     def evaluation(self, **defaults_config):
         '''
         If possible, return a Judgment of this expression equal to an
-        irreducible value.  In the @equivalence_prover decorator
+        irreducible value.  In the @equality_prover decorator
         for any 'evaluation' method, there is a check for an
         existing evaluation and a check that the resulting proven
         statement equates self with an irreducible value.
@@ -1252,12 +1252,12 @@ class Expression(metaclass=ExprType):
         # has some options via simplifying operands).
         raise EvaluationError(self)
 
-    @equivalence_prover('simplified', 'simplify')
+    @equality_prover('simplified', 'simplify')
     def simplification(self, **defaults_config):
         '''
         If possible, return a Judgment of this expression equal to a
         simplified form (according to strategies specified in 
-        proveit.defaults).  In the @equivalence_prover decorator for any
+        proveit.defaults).  In the @equality_prover decorator for any
         'simplification' method, there is a check for an existing 
         simplification, a check that the resulting proven statement is 
         an equality with self on the lhs, and it remembers the 
@@ -1281,7 +1281,7 @@ class Expression(metaclass=ExprType):
             # (no simplification).
             return Equals(self, self).prove()
 
-    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    @equality_prover('shallow_evaluated', 'shallow_evaluate')
     def shallow_evaluation(self, **defaults_config):
         '''
         Attempt to evaluate 'self' under the assumption that it's
@@ -1297,7 +1297,7 @@ class Expression(metaclass=ExprType):
             "'shallow_evaluation' not implemented for %s class" % str(
                 self.__class__))
 
-    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, **defaults_config):
         '''
         Attempt to simplify 'self' under the assumption that it's

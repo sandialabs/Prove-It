@@ -1,5 +1,5 @@
 from proveit import (Literal, USE_DEFAULTS, Operation, ExprRange, defaults,
-                     prover, equivalence_prover)
+                     prover, equality_prover)
 from proveit import a, b, c, d, k, m, n, x
 from proveit.numbers.number_sets.number_set import NumberSet, NumberMembership
 from proveit.numbers.numerals.numeral import NumeralSequence, Numeral
@@ -19,7 +19,7 @@ class DecimalSequence(NumeralSequence):
                 raise Exception(
                     'A DecimalSequence may only be composed of 0-9 digits')
 
-    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, **defaults_config):
         """
         If the DecimalSequence contains an ExprRange representing a
@@ -87,7 +87,7 @@ class DecimalSequence(NumeralSequence):
         #                        "Cannot prove %d in NaturalPos" % self.n)
         # return Numeral._inNaturalPosStmts[self.n]
 
-    @equivalence_prover('digit_repetition_reduced', 'digit_repetition_reduce')
+    @equality_prover('digit_repetition_reduced', 'digit_repetition_reduce')
     def digit_repetition_reduction(self, **defaults_config):
         '''
         Tries to reduce a decimal sequence containing an ExprRange.

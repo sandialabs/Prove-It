@@ -1,6 +1,6 @@
 from proveit import (defaults, Literal, Operation, USE_DEFAULTS, ExprTuple,
                      Judgment, ProofFailure, InnerExpr, 
-                     prover, equivalence_prover,
+                     prover, equality_prover,
                      SimplificationDirectives)
 from proveit.logic import Equals, InSet
 from proveit.numbers import num
@@ -168,7 +168,7 @@ class Mult(NumberOperation):
                                                 assumptions=assumptions)
         return NotEquals(self, zero).conclude_as_folded(assumptions)
 
-    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    @equality_prover('shallow_evaluated', 'shallow_evaluate')
     def shallow_evaluation(self, **defaults_config):
         '''
         Returns a proven evaluation equation for this Mult
@@ -243,7 +243,7 @@ class Mult(NumberOperation):
 
         raise EvaluationError(self)
 
-    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, **defaults_config):
         '''
         Returns a proven simplification equation for this Mult
@@ -354,7 +354,7 @@ class Mult(NumberOperation):
         return mult_neg_any.instantiate({i: _i, j: _j, a: _a, b: _b, c: _c},
                                         assumptions=assumptions)
 
-    @equivalence_prover('eliminated_ones', 'eliminate_ones')
+    @equality_prover('eliminated_ones', 'eliminate_ones')
     def one_eliminations(self, **defaults_config):
         '''
         Equivalence method that derives a simplification in which
@@ -380,7 +380,7 @@ class Mult(NumberOperation):
 
         return eq.relation
 
-    @equivalence_prover('eliminated_one', 'eliminate_one')
+    @equality_prover('eliminated_one', 'eliminate_one')
     def one_elimination(self, idx, **defaults_config):
         '''
         Equivalence method that derives a simplification in which
@@ -407,7 +407,7 @@ class Mult(NumberOperation):
         _j = _b.num_elements()
         return elim_one_any.instantiate({i: _i, j: _j, a: _a, b: _b})
 
-    @equivalence_prover('deep_eliminated_ones', 'deep_eliminate_ones')
+    @equality_prover('deep_eliminated_ones', 'deep_eliminate_ones')
     def deep_one_eliminations(self, **defaults_config):
         '''
         Eliminate ones from direct factors as well as grouped
@@ -427,7 +427,7 @@ class Mult(NumberOperation):
         expr = eq.update(expr.one_eliminations())
         return eq.relation
 
-    @equivalence_prover('all_canceled', 'all_cancel')
+    @equality_prover('all_canceled', 'all_cancel')
     def cancelations(self, **defaults_config):
         '''
         Deduce and return an equality between self and a form in which
@@ -784,7 +784,7 @@ class Mult(NumberOperation):
             raise ValueError(
                 "Invalid pull direction!  (Acceptable values are \"left\" and \"right\".)")
 
-    @equivalence_prover('distributed', 'distribute')
+    @equality_prover('distributed', 'distribute')
     def distribution(self, idx=None, **defaults_config):
         r'''
         Distribute through the operand at the given index.
@@ -870,7 +870,7 @@ class Mult(NumberOperation):
             raise Exception(
                 "Unsupported operand type to distribute over: " + str(operand.__class__))
 
-    @equivalence_prover('factorized', 'factor')
+    @equality_prover('factorized', 'factor')
     def factorization(self, the_factor_or_index, pull="left",
                       group_factor=True, group_remainder=False,
                       **defaults_config):
@@ -913,7 +913,7 @@ class Mult(NumberOperation):
                         0, num_remainder_operands))
         return eq.relation
 
-    @equivalence_prover('combined_exponents', 'combine_exponents')
+    @equality_prover('combined_exponents', 'combine_exponents')
     def exponent_combination(self, start_idx=None, end_idx=None,
                              **defaults_config):
         '''
@@ -1102,7 +1102,7 @@ class Mult(NumberOperation):
         raise ValueError('Product is not in a correct form to '
                          'combine exponents: ' + str(self))
 
-    @equivalence_prover('commuted', 'commute')
+    @equality_prover('commuted', 'commute')
     def commutation(self, init_idx=None, final_idx=None, **defaults_config):
         '''
         Given numerical operands, deduce that this expression is equal
@@ -1116,7 +1116,7 @@ class Mult(NumberOperation):
             self, init_idx, final_idx, commutation,
             leftward_commutation, rightward_commutation)
 
-    @equivalence_prover('group_commuted', 'group_commute')
+    @equality_prover('group_commuted', 'group_commute')
     def group_commutation(self, init_idx, final_idx, length,
                           disassociate=True, **defaults_config):
         '''
@@ -1130,7 +1130,7 @@ class Mult(NumberOperation):
         return group_commutation(
             self, init_idx, final_idx, length, disassociate=disassociate)
 
-    @equivalence_prover('associated', 'associate')
+    @equality_prover('associated', 'associate')
     def association(self, start_idx, length, **defaults_config):
         '''
         Given numerical operands, deduce that this expression is equal 
@@ -1143,7 +1143,7 @@ class Mult(NumberOperation):
         return apply_association_thm(
             self, start_idx, length, association)
 
-    @equivalence_prover('disassociated', 'disassociate')
+    @equality_prover('disassociated', 'disassociate')
     def disassociation(self, idx, **defaults_config):
         '''
         Given numerical operands, deduce that this expression is equal 
