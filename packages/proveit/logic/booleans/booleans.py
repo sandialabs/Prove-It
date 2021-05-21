@@ -105,7 +105,7 @@ class BooleanSet(Literal):
         _Px = forall_stmt.instance_expr
         _A = forall_stmt.instance_var
         return unfold_forall_over_bool.instantiate(
-            {Px: _Px, A: _A})
+            {Px: _Px, A: _A}).derive_consequent()
 
     @prover
     def fold_as_forall(self, forall_stmt, **defaults_config):
@@ -131,7 +131,7 @@ class BooleanSet(Literal):
             _Px = forall_stmt.instance_expr
             _A = forall_stmt.instance_param
             return fold_conditioned_forall_over_bool.instantiate(
-                {Qx: _Qx, Px: _Px, A: _A}, num_forall_eliminations=1, auto_simplify=False)
+                {Qx: _Qx, Px: _Px, A: _A}, num_forall_eliminations=1, preserve_expr=forall_stmt)
         else:
             # forall_{A in Boolean} P(A), assuming P(TRUE) and P(FALSE)
             Px = Function(P, forall_stmt.instance_param)
@@ -199,8 +199,7 @@ class BooleanMembership(Membership):
                 [(element = TRUE) or (element = FALSE)].
         '''
         from . import in_bool_def
-        return in_bool_def.instantiate({A: self.element},
-                                       auto_simplify=False)
+        return in_bool_def.instantiate({A: self.element})
 
     @prover
     def unfold(self, **defaults_config):
@@ -228,7 +227,7 @@ class BooleanMembership(Membership):
         from . import fold_is_bool
         if fold_is_bool.is_usable():
             return fold_is_bool.instantiate(
-                {A: self.element}, auto_simplify=False)
+                {A: self.element}, preserve_expr=in_bool(self.element))
 
     @prover
     def derive_via_excluded_middle(self, consequent, **defaults_config):
@@ -238,7 +237,7 @@ class BooleanMembership(Membership):
         '''
         from . import from_excluded_middle
         return from_excluded_middle.instantiate(
-            {A: self.element, C: consequent}, auto_simplify=False)
+            {A: self.element, C: consequent}, preserve_expr=consequent)
 
     @prover
     def deduce_in_bool(self, **defaults_config):
