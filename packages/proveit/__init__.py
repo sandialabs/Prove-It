@@ -30,7 +30,7 @@ from ._core_ import (
 
 # @prover and @equality_prover are useful decorators for many
 # Expression class methods:
-from .decorators import prover, equality_prover
+from .decorators import prover, relation_prover, equality_prover
 
 from .relation import (
     TransitiveRelation,
