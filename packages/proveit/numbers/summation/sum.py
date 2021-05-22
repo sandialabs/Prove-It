@@ -129,7 +129,7 @@ class Sum(OperationOverInstances):
             if hasattr(self, 'index'):
                 return sum_single.instantiate(
                     {Operation(f, self.index): self.summand,
-                     a: self.domain.lower_bound})
+                     a: self.domain.lower_bound, x:self.index})
         raise SimplificationError(
             "Sum simplification only implemented for a summation over an "
             "integer Interval of one instance variable where the upper "
