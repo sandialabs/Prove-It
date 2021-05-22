@@ -123,7 +123,8 @@ class Div(Operation):
 
         for numer_factor in numer_factors:
             if numer_factor in denom_factors_set:
-                expr = eq.update(expr.cancelation(numer_factor, assumptions))
+                expr = eq.update(expr.cancelation(
+                        numer_factor, assumptions=assumptions))
                 denom_factors_set.remove(numer_factor)
 
         return eq.relation
@@ -134,7 +135,9 @@ class Div(Operation):
         the given operand has been canceled on the numerator and
         denominator.  For example,
         [(a*b)/(b*c)].cancelation(b) would return
-        (a*b)/(b*c) = a / c
+        (a*b)/(b*c) = a / c.
+        Assumptions or previous work might be required to establish
+        that the term_to_cancel is non-zero.
         '''
         from proveit.numbers import Mult
         expr = self
@@ -144,7 +147,7 @@ class Div(Operation):
             # x/x = 1
             from . import frac_cancel_complete
             return frac_cancel_complete.instantiate(
-                {x: term_to_cancel}).checked(assumptions)
+                {x: term_to_cancel}, assumptions=assumptions)
 
         if term_to_cancel != self.numerator:
             if (not isinstance(self.numerator, Mult) or
