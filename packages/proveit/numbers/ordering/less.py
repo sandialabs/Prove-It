@@ -320,6 +320,7 @@ class Less(NumberOrderingRelation):
             new_rel = new_rel.with_direction_reversed()
         return new_rel
 
+    @prover
     def right_mult_both_sides(self, multiplier, **defaults_config):
         '''
         Multiply both sides of the relation by the 'multiplier'
@@ -356,6 +357,7 @@ class Less(NumberOrderingRelation):
             new_rel = new_rel.with_direction_reversed()
         return new_rel
 
+    @prover
     def divide_both_sides(self, divisor, **defaults_config):
         '''
         Divide both sides of the relation by the 'divisor'.
@@ -376,6 +378,7 @@ class Less(NumberOrderingRelation):
                 {a: divisor, x: self.lower, y: self.upper})
         return new_rel.with_mimicked_style(self)
 
+    @prover
     def left_add_both_sides(self, addend, **defaults_config):
         '''
         Add to both sides of the relation by the 'addend' on the left.
@@ -385,6 +388,7 @@ class Less(NumberOrderingRelation):
             {a: addend, x: self.lower, y: self.upper})
         return new_rel.with_mimicked_style(self)
 
+    @prover
     def right_add_both_sides(self, addend, **defaults_config):
         '''
         Add to both sides of the relation by the 'addend' on the right.
@@ -394,6 +398,7 @@ class Less(NumberOrderingRelation):
             {a: addend, x: self.lower, y: self.upper})
         return new_rel.with_mimicked_style(self)
 
+    @prover
     def exponentiate_both_sides(self, exponent, **defaults_config):
         '''
         Exponentiate both sides of the relation by the 'exponent'.

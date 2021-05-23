@@ -260,7 +260,6 @@ class TransitiveRelation(Relation):
         return Relation
     
     @classmethod
-    @prover
     def sorted_items(cls, items, reorder=True, **defaults_config):
         '''
         Return the given items in sorted order with respect to this
@@ -573,7 +572,7 @@ class TransitiveRelation(Relation):
         relations = []
         for item1, item2 in zip(items_list[:-1], items_list[1:]):
             relations.append(cls._transitivity_search(item1, item2))
-        return total_ordering(*relations).prove()
+        return total_ordering(*relations, prove=True)
 
 
 class TransitivityException(ProofFailure):
@@ -581,17 +580,26 @@ class TransitivityException(ProofFailure):
         ProofFailure.__init__(self, expr, assumptions, message)
 
 
-def total_ordering(*relations):
+def total_ordering(*relations, prove=False):
     '''
     Return a conjunction of relations in the total ordering style.
     For example, "a > b >= c = d > e" is a total ordering style for
-    "(a > b) and (b >= c) and (c = d) and (d > e)".
+    "(a > b) and (b >= c) and (c = d) and (d > e)".  If there is a
+    single relation, just return the relation.  If 'prove' is True,
+    return a proven Judgment.
     '''
+    from proveit import ExprRange
     from proveit.logic import And
+    if len(relations) == 1 and not isinstance(relations[0], ExprRange):
+        # Return a trivial, singular relation.
+        relation = relations[0]
+        if prove: relation = relation.prove()
+        return relation
+    # Return a conjunction with the proper style.
     conjunction = And(*relations)
     conjunction = conjunction.with_total_ordering_style()
-    if conjunction.operands.is_single():
-        # A single relation is a trivial total ordering.
-        return conjunction.operands[0]
+    if prove:
+        # Prove via composition.
+        # Allow automation to prove the length requirement.
+        return conjunction.conclude_via_composition(automation=True)
     return conjunction
-
