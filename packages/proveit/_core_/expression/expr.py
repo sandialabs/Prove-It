@@ -974,9 +974,12 @@ class Expression(metaclass=ExprType):
         expr = self.basic_replaced(
             repl_map, allow_relabeling=allow_relabeling,
             requirements=requirements)
+        new_equality_repl_requirements = []
         return expr.equality_replaced(
-                requirements, equality_repl_requirements,
+                new_equality_repl_requirements,
                 auto_simplify_top_level=defaults.auto_simplify)
+        requirements.extend(new_equality_repl_requirements)
+        equality_repl_requirements.update(new_equality_repl_requirements)
 
     def basic_replaced(self, repl_map, *, 
                        allow_relabeling=False, requirements=None):
@@ -1002,7 +1005,7 @@ class Expression(metaclass=ExprType):
                 style_preferences=self._style_data.styles)
         return replaced
 
-    def equality_replaced(self, requirements, equality_repl_requirements,
+    def equality_replaced(self, requirements,
                           auto_simplify_top_level=USE_DEFAULTS):
         '''
         Return something equal to this expression with replacements
@@ -1034,12 +1037,10 @@ class Expression(metaclass=ExprType):
 
         # Use the recursive helper method.
         return self._equality_replaced(
-                equality_repl_map, requirements, 
-                equality_repl_requirements,
+                equality_repl_map, requirements,
                 auto_simplify_top_level=auto_simplify_top_level)
 
-    def _equality_replaced(self, equality_repl_map, requirements, 
-                           equality_repl_requirements,
+    def _equality_replaced(self, equality_repl_map, requirements,
                            auto_simplify_top_level=USE_DEFAULTS):
         '''
         Recursive helper method for equality_replaced.
@@ -1068,8 +1069,7 @@ class Expression(metaclass=ExprType):
         if replacement is None:
             # Recurse into the sub-expressions.
             expr = self._equality_replaced_sub_exprs(
-                    equality_repl_map, requirements, 
-                    equality_repl_requirements)
+                    equality_repl_map, requirements)
             if expr in defaults.preserved_exprs:
                 # The expression should be preserved, so don't make
                 # any further equality-based replacement.
@@ -1125,11 +1125,9 @@ class Expression(metaclass=ExprType):
             # The assumptions aren't adequate to use this reduction.
             return self
         requirements.append(replacement)
-        equality_repl_requirements.add(replacement)
         return replacement.expr.rhs
 
-    def _equality_replaced_sub_exprs(self, equality_repl_map, requirements, 
-                                     equality_repl_requirements):
+    def _equality_replaced_sub_exprs(self, equality_repl_map, requirements):
         '''
         Recursive helper method for equality_replaced.
         '''
@@ -1138,7 +1136,6 @@ class Expression(metaclass=ExprType):
         subbed_sub_exprs = \
             tuple(sub_expr._equality_replaced(
                     equality_repl_map, requirements,
-                    equality_repl_requirements,
                     auto_simplify_top_level=defaults.auto_simplify)
                   for sub_expr in sub_exprs)
         if all(subbed_sub._style_id == sub._style_id for

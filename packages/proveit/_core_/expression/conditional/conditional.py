@@ -272,8 +272,7 @@ class Conditional(Expression):
         return Conditional(subbed_val, subbed_cond,
                            styles=self._style_data.styles)
 
-    def _equality_replaced_sub_exprs(self, equality_repl_map, requirements, 
-                                     equality_repl_requirements):
+    def _equality_replaced_sub_exprs(self, equality_repl_map, requirements):
         '''
         Properly handle the Conditional scope while doing equality
         replacements.
@@ -283,11 +282,9 @@ class Conditional(Expression):
             temp_defaults.assumptions = (
                     defaults.assumptions + (self.condition,))
             subbed_val = self.value._equality_replaced(
-                    equality_repl_map, requirements,
-                    equality_repl_requirements)
+                    equality_repl_map, requirements)
         subbed_cond = self.condition._equality_replaced(
-                    equality_repl_map, requirements,
-                    equality_repl_requirements)
+                    equality_repl_map, requirements)
         if (subbed_val._style_id == self.value._style_id and
                 subbed_cond._style_id == self.condition._style_id):
             # Nothing change, so don't remake anything.

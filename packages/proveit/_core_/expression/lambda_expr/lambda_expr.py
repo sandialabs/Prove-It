@@ -696,8 +696,7 @@ class Lambda(Expression):
 
         return replaced
 
-    def _equality_replaced_sub_exprs(self, equality_repl_map, requirements, 
-                                     equality_repl_requirements):
+    def _equality_replaced_sub_exprs(self, equality_repl_map, requirements):
         '''
         Properly handle the Lambda scope while doing equality
         replacements.
@@ -710,8 +709,7 @@ class Lambda(Expression):
         with defaults.temporary() as temp_defaults:
             temp_defaults.assumptions = inner_assumptions
             return Expression._equality_replaced_sub_exprs(
-                    self, equality_repl_map, requirements,
-                    equality_repl_requirements)
+                    self, equality_repl_map, requirements)
 
     def _inner_scope_sub(self, parameters, repl_map, 
                          allow_relabeling, requirements):
