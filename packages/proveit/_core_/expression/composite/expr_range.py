@@ -488,27 +488,28 @@ class ExprRange(Expression):
         lambda_map = self.lambda_map
         start_index = self.start_index
         end_index = self.end_index
+        tuple_wrapped_self = ExprTuple(self)
         if start_index == end_index:
             # We can do a singular range reduction.
             # Temporarily disable automation to avoid infinite
             # recursion.
             from proveit.core_expr_types.tuples import \
                 singular_range_reduction, singular_nested_range_reduction
-            with defaults.temporary() as temp_defaults:
-                # Preserve 'self' on the left side of the reduction.
-                temp_defaults.preserved_exprs.add(self)
-                if self.nested_range_depth() > 1:
-                    lambda_map = Lambda(
-                        (self.parameter,
-                         self.body.parameter),
-                        self.body.body)
-                    reduction = singular_nested_range_reduction.instantiate(
-                        {f: lambda_map, m: start_index,
-                         i: self.first().start_index,
-                         j: self.first().end_index})
-                else:
-                    reduction = singular_range_reduction.instantiate(
-                        {f: lambda_map, i: start_index})
+            # Preserve 'self' on the left side of the reduction.
+            if self.nested_range_depth() > 1:
+                lambda_map = Lambda(
+                    (self.parameter,
+                     self.body.parameter),
+                    self.body.body)
+                reduction = singular_nested_range_reduction.instantiate(
+                    {f: lambda_map, m: start_index,
+                     i: self.first().start_index,
+                     j: self.first().end_index},
+                     preserve_expr=tuple_wrapped_self)
+            else:
+                reduction = singular_range_reduction.instantiate(
+                    {f: lambda_map, i: start_index},
+                    preserve_expr=tuple_wrapped_self)
         else:
             # If the start and end are literal integers and form an
             # empty range, then it should be straightforward to
@@ -531,24 +532,21 @@ class ExprRange(Expression):
                     # recursion.
                     from proveit.core_expr_types.tuples import \
                         empty_outside_range_of_range
-                    with defaults.temporary() as temp_defaults:
-                        # Preserve 'self' on the left side of the reduction.
-                        temp_defaults.preserved_exprs.add(self)
-                        nest_end_index = self.first().end_index
-                        nest_start_index = self.first().start_index
-                        lambda_map = Lambda(
-                            (self.parameter, self.body.parameter), self.body.body)
-                        reduction = empty_outside_range_of_range.instantiate(
-                            {f: lambda_map, m: start_index, n: end_index,
-                             i: nest_start_index, j: nest_end_index})
+                    nest_end_index = self.first().end_index
+                    nest_start_index = self.first().start_index
+                    lambda_map = Lambda(
+                        (self.parameter, self.body.parameter), self.body.body)
+                    reduction = empty_outside_range_of_range.instantiate(
+                        {f: lambda_map, m: start_index, n: end_index,
+                         i: nest_start_index, j: nest_end_index},
+                         preserve_expr=tuple_wrapped_self)
                 else:
                     from proveit.core_expr_types.tuples import \
                         empty_range_def
-                    with defaults.temporary() as temp_defaults:
-                        # Preserve 'self' on the left side of the reduction.
-                        temp_defaults.preserved_exprs.add(self)
-                        reduction = empty_range_def.instantiate(
-                            {f: lambda_map, i: start_index, j: end_index})
+                    # Preserve 'self' on the left side of the reduction.
+                    reduction = empty_range_def.instantiate(
+                        {f: lambda_map, i: start_index, j: end_index},
+                        preserve_expr=tuple_wrapped_self)
             elif self.nested_range_depth() > 1:
                 # this is a nested range so the inner range could be empty.
 
@@ -570,17 +568,16 @@ class ExprRange(Expression):
                     # recursion.
                     from proveit.core_expr_types.tuples import \
                         empty_inside_range_of_range
-                    with defaults.temporary() as temp_defaults:
-                        # Preserve 'self' on the left side of the reduction.
-                        temp_defaults.preserved_exprs.add(self)
-                        nest_end_index = self.first().end_index
-                        nest_start_index = self.first().start_index
-                        lambda_map = Lambda(
-                            (self.parameter, self.body.parameter), 
-                            self.body.body)
-                        reduction = empty_inside_range_of_range.instantiate(
-                            {f: lambda_map, m: start_index, n: end_index, 
-                             i: nest_start_index, j: nest_end_index})
+                    # Preserve 'self' on the left side of the reduction.
+                    nest_end_index = self.first().end_index
+                    nest_start_index = self.first().start_index
+                    lambda_map = Lambda(
+                        (self.parameter, self.body.parameter), 
+                        self.body.body)
+                    reduction = empty_inside_range_of_range.instantiate(
+                        {f: lambda_map, m: start_index, n: end_index, 
+                         i: nest_start_index, j: nest_end_index},
+                         preserve_expr=tuple_wrapped_self)
                 else:
                     yield self  # no reduction
                     return
