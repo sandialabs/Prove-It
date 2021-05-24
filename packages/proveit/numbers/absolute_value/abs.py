@@ -1,5 +1,6 @@
 from proveit import (defaults, Literal, Operation, ExprRange, InnerExpr,
-                     ProofFailure, USE_DEFAULTS, equality_prover)
+                     ProofFailure, USE_DEFAULTS, relation_prover,
+                     equality_prover)
 from proveit import a, b, c, n, r, x, theta
 from proveit.logic import InSet
 from proveit.logic.sets import ProperSubset, SubsetEq
@@ -65,7 +66,18 @@ class Abs(NumberOperation):
         |x| = -x (for operand_type = 'negative'). Assumptions may be
         needed to deduce x >= 0 or x < 0, respectively.
         '''
+        from proveit.numbers import LessEq, zero
         from . import abs_non_neg_elim, abs_neg_elim
+        if operand_type is None:
+            # LessEq.sort uses a bidirectional search which should
+            # be fairly efficient, as long as there aren't too
+            # many known relationship directly or indirectly involving
+            # self.operand or zero.
+            relation_with_zero = LessEq.sort([zero, self.operand])
+            if relation_with_zero.normal_lhs == zero:
+                operand_type = 'non-negative'
+            else:
+                operand_type = 'negative'        
         # deduce_non_neg(self.operand, assumptions) # NOT YET IMPLEMENTED
         if operand_type is None or operand_type == 'non-negative':
             return abs_non_neg_elim.instantiate({x: self.operand})
@@ -78,8 +90,8 @@ class Abs(NumberOperation):
                 "as 'negative' or 'non-negative', but instead was "
                 "given as operand_type = {}.".format(operand_type))
 
-    def double_abs_elimination(self, assumptions=USE_DEFAULTS,
-                               reductions=USE_DEFAULTS):
+    @equality_prover('double_abs_eliminated', 'double_abs_eliminate')
+    def double_abs_elimination(self, **defaults_config):
         '''
         ||x|| = |x| given x is complex.
         '''
@@ -88,9 +100,27 @@ class Abs(NumberOperation):
             raise ValueError("'double_abs_elimination' is only applicable "
                              "for double absolute value cases, not %s"
                              %self)
-        return double_abs_elem.instantiate({x:self.operand.operand},
-                                           assumptions=assumptions,
-                                           reductions=reductions)
+        return double_abs_elem.instantiate({x:self.operand.operand})
+    
+    @equality_prover('shallow_evaluated', 'shallow_evaluate')
+    def shallow_evaluation(self, **defaults_config):
+        '''
+        Equates the absolute value of a literal to its
+        irreducible representation.
+        '''
+        from proveit.numbers import Neg
+        from proveit.logic import EvaluationError, is_irreducible_value
+        if not is_irreducible_value(self.operand):
+            # The operand must be irreducible in order to do a
+            # shallow evaluation.
+            raise EvaluationError(self)
+        if isinstance(self.operand, Neg):
+            # |-x| where 'x' is a literal.
+            return self.distribution()
+        else:
+            # If the operand is irreducible, we can just use 
+            # abs_elimination.
+            return self.abs_elimination()
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, **defaults_config):
@@ -119,25 +149,13 @@ class Abs(NumberOperation):
         # among other things, convert any assumptions=None
         # to assumptions=() (thus averting len(None) errors)
 
-        # Check if we can establish the relationship between
+        # Check if we have an established relationship between
         # self.operand and zero.
-        try:
-            # LessEq.sort uses a bidirectional search which should
-            # be fairly efficient, as long as there aren't too
-            # many known relationship directly or indirectly involving
-            # self.operand or zero.
-            relation_with_zero = LessEq.sort([zero, self.operand])
-            if relation_with_zero.normal_lhs == zero:
-                # x ≥ 0 so that |x| = x
-                return self.abs_elimination(operand_type='non-negative')
-            else:
-                # x ≤ 0 so that |x| = -x
-                assert relation_with_zero.normal_rhs == zero
-                return self.abs_elimination(operand_type='negative')
-        except ProofFailure:
-            # We don't know whether self.operand is less than
-            # or greater than zero.  Carry on.
-            pass
+        if (LessEq(zero, self.operand).proven() or
+                LessEq(self.operand, zero).proven()):
+            # Either |x| = x or |x| = -x depending upon the sign
+            # of x (comparison with zero).
+            return self.abs_elimination()
         
         if isinstance(self.operand, Abs):
             # Double absolute-value.  We can remove one of them.
@@ -195,7 +213,7 @@ class Abs(NumberOperation):
             if all_nonpos or all_nonneg:
                 # Do another pass now that we know the sign of
                 # the operand.
-                return self.do_reduced_simplification()
+                return self.shallow_simplification()
 
         # Default is no simplification.
         return Equals(self, self).prove()
@@ -216,8 +234,9 @@ class Abs(NumberOperation):
         _a = self.operand.operands[0]
         _b = self.operand.operands[1].operand
         return abs_diff_reversal.instantiate({a:_a, b:_b})
-    
-    def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
+
+    @relation_prover
+    def deduce_in_number_set(self, number_set, **defaults_config):
         '''
         Given a number set number_set (such as Integer, Real, etc),
         attempt to prove that the given expression is in that number
@@ -230,10 +249,6 @@ class Abs(NumberOperation):
         from proveit.numbers import (
             Rational, RationalNonZero, RationalPos, RationalNeg,
             RationalNonNeg, Real, RealNonNeg, RealPos)
-
-        # among other things, make sure non-existent assumptions
-        # manifest as empty tuple () rather than None
-        assumptions = defaults.checked_assumptions(assumptions)
 
         thm = None
         if number_set in (RationalPos, RationalNonZero):
@@ -248,14 +263,13 @@ class Abs(NumberOperation):
             thm = abs_complex_closure_non_neg_real
 
         if thm is not None:
-            in_set = thm.instantiate({a: self.operand},
-                                     assumptions=assumptions)
+            in_set = thm.instantiate({a: self.operand})
             if in_set.domain == number_set:
                 # Exactly the domain we were looking for.
                 return in_set
             # We must have proven we were in a subset of the
             # one we were looking for.
-            return InSet(self, number_set).prove(assumptions)
+            return InSet(self, number_set).prove()
 
         # To be thorough and a little more general, we check if the
         # specified number_set is already proven to *contain* one of
@@ -265,41 +279,34 @@ class Abs(NumberOperation):
         # but we don't have specific thms for those supersets Y.
         # If so, use the appropiate thm to determine that self is in X,
         # then prove that self must also be in Y since Y contains X.
-        if SubsetEq(Real, number_set).proven(assumptions=assumptions):
-            abs_complex_closure.instantiate({a: self.operand},
-                                            assumptions=assumptions)
-            return InSet(self, number_set).prove(assumptions=assumptions)
-        if SubsetEq(RealPos, number_set).proven(assumptions=assumptions):
-            abs_nonzero_closure.instantiate({a: self.operand},
-                                            assumptions=assumptions)
-            return InSet(self, number_set).prove(assumptions=assumptions)
-        if SubsetEq(RealNonNeg, number_set).proven(assumptions=assumptions):
-            abs_complex_closure_non_neg_real.instantiate(
-                {a: self.operand}, assumptions=assumptions)
-            return InSet(self, number_set).prove(assumptions=assumptions)
+        if SubsetEq(Real, number_set).proven():
+            abs_complex_closure.instantiate({a: self.operand})
+            return InSet(self, number_set).prove()
+        if SubsetEq(RealPos, number_set).proven():
+            abs_nonzero_closure.instantiate({a: self.operand})
+            return InSet(self, number_set).prove()
+        if SubsetEq(RealNonNeg, number_set).proven():
+            abs_complex_closure_non_neg_real.instantiate({a: self.operand})
+            return InSet(self, number_set).prove()
 
         # otherwise, we just don't have the right thm to make it work
         raise NotImplementedError(
             "'Abs.deduce_in_number_set()' not implemented for "
             "the %s set" % str(number_set))
 
-    def unit_length_simplification(
-            self, assumptions=USE_DEFAULTS, automation=True,
-            simplify=True):
+    @equality_prover('unit_length_simplified', 'unit_length_simplify')
+    def unit_length_simplification(self, **defaults_config):
         '''
         |exp(i * theta)| = 1 simplification given theta in Real.
         '''
         from proveit.numbers import unit_length_complex_polar_angle
         from . import complex_unit_length
-        reductions = set()
+        replacements = set()
         _theta = unit_length_complex_polar_angle(
-                self.operand, assumptions=assumptions,
-                automation=automation, simplify=True, 
-                reductions=reductions)
+                self.operand, reductions=replacements)
         # |exp(i*theta)| = 1
         return complex_unit_length.instantiate(
-                {theta:_theta}, reductions=reductions,
-                assumptions=assumptions)
+                {theta:_theta}, replacements=replacements)
 
     @equality_prover('chord_length_simplified', 'chord_length_simplify')
     def chord_length_simplification(self, **defaults_config):
@@ -324,7 +331,7 @@ class Abs(NumberOperation):
                 self.operand.operands.is_double()):
             raise_not_valid_form()
         
-        reductions = set()
+        replacements = set()
         # Grab polar coordinates without automation so we don't
         # waste time if it isn't in a complex polar form (or 
         # obviously equivalent to this form).
@@ -334,29 +341,26 @@ class Abs(NumberOperation):
             term2 = term2.operand
         else:
             term2 = Neg(term2)
-            reductions.add(Neg(term2).double_neg_simplification())
-        automation = defaults.automation
+            replacements.add(Neg(term2).double_neg_simplification())
         _r1, _theta1 = complex_polar_coordinates(
-                term1, automation=automation, simplify=True, 
-                reductions=reductions)
+                term1, reductions=replacements)
         _r2, _theta2 = complex_polar_coordinates(
-                term2, automation=automation, simplify=True,
-                reductions=reductions)
+                term2, reductions=replacements)
         if _r1 == _r2:
             # Only applicable if the magnitudes are the same.
             angle = Div(Abs(subtract(_theta1, _theta2)), two)
-            reductions.add(angle.simplification())
+            replacements.add(angle.simplification())
             if _r1 == one:
                 return complex_unit_circle_chord_length.instantiate(
-                        {a:_theta1, b:_theta2}, reductions=reductions)
+                        {a:_theta1, b:_theta2}, replacements=replacements)
             else:
                 return complex_circle_chord_length.instantiate(
                         {r: _r1, a:_theta1, b:_theta2}, 
-                        reductions=reductions)
+                        replacements=replacements)
         raise_not_valid_form()
 
-    def deduce_triangle_bound(self, assumptions=USE_DEFAULTS,
-                              simplify=True):
+    @relation_prover
+    def deduce_triangle_bound(self, **defaults_config):
         '''
         Return the proven triangle bound (or generalized triangle bound)
         of this absolute value.  For example,
@@ -377,48 +381,38 @@ class Abs(NumberOperation):
             raise ValueError("The triangle bound is only applicable on "
                              "the absolute value over a sum, not %s")
         terms = self.operand.terms
-        reductions = set()
-        if simplify:
-            for term in terms:
-                if not isinstance(term, ExprRange):
-                    # TODO, USE SHALLOW SIMPLIFICATION
-                    reductions.add(Abs(term).simplification(
-                            assumptions=assumptions))
         if terms.is_double():
-            bound = triangle_inequality.instantiate(
-                    {a:terms[0], b:terms[1]}, reductions=reductions,
-                    assumptions=assumptions)
+            return triangle_inequality.instantiate({a:terms[0], b:terms[1]})
         else:
-            _n = terms.num_elements(assumptions)
-            bound = generalized_triangle_inequality.instantiate(
-                    {n:_n, x:terms},  reductions=reductions,
-                    assumptions=assumptions)
-        if simplify:
-            # TODO, USE SHALLOW SIMPLIFICATION
-            return bound.inner_expr().rhs.simplify(assumptions=assumptions)
+            _n = terms.num_elements()
+            return generalized_triangle_inequality.instantiate(
+                    {n:_n, x:terms})
 
-    def deduce_strict_upper_bound(self, bound, assumptions=USE_DEFAULTS):
+    @relation_prover
+    def deduce_strict_upper_bound(self, bound, **defaults_config):
         # Deduce that this absolute value has the given strict lower
         # bound by bounding the operand.  For example,
         #   |a| < c    given    -c < a < c.
         from . import strict_upper_bound
         return strict_upper_bound.instantiate(
-                {a:self.operand, c:bound}, assumptions=assumptions)
+                {a:self.operand, c:bound})
 
-    def deduce_weak_upper_bound(self, bound, assumptions=USE_DEFAULTS):
+    @relation_prover
+    def deduce_weak_upper_bound(self, bound,**defaults_config):
         # Deduce that this absolute value has the given weak lower
         # bound by bounding the operand.  For example,
         #   |a| ≤ c    given    -c ≤ a ≤ c.
         from . import weak_upper_bound
         return weak_upper_bound.instantiate(
-                {a:self.operand, c:bound}, assumptions=assumptions)
+                {a:self.operand, c:bound})
     
-    def deduce_positive(self, assumptions=USE_DEFAULTS):
+    @relation_prover
+    def deduce_positive(self, **defaults_config):
         # Deduce that this absolute value is greater than zero
         # given its argument is not equal zero.
         from proveit.numbers import RealPos, zero, greater
-        InSet(self, RealPos).prove(assumptions)
-        return greater(self, zero).prove(assumptions)
+        InSet(self, RealPos).prove()
+        return greater(self, zero).prove()
 
 def is_equal_to_or_subset_eq_of(
         number_set, equal_sets=None, subset_sets=None, subset_eq_sets=None,

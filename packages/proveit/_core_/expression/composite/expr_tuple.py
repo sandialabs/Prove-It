@@ -401,8 +401,7 @@ class ExprTuple(Composite, Expression):
             self._core_info, subbed_entries, 
             style_preferences=self._style_data.styles)
 
-    def _equality_replaced_sub_exprs(self, equality_repl_map, requirements, 
-                                     equality_repl_requirements):
+    def _equality_replaced_sub_exprs(self, equality_repl_map, requirements):
         '''
         Recursive helper method for equality_replaced.  Handles
         ExprRange reductions which can't be implemented via
@@ -425,7 +424,6 @@ class ExprTuple(Composite, Expression):
             else:
                 subbed_entry = entry._equality_replaced(
                         equality_repl_map, requirements,
-                        equality_repl_requirements,
                         auto_simplify_top_level=defaults.auto_simplify)
                 subbed_entries.append(subbed_entry)
 

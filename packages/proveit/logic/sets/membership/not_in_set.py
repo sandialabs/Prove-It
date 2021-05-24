@@ -49,6 +49,8 @@ class NotInSet(Relation):
         object it generates (also 'unfold' defaults as 'unfold_not_in' if it isn't
         defined in 'nonmembership_object').
         '''
+        if attr in ('lhs', 'rhs'):
+            return Relation.__getattr__(self, attr)
         if 'nonmembership_object' in self.__dict__:
             return getattr(self.nonmembership_object, attr)
         elif attr == 'unfold':

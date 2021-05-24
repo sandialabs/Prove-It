@@ -45,6 +45,8 @@ class InSet(Relation):
         If the domain has a 'membership_object' method, include methods from the
         object it generates.
         '''
+        if attr in ('lhs', 'rhs'):
+            return Relation.__getattr__(self, attr)
         if 'membership_object' in self.__dict__:
             return getattr(self.membership_object, attr)
         raise AttributeError

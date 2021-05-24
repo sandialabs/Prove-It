@@ -1346,10 +1346,12 @@ class Instantiation(Proof):
             instantiated = Lambda._apply(
                 params, expr, *operands, allow_relabeling=True,
                 equiv_alt_expansions=active_equiv_alt_expansions)
+            new_equality_repl_requirements = []
             eq_replaced = instantiated.equality_replaced(
-                    requirements=requirements,
-                    equality_repl_requirements=equality_repl_requirements,
+                    requirements=new_equality_repl_requirements,
                     auto_simplify_top_level=False)
+            requirements.extend(new_equality_repl_requirements)
+            equality_repl_requirements.update(new_equality_repl_requirements)
             return eq_replaced
 
         remaining_forall_eliminations = num_forall_eliminations
