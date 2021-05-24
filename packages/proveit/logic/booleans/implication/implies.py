@@ -337,8 +337,6 @@ class Implies(TransitiveRelation):
 
     @equality_prover('evaluated', 'evaluate')
     def evaluation(self, **defaults_config):
-        # @equality_prover('shallow_evaluated', 'shallow_evaluate')
-        # def shallow_evaluation(self, **defaults_config):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE.
@@ -347,7 +345,6 @@ class Implies(TransitiveRelation):
         from . import implies_t_f
         from . import implies_t_t, implies_f_t, implies_f_f
         from proveit.logic import EvaluationError
-        # return Operation.shallow_evaluation(self)
         try:
             return Operation.evaluation(self)
         except NotImplementedError:
