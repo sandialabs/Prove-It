@@ -366,7 +366,8 @@ def unit_length_complex_polar_angle(expr, *, reductions=None):
                 # Factor i in the exponent, pulling to the left to
                 # get into exp(i * theta) form.
                 factorization = expr.inner_expr().exponent.factorization(
-                        i, pull='left', group_remainder=True)
+                        i, pull='left', group_remainder=True,
+                        auto_simplify=False)
                 expr = factorization.rhs
                 assert isinstance(expr.exponent, Mult)
                 assert expr.exponent.factors.is_double()
