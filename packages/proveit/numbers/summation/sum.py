@@ -493,10 +493,10 @@ class Sum(OperationOverInstances):
                 user_reductions = [*user_reductions, new_summand]
 
             return sum_split_last.instantiate(
-                {f_op: f_op_sub}, reductions=user_reductions,
-                assumptions=assumptions).instantiate(
-                {a: _a, b: _b, x: _i}, reductions=user_reductions,
+                {f_op: f_op_sub, a: _a, b: _b, x: _i},
+                reductions=user_reductions,
                 assumptions=assumptions)
+
         raise Exception(
                 "Sum.split_off_last() only implemented for summations with a "
                 "single index over an integer Interval. The sum {} has "
