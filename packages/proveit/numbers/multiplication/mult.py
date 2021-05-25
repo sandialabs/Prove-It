@@ -963,7 +963,8 @@ class Mult(Operation):
             product_of_real_powers, products_of_real_powers,
             product_of_complex_powers, products_of_complex_powers)
         from proveit.numbers.exponentiation import (
-            add_one_right_in_exp, add_one_left_in_exp)
+            add_one_right_in_exp, add_one_left_in_exp,
+            add_one_left_in_exp_poss_zero_base)
         from proveit.numbers import Exp
 
         if reductions is None:
@@ -1134,9 +1135,16 @@ class Mult(Operation):
                             shallow=True, assumptions=assumptions))
                     reductions = reductions + [new_exp_simplified]
 
-                return add_one_left_in_exp.instantiate(
-                    {a: self.operands[0], b: self.operands[1].exponent},
-                    reductions=reductions, assumptions=assumptions)
+                try: # case where base a != 0
+                    return add_one_left_in_exp.instantiate(
+                        {a: self.operands[0], b: self.operands[1].exponent},
+                        reductions=reductions, assumptions=assumptions)
+                except Exception as the_exception:
+                    # case where base might be 0 but exponent != 0
+                    return add_one_left_in_exp_poss_zero_base.instantiate(
+                        {a: self.operands[0], b: self.operands[1].exponent},
+                        reductions=reductions, assumptions=assumptions)
+
 
             raise NotImplementedError(
                 "Accumulated error_msg: " + error_msg + "\n"
