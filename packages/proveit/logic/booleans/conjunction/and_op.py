@@ -1,6 +1,7 @@
 from proveit import (Expression, Literal, Operation, Conditional,
                      defaults, USE_DEFAULTS, ProofFailure, InnerExpr,
-                     prover, equality_prover)
+                     prover, equality_prover, SimplificationDirectives,
+                     TransRelUpdater)
 from proveit.logic.equality import SimplificationError
 from proveit import j, k, l, m, n, A, B, C, D, E, F, G
 from proveit.logic.booleans.booleans import in_bool
@@ -13,6 +14,9 @@ class And(Operation):
         string_format='and',
         latex_format=r'\land',
         theory=__file__)
+
+    _simplification_directives_ = SimplificationDirectives(
+        ungroup=True)
 
     def __init__(self, *operands, styles=None):
         r'''
@@ -583,6 +587,25 @@ class And(Operation):
         '''
         if self.operands.is_single():
             return self.unary_reduction()
+
+        expr = self
+        # for convenience updating our equation
+        eq = TransRelUpdater(expr)
+
+        if And._simplification_directives_.ungroup:
+            # ungroup the expression (disassociate nested additions).
+            _n = 0
+            length = expr.operands.num_entries() - 1
+            # loop through all operands
+            while _n < length:
+                operand = expr.operands[_n]
+                if isinstance(operand, And):
+                    # if it is grouped, ungroup it
+                    expr = eq.update(expr.disassociation(
+                            _n, auto_simplify=False))
+                length = expr.operands.num_entries()
+                _n += 1
+
         return Expression.shallow_simplification(self)
 
     @prover
