@@ -178,7 +178,6 @@ class Iff(TransitiveRelation):
 
     @equality_prover('shallow_evaluated', 'shallow_evaluate')
     def shallow_evaluation(self, **defaults_config):
-        # def evaluation(self, **defaults_config):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE.

@@ -1,7 +1,7 @@
 from proveit import (Expression, Lambda, Operation, Literal, safe_dummy_var,
                      single_or_composite_expression, ExprTuple,
                      ExprRange, InnerExpr, defaults, USE_DEFAULTS,
-                     equality_prover)
+                     equality_prover, prover)
 from proveit import a, b, c, d, e, f, g, h, i, j, k, n, x, y
 
 
@@ -145,6 +145,7 @@ class Len(Operation):
             # len_of_ranges_with_repeated_indices,
             # len_of_ranges_with_repeated_indices_from_1,
             # or len_of_empty_range_of_range
+            #print("ELSE!")
             from proveit.core_expr_types.tuples import (
                 general_len, len_of_ranges_with_repeated_indices,
                 len_of_ranges_with_repeated_indices_from_1,
@@ -250,7 +251,8 @@ class Len(Operation):
                         thm = len_of_ranges_with_repeated_indices
                         return thm.instantiate(
                             {n: _n, f: _f, i: _i[0], j: _j[0]})
-
+            #print(general_len.instantiate(
+               # {n: _n, f: _f, i: _i, j: _j}))
             return general_len.instantiate(
                 {n: _n, f: _f, i: _i, j: _j}, 
                 preserved_exprs=preserved_exprs,

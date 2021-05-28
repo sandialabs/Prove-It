@@ -1328,8 +1328,7 @@ class Expression(metaclass=ExprType):
         to its previous value upon exiting the 'with' block.
         '''
         if not hasattr(cls, '_simplification_directives_'):
-            raise AttributeError("%s has no _simplification_directives_ "
-                                 "attribute")
+            raise AttributeError("%s has no _simplification_directives_ attribute" % cls)
         simplification_directives = cls._simplification_directives_
         if not isinstance(simplification_directives, SimplificationDirectives):
             raise TypeError(
