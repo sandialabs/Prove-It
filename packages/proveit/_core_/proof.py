@@ -1345,7 +1345,8 @@ class Instantiation(Proof):
                 return expr
             instantiated = Lambda._apply(
                 params, expr, *operands, allow_relabeling=True,
-                equiv_alt_expansions=active_equiv_alt_expansions)
+                equiv_alt_expansions=active_equiv_alt_expansions,
+                requirements=requirements)
             new_equality_repl_requirements = []
             eq_replaced = instantiated.equality_replaced(
                     requirements=new_equality_repl_requirements,
