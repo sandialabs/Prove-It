@@ -668,9 +668,16 @@ class Lambda(Expression):
                         repl_map, allow_relabeling=allow_relabeling, 
                         requirements=requirements)
                 range_param = var_range(param_var, subbed_start, subbed_end)
-                for param in range_param._possibly_reduced_range_entries(
-                        requirements):
-                    new_params.append(param)
+                # Check for an ExprRange reduction of the Lambda
+                # parameters.  If so, add these as 'requirements'
+                # (note that they aren't equality_requirements in this
+                # instance).
+                range_param_reduction = range_param._range_reduction()
+                if range_param_reduction.lhs != range_param_reduction.rhs:
+                    requirements.append(range_param_reduction)
+                    new_params.extend(range_param_reduction.rhs.entries)
+                else:
+                    new_params.append(range_param)
             else:
                 new_params.append(param)
 
@@ -1287,13 +1294,13 @@ def extract_param_replacements(parameters, parameter_vars, body,
                             # A possible match to check.
                             if not len_req.proven():
                                 try:
-                                    # Try to prove len_req using minimal
+                                    # Try to prove len_req without
                                     # automation since we do not know if
                                     # this is the right match or if we
                                     # need to go further with more
                                     # operands.
                                     len_req.lhs.deduce_equality(
-                                        len_req, minimal_automation=True)
+                                        len_req, automation=False)
                                     assert len_req.proven()
                                 except ProofFailure:
                                     pass

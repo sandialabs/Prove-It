@@ -30,7 +30,8 @@ class ExprType(type):
     protected = ('_canonical_version',
                  'replaced', 'basic_replaced', '_replaced_entries', 
                  'equality_replaced', '_equality_replaced', 
-                 '_equality_replaced_sub_exprs', 'relabeled',
+                 '_equality_replaced_sub_exprs', '_range_reduction',
+                 'relabeled',
                  '_make', '_checked_make', '_reduced', '_used_vars',
                  '_possibly_free_var_ranges', '_parameterized_var_ranges',
                  '_repr_html_', '_core_info',
@@ -1078,7 +1079,8 @@ class Expression(metaclass=ExprType):
                 auto_simplify_top_level = defaults.auto_simplify
             if (expr != self) and (expr in equality_repl_map):
                 replacement = equality_repl_map[expr]
-            elif auto_simplify_top_level and not is_irreducible_value(expr):
+            elif (auto_simplify_top_level and not is_irreducible_value(expr)
+                  and not isinstance(expr, ExprRange)):
                 # Look for a known evaluation.
                 replacement = Equals.get_known_evaluation(expr)
                 if (replacement is None and 
@@ -1135,8 +1137,7 @@ class Expression(metaclass=ExprType):
         sub_exprs = self._sub_expressions
         subbed_sub_exprs = \
             tuple(sub_expr._equality_replaced(
-                    equality_repl_map, requirements,
-                    auto_simplify_top_level=defaults.auto_simplify)
+                    equality_repl_map, requirements)
                   for sub_expr in sub_exprs)
         if all(subbed_sub._style_id == sub._style_id for
                subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
@@ -1270,13 +1271,12 @@ class Expression(metaclass=ExprType):
         '''
         # The only default simplification is an evaluations (though the
         # Operation class has some options via simplifying operands).
-        from proveit.logic import Equals, EvaluationError
+        from proveit.logic import EvaluationError
         try:
             return self.evaluation()
         except EvaluationError:
-            # Use the trivial reflexive equality as a last resort
-            # (no simplification).
-            return Equals(self, self).prove()
+            return self.shallow_simplification()
+
 
     @equality_prover('shallow_evaluated', 'shallow_evaluate')
     def shallow_evaluation(self, **defaults_config):
@@ -1306,7 +1306,7 @@ class Expression(metaclass=ExprType):
         Must be overridden for class-specific simplification.
         '''
         from proveit.logic import Equals
-        return Equals(self, self).prove()
+        return Equals(self, self).conclude_via_reflexivity()
 
     @classmethod
     def temporary_simplification_directives(cls):

@@ -22,10 +22,6 @@ class Defaults:
         # statements as well as automatically concluding
         # statements (via `conclude` methods) when possible.
         self.automation = True
-        
-        # If True, limit the amount of automation that will be
-        # employed, making it apply only locally.
-        self.minimal_automation = False
 
         # Display LaTeX versions of expressions.
         self.display_latex = True
@@ -46,7 +42,7 @@ class Defaults:
         # or replaced using an equality-base replacement.
         # Note that replacements override preserved expressions.
         self.preserved_exprs = set()
-        
+
         """
         # Map expression classes to directives that should be
         # employed when simplifying expressions with that class.

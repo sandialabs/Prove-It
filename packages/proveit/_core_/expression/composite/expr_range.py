@@ -9,7 +9,7 @@ from proveit._core_.expression.composite import singular_expression, ExprTuple
 from proveit._core_.expression.conditional import Conditional
 from proveit._core_.proof import ProofFailure
 from proveit._core_.defaults import defaults, USE_DEFAULTS
-from proveit.decorators import equality_prover
+from proveit.decorators import prover, equality_prover
 
 class ExprRange(Expression):
     '''
@@ -467,28 +467,43 @@ class ExprRange(Expression):
                         and param in var_forms_of_form[param]):
                     yield form
 
-    def _possibly_reduced_range_entries(self, requirements):
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, **defaults_config):
         '''
-        Yield the entries corresponding to the given expr_range after
-        the possible reduction.  If there is no reduction, the
-        'expr_range' itself is yielded.
-        Note: this cannot be done via simplification of the ExprRange
-        because the reductions are of the form of reducing 'self'
-        wrapped in an ExprTuple rather than 'self' itself.
+        Attempt to simplify 'self' under the assumption that it's
+        operands (sub-expressions) have already been simplified.
+        Returns the simplification as a Judgment equality with 'self'
+        on the left side.
+        
+        The default is to return the trivial reflexive equality.
+        Must be overridden for class-specific simplification.
         '''
-        from proveit import Judgment
+        # Use the trivial reflexive equality as a last resort.
+        # Note: this does allow reductions on the right-hand-side
+        # (e.g., for an ExprTuple).
+        assert False
+
+    # This is NOT an @equality_prover because the returned
+    # equality does not have the ExprRange directly on the left
+    # side, rather it is wrapped in an ExprTuple.
+    @prover
+    def _range_reduction(self, **defaults_config):
+        '''
+        Prove this ExprRange, wrapped in an ExprTuple, equal
+        to an ExprTuple form that is possibly reduced (e.g.,
+        collapsed to an empty range or a singular range).
+        '''
         from proveit import f, i, j, m, n
         from proveit.logic import Equals
         from proveit.numbers import Add, one
-        if (not defaults.auto_simplify
-                or self in defaults.preserved_exprs):
+        tuple_wrapped_self = ExprTuple(self)
+        if self in defaults.preserved_exprs:
             # Auto-reduction for this is disabled.
-            yield self
-            return
+            return Equals(tuple_wrapped_self, 
+                          tuple_wrapped_self).conclude_via_reflexivity()
         lambda_map = self.lambda_map
         start_index = self.start_index
         end_index = self.end_index
-        tuple_wrapped_self = ExprTuple(self)
         if start_index == end_index:
             # We can do a singular range reduction.
             # Temporarily disable automation to avoid infinite
@@ -501,13 +516,13 @@ class ExprRange(Expression):
                     (self.parameter,
                      self.body.parameter),
                     self.body.body)
-                reduction = singular_nested_range_reduction.instantiate(
+                return singular_nested_range_reduction.instantiate(
                     {f: lambda_map, m: start_index,
                      i: self.first().start_index,
                      j: self.first().end_index},
                      preserve_expr=tuple_wrapped_self)
             else:
-                reduction = singular_range_reduction.instantiate(
+                return singular_range_reduction.instantiate(
                     {f: lambda_map, i: start_index},
                     preserve_expr=tuple_wrapped_self)
         else:
@@ -536,7 +551,7 @@ class ExprRange(Expression):
                     nest_start_index = self.first().start_index
                     lambda_map = Lambda(
                         (self.parameter, self.body.parameter), self.body.body)
-                    reduction = empty_outside_range_of_range.instantiate(
+                    return empty_outside_range_of_range.instantiate(
                         {f: lambda_map, m: start_index, n: end_index,
                          i: nest_start_index, j: nest_end_index},
                          preserve_expr=tuple_wrapped_self)
@@ -544,7 +559,7 @@ class ExprRange(Expression):
                     from proveit.core_expr_types.tuples import \
                         empty_range_def
                     # Preserve 'self' on the left side of the reduction.
-                    reduction = empty_range_def.instantiate(
+                    return empty_range_def.instantiate(
                         {f: lambda_map, i: start_index, j: end_index},
                         preserve_expr=tuple_wrapped_self)
             elif self.nested_range_depth() > 1:
@@ -574,26 +589,14 @@ class ExprRange(Expression):
                     lambda_map = Lambda(
                         (self.parameter, self.body.parameter), 
                         self.body.body)
-                    reduction = empty_inside_range_of_range.instantiate(
+                    return empty_inside_range_of_range.instantiate(
                         {f: lambda_map, m: start_index, n: end_index, 
                          i: nest_start_index, j: nest_end_index},
                          preserve_expr=tuple_wrapped_self)
-                else:
-                    yield self  # no reduction
-                    return
-
-            else:
-                yield self  # no reduction
-                return
-        assert isinstance(reduction, Judgment)
-        assert isinstance(reduction.expr, Equals)
-        assert reduction.expr.operands.num_entries() == 2
-        assert reduction.expr.operands[0] == ExprTuple(self)
-        reduced_tuple = reduction.expr.operands[1]
-        assert isinstance(reduced_tuple, ExprTuple)
-        requirements.append(reduction)
-        for entry in reduced_tuple:
-            yield entry
+        # If nothing else is applicable, we will return the trivial 
+        # reflexive equality.
+        return Equals(tuple_wrapped_self, 
+                      tuple_wrapped_self).conclude_via_reflexivity()
 
     def _replaced_entries(self, repl_map, allow_relabeling, requirements):
         '''
