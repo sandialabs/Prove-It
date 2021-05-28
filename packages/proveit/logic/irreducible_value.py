@@ -14,7 +14,7 @@ class IrreducibleValue:
     def __init__(self):
         pass
 
-    def irreducible_value(self):
+    def is_irreducible_value(self):
         return True
 
     def eval_equality(self, other_irreducible, assumptions=USE_DEFAULTS):
@@ -35,6 +35,6 @@ class IrreducibleValue:
 
 
 def is_irreducible_value(expr):
-    if hasattr(expr, 'irreducible_value'):
-        return expr.irreducible_value()
+    if hasattr(expr, 'is_irreducible_value'):
+        return expr.is_irreducible_value()
     return False

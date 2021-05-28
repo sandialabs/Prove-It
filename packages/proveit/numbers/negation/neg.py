@@ -19,7 +19,7 @@ class Neg(NumberOperation):
     def __init__(self, A, *, styles=None):
         NumberOperation.__init__(self, Neg._operator_, A, styles=styles)
 
-    def irreducible_value(self):
+    def is_irreducible_value(self):
         from proveit.numbers import zero
         return is_irreducible_value(self.operand) and self.operand != zero
 

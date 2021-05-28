@@ -191,7 +191,7 @@ class NumeralSequence(Operation, IrreducibleValue):
                     "Single digit number should be represented as the "
                     "corresponding Numeral.")
 
-    def irreducible_value(self):
+    def is_irreducible_value(self):
         '''
         Only really an irreducible value if each digit is a Numeral.
         '''
