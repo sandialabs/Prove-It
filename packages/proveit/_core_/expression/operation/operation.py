@@ -580,7 +580,10 @@ class Operation(Expression):
         
         # After making sure the operands have been simplified,
         # try 'shallow_evaluation'.
-        evaluation = reduction.rhs.shallow_evaluation()
+        try:
+            evaluation = reduction.rhs.shallow_evaluation()
+        except NotImplementedError:
+            raise EvaluationError(self)
         return reduction.apply_transitivity(evaluation)
 
     @equality_prover('simplified', 'simplify')
