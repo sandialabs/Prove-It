@@ -51,7 +51,7 @@ def _make_decorated_prover(func):
                     if key[0] != '_'}
         
         if preserve_expr is not None:
-            # Preserve the 'self' expression.
+            # Preserve the 'preserve_expr'.
             if ('preserved_exprs' in defaults_to_change
                     or  preserve_expr not in defaults.preserved_exprs):
                 if 'preserved_exprs' in kwargs:
@@ -160,7 +160,7 @@ def _make_decorated_relation_prover(func):
         # Use the regular @prover wrapper.
         proven_truth = decorated_prover(*args, **kwargs)
         
-        # Check that the result is of the expected form and
+        # Check that the result is of the expected form.
         proven_expr = proven_truth.expr
         if not isinstance(proven_expr, Relation):
             raise TypeError(
@@ -268,7 +268,7 @@ def equality_prover(past_tense, present_tense):
             The wrapper for the equality_prover decorator.
             '''
             from proveit._core_.expression.expr import Expression
-            from proveit.logic import Equals
+            from proveit.logic import Equals, EvaluationError
             # Obtain the original Expression to be on the left side
             # of the resulting equality Judgment.
             _self = args[0]
@@ -322,11 +322,7 @@ def equality_prover(past_tense, present_tense):
                 # The right side of an evaluation must be irreducible.
                 from proveit.logic import is_irreducible_value
                 if not is_irreducible_value(proven_expr.rhs):
-                    raise TypeError(
-                            "An 'evaluation' for %s via %s must have an "
-                            "irreducible value in the right side, "
-                            "is_irreducible_value(%s) is False."
-                            %(_self, func, proven_expr.rhs))
+                    raise EvaluationError(_self)
             return proven_truth
 
         _equality_prover_fn_to_tenses[wrapper] = (past_tense, present_tense)
