@@ -443,6 +443,9 @@ class Set(Function):
         # Reformat assumptions if necessary. Among other things,
         # convert any assumptions=None to assumptions=()
         assumptions = defaults.checked_assumptions(assumptions)
+        #should not bne needed anymore!!!
+        # but if need assumptions actively here will need explicitly:
+        # assumptions = defaults.assumptions
 
         # We should now have a subset Set, either explicitly provided
         # as an argument or derived from the subset_indices.
@@ -458,7 +461,7 @@ class Set(Function):
         from proveit.logic import Equals, is_irreducible_value
         from proveit import TransRelUpdater
         temp_subset = subset
-        eq_temp = TransRelUpdater(temp_subset, assumptions)
+        eq_temp = TransRelUpdater(temp_subset, assumptions) #assumptions not needed here
         # perform substitutions to irreducible values when possible
         for elem in set(temp_subset.operands):
             if elem in Equals.known_equalities:
@@ -472,7 +475,7 @@ class Set(Function):
                                     assumptions=assumptions))
                             break
         # reduce multiplicities
-        temp_subset = eq_temp.update(temp_subset.reduction(assumptions))
+        temp_subset = eq_temp.update(temp_subset.reduction())
         subset = temp_subset
         subset_entries = subset.operands.entries
         subset_to_subset_subbed_reduced_kt = eq_temp.relation
@@ -661,7 +664,8 @@ class Set(Function):
         to 1. For example, the Set(a, a, b, b, c, d)={a, a, b, b, c, d}
         is equal to its support {a, b, c, d}. The deduction is
         achieved by successively applying the element-by-element
-        reduction_elem() method until no further reduction is possible.
+        elem_multiplicity_reduction() method until no further reduction
+        is possible.
         '''
         from proveit import TransRelUpdater
         eq = TransRelUpdater(self)
@@ -671,11 +675,13 @@ class Set(Function):
         desired_num_operands = len(desired_operands)
         expr = self
         while expr.operands.num_entries() > desired_num_operands:
-            expr = eq.update(expr.reduction_elem())
+            expr = eq.update(expr.elem_multiplicity_reduction())
 
         return eq.relation
 
-    def reduction_elem(self, elem=None, idx=None, assumptions=USE_DEFAULTS):
+    @equality_prover('elem_multiplicity_reduced', 'elem_multiplicity_reduce')
+    def elem_multiplicity_reduction(
+            self, elem=None, idx=None, **defaults_config):
         '''
         Deduce that this enum Set expression is equal to a Set
         in which the multiply-occurring element specified either by
@@ -685,16 +691,19 @@ class Set(Function):
         method attempts to delete the first repeated element of the Set.
         If both elem and idx are specified, the elem param is ignored.
         Examples: Let S = Set(a, b, a, b, a, c). Then
-        S.reduction_elem() gives |-S = {a, b, b, a, c};
-        S.reduction_elem(elem=b) gives |- S = {a, b, a, a, c};
-        S.reduction_elem(idx=4) gives |- S = {a, b, a, b, c}.
+        S.elem_multiplicity_reduction() gives
+            |-S = {a, b, b, a, c};
+        S.elem_multiplicity_reduction(elem=b) gives
+            |- S = {a, b, a, a, c};
+        S.elem_multiplicity_reduction(idx=4) gives
+            |- S = {a, b, a, b, c}.
         Consider changing name to elem_reduction, then use elem_reduced
         as adj and elem_reduce as verb.
         '''
         n = self.operands.num_entries()
 
         # if user has specified position index idx,
-        # check for validity and use  idx if possible
+        # check for validity and use idx if possible
         if idx is not None and (idx < -n or idx >= n):
             raise IndexError("Index specification idx is out of bounds: {0}. "
                              "Need {1} ≤ idx ≤ {2}.".
@@ -772,24 +781,23 @@ class Set(Function):
         # extra element to the right or to the left of an id'd element
         idx_left = min(idx_to_keep, idx_to_elim)
         idx_right = max(idx_to_keep, idx_to_elim)
-        # so we break the set in into [ ]+[idx_left]+[ ]+[idx_right]+[ ]
+        # so we break the set into [ ]+[idx_left]+[ ]+[idx_right]+[ ]
         operands = self.operands
         _a, _x, _b, _c = (
             operands[0:idx_left],
             operands[idx_left],
             operands[idx_left + 1: idx_right],
             operands[idx_right + 1:])
-        _l = _a.num_elements(assumptions)
-        _m = _b.num_elements(assumptions)
-        _n = _c.num_elements(assumptions)
+        _l = _a.num_elements(defaults.assumptions)
+        _m = _b.num_elements(defaults.assumptions)
+        _n = _c.num_elements(defaults.assumptions)
         if idx_to_keep < idx_to_elim:
             return reduction_right.instantiate(
-                {l: _l, m: _m, n: _n, a: _a, x: _x, b: _b, c: _c}, 
-                assumptions=assumptions)
+                {l: _l, m: _m, n: _n, a: _a, x: _x, b: _b, c: _c},
+                assumptions=defaults.assumptions)
         else:
             return reduction_left.instantiate(
-                {l: _l, m: _m, n: _n, a: _a, x: _x, b: _b, c: _c}, 
-                assumptions=assumptions)
+                {l: _l, m: _m, n: _n, a: _a, x: _x, b: _b, c: _c})
 
     def single_elem_substitution(self, elem=None, idx=None, sub_elem=None,
                                  assumptions=USE_DEFAULTS):
