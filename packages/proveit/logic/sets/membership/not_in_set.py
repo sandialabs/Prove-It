@@ -122,7 +122,7 @@ class NotInSet(Relation):
         # No known membership works.  Let's see if there is a known
         # simplification of the element before trying anything else.
         try:
-            elem_simplification = self.element.simplification(assumptions,
+            elem_simplification = self.element.simplification(assumptions=assumptions,
                                                               automation=True)
             if elem_simplification.lhs == elem_simplification.rhs:
                 elem_simplification = None  # reflection doesn't count
