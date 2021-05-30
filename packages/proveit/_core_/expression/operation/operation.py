@@ -576,11 +576,14 @@ class Operation(Expression):
         
         # If the default didn't work, try to simplify the operands
         # first.
-        reduction = self.inner_expr().simplification_of_operands()
+        reduction = self.simplification_of_operands()
         
         # After making sure the operands have been simplified,
         # try 'shallow_evaluation'.
-        evaluation = reduction.rhs.shallow_evaluation()
+        try:
+            evaluation = reduction.rhs.shallow_evaluation()
+        except NotImplementedError:
+            raise EvaluationError(self)
         return reduction.apply_transitivity(evaluation)
 
     @equality_prover('simplified', 'simplify')
@@ -605,7 +608,7 @@ class Operation(Expression):
 
         # If evaluation didn't work, try to simplify the operands
         # first.
-        reduction = self.inner_expr().simplification_of_operands()
+        reduction = self.simplification_of_operands()
 
         # After making sure the operands have been simplified,
         # try 'shallow_simplification'.
@@ -621,6 +624,28 @@ class Operation(Expression):
         simplification = reduction.rhs.shallow_simplification(
                 replacements=[reduction])
         return reduction.apply_transitivity(simplification)
+    
+    @equality_prover('simplified_operands', 'operands_simplify')
+    def simplification_of_operands(self, **defaults_config):
+        '''
+        Prove this Operation equal to a form in which its operands
+        have been simplified.
+        '''
+        from proveit.relation import TransRelUpdater
+        from proveit import ExprRange
+        from proveit.logic import is_irreducible_value
+        if any(isinstance(operand, ExprRange) for operand in self.operands):
+            # If there is any ExprRange in the operands, simplify the
+            # operands together as an ExprTuple.
+            return self.inner_expr().operands[:].simplification()
+        else:
+            expr = self
+            eq = TransRelUpdater(expr)
+            for k, operand in enumerate(self.operands):
+                if not is_irreducible_value(operand):
+                    inner_operand = expr.inner_expr().operands[k]
+                    expr = eq.update(inner_operand.simplification())
+        return eq.relation
     
     def operands_are_irreducible(self):
         '''

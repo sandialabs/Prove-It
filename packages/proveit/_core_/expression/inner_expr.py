@@ -537,40 +537,6 @@ class InnerExpr:
                          self.inner_expr_path + (k,),
                          assumptions=self.assumptions)
 
-    def simplification_of_operands(self, assumptions=USE_DEFAULTS):
-        '''
-        Returns a proven equality between the top-level expression
-        and a form in which the operands at the inner-expression
-        level have been simplified.
-        '''
-        return _inner_operands_simplification(self, in_place=False)
-
-    def evaluation_of_operands(self, assumptions=USE_DEFAULTS):
-        '''
-        Returns a proven equality between the top-level expression
-        and a form in which the operands at the inner-expression
-        level have been evaluated.
-        '''
-        return _inner_operands_simplification(self, in_place=False,
-                                              must_evaluate=True)
-
-    def simplify_operands(self, assumptions=USE_DEFAULTS):
-        '''
-        Returns a proven equivalent form of the top-level expression
-        in which the operands at the inner-expression level have been 
-        simplified.
-        '''
-        return _inner_operands_simplification(self, in_place=True)
-
-    def evaluate_operands(self, assumptions=USE_DEFAULTS):
-        '''
-        Returns a proven equivalent form of the top-level expression
-        in which the operands at the inner-expression level have been 
-        evaluated.
-        '''
-        return _inner_operands_simplification(self, in_place=True, 
-                                              must_evaluate=True)
-
     def _repr_html_(self):
         return self._expr_rep()._repr_html_()
 
@@ -595,68 +561,3 @@ def generate_inner_expressions(expr, inner):
         # exploration.
         for k, sub_expr in enumerate(cur_sub_expr.sub_expr_iter()):
             next_inner_exprs.append(next_inner_expr.sub_expr(k))
-
-
-def _inner_operands_simplification(inner_expr, *, in_place=True, 
-                                   must_evaluate=False):
-    '''
-    Returns a simplification (or proven simplified form if "in_place"
-    is True) of the top-level of inner_expr (an InnerExpr object)
-    in which the operands at the inner-expression level have been
-    simplified.  If must_evaluate is True, then the operands at
-    the inner-expression level must simplify to irreducible values
-    (evaluations).
-    
-    This is invoked from InnerExpr.simplification_of_operands,
-    InnerExpr.evaluation_of_operands, InnerExpr.simplify_operands,
-    InnerExpr.evaluate_operands.
-    '''
-    # Any of the operands that can be simplified must be replaced with
-    # their simplification.
-    from proveit import InnerExpr, ExprRange
-    from proveit.logic import is_irreducible_value
-    from proveit.relation import TransRelUpdater
-    assert isinstance(inner_expr, InnerExpr), \
-        "Expecting 'inner_expr' to be of type 'InnerExpr'"
-    top_level = inner_expr.expr_hierarchy[0]
-    inner = inner_expr.expr_hierarchy[-1]
-    
-    eq = TransRelUpdater(top_level)
-    while True:
-        all_reduced = True
-        for operand in inner.operands:
-            if (#not operand.is_simplified() and
-                    not is_irreducible_value(operand) and
-                    not isinstance(operand, ExprRange)):
-                # The operand isn't already irreducible, so try to
-                # simplify it.
-                if must_evaluate:
-                    operand_eval = operand.evaluation()
-                else:
-                    operand_eval = operand.simplification()
-                if operand_eval.lhs != operand_eval.rhs:
-                    # Compose map to replace all instances of the
-                    # operand within the inner expression.
-                    global_repl = Lambda.global_repl(inner, operand)
-                    lambda_map = inner_expr.repl_lambda().compose(global_repl)
-                    # substitute in the evaluated value
-                    if in_place:
-                        subbed = operand_eval.sub_right_side_into(lambda_map)
-                        inner_expr = InnerExpr(
-                            subbed, inner_expr.inner_expr_path)
-                    else:
-                        sub = operand_eval.substitution(lambda_map)
-                        inner_expr = InnerExpr(
-                            sub.rhs, inner_expr.inner_expr_path)
-                        eq.update(sub)
-                    all_reduced = False
-                    # Start over since there may have been multiple
-                    # substitutions:
-                    break
-        if all_reduced:
-            break  # done!
-        inner = inner_expr.expr_hierarchy[-1]
-        
-    if in_place:
-        return inner_expr.expr_hierarchy[0].prove(automation=False)
-    return eq.relation

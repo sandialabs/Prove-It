@@ -202,9 +202,9 @@ class Relation(Operation):
 
     def __dir__(self):
         '''
-        Include the '_both_sides' methods dependent upon the known
-        memberships of the left/right sides of the relation
-        (see __getattr__).
+        Include 'lhs', 'rhs', and the '_both_sides' methods dependent 
+        upon the known memberships of the left/right sides of the 
+        relation (see __getattr__).
         '''
         both_sides_str = '_both_sides'
         relation_name_str = '_of_' + self.__class__.__name__.lower()
@@ -222,4 +222,4 @@ class Relation(Operation):
                 if name[-len(method_end_str):] == method_end_str:
                     both_sides_methods.append(name[:-len(relation_name_str)])
         return sorted(set(dir(self.__class__) + list(self.__dict__.keys())
-                          + both_sides_methods))
+                          + both_sides_methods + ('lhs', 'rhs')))

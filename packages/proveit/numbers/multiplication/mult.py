@@ -1,6 +1,6 @@
 from proveit import (defaults, Literal, Operation, USE_DEFAULTS, ExprTuple,
                      Judgment, ProofFailure, InnerExpr, 
-                     prover, equality_prover,
+                     prover, relation_prover, equality_prover,
                      SimplificationDirectives)
 from proveit.logic import Equals, InSet
 from proveit.numbers import num
@@ -46,7 +46,8 @@ class Mult(NumberOperation):
                     # have been generated
                     pass  # and that's okay
 
-    def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
+    @relation_prover
+    def deduce_in_number_set(self, number_set, **defaults_config):
         '''
         Attempt to prove that this product is in the given number_set.
         '''
@@ -118,13 +119,12 @@ class Mult(NumberOperation):
         # print("self in deduce in number set", self)
         # print("self.operands", self.operands)
         if bin:
-            return thm.instantiate({a: self.operands[0], b: self.operands[1]},
-                                   assumptions=assumptions)
-        return thm.instantiate({n: self.operands.num_elements(assumptions),
-                                a: self.operands},
-                               assumptions=assumptions)
+            return thm.instantiate({a: self.operands[0], b: self.operands[1]})
+        return thm.instantiate({n: self.operands.num_elements(),
+                                a: self.operands})
 
-    def deduce_divided_by(self, divisor, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_divided_by(self, divisor, **defaults_config):
         '''
         Deduce that the product represented by Mult(a,b) is divisible
         by the mult_factor a or b. For example,
@@ -138,16 +138,14 @@ class Mult(NumberOperation):
                 left_factor_divisibility)
             _x, _y = left_factor_divisibility.instance_params
             return left_factor_divisibility.instantiate(
-                {_x: self.operands[0], _y: self.operands[1]},
-                assumptions=assumptions)
+                {_x: self.operands[0], _y: self.operands[1]})
 
         elif divisor == self.operands[1]:  # a|ba
             from proveit.numbers.divisibility import (
                 right_factor_divisibility)
             _x, _y = right_factor_divisibility.instance_params
             return right_factor_divisibility.instantiate(
-                {_x: self.operands[0], _y: self.operands[1]},
-                assumptions=assumptions)
+                {_x: self.operands[0], _y: self.operands[1]})
 
         else:
             raise ValueError(
