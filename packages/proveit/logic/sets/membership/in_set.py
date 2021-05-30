@@ -84,7 +84,7 @@ class InSet(Relation):
         Deduce x not in S assuming not(A in S), where self = (x in S).
         '''
         from .not_in_set import NotInSet
-        yield NotInSet(self.element, self.domain).conclude_as_folded()
+        return NotInSet(self.element, self.domain).conclude_as_folded()
 
     @prover
     def deduce_in_bool(self, **defaults_config):
