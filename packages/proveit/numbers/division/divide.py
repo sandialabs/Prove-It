@@ -1,4 +1,5 @@
-from proveit import (Judgment, Expression, Literal, maybe_fenced_latex, 
+from proveit import (Judgment, Expression, Literal, Operation,
+                     maybe_fenced_latex, defaults,
                      Function, ExprTuple, InnerExpr, USE_DEFAULTS,
                      UnsatisfiedPrerequisites, relation_prover,
                      equality_prover)
@@ -78,14 +79,14 @@ class Div(NumberOperation):
         eq = TransRelUpdater(expr)
 
         # perform cancelations where possible
-        expr = eq.update(expr.cancelations())
+        expr = eq.update(expr.cancelations(auto_simplify=False))
         if not isinstance(expr, Div):
             # complete cancelation.
             return eq.relation
 
         if self.denominator == one:
             # eliminate division by one
-            eq.update(expr.divide_by_one_elimination())
+            eq.update(expr.divide_by_one_elimination(auto_simplify=False))
             return eq.relation  # no more division simplifications.
 
         return eq.relation
@@ -128,7 +129,8 @@ class Div(NumberOperation):
 
         for numer_factor in numer_factors:
             if numer_factor in denom_factors_set:
-                expr = eq.update(expr.cancelation(numer_factor))
+                expr = eq.update(expr.cancelation(numer_factor,
+                                                  auto_simplify=False))
                 denom_factors_set.remove(numer_factor)
 
         return eq.relation
@@ -142,7 +144,7 @@ class Div(NumberOperation):
         [(a*b)/(b*c)].cancelation(b) would return
         (a*b)/(b*c) = a / c
         '''
-        from proveit.numbers import Mult
+        from proveit.numbers import Mult, one
         expr = self
         eq = TransRelUpdater(expr)
 
@@ -150,7 +152,7 @@ class Div(NumberOperation):
             # x/x = 1
             from . import frac_cancel_complete
             return frac_cancel_complete.instantiate(
-                {x: term_to_cancel}).checked()
+                {x: term_to_cancel})
 
         if term_to_cancel != self.numerator:
             if (not isinstance(self.numerator, Mult) or
@@ -168,23 +170,33 @@ class Div(NumberOperation):
             # Factor the term_to_cancel from the denominator to the left.
             expr = eq.update(expr.inner_expr().denominator.factorization(
                 term_to_cancel, group_factor=True, group_remainder=True))
-        if term_to_cancel == self.numerator:
-            from . import frac_cancel_numer_left
-            assert expr.denominator.operands.is_double(), "Should be grouped"
-            expr = eq.update(frac_cancel_numer_left.instantiate(
-                {x: term_to_cancel, y: expr.denominator.operands[1]}))
-            return eq.relation
-        elif term_to_cancel == self.denominator:
-            from . import frac_cancel_denom_left
-            assert expr.numerator.operands.is_double(), "Should be grouped"
-            expr = eq.update(frac_cancel_denom_left.instantiate(
-                {x: term_to_cancel, y: expr.numerator.operands[1]}))
+        if expr.numerator == expr.denominator == term_to_cancel:
+            # Perhaps it reduced to the trivial x/x = 1 case via
+            # auto-simplification.
+            expr = eq.update(expr.cancelation(term_to_cancel))
             return eq.relation
         else:
+            # (x*y) / (x*z) = y/z with possible automatic reductions
+            # via 1 eliminations.
             from . import frac_cancel_left
+            replacements = list(defaults.replacements)            
+            if expr.numerator == term_to_cancel:
+                numer_prod = Mult(term_to_cancel, one)
+                _y = one
+                replacements.append(numer_prod.one_elimination(
+                        1, perserve_expr=term_to_cancel))
+            else:
+                _y = expr.numerator.operands[1]
+            if expr.denominator == term_to_cancel:
+                denom_prod = Mult(term_to_cancel, one)
+                _z = one
+                replacements.append(denom_prod.one_elimination(
+                        1, perserve_expr=term_to_cancel))
+            else:
+                _z = expr.denominator.operands[1]
             expr = eq.update(frac_cancel_left.instantiate(
-                {x: term_to_cancel, y: expr.numerator.operands[1],
-                 z: expr.denominator.operands[1]}))
+                {x: term_to_cancel, y: _y, z: _z},
+                 replacements=replacements, preserve_expr=expr))
             return eq.relation
 
     @equality_prover('deep_eliminated_ones', 'deep_eliminate_ones')

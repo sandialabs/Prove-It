@@ -218,7 +218,6 @@ class Add(NumberOperation):
         Record the judgment in Add.known_equalities, associated for
         each term.
         '''
-        from proveit import defaults
         from proveit.numbers import Neg
         if not isinstance(judgment, Judgment):
             raise ValueError("Expecting 'judgment' to be a Judgment.")
@@ -451,7 +450,8 @@ class Add(NumberOperation):
         for rev_idx, operand in enumerate(reversed(self.operands.entries)):
             if operand == zero:
                 idx = self.operands.num_entries() - rev_idx - 1
-                expr = eq.update(expr.zero_elimination(idx))
+                expr = eq.update(expr.zero_elimination(
+                        idx, auto_simplify=False))
                 if not isinstance(expr, Add):
                     # can't do an elimination if reduced to a single term.
                     break
@@ -690,7 +690,8 @@ class Add(NumberOperation):
                         operand.is_parameter_independent):
                     # A range of repeated terms may be simplified to
                     # a multiplication, but we need to group it first.
-                    inner_simplification = Add(operand).simplification()
+                    inner_simplification = (
+                            Add(operand).shallow_simplification())
                     expr = eq.update(expr.association(
                             _n, 1, replacements=[inner_simplification],
                             auto_simplify=False))
@@ -771,7 +772,7 @@ class Add(NumberOperation):
                     grouped_term = Add(
                             *expr.operands.entries[_m:_m+len(hold[key])])
                     inner_simplification = (
-                            grouped_term.simplification())
+                            grouped_term.shallow_simplification())
                     expr = eq.update(expr.association(
                         _m, length=len(hold[key]),
                         replacements=[inner_simplification],
