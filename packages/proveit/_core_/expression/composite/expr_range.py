@@ -165,6 +165,13 @@ class ExprRange(Expression):
             related_methods = ('with_explicit_parameterization',
                                'with_implicit_parameterization',
                                'with_default_parameterization_style'))
+        options.add_option(
+            name = 'simplify',
+            description = (
+                    "If 'True', simplify the formatted instances."),
+            default = 'False',
+            related_methods = ('with_simplification',)
+        )
         return options
 
     def with_explicit_parameterization(self):
@@ -196,17 +203,24 @@ class ExprRange(Expression):
         '''
         return self.without_style('parameterization')
     
+    def with_simplification(self):
+        '''
+        Simplify the formatted instances for the style.
+        '''
+        return self.with_styles(simplify='True')
+    
     def _body_replaced(self, expr_map):
         '''
         Return the body replaced according the the expression map.
         First attempt to do this with auto-simplification.  If that
-        faisle, do it without auto-simplification.
+        fails, do it without auto-simplification.
         '''
-        with defaults.temporary() as temp_defaults:
-            temp_defaults.auto_simplify = True
-            try:
+        if self.get_style('simplify', 'False') == 'True':            
+            with defaults.temporary() as temp_defaults:
+                temp_defaults.auto_simplify = True
                 return self.body.replaced(expr_map)
-            except Exception:
+        else:
+            with defaults.temporary() as temp_defaults:
                 temp_defaults.auto_simplify = False
                 return self.body.replaced(expr_map)
 
