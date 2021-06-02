@@ -1,4 +1,4 @@
-from proveit import (USE_DEFAULTS, single_or_composite_expression,
+from proveit import (defaults, USE_DEFAULTS, single_or_composite_expression,
                      prover)
 
 @prover
@@ -149,8 +149,10 @@ def group_commutation(expr, init_idx, final_idx, length, disassociate=True,
     # for convenience while updating our equation:
     eq = TransRelUpdater(expr)
     expr = eq.update(
-        expr.association(init_idx, length))
-    expr = eq.update(expr.commutation(init_idx, final_idx))
+        expr.association(init_idx, length, auto_simplify=False))
+    expr = eq.update(expr.commutation(
+            init_idx, final_idx, 
+            auto_simplify = defaults.auto_simplify and not disassociate))
     if disassociate:
         expr = eq.update(
             expr.disassociation(final_idx))
