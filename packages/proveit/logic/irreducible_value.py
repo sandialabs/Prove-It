@@ -7,7 +7,7 @@ Classes used to represent expressions that are irreducible
 IrreducibleValue.
 '''
 
-from proveit import USE_DEFAULTS
+from proveit import prover, relation_prover
 
 
 class IrreducibleValue:
@@ -17,7 +17,8 @@ class IrreducibleValue:
     def is_irreducible_value(self):
         return True
 
-    def eval_equality(self, other_irreducible, assumptions=USE_DEFAULTS):
+    @prover
+    def eval_equality(self, other_irreducible, **defaults_config):
         '''
         Returns the evaluation of the equality between this irreducible
         value and the other irreducible value, if it is well-defined.
@@ -25,7 +26,8 @@ class IrreducibleValue:
         raise NotImplementedError(
             "eval_equality method must be implemented by IrreducibleValue objects")
 
-    def not_equal(self, other_irreducible, assumptions=USE_DEFAULTS):
+    @relation_prover
+    def not_equal(self, other_irreducible, **defaults_config):
         '''
         Attempt to prove that this irreducible values is not equal to
         the other irreducible value, returning the Judgment.
