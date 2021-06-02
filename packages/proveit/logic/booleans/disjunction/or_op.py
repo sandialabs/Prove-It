@@ -256,7 +256,8 @@ class Or(Operation):
                 ("derive_via_multi_dilemma requires conclusion to be a "
                  "disjunction, the same number of operands as self.")
         with defaults.temporary() as temp_defaults:
-            temp_defaults.preserve_expr(conclusion)
+            # temp_defaults.preserve_expr(conclusion)
+            temp_defaults.preserved_exprs = defaults.preserved_exprs.union([conclusion])
             # Check for destructive versus constructive dilemma cases.
             if all(isinstance(operand, Not) for operand in self.operands) and all(
                     isinstance(operand, Not) for operand in conclusion.operands):
