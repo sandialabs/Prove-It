@@ -1,10 +1,12 @@
-from proveit import defaults, USE_DEFAULTS, ProofFailure
+from proveit import defaults, prover, ProofFailure
 from proveit import a, b, n, x
 from proveit.logic import InSet, Membership, Nonmembership
-from proveit.numbers import greater, Less, LessEq
-from proveit.numbers import zero, Integer, IntegerNeg, NaturalPos
+from proveit.numbers import Less, LessEq, greater, greater_eq 
+from proveit.numbers import (zero, Integer, IntegerNeg, IntegerNonPos,
+                             Natural, NaturalPos)
+from proveit.numbers.number_sets.number_set import NumberMembership
 
-class IntervalMembership(Membership):
+class IntervalMembership(NumberMembership):
 
     '''
     Defines methods that apply to membership in an Interval,
@@ -13,251 +15,175 @@ class IntervalMembership(Membership):
     '''
 
     def __init__(self, element, domain):
-        Membership.__init__(self, element, domain)
+        NumberMembership.__init__(self, element, domain)
         self.domain = domain
 
-    def side_effects(self, judgment):
-        '''
-        As possible side-effects:
-        (1) Unfold the Interval set membership:
-            (a) deduce elem in Integers (assuming we know upper and
-                lower bounds are integers);
-            (b) deduce lower_bound <= elem
-            (c) deduce elem <= upper_bound
-        (2) Deduce that the membership claim is Boolean
-        (3) Try to deduce element in more restrictive subset of Integer
-        '''
-        yield self.deduce_element_in_integer
-        yield self.deduce_element_lower_bound
-        yield self.deduce_element_upper_bound
-        yield self.deduce_in_bool
-        # Temporarily leaving out this checking process until we have
-        # access to broader assumptions list
-        # if (LessEq(_a, _b).proven(assumptions=assumptions) and
-        #     (greater(_a, zero).proven(assumptions=assumptions) or
-        #     (InSet(_a, NaturalPos).proven(assumptions=assumptions) and 
-        #      InSet(_b, NaturalPos).proven(assumptions=assumptions)) )):
-        #     yield self.deduce_element_in_restricted_number_set
-        # _a = self.domain.lower_bound
-        # _b = self.domain.upper_bound
-        # _n = self.element
-        # # check for more restricted subset possibilities
-        # # (3a) if we know lower_bound >= 0, deduce_element_in_natural;
-        # if (LessEq(zero, _a).proven()):
-        #     yield self.deduce_element_in_natural
-        # # (3b) if we know lower_bound > 0
-        # #      or lower_ and upper_bounds both in NaturalPos,
-        # #      deduce_element_in_natural_pos;
-        # if (Less(zero, _a).proven() or
-        #     (InSet(_a, NaturalPos).proven() and
-        #      InSet(_b, NaturalPos).proven() )):
-        #     yield self.deduce_element_in_natural_pos
-        # # (3c) if we know upper_bound < 0
-        # #      or both lower_ and upper_bounds in IntegerNeg.
-        # #      deduce_element_in_natural_pos
-        # if (Less(_b, zero).proven() or
-        #     (InSet(_a, IntegerNeg).proven() and
-        #      InSet(_b, IntegerNeg).proven() )):
-        #     yield self.deduce_element_in_integer_neg
-        yield self.deduce_element_in_restricted_number_set
-
-    def conclude(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude(self, **defaults_config):
         '''
         From [element in Integer] and [lower_bound <= element] and
         [element <= upper_bound], derive and return
         [element in Interval(lower_bound, upper_bound)]
         '''
-        # among other things, convert any assumptions=None
-        # to assumptions=()
-        assumptions = defaults.checked_assumptions(assumptions)
+        return self.domain.deduce_elem_in_set(self.element)
 
-        from proveit import ProofFailure
-        from . import in_interval
-        _a = self.domain.lower_bound
-        _b = self.domain.upper_bound
-        _n = self.element
-        return in_interval.instantiate(
-                {a: _a, b: _b, n: _n}, assumptions=assumptions)
-
-    # def unfold(self, assumptions=USE_DEFAULTS):
-    #     '''
-    #     From [element in Interval(x, y)], derive and return the following
-    #     3 properties:
-    #     (1) element in Integer
-    #     (2) x <= element
-    #     (3) element <= y
-    #     [(element=x) or (element=y) or ..].
-    #     From original EnumMembership class:
-    #     From [element in {x, y, ..}], derive and return
-    #     [(element=x) or (element=y) or ..]
-    #     '''
-    #     from . import unfold_singleton, unfold
-    #     enum_elements = self.domain.elements
-    #     if enum_elements.is_single():
-    #         return unfold_singleton.instantiate(
-    #             {x: self.element, y: enum_elements[0]}, assumptions=assumptions)
-    #     else:
-    #         _y = enum_elements
-    #         _n = _y.num_elements(assumptions=assumptions)
-    #         return unfold.instantiate({n: _n, x: self.element, y: _y}, 
-    #                                   assumptions=assumptions)
-    
-    def deduce_element_in_integer(self, assumptions=USE_DEFAULTS):
+    def side_effects(self, judgment):
         '''
-        from (element in Interval(x, y)), deduce (element in Integer)
+        Yield side-effects when proving n in an Interval for a given n.
         '''
-        from . import interval_is_int
-        _a = self.domain.lower_bound
-        _b = self.domain.upper_bound
-        _n = self.element
-        return interval_is_int.instantiate(
-            {a: _a, b: _b, n: _n}, assumptions=assumptions)
+        from proveit.logic import InSet
+        from proveit.numbers import Natural, IntegerNonPos
+        yield self.derive_element_lower_bound
+        yield self.derive_element_upper_bound
+        yield self.derive_element_in_integer
+        # Derive that the element is in a restriced number set if
+        # we can.
+        yield self.derive_element_in_restricted_number_set_if_known
+        # Added but commented the following out while we debate the
+        # wisdom of further side-effects
+        # yield lambda: self.deduce_member_in_real(member)
 
-    def deduce_element_in_natural(self, assumptions=USE_DEFAULTS):
-        '''
-        from (element in Interval(x, y)), with x >= 0,
-        deduce (element in Natural)
-        '''
-        from . import all_in_non_neg_interval_are_natural
-        _a = self.domain.lower_bound
-        _b = self.domain.upper_bound
-        _n = self.element
-        return all_in_non_neg_interval_are_natural.instantiate(
-            {a: _a, b: _b, n: _n}, assumptions=assumptions)
-
-    def deduce_element_in_natural_pos(self, assumptions=USE_DEFAULTS):
-        '''
-        from (element in Interval(x, y)), with x > 0,
-        or (element in Interval(x, y)) with both x and y NaturalPos
-        deduce (element in NaturalPos)
-        '''
-        _a = self.domain.lower_bound
-        _b = self.domain.upper_bound
-        _n = self.element
-        from . import interval_in_nat_pos
-        try:
-            return interval_in_nat_pos.instantiate(
-                  {a:_a, b:_b, n:_n}, assumptions=assumptions)
-        except Exception as e:
-            from . import all_in_positive_interval_are_natural_pos
-            return all_in_positive_interval_are_natural_pos.instantiate(
-                    {a: _a, b: _b, n: _n}, assumptions=assumptions)
-
-    def deduce_element_in_integer_neg(self, assumptions=USE_DEFAULTS):
-        '''
-        from (element in Interval(x, y)), with integers x, y and  y < 0,
-        or (element in Interval(x, y)) with both x and y in IntegerNeg
-        deduce (element in IntegerNeg)
-        '''
-        _a = self.domain.lower_bound
-        _b = self.domain.upper_bound
-        _n = self.element
-        from . import interval_in_int_neg
-        try:
-            return interval_in_int_neg.instantiate(
-                  {a:_a, b:_b, n:_n}, assumptions=assumptions)
-        except Exception as e:
-            from . import all_in_negative_interval_are_negative_int
-            return all_in_negative_interval_are_negative_int.instantiate(
-                    {a: _a, b: _b, n: _n}, assumptions=assumptions)
-
-    def deduce_element_lower_bound(self, assumptions=USE_DEFAULTS):
-        from . import interval_lower_bound
-        _a = self.domain.lower_bound
-        _b = self.domain.upper_bound
-        _n = self.element
-        return interval_lower_bound.instantiate(
-            {a: _a, b: _b, n: _n}, assumptions=assumptions)
-
-    def deduce_element_upper_bound(self, assumptions=USE_DEFAULTS):
-        from . import interval_upper_bound
-        _a = self.domain.lower_bound
-        _b = self.domain.upper_bound
-        _n = self.element
-        return interval_upper_bound.instantiate(
-            {a: _a, b: _b, n: _n}, assumptions=assumptions)
-
-    def deduce_element_in_restricted_number_set(self, assumptions=USE_DEFAULTS):
-        '''
-        from (element in Interval(x, y)), where x and y are already
-        known to be in the same further-restricted number_set (for
-        example, both are positive integers or both are negative
-        integers), deduce that the element is also in that same more
-        restrictive set.
-        This method uses a sequence of try-excepts working from most
-        restrictive to least restrictive.
-        '''
-        from proveit.numbers import zero, greater, LessEq, NaturalPos
-
-        _a = self.domain.lower_bound
-        _b = self.domain.upper_bound
-        _n = self.element
-
-        # Case: lower_bound > 0,
-        #       so entire Interval is in NaturalPos
-        from . import interval_in_nat_pos
-        try:
-            return interval_in_nat_pos.instantiate(
-                  {a:_a, b:_b, n:_n}, assumptions=assumptions)
-        except:
-            pass
-
-        # Case: lower_bound and upper_bound both in NaturalPos
-        #       thus entire interval is in NaturalPos
-        from . import all_in_positive_interval_are_natural_pos
-        try:
-            return all_in_positive_interval_are_natural_pos.instantiate(
-                    {a: _a, b: _b, n: _n}, assumptions=assumptions)
-        except:
-            pass
-
-        # Case: lower_bound >= 0,
-        #       thus entire interval is in Natural
-        from . import all_in_non_neg_interval_are_natural
-        try:
-            return all_in_non_neg_interval_are_natural.instantiate(
-                    {a: _a, b: _b, n: _n}, assumptions=assumptions)
-        except:
-            pass
-
-        # Case: upper_bound < 0
-
-        # Case: upper_bound <= 0
-
-        # Case: lower_bound and upper_bound both in IntegerNeg
-        #       thus entire interval is in IntegerNeg
-        from . import all_in_negative_interval_are_negative_int
-        try:
-            return all_in_negative_interval_are_negative_int.instantiate(
-                    {a: _a, b: _b, n: _n}, assumptions=assumptions)
-        except:
-            pass
-
-        # Case: lower_bound > 0
-        #       so entire Interval is in positive naturals
-        if greater(_a, zero).proven(assumptions=assumptions):
-          # all elements are positive naturals
-          from . import interval_in_nat_pos
-          return interval_in_nat_pos.instantiate(
-                  {a:_a, b:_b, n:_n}, assumptions=assumptions)
-
-        # Case: lower and upper bounds both in positive naturals,
-        #       so again entire Interval is in positive naturals
-        if (InSet(_a, NaturalPos).proven(assumptions=assumptions) and 
-            InSet(_b, NaturalPos).proven(assumptions=assumptions) and
-            LessEq(_a, _b).proven(assumptions=assumptions)):
-            from . import all_in_positive_interval_are_natural_pos
-            return all_in_positive_interval_are_natural_pos.instantiate(
-                    {a: _a, b: _b, n: _n}, assumptions=assumptions)
-
-    def deduce_in_bool(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_in_bool(self, **defaults_config):
         from . import interval_membership_is_bool
         _a = self.domain.lower_bound
         _b = self.domain.upper_bound
         _x = self.element
         return interval_membership_is_bool.instantiate(
-            {a: _a, b: _b, x: _x}, assumptions=assumptions)
+            {a: _a, b: _b, x: _x})
 
+    @prover
+    def derive_element_lower_bound(self, **defaults_config):
+        from . import interval_lower_bound
+        return interval_lower_bound.instantiate(
+            {a: self.domain.lower_bound, b: self.domain.upper_bound, 
+             n:self.element},
+            auto_simplify=False)
+
+    @prover
+    def derive_element_upper_bound(self, **defaults_config):
+        from . import interval_upper_bound
+        return interval_upper_bound.instantiate(
+            {a: self.domain.lower_bound, b: self.domain.upper_bound, 
+             n: self.element},
+            auto_simplify=False)
+
+    @prover
+    def derive_element_in_integer(self, **defaults_config):
+        from . import int_interval_within_int
+        _a = self.domain.lower_bound
+        _b = self.domain.upper_bound
+        return int_interval_within_int.instantiate(
+                {a:_a, b:_b}).derive_superset_membership(
+                        self.element, auto_simplify=False)
+
+    @prover
+    def derive_element_in_natural(self, **defaults_config):
+        InSet(self.domain.lower_bound, Natural).prove()
+        return self.derive_element_in_restricted_number_set()
+
+    @prover
+    def derive_element_in_natural_pos(self, **defaults_config):
+        InSet(self.domain.lower_bound, NaturalPos).prove()
+        return self.derive_element_in_restricted_number_set()
+
+    @prover
+    def derive_element_in_integer_neg(self, **defaults_config):
+        InSet(self.domain.upper_bound, IntegerNeg).prove()
+        return self.derive_element_in_restricted_number_set()
+
+    @prover
+    def derive_element_in_integer_nonpos(self, **defaults_config):
+        InSet(self.domain.upper_bound, IntegerNonPos).prove()
+        return self.derive_element_in_restricted_number_set()
+
+    @prover
+    def derive_element_in_restricted_number_set_if_known(
+            self, **defaults_config):
+        from proveit import UnsatisfiedPrerequisites
+        _a = self.domain.lower_bound
+        _b = self.domain.upper_bound
+        if (InSet(_a, Natural).proven() or 
+                InSet(_b, IntegerNonPos).proven()):
+            return self.derive_element_in_restricted_number_set()
+        # Without employing further automation, can we prove the
+        # lower bound is non-negative or the upper bound is
+        # non-positive?
+        try:
+            _a.deduce_in_number_set(Natural, automation=False)
+        except Exception:
+            pass
+        try:
+            _b.deduce_in_number_set(IntegerNonPos, automation=False)
+        except Exception:
+            pass
+        if (InSet(_a, Natural).proven() or 
+                InSet(_b, IntegerNonPos).proven()):
+            return self.derive_element_in_restricted_number_set()
+        raise UnsatisfiedPrerequisites(
+                "Must know that the lower bound is non-negative or the "
+                "upper bound is non-positive to perform "
+                "derive_element_in_restricted_number_set_if_known")
+
+    @prover
+    def derive_element_in_restricted_number_set(
+            self, **defaults_config):
+        '''
+        From (member in Interval(x, y)), where x ≥ 0 or y ≤ 0,
+        deduce that the element is in Natural, NaturalPos, IntegerNeg,
+        or IntegerNonPos as appropriate.
+        '''
+        _a = self.domain.lower_bound
+        _b = self.domain.upper_bound
+        _n = self.element
+
+        # We wish to deduce a fact based upon the following
+        # membership fact:
+        self.expr.prove()
+
+        if (not InSet(_a, Natural).proven() and 
+                not InSet(_b, IntegerNonPos).proven()):
+            # If we don't know that a ≥ 0 or b ≤ 0, we can't prove
+            # the element is in either restricted number set
+            # (NaturalPos or IntegerNeg).  So, try to sort a, b, 0
+            # to work this out.
+            LessEq.sort([_a, _b, zero])
+
+        if InSet(_a, Natural).proven():
+            try:
+                _a.deduce_in_number_set(NaturalPos, automation=False)         
+            except Exception:
+                pass
+            if InSet(_a, NaturalPos).proven():
+                # member in N^{>0}
+                lower_bounding = self.derive_element_lower_bound()
+                a_bounding = greater(_a, zero)
+                lower_bounding.apply_transitivity(a_bounding)
+                return InSet(_n, NaturalPos).prove()
+            else:
+                # member in N
+                lower_bounding = self.derive_element_lower_bound()
+                a_bounding = greater_eq(_a, zero)
+                lower_bounding.apply_transitivity(a_bounding)
+                return InSet(_n, Natural).prove()
+        if InSet(_b, IntegerNonPos).proven():
+            try:
+                _b.deduce_in_number_set(IntegerNeg, automation=False)        
+            except Exception:
+                pass
+            if InSet(_b, IntegerNeg).proven():
+                # member in Z^{<0}
+                upper_bounding = self.derive_element_upper_bound()
+                b_bounding = Less(_b, zero)
+                upper_bounding.apply_transitivity(b_bounding)
+                return InSet(_n, IntegerNeg).prove()
+            else:
+                # member in Z^{≤0}
+                upper_bounding = self.derive_element_upper_bound()
+                b_bounding = LessEq(_b, zero)
+                upper_bounding.apply_transitivity(b_bounding)
+                return InSet(_n, IntegerNonPos).prove()
+    
 
 class IntervalNonmembership(Nonmembership):
     '''
@@ -275,49 +201,43 @@ class IntervalNonmembership(Nonmembership):
         '''
         Yield some possible side effects of Interval set nonmembership:
         (1) if element is an integer, deduce some possible bounds on it;
-        (2) deduce that the nonmembership claim is Boolean
         '''
-        _a = self.domain.lower_bound
-        _b = self.domain.upper_bound
-        _x = self.element
-        if (InSet(_x, Integer)).proven():
+        if InSet(self.element, Integer).proven():
             yield self.deduce_int_element_bounds
-        yield self.deduce_in_bool
 
-    def conclude(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude(self, **defaults_config):
         '''
         From x not in Integers, or an integer x such that x < a or x > b,
         derive and return [element x not in Interval(a, b)],
         where self is the IntervalNonmembership object.
         '''
-        # among other things, convert any assumptions=None
-        # to assumptions=()
-        assumptions = defaults.checked_assumptions(assumptions)
-
         _a = self.domain.lower_bound
         _b = self.domain.upper_bound
         _x = self.element
-        from . import not_int_not_in_interval
-        try:
-            return not_int_not_in_interval.instantiate(
-                    {a: _a, b: _b, x: _x}, assumptions=assumptions)
-        except ProofFailure:
+        if InSet(self.element, Integer).proven():
             from . import int_not_in_interval
             return int_not_in_interval.instantiate(
-                    {a: _a, b: _b, x: _x}, assumptions=assumptions)
+                    {a: _a, b: _b, x: _x})
+        else:
+            from . import not_int_not_in_interval
+            return not_int_not_in_interval.instantiate(
+                    {a: _a, b: _b, x: _x})
 
-    def deduce_int_element_bounds(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_int_element_bounds(self, **defaults_config):
         from . import bounds_for_int_not_in_interval
         _a = self.domain.lower_bound
         _b = self.domain.upper_bound
         _x = self.element
         return bounds_for_int_not_in_interval.instantiate(
-            {a: _a, b: _b, x: _x}, assumptions=assumptions)
+            {a: _a, b: _b, x: _x})
 
-    def deduce_in_bool(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_in_bool(self, **defaults_config):
         from . import interval_nonmembership_is_bool
         _a = self.domain.lower_bound
         _b = self.domain.upper_bound
         _x = self.element
         return interval_nonmembership_is_bool.instantiate(
-            {a: _a, b: _b, x: _x}, assumptions=assumptions)
+            {a: _a, b: _b, x: _x})
