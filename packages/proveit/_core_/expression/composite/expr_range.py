@@ -221,7 +221,7 @@ class ExprRange(Expression):
                 temp_defaults.replacements = []
                 return self.body.complete_replaced(expr_map)
         else:
-            return self.body.complete_replaced(expr_map)
+            return self.body.basic_replaced(expr_map)
 
     def first(self):
         '''
