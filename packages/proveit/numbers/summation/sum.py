@@ -238,7 +238,7 @@ class Sum(OperationOverInstances):
                     shallow=True, assumptions=assumptions))
             user_reductions = [*user_reductions, upper_bound_shifted]
         if (simplify_summand):
-            summand_shifted = f_op_sub.replaced({_i:subtract(_i, _c)})
+            summand_shifted = f_op_sub.basic_replaced({_i:subtract(_i, _c)})
             summand_shifted = (
                 summand_shifted.simplification(shallow=True, 
                     assumptions=[*assumptions, InSet(_i, Interval(_a, _b))]))
@@ -483,7 +483,7 @@ class Sum(OperationOverInstances):
                 user_reductions = [*user_reductions, new_idx]
             if simplify_summand:
                 # Simplify the summand for the last item
-                new_summand = f_op_sub.replaced({_i: _b})
+                new_summand = f_op_sub.basic_replaced({_i: _b})
                 new_summand = new_summand.simplification(shallow=True,
                         assumptions=assumptions)
                 user_reductions = [*user_reductions, new_summand]
@@ -553,7 +553,7 @@ class Sum(OperationOverInstances):
                 user_reductions = [*user_reductions, new_idx]
             if simplify_summand:
                 # Simplify the summand for the first item
-                new_summand = f_op_sub.replaced({_i: _a})
+                new_summand = f_op_sub.basic_replaced({_i: _a})
                 new_summand = new_summand.simplification(shallow=True,
                         assumptions=assumptions)
                 user_reductions = [*user_reductions, new_summand]

@@ -929,8 +929,8 @@ class Expression(metaclass=ExprType):
         return self in Expression.simplified_exprs.get(directive_id, tuple())
     """
 
-    def replaced(self, repl_map, *, allow_relabeling=False, 
-                 requirements=None, equality_repl_requirements=None):
+    def complete_replaced(self, repl_map, *, allow_relabeling=False, 
+                          requirements=None, equality_repl_requirements=None):
         '''
         Returns this expression with sub-expressions replaced
         according to the replacement map (repl_map) dictionary
@@ -965,7 +965,8 @@ class Expression(metaclass=ExprType):
         based replacements are made, the equality requirements are
         recorded in both requirements and equality_repl_requirements.
 
-        Also applies any enabled automatic reductions.
+        Also applies any enabled automatic simplifcations and
+        explicit replacements -- that is why this version is "complete".
         '''
         if requirements is None:
             requirements = []  # Not passing back requirements.

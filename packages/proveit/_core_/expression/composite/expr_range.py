@@ -218,11 +218,10 @@ class ExprRange(Expression):
         if self.get_style('simplify', 'False') == 'True':            
             with defaults.temporary() as temp_defaults:
                 temp_defaults.auto_simplify = True
-                return self.body.replaced(expr_map)
+                temp_defaults.replacements = []
+                return self.body.complete_replaced(expr_map)
         else:
-            with defaults.temporary() as temp_defaults:
-                temp_defaults.auto_simplify = False
-                return self.body.replaced(expr_map)
+            return self.body.complete_replaced(expr_map)
 
     def first(self):
         '''
@@ -1230,12 +1229,12 @@ class ExprRange(Expression):
         else:
             old_shifted_param = Add(self.parameter, old_shift)
             safe_var = safe_dummy_var(self.body)
-            shifted_body = self.body.replaced({old_shifted_param: safe_var})
+            shifted_body = self.body.basic_replaced({old_shifted_param: safe_var})
             if self.parameter in free_vars(shifted_body, err_inclusively=True):
                 raise ValueError("The given 'old_shift' of %s does apply "
                                  "to %s" % (old_shift, self.lambda_map))
             _f = Lambda(self.parameter,
-                        shifted_body.replaced({safe_var: self.parameter}))
+                        shifted_body.basic_replaced({safe_var: self.parameter}))
 
         _i, _j = self.start_index, self.end_index
 
@@ -1343,7 +1342,7 @@ def extract_start_indices(expr_range):
     repl_map = dict()
     while isinstance(expr, ExprRange):
         start_index = expr.start_index
-        subbed_index = start_index.replaced(repl_map)
+        subbed_index = start_index.basic_replaced(repl_map)
         indices.append(subbed_index)
         repl_map[expr.parameter] = subbed_index
         expr = expr.body
@@ -1363,7 +1362,7 @@ def extract_end_indices(expr_range):
     repl_map = dict()
     while isinstance(expr, ExprRange):
         end_index = expr.end_index
-        subbed_index = end_index.replaced(repl_map)
+        subbed_index = end_index.basic_replaced(repl_map)
         indices.append(subbed_index)
         repl_map[expr.parameter] = subbed_index
         expr = expr.body

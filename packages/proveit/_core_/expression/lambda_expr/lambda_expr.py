@@ -987,11 +987,13 @@ class Lambda(Expression):
                         "lambda2 may only take 1 parameter if lambda1 "
                         "takes only 1 parameter")
                 # g(x)
-                relabeled_expr2 = lambda2.body.replaced(
+                relabeled_expr2 = lambda2.body.basic_replaced(
                     {lambda2.parameters[0]: lambda1.parameters[0]})
                 # x -> f(g(x))
-                return Lambda(lambda1.parameters[0], lambda1.body.replaced(
-                    {lambda1.parameters[0]: relabeled_expr2}))
+                new_body = lambda1.body.basic_replaced(
+                        {lambda1.parameters[0]: relabeled_expr2})
+                return Lambda(lambda1.parameters[0], new_body)
+                              
             else:
                 if len(lambda2) != lambda1.parameters.num_entries():
                     raise TypeError(
@@ -1011,7 +1013,7 @@ class Lambda(Expression):
                             lambda1.parameters,
                             lambda2elem.parameters)}
                     relabeled_expr2s.append(
-                        lambda2elem.body.replaced(param_repl_map))
+                        lambda2elem.body.basic_replaced(param_repl_map))
                 # x1, x2, ..., xn -> f(g1(x1, x2, ..., xn), 
                 #                      g2(x1, x2, ..., xn), ...,
                 #                      gn(x1, x2, ..., xn)).
@@ -1021,7 +1023,7 @@ class Lambda(Expression):
                         lambda1.parameters,
                         relabeled_expr2s)}
                 return Lambda(lambda1.parameters,
-                              lambda1.body.replaced(lambda1_expr_sub_map))
+                              lambda1.body.basic_replaced(lambda1_expr_sub_map))
     
     @equality_prover('substituted', 'substitute')
     def substitution(self, universal_eq, **defaults_config):
@@ -1127,13 +1129,14 @@ class Lambda(Expression):
                         parameters = ExprTuple(
                                 var_range(safe_dummy_var(master_expr),
                                           one, n))
-                        body = master_expr.replaced({sub_expr: parameters},
-                                                    assumptions=assumptions)
+                        body = master_expr.basic_replaced(
+                                {sub_expr: parameters},
+                                assumptions=assumptions)
                         return Lambda(parameters, body)
 
             # Just make a single parameter replacement map.
             lambda_param = master_expr.safe_dummy_var()
-            return Lambda(lambda_param, master_expr.replaced(
+            return Lambda(lambda_param, master_expr.basic_replaced(
                 {sub_expr: lambda_param}))
 
     @staticmethod

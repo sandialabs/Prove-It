@@ -40,8 +40,10 @@ class BooleanSet(Literal):
             instance_var = instance_list[0][0]
             instance_expr = forall_stmt.instance_expr
             P_op = Function(P, instance_var)
-            true_instance = instance_expr.replaced({instance_var: TRUE})
-            false_instance = instance_expr.replaced({instance_var: FALSE})
+            true_instance = instance_expr.basic_replaced(
+                    {instance_var: TRUE})
+            false_instance = instance_expr.basic_replaced(
+                    {instance_var: FALSE})
             temp_defaults.auto_simplify = False
             if true_instance == TRUE and false_instance == FALSE:
                 # special case of Forall_{A in BOOLEAN} A
