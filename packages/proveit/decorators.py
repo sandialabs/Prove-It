@@ -78,9 +78,16 @@ def _make_decorated_prover(func):
         if len(defaults_to_change) > 0:
             # Temporarily reconfigure defaults with 
             with defaults.temporary() as temp_defaults:
+                if 'assumptions' in defaults_to_change:
+                    # Set 'assumptions' first (before turning off
+                    # 'automation', for example, so that the 
+                    # side-effects will be processed).
+                    key = 'assumptions'
+                    setattr(temp_defaults, key, kwargs[key])                    
                 for key in defaults_to_change:
-                    # Temporarily alter a default:
-                    setattr(temp_defaults, key, kwargs[key])
+                    if key != 'assumptions':
+                        # Temporarily alter a default:
+                        setattr(temp_defaults, key, kwargs[key])
                 kwargs.update(public_attributes_dict(defaults))
                 proven_truth = checked_truth(func(*args, **kwargs))
         else:
