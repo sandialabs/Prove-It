@@ -9,6 +9,10 @@ class ComplexSet(NumberSet):
         NumberSet.__init__(self, 'Complex', r'\mathbb{C}', 
                            theory=__file__, styles=styles)
 
+    def membership_object(self, element):
+        from .complex_membership import ComplexMembership    
+        return ComplexMembership(element)
+
     @staticmethod
     @prover
     def left_mult_both_sides_of_equals(relation, multiplier,

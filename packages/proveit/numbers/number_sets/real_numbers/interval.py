@@ -35,8 +35,8 @@ class IntervalOO(RealInterval):
                 + self.upper_bound.latex() + r'\right)')
 
     def membership_object(self, element):
-        from .real_interval_membership import RealIntervalMembership
-        return RealIntervalMembership(element, self)
+        from .real_interval_membership import IntervalOOMembership
+        return IntervalOOMembership(element, self)
 
     def nonmembership_object(self, element):
         from .real_interval_membership import RealIntervalNonmembership
@@ -120,8 +120,8 @@ class IntervalOC(RealInterval):
                 + self.upper_bound.latex() + r'\right]')
 
     def membership_object(self, element):
-        from .real_interval_membership import RealIntervalMembership
-        return RealIntervalMembership(element, self)
+        from .real_interval_membership import IntervalOCMembership
+        return IntervalOCMembership(element, self)
 
     def nonmembership_object(self, element):
         from .real_interval_membership import RealIntervalNonmembership
@@ -193,8 +193,8 @@ class IntervalCO(RealInterval):
                 + self.upper_bound.latex() + r'\right)')
 
     def membership_object(self, element):
-        from .real_interval_membership import RealIntervalMembership
-        return RealIntervalMembership(element, self)
+        from .real_interval_membership import IntervalCOMembership
+        return IntervalCOMembership(element, self)
 
     def nonmembership_object(self, element):
         from .real_interval_membership import RealIntervalNonmembership
@@ -266,8 +266,8 @@ class IntervalCC(RealInterval):
                 + self.upper_bound.latex() + r'\right]')
 
     def membership_object(self, element):
-        from .real_interval_membership import RealIntervalMembership
-        return RealIntervalMembership(element, self)
+        from .real_interval_membership import IntervalCCMembership
+        return IntervalCCMembership(element, self)
 
     def nonmembership_object(self, element):
         from .real_interval_membership import RealIntervalNonmembership

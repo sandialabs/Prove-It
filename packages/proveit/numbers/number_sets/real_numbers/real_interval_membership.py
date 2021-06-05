@@ -1,12 +1,10 @@
-from proveit import defaults, prover, ProofFailure
+from proveit import defaults, prover, ProofFailure, UnsatisfiedPrerequisites
 from proveit import a, b, n, x
 from proveit.logic import InSet, Membership, Nonmembership, NotInSet
-from proveit.numbers import Less, LessEq, greater, greater_eq
-from proveit.numbers import (zero, Integer, NaturalPos, Real,
-                             RealPos, RealNonNeg, RealNeg, RealNonPos)
-from proveit.numbers import IntervalOO, IntervalCO, IntervalOC, IntervalCC
-from proveit.numbers.number_sets.number_set import (
-        NumberMembership, NumberNonmembership)
+from proveit.numbers.number_sets.real_numbers import Real
+from proveit.numbers.number_sets.real_numbers.interval import (
+        IntervalOO, IntervalCO, IntervalOC, IntervalCC)
+from proveit.numbers.number_sets.number_set import NumberMembership
 
 class RealIntervalMembership(NumberMembership):
 
@@ -31,7 +29,7 @@ class RealIntervalMembership(NumberMembership):
         [element in IntervalCC(lower_bound, upper_bound)] (and
         similarly for strict upper and/or lower bounds).
         '''
-        return self.domain.deduce_elem_in_set()
+        return self.domain.deduce_elem_in_set(self.element)
 
     def side_effects(self, judgment):
         '''
@@ -46,8 +44,6 @@ class RealIntervalMembership(NumberMembership):
         (5) Try to derive the element is in any relaxed intervals
             as appropriate (changing 'open' to 'closed').
         '''
-        from proveit.logic import InSet
-        from proveit.numbers import RealNonNeg, RealNonPos
         yield self.derive_element_in_real
         yield self.derive_element_lower_bound
         yield self.derive_element_upper_bound
@@ -62,70 +58,51 @@ class RealIntervalMembership(NumberMembership):
             yield self.derive_fully_relaxed_membership
 
     @prover
-    def deduce_in_bool(self, **defaults_config):
-        '''
-        Prove that membership in a real interval is a Boolean
-        (true or false).
-        '''
-        _a = self.domain.lower_bound
-        _b = self.domain.upper_bound
-        _x = self.element
-
-        # 4 cases corresponding to the 4 types of real intervals
-
-        if isinstance(self.domain, IntervalOO):
-            from . import interval_oo_membership_is_bool
-            return interval_oo_membership_is_bool.instantiate(
-                    {a: _a, b: _b, x: _x}, auto_simplify=False)
-
-        if isinstance(self.domain, IntervalCO):
-            from . import interval_co_membership_is_bool
-            return interval_co_membership_is_bool.instantiate(
-                    {a: _a, b: _b, x: _x}, auto_simplify=False)
-
-        if isinstance(self.domain, IntervalOC):
-            from . import interval_oc_membership_is_bool
-            return interval_oc_membership_is_bool.instantiate(
-                    {a: _a, b: _b, x: _x}, auto_simplify=False)
-
-        if isinstance(self.domain, IntervalCC):
-            from . import interval_cc_membership_is_bool
-            return interval_cc_membership_is_bool.instantiate(
-                    {a: _a, b: _b, x: _x}, auto_simplify=False)
-
-    @prover
     def derive_element_in_real(self, **defaults_config):
+        '''
+        Given the element is in a real interval, prove it is real.
+        '''
         return self.domain.deduce_member_in_real(self.element)
 
     @prover
     def derive_element_lower_bound(self, **defaults_config):
+        '''
+        Given the element is in a real interval, prove it's lower
+        bound.  For example, from x in (2, 10] derive x > 2.
+        '''
         return self.domain.deduce_member_lower_bound(self.element)
 
     @prover
     def derive_element_upper_bound(self, **defaults_config):
+        '''
+        Given the element is in a real interval, prove it's upper
+        bound.  For example, from x in (2, 10] derive x ≤ 10.
+        '''
         return self.domain.deduce_member_upper_bound(self.element)
 
     @prover
     def derive_rescaled_membership(self, scale_factor,
                                    **defaults_config):
-        return self.domain.deduce_rescaled_membership(self.element)
-
-    def __getattr__(self, attr):
         '''
-        Specially handle derive_..._relaxed_membership methods.
+        Given the element is in a real interval, prove that the
+        rescaled element is in a correspondingly rescaled interval.
+        For example, from x in (2, 10] derive 2*x in (4, 20].
         '''
-        derive_str = 'derive_'
-        relaxed_mem_str = '_relaxed_membership'
-        if (attr[-len(relaxed_mem_str):] != relaxed_mem_str or
-                 attr[:len(derive_str)] != derive_str):
-            raise AttributeError() # not handled
-        domain_attr = 'deduce_' + attr[len(derive_str):]
-        return getattr(self.domain, domain_attr)
+        return self.domain.deduce_rescaled_membership(self.element,
+                                                      scale_factor)
 
     @prover
     def derive_element_in_restricted_number_set_if_known(
             self, **defaults_config):
-        from proveit import UnsatisfiedPrerequisites
+        '''
+        From (element in IntervalXX(x, y)), where either 
+        x ≥ 0 or y ≤ 0 is known or provable without automation, 
+        derive that the element is in RealPos, RealNeg, RealNonPos, or
+        RealNonNeg as appropriate.  If neither x ≥ 0 nor y ≤ 0 is 
+        known or provable without automation, raise an
+        UnsatisfiedPrerequisites exception.
+        '''
+        from proveit.numbers import RealNonNeg, RealNonPos
         _a = self.domain.lower_bound
         _b = self.domain.upper_bound
         if (InSet(_a, RealNonNeg).proven() or 
@@ -153,12 +130,15 @@ class RealIntervalMembership(NumberMembership):
     @prover
     def derive_element_in_restricted_number_set(self, **defaults_config):
         '''
-        From (member in IntervalXX(x, y)), where x ≥ 0 or y ≤ 0,
-        deduce that the element is in RealPos, RealNeg, RealNonPos, or
+        From (element in IntervalXX(x, y)), where x ≥ 0 or y ≤ 0,
+        derive that the element is in RealPos, RealNeg, RealNonPos, or
         RealNonNeg as appropriate.
         '''
-        _a = self.lower_bound
-        _b = self.upper_bound
+        from proveit.numbers import (zero, RealPos, RealNonNeg, 
+                                     RealNeg, RealNonPos)
+        from proveit.numbers import Less, LessEq, greater, greater_eq        
+        _a = self.domain.lower_bound
+        _b = self.domain.upper_bound
         _n = self.element
         
         # We wish to deduce a fact based upon the following
@@ -167,11 +147,21 @@ class RealIntervalMembership(NumberMembership):
 
         if (not InSet(_a, RealNonNeg).proven() and 
                 not InSet(_b, RealNonPos).proven()):
-            # If we don't know that a ≥ 0 or b ≤ 0, we can't prove
-            # the element is in either restricted number set
-            # (NaturalPos or IntegerNeg).  So, try to sort a, b, 0
-            # to work this out.
-            LessEq.sort([_a, _b, zero])
+            try:
+                _a.deduce_in_number_set(RealNonNeg, automation=False)
+            except Exception:
+                pass
+            try:
+                _b.deduce_in_number_set(RealNonPos, automation=False)
+            except Exception:
+                pass
+            if (not InSet(_a, RealNonNeg).proven() and 
+                    not InSet(_b, RealNonPos).proven()):
+                # If we don't know that a ≥ 0 or b ≤ 0, we can't prove
+                # the element is in either restricted number set
+                # (NaturalPos or IntegerNeg).  So, try to sort a, b, 0
+                # to work this out.
+                LessEq.sort([_a, _b, zero])
 
         if InSet(_a, RealNonNeg).proven():
             try:
@@ -211,7 +201,128 @@ class RealIntervalMembership(NumberMembership):
                 return InSet(_n, RealNonPos).prove()
 
 
-class RealIntervalNonmembership(NumberNonmembership):
+class IntervalOOMembership(RealIntervalMembership):
+    def __init__(self, element, domain):
+        RealIntervalMembership.__init__(self, element, domain)
+    
+    @prover
+    def derive_left_relaxed_membership(self, **defaults_config):
+        '''
+        From x in (a, b), derive x in [a, b).
+        '''
+        return self.domain.deduce_left_relaxed_membership(self.element)
+
+    @prover
+    def derive_right_relaxed_membership(self, **defaults_config):
+        '''
+        From x in (a, b), derive x in (a, b].
+        '''
+        return self.domain.deduce_right_relaxed_membership(self.element)
+
+    @prover
+    def derive_fully_relaxed_membership(self, **defaults_config):
+        '''
+        From x in (a, b), derive x in [a, b].
+        '''
+        return self.domain.deduce_fully_relaxed_membership(self.element)
+
+    @prover
+    def deduce_in_bool(self, **defaults_config):
+        '''
+        Prove that membership in a real interval is a Boolean
+        (true or false).
+        '''
+        from . import interval_oo_membership_is_bool
+        _a = self.domain.lower_bound
+        _b = self.domain.upper_bound
+        _x = self.element
+        return interval_oo_membership_is_bool.instantiate(
+                {a: _a, b: _b, x: _x}, auto_simplify=False)
+
+
+class IntervalOCMembership(RealIntervalMembership):
+    def __init__(self, element, domain):
+        RealIntervalMembership.__init__(self, element, domain)
+
+    @prover
+    def derive_relaxed_membership(self, **defaults_config):
+        '''
+        From x in (a, b], derive x in [a, b].
+        '''
+        return self.domain.deduce_relaxed_membership(self.element)
+
+    @prover
+    def derive_left_relaxed_membership(self, **defaults_config):
+        '''
+        From x in (a, b], derive x in [a, b].
+        '''
+        return self.derive_relaxed_membership()
+
+    @prover
+    def deduce_in_bool(self, **defaults_config):
+        '''
+        Prove that membership in a real interval is a Boolean
+        (true or false).
+        '''
+        from . import interval_oc_membership_is_bool
+        _a = self.domain.lower_bound
+        _b = self.domain.upper_bound
+        _x = self.element
+        return interval_oc_membership_is_bool.instantiate(
+                {a: _a, b: _b, x: _x}, auto_simplify=False)
+
+
+class IntervalCOMembership(RealIntervalMembership):
+    def __init__(self, element, domain):
+        RealIntervalMembership.__init__(self, element, domain)
+    
+    @prover
+    def derive_relaxed_membership(self, **defaults_config):
+        '''
+        From x in [a, b), derive x in [a, b].
+        '''
+        return self.domain.deduce_relaxed_membership(self.element)
+
+    @prover
+    def derive_right_relaxed_membership(self, **defaults_config):
+        '''
+        From x in [a, b), derive x in [a, b].
+        '''
+        return self.derive_relaxed_membership()
+
+    @prover
+    def deduce_in_bool(self, **defaults_config):
+        '''
+        Prove that membership in a real interval is a Boolean
+        (true or false).
+        '''
+        from . import interval_co_membership_is_bool
+        _a = self.domain.lower_bound
+        _b = self.domain.upper_bound
+        _x = self.element
+        return interval_co_membership_is_bool.instantiate(
+                {a: _a, b: _b, x: _x}, auto_simplify=False)
+
+
+class IntervalCCMembership(RealIntervalMembership):
+    def __init__(self, element, domain):
+        RealIntervalMembership.__init__(self, element, domain)
+
+    @prover
+    def deduce_in_bool(self, **defaults_config):
+        '''
+        Prove that membership in a real interval is a Boolean
+        (true or false).
+        '''
+        from . import interval_cc_membership_is_bool
+        _a = self.domain.lower_bound
+        _b = self.domain.upper_bound
+        _x = self.element
+        return interval_cc_membership_is_bool.instantiate(
+                {a: _a, b: _b, x: _x}, auto_simplify=False)
+
+
+class RealIntervalNonmembership(Nonmembership):
     '''
     UNDER CONSTRUCTION
     Defines methods that apply to non-membership in a continuous real

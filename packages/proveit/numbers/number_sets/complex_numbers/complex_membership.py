@@ -1,7 +1,7 @@
 from proveit import prover
 from proveit import x
-from proveit.logic import NotEquals, InSet
-from proveit.numbers import (zero, Complex, ComplexNonZero)
+from proveit.numbers.number_sets.complex_numbers import (
+        Complex, ComplexNonZero)
 from proveit.numbers.number_sets.number_set import NumberMembership
 
 
@@ -34,6 +34,8 @@ class ComplexNonZeroMembership(NumberMembership):
 
     @prover
     def conclude(self, **defaults_config):
+        from proveit.logic import NotEquals, InSet
+        from proveit.numbers import zero
         if (InSet(self.element, Complex).proven() and
                 NotEquals(self.element, zero).proven()):
             return self.conclude_as_last_resort()
@@ -51,7 +53,7 @@ class ComplexNonZeroMembership(NumberMembership):
             {x:self.element})
 
 
-    def membership_side_effects(self, judgment):
+    def side_effects(self, judgment):
         '''
         Yield side-effects when proving 'x in Complex' for a given x.
         '''
@@ -72,7 +74,7 @@ class ComplexNonZeroMembership(NumberMembership):
                 {x: self.element}, auto_simplify=False)
 
     @prover
-    def derive_element_in_complex(self, member, **defaults_config):
+    def derive_element_in_complex(self, **defaults_config):
         from . import complex_nonzero_within_complex
         return complex_nonzero_within_complex.derive_superset_membership(
             self.element, auto_simplify=False)
