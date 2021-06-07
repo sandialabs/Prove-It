@@ -229,12 +229,12 @@ class Neg(NumberOperation):
         if hasattr(self.operand, 'factorization'):
             operand_factor_eqn = self.operand.factorization(
                 the_factor, pull, group_factor=True, group_remainder=True,
-                auto_simplify=False)
+                preserve_all=True)
             eqn1 = operand_factor_eqn.substitution(self.inner_expr().operand)
             new_operand = operand_factor_eqn.rhs
             eqn2 = thm.instantiate(
                 {x: new_operand.operands[0], y: new_operand.operands[1]},
-                auto_simplify=False,
+                auto_simplify=False, preserve_expr=eqn1.rhs
                 ).derive_reversed()
             return eqn1.apply_transitivity(eqn2)
         else:

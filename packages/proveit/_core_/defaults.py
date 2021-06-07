@@ -31,17 +31,31 @@ class Defaults:
         # occurrences of the right side during instantiations
         # (and calls to Expression.replaced or 
         # Expression.equality_replaced).
+        # When setting replacements, corresponding expressions in 
+        # preserved_exprs will be discarded; however, preserved_exprs
+        # override replacements.  That is, whichever is done last is the
+        # directive that is followed.
         self.replacements = tuple()
         
+        # Expressions that should be 'preserved' and not simplified
+        # or replaced using an equality-base replacement.
+        # Preserving an expression in this manner overrides any
+        # replacement for that expression; however, when setting
+        # replacements, corresponding expressions in preserved_exprs
+        # will be discarded.  That is, whichever is done last is the
+        # directive that is followed.
+        self.preserved_exprs = set()
+
         # Automatically simplify expressions as replacements are
         # made (e.g. during instantiations), except for the
         # 'preserved_exprs' (see below).
         self.auto_simplify = True
-
-        # Expressions that should be 'preserved' and not simplified
-        # or replaced using an equality-base replacement.
-        # Note that replacements override preserved expressions.
-        self.preserved_exprs = set()
+        
+        # Do not auto-simplify or perform replacements for any
+        # expressions.  It is often the case that this should be
+        # set to true for all but one of a multi-step process
+        # within a @prover/@relation_prover/@equality_prover method.
+        self.preserve_all = False
 
         """
         # Map expression classes to directives that should be
@@ -222,6 +236,18 @@ class Defaults:
             # Invalidate the _simplification_directives_id since the
             # assumptions may have changed.
             self._simplification_directives_id = None
+        if attr == 'replacements' and len(value) > 0:
+            from proveit import Judgment
+            from proveit.logic import Equals
+            for replacement in value:
+                if not isinstance(replacement, Judgment):
+                    raise TypeError("'replacements' should be Judgments")
+                if not isinstance(replacement.expr, Equals):
+                    raise TypeError("'replacements' should be equality "
+                                    "Judgments")
+                # Setting a replacement will override an existing
+                # preserved expression.
+                self.preserved_exprs.discard(replacement.lhs)
         self.__dict__[attr] = value
 
 class TemporarySetter(object):

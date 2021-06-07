@@ -274,13 +274,13 @@ class Mult(NumberOperation):
                 if isinstance(expr.operands[idx], Mult):
                     # if it is grouped, ungroup it
                     expr = eq.update(expr.disassociation(
-                            idx, auto_simplify=False))
+                            idx, preserve_all=True))
                 else:
                     idx += 1
                 length = expr.operands.num_entries()
 
         # Simplify negations -- factor them out.
-        expr = eq.update(expr.neg_simplifications(auto_simplify=False))
+        expr = eq.update(expr.neg_simplifications(preserve_all=True))
 
         if not isinstance(expr, Mult):
             # The expression may have changed to a negation after doing
@@ -292,7 +292,7 @@ class Mult(NumberOperation):
         # Peform any cancelations between numerators and
         # denominators of different factors.  This will also
         # eliminate factors of one.
-        expr = eq.update(expr.cancelations(auto_simplify=False))
+        expr = eq.update(expr.cancelations())
 
         return eq.relation
 
@@ -317,11 +317,11 @@ class Mult(NumberOperation):
                 idx = self.operands.num_entries() - rev_idx - 1
                 if isinstance(expr, Mult):
                     expr = eq.update(expr.neg_simplification(
-                            idx, auto_simplify=False))
+                            idx, preserve_all=True))
                 elif isinstance(expr, Neg):
                     expr = eq.update(
                         expr.inner_neg_mult_simplification(
-                                idx, auto_simplify=False))
+                                idx, preserve_all=True))
 
         return eq.relation
 
@@ -377,7 +377,7 @@ class Mult(NumberOperation):
             if operand == one:
                 idx = self.operands.num_entries() - rev_idx - 1
                 expr = eq.update(expr.one_elimination(
-                        idx, auto_simplify=False))
+                        idx, preserve_all=True))
                 if not isinstance(expr, Mult):
                     # can't do an elimination if reduced to a single term.
                     break
@@ -426,9 +426,9 @@ class Mult(NumberOperation):
         for _i, factor in enumerate(self.factors.entries):
             if hasattr(factor, 'deep_one_eliminations'):
                 expr = eq.update(expr.inner_expr().factors[_i].
-                                 deep_one_eliminations(auto_simplify=False))
+                                 deep_one_eliminations(preserve_all=True))
 
-        expr = eq.update(expr.one_eliminations(auto_simplify=False))
+        expr = eq.update(expr.one_eliminations(preserve_all=True))
         return eq.relation
 
     @equality_prover('all_canceled', 'all_cancel')
@@ -471,7 +471,7 @@ class Mult(NumberOperation):
         for numer_factor in numer_factors:
             if numer_factor in denom_factors_set:
                 expr = eq.update(expr.cancelation(numer_factor, 
-                                                  auto_simplify=False))
+                                                  preserve_all=True))
                 denom_factors_set.remove(numer_factor)
 
         return eq.relation
@@ -872,10 +872,10 @@ class Mult(NumberOperation):
             # use 0:num type of convention like standard python
             if pull == 'left':  
                 expr = eq.update(expr.association(
-                        0, num, auto_simplify=False))
+                        0, num, preserve_all=True))
             elif pull == 'right':
                 expr = eq.update(expr.association(
-                        -num, num, auto_simplify=False))
+                        -num, num, preserve_all=True))
         if group_remainder and self.operands.num_entries() - num > 1:
             # if the factor has been group, effectively there is just 1
             # factor operand now
@@ -885,10 +885,10 @@ class Mult(NumberOperation):
             if pull == 'left':
                 expr = eq.update(expr.association(
                         num_factor_operands, num_remainder_operands,
-                        auto_simplify=False))
+                        preserve_all=True))
             elif pull == 'right':
                 expr = eq.update(expr.association(
-                        0, num_remainder_operands, auto_simplify=False))
+                        0, num_remainder_operands, preserve_all=True))
         return eq.relation
 
     @equality_prover('combined_exponents', 'combine_exponents')
@@ -913,7 +913,7 @@ class Mult(NumberOperation):
         from proveit.numbers import Exp
         if start_idx is not None or end_idx is not None:
             association = self.association(start_idx, end_idx, 
-                                           auto_simplify=False)
+                                           preserve_all=True)
             inner_expr = association.rhs.inner_expr().factors[start_idx]
             combination = inner_expr.exponent_combination()
             return association.apply_transitivity(combination)

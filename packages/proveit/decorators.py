@@ -27,6 +27,11 @@ def _make_decorated_prover(func):
 
     def decorated_prover(*args, **kwargs):
         from proveit import Expression, Judgment
+        if (kwargs.get('preserve_all', False) and 
+                len(kwargs.get('replacements', tuple())) > 0):
+            raise ValueError(
+                    "Adding 'replacements' and setting 'preserve_all' "
+                    "to True are incompatible settings.")
         preserve_expr = kwargs.pop('preserve_expr', None)
         if is_conclude_method:
             # If the method starts with conclude 'conclude', we must

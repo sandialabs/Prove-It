@@ -620,7 +620,7 @@ class Operation(Expression):
         #   But in the shallow simplification, we'll do a factorization
         #   that will exploit the "reduction" fact which wouldn't
         #   otherwise be used because (1*b + 3*b) is a preserved
-        #   expression inse simplification is an @equality_prover.
+        #   expression since simplification is an @equality_prover.
         simplification = reduction.rhs.shallow_simplification(
                 replacements=[reduction])
         return reduction.apply_transitivity(simplification)

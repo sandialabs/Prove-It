@@ -365,7 +365,7 @@ class Add(NumberOperation):
                     canceled_indices.insert(i_shift, _i)
                     canceled_indices.insert(j_shift, _j)
                 expr = eq.update(expr.cancelation(
-                        _i - i_shift, _j - j_shift, auto_simplify=False))
+                        _i - i_shift, _j - j_shift, preserve_all=True))
         return eq.relation
 
     @equality_prover('canceled', 'cancel')
@@ -451,7 +451,7 @@ class Add(NumberOperation):
             if operand == zero:
                 idx = self.operands.num_entries() - rev_idx - 1
                 expr = eq.update(expr.zero_elimination(
-                        idx, auto_simplify=False))
+                        idx, preserve_all=True))
                 if not isinstance(expr, Add):
                     # can't do an elimination if reduced to a single term.
                     break
@@ -673,7 +673,7 @@ class Add(NumberOperation):
         
         if self.operands.is_single():
             return unary_add_reduction.instantiate({a:self.operands[0]},
-                                                    auto_simplify=False)
+                                                    preserve_all=True)
         
         expr = self
         # for convenience updating our equation
@@ -694,25 +694,25 @@ class Add(NumberOperation):
                             Add(operand).shallow_simplification())
                     expr = eq.update(expr.association(
                             _n, 1, replacements=[inner_simplification],
-                            auto_simplify=False))
+                            preserve_all=True))
                 # print("n, length", n, length)
                 if (isinstance(operand, Add) or
                         (isinstance(operand, Neg) and
                          isinstance(operand.operand, Add))):
                     # if it is grouped, ungroup it
                     expr = eq.update(expr.disassociation(
-                            _n, auto_simplify=False))
+                            _n, preserve_all=True))
                 length = expr.operands.num_entries()
                 _n += 1
 
         # eliminate zeros where possible
-        expr = eq.update(expr.zero_eliminations(auto_simplify=False))
+        expr = eq.update(expr.zero_eliminations(preserve_all=True))
         if not isinstance(expr, Add):
             # eliminated all but one term
             return eq.relation
 
         # perform cancelations where possible
-        expr = eq.update(expr.cancelations(auto_simplify=False))
+        expr = eq.update(expr.cancelations(preserve_all=True))
         if not isinstance(expr, Add):
             # canceled all but one term
             return eq.relation
@@ -726,7 +726,7 @@ class Add(NumberOperation):
                 inner_expr = expr.inner_expr().operands[_i]
                 expr = eq.update(
                     inner_expr.double_neg_simplification(
-                            auto_simplify=False))
+                            preserve_all=True))
 
         # separate the types of operands in a dictionary
         hold, order = expr._create_dict()
@@ -750,7 +750,7 @@ class Add(NumberOperation):
                         continue  # no change. move on.
                     expr = eq.update(
                         expr.commutation(start_idx, pos, 
-                                         auto_simplify=False))
+                                         preserve_all=True))
                     old2new[new2old[start_idx]] = pos
                     orig_old_idx = new2old[start_idx]
                     if start_idx < pos:
@@ -1121,7 +1121,7 @@ class Add(NumberOperation):
             if hasattr(term, 'factorization'):
                 term_factorization = term.factorization(
                     the_factor, pull, group_factor=group_factor,
-                    group_remainder=True, auto_simplify=False)
+                    group_remainder=True, preserve_all=True)
                 if not isinstance(term_factorization.rhs, Mult):
                     raise ValueError(
                         'Expecting right hand size of factorization to be a product')

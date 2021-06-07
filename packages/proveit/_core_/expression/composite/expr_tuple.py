@@ -457,7 +457,7 @@ class ExprTuple(Composite, Expression):
         _k = 0
         for entry in self.entries:
             if isinstance(entry, ExprRange):
-                entry_simp = entry._range_reduction(auto_simplify=False)
+                entry_simp = entry._range_reduction(preserve_all=True)
                 if entry_simp.lhs != entry_simp.rhs:
                     expr = eq.update(expr.substitution(entry_simp, 
                                                        start_idx=_k))
