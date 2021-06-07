@@ -22,7 +22,8 @@ class Numeral(Literal, IrreducibleValue):
             raise ValueError("'n' of a Numeral must be an integer")
         self.n = n
 
-    def eval_equality(self, other):
+    @prover
+    def eval_equality(self, other, **defaults_config):
         if other == self:
             return Equals(self, self).prove().evaluation()
         self_neq_other = self.not_equal(other)
@@ -224,17 +225,21 @@ class NumeralSequence(Operation, IrreducibleValue):
         '''
         return all(isinstance(digit, Numeral) for digit in self.digits)
 
-    def eval_equality(self, other, assumptions=USE_DEFAULTS):
+    @prover
+    def eval_equality(self, other, **defaults_config):
         if other == self:
-            return Equals(self, self).prove()
-        pass  # need axioms/theorems to prove inequality amongst different numerals
+            return Equals(self, self).conclude_via_reflexivity()
+        self_neq_other = self.not_equal(other)
+        return self_neq_other.unfold().equate_negated_to_false()
 
-    def not_equal(self, other, assumptions=USE_DEFAULTS):
+
+    @prover
+    def not_equal(self, other, **defaults_config):
         # same method works for Numeral and NumeralSequence.
-        return Numeral.not_equals(self, other, assumptions=assumptions)
+        return Numeral.not_equals(self, other)
 
     def _formatted(self, format_type, **kwargs):
-        from proveit import ExprRange, var_range
+        from proveit import ExprRange
         outstr = ''
 
         for digit in self.digits:

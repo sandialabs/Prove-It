@@ -1,9 +1,9 @@
 from proveit import (defaults, Function, InnerExpr, Literal, USE_DEFAULTS,
-                     equality_prover)
+                     relation_prover, equality_prover)
 from proveit.numbers.number_sets import Integer, Natural, NaturalPos
 from proveit.numbers.rounding.rounding_methods import (
     apply_rounding_elimination, apply_rounding_extraction,
-    apply_reduced_simplification, rounding_deduce_in_number_set)
+    apply_shallow_simplification, rounding_deduce_in_number_set)
 
 
 class Ceil(Function):
@@ -30,7 +30,7 @@ class Ceil(Function):
         form x = real + int, derive and return this Ceil expression
         equated with Ceil(real) + int.
         '''
-        return apply_reduced_simplification(self, defaults.assumptions)
+        return apply_shallow_simplification(self)
 
     @equality_prover('rounding_eliminated', 'rounding_eliminate')
     def rounding_elimination(self, **defaults_config):
@@ -77,7 +77,8 @@ class Ceil(Function):
         return apply_rounding_extraction(
             self, ceil_of_real_plus_int, idx_to_extract)
 
-    def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
+    @relation_prover
+    def deduce_in_number_set(self, number_set, **defaults_config):
         '''
         Given a number set number_set, attempt to prove that the given
         Ceil expression is in that number set using the appropriate
@@ -87,5 +88,4 @@ class Ceil(Function):
         from proveit.numbers.rounding import ceil_real_pos_closure
 
         return rounding_deduce_in_number_set(
-            self, number_set, ceil_is_an_int, ceil_real_pos_closure,
-            assumptions)
+            self, number_set, ceil_is_an_int, ceil_real_pos_closure)
