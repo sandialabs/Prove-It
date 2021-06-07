@@ -67,12 +67,20 @@ class Numeral(Literal, IrreducibleValue):
 
     @prover
     def deduce_in_number_set(self, number_set, **defaults_config):
-        from proveit.numbers import Natural, NaturalPos, Digits
+        from proveit.numbers import (Natural, NaturalPos, 
+                                     Digits, IntegerNonPos,
+                                     RationalNonPos, RealNonPos)
         from proveit.logic import InSet, SubsetEq
         if number_set == Natural:
             return self.deduce_in_natural()
         elif number_set == NaturalPos:
             return self.deduce_in_natural_pos()
+        elif number_set == IntegerNonPos:
+            if self.n > 0:
+                raise ProofFailure(
+                        InSet(self, number_set), defaults.assumptions,
+                        "%s is positive"%self)
+            return InSet(self, number_set).conclude_as_last_resort()
         elif number_set == Digits:
             return self.deduce_in_digits()
         else:
@@ -85,17 +93,26 @@ class Numeral(Literal, IrreducibleValue):
                     InSet(self, NaturalPos).prove(automation=False)
                 else:
                     InSet(self, Natural).prove(automation=False)
+                    InSet(self, IntegerNonPos).prove(automation=False)
             except BaseException:
                 # Try to prove that it is in the given number
                 # set after proving that the numeral is in the
                 # Natural set and the NaturalPos set.
-                self.deduce_in_natural()
                 if self.n > 0:
                     self.deduce_in_natural_pos()
+                else:
+                    self.deduce_in_natural()
+                    self.deduce_in_integer_nonpos()
             if self.n > 0:
                 sub_rel = SubsetEq(NaturalPos, number_set)
             else:
-                sub_rel = SubsetEq(Natural, number_set)
+                if number_set in (RationalNonPos, RealNonPos):
+                    sub_rel = SubsetEq(IntegerNonPos, number_set)
+                    # Allow automation for this minor thing even
+                    # if automation has been disabled coming into this.
+                    sub_rel.prove(automation=True)
+                else:
+                    sub_rel = SubsetEq(Natural, number_set)
             # Prove membership via inclusion:
             return sub_rel.derive_superset_membership(self)
 
@@ -108,6 +125,16 @@ class Numeral(Literal, IrreducibleValue):
                                        3: nat3, 4: nat4, 5: nat5, 6: nat6,
                                        7: nat7, 8: nat8, 9: nat9}
         return Numeral._inNaturalStmts[self.n]
+
+    @prover
+    def deduce_in_integer_nonpos(self, **defaults_config):
+        from proveit.logic import InSet
+        from proveit.numbers import IntegerNonPos
+        if self.n != 0:
+            raise ProofFailure(InSet(self, IntegerNonPos), defaults.assumptions,
+                                "%s is positive"%self)
+        from proveit.numbers.number_sets.integers import zero_is_nonpos
+        return zero_is_nonpos
 
     '''
     def deduce_not_zero(self):

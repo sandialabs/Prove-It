@@ -1,5 +1,5 @@
-from proveit import Literal, USE_DEFAULTS
-from proveit.logic import IrreducibleValue, Equals, NotEquals, InSet
+from proveit import Literal, prover
+from proveit.logic import IrreducibleValue, Equals
 
 
 class ImaginaryLiteral(IrreducibleValue, Literal):
@@ -9,7 +9,8 @@ class ImaginaryLiteral(IrreducibleValue, Literal):
         Literal.__init__(self, 'i', r'\mathsf{i}', 
                          theory=__file__, styles=styles)
 
-    def eval_equality(self, other, assumptions=USE_DEFAULTS):
+    @prover
+    def eval_equality(self, other, **defaults_config):
         if other == self:
             return Equals(self, self).prove()
         raise NotImplementedError("'eval_equality' not implemented for "

@@ -964,7 +964,8 @@ class ModusPonens(Proof):
                             'refer to an Implies expression with two operands')
             try:
                 # Must prove the implication under the given assumptions.
-                implication_truth = implication_expr.prove(assumptions)
+                implication_truth = implication_expr.prove(
+                        assumptions=assumptions)
             except ProofFailure:
                 raise ModusPonensFailure(
                     implication_expr.operands[1],
@@ -974,7 +975,7 @@ class ModusPonens(Proof):
             try:
                 # Must prove the antecedent under the given assumptions.
                 antecedent_truth = implication_expr.operands[0].prove(
-                    assumptions)
+                    assumptions=assumptions)
             except ProofFailure:
                 raise ModusPonensFailure(
                     implication_expr.operands[1],
@@ -1460,7 +1461,8 @@ class Instantiation(Proof):
                         # If the full condition conjunction is known
                         # to be true, we'll just use that as the
                         # requirement and be done with it.
-                        requirements.append(subbed_cond.prove(assumptions))
+                        requirements.append(subbed_cond.prove(
+                                assumptions=assumptions))
                         subbed_conds = []
                     else:
                         subbed_conds = subbed_cond.operands
@@ -1474,7 +1476,8 @@ class Instantiation(Proof):
                         # conjunction.
                         subbed_cond = And(subbed_cond)
                     try:
-                        requirements.append(subbed_cond.prove(assumptions))
+                        requirements.append(subbed_cond.prove(
+                                assumptions=assumptions))
                     except ProofFailure:
                         raise_failure('Unsatisfied condition: %s'
                                       % str(subbed_cond))

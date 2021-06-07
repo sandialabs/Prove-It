@@ -142,7 +142,7 @@ class NotInSet(Relation):
             # If it has a 'nonmembership_object', try to conclude
             # nonmembership using that.
             if hasattr(self, 'nonmembership_object'):
-                return self.nonmembership_object.conclude(assumptions)
+                return self.nonmembership_object.conclude(assumptions=assumptions)
             else:
                 # Otherwise, attempt to conclude via Not(x in S)
                 return self.conclude_as_folded(assumptions=assumptions)

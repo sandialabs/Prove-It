@@ -187,7 +187,7 @@ class Relation(Operation):
                 # the sides (the left side, arbitrarily) is still in
                 # the domain so it will have a known membership for
                 # next time.
-                InSet(relation.lhs, domain).prove(assumptions)
+                InSet(relation.lhs, domain).prove(assumptions=assumptions)
                 return relation
             if len(domain_methods) == 0:
                 raise AttributeError  # Default behaviour

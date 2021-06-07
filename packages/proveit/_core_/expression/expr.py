@@ -743,7 +743,8 @@ class Expression(metaclass=ExprType):
         '''
         return tuple()
 
-    def prove(self, assumptions=USE_DEFAULTS, automation=USE_DEFAULTS):
+    @prover
+    def prove(self, **defaults_config):
         '''
         Attempt to prove this expression automatically under the
         given assumptions (if None, uses defaults.assumptions).  First
@@ -757,10 +758,9 @@ class Expression(metaclass=ExprType):
         '''
         from proveit import Judgment, ProofFailure
         from proveit.logic import Not
-        assumptions = defaults.checked_assumptions(assumptions)
+        assumptions = defaults.assumptions
+        automation = defaults.automation
         assumptions_set = set(assumptions)
-        if automation is USE_DEFAULTS:
-            automation = defaults.automation
 
         found_truth = Judgment.find_judgment(self, assumptions_set)
         if found_truth is not None:
@@ -843,12 +843,13 @@ class Expression(metaclass=ExprType):
         '''
         from proveit import ProofFailure
         try:
-            self.prove(assumptions, automation=False)
+            self.prove(assumptions=assumptions, automation=False)
             return True
         except ProofFailure:
             return False
 
-    def disprove(self, assumptions=USE_DEFAULTS, automation=USE_DEFAULTS):
+    @prover
+    def disprove(self, **defaults_config):
         '''
         Attempt to prove the logical negation (Not) of this expression.
         If successful, the Judgment is returned, otherwise an exception
@@ -857,7 +858,7 @@ class Expression(metaclass=ExprType):
         the type of expression being negated.
         '''
         from proveit.logic import Not
-        return Not(self).prove(assumptions=assumptions, automation=automation)
+        return Not(self).prove()
 
     def disproven(self, assumptions=USE_DEFAULTS):
         '''
@@ -865,7 +866,7 @@ class Expression(metaclass=ExprType):
         '''
         from proveit import ProofFailure
         try:
-            self.disprove(assumptions, automation=False)
+            self.disprove(assumptions=assumptions, automation=False)
             return True
         except ProofFailure:
             return False
@@ -929,8 +930,8 @@ class Expression(metaclass=ExprType):
         return self in Expression.simplified_exprs.get(directive_id, tuple())
     """
 
-    def replaced(self, repl_map, *, allow_relabeling=False, 
-                 requirements=None, equality_repl_requirements=None):
+    def complete_replaced(self, repl_map, *, allow_relabeling=False, 
+                          requirements=None, equality_repl_requirements=None):
         '''
         Returns this expression with sub-expressions replaced
         according to the replacement map (repl_map) dictionary
@@ -965,7 +966,8 @@ class Expression(metaclass=ExprType):
         based replacements are made, the equality requirements are
         recorded in both requirements and equality_repl_requirements.
 
-        Also applies any enabled automatic reductions.
+        Also applies any enabled automatic simplifcations and
+        explicit replacements -- that is why this version is "complete".
         '''
         if requirements is None:
             requirements = []  # Not passing back requirements.

@@ -118,7 +118,7 @@ class Sin(Function):
                                                assumptions=assumptions)
             if number_set == Real:
                 return closure
-            return InSet(self, number_set).prove(assumptions)
+            return InSet(self, number_set).prove(assumptions=assumptions)
         if number_set in (RealPos, RealNeg, RealNonNeg, RealNonPos):
             # Maybe use deduce_interval to help
             interval = self.deduce_in_interval().domain

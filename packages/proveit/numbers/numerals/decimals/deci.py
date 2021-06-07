@@ -59,7 +59,7 @@ class DecimalSequence(NumeralSequence):
                 self.deduce_in_natural()
                 if self.as_int() > 0:
                     self.deduce_in_natural_pos()
-            return InSet(self, number_set).conclude(assumptions)
+            return InSet(self, number_set).conclude(assumptions=assumptions)
 
     def deduce_in_natural(self, assumptions=USE_DEFAULTS):
         from . import deci_sequence_is_nat

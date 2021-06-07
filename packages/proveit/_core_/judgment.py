@@ -208,7 +208,7 @@ class Judgment:
         from this truth.  Called after the corresponding Proof is 
         complete.
         '''
-        from .proof import ProofFailure
+        from .proof import ProofFailure, UnsatisfiedPrerequisites
         if not defaults.automation:
             return  # automation disabled
         # Sort the assumptions according to hash key so that sets of
@@ -233,7 +233,7 @@ class Judgment:
                         # temporarily set to the assumptions utilized
                         # in the last derivation step.
                         side_effect()
-                    except ProofFailure:
+                    except (ProofFailure, UnsatisfiedPrerequisites):
                         pass
                     except Exception as e:
                         raise Exception(

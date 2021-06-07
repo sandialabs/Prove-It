@@ -1,5 +1,5 @@
 from proveit import (Function, Literal, USE_DEFAULTS, ProofFailure,
-                     defaults, equality_prover, prover)
+                     defaults, prover, relation_prover, equality_prover)
 from proveit.logic.irreducible_value import IrreducibleValue
 from proveit.logic.sets.membership import Membership, Nonmembership
 from proveit import A, C, P, Q
@@ -40,8 +40,10 @@ class BooleanSet(Literal):
             instance_var = instance_list[0][0]
             instance_expr = forall_stmt.instance_expr
             P_op = Function(P, instance_var)
-            true_instance = instance_expr.replaced({instance_var: TRUE})
-            false_instance = instance_expr.replaced({instance_var: FALSE})
+            true_instance = instance_expr.basic_replaced(
+                    {instance_var: TRUE})
+            false_instance = instance_expr.basic_replaced(
+                    {instance_var: FALSE})
             temp_defaults.auto_simplify = False
             if true_instance == TRUE and false_instance == FALSE:
                 # special case of Forall_{A in BOOLEAN} A
@@ -278,7 +280,7 @@ class TrueLiteral(Literal, IrreducibleValue):
         elif other == FALSE:
             return true_not_false.unfold().equate_negated_to_false()
 
-    @prover
+    @relation_prover
     def not_equal(self, other, **defaults_config):
         from . import true_not_false
         from . import TRUE, FALSE
@@ -316,7 +318,7 @@ class FalseLiteral(Literal, IrreducibleValue):
         from proveit.logic.booleans.negation import not_false
         return not_false  # the negation of FALSE
 
-    @prover
+    @relation_prover
     def not_equal(self, other, **defaults_config):
         from _.theorems_ import false_not_true
         from . import TRUE, FALSE

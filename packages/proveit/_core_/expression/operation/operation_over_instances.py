@@ -31,8 +31,9 @@ def _extract_domain_from_condition(ivar, condition):
                 and condition.end_index == ivar.end_index):
             # Replace the condition parameter with the ivar parameter
             # and see if the InSet element matches ivar.body.
-            cond_body_elem_with_repl_param = condition.body.element.replaced(
-                {condition.parameter: ivar.parameter})
+            cond_body_elem_with_repl_param = (
+                    condition.body.element.basic_replaced(
+                            {condition.parameter: ivar.parameter}))
             if cond_body_elem_with_repl_param == ivar.body:
                 if condition.parameter in free_vars(condition.body.domain,
                                                     err_inclusively=True):
@@ -183,8 +184,8 @@ class OperationOverInstances(Operation):
                             # Use the same parameter for the domain
                             # as the instance parameter.
                             domain_body_with_new_param = \
-                                domain.body.replaced({domain.parameter:
-                                                      iparam.parameter})
+                                domain.body.basic_replaced(
+                                        {domain.parameter: iparam.parameter})
                             condition = ExprRange(
                                 iparam.parameter,
                                 InSet(iparam.body, domain_body_with_new_param),
@@ -933,8 +934,8 @@ def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):
         Pxy = Function(P, all_params)
         Qx = Function(Q, bundled.instance_params)
         Rxy = Function(R, all_params)
-        x_1_to_m = x_1_to_m.replaced({m: _m})
-        y_1_to_n = y_1_to_n.replaced({n: _n})
+        x_1_to_m = x_1_to_m.basic_replaced({m: _m})
+        y_1_to_n = y_1_to_n.basic_replaced({n: _n})
         instantiation = bundle_thm.instantiate(
             {m: _m, n: _n, ExprTuple(x_1_to_m): bundled.instance_params,
              ExprTuple(y_1_to_n): bundled.instance_expr.instance_params,
@@ -1078,8 +1079,8 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
         Qx = Function(Q, first_params)
         Rxy = Function(R, unbundled.instance_params)
         Pxy = Function(P, unbundled.instance_params)
-        x_1_to_m = x_1_to_m.replaced({m: _m})
-        y_1_to_n = y_1_to_n.replaced({n: _n})
+        x_1_to_m = x_1_to_m.basic_replaced({m: _m})
+        y_1_to_n = y_1_to_n.basic_replaced({n: _n})
         instantiation = unbundle_thm.instantiate(
             {m: _m, n: _n, ExprTuple(x_1_to_m): first_params,
              ExprTuple(y_1_to_n): remaining_params,
