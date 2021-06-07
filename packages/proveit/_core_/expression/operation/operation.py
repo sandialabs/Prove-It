@@ -587,7 +587,8 @@ class Operation(Expression):
         return reduction.apply_transitivity(evaluation)
 
     @equality_prover('simplified', 'simplify')
-    def simplification(self, **defaults_config):
+    def simplification(self, skip_operand_simplification=False, 
+                       **defaults_config):
         '''
         If possible, return a Judgment of this expression equal to a
         simplified form (according to strategies specified in 
@@ -597,8 +598,21 @@ class Operation(Expression):
         "evaluation" (which is the best possible simplification, when
         simplifying to an irreducible value).  If that fails, it
         simplifies the operands and calls "shallow_simplification".
+        
+        Running this with skip_operand_simplification is the same
+        as trying shallow_evaluation then shallow_simplification.
         '''
         from proveit.logic import EvaluationError
+        
+        if skip_operand_simplification:
+            try:
+                # First try to perform a shallow evaluation 
+                # (since evaluation is the best possible simplification).
+                return self.shallow_evaluation()
+            except EvaluationError:
+                pass
+            return self.shallow_simplification()
+        
         try:
             # First try to perform an evaluation (which is the best
             # possible simplification).

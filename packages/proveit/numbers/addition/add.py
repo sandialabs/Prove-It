@@ -691,7 +691,8 @@ class Add(NumberOperation):
                     # A range of repeated terms may be simplified to
                     # a multiplication, but we need to group it first.
                     inner_simplification = (
-                            Add(operand).shallow_simplification())
+                            Add(operand).simplification(
+                                    skip_operand_simplification=True))
                     expr = eq.update(expr.association(
                             _n, 1, replacements=[inner_simplification],
                             preserve_all=True))
@@ -772,7 +773,8 @@ class Add(NumberOperation):
                     grouped_term = Add(
                             *expr.operands.entries[_m:_m+len(hold[key])])
                     inner_simplification = (
-                            grouped_term.shallow_simplification())
+                            grouped_term.simplification(
+                                    skip_operand_simplification=True))
                     expr = eq.update(expr.association(
                         _m, length=len(hold[key]),
                         replacements=[inner_simplification],

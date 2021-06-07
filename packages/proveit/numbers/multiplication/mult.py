@@ -286,7 +286,7 @@ class Mult(NumberOperation):
             # The expression may have changed to a negation after doing
             # neg_simplification.  Start the simplification of this new
             # expression fresh at this point.
-            eq.update(expr.shallow_simplification())
+            eq.update(expr.simplification(skip_operand_simplification=True))
             return eq.relation
 
         # Peform any cancelations between numerators and
