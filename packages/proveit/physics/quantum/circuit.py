@@ -566,6 +566,16 @@ class MultiWire(Function):
         '''
         return self.with_styles(representation='implicit')
 
+    def remake_with_style_calls(self):
+        '''
+        In order to reconstruct this Expression to have the same styles,
+        what "with..." method calls are most appropriate?  Return a
+        tuple of strings with the calls to make.
+        '''
+        if self.get_style('representation', 'explicit')=='implicit':
+            return ('with_implicit_style()',)
+        return tuple()
+
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
 
