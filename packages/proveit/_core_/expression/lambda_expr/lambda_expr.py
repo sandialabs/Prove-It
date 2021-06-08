@@ -668,14 +668,17 @@ class Lambda(Expression):
                         repl_map, allow_relabeling=allow_relabeling, 
                         requirements=requirements)
                 range_param = var_range(param_var, subbed_start, subbed_end)
-                # Check for an ExprRange reduction of the Lambda
-                # parameters.  If so, add these as 'requirements'
-                # (note that they aren't equality_requirements in this
-                # instance).
-                range_param_reduction = range_param._range_reduction()
-                if range_param_reduction.lhs != range_param_reduction.rhs:
-                    requirements.append(range_param_reduction)
-                    new_params.extend(range_param_reduction.rhs.entries)
+                if defaults.auto_simplify:
+                    # Check for an ExprRange reduction of the Lambda
+                    # parameters.  If so, add these as 'requirements'
+                    # (note that they aren't equality_requirements in this
+                    # instance).
+                    range_param_reduction = range_param._range_reduction()
+                    if range_param_reduction.lhs != range_param_reduction.rhs:
+                        requirements.append(range_param_reduction)
+                        new_params.extend(range_param_reduction.rhs.entries)
+                    else:
+                        new_params.append(range_param)
                 else:
                     new_params.append(range_param)
             else:
