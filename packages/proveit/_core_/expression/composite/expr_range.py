@@ -1168,7 +1168,7 @@ class ExprRange(Expression):
         return nested_range(parameters, new_inner_body, start_indices,
                             end_indices)
 
-    @equality_prover('partitioned', 'partition')
+    @equality_prover('partitioned', 'split')
     def partition(self, before_split_idx, **defaults_config):
         '''
         Return the equation between this range within an ExprTuple
