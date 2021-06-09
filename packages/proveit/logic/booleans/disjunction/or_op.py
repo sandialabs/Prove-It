@@ -1,9 +1,10 @@
 from proveit import (Expression, Literal, Operation, defaults, USE_DEFAULTS,
                      ProofFailure, InnerExpr, UnusableProof,
-                     prover, equality_prover)
+                     prover, equality_prover, SimplificationDirectives, TransRelUpdater)
 from proveit import A, B, C, D, m, n
 from proveit.logic.booleans.booleans import in_bool
-from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, group_commutation, group_commute
+from proveit.abstract_algebra.generic_methods import (apply_commutation_thm, apply_association_thm,
+    apply_disassociation_thm, group_commutation, group_commute)
 
 
 class Or(Operation):
@@ -12,6 +13,9 @@ class Or(Operation):
         string_format='or',
         latex_format=r'\lor',
         theory=__file__)
+
+    _simplification_directives_ = SimplificationDirectives(
+        ungroup=True)
 
     # used to avoid infinite recursion inside of unary_reduction
     trivial_disjunctions = set()
@@ -145,7 +149,9 @@ class Or(Operation):
         else:
             _A = self.operands
             _m = _A.num_elements()
-            return not_or_if_not_any.instantiate({m: _m, A: _A})
+            return not_or_if_not_any.instantiate({m: _m, A: _A}, preserve_all=True)#auto_simplify=False)
+            # we turn auto_simplification off because proveit knows that Not(A) is true,
+            # as a result, it simplifies A to be False during auto_simplification
 
     @prover
     def conclude_via_both(self, **defaults_config):
@@ -256,7 +262,8 @@ class Or(Operation):
                 ("derive_via_multi_dilemma requires conclusion to be a "
                  "disjunction, the same number of operands as self.")
         with defaults.temporary() as temp_defaults:
-            temp_defaults.preserve_expr(conclusion)
+            # temp_defaults.preserve_expr(conclusion)
+            temp_defaults.preserved_exprs = defaults.preserved_exprs.union([conclusion])
             # Check for destructive versus constructive dilemma cases.
             if all(isinstance(operand, Not) for operand in self.operands) and all(
                     isinstance(operand, Not) for operand in conclusion.operands):
@@ -489,6 +496,25 @@ class Or(Operation):
         '''
         if self.operands.is_single():
             return self.unary_reduction()
+
+        expr = self
+        # for convenience updating our equation
+        eq = TransRelUpdater(expr)
+
+        if Or._simplification_directives_.ungroup:
+            # ungroup the expression (disassociate nested disjunctions).
+            _n = 0
+            length = expr.operands.num_entries() - 1
+            # loop through all operands
+            while _n < length:
+                operand = expr.operands[_n]
+                if isinstance(operand, Or):
+                    # if it is grouped, ungroup it
+                    expr = eq.update(expr.disassociation(
+                            _n, auto_simplify=False))
+                length = expr.operands.num_entries()
+                _n += 1
+
         return Expression.shallow_simplification(self)
 
     @prover
@@ -504,7 +530,7 @@ class Or(Operation):
         else:
             _A = self.operands
             _m = self.operands.num_elements()
-            return or_contradiction.instantiate({m: _m, A: _A})
+            return or_contradiction.instantiate({m: _m, A: _A}, preserve_all=True) #, preserved_exprs={_A})
 
     @prover
     def affirm_via_contradiction(self, conclusion, **defaults_config):
