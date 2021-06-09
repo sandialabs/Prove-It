@@ -308,7 +308,7 @@ class Less(NumberOrderingRelation):
                 {a: multiplier, x: self.lower, y: self.upper})
         elif LessEq(multiplier, zero).proven():
             new_rel = reversed_weak_bound_via_right_factor_bound.instantiate(
-                {a: multiplier, x: self.lower, y: self.upper}),
+                {a: multiplier, x: self.lower, y: self.upper})
             was_reversed = True
         else:
             raise Exception(
