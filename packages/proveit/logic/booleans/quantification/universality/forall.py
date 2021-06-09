@@ -345,6 +345,7 @@ class Forall(OperationOverInstances):
         From this forall statement, evaluate it to TRUE or FALSE if
         possible by calling the domain's forall_evaluation method
         '''
+        from proveit.logic import EvaluationError
         assert self.has_domain(), ("Cannot automatically evaluate a forall "
                                    "statement with no domain")
 
@@ -357,6 +358,7 @@ class Forall(OperationOverInstances):
             unravelled_equiv = self.derive_unraveled_equiv(
                 [var for var in (list(self.instance_var_lists()))])
             return unravelled_equiv.rhs.evaluation()
+        raise EvaluationError(self)
 
     @prover
     def deduce_in_bool(self, **defaults_config):
