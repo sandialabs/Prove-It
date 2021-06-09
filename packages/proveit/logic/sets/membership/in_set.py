@@ -154,6 +154,7 @@ class InSet(Relation):
 
         # No known membership works.  Let's try to work with a
         # simplification of the element instead.
+        elem_simplification = None
         try:
             elem_simplification = self.element.simplification()
             if elem_simplification.lhs == elem_simplification.rhs:
