@@ -176,7 +176,6 @@ class Exp(NumberOperation):
         from proveit.numbers import one, two, Rational, Abs
         from proveit.relation import TransRelUpdater
         from . import complex_x_to_first_power_is_x
-        assumptions = defaults.assumptions
         if self.exponent == one:
             return complex_x_to_first_power_is_x.instantiate({x: self.base})
         if (isinstance(self.base, Exp) and
@@ -186,29 +185,37 @@ class Exp(NumberOperation):
             from . import nth_power_of_nth_root
             _n, _x = nth_power_of_nth_root.instance_params
             return nth_power_of_nth_root.instantiate(
-                {_n: self.exponent, _x: self.base.base}, assumptions=assumptions)
-
+                {_n: self.exponent, _x: self.base.base})
+        elif (isinstance(self.base, Exp) and
+            isinstance(self.exponent, Div) and
+            self.exponent.numerator == one and
+                self.exponent.denominator == self.base.exponent):
+            from . import nth_root_of_nth_power, sqrt_of_square
+            _n = self.base.exponent
+            _x =  self.base.base
+            if _n == two:
+                return sqrt_of_square.instantiate({x: _x})
+            return nth_root_of_nth_power.instantiate({n: _n, x: _x})
         expr = self
         # for convenience updating our equation:
-        eq = TransRelUpdater(expr, assumptions)
+        eq = TransRelUpdater(expr)
         if self.exponent == two and isinstance(self.base, Abs):
             from . import (square_abs_rational_simp,
                                      square_abs_real_simp)
             # |a|^2 = a if a is real
-            rational_base = InSet(self.base, Rational).proven(assumptions)
-            real_base = InSet(self.base, Real).proven(assumptions)
+            rational_base = InSet(self.base, Rational).proven()
+            real_base = InSet(self.base, Real).proven()
             thm = None
             if rational_base:
                 thm = square_abs_rational_simp
             elif real_base:
                 thm = square_abs_real_simp
             if thm is not None:
-                simp = thm.instantiate({a: self.base.operand},
-                                       assumptions=assumptions)
+                simp = thm.instantiate({a: self.base.operand})
                 expr = eq.update(simp)
                 # A further simplification may be possible after
                 # eliminating the absolute value.
-                expr = eq.update(expr.simplification(assumptions))
+                expr = eq.update(expr.simplification())
 
         return eq.relation
     
