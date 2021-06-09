@@ -79,7 +79,7 @@ class Div(NumberOperation):
         eq = TransRelUpdater(expr)
 
         # perform cancelations where possible
-        expr = eq.update(expr.cancelations(auto_simplify=False))
+        expr = eq.update(expr.cancelations(preserve_all=True))
         if not isinstance(expr, Div):
             # complete cancelation.
             return eq.relation

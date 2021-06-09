@@ -127,7 +127,7 @@ def complex_polar_coordinates(expr, *, radius_must_be_nonneg=True,
         _r = one
         expr = Mult(_r, Exp(e, Mult(i, _theta)))
         # reduction: 1*exp(i * theta) = exp(i * theta)
-        reduction = expr.one_elimination(0, auto_simplify=False)
+        reduction = expr.one_elimination(0, preserve_all=True)
         # reduction: 1*exp(i * theta) = orig_expr
         if len(inner_reductions) > 0:
             reduction = reduction.inner_expr().rhs.substitute(
@@ -206,7 +206,7 @@ def complex_polar_coordinates(expr, *, radius_must_be_nonneg=True,
         # reduction: r0 * exp(i * theta0) = orig_expr
         reduction = reduction.inner_expr().lhs.factor(
                 complex_exp_factor_idx, pull='right',
-                group_remainder=True, auto_simplify=False)
+                group_remainder=True, preserve_all=True)
         expr = reduction.lhs
     # expr: r0 * exp(i * theta0)
     assert expr.operands.is_double() and isinstance(expr.operands[1], Exp)
@@ -367,7 +367,7 @@ def unit_length_complex_polar_angle(expr, *, reductions=None):
                 # get into exp(i * theta) form.
                 factorization = expr.inner_expr().exponent.factorization(
                         i, pull='left', group_remainder=True,
-                        auto_simplify=False)
+                        preserve_all=True)
                 expr = factorization.rhs
                 assert isinstance(expr.exponent, Mult)
                 assert expr.exponent.factors.is_double()

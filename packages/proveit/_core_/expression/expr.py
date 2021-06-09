@@ -1024,7 +1024,10 @@ class Expression(metaclass=ExprType):
         '''
         from proveit import Judgment  
         from proveit.logic import Equals
-
+        
+        if defaults.preserve_all:
+            return self
+        
         # Convert the replacements tuple to an equality_repl_map.
         equality_repl_map = dict()
         for replacement in defaults.replacements:
@@ -1055,6 +1058,11 @@ class Expression(metaclass=ExprType):
                                    EvaluationError,
                                    is_irreducible_value)
 
+        if defaults.preserve_all or self in defaults.preserved_exprs:
+            # This expression should be preserved, so don't make
+            # any equality-based replacement.
+            return self
+
         # Check for an equality replacement via equality_repl_map
         # or as a simplification.  Note that 'replacements' override
         # 'preserved_exprs'.
@@ -1063,11 +1071,6 @@ class Expression(metaclass=ExprType):
                 not isinstance(self, ExprRange)):
             if self in equality_repl_map:
                 replacement = equality_repl_map[self]
-        if replacement is None:
-            if self in defaults.preserved_exprs:
-                # This expression should be preserved, so don't make
-                # any equality-based replacement.
-                return self
         expr = self
         if replacement is None:
             # Recurse into the sub-expressions.

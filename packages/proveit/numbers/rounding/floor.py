@@ -1,9 +1,9 @@
 from proveit import (defaults, Function, InnerExpr, Literal, USE_DEFAULTS,
-                     equality_prover)
+                     relation_prover, equality_prover)
 from proveit.numbers.number_sets import Integer, Natural
 from proveit.numbers.rounding.rounding_methods import (
     apply_rounding_elimination, apply_rounding_extraction,
-    apply_reduced_simplification, rounding_deduce_in_number_set)
+    apply_shallow_simplification, rounding_deduce_in_number_set)
 
 
 class Floor(Function):
@@ -38,7 +38,7 @@ class Floor(Function):
         form x = real + int, derive and return this Floor expression
         equated with Floor(real) + int.
         '''
-        return apply_reduced_simplification(self, defaults.assumptions)
+        return apply_shallow_simplification(self)
 
     @equality_prover('rounding_eliminated', 'rounding_eliminate')
     def rounding_elimination(self, **defaults_config):
@@ -85,7 +85,8 @@ class Floor(Function):
         return apply_rounding_extraction(
             self, floor_of_real_plus_int, idx_to_extract)
 
-    def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
+    @relation_prover
+    def deduce_in_number_set(self, number_set, **defaults_config):
         '''
         Given a number set number_set, attempt to prove that the given
         Floor expression is in that number set using the appropriate
@@ -95,5 +96,4 @@ class Floor(Function):
         from proveit.numbers.rounding import floor_real_pos_closure
 
         return rounding_deduce_in_number_set(
-            self, number_set, floor_is_an_int, floor_real_pos_closure,
-            assumptions)
+            self, number_set, floor_is_an_int, floor_real_pos_closure)
