@@ -145,7 +145,9 @@ class Or(Operation):
         else:
             _A = self.operands
             _m = _A.num_elements()
-            return not_or_if_not_any.instantiate({m: _m, A: _A})
+            return not_or_if_not_any.instantiate({m: _m, A: _A}, auto_simplify=False)
+            # we turn auto_simplification off because proveit knows that Not(A) is true,
+            # as a result, it simplifies A to be False during auto_simplification
 
     @prover
     def conclude_via_both(self, **defaults_config):
@@ -505,7 +507,7 @@ class Or(Operation):
         else:
             _A = self.operands
             _m = self.operands.num_elements()
-            return or_contradiction.instantiate({m: _m, A: _A})
+            return or_contradiction.instantiate({m: _m, A: _A}) #, preserved_exprs={_A})
 
     @prover
     def affirm_via_contradiction(self, conclusion, **defaults_config):
