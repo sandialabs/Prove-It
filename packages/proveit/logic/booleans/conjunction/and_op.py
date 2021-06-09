@@ -593,7 +593,7 @@ class And(Operation):
         eq = TransRelUpdater(expr)
 
         if And._simplification_directives_.ungroup:
-            # ungroup the expression (disassociate nested additions).
+            # ungroup the expression (disassociate nested conjunctions).
             _n = 0
             length = expr.operands.num_entries() - 1
             # loop through all operands
