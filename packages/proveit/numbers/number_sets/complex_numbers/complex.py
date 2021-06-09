@@ -55,6 +55,12 @@ class ComplexSet(NumberSet):
         from proveit.numbers.multiplication import right_mult_eq
         if not isinstance(relation, Equals):
             TypeError("'relation' expected to be Equals")
+        
+        from proveit import defaults
+        print("preserved_exprs", defaults.preserved_exprs,
+              "auto_simplify", defaults.auto_simplify,
+              "preserve_all", defaults.preserve_all)
+        
         return right_mult_eq.instantiate(
             {a: multiplier, x: relation.lhs, y: relation.rhs})
 
@@ -84,6 +90,12 @@ class ComplexSet(NumberSet):
         from proveit.numbers.division import div_eq
         if not isinstance(relation, Equals):
             TypeError("'relation' expected to be Equals")
+
+        from proveit import defaults
+        print("preserved_exprs", defaults.preserved_exprs,
+              "auto_simplify", defaults.auto_simplify,
+              "preserve_all", defaults.preserve_all)
+
         return div_eq.instantiate(
             {a: divisor, x: relation.lhs, y: relation.rhs})
 
@@ -215,11 +227,13 @@ class ComplexSet(NumberSet):
         '''
         Take the square root of both sides of the Equals relation.
         '''
-        from proveit.numbers import frac, one, two
+        from proveit.numbers import frac, one, two, Exp
         new_rel = ComplexSet.exponentiate_both_sides_of_equals(
             relation, frac(one, two))
-        new_rel = new_rel.inner_expr().lhs.with_styles(exponent='radical')
-        new_rel = new_rel.inner_expr().rhs.with_styles(exponent='radical')
+        if isinstance(new_rel.lhs, Exp) and new_rel.lhs.exponent==frac(one, two):
+            new_rel = new_rel.inner_expr().lhs.with_styles(exponent='radical')
+        if isinstance(new_rel.rhs, Exp) and new_rel.lhs.exponent==frac(one, two):
+            new_rel = new_rel.inner_expr().rhs.with_styles(exponent='radical')
         return new_rel
 
     @staticmethod
