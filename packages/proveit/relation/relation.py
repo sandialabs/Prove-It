@@ -18,7 +18,7 @@ class Relation(Operation):
         # with the same meaning.
         Operation.__init__(self, operator, (normal_lhs, normal_rhs),
                            styles=styles)
-        assert(self.operands.is_double())
+        assert self.operands.is_double(), "%s is not double"%self.operands
         # lhs and rhs with the "direction" style of "normal"
         # (not subject to reversal)
         self.normal_lhs = self.operands[0]
@@ -120,10 +120,8 @@ class Relation(Operation):
         The method in the domain class must end in
         "_both_sides_of_<lower-case-relation-class-name>" and match
         this attribute name up to "..._both_sides" as in these
-        examples.  The corresponding method built on-the-fly
-        for the TransitiveRelation class will take an extra optional
-        'simplify' argument, True by default, for automatically
-        simplifying both sides of the new relation.
+        examples.  The corresponding @prover method is built on-the-fly
+        for the TransitiveRelation class.
         
         Also, 'lhs' and 'rhs' attributes are implemented here
         because they will be reversed if the 'direction' style
@@ -165,29 +163,21 @@ class Relation(Operation):
                     else:
                         domain_methods.insert(0, (domain, domain_attr))
 
-            def transform_both_sides(*args, **kwargs):
-                simplify = kwargs.get('simplify', True)
-                assumptions = kwargs.get('assumptions',
-                                         USE_DEFAULTS)
-                kwargs.pop('simplify', None)
+            @prover
+            def transform_both_sides(*args, **defaults_config):
                 while len(domain_methods) > 0:
                     domain, method = domain_methods.pop()
                     try:
-                        relation = method(self, *args, **kwargs)
+                        relation = method(self, *args)
                     except TypeError as e:
                         if len(domain_methods) == 0:
                             raise e
                         # otherwise, there are other methods to try.
-                if simplify:
-                    relation = relation.inner_expr().lhs.simplify(
-                        assumptions)
-                    relation = relation.inner_expr().rhs.simplify(
-                        assumptions)
                 # After doing the transformation, prove that one of
                 # the sides (the left side, arbitrarily) is still in
                 # the domain so it will have a known membership for
                 # next time.
-                InSet(relation.lhs, domain).prove(assumptions=assumptions)
+                InSet(relation.lhs, domain).prove()
                 return relation
             if len(domain_methods) == 0:
                 raise AttributeError  # Default behaviour
