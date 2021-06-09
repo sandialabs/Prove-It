@@ -84,7 +84,7 @@ class Div(NumberOperation):
             # complete cancelation.
             return eq.relation
 
-        if self.denominator == one:
+        if expr.denominator == one:
             # eliminate division by one
             eq.update(expr.divide_by_one_elimination(auto_simplify=False))
             return eq.relation  # no more division simplifications.
@@ -130,7 +130,7 @@ class Div(NumberOperation):
         for numer_factor in numer_factors:
             if numer_factor in denom_factors_set:
                 expr = eq.update(expr.cancelation(numer_factor,
-                                                  auto_simplify=False))
+                                                  preserve_all=True))
                 denom_factors_set.remove(numer_factor)
 
         return eq.relation
@@ -161,7 +161,8 @@ class Div(NumberOperation):
                                  % (term_to_cancel, self))
             # Factor the term_to_cancel from the numerator to the left.
             expr = eq.update(expr.inner_expr().numerator.factorization(
-                term_to_cancel, group_factor=True, group_remainder=True))
+                term_to_cancel, group_factor=True, group_remainder=True,
+                preserve_all=True))
         if term_to_cancel != self.denominator:
             if (not isinstance(self.denominator, Mult) or
                     term_to_cancel not in self.denominator.operands):
@@ -169,7 +170,8 @@ class Div(NumberOperation):
                                  % (term_to_cancel, self))
             # Factor the term_to_cancel from the denominator to the left.
             expr = eq.update(expr.inner_expr().denominator.factorization(
-                term_to_cancel, group_factor=True, group_remainder=True))
+                term_to_cancel, group_factor=True, group_remainder=True,
+                preserve_all=True))
         if expr.numerator == expr.denominator == term_to_cancel:
             # Perhaps it reduced to the trivial x/x = 1 case via
             # auto-simplification.
@@ -184,14 +186,14 @@ class Div(NumberOperation):
                 numer_prod = Mult(term_to_cancel, one)
                 _y = one
                 replacements.append(numer_prod.one_elimination(
-                        1, perserve_expr=term_to_cancel))
+                        1, preserve_expr=term_to_cancel))
             else:
                 _y = expr.numerator.operands[1]
             if expr.denominator == term_to_cancel:
                 denom_prod = Mult(term_to_cancel, one)
                 _z = one
                 replacements.append(denom_prod.one_elimination(
-                        1, perserve_expr=term_to_cancel))
+                        1, preserve_expr=term_to_cancel))
             else:
                 _z = expr.denominator.operands[1]
             expr = eq.update(frac_cancel_left.instantiate(
