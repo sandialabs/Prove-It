@@ -149,18 +149,18 @@ def group_commutation(expr, init_idx, final_idx, length, disassociate=True,
     # for convenience while updating our equation:
     eq = TransRelUpdater(expr)
     expr = eq.update(
-        expr.association(init_idx, length, auto_simplify=False))
+        expr.association(init_idx, length, preserve_all=True))
     expr = eq.update(expr.commutation(
             init_idx, final_idx, 
-            auto_simplify = defaults.auto_simplify and not disassociate))
+            preserve_all = defaults.preserve_all or disassociate))
     if disassociate:
         expr = eq.update(
             expr.disassociation(final_idx))
     return eq.relation
 
-
+@prover
 def group_commute(expr, init_idx, final_idx, length, disassociate=True,
-                  assumptions=USE_DEFAULTS):
+                  **defaults_config):
     '''
     Derive a commuted form of the given expr expression on a group of
     multiple operands by associating them together first.
@@ -172,12 +172,13 @@ def group_commute(expr, init_idx, final_idx, length, disassociate=True,
     if final_idx < 0:
         final_idx = expr.operands.num_entries() + final_idx  # wrap
     if length == 1:
-        return expr.commute(init_idx, final_idx, assumptions=assumptions)
+        return expr.commute(init_idx, final_idx)
 
-    expr = expr.associate(init_idx, length, assumptions=assumptions)
-    expr = expr.commute(init_idx, final_idx, assumptions=assumptions)
+    expr = expr.associate(init_idx, length, preserve_all=True)
+    expr = expr.commute(init_idx, final_idx,
+                        preserve_all = defaults.preserve_all or disassociate)
     if disassociate:
-        expr = expr.disassociate(final_idx, assumptions=assumptions)
+        expr = expr.disassociate(final_idx)
     return expr
 
 @prover
