@@ -443,9 +443,12 @@ class Set(Function):
         # Reformat assumptions if necessary. Among other things,
         # convert any assumptions=None to assumptions=()
         assumptions = defaults.checked_assumptions(assumptions)
-        #should not bne needed anymore!!!
+        # should not bne needed anymore!!!
         # but if need assumptions actively here will need explicitly:
         # assumptions = defaults.assumptions
+        # actually, the switch causes eventual errors … but this might
+        # be because we haven't yet established this method as a @prover!
+        # so we have some work to do :o(
 
         # We should now have a subset Set, either explicitly provided
         # as an argument or derived from the subset_indices.
@@ -461,7 +464,8 @@ class Set(Function):
         from proveit.logic import Equals, is_irreducible_value
         from proveit import TransRelUpdater
         temp_subset = subset
-        eq_temp = TransRelUpdater(temp_subset, assumptions) #assumptions not needed here
+        eq_temp = TransRelUpdater(temp_subset, assumptions) # assumptions not needed here??? Hah, yes they are 
+        # eq_temp = TransRelUpdater(temp_subset) #assumptions not needed here
         # perform substitutions to irreducible values when possible
         for elem in set(temp_subset.operands):
             if elem in Equals.known_equalities:
@@ -788,19 +792,122 @@ class Set(Function):
             operands[idx_left],
             operands[idx_left + 1: idx_right],
             operands[idx_right + 1:])
-        _l = _a.num_elements(defaults.assumptions)
-        _m = _b.num_elements(defaults.assumptions)
-        _n = _c.num_elements(defaults.assumptions)
+        _l = _a.num_elements()
+        _m = _b.num_elements()
+        _n = _c.num_elements()
         if idx_to_keep < idx_to_elim:
             return reduction_right.instantiate(
-                {l: _l, m: _m, n: _n, a: _a, x: _x, b: _b, c: _c},
-                assumptions=defaults.assumptions)
+                {l: _l, m: _m, n: _n, a: _a, x: _x, b: _b, c: _c})
         else:
             return reduction_left.instantiate(
                 {l: _l, m: _m, n: _n, a: _a, x: _x, b: _b, c: _c})
 
+    # def single_elem_substitution(self, elem=None, idx=None, sub_elem=None,
+    #                              assumptions=USE_DEFAULTS):
+    #     '''
+    #     Deduce that this enum Set expression is equal to a Set
+    #     in which the element specified either by elem or by the
+    #     position idx has been replaced with sub_elem. The deduction
+    #     depends on the sub_elem being equal to the replace elem.
+    #     If elem specified in the form elem='elem', method attempts to
+    #     substitute for the 1st occurrence of elem; if elem=['elem',n],
+    #     method attempts to substitute for the nth occurrence of elem.
+    #     If both elem and idx are specified, the elem arg is ignored.
+    #     Examples: Let S = Set(a, b, a, b, a, c). Then
+    #     S.single_elem_substitution() gives error;
+    #     S.single_elem_substitution(elem=b, sub_elem=four,
+    #                                assumptions=[Equals(b, four)])
+    #         gives |- S = {a, 4, a, b, a, c};
+    #     S.single_elem_substitution(elem=[b, 2], sub_elem=four,
+    #                                assumptions=[Equals(b, four)])
+    #         gives |- S = {a, b, a, 4, a, c};
+    #     S.single_elem_substitution(idx=3, sub_elem=four,
+    #                                assumptions=[Equals(b, four)])
+    #         gives |- S = {a, b, a, 4, a, c};
+    #     '''
+    #     # First, a quick check on elem, idx, and sub_elem arguments
+    #     if elem is None and idx is None:
+    #         raise ValueError("single_elem_substitution() method requires "
+    #                          "the specification of element (elem=) or "
+    #                          "element index (idx=) candidate for "
+    #                          "substitution.")
+    #     if sub_elem is None:
+    #         raise ValueError("single_elem_substitution() method missing "
+    #                          "sub_elem argument. Must specify the replacement "
+    #                          "value using argument 'sub_elem='.")
+
+    #     set_length = self.operands.num_entries()
+
+    #     # if user has specified position index idx,
+    #     # check for validity and use idx if possible
+    #     if idx is not None and (idx < -set_length or idx >= set_length):
+    #         raise IndexError("Index specification idx = {0} is out of bounds. "
+    #                          "Need {1} ≤ idx ≤ {2}.".
+    #                          format(idx, -set_length, set_length - 1))
+    #     if idx is not None:
+    #         # we already checked for valid idx, so
+    #         # transform any wrap-around indexing for simplicity
+    #         if idx < 0:
+    #             idx = set_length + idx
+    #         elem = self.operands[idx]
+
+    #     # Designate which one of (possibly) multiple copies of the
+    #     # elem we want to replace -- default is 1st location:
+    #     which_elem = 1
+
+    #     if idx is None:
+    #         # We must have had an elem specified
+    #         if isinstance(elem, list):  # elem = [x, n]
+    #             which_elem = elem[1]    # which_elem = n
+    #             elem = elem[0]          # elem = x
+    #             if which_elem < 1 or which_elem > self.operands.num_entries():
+    #                 raise ValueError(
+    #                     "In specifying the elem to be replaced in the "
+    #                     "call to Set.single_elem_substitution(), it "
+    #                     "doesn't appear to make sense to specify instance "
+    #                     "#{0} of the element {1} in the set of elements "
+    #                     "{2}.".format(which_elem, elem, self.operands))
+    #         # find indice(s) of elem in Set
+    #         elem_indices = (
+    #             [i for i, j in enumerate(self.operands) if j == elem])
+    #         if len(elem_indices) >= which_elem and which_elem > 0:
+    #             idx = elem_indices[which_elem - 1]
+    #         else:
+    #             raise ValueError(
+    #                 "single_elem_substitution() method looked for "
+    #                 "{0} instance(s) of the elem '{1}' in the set {2} "
+    #                 "but found only {3} instance(s). The elem '{1}' does "
+    #                 "not appear to exist in the original set with "
+    #                 "sufficient multiplicity.".
+    #                 format(which_elem, elem, self.operands,
+    #                        len(elem_indices)))
+
+    #     # We should now have a valid idx indicating the index of the
+    #     # set item to be replaced, either because it was explicitly
+    #     # supplied or because it was derived from the elem argument
+
+    #     # We deduce the desired equality by instantiating the
+    #     # equal_element_equality theorem from the enumeration theory
+    #     from . import equal_element_equality
+    #     # --- Organize the instantiation mapping info.
+    #     from proveit.numbers import num
+    #     m, n, aa, b, cc, d = equal_element_equality.all_instance_vars()
+    #     # --- Break the set into [ ]+[idx]+[ ].
+    #     m_sub, n_sub = (num(idx), num(set_length - idx - 1))
+    #     operand_entries = self.operands.entries
+    #     aa_sub, b_sub, cc_sub, d_sub = (
+    #         operand_entries[0:idx],
+    #         operand_entries[idx],
+    #         operand_entries[idx + 1:],
+    #         sub_elem)
+    #     # --- Specialize and return.
+    #     return equal_element_equality.instantiate(
+    #         {m: m_sub, n: n_sub, aa: aa_sub, b: b_sub, cc: cc_sub, d: d_sub},
+    #         assumptions=assumptions)
+
+    @equality_prover('single_elem_substituted', 'single_elem_substitute')
     def single_elem_substitution(self, elem=None, idx=None, sub_elem=None,
-                                 assumptions=USE_DEFAULTS):
+                                 **defaults_config):
         '''
         Deduce that this enum Set expression is equal to a Set
         in which the element specified either by elem or by the
@@ -899,8 +1006,7 @@ class Set(Function):
             sub_elem)
         # --- Specialize and return.
         return equal_element_equality.instantiate(
-            {m: m_sub, n: n_sub, aa: aa_sub, b: b_sub, cc: cc_sub, d: d_sub},
-            assumptions=assumptions)
+            {m: m_sub, n: n_sub, aa: aa_sub, b: b_sub, cc: cc_sub, d: d_sub})
 
     @equality_prover('elem_substituted', 'elem_substitute')
     def elem_substitution(self, elem=None, sub_elem=None,

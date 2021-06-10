@@ -20,7 +20,35 @@ class EnumMembership(Membership):
         '''
         yield self.unfold
 
-    def conclude(self, assumptions=USE_DEFAULTS):
+    # def conclude(self, assumptions=USE_DEFAULTS):
+    #     '''
+    #     From [(element=x) or (element=y) or ..], derive and return
+    #     [element in {x, y, ..}].
+    #     '''
+    #     from proveit import ProofFailure
+    #     from . import fold_singleton, in_enumerated_set, fold
+    #     enum_elements = self.domain.elements
+    #     if enum_elements.is_single():
+    #         return fold_singleton.instantiate(
+    #             {x: self.element, y: enum_elements[0]}, assumptions=assumptions)
+    #     else:
+    #         try:
+    #             idx = self.domain.operands.index(self.element)
+    #             _a = self.domain.operands[:idx]
+    #             _b = self.element
+    #             _c = self.domain.operands[idx + 1:]
+    #             _m = _a.num_elements(assumptions=assumptions)
+    #             _n = _c.num_elements(assumptions=assumptions)
+    #             return in_enumerated_set.instantiate(
+    #                 {m: _m, n: _n, a: _a, b: _b, c: _c}, assumptions=assumptions)
+    #         except (ProofFailure, ValueError):
+    #             _y = enum_elements
+    #             _n = _y.num_elements(assumptions=assumptions)
+    #             return fold.instantiate({n: _n, x: self.element, y:_y}, 
+    #                                     assumptions=assumptions)
+
+    @prover
+    def conclude(self, **defaults_config):
         '''
         From [(element=x) or (element=y) or ..], derive and return
         [element in {x, y, ..}].
@@ -30,22 +58,21 @@ class EnumMembership(Membership):
         enum_elements = self.domain.elements
         if enum_elements.is_single():
             return fold_singleton.instantiate(
-                {x: self.element, y: enum_elements[0]}, assumptions=assumptions)
+                {x: self.element, y: enum_elements[0]})
         else:
             try:
                 idx = self.domain.operands.index(self.element)
                 _a = self.domain.operands[:idx]
                 _b = self.element
                 _c = self.domain.operands[idx + 1:]
-                _m = _a.num_elements(assumptions=assumptions)
-                _n = _c.num_elements(assumptions=assumptions)
+                _m = _a.num_elements()
+                _n = _c.num_elements()
                 return in_enumerated_set.instantiate(
-                    {m: _m, n: _n, a: _a, b: _b, c: _c}, assumptions=assumptions)
+                    {m: _m, n: _n, a: _a, b: _b, c: _c})
             except (ProofFailure, ValueError):
                 _y = enum_elements
-                _n = _y.num_elements(assumptions=assumptions)
-                return fold.instantiate({n: _n, x: self.element, y:_y}, 
-                                        assumptions=assumptions)
+                _n = _y.num_elements()
+                return fold.instantiate({n: _n, x: self.element, y:_y})
 
     @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
@@ -60,22 +87,30 @@ class EnumMembership(Membership):
 
         if enum_elements.is_single():
             return singleton_def.instantiate(
-                {x: self.element, y: enum_elements[0]})
+                    {x: self.element, y: enum_elements[0]}, auto_simplify=False)
         else:
             _y = enum_elements
             _n = _y.num_elements()
-            return enum_set_def.instantiate({n: _n, x: self.element, y: _y})
+            return enum_set_def.instantiate(
+                    {n: _n, x: self.element, y: _y}, auto_simplify=False)
 
-    def derive_in_singleton(self, expression, assumptions=USE_DEFAULTS):
+    @prover
+    def derive_in_singleton(self, expression, **defaults_config):
         # implemented by JML 6/28/19
+        # What is the purpose of this method? does this do exactly?
+        # Provide some examples?
         from proveit.logic import TRUE, FALSE
         from . import in_singleton_eval_false, in_singleton_eval_true
         if expression.rhs == FALSE:
             return in_singleton_eval_false.instantiate(
-                {x: expression.lhs.element, y: expression.lhs.domain.elements[0]}, assumptions=assumptions)
+                    {x: expression.lhs.element,
+                    y: expression.lhs.domain.elements[0]},
+                    auto_simplify=False)
         elif expression.rhs == TRUE:
             return in_singleton_eval_true.instantiate(
-                {x: expression.lhs.element, y: expression.lhs.domain.elements[0]}, assumptions=assumptions)
+                    {x: expression.lhs.element,
+                    y: expression.lhs.domain.elements[0]},
+                    auto_simplify=False)
 
     def unfold(self, assumptions=USE_DEFAULTS):
         '''
@@ -85,12 +120,14 @@ class EnumMembership(Membership):
         enum_elements = self.domain.elements
         if enum_elements.is_single():
             return unfold_singleton.instantiate(
-                {x: self.element, y: enum_elements[0]}, assumptions=assumptions)
+                {x: self.element, y: enum_elements[0]},
+                assumptions=assumptions, auto_simplify=False)
         else:
             _y = enum_elements
             _n = _y.num_elements(assumptions=assumptions)
-            return unfold.instantiate({n: _n, x: self.element, y: _y}, 
-                                      assumptions=assumptions)
+            return unfold.instantiate(
+                    {n: _n, x: self.element, y: _y}, 
+                    assumptions=assumptions, auto_simplify=False)
 
     def deduce_in_bool(self, assumptions=USE_DEFAULTS):
         from . import in_singleton_is_bool, in_enum_set_is_bool
