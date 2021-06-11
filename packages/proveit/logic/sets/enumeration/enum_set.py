@@ -797,10 +797,12 @@ class Set(Function):
         _n = _c.num_elements()
         if idx_to_keep < idx_to_elim:
             return reduction_right.instantiate(
-                {l: _l, m: _m, n: _n, a: _a, x: _x, b: _b, c: _c})
+                {l: _l, m: _m, n: _n, a: _a, x: _x, b: _b, c: _c},
+                auto_simplify=False)
         else:
             return reduction_left.instantiate(
-                {l: _l, m: _m, n: _n, a: _a, x: _x, b: _b, c: _c})
+                {l: _l, m: _m, n: _n, a: _a, x: _x, b: _b, c: _c},
+                auto_simplify=False)
 
     # def single_elem_substitution(self, elem=None, idx=None, sub_elem=None,
     #                              assumptions=USE_DEFAULTS):
@@ -1004,7 +1006,7 @@ class Set(Function):
             operand_entries[idx],
             operand_entries[idx + 1:],
             sub_elem)
-        # --- Specialize and return.
+        # --- instantiate and return.
         return equal_element_equality.instantiate(
             {m: m_sub, n: n_sub, aa: aa_sub, b: b_sub, cc: cc_sub, d: d_sub})
 
@@ -1053,7 +1055,7 @@ class Set(Function):
         expr = self
         while num_elems_to_replace > 0:
             expr = eq.update(expr.single_elem_substitution(
-                elem=elem, sub_elem=sub_elem))
+                elem=elem, sub_elem=sub_elem, preserve_all=True))
             num_elems_to_replace -= 1
 
         return eq.relation
