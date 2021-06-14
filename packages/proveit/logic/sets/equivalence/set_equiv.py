@@ -197,7 +197,9 @@ class SetEquiv(TransitiveRelation):
         Prove and return self of the form A equiv A.
         '''
         from . import set_equiv_reflexivity
-        assert self.lhs == self.rhs
+        assert self.lhs == self.rhs, (
+                "self.lhs ({0}) is not set-equiv to self.rhs ({1})".
+                format(self.lhs, self.rhs))
         return set_equiv_reflexivity.instantiate({A: self.lhs})
 
     @prover
@@ -212,8 +214,14 @@ class SetEquiv(TransitiveRelation):
     @prover
     def unfold(self, **defaults_config):
         '''
-        From A set_equiv B derive
-        forall_{x} (x in A) = (x in B)
+        From A set_equiv B derive forall_{x} [(x in A) = (x in B)].
+        A set_equiv B must be known, provable, or assumed to be True.
+        For example,
+            SetEquiv(Set(1, 2, 3), Set(a, b, c)).unfold(
+                assumptions=[SetEquiv(Set(1, 2, 3), Set(a, b, c))])
+        returns:
+            SetEquiv({1, 2, 3}, {a, b, c}) |-
+            forall_{x} [(x in {1, 2, 3}) = (x in {a, b, c})]
         '''
         from . import set_equiv_unfold
         return set_equiv_unfold.instantiate({A: self.lhs, B: self.rhs})
