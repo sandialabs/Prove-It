@@ -1,5 +1,5 @@
 from proveit import (defaults, USE_DEFAULTS, single_or_composite_expression,
-                     prover)
+                     prover, equality_prover)
 
 @prover
 def apply_commutation_thm(expr, init_idx, final_idx, binary_thm, leftward_thm,
@@ -218,9 +218,8 @@ def pairwise_evaluation(expr, **defaults_config):
             expr = eq.update(expr.inner_expr().operands[0].evaluate())
     return eq.relation
 
-
-def generic_permutation(expr, new_order=None, cycles=None,
-                        assumptions=USE_DEFAULTS):
+@equality_prover('generic_permuted', 'generic_permute')
+def generic_permutation(expr, new_order=None, cycles=None, **defaults_config):
     '''
     Deduce that the expression expr is equal to a new_expr which is
     the same class and in which the operands at indices 0, 1, …, n-1
@@ -342,8 +341,7 @@ def generic_permutation(expr, new_order=None, cycles=None,
         # extract the init and final indices for the permutation
         init_idx = current_order.index(temp_order_diff_info[2])
         final_idx = temp_order_diff_info[0]
-        expr = eq.update(expr.permutation_move(
-            init_idx, final_idx, assumptions=assumptions))
+        expr = eq.update(expr.permutation_move(init_idx, final_idx, auto_simplify=False))
         # update current_order to reflect step-wise change
         current_order.remove(temp_order_diff_info[2])
         current_order.insert(final_idx, temp_order_diff_info[2])
