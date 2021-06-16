@@ -73,8 +73,7 @@ class ProperSubset(InclusionRelation):
         from . import relax_proper_subset
         new_rel = relax_proper_subset.instantiate(
             {A: self.subset, B: self.superset})
-        new_rel.with_mimicked_style(self)
-        return new_rel
+        return new_rel.with_mimicked_style(self)
 
     @prover
     def derive_superset_membership(self, element, **defaults_config):
@@ -98,26 +97,21 @@ class ProperSubset(InclusionRelation):
             transitivity_subset_subset, transitivity_subset_eq_subset,
             transitivity_subset_subset_eq,)
         if isinstance(other, Equals) or isinstance(other, SetEquiv):
-            return InclusionRelation.apply_transitivity(
-                self, other, assumptions=assumptions)
+            return InclusionRelation.apply_transitivity(self, other)
         if other.subset == self.superset:
             if isinstance(other, ProperSubset):
                 new_rel = transitivity_subset_subset.instantiate(
-                    {A: self.subset, B: self.superset, C: other.superset},
-                    assumptions=assumptions)
+                    {A: self.subset, B: self.superset, C: other.superset})
             elif isinstance(other, SubsetEq):
                 new_rel = transitivity_subset_subset_eq.instantiate(
-                    {A: self.subset, B: self.superset, C: other.superset},
-                    assumptions=assumptions)
+                    {A: self.subset, B: self.superset, C: other.superset})
         elif other.superset == self.subset:
             if isinstance(other, ProperSubset):
                 new_rel = transitivity_subset_subset.instantiate(
-                    {A: other.subset, B: other.superset, C: self.superset},
-                    assumptions=assumptions)
+                    {A: other.subset, B: other.superset, C: self.superset})
             elif isinstance(other, SubsetEq):
                 new_rel = transitivity_subset_eq_subset.instantiate(
-                    {A: other.subset, B: other.superset, C: self.superset},
-                    assumptions=assumptions)
+                    {A: other.subset, B: other.superset, C: self.superset})
         else:
             raise ValueError(
                 "Cannot perform transitivity with {0} and {1}!".
