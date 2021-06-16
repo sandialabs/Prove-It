@@ -691,7 +691,7 @@ class Expression(metaclass=ExprType):
         if (self.style_options().options != 
                 other_expr.style_options().options):
             raise ValueError(
-                "'other_expr' must an expression with "
+                "'other_expr' must be an expression with "
                 "the same style options as 'self'.")
         return self.with_styles(**other_expr.get_styles())
 

@@ -1,4 +1,4 @@
-from proveit import USE_DEFAULTS, equality_prover
+from proveit import USE_DEFAULTS, equality_prover, prover
 from proveit.logic import Membership, Nonmembership
 from proveit.numbers import num
 from proveit import m, x, A
@@ -24,40 +24,47 @@ class IntersectMembership(Membership):
         Deduce and return 
             [element in (A intersect B ...)] =
             [(element in A) and (element in B) ...]
-        where self = (A intersect B ...).
+        where self = [element in (A intersect B ...)].
+        Notice that the self IntersectMembership object need not be
+        True for the definition() method to return the equality.
         '''
         from . import intersection_def
         element = self.element
         operands = self.domain.operands
         _A = operands
         _m = _A.num_elements()
-        return intersection_def.instantiate({m: _m, x: element, A: _A})
+        return intersection_def.instantiate({m: _m, x: element, A: _A},
+                auto_simplify=False)
 
-    def unfold(self, assumptions=USE_DEFAULTS):
+    @prover
+    def unfold(self, **defaults_config):
         '''
-        From [element in (A intersection B ...)], derive and return [(element in A) and (element in B) ...],
+        From [element in (A intersection B ...)], derive and return
+        [(element in A) and (element in B) ...],
         where self represents (A intersection B ...).
         '''
         from . import membership_unfolding
         element = self.element
         operands = self.domain.operands
         _A = operands
-        _m = _A.num_elements(assumptions)
+        _m = _A.num_elements()
         return membership_unfolding.instantiate(
-            {m: _m, x: element, A: _A}, assumptions=assumptions)
+                {m: _m, x: element, A: _A}, auto_simplify=False)
 
-    def conclude(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude(self, **defaults_config):
         '''
-        From [element in A], [element in B] ..., derive and return [element in (A intersection B ...)],
-        where self represents (A intersection B ...).
+        From [element in A], [element in B] ..., (known, proven, or 
+        assumed), derive and return [element in (A intersection B ...)],
+        where self represents [element in (A intersection B ...)].
         '''
         from . import membership_folding
         element = self.element
         operands = self.domain.operands
         _A = operands
-        _m = _A.num_elements(assumptions)
+        _m = _A.num_elements()
         return membership_folding.instantiate(
-            {m: _m, x: element, A: _A}, assumptions=assumptions)
+            {m: _m, x: element, A: _A})
 
 
 class IntersectNonmembership(Nonmembership):
