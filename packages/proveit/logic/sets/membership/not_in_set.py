@@ -134,10 +134,9 @@ class NotInSet(Relation):
         if elem_simplification is not None:
             simple_elem = elem_simplification.rhs
             simple_nonmembership = NotInSet(
-                simple_elem, self.domain).prove(assumptions)
+                simple_elem, self.domain).prove(preserve_all=True)
             inner_expr = simple_nonmembership.inner_expr().element
-            return elem_simplification.sub_left_side_into(
-                inner_expr, assumptions)
+            return elem_simplification.sub_left_side_into(inner_expr)
         else:
             # If it has a 'nonmembership_object', try to conclude
             # nonmembership using that.
