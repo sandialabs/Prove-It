@@ -136,7 +136,7 @@ class SubsetEq(InclusionRelation):
     @prover
     def derive_subset_nonmembership(self, element, **defaults_config):
         '''
-        From A subset_eq B and element x not_in B, derive x in A.
+        From A subset_eq B and element x not_in B, derive x not_in A.
         '''
         from . import refined_nonmembership
         return refined_nonmembership.instantiate(
@@ -147,7 +147,7 @@ class SubsetEq(InclusionRelation):
         '''
         Apply a transitivity rule to derive from this A subseteq B
         expression and something of the form B subseteq C, B subset C,
-        or B=C to obtain A subset B or A subseteq B as appropriate.
+        or B=C to obtain A subset C or A subseteq C as appropriate.
         '''
         from proveit.logic import Equals, SetEquiv, ProperSubset
         from . import (transitivity_subset_eq_subset,
