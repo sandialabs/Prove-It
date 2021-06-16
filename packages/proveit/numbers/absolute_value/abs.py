@@ -353,9 +353,11 @@ class Abs(NumberOperation):
             replacements.add(angle.simplification())
             if _r1 == one:
                 print("\nUNIT\n")
+                print(_theta1, _theta2)
                 return complex_unit_circle_chord_length.instantiate(
-                        {b:_theta1, a:_theta2}, replacements=replacements)
+                        {a:_theta1, b:_theta2}, replacements=replacements)
             else:
+                print("\nELSE\n")
                 return complex_circle_chord_length.instantiate(
                         {r: _r1, a:_theta1, b:_theta2}, 
                         replacements=replacements)
