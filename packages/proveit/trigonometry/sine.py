@@ -15,36 +15,6 @@ class Sin(Function):
     def latex(self, **kwargs):
         return r'\sin{' + self.operand.latex(fence=True) + r'}'
 
-    @equality_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **defaults_config):
-        '''
-        Returns a proven simplification equation for this Sine
-        expression assuming the operands have been simplified.
-
-        Perform a number of possible simplifications of a Sine
-        expression after the operands have been simplified.
-        etc.
-        '''
-        from proveit.numbers import two, pi, Mult, Div
-        reductions = set()
-
-        if (isinstance(self.angle, Abs) or InSet(self.angle, RealPos).proven()
-            or InSet(self.angle, RealNeg).proven() or InSet(self.angle, RealNonNeg).proven()
-                or InSet(self.angle, RealNonPos).proven()):
-            if isinstance(self.angle, Abs):
-                _theta = self.angle.operand
-            else:
-                _theta = self.angle
-            two_theta = Mult(two, _theta)
-            return Div(two_theta, pi)
-
-        else:
-            _theta = Abs(self.angle)
-            theta_simplification = _theta.simplification()
-            reductions.add(theta_simplification)
-
-        return reductions
-
     @prover
     def deduce_in_interval(self, **defaults_config):
         '''
@@ -81,24 +51,14 @@ class Sin(Function):
                     {theta:_theta})
 
     @prover
-    def deduce_linear_bound(self, simplify=True, **defaults_config):
+    def deduce_linear_bound(self, **defaults_config):
         '''
         Bound the Sin function evaluation by a line.
         '''
         from . import (sine_linear_bound, sine_linear_bound_pos,
                        sine_linear_bound_nonneg, sine_linear_bound_neg,
                        sine_linear_bound_nonpos)
-        from proveit.numbers import two, pi, Mult, Div
 
-        # def make_rhs_reduction(_theta):
-        #     reductions = set()
-        #     if simplify:
-        #         # TODO use shallow simplification
-        #         two_theta = Mult(two, _theta)
-        #         two_theta_reduction = two_theta.simplification()
-        #         reductions.add(Div(two_theta, pi).simplification(
-        #                 reductions={two_theta_reduction}))
-        #     return reductions
         if isinstance(self.angle, Abs):
             bound = sine_linear_bound.instantiate(
                     {theta: self.angle.operand})
@@ -116,17 +76,8 @@ class Sin(Function):
                     {theta: self.angle})
         else:
             _theta = Abs(self.angle)
-            # reductions = set()
-            # if simplify:
-            #     # TODO shallow simplification
-            #     theta_simplification = _theta.simplification()
-            #     simplified_theta = theta_simplification.rhs
-            #     reductions.add(theta_simplification)
-            # else:
-            #     simplified_theta = _theta
-
             bound = sine_linear_bound.instantiate(
-                    {theta:_theta})
+                    {theta: _theta})
         if bound.rhs == self:
             return bound.with_direction_reversed()
         return bound

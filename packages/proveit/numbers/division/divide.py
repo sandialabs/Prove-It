@@ -184,14 +184,14 @@ class Div(NumberOperation):
                 numer_prod = Mult(term_to_cancel, one)
                 _y = one
                 replacements.append(numer_prod.one_elimination(
-                        1, perserve_expr=term_to_cancel))
+                        1, preserve_expr=term_to_cancel))
             else:
                 _y = expr.numerator.operands[1]
             if expr.denominator == term_to_cancel:
                 denom_prod = Mult(term_to_cancel, one)
                 _z = one
                 replacements.append(denom_prod.one_elimination(
-                        1, perserve_expr=term_to_cancel))
+                        1, preserve_expr=term_to_cancel))
             else:
                 _z = expr.denominator.operands[1]
             expr = eq.update(frac_cancel_left.instantiate(
