@@ -88,24 +88,28 @@ class IntersectNonmembership(Nonmembership):
         Deduce and return 
             [element not in (A intersect B ...)] = 
             [(element not in A) or (element not in B) ...]
-        where self = (A intersect B ...).
+        where self = [element not in (A intersect B ...)].
         '''
         from . import nonmembership_equiv
         element = self.element
         operands = self.domain.operands
         _A = operands
         _m = _A.num_elements()
-        return nonmembership_equiv.instantiate({m: _m, x: element, A: _A})
+        return nonmembership_equiv.instantiate(
+                {m: _m, x: element, A: _A})
 
-    def conclude(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude(self, **defaults_config):
         '''
-        From either [element not in A] or [element not in B] ..., derive and return [element not in (A intersection B ...)],
-        where self represents (A intersection B ...).
+        From either [element not in A] or [element not in B] ...
+        (already proven or as assumptions), derive and return
+        [element not in (A intersection B ...)],
+        where self represents [element not in (A intersection B ...)]
         '''
         from . import nonmembership_folding
         element = self.element
         operands = self.domain.operands
         _A = operands
-        _m = _A.num_elements(assumptions)
+        _m = _A.num_elements()
         return nonmembership_folding.instantiate(
-            {m: _m, x: element, A: _A}, assumptions=assumptions)
+            {m: _m, x: element, A: _A})
