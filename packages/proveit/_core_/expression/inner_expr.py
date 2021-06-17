@@ -240,19 +240,17 @@ class InnerExpr:
                 # a repl_lambda with a range of parameters.
                 repl_lambda = self[:].repl_lambda()
 
-            def inner_equiv(*args, **kwargs):
-                assumptions = kwargs.get('assumptions', 
-                                         defaults.assumptions)
-                equivalence = equiv_method(*args, **kwargs)
+            def inner_equiv(*args, **defaults_config):
+                equivalence = equiv_method(*args, **defaults_config)
                 if equiv_method_type == 'equiv':
                     return equivalence.substitution(
-                        repl_lambda, assumptions=assumptions)
+                        repl_lambda, **defaults_config)
                 elif equiv_method_type == 'rhs':
                     return equivalence.substitution(
-                        repl_lambda, assumptions=assumptions).rhs
+                        repl_lambda, **defaults_config).rhs
                 elif equiv_method_type == 'action':
                     return equivalence.sub_right_side_into(
-                        repl_lambda, assumptions=assumptions)
+                        repl_lambda, **defaults_config)
             if equiv_method_type == 'equiv':
                 inner_equiv.__doc__ = "Generate an equivalence of the top-level expression with a new form by replacing the inner expression via '%s'." % equiv_method_name
             elif equiv_method_type == 'rhs':
@@ -391,7 +389,8 @@ class InnerExpr:
                 start = 0
             if stop is None:
                 stop = parent_tuple.num_entries()
-            sub_tuple_len = cur_sub_expr.num_elements(self.assumptions)
+            sub_tuple_len = cur_sub_expr.num_elements(
+                    assumptions=self.assumptions)
             dummy_var = top_level_expr.safe_dummy_var()
             lambda_params = var_range(dummy_var, one, sub_tuple_len)
             lambda_body = ExprTuple(*(parent_tuple[:start].entries + (lambda_params,)
