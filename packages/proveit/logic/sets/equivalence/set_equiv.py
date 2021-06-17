@@ -2,7 +2,8 @@ from proveit import (as_expression, defaults, USE_DEFAULTS,
                      ProofFailure, prover)
 from proveit import Literal
 from proveit import TransitiveRelation, TransitivityException
-from proveit.logic.irreducible_value import IrreducibleValue, is_irreducible_value
+from proveit.logic.irreducible_value import (
+        IrreducibleValue, is_irreducible_value)
 from proveit import A, B, C, P, f, x, y, z
 
 
@@ -40,8 +41,8 @@ class SetEquiv(TransitiveRelation):
     inversions = dict()
 
     # Record the SetEquiv objects being initialized (to avoid infinite
-    # recursion while automatically deducing an equality is in the Boolean
-    # set).
+    # recursion while automatically deducing an equality is in the
+    # Boolean set).
     initializing = set()
 
     def __init__(self, a, b, *, styles=None):
@@ -53,7 +54,8 @@ class SetEquiv(TransitiveRelation):
                 # proactively prove (a equiv b) in Boolean.
                 self.deduce_in_bool()
             except BaseException:
-                # may fail before the relevent _axioms_ have been generated
+                # may fail before the relevent _axioms_ have
+                # been generated
                 pass  # and that's okay
             SetEquiv.initializing.remove(self)
 
@@ -63,10 +65,10 @@ class SetEquiv(TransitiveRelation):
         from the left hand side and the right hand side.  This
         information may be useful for concluding new equivalences via
         transitivity. If the right hand side is an "irreducible value"
-        (see is_irreducible_value), also record it in SetEquiv.evaluations
-        for use when the evaluation method is called. Some side-effects
-        derivations are also attempted depending upon the form of
-        this equivalence.
+        (see is_irreducible_value), also record it in
+        SetEquiv.evaluations for use when the evaluation method is
+        called. Some side-effects derivations are also attempted
+        depending upon the form of this equivalence.
         '''
         from proveit.logic.booleans import TRUE, FALSE
         SetEquiv.known_equivalences.setdefault(self.lhs, set()).add(judgment)
@@ -78,16 +80,8 @@ class SetEquiv(TransitiveRelation):
         if (self.lhs != self.rhs):  # e.g. if we don't have SetEquiv(A, A)
             # automatically derive the reversed form which is equivalent
             yield self.derive_reversed
-        # THE FOLLOWING SEEM INAPPLICABLE, because we are dealing with sets
-        # if self.rhs == FALSE:
-        #     # derive lhs => FALSE from lhs = FALSE
-        #     yield self.derive_contradiction
-        #     # derive lhs from Not(lhs) = FALSE, if self is in this form
-        #     #yield self.derive_via_falsified_negation
-        # if self.rhs in (TRUE, FALSE):
-        #     # automatically derive A from A=TRUE or Not(A) from A=FALSE
-        #     yield self.derive_via_boolean_equality
-        # STILL CHECKING IN THE RELEVANCE OF THE FOLLOWING
+        
+        # STILL CHECKING ON THE RELEVANCE OF THE FOLLOWING
         # if hasattr(self.lhs, 'equality_side_effects'):
         #     for side_effect in self.lhs.equality_side_effects(judgment):
         #         yield side_effect
@@ -106,7 +100,7 @@ class SetEquiv(TransitiveRelation):
         Attempt to conclude the equivalence in various ways:
         simple reflexivity (A equiv A), via an evaluation (if one side
         is an irreducible), or via transitivity.
-        IN PROGRESS. NOT YET CLEAR how this applies to the SetEquiv
+        IN PROGRESS
         '''
         if self.lhs == self.rhs:
             try:
@@ -197,7 +191,9 @@ class SetEquiv(TransitiveRelation):
         Prove and return self of the form A equiv A.
         '''
         from . import set_equiv_reflexivity
-        assert self.lhs == self.rhs
+        assert self.lhs == self.rhs, (
+                "self.lhs ({0}) is not set-equiv to self.rhs ({1})".
+                format(self.lhs, self.rhs))
         return set_equiv_reflexivity.instantiate({A: self.lhs})
 
     @prover
@@ -212,8 +208,14 @@ class SetEquiv(TransitiveRelation):
     @prover
     def unfold(self, **defaults_config):
         '''
-        From A set_equiv B derive
-        forall_{x} (x in A) = (x in B)
+        From A set_equiv B derive forall_{x} [(x in A) = (x in B)].
+        A set_equiv B must be known, provable, or assumed to be True.
+        For example,
+            SetEquiv(Set(1, 2, 3), Set(a, b, c)).unfold(
+                assumptions=[SetEquiv(Set(1, 2, 3), Set(a, b, c))])
+        returns:
+            SetEquiv({1, 2, 3}, {a, b, c}) |-
+            forall_{x} [(x in {1, 2, 3}) = (x in {a, b, c})]
         '''
         from . import set_equiv_unfold
         return set_equiv_unfold.instantiate({A: self.lhs, B: self.rhs})
@@ -279,11 +281,12 @@ class SetEquiv(TransitiveRelation):
         '''
         From A equiv B, and given P(B), derive P(A) assuming P(B).
         UNDER CONSTRUCTION, adapted from Equals class.
-        P(x) is provided via lambda_map as a Lambda expression or an
-        object that returns a Lambda expression when calling lambda_map()
-        (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in
-        particular), or, if neither of those, an expression upon
-        which to perform a global replacement of self.rhs.
+        P(x) is provided via lambda_map as a Lambda expression or
+        an object that returns a Lambda expression when calling
+        lambda_map() (see proveit.lambda_map,
+        proveit.lambda_map.SubExprRepl in particular), or, if neither
+        of those, an expression upon which to perform a global
+        replacement of self.rhs.
         '''
         from . import sub_left_side_into
         from proveit.logic import Equals
@@ -297,10 +300,11 @@ class SetEquiv(TransitiveRelation):
         From A equiv B, and given P(A), derive P(B) assuming P(A).
         UNDER CONSTRUCTION, adapted from Equals class.
         P(x) is provided via lambda_map as a Lambda expression or an
-        object that returns a Lambda expression when calling lambda_map()
-        (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in
-        particular), or, if neither of those, an expression upon
-        which to perform a global replacement of self.lhs.
+        object that returns a Lambda expression when calling
+        lambda_map() (see proveit.lambda_map,
+        proveit.lambda_map.SubExprRepl in particular), or, if neither
+        of those, an expression upon which to perform a global
+        replacement of self.lhs.
         '''
         from . import sub_right_side_into
         from proveit.logic import Equals

@@ -46,7 +46,7 @@ class NotSubsetEq(Relation):
         '''
         from . import unfold_not_subset_eq
         unfolded = unfold_not_subset_eq.instantiate(
-            {A: self.operands[0], B: self.operands[1]})
+            {A: self.operands[0], B: self.operands[1]}, auto_simplify=False)
         return unfolded.inner_expr().operand.with_mimicked_style(self)
 
     @prover
