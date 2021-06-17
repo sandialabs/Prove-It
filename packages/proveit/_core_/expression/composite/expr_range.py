@@ -7,7 +7,7 @@ from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
 from proveit._core_.expression.composite import singular_expression, ExprTuple
 from proveit._core_.expression.conditional import Conditional
-from proveit._core_.proof import ProofFailure
+from proveit._core_.proof import ProofFailure, UnsatisfiedPrerequisites
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 from proveit.decorators import prover, equality_prover
 
@@ -81,6 +81,12 @@ class ExprRange(Expression):
                             styles=styles)
         self.start_index = singular_expression(start_index)
         self.end_index = singular_expression(end_index)
+        if self.start_index == self.end_index:
+            raise ValueError(
+                    "Do not create an ExprRange with the same start and "
+                    "end index since it reduces to a single instance.  "
+                    "Note that nested_range/var_range automatically "
+                    "perform this reduction.")
         self.lambda_map = lambda_map
         self.parameter = self.lambda_map.parameter
         self.body = self.lambda_map.body
@@ -98,6 +104,67 @@ class ExprRange(Expression):
         lambda_map, start_index, end_index = sub_expressions
         return ExprRange(None, None, start_index, end_index,
                          styles=styles, lambda_map=lambda_map)
+
+    def basic_replaced(self, repl_map, *, 
+                       allow_relabeling=False, requirements=None,
+                       _subbed_start_index=None,
+                       _subbed_end_index=None):
+        '''
+        ExprRange.basic_replaced handles the case of reducing to
+        a singular instance when start and end indices are the same.
+        '''
+        if len(repl_map) > 0 and (self in repl_map):
+            replaced = repl_map[self]
+        else:
+            if _subbed_start_index is None:
+                _subbed_start_index, _subbed_end_index = (
+                        sub_expr.basic_replaced(
+                            repl_map, allow_relabeling=allow_relabeling,
+                            requirements=requirements)
+                    for sub_expr in (self.start_index, self.end_index))
+            else:
+                assert _subbed_end_index is not None
+            if _subbed_start_index == _subbed_end_index:
+                # Reduced to a single instance since the start and
+                # end indices are the same.
+                return self._singular_reduced(
+                        repl_map, _subbed_index=_subbed_start_index,
+                       allow_relabeling=allow_relabeling, 
+                       requirements=requirements)
+            sub_exprs = self._sub_expressions
+            assert sub_exprs == (self.lambda_map, self.start_index,
+                                 self.end_index)
+            # Complete the subbed_sub_exprs
+            subbed_sub_exprs = (
+                    self.lambda_map.basic_replaced(
+                            repl_map, allow_relabeling=allow_relabeling,
+                            requirements=requirements),
+                    _subbed_start_index, _subbed_end_index)
+            if all(subbed_sub._style_id == sub._style_id for
+                   subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
+                # Nothing change, so don't remake anything.
+                return self
+            replaced = self.__class__._checked_make(
+                self._core_info, subbed_sub_exprs,
+                style_preferences=self._style_data.styles)
+        return replaced
+    
+    def _singular_reduced(self, repl_map, *, _subbed_index,
+                       allow_relabeling=False, requirements=None):
+        '''
+        Return a basic replaced version where there is a singular
+        reduction to the given _subbed_index.
+        '''
+        subbed_lambda = self.lambda_map.basic_replaced(
+                            repl_map, allow_relabeling=allow_relabeling,
+                            requirements=requirements)
+        parameter = subbed_lambda.parameter
+        body = subbed_lambda.body
+        singular_instance = body.basic_replaced(
+                {parameter: _subbed_index})
+        return singular_instance.basic_replaced(
+            repl_map, allow_relabeling=allow_relabeling,
+            requirements=requirements)            
 
     def literal_int_extent(self):
         '''
@@ -500,116 +567,110 @@ class ExprRange(Expression):
     # equality does not have the ExprRange directly on the left
     # side, rather it is wrapped in an ExprTuple.
     @prover
-    def _range_reduction(self, **defaults_config):
+    def _range_reduction(self, must_reduce=False, **defaults_config):
         '''
         Prove this ExprRange, wrapped in an ExprTuple, equal
         to an ExprTuple form that is possibly reduced (e.g.,
-        collapsed to an empty range or a singular range).
+        collapsed to an empty range).
         '''
         from proveit import f, i, j, m, n
         from proveit.logic import Equals
         from proveit.numbers import Add, one
         tuple_wrapped_self = ExprTuple(self)
-        if self in defaults.preserved_exprs:
-            # Auto-reduction for this is disabled.
-            return Equals(tuple_wrapped_self, 
-                          tuple_wrapped_self).conclude_via_reflexivity()
         lambda_map = self.lambda_map
         start_index = self.start_index
         end_index = self.end_index
-        if start_index == end_index:
-            # We can do a singular range reduction.
+        # If the start and end are literal integers and form an
+        # empty range, then it should be straightforward to
+        # prove that the range is empty.
+        from proveit.numbers import is_literal_int
+        empty_req = Equals(Add(end_index, one), start_index)
+        if is_literal_int(start_index) and is_literal_int(end_index):
+            if end_index.as_int() + 1 == start_index.as_int():
+                empty_req.prove()
+        if empty_req.proven():
+            # We can do an empty range reduction
             # Temporarily disable automation to avoid infinite
             # recursion.
-            from proveit.core_expr_types.tuples import \
-                singular_range_reduction, singular_nested_range_reduction
-            # Preserve 'self' on the left side of the reduction.
             if self.nested_range_depth() > 1:
-                lambda_map = Lambda(
-                    (self.parameter,
-                     self.body.parameter),
-                    self.body.body)
-                return singular_nested_range_reduction.instantiate(
-                    {f: lambda_map, m: start_index,
-                     i: self.first().start_index,
-                     j: self.first().end_index},
-                     preserve_expr=tuple_wrapped_self)
-            else:
-                return singular_range_reduction.instantiate(
-                    {f: lambda_map, i: start_index},
-                    preserve_expr=tuple_wrapped_self)
-        else:
-            # If the start and end are literal integers and form an
-            # empty range, then it should be straightforward to
-            # prove that the range is empty.
-            from proveit.numbers import is_literal_int
-            empty_req = Equals(Add(end_index, one), start_index)
-            if is_literal_int(start_index) and is_literal_int(end_index):
-                if end_index.as_int() + 1 == start_index.as_int():
-                    empty_req.prove()
-            if empty_req.proven():
-                # We can do an empty range reduction
+                # this is a nested range, but we know
+                # that the outer range reduces to an empty range,
+
+                # We can do an empty range reduction on the entire expression
                 # Temporarily disable automation to avoid infinite
                 # recursion.
-                if self.nested_range_depth() > 1:
-                    # this is a nested range, but we know
-                    # that the outer range reduces to an empty range,
+                from proveit.core_expr_types.tuples import \
+                    empty_outside_range_of_range
+                nest_end_index = self.first().end_index
+                nest_start_index = self.first().start_index
+                lambda_map = Lambda(
+                    (self.parameter, self.body.parameter), self.body.body)
+                return empty_outside_range_of_range.instantiate(
+                    {f: lambda_map, m: start_index, n: end_index,
+                     i: nest_start_index, j: nest_end_index},
+                     preserve_expr=tuple_wrapped_self)
+            else:
+                from proveit.core_expr_types.tuples import \
+                    empty_range_def
+                # Preserve 'self' on the left side of the reduction.
+                return empty_range_def.instantiate(
+                    {f: lambda_map, i: start_index, j: end_index},
+                    preserve_expr=tuple_wrapped_self)
+        elif self.nested_range_depth() > 1:
+            # this is a nested range so the inner range could be empty.
 
-                    # We can do an empty range reduction on the entire expression
-                    # Temporarily disable automation to avoid infinite
-                    # recursion.
-                    from proveit.core_expr_types.tuples import \
-                        empty_outside_range_of_range
-                    nest_end_index = self.first().end_index
-                    nest_start_index = self.first().start_index
-                    lambda_map = Lambda(
-                        (self.parameter, self.body.parameter), self.body.body)
-                    return empty_outside_range_of_range.instantiate(
-                        {f: lambda_map, m: start_index, n: end_index,
-                         i: nest_start_index, j: nest_end_index},
-                         preserve_expr=tuple_wrapped_self)
-                else:
-                    from proveit.core_expr_types.tuples import \
-                        empty_range_def
-                    # Preserve 'self' on the left side of the reduction.
-                    return empty_range_def.instantiate(
-                        {f: lambda_map, i: start_index, j: end_index},
-                        preserve_expr=tuple_wrapped_self)
-            elif self.nested_range_depth() > 1:
-                # this is a nested range so the inner range could be empty.
-
-                # If the start and end of the inner range are literal
-                # integers and form an empty range, then it should be
-                # straightforward to prove that the entire range is empty.
-                from proveit.numbers import is_literal_int
-                empty_req = Equals(
-                    Add(self.first().end_index, one), self.first().start_index)
-                if is_literal_int(
-                        self.first().start_index) and is_literal_int(
-                        self.first().end_index):
-                    if self.first().end_index.as_int() + \
-                            1 == self.first().start_index.as_int():
-                        empty_req.prove()
-                if empty_req.proven():
-                    # We can do an empty range reduction on the entire expression
-                    # Temporarily disable automation to avoid infinite
-                    # recursion.
-                    from proveit.core_expr_types.tuples import \
-                        empty_inside_range_of_range
-                    # Preserve 'self' on the left side of the reduction.
-                    nest_end_index = self.first().end_index
-                    nest_start_index = self.first().start_index
-                    lambda_map = Lambda(
-                        (self.parameter, self.body.parameter), 
-                        self.body.body)
-                    return empty_inside_range_of_range.instantiate(
-                        {f: lambda_map, m: start_index, n: end_index, 
-                         i: nest_start_index, j: nest_end_index},
-                         preserve_expr=tuple_wrapped_self)
+            # If the start and end of the inner range are literal
+            # integers and form an empty range, then it should be
+            # straightforward to prove that the entire range is empty.
+            from proveit.numbers import is_literal_int
+            empty_req = Equals(
+                Add(self.first().end_index, one), self.first().start_index)
+            if is_literal_int(
+                    self.first().start_index) and is_literal_int(
+                    self.first().end_index):
+                if self.first().end_index.as_int() + \
+                        1 == self.first().start_index.as_int():
+                    empty_req.prove()
+            if empty_req.proven():
+                # We can do an empty range reduction on the entire expression
+                # Temporarily disable automation to avoid infinite
+                # recursion.
+                from proveit.core_expr_types.tuples import \
+                    empty_inside_range_of_range
+                # Preserve 'self' on the left side of the reduction.
+                nest_end_index = self.first().end_index
+                nest_start_index = self.first().start_index
+                lambda_map = Lambda(
+                    (self.parameter, self.body.parameter), 
+                    self.body.body)
+                return empty_inside_range_of_range.instantiate(
+                    {f: lambda_map, m: start_index, n: end_index, 
+                     i: nest_start_index, j: nest_end_index},
+                     preserve_expr=tuple_wrapped_self)
         # If nothing else is applicable, we will return the trivial 
         # reflexive equality.
+        if must_reduce:
+            # Nothing can be reduced, so raise an exception.
+            raise UnsatisfiedPrerequisites("%s is not provably "
+                                           "reducible"%self)
         return Equals(tuple_wrapped_self, 
                       tuple_wrapped_self).conclude_via_reflexivity()
+
+    def _possibly_reduced_range_entries(self, requirements):
+        '''
+        If the given ExprRange has a reduction (as an empty), 
+        add this reduction as a requirement and yield the
+        entries of the reduced version.  Otherwise, just yield
+        the original expr_range.
+        '''
+        try:
+            reduction = self._range_reduction(must_reduce=True)
+        except UnsatisfiedPrerequisites:
+            yield self
+        if reduction.lhs != reduction.rhs:
+            requirements.append(reduction)
+        for entry in reduction.rhs:
+            yield entry
 
     def _replaced_entries(self, repl_map, allow_relabeling, requirements):
         '''
@@ -621,6 +682,10 @@ class ExprRange(Expression):
         parameters such that the length of the parameters and operands 
         must be proven to be equal.  See the Operation.replaced and 
         Lambda.apply documentation for more details.
+        
+        If the start and end indices of the ExprRange are replaced
+        with the same expression, just the single instance will
+        be yielded.
 
         Expansion replacements of a range of indexed variables must
         be made explicit for the corresponding range (and therefore
@@ -674,6 +739,21 @@ class ExprRange(Expression):
             # The full expression is to be replaced.
             return repl_map[self]
 
+        # Do replacements for the start and end indices.
+        subbed_start_index, subbed_end_index = (
+                sub_expr.basic_replaced(
+                    repl_map, allow_relabeling=allow_relabeling,
+                    requirements=requirements)
+            for sub_expr in (self.start_index, self.end_index))
+        # See if we should reduce to a singular instance, according to
+        # whether the start and end indices are the same.
+        if subbed_start_index==subbed_end_index:
+            yield self._singular_reduced(
+                    repl_map, _subbed_index=subbed_start_index,
+                    allow_relabeling=allow_relabeling,
+                    requirements=requirements)
+            return
+
         if requirements is None:
             requirements = []
         # We will turn on the `indices_must_match` flag when the
@@ -726,18 +806,14 @@ class ExprRange(Expression):
                     "by the ExprRange parameter are being expanded "
                     "(%s is expanded but %s is not)"
                     % (expanding_var, reason_indices_must_match))
-
-        # Make all of the replacements except for the variables
-        # being expanded.  If variables are to be expanded, this
-        # result will be used for getting the start and end indices
-        # ('starts' and 'ends').
-        subbed_expr_range = self.basic_replaced(
-            repl_map, allow_relabeling=allow_relabeling,
-            requirements=requirements)
-        if len(var_range_forms) == 0:
-            # Nothing to expand.
-            yield subbed_expr_range
-            return  # Done.
+        else:
+            # Nothing fancy, just basic_replaced of the expression.
+            yield self.basic_replaced(
+                repl_map, allow_relabeling=allow_relabeling,
+                requirements=requirements,
+                _subbed_start_index=subbed_start_index,
+                _subbed_end_index=subbed_end_index)
+            return
 
         # Need to handle the change in scope within the lambda
         # expression.
@@ -746,7 +822,8 @@ class ExprRange(Expression):
         dummy_reqs = []
         new_params, inner_repl_map, inner_assumptions \
             = self.lambda_map._inner_scope_sub(
-                    [self.parameter], repl_map, allow_relabeling, dummy_reqs)
+                    repl_map, allow_relabeling, dummy_reqs)
+
         # Sanity check that we didn't introduce new requirements.
         # "_inner_scope_sub" should not introduce anything that
         # wasn't introduced when we called `self.replaced`.
@@ -781,8 +858,6 @@ class ExprRange(Expression):
         #starts = extract_start_indices(subbed_expr_range)
         #ends = extract_end_indices(subbed_expr_range)
         orig_parameter = self.parameter
-        subbed_start_index = subbed_expr_range.start_index
-        subbed_end_index = subbed_expr_range.end_index
         #assert len(starts)==len(ends)==len(orig_parameters)
         for occurrence in expanding_occurrences:
             # We need to create a proper "variable range" with simple
@@ -1412,17 +1487,17 @@ def is_at_same_nested_range_level(expr1, expr2):
 def nested_range(parameters, body, start_indices, end_indices):
     if len(parameters) > 1:
         # multiple levels
-        return ExprRange(parameters[0],
-                         nested_range(parameters[1:], body,
-                                      start_indices[1:], end_indices[1:]),
-                         start_indices[0], end_indices[0])
+        inner_body = nested_range(parameters[1:], body,
+                                  start_indices[1:], end_indices[1:])
     else:
         # single level
-        param = parameters[0]
-        start_index, end_index = (start_indices[0],
-                                  end_indices[0])
-        return ExprRange(param, body, start_index, end_index)
-
+        inner_body = body
+    if start_indices[0] == end_indices[0]:
+        # When the start and end indices are the same, reduce it
+        # to a single instance.
+        return inner_body.basic_replaced({parameters[0]: start_indices[0]})
+    return ExprRange(parameters[0], inner_body,
+                     start_indices[0], end_indices[0])
 
 def var_range(var, start_index_or_indices, end_index_or_indices):
     from proveit import (safe_dummy_vars, composite_expression,

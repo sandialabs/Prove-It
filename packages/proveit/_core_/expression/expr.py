@@ -27,7 +27,7 @@ class ExprType(type):
 
     # These attributes should not be overridden by classes outside
     # of the core.
-    protected = ('_canonical_version',
+    protected = ('_apply', '_canonical_version',
                  'replaced', 'basic_replaced', '_replaced_entries', 
                  'equality_replaced', '_equality_replaced', 
                  '_equality_replaced_sub_exprs', '_range_reduction',
@@ -991,7 +991,7 @@ class Expression(metaclass=ExprType):
         replacements.
         '''
         if len(repl_map) > 0 and (self in repl_map):
-            replaced = repl_map[self]
+            return repl_map[self]
         else:
             sub_exprs = self._sub_expressions
             subbed_sub_exprs = tuple(
@@ -1003,10 +1003,9 @@ class Expression(metaclass=ExprType):
                    subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
                 # Nothing change, so don't remake anything.
                 return self
-            replaced = self.__class__._checked_make(
+            return self.__class__._checked_make(
                 self._core_info, subbed_sub_exprs,
                 style_preferences=self._style_data.styles)
-        return replaced
 
     def equality_replaced(self, requirements,
                           auto_simplify_top_level=USE_DEFAULTS):
@@ -1067,8 +1066,7 @@ class Expression(metaclass=ExprType):
         # or as a simplification.  Note that 'replacements' override
         # 'preserved_exprs'.
         replacement = None
-        if (not isinstance(self, Composite) and 
-                not isinstance(self, ExprRange)):
+        if not isinstance(self, ExprRange):
             if self in equality_repl_map:
                 replacement = equality_repl_map[self]
         expr = self

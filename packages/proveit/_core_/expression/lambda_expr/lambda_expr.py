@@ -152,7 +152,7 @@ class Lambda(Expression):
             {var for var, var_form in free_var_ranges.items()
              if var in self.parameter_var_set}
 
-        sub_exprs = (self.parameter_or_parameters, self.body)
+        sub_exprs = (self.parameters, self.body)
         Expression.__init__(self, ['Lambda'], sub_exprs, styles=styles)
 
     @classmethod
@@ -641,54 +641,14 @@ class Lambda(Expression):
         details, see Operation.replaced, Lambda.apply, and
         ExprRange.replaced (which is the sequence of calls involved).
         '''
-        from proveit import ExprTuple, ExprRange, IndexedVar
-        from proveit._core_.expression.composite.expr_range import \
-            extract_start_indices, extract_end_indices, var_range
-
         if len(repl_map) > 0 and (self in repl_map):
             # The full expression is to be replaced.
             return repl_map[self]
 
-        # First, we may replace indices of any of the parameters.
-        new_params = []
-        for param in self.parameters:
-            if isinstance(param, IndexedVar):
-                subbed_index = param.index.basic_replaced(
-                        repl_map, allow_relabeling=allow_relabeling, 
-                        requirements=requirements)
-                new_params.append(IndexedVar(param.var, subbed_index))
-            elif isinstance(param, ExprRange):
-                param_var = get_param_var(param)
-                subbed_start = \
-                    ExprTuple(*extract_start_indices(param)).basic_replaced(
-                        repl_map, allow_relabeling=allow_relabeling, 
-                        requirements=requirements)
-                subbed_end = \
-                    ExprTuple(*extract_end_indices(param)).basic_replaced(
-                        repl_map, allow_relabeling=allow_relabeling, 
-                        requirements=requirements)
-                range_param = var_range(param_var, subbed_start, subbed_end)
-                if defaults.auto_simplify:
-                    # Check for an ExprRange reduction of the Lambda
-                    # parameters.  If so, add these as 'requirements'
-                    # (note that they aren't equality_requirements in this
-                    # instance).
-                    range_param_reduction = range_param._range_reduction()
-                    if range_param_reduction.lhs != range_param_reduction.rhs:
-                        requirements.append(range_param_reduction)
-                        new_params.extend(range_param_reduction.rhs.entries)
-                    else:
-                        new_params.append(range_param)
-                else:
-                    new_params.append(range_param)
-            else:
-                new_params.append(param)
-
-        # Use a helper method to handle some inner scope transformations.
-        new_params, inner_repl_map, inner_assumptions \
-            = self._inner_scope_sub(
-                    new_params, repl_map, allow_relabeling,
-                    requirements)
+        # Use a helper method to handle some inner scope 
+        # transformations.
+        new_params, inner_repl_map, inner_assumptions = self._inner_scope_sub(
+                repl_map, allow_relabeling, requirements)
 
         # The lambda body with the substitutions.
         with defaults.temporary() as temp_defaults:
@@ -718,28 +678,49 @@ class Lambda(Expression):
                  self.parameter_vars)]        
         with defaults.temporary() as temp_defaults:
             temp_defaults.assumptions = inner_assumptions
-            return Expression._equality_replaced_sub_exprs(
+            result = Expression._equality_replaced_sub_exprs(
                     self, equality_repl_map, requirements)
+            return result
 
-    def _inner_scope_sub(self, parameters, repl_map, 
-                         allow_relabeling, requirements):
+    def _inner_scope_sub(self, repl_map, allow_relabeling, requirements):
         '''
-        Helper method for _replaced (and used by ExprRange._replaced)
-        which handles the change in scope properly as well as parameter
-        relabeling.  The parameters may differe from self.parameters
-        just in the parameters indices (e.g., x_1, ..., x_n could have
-        been changed to x_1, ..., x_5).
+        Helper method for basic_replaced (and used by 
+        ExprRange._replaced_entries) which handles the change in scope 
+        properly as well as parameter relabeling.
         '''
         from proveit import Variable, ExprTuple, ExprRange, IndexedVar
         from proveit._core_.expression.composite.expr_range import \
-            extract_start_indices, extract_end_indices
+            extract_start_indices, extract_end_indices, var_range
 
         parameter_vars = self.parameter_vars
         # Free variables of the body but excluding the parameter
         # variables.
         non_param_body_free_vars = (free_vars(self.body, err_inclusively=True)
                                     - self.parameter_var_set)
-        
+
+        # First, we may replace indices of any of the parameters.
+        parameters = []
+        for param in self.parameters:
+            if isinstance(param, IndexedVar):
+                subbed_index = param.index.basic_replaced(
+                        repl_map, allow_relabeling=allow_relabeling, 
+                        requirements=requirements)
+                parameters.append(IndexedVar(param.var, subbed_index))
+            elif isinstance(param, ExprRange):
+                param_var = get_param_var(param)
+                subbed_start = \
+                    ExprTuple(*extract_start_indices(param)).basic_replaced(
+                        repl_map, allow_relabeling=allow_relabeling, 
+                        requirements=requirements)
+                subbed_end = \
+                    ExprTuple(*extract_end_indices(param)).basic_replaced(
+                        repl_map, allow_relabeling=allow_relabeling, 
+                        requirements=requirements)
+                range_param = var_range(param_var, subbed_start, subbed_end)
+                parameters.append(range_param)
+            else:
+                parameters.append(param)
+
         # Within the lambda scope, we can instantiate lambda parameters
         # in a manner that retains the validity of the parameters as
         # parameters.  For any disallowed instantiation of Lambda
@@ -909,6 +890,7 @@ class Lambda(Expression):
         # x_1, ..., x_3 go to
         #       a, b, c with (x_1, ..., x_3):(a, b, c)
         new_params = []
+        
         for parameter, param_var in zip(parameters, parameter_vars):
             if isinstance(parameter, ExprRange):
                 for subbed_param in parameter._replaced_entries(
@@ -1236,15 +1218,19 @@ def extract_param_replacements(parameters, parameter_vars, body,
     '''
     from proveit import (ExprTuple, ExprRange, ProofFailure,
                          extract_var_tuple_indices)
-    from proveit.logic import Equals, EvaluationError
+    from proveit.logic import Equals
     from proveit.core_expr_types import Len
     # Loop through each parameter entry and match it with corresponding
     # operand(s).  Singular parameter entries match with singular
-    # operand entries.  Iterated parameter entries match with
+    # operand entries.  ExprRange parameter entries match with
     # one or more operand entries which match in element-wise length
     # For example, (x_1, ..., x_n, y) has an element-wise lenght of
     # n+1.
     try:
+        # prev_empty_param_tuple is used to keep instantiatiations as
+        # intended rather than putting empty ranges into the next
+        # parameter slot.
+        prev_empty_param_tuple = None
         for parameter, param_var in zip(parameters, parameter_vars):
             if isinstance(parameter, ExprRange):
                 from proveit.numbers import zero, one
@@ -1260,78 +1246,88 @@ def extract_param_replacements(parameters, parameter_vars, body,
                 except ValueError:
                     # Unknown integer value for param_len.
                     int_param_len = None
-                if is_complete and (parameters[-1] == parameter):
-                    # This parameter range is the last entry (and
-                    # we are required to be complete in this case)
-                    # so it must encompass all remaining operands.
-                    # We can attempt to prove the length requirement
-                    # via automation.
-                    param_operands = list(operands_iter)
-                    param_operands_len = Len(ExprTuple(*param_operands))
+                # Collect enough operands to match the length of
+                # the range of parameters.
+                param_operands = []
+                # To the extent they are known, track the minimum
+                # and maximum number of param-operand elements.
+                min_int_param_operands_len = 0
+                max_int_param_operands_len = 0
+                final_param = is_complete and (parameters[-1] == parameter)
+                while True:
+                    param_operands_tuple = ExprTuple(*param_operands)
+                    param_operands_len = Len(param_operands_tuple)
                     len_req = Equals(param_operands_len, param_len)
-                    try:
-                        requirements.append(len_req.prove())
-                    except ProofFailure as e:
+                    # Check for obvious failure of len_req
+                    if (int_param_len is not None and
+                            min_int_param_operands_len > int_param_len):
+                        # No good. Too many arguments for parameter.
                         raise ValueError(
-                            "Failed to prove operand length "
-                            "requirement: %s" % str(e))
-                else:
-                    # Collect enough operands to match the length of
-                    # the range of parameters.
-                    param_operands = []
-                    # To the extent they are known, track the minimum
-                    # and maximum number of param-operand elements.
-                    min_int_param_operands_len = 0
-                    max_int_param_operands_len = 0
-                    while True:
-                        param_operands_tuple = ExprTuple(*param_operands)
-                        param_operands_len = Len(param_operands_tuple)
-                        len_req = Equals(param_operands_len, param_len)
-                        # Check for obvious failure of len_req
-                        if (int_param_len is not None and
-                                min_int_param_operands_len > int_param_len):
-                            # No good. Too many arguments for parameter.
-                            raise ValueError(
-                                "Too many arguments, %s, for parameter"
-                                " %s." % (param_operands, parameter))
-                        elif (max_int_param_operands_len is None or
-                              int_param_len is None or
-                              max_int_param_operands_len == int_param_len):
-                            # A possible match to check.
-                            if not len_req.proven():
-                                try:
-                                    # Try to prove len_req without
-                                    # automation since we do not know if
-                                    # this is the right match or if we
-                                    # need to go further with more
-                                    # operands.
-                                    len_req.lhs.deduce_equality(
-                                        len_req, automation=False)
-                                    assert len_req.proven()
-                                except ProofFailure:
-                                    pass
-                            if len_req.proven():
-                                requirements.append(len_req.prove())
-                                break  # we have a match
-                        operand_entry = next(operands_iter)
-                        param_operands.append(operand_entry)
-                        # Update min/max number of param-operand
-                        # elements.
-                        if isinstance(operand_entry, ExprRange):
+                            "Too many arguments, %s, for parameter"
+                            " %s." % (param_operands, parameter))
+                    elif (not final_param and 
+                          (max_int_param_operands_len is None or
+                           int_param_len is None or
+                           max_int_param_operands_len == int_param_len)):
+                        # A possible match to check.
+                        if not len_req.proven():
                             try:
-                                # Maybe a known integer ExprRange length.
-                                entry_len = operand_entry.literal_int_extent()
-                                min_int_param_operands_len += entry_len
-                                if max_int_param_operands_len is not None:
-                                    max_int_param_operands_len += entry_len
-                            except ValueError:
-                                # Unnown ExprRange length, but >= 0.
-                                max_int_param_operands_len = None
-                        else:
-                            # Single element operand.
-                            min_int_param_operands_len += 1
+                                # Try to prove len_req without
+                                # automation since we do not know if
+                                # this is the right match or if we
+                                # need to go further with more
+                                # operands.
+                                len_req.lhs.deduce_equality(
+                                    len_req, automation=False)
+                                assert len_req.proven()
+                            except ProofFailure:
+                                pass
+                        if len_req.proven():
+                            requirements.append(len_req.prove())
+                            break  # we have a match
+                    try:
+                        operand_entry = next(operands_iter)
+                    except StopIteration:
+                        try:
+                            requirements.append(len_req.prove())
+                        except ProofFailure as e:
+                            raise ValueError(
+                                "Failed to prove operand length "
+                                "requirement: %s" % str(e))
+                        break # No more operands
+                    # Update min/max number of param-operand
+                    # elements.
+                    if isinstance(operand_entry, ExprRange):
+                        try:
+                            # Maybe a known integer ExprRange length.
+                            entry_len = operand_entry.literal_int_extent()
+                            min_int_param_operands_len += entry_len
                             if max_int_param_operands_len is not None:
-                                max_int_param_operands_len += 1
+                                max_int_param_operands_len += entry_len
+                        except ValueError:
+                            # Unnown ExprRange length, but >= 0.
+                            max_int_param_operands_len = None
+                    else:
+                        # Single element operand.
+                        min_int_param_operands_len += 1
+                        if max_int_param_operands_len is not None:
+                            max_int_param_operands_len += 1
+                    # If the previous parameter was assigned an
+                    # empty tuple and this entry length is 0,
+                    # assign the previous parameter to this entry
+                    # instead.
+                    if (prev_empty_param_tuple is not None and 
+                            max_int_param_operands_len == 0):
+                        # This keeps instantiations with empty
+                        # ranges as intended rather than putting
+                        # an empty range into the next slot.
+                        repl_map[prev_empty_param_tuple] = ExprTuple(
+                                operand_entry)
+                        prev_empty_param_tuple = None
+                        continue
+                    # Append this operand entry to the param_operands.
+                    param_operands.append(operand_entry)
+                        
                 # For the parameter range replacement, we map the
                 # parameter variable to a set of parameter range
                 # tuples (e.g., x : {(x_i, ..., x_n)}) to indicate
@@ -1339,7 +1335,43 @@ def extract_param_replacements(parameters, parameter_vars, body,
                 # to the actual operands to be replaced.
                 param_tuple = ExprTuple(parameter)
                 repl_map[param_var] = {param_tuple}
+                
+                """
+                # This didn't solve the problem that it was intended
+                # to solve, so I'm commenting this out, but we could
+                # resurrect it if we decide we want to be proactive
+                # about range reductions when doing lambda applications.
+                
+                # Perform range reductions of parameters via length 
+                # requirements (0 or 1).
+                reduced_param_operands = []
+                for param_operand in param_operands:
+                    if (isinstance(param_operand, ExprRange) and
+                            not defaults.preserve_all and 
+                            param_operand not in defaults.preserved_exprs):
+                        param_operand_len_eq = (
+                                Len(ExprTuple(param_operand)).computation())
+                        if param_operand_len_eq.rhs == zero:
+                            # skip 0-length range
+                            requirements.append(param_operand_len_eq)
+                        elif param_operand_len_eq.rhs == one:
+                            # reduce 1-length range to the single item
+                            requirements.append(param_operand_len_eq)
+                            reduced_param_operands.append(
+                                    param_operand.body.basic_replaced(
+                                {param_operand.parameter: 
+                                    param_operand.start_index}))
+                        else:
+                            reduced_param_operands.append(param_operand)
+                    else:
+                        reduced_param_operands.append(param_operand)
+                repl_map[param_tuple] = ExprTuple(*reduced_param_operands)
+                """
+                
                 repl_map[param_tuple] = ExprTuple(*param_operands)
+                prev_empty_param_tuple = (
+                        param_tuple if len(param_operands) == 0 else None)
+                    
             else:
                 # This is a singular parameter which should match
                 # with a singular operator or range(s) with known
@@ -1349,37 +1381,48 @@ def extract_param_replacements(parameters, parameter_vars, body,
                 if isinstance(operand, ExprRange):
                     # Rangle lengths must be known values and sum
                     # to 1.
-                    try:
-                        from proveit.numbers import zero, one
-                        while True:
-                            operand_len_evaluation = \
-                                Len(operand).evaluation()
-                            requirements.append(operand_len_evaluation)
-                            operand_len_val = operand_len_evaluation.rhs
-                            if operand_len_val == one:
-                                break  # Good to go.
-                            elif operand_len_val == zero:
-                                # Keep going until we get a length
-                                # of 1.
-                                operand = next(operands_iter)
-                            else:
-                                # No good.
-                                raise ValueError(
-                                    "Parameter/argument length "
-                                    "mismatch 1 vs %s"
-                                    % operand_len_evaluation.rhs)
-                    except EvaluationError:
-                        raise ValueError(
-                            "Singular parameters must correspond "
-                            "with singular operands or ranges with "
-                            "lengths known to sum to 1: %s vs %s."
-                            % (parameter, operand))
+                    from proveit.numbers import zero, one
+                    while True:
+                        operand_len_evaluation = \
+                            Len(operand).evaluation()
+                        requirements.append(operand_len_evaluation)
+                        operand_len_val = operand_len_evaluation.rhs
+                        if operand_len_val == one:
+                            # We know the length of this ExprRange is 
+                            # one, so just use the first entry as the 
+                            # only entry.  (This should not usually
+                            # come up since singular ExprRanges are
+                            # automatically reduced when the start and
+                            # end are the same).
+                            operand = operand.body.basic_replaced(
+                                    {operand.parameter: operand.start_index})
+                            break  # Good to go.
+                        elif operand_len_val == zero:
+                            # Keep going until we get a length
+                            # of 1.
+                            if prev_empty_param_tuple is not None:
+                                # Associate 0-legnth range with the previous 
+                                # 0-length parameter range.
+                                repl_map[prev_empty_param_tuple] = ExprTuple(
+                                        operand)
+                                prev_empty_param_tuple = None                                
+                            operand = next(operands_iter)
+                        else:
+                            # No good.
+                            raise ValueError(
+                                "Parameter/argument length "
+                                "mismatch 1 vs %s"
+                                % operand_len_evaluation.rhs)
+                        if not isinstance(operand, ExprRange):
+                            # We have our singular operand to match
+                            # a singular parameter.
+                            break
                 repl_map[parameter] = operand
+                prev_empty_param_tuple = None
     except StopIteration:
         raise ValueError("Parameter/argument length mismatch "
                          "or unproven length equality for "
                          "correspondence with %s." % str(parameter))
-
 
 def _mask_var_range(
         var, var_range_forms, mask_start, mask_end, allow_relabeling,

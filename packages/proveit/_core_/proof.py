@@ -1383,21 +1383,29 @@ class Instantiation(Proof):
                     # is already included.
                     continue
                 param_vars.add(param_var)
-                if isinstance(param, IndexedVar):
-                    param_var_repl = repl_map.get(param, None)
-                else:
-                    param_var_repl = repl_map.get(param_var, None)
+                param_var_repl = repl_map.get(param_var, None)
                 new_param = None
                 new_operands = None
-                if isinstance(param, ExprRange):
+                if (isinstance(param, ExprRange) 
+                        or isinstance(param, IndexedVar)):
                     subbed_param = instantiate(param)
-                    assert isinstance(subbed_param, ExprRange)
                     subbed_param_tuple = ExprTuple(subbed_param)
                     new_param = subbed_param
+                    if param_var_repl is not None:
+                        # The replacement of the variable of an 
+                        # ExprRange must be an ExprTuple.
+                        if not isinstance(param_var_repl, ExprTuple):
+                            raise_failure("The replacement of a parameter "
+                                          "variable for an ExprRange "
+                                          "parameter must be an ExprTuple, "
+                                          "got %s as replacement for "
+                                          "variable of %s"
+                                          %(param_var_repl, param))
                     if subbed_param_tuple in repl_map:
                         # There exists an explicit range
                         # instantiation.  For example,
-                        # (x_1, ..., x_n): (a, b, c)
+                        # (x_1, ..., x_n): (a, b, c) or 
+                        # (x_1): (z) if reduced to a singular instance.
                         new_operands = repl_map[subbed_param_tuple]
                         assert isinstance(new_operands, ExprTuple)
                         if (param_var_repl is not None and
@@ -1411,13 +1419,28 @@ class Instantiation(Proof):
                                              param_var_repl, param_var,
                                              new_operands))                            
                         new_operands = new_operands.entries
+                    elif (not isinstance(subbed_param, ExprRange)
+                          and subbed_param in repl_map):
+                        # There exists an explicit instantiation of
+                        # the singular instance.  For example,
+                        # x_1: z
+                        new_operands = (repl_map[subbed_param],)
+                        if (param_var_repl is not None and
+                                param_var_repl.entries != new_operands):
+                            # An implicit and explicit range
+                            # instantiation do not agree.
+                            raise_failure("Inconsistent assignment of "
+                                          "%s: %s, from instantiation of "
+                                          "%s, versus %s."
+                                          % (subbed_param, param_var_repl, 
+                                             param_var, new_operands))                           
                     elif param_var_repl is not None:
                         # We have an implicit range instantiation.
                         # For example, x: (a, b, c).
                         new_operands = param_var_repl.entries   
                 elif param_var_repl is not None:
                     new_param = param
-                    new_operands = [param_var_repl]
+                    new_operands = (param_var_repl,)
                 # Update the active equivalent alternative expansions.
                 equiv_alt_expansion_keys = \
                     equiv_alt_expansion_keys_by_param_var.get(param_var, None)
@@ -1430,7 +1453,7 @@ class Instantiation(Proof):
                         # be used, we need to include the parameter
                         # and corresponding operands; in this case,
                         # it is a trivial identity replacement.
-                        new_operands = [new_param]
+                        new_operands = (new_param,)
                 if new_operands is not None:
                     params.append(new_param)
                     operands.extend(new_operands)

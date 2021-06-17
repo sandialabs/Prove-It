@@ -1,10 +1,8 @@
-import types
 from .composite import Composite
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
-from proveit._core_.proof import ProofFailure
-from proveit._core_.defaults import defaults, USE_DEFAULTS
+from proveit._core_.defaults import defaults
 from proveit._core_.expression.style_options import StyleOptions
-from proveit.decorators import equality_prover
+from proveit.decorators import prover, equality_prover
 
 
 class ExprTuple(Composite, Expression):
@@ -325,13 +323,13 @@ class ExprTuple(Composite, Expression):
 
         return out_str
 
-    def num_elements(self, assumptions=USE_DEFAULTS):
+    def num_elements(self, **defaults_config):
         '''
         Return the proven number of elements of this ExprTuple as an 
         Expression.  This includes the extent of all contained ranges.
         '''
         from proveit.core_expr_types import Len
-        return Len(self).computed(assumptions=assumptions)
+        return Len(self).computed(**defaults_config)
 
     def has_matching_ranges(self, other_tuple):
         '''
@@ -430,7 +428,7 @@ class ExprTuple(Composite, Expression):
         _k = 0
         for entry in self.entries:
             if isinstance(entry, ExprRange):
-                entry_simp = entry._range_reduction(auto_simplify=True)
+                entry_simp = entry._range_reduction(preserve_all=True)
                 num_entries = entry_simp.rhs.num_entries()
             else:
                 if must_evaluate:
@@ -448,19 +446,27 @@ class ExprTuple(Composite, Expression):
     def shallow_simplification(self, **defaults_config):
         '''
         Proves that this ExprTuple is equal to an ExprTuple
-        with ExprRanges reduced.
+        with ExprRanges reduced unless these are "preserved"
+        expressions.
         '''
         from proveit.relation import TransRelUpdater
         from proveit import ExprRange
         expr = self
         eq = TransRelUpdater(expr)
+        if defaults.preserve_all:
+            # Preserve all sub-expressions -- don't simplify.
+            return eq.relation
         _k = 0
         for entry in self.entries:
+            if entry in defaults.preserved_exprs:
+                # Preserve this entry -- don't simplify it.
+                continue
             if isinstance(entry, ExprRange):
                 entry_simp = entry._range_reduction(preserve_all=True)
                 if entry_simp.lhs != entry_simp.rhs:
-                    expr = eq.update(expr.substitution(entry_simp, 
-                                                       start_idx=_k))
+                    substitution = expr.substitution(
+                            entry_simp, start_idx=_k, preserve_all=True)
+                    expr = eq.update(substitution)
                 _k += entry_simp.rhs.num_entries()
             else:
                 _k += 1
@@ -523,8 +529,8 @@ class ExprTuple(Composite, Expression):
                         "starting at %d"%(replacement_eq, self, start_idx))
             _i, _j, _k = _a.num_elements(), _b.num_elements(), _c.num_elements()
             return tuple_portion_substitution.instantiate(
-                    {a:_a, b:_b, c:_c, d:_d, i:_i, j:_j, k:_k},
-                    auto_simplify=False)
+                        {a:_a, b:_b, c:_c, d:_d, i:_i, j:_j, k:_k},
+                        preserve_all=True)
         else:
             _a = self[:start_idx]
             _b = self[start_idx]
@@ -537,7 +543,7 @@ class ExprTuple(Composite, Expression):
             _i, _k = _a.num_elements(), _c.num_elements()
             return tuple_elem_substitution.instantiate(
                     {a:_a, b:_b, c:_c, d:_d, i:_i, k:_k},
-                    auto_simplify=False)
+                    preserve_all=True)
             
 
     @equality_prover('merged', 'merge')
