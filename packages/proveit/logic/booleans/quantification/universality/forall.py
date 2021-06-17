@@ -346,8 +346,10 @@ class Forall(OperationOverInstances):
         possible by calling the domain's forall_evaluation method
         '''
         from proveit.logic import EvaluationError
-        assert self.has_domain(), ("Cannot automatically evaluate a forall "
-                                   "statement with no domain")
+        if not self.has_domain():
+            # Cannot automatically evaluate a forall statement with
+            # no domain.
+            raise EvaluationError(self)
 
         if len(list(self.instance_param_lists())) == 1:
             if hasattr(self.domain, 'forall_evaluation'):
