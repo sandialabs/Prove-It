@@ -123,8 +123,6 @@ def _make_decorated_prover(func):
                 return proven_truth.with_matching_style(not_expr)
             else:
                 if proven_truth.expr != expr:
-                    print(proven_truth.expr.expr_info())
-                    print(self.expr_info())
                     raise ValueError("@prover method %s whose name starts with "
                                      "'conclude' must prove %s but got "
                                      "%s."%(func, expr, proven_truth))
@@ -295,33 +293,23 @@ def equality_prover(past_tense, present_tense):
             proven_truth = None
             if is_simplification_method or is_evaluation_method:
                 from proveit.logic import is_irreducible_value
-                # See if there is a known evaluation (or if one may
-                # be derived via known equalities if defaults.automation
-                # is enabled).
-                if 'assumptions' in kwargs:
-                    # Use new assumptions temporarily.
-                    with defaults.temporary() as tmp_defaults:
-                        tmp_defaults.assumptions = kwargs.get('assumptions')
-                        known_evaluation = Equals.get_known_evaluation(expr)
+                if is_irreducible_value(expr):
+                    # Already irreducible.  Done.
+                    proven_truth = (
+                            Equals(expr, expr).conclude_via_reflexivity())
                 else:
-                    known_evaluation = Equals.get_known_evaluation(expr)
-
-                if known_evaluation is None:
-                    if is_irreducible_value(expr):
-                        # Already irreducible.
-                        proven_truth = Equals(expr, expr).prove()
-                    """
-                    elif is_simplification_method:
-                        # See if there is a known simplification (or if 
-                        # one may be derived via known equalities if
-                        # defaults.automation is enabled).
-                        known_simplification = (
-                                Equals.get_known_simplification(_self))
-                        if known_simplification is not None:
-                            proven_truth = known_simplification
-                    """
-                else:
-                    proven_truth = known_evaluation
+                    # See if there is a known evaluation (or if one may
+                    # be derived via known equalities if 
+                    # defaults.automation is enabled).
+                    if 'assumptions' in kwargs:
+                        # Use new assumptions temporarily.
+                        with defaults.temporary() as tmp_defaults:
+                            tmp_defaults.assumptions = kwargs.get(
+                                    'assumptions')
+                            proven_truth = Equals.get_known_evaluation(
+                                    expr)
+                    else:
+                        proven_truth = Equals.get_known_evaluation(expr)
             if proven_truth is None:
                 proven_truth = decorated_relation_prover(*args, **kwargs)
             proven_expr = proven_truth.expr
