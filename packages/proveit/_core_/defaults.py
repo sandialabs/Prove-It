@@ -25,37 +25,42 @@ class Defaults:
 
         # Display LaTeX versions of expressions.
         self.display_latex = True
+
+        # When True, Prove-It will automatically simplify expressions 
+        # as replacements are made (e.g. during instantiations), except
+        # for the 'preserved_exprs' (see below).  Turning auto_simplify 
+        # on will automatically turn preserve_all off (see below).
+        self.auto_simplify = True
+
+        # When True, Prove-It will not automatically simplify or 
+        # perform 'replacements' (see below) for any expressions.
+        # It is often the case that this should be set to True for all 
+        # but one of a multi-step process within a 
+        # @prover/@relation_prover/@equality_prover method.  Turning 
+        # preserve_all on will automatically turn auto_simplify off.
+        self.preserve_all = False
         
         # Proven equalities which specify desired replacements.
         # Occurrences of the left side will be replaced with
         # occurrences of the right side during instantiations
         # (and calls to Expression.replaced or 
         # Expression.equality_replaced).
-        # When setting replacements, corresponding expressions in 
-        # preserved_exprs will be discarded; however, preserved_exprs
-        # override replacements.  That is, whichever is done last is the
-        # directive that is followed.
+        # When setting replacements, preserve_all will automatically be
+        # disabled and corresponding expressions in preserved_exprs will
+        # be discarded; however, preserved_exprs override replacements.
+        # That is, whichever is done last is the directive that is
+        # followed.
         self.replacements = tuple()
         
-        # Expressions that should be 'preserved' and not simplified
-        # or replaced using an equality-base replacement.
+        # Expressions that should be 'preserved' and not 
+        # auto-simplified or replaced using an equality-based
+        # replacement.
         # Preserving an expression in this manner overrides any
         # replacement for that expression; however, when setting
         # replacements, corresponding expressions in preserved_exprs
         # will be discarded.  That is, whichever is done last is the
         # directive that is followed.
-        self.preserved_exprs = set()
-
-        # Automatically simplify expressions as replacements are
-        # made (e.g. during instantiations), except for the
-        # 'preserved_exprs' (see below).
-        self.auto_simplify = True
-        
-        # Do not auto-simplify or perform replacements for any
-        # expressions.  It is often the case that this should be
-        # set to true for all but one of a multi-step process
-        # within a @prover/@relation_prover/@equality_prover method.
-        self.preserve_all = False
+        self.preserved_exprs = set()        
 
         """
         # Map expression classes to directives that should be
@@ -248,7 +253,7 @@ class Defaults:
             from proveit import Judgment
             from proveit.logic import Equals
             # When we have replacements, don't preserve all (anymore?):
-            self.preserve_all=False
+            self.preserve_all = False
             value = tuple(value) # replacements should be a tuple
             for replacement in value:
                 if not isinstance(replacement, Judgment):
@@ -264,6 +269,9 @@ class Defaults:
             # off auto-simplification.
             self.replacements = tuple()
             self.auto_simplify = False
+        elif attr == 'auto_simplify' and value==True:
+            # Turning auto-simplify on, so don't preserve all (anymore?)
+            self.preserve_all = False
         self.__dict__[attr] = value
 
 class TemporarySetter(object):
