@@ -65,7 +65,7 @@ class Len(Operation):
             # not a tuple. For example, it could be a variable that
             # represent a tuple.  So just return the self equality.
             from proveit.logic import Equals
-            return Equals(self, self).prove()
+            return Equals(self, self).conclude_via_reflexivity()
         entries = self.operand.entries
         has_range = any(isinstance(entry, ExprRange) for entry in entries)
         if (len(entries) == 1 and has_range
@@ -251,12 +251,8 @@ class Len(Operation):
                         thm = len_of_ranges_with_repeated_indices
                         return thm.instantiate(
                             {n: _n, f: _f, i: _i[0], j: _j[0]})
-            #print(general_len.instantiate(
-               # {n: _n, f: _f, i: _i, j: _j}))
-            return general_len.instantiate(
-                {n: _n, f: _f, i: _i, j: _j}, 
-                preserved_exprs=preserved_exprs,
-                auto_simplify=True)
+            return general_len.instantiate({n: _n, f: _f, i: _i, j: _j}, 
+                preserved_exprs=preserved_exprs, auto_simplify=True)
 
     @equality_prover('typical_form', 'typify')
     def typical_eq(self, **defaults_config):
