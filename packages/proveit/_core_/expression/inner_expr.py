@@ -240,17 +240,19 @@ class InnerExpr:
                 # a repl_lambda with a range of parameters.
                 repl_lambda = self[:].repl_lambda()
 
-            def inner_equiv(*args, **defaults_config):
-                equivalence = equiv_method(*args, **defaults_config)
+            def inner_equiv(*args, **kwargs):
+                assumptions = kwargs.get('assumptions',
+                                         defaults.assumptions)
+                equivalence = equiv_method(*args, **kwargs)
                 if equiv_method_type == 'equiv':
                     return equivalence.substitution(
-                        repl_lambda, **defaults_config)
+                        repl_lambda, assumptions=assumptions)
                 elif equiv_method_type == 'rhs':
                     return equivalence.substitution(
-                        repl_lambda, **defaults_config).rhs
+                        repl_lambda, assumptions=assumptions).rhs
                 elif equiv_method_type == 'action':
                     return equivalence.sub_right_side_into(
-                        repl_lambda, **defaults_config)
+                        repl_lambda, assumptions=assumptions)
             if equiv_method_type == 'equiv':
                 inner_equiv.__doc__ = "Generate an equivalence of the top-level expression with a new form by replacing the inner expression via '%s'." % equiv_method_name
             elif equiv_method_type == 'rhs':
