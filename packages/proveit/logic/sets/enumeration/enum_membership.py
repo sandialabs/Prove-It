@@ -41,7 +41,7 @@ class EnumMembership(Membership):
                 _m = _a.num_elements()
                 _n = _c.num_elements()
                 return in_enumerated_set.instantiate(
-                    {m: _m, n: _n, a: _a, b: _b, c: _c})
+                    {m: _m, n: _n, a: _a, b: _b, c: _c}, auto_simplify=False)
             except (ProofFailure, ValueError):
                 _y = enum_elements
                 _n = _y.num_elements()
