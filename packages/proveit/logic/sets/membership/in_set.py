@@ -1,5 +1,5 @@
 from proveit import (Literal, defaults, USE_DEFAULTS,
-                     prover, equality_prover)
+                     prover, equality_prover, relation_prover)
 from proveit.relation import Relation
 
 class InSet(Relation):
@@ -31,8 +31,8 @@ class InSet(Relation):
 
     def __dir__(self):
         '''
-        If the domain has a 'membership_object' method, include methods from the
-        object it generates.
+        If the domain has a 'membership_object' method, include
+        methods from the object it generates.
         '''
         if 'membership_object' in self.__dict__:
             return sorted(set(list(self.__dict__.keys()) +
@@ -42,8 +42,8 @@ class InSet(Relation):
 
     def __getattr__(self, attr):
         '''
-        If the domain has a 'membership_object' method, include methods from the
-        object it generates.
+        If the domain has a 'membership_object' method, include
+        methods from the object it generates.
         '''
         if attr in ('lhs', 'rhs'):
             return Relation.__getattr__(self, attr)
@@ -65,7 +65,8 @@ class InSet(Relation):
         '''
         Store the proven membership in known_memberships.
         If the domain has a 'membership_object' method, side effects
-        will also be generated from the 'side_effects' object that it generates.
+        will also be generated from the 'side_effects' object that it
+        generates.
         '''
         InSet.known_memberships.setdefault(self.element, set()).add(judgment)
         if hasattr(self, 'membership_object'):
@@ -86,7 +87,7 @@ class InSet(Relation):
         from .not_in_set import NotInSet
         return NotInSet(self.element, self.domain).conclude_as_folded()
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
         Deduce and return that this membership statement is in the
