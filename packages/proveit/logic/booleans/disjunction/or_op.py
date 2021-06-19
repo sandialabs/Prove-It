@@ -89,14 +89,18 @@ class Or(Operation):
             if len(proven_operand_indices) > 0:
                 try:
                     # proven using conclude_via_example above 
-                    # (unless or_if[Any,Left,Right] was not a usable theorem,
-                    # in which case this will fail and we can simply try the
-                    # default below)
+                    # (unless or_if[Any,Left,Right] was not a usable
+                    # theorem, in which case this will fail and we
+                    # can simply try the default below)
                     return self.prove(automation=False)
                 except UnusableProof:
                     # or_if[Any,Left,Right] must not have been a usable
                     # theorem; use the default below.
                     break
+
+        raise ProofFailure(self, defaults.assumptions,
+                "Or.conclude() has failed to find a proof for the "
+                "disjunction: ({})".format(self))
 
     def side_effects(self, judgment):
         '''
