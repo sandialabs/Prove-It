@@ -1,4 +1,4 @@
-from proveit import USE_DEFAULTS, equality_prover
+from proveit import USE_DEFAULTS, equality_prover, prover
 from proveit.logic import Membership, Nonmembership
 from proveit import m, x, y, A, B, S
 
@@ -16,14 +16,16 @@ class DifferenceMembership(Membership):
         '''
         yield self.unfold
     
-    def conclude(self, assumptions=USE_DEFAULTS):
-        return self.conclude_as_folded(assumptions)
+    @prover
+    def conclude(self, **defaults_config):
+        return self.conclude_as_folded()
     
-    def conclude_as_folded(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude_as_folded(self, **defaults_config):
         '''
         Prove something of the form x ∈ (A - B) 
         via (x ∈ A) and (x ∉ B).
-        The special case if x in (S - {y}) may be concluded
+        The special case of x ∈ (S - {y}) may be concluded
         via (x ∈ S) and (x ≠ y) as long as that theorem is usable.
         '''
         from . import membership_folding, all_but_one_membership_folding
@@ -32,10 +34,9 @@ class DifferenceMembership(Membership):
         if (isinstance(_B, Set) and _B.elements.is_single() and
                 all_but_one_membership_folding.is_usable()):
             return all_but_one_membership_folding.instantiate(
-                    {x: self.element, S: _A, y: _B.elements[0]},
-                    assumptions=assumptions)
+                    {x: self.element, S: _A, y: _B.elements[0]})
         return membership_folding.instantiate(
-            {x: self.element, A: _A, B: _B}, assumptions=assumptions)
+            {x: self.element, A: _A, B: _B})
 
     @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
@@ -45,9 +46,11 @@ class DifferenceMembership(Membership):
         '''
         from . import difference_def
         _A, _B = self.domain.operands.entries
-        return difference_def.instantiate({x: self.element, A: _A, B: _B})
+        return difference_def.instantiate(
+            {x: self.element, A: _A, B: _B}, auto_simplify=False)
 
-    def unfold(self, assumptions=USE_DEFAULTS):
+    @prover
+    def unfold(self, **defaults_config):
         '''
         From something of the form [x ∈ (A - B)], derive and return 
         [(x ∈ A) and (x ∉ B)],
@@ -64,9 +67,9 @@ class DifferenceMembership(Membership):
                 all_but_one_membership_unfolding.is_usable()):
             return all_but_one_membership_unfolding.instantiate(
                     {x: self.element, S: _A, y: _B.elements[0]},
-                    assumptions=assumptions)
+                    auto_simplify = False)
         return membership_unfolding.instantiate(
-            {x: self.element, A: _A, B: _B}, assumptions=assumptions)
+            {x: self.element, A: _A, B: _B}, auto_simplify=False)
 
 
 class DifferenceNonmembership(Nonmembership):
@@ -83,10 +86,12 @@ class DifferenceNonmembership(Nonmembership):
         '''
         yield self.unfold
     
-    def conclude(self, assumptions=USE_DEFAULTS):
-        return self.conclude_as_folded(assumptions)
+    @prover
+    def conclude(self, **defaults_config):
+        return self.conclude_as_folded()
     
-    def conclude_as_folded(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude_as_folded(self, **defaults_config):
         '''
         Prove something of the form x ∉ (A - B) via (x ∉ A) or (x ∈ B).
         The special case if x ∉ (S - {y}) may be concluded
@@ -98,10 +103,9 @@ class DifferenceNonmembership(Nonmembership):
         if (isinstance(_B, Set) and _B.elements.is_single() and
                 all_but_one_nonmembership_folding.is_usable()):
             return all_but_one_nonmembership_folding.instantiate(
-                    {x: self.element, S: _A, y: _B.elements[0]},
-                    assumptions=assumptions)
+                    {x: self.element, S: _A, y: _B.elements[0]})
         return nonmembership_folding.instantiate(
-            {x: self.element, A: _A, B: _B}, assumptions=assumptions)
+            {x: self.element, A: _A, B: _B})
 
     @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
@@ -112,15 +116,14 @@ class DifferenceNonmembership(Nonmembership):
         from . import nonmembership_equiv
         _A, _B = self.domain.operands.entries
         return nonmembership_equiv.instantiate(
-            {x: self.element, A: _A, B: _B})
+            {x: self.element, A: _A, B: _B}, auto_simplify=False)
 
-    def unfold(self, assumptions=USE_DEFAULTS):
+    @prover
+    def unfold(self, **defaults_config):
         '''
-        From [x ∉ (A - B)], derive and return 
-        [(x ∉ A) or (x ∈ B)],
-        or, for the special case of x ∈ (S - {y}), we derive and return 
-        [(x ∉ A) or (x ∈ y)]
-        (if that theorem is usable).
+        From [x ∉ (A - B)], derive and return [(x ∉ A) or (x ∈ B)],
+        or, for the special case of x ∉ (S - {y}), we derive and return 
+        [(x ∉ A) or (x = y)] (if that theorem is usable).
         '''
         from . import (nonmembership_unfolding, 
                        all_but_one_nonmembership_unfolding)
@@ -130,6 +133,6 @@ class DifferenceNonmembership(Nonmembership):
                 all_but_one_nonmembership_unfolding.is_usable()):
             return all_but_one_nonmembership_unfolding.instantiate(
                     {x: self.element, S: _A, y: _B.elements[0]},
-                    assumptions=assumptions)
+                    auto_simplify=False)
         return nonmembership_unfolding.instantiate(
-            {x: self.element, A: _A, B: _B}, assumptions=assumptions)
+            {x: self.element, A: _A, B: _B}, auto_simplify=False)
