@@ -30,8 +30,9 @@ class ExprType(type):
     protected = ('_apply', '_canonical_version',
                  'replaced', 'basic_replaced', '_replaced_entries', 
                  'equality_replaced', '_equality_replaced', 
-                 '_equality_replaced_sub_exprs', '_range_reduction',
-                 'relabeled',
+                 '_manual_equality_replaced',
+                 '_auto_simplified', '_auto_simplified_sub_exprs',
+                 '_range_reduction', 'relabeled',
                  '_make', '_checked_make', '_reduced', '_used_vars',
                  '_possibly_free_var_ranges', '_parameterized_var_ranges',
                  '_repr_html_', '_core_info',
@@ -1039,78 +1040,119 @@ class Expression(metaclass=ExprType):
                 # Don't bother with reflexive (x=x) reductions.
                 continue
             equality_repl_map[replacement.expr.lhs] = replacement
+        
+        expr = self
+        if len(equality_repl_map) > 0:
+            expr = expr._manual_equality_replaced(
+                    equality_repl_map, requirements=requirements,
+                    stored_replacements=dict())
+        if defaults.auto_simplify:
+            expr = self._auto_simplified(
+                    requirements=requirements,
+                    stored_replacements=dict(),
+                    auto_simplify_top_level=auto_simplify_top_level)
+        return expr
 
-        # Use the recursive helper method.
-        return self._equality_replaced(
-                equality_repl_map, requirements,
-                auto_simplify_top_level=auto_simplify_top_level)
-
-    def _equality_replaced(self, equality_repl_map, requirements,
-                           auto_simplify_top_level=USE_DEFAULTS):
+    def _manual_equality_replaced(self, equality_repl_map, *,
+                                  requirements, stored_replacements):
         '''
-        Recursive helper method for equality_replaced.
+        Helper method for equality_replaced which handles the manual
+        replacements.
         '''
-        from proveit import Judgment, Composite, ExprRange       
+        if self in defaults.preserved_exprs:
+            # This expression should be preserved, so don't make
+            # any equality-based replacement.
+            return self
+        if self in equality_repl_map:
+            return equality_repl_map[self].expr.rhs
+        elif self in stored_replacements:
+            # We've handled this one before, so reuse it.
+            return stored_replacements[self]
+        # Recurse into the sub-expressions.
+        sub_exprs = self._sub_expressions
+        subbed_sub_exprs = \
+            tuple(sub_expr._manual_equality_replaced(
+                    equality_repl_map, requirements=requirements,
+                    stored_replacements=stored_replacements)
+                  for sub_expr in sub_exprs)
+        if all(subbed_sub._style_id == sub._style_id for
+               subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
+            # Nothing change, so don't remake anything.
+            replaced_expr = self
+        else:
+            replaced_expr = self.__class__._checked_make(
+                self._core_info, subbed_sub_exprs,
+                style_preferences=self._style_data.styles)   
+        stored_replacements[self] = replaced_expr
+        return replaced_expr
+    
+    def _auto_simplified(
+            self, *, requirements, stored_replacements,
+            auto_simplify_top_level=USE_DEFAULTS):
+        '''
+        Helper method for equality_replaced which handles the automatic
+        simplification replacements.
+        '''
+        from proveit import Judgment, ExprRange       
         from proveit._core_.proof import (
                 ProofFailure, UnsatisfiedPrerequisites)
         from proveit.logic import (Equals, SimplificationError,
                                    EvaluationError,
                                    is_irreducible_value)
 
-        if defaults.preserve_all or self in defaults.preserved_exprs:
-            # This expression should be preserved, so don't make
-            # any equality-based replacement.
+        if self in defaults.preserved_exprs:
+            # This expression should be preserved, so don't 
+            # auto-simplify.
             return self
+        elif self in stored_replacements:
+            # We've handled this one before, so reuse it.
+            return stored_replacements[self]
 
         # Check for an equality replacement via equality_repl_map
         # or as a simplification.  Note that 'replacements' override
         # 'preserved_exprs'.
-        replacement = None
-        if not isinstance(self, ExprRange):
-            if self in equality_repl_map:
-                replacement = equality_repl_map[self]
         expr = self
+        # Recurse into the sub-expressions.
+        expr = expr._auto_simplified_sub_exprs(
+                requirements=requirements, 
+                stored_replacements=stored_replacements)
+        if (expr != self) and (expr in defaults.preserved_exprs):
+            # The new expression should be preserved, so don't make
+            # any further auto-simplification.
+            return expr
+        if auto_simplify_top_level is USE_DEFAULTS:
+            auto_simplify_top_level = defaults.auto_simplify
+        replacement = None
+        if (auto_simplify_top_level and not is_irreducible_value(expr)
+              and not isinstance(expr, ExprRange)):
+            # Look for a known evaluation.
+            replacement = Equals.get_known_evaluation(expr)
+            if (replacement is None and 
+                    hasattr(expr, 'shallow_evaluation')):
+                # Attempt a shallow evaluation (after recursion).
+                try:
+                    replacement = expr.shallow_evaluation()
+                except (EvaluationError, UnsatisfiedPrerequisites, 
+                        NotImplementedError, ProofFailure):
+                    # Failure in the simplification attempt; 
+                    # just skip it.
+                    pass
+            if (replacement is None and 
+                    hasattr(expr, 'shallow_simplification')):
+                # Attempt a shallow simplification (after recursion).
+                try:
+                    replacement = expr.shallow_simplification()
+                    if replacement.rhs == expr:
+                        # Trivial simplification -- don't use it.
+                        return expr
+                except (SimplificationError, UnsatisfiedPrerequisites, 
+                        NotImplementedError, ProofFailure):
+                    # Failure in the simplification attempt; 
+                    # just skip it.
+                    pass
         if replacement is None:
-            # Recurse into the sub-expressions.
-            expr = self._equality_replaced_sub_exprs(
-                    equality_repl_map, requirements)
-            if expr in defaults.preserved_exprs:
-                # The expression should be preserved, so don't make
-                # any further equality-based replacement.
-                return expr
-            if auto_simplify_top_level is USE_DEFAULTS:
-                auto_simplify_top_level = defaults.auto_simplify
-            if (expr != self) and (expr in equality_repl_map):
-                replacement = equality_repl_map[expr]
-            elif (auto_simplify_top_level and not is_irreducible_value(expr)
-                  and not isinstance(expr, ExprRange)):
-                # Look for a known evaluation.
-                replacement = Equals.get_known_evaluation(expr)
-                if (replacement is None and 
-                        hasattr(expr, 'shallow_evaluation')):
-                    # Attempt a shallow evaluation (after recursion).
-                    try:
-                        replacement = expr.shallow_evaluation()
-                    except (EvaluationError, UnsatisfiedPrerequisites, 
-                            NotImplementedError, ProofFailure):
-                        # Failure in the simplification attempt; 
-                        # just skip it.
-                        pass
-                if (replacement is None and 
-                        hasattr(expr, 'shallow_simplification')):
-                    # Attempt a shallow simplification (after recursion).
-                    try:
-                        replacement = expr.shallow_simplification()
-                        if replacement.rhs == expr:
-                            # Trivial simplification -- don't use it.
-                            return expr
-                    except (SimplificationError, UnsatisfiedPrerequisites, 
-                            NotImplementedError, ProofFailure):
-                        # Failure in the simplification attempt; 
-                        # just skip it.
-                        pass
-            if replacement is None:
-                return expr
+            stored_replacements[self] = expr
+            return expr
         
         # We have a replacement here; make sure it is a valid one.
         if not isinstance(replacement, Judgment):
@@ -1130,17 +1172,22 @@ class Expression(metaclass=ExprType):
             # The assumptions aren't adequate to use this reduction.
             return self
         requirements.append(replacement)
-        return replacement.expr.rhs
+        replaced_expr = replacement.expr.rhs
+        stored_replacements[self] = replaced_expr
+        return replaced_expr
 
-    def _equality_replaced_sub_exprs(self, equality_repl_map, requirements):
+    def _auto_simplified_sub_exprs(
+            self, *, requirements, stored_replacements):
         '''
-        Recursive helper method for equality_replaced.
+        Helper method for _auto_simplified do handle auto-simplification
+        replacements for sub-expressions.
         '''
         # Recurse into the sub-expressions.
         sub_exprs = self._sub_expressions
         subbed_sub_exprs = \
-            tuple(sub_expr._equality_replaced(
-                    equality_repl_map, requirements)
+            tuple(sub_expr._auto_simplified(
+                    requirements=requirements, 
+                    stored_replacements=stored_replacements)
                   for sub_expr in sub_exprs)
         if all(subbed_sub._style_id == sub._style_id for
                subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
