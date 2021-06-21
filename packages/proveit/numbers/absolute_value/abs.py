@@ -341,23 +341,17 @@ class Abs(NumberOperation):
             term2 = term2.operand
         else:
             term2 = Neg(term2)
-            replacements.add(Neg(term2).double_neg_simplification())
+            replacements.add(Neg(term2).double_neg_simplification(
+                    preserve_all=True))
         _r1, _theta1 = complex_polar_coordinates(
                 term1, reductions=replacements)
         _r2, _theta2 = complex_polar_coordinates(
                 term2, reductions=replacements)
-        print(replacements)
         if _r1 == _r2:
-            # Only applicable if the magnitudes are the same.
-            angle = Div(Abs(subtract(_theta1, _theta2)), two)
-            replacements.add(angle.simplification())
             if _r1 == one:
-                print("\nUNIT\n")
-                print(_theta1, _theta2)
                 return complex_unit_circle_chord_length.instantiate(
                         {a:_theta1, b:_theta2}, replacements=replacements)
             else:
-                print("\nELSE\n")
                 return complex_circle_chord_length.instantiate(
                         {r: _r1, a:_theta1, b:_theta2}, 
                         replacements=replacements)
