@@ -979,11 +979,12 @@ class Expression(metaclass=ExprType):
             repl_map, allow_relabeling=allow_relabeling,
             requirements=requirements)
         new_equality_repl_requirements = []
-        return expr.equality_replaced(
+        replaced_expr = expr.equality_replaced(
                 new_equality_repl_requirements,
                 auto_simplify_top_level=defaults.auto_simplify)
         requirements.extend(new_equality_repl_requirements)
         equality_repl_requirements.update(new_equality_repl_requirements)
+        return replaced_expr
 
     def basic_replaced(self, repl_map, *, 
                        allow_relabeling=False, requirements=None):
