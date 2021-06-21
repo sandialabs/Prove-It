@@ -272,19 +272,26 @@ class Conditional(Expression):
         return Conditional(subbed_val, subbed_cond,
                            styles=self._style_data.styles)
 
-    def _equality_replaced_sub_exprs(self, equality_repl_map, requirements):
+    def _auto_simplified_sub_exprs(self, *, requirements, stored_replacements):
         '''
-        Properly handle the Conditional scope while doing equality
-        replacements.
+        Properly handle the Conditional scope while doing 
+        auto-simplification replacements.
         '''
+        subbed_cond = self.condition._auto_simplified(
+                requirements=requirements, 
+                stored_replacements=stored_replacements)
         # Add the 'condition' as an assumption for the 'value' scope.
         with defaults.temporary() as temp_defaults:
+            prev_num_assumptions = len(defaults.assumptions)
             temp_defaults.assumptions = (
-                    defaults.assumptions + (self.condition,))
-            subbed_val = self.value._equality_replaced(
-                    equality_repl_map, requirements)
-        subbed_cond = self.condition._equality_replaced(
-                    equality_repl_map, requirements)
+                    defaults.assumptions + (subbed_cond,))
+            if len(defaults.assumptions) > prev_num_assumptions:
+                # Since the assumptions have changed, we can no longer
+                # use the stored_replacements from before.
+                stored_replacements = dict()
+            subbed_val = self.value._auto_simplified(
+                    requirements=requirements,
+                    stored_replacements=stored_replacements)
         if (subbed_val._style_id == self.value._style_id and
                 subbed_cond._style_id == self.condition._style_id):
             # Nothing change, so don't remake anything.

@@ -666,9 +666,9 @@ class Lambda(Expression):
 
         return replaced
 
-    def _equality_replaced_sub_exprs(self, equality_repl_map, requirements):
+    def _auto_simplified_sub_exprs(self, *, requirements, stored_replacements):
         '''
-        Properly handle the Lambda scope while doing equality
+        Properly handle the Lambda scope while doing auto-simplification
         replacements.
         '''
         # Can't use assumptions involving lambda parameter variables
@@ -678,8 +678,11 @@ class Lambda(Expression):
                  self.parameter_vars)]        
         with defaults.temporary() as temp_defaults:
             temp_defaults.assumptions = inner_assumptions
-            result = Expression._equality_replaced_sub_exprs(
-                    self, equality_repl_map, requirements)
+            # Since the assumptions have changed, we can no longer use
+            # the stored_replacements from before.
+            result = Expression._auto_simplified_sub_exprs(
+                    self, requirements=requirements,
+                    stored_replacements=dict())
             return result
 
     def _inner_scope_sub(self, repl_map, allow_relabeling, requirements):
