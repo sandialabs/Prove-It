@@ -1,4 +1,5 @@
-from proveit import Literal, defaults, USE_DEFAULTS, equality_prover
+from proveit import (Literal, defaults, USE_DEFAULTS, equality_prover, 
+                     prover, relation_prover)
 from proveit import x, S
 from proveit.relation import Relation
 
@@ -29,13 +30,15 @@ class NotInSet(Relation):
                 raise TypeError(
                     "The 'nonmembership_object' of %s is a %s which "
                     "is not derived from %s as it should be." %
-                    (self.domain, self.nonmembership_object.__class__, Nonmembership))
+                    (self.domain, self.nonmembership_object.__class__,
+                        Nonmembership))
 
     def __dir__(self):
         '''
-        If the domain has a 'nonmembership_object' method, include methods from the
-        object it generates (also 'unfold' which defaults as 'unfold_not_in' if it
-        isn't defined in 'nonmembership_object').
+        If the domain has a 'nonmembership_object' method,
+        include methods from the object it generates (also
+        'unfold' which defaults as 'unfold_not_in' if it isn't
+        defined in 'nonmembership_object').
         '''
         if 'nonmembership_object' in self.__dict__:
             return sorted(set(list(self.__dict__.keys()) +
@@ -45,8 +48,9 @@ class NotInSet(Relation):
 
     def __getattr__(self, attr):
         '''
-        If the domain has a 'nonmembership_object' method, include methods from the
-        object it generates (also 'unfold' defaults as 'unfold_not_in' if it isn't
+        If the domain has a 'nonmembership_object' method,
+        include methods from the object it generates (also
+        'unfold' defaults as 'unfold_not_in' if it isn't
         defined in 'nonmembership_object').
         '''
         if attr in ('lhs', 'rhs'):
@@ -62,7 +66,8 @@ class NotInSet(Relation):
         Store the proven non-membership in known_nonmemberships.
         Unfold x not-in S as Not(x in S) as an automatic side-effect.
         If the domain has a 'nonmembership_object' method, side effects
-        will also be generated from the 'side_effects' object that it generates.
+        will also be generated from the 'side_effects' object that it
+        generates.
         '''
         NotInSet.known_nonmemberships.setdefault(
             self.element, set()).add(judgment)
@@ -72,65 +77,82 @@ class NotInSet(Relation):
                     judgment):
                 yield side_effect
 
-    def deduce_in_bool(self, assumptions=USE_DEFAULTS):
+    @relation_prover
+    def deduce_in_bool(self, **defaults_config):
         '''
-        Deduce and return that this 'not in' statement is in the set of BOOLEANS.
+        Deduce and return that this 'not in' statement is in the set
+        of BOOLEANS. For example,
+        NotInSet(x, {1, 2, 3}).deduce_in_bool()
+        returns |- NotInSet(x, {1, 2, 3}) in Bool
         '''
         from . import not_in_set_is_bool
         from proveit import x, S
         return not_in_set_is_bool.instantiate(
-            {x: self.element, S: self.domain}, assumptions=assumptions)
+                {x: self.element, S: self.domain})
 
-    def unfold_not_in(self, assumptions=USE_DEFAULTS):
+    @prover
+    def unfold_not_in(self, **defaults_config):
         r'''
         From (x \notin y), derive and return Not(x \in y).
+        For example,
+        NotInSet(a, {b, c, d}).unfold_not_in(
+                assumptions=[NotInSet(a, {b, c, d})])
+        and
+        NotInSet(a, {b, c, d}).unfold_not_in(
+                assumptions=[NotEquals(a, b), NotEquals(a, c),
+                             NotEquals(a, d)])
+        both return
+        NotInSet(a, {b, c, d}) |- Not (a in {b, c, d}),
+        We include the auto_simplify=False to keep the membership
+        result inside the Not() from being reduced to False.
         '''
         from . import unfold_not_in_set
         return unfold_not_in_set.instantiate(
-            {x: self.element, S: self.domain}, assumptions=assumptions)
+            {x: self.element, S: self.domain}, auto_simplify=False)
 
-    def conclude(self, assumptions):
+    @prover
+    def conclude(self, **defaults_config):
         '''
-        Attempt to conclude that the element is in the domain.
+        Attempt to conclude that the the NotInSet object is true ---
+        i.e. that the element is not in the domain.
         First, see if it is not contained in a superset of the domain.
         Next, check if the element has a known simplification; if so,
         try to derive non-membership via this simplification.
         If there isn't a known simplification, next try to call
-        the 'self.domain.nonmembership_object.conclude(..)' method to prove
-        the non-membership.  If that fails, try simplifying the element
-        again, this time using automation to push the simplification through
-        if possible.
+        the 'self.domain.nonmembership_object.conclude(..)' method to
+        prove the non-membership.  If that fails, try simplifying the
+        element again, this time using automation to push the
+        simplification through if possible.
         As a last resort, try 'conclude_as_folded'.
         '''
         from proveit.logic import SubsetEq, InSet
         from proveit import ProofFailure
         from proveit.logic import SimplificationError
 
-        # See if the membership is already known.
+        # See if the nonmembership is already known.
         if self.element in NotInSet.known_nonmemberships:
             for known_nonmembership in NotInSet.known_nonmemberships[self.element]:
-                if known_nonmembership.is_applicable(assumptions):
+                if known_nonmembership.is_applicable():
                     # x not in R is known to be true; if we know that
                     # S subset_eq R, we are done.
                     rel = SubsetEq(self.domain,
                                    known_nonmembership.domain)
-                    if rel.proven(assumptions):
+                    if rel.proven():
                         # S is a subset of R, so now we can prove 
                         # x not in S.
                         return rel.derive_subset_nonmembership(
-                            self.element, assumptions)
-        # No known membership works.  Let's see if there is a known
+                            self.element)
+        # No known nonmembership works.  Let's see if there is a known
         # simplification of the element before trying anything else.
         try:
-            elem_simplification = self.element.simplification(assumptions=assumptions,
-                                                              automation=True)
+            elem_simplification = self.element.simplification(automation=True)
             if elem_simplification.lhs == elem_simplification.rhs:
                 elem_simplification = None  # reflection doesn't count
         except SimplificationError:
             elem_simplification = None
 
-        # If the element simplification succeeded, prove the membership
-        # via the simplified form of the element.
+        # If the element simplification succeeded, prove the
+        # nonmembership via the simplified form of the element.
         if elem_simplification is not None:
             simple_elem = elem_simplification.rhs
             simple_nonmembership = NotInSet(
@@ -141,10 +163,14 @@ class NotInSet(Relation):
             # If it has a 'nonmembership_object', try to conclude
             # nonmembership using that.
             if hasattr(self, 'nonmembership_object'):
-                return self.nonmembership_object.conclude(assumptions=assumptions)
+                return self.nonmembership_object.conclude()
             else:
                 # Otherwise, attempt to conclude via Not(x in S)
-                return self.conclude_as_folded(assumptions=assumptions)
+                return self.conclude_as_folded()
+
+        raise ProofFailure(self, defaults.assumptions,
+                "NotInSet.conclude() has failed to find a proof for the "
+                "non-membership: ({})".format(self))
 
     def conclude_as_folded(self, assumptions=USE_DEFAULTS):
         '''
@@ -158,12 +184,12 @@ class NotInSet(Relation):
     def shallow_evaluation(self, **defaults_config):
         '''
         Attempt to evaluate whether some x ∉ S is TRUE or FALSE
-        using the 'equivalence' method of the domain's 
+        using the 'definition' method of the domain's 
         'nonmembership_object' if there is one.
         '''
         from proveit.logic import Equals, TRUE, InSet, EvaluationError
         # try an 'definition' method (via the nonmembership object)
-        if not hasattr(self, 'membership_object'):
+        if not hasattr(self, 'nonmembership_object'):
             # Don't know what to do otherwise.
             raise EvaluationError(self)
         definition = self.nonmembership_object.definition()
@@ -178,8 +204,8 @@ class NotInSet(Relation):
                     self.nonmembership_object.conclude()
             else:
                 in_domain = InSet(self.element, self.domain)
-                if hasattr(in_domain, 'membership_object'):
-                    in_domain.membership_object.conclude()
+                if hasattr(in_domain, 'nonmembership_object'):
+                    in_domain.nonmembership_object.conclude()
         except BaseException:
             pass
         return evaluation
