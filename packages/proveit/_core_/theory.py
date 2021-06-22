@@ -634,7 +634,6 @@ class TheoryPackage(ModuleType):
         the missing name is a common expression that hasn't been
         defined yet and return an UnsetCommonExpressionPlaceholder.
         '''
-        import importlib
         if name[0:2]=='__': 
             # don't handle internal Python attributes
             raise AttributeError 
@@ -669,11 +668,10 @@ class TheoryPackage(ModuleType):
                     return UnsetCommonExpressionPlaceholder(
                             self._theory,  name)
             raise AttributeError(
-                    "'%s' not found in the list of common expressions of "
-                    "'%s'\n(make sure to execute the appropriate "
-                    "'common.ipynb' notebook after any changes)"
-                    %(name, self._theory.name))
-        return getattr(module, name)
+                    "'%s' not found in the list of common expressions, "
+                    "axioms, or theorems of '%s'\n(make sure to execute "
+                    "the appropriate 'common.ipynb' notebook after any "
+                    "changes)"%(name, self._theory.name))
 
 class UnsetCommonExpressionPlaceholder(object):
     '''
