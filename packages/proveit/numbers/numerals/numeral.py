@@ -213,17 +213,13 @@ class NumeralSequence(Operation, IrreducibleValue):
     def __init__(self, operator, *digits, styles=None):
         Operation.__init__(self, operator, digits, styles=styles)
         self.digits = self.operands
-        if self.digits.is_single():
-            raise Exception(
-                    "A NumeralSequence should have two or more digits. "
-                    "Single digit number should be represented as the "
-                    "corresponding Numeral.")
 
     def is_irreducible_value(self):
         '''
         Only really an irreducible value if each digit is a Numeral.
         '''
-        return all(isinstance(digit, Numeral) for digit in self.digits)
+        return (not self.digits.is_single() and
+                all(isinstance(digit, Numeral) for digit in self.digits))
 
     @prover
     def eval_equality(self, other, **defaults_config):
@@ -258,7 +254,7 @@ def is_literal_int(expr):
     if isinstance(expr, Numeral):
         return True
     elif isinstance(expr, NumeralSequence):
-        return True
+        return expr.is_irreducible_value()
     elif isinstance(expr, Neg) and is_literal_int(expr.operand):
         return True
     return False
