@@ -1096,8 +1096,8 @@ class Instantiation(Proof):
                 with defaults.temporary() as temp_defaults:
                     temp_defaults.auto_simplify = False
                     subbed_assumption = subbed_assumption.equality_replaced(
-                            requirements=requirements,
-                            equality_repl_requirements=equality_repl_requirements)
+                            requirements=requirements)
+                equality_repl_requirements.update(requirements)
                 if isinstance(assumption, ExprRange):
                     # An iteration of assumptions to expand.
                     orig_subbed_assumptions.extend(subbed_assumption)

@@ -1292,6 +1292,8 @@ def extract_param_replacements(parameters, parameter_vars, body,
                         operand_entry = next(operands_iter)
                     except StopIteration:
                         try:
+                            # Try to prove len_req via 'deduce_equality'
+                            len_req.lhs.deduce_equality(len_req)                            
                             requirements.append(len_req.prove())
                         except ProofFailure as e:
                             raise ValueError(

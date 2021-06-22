@@ -50,6 +50,7 @@ def complex_polar_coordinates(expr, *, radius_must_be_nonneg=True,
     '''
     from . import complex_polar_negation, complex_polar_radius_negation
     from proveit.logic import InSet, Equals
+    from proveit.numbers import deduce_in_number_set
     from proveit.numbers import zero, one, e, i, pi, Real, RealNonNeg, Complex
     from proveit.numbers import Add, LessEq, Neg, Mult, Exp
     orig_expr = expr
@@ -91,7 +92,28 @@ def complex_polar_coordinates(expr, *, radius_must_be_nonneg=True,
                          "reducible from an r * exp(i*theta) form. %s"
                          %(orig_expr, extra_msg))
     
-    if isinstance(expr, Neg):
+    if (isinstance(expr, Exp) or 
+        (isinstance(expr, Neg) and isinstance(expr.operand, Exp))):
+        # exp(i * theta) reduced from 1 * exp(i * theta).
+        # or exp(i * (theta + pi)) reduced from -exp(i * theta).
+        inner_reductions = set()
+        _theta = unit_length_complex_polar_angle(
+                expr, reductions=inner_reductions)
+        deduce_in_number_set(_theta, Complex)
+        deduce_in_number_set(Mult(i, _theta), Complex)
+        deduce_in_number_set(Exp(e, Mult(i, _theta)), Complex)
+        _r = one
+        expr = Mult(_r, Exp(e, Mult(i, _theta)))
+        # reduction: 1*exp(i * theta) = exp(i * theta)
+        reduction = expr.one_elimination(0, preserve_all=True)
+        # reduction: 1*exp(i * theta) = orig_expr
+        if len(inner_reductions) > 0:
+            reduction = reduction.inner_expr().rhs.substitute(
+                    inner_reductions.pop().rhs)
+        # Add the reduction and return the coordinates.
+        add_reduction(reduction, _r, _theta)
+        return (_r, _theta)        
+    elif isinstance(expr, Neg):
         # expr = -(r*exp(i*theta0)) = r*exp(i*(theta0 + pi))
         inner_reductions = set()
         # obtain the theta of the negated expression.
@@ -106,32 +128,13 @@ def complex_polar_coordinates(expr, *, radius_must_be_nonneg=True,
             theta_simplification = _theta.simplification()
             inner_reductions.add(theta_simplification)
             _theta = theta_simplification.rhs
-        # Allow these automation which should be trivial.
-        InSet(Mult(i, _theta), Complex).prove(automation=True)
-        InSet(Exp(e, Mult(i, _theta)), Complex).prove(automation=True)
+        deduce_in_number_set(_theta, Complex)
+        deduce_in_number_set(Mult(i, _theta), Complex)
+        deduce_in_number_set(Exp(e, Mult(i, _theta)), Complex)
         # reduction: r*exp(i*theta) = orig_expr [via -(r*exp(i*theta0))]
         reduction = complex_polar_negation.instantiate(
                 {r:_r, theta:_theta0}, replacements=inner_reductions,
                 auto_simplify=False)
-        # Add the reduction and return the coordinates.
-        add_reduction(reduction, _r, _theta)
-        return (_r, _theta)
-    elif isinstance(expr, Exp):
-        # exp(i * theta) reduced from 1 * exp(i * theta).
-        inner_reductions = set()
-        _theta = unit_length_complex_polar_angle(
-                expr, reductions=inner_reductions)
-        # Allow these automation which should be trivial.
-        InSet(Mult(i, _theta), Complex).prove(automation=True)
-        InSet(Exp(e, Mult(i, _theta)), Complex).prove(automation=True)
-        _r = one
-        expr = Mult(_r, Exp(e, Mult(i, _theta)))
-        # reduction: 1*exp(i * theta) = exp(i * theta)
-        reduction = expr.one_elimination(0, preserve_all=True)
-        # reduction: 1*exp(i * theta) = orig_expr
-        if len(inner_reductions) > 0:
-            reduction = reduction.inner_expr().rhs.substitute(
-                    inner_reductions.pop().rhs)
         # Add the reduction and return the coordinates.
         add_reduction(reduction, _r, _theta)
         return (_r, _theta)
@@ -173,8 +176,7 @@ def complex_polar_coordinates(expr, *, radius_must_be_nonneg=True,
                 do_include_unit_length_reduction=False,
                 reductions=inner_reductions)
         assert _theta == zero
-        # Allow this automation which should be trivial.
-        InSet(exp_i0, Complex).prove(automation=True)
+        deduce_in_number_set(exp_i0, Complex)
         # reduction: r * exp(i * theta) = orig_expr * exp(i * 0)
         if len(inner_reductions) > 0:
             reduction = inner_reductions.pop()
@@ -204,6 +206,10 @@ def complex_polar_coordinates(expr, *, radius_must_be_nonneg=True,
     if not expr.operands.is_double() or complex_exp_factor_idx != 1:
         # Pull the exp(i*theta) type factor to the right.
         # reduction: r0 * exp(i * theta0) = orig_expr
+        for factor in expr.factors:
+            # Deduce the factors are complex numbers ahead of time
+            # in case automation is disabled.
+            deduce_in_number_set(factor, Complex)
         reduction = reduction.inner_expr().lhs.factor(
                 complex_exp_factor_idx, pull='right',
                 group_remainder=True, preserve_all=True)
@@ -215,18 +221,14 @@ def complex_polar_coordinates(expr, *, radius_must_be_nonneg=True,
     if (not automation and isinstance(_r0, Mult) and
             all(InSet(factor, RealNonNeg).proven() for 
                 factor in _r0.factors)):
-        # We'll allow this low-level automation to
-        # prove r0 is non-negative given its factors are non-negative.
-        InSet(_r0, RealNonNeg).prove()    
+        deduce_in_number_set(_r0, RealNonNeg)
     elif (not automation and isinstance(_r0, Mult) and
             all(InSet(factor, Real).proven() for 
                 factor in _r0.factors)):
-        # We'll allow this low-level automation to
-        # prove r0 is real given its factors are real.
-        InSet(_r0, Real).prove()    
+        deduce_in_number_set(_r0, Real)
     else:
         try:
-            InSet(_r0, Real).prove()
+            deduce_in_number_set(_r0, Real)
         except ProofFailure:
             raise_not_valid_form("%s not known to be real."%_r0)
     if radius_must_be_nonneg:
@@ -277,7 +279,7 @@ def complex_polar_coordinates(expr, *, radius_must_be_nonneg=True,
     if nonneg_radius_preferred:
         # We know that r is real and r >= 0, 
         # so r in RealNonNeg should be trivial.
-        InSet(_r, RealNonNeg).prove()
+        deduce_in_number_set(_r, RealNonNeg)
     # Add the reduction and return the coordinates.
     add_reduction(reduction, _r, _theta)
     return (_r, _theta)
@@ -309,8 +311,9 @@ def unit_length_complex_polar_angle(expr, *, reductions=None):
     '''
     from proveit import ExprRange
     from proveit.logic import Equals, InSet
+    from proveit.numbers import deduce_in_number_set
     from proveit.numbers import zero, one, e, i, pi
-    from proveit.numbers import Add, Neg, Mult, Exp, Real
+    from proveit.numbers import Add, Neg, Mult, Exp, Real, Complex
     from . import unit_length_complex_polar_negation
     if reductions is None: reductions = set()
 
@@ -346,7 +349,7 @@ def unit_length_complex_polar_angle(expr, *, reductions=None):
     if isinstance(expr, Exp) and expr.base == e:
         if expr.exponent == i:
             # expr = exp(i) = exp(i * 1)
-            theta = one
+            _theta = one
             expr = Exp(e, Mult(i, one))
             # reduction: exp(i * 1) = exp(i)
             reduction = expr.inner_expr().exponent.one_elimination(1)
@@ -360,11 +363,15 @@ def unit_length_complex_polar_angle(expr, *, reductions=None):
                 # Already in the proper form.  No reduction needed,
                 # but we do need to check that theta is real.
                 _theta = expr.exponent.factors[1]
-                InSet(_theta, Real).prove()
+                deduce_in_number_set(_theta, Real)
                 return _theta
             try:
                 # Factor i in the exponent, pulling to the left to
                 # get into exp(i * theta) form.
+                for operand in expr.exponent.operands:
+                    # Deduce the operands are complex numbers ahead of 
+                    # time in case automation is disabled.
+                    deduce_in_number_set(operand, Complex)
                 factorization = expr.inner_expr().exponent.factorization(
                         i, pull='left', group_remainder=True,
                         preserve_all=True)
@@ -375,20 +382,15 @@ def unit_length_complex_polar_angle(expr, *, reductions=None):
                 _theta = expr.exponent.factors[1]
                 if (not automation and isinstance(_theta, Neg) and 
                         InSet(_theta.operand, Real).proven()):
-                    # We'll allow this low-level automation to
-                    # prove -theta is real given theta is real.
-                    InSet(_theta, Real).prove(automation=True)
+                    deduce_in_number_set(_theta, Real)
                 elif (not automation and isinstance(_theta, Mult) and 
                         all(InSet(Mult(factor), Real).proven() if
                             isinstance(factor, ExprRange) else
                             InSet(factor, Real).proven() for
                             factor in _theta.factors)):
-                    # We'll allow this low-level automation to
-                    # prove a product is real given that the factors
-                    # are known to be real.
-                    InSet(_theta, Real).prove(automation=True)                    
+                    deduce_in_number_set(_theta, Real)
                 else:
-                    InSet(_theta, Real).prove()
+                    deduce_in_number_set(_theta, Real)
                 # reduction: exp(i * theta) = orig_expr
                 reduction = factorization.derive_reversed()
                 # Add the reduction and return theta.
@@ -415,6 +417,6 @@ def unit_length_complex_polar_angle(expr, *, reductions=None):
                 auto_simplify=False)
         # Add the reduction and return theta.
         add_reduction(reduction, _theta)
-        return theta
+        return _theta
         
     raise_not_valid_form()

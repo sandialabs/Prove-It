@@ -979,11 +979,12 @@ class Expression(metaclass=ExprType):
             repl_map, allow_relabeling=allow_relabeling,
             requirements=requirements)
         new_equality_repl_requirements = []
-        return expr.equality_replaced(
+        replaced_expr = expr.equality_replaced(
                 new_equality_repl_requirements,
                 auto_simplify_top_level=defaults.auto_simplify)
         requirements.extend(new_equality_repl_requirements)
         equality_repl_requirements.update(new_equality_repl_requirements)
+        return replaced_expr
 
     def basic_replaced(self, repl_map, *, 
                        allow_relabeling=False, requirements=None):
@@ -1047,10 +1048,14 @@ class Expression(metaclass=ExprType):
                     equality_repl_map, requirements=requirements,
                     stored_replacements=dict())
         if defaults.auto_simplify:
-            expr = self._auto_simplified(
-                    requirements=requirements,
-                    stored_replacements=dict(),
-                    auto_simplify_top_level=auto_simplify_top_level)
+            with defaults.temporary() as temp_defaults:
+                # Let's turn on automation while auto-simplifying at
+                # least.
+                temp_defaults.automation = True
+                expr = expr._auto_simplified(
+                        requirements=requirements,
+                        stored_replacements=dict(),
+                        auto_simplify_top_level=auto_simplify_top_level)
         return expr
 
     def _manual_equality_replaced(self, equality_repl_map, *,
@@ -1064,7 +1069,9 @@ class Expression(metaclass=ExprType):
             # any equality-based replacement.
             return self
         if self in equality_repl_map:
-            return equality_repl_map[self].expr.rhs
+            replacement = equality_repl_map[self]
+            requirements.append(replacement)
+            return replacement.expr.rhs
         elif self in stored_replacements:
             # We've handled this one before, so reuse it.
             return stored_replacements[self]
@@ -1077,12 +1084,17 @@ class Expression(metaclass=ExprType):
                   for sub_expr in sub_exprs)
         if all(subbed_sub._style_id == sub._style_id for
                subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
-            # Nothing change, so don't remake anything.
+            # Nothing changed, so don't remake anything.
             replaced_expr = self
         else:
             replaced_expr = self.__class__._checked_make(
                 self._core_info, subbed_sub_exprs,
                 style_preferences=self._style_data.styles)   
+        if replaced_expr in equality_repl_map:
+            # Check if the revised expression has a replacement.
+            replacement = equality_repl_map[replaced_expr]
+            requirements.append(replacement)
+            replaced_expr = replacement.expr.rhs        
         stored_replacements[self] = replaced_expr
         return replaced_expr
     

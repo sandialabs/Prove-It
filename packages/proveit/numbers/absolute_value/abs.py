@@ -188,7 +188,7 @@ class Abs(NumberOperation):
                 # waste time if it isn't in a complex polar form (or 
                 # obviously equivalent to this form).
                 return self.chord_length_simplification(automation=False)
-            except ValueError:
+            except (ProofFailure, ValueError):
                 # Not in a complex polar form.
                 pass
 
