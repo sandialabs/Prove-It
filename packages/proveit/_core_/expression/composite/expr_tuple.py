@@ -458,10 +458,11 @@ class ExprTuple(Composite, Expression):
             return eq.relation
         _k = 0
         for entry in self.entries:
-            if entry in defaults.preserved_exprs:
-                # Preserve this entry -- don't simplify it.
-                continue
             if isinstance(entry, ExprRange):
+                if entry in defaults.preserved_exprs:
+                    # Preserve this entry -- don't simplify it.
+                    _k += ExprTuple(entry).num_entries()
+                    continue
                 entry_simp = entry._range_reduction(preserve_all=True)
                 if entry_simp.lhs != entry_simp.rhs:
                     substitution = expr.substitution(
