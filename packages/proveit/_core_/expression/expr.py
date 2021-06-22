@@ -1048,10 +1048,14 @@ class Expression(metaclass=ExprType):
                     equality_repl_map, requirements=requirements,
                     stored_replacements=dict())
         if defaults.auto_simplify:
-            expr = expr._auto_simplified(
-                    requirements=requirements,
-                    stored_replacements=dict(),
-                    auto_simplify_top_level=auto_simplify_top_level)
+            with defaults.temporary() as temp_defaults:
+                # Let's turn on automation while auto-simplifying at
+                # least.
+                temp_defaults.automation = True
+                expr = expr._auto_simplified(
+                        requirements=requirements,
+                        stored_replacements=dict(),
+                        auto_simplify_top_level=auto_simplify_top_level)
         return expr
 
     def _manual_equality_replaced(self, equality_repl_map, *,
