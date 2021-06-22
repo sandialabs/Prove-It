@@ -379,6 +379,7 @@ class MultiQubitGate(Function):
         "MultiQubitGate(a, Set(n)) = Gate(a)".
         '''
         from proveit.numbers import is_literal_int
+        from proveit.logic.equality import Equals
         if (isinstance(self.gate_set, Set) and self.gate_set.operands.is_single()
                 and is_literal_int(self.gate_set.operands[0])):
             try:
@@ -392,6 +393,7 @@ class MultiQubitGate(Function):
                 self.gate_set.operands.num_entries() == 0):
             return self.empty_set_reduction()
             # need to implement an empty set reduction theorem
+        return Equals(self, self).conclude_via_reflexivity()
 
     def style_options(self):
         from proveit._core_.expression.style_options import StyleOptions
@@ -1202,9 +1204,9 @@ class Circuit(Function):
                                                      "all linked MultiQubitGates must have 'block' representation.")
                                 if number.as_int() == k:
                                     inset = True
-                        if not inset:
-                            # print(self)
-                            raise ValueError('The indices of each MultiQubitGate must also contain the index of itself')
+                        # if not inset:
+                        #     # print(self)
+                        #     raise ValueError('The indices of each MultiQubitGate must also contain the index of itself')
                     elif isinstance(value, ExprRange):
                         pass
                 k += 1
