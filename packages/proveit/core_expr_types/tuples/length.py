@@ -113,9 +113,14 @@ class Len(Operation):
                 from proveit.core_expr_types.tuples import tuple_len_incr
                 from proveit.numbers import num
                 from proveit.logic import Equals
-
-                return tuple_len_incr.instantiate({i: num(
-                    len(entries) - 1), a: entries[:-1], b: entries[-1]})
+                # We turn on automation because this length equality should
+                # be true (we know the number of elements is equal to the 
+                # number of entries since there are no ExprRange entries).
+                # Since we know it's true, why not commit ourselves to 
+                # proving it?
+                return tuple_len_incr.instantiate(
+                    {i: num(len(entries) - 1), a: entries[:-1], b: entries[-1]},
+                    automation=True)
                 # return Equals(eq.lhs, eq.rhs._integerBinaryEval(assumptions=assumptions).rhs).prove(assumptions=assumptions)
                 # raise NotImplementedError("Can't handle length computation "
                 #                         ">= 10 for %s"%self)
@@ -380,7 +385,7 @@ class Len(Operation):
                 eq = Equals(lhs_computation.rhs, equality.rhs)
                 if eq.lhs == eq.rhs:
                     # Trivial reflection -- automation is okay for that.
-                    eq = eq.conclude_via_reflection()
+                    eq = eq.conclude_via_reflexivity()
                 else:
                     eq = eq.prove()
                 return lhs_computation.apply_transitivity(eq)
