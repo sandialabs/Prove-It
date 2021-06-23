@@ -114,12 +114,8 @@ class Len(Operation):
                 from proveit.numbers import num
                 from proveit.logic import Equals
 
-                eq = tuple_len_incr.instantiate({i: num(
+                return tuple_len_incr.instantiate({i: num(
                     len(entries) - 1), a: entries[:-1], b: entries[-1]})
-
-                rhs_simp = eq.rhs._integerBinaryEval()
-
-                return rhs_simp.sub_right_side_into(eq)
                 # return Equals(eq.lhs, eq.rhs._integerBinaryEval(assumptions=assumptions).rhs).prove(assumptions=assumptions)
                 # raise NotImplementedError("Can't handle length computation "
                 #                         ">= 10 for %s"%self)

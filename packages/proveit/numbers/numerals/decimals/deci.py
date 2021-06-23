@@ -26,6 +26,8 @@ class DecimalSequence(NumeralSequence):
         repeated digit, expand it appropriately.
         """
         from proveit import ExprRange
+        if self.digits.is_single():
+            return self.single_digit_reduction()
         for digit in self.digits:
             if isinstance(digit, ExprRange):
                 # if at least one digit is an ExprRange, we can try to 
@@ -90,6 +92,15 @@ class DecimalSequence(NumeralSequence):
         #                        "Cannot prove %d in NaturalPos" % self.n)
         # return Numeral._inNaturalPosStmts[self.n]
 
+    @equality_prover('single_digit_reduced', 'single_digit_reduce')
+    def single_digit_reduction(self, **defaults_config):
+        from . import single_digit_reduction
+        if not self.digits.is_single():
+            raise ValueError("single_digit_reduction is only applicable "
+                             "when there is a single digit in the "
+                             "DecimalSequence; not satisfied by %s"%self)
+        return single_digit_reduction.instantiate({n:self.digits[0]})
+
     @equality_prover('digit_repetition_reduced', 'digit_repetition_reduce')
     def digit_repetition_reduction(self, **defaults_config):
         '''
@@ -109,11 +120,8 @@ class DecimalSequence(NumeralSequence):
         for i, digit in enumerate(self.digits):
             # i is the current index in the original expression
             # idx is the current index in the transformed expression (eq.relation)
-            if isinstance(
-                    digit,
-                    ExprRange) and isinstance(
-                    digit.body,
-                    Numeral):
+            if (isinstance(digit, ExprRange) and 
+                    isinstance(digit.body, Numeral)):
                 import proveit.numbers.numerals.decimals
 
                 # _m = expr.digits[:i].num_elements(assumptions)
@@ -139,10 +147,12 @@ class DecimalSequence(NumeralSequence):
                 while _n.as_int() > 9:
                     _x = digit.body
 
-                    _c = n_repeats_reduction.instantiate({n: _n, x: _x}).rhs
+                    _c = n_repeats_reduction.instantiate(
+                            {n: _n, x: _x}, preserve_all=True).rhs
 
                     eq.update(deci_sequence_reduction_ER.instantiate(
-                        {m: _m, n: _n, k: _k, a: _a, b: _b, c: _c, d: _d}))
+                        {m: _m, n: _n, k: _k, a: _a, b: _b, c: _c, d: _d},
+                        preserve_all=True))
                     _n = num(_n.as_int() - 1)
                     idx += 1
 
@@ -156,7 +166,8 @@ class DecimalSequence(NumeralSequence):
                 idx += _n.as_int()
 
                 eq.update(deci_sequence_reduction_ER.instantiate(
-                    {m: _m, n: _n, k: _k, a: _a, b: _b, c: _c, d: _d}))
+                    {m: _m, n: _n, k: _k, a: _a, b: _b, c: _c, d: _d},
+                    preserve_all=True))
             else:
                 idx += 1
 
@@ -258,7 +269,9 @@ class DecimalSequence(NumeralSequence):
         fence = False
         if operator is None:
             operator = ' ~ '
-        if not all(isinstance(digit, Numeral) for digit in self.digits):
+        if (self.digits.is_single() or 
+                not all(isinstance(digit, Numeral) for 
+                        digit in self.digits)):
             outstr += r'\# ('
             fence = True
         for i, digit in enumerate(self.digits):
@@ -275,6 +288,9 @@ class DecimalSequence(NumeralSequence):
         if fence:
             outstr += r')'
         return outstr
+
+    def _function_formatted(self, format_type, **kwargs):
+        return self._formatted(format_type, **kwargs)
 
 
 class DigitSet(NumberSet):
