@@ -1275,13 +1275,18 @@ def extract_param_replacements(parameters, parameter_vars, body,
                         # A possible match to check.
                         if not len_req.proven():
                             try:
-                                # Try to prove len_req without
-                                # automation since we do not know if
-                                # this is the right match or if we
-                                # need to go further with more
-                                # operands.
+                                # If we do not know that this must
+                                # be the right match, use automation.
+                                # Otherwise, just try to prove this
+                                # without automation since we'll need
+                                # to consider various possibilities.
+                                _automation = (
+                                        int_param_len is not None and
+                                        (min_int_param_operands_len ==
+                                         max_int_param_operands_len ==
+                                         int_param_len))
                                 len_req.lhs.deduce_equality(
-                                    len_req, automation=False)
+                                    len_req, automation=_automation)
                                 assert len_req.proven()
                             except ProofFailure:
                                 pass
