@@ -155,16 +155,12 @@ class ExprRange(Expression):
         Return a basic replaced version where there is a singular
         reduction to the given _subbed_index.
         '''
-        subbed_lambda = self.lambda_map.basic_replaced(
-                            repl_map, allow_relabeling=allow_relabeling,
+        singular_instance = self.lambda_map.body.basic_replaced(
+                            {self.parameter:_subbed_index},
                             requirements=requirements)
-        parameter = subbed_lambda.parameter
-        body = subbed_lambda.body
-        singular_instance = body.basic_replaced(
-                {parameter: _subbed_index})
         return singular_instance.basic_replaced(
-            repl_map, allow_relabeling=allow_relabeling,
-            requirements=requirements)            
+                repl_map, allow_relabeling=allow_relabeling,
+                requirements=requirements)            
 
     def literal_int_extent(self):
         '''
