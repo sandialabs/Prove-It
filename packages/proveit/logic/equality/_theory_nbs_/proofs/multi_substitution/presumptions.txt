@@ -1,6 +1,5 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
 proveit.core_expr_types.tuples.tuple_eq_via_elem_eq
-proveit.logic.booleans.false_eq_false
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.negation_intro
 proveit.logic.booleans.true_is_bool
@@ -14,13 +13,4 @@ proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.numbers.number_sets.natural_numbers.nat_pos_within_nat
 proveit.numbers.number_sets.natural_numbers.natural_lower_bound
 proveit.numbers.number_sets.natural_numbers.natural_pos_lower_bound
-proveit.numbers.numerals.decimals.nat1
-proveit.numbers.numerals.decimals.nat2
-proveit.numbers.numerals.decimals.nat3
-proveit.numbers.numerals.decimals.nat4
-proveit.numbers.numerals.decimals.nat5
-proveit.numbers.numerals.decimals.nat6
-proveit.numbers.numerals.decimals.nat7
-proveit.numbers.numerals.decimals.nat8
-proveit.numbers.numerals.decimals.nat9
 # THEOREMS AND THEORIES TO EXCLUDE:
