@@ -3,6 +3,7 @@ from .operation import Operation, Function
 from .lambda_expr import Lambda
 from .composite import ExprTuple, Composite, NamedExprs, composite_expression
 from proveit._core_.defaults import defaults, USE_DEFAULTS
+from proveit.decorators import prover
 import inspect
 from collections import deque
 
@@ -480,7 +481,8 @@ class InnerExpr:
         return equality.substitution(self.repl_lambda(), 
                                      assumptions=assumptions)
 
-    def substitute(self, replacement, assumptions=USE_DEFAULTS):
+    @prover
+    def substitute(self, replacement, **defaults_config):
         '''
         Substitute the replacement in place of the inner expression
         and return a new proven statement (assuming the top
@@ -493,15 +495,13 @@ class InnerExpr:
         cur_inner_expr = self.expr_hierarchy[-1]
         if cur_inner_expr == TRUE:
             return substitute_truth.instantiate(
-                {P: self.repl_lambda(), x: replacement},
-                assumptions=assumptions)
+                {P: self.repl_lambda(), x: replacement}, preserve_all=True)
         elif cur_inner_expr == FALSE:
             return substitute_falsehood.instantiate(
-                {P: self.repl_lambda(), x: replacement},
-                assumptions=assumptions)
+                {P: self.repl_lambda(), x: replacement}, preserve_all=True)
         else:
             return Equals(cur_inner_expr, replacement).sub_right_side_into(
-                self.repl_lambda(), assumptions=assumptions)
+                self.repl_lambda())
 
     def _expr_rep(self):
         '''
