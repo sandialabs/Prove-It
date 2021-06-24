@@ -1,5 +1,5 @@
 from proveit import (as_expression, Literal, Operation, safe_dummy_var,
-                     prover)
+                     prover, ProofFailure, defaults)
 from proveit import A, B, C, x
 from proveit import f, S
 from .inclusion_relation import InclusionRelation
@@ -52,7 +52,8 @@ class ProperSubset(InclusionRelation):
         '''
         '''
         #print("Entering the ProperSubset.conclude() method!")                   # for testing; delete later
-        pass
+        raise ProofFailure(self, defaults.assumptions,
+                       "ProperSubset.conclude() not implemented.")
     
     @prover
     def unfold(self, **defaults_config):

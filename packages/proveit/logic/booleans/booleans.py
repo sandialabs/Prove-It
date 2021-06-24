@@ -178,16 +178,10 @@ class BooleanMembership(Membership):
         element = self.element
         # if the element is already proven or disproven, use in_bool_if_true or
         # in_bool_if_false
-        try:
-            element.prove(automation=False)
+        if element.proven():
             return in_bool_if_true.instantiate({A: element})
-        except ProofFailure:
-            pass
-        try:
-            element.disprove(automation=False)
+        if element.disproven():
             return in_bool_if_false.instantiate({A: element})
-        except ProofFailure:
-            pass
         # Use 'deduce_in_bool' if the element has that method.
         if hasattr(element, 'deduce_in_bool'):
             return element.deduce_in_bool()

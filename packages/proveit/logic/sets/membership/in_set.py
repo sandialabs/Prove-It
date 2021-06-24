@@ -87,16 +87,6 @@ class InSet(Relation):
         from .not_in_set import NotInSet
         return NotInSet(self.element, self.domain).conclude_as_folded()
 
-    @relation_prover
-    def deduce_in_bool(self, **defaults_config):
-        '''
-        Deduce and return that this membership statement is in the
-        Boolean set (i.e. membership is True or False).
-        '''
-        if hasattr(self, 'membership_object'):
-            return self.membership_object.deduce_in_bool()
-        raise AttributeError
-
     @prover
     def conclude(self, **defaults_config):
         '''
@@ -244,7 +234,8 @@ class Membership:
             "Membership object, %s, has no 'side_effects' method implemented" % str(
                 self.__class__))
 
-    def conclude(self, assumptions):
+    @prover
+    def conclude(self, **defaults_config):
         raise NotImplementedError(
             "Membership object, %s, has no 'conclude' method implemented" % str(
                 self.__class__))
@@ -255,7 +246,8 @@ class Membership:
             "Membership object, %s, has no 'definition' method implemented" % str(
                 self.__class__))
 
-    def deduce_in_bool(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_in_bool(self, **defaults_config):
         raise NotImplementedError(
             "Membership object, %s, has no 'deduce_in_bool' method implemented" % str(
                 self.__class__))
