@@ -1,7 +1,8 @@
-from proveit import Literal, Operation
-from proveit.logic import Equals
+from proveit import defaults, equality_prover, Literal, Operation
 from proveit import f, x, y, alpha, S  # a_etc, x_etc, y_etc, z_etc,
-# from proveit.linalg.matrix_ops import ScalarProd
+from proveit.logic import Equals
+from proveit.numbers import one, subtract
+from proveit.core_expr_types import Len
 from proveit.linear_algebra.matrix_ops import ScalarProd
 
 pkg = __package__
@@ -22,37 +23,107 @@ class TensorProd(Operation):
                            styles=styles)
         self.factors = self.operands
 
-    def factor(self, scalar):
+    @equality_prover('factorized', 'factor')
+    def factorization(self, scalar, **defaults_config):
         '''
-        Factor the given scalar from one of the tensor product scalars.
+        Factor the given scalar from one of the tensor product
+        multiplicands and return the original tensor product equal to
+        the factored version. For example,
+            TensorProd(a, cb, d).factorization(c)
+        returns
+            |- TensorProd(a, ScalarProd(c, b), d).factorization(c) =
+               c TensorProd(a, b, d)
+        Note that this works only for explicit ScalarProd components
+        within the TensorProd structure. Plans are to generalize this
+        to not require an explicit ScalarProd object (instead allowing
+        the more general Mult object).
         '''
-        from theorems import factor_scalar_from_tensor_prod
+        from . import factor_scalar_from_tensor_prod
         for k, operand in enumerate(self.operands):
             if isinstance(operand, ScalarProd) and operand.scalar == scalar:
+                _m, _n, _x, _y, _z, _alpha = (
+                    factor_scalar_from_tensor_prod.all_instance_vars())
+                # organize and compute the instantiation subs
+                _m_sub = Len(self.operands[:k]).computed()
+                _n_sub = subtract(subtract(
+                    Len(self.operands).computed(), _m_sub), one)
+                _x_sub = self.operands[:k]
+                _y_sub = operand.scaled
+                _z_sub = self.operands[k + 1:]
+                _alpha_sub = scalar
+                # instantiate and return
                 return factor_scalar_from_tensor_prod.instantiate(
-                    {x_etc: self.operands[:k], y: operand.scaled, z_etc: self.operands[k + 1:]}).instantiate({alpha: scalar})
+                    {_m: _m_sub, _n: _n_sub, _x: _x_sub, _y: _y_sub,
+                    _z: _z_sub, _alpha: _alpha_sub})
         raise ValueError(
-            'Scalar not found in any of the tensor product factors')
+            "Targeted scalar {0} not found in any of the tensor product "
+            "factors {1}".format(scalar, self.operands))
 
-    def distribute(self, factor_idx):
+    # @equality_prover('distributed', 'distribute')
+    # def distribution(self, factor_idx, **defaults_config):
+    #     '''
+    #     Distribute over the factor at the given index.
+    #     '''
+    #     from . import (distribute_tensor_prod_over_sum,
+    #             distribute_tensor_prod_over_summation)
+    #     from proveit.numbers import Add, Sum
+    #     factor = self.factors[factor_idx]
+    #     if isinstance(factor, Add):
+    #         return distribute_tensor_prod_over_sum.instantiate(
+    #             {x_etc: self.factors[:factor_idx], y_etc: factor.terms, z_etc: self.factors[factor_idx + 1:]})
+    #     elif isinstance(factor, Sum):
+    #         domain = factor.domain
+    #         summand = factor.summand
+    #         index = factor.index
+    #         return distribute_tensor_prod_over_summation.instantiate({x_etc: self.factors[:factor_idx], Operation(
+    #             f, index): summand, S: domain, y: index, z_etc: self.factors[factor_idx + 1:]})
+    #     else:
+    #         raise Exception(
+    #             "Don't know how to distribute tensor product over " + str(factor.__class__) + " factor")
+
+    @equality_prover('distributed', 'distribute')
+    def distribution(self, factor_idx, **defaults_config):
         '''
         Distribute over the factor at the given index.
         '''
-        from theorems import distribute_tensor_prod_over_sum, distribute_tensor_prod_over_summation
+        from . import (distribute_tensor_prod_over_sum,
+                       distribute_tensor_prod_over_summation)
         from proveit.numbers import Add, Sum
         factor = self.factors[factor_idx]
         if isinstance(factor, Add):
+            _i, _j, _k, _x, _y, _z = (
+                    distribute_tensor_prod_over_sum.all_instance_vars())
+            _i_sub = Len(self.operands[:factor_idx]).computed()
+            _j_sub = Len(self.operands[factor_idx].operands).computed()
+            _k_sub = subtract(subtract(Len(self.operands).computed(),
+                    _i_sub), one)
+            _x_sub = self.factors[:factor_idx]
+            _y_sub = factor.terms
+            _z_sub = self.factors[factor_idx+1:]
             return distribute_tensor_prod_over_sum.instantiate(
-                {x_etc: self.factors[:factor_idx], y_etc: factor.terms, z_etc: self.factors[factor_idx + 1:]})
+                {_i: _i_sub, _j: _j_sub, _k: _k_sub,
+                 _x: _x_sub, _y: _y_sub, _z: _z_sub})
         elif isinstance(factor, Sum):
-            domain = factor.domain
-            summand = factor.summand
             index = factor.index
-            return distribute_tensor_prod_over_summation.instantiate({x_etc: self.factors[:factor_idx], Operation(
-                f, index): summand, S: domain, y: index, z_etc: self.factors[factor_idx + 1:]})
+            _m, _n, _f, _S, _x, _z = (
+                distribute_tensor_prod_over_summation.all_instance_vars())
+            _y = y # that's the index var in the summation in the thm
+            _m_sub = Len(self.factors[:factor_idx]).computed()
+            _n_sub = subtract(subtract(Len(self.operands).computed(),
+                     _m_sub), one)
+            _f_sub = factor.summand
+            _S_sub = factor.domain
+            _x_sub = self.factors[:factor_idx]
+            _y_sub = factor.index
+            _z_sub = self.factors[factor_idx + 1:]
+            return distribute_tensor_prod_over_summation.instantiate(
+                {_m: _m_sub, _n: _n_sub, _x: _x_sub,
+                Operation(f, index, styles=None): _f_sub, _S: _S_sub,
+                _y: _y_sub, _z: _z_sub})
         else:
-            raise Exception(
-                "Don't know how to distribute tensor product over " + str(factor.__class__) + " factor")
+            raise ValueError(self, defaults.assumptions,
+                "Don't know how to distribute tensor product over " +
+                str(factor.__class__) + " factor")
 
     # 2/11/2020 temporarily commented out by wdc until we determine the
     # equivalents for a_etc, etc
@@ -76,8 +147,6 @@ class TensorProd(Operation):
     # return
     # tensor_prod_equiv_by_elimination.instantiate({a_etc:tensor_equality.lhs.factors[:k],
     # x:factor1, y:factor2, z_etc:tensor_equality.lhs.factors[k+1:]})
-
-# TENSOR_PROD = Literal(pkg, 'TENSOR_PROD', {STRING: r'otimes', LATEX: r'\otimes'}, operation_maker = lambda operands : TensorProd(*operands))
 
 
 class TensorExp(Operation):
@@ -107,19 +176,19 @@ class TensorExp(Operation):
         elif format_type == 'string':
             return formatted_base + '^{otimes ' + formatted_exp + '}'
 
-    def do_reduced_simplification(self, assumptions=frozenset()):
+    @equality_prover('do_reduced_simplified', 'do_reduced_simplify')
+    def do_reduced_simplification(self, **defaults_config):
         '''
         For the trivial cases of a one exponent, derive and return
         this tensor-exponentiated expression equated with a simplified
         form. Assumptions may be necessary to deduce necessary
-        conditions for the simplification.
+        conditions for the simplification. For example, 
+        TensorExp(x, one).do_reduced_simplification()
         '''
-        from proveit.numbers.common import zero, one
-        from axioms import tensor_exp_one
+        from proveit.numbers import zero, one
+        from . import tensor_exp_one
         if self.exponent == one:
             return tensor_exp_one.instantiate({x: self.base})
-            raise ValueError('Only trivial simplification is implemented '
-                             '(tensor exponent of one).')
-
-
-# TENSOR_EXP = Literal(pkg, 'TENSOR_EXP', {STRING: r'^otimes', LATEX: r'^{\otimes}'}, operation_maker = lambda operands : TensorExp(*operands))
+        raise ValueError('Only trivial simplification is implemented '
+                         '(tensor exponent of one). Submitted tensor '
+                         'exponent was {}.'.format(self.exponent))
