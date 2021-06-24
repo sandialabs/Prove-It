@@ -1103,6 +1103,8 @@ class Lambda(Expression):
             # Don't auto-simplify anything when creating our lambda
             # map.
             temp_defaults.auto_simplify = False
+            if assumptions is not USE_DEFAULTS:
+                temp_defaults.assumptions = assumptions
             if isinstance(sub_expr, ExprTuple):
                 # If we are replacing an ExprTuple which are operands
                 # that transform to a single operand, we need to instead
@@ -1113,13 +1115,12 @@ class Lambda(Expression):
                         # We should use a multi-parameter map
                         from proveit import safe_dummy_var, var_range
                         from proveit.numbers import one
-                        n = sub_expr.num_elements(assumptions)
+                        n = sub_expr.num_elements()
                         parameters = ExprTuple(
                                 var_range(safe_dummy_var(master_expr),
                                           one, n))
                         body = master_expr.basic_replaced(
-                                {sub_expr: parameters},
-                                assumptions=assumptions)
+                                {sub_expr: parameters})
                         return Lambda(parameters, body)
 
             # Just make a single parameter replacement map.
