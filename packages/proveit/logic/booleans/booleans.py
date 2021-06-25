@@ -340,8 +340,11 @@ class FalseLiteral(Literal, IrreducibleValue):
         of those assumptions may be proven untrue given the other
         assumptions.
         '''
-        impl = self.prove(assumptions).as_implication(assumption_to_deny)
-        return impl.deny_antecedent()
+        impl = self.prove().as_implication(assumption_to_deny)
+        # Exclude the assumption_to_deny from the assumptions
+        return impl.deny_antecedent(assumptions=[
+                assumption for assumption in defaults.assumptions
+                if assumption != assumption_to_deny])
 
 
 def in_bool(*elements):
