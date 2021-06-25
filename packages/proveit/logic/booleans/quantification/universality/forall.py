@@ -377,6 +377,12 @@ class Forall(OperationOverInstances):
         _x = self.instance_params
         P_op, _P_op = Function(P, _x), self.instance_expr
         _n = _x.num_elements()
-        x_1_to_n = ExprTuple(ExprRange(k, IndexedVar(x, k), one, _n))
+        # Need to distinguish two cases: _n == 1 vs. _n > 1, b/c we are
+        # not allowed to construct a single-element ExprRange
+        if _n == one:
+            x_1_to_n = IndexedVar(x, one)  # we are subbing for x_1
+            _x = _x[0]                     # using a bare elem
+        else:
+            x_1_to_n = ExprTuple(ExprRange(k, IndexedVar(x, k), one, _n))
         return forall_in_bool.instantiate(
             {n: _n, P_op: _P_op, x_1_to_n: _x}, preserve_expr=self)
