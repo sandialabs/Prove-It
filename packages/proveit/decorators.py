@@ -40,7 +40,9 @@ def _make_decorated_prover(func):
             preserve_expr = _self
         if isinstance(_self, Judgment):
             # Include the assumptions of the Judgment.
-            assumptions = kwargs.get('assumptions', defaults.assumptions)
+            assumptions = kwargs.get('assumptions', None)
+            if assumptions is None:
+                assumptions = defaults.assumptions
             if not _self.assumptions_set.issubset(assumptions):
                 assumptions = tuple(assumptions) + _self.assumptions
                 kwargs['assumptions'] = assumptions
