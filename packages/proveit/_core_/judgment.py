@@ -1056,11 +1056,22 @@ class Judgment:
         from proveit.logic import Exists
         return Exists.eliminate(skolem_constants, self, assumptions)
 
-    def evaluation(self, assumptions=USE_DEFAULTS):
+    # Not a @prover since it just uses the assumptions of the Judgment. 
+    def simplify(self):
         '''
-        Calling evaluation on a Judgment results in deriving that its
-        expression is equal to TRUE, under the assumptions of the 
-        Judgment.
+        Prove a simplified form of this Judgment.
+        '''
+        with defaults.temporary() as temp_defaults:
+            # Use the assumptions of the Judgment
+            temp_defaults.assumptions = self.assumptions
+            simplification = self.simplification()
+            return simplification.derive_right_via_equality()
+        
+    # Not a @prover since it just uses the assumptions of the Judgment. 
+    def evaluation(self):
+        '''
+        Prove that the Judgement expression equals TRUE
+        under the assumptions of the Judgment.
         '''
         from proveit.logic import evaluate_truth
         return evaluate_truth(self.expr, assumptions=self.assumptions)

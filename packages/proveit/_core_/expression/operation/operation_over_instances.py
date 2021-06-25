@@ -8,7 +8,7 @@ from proveit._core_.expression.composite import (
     composite_expression, ExprRange)
 from proveit._core_.expression.conditional import Conditional
 from proveit._core_.defaults import USE_DEFAULTS
-from proveit.decorators import equality_prover
+from proveit.decorators import prover, equality_prover
 from .operation import Operation, OperationError
 from .function import Function
 
@@ -872,8 +872,8 @@ class OperationOverInstances(Operation):
         return substitution.derive_right_via_equality(assumptions=assumptions)
     """
 
-
-def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):
+@prover
+def bundle(expr, bundle_thm, num_levels=2, **defaults_config):
     '''
     Given a nested OperationOverInstances, derive or equate an
     equivalent form in which a given number of nested levels is
@@ -903,8 +903,8 @@ def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):
                 "May only 'bundle' nested OperationOverInstances, "
                 "not %s" %
                 bundled)
-        _m = bundled.instance_params.num_elements(assumptions)
-        _n = bundled.instance_expr.instance_params.num_elements(assumptions)
+        _m = bundled.instance_params.num_elements()
+        _n = bundled.instance_expr.instance_params.num_elements()
         _P = bundled.instance_expr.instance_expr
         _Q = bundled.effective_condition()
         _R = bundled.instance_expr.effective_condition()
@@ -939,7 +939,7 @@ def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):
         instantiation = bundle_thm.instantiate(
             {m: _m, n: _n, ExprTuple(x_1_to_m): bundled.instance_params,
              ExprTuple(y_1_to_n): bundled.instance_expr.instance_params,
-             Pxy: _P, Qx: _Q, Rxy: _R}, assumptions=assumptions)
+             Pxy: _P, Qx: _Q, Rxy: _R})
         if isinstance(instantiation.expr, Implies):
             bundled = instantiation.derive_consequent()
         elif isinstance(instantiation.expr, Equals):
@@ -965,9 +965,9 @@ def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):
         # the bundled result.
         return eq.relation
 
-
-def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
-             assumptions=USE_DEFAULTS):
+@prover
+def unbundle(expr, unbundle_thm, num_param_entries=(1,), 
+             **defaults_config):
     '''
     Given a nested OperationOverInstances, derive or equate an
     equivalent form in which the parameter entries are split in
@@ -1016,8 +1016,8 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
         first_params = unbundled.instance_params[:-n_last_entries]
         first_param_vars = {get_param_var(param) for param in first_params}
         remaining_params = unbundled.instance_params[-n_last_entries:]
-        _m = first_params.num_elements(assumptions)
-        _n = remaining_params.num_elements(assumptions)
+        _m = first_params.num_elements()
+        _n = remaining_params.num_elements()
         _P = unbundled.instance_expr
         # Split up the conditions between the outer
         # OperationOverInstances and inner OperationOverInstances
@@ -1084,7 +1084,7 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
         instantiation = unbundle_thm.instantiate(
             {m: _m, n: _n, ExprTuple(x_1_to_m): first_params,
              ExprTuple(y_1_to_n): remaining_params,
-             Pxy: _P, Qx: _Q, Rxy: _R}, assumptions=assumptions)
+             Pxy: _P, Qx: _Q, Rxy: _R})
         if isinstance(instantiation.expr, Implies):
             unbundled = instantiation.derive_consequent()
         elif isinstance(instantiation.expr, Equals):

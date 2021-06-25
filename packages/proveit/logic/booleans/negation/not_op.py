@@ -35,7 +35,7 @@ class Not(Operation):
                 pass
         except BaseException:
             pass  # no contradiction
-        yield self.deduce_in_bool  # [Not(A) in Boolean] given Not(A)
+        yield self.derive_in_bool  # [Not(A) in Boolean] given Not(A)
         if hasattr(self.operand, 'negation_side_effects'):
             # derive negation side-effects for the specific type of
             # expression being negated.
@@ -134,6 +134,13 @@ class Not(Operation):
         Plambda = Equals._lambda_expr(lambda_map, self.operand)
         return substitute_falsehood.instantiate(
             {x: self.operand, P: Plambda})
+
+    @prover
+    def derive_in_bool(self, **defaults_config):
+        '''
+        From Not(A) derive [Not(A) in Boolean].
+        '''
+        return in_bool(self).prove()
 
     @prover
     def deduce_in_bool(self, **defaults_config):

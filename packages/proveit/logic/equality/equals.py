@@ -74,6 +74,7 @@ class Equals(TransitiveRelation):
         if is_irreducible_value(self.rhs):
             # With an irreducible right hand side, remember this as
             # an evaluation.
+            assert isinstance(judgment.expr, Equals)
             Equals.known_evaluation_sets.setdefault(
                 self.lhs, set()).add(judgment)
 
@@ -633,6 +634,7 @@ class Equals(TransitiveRelation):
             return sub_right_side_into.instantiate(
                 {x: self.lhs, y: self.rhs, P: lambda_map})
 
+    @prover
     def derive_right_via_equality(self, **defaults_config):
         '''
         From A = B, derive B (the Right-Hand-Side) assuming A.
@@ -640,6 +642,7 @@ class Equals(TransitiveRelation):
         from . import rhs_via_equality
         return rhs_via_equality.instantiate({P: self.lhs, Q: self.rhs})
 
+    @prover
     def derive_left_via_equality(self, **defaults_config):
         '''
         From A = B, derive A (the Right-Hand-Side) assuming B.

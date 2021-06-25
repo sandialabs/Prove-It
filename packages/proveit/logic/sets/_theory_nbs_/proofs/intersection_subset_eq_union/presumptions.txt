@@ -1,12 +1,9 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
 proveit.logic.booleans.conjunction.left_from_and
 proveit.logic.booleans.conjunction.right_from_and
-proveit.logic.booleans.disjunction.false_or_true
 proveit.logic.booleans.disjunction.or_if_both
 proveit.logic.booleans.disjunction.or_if_left
 proveit.logic.booleans.disjunction.or_if_right
-proveit.logic.booleans.disjunction.true_or_false
-proveit.logic.booleans.disjunction.true_or_true
 proveit.logic.booleans.false_eq_false
 proveit.logic.booleans.from_not_false
 proveit.logic.booleans.in_bool_if_true

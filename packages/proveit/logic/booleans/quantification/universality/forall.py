@@ -258,7 +258,8 @@ class Forall(OperationOverInstances):
                 {x:_x, P_op:_P_op, A:superset_domain, B:self.domain}
                 ).derive_consequent()
 
-    def bundle(self, num_levels=2, *, assumptions=USE_DEFAULTS):
+    @prover
+    def bundle(self, num_levels=2, **defaults_config):
         '''
         Given a nested forall, derive an equivalent form in which a
         given number of nested levels is bundled together.
@@ -271,10 +272,10 @@ class Forall(OperationOverInstances):
         '''
         from proveit import bundle  # generic for OperationOverInstances
         from . import bundle as bundle_thm
-        return bundle(self, bundle_thm, num_levels=num_levels,
-                      assumptions=assumptions)
+        return bundle(self, bundle_thm, num_levels=num_levels)
 
-    def bundle_equality(self, num_levels=2, *, assumptions=USE_DEFAULTS):
+    @prover # Could be an @equality_prover but leave it as is for now.
+    def bundle_equality(self, num_levels=2, **defaults_config):
         '''
         Given a nested forall, equate it with an equivalent form in
         which a given number of nested levels is bundled together.
@@ -287,10 +288,10 @@ class Forall(OperationOverInstances):
         '''
         from proveit import bundle  # generic for OperationOverInstances
         from . import bundling
-        return bundle(self, bundling, num_levels=num_levels,
-                      assumptions=assumptions)
+        return bundle(self, bundling, num_levels=num_levels)
 
-    def unbundle(self, num_param_entries=(1,), *, assumptions=USE_DEFAULTS):
+    @prover
+    def unbundle(self, num_param_entries=(1,), **defaults_config):
         '''
         From a nested forall, derive an equivalent form in which the
         parameter entries are split in number according to
@@ -307,11 +308,11 @@ class Forall(OperationOverInstances):
         from proveit import unbundle  # generic for Op..OverInstances
         from . import unbundle as unbundle_thm
         return unbundle(self, unbundle_thm,
-                        num_param_entries=num_param_entries,
-                        assumptions=assumptions)
+                        num_param_entries=num_param_entries)
 
-    def unbundle_equality(self, num_param_entries=(1,), *,
-                          assumptions=USE_DEFAULTS):
+    @prover # Could be an @equality_prover but leave it as is for now.
+    def unbundle_equality(self, num_param_entries=(1,), 
+                          **defaults_config):
         '''
         From a nested forall, equate it with an equivalent form in
         which the parameter entries are split in number according to
@@ -328,8 +329,7 @@ class Forall(OperationOverInstances):
         from proveit import unbundle  # generic for Op..OverInstances
         from . import bundling
         return unbundle(
-            self, bundling, num_param_entries=num_param_entries,
-            assumptions=assumptions)
+            self, bundling, num_param_entries=num_param_entries)
 
     @prover
     def instantiate(self, repl_map=None, **defaults_config):
@@ -350,16 +350,19 @@ class Forall(OperationOverInstances):
             # Cannot automatically evaluate a forall statement with
             # no domain.
             raise EvaluationError(self)
-
-        if len(list(self.instance_param_lists())) == 1:
+        
+        if hasattr(self, 'instance_param'):
             if hasattr(self.domain, 'forall_evaluation'):
                 # Use the domain's forall_evaluation method
                 return self.domain.forall_evaluation(self)
-        else:
-            # Evaluate an unravelled version
-            unravelled_equiv = self.derive_unraveled_equiv(
-                [var for var in (list(self.instance_var_lists()))])
-            return unravelled_equiv.rhs.evaluation()
+
+        '''
+        # Let's not do this fancy stuff just yet.
+        # Evaluate an unbundled version
+        unbundle_eq = self.unbundle_equality()
+        return unbundle_eq.rhs.evaluation()
+        '''
+        
         raise EvaluationError(self)
 
     @prover
