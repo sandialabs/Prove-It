@@ -12,7 +12,7 @@ def _make_decorated_prover(func):
     defaults.assumptions) before calling the decorated method.
     It will then check to see if the return type is a Judgment that is
     valid under "active" assumptions.
-    '''    
+    '''
     sig = signature(func)
     if ('defaults_config' not in sig.parameters or
             sig.parameters['defaults_config'].kind != Parameter.VAR_KEYWORD):
@@ -33,11 +33,17 @@ def _make_decorated_prover(func):
                     "Adding 'replacements' and setting 'preserve_all' "
                     "to True are incompatible settings.")
         preserve_expr = kwargs.pop('preserve_expr', None)
+        _self = args[0]
         if is_conclude_method:
             # If the method starts with conclude 'conclude', we must
             # preserve _self.
-            _self = args[0]
             preserve_expr = _self
+        if isinstance(_self, Judgment):
+            # Include the assumptions of the Judgment.
+            assumptions = kwargs.get('assumptions', defaults.assumptions)
+            if not _self.assumptions_set.issubset(assumptions):
+                assumptions = tuple(assumptions) + _self.assumptions
+                kwargs['assumptions'] = assumptions
         defaults_to_change = set(kwargs.keys()).intersection(
                 defaults.__dict__.keys())
         # Check to see if there are any unexpected keyword
