@@ -648,12 +648,13 @@ class Judgment:
                 # Automatically include the Judgment assumptions.
                 def call_method_with_judgment_assumptions(
                         *args, **defaults_config):
-                    assumptions = defaults_config.get('assumptions',
-                                                      USE_DEFAULTS)
-                    assumptions = defaults.checked_assumptions(assumptions)
-                    assumptions = tuple(assumptions) + self.assumptions
-                    defaults_config['assumptions'] = \
-                        defaults.checked_assumptions(assumptions)
+                    if len(self.assumptions) > 0:
+                        # Include assumptions of the Judgment.
+                        assumptions = defaults_config.get(
+                                'assumptions', defaults.assumptions)
+                        if not self.assumptions_set.issubset(assumptions):
+                            defaults_config['assumptions'] = \
+                                tuple(assumptions) + self.assumptions
                     return attr.__call__(*args, **defaults_config)
                 return call_method_with_judgment_assumptions
 
