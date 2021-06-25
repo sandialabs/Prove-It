@@ -1,7 +1,7 @@
-from proveit import defaults, equality_prover, Literal, Operation
+from proveit import defaults, equality_prover, Literal, Operation, prover
 from proveit import f, x, y, alpha, S  # a_etc, x_etc, y_etc, z_etc,
 from proveit.logic import Equals
-from proveit.numbers import one, subtract
+from proveit.numbers import one, num, subtract
 from proveit.core_expr_types import Len
 from proveit.linear_algebra.matrix_ops import ScalarProd
 
@@ -59,32 +59,17 @@ class TensorProd(Operation):
             "Targeted scalar {0} not found in any of the tensor product "
             "factors {1}".format(scalar, self.operands))
 
-    # @equality_prover('distributed', 'distribute')
-    # def distribution(self, factor_idx, **defaults_config):
-    #     '''
-    #     Distribute over the factor at the given index.
-    #     '''
-    #     from . import (distribute_tensor_prod_over_sum,
-    #             distribute_tensor_prod_over_summation)
-    #     from proveit.numbers import Add, Sum
-    #     factor = self.factors[factor_idx]
-    #     if isinstance(factor, Add):
-    #         return distribute_tensor_prod_over_sum.instantiate(
-    #             {x_etc: self.factors[:factor_idx], y_etc: factor.terms, z_etc: self.factors[factor_idx + 1:]})
-    #     elif isinstance(factor, Sum):
-    #         domain = factor.domain
-    #         summand = factor.summand
-    #         index = factor.index
-    #         return distribute_tensor_prod_over_summation.instantiate({x_etc: self.factors[:factor_idx], Operation(
-    #             f, index): summand, S: domain, y: index, z_etc: self.factors[factor_idx + 1:]})
-    #     else:
-    #         raise Exception(
-    #             "Don't know how to distribute tensor product over " + str(factor.__class__) + " factor")
-
     @equality_prover('distributed', 'distribute')
     def distribution(self, factor_idx, **defaults_config):
         '''
-        Distribute over the factor at the given index.
+        Given a TensorProd factor at the (0-based) index location
+        'factor_idx' that is a sum or summation, distribute over that
+        TensorProd factor and return an equality to the original
+        TensorProd. For example, we could take the TensorProd
+            tens_prod = TensorProd(a, b+c, d)
+        and call tens_prod.distribution(1) to obtain:
+            |- TensorProd(a, b+c, d) =
+               TensorProd(a, b, d) + TensorProd(a, c, d)
         '''
         from . import (distribute_tensor_prod_over_sum,
                        distribute_tensor_prod_over_summation)
@@ -125,28 +110,80 @@ class TensorProd(Operation):
                 "Don't know how to distribute tensor product over " +
                 str(factor.__class__) + " factor")
 
-    # 2/11/2020 temporarily commented out by wdc until we determine the
-    # equivalents for a_etc, etc
-    # def equate_factors(self, tensor_equality):
-    #     from theorems import tensor_prod_equiv_by_elimination
-    #     if not isinstance(tensor_equality, Equals):
-    #         raise ValueError('tensor_equality should be an Equals expression')
-    #     if not isinstance(tensor_equality.lhs, TensorProd) or not isinstance(tensor_equality.rhs, TensorProd):
-    #         raise ValueError("tensor_equality should be an Equals expression of tensor products")
-    #     if len(tensor_equality.lhs.factors) != len(tensor_equality.rhs.factors):
-    #         raise ValueError("tensor_equality should be an Equals expression of tensor products with the same number of factors")
-    #     if self == tensor_equality.rhs:
-    #         # reverse the equality so "self" is on the left
-    #         tensor_equality = tensor_equality.derive_reversed()
-    #     if not self == tensor_equality.lhs:
-    #         raise ValueError("tensor_equality should be an Equals expression of tensor products with 'self' on one side of the equality")
-    #     for k, (factor1, factor2) in enumerate(zip(tensor_equality.lhs.factors, tensor_equality.rhs.factors)):
-    #         if factor1 != factor2:
-    #             if tensor_equality.lhs.factors[:k] != tensor_equality.rhs.factors[:k] or tensor_equality.lhs.factors[k+1:] != tensor_equality.rhs.factors[k+1:]:
-    #                 raise ValueError("tensor_equality should be an Equals expression of tensor products that are the same except for only one factor")
-    # return
-    # tensor_prod_equiv_by_elimination.instantiate({a_etc:tensor_equality.lhs.factors[:k],
-    # x:factor1, y:factor2, z_etc:tensor_equality.lhs.factors[k+1:]})
+    @prover
+    def equate_factors(self, tensor_equality, **defaults_config):
+        '''
+        Operating on the 'self' TensorProd and taking as an argument
+        an equality between the 'self' TensorProd and another
+        TensorProd with the same number of factors all but one of
+        which agree with the factors of 'self', deduce and return a
+        logical equivalence between the TensorProd equality and the
+        equality of the two non-matching factors.
+        For example, letting tp_01 = a X b X c and tp_02 = a X d X c,
+        then calling tp.equate_factors(Equals(tp_01, tp_02))
+        deduces and returns
+        |- (a X b X c = (a X d X c)) IFF (b = d)
+        '''
+        # First check various characteristics of the tensor_equality
+        if not isinstance(tensor_equality, Equals):
+            raise ValueError("tensor_equality should be an Equals expression; "
+                             " instead received: {}.".format(tensor_equality))
+        if (not isinstance(tensor_equality.lhs, TensorProd) or
+            not isinstance(tensor_equality.rhs, TensorProd)):
+            raise ValueError(
+                    "tensor_equality should be an Equals expression of "
+                    "tensor products; "
+                    "instead received: {}.".format(tensor_equality))
+        if (tensor_equality.lhs.factors.num_elements() !=
+            tensor_equality.rhs.factors.num_elements()):
+            raise ValueError(
+                    "tensor_equality should be an Equals expression of tensor "
+                    "products with the same number of factors; "
+                    "instead received: {}.".format(tensor_equality))
+
+        if self == tensor_equality.rhs:
+            # reverse the equality so "self" is on the left
+            tensor_equality = tensor_equality.derive_reversed()
+        if not self == tensor_equality.lhs:
+            raise ValueError(
+                    "tensor_equality should be an Equals expression of "
+                    "tensor products with 'self' ({0}) on one side of the "
+                    "equality; "
+                    "instead received: {1}.".format(self, tensor_equality))
+
+        non_identical_factor = -1 # track loc of non-ident factors
+        for k, (factor1, factor2) in (
+                enumerate(zip(tensor_equality.lhs.factors,
+                              tensor_equality.rhs.factors))):
+            if factor1 != factor2:
+                non_identical_factor = k
+                if ((tensor_equality.lhs.factors[:k] !=
+                    tensor_equality.rhs.factors[:k]) or
+                    (tensor_equality.lhs.factors[k+1:] !=
+                    tensor_equality.rhs.factors[k+1:])):
+                    raise ValueError(
+                            "tensor_equality should be an Equals expression "
+                            "of tensor products that are the same except for "
+                            "only one factor; "
+                            "instead received: {}.".format(tensor_equality))
+
+        # user-supplied tensor_equality looks ok, so import theorem
+        from . import tensor_prod_equiv_by_elimination
+
+        # organize and compute the instantiation subs
+        _m, _n, _a, _x, _y, _z = (
+                tensor_prod_equiv_by_elimination.all_instance_vars())
+        _m_sub = num(non_identical_factor)
+        _n_sub = subtract(subtract(self.factors.num_elements(),_m_sub), one)
+        _a_sub = self.factors[:non_identical_factor]
+        _x_sub = self.factors[non_identical_factor]
+        _y_sub = tensor_equality.rhs.factors[non_identical_factor]
+        _z_sub = self.factors[non_identical_factor+1:]
+
+        # instantiate and return equality
+        return tensor_prod_equiv_by_elimination.instantiate(
+            {_m: _m_sub, _n: _n_sub, _a: _a_sub,
+             _x: _x_sub, _y: _y_sub, _z: _z_sub})
 
 
 class TensorExp(Operation):
