@@ -263,6 +263,8 @@ class Gate(Function):
             from proveit.physics.quantum import output_gate_to_ket
             return output_gate_to_ket.instantiate(
                 {U: self.gate_operation.state})
+        from proveit.logic import Equals
+        return Equals(self, self).conclude_via_reflexivity()
 
     def style_options(self):
         '''
