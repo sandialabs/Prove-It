@@ -651,7 +651,9 @@ class Judgment:
                     if len(self.assumptions) > 0:
                         # Include assumptions of the Judgment.
                         assumptions = defaults_config.get(
-                                'assumptions', defaults.assumptions)
+                                'assumptions', None)
+                        if assumptions is None: 
+                            assumptions=defaults.assumptions
                         if not self.assumptions_set.issubset(assumptions):
                             defaults_config['assumptions'] = \
                                 tuple(assumptions) + self.assumptions
