@@ -12,6 +12,7 @@ from proveit.decorators import prover
 from .defaults import defaults, USE_DEFAULTS
 import re
 from copy import copy
+from inspect import signature, Parameter
 
 
 class _ExprProofs:
@@ -207,7 +208,7 @@ class Judgment:
         from this truth.  Called after the corresponding Proof is 
         complete.
         '''
-        from .proof import ProofFailure
+        from .proof import ProofFailure, UnsatisfiedPrerequisites
         if not defaults.automation:
             return  # automation disabled
         # Sort the assumptions according to hash key so that sets of
@@ -232,7 +233,7 @@ class Judgment:
                         # temporarily set to the assumptions utilized
                         # in the last derivation step.
                         side_effect()
-                    except ProofFailure:
+                    except (ProofFailure, UnsatisfiedPrerequisites):
                         pass
                     except Exception as e:
                         raise Exception(
@@ -624,7 +625,6 @@ class Judgment:
         included.
         '''
         from proveit import defaults, USE_DEFAULTS
-        import inspect
 
         # called only if the attribute does not exist in Judgment 
         # directly
@@ -642,41 +642,22 @@ class Judgment:
                     new_style_expr = attr.__call__(*args, **kwargs)
                     return self.with_matching_styles(new_style_expr, [])
                 return call_method_for_new_style
-            argspec = inspect.getfullargspec(attr)
-
-            # TODO: Revisit this after we have switched to using
-            # @prover or @equivalence_prover for all the methods.
-            # This is more complicated than necessary for backward
-            # compatibility.
-            if ('assumptions' in argspec.args
-                    or 'assumptions' in argspec.kwonlyargs
-                    or  argspec.varkw == 'defaults_config'):
+            sig = signature(attr)
+            if ('defaults_config' in sig.parameters and
+                    (sig.parameters['defaults_config'].kind 
+                     == Parameter.VAR_KEYWORD)):
                 # The attribute is a callable function with
-                # 'assumptions' as an argument.
+                # 'defaults_config' as an argument (e.g., a prover).
                 # Automatically include the Judgment assumptions.
-
-                # note, index zero is self.
-                if 'assumptions' in argspec.args:
-                    assumptions_idx = argspec.args.index('assumptions') - 1
-                else:
-                    assumptions_idx = None  # 'assumptions' is kwonly
-
-                def call_method_with_judgment_assumptions(*args, **kwargs):
-                    if (assumptions_idx is not None and
-                            len(args) > assumptions_idx):
-                        args = list(args)
-                        assumptions = args[assumptions_idx]
-                        assumptions = defaults.checked_assumptions(assumptions)
-                        assumptions += self.assumptions
-                        args[assumptions_idx] = \
-                            defaults.checked_assumptions(assumptions)
-                    else:
-                        assumptions = kwargs.get('assumptions', USE_DEFAULTS)
-                        assumptions = defaults.checked_assumptions(assumptions)
-                        assumptions = tuple(assumptions) + self.assumptions
-                        kwargs['assumptions'] = \
-                            defaults.checked_assumptions(assumptions)
-                    return attr.__call__(*args, **kwargs)
+                def call_method_with_judgment_assumptions(
+                        *args, **defaults_config):
+                    assumptions = defaults_config.get('assumptions',
+                                                      USE_DEFAULTS)
+                    assumptions = defaults.checked_assumptions(assumptions)
+                    assumptions = tuple(assumptions) + self.assumptions
+                    defaults_config['assumptions'] = \
+                        defaults.checked_assumptions(assumptions)
+                    return attr.__call__(*args, **defaults_config)
                 return call_method_with_judgment_assumptions
 
         return attr
@@ -890,27 +871,16 @@ class Judgment:
                         "as a repl_map key:\n%s" %
                         str(e))
                 if key.num_entries() == 1:
-                    key_entry = key.entries[0]
-                    if (isinstance(key_entry, ExprRange) and
-                            key_entry.start_index == key_entry.end_index
-                            and isinstance(replacement, ExprTuple)
-                            and replacement.is_single()):
-                        # Special case of a singular range 
-                        # (e.g., x_1, ..., x1) and singlular
-                        # replacement.
-                        processed_repl_map[key_entry.first()] = \
-                            replacement.entries[0]
-                    else:
-                        # Replacement key for replacing a range of indexed
-                        # variables, or range of ranges of indexed variables
-                        # , etc.
-                        processed_repl_map[key] = replacement
-                        # Although this is redundant (not really necessary
-                        # as an entry in `equiv_alt_expansions` as far
-                        # as Lambda.apply is concerned) it is useful for
-                        # bookkeeping to extract all of the instantiation
-                        # mappings:
-                        equiv_alt_expansions[key] = replacement
+                    # Replacement key for replacing a range of indexed
+                    # variables, or range of ranges of indexed variables
+                    # , etc.
+                    processed_repl_map[key] = replacement
+                    # Although this is redundant (not really necessary
+                    # as an entry in `equiv_alt_expansions` as far
+                    # as Lambda.apply is concerned) it is useful for
+                    # bookkeeping to extract all of the instantiation
+                    # mappings:
+                    equiv_alt_expansions[key] = replacement
                 else:
                     assert key.num_entries() > 1
                     # An "alternative equivalent expansion" of
@@ -991,7 +961,7 @@ class Judgment:
                               equiv_alt_expansions=equiv_alt_expansions,
                               assumptions=defaults.assumptions))
         finally:
-            # Revert the preserve_exprs set back to what it was.
+            # Revert the preserved_exprs set back to what it was.
             defaults.preserved_exprs.difference_update(
                     temporarily_preserved_exprs)
 
@@ -1089,14 +1059,25 @@ class Judgment:
         from proveit.logic import Exists
         return Exists.eliminate(skolem_constants, self, assumptions)
 
-    def evaluation(self, assumptions=USE_DEFAULTS):
+    # Not a @prover since it just uses the assumptions of the Judgment. 
+    def simplify(self):
         '''
-        Calling evaluation on a Judgment results in deriving that its
-        expression is equal to TRUE, under the assumptions of the 
-        Judgment.
+        Prove a simplified form of this Judgment.
+        '''
+        with defaults.temporary() as temp_defaults:
+            # Use the assumptions of the Judgment
+            temp_defaults.assumptions = self.assumptions
+            simplification = self.simplification()
+            return simplification.derive_right_via_equality()
+        
+    # Not a @prover since it just uses the assumptions of the Judgment. 
+    def evaluation(self):
+        '''
+        Prove that the Judgement expression equals TRUE
+        under the assumptions of the Judgment.
         '''
         from proveit.logic import evaluate_truth
-        return evaluate_truth(self.expr, self.assumptions)
+        return evaluate_truth(self.expr, assumptions=self.assumptions)
 
     def as_impl(self, hypothesis):
         '''

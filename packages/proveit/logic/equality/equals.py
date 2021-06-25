@@ -1,5 +1,5 @@
 from proveit import (as_expression, defaults, USE_DEFAULTS, ProofFailure,
-                     equivalence_prover)
+                     equality_prover)
 from proveit import Literal, Operation, Lambda, ArgumentExtractionError
 from proveit import TransitiveRelation, TransitivityException
 from proveit import prover
@@ -74,6 +74,7 @@ class Equals(TransitiveRelation):
         if is_irreducible_value(self.rhs):
             # With an irreducible right hand side, remember this as
             # an evaluation.
+            assert isinstance(judgment.expr, Equals)
             Equals.known_evaluation_sets.setdefault(
                 self.lhs, set()).add(judgment)
 
@@ -255,8 +256,7 @@ class Equals(TransitiveRelation):
         return Equals(self.rhs, self.lhs)
 
     @staticmethod
-    def yield_known_equal_expressions(expr, *, assumptions=USE_DEFAULTS,
-                                      exceptions=None):
+    def yield_known_equal_expressions(expr, *, exceptions=None):
         '''
         Yield everything known to be equal to the given expression
         under the given assumptions directly or indirectly through 
@@ -264,7 +264,7 @@ class Equals(TransitiveRelation):
         If 'exceptions' are provided, disregard known equalities
         with expressions in the 'exceptions' set.
         '''
-        assumptions = defaults.checked_assumptions(assumptions)
+        assumptions = defaults.assumptions
         to_process = {expr}
         processed = set()
         while len(to_process) > 0:
@@ -450,7 +450,7 @@ class Equals(TransitiveRelation):
                                  "%s as 'lambda_map'" % lambda_map)
         return lambda_map
 
-    @prover # Note: this should NOT be an @equivalence_prover.
+    @prover # Note: this should NOT be an @equality_prover.
     def substitution(self, lambda_map, **defaults_config):
         '''
         From x = y, and given f(x), derive f(x)=f(y).
@@ -474,9 +474,9 @@ class Equals(TransitiveRelation):
         lambda_map = Equals._lambda_expr(lambda_map, self.lhs)
         
         with defaults.temporary() as temp_defaults:
-            # Turn auto-simplification off when we are performing
-            # a manual substitution.
-            temp_defaults.auto_simplify = False
+            # Don't do any auto-simplification or replacements
+            # while performing manual substitution.
+            temp_defaults.preserve_all = True
             if isinstance(lambda_map.parameters[0], ExprRange):
                 # We must use operands_substitution for ExprTuple
                 # substitution.
@@ -519,9 +519,9 @@ class Equals(TransitiveRelation):
                 return reversed_eq.sub_right_side_into(lambda_map)
         
         with defaults.temporary() as temp_defaults:
-            # Turn auto-simplification off when we are performing
-            # a manual substitution.
-            temp_defaults.auto_simplify = False
+            # Don't do any auto-simplification or replacements
+            # while performing manual substitution.
+            temp_defaults.preserve_all = True
             
             if isinstance(lambda_map.parameters[0], ExprRange):
                 # We must use sub_in_left_operands for ExprTuple
@@ -591,9 +591,9 @@ class Equals(TransitiveRelation):
         lambda_map = Equals._lambda_expr(lambda_map, self.lhs)
 
         with defaults.temporary() as temp_defaults:
-            # Turn auto-simplification off when we are performing
-            # a manual substitution.
-            temp_defaults.auto_simplify = False
+            # Don't do any auto-simplification or replacements
+            # while performing manual substitution.
+            temp_defaults.preserve_all = True
 
             if isinstance(lambda_map.parameters[0], ExprRange):
                 # We must use sub_in_right_operands for ExprTuple
@@ -634,6 +634,7 @@ class Equals(TransitiveRelation):
             return sub_right_side_into.instantiate(
                 {x: self.lhs, y: self.rhs, P: lambda_map})
 
+    @prover
     def derive_right_via_equality(self, **defaults_config):
         '''
         From A = B, derive B (the Right-Hand-Side) assuming A.
@@ -641,6 +642,7 @@ class Equals(TransitiveRelation):
         from . import rhs_via_equality
         return rhs_via_equality.instantiate({P: self.lhs, Q: self.rhs})
 
+    @prover
     def derive_left_via_equality(self, **defaults_config):
         '''
         From A = B, derive A (the Right-Hand-Side) assuming B.
@@ -668,7 +670,7 @@ class Equals(TransitiveRelation):
         from . import equality_in_bool
         return equality_in_bool.instantiate({x: self.lhs, y: self.rhs})
 
-    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    @equality_prover('shallow_evaluated', 'shallow_evaluate')
     def shallow_evaluation(self, **defaults_config):
         '''
         Given equality operands that are the same or are irreducible
@@ -685,7 +687,7 @@ class Equals(TransitiveRelation):
         raise EvaluationError(self) 
 
     @staticmethod
-    def get_known_evaluation(expr, automation=USE_DEFAULTS):
+    def get_known_evaluation(expr, *, automation=USE_DEFAULTS):
         '''
         Return an applicable evaluation (under current defaults) for 
         the given expression if one is known; otherwise return None.
@@ -695,22 +697,21 @@ class Equals(TransitiveRelation):
         expressions (in defaults.preserved_exprs) whose evaluations
         are to be disregarded.
         '''
-        try:
+        if expr in Equals.known_evaluation_sets:
             evaluations = Equals.known_evaluation_sets[expr]
-        except KeyError:
-            return None
-        candidates = []
-        assumptions_set = set(defaults.assumptions)
-        for judgment in evaluations:
-            if judgment.is_applicable(assumptions_set):
-                # Found existing evaluation suitable for the
-                # assumptions
-                candidates.append(judgment)
-        if len(candidates) >= 1:
-            # Return the "best" candidate with respect to fewest number
-            # of steps.
-            def min_key(judgment): return judgment.proof().num_steps()
-            return min(candidates, key=min_key)
+            candidates = []
+            assumptions = defaults.assumptions
+            assumptions_set = set(assumptions)
+            for judgment in evaluations:
+                if judgment.is_applicable(assumptions_set):
+                    # Found existing evaluation suitable for the
+                    # assumptions
+                    candidates.append(judgment)
+            if len(candidates) >= 1:
+                # Return the "best" candidate with respect to fewest number
+                # of steps.
+                def min_key(judgment): return judgment.proof().num_steps()
+                return min(candidates, key=min_key)
         if automation is USE_DEFAULTS:
             automation = defaults.automation
         if automation:

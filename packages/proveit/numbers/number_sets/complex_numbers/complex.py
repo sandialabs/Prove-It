@@ -1,5 +1,5 @@
 import proveit
-from proveit import USE_DEFAULTS
+from proveit import prover, relation_prover
 from proveit import a, x, y
 from proveit.numbers.number_sets.number_set import NumberSet
 
@@ -9,23 +9,14 @@ class ComplexSet(NumberSet):
         NumberSet.__init__(self, 'Complex', r'\mathbb{C}', 
                            theory=__file__, styles=styles)
 
-    def deduce_in_set_is_bool(self, element, assumptions=USE_DEFAULTS):
-        from .theorems import in_complex_is_bool
-        return in_complex_is_bool.instantiate({a: element}, assumptions)
-
-    def deduce_not_in_set_is_bool(self, element, assumptions=USE_DEFAULTS):
-        from .theorems import not_in_complex_is_bool
-        return not_in_complex_is_bool.instantiate({a: element}, assumptions)
-
-    def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
-        from . import complex_membership_is_bool
-        from proveit import x
-        return complex_membership_is_bool.instantiate(
-            {x: member}, assumptions=assumptions)
+    def membership_object(self, element):
+        from .complex_membership import ComplexMembership    
+        return ComplexMembership(element)
 
     @staticmethod
+    @prover
     def left_mult_both_sides_of_equals(relation, multiplier,
-                                       assumptions=USE_DEFAULTS):
+                                       **defaults_config):
         '''
         Multiply both sides of an Equals relation by the 'multiplier'
         on the left.
@@ -35,12 +26,12 @@ class ComplexSet(NumberSet):
         if not isinstance(relation, Equals):
             TypeError("'relation' expected to be Equals")
         return left_mult_eq.instantiate(
-            {a: multiplier, x: relation.lhs, y: relation.rhs},
-            assumptions=assumptions)
+            {a: multiplier, x: relation.lhs, y: relation.rhs})
 
     @staticmethod
+    @prover
     def left_mult_both_sides_of_notequals(relation, multiplier,
-                                          assumptions=USE_DEFAULTS):
+                                          **defaults_config):
         '''
         Multiply both sides of a NonEquals relation by the 'multiplier'
         on the left.
@@ -50,12 +41,12 @@ class ComplexSet(NumberSet):
         if not isinstance(relation, NotEquals):
             TypeError("'relation' expected to be NotEquals")
         return left_mult_neq.instantiate(
-            {a: multiplier, x: relation.lhs, y: relation.rhs},
-            assumptions=assumptions)
+            {a: multiplier, x: relation.lhs, y: relation.rhs})
 
     @staticmethod
+    @prover
     def right_mult_both_sides_of_equals(relation, multiplier,
-                                        assumptions=USE_DEFAULTS):
+                                        **defaults_config):
         '''
         Multiply both sides of an Equals relation by the 'multiplier'
         on the right.
@@ -64,13 +55,19 @@ class ComplexSet(NumberSet):
         from proveit.numbers.multiplication import right_mult_eq
         if not isinstance(relation, Equals):
             TypeError("'relation' expected to be Equals")
+        
+        from proveit import defaults
+        print("preserved_exprs", defaults.preserved_exprs,
+              "auto_simplify", defaults.auto_simplify,
+              "preserve_all", defaults.preserve_all)
+        
         return right_mult_eq.instantiate(
-            {a: multiplier, x: relation.lhs, y: relation.rhs},
-            assumptions=assumptions)
+            {a: multiplier, x: relation.lhs, y: relation.rhs})
 
     @staticmethod
+    @prover
     def right_mult_both_sides_of_notequals(relation, multiplier,
-                                           assumptions=USE_DEFAULTS):
+                                           **defaults_config):
         '''
         Multiply both sides of a NotEquals relation by the 'multiplier'
         on the right.
@@ -80,12 +77,12 @@ class ComplexSet(NumberSet):
         if not isinstance(relation, NotEquals):
             TypeError("'relation' expected to be NotEquals")
         return right_mult_neq.instantiate(
-            {a: multiplier, x: relation.lhs, y: relation.rhs},
-            assumptions=assumptions)
+            {a: multiplier, x: relation.lhs, y: relation.rhs})
 
     @staticmethod
+    @prover
     def divide_both_sides_of_equals(relation, divisor,
-                                    assumptions=USE_DEFAULTS):
+                                    **defaults_config):
         '''
         Divide both sides of the Equals relation by the 'divisor'.
         '''
@@ -93,13 +90,19 @@ class ComplexSet(NumberSet):
         from proveit.numbers.division import div_eq
         if not isinstance(relation, Equals):
             TypeError("'relation' expected to be Equals")
+
+        from proveit import defaults
+        print("preserved_exprs", defaults.preserved_exprs,
+              "auto_simplify", defaults.auto_simplify,
+              "preserve_all", defaults.preserve_all)
+
         return div_eq.instantiate(
-            {a: divisor, x: relation.lhs, y: relation.rhs},
-            assumptions=assumptions)
+            {a: divisor, x: relation.lhs, y: relation.rhs})
 
     @staticmethod
-    def divide_both_sides_of_notequals(relation, divisor,
-                                       assumptions=USE_DEFAULTS):
+    @prover
+    def divide_both_sides_of_notequals(relation, divisor, 
+                                       **defaults_config):
         '''
         Divide both sides of the NotEquals relation by the 'divisor'.
         '''
@@ -108,12 +111,12 @@ class ComplexSet(NumberSet):
         if not isinstance(relation, NotEquals):
             TypeError("'relation' expected to be NotEquals")
         return div_neq.instantiate(
-            {a: divisor, x: relation.lhs, y: relation.rhs},
-            assumptions=assumptions)
+            {a: divisor, x: relation.lhs, y: relation.rhs})
 
     @staticmethod
+    @prover
     def left_add_both_sides_of_equals(relation, addend,
-                                      assumptions=USE_DEFAULTS):
+                                      **defaults_config):
         '''
         Add both sides of the Equals relation by the 'addend'
         on the left.
@@ -123,12 +126,12 @@ class ComplexSet(NumberSet):
         if not isinstance(relation, Equals):
             TypeError("'relation' expected to be Equals")
         return left_add_eq.instantiate(
-            {a: addend, x: relation.lhs, y: relation.rhs},
-            assumptions=assumptions)
+            {a: addend, x: relation.lhs, y: relation.rhs})
 
     @staticmethod
+    @prover
     def left_add_both_sides_of_notequals(relation, addend,
-                                         assumptions=USE_DEFAULTS):
+                                         **defaults_config):
         '''
         Add both sides of the NotEquals relation by the 'addend'
         on the left.
@@ -138,12 +141,12 @@ class ComplexSet(NumberSet):
         if not isinstance(relation, NotEquals):
             TypeError("'relation' expected to be NotEquals")
         return left_add_neq.instantiate(
-            {a: addend, x: relation.lhs, y: relation.rhs},
-            assumptions=assumptions)
+            {a: addend, x: relation.lhs, y: relation.rhs})
 
     @staticmethod
+    @prover
     def right_add_both_sides_of_equals(relation, addend,
-                                       assumptions=USE_DEFAULTS):
+                                       **defaults_config):
         '''
         Add both sides of the Equals relation by the 'addend'
         on the right.
@@ -153,12 +156,12 @@ class ComplexSet(NumberSet):
         if not isinstance(relation, Equals):
             TypeError("'relation' expected to be Equals")
         return right_add_eq.instantiate(
-            {a: addend, x: relation.lhs, y: relation.rhs},
-            assumptions=assumptions)
+            {a: addend, x: relation.lhs, y: relation.rhs})
 
     @staticmethod
+    @prover
     def right_add_both_sides_of_notequals(relation, addend,
-                                          assumptions=USE_DEFAULTS):
+                                          **defaults_config):
         '''
         Add both sides of the NotEquals relation by the 'addend'
         on the right.
@@ -168,12 +171,12 @@ class ComplexSet(NumberSet):
         if not isinstance(relation, NotEquals):
             TypeError("'relation' expected to be NotEquals")
         return right_add_neq.instantiate(
-            {a: addend, x: relation.lhs, y: relation.rhs},
-            assumptions=assumptions)
+            {a: addend, x: relation.lhs, y: relation.rhs})
 
     @staticmethod
+    @prover
     def exponentiate_both_sides_of_equals(relation, exponent,
-                                          assumptions=USE_DEFAULTS):
+                                          **defaults_config):
         '''
         Add both sides of the Equals relation by the 'exponent'.
         '''
@@ -182,12 +185,12 @@ class ComplexSet(NumberSet):
         if not isinstance(relation, Equals):
             TypeError("'relation' expected to be Equals")
         return exp_eq.instantiate(
-            {a: exponent, x: relation.lhs, y: relation.rhs},
-            assumptions=assumptions)
+            {a: exponent, x: relation.lhs, y: relation.rhs})
 
     @staticmethod
+    @prover
     def exponentiate_both_sides_of_notequals(relation, exponent,
-                                             assumptions=USE_DEFAULTS):
+                                             **defaults_config):
         '''
         Add both sides of the NotEquals relation by the 'exponent'.
         '''
@@ -196,50 +199,52 @@ class ComplexSet(NumberSet):
         if not isinstance(relation, NotEquals):
             TypeError("'relation' expected to be NotEquals")
         return exp_neq.instantiate(
-            {a: exponent, x: relation.lhs, y: relation.rhs},
-            assumptions=assumptions)
+            {a: exponent, x: relation.lhs, y: relation.rhs})
 
     @staticmethod
-    def square_both_sides_of_equals(relation,
-                                    assumptions=USE_DEFAULTS):
+    @prover
+    def square_both_sides_of_equals(relation, **defaults_config):
         '''
         Square both sides of the Equals relation.
         '''
         from proveit.numbers import two
         return ComplexSet.exponentiate_both_sides_of_equals(
-            relation, two, assumptions=assumptions)
+            relation, two)
 
     @staticmethod
-    def square_both_sides_of_notequals(relation,
-                                       assumptions=USE_DEFAULTS):
+    @prover
+    def square_both_sides_of_notequals(relation, **defaults_config):
         '''
         Square both sides of the NotEquals relation.
         '''
         from proveit.numbers import two
         return ComplexSet.exponentiate_both_sides_of_notequals(
-            relation, two, assumptions=assumptions)
+            relation, two)
 
     @staticmethod
-    def square_root_both_sides_of_equals(relation, assumptions=USE_DEFAULTS):
+    @prover
+    def square_root_both_sides_of_equals(relation, **defaults_config):
         '''
         Take the square root of both sides of the Equals relation.
         '''
-        from proveit.numbers import frac, one, two
+        from proveit.numbers import frac, one, two, Exp
         new_rel = ComplexSet.exponentiate_both_sides_of_equals(
-            relation, frac(one, two), assumptions=assumptions)
-        new_rel = new_rel.inner_expr().lhs.with_styles(exponent='radical')
-        new_rel = new_rel.inner_expr().rhs.with_styles(exponent='radical')
+            relation, frac(one, two))
+        if isinstance(new_rel.lhs, Exp) and new_rel.lhs.exponent==frac(one, two):
+            new_rel = new_rel.inner_expr().lhs.with_styles(exponent='radical')
+        if isinstance(new_rel.rhs, Exp) and new_rel.lhs.exponent==frac(one, two):
+            new_rel = new_rel.inner_expr().rhs.with_styles(exponent='radical')
         return new_rel
 
     @staticmethod
-    def square_root_both_sides_of_notequals(relation,
-                                            assumptions=USE_DEFAULTS):
+    @prover
+    def square_root_both_sides_of_notequals(relation, **defaults_config):
         '''
         Take the square root of both sides of the NotEquals relation.
         '''
         from proveit.numbers import frac, one, two
         new_rel = ComplexSet.exponentiate_both_sides_of_notequals(
-            relation, frac(one, two), assumptions=assumptions)
+            relation, frac(one, two))
         new_rel = new_rel.inner_expr().lhs.with_styles(exponent='radical')
         new_rel = new_rel.inner_expr().rhs.with_styles(exponent='radical')
         return new_rel
@@ -253,30 +258,6 @@ class ComplexNonZeroSet(NumberSet):
     def membership_object(self, element):
         from .complex_membership import ComplexNonZeroMembership    
         return ComplexNonZeroMembership(element)
-
-    def membership_side_effects(self, judgment):
-        '''
-        Yield side-effects when proving 'q in RationalPos'
-        for a given q.
-        '''
-        member = judgment.element
-        yield lambda: self.deduce_member_in_complex(member)
-        yield lambda: self.deduce_member_not_zero(member)
-    def deduce_member_not_zero(self, member, assumptions=USE_DEFAULTS):
-        from . import nonzero_if_in_complex_nonzero
-        return nonzero_if_in_complex_nonzero.instantiate(
-            {x: member}, assumptions=assumptions)
-
-    def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
-        from . import complex_nonzero_membership_is_bool
-        from proveit import x
-        return complex_nonzero_membership_is_bool.instantiate(
-            {x: member}, assumptions=assumptions)
-
-    def deduce_member_in_complex(self, member, assumptions=USE_DEFAULTS):
-        from . import complex_nonzero_within_complex
-        return complex_nonzero_within_complex.derive_superset_membership(
-            member, assumptions)
     
 
 # if proveit.defaults.automation:

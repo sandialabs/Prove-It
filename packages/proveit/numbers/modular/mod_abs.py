@@ -1,5 +1,4 @@
-from proveit import defaults, Literal, Operation, ProofFailure, USE_DEFAULTS
-from proveit.numbers.number_sets import Real
+from proveit import (defaults, Literal, Operation, relation_prover)
 
 
 class ModAbs(Operation):
@@ -21,28 +20,24 @@ class ModAbs(Operation):
                 + r'\right|_{\textup{mod}\thinspace '
                   + self.divisor.latex(fence=False) + r'}')
 
-    def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
+    @relation_prover
+    def deduce_in_number_set(self, number_set, **defaults_config):
         '''
         Given a number set number_set (such as Integer, Real, etc),
         attempt to prove that the given ModAbs expression is in that
         number set using the appropriate closure theorem.
         '''
         from proveit import a, b
-        from proveit.logic import InSet
         from proveit.numbers.modular import (
             mod_abs_int_closure, mod_abs_real_closure)
         from proveit.numbers import Integer, Real
 
-        # among other things, make sure non-existent assumptions
-        # manifest as empty tuple () rather than None
-        assumptions = defaults.checked_assumptions(assumptions)
-
         if number_set == Integer:
             return mod_abs_int_closure.instantiate(
-                {a: self.value, b: self.divisor}, assumptions=assumptions)
+                    {a: self.value, b: self.divisor})
         if number_set == Real:
             return mod_abs_real_closure.instantiate(
-                {a: self.value, b: self.divisor}, assumptions=assumptions)
+                {a: self.value, b: self.divisor})
         raise NotImplementedError(
             "'ModAbs.deduce_in_number_set()' not implemented for the %s set" 
             % str(number_set))

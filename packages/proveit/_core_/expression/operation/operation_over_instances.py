@@ -8,7 +8,7 @@ from proveit._core_.expression.composite import (
     composite_expression, ExprRange)
 from proveit._core_.expression.conditional import Conditional
 from proveit._core_.defaults import USE_DEFAULTS
-from proveit.decorators import equivalence_prover
+from proveit.decorators import prover, equality_prover
 from .operation import Operation, OperationError
 from .function import Function
 
@@ -31,8 +31,9 @@ def _extract_domain_from_condition(ivar, condition):
                 and condition.end_index == ivar.end_index):
             # Replace the condition parameter with the ivar parameter
             # and see if the InSet element matches ivar.body.
-            cond_body_elem_with_repl_param = condition.body.element.replaced(
-                {condition.parameter: ivar.parameter})
+            cond_body_elem_with_repl_param = (
+                    condition.body.element.basic_replaced(
+                            {condition.parameter: ivar.parameter}))
             if cond_body_elem_with_repl_param == ivar.body:
                 if condition.parameter in free_vars(condition.body.domain,
                                                     err_inclusively=True):
@@ -183,8 +184,8 @@ class OperationOverInstances(Operation):
                             # Use the same parameter for the domain
                             # as the instance parameter.
                             domain_body_with_new_param = \
-                                domain.body.replaced({domain.parameter:
-                                                      iparam.parameter})
+                                domain.body.basic_replaced(
+                                        {domain.parameter: iparam.parameter})
                             condition = ExprRange(
                                 iparam.parameter,
                                 InSet(iparam.body, domain_body_with_new_param),
@@ -842,7 +843,7 @@ class OperationOverInstances(Operation):
                     count += len(entry.formatted(format_type, fence=fence))
         return out_str
 
-    @equivalence_prover('instance_substituted', 'instance_substitute')
+    @equality_prover('instance_substituted', 'instance_substitute')
     def instance_substitution(self, universal_eq, **defaults_config):
         '''
         Equate this OperationOverInstances, 
@@ -871,8 +872,8 @@ class OperationOverInstances(Operation):
         return substitution.derive_right_via_equality(assumptions=assumptions)
     """
 
-
-def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):
+@prover
+def bundle(expr, bundle_thm, num_levels=2, **defaults_config):
     '''
     Given a nested OperationOverInstances, derive or equate an
     equivalent form in which a given number of nested levels is
@@ -902,8 +903,8 @@ def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):
                 "May only 'bundle' nested OperationOverInstances, "
                 "not %s" %
                 bundled)
-        _m = bundled.instance_params.num_elements(assumptions)
-        _n = bundled.instance_expr.instance_params.num_elements(assumptions)
+        _m = bundled.instance_params.num_elements()
+        _n = bundled.instance_expr.instance_params.num_elements()
         _P = bundled.instance_expr.instance_expr
         _Q = bundled.effective_condition()
         _R = bundled.instance_expr.effective_condition()
@@ -933,12 +934,12 @@ def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):
         Pxy = Function(P, all_params)
         Qx = Function(Q, bundled.instance_params)
         Rxy = Function(R, all_params)
-        x_1_to_m = x_1_to_m.replaced({m: _m})
-        y_1_to_n = y_1_to_n.replaced({n: _n})
+        x_1_to_m = x_1_to_m.basic_replaced({m: _m})
+        y_1_to_n = y_1_to_n.basic_replaced({n: _n})
         instantiation = bundle_thm.instantiate(
             {m: _m, n: _n, ExprTuple(x_1_to_m): bundled.instance_params,
              ExprTuple(y_1_to_n): bundled.instance_expr.instance_params,
-             Pxy: _P, Qx: _Q, Rxy: _R}, assumptions=assumptions)
+             Pxy: _P, Qx: _Q, Rxy: _R})
         if isinstance(instantiation.expr, Implies):
             bundled = instantiation.derive_consequent()
         elif isinstance(instantiation.expr, Equals):
@@ -964,9 +965,9 @@ def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):
         # the bundled result.
         return eq.relation
 
-
-def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
-             assumptions=USE_DEFAULTS):
+@prover
+def unbundle(expr, unbundle_thm, num_param_entries=(1,), 
+             **defaults_config):
     '''
     Given a nested OperationOverInstances, derive or equate an
     equivalent form in which the parameter entries are split in
@@ -1015,8 +1016,8 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
         first_params = unbundled.instance_params[:-n_last_entries]
         first_param_vars = {get_param_var(param) for param in first_params}
         remaining_params = unbundled.instance_params[-n_last_entries:]
-        _m = first_params.num_elements(assumptions)
-        _n = remaining_params.num_elements(assumptions)
+        _m = first_params.num_elements()
+        _n = remaining_params.num_elements()
         _P = unbundled.instance_expr
         # Split up the conditions between the outer
         # OperationOverInstances and inner OperationOverInstances
@@ -1078,12 +1079,12 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
         Qx = Function(Q, first_params)
         Rxy = Function(R, unbundled.instance_params)
         Pxy = Function(P, unbundled.instance_params)
-        x_1_to_m = x_1_to_m.replaced({m: _m})
-        y_1_to_n = y_1_to_n.replaced({n: _n})
+        x_1_to_m = x_1_to_m.basic_replaced({m: _m})
+        y_1_to_n = y_1_to_n.basic_replaced({n: _n})
         instantiation = unbundle_thm.instantiate(
             {m: _m, n: _n, ExprTuple(x_1_to_m): first_params,
              ExprTuple(y_1_to_n): remaining_params,
-             Pxy: _P, Qx: _Q, Rxy: _R}, assumptions=assumptions)
+             Pxy: _P, Qx: _Q, Rxy: _R})
         if isinstance(instantiation.expr, Implies):
             unbundled = instantiation.derive_consequent()
         elif isinstance(instantiation.expr, Equals):

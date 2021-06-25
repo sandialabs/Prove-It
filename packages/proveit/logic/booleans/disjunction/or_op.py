@@ -1,9 +1,10 @@
 from proveit import (Expression, Literal, Operation, defaults, USE_DEFAULTS,
                      ProofFailure, InnerExpr, UnusableProof,
-                     prover, equivalence_prover)
+                     prover, equality_prover, SimplificationDirectives, TransRelUpdater)
 from proveit import A, B, C, D, m, n
 from proveit.logic.booleans.booleans import in_bool
-from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, group_commutation, group_commute
+from proveit.abstract_algebra.generic_methods import (apply_commutation_thm, apply_association_thm,
+    apply_disassociation_thm, group_commutation, group_commute)
 
 
 class Or(Operation):
@@ -12,6 +13,9 @@ class Or(Operation):
         string_format='or',
         latex_format=r'\lor',
         theory=__file__)
+
+    _simplification_directives_ = SimplificationDirectives(
+        ungroup=True)
 
     # used to avoid infinite recursion inside of unary_reduction
     trivial_disjunctions = set()
@@ -85,14 +89,18 @@ class Or(Operation):
             if len(proven_operand_indices) > 0:
                 try:
                     # proven using conclude_via_example above 
-                    # (unless or_if[Any,Left,Right] was not a usable theorem,
-                    # in which case this will fail and we can simply try the
-                    # default below)
+                    # (unless or_if[Any,Left,Right] was not a usable
+                    # theorem, in which case this will fail and we
+                    # can simply try the default below)
                     return self.prove(automation=False)
                 except UnusableProof:
                     # or_if[Any,Left,Right] must not have been a usable
                     # theorem; use the default below.
                     break
+
+        raise ProofFailure(self, defaults.assumptions,
+                "Or.conclude() has failed to find a proof for the "
+                "disjunction: ({})".format(self))
 
     def side_effects(self, judgment):
         '''
@@ -145,7 +153,9 @@ class Or(Operation):
         else:
             _A = self.operands
             _m = _A.num_elements()
-            return not_or_if_not_any.instantiate({m: _m, A: _A})
+            return not_or_if_not_any.instantiate({m: _m, A: _A}, auto_simplify=False)
+            # we turn auto_simplification off because proveit knows that Not(A) is true,
+            # as a result, it simplifies A to be False during auto_simplification
 
     @prover
     def conclude_via_both(self, **defaults_config):
@@ -256,7 +266,8 @@ class Or(Operation):
                 ("derive_via_multi_dilemma requires conclusion to be a "
                  "disjunction, the same number of operands as self.")
         with defaults.temporary() as temp_defaults:
-            temp_defaults.preserve_expr(conclusion)
+            # temp_defaults.preserve_expr(conclusion)
+            temp_defaults.preserved_exprs = defaults.preserved_exprs.union([conclusion])
             # Check for destructive versus constructive dilemma cases.
             if all(isinstance(operand, Not) for operand in self.operands) and all(
                     isinstance(operand, Not) for operand in conclusion.operands):
@@ -381,7 +392,7 @@ class Or(Operation):
         return not_right_if_neither.instantiate(
             {A: left_operand, B: right_operand})
 
-    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    @equality_prover('shallow_evaluated', 'shallow_evaluate')
     def shallow_evaluation(self, **defaults_config):
         '''
         Attempt to determine whether this disjunction, with
@@ -419,7 +430,7 @@ class Or(Operation):
         return Equals(self, FALSE).prove()
 
     """
-    @equivalence_prover('evaluated', 'evaluate')
+    @equality_prover('evaluated', 'evaluate')
     def evaluation(self, **defaults_config):
         '''
         Attempt to determine whether this disjunction evaluates
@@ -481,7 +492,7 @@ class Or(Operation):
         return Operation.evaluation(self, automation=False)
     """
     
-    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, **defaults_config):
         '''
         Return the "And(a) = a" simplification if applicable,
@@ -489,6 +500,25 @@ class Or(Operation):
         '''
         if self.operands.is_single():
             return self.unary_reduction()
+
+        expr = self
+        # for convenience updating our equation
+        eq = TransRelUpdater(expr)
+
+        if Or._simplification_directives_.ungroup:
+            # ungroup the expression (disassociate nested disjunctions).
+            _n = 0
+            length = expr.operands.num_entries() - 1
+            # loop through all operands
+            while _n < length:
+                operand = expr.operands[_n]
+                if isinstance(operand, Or):
+                    # if it is grouped, ungroup it
+                    expr = eq.update(expr.disassociation(
+                            _n, auto_simplify=False))
+                length = expr.operands.num_entries()
+                _n += 1
+
         return Expression.shallow_simplification(self)
 
     @prover
@@ -504,8 +534,8 @@ class Or(Operation):
         else:
             _A = self.operands
             _m = self.operands.num_elements()
-            return or_contradiction.instantiate({m: _m, A: _A})
-
+            return or_contradiction.instantiate({m: _m, A: _A}, auto_simplify=False)
+        
     @prover
     def affirm_via_contradiction(self, conclusion, **defaults_config):
         '''
@@ -659,7 +689,7 @@ class Or(Operation):
 
         return permuted_disjunction
 
-    @equivalence_prover('unary_reduced', 'unary_reduce')
+    @equality_prover('unary_reduced', 'unary_reduce')
     def unary_reduction(self, **defaults_config):
         '''
         For the degenerate case of Or(A), where A is Boolean, derive
@@ -677,7 +707,7 @@ class Or(Operation):
         operand = self.operands[0]
         return unary_or_reduction.instantiate({A: operand})
 
-    @equivalence_prover('commuted', 'commute')
+    @equality_prover('commuted', 'commute')
     def commutation(self, init_idx=None, final_idx=None, **defaults_config):
         '''
         Given Boolean operands, deduce that this expression is equal to 
@@ -692,7 +722,7 @@ class Or(Operation):
             self, init_idx, final_idx, commutation,
             leftward_commutation, rightward_commutation)
 
-    @equivalence_prover('group_commuted', 'group_commute')  
+    @equality_prover('group_commuted', 'group_commute')  
     def group_commutation(self, init_idx, final_idx, length, 
                           disassociate=True, **defaults_config):
         '''
@@ -743,7 +773,7 @@ class Or(Operation):
         return group_commute(
             self, init_idx,  final_idx, length, disassociate)
 
-    @equivalence_prover('associated', 'associate')  
+    @equality_prover('associated', 'associate')  
     def association(self, start_idx, length, **defaults_config):
         '''
         Given Boolean operands, deduce that this expression is equal to a form in which operands in the
@@ -766,7 +796,7 @@ class Or(Operation):
         return apply_association_thm(
             self, start_idx, length, associate)
 
-    @equivalence_prover('disassociated', 'disassociate')  
+    @equality_prover('disassociated', 'disassociate')  
     def disassociation(self, idx, **defaults_config):
         '''
         Given Boolean operands, deduce that this expression is equal to

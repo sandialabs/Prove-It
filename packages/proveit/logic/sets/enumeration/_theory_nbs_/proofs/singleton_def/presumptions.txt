@@ -13,5 +13,4 @@ proveit.logic.equality.sub_left_side_into
 proveit.logic.equality.substitute_truth
 proveit.logic.equality.unfold_not_equals
 proveit.numbers.numerals.decimals.nat1
-proveit.numbers.numerals.decimals.tuple_len_1_typical_eq
 # THEOREMS AND THEORIES TO EXCLUDE:

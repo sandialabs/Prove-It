@@ -110,8 +110,8 @@ class Exists(OperationOverInstances):
         # instance expression P
         repl_dict = {param: skolem_const for param, skolem_const
                      in zip(self.instance_params, skolem_constants)}
-        P_skolem = self.instance_expr.replaced(repl_dict)
-        Q_skolem = self.conditions.replaced(repl_dict)
+        P_skolem = self.instance_expr.basic_replaced(repl_dict)
+        Q_skolem = self.conditions.basic_replaced(repl_dict)
 
         # Update the default assumptions with the Skolem versions
         # of the conditions and instance expression
@@ -175,8 +175,8 @@ class Exists(OperationOverInstances):
                     existential.instance_params, And())
             _alpha = judgment
             _n = existential.instance_params.num_elements()
-            x_1_to__n = ExprTuple(x_1_to_n.replaced({n: _n}))
-            y_1_to__n = ExprTuple(y_1_to_n.replaced({n: _n}))
+            x_1_to__n = ExprTuple(x_1_to_n.basic_replaced({n: _n}))
+            y_1_to__n = ExprTuple(y_1_to_n.basic_replaced({n: _n}))
     
             # express the judgment as an implication to match details of
             # the skolem_elim theorem being instantiated further below

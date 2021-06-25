@@ -28,9 +28,9 @@ from ._core_ import (
     UnsatisfiedPrerequisites,
     StyleOptions, maybe_fenced_string, maybe_fenced_latex, maybe_fenced)
 
-# @prover and @equivalence_prover are useful decorators for many
+# @prover and @equality_prover are useful decorators for many
 # Expression class methods:
-from .decorators import prover, equivalence_prover
+from .decorators import prover, relation_prover, equality_prover
 
 from .relation import (
     TransitiveRelation,

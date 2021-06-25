@@ -1,6 +1,6 @@
 from proveit import (defaults, Literal, Operation, USE_DEFAULTS, ExprTuple,
                      Judgment, ProofFailure, InnerExpr, 
-                     prover, equivalence_prover,
+                     prover, relation_prover, equality_prover,
                      SimplificationDirectives)
 from proveit.logic import Equals, InSet
 from proveit.numbers import num
@@ -46,7 +46,8 @@ class Mult(NumberOperation):
                     # have been generated
                     pass  # and that's okay
 
-    def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
+    @relation_prover
+    def deduce_in_number_set(self, number_set, **defaults_config):
         '''
         Attempt to prove that this product is in the given number_set.
         '''
@@ -118,16 +119,15 @@ class Mult(NumberOperation):
         # print("self in deduce in number set", self)
         # print("self.operands", self.operands)
         if bin:
-            return thm.instantiate({a: self.operands[0], b: self.operands[1]},
-                                   assumptions=assumptions)
-        return thm.instantiate({n: self.operands.num_elements(assumptions),
-                                a: self.operands},
-                               assumptions=assumptions)
+            return thm.instantiate({a: self.operands[0], b: self.operands[1]})
+        return thm.instantiate({n: self.operands.num_elements(),
+                                a: self.operands})
 
-    def deduce_divided_by(self, divisor, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_divided_by(self, divisor, **defaults_config):
         '''
         Deduce that the product represented by Mult(a,b) is divisible
-        by the mult_factor a or b. For example,
+        by the divisor a or b. For example,
            Mult(a, b).deduce_divided_by(a)
         returns |- Divides(a, Mult(a,b)), that is |- a|ab, (assuming
         complex a≠0 and integer b).
@@ -139,7 +139,7 @@ class Mult(NumberOperation):
             _x, _y = left_factor_divisibility.instance_params
             return left_factor_divisibility.instantiate(
                 {_x: self.operands[0], _y: self.operands[1]},
-                assumptions=assumptions)
+                preserve_expr=self)
 
         elif divisor == self.operands[1]:  # a|ba
             from proveit.numbers.divisibility import (
@@ -147,7 +147,7 @@ class Mult(NumberOperation):
             _x, _y = right_factor_divisibility.instance_params
             return right_factor_divisibility.instantiate(
                 {_x: self.operands[0], _y: self.operands[1]},
-                assumptions=assumptions)
+                preserve_expr=self)
 
         else:
             raise ValueError(
@@ -157,18 +157,19 @@ class Mult(NumberOperation):
                 "{0} or {1}.".
                 format(self.operands[0], self.operands[1], divisor))
 
-    def not_equal(self, rhs, assumptions=USE_DEFAULTS):
+    @relation_prover
+    def not_equal(self, rhs, **defaults_config):
         from . import mult_not_eq_zero
         from proveit.logic import NotEquals
         from proveit.numbers import zero
         if rhs == zero:
-            _n = self.operands.num_elements(assumptions)
+            _n = self.operands.num_elements()
             _a = self.operands
             return mult_not_eq_zero.instantiate({n: _n, a: _a},
-                                                assumptions=assumptions)
-        return NotEquals(self, zero).conclude_as_folded(assumptions)
+                                                auto_simplify=False)
+        return NotEquals(self, rhs).conclude_as_folded()
 
-    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    @equality_prover('shallow_evaluated', 'shallow_evaluate')
     def shallow_evaluation(self, **defaults_config):
         '''
         Returns a proven evaluation equation for this Mult
@@ -243,7 +244,7 @@ class Mult(NumberOperation):
 
         raise EvaluationError(self)
 
-    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, **defaults_config):
         '''
         Returns a proven simplification equation for this Mult
@@ -257,7 +258,8 @@ class Mult(NumberOperation):
         
         if self.operands.is_single():
              # Multiplication with 1 operand is just that operand
-            return unary_mult_reduction.instantiate({a:self.operands[0]})     
+            return unary_mult_reduction.instantiate(
+                    {a:self.operands[0]}, auto_simplify=False)     
 
         expr = self
         # for convenience updating our equation
@@ -271,19 +273,20 @@ class Mult(NumberOperation):
                 # loop through all operands
                 if isinstance(expr.operands[idx], Mult):
                     # if it is grouped, ungroup it
-                    expr = eq.update(expr.disassociation(idx))
+                    expr = eq.update(expr.disassociation(
+                            idx, preserve_all=True))
                 else:
                     idx += 1
                 length = expr.operands.num_entries()
 
         # Simplify negations -- factor them out.
-        expr = eq.update(expr.neg_simplifications())
+        expr = eq.update(expr.neg_simplifications(preserve_all=True))
 
         if not isinstance(expr, Mult):
             # The expression may have changed to a negation after doing
             # neg_simplification.  Start the simplification of this new
             # expression fresh at this point.
-            eq.update(expr.simplification())
+            eq.update(expr.simplification(skip_operand_simplification=True))
             return eq.relation
 
         # Peform any cancelations between numerators and
@@ -293,7 +296,8 @@ class Mult(NumberOperation):
 
         return eq.relation
 
-    def neg_simplifications(self, assumptions=USE_DEFAULTS):
+    @equality_prover('simplified_negations', 'simplify_negations')
+    def neg_simplifications(self, **defaults_config):
         '''
         Equivalence method that derives a simplification in which
         negated factors are factored out.  For example:
@@ -303,24 +307,26 @@ class Mult(NumberOperation):
 
         expr = self
 
-        # A convenience to allow successive update to the equation via transitivities.
-        # (starting with self=self).
-        eq = TransRelUpdater(self, assumptions)
+        # A convenience to allow successive update to the equation via 
+        # transitivities (starting with self=self).
+        eq = TransRelUpdater(self)
 
         # Work in reverse order so indices don't need to be updated.
         for rev_idx, operand in enumerate(reversed(self.operands.entries)):
             if isinstance(operand, Neg):
                 idx = self.operands.num_entries() - rev_idx - 1
                 if isinstance(expr, Mult):
-                    expr = eq.update(expr.neg_simplification(idx, assumptions))
+                    expr = eq.update(expr.neg_simplification(
+                            idx, preserve_all=True))
                 elif isinstance(expr, Neg):
                     expr = eq.update(
                         expr.inner_neg_mult_simplification(
-                            idx, assumptions))
+                                idx, preserve_all=True))
 
         return eq.relation
 
-    def neg_simplification(self, idx, assumptions=USE_DEFAULTS):
+    @equality_prover('simplified_negation', 'simplify_negation')
+    def neg_simplification(self, idx, **defaults_config):
         '''
         Equivalence method that derives a simplification in which
         a specific negated factor, at the given index, is factored out.
@@ -339,22 +345,19 @@ class Mult(NumberOperation):
             if idx == 0:
                 _x = self.operands[0].operand
                 _y = self.operands[1]
-                return mult_neg_left.instantiate({x: _x, y: _y},
-                                                 assumptions=assumptions)
+                return mult_neg_left.instantiate({x: _x, y: _y})
             else:
                 _x = self.operands[0]
                 _y = self.operands[1].operand
-                return mult_neg_right.instantiate({x: _x, y: _y},
-                                                  assumptions=assumptions)
+                return mult_neg_right.instantiate({x: _x, y: _y})
         _a = self.operands[:idx]
         _b = self.operands[idx].operand
         _c = self.operands[idx + 1:]
-        _i = _a.num_elements(assumptions)
-        _j = _c.num_elements(assumptions)
-        return mult_neg_any.instantiate({i: _i, j: _j, a: _a, b: _b, c: _c},
-                                        assumptions=assumptions)
+        _i = _a.num_elements()
+        _j = _c.num_elements()
+        return mult_neg_any.instantiate({i: _i, j: _j, a: _a, b: _b, c: _c})
 
-    @equivalence_prover('eliminated_ones', 'eliminate_ones')
+    @equality_prover('eliminated_ones', 'eliminate_ones')
     def one_eliminations(self, **defaults_config):
         '''
         Equivalence method that derives a simplification in which
@@ -373,14 +376,15 @@ class Mult(NumberOperation):
         for rev_idx, operand in enumerate(reversed(self.operands.entries)):
             if operand == one:
                 idx = self.operands.num_entries() - rev_idx - 1
-                expr = eq.update(expr.one_elimination(idx))
+                expr = eq.update(expr.one_elimination(
+                        idx, preserve_all=True))
                 if not isinstance(expr, Mult):
                     # can't do an elimination if reduced to a single term.
                     break
 
         return eq.relation
 
-    @equivalence_prover('eliminated_one', 'eliminate_one')
+    @equality_prover('eliminated_one', 'eliminate_one')
     def one_elimination(self, idx, **defaults_config):
         '''
         Equivalence method that derives a simplification in which
@@ -407,7 +411,7 @@ class Mult(NumberOperation):
         _j = _b.num_elements()
         return elim_one_any.instantiate({i: _i, j: _j, a: _a, b: _b})
 
-    @equivalence_prover('deep_eliminated_ones', 'deep_eliminate_ones')
+    @equality_prover('deep_eliminated_ones', 'deep_eliminate_ones')
     def deep_one_eliminations(self, **defaults_config):
         '''
         Eliminate ones from direct factors as well as grouped
@@ -422,12 +426,12 @@ class Mult(NumberOperation):
         for _i, factor in enumerate(self.factors.entries):
             if hasattr(factor, 'deep_one_eliminations'):
                 expr = eq.update(expr.inner_expr().factors[_i].
-                                 deep_one_eliminations())
+                                 deep_one_eliminations(preserve_all=True))
 
-        expr = eq.update(expr.one_eliminations())
+        expr = eq.update(expr.one_eliminations(preserve_all=True))
         return eq.relation
 
-    @equivalence_prover('all_canceled', 'all_cancel')
+    @equality_prover('all_canceled', 'all_cancel')
     def cancelations(self, **defaults_config):
         '''
         Deduce and return an equality between self and a form in which
@@ -437,8 +441,8 @@ class Mult(NumberOperation):
         from proveit.numbers import Div
         expr = self
 
-        # A convenience to allow successive update to the equation via transitivities.
-        # (starting with self=self).
+        # A convenience to allow successive update to the equation via 
+        # transitivities (starting with self=self).
         eq = TransRelUpdater(self)
 
         # Eliminate any ones "deeply".  Ones can be eliminated without
@@ -466,12 +470,14 @@ class Mult(NumberOperation):
 
         for numer_factor in numer_factors:
             if numer_factor in denom_factors_set:
-                expr = eq.update(expr.cancelation(numer_factor))
+                expr = eq.update(expr.cancelation(numer_factor, 
+                                                  preserve_all=True))
                 denom_factors_set.remove(numer_factor)
 
         return eq.relation
 
-    def cancelation(self, term_to_cancel, assumptions=USE_DEFAULTS):
+    @equality_prover('canceled', 'cancel')
+    def cancelation(self, term_to_cancel, **defaults_config):
         '''
         Deduce and return an equality between self and a form in which
         the given factor has been canceled in a numerator (or factor)
@@ -481,7 +487,7 @@ class Mult(NumberOperation):
         '''
         from proveit.numbers import Div, zero, one
         expr = self
-        eq = TransRelUpdater(expr, assumptions)
+        eq = TransRelUpdater(expr)
 
         if term_to_cancel in (zero, one):
             raise ValueError("'term_to_cancel' must not be zero or one")
@@ -518,7 +524,7 @@ class Mult(NumberOperation):
         if len(intersection_indices) > 0:
             idx = sorted(intersection_indices)[0]
             eq.update(expr.inner_expr().factors[idx].cancellation(
-                term_to_cancel, assumptions=assumptions))
+                term_to_cancel))
             return eq.relation
 
         # Handle the special case of two neighboring factors which
@@ -547,8 +553,7 @@ class Mult(NumberOperation):
             canceling_numer_inner_expr, canceling_numer_expr = \
                 updated_canceling_numer_inner_expr()
             if isinstance(canceling_numer_expr, Mult):
-                one_elims = canceling_numer_inner_expr.deep_one_eliminations(
-                    assumptions)
+                one_elims = canceling_numer_inner_expr.deep_one_eliminations()
                 if one_elims.lhs != one_elims.rhs:
                     # Update canceling numerator with one eliminations.
                     expr = eq.update(one_elims)
@@ -557,8 +562,7 @@ class Mult(NumberOperation):
             canceling_denom_inner_expr, canceling_denom_expr = \
                 updated_canceling_denom_inner_expr()
             if isinstance(canceling_denom_expr, Mult):
-                one_elims = canceling_denom_inner_expr.deep_one_eliminations(
-                    assumptions)
+                one_elims = canceling_denom_inner_expr.deep_one_eliminations()
                 if one_elims.lhs != one_elims.rhs:
                     # Update canceling denominator with one elims.
                     expr = eq.update(one_elims)
@@ -572,7 +576,7 @@ class Mult(NumberOperation):
                 pull = 'right' if numer_idx == 0 else 'left'
                 expr = eq.update(canceling_numer_inner_expr.factorization(
                     term_to_cancel, pull=pull, group_factor=True,
-                    group_remainder=True, assumptions=assumptions))
+                    group_remainder=True))
                 canceling_numer_inner_expr, canceling_numer_expr = \
                     updated_canceling_numer_inner_expr()
             if canceling_denom_expr != term_to_cancel:
@@ -580,7 +584,7 @@ class Mult(NumberOperation):
                 pull = 'right' if denom_idx == 0 else 'left'
                 expr = eq.update(canceling_denom_inner_expr.factorization(
                     term_to_cancel, pull=pull, group_factor=True,
-                    group_remainder=True, assumptions=assumptions))
+                    group_remainder=True))
                 canceling_numer_inner_expr, canceling_numer_expr = \
                     updated_canceling_numer_inner_expr()
 
@@ -611,8 +615,7 @@ class Mult(NumberOperation):
                             canceling_denom_expr.factors.is_double())
                     _e = canceling_denom_expr.factors[1]
                 cancelation = mult_frac_cancel_numer_left.instantiate(
-                    {a: _a, b: _b, c: _c, d: _d, e: _e},
-                    assumptions=assumptions)
+                    {a: _a, b: _b, c: _c, d: _d, e: _e})
             else:
                 # numerator on the right side
                 assert numer_idx == 1 and denom_idx == 0
@@ -640,15 +643,14 @@ class Mult(NumberOperation):
                             canceling_numer_expr.factors.is_double())
                     _e = canceling_numer_expr.factors[1]
                 cancelation = mult_frac_cancel_denom_left.instantiate(
-                    {a: _a, b: _b, c: _c, d: _d, e: _e},
-                    assumptions=assumptions)
+                    {a: _a, b: _b, c: _c, d: _d, e: _e})
             # Eliminate ones in the cancelation; it should now
             # match with the expression where we have already
             # eliminated ones.
             cancelation = (
-                cancelation.inner_expr().lhs.deep_eliminate_ones(assumptions))
+                cancelation.inner_expr().lhs.deep_eliminate_ones())
             cancelation = (
-                cancelation.inner_expr().rhs.deep_eliminate_ones(assumptions))
+                cancelation.inner_expr().rhs.deep_eliminate_ones())
             eq.update(cancelation)
             return eq.relation
 
@@ -665,14 +667,13 @@ class Mult(NumberOperation):
             # Found neighboring occurrences.  Group, cancel,
             # then ungroup (if necessary).
             expr = eq.update(expr.inner_expr().association(
-                left_idx, 2, assumptions=assumptions))
+                left_idx, 2))
             expr = eq.update(
                 expr.inner_expr().factors[left_idx].cancellation(
-                    term_to_cancel, assumptions=assumptions))
+                    term_to_cancel))
             if isinstance(expr.factors[left_idx], Mult):
                 expr = eq.update(
-                    expr.inner_expr().disassociation(left_idx,
-                                                     assumptions=assumptions))
+                    expr.inner_expr().disassociation(left_idx))
             return eq.relation
 
         # As the last resort, we simply move the first occurrences
@@ -683,21 +684,19 @@ class Mult(NumberOperation):
         numer_idx = numer_occurrence_indices[0]
         denom_idx = denom_occurrence_indices[0]
         expr = eq.update(
-            expr.inner_expr().commutation(
-                denom_idx, numer_idx, assumptions=assumptions))
-        expr = eq.update(expr.inner_expr().cancelation(
-            term_to_cancel, assumptions=assumptions))
+            expr.inner_expr().commutation(denom_idx, numer_idx))
+        expr = eq.update(expr.inner_expr().cancelation(term_to_cancel))
         if expr.factors.num_entries() < self.factors.num_entries():
             # It must have been a complete cancelation, so no
             # reason to move anything back.
             return eq.relation
         # We should put things back where they were to play nice.
         expr = eq.update(
-            expr.inner_expr().commutation(
-                numer_idx, denom_idx, assumptions=assumptions))
+            expr.inner_expr().commutation(numer_idx, denom_idx))
         return eq.relation
 
-    def conversion_to_addition(self, assumptions=USE_DEFAULTS):
+    @equality_prover('converted_to_addition', 'convert_to_addition')
+    def conversion_to_addition(self, **defaults_config):
         '''
         From multiplication by an integer as the first factor,
         derive and return the equivalence of this multiplication
@@ -708,21 +707,22 @@ class Mult(NumberOperation):
             reps = self.operands[0].as_int()
         else:
             raise ValueError(
-                "Cannot 'expand_as_addition' unless the first operand is a literal integer: %s" %
-                str(self))
+                "Cannot 'expand_as_addition' unless the first operand "
+                "is a literal integer: %s" %str(self))
 
         expr = self
         # for convenience updating our equation
-        eq = TransRelUpdater(self, assumptions)
+        eq = TransRelUpdater(self)
         # Group together the remaining factors if necessary:
         if self.operands.num_entries() > 2:
             expr = eq.update(
                 expr.association(
-                    1, self.operands.num_entries() - 1, assumptions))
+                    1, self.operands.num_entries() - 1,
+                    preserve_expr=self.operands[0]))
         _x = self.operands[1]
         _n = num(reps)
         eq.update(mult_def.instantiate({n: _n, a: [_x] * reps, x: _x},
-                                       assumptions=assumptions))
+                                        auto_simplify=False))
         return eq.relation
 
     def index(self, the_factor, also_return_num=False):
@@ -756,35 +756,7 @@ class Mult(NumberOperation):
                 raise ValueError("Factor is absent!")
         return (idx, num) if also_return_num else idx
 
-    def pull(
-            self,
-            start_idx=None,
-            end_idx=None,
-            direction='left',
-            assumptions=USE_DEFAULTS):
-        '''
-        Pull a subset of consecutive operands, self.operands[start_idx:end_idx],
-        to one side or another. Returns the equality that equates self to
-        this new version.  Give any assumptions necessary to prove that the
-        operands are in the Complex numbers so that the commutation theorem is applicable.
-        '''
-        if direction == "left":  # pull the factor(s) to the left
-            if start_idx == 0 or start_idx is None:
-                return Equals(self, self).prove(
-                    assumptions)  # no move necessary
-            return self.group_commutation(
-                None, start_idx, start_idx, end_idx, assumptions=assumptions)
-        elif direction == "right":  # pull the factor(s) to the right
-            if end_idx == self.operands.num_entries() or end_idx is None:
-                return Equals(self, self).prove(
-                    assumptions)  # no move necessary
-            return self.group_commutation(
-                start_idx, end_idx, end_idx, None, assumptions=assumptions)
-        else:
-            raise ValueError(
-                "Invalid pull direction!  (Acceptable values are \"left\" and \"right\".)")
-
-    @equivalence_prover('distributed', 'distribute')
+    @equality_prover('distributed', 'distribute')
     def distribution(self, idx=None, **defaults_config):
         r'''
         Distribute through the operand at the given index.
@@ -814,12 +786,12 @@ class Mult(NumberOperation):
         _i = _a.num_elements()
         _k = _c.num_elements()
         if (isinstance(operand, Add) and operand.operands.is_double()
-              and isinstance(operand.operands[0], Neg)):
+              and isinstance(operand.operands[1], Neg)):
             _j = _k
             _x = self.operands[idx].operands[0]
             _y = self.operands[idx].operands[1].operand
             return distribute_through_subtract.instantiate(
-                {i: _i, j: _j, a: _a, x: _x, y: _y, c: _c})
+                {i: _i, j: _j, a: _a, x: _x, y: _y, b: _c})
         elif isinstance(operand, Add):
             _b = self.operands[idx].operands
             _j = _b.num_elements()
@@ -870,7 +842,7 @@ class Mult(NumberOperation):
             raise Exception(
                 "Unsupported operand type to distribute over: " + str(operand.__class__))
 
-    @equivalence_prover('factorized', 'factor')
+    @equality_prover('factorized', 'factor')
     def factorization(self, the_factor_or_index, pull="left",
                       group_factor=True, group_remainder=False,
                       **defaults_config):
@@ -889,31 +861,37 @@ class Mult(NumberOperation):
             return eq.relation # self = self
         if isinstance(the_factor_or_index, int):
             idx, num = the_factor_or_index, 1
+            the_factor = self.operands[idx]
         else:
             the_factor = the_factor_or_index
             idx, num = self.index(the_factor, also_return_num=True)
         expr = eq.update(self.group_commutation(
-            idx, 0 if pull == 'left' else -num, length=num))
+            idx, 0 if pull == 'left' else -num, length=num,
+            preserve_expr=the_factor))
         if group_factor and num > 1:
             # use 0:num type of convention like standard python
             if pull == 'left':  
-                expr = eq.update(expr.association(0, num))
+                expr = eq.update(expr.association(
+                        0, num, preserve_all=True))
             elif pull == 'right':
-                expr = eq.update(expr.association(-num, num))
+                expr = eq.update(expr.association(
+                        -num, num, preserve_all=True))
         if group_remainder and self.operands.num_entries() - num > 1:
             # if the factor has been group, effectively there is just 1
             # factor operand now
             num_factor_operands = 1 if group_factor else num
-            num_remainder_operands = self.operands.num_entries() - num_factor_operands
+            num_remainder_operands = (self.operands.num_entries() - 
+                                      num_factor_operands)
             if pull == 'left':
                 expr = eq.update(expr.association(
-                        num_factor_operands, num_remainder_operands))
+                        num_factor_operands, num_remainder_operands,
+                        preserve_all=True))
             elif pull == 'right':
                 expr = eq.update(expr.association(
-                        0, num_remainder_operands))
+                        0, num_remainder_operands, preserve_all=True))
         return eq.relation
 
-    @equivalence_prover('combined_exponents', 'combine_exponents')
+    @equality_prover('combined_exponents', 'combine_exponents')
     def exponent_combination(self, start_idx=None, end_idx=None,
                              **defaults_config):
         '''
@@ -934,17 +912,11 @@ class Mult(NumberOperation):
             add_one_right_in_exp, add_one_left_in_exp)
         from proveit.numbers import Exp
         if start_idx is not None or end_idx is not None:
-            dummy_var = self.safe_dummy_var()
-            grouped = self.group(start_idx, end_idx)
-            inner_combination = (
-                grouped.rhs.factors[start_idx].
-                exponent_combination())
-            combine_in_group = (
-                inner_combination.
-                substitution(Mult(*(self.factors[:start_idx]
-                                    + (dummy_var,)
-                                    + self.factors[end_idx:])), dummy_var))
-            return grouped.apply_transitivity(combine_in_group)
+            association = self.association(start_idx, end_idx, 
+                                           preserve_all=True)
+            inner_expr = association.rhs.inner_expr().factors[start_idx]
+            combination = inner_expr.exponent_combination()
+            return association.apply_transitivity(combination)
         # if all(isinstance(factor, Sqrt) for factor in self.factors):
         #     # combine the square roots into one square root
         #     factor_bases = [factor.base for factor in self.factors]
@@ -966,18 +938,14 @@ class Mult(NumberOperation):
                     self.operands[0].base == self.operands[1]):
                 # Of the form a^b a
                 return add_one_right_in_exp.instantiate(
-                    {
-                        a: self.operands[1],
-                        b: self.operands[0].exponent},
+                    {a: self.operands[1], b: self.operands[0].exponent},
                     ).derive_reversed()
             elif (self.operands.is_double() and 
                       isinstance(self.operands[1], Exp) and 
                       self.operands[1].base == self.operands[0]):
                 # Of the form a a^b
                 return add_one_left_in_exp.instantiate(
-                    {
-                        a: self.operands[0],
-                        b: self.operands[1].exponent},
+                    {a: self.operands[0], b: self.operands[1].exponent},
                     ).derive_reversed()
             raise NotImplementedError(
                 "Need to better implement degenerate cases "
@@ -1102,7 +1070,7 @@ class Mult(NumberOperation):
         raise ValueError('Product is not in a correct form to '
                          'combine exponents: ' + str(self))
 
-    @equivalence_prover('commuted', 'commute')
+    @equality_prover('commuted', 'commute')
     def commutation(self, init_idx=None, final_idx=None, **defaults_config):
         '''
         Given numerical operands, deduce that this expression is equal
@@ -1116,7 +1084,7 @@ class Mult(NumberOperation):
             self, init_idx, final_idx, commutation,
             leftward_commutation, rightward_commutation)
 
-    @equivalence_prover('group_commuted', 'group_commute')
+    @equality_prover('group_commuted', 'group_commute')
     def group_commutation(self, init_idx, final_idx, length,
                           disassociate=True, **defaults_config):
         '''
@@ -1130,7 +1098,7 @@ class Mult(NumberOperation):
         return group_commutation(
             self, init_idx, final_idx, length, disassociate=disassociate)
 
-    @equivalence_prover('associated', 'associate')
+    @equality_prover('associated', 'associate')
     def association(self, start_idx, length, **defaults_config):
         '''
         Given numerical operands, deduce that this expression is equal 
@@ -1143,7 +1111,7 @@ class Mult(NumberOperation):
         return apply_association_thm(
             self, start_idx, length, association)
 
-    @equivalence_prover('disassociated', 'disassociate')
+    @equality_prover('disassociated', 'disassociate')
     def disassociation(self, idx, **defaults_config):
         '''
         Given numerical operands, deduce that this expression is equal 
@@ -1155,7 +1123,7 @@ class Mult(NumberOperation):
         from . import disassociation
         return apply_disassociation_thm(self, idx, disassociation)
 
-    @prover
+    @relation_prover
     def bound_via_operand_bound(self, operand_relation, **defaults_config):
         '''
         Alias for bound_via_factor_bound.
@@ -1163,7 +1131,7 @@ class Mult(NumberOperation):
         '''
         return self.bound_via_factor_bound(operand_relation)
 
-    @prover
+    @relation_prover
     def bound_via_factor_bound(self, factor_relation, **defaults_config):
         '''
         Deduce a bound of this multiplication via the bound on
@@ -1247,10 +1215,11 @@ class Mult(NumberOperation):
         assert relation.lhs == self
         return relation
 
-    @prover
+    @relation_prover
     def deduce_positive(self, **defaults_config):
-        # Deduce that this absolute value is greater than zero
-        # given its argument is not equal zero.
+        '''
+        Deduce that this product is greater than zero.
+        '''
         from proveit.numbers import RealPos, zero, greater
         InSet(self, RealPos).prove()
         return greater(self, zero).prove()

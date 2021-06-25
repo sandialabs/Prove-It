@@ -1,7 +1,7 @@
 import sys
 from proveit import (Lambda, Literal, Function, TransitiveRelation, 
                      StyleOptions, USE_DEFAULTS, defaults,
-                     prover, equivalence_prover)
+                     prover, equality_prover)
 from proveit import A, B, C, D, E, F, G, h, i, j, k, m, n, p, Q, R, S, U
 from proveit._core_.expression.composite import ExprArray, ExprTuple, ExprRange
 from proveit.logic import Set
@@ -246,7 +246,7 @@ class Gate(Function):
         else:
             self.gate_operation = self.operands[0]
 
-    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, **defaults_config):
         '''
         Handles "Gate() = IdentityOp()", "Gate(Input(U)) = Input(U)",
@@ -264,6 +264,8 @@ class Gate(Function):
             from proveit.physics.quantum import output_gate_to_ket
             return output_gate_to_ket.instantiate(
                 {U: self.gate_operation.state})
+        from proveit.logic import Equals
+        return Equals(self, self).conclude_via_reflexivity()
 
     def style_options(self):
         '''
@@ -374,13 +376,14 @@ class MultiQubitGate(Function):
             call_strs.append("with_styles(representation='implicit')")
         return call_strs
 
-    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, **defaults_config):
         '''
         Handles "MultiQubitGate(a, Set()) = IdentityOp()" and
         "MultiQubitGate(a, Set(n)) = Gate(a)".
         '''
         from proveit.numbers import is_literal_int
+        from proveit.logic.equality import Equals
         if (isinstance(self.gate_set, Set) and self.gate_set.operands.is_single()
                 and is_literal_int(self.gate_set.operands[0])):
             try:
@@ -394,6 +397,7 @@ class MultiQubitGate(Function):
                 self.gate_set.operands.num_entries() == 0):
             return self.empty_set_reduction()
             # need to implement an empty set reduction theorem
+        return Equals(self, self).conclude_via_reflexivity()
 
     def style_options(self):
         from proveit._core_.expression.style_options import StyleOptions
@@ -420,7 +424,7 @@ class MultiQubitGate(Function):
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
 
-    @equivalence_prover('unary_reduced', 'unary_reduce')
+    @equality_prover('unary_reduced', 'unary_reduce')
     def unary_reduction(self, **defaults_config):
         from proveit.physics.quantum import unary_multi_qubit_gate_reduction
 
@@ -431,7 +435,7 @@ class MultiQubitGate(Function):
         return unary_multi_qubit_gate_reduction.instantiate(
             {U: self.gate, A: operand})
 
-    @equivalence_prover('empty_set_reduced', 'empty_set_reduce')
+    @equality_prover('empty_set_reduced', 'empty_set_reduce')
     def empty_set_reduction(self, **defaults_config):
         from proveit.physics.quantum import empty_multi_qubit_gate_reduction
         if not self.gate_set.operands.num_entries() == 0:
@@ -1245,9 +1249,9 @@ class Circuit(Function):
                                                      "all linked MultiQubitGates must have 'block' representation.")
                                 if number.as_int() == k:
                                     inset = True
-                        if not inset:
-                            # print(self)
-                            raise ValueError('The indices of each MultiQubitGate must also contain the index of itself')
+                        # if not inset:
+                        #     # print(self)
+                        #     raise ValueError('The indices of each MultiQubitGate must also contain the index of itself')
                     elif isinstance(value, ExprRange):
                         pass
                 k += 1

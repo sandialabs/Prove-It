@@ -1,7 +1,7 @@
 from proveit import (Expression, Lambda, Operation, Literal, safe_dummy_var,
                      single_or_composite_expression, ExprTuple,
                      ExprRange, InnerExpr, defaults, USE_DEFAULTS,
-                     equivalence_prover)
+                     equality_prover, prover)
 from proveit import a, b, c, d, e, f, g, h, i, j, k, n, x, y
 
 
@@ -42,7 +42,7 @@ class Len(Operation):
     def latex(self, **kwargs):
         return '|' + self.operand.latex() + '|'
 
-    @equivalence_prover('computed', 'compute')
+    @equality_prover('computed', 'compute')
     def computation(self, **defaults_config):
         '''
         Compute this Len expression, returning the equality
@@ -65,7 +65,7 @@ class Len(Operation):
             # not a tuple. For example, it could be a variable that
             # represent a tuple.  So just return the self equality.
             from proveit.logic import Equals
-            return Equals(self, self).prove()
+            return Equals(self, self).conclude_via_reflexivity()
         entries = self.operand.entries
         has_range = any(isinstance(entry, ExprRange) for entry in entries)
         if (len(entries) == 1 and has_range
@@ -113,13 +113,14 @@ class Len(Operation):
                 from proveit.core_expr_types.tuples import tuple_len_incr
                 from proveit.numbers import num
                 from proveit.logic import Equals
-
-                eq = tuple_len_incr.instantiate({i: num(
-                    len(entries) - 1), a: entries[:-1], b: entries[-1]})
-
-                rhs_simp = eq.rhs._integerBinaryEval()
-
-                return rhs_simp.sub_right_side_into(eq)
+                # We turn on automation because this length equality should
+                # be true (we know the number of elements is equal to the 
+                # number of entries since there are no ExprRange entries).
+                # Since we know it's true, why not commit ourselves to 
+                # proving it?
+                return tuple_len_incr.instantiate(
+                    {i: num(len(entries) - 1), a: entries[:-1], b: entries[-1]},
+                    automation=True)
                 # return Equals(eq.lhs, eq.rhs._integerBinaryEval(assumptions=assumptions).rhs).prove(assumptions=assumptions)
                 # raise NotImplementedError("Can't handle length computation "
                 #                         ">= 10 for %s"%self)
@@ -145,13 +146,17 @@ class Len(Operation):
             # len_of_ranges_with_repeated_indices,
             # len_of_ranges_with_repeated_indices_from_1,
             # or len_of_empty_range_of_range
+            #print("ELSE!")
             from proveit.core_expr_types.tuples import (
                 general_len, len_of_ranges_with_repeated_indices,
                 len_of_ranges_with_repeated_indices_from_1,
                 len_of_empty_range_of_ranges)
             _x = safe_dummy_var(self)
+            preserved_exprs = defaults.preserved_exprs
 
             def entry_map(entry):
+                # Don't auto-simplify the entry.
+                preserved_exprs.add(entry)
                 if isinstance(entry, ExprRange):
                     if isinstance(entry.body, ExprRange):
                         # Return an ExprRange of lambda maps.
@@ -160,7 +165,6 @@ class Len(Operation):
                                          entry.start_index,
                                          entry.end_index)
                     else:
-                        # Use the ExprRange entry's map.
                         return entry.lambda_map
                 # For individual elements, just map to the
                 # elemental entry.
@@ -248,11 +252,10 @@ class Len(Operation):
                         thm = len_of_ranges_with_repeated_indices
                         return thm.instantiate(
                             {n: _n, f: _f, i: _i[0], j: _j[0]})
+            return general_len.instantiate({n: _n, f: _f, i: _i, j: _j}, 
+                preserved_exprs=preserved_exprs, auto_simplify=True)
 
-            return general_len.instantiate(
-                {n: _n, f: _f, i: _i, j: _j})
-
-    @equivalence_prover('typical_form', 'typify')
+    @equality_prover('typical_form', 'typify')
     def typical_eq(self, **defaults_config):
         '''
         Attempt to prove that this Len expression is equal to
@@ -331,56 +334,63 @@ class Len(Operation):
                                   "this case: %s.  Try Len.deduce_equality "
                                   "instead." % self)
 
-    def deduce_equality(self, equality, assumptions=USE_DEFAULTS,
-                        minimal_automation=False):
+    @equality_prover('equated', 'equate')
+    def deduce_equality(self, equality, **defaults_config):
+        '''
+        Prove the given equality with self on the left-hand side.
+        
+        '''
         from proveit.logic import Equals
         if not isinstance(equality, Equals):
             raise ValueError("The 'equality' should be an Equals expression")
         if equality.lhs != self:
             raise ValueError("The left side of 'equality' should be 'self'")
-        # Try a special-case "typical equality".
-        if isinstance(equality.rhs, Len):
-            if (isinstance(equality.rhs.operand, ExprTuple)
-                    and isinstance(self.operand, ExprTuple)):
-                if (equality.rhs.operand.num_entries() == 1 and
-                        isinstance(equality.rhs.operand[0], ExprRange)):
-                    try:
-                        eq = \
-                            self.typical_eq(assumptions=assumptions)
-                        if eq.expr == equality:
-                            return eq
-                    except (NotImplementedError, ValueError):
-                        pass
+        with defaults.temporary() as temp_defaults:
+            # Auto-simplify everything except the left and right sides
+            # of the equality.
+            temp_defaults.preserved_exprs={equality.lhs, equality.rhs}
+            temp_defaults.auto_simplify=True
 
-        # Next try to compute each side, simplify each side, and
-        # prove they are equal.
-        lhs_computation = equality.lhs.computation(assumptions=assumptions)
-        if isinstance(equality.rhs, Len):
-            # Compute both lengths and see if we can prove that they
-            # are equal.
-            rhs_computation = equality.rhs.computation(assumptions=assumptions)
-            eq = Equals(lhs_computation.rhs, rhs_computation.rhs)
-            if eq.lhs == eq.rhs:
-                # Trivial reflection -- automation is okay for that.
-                eq = eq.prove()
+            # Try a special-case "typical equality".
+            if isinstance(equality.rhs, Len):
+                if (isinstance(equality.rhs.operand, ExprTuple)
+                        and isinstance(self.operand, ExprTuple)):
+                    if (equality.rhs.operand.num_entries() == 1 and
+                            isinstance(equality.rhs.operand[0], ExprRange)):
+                        try:
+                            eq = self.typical_eq()
+                            if eq.expr == equality:
+                                return eq
+                        except (NotImplementedError, ValueError):
+                            pass
+    
+            # Next try to compute each side, simplify each side, and
+            # prove they are equal.
+            lhs_computation = equality.lhs.computation()
+            if isinstance(equality.rhs, Len):
+                # Compute both lengths and see if we can prove that they
+                # are equal.
+                rhs_computation = equality.rhs.computation()
+                eq = Equals(lhs_computation.rhs, rhs_computation.rhs)
+                if eq.lhs == eq.rhs:
+                    # Trivial reflection -- automation is okay for that.
+                    eq = eq.conclude_via_transitivity()
+                else:
+                    eq = eq.prove()
+                return Equals.apply_transitivities(
+                    [lhs_computation, eq, rhs_computation])
             else:
-                eq = eq.prove(assumptions, automation=not minimal_automation)
-            return Equals.apply_transitivities(
-                [lhs_computation, eq, rhs_computation],
-                assumptions=assumptions)
-        else:
-            # Compute the lhs length and see if we can prove that it is
-            # equal to the rhs.
-            eq = Equals(lhs_computation.rhs, equality.rhs)
-            if eq.lhs == eq.rhs:
-                # Trivial reflection -- automation is okay for that.
-                eq = eq.prove()
-            else:
-                eq = eq.prove(assumptions, automation=not minimal_automation)
-            return lhs_computation.apply_transitivity(
-                eq, assumptions=assumptions)
+                # Compute the lhs length and see if we can prove that it is
+                # equal to the rhs.
+                eq = Equals(lhs_computation.rhs, equality.rhs)
+                if eq.lhs == eq.rhs:
+                    # Trivial reflection -- automation is okay for that.
+                    eq = eq.conclude_via_reflexivity()
+                else:
+                    eq = eq.prove()
+                return lhs_computation.apply_transitivity(eq)
 
-    @equivalence_prover('evaluated', 'evaluate')
+    @equality_prover('evaluated', 'evaluate')
     def evaluation(self, **defaults_config):
         '''
         Returns a proven evaluations equation for this Len
@@ -390,7 +400,7 @@ class Len(Operation):
         computation = self.computation()
         return computation.inner_expr().rhs.evaluate()
 
-    @equivalence_prover('simplified', 'simplify')
+    @equality_prover('simplified', 'simplify')
     def simplification(self, **defaults_config):
         '''
         Returns a proven simplification equation for this Len

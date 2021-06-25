@@ -1,8 +1,8 @@
-from proveit import (Literal, Operation, defaults, USE_DEFAULTS,
-                     prover, equivalence_prover)
+from proveit import (Literal, defaults, USE_DEFAULTS,
+                     prover, equality_prover, relation_prover)
+from proveit.relation import Relation
 
-
-class InSet(Operation):
+class InSet(Relation):
     # operator of the InSet operation
     _operator_ = Literal(string_format='in',
                          latex_format=r'\in',
@@ -16,8 +16,8 @@ class InSet(Operation):
     inset_expressions = dict()
 
     def __init__(self, element, domain, *, styles=None):
-        Operation.__init__(self, InSet._operator_, (element, domain),
-                           styles=styles)
+        Relation.__init__(self, InSet._operator_, element, domain,
+                          styles=styles)
         self.element = self.operands[0]
         self.domain = self.operands[1]
         InSet.inset_expressions[(self.element, self.domain)] = self
@@ -31,8 +31,8 @@ class InSet(Operation):
 
     def __dir__(self):
         '''
-        If the domain has a 'membership_object' method, include methods from the
-        object it generates.
+        If the domain has a 'membership_object' method, include
+        methods from the object it generates.
         '''
         if 'membership_object' in self.__dict__:
             return sorted(set(list(self.__dict__.keys()) +
@@ -42,18 +42,31 @@ class InSet(Operation):
 
     def __getattr__(self, attr):
         '''
-        If the domain has a 'membership_object' method, include methods from the
-        object it generates.
+        If the domain has a 'membership_object' method, include
+        methods from the object it generates.
         '''
+        if attr in ('lhs', 'rhs'):
+            return Relation.__getattr__(self, attr)
         if 'membership_object' in self.__dict__:
             return getattr(self.membership_object, attr)
         raise AttributeError
+
+    @staticmethod
+    def reversed_operator_str(formatType):
+        '''
+        Reversing \in gives \ni.  Reversing "in" gives "contains".
+        '''
+        if formatType=='latex':
+            return '\ni'
+        else:
+            return 'contains'
 
     def side_effects(self, judgment):
         '''
         Store the proven membership in known_memberships.
         If the domain has a 'membership_object' method, side effects
-        will also be generated from the 'side_effects' object that it generates.
+        will also be generated from the 'side_effects' object that it
+        generates.
         '''
         InSet.known_memberships.setdefault(self.element, set()).add(judgment)
         if hasattr(self, 'membership_object'):
@@ -72,17 +85,7 @@ class InSet(Operation):
         Deduce x not in S assuming not(A in S), where self = (x in S).
         '''
         from .not_in_set import NotInSet
-        yield NotInSet(self.element, self.domain).conclude_as_folded()
-
-    @prover
-    def deduce_in_bool(self, **defaults_config):
-        '''
-        Deduce and return that this membership statement is in the
-        Boolean set (i.e. membership is True or False).
-        '''
-        if hasattr(self, 'membership_object'):
-            return self.membership_object.deduce_in_bool()
-        raise AttributeError
+        return NotInSet(self.element, self.domain).conclude_as_folded()
 
     @prover
     def conclude(self, **defaults_config):
@@ -142,6 +145,7 @@ class InSet(Operation):
 
         # No known membership works.  Let's try to work with a
         # simplification of the element instead.
+        elem_simplification = None
         try:
             elem_simplification = self.element.simplification()
             if elem_simplification.lhs == elem_simplification.rhs:
@@ -181,7 +185,7 @@ class InSet(Operation):
                 if known_membership.is_applicable(assumptions):
                     yield known_membership
 
-    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    @equality_prover('shallow_evaluated', 'shallow_evaluate')
     def shallow_evaluation(self, **defaults_config):
         '''
         Attempt to evaluate whether some x ∊ S is TRUE or FALSE
@@ -230,18 +234,20 @@ class Membership:
             "Membership object, %s, has no 'side_effects' method implemented" % str(
                 self.__class__))
 
-    def conclude(self, assumptions):
+    @prover
+    def conclude(self, **defaults_config):
         raise NotImplementedError(
             "Membership object, %s, has no 'conclude' method implemented" % str(
                 self.__class__))
 
-    @equivalence_prover('defined', 'define')
+    @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
         raise NotImplementedError(
             "Membership object, %s, has no 'definition' method implemented" % str(
                 self.__class__))
 
-    def deduce_in_bool(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_in_bool(self, **defaults_config):
         raise NotImplementedError(
             "Membership object, %s, has no 'deduce_in_bool' method implemented" % str(
                 self.__class__))

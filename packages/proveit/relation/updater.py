@@ -19,7 +19,7 @@ class TransRelUpdater:
         '''
         from proveit.logic import Equals
         self.expr = expr
-        self.relation = Equals(expr, expr).prove()
+        self.relation = Equals(expr, expr).conclude_via_reflexivity()
         self.assumptions = assumptions
 
     def update(self, relation, assumptions=None):

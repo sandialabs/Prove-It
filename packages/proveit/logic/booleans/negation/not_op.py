@@ -1,5 +1,5 @@
 from proveit import (Literal, Operation, USE_DEFAULTS, ProofFailure,
-                     defaults, prover, equivalence_prover)
+                     defaults, prover, equality_prover)
 from proveit.logic.booleans.booleans import in_bool
 from proveit import A, x, y, S
 
@@ -49,12 +49,6 @@ class Not(Operation):
         '''
         yield self.deduce_operand_in_bool
 
-    def derive_in_bool(self, assumptions=USE_DEFAULTS):
-        '''
-        From Not(A) derive [Not(A) in Boolean].
-        '''
-        return in_bool(self).prove(assumptions=assumptions)
-
     @prover
     def conclude(self, **defaults_config):
         '''
@@ -93,7 +87,7 @@ class Not(Operation):
             out_str += ')'
         return out_str
 
-    @equivalence_prover('evaluated', 'evaluate')
+    @equality_prover('evaluated', 'evaluate')
     def evaluation(self, **defaults_config):
         '''
         Given an operand that evaluates to TRUE or FALSE, derive and
@@ -107,7 +101,7 @@ class Not(Operation):
             return falsified_negation_intro.instantiate({A: self.operand})
         return Operation.evaluation(self)
 
-    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    @equality_prover('shallow_evaluated', 'shallow_evaluate')
     def shallow_evaluation(self, **defaults_config):
         from proveit.logic import TRUE, FALSE, EvaluationError
         from . import not_t, not_f  # load in truth-table evaluations
@@ -140,6 +134,13 @@ class Not(Operation):
         Plambda = Equals._lambda_expr(lambda_map, self.operand)
         return substitute_falsehood.instantiate(
             {x: self.operand, P: Plambda})
+
+    @prover
+    def derive_in_bool(self, **defaults_config):
+        '''
+        From Not(A) derive [Not(A) in Boolean].
+        '''
+        return in_bool(self).prove()
 
     @prover
     def deduce_in_bool(self, **defaults_config):

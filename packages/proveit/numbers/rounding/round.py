@@ -1,10 +1,10 @@
 from proveit import (defaults, Function, InnerExpr, Literal, ProofFailure,
-                     USE_DEFAULTS, equivalence_prover)
+                     USE_DEFAULTS, relation_prover, equality_prover)
 from proveit.logic import InSet
 from proveit.numbers.number_sets import Integer, Natural, Real
 from proveit.numbers.rounding.rounding_methods import (
     apply_rounding_elimination, apply_rounding_extraction,
-    apply_reduced_simplification, rounding_deduce_in_number_set)
+    apply_shallow_simplification, rounding_deduce_in_number_set)
 
 
 class Round(Function):
@@ -15,7 +15,7 @@ class Round(Function):
         Function.__init__(self, Round._operator_, A, styles=styles)
 
 
-    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, **defaults_config):
         '''
         Returns a proven simplification equation for this Round
@@ -29,9 +29,9 @@ class Round(Function):
         form x = real + int, derive and return this Round expression
         equated with Round(real) + int.
         '''
-        return apply_reduced_simplification(self, defaults.assumptions)
+        return apply_shallow_simplification(self)
 
-    @equivalence_prover('rounding_eliminated', 'rounding_eliminate')
+    @equality_prover('rounding_eliminated', 'rounding_eliminate')
     def rounding_elimination(self, **defaults_config):
         '''
         For the trivial case of Round(x) where the operand x is already
@@ -48,7 +48,7 @@ class Round(Function):
         from . import round_of_integer
         return apply_rounding_elimination(self, round_of_integer)
 
-    @equivalence_prover('rounding_extracted', 'rounding_extract')
+    @equality_prover('rounding_extracted', 'rounding_extract')
     def rounding_extraction(self, idx_to_extract=None, **defaults_config):
         '''
         For the case of Round(x) where the operand x = x_real + x_int,
@@ -75,7 +75,8 @@ class Round(Function):
         return apply_rounding_extraction(
             self, round_of_real_plus_int, idx_to_extract)
 
-    def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
+    @relation_prover
+    def deduce_in_number_set(self, number_set, **defaults_config):
         '''
         Given a number set number_set, attempt to prove that the given
         Round expression is in that number set using the appropriate
@@ -85,5 +86,4 @@ class Round(Function):
         from proveit.numbers.rounding import round_real_pos_closure
 
         return rounding_deduce_in_number_set(
-            self, number_set, round_is_an_int, round_real_pos_closure,
-            assumptions)
+            self, number_set, round_is_an_int, round_real_pos_closure)

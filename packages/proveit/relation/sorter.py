@@ -605,7 +605,8 @@ class TransitivitySorter:
                     for rel_class in relation_class._RelationClasses():
                         try:
                             rel = rel_class(eq_item1, eq_item2)
-                            rel = rel.prove(assumptions, automation=False)
+                            rel = rel.prove(assumptions=assumptions, 
+                                            automation=False)
                             item_pair_chains[(eq_item1, eq_item2)] = [rel]
                             break  # We got all we need
                         except BaseException:
@@ -615,13 +616,15 @@ class TransitivitySorter:
                     # If item1, eq_item1 are not identical expressions,
                     # prove that they are logically equal.
                     if item1 != eq_item1:
-                        prepend = [Equals(item1, eq_item1).prove(assumptions)]
+                        prepend = [Equals(item1, eq_item1).prove(
+                                   assumptions=assumptions)]
                     else:
                         prepend = []
                     # If item2, eq_item2 are not identical expressions,
                     # prove that they are logically equal.
                     if item2 != eq_item2:
-                        append = [Equals(eq_item2, item2).prove(assumptions)]
+                        append = [Equals(eq_item2, item2).prove(
+                                  assumptions=assumptions)]
                     else:
                         append = []
                     # Make the (item1, item2) chain by

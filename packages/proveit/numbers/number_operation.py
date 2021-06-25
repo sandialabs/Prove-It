@@ -1,6 +1,6 @@
 from proveit import (Expression, Judgment, Operation, ExprTuple,
                      generate_inner_expressions, USE_DEFAULTS,
-                     prover)
+                     prover, relation_prover)
 from proveit.relation import TransRelUpdater
 from collections import deque
 
@@ -12,7 +12,7 @@ class NumberOperation(Operation):
     def __init__(self, operator, operand_or_operands, *, styles=None):
         Operation.__init__(self, operator, operand_or_operands, styles=styles)
 
-    @prover
+    @relation_prover
     def deduce_bound(self, inner_expr_bound_or_bounds, 
                      inner_exprs_to_bound = None,
                      **defaults_config):
@@ -111,7 +111,7 @@ class NumberOperation(Operation):
                 "valid, they should have percolated to the top")
         return inner_relations[self].relation
 
-    @prover
+    @relation_prover
     def bound_via_operand_bound(self, operand_bound, **defaults_config):
         '''
         Return a bound of this arithmetic expression based upon
@@ -125,3 +125,10 @@ class NumberOperation(Operation):
         raise NotImplementedError(
                 "'bound_via_operand_bound' not implemented for %s of type %s."
                 %(self, self.__class__))
+
+@prover
+def deduce_in_number_set(expr, number_set, **defaults_config):
+    from proveit.logic import InSet
+    if hasattr(expr, 'deduce_in_number_set'):
+        return expr.deduce_in_number_set(number_set)
+    return InSet(expr, number_set).prove()

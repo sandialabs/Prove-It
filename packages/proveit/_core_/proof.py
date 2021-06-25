@@ -986,7 +986,8 @@ class ModusPonens(Proof):
                             'refer to an Implies expression with two operands')
             try:
                 # Must prove the implication under the given assumptions.
-                implication_truth = implication_expr.prove(assumptions)
+                implication_truth = implication_expr.prove(
+                        assumptions=assumptions)
             except ProofFailure:
                 raise ModusPonensFailure(
                     implication_expr.operands[1],
@@ -996,7 +997,7 @@ class ModusPonens(Proof):
             try:
                 # Must prove the antecedent under the given assumptions.
                 antecedent_truth = implication_expr.operands[0].prove(
-                    assumptions)
+                    assumptions=assumptions)
             except ProofFailure:
                 raise ModusPonensFailure(
                     implication_expr.operands[1],
@@ -1117,8 +1118,8 @@ class Instantiation(Proof):
                 with defaults.temporary() as temp_defaults:
                     temp_defaults.auto_simplify = False
                     subbed_assumption = subbed_assumption.equality_replaced(
-                            requirements=requirements,
-                            equality_repl_requirements=equality_repl_requirements)
+                            requirements=requirements)
+                equality_repl_requirements.update(requirements)
                 if isinstance(assumption, ExprRange):
                     # An iteration of assumptions to expand.
                     orig_subbed_assumptions.extend(subbed_assumption)
@@ -1367,136 +1368,170 @@ class Instantiation(Proof):
                 return expr
             instantiated = Lambda._apply(
                 params, expr, *operands, allow_relabeling=True,
-                equiv_alt_expansions=active_equiv_alt_expansions)
+                equiv_alt_expansions=active_equiv_alt_expansions,
+                requirements=requirements)
+            new_equality_repl_requirements = []
             eq_replaced = instantiated.equality_replaced(
-                    requirements=requirements,
-                    equality_repl_requirements=equality_repl_requirements,
+                    requirements=new_equality_repl_requirements,
                     auto_simplify_top_level=False)
+            requirements.extend(new_equality_repl_requirements)
+            equality_repl_requirements.update(new_equality_repl_requirements)
             return eq_replaced
 
-        remaining_forall_eliminations = num_forall_eliminations
-        while remaining_forall_eliminations > 0:
-            remaining_forall_eliminations -= 1
-            assert isinstance(expr, Forall)
-            lambda_expr = expr.operand
-            assert isinstance(lambda_expr, Lambda)
-            expr = lambda_expr.body
-            
-            # Append to params and operands for new parameter
-            # variables as the parameter quantifiers are 
-            # eliminated.
-            # Check for implicit variable range substitutions
-            # that need to be made explicit.  For example,
-            # if we have an instantiation for 'x' that is an ExprTuple
-            # and 'x' is universally quantified over a range here
-            # (e.g., x_1, ..., x_n), we will use the replacement
-            # of 'x' as the operands corresponding to
-            # the x_1, ..., x_n parameters.  Also activate
-            # equivalent alternative expansions (of such ranges)
-            # as appropriate.
-            for param in lambda_expr.parameters:
-                param_var = get_param_var(param)
-                if param_var in param_vars:
-                    # The replacement for this parameter variable
-                    # is already included.
-                    continue
-                param_vars.add(param_var)
-                if isinstance(param, IndexedVar):
-                    param_var_repl = repl_map.get(param, None)
-                else:
+        with defaults.temporary() as temp_defaults:
+            # We don't want to simplify or make replacements when
+            # instantiating indices of parameters or conditions.
+            temp_defaults.preserve_all = True
+            remaining_forall_eliminations = num_forall_eliminations
+            while remaining_forall_eliminations > 0:
+                remaining_forall_eliminations -= 1
+                assert isinstance(expr, Forall)
+                lambda_expr = expr.operand
+                assert isinstance(lambda_expr, Lambda)
+                expr = lambda_expr.body
+                
+                # Append to params and operands for new parameter
+                # variables as the parameter quantifiers are 
+                # eliminated.
+                # Check for implicit variable range substitutions
+                # that need to be made explicit.  For example,
+                # if we have an instantiation for 'x' that is an 
+                # ExprTuple and 'x' is universally quantified over a 
+                # range here (e.g., x_1, ..., x_n), we will use the 
+                # replacement of 'x' as the operands corresponding to
+                # the x_1, ..., x_n parameters.  Also activate
+                # equivalent alternative expansions (of such ranges)
+                # as appropriate.
+                for param in lambda_expr.parameters:
+                    param_var = get_param_var(param)
+                    if param_var in param_vars:
+                        # The replacement for this parameter variable
+                        # is already included.
+                        continue
+                    param_vars.add(param_var)
                     param_var_repl = repl_map.get(param_var, None)
-                new_param = None
-                new_operands = None
-                if isinstance(param, ExprRange):
-                    subbed_param = instantiate(param)
-                    assert isinstance(subbed_param, ExprRange)
-                    subbed_param_tuple = ExprTuple(subbed_param)
-                    new_param = subbed_param
-                    if subbed_param_tuple in repl_map:
-                        # There exists an explicit range
-                        # instantiation.  For example,
-                        # (x_1, ..., x_n): (a, b, c)
-                        new_operands = repl_map[subbed_param_tuple]
-                        assert isinstance(new_operands, ExprTuple)
-                        if (param_var_repl is not None and
-                                param_var_repl != new_operands):
-                            # An implicit and explicit range
-                            # instantiation do not agree.
-                            raise_failure("Inconsistent assignment of "
-                                          "%s: %s, from instantiation of "
-                                          "%s, versus %s."
-                                          % (subbed_param_tuple,
-                                             param_var_repl, param_var,
-                                             new_operands))                            
-                        new_operands = new_operands.entries
+                    new_param = None
+                    new_operands = None
+                    if (isinstance(param, ExprRange) 
+                            or isinstance(param, IndexedVar)):
+                        subbed_param = instantiate(param)
+                        subbed_param_tuple = ExprTuple(subbed_param)
+                        new_param = subbed_param
+                        if param_var_repl is not None:
+                            # The replacement of the variable of an 
+                            # ExprRange must be an ExprTuple.
+                            if not isinstance(param_var_repl, ExprTuple):
+                                raise_failure(
+                                        "The replacement of a parameter "
+                                        "variable for an ExprRange "
+                                        "parameter must be an ExprTuple, "
+                                        "got %s as replacement for "
+                                        "variable of %s"
+                                        %(param_var_repl, param))
+                        if subbed_param_tuple in repl_map:
+                            # There exists an explicit range
+                            # instantiation.  For example,
+                            # (x_1, ..., x_n): (a, b, c) or 
+                            # (x_1): (z) if reduced to a singular 
+                            # instance.
+                            new_operands = repl_map[subbed_param_tuple]
+                            assert isinstance(new_operands, ExprTuple)
+                            if (param_var_repl is not None and
+                                    param_var_repl != new_operands):
+                                # An implicit and explicit range
+                                # instantiation do not agree.
+                                raise_failure("Inconsistent assignment of "
+                                              "%s: %s, from instantiation "
+                                              "of %s, versus %s."
+                                              % (subbed_param_tuple,
+                                                 param_var_repl, param_var,
+                                                 new_operands))                            
+                            new_operands = new_operands.entries
+                        elif (not isinstance(subbed_param, ExprRange)
+                              and subbed_param in repl_map):
+                            # There exists an explicit instantiation of
+                            # the singular instance.  For example,
+                            # x_1: z
+                            new_operands = (repl_map[subbed_param],)
+                            if (param_var_repl is not None and
+                                    param_var_repl.entries != new_operands):
+                                # An implicit and explicit range
+                                # instantiation do not agree.
+                                raise_failure("Inconsistent assignment of "
+                                              "%s: %s, from instantiation "
+                                              "of %s, versus %s."
+                                              % (subbed_param, param_var_repl, 
+                                                 param_var, new_operands))                           
+                        elif param_var_repl is not None:
+                            # We have an implicit range instantiation.
+                            # For example, x: (a, b, c).
+                            new_operands = param_var_repl.entries   
                     elif param_var_repl is not None:
-                        # We have an implicit range instantiation.
-                        # For example, x: (a, b, c).
-                        new_operands = param_var_repl.entries   
-                elif param_var_repl is not None:
-                    new_param = param
-                    new_operands = [param_var_repl]
-                # Update the active equivalent alternative expansions.
-                equiv_alt_expansion_keys = \
-                    equiv_alt_expansion_keys_by_param_var.get(param_var, None)
-                if equiv_alt_expansion_keys is not None:
-                    active_equiv_alt_expansions.update(
-                        {key:equiv_alt_expansions[key] for key 
-                         in equiv_alt_expansion_keys})
-                    if new_operands is None:
-                        # For the equivalent alternative expansion to
-                        # be used, we need to include the parameter
-                        # and corresponding operands; in this case,
-                        # it is a trivial identity replacement.
-                        new_operands = [new_param]
-                if new_operands is not None:
-                    params.append(new_param)
-                    operands.extend(new_operands)
-            
-            # If there is a condition of the universal quantifier
-            # being eliminated, produce the instantiated condition,
-            # prove that this is satisfied and add it as "requirements".
-            # When there is a conjunction of multiple conditions,
-            # separate out a requirement for each individual condition
-            # (the operands of the conjunction).
-            if isinstance(expr, Conditional):
-                condition = expr.condition
-                expr = expr.value
-
-                # Instantiate the condition.
-                with defaults.temporary() as temp_defaults:
-                    # We don't want to simplify conditions.
-                    temp_defaults.auto_simplify = False
+                        new_param = param
+                        new_operands = (param_var_repl,)
+                    # Update the active equivalent alternative expansions.
+                    equiv_alt_expansion_keys = \
+                        equiv_alt_expansion_keys_by_param_var.get(
+                                param_var, None)
+                    if equiv_alt_expansion_keys is not None:
+                        active_equiv_alt_expansions.update(
+                            {key:equiv_alt_expansions[key] for key 
+                             in equiv_alt_expansion_keys})
+                        if new_operands is None:
+                            # For the equivalent alternative expansion 
+                            # to be used, we need to include the 
+                            # parameter and corresponding operands; 
+                            # in this case, it is a trivial identity 
+                            # replacement.
+                            new_operands = (new_param,)
+                    if new_operands is not None:
+                        params.append(new_param)
+                        operands.extend(new_operands)
+                
+                # If there is a condition of the universal quantifier
+                # being eliminated, produce the instantiated condition,
+                # prove that this is satisfied and add it as
+                # "requirements".  When there is a conjunction of
+                # multiple conditions, separate out a requirement for 
+                # each individual condition (the operands of the
+                # conjunction).
+                if isinstance(expr, Conditional):
+                    condition = expr.condition
+                    expr = expr.value
+    
+                    # Instantiate the condition.
                     subbed_cond = instantiate(condition)
-                if isinstance(subbed_cond, And):
-                    # It is important to deal with a conjunction
-                    # condition in this implicit manner here or we would
-                    # have a chicken/egg infinite recursion problem.
-                    # That is, we have to split up a conjunction into
-                    # multiple requirements at some point, so we do it
-                    # here.
-                    if subbed_cond.proven(assumptions):
-                        # If the full condition conjunction is known
-                        # to be true, we'll just use that as the
-                        # requirement and be done with it.
-                        requirements.append(subbed_cond.prove(assumptions))
-                        subbed_conds = []
+                    if isinstance(subbed_cond, And):
+                        # It is important to deal with a conjunction
+                        # condition in this implicit manner here or we
+                        # would have a chicken/egg infinite recursion
+                        # problem.  That is, we have to split up a
+                        # conjunction into  multiple requirements at
+                        # some point, so we do it there.
+                        if subbed_cond.proven(assumptions):
+                            # If the full condition conjunction is known
+                            # to be true, we'll just use that as the
+                            # requirement and be done with it.
+                            requirements.append(subbed_cond.prove(
+                                    assumptions=assumptions))
+                            subbed_conds = []
+                        else:
+                            subbed_conds = subbed_cond.operands
                     else:
-                        subbed_conds = subbed_cond.operands
-                else:
-                    subbed_conds = [subbed_cond]
-
-                for subbed_cond in subbed_conds:
-                    if isinstance(subbed_cond, ExprRange):
-                        # If the substituted condition "entry" is
-                        # a range, we need to wrap it in a
-                        # conjunction.
-                        subbed_cond = And(subbed_cond)
-                    try:
-                        requirements.append(subbed_cond.prove(assumptions))
-                    except ProofFailure:
-                        raise_failure('Unsatisfied condition: %s'
-                                      % str(subbed_cond))
+                        subbed_conds = [subbed_cond]
+    
+                    for subbed_cond in subbed_conds:
+                        if isinstance(subbed_cond, ExprRange):
+                            # If the substituted condition "entry" is
+                            # a range, we need to wrap it in a
+                            # conjunction.
+                            subbed_cond = And(subbed_cond)
+                        try:
+                            requirements.append(subbed_cond.prove(
+                                    assumptions=assumptions))
+                        except ProofFailure:
+                            raise_failure('Unsatisfied condition: %s'
+                                          % str(subbed_cond))
 
         # Make final instantiations in the inner instance expression.
         # Add to the lambda-application parameters anything that has

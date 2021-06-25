@@ -1,6 +1,6 @@
-from proveit import (Literal, Operation, maybe_fenced_string, 
+from proveit import (Expression, Literal, Operation, maybe_fenced_string, 
                      maybe_fenced_latex, InnerExpr, defaults, USE_DEFAULTS, 
-                     ProofFailure, equivalence_prover)
+                     ProofFailure, relation_prover, equality_prover)
 from proveit.logic import is_irreducible_value
 from proveit.numbers.number_sets import (
         Natural, NaturalPos, 
@@ -19,11 +19,14 @@ class Neg(NumberOperation):
     def __init__(self, A, *, styles=None):
         NumberOperation.__init__(self, Neg._operator_, A, styles=styles)
 
-    def irreducible_value(self):
+    def is_irreducible_value(self):
         from proveit.numbers import zero
+        if isinstance(self.operand, Neg):
+            return False # double negation is reducible
         return is_irreducible_value(self.operand) and self.operand != zero
 
-    def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
+    @relation_prover
+    def deduce_in_number_set(self, number_set, **defaults_config):
         '''
         given a number set, attempt to prove that the given expression is in that
         number set using the appropriate closure theorem
@@ -38,71 +41,50 @@ class Neg(NumberOperation):
                        real_pos_closure, real_neg_closure,
                        real_nonneg_closure, real_nonpos_closure, 
                        complex_closure, complex_nonzero_closure)
-        from proveit.logic import InSet
         if number_set == Natural:
-            return nat_closure.instantiate(
-                    {a: self.operand}, assumptions=assumptions)
+            return nat_closure.instantiate({a: self.operand})
         elif number_set == NaturalPos:
-            return nat_pos_closure.instantiate(
-                    {a: self.operand}, assumptions=assumptions)
+            return nat_pos_closure.instantiate({a: self.operand})
         elif number_set == Integer:
-            return int_closure.instantiate(
-                    {a: self.operand},  assumptions=assumptions)
+            return int_closure.instantiate({a: self.operand})
         elif number_set == IntegerNonZero:
-            return int_nonzero_closure.instantiate(
-                    {a: self.operand}, assumptions=assumptions)
+            return int_nonzero_closure.instantiate({a: self.operand})
         elif number_set == IntegerNeg:
-            return int_neg_closure.instantiate(
-                    {a: self.operand}, assumptions=assumptions)
+            return int_neg_closure.instantiate({a: self.operand})
         elif number_set == IntegerNonPos:
-            return int_nonpos_closure.instantiate(
-                    {a: self.operand}, assumptions=assumptions)
+            return int_nonpos_closure.instantiate({a: self.operand})
         elif number_set == Rational:
-            return rational_closure.instantiate(
-                    {a: self.operand}, assumptions=assumptions)
+            return rational_closure.instantiate({a: self.operand})
         elif number_set == RationalNonZero:
-            return rational_nonzero_closure.instantiate(
-                    {a: self.operand}, assumptions=assumptions)
+            return rational_nonzero_closure.instantiate({a: self.operand})
         elif number_set == RationalPos:
-            return rational_pos_closure.instantiate(
-                    {a: self.operand}, assumptions=assumptions)
+            return rational_pos_closure.instantiate({a: self.operand})
         elif number_set == RationalNeg:
-            return rational_neg_closure.instantiate(
-                    {a: self.operand}, assumptions=assumptions)
+            return rational_neg_closure.instantiate({a: self.operand})
         elif number_set == RationalNonNeg:
-            return rational_nonneg_closure.instantiate(
-                    {a: self.operand}, assumptions=assumptions)
+            return rational_nonneg_closure.instantiate({a: self.operand})
         elif number_set == RationalNonPos:
-            return rational_nonpos_closure.instantiate(
-                    {a: self.operand}, assumptions=assumptions)
+            return rational_nonpos_closure.instantiate({a: self.operand})
         elif number_set == Real:
-            return real_closure.instantiate(
-                    {a: self.operand}, assumptions=assumptions)
+            return real_closure.instantiate({a: self.operand})
         elif number_set == RealNonZero:
-            return real_nonzero_closure.instantiate(
-                    {a: self.operand}, assumptions=assumptions)
+            return real_nonzero_closure.instantiate({a: self.operand})
         elif number_set == RealPos:
-            return real_pos_closure.instantiate(
-                    {a: self.operand}, assumptions=assumptions)
+            return real_pos_closure.instantiate({a: self.operand})
         elif number_set == RealNeg:
-            return real_neg_closure.instantiate(
-                    {a: self.operand}, assumptions=assumptions)
+            return real_neg_closure.instantiate({a: self.operand})
         elif number_set == RealNonNeg:
-            return real_nonneg_closure.instantiate(
-                    {a: self.operand}, assumptions=assumptions)
+            return real_nonneg_closure.instantiate({a: self.operand})
         elif number_set == RealNonPos:
-            return real_nonpos_closure.instantiate(
-                    {a: self.operand}, assumptions=assumptions)
+            return real_nonpos_closure.instantiate({a: self.operand})
         elif number_set == Complex:
-            return complex_closure.instantiate(
-                    {a: self.operand}, assumptions=assumptions)
+            return complex_closure.instantiate({a: self.operand})
         elif number_set == ComplexNonZero:
-            return complex_nonzero_closure.instantiate(
-                    {a: self.operand}, assumptions=assumptions)
+            return complex_nonzero_closure.instantiate({a: self.operand})
         raise NotImplementedError(
             "No negation closure theorem for set %s" %str(number_set))
 
-    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+    @equality_prover('shallow_evaluated', 'shallow_evaluate')
     def shallow_evaluation(self, **defaults_config):
         '''
         Returns a proven evaluation equation for this Neg
@@ -122,7 +104,7 @@ class Neg(NumberOperation):
             return self.double_neg_simplification()
         raise EvaluationError(self)
 
-    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, **defaults_config):
         '''
         Returns a proven simplification equation for this Neg
@@ -130,20 +112,13 @@ class Neg(NumberOperation):
         
         Handles double negation specifically.
         '''
-        from proveit.relation import TransRelUpdater
-
-        expr = self
-        # For convenience updating our equation:
-        eq = TransRelUpdater(expr)
         # Handle double negation:
         if isinstance(self.operand, Neg):
             # simplify double negation
-            expr = eq.update(self.double_neg_simplification())
-            # simplify what is inside the double-negation.
-            expr = eq.update(expr.simplification())
-        return eq.relation
+            return self.double_neg_simplification()
+        return Expression.shallow_simplification(self)
 
-    @equivalence_prover('double_neg_simplified', 'double_neg_simplify')
+    @equality_prover('double_neg_simplified', 'double_neg_simplify')
     def double_neg_simplification(self, **defaults_config):
         from . import double_negation
         assert isinstance(
@@ -194,7 +169,7 @@ class Neg(NumberOperation):
                 fence=True),
             **kwargs)
 
-    @equivalence_prover('distributed', 'distribute')
+    @equality_prover('distributed', 'distribute')
     def distribution(self, **defaults_config):
         '''
         Distribute negation through a sum, deducing and returning
@@ -203,10 +178,6 @@ class Neg(NumberOperation):
         from . import distribute_neg_through_binary_sum
         from . import distribute_neg_through_subtract, distribute_neg_through_sum
         from proveit.numbers import Add
-        from proveit.relation import TransRelUpdater
-        expr = self
-        # for convenience updating our equation
-        eq = TransRelUpdater(expr)
 
         if isinstance(self.operand, Add):
             # Distribute negation through a sum.
@@ -214,32 +185,22 @@ class Neg(NumberOperation):
             if add_expr.operands.is_double():
                 # special case of 2 operands
                 if isinstance(add_expr.operands[1], Neg):
-                    expr = eq.update(distribute_neg_through_subtract.instantiate(
-                        {a: add_expr.operands[0], b: add_expr.operands[1].operand}))
+                    return distribute_neg_through_subtract.instantiate(
+                        {a: add_expr.operands[0], b: add_expr.operands[1].operand})
                 else:
-                    expr = eq.update(distribute_neg_through_binary_sum.instantiate(
-                        {a: add_expr.operands[0], b: add_expr.operands[1]}))
+                    return distribute_neg_through_binary_sum.instantiate(
+                        {a: add_expr.operands[0], b: add_expr.operands[1]})
             else:
                 # distribute the negation over the sum
                 _x = add_expr.operands
                 _n = _x.num_elements()
-                expr = eq.update(distribute_neg_through_sum.instantiate(
-                    {n: _n, x: _x}))
-            assert isinstance(
-                expr, Add), "distribute_neg theorems are expected to yield an Add expression"
-            # check for double negation
-            for k, operand in enumerate(expr.operands):
-                assert isinstance(
-                    operand, Neg), "Each term from distribute_neg_through_sum is expected to be negated"
-                if isinstance(operand.operand, Neg):
-                    expr = eq.update(
-                        expr.inner_expr().operands[k].double_neg_simplification())
-            return eq.relation
+                return distribute_neg_through_sum.instantiate(
+                        {n: _n, x: _x})
         else:
             raise Exception(
                 'Only negation distribution through a sum or subtract is implemented')
 
-    @equivalence_prover('factorized', 'factor')
+    @equality_prover('factorized', 'factor')
     def factorization(self, the_factor, pull="left", group_factor=None,
                       group_remainder=None, **defaults_config):
         '''
@@ -267,13 +228,13 @@ class Neg(NumberOperation):
                 thm = neg_times_pos
         if hasattr(self.operand, 'factorization'):
             operand_factor_eqn = self.operand.factorization(
-                the_factor, pull, group_factor=True, group_remainder=True)
+                the_factor, pull, group_factor=True, group_remainder=True,
+                preserve_all=True)
             eqn1 = operand_factor_eqn.substitution(self.inner_expr().operand)
             new_operand = operand_factor_eqn.rhs
             eqn2 = thm.instantiate(
-                {
-                    x: new_operand.operands[0],
-                    y: new_operand.operands[1]},
+                {x: new_operand.operands[0], y: new_operand.operands[1]},
+                auto_simplify=False, preserve_expr=eqn1.rhs
                 ).derive_reversed()
             return eqn1.apply_transitivity(eqn2)
         else:
@@ -284,9 +245,9 @@ class Neg(NumberOperation):
             if thm == pos_times_neg:
                 thm = mult_neg_one_right
             return thm.instantiate(
-                {x: self.operand}).derive_reversed()
+                {x: self.operand}, auto_simplify=False).derive_reversed()
 
-    @equivalence_prover('inner_neg_mult_simplified',
+    @equality_prover('inner_neg_mult_simplified',
                         'inner_neg_mult_simplify')
     def inner_neg_mult_simplification(self, idx, **defaults_config):
         '''

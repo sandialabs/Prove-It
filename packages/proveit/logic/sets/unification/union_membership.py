@@ -1,4 +1,4 @@
-from proveit import USE_DEFAULTS, equivalence_prover
+from proveit import USE_DEFAULTS, equality_prover, prover
 from proveit.logic import Membership, Nonmembership
 from proveit.numbers import num
 from proveit import m, A, x
@@ -6,7 +6,7 @@ from proveit import m, A, x
 
 class UnionMembership(Membership):
     '''
-    Defines methods that apply to membership in a unification of sets.
+    Defines methods that apply to membership in a union of sets.
     '''
 
     def __init__(self, element, domain):
@@ -18,7 +18,7 @@ class UnionMembership(Membership):
         '''
         yield self.unfold
 
-    @equivalence_prover('defined', 'define')
+    @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
         '''
         Deduce and return 
@@ -31,38 +31,42 @@ class UnionMembership(Membership):
         operands = self.domain.operands
         _A = operands
         _m = _A.num_elements()
-        return union_def.instantiate({m: _m, x: element, A: _A})
+        return union_def.instantiate(
+                {m: _m, x: element, A: _A}, auto_simplify=False)
 
-    def unfold(self, assumptions=USE_DEFAULTS):
+    @prover
+    def unfold(self, **defaults_config):
         '''
-        From [element in (A union B ...)], derive and return [(element in A) or (element in B) ...],
-        where self represents (A union B ...).
+        From [element in (A union B ...)], derive and return
+        [(element in A) or (element in B) ...],
+        where self represents [element in (A union B ...)].
         '''
         from . import membership_unfolding
         element = self.element
         operands = self.domain.operands
         _A = operands
-        _m = _A.num_elements(assumptions)
+        _m = _A.num_elements()
         return membership_unfolding.instantiate(
-            {m: _m, x: element, A: _A}, assumptions=assumptions)
+            {m: _m, x: element, A: _A}, auto_simplify=False)
 
-    def conclude(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude(self, **defaults_config):
         '''
-        From either [element in A] or [element in B] ..., derive and return [element in (A union B ...)],
-        where self represents (A union B ...).
+        Called on self = [elem in (A U B U ...)], and knowing or
+        assuming [[elem in A] OR [elem in B] OR ...], derive and
+        return self.
         '''
         from . import membership_folding
         element = self.element
         operands = self.domain.operands
         _A = operands
-        _m = _A.num_elements(assumptions)
-        return membership_folding.instantiate(
-            {m: _m, x: element, A: _A}, assumptions=assumptions)
+        _m = _A.num_elements()
+        return membership_folding.instantiate({m: _m, x: element, A: _A})
 
 
 class UnionNonmembership(Nonmembership):
     '''
-    Defines methods that apply to non-membership in an unification of sets.
+    Defines methods that apply to non-membership in a union of sets.
     '''
 
     def __init__(self, element, domain):
@@ -75,30 +79,32 @@ class UnionNonmembership(Nonmembership):
         return
         yield
 
-    @equivalence_prover('defined', 'define')
+    @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
         '''
-        Deduce and return
-            [element not in (A union B ...)] = 
-            [(element not in A) and (element not in B) ...]
-        where self = (A union B ...).
+        From self=[elem not in (A U B U ...)], deduce and return
+            |- [elem not in (A U B U ...)] = 
+            [(element not in A) and (element not in B) and ...].
         '''
         from . import nonmembership_equiv
         element = self.element
         operands = self.domain.operands
         _A = operands
         _m = _A.num_elements()
-        return nonmembership_equiv.instantiate({m: _m, x: element, A: _A})
+        return nonmembership_equiv.instantiate(
+            {m: _m, x: element, A: _A}, auto_simplify=False)
 
-    def conclude(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude(self, **defaults_config):
         '''
-        From [element not in A] and [element not in B] ..., derive and return [element not in (A union B ...)],
-        where self represents (A union B ...).
+        Called on the self = [elem not in (A U B U ...)], from known
+        or assumed [element not in A] and [element not in B] ...,
+        derive and return self.
         '''
         from . import nonmembership_folding
         element = self.element
         operands = self.domain.operands
         _A = operands
-        _m = _A.num_elements(assumptions)
+        _m = _A.num_elements()
         return nonmembership_folding.instantiate(
-            {m: _m, x: element, A: _A}, assumptions=assumptions)
+            {m: _m, x: element, A: _A})

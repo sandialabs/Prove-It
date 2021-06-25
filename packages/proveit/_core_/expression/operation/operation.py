@@ -1,5 +1,5 @@
 import inspect
-from proveit.decorators import equivalence_prover
+from proveit.decorators import equality_prover
 from proveit._core_.expression.expr import Expression, ImproperReplacement
 from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_.defaults import defaults, USE_DEFAULTS
@@ -557,7 +557,7 @@ class Operation(Expression):
             self._core_info, subbed_sub_exprs, 
             style_preferences=self._style_data.styles)
 
-    @equivalence_prover('evaluated', 'evaluate')
+    @equality_prover('evaluated', 'evaluate')
     def evaluation(self, **defaults_config):
         '''
         If possible, return a Judgment of this expression equal to an
@@ -574,15 +574,19 @@ class Operation(Expression):
         
         # If the default didn't work, try to simplify the operands
         # first.
-        reduction = self.inner_expr().simplification_of_operands()
+        reduction = self.simplification_of_operands()
         
         # After making sure the operands have been simplified,
         # try 'shallow_evaluation'.
-        evaluation = reduction.rhs.shallow_evaluation()
+        try:
+            evaluation = reduction.rhs.shallow_evaluation()
+        except NotImplementedError:
+            raise EvaluationError(self)
         return reduction.apply_transitivity(evaluation)
 
-    @equivalence_prover('simplified', 'simplify')
-    def simplification(self, **defaults_config):
+    @equality_prover('simplified', 'simplify')
+    def simplification(self, skip_operand_simplification=False, 
+                       **defaults_config):
         '''
         If possible, return a Judgment of this expression equal to a
         simplified form (according to strategies specified in 
@@ -592,8 +596,21 @@ class Operation(Expression):
         "evaluation" (which is the best possible simplification, when
         simplifying to an irreducible value).  If that fails, it
         simplifies the operands and calls "shallow_simplification".
+        
+        Running this with skip_operand_simplification is the same
+        as trying shallow_evaluation then shallow_simplification.
         '''
         from proveit.logic import EvaluationError
+        
+        if skip_operand_simplification:
+            try:
+                # First try to perform a shallow evaluation 
+                # (since evaluation is the best possible simplification).
+                return self.shallow_evaluation()
+            except EvaluationError:
+                pass
+            return self.shallow_simplification()
+        
         try:
             # First try to perform an evaluation (which is the best
             # possible simplification).
@@ -603,7 +620,7 @@ class Operation(Expression):
 
         # If evaluation didn't work, try to simplify the operands
         # first.
-        reduction = self.inner_expr().simplification_of_operands()
+        reduction = self.simplification_of_operands()
 
         # After making sure the operands have been simplified,
         # try 'shallow_simplification'.
@@ -615,10 +632,32 @@ class Operation(Expression):
         #   But in the shallow simplification, we'll do a factorization
         #   that will exploit the "reduction" fact which wouldn't
         #   otherwise be used because (1*b + 3*b) is a preserved
-        #   expression inse simplification is an @equivalence_prover.
+        #   expression since simplification is an @equality_prover.
         simplification = reduction.rhs.shallow_simplification(
                 replacements=[reduction])
         return reduction.apply_transitivity(simplification)
+    
+    @equality_prover('simplified_operands', 'operands_simplify')
+    def simplification_of_operands(self, **defaults_config):
+        '''
+        Prove this Operation equal to a form in which its operands
+        have been simplified.
+        '''
+        from proveit.relation import TransRelUpdater
+        from proveit import ExprRange
+        from proveit.logic import is_irreducible_value
+        if any(isinstance(operand, ExprRange) for operand in self.operands):
+            # If there is any ExprRange in the operands, simplify the
+            # operands together as an ExprTuple.
+            return self.inner_expr().operands[:].simplification()
+        else:
+            expr = self
+            eq = TransRelUpdater(expr)
+            for k, operand in enumerate(self.operands):
+                if not is_irreducible_value(operand):
+                    inner_operand = expr.inner_expr().operands[k]
+                    expr = eq.update(inner_operand.simplification())
+        return eq.relation
     
     def operands_are_irreducible(self):
         '''

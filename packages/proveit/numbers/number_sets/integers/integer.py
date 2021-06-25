@@ -1,5 +1,5 @@
 import proveit
-from proveit import USE_DEFAULTS
+from proveit import prover
 from proveit import a, x
 from proveit.numbers.number_sets.number_set import NumberSet
 
@@ -9,31 +9,9 @@ class IntegerSet(NumberSet):
         NumberSet.__init__(self, 'Integer', r'\mathbb{Z}', 
                            theory=__file__, styles=styles)
 
-    def membership_side_effects(self, judgment):
-        '''
-        Yield side-effects when proving 'n in Integer' for a given n.
-        '''
-        member = judgment.element
-        yield lambda: self.deduce_member_in_rational(member)
-        # Added but commented the following out while we debate the
-        # wisdom of further side-effects
-        # yield lambda: self.deduce_member_in_real(member)
-
-    def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
-        from . import int_membership_is_bool
-        from proveit import x
-        return int_membership_is_bool.instantiate(
-            {x: member}, assumptions=assumptions)
-
-    def deduce_member_in_rational(self, member, assumptions=USE_DEFAULTS):
-        from proveit.numbers.number_sets.rational_numbers import int_within_rational
-        return int_within_rational.derive_superset_membership(
-            member, assumptions)
-
-    def deduce_member_in_real(self, member, assumptions=USE_DEFAULTS):
-        from proveit.numbers.number_sets.real_numbers import int_within_real
-        return int_within_real.derive_superset_membership(
-            member, assumptions)
+    def membership_object(self, element):
+        from .integer_membership import IntegerMembership    
+        return IntegerMembership(element)
 
 
 class IntegerNonZeroSet(NumberSet):
@@ -46,36 +24,6 @@ class IntegerNonZeroSet(NumberSet):
         from .integer_membership import IntegerNonZeroMembership    
         return IntegerNonZeroMembership(element)
 
-    def membership_side_effects(self, judgment):
-        '''
-        Yield side-effects when proving 'n in Integer' for a given n.
-        '''
-        member = judgment.element
-        yield lambda: self.deduce_member_not_zero(member)
-        yield lambda: self.deduce_member_in_integer(member)
-        yield lambda: self.deduce_member_in_rational_nonzero(member)
-    
-    def deduce_member_not_zero(self, member, assumptions=USE_DEFAULTS):
-        from . import nonzero_if_in_nonzero_int
-        return nonzero_if_in_nonzero_int.instantiate(
-            {a: member}, assumptions=assumptions)
-    
-    def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
-        from . import nonzero_int_membership_is_bool
-        return nonzero_int_membership_is_bool.instantiate(
-            {x: member}, assumptions=assumptions)
-
-    def deduce_member_in_integer(self, member, assumptions=USE_DEFAULTS):
-        from . import nonzero_int_within_int
-        return nonzero_int_within_int.derive_superset_membership(
-            member, assumptions)
-
-    def deduce_member_in_rational_nonzero(self, member, assumptions=USE_DEFAULTS):
-        from proveit.numbers.number_sets.rational_numbers import (
-                nonzero_int_within_rational_nonzero)
-        return nonzero_int_within_rational_nonzero.derive_superset_membership(
-            member, assumptions)
-
 
 class IntegerNegSet(NumberSet):
     def __init__(self, *, styles=None):
@@ -87,48 +35,6 @@ class IntegerNegSet(NumberSet):
         from .integer_membership import IntegerNegMembership    
         return IntegerNegMembership(element)
 
-    def membership_side_effects(self, judgment):
-        '''
-        Yield side-effects when proving 'n in Integer' for a given n.
-        '''
-        member = judgment.element
-        yield lambda: self.deduce_member_upper_bound(member)
-        yield lambda: self.deduce_member_in_integer(member)
-        yield lambda: self.deduce_member_in_integer_non_zero(member)
-        yield lambda: self.deduce_member_in_integer_non_pos(member)
-        yield lambda: self.deduce_member_in_rational_neg(member)
-    
-    def deduce_member_upper_bound(self, member, assumptions=USE_DEFAULTS):
-        from . import negative_if_in_neg_int
-        return negative_if_in_neg_int.instantiate(
-            {a: member}, assumptions=assumptions)
-    
-    def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
-        from . import neg_int_membership_is_bool
-        from proveit import x
-        return neg_int_membership_is_bool.instantiate(
-            {x: member}, assumptions=assumptions)
-
-    def deduce_member_in_integer(self, member, assumptions=USE_DEFAULTS):
-        from . import neg_int_within_int
-        return neg_int_within_int.derive_superset_membership(
-            member, assumptions)
-
-    def deduce_member_in_integer_non_zero(self, member, assumptions=USE_DEFAULTS):
-        from . import neg_int_within_nonzero_int
-        return neg_int_within_nonzero_int.derive_superset_membership(
-            member, assumptions)
-
-    def deduce_member_in_integer_non_pos(self, member, assumptions=USE_DEFAULTS):
-        from . import neg_int_within_nonpos_int
-        return neg_int_within_nonpos_int.derive_superset_membership(
-            member, assumptions)
-
-    def deduce_member_in_rational_neg(self, member, assumptions=USE_DEFAULTS):
-        from proveit.numbers.number_sets.rational_numbers import (
-                neg_int_within_rational_neg)
-        return neg_int_within_rational_neg.derive_superset_membership(
-            member, assumptions)
 
 class IntegerNonPosSet(NumberSet):
     def __init__(self, *, styles=None):
@@ -139,38 +45,6 @@ class IntegerNonPosSet(NumberSet):
     def membership_object(self, element):
         from .integer_membership import IntegerNonPosMembership    
         return IntegerNonPosMembership(element)
-
-    def membership_side_effects(self, judgment):
-        '''
-        Yield side-effects when proving 'n in Integer' for a given n.
-        '''
-        member = judgment.element
-        yield lambda: self.deduce_member_upper_bound(member)
-        yield lambda: self.deduce_member_in_integer(member)
-        yield lambda: self.deduce_member_in_rational_nonpos(member)
-    
-    def deduce_member_upper_bound(self, member, assumptions=USE_DEFAULTS):
-        from . import nonpos_if_in_nonpos_int
-        return nonpos_if_in_nonpos_int.instantiate(
-            {a: member}, assumptions=assumptions)
-    
-    def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
-        from . import nonpos_int_membership_is_bool
-        from proveit import x
-        return nonpos_int_membership_is_bool.instantiate(
-            {x: member}, assumptions=assumptions)
-
-    def deduce_member_in_integer(self, member, assumptions=USE_DEFAULTS):
-        from . import nonpos_int_within_int
-        return nonpos_int_within_int.derive_superset_membership(
-            member, assumptions)
-
-    def deduce_member_in_rational_nonpos(self, member, assumptions=USE_DEFAULTS):
-        from proveit.numbers.number_sets.rational_numbers import (
-                nonpos_int_within_rational_nonpos)
-        return nonpos_int_within_rational_nonpos.derive_superset_membership(
-            member, assumptions)
-
 
 
 if proveit.defaults.automation:

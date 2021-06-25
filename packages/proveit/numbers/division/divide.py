@@ -1,6 +1,8 @@
-from proveit import (Judgment, Expression, Literal, maybe_fenced_latex, 
+from proveit import (Judgment, Expression, Literal, Operation,
+                     maybe_fenced_latex, defaults,
                      Function, ExprTuple, InnerExpr, USE_DEFAULTS,
-                     UnsatisfiedPrerequisites, equivalence_prover)
+                     UnsatisfiedPrerequisites, relation_prover,
+                     equality_prover)
 from proveit import TransRelUpdater
 from proveit import a, b, c, m, n, w, x, y, z
 from proveit.numbers import NumberOperation
@@ -63,7 +65,7 @@ class Div(NumberOperation):
             return 'frac'  # use a different constructor if using the fraction style
         return Operation.remake_constructor(self)
 
-    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, **defaults_config):
         '''
         Returns a proven simplification equation for this Divide
@@ -77,14 +79,14 @@ class Div(NumberOperation):
         eq = TransRelUpdater(expr)
 
         # perform cancelations where possible
-        expr = eq.update(expr.cancelations())
+        expr = eq.update(expr.cancelations(preserve_all=True))
         if not isinstance(expr, Div):
             # complete cancelation.
             return eq.relation
 
-        if self.denominator == one:
+        if expr.denominator == one:
             # eliminate division by one
-            eq.update(expr.eliminate_divide_by_one())
+            eq.update(expr.divide_by_one_elimination(auto_simplify=False))
             return eq.relation  # no more division simplifications.
 
         return eq.relation
@@ -104,7 +106,7 @@ class Div(NumberOperation):
         raise Exception('Unable to combine exponents of this fraction')
     """
 
-    @equivalence_prover('all_canceled', 'all_cancel')
+    @equality_prover('all_canceled', 'all_cancel')
     def cancelations(self, **defaults_config):
         '''
         Deduce and return an equality between self and a form in which
@@ -127,12 +129,13 @@ class Div(NumberOperation):
 
         for numer_factor in numer_factors:
             if numer_factor in denom_factors_set:
-                expr = eq.update(expr.cancelation(numer_factor))
+                expr = eq.update(expr.cancelation(numer_factor,
+                                                  preserve_all=True))
                 denom_factors_set.remove(numer_factor)
 
         return eq.relation
 
-    @equivalence_prover('canceled', 'cancel')
+    @equality_prover('canceled', 'cancel')
     def cancelation(self, term_to_cancel, **defaults_config):
         '''
         Deduce and return an equality between self and a form in which
@@ -141,7 +144,7 @@ class Div(NumberOperation):
         [(a*b)/(b*c)].cancelation(b) would return
         (a*b)/(b*c) = a / c
         '''
-        from proveit.numbers import Mult
+        from proveit.numbers import Mult, one
         expr = self
         eq = TransRelUpdater(expr)
 
@@ -149,7 +152,7 @@ class Div(NumberOperation):
             # x/x = 1
             from . import frac_cancel_complete
             return frac_cancel_complete.instantiate(
-                {x: term_to_cancel}).checked()
+                {x: term_to_cancel})
 
         if term_to_cancel != self.numerator:
             if (not isinstance(self.numerator, Mult) or
@@ -158,7 +161,8 @@ class Div(NumberOperation):
                                  % (term_to_cancel, self))
             # Factor the term_to_cancel from the numerator to the left.
             expr = eq.update(expr.inner_expr().numerator.factorization(
-                term_to_cancel, group_factor=True, group_remainder=True))
+                term_to_cancel, group_factor=True, group_remainder=True,
+                preserve_all=True))
         if term_to_cancel != self.denominator:
             if (not isinstance(self.denominator, Mult) or
                     term_to_cancel not in self.denominator.operands):
@@ -166,27 +170,38 @@ class Div(NumberOperation):
                                  % (term_to_cancel, self))
             # Factor the term_to_cancel from the denominator to the left.
             expr = eq.update(expr.inner_expr().denominator.factorization(
-                term_to_cancel, group_factor=True, group_remainder=True))
-        if term_to_cancel == self.numerator:
-            from . import frac_cancel_numer_left
-            assert expr.denominator.operands.is_double(), "Should be grouped"
-            expr = eq.update(frac_cancel_numer_left.instantiate(
-                {x: term_to_cancel, y: expr.denominator.operands[1]}))
-            return eq.relation
-        elif term_to_cancel == self.denominator:
-            from . import frac_cancel_denom_left
-            assert expr.numerator.operands.is_double(), "Should be grouped"
-            expr = eq.update(frac_cancel_denom_left.instantiate(
-                {x: term_to_cancel, y: expr.numerator.operands[1]}))
+                term_to_cancel, group_factor=True, group_remainder=True,
+                preserve_all=True))
+        if expr.numerator == expr.denominator == term_to_cancel:
+            # Perhaps it reduced to the trivial x/x = 1 case via
+            # auto-simplification.
+            expr = eq.update(expr.cancelation(term_to_cancel))
             return eq.relation
         else:
+            # (x*y) / (x*z) = y/z with possible automatic reductions
+            # via 1 eliminations.
             from . import frac_cancel_left
+            replacements = list(defaults.replacements)            
+            if expr.numerator == term_to_cancel:
+                numer_prod = Mult(term_to_cancel, one)
+                _y = one
+                replacements.append(numer_prod.one_elimination(
+                        1, preserve_expr=term_to_cancel))
+            else:
+                _y = expr.numerator.operands[1]
+            if expr.denominator == term_to_cancel:
+                denom_prod = Mult(term_to_cancel, one)
+                _z = one
+                replacements.append(denom_prod.one_elimination(
+                        1, preserve_expr=term_to_cancel))
+            else:
+                _z = expr.denominator.operands[1]
             expr = eq.update(frac_cancel_left.instantiate(
-                {x: term_to_cancel, y: expr.numerator.operands[1],
-                 z: expr.denominator.operands[1]}))
+                {x: term_to_cancel, y: _y, z: _z},
+                 replacements=replacements, preserve_expr=expr))
             return eq.relation
 
-    @equivalence_prover('deep_eliminated_ones', 'deep_eliminate_ones')
+    @equality_prover('deep_eliminated_ones', 'deep_eliminate_ones')
     def deep_one_eliminations(self, **defaults_config):
         '''
         Eliminate ones from the numerator, the denominator,
@@ -205,19 +220,19 @@ class Div(NumberOperation):
                                  deep_one_eliminations())
 
         if expr.denominator == one:
-            expr = eq.update(expr.eliminate_divide_by_one())
+            expr = eq.update(expr.divide_by_one_elimination())
         return eq.relation
 
-    def eliminate_divide_by_one(self, assumptions=USE_DEFAULTS):
+    @equality_prover('divide_by_one_eliminated', 'eliminate_divide_by_one')
+    def divide_by_one_elimination(self, **defaults_config):
         from proveit.numbers import one
         from . import frac_one_denom
         if self.denominator != one:
-            raise ValueError("'eliminate_divide_by_one' is only applicable "
+            raise ValueError("'divide_by_one_elimination' is only applicable "
                              "if the denominator is precisely one.")
-        return frac_one_denom.instantiate({x: self.numerator},
-                                          assumptions=assumptions)
+        return frac_one_denom.instantiate({x: self.numerator})
 
-    @equivalence_prover('factorized', 'factor')
+    @equality_prover('factorized', 'factor')
     def factorization(self, the_factor, pull="left",
                       group_factor=True, group_remainder=True,
                       **defaults_config):
@@ -258,7 +273,7 @@ class Div(NumberOperation):
         else:
             the_factor_numer = the_factor
             the_factor_denom = one
-        reductions = []
+        replacements = []
         # Factor out a fraction.
         if expr.denominator == the_factor_denom:
             # Factor (x/z) from (x*y)/z.
@@ -274,7 +289,7 @@ class Div(NumberOperation):
                     # factor y/z into (1/z)*y
                     _x = one
                     _y = expr.numerator
-                    reductions.append(Mult(_x, _y).one_elimination(0))
+                    replacements.append(Mult(_x, _y).one_elimination(0))
             else:
                 # factor (x*y)/z into x*(y/z)
                 thm = mult_frac_right
@@ -282,14 +297,14 @@ class Div(NumberOperation):
                     # factor x/z into x*(1/z)
                     _x = expr.numerator
                     _y = one
-                    reductions.append(Mult(_x, _y).one_elimination(1))
+                    replacements.append(Mult(_x, _y).one_elimination(1))
             if the_factor_numer != one:
                 assert expr.numerator.operands.num_entries() == 2
                 _x = expr.numerator.operands.entries[0]
                 _y = expr.numerator.operands.entries[1]
             _z = expr.denominator
             eq.update(thm.instantiate({x:_x, y:_y, z:_z},
-                                      reductions=reductions))
+                                      replacements=replacements))
         else:
             # Factor (x*y)/(z*w) into (x/z)*(y/w).
             thm = prod_of_fracs
@@ -304,12 +319,12 @@ class Div(NumberOperation):
                 # Factor (x*y)/w into x*(y/w).
                 _z = one
                 _w = expr.denominator
-                reductions.append(Mult(_z, _w).one_elimination(0))
+                replacements.append(Mult(_z, _w).one_elimination(0))
             else:
                 # Factor (x*y)/z into (x/z)*y.
                 _z = expr.denominator
                 _w = one
-                reductions.append(Mult(_z, _w).one_elimination(1))
+                replacements.append(Mult(_z, _w).one_elimination(1))
             # Factor the numerator parts unless there is a 1 numerator.
             if the_factor_numer not in (one, expr.numerator):
                 expr = eq.update(expr.inner_expr().numerator.factorization(
@@ -323,19 +338,19 @@ class Div(NumberOperation):
                 # Factor y/(z*w) into (1/z)*(y/w)
                 _x = one
                 _y = expr.numerator
-                reductions.append(Mult(_x, _y).one_elimination(0))
+                replacements.append(Mult(_x, _y).one_elimination(0))
             else:
                 # Factor x/(y*z) into (x/y)*(1/z)
                 _x = expr.numerator
                 _y = one
-                reductions.append(Mult(_x, _y).one_elimination(1))      
+                replacements.append(Mult(_x, _y).one_elimination(1))      
             eq.update(thm.instantiate({x:_x, y:_y, z:_z, w:_w},
-                                      reductions=reductions))
+                                      replacements=replacements))
         
         return eq.relation
 
-
-    def distribution(self, assumptions=USE_DEFAULTS):
+    @equality_prover('distributed', 'distribute') 
+    def distribution(self, **defaults_config):
         r'''
         Distribute the denominator through the numerate.
         Returns the equality that equates self to this new version.
@@ -346,18 +361,30 @@ class Div(NumberOperation):
         Give any assumptions necessary to prove that the operands are in the Complex
         numbers so that the associative and commutation theorems are applicable.
         '''
-        from proveit.numbers import Add, subtract, Sum
-        from . import distributefrac_through_sum, distributefrac_through_subtract, distributefrac_through_summation
+        from proveit.numbers import Add, Sum, Neg
+        from . import (distribute_fraction_through_sum, 
+                       distribute_fraction_through_subtract)
         if isinstance(self.numerator, Add):
-            return distributefrac_through_sum.instantiate(
-                {x_etc: self.numerator.operands, y: self.denominator})
-        elif isinstance(self.numerator, subtract):
-            return distributefrac_through_subtract.instantiate(
-                {x: self.numerator.operands[0], y: self.numerator.operands[1], z: self.denominator})
+            if (self.numerator.operands.is_double()
+                    and isinstance(self.numerator.operands[1], Neg)):
+                _x = self.numerator.operands[0]
+                _y = self.numerator.operands[1].operand
+                _z = self.denominator
+                return distribute_fraction_through_subtract.instantiate(
+                        {x:_x, y:_y, z:_z})
+            _x = self.numerator.operands
+            _y = self.denominator
+            _n = _x.num_elements()
+            return distribute_fraction_through_sum.instantiate(
+                    {n: _n, x: _x, y: _y})
         elif isinstance(self.numerator, Sum):
             # Should deduce in Complex, but distribute_through_summation doesn't have a domain restriction right now
             # because this is a little tricky.   To do.
             #deduce_in_complex(self.operands, assumptions)
+            raise NotImplementedError(
+                    "Distribution of division through summation not yet "
+                    "implemented.")
+            """
             y_etc_sub = self.numerator.indices
             Pop, Pop_sub = Function(
                 P, self.numerator.indices), self.numerator.summand
@@ -367,12 +394,13 @@ class Div(NumberOperation):
                 {Pop: Pop_sub, S: S_sub, y_etc: y_etc_sub, z: dummy_var})
             return spec1.derive_conclusion().instantiate(
                 {dummy_var: self.denominator})
+            """
         else:
             raise Exception(
                 "Unsupported operand type to distribute over: " +
                 self.numerator.__class__)
 
-    @equivalence_prover('combined_exponents', 'combine_exponents')
+    @equality_prover('combined_exponents', 'combine_exponents')
     def exponent_combination(self, start_idx=None, end_idx=None,
                              **defaults_config):
         '''
@@ -431,16 +459,13 @@ class Div(NumberOperation):
         else:
             raise NotImplementedError("Need to implement degenerate cases "
                                       "of a^b/a and a/a^b.")
-
-    def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
+    
+    @relation_prover
+    def deduce_in_number_set(self, number_set, **defaults_config):
         '''
         Given a number set number_set, attempt to prove that the given
         expression is in that number set using the appropriate closure
         theorem.
-        Created: 2/27/2020 by wdc, based on the same method in the Add
-                 class. Just a start on this method, to be cont'd.
-        Last Modified: 2/27/2020 by wdc. Creation.
-        Once established, these authorship notations can be deleted.
         '''
         from proveit import a, b
         from proveit.numbers.division import (
@@ -467,13 +492,13 @@ class Div(NumberOperation):
         elif number_set == Complex:
             thm = divide_complex_closure
         if thm is not None:
-            return thm.instantiate({a: self.numerator, b: self.denominator},
-                                   assumptions=assumptions)
+            return thm.instantiate({a: self.numerator, b: self.denominator})
         raise NotImplementedError(
             "'Div.deduce_in_number_set()' not implemented for the %s set" 
             % str(number_set))
     
-    def bound_via_operand_bound(self, operand_relation, assumptions=USE_DEFAULTS):
+    @relation_prover
+    def bound_via_operand_bound(self, operand_relation, **defaults_config):
         '''
         Deduce a bound of this division (fraction) given a bound on
         either the numerator or the denominatory.
@@ -486,17 +511,15 @@ class Div(NumberOperation):
                             "relation (<, >, ≤, or ≥)")
         lhs = operand_relation.lhs
         if lhs == self.numerator:
-            return self.bound_via_numerator_bound(
-                    operand_relation, assumptions=assumptions)
+            return self.bound_via_numerator_bound(operand_relation)
         elif lhs == self.denominator:
-            return self.bound_via_denominator_bound(
-                    operand_relation, assumptions=assumptions)
+            return self.bound_via_denominator_bound(operand_relation)
         else:
             raise ValueError("Left side of %s expected to be the numerator "
                              "or denominator of %s"%(operand_relation, self))
 
-    def bound_via_numerator_bound(self, relation, 
-                                  assumptions=USE_DEFAULTS):
+    @relation_prover
+    def bound_via_numerator_bound(self, relation, **defaults_config):
         '''
         Given a relation applicable to the numerator,  bound this 
         division accordingly.  For example, 
@@ -522,20 +545,20 @@ class Div(NumberOperation):
         _a = self.denominator
         _x = relation.normal_lhs
         _y = relation.normal_rhs
-        if greater(self.denominator, zero).proven(assumptions):
+        if greater(self.denominator, zero).proven():
             if isinstance(relation, Less):
                 bound = strong_div_from_numer_bound__pos_denom.instantiate(
-                        {a: _a, x: _x, y: _y}, assumptions=assumptions)
+                        {a: _a, x: _x, y: _y})
             elif isinstance(relation, LessEq):
                 bound =  weak_div_from_numer_bound__pos_denom.instantiate(
-                        {a: _a, x: _x, y: _y}, assumptions=assumptions)                
-        elif Less(self.denominator, zero).proven(assumptions):
+                        {a: _a, x: _x, y: _y})                
+        elif Less(self.denominator, zero).proven():
             if isinstance(relation, Less):
                 bound =  strong_div_from_numer_bound__neg_denom.instantiate(
-                        {a: _a, x: _x, y: _y}, assumptions=assumptions)
+                        {a: _a, x: _x, y: _y})
             elif isinstance(relation, LessEq):
                 bound =  weak_div_from_numer_bound__neg_denom.instantiate(
-                        {a: _a, x: _x, y: _y}, assumptions=assumptions)                        
+                        {a: _a, x: _x, y: _y})                        
         else:
             raise UnsatisfiedPrerequisites(
                     "We must know whether the denominator of %s "
@@ -545,8 +568,8 @@ class Div(NumberOperation):
             return bound.with_direction_reversed()
         return bound
 
-    def bound_via_denominator_bound(self, relation, 
-                                    assumptions=USE_DEFAULTS):
+    @relation_prover
+    def bound_via_denominator_bound(self, relation, **defaults_config):
         '''
         Given a relation applicable to the numerator,  bound this 
         division accordingly.  For example, 
@@ -579,16 +602,14 @@ class Div(NumberOperation):
         try:
             # Ensure that we relate both _x and _y to zero by knowing
             # one of these.
-            ordering = LessEq.sort((_x, _y, zero),
-                                   assumptions=assumptions)
-            ordering.operands[0].apply_transitivity(
-                    ordering.operands[1], assumptions=assumptions)
+            ordering = LessEq.sort((_x, _y, zero))
+            ordering.operands[0].apply_transitivity(ordering.operands[1])
         except:
             pass # We'll generate an appropriate error below.
-        pos_numer = greater_eq(self.numerator, zero).proven(assumptions)
-        neg_numer = LessEq(self.numerator, zero).proven(assumptions)
-        pos_denom = greater(self.denominator, zero).proven(assumptions)
-        neg_denom = Less(self.denominator, zero).proven(assumptions)
+        pos_numer = greater_eq(self.numerator, zero).proven()
+        neg_numer = LessEq(self.numerator, zero).proven()
+        pos_denom = greater(self.denominator, zero).proven()
+        neg_denom = Less(self.denominator, zero).proven()
         if not (pos_numer or neg_numer) or not (pos_denom or neg_denom):
             raise UnsatisfiedPrerequisites(
                     "We must know the sign of the numerator and "
@@ -597,31 +618,31 @@ class Div(NumberOperation):
         if pos_numer and pos_denom:
             if isinstance(relation, Less):
                 bound = strong_div_from_denom_bound__all_pos.instantiate(
-                        {a: _a, x: _x, y: _y}, assumptions=assumptions)
+                        {a: _a, x: _x, y: _y})
             elif isinstance(relation, LessEq):
                 bound = weak_div_from_denom_bound__all_pos.instantiate(
-                        {a: _a, x: _x, y: _y}, assumptions=assumptions)                
+                        {a: _a, x: _x, y: _y})                
         elif neg_numer and neg_denom:
             if isinstance(relation, Less):
                 bound = strong_div_from_denom_bound__all_neg.instantiate(
-                        {a: _a, x: _x, y: _y}, assumptions=assumptions)
+                        {a: _a, x: _x, y: _y})
             elif isinstance(relation, LessEq):
                 bound = weak_div_from_denom_bound__all_neg.instantiate(
-                        {a: _a, x: _x, y: _y}, assumptions=assumptions)             
+                        {a: _a, x: _x, y: _y})             
         elif pos_numer and neg_denom:
             if isinstance(relation, Less):
                 bound = strong_div_from_denom_bound__pos_over_neg.instantiate(
-                        {a: _a, x: _x, y: _y}, assumptions=assumptions)
+                        {a: _a, x: _x, y: _y})
             elif isinstance(relation, LessEq):
                 bound = weak_div_from_denom_bound__pos_over_neg.instantiate(
-                        {a: _a, x: _x, y: _y}, assumptions=assumptions)
+                        {a: _a, x: _x, y: _y})
         elif neg_numer and pos_denom:
             if isinstance(relation, Less):
                 bound = strong_div_from_denom_bound__neg_over_pos.instantiate(
-                        {a: _a, x: _x, y: _y}, assumptions=assumptions)
+                        {a: _a, x: _x, y: _y})
             elif isinstance(relation, LessEq):
                 bound = weak_div_from_denom_bound__neg_over_pos.instantiate(
-                        {a: _a, x: _x, y: _y}, assumptions=assumptions)
+                        {a: _a, x: _x, y: _y})
         else:
             raise UnsatisfiedPrerequisites(
                     "We must know whether or not the denominator of %s "

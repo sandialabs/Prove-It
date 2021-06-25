@@ -22,31 +22,46 @@ class Defaults:
         # statements as well as automatically concluding
         # statements (via `conclude` methods) when possible.
         self.automation = True
-        
-        # If True, limit the amount of automation that will be
-        # employed, making it apply only locally.
-        self.minimal_automation = False
 
         # Display LaTeX versions of expressions.
         self.display_latex = True
+
+        # When True, Prove-It will automatically simplify expressions 
+        # as replacements are made (e.g. during instantiations), except
+        # for the 'preserved_exprs' (see below).  Turning auto_simplify 
+        # on will automatically turn preserve_all off (see below).
+        self.auto_simplify = True
+
+        # When True, Prove-It will not automatically simplify or 
+        # perform 'replacements' (see below) for any expressions.
+        # It is often the case that this should be set to True for all 
+        # but one of a multi-step process within a 
+        # @prover/@relation_prover/@equality_prover method.  Turning 
+        # preserve_all on will automatically turn auto_simplify off.
+        self.preserve_all = False
         
         # Proven equalities which specify desired replacements.
         # Occurrences of the left side will be replaced with
         # occurrences of the right side during instantiations
         # (and calls to Expression.replaced or 
         # Expression.equality_replaced).
+        # When setting replacements, preserve_all will automatically be
+        # disabled and corresponding expressions in preserved_exprs will
+        # be discarded; however, preserved_exprs override replacements.
+        # That is, whichever is done last is the directive that is
+        # followed.
         self.replacements = tuple()
         
-        # Automatically simplify expressions as replacements are
-        # made (e.g. during instantiations), except for the
-        # 'preserved_exprs' (see below).
-        self.auto_simplify = True
+        # Expressions that should be 'preserved' and not 
+        # auto-simplified or replaced using an equality-based
+        # replacement.
+        # Preserving an expression in this manner overrides any
+        # replacement for that expression; however, when setting
+        # replacements, corresponding expressions in preserved_exprs
+        # will be discarded.  That is, whichever is done last is the
+        # directive that is followed.
+        self.preserved_exprs = set()        
 
-        # Expressions that should be 'preserved' and not simplified
-        # or replaced using an equality-base replacement.
-        # Note that replacements override preserved expressions.
-        self.preserved_exprs = set()
-        
         """
         # Map expression classes to directives that should be
         # employed when simplifying expressions with that class.
@@ -156,7 +171,14 @@ class Defaults:
         
         Will temporarily set defaults.assumptions to inner_assumptions.
         '''
-        return TemporarySetter(self)
+        temp_setter = TemporarySetter(self)
+        # Store some attributes that can effect each other indirectly
+        # via the Defaults.__setattr__ method.  These are shallow, not
+        # deep, copies, so no big deal time-wise.
+        for attr in ('auto_simplify', 'preserve_all', 'preserved_exprs', 
+                     'replacements'):
+            temp_setter._original_values[attr] = getattr(self, attr)
+        return temp_setter
 
     def checked_assumptions(self, assumptions):
         '''
@@ -171,9 +193,7 @@ class Defaults:
 
         assumptions = tuple(self._checkAssumptions(assumptions))
         sorted_assumptions = tuple(
-            sorted(
-                assumptions,
-                key=lambda expr: hash(expr)))
+            sorted(assumptions, key=lambda expr: hash(expr)))
 
         # avoid infinite recursion and extra work
         if sorted_assumptions not in Defaults.considered_assumption_sets:
@@ -227,7 +247,31 @@ class Defaults:
                 return # Nothing has changed.
             # Invalidate the _simplification_directives_id since the
             # assumptions may have changed.
-            self._simplification_directives_id = None
+            # NOT USED ANYMORE
+            #self._simplification_directives_id = None
+        if attr == 'replacements' and len(value) > 0:
+            from proveit import Judgment
+            from proveit.logic import Equals
+            # When we have replacements, don't preserve all (anymore?):
+            self.preserve_all = False
+            value = tuple(value) # replacements should be a tuple
+            for replacement in value:
+                if not isinstance(replacement, Judgment):
+                    raise TypeError("'replacements' should be Judgments")
+                if not isinstance(replacement.expr, Equals):
+                    raise TypeError("'replacements' should be equality "
+                                    "Judgments")
+                # Setting a replacement will override an existing
+                # preserved expression.
+                self.preserved_exprs.discard(replacement.lhs)
+        elif attr == 'preserve_all' and value==True:
+            # When preserving all, we can nix replacements and turn
+            # off auto-simplification.
+            self.replacements = tuple()
+            self.auto_simplify = False
+        elif attr == 'auto_simplify' and value==True:
+            # Turning auto-simplify on, so don't preserve all (anymore?)
+            self.preserve_all = False
         self.__dict__[attr] = value
 
 class TemporarySetter(object):

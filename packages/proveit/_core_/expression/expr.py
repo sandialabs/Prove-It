@@ -7,8 +7,8 @@ from proveit._core_.defaults import (defaults, USE_DEFAULTS,
 from proveit._core_.theory import Theory
 from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_._unique_data import meaning_data, style_data
-from proveit.decorators import (prover, equivalence_prover,
-                                _equiv_prover_fn_to_tenses)
+from proveit.decorators import (prover, equality_prover,
+                                _equality_prover_fn_to_tenses)
 import sys
 import re
 import inspect
@@ -27,10 +27,12 @@ class ExprType(type):
 
     # These attributes should not be overridden by classes outside
     # of the core.
-    protected = ('_canonical_version',
+    protected = ('_apply', '_canonical_version',
                  'replaced', 'basic_replaced', '_replaced_entries', 
                  'equality_replaced', '_equality_replaced', 
-                 '_equality_replaced_sub_exprs', 'relabeled',
+                 '_manual_equality_replaced',
+                 '_auto_simplified', '_auto_simplified_sub_exprs',
+                 '_range_reduction', 'relabeled',
                  '_make', '_checked_make', '_reduced', '_used_vars',
                  '_possibly_free_var_ranges', '_parameterized_var_ranges',
                  '_repr_html_', '_core_info',
@@ -93,16 +95,16 @@ class ExprType(type):
                 styles_param.default not in (None, inspect.Parameter.empty)):
             raise_invalid_styles_init_arg()
         
-        # Register @equivalence_prover methods.
+        # Register @equality_prover methods.
         for attr, val in list(cls.__dict__.items()):
-            if callable(val) and val in _equiv_prover_fn_to_tenses:
+            if callable(val) and val in _equality_prover_fn_to_tenses:
                 fn = val
-                past_tense, present_tense = _equiv_prover_fn_to_tenses[fn]
-                cls._register_equivalence_method(
+                past_tense, present_tense = _equality_prover_fn_to_tenses[fn]
+                cls._register_equality_method(
                         fn, past_tense, present_tense)
 
-    def _register_equivalence_method(
-            cls, equiv_method, past_tense_name, present_tense_name):
+    def _register_equality_method(
+            cls, equality_method, past_tense_name, present_tense_name):
         '''
         Register a method of an expression class that is used to derive
         and return (as a Judgment) the equivalence of that expression 
@@ -118,14 +120,14 @@ class ExprType(type):
         as a method to the given expression class with an appropriate
         doc string.
         '''
-        if not isinstance(equiv_method, str):
+        if not isinstance(equality_method, str):
             # can be a string or a function:
-            equiv_method = equiv_method.__name__
-        if not hasattr(cls, equiv_method):
+            equality_method = equality_method.__name__
+        if not hasattr(cls, equality_method):
             raise Exception(
                 "Must have '%s' method defined in class '%s' in order to "
                 "register it as an equivalence method in InnerExpr." %
-                (equiv_method, str(cls)))
+                (equality_method, str(cls)))
     
         # Store information in the Expression class that will enable 
         # calling InnerExpr methods when an expression of that type
@@ -133,13 +135,13 @@ class ExprType(type):
         # performing in-place replacements.
         setattr(
             cls, '_equiv_method_%s_' %
-            equiv_method, ('equiv', equiv_method))
+            equality_method, ('equiv', equality_method))
         setattr(
             cls, '_equiv_method_%s_' %
-            past_tense_name, ('rhs', equiv_method))
+            past_tense_name, ('rhs', equality_method))
         setattr(
             cls, '_equiv_method_%s_' %
-            present_tense_name, ('action', equiv_method))
+            present_tense_name, ('action', equality_method))
     
         # Automatically create the "past-tense" equivalence method for
         # the expression class which returns the right side.
@@ -155,11 +157,11 @@ class ExprType(type):
         """
     
         def equiv_rhs(expr, *args, **kwargs):
-            return getattr(expr, equiv_method)(*args, **kwargs).rhs
+            return getattr(expr, equality_method)(*args, **kwargs).rhs
         equiv_rhs.__name__ = past_tense_name
         equiv_rhs.__doc__ = (
                 "Return an equivalent form of this expression derived "
-                "via '%s'."% equiv_method)
+                "via '%s'."% equality_method)
         setattr(cls, past_tense_name, equiv_rhs)
 
 
@@ -690,7 +692,7 @@ class Expression(metaclass=ExprType):
         if (self.style_options().options != 
                 other_expr.style_options().options):
             raise ValueError(
-                "'other_expr' must an expression with "
+                "'other_expr' must be an expression with "
                 "the same style options as 'self'.")
         return self.with_styles(**other_expr.get_styles())
 
@@ -742,7 +744,8 @@ class Expression(metaclass=ExprType):
         '''
         return tuple()
 
-    def prove(self, assumptions=USE_DEFAULTS, automation=USE_DEFAULTS):
+    @prover
+    def prove(self, **defaults_config):
         '''
         Attempt to prove this expression automatically under the
         given assumptions (if None, uses defaults.assumptions).  First
@@ -756,10 +759,9 @@ class Expression(metaclass=ExprType):
         '''
         from proveit import Judgment, ProofFailure
         from proveit.logic import Not
-        assumptions = defaults.checked_assumptions(assumptions)
+        assumptions = defaults.assumptions
+        automation = defaults.automation
         assumptions_set = set(assumptions)
-        if automation is USE_DEFAULTS:
-            automation = defaults.automation
 
         found_truth = Judgment.find_judgment(self, assumptions_set)
         if found_truth is not None:
@@ -842,12 +844,13 @@ class Expression(metaclass=ExprType):
         '''
         from proveit import ProofFailure
         try:
-            self.prove(assumptions, automation=False)
+            self.prove(assumptions=assumptions, automation=False)
             return True
         except ProofFailure:
             return False
 
-    def disprove(self, assumptions=USE_DEFAULTS, automation=USE_DEFAULTS):
+    @prover
+    def disprove(self, **defaults_config):
         '''
         Attempt to prove the logical negation (Not) of this expression.
         If successful, the Judgment is returned, otherwise an exception
@@ -856,7 +859,7 @@ class Expression(metaclass=ExprType):
         the type of expression being negated.
         '''
         from proveit.logic import Not
-        return Not(self).prove(assumptions=assumptions, automation=automation)
+        return Not(self).prove()
 
     def disproven(self, assumptions=USE_DEFAULTS):
         '''
@@ -864,7 +867,7 @@ class Expression(metaclass=ExprType):
         '''
         from proveit import ProofFailure
         try:
-            self.disprove(assumptions, automation=False)
+            self.disprove(assumptions=assumptions, automation=False)
             return True
         except ProofFailure:
             return False
@@ -928,8 +931,8 @@ class Expression(metaclass=ExprType):
         return self in Expression.simplified_exprs.get(directive_id, tuple())
     """
 
-    def replaced(self, repl_map, *, allow_relabeling=False, 
-                 requirements=None, equality_repl_requirements=None):
+    def complete_replaced(self, repl_map, *, allow_relabeling=False, 
+                          requirements=None, equality_repl_requirements=None):
         '''
         Returns this expression with sub-expressions replaced
         according to the replacement map (repl_map) dictionary
@@ -964,7 +967,8 @@ class Expression(metaclass=ExprType):
         based replacements are made, the equality requirements are
         recorded in both requirements and equality_repl_requirements.
 
-        Also applies any enabled automatic reductions.
+        Also applies any enabled automatic simplifcations and
+        explicit replacements -- that is why this version is "complete".
         '''
         if requirements is None:
             requirements = []  # Not passing back requirements.
@@ -974,9 +978,13 @@ class Expression(metaclass=ExprType):
         expr = self.basic_replaced(
             repl_map, allow_relabeling=allow_relabeling,
             requirements=requirements)
-        return expr.equality_replaced(
-                requirements, equality_repl_requirements,
+        new_equality_repl_requirements = []
+        replaced_expr = expr.equality_replaced(
+                new_equality_repl_requirements,
                 auto_simplify_top_level=defaults.auto_simplify)
+        requirements.extend(new_equality_repl_requirements)
+        equality_repl_requirements.update(new_equality_repl_requirements)
+        return replaced_expr
 
     def basic_replaced(self, repl_map, *, 
                        allow_relabeling=False, requirements=None):
@@ -985,7 +993,7 @@ class Expression(metaclass=ExprType):
         replacements.
         '''
         if len(repl_map) > 0 and (self in repl_map):
-            replaced = repl_map[self]
+            return repl_map[self]
         else:
             sub_exprs = self._sub_expressions
             subbed_sub_exprs = tuple(
@@ -997,12 +1005,11 @@ class Expression(metaclass=ExprType):
                    subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
                 # Nothing change, so don't remake anything.
                 return self
-            replaced = self.__class__._checked_make(
+            return self.__class__._checked_make(
                 self._core_info, subbed_sub_exprs,
                 style_preferences=self._style_data.styles)
-        return replaced
 
-    def equality_replaced(self, requirements, equality_repl_requirements,
+    def equality_replaced(self, requirements,
                           auto_simplify_top_level=USE_DEFAULTS):
         '''
         Return something equal to this expression with replacements
@@ -1018,7 +1025,10 @@ class Expression(metaclass=ExprType):
         '''
         from proveit import Judgment  
         from proveit.logic import Equals
-
+        
+        if defaults.preserve_all:
+            return self
+        
         # Convert the replacements tuple to an equality_repl_map.
         equality_repl_map = dict()
         for replacement in defaults.replacements:
@@ -1031,81 +1041,130 @@ class Expression(metaclass=ExprType):
                 # Don't bother with reflexive (x=x) reductions.
                 continue
             equality_repl_map[replacement.expr.lhs] = replacement
+        
+        expr = self
+        if len(equality_repl_map) > 0:
+            expr = expr._manual_equality_replaced(
+                    equality_repl_map, requirements=requirements,
+                    stored_replacements=dict())
+        if defaults.auto_simplify:
+            with defaults.temporary() as temp_defaults:
+                # Let's turn on automation while auto-simplifying at
+                # least.
+                temp_defaults.automation = True
+                expr = expr._auto_simplified(
+                        requirements=requirements,
+                        stored_replacements=dict(),
+                        auto_simplify_top_level=auto_simplify_top_level)
+        return expr
 
-        # Use the recursive helper method.
-        return self._equality_replaced(
-                equality_repl_map, requirements, 
-                equality_repl_requirements,
-                auto_simplify_top_level=auto_simplify_top_level)
-
-    def _equality_replaced(self, equality_repl_map, requirements, 
-                           equality_repl_requirements,
-                           auto_simplify_top_level=USE_DEFAULTS):
+    def _manual_equality_replaced(self, equality_repl_map, *,
+                                  requirements, stored_replacements):
         '''
-        Recursive helper method for equality_replaced.
+        Helper method for equality_replaced which handles the manual
+        replacements.
         '''
-        from proveit import Judgment, Composite, ExprRange       
+        if self in defaults.preserved_exprs:
+            # This expression should be preserved, so don't make
+            # any equality-based replacement.
+            return self
+        if self in equality_repl_map:
+            replacement = equality_repl_map[self]
+            requirements.append(replacement)
+            return replacement.expr.rhs
+        elif self in stored_replacements:
+            # We've handled this one before, so reuse it.
+            return stored_replacements[self]
+        # Recurse into the sub-expressions.
+        sub_exprs = self._sub_expressions
+        subbed_sub_exprs = \
+            tuple(sub_expr._manual_equality_replaced(
+                    equality_repl_map, requirements=requirements,
+                    stored_replacements=stored_replacements)
+                  for sub_expr in sub_exprs)
+        if all(subbed_sub._style_id == sub._style_id for
+               subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
+            # Nothing changed, so don't remake anything.
+            replaced_expr = self
+        else:
+            replaced_expr = self.__class__._checked_make(
+                self._core_info, subbed_sub_exprs,
+                style_preferences=self._style_data.styles)   
+        if replaced_expr in equality_repl_map:
+            # Check if the revised expression has a replacement.
+            replacement = equality_repl_map[replaced_expr]
+            requirements.append(replacement)
+            replaced_expr = replacement.expr.rhs        
+        stored_replacements[self] = replaced_expr
+        return replaced_expr
+    
+    def _auto_simplified(
+            self, *, requirements, stored_replacements,
+            auto_simplify_top_level=USE_DEFAULTS):
+        '''
+        Helper method for equality_replaced which handles the automatic
+        simplification replacements.
+        '''
+        from proveit import Judgment, ExprRange       
         from proveit._core_.proof import (
                 ProofFailure, UnsatisfiedPrerequisites)
         from proveit.logic import (Equals, SimplificationError,
                                    EvaluationError,
                                    is_irreducible_value)
 
+        if self in defaults.preserved_exprs:
+            # This expression should be preserved, so don't 
+            # auto-simplify.
+            return self
+        elif self in stored_replacements:
+            # We've handled this one before, so reuse it.
+            return stored_replacements[self]
+
         # Check for an equality replacement via equality_repl_map
         # or as a simplification.  Note that 'replacements' override
         # 'preserved_exprs'.
-        replacement = None
-        if (not isinstance(self, Composite) and 
-                not isinstance(self, ExprRange)):
-            if self in equality_repl_map:
-                replacement = equality_repl_map[self]
-        if replacement is None:
-            if self in defaults.preserved_exprs:
-                # This expression should be preserved, so don't make
-                # any equality-based replacement.
-                return self
         expr = self
+        # Recurse into the sub-expressions.
+        expr = expr._auto_simplified_sub_exprs(
+                requirements=requirements, 
+                stored_replacements=stored_replacements)
+        if (expr != self) and (expr in defaults.preserved_exprs):
+            # The new expression should be preserved, so don't make
+            # any further auto-simplification.
+            return expr
+        if auto_simplify_top_level is USE_DEFAULTS:
+            auto_simplify_top_level = defaults.auto_simplify
+        replacement = None
+        if (auto_simplify_top_level and not is_irreducible_value(expr)
+              and not isinstance(expr, ExprRange)):
+            # Look for a known evaluation.
+            replacement = Equals.get_known_evaluation(expr)
+            if (replacement is None and 
+                    hasattr(expr, 'shallow_evaluation')):
+                # Attempt a shallow evaluation (after recursion).
+                try:
+                    replacement = expr.shallow_evaluation()
+                except (EvaluationError, UnsatisfiedPrerequisites, 
+                        NotImplementedError, ProofFailure):
+                    # Failure in the simplification attempt; 
+                    # just skip it.
+                    pass
+            if (replacement is None and 
+                    hasattr(expr, 'shallow_simplification')):
+                # Attempt a shallow simplification (after recursion).
+                try:
+                    replacement = expr.shallow_simplification()
+                    if replacement.rhs == expr:
+                        # Trivial simplification -- don't use it.
+                        return expr
+                except (SimplificationError, UnsatisfiedPrerequisites, 
+                        NotImplementedError, ProofFailure):
+                    # Failure in the simplification attempt; 
+                    # just skip it.
+                    pass
         if replacement is None:
-            # Recurse into the sub-expressions.
-            expr = self._equality_replaced_sub_exprs(
-                    equality_repl_map, requirements, 
-                    equality_repl_requirements)
-            if expr in defaults.preserved_exprs:
-                # The expression should be preserved, so don't make
-                # any further equality-based replacement.
-                return expr
-            if auto_simplify_top_level is USE_DEFAULTS:
-                auto_simplify_top_level = defaults.auto_simplify
-            if (expr != self) and (expr in equality_repl_map):
-                replacement = equality_repl_map[expr]
-            elif auto_simplify_top_level and not is_irreducible_value(expr):
-                # Look for a known evaluation.
-                replacement = Equals.get_known_evaluation(expr)
-                if (replacement is None and 
-                        hasattr(expr, 'shallow_evaluation')):
-                    # Attempt a shallow evaluation (after recursion).
-                    try:
-                        replacement = expr.shallow_evaluation()
-                    except (EvaluationError, UnsatisfiedPrerequisites, 
-                            NotImplementedError, ProofFailure):
-                        # Failure in the simplification attempt; 
-                        # just skip it.
-                        pass
-                if (replacement is None and 
-                        hasattr(expr, 'shallow_simplification')):
-                    # Attempt a shallow simplification (after recursion).
-                    try:
-                        replacement = expr.shallow_simplification()
-                        if replacement.rhs == expr:
-                            # Trivial simplification -- don't use it.
-                            return expr
-                    except (SimplificationError, UnsatisfiedPrerequisites, 
-                            NotImplementedError, ProofFailure):
-                        # Failure in the simplification attempt; 
-                        # just skip it.
-                        pass
-            if replacement is None:
-                return expr
+            stored_replacements[self] = expr
+            return expr
         
         # We have a replacement here; make sure it is a valid one.
         if not isinstance(replacement, Judgment):
@@ -1125,21 +1184,22 @@ class Expression(metaclass=ExprType):
             # The assumptions aren't adequate to use this reduction.
             return self
         requirements.append(replacement)
-        equality_repl_requirements.add(replacement)
-        return replacement.expr.rhs
+        replaced_expr = replacement.expr.rhs
+        stored_replacements[self] = replaced_expr
+        return replaced_expr
 
-    def _equality_replaced_sub_exprs(self, equality_repl_map, requirements, 
-                                     equality_repl_requirements):
+    def _auto_simplified_sub_exprs(
+            self, *, requirements, stored_replacements):
         '''
-        Recursive helper method for equality_replaced.
+        Helper method for _auto_simplified do handle auto-simplification
+        replacements for sub-expressions.
         '''
         # Recurse into the sub-expressions.
         sub_exprs = self._sub_expressions
         subbed_sub_exprs = \
-            tuple(sub_expr._equality_replaced(
-                    equality_repl_map, requirements,
-                    equality_repl_requirements,
-                    auto_simplify_top_level=defaults.auto_simplify)
+            tuple(sub_expr._auto_simplified(
+                    requirements=requirements, 
+                    stored_replacements=stored_replacements)
                   for sub_expr in sub_exprs)
         if all(subbed_sub._style_id == sub._style_id for
                subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
@@ -1211,11 +1271,11 @@ class Expression(metaclass=ExprType):
         from proveit._core_.expression.label.var import safe_dummy_vars
         return safe_dummy_vars(n, self)
     
-    @equivalence_prover('evaluated', 'evaluate')
+    @equality_prover('evaluated', 'evaluate')
     def evaluation(self, **defaults_config):
         '''
         If possible, return a Judgment of this expression equal to an
-        irreducible value.  In the @equivalence_prover decorator
+        irreducible value.  In the @equality_prover decorator
         for any 'evaluation' method, there is a check for an
         existing evaluation and a check that the resulting proven
         statement equates self with an irreducible value.
@@ -1252,12 +1312,12 @@ class Expression(metaclass=ExprType):
         # has some options via simplifying operands).
         raise EvaluationError(self)
 
-    @equivalence_prover('simplified', 'simplify')
+    @equality_prover('simplified', 'simplify')
     def simplification(self, **defaults_config):
         '''
         If possible, return a Judgment of this expression equal to a
         simplified form (according to strategies specified in 
-        proveit.defaults).  In the @equivalence_prover decorator for any
+        proveit.defaults).  In the @equality_prover decorator for any
         'simplification' method, there is a check for an existing 
         simplification, a check that the resulting proven statement is 
         an equality with self on the lhs, and it remembers the 
@@ -1273,15 +1333,14 @@ class Expression(metaclass=ExprType):
         '''
         # The only default simplification is an evaluations (though the
         # Operation class has some options via simplifying operands).
-        from proveit.logic import Equals, EvaluationError
+        from proveit.logic import EvaluationError
         try:
             return self.evaluation()
         except EvaluationError:
-            # Use the trivial reflexive equality as a last resort
-            # (no simplification).
-            return Equals(self, self).prove()
+            return self.shallow_simplification()
 
-    @equivalence_prover('shallow_evaluated', 'shallow_evaluate')
+
+    @equality_prover('shallow_evaluated', 'shallow_evaluate')
     def shallow_evaluation(self, **defaults_config):
         '''
         Attempt to evaluate 'self' under the assumption that it's
@@ -1297,7 +1356,7 @@ class Expression(metaclass=ExprType):
             "'shallow_evaluation' not implemented for %s class" % str(
                 self.__class__))
 
-    @equivalence_prover('shallow_simplified', 'shallow_simplify')
+    @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, **defaults_config):
         '''
         Attempt to simplify 'self' under the assumption that it's
@@ -1309,7 +1368,7 @@ class Expression(metaclass=ExprType):
         Must be overridden for class-specific simplification.
         '''
         from proveit.logic import Equals
-        return Equals(self, self).prove()
+        return Equals(self, self).conclude_via_reflexivity()
 
     @classmethod
     def temporary_simplification_directives(cls):
@@ -1331,8 +1390,7 @@ class Expression(metaclass=ExprType):
         to its previous value upon exiting the 'with' block.
         '''
         if not hasattr(cls, '_simplification_directives_'):
-            raise AttributeError("%s has no _simplification_directives_ "
-                                 "attribute")
+            raise AttributeError("%s has no _simplification_directives_ attribute" % cls)
         simplification_directives = cls._simplification_directives_
         if not isinstance(simplification_directives, SimplificationDirectives):
             raise TypeError(

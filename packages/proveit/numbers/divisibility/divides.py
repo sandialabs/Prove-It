@@ -1,6 +1,7 @@
 from proveit import (as_expression, defaults, Literal,
                      ProofFailure, TransitiveRelation, 
-                     TransitivityException, USE_DEFAULTS)
+                     TransitivityException, USE_DEFAULTS,
+                     prover, relation_prover)
 from proveit.logic import Equals, InSet, NotEquals
 from proveit.numbers import zero, Complex, Integer, NaturalPos
 
@@ -94,7 +95,8 @@ class Divides(DividesRelation):
         DividesRelation.__init__(self, Divides._operator_, a, b,
                                  styles=styles)
 
-    def conclude(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude(self, **defaults_config):
         '''
         Attempt to conclude the divisibility claim in various ways:
         (1) simple reflexivity (x|x);
@@ -106,10 +108,6 @@ class Divides(DividesRelation):
         '''
         from proveit.numbers import Exp
         
-        # Check validity of assumptions (and convert assumptions=None
-        # to assumptions=(), thus averting len(None) errors).
-        assumptions = defaults.checked_assumptions(assumptions)
-
         #-- -------------------------------------------------------- --#
         #-- Case (1): x|x with x != 0 known or assumed               --#
         #-- -------------------------------------------------------- --#
@@ -117,10 +115,10 @@ class Divides(DividesRelation):
         from proveit.numbers import zero, Complex
         err_str = "In Divides.conclude() we tried:\n"
         if self.lhs == self.rhs:
-            if (NotEquals(self.lhs, zero).proven(assumptions=assumptions) and
-                    InSet(self.lhs, Complex).proven(assumptions=assumptions)):
+            if (NotEquals(self.lhs, zero).proven() and
+                    InSet(self.lhs, Complex).proven()):
                 # Trivial x|x with complex x ≠ 0
-                return self.conclude_via_reflexivity(assumptions)
+                return self.conclude_via_reflexivity()
             else:
                 err_str = err_str + (
                     "Case: lhs = rhs. "
@@ -134,10 +132,10 @@ class Divides(DividesRelation):
         #-- Case (2): x|0 with x != 0 known or assumed               --#
         #-- -------------------------------------------------------- --#
         if self.rhs == zero:
-            if (NotEquals(self.lhs, zero).proven(assumptions=assumptions) and
-                    InSet(self.lhs, Complex).proven(assumptions=assumptions)):
+            if (NotEquals(self.lhs, zero).proven() and
+                    InSet(self.lhs, Complex).proven()):
                 # We have 0/x with complex x ≠ 0
-                return self.conclude_via_zero_factor(assumptions)
+                return self.conclude_via_zero_factor()
             else:
                 err_str = err_str + (
                     "Case: rhs = 0. "
@@ -151,7 +149,7 @@ class Divides(DividesRelation):
         #-- -------------------------------------------------------- --#
         # return self.conclude_via_factor(assumptions)
         try:
-            return self.conclude_via_factor(assumptions)
+            return self.conclude_via_factor()
         except Exception as e:
             err_str = err_str + (
                 "Case: x|xy. This possible case returned the following "
@@ -162,15 +160,14 @@ class Divides(DividesRelation):
         #-- Case (4): x^n|y^n if x|y                                 --#
         #-- -------------------------------------------------------- --#
         if (isinstance(self.lhs, Exp) and isinstance(self.rhs, Exp)):
-            if (InSet(self.lhs.base, Integer).proven(assumptions) and
-                InSet(self.rhs.base, Integer).proven(assumptions) and
+            if (InSet(self.lhs.base, Integer).proven() and
+                InSet(self.rhs.base, Integer).proven() and
                 Equals(self.lhs.exponent, self.rhs.exponent) and
-                InSet(self.lhs.exponent, NaturalPos).proven(assumptions) and
-                    Divides(self.lhs.base, self.rhs.base).proven(assumptions)):
+                InSet(self.lhs.exponent, NaturalPos).proven() and
+                    Divides(self.lhs.base, self.rhs.base).proven()):
 
                 return (Divides(self.lhs.base, self.rhs.base).
-                        introduce_common_exponent(
-                    self.lhs.exponent, assumptions=assumptions))
+                        introduce_common_exponent(self.lhs.exponent))
 
             else:
                 err_str = err_str + (
@@ -212,7 +209,7 @@ class Divides(DividesRelation):
         # to get x|z, utilizing the conclude_via_transitivity() method
         # available for instances of TransitiveRelation
         try:
-            return self.conclude_via_transitivity(assumptions)
+            return self.conclude_via_transitivity()
         except Exception as e:
             err_str = err_str + (
                 "Case: transitivity search. In attempting to use "
@@ -220,28 +217,29 @@ class Divides(DividesRelation):
                 "error message: {0}.".format(e))
             pass
 
-        raise ProofFailure(self, assumptions, err_str)
+        raise ProofFailure(self, defaults.assumptions, err_str)
 
-    def conclude_via_reflexivity(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude_via_reflexivity(self, **defaults_config):
         '''
         Prove and return self of the form x|x with x ≠ 0.
         '''
         from . import divides_reflexivity
         _x = divides_reflexivity.instance_var
         assert self.lhs == self.rhs
-        return divides_reflexivity.instantiate(
-            {_x: self.lhs}, assumptions=assumptions)
+        return divides_reflexivity.instantiate({_x: self.lhs})
 
-    def conclude_via_zero_factor(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude_via_zero_factor(self, **defaults_config):
         '''
         Prove and return self of the form x|0 for x ≠ 0
         '''
         from . import non_zero_divides_zero
         _x = non_zero_divides_zero.instance_var
-        return non_zero_divides_zero.instantiate(
-            {_x: self.lhs}, assumptions=assumptions)
+        return non_zero_divides_zero.instantiate({_x: self.lhs})
 
-    def conclude_via_factor(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude_via_factor(self, **defaults_config):
         '''
         Prove and return self of the form x|xy for x ≠ 0 and y in Ints
         '''
@@ -255,15 +253,13 @@ class Divides(DividesRelation):
                     from . import left_factor_divisibility
                     _x, _y = left_factor_divisibility.instance_params
                     return left_factor_divisibility.instantiate(
-                        {_x: self.lhs, _y: self.rhs.operands[1]},
-                        assumptions=assumptions)
+                        {_x: self.lhs, _y: self.rhs.operands[1]})
                 elif self.lhs == self.rhs.operands[1]:
                     # apply right version
                     from . import right_factor_divisibility
                     _x, _y = right_factor_divisibility.instance_params
                     return right_factor_divisibility.instantiate(
-                        {_x: self.lhs, _y: self.rhs.operands[0]},
-                        assumptions=assumptions)
+                        {_x: self.lhs, _y: self.rhs.operands[0]})
                 else:
                     raise ValueError(
                         "conclude_via_factor only applies for an explicit "
@@ -281,7 +277,8 @@ class Divides(DividesRelation):
                 "but received {0} on the right side.".
                 format(self.rhs))
 
-    def eliminate_dividend_exponent(self, assumptions=USE_DEFAULTS):
+    @prover
+    def eliminate_dividend_exponent(self, **defaults_config):
         '''
         From k|a^n (self), derive and return k|a if k is prime
         and a and n are integers.  Currently, this is only implement
@@ -301,10 +298,10 @@ class Divides(DividesRelation):
                 "generalized for any prime divisor.")
         a_, n_ = even__if__power_is_even.instance_params
         return even__if__power_is_even.instantiate(
-            {a_: self.rhs.base, n_: self.rhs.exponent},
-            assumptions=assumptions)
+            {a_: self.rhs.base, n_: self.rhs.exponent})
 
-    def eliminate_common_exponent(self, assumptions=USE_DEFAULTS):
+    @prover
+    def eliminate_common_exponent(self, **defaults_config):
         '''
         From self of the form (k^n)|(a^n), derive and return k|a.
         k, a, must be integers, with n a positive integer. This method
@@ -319,14 +316,14 @@ class Divides(DividesRelation):
             a = self.rhs.base
             n = self.lhs.exponent
 
-            if (InSet(k, Integer).proven(assumptions) and
-                InSet(a, Integer).proven(assumptions) and
-                    InSet(n, NaturalPos).proven(assumptions)):
+            if (InSet(k, Integer).proven() and
+                InSet(a, Integer).proven() and
+                    InSet(n, NaturalPos).proven()):
 
                 from . import common_exponent_elimination
                 _k, _a, _n = common_exponent_elimination.instance_params
                 return common_exponent_elimination.instantiate(
-                    {_k: k, _a: a, _n: n}, assumptions=assumptions)
+                    {_k: k, _a: a, _n: n})
             else:
                 err_msg = ("In using Divides.eliminate_common_exponent(), "
                            "the exponent ({0}) must already be known to be "
@@ -340,7 +337,8 @@ class Divides(DividesRelation):
 
         raise ValueError(err_msg)
 
-    def introduce_common_exponent(self, exponent, assumptions=USE_DEFAULTS):
+    @prover
+    def introduce_common_exponent(self, exponent, **defaults_config):
         '''
         From self of the form (k)|(a), with integers k and a, derive
         and return k^n|a^n where n = exponent is a positive natural.
@@ -348,10 +346,10 @@ class Divides(DividesRelation):
         from . import common_exponent_introduction
         _k, _a, _n = common_exponent_introduction.instance_params
         return common_exponent_introduction.instantiate(
-            {_k: self.lhs, _a: self.rhs, _n: exponent},
-            assumptions=assumptions)
+            {_k: self.lhs, _a: self.rhs, _n: exponent})
 
-    def eliminate_common_factor(self, assumptions=USE_DEFAULTS):
+    @prover
+    def eliminate_common_factor(self, **defaults_config):
         '''
         From self of the form (k a)|(k b), derive and return a|b.
         k must be a non-zero complex number. This method
@@ -377,7 +375,7 @@ class Divides(DividesRelation):
                     from . import common_factor_elimination
                     from proveit import a, b, k
                     return common_factor_elimination.instantiate(
-                        {a: lhs2, b: rhs2, k: lhs1}, assumptions=assumptions)
+                        {a: lhs2, b: rhs2, k: lhs1})
 
                 else:
                     err_msg = ("Error!")
@@ -392,7 +390,8 @@ class Divides(DividesRelation):
 
         raise ValueError(err_msg)
 
-    def apply_transitivity(self, other, assumptions=USE_DEFAULTS):
+    @prover
+    def apply_transitivity(self, other, **defaults_config):
         '''
         From x|y (self) and y|z (other) derive and return x|z.
         Will also check for y|z (self) and x|y (other) to return x|z.
@@ -409,20 +408,21 @@ class Divides(DividesRelation):
         if self.rhs == other.lhs:
             return divides_transitivity.instantiate(
                 {_x: self.lhs, _y: self.rhs, _z: other.rhs},
-                assumptions=assumptions)
+                auto_simplify=False)
         if self.lhs == other.rhs:
             return divides_transitivity.instantiate(
                 {_x: other.lhs, _y: other.rhs, _z: self.rhs},
-                assumptions=assumptions)
+                auto_simplify=False)
         else:
             raise TransitivityException(
-                self, assumptions,
+                self, defaults.assumptions,
                 'Transitivity cannot be applied unless the lhs of one of '
                 'Divides expressions is equal to the rhs of the other '
                 'Divides expression. Instead we have: {0} vs {1}'.
                 format(self, other))
 
-    def deduce_in_bool(self, assumptions=USE_DEFAULTS):
+    @relation_prover
+    def deduce_in_bool(self, **defaults_config):
         '''
         Deduce and return that this 'Divides' expression is in
         the Boolean set.
@@ -430,8 +430,7 @@ class Divides(DividesRelation):
         from . import divides_is_bool
         _x, _y = divides_is_bool.instance_params
         return divides_is_bool.instantiate(
-            {_x: self.operands[0], _y: self.operands[1]},
-            assumptions=assumptions)
+            {_x: self.operands[0], _y: self.operands[1]})
 
 
 class DividesProper(DividesRelation):
