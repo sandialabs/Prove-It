@@ -3,7 +3,7 @@ proveit.core_expr_types.tuples.singular_range_reduction
 proveit.logic.booleans.conjunction.left_from_and
 proveit.logic.booleans.conjunction.right_from_and
 proveit.logic.booleans.false_eq_false
-proveit.logic.booleans.fold_forall_over_bool
+proveit.logic.booleans.forall_over_bool_by_cases
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.negation_intro
 proveit.logic.booleans.quantification.universality.bundle

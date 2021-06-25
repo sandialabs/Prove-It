@@ -110,18 +110,20 @@ class BooleanSet(Literal):
             {Px: _Px, A: _A}).derive_consequent()
 
     @prover
-    def fold_as_forall(self, forall_stmt, **defaults_config):
+    def prove_by_cases(self, forall_stmt, **defaults_config):
         '''
         Given forall_{A in Boolean} P(A), conclude and return it from
         [P(TRUE) and P(FALSE)].
         '''
         from proveit.logic import Forall, And
-        from . import fold_forall_over_bool, fold_conditioned_forall_over_bool
+        from . import forall_over_bool_by_cases, conditioned_forall_over_bool_by_cases
         from . import Boolean
-        assert(isinstance(forall_stmt, Forall)
-               ), "May only apply fold_as_forall method of Boolean to a forall statement"
-        assert(forall_stmt.domain ==
-               Boolean), "May only apply fold_as_forall method of Boolean to a forall statement with the Boolean domain"
+        assert(isinstance(forall_stmt, Forall)), (
+                "May only apply prove_by_cases method of Boolean to a "
+                "forall statement")
+        assert(forall_stmt.domain == Boolean), (
+                "May only apply prove_by_cases method of Boolean "
+                "to a forall statement with the Boolean domain")
         if forall_stmt.conditions.num_entries() > 1:
             if forall_stmt.conditions.is_double():
                 condition = forall_stmt.conditions[1]
@@ -132,15 +134,17 @@ class BooleanSet(Literal):
             Px = Function(P, forall_stmt.instance_param)
             _Px = forall_stmt.instance_expr
             _A = forall_stmt.instance_param
-            return fold_conditioned_forall_over_bool.instantiate(
-                {Qx: _Qx, Px: _Px, A: _A}, num_forall_eliminations=1, preserve_expr=forall_stmt)
+            return conditioned_forall_over_bool_by_cases.instantiate(
+                    {Qx: _Qx, Px: _Px, A: _A}, num_forall_eliminations=1, 
+                    preserve_expr=forall_stmt, auto_simplify=True)
         else:
             # forall_{A in Boolean} P(A), assuming P(TRUE) and P(FALSE)
             Px = Function(P, forall_stmt.instance_param)
             _Px = forall_stmt.instance_expr
             _A = forall_stmt.instance_param
-            return fold_forall_over_bool.instantiate(
-                {Px: _Px, A: _A}, num_forall_eliminations=1)
+            return forall_over_bool_by_cases.instantiate(
+                {Px: _Px, A: _A}, num_forall_eliminations=1,
+                preserve_expr=forall_stmt)
 
 
 class BooleanMembership(Membership):

@@ -6,7 +6,7 @@ proveit.logic.booleans.conjunction.nand_if_left_but_not_right
 proveit.logic.booleans.conjunction.nand_if_neither
 proveit.logic.booleans.conjunction.right_from_and
 proveit.logic.booleans.false_eq_false
-proveit.logic.booleans.fold_forall_over_bool
+proveit.logic.booleans.forall_over_bool_by_cases
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.negation_intro
 proveit.logic.booleans.negation.not_false
