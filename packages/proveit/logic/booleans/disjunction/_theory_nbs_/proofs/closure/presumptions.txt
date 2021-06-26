@@ -5,7 +5,6 @@ proveit.core_expr_types.tuples.extended_range_from1_len_typical_eq
 proveit.core_expr_types.tuples.merge_extension
 proveit.core_expr_types.tuples.range_from1_len
 proveit.core_expr_types.tuples.range_from1_len_typical_eq
-proveit.core_expr_types.tuples.singular_range_reduction
 proveit.core_expr_types.tuples.tuple_len_0_typical_eq
 proveit.logic.booleans.conjunction.and_if_both
 proveit.logic.booleans.conjunction.any_from_and
@@ -18,13 +17,11 @@ proveit.logic.booleans.conjunction.true_and_true
 proveit.logic.booleans.conjunction.unary_and_reduction
 proveit.logic.booleans.disjunction.binary_closure
 proveit.logic.booleans.disjunction.each_is_bool
-proveit.logic.booleans.disjunction.empty_disjunction_eval
 proveit.logic.booleans.disjunction.unary_or_reduction
 proveit.logic.booleans.false_eq_false
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.double_negation_elim
 proveit.logic.booleans.negation.negation_intro
-proveit.logic.booleans.negation.not_false
 proveit.logic.booleans.negation.untrue_from_negation
 proveit.logic.booleans.true_is_bool
 proveit.logic.equality.equals_reversal
@@ -37,11 +34,6 @@ proveit.logic.equality.substitute_truth
 proveit.logic.equality.unfold_not_equals
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.numbers.addition.add_nat_closure_bin
-proveit.numbers.addition.commutation
-proveit.numbers.addition.subtraction.negated_add
-proveit.numbers.addition.subtraction.subtract_from_add
-proveit.numbers.addition.subtraction.subtract_from_add_reversed
-proveit.numbers.negation.complex_closure
 proveit.numbers.negation.negated_zero
 proveit.numbers.number_sets.complex_numbers.int_within_complex
 proveit.numbers.number_sets.complex_numbers.nat_within_complex
@@ -63,16 +55,6 @@ proveit.numbers.number_sets.real_numbers.nat_within_real
 proveit.numbers.number_sets.real_numbers.rational_within_real
 proveit.numbers.number_sets.real_numbers.real_neg_within_real
 proveit.numbers.number_sets.real_numbers.real_pos_within_real
-proveit.numbers.numerals.decimals.add_0_1
 proveit.numbers.numerals.decimals.nat1
-proveit.numbers.numerals.decimals.nat2
-proveit.numbers.numerals.decimals.nat3
-proveit.numbers.numerals.decimals.nat4
-proveit.numbers.numerals.decimals.nat5
-proveit.numbers.numerals.decimals.nat6
-proveit.numbers.numerals.decimals.nat7
-proveit.numbers.numerals.decimals.nat8
-proveit.numbers.numerals.decimals.nat9
 proveit.numbers.numerals.decimals.tuple_len_1
-proveit.numbers.numerals.decimals.tuple_len_1_typical_eq
 # THEOREMS AND THEORIES TO EXCLUDE:
