@@ -134,9 +134,15 @@ class BooleanSet(Literal):
             Px = Function(P, forall_stmt.instance_param)
             _Px = forall_stmt.instance_expr
             _A = forall_stmt.instance_param
+            # We may need to auto-simplify in order to flatten the
+            # conditions (if there are multiple conditions beyond the
+            # domain condition), but we must preserve the different
+            # parts.
+            preserved_exprs = {forall_stmt, forall_stmt.instance_expr}
+            preserved_exprs.update(forall_stmt.conditions)    
             return conditioned_forall_over_bool_by_cases.instantiate(
                     {Qx: _Qx, Px: _Px, A: _A}, num_forall_eliminations=1, 
-                    preserve_expr=forall_stmt, auto_simplify=True)
+                    preserved_exprs=preserved_exprs, auto_simplify=True)
         else:
             # forall_{A in Boolean} P(A), assuming P(TRUE) and P(FALSE)
             Px = Function(P, forall_stmt.instance_param)
