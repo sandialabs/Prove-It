@@ -1,3 +1,6 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
-proveit.logic.equality.sub_left_side_into
+proveit.logic.booleans.from_not_false
+proveit.logic.booleans.negation.untrue_from_negation
+proveit.logic.equality.equals_reversal
+proveit.logic.equality.not_equals_symmetry
 # THEOREMS AND THEORIES TO EXCLUDE:

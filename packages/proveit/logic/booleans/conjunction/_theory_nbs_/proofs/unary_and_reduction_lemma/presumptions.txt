@@ -8,19 +8,9 @@ proveit.logic.booleans.true_is_bool
 proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
 proveit.logic.equality.not_equals_symmetry
-proveit.logic.equality.sub_left_side_into
 proveit.logic.equality.substitute_truth
 proveit.logic.equality.unfold_not_equals
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.numbers.number_sets.natural_numbers.nat_pos_within_nat
 proveit.numbers.number_sets.natural_numbers.natural_lower_bound
-proveit.numbers.numerals.decimals.nat1
-proveit.numbers.numerals.decimals.nat2
-proveit.numbers.numerals.decimals.nat3
-proveit.numbers.numerals.decimals.nat4
-proveit.numbers.numerals.decimals.nat5
-proveit.numbers.numerals.decimals.nat6
-proveit.numbers.numerals.decimals.nat7
-proveit.numbers.numerals.decimals.nat8
-proveit.numbers.numerals.decimals.nat9
 # THEOREMS AND THEORIES TO EXCLUDE:

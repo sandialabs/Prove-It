@@ -508,6 +508,19 @@ class OperationOverInstances(Operation):
         '''
         return list(self._all_conditions())
 
+    def _all_instance_exprs(self):
+        '''
+        '''
+        expr = self
+        while hasattr(expr, 'instance_expr'):
+            yield expr.instance_expr
+            expr = expr.instance_expr
+
+    def all_instance_exprs(self):
+        '''
+        '''
+        return list(self._all_instance_exprs())
+
     def explicit_instance_params(self):
         '''
         Return the instance parameters that are to be shown explicitly
@@ -936,10 +949,21 @@ def bundle(expr, bundle_thm, num_levels=2, **defaults_config):
         Rxy = Function(R, all_params)
         x_1_to_m = x_1_to_m.basic_replaced({m: _m})
         y_1_to_n = y_1_to_n.basic_replaced({n: _n})
+
+        # We may need to auto-simplify, but we must preserve the
+        # different parts.
+        preserved_exprs = {expr, expr.instance_expr}
+        preserved_exprs.update(expr.conditions)
+        # Determine inner-most instance_expr and add it to the 
+        # preserved_exprs set
+        innermost_instance_expr = expr.all_instance_exprs()[-1]
+        preserved_exprs.update([innermost_instance_expr])
+
         instantiation = bundle_thm.instantiate(
             {m: _m, n: _n, ExprTuple(x_1_to_m): bundled.instance_params,
              ExprTuple(y_1_to_n): bundled.instance_expr.instance_params,
-             Pxy: _P, Qx: _Q, Rxy: _R})
+             Pxy: _P, Qx: _Q, Rxy: _R}, preserved_exprs=preserved_exprs,
+             auto_simplify=True)
         if isinstance(instantiation.expr, Implies):
             bundled = instantiation.derive_consequent()
         elif isinstance(instantiation.expr, Equals):
@@ -1075,16 +1099,21 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,),
                              "form with an equality or implication  "
                              "correspondence, %s"
                              % (unbundle_thm, correspondence))
-
+        
         Qx = Function(Q, first_params)
         Rxy = Function(R, unbundled.instance_params)
         Pxy = Function(P, unbundled.instance_params)
         x_1_to_m = x_1_to_m.basic_replaced({m: _m})
         y_1_to_n = y_1_to_n.basic_replaced({n: _n})
+        # We may need to auto-simplify, but we must also preserve the
+        # various different original parts.
+        preserved_exprs = {expr, expr.instance_expr}
+        preserved_exprs.update(expr.conditions)
         instantiation = unbundle_thm.instantiate(
             {m: _m, n: _n, ExprTuple(x_1_to_m): first_params,
              ExprTuple(y_1_to_n): remaining_params,
-             Pxy: _P, Qx: _Q, Rxy: _R})
+             Pxy: _P, Qx: _Q, Rxy: _R},
+             preserved_exprs=preserved_exprs, auto_simplify=True)
         if isinstance(instantiation.expr, Implies):
             unbundled = instantiation.derive_consequent()
         elif isinstance(instantiation.expr, Equals):
