@@ -1,25 +1,15 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
-proveit.core_expr_types.tuples.singular_range_reduction
-proveit.logic.booleans.conjunction.false_and_false_negated
-proveit.logic.booleans.conjunction.false_and_true_negated
 proveit.logic.booleans.conjunction.left_from_and
 proveit.logic.booleans.conjunction.right_from_and
-proveit.logic.booleans.conjunction.true_and_false_negated
-proveit.logic.booleans.conjunction.true_and_true
 proveit.logic.booleans.false_eq_false
 proveit.logic.booleans.forall_over_bool_by_cases
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.negation_intro
 proveit.logic.booleans.quantification.universality.bundle
 proveit.logic.booleans.quantification.universality.bundling
-proveit.logic.booleans.true_is_bool
 proveit.logic.equality.equals_reversal
-proveit.logic.equality.fold_not_equals
-proveit.logic.equality.not_equals_symmetry
 proveit.logic.equality.sub_left_side_into
-proveit.logic.equality.sub_right_side_into
 proveit.logic.equality.substitute_truth
-proveit.logic.equality.unfold_not_equals
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.numbers.number_sets.natural_numbers.nat_pos_within_nat
 proveit.numbers.number_sets.natural_numbers.natural_lower_bound
