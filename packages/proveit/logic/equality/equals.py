@@ -725,8 +725,8 @@ class Equals(TransitiveRelation):
                 eq_evaluation = Equals.get_known_evaluation(
                         eq_expr, automation=False)
                 if eq_evaluation is not None:
-                    return Equals(expr, eq_expr).prove().apply_transitivity(
-                            eq_evaluation)
+                    _eq = Equals(expr, eq_expr).conclude_via_transitivity()
+                    return _eq.apply_transitivity(eq_evaluation)
         return None
 
     """
