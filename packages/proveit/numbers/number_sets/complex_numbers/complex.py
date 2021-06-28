@@ -57,10 +57,6 @@ class ComplexSet(NumberSet):
             TypeError("'relation' expected to be Equals")
         
         from proveit import defaults
-        print("preserved_exprs", defaults.preserved_exprs,
-              "auto_simplify", defaults.auto_simplify,
-              "preserve_all", defaults.preserve_all)
-        
         return right_mult_eq.instantiate(
             {a: multiplier, x: relation.lhs, y: relation.rhs})
 
@@ -92,10 +88,6 @@ class ComplexSet(NumberSet):
             TypeError("'relation' expected to be Equals")
 
         from proveit import defaults
-        print("preserved_exprs", defaults.preserved_exprs,
-              "auto_simplify", defaults.auto_simplify,
-              "preserve_all", defaults.preserve_all)
-
         return div_eq.instantiate(
             {a: divisor, x: relation.lhs, y: relation.rhs})
 

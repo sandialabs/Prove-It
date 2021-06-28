@@ -1,3 +1,5 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
 proveit
 # THEOREMS AND THEORIES TO EXCLUDE:
+proveit.logic.sets.inclusion.relax_proper_subset
+proveit.numbers.number_sets.natural_numbers.nonzero_if_is_nat_pos
