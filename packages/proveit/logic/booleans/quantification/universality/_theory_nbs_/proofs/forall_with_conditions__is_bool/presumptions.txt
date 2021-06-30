@@ -2,7 +2,6 @@
 proveit.core_expr_types.tuples.range_from1_len_typical_eq
 proveit.logic.booleans.negation.negation_intro
 proveit.logic.equality.equals_reversal
-proveit.logic.equality.sub_left_side_into
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.numbers.number_sets.natural_numbers.nat_pos_within_nat
 proveit.numbers.number_sets.natural_numbers.natural_lower_bound

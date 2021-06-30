@@ -57,7 +57,7 @@ class Forall(OperationOverInstances):
         nested universal quantifiers, is known to be true, conclude
         via generalization.  Otherwise, if the domain has a 'fold_forall'
         method, attempt to conclude this Forall statement
-        via 'conclude_as_folded'.
+        via 'conclude_by_cases'.
         '''
         from proveit.logic import SubsetEq
         
@@ -95,33 +95,17 @@ class Forall(OperationOverInstances):
                             # inclusive_universal_quantification.
                             return self.conclude_via_domain_inclusion(
                                     superset)
-        
-        # The next 2 'ifs', one for prove_by_cases and one for
-        # conclude_as_folded can eventually be merged as we eliminate the
-        # separate conclude_as_folded() method. Keeping both for now
-        # to ensure no problems as we transition.
 
         if self.has_domain() and hasattr(self.first_domain(), 'prove_by_cases'):
             try:
                 return self.conclude_by_cases()
-            except Exception:
+            except ProofFailure:
                 raise ProofFailure(self, defaults.assumptions,
                                    "Unable to conclude automatically; the "
                                    "prove_by_cases method on the domain "
                                    "has failed. :o( ")
-
-        # next try 'fold_as_forall' on the domain (if applicable)
-        if self.has_domain() and hasattr(self.first_domain(), 'fold_as_forall'):
-            # try fold_as_forall first
-            try:
-                return self.conclude_as_folded()
-            except Exception:
-                raise ProofFailure(self, defaults.assumptions,
-                                   "Unable to conclude automatically; "
-                                   "the 'fold_as_forall' method on the "
-                                   "domain failed.")
         else:
-            # If there is no 'fold_as_forall' strategy to try, we can
+            # If there is no 'prove_by_cases' strategy to try, we can
             # attempt a different non-trivial strategy of proving
             # via generalization with automation.
             try:
@@ -129,14 +113,14 @@ class Forall(OperationOverInstances):
             except ProofFailure:
                 raise ProofFailure(self, defaults.assumptions,
                                    "Unable to conclude automatically; "
-                                   "the domain has no 'fold_as_forall' method "
+                                   "the domain has no 'prove_by_cases' method "
                                    "and automated generalization failed.")
 
         raise ProofFailure(self, defaults.assumptions,
                            "Unable to conclude automatically; a "
                            "universally quantified instance expression "
                            "is not known to be true and the domain has "
-                           "no 'fold_as_forall' method.")
+                           "no 'prove_by_cases' method.")
 
     @prover
     def unfold(self, **defaults_config):
@@ -214,27 +198,8 @@ class Forall(OperationOverInstances):
             unbundled = self.unbundle_equality().rhs
             unbundled = unbundled.conclude_by_cases()
             return unbundled.bundle()
-        return self.domain.prove_by_cases(self)
-
-    @prover
-    def conclude_as_folded(self, **defaults_config):
-        '''
-        Conclude this forall statement from an "unfolded" version
-        dependent upon the domain of the forall,
-        calling fold_as_forall on the condition.
-        For example, conclude
-        forall_{A in BOOLEANS} P(A) from P(TRUE) and P(FALSE).
-        '''
-        assert self.has_domain(), (
-            "Cannot fold a forall statement with no domain")
-        if self.instance_params.num_entries() > 1:
-            # When there are more than one instance variables, we
-            # must conclude the unbundled form first and the
-            # derive the bundled form from that.
-            unbundled = self.unbundle_equality().rhs
-            unbundled = unbundled.conclude_as_folded()
-            return unbundled.bundle()
-        return self.domain.fold_as_forall(self)
+        result = self.domain.prove_by_cases(self)
+        return result
     
     @prover
     def conclude_via_domain_inclusion(self, superset_domain,

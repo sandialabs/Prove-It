@@ -140,7 +140,8 @@ class Not(Operation):
         '''
         From Not(A) derive [Not(A) in Boolean].
         '''
-        return in_bool(self).prove()
+        from proveit.logic.booleans import in_bool_if_true
+        return in_bool_if_true.instantiate({A: self})
 
     @prover
     def deduce_in_bool(self, **defaults_config):

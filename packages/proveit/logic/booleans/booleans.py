@@ -110,18 +110,20 @@ class BooleanSet(Literal):
             {Px: _Px, A: _A}).derive_consequent()
 
     @prover
-    def fold_as_forall(self, forall_stmt, **defaults_config):
+    def prove_by_cases(self, forall_stmt, **defaults_config):
         '''
         Given forall_{A in Boolean} P(A), conclude and return it from
         [P(TRUE) and P(FALSE)].
         '''
         from proveit.logic import Forall, And
-        from . import fold_forall_over_bool, fold_conditioned_forall_over_bool
+        from . import forall_over_bool_by_cases, conditioned_forall_over_bool_by_cases
         from . import Boolean
-        assert(isinstance(forall_stmt, Forall)
-               ), "May only apply fold_as_forall method of Boolean to a forall statement"
-        assert(forall_stmt.domain ==
-               Boolean), "May only apply fold_as_forall method of Boolean to a forall statement with the Boolean domain"
+        assert(isinstance(forall_stmt, Forall)), (
+                "May only apply prove_by_cases method of Boolean to a "
+                "forall statement")
+        assert(forall_stmt.domain == Boolean), (
+                "May only apply prove_by_cases method of Boolean "
+                "to a forall statement with the Boolean domain")
         if forall_stmt.conditions.num_entries() > 1:
             if forall_stmt.conditions.is_double():
                 condition = forall_stmt.conditions[1]
@@ -132,15 +134,23 @@ class BooleanSet(Literal):
             Px = Function(P, forall_stmt.instance_param)
             _Px = forall_stmt.instance_expr
             _A = forall_stmt.instance_param
-            return fold_conditioned_forall_over_bool.instantiate(
-                {Qx: _Qx, Px: _Px, A: _A}, num_forall_eliminations=1, preserve_expr=forall_stmt)
+            # We may need to auto-simplify in order to flatten the
+            # conditions (if there are multiple conditions beyond the
+            # domain condition), but we must preserve the different
+            # parts.
+            preserved_exprs = {forall_stmt, forall_stmt.instance_expr}
+            preserved_exprs.update(forall_stmt.conditions)    
+            return conditioned_forall_over_bool_by_cases.instantiate(
+                    {Qx: _Qx, Px: _Px, A: _A}, num_forall_eliminations=1, 
+                    preserved_exprs=preserved_exprs, auto_simplify=True)
         else:
             # forall_{A in Boolean} P(A), assuming P(TRUE) and P(FALSE)
             Px = Function(P, forall_stmt.instance_param)
             _Px = forall_stmt.instance_expr
             _A = forall_stmt.instance_param
-            return fold_forall_over_bool.instantiate(
-                {Px: _Px, A: _A}, num_forall_eliminations=1)
+            return forall_over_bool_by_cases.instantiate(
+                {Px: _Px, A: _A}, num_forall_eliminations=1,
+                preserve_expr=forall_stmt)
 
 
 class BooleanMembership(Membership):
@@ -336,8 +346,11 @@ class FalseLiteral(Literal, IrreducibleValue):
         of those assumptions may be proven untrue given the other
         assumptions.
         '''
-        impl = self.prove(assumptions).as_implication(assumption_to_deny)
-        return impl.deny_antecedent()
+        impl = self.prove().as_implication(assumption_to_deny)
+        # Exclude the assumption_to_deny from the assumptions
+        return impl.deny_antecedent(assumptions=[
+                assumption for assumption in defaults.assumptions
+                if assumption != assumption_to_deny])
 
 
 def in_bool(*elements):

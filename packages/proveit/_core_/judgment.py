@@ -651,12 +651,15 @@ class Judgment:
                 # Automatically include the Judgment assumptions.
                 def call_method_with_judgment_assumptions(
                         *args, **defaults_config):
-                    assumptions = defaults_config.get('assumptions',
-                                                      USE_DEFAULTS)
-                    assumptions = defaults.checked_assumptions(assumptions)
-                    assumptions = tuple(assumptions) + self.assumptions
-                    defaults_config['assumptions'] = \
-                        defaults.checked_assumptions(assumptions)
+                    if len(self.assumptions) > 0:
+                        # Include assumptions of the Judgment.
+                        assumptions = defaults_config.get(
+                                'assumptions', None)
+                        if assumptions is None: 
+                            assumptions=defaults.assumptions
+                        if not self.assumptions_set.issubset(assumptions):
+                            defaults_config['assumptions'] = \
+                                tuple(assumptions) + self.assumptions
                     return attr.__call__(*args, **defaults_config)
                 return call_method_with_judgment_assumptions
 
@@ -1046,7 +1049,8 @@ class Judgment:
             hypothesis = hypothesis.expr  # we want the expression for this purpose
         return self._checkedTruth(Deduction(self, hypothesis))
 
-    def eliminate(self, *skolem_constants, assumptions=USE_DEFAULTS):
+    @prover
+    def eliminate(self, *skolem_constants, **defaults_config):
         '''
         Performs a Skolem constant elimination derivation step on this
         Judgment (KT), where this KT has the form S |– alpha and the
@@ -1057,7 +1061,7 @@ class Judgment:
         method.
         '''
         from proveit.logic import Exists
-        return Exists.eliminate(skolem_constants, self, assumptions)
+        return Exists.eliminate(skolem_constants, self)
 
     # Not a @prover since it just uses the assumptions of the Judgment. 
     def simplify(self):
