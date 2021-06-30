@@ -1144,7 +1144,8 @@ class ExprRange(Expression):
                 if indices_must_match:
                     # Attempt to simplify the 'next_index' only when
                     # we need it.
-                    next_index = next_index._equality_replaced(requirements)
+                    next_index = next_index.equality_replaced(
+                        requirements, auto_simplify_top_level=True)
                     # The actual range parameter index is needed:
                     param_repl_map = {orig_parameter: next_index}
                     full_entry_repl_map = update_map(
