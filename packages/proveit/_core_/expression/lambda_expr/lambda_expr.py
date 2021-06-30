@@ -1276,18 +1276,7 @@ def extract_param_replacements(parameters, parameter_vars, body,
                         # A possible match to check.
                         if not len_req.proven():
                             try:
-                                # If we do not know that this must
-                                # be the right match, use automation.
-                                # Otherwise, just try to prove this
-                                # without automation since we'll need
-                                # to consider various possibilities.
-                                _automation = (
-                                        int_param_len is not None and
-                                        (min_int_param_operands_len ==
-                                         max_int_param_operands_len ==
-                                         int_param_len))
-                                len_req.lhs.deduce_equality(
-                                    len_req, automation=_automation)
+                                len_req.lhs.deduce_equality(len_req)
                                 assert len_req.proven()
                             except ProofFailure:
                                 pass
@@ -1297,14 +1286,19 @@ def extract_param_replacements(parameters, parameter_vars, body,
                     try:
                         operand_entry = next(operands_iter)
                     except StopIteration:
+                        if len_req.proven():
+                            # Length requirement already satisfied.
+                            requirements.append(len_req.prove())
+                            break
                         try:
                             # Try to prove len_req via 'deduce_equality'
-                            len_req.lhs.deduce_equality(len_req)                            
+                            len_req.lhs.deduce_equality(len_req)
                             requirements.append(len_req.prove())
                         except ProofFailure as e:
                             raise ValueError(
                                 "Failed to prove operand length "
-                                "requirement: %s" % str(e))
+                                "requirement, %s: %s" 
+                                % (len_req, str(e)))
                         break # No more operands
                     # Update min/max number of param-operand
                     # elements.

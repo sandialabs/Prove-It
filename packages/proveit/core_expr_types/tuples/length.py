@@ -373,10 +373,10 @@ class Len(Operation):
                 rhs_computation = equality.rhs.computation()
                 eq = Equals(lhs_computation.rhs, rhs_computation.rhs)
                 if eq.lhs == eq.rhs:
-                    # Trivial reflection -- automation is okay for that.
-                    eq = eq.conclude_via_transitivity()
+                    # Trivial reflection
+                    eq = eq.conclude_via_reflexivity()
                 else:
-                    eq = eq.prove()
+                    eq = eq.conclude_via_transitivity()
                 return Equals.apply_transitivities(
                     [lhs_computation, eq, rhs_computation])
             else:
@@ -384,10 +384,10 @@ class Len(Operation):
                 # equal to the rhs.
                 eq = Equals(lhs_computation.rhs, equality.rhs)
                 if eq.lhs == eq.rhs:
-                    # Trivial reflection -- automation is okay for that.
+                    # Trivial reflection
                     eq = eq.conclude_via_reflexivity()
                 else:
-                    eq = eq.prove()
+                    eq = eq.conclude_via_transitivity()
                 return lhs_computation.apply_transitivity(eq)
 
     @equality_prover('evaluated', 'evaluate')
