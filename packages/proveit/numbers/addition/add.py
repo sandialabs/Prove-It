@@ -733,9 +733,9 @@ class Add(NumberOperation):
         hold, order = expr._create_dict()
 
         # Have the basic numbers come at the end.
-        if order[-1] != one and one in hold:
-            order.pop(order.index(one))
-            order.append(one)
+        #if order[-1] != one and one in hold:
+        #    order.pop(order.index(one))
+        #    order.append(one)
         
         if len(order) > 1:
             # Reorder the terms so like terms are adjacent.
