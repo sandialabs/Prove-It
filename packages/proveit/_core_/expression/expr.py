@@ -29,8 +29,7 @@ class ExprType(type):
     # of the core.
     protected = ('_apply', '_canonical_version',
                  'replaced', 'basic_replaced', '_replaced_entries', 
-                 'equality_replaced', '_equality_replaced', 
-                 '_manual_equality_replaced',
+                 'equality_replaced', '_manual_equality_replaced',
                  '_auto_simplified', '_auto_simplified_sub_exprs',
                  '_range_reduction', 'relabeled',
                  '_make', '_checked_make', '_reduced', '_used_vars',
