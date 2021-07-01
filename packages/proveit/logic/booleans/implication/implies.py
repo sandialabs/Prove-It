@@ -355,22 +355,29 @@ class Implies(TransitiveRelation):
             return to_contraposition.instantiate(
                 {A: self.antecedent, B: self.consequent})
 
-    @equality_prover('evaluated', 'evaluate')
-    def evaluation(self, **defaults_config):
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         '''
         Given operands that evaluate to TRUE or FALSE, derive and
         return the equality of this expression with TRUE or FALSE.
         '''
+        from proveit.logic import TRUE, FALSE
         # load in truth-table evaluations
-        from . import implies_t_f
-        from . import implies_t_t, implies_f_t, implies_f_f
-        from proveit.logic import EvaluationError
-        try:
-            return Operation.evaluation(self)
-        except NotImplementedError:
-            # Should have been able to do the evaluation from the loaded truth table.
-            # If it can't we are unable to evaluate it.
-            raise EvaluationError(self)
+        from . import implies_t_f, implies_t_t, implies_f_t, implies_f_f
+        if must_evaluate:
+            start_over = False
+            for operand in self.operands:
+                if operand not in (TRUE, FALSE):
+                    # The simplification of the operands may not have
+                    # worked hard enough.  Let's work harder if we
+                    # must evaluate.
+                    operand.evaluation()
+                    start_over = True
+            if start_over: return self.evaluation()
+        # May now be able to evaluate via loaded truth tables.
+        return Operation.shallow_simplification(
+                self, must_evaluate=must_evaluate)
 
     @prover
     def deduce_in_bool(self, **defaults_config):

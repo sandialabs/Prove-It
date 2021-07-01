@@ -395,69 +395,7 @@ class Or(Operation):
         return not_right_if_neither.instantiate(
             {A: left_operand, B: right_operand})
 
-    """
-    @equality_prover('evaluated', 'evaluate')
-    def evaluation(self, **defaults_config):
-        '''
-        Attempt to determine whether this disjunction evaluates
-        to true or false under the given assumptions.  If automation
-        is false, it will only succeed if the evaluation is already
-        known.  If automation and minimal_automation are True, it will
-        only rely upon known evaluations of the operands to determine
-        whether to try to prove or disprove the disjunction.
-        '''
-        from proveit.logic import TRUE, SimplificationError
-        # load in truth-table evaluations
-        from . import or_t_t, or_t_f, or_f_t, or_f_f
-        if self.operands.num_entries() == 0:
-            from proveit.logic.booleans.disjunction import \
-                empty_disjunction_eval
-            # Or() = TRUE     
-            return empty_disjunction_eval
 
-        # First just see if it has a known evaluation.
-        try:
-            return Operation.evaluation(self, automation=False)
-        except SimplificationError as e:
-            if not defaults.automation:
-                raise e
-
-        # Depending upon evaluations of operands, we will either
-        # attempt to prove or disprove this conjunction.
-        if defaults.minimal_automation:
-            # Only do non-automated evaluations of operands
-            # if minimal_automation is True.
-            operand_automations = (False,)
-        else:
-            # First try non-automated operand evaluation, then
-            # automated only if necessary.
-            operand_automations = (False, True)
-        for operand_automation in operand_automations:
-            operands_evals = []
-            for operand in self.operands:
-                try:
-                    operand_eval = operand.evaluation(
-                            automation=operand_automations)
-                    operands_evals.append(operand_eval.rhs)
-                except BaseException:
-                    operands_evals.append(None)
-            if TRUE in operands_evals:
-                # If any operand is true, the disjunction may
-                # only evaluate to true if it can be evaluated.
-                self.prove()
-                break
-            elif None not in operands_evals:
-                # If no operand is true and all the evaluations
-                # are known, the conjunction may only evaluate
-                # to false if it can be evaluated.
-                self.disprove()
-                break
-
-        # If we had any success proving or disproving this conjunction
-        # there should be a known evaluation now.
-        return Operation.evaluation(self, automation=False)
-    """
-    
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
                                **defaults_config):
@@ -473,7 +411,8 @@ class Or(Operation):
         simplification direction.  Also, if applicable, perform 
         a unary reduction: Or(A) = A.
         '''
-        from proveit.logic import Equals, FALSE, TRUE, EvaluationError
+        from proveit.logic import (Equals, FALSE, TRUE, EvaluationError,
+                                   is_irreducible_value)
         # load in truth-table evaluations
         from . import or_t_t, or_t_f, or_f_t, or_f_f
         if self.operands.num_entries() == 0:
@@ -502,6 +441,15 @@ class Or(Operation):
             return Equals(self, FALSE).prove()
         
         if must_evaluate:
+            if not all(is_irreducible_value(operand) for 
+                       operand in self.operands):
+                # The simplification of the operands may not have
+                # worked hard enough.  Let's work harder if we
+                # must evaluate.
+                for operand in self.operands:
+                    if not is_irreducible_value(operand):
+                        operand.evaluation()
+                return self.evaluation()
             # Can't evaluate the conjunction if no operand was
             # FALSE but they aren't all TRUE.
             raise EvaluationError(self)

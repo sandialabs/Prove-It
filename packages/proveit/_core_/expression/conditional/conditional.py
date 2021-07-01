@@ -175,7 +175,7 @@ class Conditional(Expression):
             etc.
         '''
         from proveit import a, m, n, Q, R
-        from proveit.logic import And, TRUE, Equals
+        from proveit.logic import And, TRUE, Equals, is_irreducible_value
         if self.condition == TRUE:
             from proveit.core_expr_types.conditionals import \
                 true_condition_reduction
@@ -231,6 +231,11 @@ class Conditional(Expression):
                 _n = _R.num_elements()
                 return condition_prepend_reduction.instantiate(
                     {a: self.value, n: _n, Q: conditions[0], R: _R})
+        elif must_evaluate:
+            # The only way we can equate a Conditional to an
+            # irreducible is if we prove the condition to be true.
+            self.condition.prove()
+            return self.evaluation()
         # Use trivial self-reflection if there is no other 
         # simplification to do.
         return Equals(self, self).prove()

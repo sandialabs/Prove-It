@@ -98,9 +98,11 @@ class Neg(NumberOperation):
         from proveit.numbers import zero
         
         if must_evaluate and not is_irreducible_value(self.operand):
-            # Can't evaluate the negation if the operand is not
-            # irreducible.
-            raise EvaluationError(self)
+            # The simplification of the operands may not have
+            # worked hard enough.  Let's work harder if we
+            # must evaluate.
+            self.operand.evalution()
+            return self.evaluation()
         
         if self.operand == zero:
             return negated_zero

@@ -416,7 +416,7 @@ class ExprTuple(Composite, Expression):
         return self.simplification(must_evaluate=True)
 
     @equality_prover('simplified', 'simplify')
-    def simplification(self, must_evaluate=False, **defaults_config):
+    def simplification(self, *, must_evaluate=False, **defaults_config):
         '''
         Proves that this ExprTuple is equal to an ExprTuple
         with all of its entries simplified (and ExprRanges reduced).

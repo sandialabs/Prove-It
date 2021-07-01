@@ -128,7 +128,7 @@ class Abs(NumberOperation):
         from proveit.numbers import e, Add, Neg, LessEq, Mult, Div, Exp
         from proveit.numbers import zero, RealNonNeg, RealNonPos
         from proveit.logic import EvaluationError, is_irreducible_value
-        
+                
         if is_irreducible_value(self.operand):
             if isinstance(self.operand, Neg):
                 # |-x| where 'x' is a literal.
@@ -137,11 +137,12 @@ class Abs(NumberOperation):
                 # If the operand is irreducible, we can just use 
                 # abs_elimination.
                 return self.abs_elimination()
-        
-        if must_evaluate:
-            # If the operand is not irreducible, we can't evaluate
-            # the absolute value.
-            raise EvaluationError(self)
+        elif must_evaluate:
+            # The simplification of the operands may not have
+            # worked hard enough.  Let's work harder if we
+            # must evaluate.
+            self.operand.evaluation()
+            return self.evaluation()
         
         # among other things, convert any assumptions=None
         # to assumptions=() (thus averting len(None) errors)

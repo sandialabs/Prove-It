@@ -74,6 +74,7 @@ class Div(NumberOperation):
 
         Specifically, cancels common factors and eliminates ones.
         '''
+        from proveit.logic import is_irreducible_value
         from proveit.numbers import one
         expr = self
         # for convenience updating our equation
@@ -84,6 +85,16 @@ class Div(NumberOperation):
         if not isinstance(expr, Div):
             # complete cancelation.
             return eq.relation
+
+        if must_evaluate and not all(
+                is_irreducible_value(operand) for operand in self.operands):
+            for operand in self.operands:
+                if not is_irreducible_value(operand):
+                    # The simplification of the operands may not have
+                    # worked hard enough.  Let's work harder if we
+                    # must evaluate.            
+                    operand.evalution()
+            return self.evaluation()
 
         if expr.denominator == one:
             # eliminate division by one

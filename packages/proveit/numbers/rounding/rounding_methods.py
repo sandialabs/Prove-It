@@ -110,7 +110,9 @@ def apply_shallow_simplification(expr, *, must_evaluate=False):
     from proveit.logic import InSet
     from proveit.numbers import Add, Integer
     
-    # TODO: Speed this up when must_evaluate=True.
+    # TODO: Speed this up when must_evaluate=True as well as
+    # try harder to evaluate the operand as appropriate.
+
 
     #-- -------------------------------------------------------- --#
     #-- Case (1): F(x) where entire operand x is known or        --#

@@ -166,6 +166,15 @@ class Exp(NumberOperation):
             expr = eq.update(expr.evaluation())
             return eq.relation
         elif must_evaluate:
+            if not all(is_irreducible_value(operand) for
+                       operand in self.operands):
+                for operand in self.operands:
+                    if not is_irreducible_value(operand):
+                        # The simplification of the operands may not have
+                        # worked hard enough.  Let's work harder if we
+                        # must evaluate.            
+                        operand.evalution()
+                return self.evaluation()            
             raise EvaluationError(self)
             
         if self.exponent == one:

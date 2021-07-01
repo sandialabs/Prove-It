@@ -26,10 +26,6 @@ class Add(NumberOperation):
     # the term on the left hand side.
     known_equalities = dict()
 
-    # Adding two numerals may import a theorem for the evaluation.
-    # Track which ones we have encountered already.
-    added_numerals = set()
-
     def __init__(self, *operands, styles=None):
         r'''
         Add together any number of operands.
@@ -779,7 +775,16 @@ class Add(NumberOperation):
             else:
                 # Do a pairwise addition of irreducible terms.         
                 return pairwise_evaluation(self)
-
+        elif must_evaluate:
+            # The simplification of the operands may not have
+            # worked hard enough.  Let's work harder if we
+            # must evaluate.
+            for term in self.terms:
+                if not is_irreducible_value(term):
+                    term.evaluation()
+            # Start over now that the terms are all evaluated to
+            # irreductible values.
+            return self.evaluation()
         return eq.relation
 
     def _integerBinaryEval(self, assumptions=USE_DEFAULTS):
@@ -824,24 +829,13 @@ class Add(NumberOperation):
             raise NotImplementedError(
                 "Currently, _integerBinaryEval only works for integer "
                 " addition and related subtractions: %d, %d" % (_a, _b))
-        if (_a, _b) not in Add.added_numerals:
-            try:
-                # for single digit addition, import the theorem that provides
-                # the evaluation
-                Add.added_numerals.add((_a, _b))
-                proveit.numbers.numerals.decimals.__getattr__(
+        with defaults.temporary() as temp_defaults:
+            # We rely upon side-effect automation here.
+            temp_defaults.automation = True
+            # for single digit addition, import the theorem that provides
+            # the evaluation
+            proveit.numbers.numerals.decimals.__getattr__(
                     'add_%d_%d' % (_a, _b))
-            except BaseException:
-                # may fail before the relevent _commons_ and _theorems_ have
-                # been generated
-                pass  # and that's okay
-        # Should have an evaluation now.
-        if self not in Equals.known_evaluation_sets:
-            raise Exception(
-                "Should have an evaluation for %s now.  Why not?  "
-                "Perhaps we were not able to prove that the involved numbers "
-                "are in the Complex set." %
-                self)
         return self.evaluation()
 
     def subtraction_folding(self, term_idx=None, assumptions=frozenset()):

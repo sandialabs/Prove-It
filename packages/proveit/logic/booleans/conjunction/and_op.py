@@ -468,82 +468,6 @@ class And(Operation):
         return redundant_conjunction.instantiate(
             {n: self.operands[0].end_index, A: _A})
     
-    """
-    @equality_prover('evaluated', 'evaluate')
-    def evaluation(self, **defaults_config):
-        '''
-        Attempt to determine whether this conjunction evaluates
-        to true or false under the given assumptions.  If 
-        defaults.automation is False, it will only succeed if the 
-        evaluation is already known.  If defaults.automation and 
-        defaults.minimal_automation are True, it will only rely upon 
-        known evaluations of the operands to determine
-        whether to try to prove or disprove the conjunction.
-        '''
-        from proveit.logic import Equals, FALSE, TRUE
-        # load in truth-table evaluations
-        from . import and_t_t, and_t_f, and_f_t, and_f_f
-        if self.operands.num_entries() == 0:
-            from proveit.logic.booleans.conjunction import \
-                empty_conjunction_eval
-            # And() = TRUE
-            return empty_conjunction_eval
-        
-        for operand in self.operands:
-            if operand == FALSE:
-                # If any operand simplified to FALSE the conjunction may
-                # only evaluate to FALSE if it can be evaluated.
-                self.disprove()
-                return Equals(self, FALSE).prove()
-        # If no operand simplified to FALSE, see if they can
-        # all be proven TRUE to prove the conjunction TRUE.
-        self.prove()
-        return Equals(self, TRUE).prove()
-                
-
-        # First just see if it has a known evaluation.
-        try:
-            return Operation.evaluation(self, automation=False)
-        except SimplificationError as e:
-            if not defaults.automation:
-                raise e
-
-        # Depending upon evaluations of operands, we will either
-        # attempt to prove or disprove this conjunction.
-        if defaults.minimal_automation:
-            # Only do non-automated evaluations of operands
-            # if minimal_automation is True.
-            operand_automations = (False,)
-        else:
-            # First try non-automated operand evaluation, then
-            # automated only if necessary.
-            operand_automations = (False, True)
-        for operand_automation in operand_automations:
-            operands_evals = []
-            for operand in self.operands:
-                try:
-                    operand_eval = operand.evaluation(
-                        automation=operand_automations)
-                    operands_evals.append(operand_eval.rhs)
-                except BaseException:
-                    operands_evals.append(None)
-            if FALSE in operands_evals:
-                # If any operand is untrue, the conjunction may
-                # only evaluate to false if it can be evaluated.
-                self.disprove()
-                break
-            elif None not in operands_evals:
-                # If no operand is untrue and all the evaluations
-                # are known, the conjunction may only evaluate
-                # to true if it can be evaluated.
-                self.prove()
-                break
-
-        # If we had any success proving or disproving this conjunction
-        # there should be a known evaluation now.
-        return Operation.evaluation(self, automation=False)
-    """
-    
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
                                **defaults_config):
@@ -559,7 +483,8 @@ class And(Operation):
         simplification direction.  Also, if applicable, perform 
         a unary reduction: And(A) = A.
         '''
-        from proveit.logic import Equals, FALSE, TRUE, EvaluationError
+        from proveit.logic import (Equals, FALSE, TRUE, EvaluationError,
+                                   is_irreducible_value)
         # load in truth-table evaluations
         from . import and_t_t, and_t_f, and_f_t, and_f_f
         
@@ -589,6 +514,15 @@ class And(Operation):
             return Equals(self, TRUE).prove()
         
         if must_evaluate:
+            if not all(is_irreducible_value(operand) for 
+                       operand in self.operands):
+                # The simplification of the operands may not have
+                # worked hard enough.  Let's work harder if we
+                # must evaluate.
+                for operand in self.operands:
+                    if not is_irreducible_value(operand):
+                        operand.evaluation()
+                return self.evaluation()
             # Can't evaluate the conjunction if no operand was
             # FALSE but they aren't all TRUE.
             raise EvaluationError(self)

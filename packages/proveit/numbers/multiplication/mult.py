@@ -260,6 +260,18 @@ class Mult(NumberOperation):
                     must_evaluate=must_evaluate))
             return eq.relation
         
+        if must_evaluate and not all(is_irreducible_value(factor) for
+                                     factor in self.factors):
+            # The simplification of the operands may not have
+            # worked hard enough.  Let's work harder if we
+            # must evaluate.
+            for factor in self.factors:
+                if not is_irreducible_value(factor):
+                    factor.evaluation()
+            # Start over now that the terms are all evaluated to
+            # irreductible values.
+            return self.evaluation()
+        
         if isinstance(expr, Mult) and expr.operands.num_entries() > 2:
             # Perform a pairwise evaluation.
             eq.update(pairwise_evaluation(expr))

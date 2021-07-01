@@ -183,17 +183,22 @@ class Iff(TransitiveRelation):
         If the operands that to TRUE or FALSE, we can 
         evaluate this expression as TRUE or FALSE.
         '''
-        # IMPORTANT: load in truth-table evaluations
+        from proveit.logic import TRUE, FALSE
+        # Load in truth-table evaluations
         from . import iff_t_t, iff_t_f, iff_f_t, iff_f_f
-        try:
-            return Operation.shallow_simplification(
-                    self, must_evaluate=must_evaluate)
-        except NotImplementedError:
-            # Should have been able to do the evaluation from the
-            # loaded truth table.
-            # If it can't we are unable to evaluate it.
-            from proveit.logic import EvaluationError
-            raise EvaluationError(self)
+        if must_evaluate:
+            start_over = False
+            for operand in self.operands:
+                if operand not in (TRUE, FALSE):
+                    # The simplification of the operands may not have
+                    # worked hard enough.  Let's work harder if we
+                    # must evaluate.
+                    operand.evaluation()
+                    start_over = True
+            if start_over: return self.evaluation()
+        # May now be able to evaluate via loaded truth tables.
+        return Operation.shallow_simplification(
+                self, must_evaluate=must_evaluate)
 
     @prover
     def deduce_in_bool(self, **defaults_config):
