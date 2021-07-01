@@ -1317,8 +1317,8 @@ class Expression(metaclass=ExprType):
         The default is to return the trivial reflexive equality.
         Must be overridden for class-specific simplification.
         '''
-        from proveit.logic import Equals, irreducible_value
-        if must_evaluate and not irreducible_value(self):
+        from proveit.logic import Equals, is_irreducible_value
+        if must_evaluate and not is_irreducible_value(self):
             raise NotImplementedError(
                 "'shallow_simplification' applicable when 'must_evaluate' "
                 "is True is not implemented for %s class" % str(
