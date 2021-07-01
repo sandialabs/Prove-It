@@ -150,8 +150,10 @@ class And(Operation):
         # In the first attempt, don't use automation to prove any of the
         # operands so that
         # we don't waste time trying to prove operands when we already 
-        # know oneto be false
-        for use_automation_for_operand in [False, True]:
+        # know one to be false
+        use_automation_possibilities = (
+                [False, True] if defaults.automation else [False])
+        for use_automation_for_operand in use_automation_possibilities:
             disproven_operand_indices = []
             for _k, operand in enumerate(self.operands):
                 try:
@@ -416,14 +418,14 @@ class And(Operation):
             return demorgans_law_or_to_and.instantiate({m: _m, A: _A})
 
     @prover
-    def conclude_negation_via_example(self, true_operand, **defaults_config):
+    def conclude_negation_via_example(self, false_operand, **defaults_config):
         '''
-        From one false operand, conclude that the negation of this 
+        From one false operand, conclude the negation of this 
         conjunction.  Requires all of the operands to be in the
         BOOLEAN set.
         '''
         from . import nand_if_not_one, nand_if_not_left, nand_if_not_right
-        index = self.operands.index(true_operand)
+        index = self.operands.index(false_operand)
         if self.operands.is_double():
             if index == 0:
                 return nand_if_not_left.instantiate(
@@ -464,44 +466,6 @@ class And(Operation):
         _A = self.operands[0].body
         return redundant_conjunction.instantiate(
             {n: self.operands[0].end_index, A: _A})
-
-    @equality_prover('shallow_evaluated', 'shallow_evaluate')
-    def shallow_evaluation(self, **defaults_config):
-        '''
-        Attempt to determine whether this conjunction, with
-        simplified operands, evaluates to TRUE or FALSE under the given 
-        assumptions.  If all operands have simplified to TRUE,
-        the conjunction is TRUE.  If any of the operands have
-        simplified to FALSE, the conjunction is FALSE (if the
-        other operands are provably Boolean).
-        '''
-        from proveit.logic import Equals, FALSE, TRUE, EvaluationError
-        # load in truth-table evaluations
-        from . import and_t_t, and_t_f, and_f_t, and_f_f
-        if self.operands.num_entries() == 0:
-            from proveit.logic.booleans.conjunction import \
-                empty_conjunction_eval
-            # And() = TRUE
-            return empty_conjunction_eval
-        
-        all_are_true = True
-        for operand in self.operands:
-            if operand != TRUE:
-                all_are_true = False
-            if operand == FALSE:
-                # If any simplified operand is FALSE, the conjunction 
-                # may only evaluate to FALSE if it can be evaluated.
-                self.disprove()
-                return Equals(self, FALSE).prove()
-        # If no simplified operand is FALSE, it may only evaluate to
-        # TRUE if it can be evaluated.
-        if not all_are_true:
-            # Can't evaluate the conjunction if no operand was
-            # FALSE but they aren't all TRUE.
-            raise EvaluationError(self)
-        self.prove()
-        return Equals(self, TRUE).prove()
-
     
     """
     @equality_prover('evaluated', 'evaluate')
@@ -580,12 +544,56 @@ class And(Operation):
     """
     
     @equality_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **defaults_config):
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         '''
-        Return the "And(a) = a" simplification if applicable,
-        or the default reflexive equality otherwise.
+        Attempt to determine whether this conjunction, with
+        simplified operands, evaluates to TRUE or FALSE under the given 
+        assumptions.  If all operands have simplified to TRUE,
+        the conjunction is TRUE.  If any of the operands have
+        simplified to FALSE, the conjunction may be FALSE (if the
+        other operands are provably Boolean).
+        If it can't be evaluated, and must_evaluate is False,
+        ungroup nested conjunctions if that is an active
+        simplification direction.  Also, if applicable, perform 
+        a unary reduction: And(A) = A.
         '''
+        from proveit.logic import Equals, FALSE, TRUE, EvaluationError
+        # load in truth-table evaluations
+        from . import and_t_t, and_t_f, and_f_t, and_f_f
+        
+        if self.operands.num_entries() == 0:
+            from proveit.logic.booleans.conjunction import \
+                empty_conjunction_eval
+            # And() = TRUE
+            return empty_conjunction_eval
+        
+        # Check whether or not all of the operands are TRUE
+        # or any are FALSE.
+        all_are_true = True
+        for operand in self.operands:
+            if operand != TRUE:
+                all_are_true = False
+            if operand == FALSE:
+                # If any simplified operand is FALSE, the conjunction 
+                # may only evaluate to FALSE if it can be evaluated.
+                # Only use automation here if 'must_evaluate' is True.
+                self.conclude_negation(automation=must_evaluate)
+                return Equals(self, FALSE).prove()
+        
+        # If all of the operands are TRUE, we can prove that the
+        # conjunction is equal to TRUE.
+        if all_are_true:
+            self.conclude()
+            return Equals(self, TRUE).prove()
+        
+        if must_evaluate:
+            # Can't evaluate the conjunction if no operand was
+            # FALSE but they aren't all TRUE.
+            raise EvaluationError(self)
+    
         if self.operands.is_single():
+            # And(A) = A
             return self.unary_reduction()
 
         expr = self

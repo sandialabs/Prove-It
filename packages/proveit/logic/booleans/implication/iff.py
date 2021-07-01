@@ -53,7 +53,7 @@ class Iff(TransitiveRelation):
             # should be proven via one of the imported theorems as a simple
             # special case
             try:
-                self.shallow_evaluation()
+                self.shallow_simplification()
                 # self.evaluation()
             except BaseException:
                 return self.prove()
@@ -176,20 +176,25 @@ class Iff(TransitiveRelation):
         from . import iff_intro
         return iff_intro.instantiate({A: self.A, B: self.B})
 
-    @equality_prover('shallow_evaluated', 'shallow_evaluate')
-    def shallow_evaluation(self, **defaults_config):
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         '''
-        Given operands that evaluate to TRUE or FALSE, derive and
-        return the equality of this expression with TRUE or FALSE.
+        If the operands that to TRUE or FALSE, we can 
+        evaluate this expression as TRUE or FALSE.
         '''
-        from . import iff_t_t, iff_t_f, iff_f_t, iff_f_f  # IMPORTANT: load in truth-table evaluations
+        # IMPORTANT: load in truth-table evaluations
+        from . import iff_t_t, iff_t_f, iff_f_t, iff_f_f
         try:
-            return Operation.shallow_evaluation(self)
+            return Operation.shallow_simplification(
+                    self, must_evaluate=must_evaluate)
         except NotImplementedError:
-            # Should have been able to do the evaluation from the loaded truth table.
+            # Should have been able to do the evaluation from the
+            # loaded truth table.
             # If it can't we are unable to evaluate it.
             from proveit.logic import EvaluationError
             raise EvaluationError(self)
+
     @prover
     def deduce_in_bool(self, **defaults_config):
         '''

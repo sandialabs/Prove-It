@@ -84,34 +84,26 @@ class Neg(NumberOperation):
         raise NotImplementedError(
             "No negation closure theorem for set %s" %str(number_set))
 
-    @equality_prover('shallow_evaluated', 'shallow_evaluate')
-    def shallow_evaluation(self, **defaults_config):
-        '''
-        Returns a proven evaluation equation for this Neg
-        expression assuming the operands have been simplified or
-        raises an EvaluationError or ProofFailure (e.g., if appropriate
-        number set membership has not been proven).
-        
-        Handles -0 = 0 or double negation.
-        '''
-        from proveit.logic import EvaluationError
-        from . import negated_zero
-        from proveit.numbers import zero
-        if self.operand == zero:
-            return negated_zero
-        if isinstance(self.operand, Neg) and is_irreducible_value(
-                self.operand.operand):
-            return self.double_neg_simplification()
-        raise EvaluationError(self)
-
     @equality_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **defaults_config):
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         '''
         Returns a proven simplification equation for this Neg
         expression assuming the operands have been simplified.
         
-        Handles double negation specifically.
+        Handle negation of 0 and double negation specifically.
         '''
+        from proveit.logic import EvaluationError
+        from . import negated_zero
+        from proveit.numbers import zero
+        
+        if must_evaluate and not is_irreducible_value(self.operand):
+            # Can't evaluate the negation if the operand is not
+            # irreducible.
+            raise EvaluationError(self)
+        
+        if self.operand == zero:
+            return negated_zero
         # Handle double negation:
         if isinstance(self.operand, Neg):
             # simplify double negation

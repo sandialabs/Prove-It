@@ -20,7 +20,8 @@ class DecimalSequence(NumeralSequence):
                     'A DecimalSequence may only be composed of 0-9 digits')
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **defaults_config):
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         """
         If the DecimalSequence contains an ExprRange representing a
         repeated digit, expand it appropriately.

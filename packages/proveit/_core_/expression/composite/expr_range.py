@@ -543,22 +543,6 @@ class ExprRange(Expression):
                         and param in var_forms_of_form[param]):
                     yield form
 
-    @equality_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **defaults_config):
-        '''
-        Attempt to simplify 'self' under the assumption that it's
-        operands (sub-expressions) have already been simplified.
-        Returns the simplification as a Judgment equality with 'self'
-        on the left side.
-        
-        The default is to return the trivial reflexive equality.
-        Must be overridden for class-specific simplification.
-        '''
-        # Use the trivial reflexive equality as a last resort.
-        # Note: this does allow reductions on the right-hand-side
-        # (e.g., for an ExprTuple).
-        assert False
-
     # This is NOT an @equality_prover because the returned
     # equality does not have the ExprRange directly on the left
     # side, rather it is wrapped in an ExprTuple.

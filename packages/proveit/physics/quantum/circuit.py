@@ -246,7 +246,8 @@ class Gate(Function):
             self.gate_operation = self.operands[0]
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **defaults_config):
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         '''
         Handles "Gate() = IdentityOp()", "Gate(Input(U)) = Input(U)",
         and  "Gate(Output(U)) = Output(U)".

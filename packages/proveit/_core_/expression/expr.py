@@ -1140,20 +1140,11 @@ class Expression(metaclass=ExprType):
             # Look for a known evaluation.
             replacement = Equals.get_known_evaluation(expr)
             if (replacement is None and 
-                    hasattr(expr, 'shallow_evaluation')):
-                # Attempt a shallow evaluation (after recursion).
-                try:
-                    replacement = expr.shallow_evaluation()
-                except (EvaluationError, UnsatisfiedPrerequisites, 
-                        NotImplementedError, ProofFailure):
-                    # Failure in the simplification attempt; 
-                    # just skip it.
-                    pass
-            if (replacement is None and 
                     hasattr(expr, 'shallow_simplification')):
                 # Attempt a shallow simplification (after recursion).
                 try:
-                    replacement = expr.shallow_simplification()
+                    replacement = expr.shallow_simplification(
+                            must_evaluate=False)
                     if replacement.rhs == expr:
                         # Trivial simplification -- don't use it.
                         return expr
@@ -1279,35 +1270,11 @@ class Expression(metaclass=ExprType):
         for any 'evaluation' method, there is a check for an
         existing evaluation and a check that the resulting proven
         statement equates self with an irreducible value.
-
-        The default Expression.evaluation only checks to see if the
-        expression has been proven or disproven (and therefore equal
-        to TRUE or FALSE respectively) or known to be equal to another
-        expression that has been evaluated.  This method may be
-        overridden for particular Expression types.
         
-        See also Operation.evaluation and Expression.shallow_evaluation.
+        See also Operation.evaluation, Expression.simplification,
+        and Expression.shallow_simplification.
         '''
-        from proveit.logic import (Equals, evaluate_truth,  
-                                   evaluate_falsehood, EvaluationError)
-
-        # If self is proven or disproven, we can equate it to
-        # TRUE or FALSE respectively.
-        if self.proven():
-            return evaluate_truth(self)
-        elif self.disproven():
-            return evaluate_falsehood(self)
-
-        # See if there is a known equal expression that has an
-        # evaluation.
-        for eq_expr in Equals.yield_known_equal_expressions(self):
-            known_evaluation = Equals.get_known_evaluation(self)
-            if known_evaluation is not None:
-                # Found a known evaluation of an expression equal to 
-                # self, so self is equal to the evaluation via
-                # transitivity.
-                return Equals(self, known_evaluation.rhs).prove()
-        
+        from proveit.logic import EvaluationError
         # No other default options (though the Operation class
         # has some options via simplifying operands).
         raise EvaluationError(self)
@@ -1337,27 +1304,11 @@ class Expression(metaclass=ExprType):
         try:
             return self.evaluation()
         except EvaluationError:
-            return self.shallow_simplification()
-
-
-    @equality_prover('shallow_evaluated', 'shallow_evaluate')
-    def shallow_evaluation(self, **defaults_config):
-        '''
-        Attempt to evaluate 'self' under the assumption that it's
-        operands (sub-expressions) have already been simplified.
-        Return the evaluation as a Judgment equality with 'self' on 
-        the left side and an irreducible value on the right side.
-        
-        Must be overridden for class-specific evaluation.
-        Raise a SimplificationError if the evaluation
-        cannot be done.
-        '''
-        raise NotImplementedError(
-            "'shallow_evaluation' not implemented for %s class" % str(
-                self.__class__))
+            return self.shallow_simplification(must_evaluate=False)
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **defaults_config):
+    def shallow_simplification(self, *, must_evaluate=False, 
+                               **defaults_config):
         '''
         Attempt to simplify 'self' under the assumption that it's
         operands (sub-expressions) have already been simplified.
@@ -1367,7 +1318,12 @@ class Expression(metaclass=ExprType):
         The default is to return the trivial reflexive equality.
         Must be overridden for class-specific simplification.
         '''
-        from proveit.logic import Equals
+        from proveit.logic import Equals, irreducible_value
+        if must_evaluate and not irreducible_value(self):
+            raise NotImplementedError(
+                "'shallow_simplification' applicable when 'must_evaluate' "
+                "is True is not implemented for %s class" % str(
+                    self.__class__))
         return Equals(self, self).conclude_via_reflexivity()
 
     @classmethod

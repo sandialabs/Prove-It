@@ -185,8 +185,9 @@ class InSet(Relation):
                 if known_membership.is_applicable(assumptions):
                     yield known_membership
 
-    @equality_prover('shallow_evaluated', 'shallow_evaluate')
-    def shallow_evaluation(self, **defaults_config):
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         '''
         Attempt to evaluate whether some x ∊ S is TRUE or FALSE
         using the 'definition' method of the domain's 
@@ -196,9 +197,15 @@ class InSet(Relation):
         # try a 'definition' method (via the membership object)
         if not hasattr(self, 'membership_object'):
             # Don't know what to do otherwise.
-            raise EvaluationError(self)
+            return Relation.shallow_simplification(
+                    self, must_evaluate=must_evaluate)
         definition = self.membership_object.definition()
-        rhs_eval = definition.rhs.evaluation()
+        try:
+            rhs_eval = definition.rhs.evaluation(automation=must_evaluate)
+        except EvaluationError as e:
+            if must_evaluate:
+                raise e
+            return Relation.shallow_simplification(self)
         evaluation = definition.apply_transitivity(rhs_eval)
         
         # Try also to evaluate this by deducing membership

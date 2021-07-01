@@ -113,7 +113,8 @@ class Sum(OperationOverInstances):
             return OperationOverInstances._formatted(self, format_type, fence)
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **defaults_config):
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         '''
         Returns a proven simplification equation for this Sum
         expression assuming the operands have been simplified.
@@ -292,8 +293,8 @@ class Sum(OperationOverInstances):
 
         # Create low-effort, simplified versions of transition index
         # values, if possible
-        _b1_plus_1_simplified = Add(_b1, one).simplified(skip_operand_simplification=True)
-        _a2_minus_1_simplified = subtract(_a2, one).simplified(skip_operand_simplification=True)
+        _b1_plus_1_simplified = Add(_b1, one).shallow_simplified()
+        _a2_minus_1_simplified = subtract(_a2, one).shallow_simplified()
 
         # This breaks into four cases (despite the temptation to
         # combine some of the cases):

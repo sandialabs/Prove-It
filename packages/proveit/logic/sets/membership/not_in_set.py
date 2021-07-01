@@ -180,8 +180,9 @@ class NotInSet(Relation):
         return fold_not_in_set.instantiate(
             {x: self.element, S: self.domain}, assumptions=assumptions)
 
-    @equality_prover('shallow_evaluated', 'shallow_evaluate')
-    def shallow_evaluation(self, **defaults_config):
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         '''
         Attempt to evaluate whether some x ∉ S is TRUE or FALSE
         using the 'definition' method of the domain's 
@@ -191,9 +192,15 @@ class NotInSet(Relation):
         # try an 'definition' method (via the nonmembership object)
         if not hasattr(self, 'nonmembership_object'):
             # Don't know what to do otherwise.
-            raise EvaluationError(self)
+            return Relation.shallow_simplification(
+                    self, must_evaluate=must_evaluate)
         definition = self.nonmembership_object.definition()
-        rhs_eval = definition.rhs.evaluation()
+        try:
+            rhs_eval = definition.rhs.evaluation(automation=must_evaluate)
+        except EvaluationError as e:
+            if must_evaluate:
+                raise e
+            return Relation.shallow_simplification(self)
         evaluation = definition.apply_transitivity(rhs_eval)
 
         # try also to evaluate this by deducing membership or 

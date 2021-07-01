@@ -66,7 +66,8 @@ class Div(NumberOperation):
         return Operation.remake_constructor(self)
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **defaults_config):
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         '''
         Returns a proven simplification equation for this Divide
         expression assuming the operands have been simplified.

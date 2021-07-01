@@ -101,15 +101,18 @@ class Not(Operation):
             return falsified_negation_intro.instantiate({A: self.operand})
         return Operation.evaluation(self)
 
-    @equality_prover('shallow_evaluated', 'shallow_evaluate')
-    def shallow_evaluation(self, **defaults_config):
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         from proveit.logic import TRUE, FALSE, EvaluationError
         from . import not_t, not_f  # load in truth-table evaluations
         if self.operand == TRUE:
             return not_t
         elif self.operand == FALSE:
             return not_f
-        raise EvaluationError(self)
+        if must_evaluate:
+            raise EvaluationError(self)
+        return Operation.shallow_simplification(self)
 
     @prover
     def substitute_in_false(self, lambda_map, **defaults_config):

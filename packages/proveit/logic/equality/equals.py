@@ -670,21 +670,24 @@ class Equals(TransitiveRelation):
         from . import equality_in_bool
         return equality_in_bool.instantiate({x: self.lhs, y: self.rhs})
 
-    @equality_prover('shallow_evaluated', 'shallow_evaluate')
-    def shallow_evaluation(self, **defaults_config):
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         '''
         Given equality operands that are the same or are irreducible
         values, return this expression equated to TRUE or FALSE.
         '''
         if self.lhs == self.rhs:
             # prove equality is true by reflexivity
-            return evaluate_truth(self.prove().expr)
+            return evaluate_truth(self.conclude_via_reflexivity().expr)
         if (is_irreducible_value(self.lhs) and 
                 is_irreducible_value(self.rhs)):
             # Irreducible values must know how to evaluate the equality
             # between each other, where appropriate.
             return self.lhs.eval_equality(self.rhs)
-        raise EvaluationError(self) 
+        if must_evaluate:
+            raise EvaluationError(self)
+        return Operation.shallow_simplification(self)
 
     @staticmethod
     def get_known_evaluation(expr, *, automation=USE_DEFAULTS):

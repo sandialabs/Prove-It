@@ -101,29 +101,10 @@ class Abs(NumberOperation):
                              "for double absolute value cases, not %s"
                              %self)
         return double_abs_elem.instantiate({x:self.operand.operand})
-    
-    @equality_prover('shallow_evaluated', 'shallow_evaluate')
-    def shallow_evaluation(self, **defaults_config):
-        '''
-        Equates the absolute value of a literal to its
-        irreducible representation.
-        '''
-        from proveit.numbers import Neg
-        from proveit.logic import EvaluationError, is_irreducible_value
-        if not is_irreducible_value(self.operand):
-            # The operand must be irreducible in order to do a
-            # shallow evaluation.
-            raise EvaluationError(self)
-        if isinstance(self.operand, Neg):
-            # |-x| where 'x' is a literal.
-            return self.distribution()
-        else:
-            # If the operand is irreducible, we can just use 
-            # abs_elimination.
-            return self.abs_elimination()
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **defaults_config):
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         '''
         Returns a proven simplification equation for this Abs
         expression assuming the operand has been simplified.
@@ -146,6 +127,22 @@ class Abs(NumberOperation):
         from proveit.logic import Equals
         from proveit.numbers import e, Add, Neg, LessEq, Mult, Div, Exp
         from proveit.numbers import zero, RealNonNeg, RealNonPos
+        from proveit.logic import EvaluationError, is_irreducible_value
+        
+        if is_irreducible_value(self.operand):
+            if isinstance(self.operand, Neg):
+                # |-x| where 'x' is a literal.
+                return self.distribution()
+            else:
+                # If the operand is irreducible, we can just use 
+                # abs_elimination.
+                return self.abs_elimination()
+        
+        if must_evaluate:
+            # If the operand is not irreducible, we can't evaluate
+            # the absolute value.
+            raise EvaluationError(self)
+        
         # among other things, convert any assumptions=None
         # to assumptions=() (thus averting len(None) errors)
 

@@ -277,9 +277,10 @@ def equality_prover(past_tense, present_tense):
         else:
             _equality_prover_name_to_tenses[name] = (
                     past_tense, present_tense)
-        is_simplification_method = (name == 'simplification')
         is_evaluation_method = (name == 'evaluation')
-        is_shallow_evaluation_method = (name == 'shallow_evaluation')
+        is_shallow_simplification_method = (name == 'shallow_simplification')
+        is_simplification_method = (is_shallow_simplification_method or
+                                    name == 'simplification')
         decorated_relation_prover = _make_decorated_relation_prover(func)
 
         def wrapper(*args, **kwargs):   
@@ -300,8 +301,16 @@ def equality_prover(past_tense, present_tense):
                                 "method for an Expression type or it must "
                                 "have an 'expr' attribute."%func)            
             proven_truth = None
-            if is_simplification_method or is_evaluation_method:
-                from proveit.logic import is_irreducible_value
+            # If _no_eval_check is set to True, don't bother
+            # checking for an existing evaluation.  Used internally
+            # in Operation.simplification and Operation.evaluation.
+            _no_eval_check = False
+            if is_shallow_simplification_method:
+                _no_eval_check = kwargs.pop('_no_eval_check', False)
+            if not _no_eval_check and (is_simplification_method or 
+                                       is_evaluation_method):
+                from proveit.logic import (is_irreducible_value,
+                                           evaluate_truth)
                 if is_irreducible_value(expr):
                     # Already irreducible.  Done.
                     proven_truth = (
@@ -315,8 +324,13 @@ def equality_prover(past_tense, present_tense):
                         with defaults.temporary() as tmp_defaults:
                             tmp_defaults.assumptions = kwargs.get(
                                     'assumptions')
-                            proven_truth = Equals.get_known_evaluation(
-                                    expr)
+                            if expr.proven():
+                                # expr is proven, so it evaluates
+                                # to TRUE.
+                                proven_truth = evaluate_truth(expr)                                
+                            else:
+                                proven_truth = Equals.get_known_evaluation(
+                                        expr)
                     else:
                         proven_truth = Equals.get_known_evaluation(expr)
             if proven_truth is None:
@@ -327,7 +341,9 @@ def equality_prover(past_tense, present_tense):
                         "@equality_prover, %s, expected to prove an "
                         "Equals expression, not %s of type %s."
                         %(func, proven_expr, proven_expr.__class__))
-            if is_evaluation_method or is_shallow_evaluation_method:
+            if is_evaluation_method or (
+                    is_shallow_simplification_method and
+                    kwargs.get('must_evaluate', False)==True):
                 # The right side of an evaluation must be irreducible.
                 from proveit.logic import is_irreducible_value
                 if not is_irreducible_value(proven_expr.rhs):

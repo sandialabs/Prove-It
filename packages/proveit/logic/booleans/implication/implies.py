@@ -174,6 +174,26 @@ class Implies(TransitiveRelation):
                 {A: self.antecedent, B: self.consequent.operand.operand})
         return "Not of the form 'A => B'"
 
+
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
+        '''
+        If the operands that to TRUE or FALSE, we can 
+        evaluate this expression as TRUE or FALSE.
+        '''
+        # IMPORTANT: load in truth-table evaluations
+        from . import implies_t_t, implies_t_f, implies_f_t, implies_f_f  
+        try:
+            return Operation.shallow_simplification(
+                    self, must_evaluate=must_evaluate)
+        except NotImplementedError:
+            # Should have been able to do the evaluation from the
+            # loaded truth table.
+            # If it can't we are unable to evaluate it.
+            from proveit.logic import EvaluationError
+            raise EvaluationError(self)
+
     @prover
     def derive_consequent(self, **defaults_config):
         r'''
