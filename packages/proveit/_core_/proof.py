@@ -1717,18 +1717,24 @@ class ProofFailure(Exception):
         self.expr = expr
         self.message = message
         self.assumptions = assumptions
+        self.automation = defaults.automation
 
     def __str__(self):
+        if self.automation:
+            automation_str = ""
+        else:
+            automation_str = " without automation"
         if len(self.assumptions) == 0:
             assumptions_str = ""
         else:
             assumptions_str = " assuming {" + ", ".join(
                 str(assumption) for assumption in self.assumptions) + "}"
         if self.expr is not None:
-            return "Unable to prove " + \
-                str(self.expr) + assumptions_str + ":\n" + self.message
+            return ("Unable to prove " + str(self.expr) + automation_str 
+                    + assumptions_str + ":\n" + self.message)
         else:
-            return "Proof step failed" + assumptions_str + ":\n" + self.message
+            return ("Proof step failed" + automation_str 
+                    + assumptions_str + ":\n" + self.message)
 
 class UnsatisfiedPrerequisites(Exception):
     def __init__(self, msg):
