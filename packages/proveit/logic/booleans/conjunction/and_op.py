@@ -244,7 +244,8 @@ class And(Operation):
         From (A and B and ... and Z) derive 
         [(A and B and ... and Z) in Boolean].
         '''
-        return in_bool(self).prove()
+        from proveit.logic.booleans import in_bool_if_true
+        return in_bool_if_true.instantiate({A: self})
 
     @prover
     def derive_any(self, index_or_expr, **defaults_config):

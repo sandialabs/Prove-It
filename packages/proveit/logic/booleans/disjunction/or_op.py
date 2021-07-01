@@ -210,7 +210,8 @@ class Or(Operation):
         '''
         From (A or B or ... or Z) derive [(A or B or ... or Z) in Boolean].
         '''
-        return in_bool(self).prove()
+        from proveit.logic.booleans import in_bool_if_true
+        return in_bool_if_true.instantiate({A: self})
 
     @prover
     def derive_right_if_not_left(self, **defaults_config):
