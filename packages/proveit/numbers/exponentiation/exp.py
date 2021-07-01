@@ -462,14 +462,14 @@ class Exp(NumberOperation):
             exp_complex_closure, exp_natpos_closure, exp_int_closure, 
             exp_rational_closure_nat_power, exp_rational_nonzero_closure,
             exp_rational_pos_closure, exp_real_closure_nat_power,
-            exp_real_pos_closure, exp_complex_closure, 
-            exp_complex_nonzero_closure,
+            exp_real_pos_closure, exp_real_non_neg_closure,
+            exp_complex_closure, exp_complex_nonzero_closure,
             sqrt_complex_closure, sqrt_real_closure,
-            sqrt_real_pos_closure)
+            sqrt_real_pos_closure, sqrt_real_non_neg_closure)
         from proveit.numbers import (
             Natural, NaturalPos, Integer,
             Rational, RationalPos, RationalNonZero,
-            Real, RealPos, Complex, ComplexNonZero)
+            Real, RealNonNeg, RealPos, Complex, ComplexNonZero)
         from proveit.numbers import zero
 
         if number_set == NaturalPos:
@@ -517,6 +517,12 @@ class Exp(NumberOperation):
                 return sqrt_real_pos_closure.instantiate({a: self.base})
             else:
                 return exp_real_pos_closure.instantiate(
+                    {a: self.base, b: self.exponent})
+        elif number_set == RealNonNeg:
+            if self.exponent == frac(one, two):
+                return sqrt_real_non_neg_closure.instantiate({a: self.base})
+            else:
+                return exp_real_non_neg_closure.instantiate(
                     {a: self.base, b: self.exponent})
         elif number_set == Complex:
             if self.exponent == frac(one, two):
