@@ -22,7 +22,7 @@ class Div(NumberOperation):
                                  styles=styles)
         self.numerator = self.operands[0]
         self.denominator = self.operands[1]
-    
+
     def latex(self, **kwargs):
         if self.get_style('division') == 'fraction':
             # only fence if force_fence=True (a fraction within an
@@ -38,7 +38,7 @@ class Div(NumberOperation):
         else:
             # normal division
             return NumberOperation.latex(self, **kwargs)
-    
+
     def style_options(self):
         '''
         Return the StyleOptions object for this Div.
@@ -50,10 +50,10 @@ class Div(NumberOperation):
                          "numerator over the denominator "
                          "(also see 'frac' function)"),
             default='fraction',
-            related_methods=('with_inline_style', 
+            related_methods=('with_inline_style',
                              'with_fraction_style'))
         return options
-        
+
     def with_inline_style(self):
         return self.with_styles(division='inline')
 
@@ -142,7 +142,9 @@ class Div(NumberOperation):
         the given operand has been canceled on the numerator and
         denominator.  For example,
         [(a*b)/(b*c)].cancelation(b) would return
-        (a*b)/(b*c) = a / c
+        (a*b)/(b*c) = a / c.
+        Assumptions or previous work might be required to establish
+        that the term_to_cancel is non-zero.
         '''
         from proveit.numbers import Mult, one
         expr = self
@@ -181,7 +183,7 @@ class Div(NumberOperation):
             # (x*y) / (x*z) = y/z with possible automatic reductions
             # via 1 eliminations.
             from . import frac_cancel_left
-            replacements = list(defaults.replacements)            
+            replacements = list(defaults.replacements)
             if expr.numerator == term_to_cancel:
                 numer_prod = Mult(term_to_cancel, one)
                 _y = one
@@ -239,17 +241,17 @@ class Div(NumberOperation):
         '''
         Return the proven factorization (equality with the factored
         form) from pulling "the_factor" from this division to the "left"
-        or "right".  If there are multiple occurrences, the first 
-        occurrence is used.  If group_factor is True and the_factor is 
+        or "right".  If there are multiple occurrences, the first
+        occurrence is used.  If group_factor is True and the_factor is
         a product, these operands are grouped together as a sub-product.
-        If group_remainder is True and there are multiple remaining 
+        If group_remainder is True and there are multiple remaining
         operands (those not in "the_factor"), then these remaining
         operands are grouped together as a sub-product.
         The group_remainder parameter is not relevant but kept
         for consistency with other factorization methods.
-        
+
         Examples:
-        
+
             [(a*b)/(c*d)].factorization((a/c))
             proves (a*b)/(c*d) = (a/c)*(b/d)
             [(a*b)/(c*d)].factorization((1/c))
@@ -343,26 +345,27 @@ class Div(NumberOperation):
                 # Factor x/(y*z) into (x/y)*(1/z)
                 _x = expr.numerator
                 _y = one
-                replacements.append(Mult(_x, _y).one_elimination(1))      
+                replacements.append(Mult(_x, _y).one_elimination(1))
             eq.update(thm.instantiate({x:_x, y:_y, z:_z, w:_w},
                                       replacements=replacements))
-        
+
         return eq.relation
 
-    @equality_prover('distributed', 'distribute') 
+    @equality_prover('distributed', 'distribute')
     def distribution(self, **defaults_config):
         r'''
-        Distribute the denominator through the numerate.
-        Returns the equality that equates self to this new version.
+        Distribute the denominator through the numerator, returning
+        the equality that equates self to this new version.
         Examples:
             :math:`(a + b + c) / d = a / d + b / d + c / d`
             :math:`(a - b) / d = a / d - b / d`
             :math:`\left(\sum_x f(x)\right / y = \sum_x [f(x) / y]`
-        Give any assumptions necessary to prove that the operands are in the Complex
-        numbers so that the associative and commutation theorems are applicable.
+        Give any assumptions necessary to prove that the operands are
+        in the Complex numbers so that the associative and commutation
+        theorems are applicable.
         '''
         from proveit.numbers import Add, Sum, Neg
-        from . import (distribute_fraction_through_sum, 
+        from . import (distribute_fraction_through_sum,
                        distribute_fraction_through_subtract)
         if isinstance(self.numerator, Add):
             if (self.numerator.operands.is_double()
@@ -459,7 +462,7 @@ class Div(NumberOperation):
         else:
             raise NotImplementedError("Need to implement degenerate cases "
                                       "of a^b/a and a/a^b.")
-    
+
     @relation_prover
     def deduce_in_number_set(self, number_set, **defaults_config):
         '''
@@ -494,9 +497,9 @@ class Div(NumberOperation):
         if thm is not None:
             return thm.instantiate({a: self.numerator, b: self.denominator})
         raise NotImplementedError(
-            "'Div.deduce_in_number_set()' not implemented for the %s set" 
+            "'Div.deduce_in_number_set()' not implemented for the %s set"
             % str(number_set))
-    
+
     @relation_prover
     def bound_via_operand_bound(self, operand_relation, **defaults_config):
         '''
@@ -521,11 +524,11 @@ class Div(NumberOperation):
     @relation_prover
     def bound_via_numerator_bound(self, relation, **defaults_config):
         '''
-        Given a relation applicable to the numerator,  bound this 
-        division accordingly.  For example, 
+        Given a relation applicable to the numerator,  bound this
+        division accordingly.  For example,
         if self is "a / b" and the relation is a < x
         return (a / b) < (x / b), provided b > 0.
-        
+
         Also see NumberOperation.deduce_bound.
         '''
         from proveit.numbers import zero, Less, LessEq, greater
@@ -551,14 +554,14 @@ class Div(NumberOperation):
                         {a: _a, x: _x, y: _y})
             elif isinstance(relation, LessEq):
                 bound =  weak_div_from_numer_bound__pos_denom.instantiate(
-                        {a: _a, x: _x, y: _y})                
+                        {a: _a, x: _x, y: _y})
         elif Less(self.denominator, zero).proven():
             if isinstance(relation, Less):
                 bound =  strong_div_from_numer_bound__neg_denom.instantiate(
                         {a: _a, x: _x, y: _y})
             elif isinstance(relation, LessEq):
                 bound =  weak_div_from_numer_bound__neg_denom.instantiate(
-                        {a: _a, x: _x, y: _y})                        
+                        {a: _a, x: _x, y: _y})
         else:
             raise UnsatisfiedPrerequisites(
                     "We must know whether the denominator of %s "
@@ -571,11 +574,11 @@ class Div(NumberOperation):
     @relation_prover
     def bound_via_denominator_bound(self, relation, **defaults_config):
         '''
-        Given a relation applicable to the numerator,  bound this 
-        division accordingly.  For example, 
+        Given a relation applicable to the numerator,  bound this
+        division accordingly.  For example,
         if self is "a / b" and the relation is b > y
         return (a / b) < (a / y), provided a, b, and y are positive.
-        
+
         Also see NumberOperation.deduce_bound.
         '''
         from proveit.numbers import zero, Less, LessEq, greater, greater_eq
@@ -614,21 +617,21 @@ class Div(NumberOperation):
             raise UnsatisfiedPrerequisites(
                     "We must know the sign of the numerator and "
                     "denominator of %s before we can use "
-                    "'bound_via_denominator_bound'."%self)        
+                    "'bound_via_denominator_bound'."%self)
         if pos_numer and pos_denom:
             if isinstance(relation, Less):
                 bound = strong_div_from_denom_bound__all_pos.instantiate(
                         {a: _a, x: _x, y: _y})
             elif isinstance(relation, LessEq):
                 bound = weak_div_from_denom_bound__all_pos.instantiate(
-                        {a: _a, x: _x, y: _y})                
+                        {a: _a, x: _x, y: _y})
         elif neg_numer and neg_denom:
             if isinstance(relation, Less):
                 bound = strong_div_from_denom_bound__all_neg.instantiate(
                         {a: _a, x: _x, y: _y})
             elif isinstance(relation, LessEq):
                 bound = weak_div_from_denom_bound__all_neg.instantiate(
-                        {a: _a, x: _x, y: _y})             
+                        {a: _a, x: _x, y: _y})
         elif pos_numer and neg_denom:
             if isinstance(relation, Less):
                 bound = strong_div_from_denom_bound__pos_over_neg.instantiate(

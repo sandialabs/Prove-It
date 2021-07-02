@@ -54,7 +54,7 @@ class ProperSubset(InclusionRelation):
         #print("Entering the ProperSubset.conclude() method!")                   # for testing; delete later
         raise ProofFailure(self, defaults.assumptions,
                        "ProperSubset.conclude() not implemented.")
-    
+
     @prover
     def unfold(self, **defaults_config):
         '''
@@ -65,7 +65,7 @@ class ProperSubset(InclusionRelation):
         unfolded = unfold_proper_subset.instantiate(
             {A: self.operands[0], B: self.operands[1]})
         return unfolded.inner_expr().operands[0].with_mimicked_style(self)
-    
+
     @prover
     def derive_relaxed(self, **defaults_config):
         '''

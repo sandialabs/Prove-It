@@ -219,7 +219,7 @@ class TensorExp(Operation):
         For the trivial cases of a one exponent, derive and return
         this tensor-exponentiated expression equated with a simplified
         form. Assumptions may be necessary to deduce necessary
-        conditions for the simplification. For example, 
+        conditions for the simplification. For example,
         TensorExp(x, one).do_reduced_simplification()
         '''
         from proveit.numbers import zero, one

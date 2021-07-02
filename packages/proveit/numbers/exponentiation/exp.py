@@ -4,6 +4,10 @@ from proveit import (Literal, Function, ExprTuple, InnerExpr, ProofFailure,
 from proveit.logic import InSet, Membership
 import proveit
 from proveit import a, b, c, k, m, n, x, S
+from proveit import (defaults, Literal, Function, ExprTuple, InnerExpr,
+                     ProofFailure, maybe_fenced_string, USE_DEFAULTS,
+                     StyleOptions)
+from proveit.logic import InSet, Membership
 from proveit.numbers import one, two, Div, frac, num, Real
 from proveit.numbers import NumberOperation
 
@@ -24,7 +28,7 @@ class Exp(NumberOperation):
         self.exponent = exponent
         NumberOperation.__init__(self, Exp._operator_, (base, exponent),
                                  styles=styles)
-    
+
     def remake_constructor(self):
         if self.get_style('exponent') == 'radical':
             # Use a different constructor if using the 'radical' style.
@@ -91,7 +95,7 @@ class Exp(NumberOperation):
 
     def membership_object(self, element):
         return ExpSetMembership(element, self)
-    
+
     def style_options(self):
         '''
         Returns the StyleOptions object for this Exp.
@@ -106,7 +110,7 @@ class Exp(NumberOperation):
                 default = default_exp_style,
                 related_methods = ('with_radical', 'without_radical'))
         return options
-        
+
     def with_radical(self):
         return self.with_styles(exponent='radical')
 
@@ -119,7 +123,7 @@ class Exp(NumberOperation):
         Returns a proven evaluation equation for this Exp
         expression assuming the operands have been simplified or
         raises an EvaluationError or ProofFailure (e.g., if appropriate
-        number set membership has not been proven).       
+        number set membership has not been proven).
 
         Handles the following exponential evaluations:
             a^0 = 1 for any complex a
@@ -130,7 +134,7 @@ class Exp(NumberOperation):
         from proveit.relation import TransRelUpdater
         from proveit.logic import EvaluationError, is_irreducible_value
         from proveit.numbers import (zero, one, is_literal_int)
-        from . import (exp_zero_eq_one, exponentiated_zero, 
+        from . import (exp_zero_eq_one, exponentiated_zero,
                        exponentiated_one, exp_nat_pos_expansion)
         assumptions = defaults.assumptions
         if self.exponent == zero:
@@ -139,8 +143,8 @@ class Exp(NumberOperation):
             return exponentiated_zero.instantiate({x: self.exponent})  # =0
         elif self.base == one:
             return exponentiated_one.instantiate({x: self.exponent})  # =1
-        elif (is_irreducible_value(self.base) and 
-                  is_literal_int(self.exponent) and 
+        elif (is_irreducible_value(self.base) and
+                  is_literal_int(self.exponent) and
                   self.exponent.as_int() > 1):
             expr = self
             eq = TransRelUpdater(expr, assumptions=assumptions)
@@ -218,7 +222,7 @@ class Exp(NumberOperation):
                 expr = eq.update(expr.simplification())
 
         return eq.relation
-    
+
     @relation_prover
     def not_equal(self, other, **defaults_config):
         '''
@@ -426,6 +430,44 @@ class Exp(NumberOperation):
         return thm.instantiate({n: n_sub}).instantiate(
             {a: a_sub, b: b_sub}).derive_reversed()
 
+    def exponent_separation(self, assumptions=USE_DEFAULTS):
+        '''
+        From self of the form x^{a+b} deduce and return the equality
+        x^{a+b} = x^a x^b. For example,
+            Exp(x, Add(two, c)).split_exponent_sum()
+        (with the apprpriate assumptions) should return:
+            |- (x^{2+c}) =  x^2 x^c.
+        '''
+        # among other things, convert any assumptions=None
+        # to assumptions=()
+        # assumptions = defaults.checkedAssumptions(assumptions)
+
+        from proveit.numbers import Add, Mult
+
+        # implement only for the case in which exponent is an Add
+        if not isinstance(self.exponent, Add):
+            raise NotImplementedError(
+            "'Exp.exponent_separation()' implemented only for cases in which "
+            "the exponent appears as a sum (i.e. in the Add class). The "
+            "exponent in this case is {0}.".format(self.exponent))
+
+        # list the addends in the exponent, which become exponents
+        the_exponents = self.exponent.operands
+
+        # list the new exponential factors
+        the_new_factors = [Exp(self.base, new_exp) for new_exp in the_exponents]
+
+        # create the new equivalent product (Mult)
+        mult_equiv = Mult(*the_new_factors)
+
+        # use the Mult.exponent_combination() to deduce equality to self
+        exp_separated = mult_equiv.exponent_combination(
+                    simplify_exp=False, assumptions=assumptions)
+
+        # reverse the equality relationship and return
+        return exp_separated.derive_reversed(assumptions=assumptions)
+
+
     def lower_outer_exp(self, assumptions=frozenset()):
         #
         from proveit.numbers import Neg
@@ -462,12 +504,12 @@ class Exp(NumberOperation):
     @relation_prover
     def deduce_in_number_set(self, number_set, **defaults_config):
         '''
-        Attempt to prove that this exponentiation expression is in the 
+        Attempt to prove that this exponentiation expression is in the
         given number set.
         '''
         from proveit.logic import InSet, NotEquals
         from proveit.numbers.exponentiation import (
-            exp_complex_closure, exp_natpos_closure, exp_int_closure, 
+            exp_complex_closure, exp_natpos_closure, exp_int_closure,
             exp_rational_closure_nat_power, exp_rational_nonzero_closure,
             exp_rational_pos_closure, exp_real_closure_nat_power,
             exp_real_pos_closure, exp_real_non_neg_closure,
@@ -544,7 +586,7 @@ class Exp(NumberOperation):
                     {a: self.base, b: self.exponent})
 
         raise NotImplementedError(
-            "'Exp.deduce_in_number_set' not implemented for the %s set" 
+            "'Exp.deduce_in_number_set' not implemented for the %s set"
             % str(number_set))
 
 
@@ -578,7 +620,6 @@ class ExpSetMembership(Membership):
         exponent_eval = domain.exponent.evaluation()
         exponent = exponent_eval.rhs
         base = domain.base
-        #print(exponent, base, exponent.as_int(),element, domain, len(element))
         if is_literal_int(exponent):
             if exponent == zero:
                 return exp_set_0.instantiate({S: base})
@@ -593,7 +634,7 @@ class ExpSetMembership(Membership):
                 expr_map = {S: base}  # S is the base
                 # map a, b, ... to the elements of element.
                 expr_map.update({proveit.__getattr__(
-                    chr(ord('a') + _k)): elem_k for _k, elem_k 
+                    chr(ord('a') + _k)): elem_k for _k, elem_k
                     in enumerate(element)})
                 elem_in_set = thm.instantiate(expr_map)
             else:

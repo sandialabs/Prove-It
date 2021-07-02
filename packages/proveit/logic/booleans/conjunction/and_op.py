@@ -48,7 +48,7 @@ class And(Operation):
         else:
             # Just use the default Operation._formatted method.
             return Operation._formatted(self, format_type, **kwargs)
-    
+
     def remake_with_style_calls(self):
         '''
         In order to reconstruct this Expression to have the same styles,
@@ -82,7 +82,7 @@ class And(Operation):
                     "Consecutive total ordering relations must "
                     "match rhs to lhs: %s and %s do not match"
                     %(rel1, rel2))
-    
+
     def style_options(self):
         '''
         Return the StyleOptions object for this And expression.
@@ -111,7 +111,7 @@ class And(Operation):
     @prover
     def conclude(self, **defaults_config):
         '''
-        Try to automatically conclude this conjunction via composing 
+        Try to automatically conclude this conjunction via composing
         the constituents.
         That is, conclude some A and B and ... and Z via
         A, B, ..., Z individually.
@@ -145,11 +145,11 @@ class And(Operation):
             # should be disproven via one of the imported theorems as a
             # simple special case
             return not_self.prove()
-            # Prove that the conjunction is true by proving that one of 
+            # Prove that the conjunction is true by proving that one of
             # its operands is false and then negate it.
         # In the first attempt, don't use automation to prove any of the
         # operands so that
-        # we don't waste time trying to prove operands when we already 
+        # we don't waste time trying to prove operands when we already
         # know oneto be false
         for use_automation_for_operand in [False, True]:
             disproven_operand_indices = []
@@ -162,9 +162,9 @@ class And(Operation):
                 except ProofFailure:
                     pass
             if self.operands.is_double() and len(disproven_operand_indices) > 0:
-                # One or both of the two operands were known to be true 
+                # One or both of the two operands were known to be true
                 # (without automation).
-                # Try a possibly simpler proof than 
+                # Try a possibly simpler proof than
                 # conclude_negation_via_example.
                 try:
                     if len(disproven_operand_indices) == 2:
@@ -184,7 +184,7 @@ class And(Operation):
                 try:
                     return not_self.prove(automation=False)
                 except BaseException:
-                    # If it wasn't proven via 
+                    # If it wasn't proven via
                     # conclude_negation_via_example, let's
                     # call it again to raise the appropriate exception.
                     operand = self.operands[disproven_operand_indices[0]]
@@ -216,7 +216,7 @@ class And(Operation):
 
     def negation_side_effects(self, judgment):
         '''
-        Side-effect derivations to attempt automatically for 
+        Side-effect derivations to attempt automatically for
         Not(A and B and .. and .. Z).
         '''
         from proveit.logic import Not, Or
@@ -239,7 +239,7 @@ class And(Operation):
     @prover
     def derive_in_bool(self, **defaults_config):
         '''
-        From (A and B and ... and Z) derive 
+        From (A and B and ... and Z) derive
         [(A and B and ... and Z) in Boolean].
         '''
         return in_bool(self).prove()
@@ -343,7 +343,7 @@ class And(Operation):
     @prover
     def conclude_via_composition(self, **defaults_config):
         '''
-        Prove and return some (A and B ... and ... Z) via 
+        Prove and return some (A and B ... and ... Z) via
         A, B, ..., Z each proven individually.
         See also the compose method to do this constructively.
         '''
@@ -382,7 +382,7 @@ class And(Operation):
         provided X by expression or index number.
         '''
         from . import each_is_bool
-        idx = (index_or_expr if isinstance(index_or_expr, int) else 
+        idx = (index_or_expr if isinstance(index_or_expr, int) else
                self.operands.entries.index(index_or_expr))
         if idx < 0 or idx >= self.operands.num_entries():
             raise IndexError("Operand out of range: " + str(idx))
@@ -418,7 +418,7 @@ class And(Operation):
     @prover
     def conclude_negation_via_example(self, true_operand, **defaults_config):
         '''
-        From one false operand, conclude that the negation of this 
+        From one false operand, conclude that the negation of this
         conjunction.  Requires all of the operands to be in the
         BOOLEAN set.
         '''
@@ -469,7 +469,7 @@ class And(Operation):
     def shallow_evaluation(self, **defaults_config):
         '''
         Attempt to determine whether this conjunction, with
-        simplified operands, evaluates to TRUE or FALSE under the given 
+        simplified operands, evaluates to TRUE or FALSE under the given
         assumptions.  If all operands have simplified to TRUE,
         the conjunction is TRUE.  If any of the operands have
         simplified to FALSE, the conjunction is FALSE (if the
@@ -483,13 +483,13 @@ class And(Operation):
                 empty_conjunction_eval
             # And() = TRUE
             return empty_conjunction_eval
-        
+
         all_are_true = True
         for operand in self.operands:
             if operand != TRUE:
                 all_are_true = False
             if operand == FALSE:
-                # If any simplified operand is FALSE, the conjunction 
+                # If any simplified operand is FALSE, the conjunction
                 # may only evaluate to FALSE if it can be evaluated.
                 self.disprove()
                 return Equals(self, FALSE).prove()
@@ -502,16 +502,16 @@ class And(Operation):
         self.prove()
         return Equals(self, TRUE).prove()
 
-    
+
     """
     @equality_prover('evaluated', 'evaluate')
     def evaluation(self, **defaults_config):
         '''
         Attempt to determine whether this conjunction evaluates
-        to true or false under the given assumptions.  If 
-        defaults.automation is False, it will only succeed if the 
-        evaluation is already known.  If defaults.automation and 
-        defaults.minimal_automation are True, it will only rely upon 
+        to true or false under the given assumptions.  If
+        defaults.automation is False, it will only succeed if the
+        evaluation is already known.  If defaults.automation and
+        defaults.minimal_automation are True, it will only rely upon
         known evaluations of the operands to determine
         whether to try to prove or disprove the conjunction.
         '''
@@ -523,7 +523,7 @@ class And(Operation):
                 empty_conjunction_eval
             # And() = TRUE
             return empty_conjunction_eval
-        
+
         for operand in self.operands:
             if operand == FALSE:
                 # If any operand simplified to FALSE the conjunction may
@@ -534,7 +534,7 @@ class And(Operation):
         # all be proven TRUE to prove the conjunction TRUE.
         self.prove()
         return Equals(self, TRUE).prove()
-                
+
 
         # First just see if it has a known evaluation.
         try:
@@ -578,7 +578,7 @@ class And(Operation):
         # there should be a known evaluation now.
         return Operation.evaluation(self, automation=False)
     """
-    
+
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, **defaults_config):
         '''
@@ -611,7 +611,7 @@ class And(Operation):
     @prover
     def deduce_in_bool(self, **defaults_config):
         '''
-        Attempt to deduce, then return, that this 'and' expression is 
+        Attempt to deduce, then return, that this 'and' expression is
         in the BOOLEAN set.
         '''
 
@@ -662,7 +662,7 @@ class And(Operation):
         '''
         From self, derive and return a form in which the operand
         at index init_idx has been moved to final_idx.
-        For example, given (A and B and ... and Y and Z) derive 
+        For example, given (A and B and ... and Y and Z) derive
         (A and ... and Y and B and Z)
         via init_idx = 1 and final_idx = -2.
         '''
@@ -676,9 +676,9 @@ class And(Operation):
                       **defaults_config):
         '''
         Given self, deduce and return a form in which the operands
-        at indices [init_idx, init_idx+length) have been moved to 
+        at indices [init_idx, init_idx+length) have been moved to
         [final_idx. final_idx+length).
-        It will do this by performing association first. 
+        It will do this by performing association first.
         If disassocate is True, it will be disassociated afterwards.
         '''
         return group_commute(
@@ -687,11 +687,11 @@ class And(Operation):
     @equality_prover('associated', 'associate')
     def association(self, start_idx, length, **defaults_config):
         '''
-        Given Boolean operands, deduce that this expression is equal to 
+        Given Boolean operands, deduce that this expression is equal to
         a form in which operands in the
         range [start_idx, start_idx+length) are grouped together.
-        For example, 
-            (A and B and ... and Y and Z) = 
+        For example,
+            (A and B and ... and Y and Z) =
             (A and B ... and (L and ... and M) and ... and Y and Z)
         '''
         from . import association
@@ -714,10 +714,10 @@ class And(Operation):
     def disassociation(self, idx, **defaults_config):
         '''
         Given Boolean operands, deduce that this expression is equal to
-        a form in which the operand  at index idx is no longer grouped 
+        a form in which the operand  at index idx is no longer grouped
         together.
-        For example, 
-            (A and B ... and (L and ... and M) and ... and Y and Z) = 
+        For example,
+            (A and B ... and (L and ... and M) and ... and Y and Z) =
             (A and B and ... and Y and Z)
         '''
         from . import disassociation
@@ -728,7 +728,7 @@ class And(Operation):
         '''
         From self, derive and return a form in which the operand
         at the given index is ungrouped.
-        For example, from 
+        For example, from
         (A and B ... and (L and ... and M) and ... and Y and Z)
         derive (A and B and ... and Y and Z).
         '''
