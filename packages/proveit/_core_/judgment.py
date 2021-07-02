@@ -578,7 +578,7 @@ class Judgment:
             return False  # no change
 
         # swap out the old proof for the new proof in all dependencies
-        meaning_data._proof._updateDependencies(new_proof)
+        meaning_data._proof._update_dependencies(new_proof)
         meaning_data._proof = new_proof  # set to the new proof
 
         return True

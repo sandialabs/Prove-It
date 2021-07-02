@@ -17,18 +17,12 @@ from .theory import Theory
 
 class Proof:
 
-    # Map each Proof to the first instantiation of it that was created (noting that
-    # multiple Proof objects can represent the same Proof and will have the same hash value).
-    # Using this, internal references (between Judgments and Proofs) unique .
-    unique_proofs = dict()
-
     @staticmethod
     def _clear_():
         '''
         Clear all references to Prove-It information in
         the Proof jurisdiction.
         '''
-        Proof.unique_proofs.clear()
         Assumption.all_assumptions.clear()
         Theorem.all_theorems.clear()
         Theorem.all_used_theorems.clear()
@@ -167,7 +161,7 @@ class Proof:
                     temp_defaults.replacements = []
                 proven_truth.derive_side_effects()
 
-    def _updateDependencies(self, newproof):
+    def _update_dependencies(self, newproof):
         '''
         Swap out this oldproof for the newproof in all dependents and 
         update their num_steps and usability status.
@@ -180,7 +174,11 @@ class Proof:
                 if dependent.required_proofs[i] == oldproof:
                     dependent.required_proofs[i] = newproof
                     revised_dependent = True
-            assert revised_dependent, "Incorrect dependency relationship"
+            assert revised_dependent, (
+                    "Dependency/requirement relationship not mutual: "
+                    "a dependent, proving %s, of the proof of, %s, "
+                    "does not require the particular proof mutually."
+                    %(dependent.proven_truth, oldproof.proven_truth))
             newproof._dependents.add(dependent)
             dependent._mark_num_steps_as_unknown()
             if all(required_proof.is_usable()
@@ -188,6 +186,8 @@ class Proof:
                 dependent._meaning_data._unusable_proof = None  # it is usable again
                 dependent.proven_truth._addProof(
                     dependent)  # add it back as an option
+        # Nothing should depend upon the old proof any longer.
+        oldproof._dependents.clear()        
 
     def _mark_usability(self, set_to_disable=None):
         pass  # overloaded for the Theorem type Proof
