@@ -21,10 +21,6 @@ class Mult(NumberOperation):
     _simplification_directives_ = SimplificationDirectives(
             ungroup = True)
 
-    # Multiplying two numerals may import a theorem for the evaluation.
-    # Track which ones we have encountered already.
-    multiplied_numerals = set()
-
     def __init__(self, *operands, styles=None):
         r'''
         Multiply together any number of operands from first operand.
@@ -32,19 +28,6 @@ class Mult(NumberOperation):
         NumberOperation.__init__(self, Mult._operator_, operands,
                                  styles=styles)
         self.factors = self.operands
-        if self.factors.is_double() and all(
-                factor in DIGITS for factor in self.factors):
-            if self not in Mult.multiplied_numerals:
-                try:
-                    # for single digit addition, import the theorem that
-                    # provides the evaluation
-                    Mult.multiplied_numerals.add(self)
-                    proveit.numbers.numerals.decimals.__getattr__(
-                        'mult_%d_%d' % (self.factors[0].as_int(), self.factors[1].as_int()))
-                except BaseException:
-                    # may fail before the relevent _commons_ and _theorems_
-                    # have been generated
-                    pass  # and that's okay
 
     @relation_prover
     def deduce_in_number_set(self, number_set, **defaults_config):
@@ -194,7 +177,9 @@ class Mult(NumberOperation):
             zero_idx = self.operands.index(zero)
             if self.operands.is_double():
                 if zero_idx == 0:
-                    return mult_zero_left.instantiate({x: self.operands[1]})
+                    result = mult_zero_left.instantiate({x: self.operands[1]})
+                    print("mult_zero_left", defaults.preserved_exprs, result)
+                    return result
                 else:
                     return mult_zero_right.instantiate({x: self.operands[0]})
             _a = self.operands[:zero_idx]
@@ -260,8 +245,22 @@ class Mult(NumberOperation):
                     must_evaluate=must_evaluate))
             return eq.relation
         
-        if must_evaluate and not all(is_irreducible_value(factor) for
-                                     factor in self.factors):
+        if all(is_irreducible_value(factor) for factor in self.factors):
+            if self.operands.is_double():
+                if all(factor in DIGITS for factor in self.factors):
+                    # Prove single-digit multiplication by importing the
+                    # appropriate theorem.
+                    return proveit.numbers.numerals.decimals.__getattr__(
+                        'mult_%d_%d' % (self.factors[0].as_int(), self.factors[1].as_int()))
+                else:
+                    raise NotImplementedError("Only single-digit multiplication "
+                                              "is currently implemented")
+            else:
+                # Use pairwise evaluation when multiplying more then 2
+                # operands.
+                assert self.factors.num_entries() > 2
+                return pairwise_evaluation(self)
+        elif must_evaluate:
             # The simplification of the operands may not have
             # worked hard enough.  Let's work harder if we
             # must evaluate.
@@ -272,12 +271,7 @@ class Mult(NumberOperation):
             # irreductible values.
             return self.evaluation()
         
-        if isinstance(expr, Mult) and expr.operands.num_entries() > 2:
-            # Perform a pairwise evaluation.
-            eq.update(pairwise_evaluation(expr))
-            return eq.relation
-        
-        return eq.relation
+        return eq.relation # Should be self=self.
 
     @equality_prover('simplified_negations', 'simplify_negations')
     def neg_simplifications(self, **defaults_config):
