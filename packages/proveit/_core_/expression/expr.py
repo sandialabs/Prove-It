@@ -1032,10 +1032,10 @@ class Expression(metaclass=ExprType):
         equality_repl_map = dict()
         for replacement in defaults.replacements:
             if not isinstance(replacement, Judgment):
-                raise TypeError("The 'reductions' must be Judgments")
+                raise TypeError("The 'replacements' must be Judgments")
             if not isinstance(replacement.expr, Equals):
                 raise TypeError(
-                        "The 'reductions' must be equality Judgments")
+                        "The 'replacements' must be equality Judgments")
             if replacement.expr.lhs == replacement.expr.rhs:
                 # Don't bother with reflexive (x=x) reductions.
                 continue
