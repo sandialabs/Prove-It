@@ -235,8 +235,10 @@ class And(Operation):
         From (A and B and .. and Z) in Boolean deduce
         (A in Boolean), (B in Boolean), ... (Z in Boolean).
         '''
-        for i in range(self.operands.num_entries()):
-            yield lambda : self.deduce_part_in_bool(i)
+        from proveit import ExprRange
+        for _i in range(self.operands.num_entries()):
+            if not isinstance(self.operands[_i], ExprRange):
+                yield lambda : self.deduce_part_in_bool(_i)
 
     @prover
     def derive_in_bool(self, **defaults_config):

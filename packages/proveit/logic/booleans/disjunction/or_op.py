@@ -138,8 +138,10 @@ class Or(Operation):
         From (A or B or .. or Z) in Boolean deduce (A in Boolean), (B in Boolean), ...
         (Z in Boolean).
         '''
+        from proveit import ExprRange
         for _i in range(self.operands.num_entries()):
-            yield lambda : self.deduce_part_in_bool(_i)
+            if not isinstance(self.operands[_i], ExprRange):
+                yield lambda : self.deduce_part_in_bool(_i)
 
     @prover
     def conclude_negation(self, **defaults_config):
