@@ -650,7 +650,7 @@ class Add(NumberOperation):
                             Add(operand).shallow_simplification())
                     expr = eq.update(expr.association(
                             _n, 1, replacements=[inner_simplification],
-                            preserve_all=True))
+                            auto_simplify=False))
                 # print("n, length", n, length)
                 if (isinstance(operand, Add) or
                         (isinstance(operand, Neg) and
