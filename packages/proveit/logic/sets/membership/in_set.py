@@ -199,7 +199,12 @@ class InSet(Relation):
             # Don't know what to do otherwise.
             return Relation.shallow_simplification(
                     self, must_evaluate=must_evaluate)
-        definition = self.membership_object.definition()
+        try:
+            definition = self.membership_object.definition()
+        except NotImplementedError:
+            # Don't know what to do otherwise.
+            return Relation.shallow_simplification(
+                    self, must_evaluate=must_evaluate)
         try:
             rhs_eval = definition.rhs.evaluation(automation=must_evaluate)
         except EvaluationError as e:
