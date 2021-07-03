@@ -123,6 +123,37 @@ class Equals(TransitiveRelation):
                 return self.conclude_boolean_equality()
             except ProofFailure:
                 pass
+
+        if (Implies(self.lhs, self.rhs).proven() and
+                Implies(self.rhs, self.lhs).proven() and
+                in_bool(self.lhs).proven() and
+                in_bool(self.rhs).proven()):
+            # There is mutual implication both sides are known to be
+            # boolean.  Conclude equality via mutual implication.
+            return Iff(self.lhs, self.rhs).derive_equality()
+        
+        # check the equivalence set.
+
+        if hasattr(self.lhs, 'deduce_equality'):
+            # If there is a 'deduce_equality' method, use that.
+            # The responsibility then shifts to that method for
+            # determining what strategies should be attempted
+            # (with the recommendation that it should not attempt
+            # multiple non-trivial automation strategies).
+            eq = self.lhs.deduce_equality(self)
+            if eq.expr != self:
+                raise ValueError("'deduce_equality' not implemented "
+                                 "correctly; must deduce the 'equality' "
+                                 "that it is given if it can: "
+                                 "'%s' != '%s'" % (eq.expr, self))
+            return eq
+
+        '''
+        If there is no 'deduce_equality' method, we'll try
+        simplifying each side to see if they are equal
+        (or evaluating if one side is irreducible).
+        '''
+
         if is_irreducible_value(self.rhs):
             try:
                 evaluation = self.lhs.evaluation()
@@ -150,47 +181,20 @@ class Equals(TransitiveRelation):
                 raise ProofFailure(self, defaults.assumptions,
                                    "Evaluation error: %s" % e.message)
 
-        if (Implies(self.lhs, self.rhs).proven() and
-                Implies(self.rhs, self.lhs).proven() and
-                in_bool(self.lhs).proven() and
-                in_bool(self.rhs).proven()):
-            # There is mutual implication both sides are known to be
-            # boolean.  Conclude equality via mutual implication.
-            return Iff(self.lhs, self.rhs).derive_equality()
+        # Try to prove equality via simplifying both sides.
+        lhs_simplification = self.lhs.simplification()
+        rhs_simplification = self.rhs.simplification()
+        simplified_lhs = lhs_simplification.rhs
+        simplified_rhs = rhs_simplification.rhs
+        try:
+            if simplified_lhs != self.lhs or simplified_rhs != self.rhs:
+                simplified_eq = Equals(
+                    simplified_lhs, simplified_rhs).prove()
+                return Equals.apply_transitivities(
+                    [lhs_simplification, simplified_eq, rhs_simplification])
+        except ProofFailure:
+            pass
         
-        # check the equivalence set.
-
-        if hasattr(self.lhs, 'deduce_equality'):
-            # If there is a 'deduce_equality' method, use that.
-            # The responsibility then shifts to that method for
-            # determining what strategies should be attempted
-            # (with the recommendation that it should not attempt
-            # multiple non-trivial automation strategies).
-            eq = self.lhs.deduce_equality(self)
-            if eq.expr != self:
-                raise ValueError("'deduce_equality' not implemented "
-                                 "correctly; must deduce the 'equality' "
-                                 "that it is given if it can: "
-                                 "'%s' != '%s'" % (eq.expr, self))
-            return eq
-        else:
-            '''
-            If there is no 'deduce_equality' method, we'll try
-            simplifying each side to see if they are equal.
-            '''
-            # Try to prove equality via simplifying both sides.
-            lhs_simplification = self.lhs.simplification()
-            rhs_simplification = self.rhs.simplification()
-            simplified_lhs = lhs_simplification.rhs
-            simplified_rhs = rhs_simplification.rhs
-            try:
-                if simplified_lhs != self.lhs or simplified_rhs != self.rhs:
-                    simplified_eq = Equals(
-                        simplified_lhs, simplified_rhs).prove()
-                    return Equals.apply_transitivities(
-                        [lhs_simplification, simplified_eq, rhs_simplification])
-            except ProofFailure:
-                pass
         raise ProofFailure(self, defaults.assumptions,
                            "Unable to automatically conclude by "
                            "standard means.  To try to prove this via "
