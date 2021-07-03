@@ -27,6 +27,7 @@ def _make_decorated_prover(func):
 
     def decorated_prover(*args, **kwargs):
         from proveit import Expression, Judgment
+        from proveit.logic import Equals
         if (kwargs.get('preserve_all', False) and 
                 len(kwargs.get('replacements', tuple())) > 0):
             raise ValueError(
@@ -63,8 +64,34 @@ def _make_decorated_prover(func):
             # an object.
             return {key:val for key, val in obj.__dict__.items() 
                     if key[0] != '_'}
-        
+
+        exprs_to_replace = set()
+        if 'replacements' in kwargs:
+            for replacement in kwargs['replacements']:
+                if not isinstance(replacement, Judgment):
+                    raise TypeError("The 'replacements' must be Judgments")
+                if not isinstance(replacement.expr, Equals):
+                    raise TypeError(
+                        "The 'replacements' must be equality Judgments")
+                exprs_to_replace.add(replacement.expr.lhs)
+
+        # Make sure a preserved expression isn't also being replaced.
+        if 'preserved_exprs' in kwargs:
+            # Make sure a preserved expression isn't also
+            # being replaced.
+            preserved_exprs = kwargs['preserved_exprs']
+            if not exprs_to_replace.isdisjoint(preserved_exprs):
+                raise ValueError(
+                    "Cannot simultaneously replace and preserve these "
+                    "expression: %s"
+                    %exprs_to_replace.intersection(preserved_exprs))
+
         if preserve_expr is not None:
+            # Make sure this preserved expression isn't also being replaced.
+            if preserve_expr in exprs_to_replace:
+                raise ValueError(
+                    "Cannot simultaneously replace and preserve %s"
+                    %preserve_expr)
             # Preserve the 'preserve_expr'.
             if ('preserved_exprs' in defaults_to_change
                     or  preserve_expr not in defaults.preserved_exprs):
@@ -74,7 +101,7 @@ def _make_decorated_prover(func):
                     defaults_to_change.add('preserved_exprs')
                     kwargs['preserved_exprs'] = (
                             defaults.preserved_exprs.union({preserve_expr}))
-        
+
         def checked_truth(proven_truth):
             # Check that the proven_truth is a Judgment and has
             # appropriate assumptions.

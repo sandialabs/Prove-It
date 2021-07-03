@@ -576,13 +576,14 @@ class Operation(Expression):
         # After making sure the operands have been simplified,
         # try 'shallow_simplification' with must_evaluate=True.
         try:
-            # _no_eval_check is a directive to the @equality_prover wrapper 
-            # to tell it not to check for an existing evaluation if we have
-            # already checked.
-            _no_eval_check = (reduction.lhs == reduction.rhs)
-            
+            if reduction.lhs == reduction.rhs:
+                # _no_eval_check is a directive to the @equality_prover wrapper 
+                # to tell it not to check for an existing evaluation if we have
+                # already checked.
+                return self.shallow_simplification(
+                    must_evaluate=True, _no_eval_check=True)
             evaluation = reduction.rhs.shallow_simplification(
-                    must_evaluate=True, _no_eval_check=_no_eval_check)
+                    must_evaluate=True)
         except (SimplificationError, UnsatisfiedPrerequisites,
                 NotImplementedError, ProofFailure):
             raise EvaluationError(self)
@@ -613,14 +614,15 @@ class Operation(Expression):
         #   otherwise be used because (1*b + 3*b) is a preserved
         #   expression since simplification is an @equality_prover.
 
-        # _no_eval_check is a directive to the @equality_prover wrapper 
-        # to tell it not to check for an existing evaluation if we have
-        # already checked.
-        _no_eval_check = (reduction.lhs == reduction.rhs)
-
-        simplification = reduction.rhs.shallow_simplification(
-                replacements=[reduction], _no_eval_check=_no_eval_check)
-        return reduction.apply_transitivity(simplification)
+        if reduction.lhs == reduction.rhs:
+            # _no_eval_check is a directive to the @equality_prover wrapper 
+            # to tell it not to check for an existing evaluation if we have
+            # already checked.
+            return self.shallow_simplification(_no_eval_check=True)
+        else:
+            simplification = reduction.rhs.shallow_simplification(
+                replacements=[reduction])
+            return reduction.apply_transitivity(simplification)
     
     @equality_prover('simplified_operands', 'operands_simplify')
     def simplification_of_operands(self, **defaults_config):
