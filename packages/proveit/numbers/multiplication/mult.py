@@ -1,9 +1,9 @@
-from proveit import (defaults, Literal, Operation, USE_DEFAULTS, ExprTuple,
-                     Judgment, ProofFailure, InnerExpr,
+from proveit import (Literal, ExprTuple, InnerExpr, Judgment, ProofFailure,
                      prover, relation_prover, equality_prover,
-                     SimplificationDirectives)
+                     SimplificationDirectives, TransRelUpdater)
+from proveit import a, b, c, d, e, i, j, k, m, n, w, x, y, z
 from proveit.logic import Equals, InSet
-from proveit.numbers import one, Add, num
+from proveit.numbers import one, Add, num, NumberOperation
 from proveit.numbers.number_sets import (Integer, Natural, NaturalPos, Real,
                                          RealNonNeg, RealPos, Complex)
 import proveit.numbers.numerals.decimals
@@ -11,8 +11,6 @@ from proveit.numbers.numerals.decimals import DIGITS
 from proveit.abstract_algebra.generic_methods import (
         apply_commutation_thm, apply_association_thm, apply_disassociation_thm,
         group_commutation, pairwise_evaluation)
-from proveit import TransRelUpdater
-from proveit.numbers import NumberOperation
 
 class Mult(NumberOperation):
     # operator of the Mult operation.
@@ -523,7 +521,7 @@ class Mult(NumberOperation):
             set(denom_occurrence_indices))
         if len(intersection_indices) > 0:
             idx = sorted(intersection_indices)[0]
-            eq.update(expr.inner_expr().factors[idx].cancellation(
+            eq.update(expr.inner_expr().factors[idx].cancelation(
                 term_to_cancel))
             return eq.relation
 
@@ -669,7 +667,7 @@ class Mult(NumberOperation):
             expr = eq.update(expr.inner_expr().association(
                 left_idx, 2))
             expr = eq.update(
-                expr.inner_expr().factors[left_idx].cancellation(
+                expr.inner_expr().factors[left_idx].cancelation(
                     term_to_cancel))
             if isinstance(expr.factors[left_idx], Mult):
                 expr = eq.update(
@@ -926,10 +924,9 @@ class Mult(NumberOperation):
         |- (a^b a^c a^d) = a^{b+c+d}.
         The start_idx and end_idx can be used to apply the process to
         a contiguous subset of factors within a larger set of factors.
-        Automatically attempts to reduce the resulting new exponent sum
-        or new base product, unless the simplify_exp or simplify_base
-        flags set to False, and will consider user-supplied reductions
-        in doing so.
+        Automatically attempts to reduce a resulting new exponent sum,
+        but not a new base product, unless call includes
+        auto_simplify=False.
         Planned but not implemented: allow user to specify non-
         contiguous factors to combine. For example, given self as
         a^b a^c b^a a^d
@@ -948,53 +945,121 @@ class Mult(NumberOperation):
             add_one_left_in_exp_poss_zero_base)
         from proveit.numbers import Exp
 
-        if reductions is None:
-            reductions = []
-
         error_msg = ""
 
         # If the start_idx and/or end_idx has been specified
         if start_idx is not None or end_idx is not None:
-            association = self.association(start_idx, end_idx,
-                                           preserve_all=True)
-            inner_expr = association.rhs.inner_expr().factors[start_idx]
-            combination = inner_expr.exponent_combination()
-            return association.apply_transitivity(combination)
-        # if all(isinstance(factor, Sqrt) for factor in self.factors):
-        #     # combine the square roots into one square root
-        #     factor_bases = [factor.base for factor in self.factors]
-        #     return prod_of_sqrts.instantiate({x_multi:factor_bases},
-        #                                   assumptions=assumptions)
-        # the following sqrt instantiation modified by wdc on 2/29/2020
-        # based on the above-commented-out code (kept here temporarily
-        # until we're sure this works ok)
+
+            # Compensate for potential missing indices in this block:
+            # omission of either start or end idx defaults to a pair
+            # of contiguous multiplicands
+            if end_idx is None:
+                end_idx = min(start_idx + 1, self.factors.num_entries())
+            elif start_idx is None:
+                start_idx = max(0, end_idx - 1)
+
+            assoc_length = end_idx - start_idx + 1
+
+            # associate the factors intended for combination
+            # warning: 2nd arg of association() fxn is length not index
+            grouped = self.association(start_idx, assoc_length,
+                                       preserve_all=True)
+            # isolate the targeted factors and combine them as desired
+            # using call to this same method
+            inner_combination = (
+                    grouped.rhs.factors[start_idx].
+                    exponent_combination())
+            # substitute the combined factors back into the
+            # grouped expression and return the deduced equality
+            return inner_combination.sub_right_side_into(grouped)
+
+        # Else neither the start_idx nor the end_idx has been specified,
+        # indicating we intend to combine all possible factors, either:
+        # (1) all like-bases combined with a single exponent, such as
+        #     a^b a^c a^d = a^{b+c+d},
+        # OR
+        # (2) all like-exponents
+        #     a^z b^z c^z = (abc)^z
+        # for the moment assuming we have all exponential factors of
+        # the form Exp(a, b) instead of something like a^b * a
+        if (all(isinstance(factor, Exp) for factor in self.factors)):
+
+            factor_bases = [factor.base for factor in self.factors]
+            factor_exponents = [factor.exponent for factor in self.factors]
+            from proveit.numbers.exponentiation import (
+                    products_of_complex_powers)
+
+            # (1) all same bases to combine with a single exponent,
+            # such as a^b a^c a^d = a^{b+c+d}
+            if len(set(factor_bases)) == 1:
+
+                _m_sub = num(len(factor_exponents))
+                _a_sub = factor_bases[0]
+                _b_sub = factor_exponents
+                try:
+                    return products_of_complex_powers.instantiate(
+                            {m: _m_sub, a: _a_sub, b: _b_sub})
+                except Exception as the_exception:
+                    # something went wrong
+                    error_msg = (
+                            error_msg +
+                            "All factors appeared to have same base, but "
+                            "attempt failed with error message: \n" +
+                            str(the_exception))
+                    pass
+
+            # (2) all same exponent to combine with a single base,
+            # such as a^d b^d c^d = (a b c)^d.
+            # Less common but sometimes useful.
+            if len(set(factor_exponents)) == 1:
+
+                # Same exponent: equate $a^c b^c = (a b)^c$
+                # Combining the exponents in this case is the reverse
+                # of disibuting an exponent.
+                _new_prod = Mult(*factor_bases)
+                _new_exp = Exp(_new_prod, factor_exponents[0])
+                try:
+                    return _new_exp.distribution().derive_reversed()
+                except Exception as the_exception:
+                    # something went wrong; append to error message
+                    error_msg = (
+                            error_msg +
+                            "All factors appeared to have the same exponent, "
+                            "but attempt failed with error message: \n" +
+                            str(the_exception)) + "\n"
+                    pass
 
         exp_operand_msg = (
             'Combine exponents only implemented for a product '
             'of two exponentiated operands (or a simple variant)')
 
-        if not self.operands.is_double() or not isinstance(
-                self.operands[0], Exp) or not isinstance(
-                self.operands[1], Exp):
-            if (self.operands.is_double() and
-                    isinstance(self.operands[0], Exp) and
-                    self.operands[0].base == self.operands[1]):
-                # Of the form a^b a
+        # I wonder if we might simply take any non-exp factor a and
+        # convert it to Exp(a, one) (i.e. a^1). This might simplify
+        # the process, making things a bit more mechanical ....
+
+        if (not self.operands.is_double()
+                or not isinstance(self.operands[0], Exp)
+                or not isinstance(self.operands[1], Exp)):
+
+            if (self.operands.is_double()
+                    and isinstance(self.operands[0], Exp)
+                    and self.operands[0].base == self.operands[1]):
+                # self is of the form: (a^b) a
                 return add_one_right_in_exp.instantiate(
-                    {a: self.operands[1], b: self.operands[0].exponent},
-                    ).derive_reversed()
+                    {a: self.operands[1], b: self.operands[0].exponent})
+
             elif (self.operands.is_double() and
-                      isinstance(self.operands[1], Exp) and
-                      self.operands[1].base == self.operands[0]):
-                # Of the form a a^b
-                return add_one_left_in_exp.instantiate(
-                    {a: self.operands[0], b: self.operands[1].exponent},
-                    ).derive_reversed()
-            raise NotImplementedError(
-                "Accumulated error_msg: " + error_msg + "\n"
-                "Need to better implement degenerate cases "
-                "of a^b*a and a*a^b.")
-            # raise ValueError(exp_operand_msg)
+                  isinstance(self.operands[1], Exp) and
+                  self.operands[1].base == self.operands[0]):
+                # self is of the form: a (a^b)
+
+                try: # case where base a != 0
+                    return add_one_left_in_exp.instantiate(
+                        {a: self.operands[0], b: self.operands[1].exponent})
+                except Exception as the_exception:
+                    # case where base might be 0 but exponent != 0
+                    return add_one_left_in_exp_poss_zero_base.instantiate(
+                        {a: self.operands[0], b: self.operands[1].exponent})
 
         # More complex efforts if code above does not catch the
         # specific instance. The code below remains from earlier.
