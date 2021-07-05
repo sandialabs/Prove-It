@@ -1,5 +1,5 @@
 from proveit import (Literal, Operation, USE_DEFAULTS, ProofFailure,
-                     defaults, prover, equality_prover)
+                     defaults, prover, relation_prover, equality_prover)
 from proveit.logic.booleans.booleans import in_bool
 from proveit import A, x, y, S
 
@@ -142,7 +142,7 @@ class Not(Operation):
         return substitute_falsehood.instantiate(
             {x: self.operand, P: Plambda})
 
-    @prover
+    @relation_prover
     def derive_in_bool(self, **defaults_config):
         '''
         From Not(A) derive [Not(A) in Boolean].
@@ -150,7 +150,7 @@ class Not(Operation):
         from proveit.logic.booleans import in_bool_if_true
         return in_bool_if_true.instantiate({A: self})
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
         Attempt to deduce, then return, that this 'not' expression is 

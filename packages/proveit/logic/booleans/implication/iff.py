@@ -1,5 +1,5 @@
 from proveit import (Literal, Operation, USE_DEFAULTS, 
-                     prover, equality_prover)
+                     prover, relation_prover, equality_prover)
 from proveit.logic.booleans.conjunction import compose
 from .implies import Implies
 from proveit import A, B, C
@@ -200,7 +200,7 @@ class Iff(TransitiveRelation):
         return Operation.shallow_simplification(
                 self, must_evaluate=must_evaluate)
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
         Attempt to deduce, then return, that this 'iff' expression is in the set of BOOLEANS.

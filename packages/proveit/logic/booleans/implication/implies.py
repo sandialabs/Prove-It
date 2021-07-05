@@ -1,6 +1,6 @@
 from proveit import (Literal, Operation, defaults, USE_DEFAULTS, 
                      composite_expression, ProofFailure,
-                     prover, equality_prover)
+                     prover, relation_prover, equality_prover)
 from proveit.logic.booleans.negation import Not
 from proveit import A, B, C
 from proveit import TransitiveRelation
@@ -379,7 +379,7 @@ class Implies(TransitiveRelation):
         return Operation.shallow_simplification(
                 self, must_evaluate=must_evaluate)
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
         Attempt to deduce, then return, that this implication expression is in the set of BOOLEANS.

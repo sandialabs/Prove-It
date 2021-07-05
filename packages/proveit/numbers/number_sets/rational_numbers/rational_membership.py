@@ -1,4 +1,4 @@
-from proveit import prover
+from proveit import prover, relation_prover
 from proveit import q
 from proveit.logic import NotEquals, InSet
 from proveit.numbers.number_sets.number_set import NumberMembership
@@ -13,7 +13,7 @@ class RationalMembership(NumberMembership):
         '''
         yield self.derive_element_in_real
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import rational_membership_is_bool
         from proveit import x
@@ -108,7 +108,7 @@ class RationalNonZeroMembership(RationalMembership):
         yield self.derive_element_in_rational
         yield self.derive_element_in_real_nonzero
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import rational_nonzero_membership_is_bool
         from proveit import x
@@ -173,7 +173,7 @@ class RationalPosMembership(RationalMembership):
         yield self.derive_element_in_rational_nonneg
         yield self.derive_element_in_real_pos
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import rational_pos_membership_is_bool
         from proveit import x
@@ -254,7 +254,7 @@ class RationalNegMembership(RationalMembership):
         yield self.derive_element_in_rational_nonpos
         yield self.derive_element_in_real_neg
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import rational_neg_membership_is_bool
         from proveit import x
@@ -333,7 +333,7 @@ class RationalNonNegMembership(RationalMembership):
         yield self.derive_element_in_rational
         yield self.derive_element_in_real_nonneg
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import rational_nonneg_membership_is_bool
         from proveit import x
@@ -398,7 +398,7 @@ class RationalNonPosMembership(RationalMembership):
         yield self.derive_element_in_rational
         yield self.derive_element_in_real_nonpos
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import rational_nonpos_membership_is_bool
         from proveit import x

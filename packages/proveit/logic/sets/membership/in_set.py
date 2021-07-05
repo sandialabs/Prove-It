@@ -258,7 +258,7 @@ class Membership:
             "Membership object, %s, has no 'definition' method implemented" % str(
                 self.__class__))
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         raise NotImplementedError(
             "Membership object, %s, has no 'deduce_in_bool' method implemented" % str(

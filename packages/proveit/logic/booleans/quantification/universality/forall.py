@@ -1,7 +1,7 @@
 from proveit import (Literal, Function, Lambda, OperationOverInstances,
                      ExprTuple, ExprRange, IndexedVar,
                      defaults, USE_DEFAULTS, ProofFailure,
-                     prover, equality_prover)
+                     prover, relation_prover, equality_prover)
 from proveit import k, n, x, A, B, P, S
 from proveit._core_.proof import Generalization
 
@@ -333,7 +333,7 @@ class Forall(OperationOverInstances):
         
         return OperationOverInstances.shallow_simplification(self)
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
         Attempt to deduce, then return, that this forall expression

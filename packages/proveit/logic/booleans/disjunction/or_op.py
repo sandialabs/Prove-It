@@ -1,6 +1,7 @@
 from proveit import (Expression, Literal, Operation, defaults, USE_DEFAULTS,
                      ProofFailure, InnerExpr, UnusableProof,
-                     prover, equality_prover, SimplificationDirectives, TransRelUpdater)
+                     prover, relation_prover, equality_prover, 
+                     SimplificationDirectives, TransRelUpdater)
 from proveit import A, B, C, D, m, n
 from proveit.logic.booleans.booleans import in_bool
 from proveit.abstract_algebra.generic_methods import (apply_commutation_thm, apply_association_thm,
@@ -206,14 +207,6 @@ class Or(Operation):
             _A = self.operands
             _m = _A.num_elements()
             return demorgans_law_and_to_or.instantiate({m: _m, A: _A})
-
-    @prover
-    def derive_in_bool(self, **defaults_config):
-        '''
-        From (A or B or ... or Z) derive [(A or B or ... or Z) in Boolean].
-        '''
-        from proveit.logic.booleans import in_bool_if_true
-        return in_bool_if_true.instantiate({A: self})
 
     @prover
     def derive_right_if_not_left(self, **defaults_config):
@@ -516,7 +509,7 @@ class Or(Operation):
         from proveit.logic.booleans.implication import deny_via_contradiction
         return deny_via_contradiction(self, conclusion)
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
         Attempt to deduce, then return, that this 'or' expression 

@@ -2,7 +2,7 @@ from proveit import (as_expression, defaults, USE_DEFAULTS, ProofFailure,
                      equality_prover)
 from proveit import Literal, Operation, Lambda, ArgumentExtractionError
 from proveit import TransitiveRelation, TransitivityException
-from proveit import prover
+from proveit import relation_prover, prover
 from proveit.logic.irreducible_value import is_irreducible_value
 from proveit import A, B, P, Q, f, n, x, y, z
 
@@ -666,13 +666,14 @@ class Equals(TransitiveRelation):
         raise ValueError(
             'The given expression is expected to be one of the sides of the equation')
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
         Deduce and return that this equality statement is in the Boolean set.
         '''
         from . import equality_in_bool
-        return equality_in_bool.instantiate({x: self.lhs, y: self.rhs})
+        return equality_in_bool.instantiate({x: self.lhs, y: self.rhs},
+                                            preserve_all=True)
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,

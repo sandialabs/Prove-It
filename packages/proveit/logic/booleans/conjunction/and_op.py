@@ -1,7 +1,7 @@
 from proveit import (Expression, Literal, Operation, Conditional,
                      defaults, USE_DEFAULTS, ProofFailure, InnerExpr,
-                     prover, equality_prover, SimplificationDirectives,
-                     TransRelUpdater)
+                     prover, relation_prover, equality_prover, 
+                     SimplificationDirectives, TransRelUpdater)
 from proveit.logic.equality import SimplificationError
 from proveit import j, k, l, m, n, A, B, C, D, E, F, G
 from proveit.logic.booleans.booleans import in_bool
@@ -239,15 +239,6 @@ class And(Operation):
         for _i in range(self.operands.num_entries()):
             if not isinstance(self.operands[_i], ExprRange):
                 yield lambda : self.deduce_part_in_bool(_i)
-
-    @prover
-    def derive_in_bool(self, **defaults_config):
-        '''
-        From (A and B and ... and Z) derive 
-        [(A and B and ... and Z) in Boolean].
-        '''
-        from proveit.logic.booleans import in_bool_if_true
-        return in_bool_if_true.instantiate({A: self})
 
     @prover
     def derive_any(self, index_or_expr, **defaults_config):
@@ -553,7 +544,7 @@ class And(Operation):
 
         return Expression.shallow_simplification(self)
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
         Attempt to deduce, then return, that this 'and' expression is 
