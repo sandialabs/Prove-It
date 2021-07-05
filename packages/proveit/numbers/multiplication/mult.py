@@ -174,7 +174,6 @@ class Mult(NumberOperation):
             if self.operands.is_double():
                 if zero_idx == 0:
                     result = mult_zero_left.instantiate({x: self.operands[1]})
-                    print("mult_zero_left", defaults.preserved_exprs, result)
                     return result
                 else:
                     return mult_zero_right.instantiate({x: self.operands[0]})
