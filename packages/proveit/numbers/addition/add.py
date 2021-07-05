@@ -624,7 +624,21 @@ class Add(NumberOperation):
             return unary_add_reduction.instantiate({a:self.operands[0]},
                                                     preserve_all=True)
 
-        # All operands are negated, factor out the negation.
+        # If all operands are irreducible, perform the evaluation.
+        if all(is_irreducible_value(term) for term in self.terms):
+            if self.operands.is_double():                
+                abs_terms = [
+                    term.operand if isinstance(term, Neg) 
+                    else term for term in self.terms]
+                if all(is_literal_int(abs_term) for abs_term in abs_terms):
+                    # Evaluate the addition of two literal integers.
+                    evaluation = self._integerBinaryEval()
+                    return evaluation
+            else:
+                # Do a pairwise addition of irreducible terms.         
+                return pairwise_evaluation(self)
+
+        # If all operands are negated, factor out the negation.
         if all(isinstance(operand, Neg) for operand in self.operands):
             negated = Neg(
                 Add(*[operand.operand for operand in self.operands]))
@@ -762,20 +776,13 @@ class Add(NumberOperation):
             eq.update(expr.shallow_simplification(
                     must_evaluate=must_evaluate))
             return eq.relation
-        
+
         if all(is_irreducible_value(term) for term in self.terms):
-            if self.operands.is_double():                
-                abs_terms = [
-                    term.operand if isinstance(term, Neg) 
-                    else term for term in self.terms]
-                if all(is_literal_int(abs_term) for abs_term in abs_terms):
-                    # Evaluate the addition of two literal integers.
-                    evaluation = self._integerBinaryEval()
-                    return evaluation
-            else:
-                # Do a pairwise addition of irreducible terms.         
-                return pairwise_evaluation(self)
-        elif must_evaluate:
+            raise NotImplementedError(
+                "Addition evaluation only implemented for integers: %s"
+                %self)
+        
+        if must_evaluate:
             # The simplification of the operands may not have
             # worked hard enough.  Let's work harder if we
             # must evaluate.
