@@ -3,10 +3,8 @@ proveit.logic.booleans.conjunction.nand_if_neither
 proveit.logic.booleans.false_eq_false
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.negation_intro
-proveit.logic.booleans.true_is_bool
 proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
 proveit.logic.equality.not_equals_symmetry
-proveit.logic.equality.substitute_truth
 proveit.logic.equality.unfold_not_equals
 # THEOREMS AND THEORIES TO EXCLUDE:

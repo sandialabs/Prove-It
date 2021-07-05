@@ -564,64 +564,42 @@ class Operation(Expression):
         '''
         If possible, return a Judgment of this expression equal to an
         irreducible value.  This Operation.evaluation version
-        tries Expression.evaluation; if that fails, it simplifies
-        the operands and calls "shallow_evaluation".
+        simplifies the operands and then calls shallow_simplification
+        with must_evaluat=True.
         '''
-        from proveit.logic import EvaluationError
-        try:
-            # First try default, generic Expression strategies.
-            return Expression.evaluation(self)
-        except (EvaluationError, NotImplementedError):
-            pass
+        from proveit import UnsatisfiedPrerequisites, ProofFailure
+        from proveit.logic import EvaluationError, SimplificationError
         
-        # If the default didn't work, try to simplify the operands
-        # first.
+        # Try to simplify the operands first.
         reduction = self.simplification_of_operands()
         
         # After making sure the operands have been simplified,
-        # try 'shallow_evaluation'.
+        # try 'shallow_simplification' with must_evaluate=True.
         try:
-            evaluation = reduction.rhs.shallow_evaluation()
-        except NotImplementedError:
+            if reduction.lhs == reduction.rhs:
+                # _no_eval_check is a directive to the @equality_prover wrapper 
+                # to tell it not to check for an existing evaluation if we have
+                # already checked.
+                return self.shallow_simplification(
+                    must_evaluate=True, _no_eval_check=True)
+            evaluation = reduction.rhs.shallow_simplification(
+                    must_evaluate=True)
+        except (SimplificationError, UnsatisfiedPrerequisites,
+                NotImplementedError, ProofFailure):
             raise EvaluationError(self)
         return reduction.apply_transitivity(evaluation)
 
     @equality_prover('simplified', 'simplify')
-    def simplification(self, skip_operand_simplification=False, 
-                       **defaults_config):
+    def simplification(self, **defaults_config):
         '''
         If possible, return a Judgment of this expression equal to a
         simplified form (according to strategies specified in 
         proveit.defaults). 
         
         This Operation.simplification version tries calling
-        "evaluation" (which is the best possible simplification, when
-        simplifying to an irreducible value).  If that fails, it
-        simplifies the operands and calls "shallow_simplification".
-        
-        Running this with skip_operand_simplification is the same
-        as trying shallow_evaluation then shallow_simplification.
+        simplifies the operands and then calls 'shallow_simplification'.
         '''
-        from proveit.logic import EvaluationError
-        
-        if skip_operand_simplification:
-            try:
-                # First try to perform a shallow evaluation 
-                # (since evaluation is the best possible simplification).
-                return self.shallow_evaluation()
-            except EvaluationError:
-                pass
-            return self.shallow_simplification()
-        
-        try:
-            # First try to perform an evaluation (which is the best
-            # possible simplification).
-            return self.evaluation()
-        except EvaluationError:
-            pass
-
-        # If evaluation didn't work, try to simplify the operands
-        # first.
+        # Try to simplify the operands first.
         reduction = self.simplification_of_operands()
 
         # After making sure the operands have been simplified,
@@ -635,9 +613,16 @@ class Operation(Expression):
         #   that will exploit the "reduction" fact which wouldn't
         #   otherwise be used because (1*b + 3*b) is a preserved
         #   expression since simplification is an @equality_prover.
-        simplification = reduction.rhs.shallow_simplification(
+
+        if reduction.lhs == reduction.rhs:
+            # _no_eval_check is a directive to the @equality_prover wrapper 
+            # to tell it not to check for an existing evaluation if we have
+            # already checked.
+            return self.shallow_simplification(_no_eval_check=True)
+        else:
+            simplification = reduction.rhs.shallow_simplification(
                 replacements=[reduction])
-        return reduction.apply_transitivity(simplification)
+            return reduction.apply_transitivity(simplification)
     
     @equality_prover('simplified_operands', 'operands_simplify')
     def simplification_of_operands(self, **defaults_config):

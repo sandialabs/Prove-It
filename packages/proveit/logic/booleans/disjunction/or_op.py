@@ -1,6 +1,7 @@
 from proveit import (Expression, Literal, Operation, defaults, USE_DEFAULTS,
                      ProofFailure, InnerExpr, UnusableProof,
-                     prover, equality_prover, SimplificationDirectives, TransRelUpdater)
+                     prover, relation_prover, equality_prover, 
+                     SimplificationDirectives, TransRelUpdater)
 from proveit import A, B, C, D, m, n
 from proveit.logic.booleans.booleans import in_bool
 from proveit.abstract_algebra.generic_methods import (apply_commutation_thm, apply_association_thm,
@@ -63,7 +64,9 @@ class Or(Operation):
         # operands is true.   In the first attempt, don't use automation
         # to prove any of the operands so that  we don't waste time 
         # trying to prove operands when we already know one to be true.
-        for use_automation_for_operand in [False, True]:
+        use_automation_possibilities = (
+                [False, True] if defaults.automation else [False])
+        for use_automation_for_operand in use_automation_possibilities:
             proven_operand_indices = []
             for _k, operand in enumerate(self.operands):
                 try:
@@ -136,8 +139,10 @@ class Or(Operation):
         From (A or B or .. or Z) in Boolean deduce (A in Boolean), (B in Boolean), ...
         (Z in Boolean).
         '''
+        from proveit import ExprRange
         for _i in range(self.operands.num_entries()):
-            yield lambda : self.deduce_part_in_bool(_i)
+            if not isinstance(self.operands[_i], ExprRange):
+                yield lambda : self.deduce_part_in_bool(_i)
 
     @prover
     def conclude_negation(self, **defaults_config):
@@ -202,13 +207,6 @@ class Or(Operation):
             _A = self.operands
             _m = _A.num_elements()
             return demorgans_law_and_to_or.instantiate({m: _m, A: _A})
-
-    @prover
-    def derive_in_bool(self, **defaults_config):
-        '''
-        From (A or B or ... or Z) derive [(A or B or ... or Z) in Boolean].
-        '''
-        return in_bool(self).prove()
 
     @prover
     def derive_right_if_not_left(self, **defaults_config):
@@ -392,113 +390,67 @@ class Or(Operation):
         return not_right_if_neither.instantiate(
             {A: left_operand, B: right_operand})
 
-    @equality_prover('shallow_evaluated', 'shallow_evaluate')
-    def shallow_evaluation(self, **defaults_config):
+
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         '''
         Attempt to determine whether this disjunction, with
         simplified operands, evaluates to TRUE or FALSE under the given 
         assumptions.  If all operands have simplified to FALSE,
         the disjunction is FALSE.  If any of the operands have
-        simplified to TRUE, the disjunction is TRUE (if the
+        simplified to TRUE, the disjunction may be TRUE (if the
         other operands are provably Boolean).
+        If it can't be evaluated, and must_evaluate is False,
+        ungroup nested disjunctions if that is an active
+        simplification direction.  Also, if applicable, perform 
+        a unary reduction: Or(A) = A.
         '''
-        from proveit.logic import Equals, FALSE, TRUE, EvaluationError
+        from proveit.logic import (Equals, FALSE, TRUE, EvaluationError,
+                                   is_irreducible_value)
         # load in truth-table evaluations
         from . import or_t_t, or_t_f, or_f_t, or_f_f
         if self.operands.num_entries() == 0:
             from proveit.logic.booleans.disjunction import \
                 empty_disjunction_eval
-            # And() = TRUE
+            # Or() = FALSE
             return empty_disjunction_eval
         
+        # Check whether or not all of the operands are FALSE
+        # or any are TRUE.
         all_are_false = True
         for operand in self.operands:
             if operand != FALSE:
                 all_are_false = False
             if operand == TRUE:
-                # If any simplified operand is FALSE, the conjunction 
-                # may only evaluate to FALSE if it can be evaluated.
-                self.prove()
+                # If any simplified operand is TRUE, the disjunction 
+                # may only evaluate to TRUE if it can be evaluated.
+                # Only use automation here if 'must_evaluate' is True.
+                self.conclude(automation=must_evaluate)
                 return Equals(self, TRUE).prove()
-        # If no simplified operand is FALSE, it may only evaluate to
-        # FALSE if it can be evaluated.
-        if not all_are_false:
-            # Can't evaluate the disjunction if no operand was
-            # TRUE but they aren't all FALSE.
+
+        # If all of the operands are FALSE, we can prove that the
+        # conjunction is equal to FALSE.
+        if all_are_false:
+            self.conclude_negation()
+            return Equals(self, FALSE).prove()
+        
+        if must_evaluate:
+            if not all(is_irreducible_value(operand) for 
+                       operand in self.operands):
+                # The simplification of the operands may not have
+                # worked hard enough.  Let's work harder if we
+                # must evaluate.
+                for operand in self.operands:
+                    if not is_irreducible_value(operand):
+                        operand.evaluation()
+                return self.evaluation()
+            # Can't evaluate the conjunction if no operand was
+            # FALSE but they aren't all TRUE.
             raise EvaluationError(self)
-        self.disprove()
-        return Equals(self, FALSE).prove()
-
-    """
-    @equality_prover('evaluated', 'evaluate')
-    def evaluation(self, **defaults_config):
-        '''
-        Attempt to determine whether this disjunction evaluates
-        to true or false under the given assumptions.  If automation
-        is false, it will only succeed if the evaluation is already
-        known.  If automation and minimal_automation are True, it will
-        only rely upon known evaluations of the operands to determine
-        whether to try to prove or disprove the disjunction.
-        '''
-        from proveit.logic import TRUE, SimplificationError
-        # load in truth-table evaluations
-        from . import or_t_t, or_t_f, or_f_t, or_f_f
-        if self.operands.num_entries() == 0:
-            from proveit.logic.booleans.disjunction import \
-                empty_disjunction_eval
-            # Or() = TRUE     
-            return empty_disjunction_eval
-
-        # First just see if it has a known evaluation.
-        try:
-            return Operation.evaluation(self, automation=False)
-        except SimplificationError as e:
-            if not defaults.automation:
-                raise e
-
-        # Depending upon evaluations of operands, we will either
-        # attempt to prove or disprove this conjunction.
-        if defaults.minimal_automation:
-            # Only do non-automated evaluations of operands
-            # if minimal_automation is True.
-            operand_automations = (False,)
-        else:
-            # First try non-automated operand evaluation, then
-            # automated only if necessary.
-            operand_automations = (False, True)
-        for operand_automation in operand_automations:
-            operands_evals = []
-            for operand in self.operands:
-                try:
-                    operand_eval = operand.evaluation(
-                            automation=operand_automations)
-                    operands_evals.append(operand_eval.rhs)
-                except BaseException:
-                    operands_evals.append(None)
-            if TRUE in operands_evals:
-                # If any operand is true, the disjunction may
-                # only evaluate to true if it can be evaluated.
-                self.prove()
-                break
-            elif None not in operands_evals:
-                # If no operand is true and all the evaluations
-                # are known, the conjunction may only evaluate
-                # to false if it can be evaluated.
-                self.disprove()
-                break
-
-        # If we had any success proving or disproving this conjunction
-        # there should be a known evaluation now.
-        return Operation.evaluation(self, automation=False)
-    """
-    
-    @equality_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **defaults_config):
-        '''
-        Return the "And(a) = a" simplification if applicable,
-        or the default reflexive equality otherwise.
-        '''
+        
         if self.operands.is_single():
+            # Or(A) = A
             return self.unary_reduction()
 
         expr = self
@@ -557,7 +509,7 @@ class Or(Operation):
         from proveit.logic.booleans.implication import deny_via_contradiction
         return deny_via_contradiction(self, conclusion)
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
         Attempt to deduce, then return, that this 'or' expression 

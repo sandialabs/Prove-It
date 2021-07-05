@@ -25,7 +25,8 @@ class Floor(Function):
         return r'\lfloor ' + self.operand.latex(fence=False) + r'\rfloor'
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **defaults_config):
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         '''
         Returns a proven simplification equation for this Floor
         expression assuming the operands have been simplified.
@@ -38,7 +39,7 @@ class Floor(Function):
         form x = real + int, derive and return this Floor expression
         equated with Floor(real) + int.
         '''
-        return apply_shallow_simplification(self)
+        return apply_shallow_simplification(self, must_evaluate=must_evaluate)
 
     @equality_prover('rounding_eliminated', 'rounding_eliminate')
     def rounding_elimination(self, **defaults_config):

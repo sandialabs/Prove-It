@@ -3,7 +3,6 @@ proveit.logic.booleans.forall_over_bool_by_cases
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.double_negation_elim
 proveit.logic.booleans.negation.double_negation_intro
-proveit.logic.booleans.negation.falsified_negation_intro
 proveit.logic.booleans.negation.negation_intro
 proveit.logic.booleans.negation.untrue_from_negation
 proveit.logic.equality.equals_reversal

@@ -21,10 +21,6 @@ class Mult(NumberOperation):
     _simplification_directives_ = SimplificationDirectives(
             ungroup = True)
 
-    # Multiplying two numerals may import a theorem for the evaluation.
-    # Track which ones we have encountered already.
-    multiplied_numerals = set()
-
     def __init__(self, *operands, styles=None):
         r'''
         Multiply together any number of operands from first operand.
@@ -32,19 +28,6 @@ class Mult(NumberOperation):
         NumberOperation.__init__(self, Mult._operator_, operands,
                                  styles=styles)
         self.factors = self.operands
-        if self.factors.is_double() and all(
-                factor in DIGITS for factor in self.factors):
-            if self not in Mult.multiplied_numerals:
-                try:
-                    # for single digit addition, import the theorem that
-                    # provides the evaluation
-                    Mult.multiplied_numerals.add(self)
-                    proveit.numbers.numerals.decimals.__getattr__(
-                        'mult_%d_%d' % (self.factors[0].as_int(), self.factors[1].as_int()))
-                except BaseException:
-                    # may fail before the relevent _commons_ and _theorems_
-                    # have been generated
-                    pass  # and that's okay
 
     @relation_prover
     def deduce_in_number_set(self, number_set, **defaults_config):
@@ -169,17 +152,15 @@ class Mult(NumberOperation):
                                                 auto_simplify=False)
         return NotEquals(self, rhs).conclude_as_folded()
 
-    @equality_prover('shallow_evaluated', 'shallow_evaluate')
-    def shallow_evaluation(self, **defaults_config):
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         '''
-        Returns a proven evaluation equation for this Mult
-        expression assuming the operands have been simplified or
-        raises an EvaluationError or ProofFailure (e.g., if appropriate
-        number set membership has not been proven).
+        Returns a proven simplification equation for this Mult
+        expression assuming the operands have been simplified.
         
-        Handle the trivial case of a zero factor or do pairwise
-        evaluation after simplifying negations and eliminating one 
-        factors.
+        Deals with disassociating any nested multiplications,
+        simplifying negations, and factors of one, and factors of 0.
         '''
         from . import mult_zero_left, mult_zero_right, mult_zero_any
         from proveit.logic import is_irreducible_value, EvaluationError
@@ -196,7 +177,9 @@ class Mult(NumberOperation):
             zero_idx = self.operands.index(zero)
             if self.operands.is_double():
                 if zero_idx == 0:
-                    return mult_zero_left.instantiate({x: self.operands[1]})
+                    result = mult_zero_left.instantiate({x: self.operands[1]})
+                    print("mult_zero_left", defaults.preserved_exprs, result)
+                    return result
                 else:
                     return mult_zero_right.instantiate({x: self.operands[0]})
             _a = self.operands[:zero_idx]
@@ -205,57 +188,14 @@ class Mult(NumberOperation):
             _j = _b.num_elements()
             return mult_zero_any.instantiate({i: _i, j: _j, a: _a, b: _b})
         except (ValueError, ProofFailure):
-            pass  # No such "luck" regarding a simple multiplication by zero.
+            # No such "luck" regarding a simple multiplication by zero.
+            pass
 
-        if not self.operands_are_irreducible():
+        if must_evaluate and not self.operands_are_irreducible():
             # Without a zero factor, shallow evaluation of Mult is only
             # viable if the operands are all irreducible.
             raise EvaluationError(self)
-        
-        if self.operands.is_single():
-             # Multiplication with 1 operand is just that operand
-            return unary_mult_reduction.instantiate({a:self.operands[0]})        
-
-        expr = self
-
-        # A convenience to allow successive update to the equation via transitivities.
-        # (starting with self=self).
-        eq = TransRelUpdater(self)
-
-        # Simplify negations -- factor them out.
-        expr = eq.update(expr.neg_simplifications())
-
-        if not isinstance(expr, Mult):
-            # The expression may have changed to a negation after doing
-            # neg_simplification.  Start the simplification of this new
-            # expression fresh at this point.
-            eq.update(expr.evaluation())
-            return eq.relation
-
-        # Eliminate any factors of one.
-        expr = eq.update(expr.one_eliminations())
-
-        if is_irreducible_value(expr):
-            return eq.relation  # done
-
-        if isinstance(expr, Mult) and expr.operands.num_entries() > 2:
-            eq.update(pairwise_evaluation(expr))
-            return eq.relation
-
-        raise EvaluationError(self)
-
-    @equality_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **defaults_config):
-        '''
-        Returns a proven simplification equation for this Mult
-        expression assuming the operands have been simplified.
-        
-        Deals with disassociating any nested multiplications,
-        simplifying negations, and factors of one, in that order.
-        Factors of 0 are dealt with in shallow_evaluation.
-        '''
-        from . import unary_mult_reduction
-        
+                
         if self.operands.is_single():
              # Multiplication with 1 operand is just that operand
             return unary_mult_reduction.instantiate(
@@ -286,7 +226,8 @@ class Mult(NumberOperation):
             # The expression may have changed to a negation after doing
             # neg_simplification.  Start the simplification of this new
             # expression fresh at this point.
-            eq.update(expr.simplification(skip_operand_simplification=True))
+            eq.update(expr.shallow_simplification(
+                    must_evaluate=must_evaluate))
             return eq.relation
 
         # Peform any cancelations between numerators and
@@ -294,7 +235,43 @@ class Mult(NumberOperation):
         # eliminate factors of one.
         expr = eq.update(expr.cancelations())
 
-        return eq.relation
+        if is_irreducible_value(expr):
+            return eq.relation  # done
+        
+        if expr != self:
+            # Try starting over with a call to shallow_simplification
+            # (an evaluation may already be known).
+            eq.update(expr.shallow_simplification(
+                    must_evaluate=must_evaluate))
+            return eq.relation
+        
+        if all(is_irreducible_value(factor) for factor in self.factors):
+            if self.operands.is_double():
+                if all(factor in DIGITS for factor in self.factors):
+                    # Prove single-digit multiplication by importing the
+                    # appropriate theorem.
+                    return proveit.numbers.numerals.decimals.__getattr__(
+                        'mult_%d_%d' % (self.factors[0].as_int(), self.factors[1].as_int()))
+                else:
+                    raise NotImplementedError("Only single-digit multiplication "
+                                              "is currently implemented")
+            else:
+                # Use pairwise evaluation when multiplying more then 2
+                # operands.
+                assert self.factors.num_entries() > 2
+                return pairwise_evaluation(self)
+        elif must_evaluate:
+            # The simplification of the operands may not have
+            # worked hard enough.  Let's work harder if we
+            # must evaluate.
+            for factor in self.factors:
+                if not is_irreducible_value(factor):
+                    factor.evaluation()
+            # Start over now that the terms are all evaluated to
+            # irreductible values.
+            return self.evaluation()
+        
+        return eq.relation # Should be self=self.
 
     @equality_prover('simplified_negations', 'simplify_negations')
     def neg_simplifications(self, **defaults_config):

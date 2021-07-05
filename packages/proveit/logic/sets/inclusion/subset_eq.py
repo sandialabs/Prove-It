@@ -1,5 +1,5 @@
 from proveit import (as_expression, Literal, Operation, safe_dummy_var,
-                     defaults, USE_DEFAULTS, prover)
+                     defaults, USE_DEFAULTS, prover, relation_prover)
 from proveit import A, B, C, Q, x
 from proveit import S
 from .inclusion_relation import InclusionRelation
@@ -176,7 +176,7 @@ class SubsetEq(InclusionRelation):
                 format(self, other))
         return new_rel.with_mimicked_style(self)
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
         Deduce and return that this SubsetEq statement is

@@ -1,5 +1,5 @@
 from proveit import (Literal, Operation, USE_DEFAULTS, 
-                     equality_prover, prover)
+                     prover, relation_prover, equality_prover)
 from .set_equiv import SetEquiv
 # from .equals import Equals
 from proveit.logic.irreducible_value import is_irreducible_value
@@ -165,7 +165,7 @@ class SetNotEquiv(Operation):
     #     from proveit.logic.booleans.implication import deny_via_contradiction
     #     return deny_via_contradiction(self, conclusion, assumptions)
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
         Deduce and return that this 'not equiv' statement is in

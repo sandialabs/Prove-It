@@ -1,4 +1,5 @@
-from proveit import defaults, prover, ProofFailure, UnsatisfiedPrerequisites
+from proveit import (defaults, prover, relation_prover,
+                     ProofFailure, UnsatisfiedPrerequisites)
 from proveit import a, b, n, x
 from proveit.logic import InSet, Membership, Nonmembership, NotInSet
 from proveit.numbers.number_sets.real_numbers import Real
@@ -226,7 +227,7 @@ class IntervalOOMembership(RealIntervalMembership):
         '''
         return self.domain.deduce_fully_relaxed_membership(self.element)
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
         Prove that membership in a real interval is a Boolean
@@ -258,7 +259,7 @@ class IntervalOCMembership(RealIntervalMembership):
         '''
         return self.derive_relaxed_membership()
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
         Prove that membership in a real interval is a Boolean
@@ -290,7 +291,7 @@ class IntervalCOMembership(RealIntervalMembership):
         '''
         return self.derive_relaxed_membership()
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
         Prove that membership in a real interval is a Boolean
@@ -308,7 +309,7 @@ class IntervalCCMembership(RealIntervalMembership):
     def __init__(self, element, domain):
         RealIntervalMembership.__init__(self, element, domain)
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
         Prove that membership in a real interval is a Boolean
@@ -463,7 +464,7 @@ class RealIntervalNonmembership(Nonmembership):
             return bounds_for_real_not_in_interval_cc.instantiate(
                     {a: _a, b: _b, x: _x})
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
         Deduce and return that the non-membership claim is Boolean.

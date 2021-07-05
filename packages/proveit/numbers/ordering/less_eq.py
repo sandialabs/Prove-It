@@ -1,5 +1,5 @@
 from proveit import (Literal, Operation, USE_DEFAULTS, as_expression,
-                     UnsatisfiedPrerequisites, prover)
+                     UnsatisfiedPrerequisites, prover, relation_prover)
 from proveit.logic import Equals
 from proveit import a, b, c, d, x, y, z
 from .number_ordering_relation import NumberOrderingRelation
@@ -107,7 +107,7 @@ class LessEq(NumberOrderingRelation):
                              "expression is an addition and the other "
                              "side is one of the terms")
     
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import less_than_equals_is_bool
         is_bool_stmt = less_than_equals_is_bool.instantiate(
