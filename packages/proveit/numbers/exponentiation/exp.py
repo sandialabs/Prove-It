@@ -117,29 +117,36 @@ class Exp(NumberOperation):
     def without_radical(self):
         return self.with_styles(exponent='raised')
 
-    @equality_prover('shallow_evaluated', 'shallow_evaluate')
-    def shallow_evaluation(self, **defaults_config):
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         '''
-        Returns a proven evaluation equation for this Exp
-        expression assuming the operands have been simplified or
-        raises an EvaluationError or ProofFailure (e.g., if appropriate
-        number set membership has not been proven).
+        Returns a proven simplification equation for this Exp
+        expression assuming the operands have been simplified.
 
-        Handles the following exponential evaluations:
+        Handles the following evaluations:
             a^0 = 1 for any complex a
             0^x = 0 for any positive x
             1^x = 1 for any complex x
             x^n = x*x*...*x = ? for a natural n and irreducible x.
+
+        Handles a zero or one exponent or zero or one base as
+        simplifications.
         '''
         from proveit.relation import TransRelUpdater
         from proveit.logic import EvaluationError, is_irreducible_value
-        from proveit.numbers import (zero, one, is_literal_int)
+        from proveit.logic import InSet
+        from proveit.numbers import (zero, one, two, is_literal_int,
+                                     Rational, Abs)
         from . import (exp_zero_eq_one, exponentiated_zero,
                        exponentiated_one, exp_nat_pos_expansion)
-        assumptions = defaults.assumptions
+        from . import complex_x_to_first_power_is_x
+
         if self.exponent == zero:
             return exp_zero_eq_one.instantiate({a: self.base})  # =1
         elif self.base == zero:
+            # Will fail if the exponent is not positive, but this
+            # is the only sensible thing to try.
             return exponentiated_zero.instantiate({x: self.exponent})  # =0
         elif self.base == one:
             return exponentiated_one.instantiate({x: self.exponent})  # =1
@@ -147,9 +154,9 @@ class Exp(NumberOperation):
                   is_literal_int(self.exponent) and
                   self.exponent.as_int() > 1):
             expr = self
-            eq = TransRelUpdater(expr, assumptions=assumptions)
+            eq = TransRelUpdater(expr)
             expr = eq.update(exp_nat_pos_expansion.instantiate(
-                    {x:self.base, n:self.exponent}, assumptions=assumptions))
+                    {x:self.base, n:self.exponent}))
             # We should come up with a better way of reducing
             # ExprRanges representing repetitions:
             _n = self.exponent.as_int()
@@ -157,29 +164,23 @@ class Exp(NumberOperation):
                 raise NotImplementedError("Currently only implemented for 1-9")
             repetition_thm = proveit.numbers.numerals.decimals \
                 .__getattr__('reduce_%s_repeats' % _n)
-            rep_reduction = repetition_thm.instantiate(
-                    {x: self.base}, assumptions=assumptions)
+            rep_reduction = repetition_thm.instantiate({x: self.base})
             expr = eq.update(expr.inner_expr().operands.substitution(
-                    rep_reduction.rhs, assumptions=assumptions))
-            expr = eq.update(expr.evaluation(assumptions=assumptions))
+                    rep_reduction.rhs))
+            expr = eq.update(expr.evaluation())
             return eq.relation
-        else:
-            raise EvaluationError('Only trivial evaluation is implemented '
-                                  '(zero or one for the base or exponent).',
-                                  assumptions)
+        elif must_evaluate:
+            if not all(is_irreducible_value(operand) for
+                       operand in self.operands):
+                for operand in self.operands:
+                    if not is_irreducible_value(operand):
+                        # The simplification of the operands may not have
+                        # worked hard enough.  Let's work harder if we
+                        # must evaluate.
+                        operand.evalution()
+                return self.evaluation()
+            raise EvaluationError(self)
 
-    @equality_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **defaults_config):
-        '''
-        Returns a proven simplification equation for this Exp
-        expression assuming the operands have been simplified.
-
-        Handles a zero or one exponent or zero or one base.
-        '''
-        from proveit.logic import InSet
-        from proveit.numbers import one, two, Rational, Abs
-        from proveit.relation import TransRelUpdater
-        from . import complex_x_to_first_power_is_x
         if self.exponent == one:
             return complex_x_to_first_power_is_x.instantiate({x: self.base})
         if (isinstance(self.base, Exp) and

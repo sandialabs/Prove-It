@@ -1,24 +1,18 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
 proveit.logic.booleans.conjunction.left_from_and
 proveit.logic.booleans.conjunction.right_from_and
-proveit.logic.booleans.disjunction.or_if_both
-proveit.logic.booleans.disjunction.or_if_left
-proveit.logic.booleans.disjunction.or_if_right
 proveit.logic.booleans.false_eq_false
 proveit.logic.booleans.from_not_false
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.double_negation_elim
 proveit.logic.booleans.negation.negation_intro
 proveit.logic.booleans.negation.untrue_from_negation
-proveit.logic.booleans.true_is_bool
 proveit.logic.booleans.unfold_is_bool
 proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
 proveit.logic.equality.lhs_via_equality
 proveit.logic.equality.not_equals_symmetry
 proveit.logic.equality.rhs_via_equality
-proveit.logic.equality.sub_left_side_into
-proveit.logic.equality.substitute_truth
 proveit.logic.equality.unfold_not_equals
 proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset

@@ -509,26 +509,18 @@ class InnerExpr:
         function but the sub-Expressions that may be accessed more
         deeply.
         '''
+        from proveit import ExprRange
         repl_lambda = self.repl_lambda()
         lambda_params = repl_lambda.parameters
         cur_sub_expr = self.expr_hierarchy[-1]
-        # if isinstance(cur_sub_expr, Composite):
-        #    sub_exprs = list(cur_sub_expr.sub_expr_iter())
-        # else:
-        sub_exprs = [cur_sub_expr]
         named_expr_dict = [('lambda', repl_lambda)]
-        #if len(self.parameters) == 0:
-        named_expr_dict += [('$%s$' % lambda_param.latex(), sub_expr)
-                            for lambda_param, sub_expr
-                            in zip(lambda_params, sub_exprs)]
-        '''
+        assert lambda_params.num_entries()==1
+        if isinstance(lambda_params[0], ExprRange):
+            named_expr_dict += [('$(%s)$' % lambda_params[0].latex(), 
+                                 cur_sub_expr)]
         else:
-            def make_fn(lambda_param): return Function(lambda_param,
-                                                       self.parameters)
-            named_expr_dict += \
-                [('$%s$' % make_fn(lambda_param).latex(), sub_expr)
-                 for lambda_param, sub_expr in zip(lambda_params, sub_exprs)]
-        '''
+            named_expr_dict += [('$%s$' % lambda_params[0].latex(), 
+                                 cur_sub_expr)]
         return NamedExprs(named_expr_dict)
 
     def cur_sub_expr(self):

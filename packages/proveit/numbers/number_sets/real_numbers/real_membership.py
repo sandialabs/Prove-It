@@ -1,4 +1,4 @@
-from proveit import defaults, prover
+from proveit import defaults, prover, relation_prover
 from proveit import a, x
 from proveit.logic import NotEquals, InSet
 from proveit.numbers.number_sets.real_numbers import (
@@ -20,7 +20,7 @@ class RealMembership(NumberMembership):
         '''
         yield self.derive_element_in_complex
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import real_membership_is_bool
         return real_membership_is_bool.instantiate(
@@ -71,7 +71,7 @@ class RealNonZeroMembership(NumberMembership):
         yield self.derive_element_not_zero
         yield self.derive_element_in_complex_nonzero
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import real_nonzero_membership_is_bool
         from proveit import x
@@ -134,7 +134,7 @@ class RealPosMembership(NumberMembership):
         yield self.derive_element_in_real_nonneg
         yield self.derive_element_lower_bound
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import real_pos_membership_is_bool
         from proveit import x
@@ -204,7 +204,7 @@ class RealNegMembership(NumberMembership):
         yield self.derive_element_in_real_nonpos
         yield self.derive_element_upper_bound
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import real_neg_membership_is_bool
         from proveit import x
@@ -270,7 +270,7 @@ class RealNonNegMembership(NumberMembership):
         yield self.derive_element_in_real
         yield self.derive_element_lower_bound
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import real_nonneg_membership_is_bool
         from proveit import x
@@ -324,7 +324,7 @@ class RealNonPosMembership(NumberMembership):
         yield self.derive_element_in_real
         yield self.derive_element_upper_bound
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import real_nonpos_membership_is_bool
         return real_nonpos_membership_is_bool.instantiate(

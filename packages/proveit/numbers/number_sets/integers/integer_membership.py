@@ -1,4 +1,4 @@
-from proveit import prover
+from proveit import prover, relation_prover
 from proveit import a, x
 from proveit.logic import NotEquals, InSet
 from proveit.numbers import Less, LessEq
@@ -25,7 +25,7 @@ class IntegerMembership(NumberMembership):
         # wisdom of further side-effects
         # yield lambda: self.deduce_member_in_real(member)
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import int_membership_is_bool
         from proveit import x
@@ -79,7 +79,7 @@ class IntegerNonZeroMembership(NumberMembership):
         yield self.derive_element_in_integer
         yield self.derive_element_in_rational_nonzero
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import nonzero_int_membership_is_bool
         return nonzero_int_membership_is_bool.instantiate(
@@ -142,7 +142,7 @@ class IntegerNegMembership(NumberMembership):
         yield self.derive_element_in_integer_non_pos
         yield self.derive_element_in_rational_neg
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import neg_int_membership_is_bool
         from proveit import x
@@ -217,7 +217,7 @@ class IntegerNonPosMembership(NumberMembership):
         yield self.derive_element_in_integer
         yield self.derive_element_in_rational_nonpos
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import nonpos_int_membership_is_bool
         from proveit import x

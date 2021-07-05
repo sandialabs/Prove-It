@@ -1,4 +1,4 @@
-from proveit import prover
+from proveit import prover, relation_prover
 from proveit import a, n, x
 from proveit.logic import NotEquals, InSet
 from proveit.numbers import greater, greater_eq
@@ -41,7 +41,7 @@ class NaturalMembership(NumberMembership):
         yield self.derive_element_in_int
         yield self.derive_element_in_rational_nonneg
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from proveit.numbers.number_sets.natural_numbers import (
                 nat_membership_is_bool)
@@ -107,7 +107,7 @@ class NaturalPosMembership(NaturalMembership):
         yield self.derive_element_nonzero
         yield self.derive_element_in_rational_pos
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from proveit.numbers.number_sets.natural_numbers import (
                 nat_pos_membership_is_bool)

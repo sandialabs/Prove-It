@@ -16,7 +16,8 @@ class Round(Function):
 
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **defaults_config):
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         '''
         Returns a proven simplification equation for this Round
         expression assuming the operands have been simplified.
@@ -29,7 +30,7 @@ class Round(Function):
         form x = real + int, derive and return this Round expression
         equated with Round(real) + int.
         '''
-        return apply_shallow_simplification(self)
+        return apply_shallow_simplification(self, must_evaluate=must_evaluate)
 
     @equality_prover('rounding_eliminated', 'rounding_eliminate')
     def rounding_elimination(self, **defaults_config):

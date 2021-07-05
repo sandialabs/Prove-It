@@ -1,5 +1,5 @@
 from proveit import (as_expression, Literal, Operation, safe_dummy_var,
-                     USE_DEFAULTS, prover)
+                     USE_DEFAULTS, prover, relation_prover)
 from proveit import A, B, C, x
 from proveit import f, S
 from proveit.relation import Relation
@@ -59,7 +59,7 @@ class NotSubsetEq(Relation):
         return fold_not_subset_eq.instantiate(
             {A: self.operands[0], B: self.operands[1]})
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
         Deduce and return that this NotSubsetEq statement is in the

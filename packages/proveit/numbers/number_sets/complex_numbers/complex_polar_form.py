@@ -165,6 +165,7 @@ def complex_polar_coordinates(expr, *, radius_must_be_nonneg=True,
                         # an exponent.  We can only have one.
                         raise_not_valid_form()
                     complex_exp_factor_idx = idx
+                    deduce_in_number_set(sub_expr, Complex)
     if complex_exp_factor_idx is None:
         # No exp(i theta) factor.  Let's multiply by exp(i * 0).
         exp_i0 = Exp(e, Mult(i, zero))
@@ -218,14 +219,16 @@ def complex_polar_coordinates(expr, *, radius_must_be_nonneg=True,
     assert expr.operands.is_double() and isinstance(expr.operands[1], Exp)
     # Check that r0 is real and that we know it's relation with zero.
     _r0 = expr.operands[0]
-    if (not automation and isinstance(_r0, Mult) and
+    if (isinstance(_r0, Mult) and
             all(InSet(factor, RealNonNeg).proven() for 
                 factor in _r0.factors)):
-        deduce_in_number_set(_r0, RealNonNeg)
-    elif (not automation and isinstance(_r0, Mult) and
+        # Turn on automation for side-effects.
+        deduce_in_number_set(_r0, RealNonNeg, automation=True)
+    elif (isinstance(_r0, Mult) and
             all(InSet(factor, Real).proven() for 
                 factor in _r0.factors)):
-        deduce_in_number_set(_r0, Real)
+        # Turn on automation for side-effects.
+        deduce_in_number_set(_r0, Real, automation=True)
     else:
         try:
             deduce_in_number_set(_r0, Real)

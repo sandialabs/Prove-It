@@ -1,5 +1,5 @@
 from proveit import (as_expression, Literal, Operation, safe_dummy_var,
-                     prover, ProofFailure, defaults)
+                     prover, relation_prover, ProofFailure, defaults)
 from proveit import A, B, C, x
 from proveit import f, S
 from .inclusion_relation import InclusionRelation
@@ -119,7 +119,7 @@ class ProperSubset(InclusionRelation):
                 format(self, other))
         return new_rel.with_mimicked_style(self)
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
         Deduce and return that this ProperSubset expression

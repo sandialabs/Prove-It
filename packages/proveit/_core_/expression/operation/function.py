@@ -25,11 +25,14 @@ class Function(Operation):
         assert first[0]=='operation'
         return options
 
-    @equality_prover('shallow_evaluated', 'shallow_evaluate')
-    def shallow_evaluation(self, **defaults_config):
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False, 
+                               **defaults_config):
         '''
         For a generic Function expression (e.g., "f(x)"), there is
         no evaluation strategy.
         '''
         from proveit.logic import EvaluationError
-        raise EvaluationError(self)
+        if must_evaluate:
+            raise EvaluationError(self)
+        return Operation.shallow_simplification(self)

@@ -26,10 +26,6 @@ class Add(NumberOperation):
     # the term on the left hand side.
     known_equalities = dict()
 
-    # Adding two numerals may import a theorem for the evaluation.
-    # Track which ones we have encountered already.
-    added_numerals = set()
-
     def __init__(self, *operands, styles=None):
         r'''
         Add together any number of operands.
@@ -604,60 +600,9 @@ class Add(NumberOperation):
 
         return hold, order
 
-    @equality_prover('shallow_evaluated', 'shallow_evaluate')
-    def shallow_evaluation(self, **defaults_config):
-        '''
-        Returns a proven evaluation equation for this Add
-        expression assuming the operands have been simplified or
-        raises an EvaluationError or ProofFailure (e.g., if appropriate
-        number set membership has not been proven).       
-        '''
-        from proveit.logic import EvaluationError
-        from proveit.numbers import Neg, is_literal_int
-        from . import empty_addition, unary_add_reduction
-        
-        if self.operands.num_entries() == 0:
-            return empty_addition
-        
-        if not self.operands_are_irreducible():
-            # Shallow evaluation of Add is only viable if the operands
-            # are all irreducible or they all cancel.
-            cancelations = self.cancelations()
-            if is_irreducible_value(cancelations.rhs):
-                return cancelations
-            raise EvaluationError(self)
-        
-        if self.operands.is_single():
-            return unary_add_reduction.instantiate({a:self.operands[0]})
-
-        abs_terms = [
-            term.operand if isinstance(
-                term, Neg) else term for term in self.terms]
-        if len(abs_terms) == 2 and all(is_literal_int(abs_term)
-                                       for abs_term in abs_terms):
-            evaluation = self._integerBinaryEval()
-            return evaluation
-
-        # If all the operands are the same, combine via multiplication 
-        # and then evaluate.
-        if all(operand == self.operands[0] for operand in self.operands):
-            return self.conversion_to_multiplication(auto_simplify=True)
-
-        if self.operands.num_entries() > 2:
-            return pairwise_evaluation(self)
-
-        if self.operands.is_double():
-            # If both operands are negated, factor out the negation.
-            if all(isinstance(operand, Neg) for operand in self.operands):
-                negated = Neg(
-                    Add(*[operand.operand for operand in self.operands]))
-                neg_distribution = negated.distribution(auto_simplify=True)
-                return neg_distribution.derive_reversed()
-
-        raise EvaluationError(self)
-
     @equality_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **defaults_config):
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         '''
         Returns a proven simplification equation for this Add
         expression assuming the operands have been simplified.
@@ -668,12 +613,37 @@ class Add(NumberOperation):
         cancel common terms that are subtracted, combine like terms,
         convert repeated addition to multiplication, etc.
         '''
-        from proveit.numbers import one, Neg
-        from . import unary_add_reduction
+        from proveit.numbers import one, Neg, is_literal_int
+        from . import empty_addition, unary_add_reduction
+        
+        if self.operands.num_entries() == 0:
+            # +() = 0
+            return empty_addition
         
         if self.operands.is_single():
             return unary_add_reduction.instantiate({a:self.operands[0]},
                                                     preserve_all=True)
+
+        # If all operands are irreducible, perform the evaluation.
+        if all(is_irreducible_value(term) for term in self.terms):
+            if self.operands.is_double():                
+                abs_terms = [
+                    term.operand if isinstance(term, Neg) 
+                    else term for term in self.terms]
+                if all(is_literal_int(abs_term) for abs_term in abs_terms):
+                    # Evaluate the addition of two literal integers.
+                    evaluation = self._integerBinaryEval()
+                    return evaluation
+            else:
+                # Do a pairwise addition of irreducible terms.         
+                return pairwise_evaluation(self)
+
+        # If all operands are negated, factor out the negation.
+        if all(isinstance(operand, Neg) for operand in self.operands):
+            negated = Neg(
+                Add(*[operand.operand for operand in self.operands]))
+            neg_distribution = negated.distribution(auto_simplify=True)
+            return neg_distribution.derive_reversed()
         
         expr = self
         # for convenience updating our equation
@@ -691,11 +661,10 @@ class Add(NumberOperation):
                     # A range of repeated terms may be simplified to
                     # a multiplication, but we need to group it first.
                     inner_simplification = (
-                            Add(operand).simplification(
-                                    skip_operand_simplification=True))
+                            Add(operand).shallow_simplification())
                     expr = eq.update(expr.association(
                             _n, 1, replacements=[inner_simplification],
-                            preserve_all=True))
+                            auto_simplify=False))
                 # print("n, length", n, length)
                 if (isinstance(operand, Add) or
                         (isinstance(operand, Neg) and
@@ -773,8 +742,7 @@ class Add(NumberOperation):
                     grouped_term = Add(
                             *expr.operands.entries[_m:_m+len(hold[key])])
                     inner_simplification = (
-                            grouped_term.simplification(
-                                    skip_operand_simplification=True))
+                            grouped_term.shallow_simplification())
                     expr = eq.update(expr.association(
                         _m, length=len(hold[key]),
                         replacements=[inner_simplification],
@@ -803,14 +771,27 @@ class Add(NumberOperation):
                 return eq.relation
         
         if expr != self:
-            try:
-                # After we've made other changes, try an evaluation,
-                # such as making cancelations and grouping like terms,
-                # try one final evaluation.  For example,
-                #   1 + 2 + a - a = 1 + 2 = 3
-                return eq.update(expr.evaluation())
-            except EvaluationError:
-                pass
+            # Try starting over with a call to shallow_simplification
+            # (an evaluation may already be known).
+            eq.update(expr.shallow_simplification(
+                    must_evaluate=must_evaluate))
+            return eq.relation
+
+        if all(is_irreducible_value(term) for term in self.terms):
+            raise NotImplementedError(
+                "Addition evaluation only implemented for integers: %s"
+                %self)
+        
+        if must_evaluate:
+            # The simplification of the operands may not have
+            # worked hard enough.  Let's work harder if we
+            # must evaluate.
+            for term in self.terms:
+                if not is_irreducible_value(term):
+                    term.evaluation()
+            # Start over now that the terms are all evaluated to
+            # irreductible values.
+            return self.evaluation()
         return eq.relation
 
     def _integerBinaryEval(self, assumptions=USE_DEFAULTS):
@@ -855,24 +836,13 @@ class Add(NumberOperation):
             raise NotImplementedError(
                 "Currently, _integerBinaryEval only works for integer "
                 " addition and related subtractions: %d, %d" % (_a, _b))
-        if (_a, _b) not in Add.added_numerals:
-            try:
-                # for single digit addition, import the theorem that provides
-                # the evaluation
-                Add.added_numerals.add((_a, _b))
-                proveit.numbers.numerals.decimals.__getattr__(
+        with defaults.temporary() as temp_defaults:
+            # We rely upon side-effect automation here.
+            temp_defaults.automation = True
+            # for single digit addition, import the theorem that provides
+            # the evaluation
+            proveit.numbers.numerals.decimals.__getattr__(
                     'add_%d_%d' % (_a, _b))
-            except BaseException:
-                # may fail before the relevent _commons_ and _theorems_ have
-                # been generated
-                pass  # and that's okay
-        # Should have an evaluation now.
-        if self not in Equals.known_evaluation_sets:
-            raise Exception(
-                "Should have an evaluation for %s now.  Why not?  "
-                "Perhaps we were not able to prove that the involved numbers "
-                "are in the Complex set." %
-                self)
         return self.evaluation()
 
     def subtraction_folding(self, term_idx=None, assumptions=frozenset()):

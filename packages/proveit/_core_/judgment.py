@@ -578,7 +578,7 @@ class Judgment:
             return False  # no change
 
         # swap out the old proof for the new proof in all dependencies
-        meaning_data._proof._updateDependencies(new_proof)
+        meaning_data._proof._update_dependencies(new_proof)
         meaning_data._proof = new_proof  # set to the new proof
 
         return True
@@ -688,15 +688,15 @@ class Judgment:
                                 assumptions_dict.pop(assumption)))
             else:
                 new_style_assumptions.append(assumption)
-        new_style_judgment = \
-            Judgment(new_style_expr, new_style_assumptions)
         if ((new_style_expr._style_id == self.expr._style_id) and
                 all(new_style_assumption._style_id == old_assumption._style_id
                     for new_style_assumption, old_assumption in zip(
                             new_style_assumptions, self.assumptions))):
             # Nothing has changed.
             return self
-            
+        
+        new_style_judgment = \
+            Judgment(new_style_expr, new_style_assumptions)
         proof = new_style_judgment.proof()
         if proof is not None:
             # Update the style for the proof if there is one.
@@ -1068,7 +1068,10 @@ class Judgment:
         with defaults.temporary() as temp_defaults:
             # Use the assumptions of the Judgment
             temp_defaults.assumptions = self.assumptions
-            simplification = self.simplification()
+            # Don't exploit the evaluation of the Judgment; it
+            # must be TRUE (under its assumptions), but that's
+            # trivial and useless.
+            simplification = self.simplification(_no_eval_check=True)
             return simplification.derive_right_via_equality()
         
     # Not a @prover since it just uses the assumptions of the Judgment. 

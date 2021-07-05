@@ -19,13 +19,10 @@ proveit.logic.booleans.negation.untrue_from_negation
 proveit.logic.booleans.quantification.universality.bundle
 proveit.logic.booleans.quantification.universality.bundling
 proveit.logic.booleans.true_eq_true
-proveit.logic.booleans.true_is_bool
 proveit.logic.booleans.unfold_is_bool
 proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
 proveit.logic.equality.not_equals_symmetry
-proveit.logic.equality.sub_left_side_into
-proveit.logic.equality.substitute_truth
 proveit.logic.equality.unfold_not_equals
 proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
