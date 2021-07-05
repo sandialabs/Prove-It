@@ -15,7 +15,6 @@ proveit.logic.booleans.conjunction.true_and_true
 proveit.logic.booleans.conjunction.unary_and_reduction
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.negation_intro
-proveit.logic.booleans.true_is_bool
 proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
 proveit.logic.equality.lhs_via_equality
@@ -23,7 +22,6 @@ proveit.logic.equality.not_equals_symmetry
 proveit.logic.equality.sub_in_right_operands
 proveit.logic.equality.sub_left_side_into
 proveit.logic.equality.sub_right_side_into
-proveit.logic.equality.substitute_truth
 proveit.logic.equality.unfold_not_equals
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.numbers.addition.add_nat_closure_bin
