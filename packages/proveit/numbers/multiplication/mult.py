@@ -1,5 +1,5 @@
-from proveit import (Literal, ExprTuple, InnerExpr, Judgment, ProofFailure,
-                     prover, relation_prover, equality_prover,
+from proveit import (defaults, Literal, ExprTuple, InnerExpr, Judgment,
+                     ProofFailure, prover, relation_prover, equality_prover,
                      SimplificationDirectives, TransRelUpdater)
 from proveit import a, b, c, d, e, i, j, k, m, n, w, x, y, z
 from proveit.logic import Equals, InSet
