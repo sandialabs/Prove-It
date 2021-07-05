@@ -315,7 +315,7 @@ def equality_prover(past_tense, present_tense):
             The wrapper for the equality_prover decorator.
             '''
             from proveit._core_.expression.expr import Expression
-            from proveit.logic import Equals, EvaluationError
+            from proveit.logic import Equals, TRUE, EvaluationError
             # Obtain the original Expression to be on the left side
             # of the resulting equality Judgment.
             _self = args[0]
@@ -330,10 +330,9 @@ def equality_prover(past_tense, present_tense):
             proven_truth = None
             # If _no_eval_check is set to True, don't bother
             # checking for an existing evaluation.  Used internally
-            # in Operation.simplification and Operation.evaluation.
-            _no_eval_check = False
-            if is_shallow_simplification_method:
-                _no_eval_check = kwargs.pop('_no_eval_check', False)
+            # in Operation.simplification, Operation.evaluation,
+            # Conditional.simplification, and Judgment.simplify.
+            _no_eval_check = kwargs.pop('_no_eval_check', False)
             if not _no_eval_check and (is_simplification_method or 
                                        is_evaluation_method):
                 from proveit.logic import (is_irreducible_value,
@@ -342,6 +341,9 @@ def equality_prover(past_tense, present_tense):
                     # Already irreducible.  Done.
                     proven_truth = (
                             Equals(expr, expr).conclude_via_reflexivity())
+                elif expr.proven():
+                    # The expression is proven so it equals true.
+                    proven_truth = Equals(expr, TRUE).conclude_boolean_equality()
                 else:
                     # See if there is a known evaluation (or if one may
                     # be derived via known equalities if 
