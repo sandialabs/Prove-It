@@ -159,7 +159,10 @@ class Conditional(Expression):
                     expr.condition_substitution(
                             self.condition.simplification()))
         # Perform a shallow simplifation on this Conditional.
-        eq.update(expr.shallow_simplification())
+        # If the expression has not been reduced yet, no need for an
+        # "evaluation check" by the @prover decorator.
+        _no_eval_check = (expr == self)
+        eq.update(expr.shallow_simplification(_no_eval_check=_no_eval_check))
         
         return eq.relation
 

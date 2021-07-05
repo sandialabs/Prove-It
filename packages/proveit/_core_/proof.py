@@ -548,7 +548,7 @@ class Proof:
             out_str += '\n'
             if proof.step_type() == 'instantiation':
                 out_str += '\t' + proof._mapping('str') + '\n'
-            if proof.step_type() == 'axiom' or proof.step_type() == 'theorem':
+            if proof.step_type() in ('axiom', 'theorem', 'conjecture'):
                 out_str += '\t' + str(proof.theory) + '.' + proof.name + '\n'
         if any_marked:
             out_str += ('* equality replacement requirements\n')

@@ -7,8 +7,9 @@ from proveit._core_.defaults import (defaults, USE_DEFAULTS,
 from proveit._core_.theory import Theory
 from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_._unique_data import meaning_data, style_data
-from proveit.decorators import (prover, equality_prover,
-                                _equality_prover_fn_to_tenses)
+from proveit.decorators import (
+    prover, relation_prover, equality_prover,
+    _equality_prover_fn_to_tenses)
 import sys
 import re
 import inspect
@@ -1297,13 +1298,8 @@ class Expression(metaclass=ExprType):
         Expression.shallow_simplification.
 
         '''
-        # The only default simplification is an evaluations (though the
-        # Operation class has some options via simplifying operands).
-        from proveit.logic import EvaluationError
-        try:
-            return self.evaluation()
-        except EvaluationError:
-            return self.shallow_simplification(must_evaluate=False)
+        # Resort to a shallow_simplification as the default.
+        return self.shallow_simplification(must_evaluate=False)
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False, 
@@ -1408,6 +1404,15 @@ class Expression(metaclass=ExprType):
         from proveit._core_.expression.expr_info import ExpressionInfo
         return ExpressionInfo(self, details)
 
+    @relation_prover
+    def derive_in_bool(self, **defaults_config):
+        '''
+        If the expression can be proven, it must
+        be TRUE and therefore Boolean.
+        '''
+        from proveit import A
+        from proveit.logic.booleans import in_bool_if_true
+        return in_bool_if_true.instantiate({A: self})
 
 def used_vars(expr):
     '''
