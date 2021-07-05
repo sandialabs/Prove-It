@@ -365,20 +365,20 @@ class Div(NumberOperation):
         theorems are applicable.
         '''
         from proveit.numbers import Add, Sum, Neg
-        from . import (distribute_fraction_through_sum,
-                       distribute_fraction_through_subtract)
+        from . import (distribute_frac_through_sum,
+                       distribute_frac_through_subtract)
         if isinstance(self.numerator, Add):
             if (self.numerator.operands.is_double()
                     and isinstance(self.numerator.operands[1], Neg)):
                 _x = self.numerator.operands[0]
                 _y = self.numerator.operands[1].operand
                 _z = self.denominator
-                return distribute_fraction_through_subtract.instantiate(
+                return distribute_frac_through_subtract.instantiate(
                         {x:_x, y:_y, z:_z})
             _x = self.numerator.operands
             _y = self.denominator
             _n = _x.num_elements()
-            return distribute_fraction_through_sum.instantiate(
+            return distribute_frac_through_sum.instantiate(
                     {n: _n, x: _x, y: _y})
         elif isinstance(self.numerator, Sum):
             # Should deduce in Complex, but distribute_through_summation doesn't have a domain restriction right now
