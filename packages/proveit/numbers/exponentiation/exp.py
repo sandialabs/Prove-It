@@ -319,21 +319,21 @@ class Exp(NumberOperation):
                         {a: _a, b: _b, c: exponent})
                 else:
                     return pos_power_of_products.instantiate(
-                        {m: _m, a: _a, c: exponent})
+                        {m: _m, a: _a, b: exponent})
             elif InSet(exponent, Real).proven():
                 if self.base.operands.is_double():
                     return real_power_of_product.instantiate(
                         {a: _a, b: _b, c: exponent})
                 else:
                     return real_power_of_products.instantiate(
-                        {m: _m, a: _a, c: exponent})
+                        {m: _m, a: _a, b: exponent})
             else:  # Complex is the default
                 if self.base.operands.is_double():
                     return complex_power_of_product.instantiate(
                         {a: _a, b: _b, c: exponent})
                 else:
                     return complex_power_of_products.instantiate(
-                        {m: _m, a: _a, c: exponent})
+                        {m: _m, a: _a, b: exponent})
         elif isinstance(base, Div):
             assert self.base.operands.is_double()
             _a, _b = self.base.operands
@@ -462,7 +462,7 @@ class Exp(NumberOperation):
 
         # use the Mult.exponent_combination() to deduce equality to self
         exp_separated = mult_equiv.exponent_combination(
-                    simplify_exp=False, assumptions=assumptions)
+                assumptions=assumptions)
 
         # reverse the equality relationship and return
         return exp_separated.derive_reversed(assumptions=assumptions)
