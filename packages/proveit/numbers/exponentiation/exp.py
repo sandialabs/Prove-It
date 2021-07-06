@@ -431,7 +431,8 @@ class Exp(NumberOperation):
         return thm.instantiate({n: n_sub}).instantiate(
             {a: a_sub, b: b_sub}).derive_reversed()
 
-    def exponent_separation(self, assumptions=USE_DEFAULTS):
+    @equality_prover('exponent_separated', 'exponent_separate')
+    def exponent_separation(self, **defaults_config):
         '''
         From self of the form x^{a+b} deduce and return the equality
         x^{a+b} = x^a x^b. For example,
@@ -462,11 +463,10 @@ class Exp(NumberOperation):
         mult_equiv = Mult(*the_new_factors)
 
         # use the Mult.exponent_combination() to deduce equality to self
-        exp_separated = mult_equiv.exponent_combination(
-                assumptions=assumptions)
+        exp_separated = mult_equiv.exponent_combination()
 
         # reverse the equality relationship and return
-        return exp_separated.derive_reversed(assumptions=assumptions)
+        return exp_separated.derive_reversed()
 
 
     def lower_outer_exp(self, assumptions=frozenset()):
