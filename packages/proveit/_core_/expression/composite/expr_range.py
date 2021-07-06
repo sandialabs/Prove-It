@@ -588,7 +588,10 @@ class ExprRange(Expression):
             # same, we can use the singular_range_reduction.
             from proveit.core_expr_types.tuples import \
                 singular_range_reduction
-            return self.singular_range_reduction(
+            # return self.singular_range_reduction(
+            #     {f:lambda_map, i:start_index, j:end_index},
+            #      preserve_expr=tuple_wrapped_self)
+            return singular_range_reduction.instantiate(
                 {f:lambda_map, i:start_index, j:end_index},
                  preserve_expr=tuple_wrapped_self)
         # If the start and end are literal integers and form an
