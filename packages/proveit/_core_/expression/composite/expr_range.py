@@ -105,6 +105,29 @@ class ExprRange(Expression):
         return ExprRange(None, None, start_index, end_index,
                          styles=styles, lambda_map=lambda_map)
 
+    @staticmethod
+    def _proper_sub_expr_replacements(orig_sub_exprs, subbed_sub_exprs):
+        '''
+        Given original sub-expressions and "subbed" (substituted) 
+        sub-expressions for and ExprRange, return new subbed 
+        sub-expressions that are revised appropriately if necessary to 
+        nsure that the start and end indices are different, and the 
+        start is the original version.
+        '''
+        start_index, end_index = subbed_sub_exprs[1:]
+        if start_index == end_index:
+            # Use the simplification for the start index,
+            # but something equal to it but not the same expression
+            # for the end index.
+            if orig_sub_exprs[2] == start_index:
+                assert orig_sub_exprs[1] != start_index, (
+                    "start and end indices should not be the same")
+                return (subbed_sub_exprs[0], subbed_sub_exprs[1],
+                        orig_sub_exprs[1])
+            else:
+                return (subbed_sub_exprs[0], subbed_sub_exprs[1],
+                        orig_sub_exprs[2])
+
     def basic_replaced(self, repl_map, *, 
                        allow_relabeling=False, requirements=None,
                        _subbed_start_index=None,
@@ -560,6 +583,14 @@ class ExprRange(Expression):
         lambda_map = self.lambda_map
         start_index = self.start_index
         end_index = self.end_index
+        if Equals(start_index, end_index).proven():
+            # If we know that the start and end index are the
+            # same, we can use the singular_range_reduction.
+            from proveit.core_expr_types.tuples import \
+                singular_range_reduction
+            return self.singular_range_reduction(
+                {f:lambda_map, i:start_index, j:end_index},
+                 preserve_expr=tuple_wrapped_self)
         # If the start and end are literal integers and form an
         # empty range, then it should be straightforward to
         # prove that the range is empty.

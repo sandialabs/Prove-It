@@ -1064,6 +1064,7 @@ class Expression(metaclass=ExprType):
         Helper method for equality_replaced which handles the manual
         replacements.
         '''
+        from proveit import ExprRange
         if self in defaults.preserved_exprs:
             # This expression should be preserved, so don't make
             # any equality-based replacement.
@@ -1087,6 +1088,14 @@ class Expression(metaclass=ExprType):
             # Nothing changed, so don't remake anything.
             replaced_expr = self
         else:
+            if isinstance(self, ExprRange):
+                # This is an ExprRange.  If the start and end indices
+                # are the same, force them to be different here
+                # (we can't create an ExprRange where they are the same)
+                # but it will be simplified in the containing ExprTuple
+                # via a singlular range reduction.
+                subbed_sub_exprs = ExprRange._proper_sub_expr_replacements(
+                    sub_exprs, subbed_sub_exprs)
             replaced_expr = self.__class__._checked_make(
                 self._core_info, subbed_sub_exprs,
                 style_preferences=self._style_data.styles)   
@@ -1185,6 +1194,7 @@ class Expression(metaclass=ExprType):
         Helper method for _auto_simplified do handle auto-simplification
         replacements for sub-expressions.
         '''
+        from proveit import ExprRange
         # Recurse into the sub-expressions.
         sub_exprs = self._sub_expressions
         subbed_sub_exprs = \
@@ -1196,6 +1206,14 @@ class Expression(metaclass=ExprType):
                subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
             # Nothing change, so don't remake anything.
             return self
+        if isinstance(self, ExprRange):
+            # This is an ExprRange.  If the start and end indices
+            # are the same, force them to be different here
+            # (we can't create an ExprRange where they are the same)
+            # but it will be simplified in the containing ExprTuple
+            # via a singlular range reduction.
+            subbed_sub_exprs = ExprRange._proper_sub_expr_replacements(
+                sub_exprs, subbed_sub_exprs)
         return self.__class__._checked_make(
             self._core_info, subbed_sub_exprs,
             style_preferences=self._style_data.styles)
