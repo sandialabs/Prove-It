@@ -127,6 +127,8 @@ class ExprRange(Expression):
             else:
                 return (subbed_sub_exprs[0], subbed_sub_exprs[1],
                         orig_sub_exprs[2])
+                
+        return subbed_sub_exprs
 
     def basic_replaced(self, repl_map, *, 
                        allow_relabeling=False, requirements=None,
