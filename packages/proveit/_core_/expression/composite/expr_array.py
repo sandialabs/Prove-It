@@ -70,31 +70,37 @@ class ExprArray(ExprTuple):
         '''
         options = StyleOptions(self)
         options.add_option(
-            name = 'justification',
-            description = ("justify to the 'left', 'center', or 'right' "
-                           "in the array cells"),
-            default = 'center',
-            related_methods = ('with_justification'))
+            name='justification',
+            description=("justify to the 'left', 'center', or 'right' "
+                         "in the array cells"),
+            default='center',
+            related_methods='with_justification')
         options.add_option(
-            name = 'orientation',
-            description = ("to be read from left to right then top to "
-                           "bottom ('horizontal') or to be read top to "
-                           "bottom then left to right ('vertical')"),
-            default = 'horizontal',
-            related_methods = ('with_orientation'))
+            name='orientation',
+            description=("to be read from left to right then top to "
+                         "bottom ('horizontal') or to be read top to "
+                         "bottom then left to right ('vertical')"),
+            default='horizontal',
+            related_methods='with_orientation')
         options.add_option(
-            name = 'parameterization',
-            description = (
+            name='center_parameter',
+            description=("to include the center parameter in a range of a range (include) "
+                         "or to leave the center space empty (exclude)"),
+            default='exclude',
+            related_methods=('with_center_parameter', 'without_center_parameter'))
+        options.add_option(
+            name='parameterization',
+            description=(
                     "'implicit' (default for LaTeX formatting) hides "
                     "the parameter the ExprRange so the parameterization "
                     "may be ambiguous (e.g., x_{1+1}, ..., x_{n+1}); "
                     "'explicit' (default for string formatting) reveals "
                     "the parameterization "
                     "(e.g. x_{1+1}, ..x_{k+1}.., x_{n+1})."),
-            default = None, # Removes the 'parameterization' key.
-            related_methods = ('with_explicit_parameterization',
-                               'with_implicit_parameterization',
-                               'with_default_parameterization_style'))
+            default=None, # Removes the 'parameterization' key.
+            related_methods=('with_explicit_parameterization',
+                             'with_implicit_parameterization',
+                             'with_default_parameterization_style'))
         return options
     
     def with_justification(self, justification):
@@ -108,6 +114,23 @@ class ExprArray(ExprTuple):
             raise ValueError("'orientation' must be 'horizontal' or "
                              "'vertical', not %s" % orientation)
         return self.with_styles(orientation=orientation)
+
+    def with_center_parameter(self):
+        '''
+        The center parameter style shows the explicit parameterization
+        of an ExprRange of an ExprRange that produces a rectangular portion of the ExprArray.
+        The center of this rectangular is populated with the explicit parameterization.
+        '''
+        return self.with_styles(center_parameter='include')
+
+    def without_center_parameter(self):
+        '''
+        The center parameter style shows the explicit parameterization
+        of an ExprRange of an ExprRange that produces a rectangular portion of the ExprArray.
+        The center of this rectangular is usually populated with the explicit parameterization,
+        but in this case is left blank.
+        '''
+        return self.with_styles(center_parameter='exclude')
 
     def with_explicit_parameterization(self):
         '''
