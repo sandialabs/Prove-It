@@ -376,7 +376,7 @@ class ExprRange(Expression):
         output = [self.first()]
         while i < expansion:
             expr_map = {self.lambda_map.parameter: Add(prev, one).simplification().rhs}
-            next_value = self.body.replaced(expr_map)
+            next_value = self.body.basic_replaced(expr_map)
             output.append(next_value)
             prev = Add(prev, one).simplification().rhs
             i += 1
@@ -462,7 +462,7 @@ class ExprRange(Expression):
             prev = self.start_index
             while i < expansion:
                 expr_map = {self.lambda_map.parameter: Add(prev, one).simplification().rhs}
-                next_value = self.body.replaced(expr_map)
+                next_value = self.body.basic_replaced(expr_map)
                 formatted_sub_expressions.insert(i, next_value.formatted(format_type, operator=operator,
                                                  **kwargs))
                 prev = Add(prev, one).simplification().rhs
