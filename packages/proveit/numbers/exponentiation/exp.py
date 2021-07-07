@@ -43,6 +43,21 @@ class Exp(NumberOperation):
             yield self.base
             yield self.exponent
 
+    def style_options(self):
+        '''
+        Returns the StyleOptions object for this Exp.
+        '''
+        options = StyleOptions(self)
+        if (isinstance(self.exponent, Div) and
+                self.exponent.numerator == one):
+            options.add_option(
+                name='exponent',
+                description=("'raised': exponent as a superscript; "
+                             "'radical': using a radical sign"),
+                default='radical',
+                related_methods=('with_radical', 'without_radical'))
+        return options
+
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
 
@@ -53,7 +68,9 @@ class Exp(NumberOperation):
         # begin building the inner_str
         inner_str = self.base.formatted(
             format_type, fence=True, force_fence=True)
-        if self.get_style('exponent') == 'raised':
+        # if self.get_style('exponent', 'TEST') == 'TEST' and self.exponent == frac(one, two):
+        #     self.with_radical()
+        if self.get_style('exponent', 'raised') == 'raised':
             inner_str = (
                 inner_str
                 + r'^{' + self.exponent.formatted(format_type, fence=False)
@@ -72,9 +89,24 @@ class Exp(NumberOperation):
                         + self.base.formatted(format_type, fence=True,
                                               force_fence=True)
                         + '}')
+            elif isinstance(self.exponent, Div):
+                if format_type == 'string':
+                    inner_str = (
+                            self.exponent.denominator.formatted(format_type, fence=False)
+                            + r' radical('
+                            + self.base.formatted(format_type, fence=True,
+                                                  force_fence=True)
+                            + ')')
+                elif format_type == 'latex':
+                    inner_str = (
+                            r'\sqrt[\leftroot{-3}\uproot{3}'
+                            + self.exponent.denominator.formatted(format_type, fence=False) + ']{'
+                            + self.base.formatted(format_type, fence=True,
+                                                  force_fence=True)
+                            + '}')
             else:
                 raise ValueError(
-                    "Unkown radical type, exponentiating to the power "
+                    "Unknown radical type, exponentiating to the power "
                     "of %s" % str(
                         self.exponent))
 
@@ -86,22 +118,7 @@ class Exp(NumberOperation):
 
     def membership_object(self, element):
         return ExpSetMembership(element, self)
-    
-    def style_options(self):
-        '''
-        Returns the StyleOptions object for this Exp.
-        '''
-        options = StyleOptions(self)
-        if (isinstance(self.exponent, Div) and 
-                self.exponent.numerator == one):
-            options.add_option(
-                name = 'exponent',
-                description = ("'raised': exponent as a superscript; "
-                               "'radical': using a radical sign"),
-                default = 'radical',
-                related_methods = ('with_radical', 'without_radical'))
-        return options
-        
+
     def with_radical(self):
         return self.with_styles(exponent='radical')
 
