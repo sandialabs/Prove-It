@@ -1,4 +1,5 @@
-from proveit import defaults, equality_prover, Literal, Operation, prover
+from proveit import (defaults, equality_prover, Literal, Operation,
+                     prover, TransRelUpdater)
 from proveit import f, x, y, alpha, S  # a_etc, x_etc, y_etc, z_etc,
 from proveit.logic import Equals
 from proveit.numbers import one, num, subtract
@@ -58,6 +59,34 @@ class TensorProd(Operation):
         raise ValueError(
             "Targeted scalar {0} not found in any of the tensor product "
             "factors {1}".format(scalar, self.operands))
+
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
+        '''
+        Returns a proven simplification equation for this TensorProd
+        expression assuming the operands have been simplified.
+        
+        Currently deals only with:
+        (1) simplifying a TensorProd(x) (i.e. a TensorProd with a
+            single operand x) to x itself. For example,
+            TensorProd(x) = x.
+        '''
+
+        if self.operands.is_single():
+            from . import unary_tensor_prod_reduction
+            return unary_tensor_prod_reduction.instantiate(
+                {x:self.operands[0]}, preserve_all=True)
+
+        # Else simply return self=self.
+        # Establishing some minimal infrastructure
+        # for future development
+        expr = self
+        # for convenience updating our equation:
+        eq = TransRelUpdater(expr)
+        # Future processing possible here.
+        return eq.relation
+
 
     @equality_prover('distributed', 'distribute')
     def distribution(self, factor_idx, **defaults_config):
