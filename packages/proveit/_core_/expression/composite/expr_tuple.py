@@ -416,7 +416,7 @@ class ExprTuple(Composite, Expression):
         return self.simplification(must_evaluate=True)
 
     @equality_prover('simplified', 'simplify')
-    def simplification(self, must_evaluate=False, **defaults_config):
+    def simplification(self, *, must_evaluate=False, **defaults_config):
         '''
         Proves that this ExprTuple is equal to an ExprTuple
         with all of its entries simplified (and ExprRanges reduced).
@@ -443,7 +443,8 @@ class ExprTuple(Composite, Expression):
         return eq.relation
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **defaults_config):
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         '''
         Proves that this ExprTuple is equal to an ExprTuple
         with ExprRanges reduced unless these are "preserved"
@@ -451,6 +452,7 @@ class ExprTuple(Composite, Expression):
         '''
         from proveit.relation import TransRelUpdater
         from proveit import ExprRange
+        from proveit.logic import is_irreducible_value, EvaluationError
         expr = self
         eq = TransRelUpdater(expr)
         if defaults.preserve_all:
@@ -460,34 +462,25 @@ class ExprTuple(Composite, Expression):
         for entry in self.entries:
             if isinstance(entry, ExprRange):
                 if entry in defaults.preserved_exprs:
+                    if must_evaluate:
+                        # An ExprRange is not irreducible.
+                        raise EvaluationError(self)
                     # Preserve this entry -- don't simplify it.
                     _k += ExprTuple(entry).num_entries()
                     continue
                 entry_simp = entry._range_reduction(preserve_all=True)
+                if must_evaluate and not is_irreducible_value(entry_simp.rhs):
+                    raise EvaluationError(self)
                 if entry_simp.lhs != entry_simp.rhs:
                     substitution = expr.substitution(
                             entry_simp, start_idx=_k, preserve_all=True)
                     expr = eq.update(substitution)
                 _k += entry_simp.rhs.num_entries()
             else:
+                if must_evaluate and not is_irreducible_value(entry):
+                    raise EvaluationError(self)
                 _k += 1
         return eq.relation
-
-    @equality_prover('shallow_evaluated', 'shallow_evaluate')
-    def shallow_evaluation(self, **defaults_config):
-        '''
-        Proves that this ExprTuple is equal to an ExprTuple
-        with ExprRanges reduced.  An EvaluationError will be
-        raised if the right-hand-side is not irreducible
-        (handled via the @equality_prover decorator).
-        '''
-        from proveit import ExprRange
-        from proveit.logic import is_irreducible_value, EvaluationError
-        for entry in self.entries:
-            if not isinstance(entry, ExprRange):
-                if not is_irreducible_value(entry):
-                    raise EvaluationError(self)
-        return self.shallow_simplification()
 
     @equality_prover('substituted', 'substitute')
     def substitution(self, replacement_eq, start_idx=0,

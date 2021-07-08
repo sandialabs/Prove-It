@@ -126,7 +126,7 @@ class NumberOperation(Operation):
                 "'bound_via_operand_bound' not implemented for %s of type %s."
                 %(self, self.__class__))
 
-@prover
+@relation_prover
 def deduce_in_number_set(expr, number_set, **defaults_config):
     from proveit.logic import InSet
     if hasattr(expr, 'deduce_in_number_set'):

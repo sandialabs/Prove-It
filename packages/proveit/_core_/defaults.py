@@ -8,8 +8,6 @@ class Defaults:
     # used to avoid infinite recursion and extra work
     considered_assumption_sets = set()
     
-    last_simplifications_directives_id = 0
-
     def __init__(self):
         self.reset()
 

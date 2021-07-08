@@ -105,6 +105,31 @@ class ExprRange(Expression):
         return ExprRange(None, None, start_index, end_index,
                          styles=styles, lambda_map=lambda_map)
 
+    @staticmethod
+    def _proper_sub_expr_replacements(orig_sub_exprs, subbed_sub_exprs):
+        '''
+        Given original sub-expressions and "subbed" (substituted) 
+        sub-expressions for and ExprRange, return new subbed 
+        sub-expressions that are revised appropriately if necessary to 
+        nsure that the start and end indices are different, and the 
+        start is the original version.
+        '''
+        start_index, end_index = subbed_sub_exprs[1:]
+        if start_index == end_index:
+            # Use the simplification for the start index,
+            # but something equal to it but not the same expression
+            # for the end index.
+            if orig_sub_exprs[2] == start_index:
+                assert orig_sub_exprs[1] != start_index, (
+                    "start and end indices should not be the same")
+                return (subbed_sub_exprs[0], subbed_sub_exprs[1],
+                        orig_sub_exprs[1])
+            else:
+                return (subbed_sub_exprs[0], subbed_sub_exprs[1],
+                        orig_sub_exprs[2])
+                
+        return subbed_sub_exprs
+
     def basic_replaced(self, repl_map, *, 
                        allow_relabeling=False, requirements=None,
                        _subbed_start_index=None,
@@ -622,22 +647,6 @@ class ExprRange(Expression):
                         and param in var_forms_of_form[param]):
                     yield form
 
-    @equality_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **defaults_config):
-        '''
-        Attempt to simplify 'self' under the assumption that it's
-        operands (sub-expressions) have already been simplified.
-        Returns the simplification as a Judgment equality with 'self'
-        on the left side.
-        
-        The default is to return the trivial reflexive equality.
-        Must be overridden for class-specific simplification.
-        '''
-        # Use the trivial reflexive equality as a last resort.
-        # Note: this does allow reductions on the right-hand-side
-        # (e.g., for an ExprTuple).
-        assert False
-
     # This is NOT an @equality_prover because the returned
     # equality does not have the ExprRange directly on the left
     # side, rather it is wrapped in an ExprTuple.
@@ -655,6 +664,17 @@ class ExprRange(Expression):
         lambda_map = self.lambda_map
         start_index = self.start_index
         end_index = self.end_index
+        if Equals(start_index, end_index).proven():
+            # If we know that the start and end index are the
+            # same, we can use the singular_range_reduction.
+            from proveit.core_expr_types.tuples import \
+                singular_range_reduction
+            # return self.singular_range_reduction(
+            #     {f:lambda_map, i:start_index, j:end_index},
+            #      preserve_expr=tuple_wrapped_self)
+            return singular_range_reduction.instantiate(
+                {f:lambda_map, i:start_index, j:end_index},
+                 preserve_expr=tuple_wrapped_self)
         # If the start and end are literal integers and form an
         # empty range, then it should be straightforward to
         # prove that the range is empty.
@@ -1223,7 +1243,8 @@ class ExprRange(Expression):
                 if indices_must_match:
                     # Attempt to simplify the 'next_index' only when
                     # we need it.
-                    next_index = next_index._equality_replaced(requirements)
+                    next_index = next_index.equality_replaced(
+                        requirements, auto_simplify_top_level=True)
                     # The actual range parameter index is needed:
                     param_repl_map = {orig_parameter: next_index}
                     full_entry_repl_map = update_map(

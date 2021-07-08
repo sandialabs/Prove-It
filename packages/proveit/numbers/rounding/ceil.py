@@ -17,7 +17,8 @@ class Ceil(Function):
         return r'\lceil ' + self.operand.latex(fence=False) + r'\rceil'
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **defaults_config):
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         '''
         Returns a proven simplification equation for this Ceil
         expression assuming the operands have been simplified.
@@ -30,7 +31,7 @@ class Ceil(Function):
         form x = real + int, derive and return this Ceil expression
         equated with Ceil(real) + int.
         '''
-        return apply_shallow_simplification(self)
+        return apply_shallow_simplification(self, must_evaluate=must_evaluate)
 
     @equality_prover('rounding_eliminated', 'rounding_eliminate')
     def rounding_elimination(self, **defaults_config):

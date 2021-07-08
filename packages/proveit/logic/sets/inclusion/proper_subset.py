@@ -1,5 +1,5 @@
 from proveit import (as_expression, Literal, Operation, safe_dummy_var,
-                     prover, ProofFailure, defaults)
+                     prover, relation_prover, ProofFailure, defaults)
 from proveit import A, B, C, x
 from proveit import f, S
 from .inclusion_relation import InclusionRelation
@@ -54,7 +54,7 @@ class ProperSubset(InclusionRelation):
         #print("Entering the ProperSubset.conclude() method!")                   # for testing; delete later
         raise ProofFailure(self, defaults.assumptions,
                        "ProperSubset.conclude() not implemented.")
-    
+
     @prover
     def unfold(self, **defaults_config):
         '''
@@ -65,7 +65,7 @@ class ProperSubset(InclusionRelation):
         unfolded = unfold_proper_subset.instantiate(
             {A: self.operands[0], B: self.operands[1]})
         return unfolded.inner_expr().operands[0].with_mimicked_style(self)
-    
+
     @prover
     def derive_relaxed(self, **defaults_config):
         '''
@@ -119,7 +119,7 @@ class ProperSubset(InclusionRelation):
                 format(self, other))
         return new_rel.with_mimicked_style(self)
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
         Deduce and return that this ProperSubset expression

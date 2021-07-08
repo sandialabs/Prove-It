@@ -27,6 +27,7 @@ def _make_decorated_prover(func):
 
     def decorated_prover(*args, **kwargs):
         from proveit import Expression, Judgment
+        from proveit.logic import Equals
         if (kwargs.get('preserve_all', False) and 
                 len(kwargs.get('replacements', tuple())) > 0):
             raise ValueError(
@@ -63,8 +64,34 @@ def _make_decorated_prover(func):
             # an object.
             return {key:val for key, val in obj.__dict__.items() 
                     if key[0] != '_'}
-        
+
+        exprs_to_replace = set()
+        if 'replacements' in kwargs:
+            for replacement in kwargs['replacements']:
+                if not isinstance(replacement, Judgment):
+                    raise TypeError("The 'replacements' must be Judgments")
+                if not isinstance(replacement.expr, Equals):
+                    raise TypeError(
+                        "The 'replacements' must be equality Judgments")
+                exprs_to_replace.add(replacement.expr.lhs)
+
+        # Make sure a preserved expression isn't also being replaced.
+        if 'preserved_exprs' in kwargs:
+            # Make sure a preserved expression isn't also
+            # being replaced.
+            preserved_exprs = kwargs['preserved_exprs']
+            if not exprs_to_replace.isdisjoint(preserved_exprs):
+                raise ValueError(
+                    "Cannot simultaneously replace and preserve these "
+                    "expression: %s"
+                    %exprs_to_replace.intersection(preserved_exprs))
+
         if preserve_expr is not None:
+            # Make sure this preserved expression isn't also being replaced.
+            if preserve_expr in exprs_to_replace:
+                raise ValueError(
+                    "Cannot simultaneously replace and preserve %s"
+                    %preserve_expr)
             # Preserve the 'preserve_expr'.
             if ('preserved_exprs' in defaults_to_change
                     or  preserve_expr not in defaults.preserved_exprs):
@@ -74,7 +101,7 @@ def _make_decorated_prover(func):
                     defaults_to_change.add('preserved_exprs')
                     kwargs['preserved_exprs'] = (
                             defaults.preserved_exprs.union({preserve_expr}))
-        
+
         def checked_truth(proven_truth):
             # Check that the proven_truth is a Judgment and has
             # appropriate assumptions.
@@ -277,9 +304,10 @@ def equality_prover(past_tense, present_tense):
         else:
             _equality_prover_name_to_tenses[name] = (
                     past_tense, present_tense)
-        is_simplification_method = (name == 'simplification')
         is_evaluation_method = (name == 'evaluation')
-        is_shallow_evaluation_method = (name == 'shallow_evaluation')
+        is_shallow_simplification_method = (name == 'shallow_simplification')
+        is_simplification_method = (is_shallow_simplification_method or
+                                    name == 'simplification')
         decorated_relation_prover = _make_decorated_relation_prover(func)
 
         def wrapper(*args, **kwargs):   
@@ -287,7 +315,7 @@ def equality_prover(past_tense, present_tense):
             The wrapper for the equality_prover decorator.
             '''
             from proveit._core_.expression.expr import Expression
-            from proveit.logic import Equals, EvaluationError
+            from proveit.logic import Equals, TRUE, EvaluationError
             # Obtain the original Expression to be on the left side
             # of the resulting equality Judgment.
             _self = args[0]
@@ -300,12 +328,22 @@ def equality_prover(past_tense, present_tense):
                                 "method for an Expression type or it must "
                                 "have an 'expr' attribute."%func)            
             proven_truth = None
-            if is_simplification_method or is_evaluation_method:
-                from proveit.logic import is_irreducible_value
+            # If _no_eval_check is set to True, don't bother
+            # checking for an existing evaluation.  Used internally
+            # in Operation.simplification, Operation.evaluation,
+            # Conditional.simplification, and Judgment.simplify.
+            _no_eval_check = kwargs.pop('_no_eval_check', False)
+            if not _no_eval_check and (is_simplification_method or 
+                                       is_evaluation_method):
+                from proveit.logic import (is_irreducible_value,
+                                           evaluate_truth)
                 if is_irreducible_value(expr):
                     # Already irreducible.  Done.
                     proven_truth = (
                             Equals(expr, expr).conclude_via_reflexivity())
+                elif expr.proven():
+                    # The expression is proven so it equals true.
+                    proven_truth = Equals(expr, TRUE).conclude_boolean_equality()
                 else:
                     # See if there is a known evaluation (or if one may
                     # be derived via known equalities if 
@@ -315,8 +353,13 @@ def equality_prover(past_tense, present_tense):
                         with defaults.temporary() as tmp_defaults:
                             tmp_defaults.assumptions = kwargs.get(
                                     'assumptions')
-                            proven_truth = Equals.get_known_evaluation(
-                                    expr)
+                            if expr.proven():
+                                # expr is proven, so it evaluates
+                                # to TRUE.
+                                proven_truth = evaluate_truth(expr)                                
+                            else:
+                                proven_truth = Equals.get_known_evaluation(
+                                        expr)
                     else:
                         proven_truth = Equals.get_known_evaluation(expr)
             if proven_truth is None:
@@ -327,7 +370,9 @@ def equality_prover(past_tense, present_tense):
                         "@equality_prover, %s, expected to prove an "
                         "Equals expression, not %s of type %s."
                         %(func, proven_expr, proven_expr.__class__))
-            if is_evaluation_method or is_shallow_evaluation_method:
+            if is_evaluation_method or (
+                    is_shallow_simplification_method and
+                    kwargs.get('must_evaluate', False)==True):
                 # The right side of an evaluation must be irreducible.
                 from proveit.logic import is_irreducible_value
                 if not is_irreducible_value(proven_expr.rhs):

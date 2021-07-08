@@ -245,7 +245,7 @@ class BooleanMembership(Membership):
         return from_excluded_middle.instantiate(
             {A: self.element, C: consequent}, preserve_expr=consequent)
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import in_bool_is_bool
         return in_bool_is_bool.instantiate({A: self.element})

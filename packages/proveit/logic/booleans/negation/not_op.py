@@ -1,5 +1,5 @@
 from proveit import (Literal, Operation, USE_DEFAULTS, ProofFailure,
-                     defaults, prover, equality_prover)
+                     defaults, prover, relation_prover, equality_prover)
 from proveit.logic.booleans.booleans import in_bool
 from proveit import A, x, y, S
 
@@ -86,30 +86,37 @@ class Not(Operation):
         if fence:
             out_str += ')'
         return out_str
-
-    @equality_prover('evaluated', 'evaluate')
-    def evaluation(self, **defaults_config):
-        '''
-        Given an operand that evaluates to TRUE or FALSE, derive and
-        return the equality of this expression with TRUE or FALSE.
-        '''
-        from . import not_t, not_f  # load in truth-table evaluations
-        from proveit.logic.booleans import TRUE
-        from proveit.logic.booleans.negation import falsified_negation_intro
-        if self.operand.proven() and self.operand != TRUE:
-            # evaluate to FALSE via falsified_negation_intro
-            return falsified_negation_intro.instantiate({A: self.operand})
-        return Operation.evaluation(self)
-
-    @equality_prover('shallow_evaluated', 'shallow_evaluate')
-    def shallow_evaluation(self, **defaults_config):
-        from proveit.logic import TRUE, FALSE, EvaluationError
+    
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
+        from proveit.logic import TRUE, FALSE, EvaluationError, evaluate_truth
+        from proveit.logic.booleans.negation import (
+                negation_intro, falsified_negation_intro)
         from . import not_t, not_f  # load in truth-table evaluations
         if self.operand == TRUE:
             return not_t
         elif self.operand == FALSE:
             return not_f
-        raise EvaluationError(self)
+        elif self.operand.proven():
+            # evaluate to FALSE via falsified_negation_intro
+            return falsified_negation_intro.instantiate({A: self.operand})
+        elif self.operand.disproven():
+            # evaluate to TRUE via falsified_negation_intro
+            return evaluate_truth(negation_intro.instantiate(
+                    {A: self.operand}))
+        elif must_evaluate:
+            # The simplification of the operands may not have
+            # worked hard enough.  Let's work harder if we must 
+            # evaluate.
+            evaluated = self.operand.evaluation().rhs
+            if evaluated in (TRUE, FALSE):
+                # All the pieces should be there now.
+                return self.evaluation(automation=True)
+            raise EvaluationError(self)
+            
+        # May now be able to evaluate via loaded truth tables.
+        return Operation.shallow_simplification(self)
 
     @prover
     def substitute_in_false(self, lambda_map, **defaults_config):
@@ -135,7 +142,7 @@ class Not(Operation):
         return substitute_falsehood.instantiate(
             {x: self.operand, P: Plambda})
 
-    @prover
+    @relation_prover
     def derive_in_bool(self, **defaults_config):
         '''
         From Not(A) derive [Not(A) in Boolean].
@@ -143,7 +150,7 @@ class Not(Operation):
         from proveit.logic.booleans import in_bool_if_true
         return in_bool_if_true.instantiate({A: self})
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
         Attempt to deduce, then return, that this 'not' expression is 

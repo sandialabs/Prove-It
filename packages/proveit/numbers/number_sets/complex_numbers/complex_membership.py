@@ -1,4 +1,4 @@
-from proveit import prover
+from proveit import prover, relation_prover
 from proveit import x
 from proveit.numbers.number_sets.complex_numbers import (
         Complex, ComplexNonZero)
@@ -14,7 +14,7 @@ class ComplexMembership(NumberMembership):
     def __init__(self, element):
         NumberMembership.__init__(self, element, Complex)
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import complex_membership_is_bool
         from proveit import x
@@ -60,7 +60,7 @@ class ComplexNonZeroMembership(NumberMembership):
         yield self.derive_element_in_complex
         yield self.derive_element_not_zero
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import complex_nonzero_membership_is_bool
         from proveit import x

@@ -1,7 +1,7 @@
 from proveit import (Literal, Function, Lambda, OperationOverInstances,
                      ExprTuple, ExprRange, IndexedVar,
                      defaults, USE_DEFAULTS, ProofFailure,
-                     prover, equality_prover)
+                     prover, relation_prover, equality_prover)
 from proveit import k, n, x, A, B, P, S
 from proveit._core_.proof import Generalization
 
@@ -303,15 +303,16 @@ class Forall(OperationOverInstances):
         the assumptions, and then call instantiate on the Judgment.
         '''
         return self.prove().instantiate(repl_map)
-    
-    @equality_prover('shallow_evaluated', 'shallow_evaluate')
-    def shallow_evaluation(self, **defaults_config):
+
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         '''
         From this forall statement, evaluate it to TRUE or FALSE if
         possible by calling the domain's forall_evaluation method
         '''
         from proveit.logic import EvaluationError
-        if not self.has_domain():
+        if must_evaluate and not self.has_domain():
             # Cannot automatically evaluate a forall statement with
             # no domain.
             raise EvaluationError(self)
@@ -327,10 +328,12 @@ class Forall(OperationOverInstances):
         unbundle_eq = self.unbundle_equality()
         return unbundle_eq.rhs.evaluation()
         '''
+        if must_evaluate:
+            raise EvaluationError(self)
         
-        raise EvaluationError(self)
+        return OperationOverInstances.shallow_simplification(self)
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
         Attempt to deduce, then return, that this forall expression

@@ -1,5 +1,5 @@
 from proveit import (as_expression, defaults, USE_DEFAULTS, 
-                     ProofFailure, prover)
+                     ProofFailure, prover, relation_prover)
 from proveit import Literal
 from proveit import TransitiveRelation, TransitivityException
 from proveit.logic.irreducible_value import (
@@ -312,7 +312,7 @@ class SetEquiv(TransitiveRelation):
         return sub_right_side_into.instantiate(
             {A: self.lhs, B: self.rhs, P: Plambda}, assumptions=assumptions)
 
-    @prover
+    @relation_prover
     def deduce_in_bool(self,  **defaults_config):
         '''
         Deduce and return that this SetEquiv claim is in the Boolean

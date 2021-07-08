@@ -78,13 +78,12 @@ class Len(Operation):
             end_index = range_entry.end_index
             lambda_map = range_entry.lambda_map
             if start_index == one:
-                from proveit.core_expr_types.tuples import \
-                    range_from1_len
-                return range_from1_len.instantiate(
+                from proveit.core_expr_types.tuples import range_from1_len
+                len_comp = range_from1_len.instantiate(
                     {f: lambda_map, i: end_index})
             else:
                 from proveit.core_expr_types.tuples import range_len
-                return range_len.instantiate(
+                len_comp = range_len.instantiate(
                     {f: lambda_map, i: start_index, j: end_index})
         elif not has_range:
             # Case of all non-range entries.
@@ -135,10 +134,10 @@ class Len(Operation):
             range_start = entries[0].start_index
             range_end = entries[0].end_index
             if range_start == one:
-                return extended_range_from1_len.instantiate(
+                len_comp = extended_range_from1_len.instantiate(
                     {f: range_lambda, b: entries[1], i: range_end})
             else:
-                return extended_range_len.instantiate(
+                len_comp = extended_range_len.instantiate(
                     {f: range_lambda, b: entries[1],
                      i: range_start, j: range_end})
         else:
@@ -230,6 +229,7 @@ class Len(Operation):
                             == entries[0].start_index.as_int()):
                         return empty_range(_i[0], _j[0], _f)
 
+            len_comp = None
             if all(_ == _i[0] for _ in _i) and all(_ == _j[0] for _ in _j):
                 if isinstance(_i[0], ExprRange):
                     if _i[0].is_parameter_independent:
@@ -246,14 +246,28 @@ class Len(Operation):
                     # special cases where the indices are repeated
                     if _i[0] == one:
                         thm = len_of_ranges_with_repeated_indices_from_1
-                        return thm.instantiate(
+                        len_comp = thm.instantiate(
                             {n: _n, f: _f, i: _j[0]})
                     else:
                         thm = len_of_ranges_with_repeated_indices
-                        return thm.instantiate(
+                        len_comp = thm.instantiate(
                             {n: _n, f: _f, i: _i[0], j: _j[0]})
-            return general_len.instantiate({n: _n, f: _f, i: _i, j: _j}, 
-                preserved_exprs=preserved_exprs, auto_simplify=True)
+            if len_comp is None:
+                len_comp = general_len.instantiate(
+                    {n: _n, f: _f, i: _i, j: _j}, 
+                    preserved_exprs=preserved_exprs)
+                if not defaults.auto_simplify and len_comp.lhs != self:
+                    # Make sure the left side is reduced to the
+                    # original expression (self) which is preserved.
+                    return len_comp.inner_expr().lhs.shallow_simplify(
+                        preserved_exprs=preserved_exprs)
+        if defaults.auto_simplify:
+            # Ensure the right side is simplified which may have
+            # been prevented due to automatic preservation of
+            # instatiation expressions.
+            return len_comp.inner_expr().rhs.simplify()
+        return len_comp
+
 
     @equality_prover('typical_form', 'typify')
     def typical_eq(self, **defaults_config):
@@ -288,12 +302,13 @@ class Len(Operation):
                 from proveit.core_expr_types.tuples import \
                     range_from1_len_typical_eq
                 return range_from1_len_typical_eq.instantiate(
-                    {f: lambda_map, i: end_index})
+                    {f: lambda_map, i: end_index}, auto_simplify=False)
             else:
                 from proveit.core_expr_types.tuples import \
                     range_len_typical_eq
                 return range_len_typical_eq.instantiate(
-                    {f: lambda_map, i: start_index, j: end_index})
+                    {f: lambda_map, i: start_index, j: end_index},
+                    auto_simplify=False)
         elif not any(isinstance(entry, ExprRange) for entry in entries):
             if len(entries) == 0:
                 from proveit.core_expr_types.tuples import \
@@ -311,7 +326,7 @@ class Len(Operation):
                 for param, entry in zip(eq_thm.explicit_instance_params(),
                                         entries):
                     repl_map[param] = entry
-                return eq_thm.instantiate(repl_map)
+                return eq_thm.instantiate(repl_map, auto_simplify=False)
         elif (len(entries) == 2 and not isinstance(entries[1], ExprRange)
                 and not isinstance(entries[0].body, ExprRange)):
             # Case of an extended range:
@@ -325,11 +340,12 @@ class Len(Operation):
             range_end = entries[0].end_index
             if range_start == one:
                 return extended_range_from1_len_typical_eq.instantiate(
-                    {f: range_lambda, b: entries[1], i: range_end})
+                    {f: range_lambda, b: entries[1], i: range_end},
+                    auto_simplify=False)
             else:
                 return extended_range_len_typical_eq.instantiate(
                     {f: range_lambda, b: entries[1],
-                     i: range_start, j: range_end})
+                     i: range_start, j: range_end}, auto_simplify=False)
         raise NotImplementedError("Len.typical_eq not implemented for "
                                   "this case: %s.  Try Len.deduce_equality "
                                   "instead." % self)
@@ -373,10 +389,10 @@ class Len(Operation):
                 rhs_computation = equality.rhs.computation()
                 eq = Equals(lhs_computation.rhs, rhs_computation.rhs)
                 if eq.lhs == eq.rhs:
-                    # Trivial reflection -- automation is okay for that.
-                    eq = eq.conclude_via_transitivity()
+                    # Trivial reflection
+                    eq = eq.conclude_via_reflexivity()
                 else:
-                    eq = eq.prove()
+                    eq = eq.conclude_via_transitivity()
                 return Equals.apply_transitivities(
                     [lhs_computation, eq, rhs_computation])
             else:
@@ -384,10 +400,10 @@ class Len(Operation):
                 # equal to the rhs.
                 eq = Equals(lhs_computation.rhs, equality.rhs)
                 if eq.lhs == eq.rhs:
-                    # Trivial reflection -- automation is okay for that.
+                    # Trivial reflection
                     eq = eq.conclude_via_reflexivity()
                 else:
-                    eq = eq.prove()
+                    eq = eq.conclude_via_transitivity()
                 return lhs_computation.apply_transitivity(eq)
 
     @equality_prover('evaluated', 'evaluate')
@@ -396,6 +412,9 @@ class Len(Operation):
         Returns a proven evaluations equation for this Len
         expression assuming.  Performs the "computation" of the
         Len expression and then evaluates the right side.
+        
+        Note: simplifying the operand, when it is an ExprTuple,
+        is not so important when evaluating its length.
         '''
         computation = self.computation()
         return computation.inner_expr().rhs.evaluate()
@@ -406,9 +425,21 @@ class Len(Operation):
         Returns a proven simplification equation for this Len
         expression assuming.  Performs the "computation" of the
         Len expression and then simplifies the right side.
+
+        Note: simplifying the operand, when it is an ExprTuple,
+        is not so important when evaluating its length.
         '''
-        computation = self.computation()
-        return computation.inner_expr().rhs.simplify()
+        return self.computation(auto_simplify=True)
+
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
+        '''
+        Returns a proven simplification equation for this Len
+        expression assuming.  Performs the "computation" of the
+        Len expression and then simplifies the right side.
+        '''
+        return self.computation(auto_simplify=True)
 
     def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
         from proveit.core_expr_types.tuples import (

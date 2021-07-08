@@ -133,14 +133,32 @@ class NotEquals(Relation):
         return fold_not_equals.instantiate(
             {x: self.lhs, y: self.rhs})
 
-    @equality_prover('evaluated', 'evaluate')
-    def evaluation(self, **defaults_config):
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         '''
-        Evaluate A ≠ B via evaluating ￢(A = B), 
+        If the left side has a 'not_equal' method, use that for
+        evalaution.  Otherwise, if appropriate (must_evaluate is TRUE
+        or the answer is already known) apply the definition to
+        perform the evaluation: A ≠ B via ￢(A = B).
         '''
-        definition_equality = self.definition()
-        unfolded_evaluation = definition_equality.rhs.evaluation()
-        return definition_equality.apply_transitivity(unfolded_evaluation)
+        from proveit import ProofFailure
+        from proveit.logic import evaluate_truth
+        if self.lhs != self.rhs and hasattr(self.lhs, 'not_equal'):
+            try:
+                # If there is a 'not_equal' method, try to use that.
+                neq = self.lhs.not_equal(self.rhs, automation=must_evaluate)
+                return evaluate_truth(neq)
+            except ProofFailure:
+                pass
+        eq = Equals(self.lhs, self.rhs)
+        if must_evaluate or eq.proven() or eq.disproven():
+            # Evaluate A ≠ B via evaluating ￢(A = B), 
+            definition_equality = self.definition()
+            unfolded_evaluation = definition_equality.rhs.evaluation(
+                    automation=must_evaluate)
+            return definition_equality.apply_transitivity(unfolded_evaluation)
+        return Operation.shallow_simplification(self)
 
     @prover
     def derive_contradiction(self, **defaults_config):

@@ -3,7 +3,6 @@ proveit.logic.booleans.disjunction.singular_constructive_dilemma
 proveit.logic.booleans.false_eq_false
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.negation_intro
-proveit.logic.booleans.true_is_bool
 proveit.logic.booleans.unfold_is_bool_explicit
 proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
