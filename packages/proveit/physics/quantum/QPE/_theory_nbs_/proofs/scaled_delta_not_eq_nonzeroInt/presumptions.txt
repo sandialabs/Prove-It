@@ -4,18 +4,13 @@ proveit.logic.booleans.conjunction.left_from_and
 proveit.logic.booleans.conjunction.right_from_and
 proveit.logic.booleans.conjunction.true_and_true
 proveit.logic.booleans.disjunction.left_if_not_right
-proveit.logic.booleans.disjunction.not_left_if_neither
-proveit.logic.booleans.disjunction.not_right_if_neither
 proveit.logic.booleans.false_eq_false
-proveit.logic.booleans.false_is_bool
 proveit.logic.booleans.from_not_false
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.double_negation_elim
 proveit.logic.booleans.negation.negation_contradiction
 proveit.logic.booleans.negation.negation_intro
-proveit.logic.booleans.negation.not_false
 proveit.logic.booleans.negation.untrue_from_negation
-proveit.logic.booleans.true_is_bool
 proveit.logic.booleans.unfold_is_bool
 proveit.logic.equality.contradiction_via_falsification
 proveit.logic.equality.equals_reversal
@@ -23,7 +18,6 @@ proveit.logic.equality.fold_not_equals
 proveit.logic.equality.not_equals_symmetry
 proveit.logic.equality.sub_left_side_into
 proveit.logic.equality.sub_right_side_into
-proveit.logic.equality.substitute_truth
 proveit.logic.equality.unfold_not_equals
 proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset

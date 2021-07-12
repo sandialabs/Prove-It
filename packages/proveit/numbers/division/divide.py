@@ -342,7 +342,7 @@ class Div(NumberOperation):
             # Factor the numerator parts unless there is a 1 numerator.
             if the_factor_numer not in (one, expr.numerator):
                 expr = eq.update(expr.inner_expr().numerator.factorization(
-                        the_factor.numerator, pull=pull,
+                        the_factor_numer, pull=pull,
                         group_factor=True, group_remainder=True))
                 assert expr.numerator.operands.num_entries() == 2
                 # Factor (x*y)/(z*w) into (x/z)*(y/w)
@@ -393,9 +393,11 @@ class Div(NumberOperation):
             return distribute_frac_through_sum.instantiate(
                     {n: _n, x: _x, y: _y})
         elif isinstance(self.numerator, Sum):
-            # Should deduce in Complex, but distribute_through_summation doesn't have a domain restriction right now
-            # because this is a little tricky.   To do.
-            #deduce_in_complex(self.operands, assumptions)
+            # Should deduce in Complex, but
+            # distribute_through_summation doesn't have a domain
+            # restriction right now because this is a little tricky.
+            # To do.
+            # deduce_in_complex(self.operands, assumptions)
             raise NotImplementedError(
                     "Distribution of division through summation not yet "
                     "implemented.")
@@ -413,7 +415,7 @@ class Div(NumberOperation):
         else:
             raise Exception(
                 "Unsupported operand type to distribute over: " +
-                self.numerator.__class__)
+                str(self.numerator.__class__))
 
     @equality_prover('combined_exponents', 'combine_exponents')
     def exponent_combination(self, start_idx=None, end_idx=None,
