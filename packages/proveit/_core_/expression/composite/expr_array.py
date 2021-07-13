@@ -83,6 +83,7 @@ class ExprArray(ExprTuple):
             default='horizontal',
             related_methods='with_orientation')
         options.add_option(
+            # TODO implement center_parameter in formatted method
             name='center_parameter',
             description=("to include the center parameter in a range of a range (include) "
                          "or to leave the center space empty (exclude)"),
@@ -121,6 +122,7 @@ class ExprArray(ExprTuple):
         of an ExprRange of an ExprRange that produces a rectangular portion of the ExprArray.
         The center of this rectangular is populated with the explicit parameterization.
         '''
+        # TODO implement center_parameter in formatted method
         return self.with_styles(center_parameter='include')
 
     def without_center_parameter(self):
@@ -130,6 +132,7 @@ class ExprArray(ExprTuple):
         The center of this rectangular is usually populated with the explicit parameterization,
         but in this case is left blank.
         '''
+        # TODO implement center_parameter in formatted method
         return self.with_styles(center_parameter='exclude')
 
     def with_explicit_parameterization(self):
@@ -505,6 +508,7 @@ class ExprArray(ExprTuple):
         '''
         Used to cycle through the ExprArray and format the output accordingly
         '''
+        # TODO implement center_parameter in this method
         from .expr_range import ExprRange
 
         # Track whether or not ExprRange operands are using
@@ -555,11 +559,13 @@ class ExprArray(ExprTuple):
                                             if n != 0:
                                                 if orientation == 'horizontal':
                                                     yield '& ' + var.formatted(format_type, solo=solo, fence=False)
-                                                    if self.get_style(
-                                                            'parameterization', default_style) == 'explicit':
-                                                        ell.append(r'& \colon')
-                                                    else:
-                                                        ell.append(r'& \vdots')
+                                                    if j == 0:
+                                                        # we only want to do this once
+                                                        if self.get_style(
+                                                                'parameterization', default_style) == 'explicit':
+                                                            ell.append(r'& \colon')
+                                                        else:
+                                                            ell.append(r'& \vdots')
                                                 else:
                                                     # if the orientation is
                                                     # 'vertical', include the
@@ -577,21 +583,27 @@ class ExprArray(ExprTuple):
 
                                                 if orientation == 'horizontal':
                                                     yield var.formatted(format_type, solo=solo, fence=False)
-                                                    if self.get_style(
-                                                            'parameterization', default_style) == 'explicit':
-                                                        ell.append(r'\colon')
-                                                    else:
-                                                        ell.append(r'\vdots')
+                                                    if j == 0:
+                                                        # we only want to do this once
+                                                        if self.get_style(
+                                                                'parameterization', default_style) == 'explicit':
+                                                            ell.append(r'\colon')
+                                                        else:
+                                                            ell.append(r'\vdots')
                                                 else:
                                                     # if the orientation is
                                                     # 'vertical', include the
                                                     # ellipses
                                                     if k == 0:
                                                         yield var.formatted(format_type, solo=solo, fence=False)
-                                                        vell.append(r'& \cdots')
+                                                        if j == 0:
+                                                        # we only want to do this once
+                                                            vell.append(r'& \cdots')
                                                     else:
                                                         yield '& ' + var.formatted(format_type, solo=solo, fence=False)
-                                                        vell.append(r'& \cdots')
+                                                        if j == 0:
+                                                        # we only want to do this once
+                                                            vell.append(r'& \cdots')
                                     elif isinstance(entry, ExprRange):
                                         # this is first for both orientations so
                                         # don't include the '&' for either
@@ -645,36 +657,46 @@ class ExprArray(ExprTuple):
                                                 # yield r'\colon'
                                             else:
                                                 yield r'\vdots'
-                                            for obj in entry_expansion_objects:
-                                                vell.append(r'& \cdots')
-                                            if len(entry_expansion_objects) != 1 or len(expansion_objects) != 1:
-                                                vell.append('& ')
-                                            else:
-                                                vell.append('& ' + sub_expr.body.entries[m].body.formatted(
-                                                                                                       format_type,
-                                                                                                       solo=solo,
-                                                                                                       fence=False))
+                                            if j == 0:
+                                                # we only want to do this once
+                                                for obj in entry_expansion_objects:
+                                                    vell.append(r'& \cdots')
+                                                if len(entry_expansion_objects) != 1 or len(expansion_objects) != 1:
+                                                    vell.append('& ')
+                                                else:
+                                                    vell.append('& ' + sub_expr.body.entries[m].body.formatted(
+                                                                                                           format_type,
+                                                                                                           solo=solo,
+                                                                                                           fence=False))
 
                                             yield entry.last().formatted(format_type, solo=solo, fence=False)
-                                            vell.append(r'& \cdots')
+                                            if j == 0:
+                                                # we only want to do this once
+                                                vell.append(r'& \cdots')
 
                                     else:
                                         if orientation == 'horizontal':
                                             yield entry.formatted(format_type, solo=solo, fence=False)
-                                            if self.get_style(
-                                                    'parameterization', default_style) == 'explicit':
-                                                ell.append(r'\colon')
-                                            else:
-                                                ell.append(r'\vdots')
+                                            if j == 0:
+                                                # we only want to do this once
+                                                if self.get_style(
+                                                        'parameterization', default_style) == 'explicit':
+                                                    ell.append(r'\colon')
+                                                else:
+                                                    ell.append(r'\vdots')
                                         else:
                                             # if the orientation is 'vertical',
                                             # include the ellipses
                                             if k == 0:
                                                 yield entry.formatted(format_type, solo=solo, fence=False)
-                                                vell.append(r'& \cdots')
+                                                if j == 0:
+                                                # we only want to do this once
+                                                    vell.append(r'& \cdots')
                                             else:
                                                 yield '& ' + entry.formatted(format_type, solo=solo, fence=False)
-                                                vell.append(r'& \cdots')
+                                                if j == 0:
+                                                    # we only want to do this once
+                                                    vell.append(r'& \cdots')
                                 else:
                                     if isinstance(entry, ExprTuple):
                                         for var in entry:
@@ -682,21 +704,27 @@ class ExprArray(ExprTuple):
                                                 # this is not the first so we add
                                                 # '&'
                                                 yield '& ' + var.formatted(format_type, solo=solo, fence=False)
-                                                if self.get_style(
-                                                        'parameterization', default_style) == 'explicit':
-                                                    ell.append(r'& \colon')
-                                                else:
-                                                    ell.append(r'& \vdots')
+                                                if j == 0:
+                                                    # we only want to do this once
+                                                    if self.get_style(
+                                                            'parameterization', default_style) == 'explicit':
+                                                        ell.append(r'& \colon')
+                                                    else:
+                                                        ell.append(r'& \vdots')
                                             else:
                                                 if k == 0:
                                                     # this is still technically the first column so we don't include
                                                     # the '&' for formatting
                                                     # purposes
                                                     yield var.formatted(format_type, solo=solo, fence=False)
-                                                    vell.append(r'& \cdots')
+                                                    if j == 0:
+                                                        # we only want to do this once
+                                                        vell.append(r'& \cdots')
                                                 else:
                                                     yield '& ' + var.formatted(format_type, solo=solo, fence=False)
-                                                    vell.append(r'& \cdots')
+                                                    if j == 0:
+                                                        # we only want to do this once
+                                                        vell.append(r'& \cdots')
                                     elif isinstance(entry, ExprRange):
                                         using_explicit_parameterization.append(
                                             entry._use_explicit_parameterization(format_type))
@@ -707,23 +735,27 @@ class ExprArray(ExprTuple):
                                                 yield '& ' + obj.formatted(format_type, solo=solo, fence=False)
                                             if self.get_style(
                                                     'parameterization', default_style) == 'explicit':
-                                                for obj in entry_expansion_objects:
+                                                if j == 0:
+                                                    # we only want to do this once
+                                                    for obj in entry_expansion_objects:
+                                                        ell.append(r'& \colon')
                                                     ell.append(r'& \colon')
-                                                ell.append(r'& \colon')
-                                                ell.append(r'& \colon')
+                                                    ell.append(r'& \colon')
                                                 yield '& ..' + entry.body.formatted(format_type, solo=solo,
                                                                                     fence=False) + '..'
                                             else:
-                                                for obj in entry_expansion_objects:
+                                                if j == 0:
+                                                    # we only want to do this once
+                                                    for obj in entry_expansion_objects:
+                                                        ell.append(r'& \vdots')
+                                                    if len(entry_expansion_objects) != 1 or len(expansion_objects) != 1:
+                                                        ell.append('& ')
+                                                    else:
+                                                        ell.append(r'& ' +
+                                                                   sub_expr.body.entries[m].body.formatted(format_type,
+                                                                                                           solo=solo,
+                                                                                                           fence=False))
                                                     ell.append(r'& \vdots')
-                                                if len(entry_expansion_objects) != 1 or len(expansion_objects) != 1:
-                                                    ell.append('& ')
-                                                else:
-                                                    ell.append(r'& ' +
-                                                               sub_expr.body.entries[m].body.formatted(format_type,
-                                                                                                       solo=solo,
-                                                                                                       fence=False))
-                                                ell.append(r'& \vdots')
                                                 yield r'& \cdots'
                                             yield '& ' + entry.last().formatted(format_type, solo=solo, fence=False)
 
@@ -743,34 +775,42 @@ class ExprArray(ExprTuple):
                                                 for obj in entry_expansion_objects:
                                                     yield r'\vdots'
                                             yield entry.last().formatted(format_type, solo=solo, fence=False)
-                                            for obj in entry_expansion_objects:
+                                            if j == 0:
+                                                # we only want to do this once
+                                                for obj in entry_expansion_objects:
+                                                    vell.append(r'& \cdots ')
+                                                if len(entry_expansion_objects) != 1 or len(expansion_objects) != 1:
+                                                    ell.append('& ')
+                                                else:
+                                                    vell.append(
+                                                    '& ' +
+                                                    sub_expr.body.entries[m].body.formatted(format_type, solo=solo,
+                                                                                            fence=False))
                                                 vell.append(r'& \cdots ')
-                                            if len(entry_expansion_objects) != 1 or len(expansion_objects) != 1:
-                                                ell.append('& ')
-                                            else:
-                                                vell.append(
-                                                '& ' +
-                                                sub_expr.body.entries[m].body.formatted(format_type, solo=solo,
-                                                                                        fence=False))
-                                            vell.append(r'& \cdots ')
                                     else:
                                         if orientation == 'horizontal':
                                             # this is not the first so we add '&'
                                             yield '& ' + entry.formatted(format_type, solo=solo, fence=False)
-                                            if self.get_style(
-                                                    'parameterization', default_style) == 'explicit':
-                                                ell.append(r'& \colon')
-                                            else:
-                                                ell.append(r'& \vdots')
+                                            if j == 0:
+                                                # we only want to do this once
+                                                if self.get_style(
+                                                        'parameterization', default_style) == 'explicit':
+                                                    ell.append(r'& \colon')
+                                                else:
+                                                    ell.append(r'& \vdots')
                                         else:
                                             if k == 0:
                                                 # this is still technically the first column so we don't include
                                                 # the '&' for formatting purposes
                                                 yield entry.formatted(format_type, solo=solo, fence=False)
-                                                vell.append(r'& \cdots')
+                                                if j == 0:
+                                                    # we only want to do this once
+                                                    vell.append(r'& \cdots')
                                             else:
                                                 yield '& ' + entry.formatted(format_type, solo=solo, fence=False)
-                                                vell.append(r'& \cdots')
+                                                if j == 0:
+                                                    # we only want to do this once
+                                                    vell.append(r'& \cdots')
                             j += 1
 
                     elif (expr == sub_expr.last().formatted(format_type, solo=solo, fence=False)) \
