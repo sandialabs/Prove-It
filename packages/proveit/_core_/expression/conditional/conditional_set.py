@@ -16,7 +16,7 @@ class ConditionalSet(Operation):
         self.conditionals = self.operands
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, **defaults_config):
+    def shallow_simplification(self, must_evaluate=False, **defaults_config):
         '''
         Reduce a conditional set with one and only one TRUE condition
         where the other conditions are FALSE if applicable.
