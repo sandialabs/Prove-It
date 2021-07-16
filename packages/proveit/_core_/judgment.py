@@ -1190,7 +1190,7 @@ class Judgment:
         or relabeling variables.
         '''
         from .expression.inner_expr import InnerExpr
-        return InnerExpr(self)
+        return InnerExpr(self, assumptions=self.assumptions)
 
 
 def as_expression(truth_or_expression):
