@@ -312,10 +312,22 @@ class ExprRange(Expression):
         First attempt to do this with auto-simplification.  If that
         fails, do it without auto-simplification.
         '''
+        from proveit.numbers import Less, num, Add
+        from proveit.logic import NotEquals
         if self.get_style('simplify', 'False') == 'True':            
             with defaults.temporary() as temp_defaults:
                 temp_defaults.auto_simplify = True
                 temp_defaults.replacements = []
+                expansion = int(self.get_style("expansion", str(1)))
+                expanded_value = Add(self.start_index, num(expansion - 1)).simplification().rhs
+                second_value = Add(self.start_index, num(1)).simplification().rhs
+                temp_defaults.assumptions = defaults.assumptions \
+                                            + tuple([Less(expanded_value, self.end_index),
+                                                     Less(self.start_index, self.end_index),
+                                                     Less(second_value, self.end_index),
+                                                     NotEquals(expanded_value, self.end_index),
+                                                     NotEquals(second_value, self.end_index),
+                                                     NotEquals(self.start_index, self.end_index)])
                 return self.body.complete_replaced(expr_map)
         else:
             return self.body.basic_replaced(expr_map)
@@ -408,6 +420,13 @@ class ExprRange(Expression):
             output.append(next_value)
             prev = Add(prev, one).simplification().rhs
             i += 1
+        if self.get_style("simplify", 'False') == 'True':
+            try:
+                from proveit.numbers import Less
+                Less(prev, self.end_index).prove()
+            except ProofFailure:
+                print("WARNING: unable to prove that %s < %s. This will be assumed for formatting purposes. "
+                      "Please double check that your expansion is valid." % (prev, self.end_index))
         return output
 
     def _formatted_checkpoints(self, format_type, *,
