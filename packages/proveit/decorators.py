@@ -26,7 +26,7 @@ def _make_decorated_prover(func):
     is_conclude_method = func.__name__.startswith('conclude')
 
     def decorated_prover(*args, **kwargs):
-        from proveit import Expression, Judgment
+        from proveit import Expression, Judgment, InnerExpr
         from proveit.logic import Equals
         if (kwargs.get('preserve_all', False) and 
                 len(kwargs.get('replacements', tuple())) > 0):
@@ -40,8 +40,8 @@ def _make_decorated_prover(func):
                 # If the method starts with conclude 'conclude', we must
                 # preserve _self.
                 preserve_expr = _self
-            if isinstance(_self, Judgment):
-                # Include the assumptions of the Judgment.
+            if isinstance(_self, Judgment) or isinstance(_self, InnerExpr):
+                # Include the assumptions of the Judgment or InnerExpr
                 assumptions = kwargs.get('assumptions', None)
                 if assumptions is None:
                     assumptions = defaults.assumptions

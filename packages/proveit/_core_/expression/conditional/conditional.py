@@ -132,15 +132,71 @@ class Conditional(Expression):
                 inner_str = r'\left\{' + inner_str + r'\right..'
             return inner_str
 
-    '''
-    def do_reduced_evaluation(self, assumptions=USE_DEFAULTS, **kwargs):
-        from proveit.logic import EvaluationError, TRUE
-        for condition in self.conditions:
-            if condition == TRUE:
-                return value # ACTUALLY, THIS MUST BE PROVED
-        raise EvaluationError(self, assumptions)
-    '''
 
+    def basic_replaced(self, repl_map, *,
+                       allow_relabeling=False, requirements=None):
+        '''
+        Returns this expression with sub-expressions replaced
+        according to the replacement map (repl_map) dictionary.
+
+        'assumptions' and 'requirements' are used when an operator is
+        replaced by a Lambda map that has iterated parameters such that
+        the length of the parameters and operands must be proven to be equal.
+        For more details, see Operation.replaced, Lambda.apply, and
+        ExprRange.replaced (which is the sequence of calls involved).
+
+        For a Conditional, the 'condition' is added to the assumptions
+        when 'replaced' is called on the 'value'.
+        '''
+        if len(repl_map) > 0 and (self in repl_map):
+            # The full expression is to be replaced.
+            return repl_map[self]
+
+        value = self.value
+        condition = self.condition
+
+        # First perform substitution on the conditions:
+        subbed_cond = condition.basic_replaced(
+                repl_map, allow_relabeling=allow_relabeling,
+                requirements=requirements)
+
+        # Next perform substitution on the value, adding the condition
+        # as an assumption.
+        with defaults.temporary() as temp_defaults:
+            temp_defaults.assumptions = defaults.assumptions + (subbed_cond,)
+            subbed_val = value.basic_replaced(
+                    repl_map, allow_relabeling=allow_relabeling,
+                    requirements=requirements)
+
+        return Conditional(subbed_val, subbed_cond,
+                           styles=self._style_data.styles)
+
+    def _auto_simplified_sub_exprs(self, *, requirements, stored_replacements):
+        '''
+        Properly handle the Conditional scope while doing 
+        auto-simplification replacements.
+        '''
+        subbed_cond = self.condition._auto_simplified(
+                requirements=requirements, 
+                stored_replacements=stored_replacements)
+        # Add the 'condition' as an assumption for the 'value' scope.
+        with defaults.temporary() as temp_defaults:
+            prev_num_assumptions = len(defaults.assumptions)
+            temp_defaults.assumptions = (
+                    defaults.assumptions + (subbed_cond,))
+            if len(defaults.assumptions) > prev_num_assumptions:
+                # Since the assumptions have changed, we can no longer
+                # use the stored_replacements from before.
+                stored_replacements = dict()
+            subbed_val = self.value._auto_simplified(
+                    requirements=requirements,
+                    stored_replacements=stored_replacements)
+        if (subbed_val._style_id == self.value._style_id and
+                subbed_cond._style_id == self.condition._style_id):
+            # Nothing change, so don't remake anything.
+            return self
+        return Conditional(subbed_val, subbed_cond,
+                           styles=self._style_data.styles)
 
     @equality_prover('simplified', 'simplify')
     def simplification(self, **defaults_config):
@@ -248,73 +304,19 @@ class Conditional(Expression):
         # Use trivial self-reflection if there is no other 
         # simplification to do.
         return Equals(self, self).prove()
-
-    def basic_replaced(self, repl_map, *,
-                       allow_relabeling=False, requirements=None):
-        '''
-        Returns this expression with sub-expressions replaced
-        according to the replacement map (repl_map) dictionary.
-
-        'assumptions' and 'requirements' are used when an operator is
-        replaced by a Lambda map that has iterated parameters such that
-        the length of the parameters and operands must be proven to be equal.
-        For more details, see Operation.replaced, Lambda.apply, and
-        ExprRange.replaced (which is the sequence of calls involved).
-
-        For a Conditional, the 'condition' is added to the assumptions
-        when 'replaced' is called on the 'value'.
-        '''
-        if len(repl_map) > 0 and (self in repl_map):
-            # The full expression is to be replaced.
-            return repl_map[self]
-
-        value = self.value
-        condition = self.condition
-
-        # First perform substitution on the conditions:
-        subbed_cond = condition.basic_replaced(
-                repl_map, allow_relabeling=allow_relabeling,
-                requirements=requirements)
-
-        # Next perform substitution on the value, adding the condition
-        # as an assumption.
-        with defaults.temporary() as temp_defaults:
-            temp_defaults.assumptions = defaults.assumptions + (subbed_cond,)
-            subbed_val = value.basic_replaced(
-                    repl_map, allow_relabeling=allow_relabeling,
-                    requirements=requirements)
-
-        return Conditional(subbed_val, subbed_cond,
-                           styles=self._style_data.styles)
-
-    def _auto_simplified_sub_exprs(self, *, requirements, stored_replacements):
-        '''
-        Properly handle the Conditional scope while doing 
-        auto-simplification replacements.
-        '''
-        subbed_cond = self.condition._auto_simplified(
-                requirements=requirements, 
-                stored_replacements=stored_replacements)
-        # Add the 'condition' as an assumption for the 'value' scope.
-        with defaults.temporary() as temp_defaults:
-            prev_num_assumptions = len(defaults.assumptions)
-            temp_defaults.assumptions = (
-                    defaults.assumptions + (subbed_cond,))
-            if len(defaults.assumptions) > prev_num_assumptions:
-                # Since the assumptions have changed, we can no longer
-                # use the stored_replacements from before.
-                stored_replacements = dict()
-            subbed_val = self.value._auto_simplified(
-                    requirements=requirements,
-                    stored_replacements=stored_replacements)
-        if (subbed_val._style_id == self.value._style_id and
-                subbed_cond._style_id == self.condition._style_id):
-            # Nothing change, so don't remake anything.
-            return self
-        return Conditional(subbed_val, subbed_cond,
-                           styles=self._style_data.styles)
     
-    def value_substitution(self, equality, assumptions=USE_DEFAULTS):
+    @equality_prover('satisfied_condition_reduced', 
+                     'satisfied_condition_reduce')
+    def satisfied_condition_reduction(self, **defaults_config):
+        from proveit import a, Q
+        from proveit.core_expr_types.conditionals import \
+            satisfied_condition_reduction
+        return satisfied_condition_reduction.instantiate(
+                {a: self.value, Q: self.condition})
+    
+    @equality_prover('value_substituted', 
+                     'value_substitute')
+    def value_substitution(self, equality, **defaults_config):
         '''
         Equate this Conditional to one that has the value
         substituted.  For example,
@@ -328,7 +330,6 @@ class Conditional(Expression):
         from proveit.logic import Equals, Forall
         from proveit.core_expr_types.conditionals import (
                 conditional_substitution)
-        assumptions = defaults.checked_assumptions(assumptions)
         def raise_type_error():
             raise TypeError("'equality' expected to be of type Equals "
                             "or a universally quantified equality, "
@@ -355,24 +356,24 @@ class Conditional(Expression):
             except ArgumentExtractionError:
                 raise_invalid_condition_error()
             equality = quantified_eq.instantiate(
-                    {_y:_x}, assumptions = assumptions + (condition,))
-            return self.value_substitution(equality, assumptions)
+                    {_y:_x}, assumptions = defaults.assumptions + (condition,))
+            return self.value_substitution(equality)
         if not isinstance(equality, Equals):
             raise_type_error()
         if equality.lhs == self.value:
             return conditional_substitution.instantiate(
-                    {a:equality.lhs, b:equality.rhs, Q:self.condition}, 
-                    assumptions = assumptions)
+                    {a:equality.lhs, b:equality.rhs, Q:self.condition})
         elif equality.rhs == self.value:
             return conditional_substitution.instantiate(
-                    {a:equality.rhs, b:equality.lhs, Q:self.condition}, 
-                    assumptions = assumptions)
+                    {a:equality.rhs, b:equality.lhs, Q:self.condition})
         else:
             raise ValueError("One of the sides of %s was expected to "
                              "match the 'value' part of %s"
                              %(equality, self))
 
-    def condition_substitution(self, equality, assumptions=USE_DEFAULTS):
+    @equality_prover('condition_substituted', 
+                     'condition_substitute')
+    def condition_substitution(self, equality, **defaults_config):
         '''
         Equate this Conditional to one that has the condition
         substituted.  For example,

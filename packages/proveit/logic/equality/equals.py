@@ -478,9 +478,9 @@ class Equals(TransitiveRelation):
         lambda_map = Equals._lambda_expr(lambda_map, self.lhs)
         
         with defaults.temporary() as temp_defaults:
-            # Don't do any auto-simplification or replacements
+            # Don't do any auto-simplifications
             # while performing manual substitution.
-            temp_defaults.preserve_all = True
+            temp_defaults.auto_simplify = False
             if isinstance(lambda_map.parameters[0], ExprRange):
                 # We must use operands_substitution for ExprTuple
                 # substitution.
@@ -523,9 +523,9 @@ class Equals(TransitiveRelation):
                 return reversed_eq.sub_right_side_into(lambda_map)
         
         with defaults.temporary() as temp_defaults:
-            # Don't do any auto-simplification or replacements
+            # Don't do any auto-simplifications
             # while performing manual substitution.
-            temp_defaults.preserve_all = True
+            temp_defaults.auto_simplify = False
             
             if isinstance(lambda_map.parameters[0], ExprRange):
                 # We must use sub_in_left_operands for ExprTuple
@@ -595,9 +595,9 @@ class Equals(TransitiveRelation):
         lambda_map = Equals._lambda_expr(lambda_map, self.lhs)
 
         with defaults.temporary() as temp_defaults:
-            # Don't do any auto-simplification or replacements
+            # Don't do any auto-simplifications
             # while performing manual substitution.
-            temp_defaults.preserve_all = True
+            temp_defaults.auto_simplify = False
 
             if isinstance(lambda_map.parameters[0], ExprRange):
                 # We must use sub_in_right_operands for ExprTuple
