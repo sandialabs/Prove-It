@@ -1429,17 +1429,18 @@ class Circuit(Function):
         #                 else:
         #                     col += 1
 
-        #print(col_with_mqg)
+        # print(col_with_mqg)
 
         # This loop determines the actual wire placement
-        for k, entry in enumerate(self.array, 1):
+        k = 1
+        for entry in self.array:
             # cycle through each ExprTuple; k keeps track of which row we are
             # on.
             row = dict()
             if isinstance(entry, ExprTuple):
                 col = 0
                 for value in entry:
-                    # cycle through each row; i keeps track of which column we
+                    # cycle through each row; col keeps track of which column we
                     # are on.
                     '''
                     # commented because right now we don't include explicit circuits in the wire formatting
@@ -1583,7 +1584,7 @@ class Circuit(Function):
                         col += 1
 
                     elif isinstance(value, ExprRange):
-                        # ExprTuple of an ExprRange
+                        # ExprTuple of an ExprRange (this is a horizontal ExprRange)
                         j = 0
                         if isinstance(value.first(), MultiQubitGate):
                             while j < value.format_length():
@@ -1665,10 +1666,11 @@ class Circuit(Function):
                         col += 1
 
                 wire_placement.append(row)
+                k += 1
 
             elif isinstance(entry, ExprRange):
                 if isinstance(entry.first(), ExprTuple):
-                    # ExprRange of an ExprTuple
+                    # ExprRange of an ExprTuple (this is a vertical ExprRange)
                     n = 0
                     while n < entry.format_length():
                         # we loop through each value of the expression range
@@ -1689,7 +1691,7 @@ class Circuit(Function):
                                 connect = False
 
                             if isinstance(item, ExprRange):
-                                # ExprRange of an ExprTuple of an ExprRange
+                                # ExprRange of an ExprTuple of an ExprRange (this is a rectangular ExprRange)
                                 j = 0
                                 if isinstance(item.first(), MultiQubitGate):
                                     while j < item.format_length():
@@ -1789,9 +1791,11 @@ class Circuit(Function):
                         wire_placement.append(row)
                         row = dict()
                         n += 1
+                        k += 1
 
             else:
                 wire_placement.append(row)
+                k += 1
 
         return wire_placement
 
