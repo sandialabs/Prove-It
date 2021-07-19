@@ -1,10 +1,10 @@
 from .expr import Expression, free_vars
 from .operation import Operation, Function
 from .lambda_expr import Lambda
+from .conditional import Conditional
 from .composite import ExprTuple, Composite, NamedExprs, composite_expression
 from proveit._core_.defaults import defaults, USE_DEFAULTS
-from proveit.decorators import prover
-import inspect
+from proveit.decorators import prover, equality_prover
 from collections import deque
 
 
@@ -99,12 +99,17 @@ class InnerExpr:
         from proveit import Judgment
         self.inner_expr_path = tuple(_inner_expr_path)
         self.expr_hierarchy = [top_level]
-        self.assumptions = assumptions
+        if assumptions is None: assumptions = defaults.assumptions
+        self.assumptions = tuple(assumptions)
+        self.assumptions_set = set(assumptions)
         # list all of the lambda expression parameters encountered
         # along the way from the top-level expression to the inner
         # expression.
-        #self.parameters = []
-        expr = self.expr_hierarchy[0]
+        self.parameters = []
+        self.conditions = [] # Conditions of containing Conditionals.
+        self.expr = expr = self.expr_hierarchy[0]
+        if isinstance(expr, Judgment):
+            self.expr = expr.expr
         for idx in self.inner_expr_path:
             if isinstance(expr, Judgment) and idx == -1:
                 # The top level may actually be a Judgment rather
@@ -117,8 +122,11 @@ class InnerExpr:
                 if isinstance(expr, Lambda) and idx == expr.num_sub_expr() - 1:
                     # while descending into a lambda expression body, we
                     # pick up the lambda parameters.
-                    #self.parameters.extend(expr.parameters.entries)
-                    pass
+                    self.parameters.extend(expr.parameters.entries)
+                if isinstance(expr, Conditional) and idx == 0:
+                    # while descending into a Conditional value, we
+                    # pick up the condition as an assumption.
+                    self.conditions.append(expr.condition)
                 expr = expr.sub_expr(idx)
                 if isinstance(expr, tuple):
                     # A slice `idx` will yield a tuple sub expression.
@@ -233,27 +241,25 @@ class InnerExpr:
             equiv_method_type, equiv_method_name = \
                 getattr(cur_inner_expr.__class__, '_equiv_method_%s_' % attr)
             equiv_method = getattr(cur_inner_expr, equiv_method_name)
-            repl_lambda = self.repl_lambda()
-            if (isinstance(cur_inner_expr, ExprTuple)
-                    and len(self.expr_hierarchy) > 2
-                    and isinstance(self.expr_hierarchy[-2], Operation)):
-                # When replace operands of an operation, we need a
-                # a repl_lambda with a range of parameters.
-                repl_lambda = self[:].repl_lambda()
 
             def inner_equiv(*args, **kwargs):
-                assumptions = kwargs.get('assumptions',
-                                         defaults.assumptions)
-                equivalence = equiv_method(*args, **kwargs)
+                assumptions = kwargs.get('assumptions', defaults.assumptions)
+                # Add in 'assumptions' to be used by the InnerExpr 
+                # object.
+                assumptions = tuple(assumptions) + self.assumptions
+                # Add in the conditions of the inner expression
+                # for the 'equiv_method' call.
+                kwargs['assumptions'] = (assumptions +
+                                         tuple(self.conditions))
+                equality = equiv_method(*args, **kwargs)
                 if equiv_method_type == 'equiv':
-                    return equivalence.substitution(
-                        repl_lambda, assumptions=assumptions)
+                    return self.substitution(equality, 
+                                             assumptions=assumptions)
                 elif equiv_method_type == 'rhs':
-                    return equivalence.substitution(
-                        repl_lambda, assumptions=assumptions).rhs
+                    return self.substitution(equality,
+                                             assumptions=assumptions).rhs
                 elif equiv_method_type == 'action':
-                    return equivalence.sub_right_side_into(
-                        repl_lambda, assumptions=assumptions)
+                    return self.substitute(equality, assumptions=assumptions)
             if equiv_method_type == 'equiv':
                 inner_equiv.__doc__ = "Generate an equivalence of the top-level expression with a new form by replacing the inner expression via '%s'." % equiv_method_name
             elif equiv_method_type == 'rhs':
@@ -361,12 +367,16 @@ class InnerExpr:
         setattr(expr_class, past_tense_name, equiv_rhs)
     """
 
-    def repl_lambda(self):
+    def repl_lambda(self, params_of_param=None):
         '''
         Returns the lambda function/map that would replace this
         particular inner expression within the top-level expression.
         '''
         from proveit import Judgment, var_range
+        
+        if params_of_param is None:
+            params_of_param = self.parameters
+        
         # build the lambda expression, starting with the lambda
         # parameter and working up the hierarchy.
         top_level = self.expr_hierarchy[0]
@@ -417,16 +427,15 @@ class InnerExpr:
                          for dummy_var in dummy_vars])
             """
         else:
-            lambda_params = [top_level_expr.safe_dummy_var()]
-            #if len(self.parameters) == 0:
-            lambda_body = lambda_params[0]
-            '''
+            lambda_param = top_level_expr.safe_dummy_var()
+            if len(params_of_param) == 0:
+                lambda_body = lambda_param
             else:
                 # The replacements should be a function of the
                 # parameters encountered between the top-level
                 # expression and the inner expression.
-                lambda_body = Function(lambda_params[0], self.parameters)
-            '''
+                lambda_body = Function(lambda_param, params_of_param)
+            lambda_params = [lambda_param]
         # Build the expression with replacement parameters from
         # the inside out.
         with defaults.temporary() as temp_defaults:
@@ -469,39 +478,170 @@ class InnerExpr:
             return kt
         return revised_expr
 
-    def substitution(self, replacement, assumptions=USE_DEFAULTS):
+    def _eq_from_equality_or_replacement(self, equality_or_replacement,
+                                         prove_equality=False,
+                                         assumptions=None):
+        '''
+        Help for _substitution and substitute.  Check that
+        'equality_or_replacement' is appropriate and return the
+        corresponding equality expression.
+        '''
+        from proveit import Judgment
+        from proveit.logic import Equals
+
+        cur_inner_expr = self.expr_hierarchy[-1]
+        if isinstance(equality_or_replacement, Judgment):
+            if not isinstance(equality_or_replacement.expr, Equals):
+                raise TypeError("When given a Judgment, "
+                                "'equality_or_replacement' must prove"
+                                "an Equals expression")
+            if equality_or_replacement.lhs != cur_inner_expr:
+                raise ValueError("Expecting lhs of %s to be %s"%
+                                 (equality_or_replacement, cur_inner_expr))
+            if prove_equality:
+                return equality_or_replacement
+            else:
+                return equality_or_replacement.expr
+
+        replacement = equality_or_replacement
+        equality = Equals(cur_inner_expr, replacement)
+        if prove_equality:
+            # Include assumptions from the InnerExpr object which
+            # includes conditions of any containing Conditionals.
+            assumptions = defaults.assumptions + tuple(self.conditions)
+            return equality.prove(assumptions=assumptions)
+        return equality
+        
+    def _substitution(self, equality_or_replacement, 
+                      return_proven_rhs=False):
         '''
         Equate the top level expression with a similar expression
         with the inner expression replaced by the replacement.
+
+        equality_or_replacement may be a proven equality with the 
+        current inner expression on the left side or it may be the
+        replacement.
         '''
-        from proveit.logic import Equals
         cur_inner_expr = self.expr_hierarchy[-1]
-        equality = Equals(cur_inner_expr, replacement).prove(
-                assumptions=assumptions)
-        return equality.substitution(self.repl_lambda(), 
-                                     assumptions=assumptions)
+        
+        equality = self._eq_from_equality_or_replacement(
+                equality_or_replacement, prove_equality=True)
+
+        if len(self.parameters) > 0:
+            # Determine which parameters, if any, are involved
+            # in the equivalence.
+            fvars = free_vars(equality, err_inclusively=True)
+            involved_params = [param for param in self.parameters
+                               if param in fvars]
+        else:
+            involved_params = tuple()
+        repl_lambda = self.repl_lambda(params_of_param
+                                       =involved_params)
+        if (isinstance(cur_inner_expr, ExprTuple)
+                and len(self.expr_hierarchy) > 2
+                and isinstance(self.expr_hierarchy[-2], Operation)):
+            # When replacing operands of an operation, we need a
+            # a repl_lambda with a range of parameters.
+            repl_lambda = self[:].repl_lambda(
+                    params_of_param=involved_params)
+        replacements = []
+        if len(involved_params) > 0:
+            # Change the equivalence to an appropriate
+            # equivalence of lambda expressions.
+            gen_equality = equality.generalize(
+                    involved_params, 
+                    conditions=equality.assumptions)
+            gen_conditions = gen_equality.conditions
+            if len(equality.assumptions) == 0:
+                lhs_lambda_body = equality.lhs
+            else:
+                lhs_lambda_body = Conditional(
+                        equality.lhs, gen_conditions)
+                for equiv_side in (equality.lhs, equality.rhs):
+                    # Create replacements that reduce the
+                    # Conditional to its value when assuming
+                    # the condition.
+                    conditional = Conditional(
+                        equiv_side, gen_conditions)
+                    conditional_reduction = (
+                            conditional.satisfied_condition_reduction(
+                                    assumptions=gen_conditions,
+                                    preserve_all=True))
+                    replacements.append(conditional_reduction)
+            equality = Lambda(involved_params,
+                              lhs_lambda_body).substitution(
+                                      gen_equality, preserve_all=True)
+
+        if return_proven_rhs:
+            if len(replacements) > 0:
+                # We need to perform replacements before we
+                # are ready to prove the left side.
+                substitution = equality.substitution(
+                    repl_lambda, replacements=replacements)
+                return substitution.derive_right_via_equality(
+                        preserve_all=True)
+            return equality.sub_right_side_into(
+                repl_lambda, replacements=replacements)        
+        else:
+            return equality.substitution(
+                repl_lambda, replacements=replacements)
+
+    @equality_prover('substituted', 'substitute')
+    def substitution(self, equality_or_replacement, **defaults_config):
+        '''
+        Equate the top level expression with a similar expression
+        with the inner expression replaced by the replacement.
+
+        equality_or_replacement may be a proven equality with the 
+        current inner expression on the left side or it may be the
+        replacement.
+        '''
+        return self._substitution(equality_or_replacement)
 
     @prover
-    def substitute(self, replacement, **defaults_config):
+    def substitute(self, equality_or_replacement, **defaults_config):
         '''
         Substitute the replacement in place of the inner expression
         and return a new proven statement (assuming the top
         level expression is proven, or can be proven automatically).
-        '''
+        
+        equality_or_replacement may be a proven equality with the 
+        current inner expression on the left side or it may be the
+        replacement.
+        '''        
         from proveit import x, P
-        from proveit.logic import TRUE, FALSE, Equals
+        from proveit.logic import TRUE, FALSE
         from proveit.logic.equality import (
             substitute_truth, substitute_falsehood)
         cur_inner_expr = self.expr_hierarchy[-1]
-        if cur_inner_expr == TRUE:
-            return substitute_truth.instantiate(
-                {P: self.repl_lambda(), x: replacement}, preserve_all=True)
-        elif cur_inner_expr == FALSE:
-            return substitute_falsehood.instantiate(
-                {P: self.repl_lambda(), x: replacement}, preserve_all=True)
-        else:
-            return Equals(cur_inner_expr, replacement).sub_right_side_into(
-                self.repl_lambda())
+        if cur_inner_expr in (TRUE, FALSE):
+            # Determine which parameters, if any, are involved.
+            # If no parameters are involved, we can use
+            # substitute_truth or substitute_false as a simple proof.
+            if len(self.parameters) > 0:
+                fvars = free_vars(equality_or_replacement,
+                                  err_inclusively=True)
+                involved_params = [param for param in self.parameters
+                                   if param in fvars]
+            else:
+                involved_params = tuple()
+            if len(involved_params) == 0:
+                # Use substitute_truth or substitute_falsehood after
+                # we grab the 'replacement' from 
+                # 'equality_or_replacement'.
+                equality = self._eq_from_equality_or_replacement(
+                        equality_or_replacement, prove_equality=False)
+                replacement = equality.rhs
+                if cur_inner_expr == TRUE:            
+                    return substitute_truth.instantiate(
+                        {P: self.repl_lambda(), x: replacement}, 
+                        preserve_all=True)
+                elif cur_inner_expr == FALSE:
+                    return substitute_falsehood.instantiate(
+                        {P: self.repl_lambda(), x: replacement}, 
+                        preserve_all=True)
+        return self._substitution(equality_or_replacement, 
+                                  return_proven_rhs=True)            
 
     def _expr_rep(self):
         '''
