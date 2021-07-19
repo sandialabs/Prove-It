@@ -1356,7 +1356,7 @@ class Circuit(Function):
         # k is each row
         col = 0
         # col is each column
-        print(self.array.get_row_length())
+        #print(self.array.get_row_length())
         for entry in self.array.get_formatted_sub_expressions(format_type='string', orientation='horizontal',
                                                               default_style='implicit', operator_or_operators=None):
 
@@ -1364,7 +1364,7 @@ class Circuit(Function):
                 # we add one to accommodate for the wrapping slash
                 col = 0
                 k += 1
-            print('[%i, %i]: %s' % (k, col, entry))
+            #print('[%i, %i]: %s' % (k, col, entry))
             if 'MultiQubitGate' in entry:
                 if str(col) not in col_with_mqg:
                     col_with_mqg[str(col)] = {
@@ -1429,7 +1429,7 @@ class Circuit(Function):
         #                 else:
         #                     col += 1
 
-        print(col_with_mqg)
+        #print(col_with_mqg)
 
         # This loop determines the actual wire placement
         for k, entry in enumerate(self.array, 1):
@@ -1829,7 +1829,7 @@ class Circuit(Function):
             out_str += r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n'
 
         wires = self._find_wires()
-        print(wires)
+        #print(wires)
         formatted_sub_expressions = []
         row = 0
         column = 0
@@ -1837,7 +1837,7 @@ class Circuit(Function):
         # what we add in front of the entry
         for entry in self.array.get_formatted_sub_expressions(
                 format_type, orientation, default_style, operator_or_operators, solo=False):
-            print(entry)
+            #print(entry)
             if column == self.array.get_row_length() + 1:
                 # we add one to compensate for the added wrapping slash
                 row += 1
