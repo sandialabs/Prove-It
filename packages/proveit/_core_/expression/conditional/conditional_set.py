@@ -55,8 +55,8 @@ class ConditionalSet(Operation):
                 else:
                     _b = item
                     index = i
-        _a = self.conditionals[:index]
-        _c = self.conditionals[index+1:]
+        _a = [entry.value if isinstance(entry, Conditional) else entry for entry in self.conditionals[:index]]
+        _c = [entry.value if isinstance(entry, Conditional) else entry for entry in self.conditionals[index+1:]]
         _m = self.conditionals[:index].num_elements()
         _n = self.conditionals[index+1:].num_elements()
         return true_case_reduction.instantiate({m: _m, n: _n, a: _a, b: _b, c: _c})
