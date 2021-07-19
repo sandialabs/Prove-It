@@ -1352,63 +1352,84 @@ class Circuit(Function):
 
         # This first loop determines which columns contain MQGs as well as
         # which rows they start and end on
-        for k, entry in enumerate(self.array, 1):
-            # loop through each row; k tells us which row we are on
-            if isinstance(entry, ExprTuple):
-                col = 0
-                for value in entry:
-                    # loop through each column
-                    if isinstance(value, ExprRange):
-                        if isinstance(value.first(), MultiQubitGate):
-                            j = 0
-                            while j < 3:
-                                # we count to 3 because there are three items
-                                # in each row of an ExprRange
-                                if str(col) not in col_with_mqg:
-                                    col_with_mqg[str(col)] = {
-                                        'top': k, 'bottom': k}
-                                else:
-                                    col_with_mqg[str(col)]['bottom'] = k
-                                j += 1
-                                col += 1
-                    elif isinstance(value, MultiQubitGate):
-                        if str(col) not in col_with_mqg:
-                            col_with_mqg[str(col)] = {'top': k, 'bottom': k}
-                        else:
-                            col_with_mqg[str(col)]['bottom'] = k
-                        col += 1
-                    else:
-                        col += 1
+        k = 1
+        # k is each row
+        col = 0
+        # col is each column
+        print(self.array.get_row_length())
+        for entry in self.array.get_formatted_sub_expressions(format_type='string', orientation='horizontal',
+                                                              default_style='implicit', operator_or_operators=None):
 
-            elif isinstance(entry, ExprRange):
-                if isinstance(entry.first(), ExprTuple):
-                    # ExprRange of a ExprTuple
-                    col = 0
-                    for value in entry.first():
-                        # loop through the columns
-                        if isinstance(value, MultiQubitGate):
-                            if str(col) not in col_with_mqg:
-                                col_with_mqg[str(col)] = {
-                                    'top': k, 'bottom': k}
-                            else:
-                                col_with_mqg[str(col)]['bottom'] = k
-                            col += 1
-                        elif isinstance(value, ExprRange):
-                            # ExprRange of a ExprTuple of a ExprRange
-                            if isinstance(value.first(), MultiQubitGate):
-                                j = 0
-                                while j < 3:
-                                    # we count to 3 because there are 3
-                                    # elements in each row of an ExprRange
-                                    if str(col) not in col_with_mqg:
-                                        col_with_mqg[str(col)] = {
-                                            'top': k, 'bottom': k}
-                                    else:
-                                        col_with_mqg[str(col)]['bottom'] = k
-                                    j += 1
-                                    col += 1
-                        else:
-                            col += 1
+            if col == self.array.get_row_length() + 1:
+                # we add one to accommodate for the wrapping slash
+                col = 0
+                k += 1
+            print('[%i, %i]: %s' % (k, col, entry))
+            if 'MultiQubitGate' in entry:
+                if str(col) not in col_with_mqg:
+                    col_with_mqg[str(col)] = {
+                        'top': k, 'bottom': k}
+                else:
+                    col_with_mqg[str(col)]['bottom'] = k
+            col += 1
+        # for entry in self.array:
+        #     # loop through each row; k tells us which row we are on
+        #     if col == self.array.get_row_length:
+        #         col = 0
+        #         k += 1
+        #     if isinstance(entry, ExprTuple):
+        #         for value in entry:
+        #             # loop through each column
+        #             if isinstance(value, ExprRange):
+        #                 if isinstance(value.first(), MultiQubitGate):
+        #                     j = 0
+        #                     while j < value.format_length():
+        #                         # loop through each value of the expression range
+        #                         if str(col) not in col_with_mqg:
+        #                             col_with_mqg[str(col)] = {
+        #                                 'top': k, 'bottom': k}
+        #                         else:
+        #                             col_with_mqg[str(col)]['bottom'] = k
+        #                         j += 1
+        #                         col += 1
+        #             elif isinstance(value, MultiQubitGate):
+        #                 if str(col) not in col_with_mqg:
+        #                     col_with_mqg[str(col)] = {'top': k, 'bottom': k}
+        #                 else:
+        #                     col_with_mqg[str(col)]['bottom'] = k
+        #                 col += 1
+        #             else:
+        #                 col += 1
+        #
+        #     elif isinstance(entry, ExprRange):
+        #         if isinstance(entry.first(), ExprTuple):
+        #             # ExprRange of a ExprTuple
+        #             for value in entry.first():
+        #                 # loop through the columns
+        #                 if isinstance(value, MultiQubitGate):
+        #                     if str(col) not in col_with_mqg:
+        #                         col_with_mqg[str(col)] = {
+        #                             'top': k, 'bottom': k}
+        #                     else:
+        #                         col_with_mqg[str(col)]['bottom'] = k
+        #                     col += 1
+        #                 elif isinstance(value, ExprRange):
+        #                     # ExprRange of a ExprTuple of a ExprRange
+        #                     if isinstance(value.first(), MultiQubitGate):
+        #                         j = 0
+        #                         while j < value.format_length():
+        #                             # we loop through each value of the expression range
+        #                             if str(col) not in col_with_mqg:
+        #                                 col_with_mqg[str(col)] = {
+        #                                     'top': k, 'bottom': k}
+        #                             else:
+        #                                 col_with_mqg[str(col)]['bottom'] = k
+        #                             j += 1
+        #                             col += 1
+        #                 else:
+        #                     col += 1
+
+        print(col_with_mqg)
 
         # This loop determines the actual wire placement
         for k, entry in enumerate(self.array, 1):
@@ -1469,7 +1490,8 @@ class Circuit(Function):
                                                                                           'explicit') == "block":
                                             row[col] = ['first', length]
                                         else:
-                                            row[col] = ['gate', 1]
+                                            row[col] = ['gate', length]
+                                            #CHANGED used to be 1
                                             # we just use 1 instead of length because it is only connecting to the next
                                     elif self.array.entries[value.indices[index - 1].as_int()
                                                               - 1].entries[col].get_style('representation',
@@ -1564,9 +1586,8 @@ class Circuit(Function):
                         # ExprTuple of an ExprRange
                         j = 0
                         if isinstance(value.first(), MultiQubitGate):
-                            while j < 3:
-                                # we count to 3 because there are 3 elements in
-                                # each row of the ExprRange
+                            while j < value.format_length():
+                                # we loop through each value of the expression range
                                 if str(col) in col_with_mqg:
                                     if col_with_mqg[str(
                                             col)]['top'] <= k < col_with_mqg[str(col)]['bottom']:
@@ -1605,9 +1626,8 @@ class Circuit(Function):
                                     value.first())
                         else:
                             # this is a gate
-                            while j < 3:
-                                # we count to 3 because there are 3 elements in
-                                # each row of the ExprRange
+                            while j < value.format_length():
+                                # we loop through each value of the expression range
                                 if str(col) in col_with_mqg:
                                     if col_with_mqg[str(
                                             col)]['top'] <= k < col_with_mqg[str(col)]['bottom']:
@@ -1650,9 +1670,8 @@ class Circuit(Function):
                 if isinstance(entry.first(), ExprTuple):
                     # ExprRange of an ExprTuple
                     n = 0
-                    while n < 3:
-                        # we count to 3 because there are three rows in an
-                        # ExprRange of an ExprTuple
+                    while n < entry.format_length():
+                        # we loop through each value of the expression range
                         col = 0
 
                         for item in entry.first():
@@ -1673,10 +1692,9 @@ class Circuit(Function):
                                 # ExprRange of an ExprTuple of an ExprRange
                                 j = 0
                                 if isinstance(item.first(), MultiQubitGate):
-                                    while j < 3:
-                                        # we count to 3 because there are 3 elements in each ExprRange (regardless of
-                                        # explicit parameterization)
-                                        if n == 2:
+                                    while j < item.format_length():
+                                        # we loop through each value of the expression range
+                                        if n == entry.format_length()-1:
                                             if connect:
                                                 # if we are between the first
                                                 # and last MQG in this column,
@@ -1711,10 +1729,8 @@ class Circuit(Function):
                                         # even though this is a gate, we are between the first and last MQG in this
                                         # column so we add a wire.
                                         j = 0
-                                        while j < 3:
-                                            # we count to 3 because there are 3
-                                            # entries in each row of a
-                                            # ExprRange
+                                        while j < item.format_length():
+                                            # we loop through each value of an expression range
                                             row[col] = ['gate', 1]
                                             col += 1
                                             j += 1
@@ -1722,10 +1738,8 @@ class Circuit(Function):
                                         # this is not between the first and last MQG in this column so we do not add a
                                         # wire
                                         j = 0
-                                        while j < 3:
-                                            # we count to 3 because there are 3
-                                            # entries in each row of a
-                                            # ExprRange
+                                        while j < item.format_length():
+                                            # we loop through each value of an expression range
                                             row[col] = 'gate'
                                             col += 1
                                             j += 1
@@ -1734,7 +1748,7 @@ class Circuit(Function):
 
                             elif isinstance(item, MultiQubitGate):
                                 # ExprRange of an ExprTuple
-                                if n == 2:
+                                if n == entry.format_length()-1:
                                     # this is the last row in the ExprRange
                                     if connect:
                                         # this is between the first and last
@@ -1815,6 +1829,7 @@ class Circuit(Function):
             out_str += r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n'
 
         wires = self._find_wires()
+        print(wires)
         formatted_sub_expressions = []
         row = 0
         column = 0
@@ -1822,6 +1837,7 @@ class Circuit(Function):
         # what we add in front of the entry
         for entry in self.array.get_formatted_sub_expressions(
                 format_type, orientation, default_style, operator_or_operators, solo=False):
+            print(entry)
             if column == self.array.get_row_length() + 1:
                 # we add one to compensate for the added wrapping slash
                 row += 1
@@ -1851,7 +1867,10 @@ class Circuit(Function):
                     entry_str += add + ' & '
                 elif entry == ' WIRE':
                     entry_str += add + r' \cw'
-
+                # elif wires is not None:
+                #     print(wires)
+                #     print(row)
+                #     print(wires[row])
                 elif wires is not None and wires[row] is not None and len(wires[row]) != 0 and column in wires[row]:
                     if column == 0:
                         add = '& '

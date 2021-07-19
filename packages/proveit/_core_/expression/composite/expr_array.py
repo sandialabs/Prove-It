@@ -1205,7 +1205,7 @@ class ExprArray(ExprTuple):
                             else:
                                 if k == 0:
                                     # this is still the first column
-                                    yield expr.formatted(format_type, solo=solo, fence=False, sub_fence=False)
+                                    yield expr.formatted(format_type, solo=solo, fence=False)
                                 else:
                                     # this is not the first column
                                     yield '& ' + expr.formatted(format_type, solo=solo, fence=False, sub_fence=False)
