@@ -103,7 +103,7 @@ class Proof:
             # proof that depends upon a different proof of the same
             # truth which should never actually get used), track the 
             # dependencies of required proofs so they can be updated 
-            # appropriated if there are changes due to proof disabling.
+            # appropriately if there are changes due to proof disabling.
             for required_proof in self.required_proofs:
                 required_proof._dependents.add(self)
 
@@ -141,7 +141,7 @@ class Proof:
         # This new proof may be the first proof, make an old one 
         # obselete, or be born obsolete itself.
         #had_previous_proof = (proven_truth.proof() is not None and proven_truth.is_usable())
-        proven_truth._addProof(self)
+        proven_truth._add_proof(self)
         if requiring_unusable_proof:
             # Raise an UnusableProof exception when an attempt is made
             # to use an "unusable" theorem directly or indirectly.
@@ -168,6 +168,7 @@ class Proof:
         '''
         newproof._dependents.clear()
         oldproof = self
+
         for dependent in oldproof._dependents:
             revised_dependent = False
             for i in range(len(dependent.required_proofs)):
@@ -184,7 +185,7 @@ class Proof:
             if all(required_proof.is_usable()
                    for required_proof in dependent.required_proofs):
                 dependent._meaning_data._unusable_proof = None  # it is usable again
-                dependent.proven_truth._addProof(
+                dependent.proven_truth._add_proof(
                     dependent)  # add it back as an option
         # Nothing should depend upon the old proof any longer.
         oldproof._dependents.clear()        
@@ -322,36 +323,56 @@ class Proof:
         for proof in to_disable:
             dep_id_to_dep_and_source[id(proof)] = (proof, proof)
         dependents_by_nsteps = [(proof.num_steps(), id(proof)) 
-                                for proof in to_disable]
+                                for proof in to_disable
+                                if proof.is_usable()]
+
+        # In the first pass, disable the 'to_disable' set and
+        # their direct/indirect dependence in a monotonic order
+        # (avoiding repeats).
+        next_pass_dependents_by_nsteps = []
         heapq.heapify(dependents_by_nsteps)
         while len(dependents_by_nsteps) > 0:
-            _, dependent_id = heapq.heappop(dependents_by_nsteps)
+            _n, dependent_id = heapq.heappop(dependents_by_nsteps)
+            next_pass_dependents_by_nsteps.append((_n, dependent_id))
             dependent, source = \
                 dep_id_to_dep_and_source[dependent_id]
-            if not dependent.is_usable():
-                # Already disabled, so we can skip it.
-                continue
             is_defunct = (dependent.proven_truth.proof() == dependent)
             dependent._meaning_data._unusable_proof = source
-            dependent.proven_truth._discardProof(dependent)
+            dependent.proven_truth._discard_proof(dependent)
+            # Make the number of steps as unknown as we go up through
+            # the dependents.
+            dependent._meaning_data.num_steps = None
             if not is_defunct:
                 # A different proof was active, so we don't have
-                # to revise it or worry about its dependents.
+                # worry about its dependents.
                 continue
-            if dependent.proven_truth._reviseProof():
-                # A new proof was found, so we do NOT have to
-                # propagate the disabling to its dependents.
+            # Push sub-dependents onto the heap.
+            for _dependent in dependent._dependents:
+                if _dependent.is_usable():
+                    dep_id_to_dep_and_source[id(_dependent)] = (
+                        _dependent, source)
+                    heapq.heappush(dependents_by_nsteps,
+                                   (_dependent.num_steps(),
+                                    id(_dependent)))
+
+        # In a second pass, see if there are alternative proofs.
+        # Doing this in a separate pass avoids making revisions
+        # that generate circular dependencies.
+        dependents_by_nsteps = next_pass_dependents_by_nsteps
+        heapq.heapify(dependents_by_nsteps)
+        while len(dependents_by_nsteps) > 0:
+            _n, dependent_id = heapq.heappop(dependents_by_nsteps)
+            dependent, _ = dep_id_to_dep_and_source[dependent_id]
+            if dependent.is_usable():
+                # Already enabled, so we can skip it.
                 continue
-            else:
-                # Push sub-dependents onto the heap.
-                for _dependent in dependent._dependents:
-                    if _dependent.is_usable():
-                        #assert _dependent.num_steps() > dependent.num_steps()
-                        dep_id_to_dep_and_source[id(_dependent)] = (
-                            _dependent, source)
-                        heapq.heappush(dependents_by_nsteps,
-                                       (_dependent.num_steps(),
-                                        id(_dependent)))
+            is_defunct = (dependent.proven_truth.proof() == dependent)
+            if not is_defunct:
+                # A different proof was active, so we don't have
+                # to revise it.
+                continue
+            # Use an alternate proof if available.
+            dependent.proven_truth._revise_proof()
 
     def __eq__(self, other):
         if isinstance(other, Proof):
@@ -441,11 +462,11 @@ class Proof:
         return ordered_dependency_nodes(
             self, lambda proof: proof.required_proofs)
 
-    def all_required_proofs(self):
+    def all_required_proofs(self, all_requirements_chain = None):
         '''
         Returns the set of directly or indirectly required proofs.
         '''
-        sub_proof_sets = [required_proof.all_required_proofs()
+        sub_proof_sets = [required_proof.all_required_proofs(all_requirements_chain)
                           for required_proof in self.required_proofs]
         return set([self]).union(*sub_proof_sets)
 

@@ -384,7 +384,7 @@ class OperationOverInstances(Operation):
             # Operation instead.  This can come up when creating
             # an InnerExpr replacement map when the inner expression
             # the the operand of an OperationOverInstances.
-            return Operation(cls._operator_, operands, styles=styles)
+            return Function(cls._operator_, operands, styles=styles)
             
         lambda_map = operands[0]
         if not isinstance(lambda_map, Lambda):
