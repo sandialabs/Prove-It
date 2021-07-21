@@ -1438,45 +1438,35 @@ class ExprRange(Expression):
         if new_shift is not None:
             net_shift = new_shift
             if old_shift is not None:
-                net_shift = subtract(new_shift, old_shift).simplified(
-                    assumptions=assumptions)
+                net_shift = subtract(new_shift, old_shift).simplified()
             if new_start is None:
                 # new start = _i - new_shift
-                new_start = subtract(_i, net_shift).simplified(
-                    assumptions=assumptions)
+                new_start = subtract(_i, net_shift).simplified()
             if new_end is None:
                 # new_end = _j - new_shift
-                new_end = subtract(_j, net_shift).simplified(
-                    assumptions=assumptions)
+                new_end = subtract(_j, net_shift).simplified()
         elif new_start is None:
             # new_start = new_end + i - j
-            new_end = Add(new_start, _i, Neg(_j)).simplified(
-                assumptions=assumptions)
+            new_end = Add(new_start, _i, Neg(_j)).simplified()
         elif new_end is None:
             # new_end = new_start + j - i
-            new_end = Add(new_start, _j, Neg(_i)).simplified(
-                assumptions=assumptions)
+            new_end = Add(new_start, _j, Neg(_i)).simplified()
 
         _k, _l = new_start, new_end
 
         if new_shift is None:
             # Compute the new shift based upon the other parameters.
             if old_shift is None:
-                new_shift = subtract(
-                    _i, _k).simplified(
-                    assumptions=assumptions)
+                new_shift = subtract(_i, _k).simplified()
             else:
-                new_shift = Add(_i, old_shift, Neg(_k)).simplified(
-                    assumptions=assumptions)
+                new_shift = Add(_i, old_shift, Neg(_k)).simplified()
 
         if old_shift is None:
             return shift_equivalence.instantiate(
-                {f: _f, a: new_shift, i: _i, j: _j, k: _k, l: _l},
-                assumptions=assumptions)
+                {f: _f, a: new_shift, i: _i, j: _j, k: _k, l: _l})
         else:
             return shift_equivalence_both.instantiate(
-                {f: _f, a: old_shift, b: new_shift, i: _i, j: _j, k: _k, l: _l},
-                assumptions=assumptions)
+                {f: _f, a: old_shift, b: new_shift, i: _i, j: _j, k: _k, l: _l})
 
     """
     def _var_index_shifts_in_ranges(self, var, shifts):
