@@ -1402,9 +1402,10 @@ class ExprRange(Expression):
                 {f: lambda_map, i: start_index, j: before_split_idx,
                  k: end_index})
 
+    @prover
     def shift_equivalence(self, *, old_shift=None, new_start=None,
                           new_end=None, new_shift=None,
-                          assumptions=USE_DEFAULTS):
+                          **defaults_config):
         '''
         Return the equation between this range within an ExprTuple
         and a shifted version in the following manner:
