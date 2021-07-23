@@ -88,8 +88,11 @@ class NumberOperation(Operation):
                 container_relation = inner_relations.setdefault(
                         container, TransRelUpdater(container))
                 expr = container_relation.expr
+                # Don't simplify or make replacements if there
+                # is more to go:
+                preserve_all = (len(inner_expr_bounds) > 0)
                 container_relation.update(expr.bound_via_operand_bound(
-                        inner_expr_bound))
+                        inner_expr_bound, preserve_all=preserve_all))
                 # Append the relation for processing
                 if container is self:
                     # No further processing needed when the container
@@ -129,6 +132,12 @@ class NumberOperation(Operation):
 @relation_prover
 def deduce_in_number_set(expr, number_set, **defaults_config):
     from proveit.logic import InSet
+    membership = InSet(expr, number_set)
+    if membership.proven():
+        # Already proven. We're done.
+        return membership.prove()
     if hasattr(expr, 'deduce_in_number_set'):
+        # Use 'deduce_in_number_set' method.
         return expr.deduce_in_number_set(number_set)
-    return InSet(expr, number_set).prove()
+    # Try prove().
+    return membership.prove()

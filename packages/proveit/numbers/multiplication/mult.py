@@ -215,7 +215,7 @@ class Mult(NumberOperation):
                 length = expr.operands.num_entries()
 
         # Simplify negations -- factor them out.
-        expr = eq.update(expr.neg_simplifications(preserve_all=True))
+        expr = eq.update(expr.neg_simplifications(auto_simplify=True))
 
         if not isinstance(expr, Mult):
             # The expression may have changed to a negation after doing
@@ -282,18 +282,30 @@ class Mult(NumberOperation):
         # A convenience to allow successive update to the equation via
         # transitivities (starting with self=self).
         eq = TransRelUpdater(self)
+        
+        # Find out the first operand that is a negation for
+        # the purpose of knowing when we should 'preserve all'.
+        first_neg_operand_idx = None
+        for idx, operand in enumerate(self.operands.entries):
+            if isinstance(operand, Neg):
+                first_neg_operand_idx = idx
+                break
+        if first_neg_operand_idx is None:
+            return eq.relation # trivial self=self
 
         # Work in reverse order so indices don't need to be updated.
         for rev_idx, operand in enumerate(reversed(self.operands.entries)):
             if isinstance(operand, Neg):
                 idx = self.operands.num_entries() - rev_idx - 1
+                # Preserve all until we process the final operand.
+                preserve_all = (idx > first_neg_operand_idx)
                 if isinstance(expr, Mult):
                     expr = eq.update(expr.neg_simplification(
-                            idx, preserve_all=True))
+                            idx, preserve_all=preserve_all))
                 elif isinstance(expr, Neg):
                     expr = eq.update(
                         expr.inner_neg_mult_simplification(
-                                idx, preserve_all=True))
+                                idx, preserve_all=preserve_all))
 
         return eq.relation
 

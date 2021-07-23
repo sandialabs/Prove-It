@@ -32,10 +32,12 @@ class StyleOptions:
         styles = dict(styles)
         known_style_names = set()
         for name, _, default, _ in self.options:
-            known_style_names.add(name)
-            if name not in styles and default is not None:
+            if name in styles:
+                known_style_names.add(name)
+            elif default is not None:
                 # Use the default of the StyleOptions.
                 styles[name] = default
+                known_style_names.add(name)
         if len(styles) > len(known_style_names):
             for style_name in list(styles.keys()):                    
                 if style_name not in known_style_names:

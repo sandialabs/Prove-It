@@ -36,6 +36,9 @@ class Operation(Expression):
             single_or_composite_expression, Composite, ExprTuple)
         from proveit._core_.expression.label.label import Label
         from .indexed_var import IndexedVar
+        if self.__class__ == Operation:
+            raise TypeError("Do not create an object of type Operation; "
+                            "use a derived class (e.g., Function) instead.")
         self.operator = operator
         operand_or_operands = single_or_composite_expression(
             operand_or_operands, do_singular_reduction=True)
@@ -67,22 +70,17 @@ class Operation(Expression):
         Return the StyleOptions object for the Operation.
         '''
         from proveit._core_.expression.composite.expr_tuple import ExprTuple
-        trivial_op = False
-        if (isinstance(self.operands, ExprTuple) and 
-                len(self.operands.entries) > 0  and
-                not self.operands.is_single()):
-            # 'infix' is only a sensible option when there are
-            # multiple operands as an ExprTuple.
-            default_op_style = 'infix'
-        else:            
-            # With no operands or 1 operand, infix is not an option.
-            trivial_op = True
-            default_op_style= 'function'
+        trivial_op = not (isinstance(self.operands, ExprTuple) and 
+                          len(self.operands.entries) > 0  and
+                          not self.operands.is_single())
         options = StyleOptions(self)
+        # Note: when there are no operands or 1 operand, 'infix'
+        # is like the 'function' style except the operator is
+        # wrapped in square braces.
         options.add_option(
                 name = 'operation',
                 description = "'infix' or 'function' style formatting",
-                default = default_op_style,
+                default = 'infix',
                 related_methods = ())
         if not trivial_op:
             # Wrapping is only relevant if there is more than one

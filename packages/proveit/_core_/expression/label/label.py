@@ -95,8 +95,10 @@ class Label(Expression):
         from .literal import Literal
         sig = signature(self.__class__.__init__)
         init_params = sig.parameters
-        if len(init_params) == 1:
-            return  # no arguments (except self) are taken
+        if len(init_params) == 2:
+            assert 'styles' in init_params, (
+                "'styles' is mandatory as a keyword-only argument")
+            return  # no arguments (except self and 'styles') are taken
         is_literal_instance = isinstance(self, Literal)
         known_param_names = {'self', 'string_format', 'latex_format', 
                              'fence_when_forced', 'extra_core_info',
