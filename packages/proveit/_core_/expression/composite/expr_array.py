@@ -242,6 +242,9 @@ class ExprArray(ExprTuple):
                                             'not equal to %s.' %
                                             (entry.end_index, entry, item[2]))
                                     k += 1
+                        if (self.get_style('orientation', 'horizontal') == 'vertical'
+                                and self.get_style('parameterization', 'implicit') == 'explicit'):
+                            count += 2
                         count += entry.format_length()
 
                     elif isinstance(entry, ExprTuple):
@@ -250,8 +253,13 @@ class ExprArray(ExprTuple):
                             'extraneous feature for the ExprArray class.')
                     else:
                         count += 1
-
-                if count != self.get_row_length():
+                if self.get_style('orientation', 'horizontal') == 'vertical':
+                    row = self.get_row_length(from_get_col_height=True)
+                else:
+                    row = self.get_row_length()
+                # we want the row length as if it was horizontal
+                if count != row:
+                    print(count)
                     raise ValueError(
                         'One or more rows are a different length.  Please double check your entries.')
             elif isinstance(expr, ExprRange):
@@ -284,6 +292,9 @@ class ExprArray(ExprTuple):
                                                 'not equal to %s.' %
                                                 (entry.end_index, entry, item[2]))
                                         k += 1
+                            if (self.get_style('orientation', 'horizontal') == 'vertical'
+                                    and self.get_style('parameterization', 'implicit') == 'explicit'):
+                                count += 2
                             count += entry.format_length()
 
                         elif isinstance(entry, ExprTuple):
@@ -293,7 +304,14 @@ class ExprArray(ExprTuple):
                         else:
                             count += 1
 
-                    if count != self.get_row_length():
+                    if self.get_style('orientation', 'horizontal') == 'vertical':
+                        row = self.get_row_length(from_get_col_height=True)
+                    else:
+                        row = self.get_row_length()
+                    # we want the row length as if it was horizontal
+                    if count != row:
+                        print(count)
+                        print(row)
                         raise ValueError(
                             'One or more rows are a different length.  Please double check your entries.')
                     # start = None
@@ -401,7 +419,7 @@ class ExprArray(ExprTuple):
         #             'as the ExprRange in tuple number %s' %
         #             str(n))
 
-    def get_col_height(self, orientation=None, parameterization=None):
+    def get_col_height(self, orientation=None, parameterization=None, from_get_row_length=False):
         '''
         Return the height of the first column of the array in an integer form.
         (Horizontal orientation is assumed)
@@ -411,6 +429,9 @@ class ExprArray(ExprTuple):
             orientation = self.get_style('orientation', 'horizontal')
         if parameterization is None:
             parameterization = self.get_style('parameterization', 'implicit')
+
+        if orientation == 'vertical' and not from_get_row_length:
+            return self.get_row_length(from_get_col_height=True)
 
         output = 0
         for expr in self:
@@ -429,7 +450,7 @@ class ExprArray(ExprTuple):
                     output += expr.format_length()
         return output
 
-    def get_row_length(self, orientation=None, parameterization=None):
+    def get_row_length(self, orientation=None, parameterization=None, from_get_col_height=False):
         '''
         Return the length of the first row of the array in an integer form.
         (Horizontal orientation is assumed)
@@ -441,6 +462,9 @@ class ExprArray(ExprTuple):
             orientation = self.get_style('orientation', 'horizontal')
         if parameterization is None:
             parameterization = self.get_style('parameterization', 'implicit')
+
+        if orientation == 'vertical' and not from_get_col_height:
+            return self.get_col_height(from_get_row_length=True)
 
         output = 0
 
@@ -1305,10 +1329,8 @@ class ExprArray(ExprTuple):
         if fence:
             out_str = '(' if format_type == 'string' else r'\left('
 
-        if orientation == 'horizontal':
-            length = self.get_row_length()
-        else:
-            length = self.get_col_height()
+        length = self.get_row_length()
+
         if format_type == 'latex':
             out_str += r'\begin{array} {%s} ' % (
                 justification[0] * length) + '\n '
@@ -1326,10 +1348,10 @@ class ExprArray(ExprTuple):
             k = 1
             vert = []
 
-            m = self.get_col_height()
+            m = self.get_row_length()
             # print(m)
             # print(self.get_row_length())
-            while k <= self.get_row_length():
+            while k <= self.get_col_height():
                 i = 1
                 j = k
                 for var in self.get_formatted_sub_expressions(
@@ -1339,8 +1361,8 @@ class ExprArray(ExprTuple):
                         m = m - 1
                         if m == 0:
                             vert.append(r' \\' + ' \n ')
-                            m = self.get_col_height()
-                        j += self.get_row_length()
+                            m = self.get_row_length()
+                        j += self.get_col_height()
                     i += 1
                 k += 1
             formatted_sub_expressions = vert
