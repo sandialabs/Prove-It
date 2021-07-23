@@ -729,12 +729,12 @@ class ExprTuple(Composite, Expression):
                 subtract(self[0].end_index, self[0].start_index))
         
         _n = _n.as_int() + 1 # actual number of elems being represented
-        if not (1 <= _n and _n <= 10):
+        if not (1 <= _n and _n <= 9):
             raise ValueError(
                     "ExprTuple.range_expansion() implemented only for "
                     "ExprTuples with a single entry, with the single "
                     "entry being an ExprRange representing a finite "
-                    "number of elements n with 1 <= n <= 10. Instead, "
+                    "number of elements n with 1 <= n <= 9. Instead, "
                     "the ExprTuple is {0} with number of elements equal "
                     "to {1}.".format(self[0], _n))
 
