@@ -21,10 +21,11 @@ class ConditionalSet(Operation):
         Reduce a conditional set with one and only one TRUE condition
         where the other conditions are FALSE if applicable.
         '''
-        return self.reducing_to_true_case()
+        return self.single_case_via_elimination()
 
+    # single_case_via_elimination
     @equality_prover('reduced_to_true_case', 'reduce_to_true_case')
-    def reducing_to_true_case(self, **defaults_config):
+    def single_case_via_elimination(self, **defaults_config):
         '''
         Automatically reduce a conditional set with one and only one TRUE condition
         where the other conditions are FALSE.
