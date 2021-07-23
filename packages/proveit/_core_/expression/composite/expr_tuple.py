@@ -673,6 +673,86 @@ class ExprTuple(Composite, Expression):
                     return equiv_thm
         raise NotImplementedError("ExprTuple.deduce_equality not implemented "
                                   "for this case: %s." % self)
+    
+    @equality_prover("expanded_range", "expand_range")
+    def range_expansion(self, **defaults_config):
+        '''
+        For self an ExprTuple with a single entry that is an ExprRange
+        of the form f(i),...,f(j), where 0 <= (j-i) <= 9 (i.e. the
+        ExprRange represents 1 to 10 elements), derive and
+        return an equality between self and an ExprTuple with explicit
+        entries replacing the ExprRange. For example, if
+            self = ExprTuple(f(3),...,f(6)),
+        then self.range_expansion() would return:
+        |- ExprTuple(f(3),...,f(6)) = ExprTuple(f(3), f(4), f(5), f(6))
+        '''
+
+        # Check that we have a an ExprTuple with
+        # (1) a single entry
+        # (2) and the single entry is an ExprRange
+        # (these restrictions can be relaxed later to make the
+        # method more general)
+
+        # ExprTuple with single entry
+        if not self.num_entries() == 1:
+            raise ValueError(
+                    "ExprTuple.range_expansion() implemented only for "
+                    "ExprTuples with a single entry (and the single "
+                    "entry must be an ExprRange). Instead, the ExprTuple "
+                    "{0} has {1} entries.".format(self, self.num_entries))
+
+        # and the single entry is an ExprRange:
+        from proveit import ExprRange
+        if not isinstance(self.entries[0], ExprRange):
+            raise ValueError(
+                    "ExprTuple.range_expansion() implemented only for "
+                    "ExprTuples with a single entry (and the single "
+                    "entry must be an ExprRange). Instead, the ExprTuple "
+                    "is {0}.".format(self))
+
+        from proveit import Function
+        from proveit.logic import EvaluationError
+        from proveit.numbers import subtract
+
+        _the_expr_range = self[0]
+
+        # _n = self.num_elements()
+        try:
+            _n = subtract(self[0].end_index, self[0].start_index).evaluated()
+        except EvaluationError as the_error:
+            _diff = subtract(self[0].end_index, self[0].start_index)
+            print("EvaluationError: {0}. The ExprRange {1} must represent "
+                  "a known, finite number of elements, but all we know is "
+                  "that it represents {2} elements.".format(
+                    the_error, self[0], _diff))
+            raise EvaluationError(
+                subtract(self[0].end_index, self[0].start_index))
+        
+        _n = _n.as_int() + 1 # actual number of elems being represented
+        if not (1 <= _n and _n <= 10):
+            raise ValueError(
+                    "ExprTuple.range_expansion() implemented only for "
+                    "ExprTuples with a single entry, with the single "
+                    "entry being an ExprRange representing a finite "
+                    "number of elements n with 1 <= n <= 10. Instead, "
+                    "the ExprTuple is {0} with number of elements equal "
+                    "to {1}.".format(self[0], _n))
+
+        # id the correct theorem for the number of entries
+        import proveit.numbers.numerals.decimals
+        expansion_thm = proveit.numbers.numerals.decimals\
+                        .__getattr__('range_%d_expansion' % _n)
+
+        # instantiate and return the identified expansion theorem
+        _f, _i, _j = expansion_thm.instance_vars
+        _safe_var = self.safe_dummy_var()
+        _idx_param = _the_expr_range.parameter
+        _fxn_sub = _the_expr_range.body.basic_replaced(
+                {_idx_param: _safe_var})
+        _i_sub = _the_expr_range.start_index
+        _j_sub = _the_expr_range.end_index
+        return expansion_thm.instantiate(
+                {Function(_f, _safe_var): _fxn_sub, _i: _i_sub, _j: _j_sub})
 
     """
     TODO: change register_equivalence_method to allow and fascilitate these
