@@ -53,6 +53,12 @@ from .relation import (
 # from . import _core_.magics
 from . import magics
 
+# So we can reset back to the basics.
+from .decorators import (_equality_prover_fn_to_tenses,
+                         _equality_prover_name_to_tenses)
+_basic_equality_prover_fn_to_tenses = _equality_prover_fn_to_tenses.copy()
+_basic_equality_prover_name_to_tenses = _equality_prover_name_to_tenses.copy()
+
 def reset():
     '''
     Clear all references to Prove-It information.
@@ -68,6 +74,11 @@ def reset():
     Proof._clear_()
     Theory._clear_()
     defaults.reset()
+    _equality_prover_fn_to_tenses.clear()
+    _equality_prover_fn_to_tenses.update(_basic_equality_prover_fn_to_tenses)
+    _equality_prover_name_to_tenses.clear()
+    _equality_prover_name_to_tenses.update(
+        _basic_equality_prover_name_to_tenses)
     if hasattr(magics, 'prove_it_magic'):
         magics.prove_it_magic.reset()
     from proveit._core_._unique_data import clear_unique_data

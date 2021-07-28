@@ -177,11 +177,13 @@ class Expression(metaclass=ExprType):
     # by the Expression._class_path method).
     class_paths = dict()
     
+    """
     # Map simplification directive identifiers to expressions
     # that have been simplified under the corresponding directive.
     # See decorators.py in the proveit package.
     simplified_exprs = dict()
-    
+    """
+
     """
     # Map "labeled meaning ids" of expressions to default styles.
     # That is, expressions with a specific labeling will establish
