@@ -184,6 +184,62 @@ class ExprArray(ExprTuple):
 
         return output
 
+    def get_element_at(self, row, col):
+        '''
+        Return the object at the indicated row and column of the ExprArray (starting at 1 NOT 0)
+        TODO: it would be cool if this was smart enough to return
+        elements that were contained in ExprRanges, but for now it is constrained to the formatted dimensions
+        '''
+        from proveit import ExprRange
+        cur_row = 1
+        cur_col = 1
+        for entry in self:
+            if isinstance(entry, ExprTuple):
+                for item in entry.entries:
+                    if isinstance(item, ExprRange):
+                        j = 0
+                        expr_range_items = item.get_range_expansion()
+                        expr_range_items.append(item.body)
+                        expr_range_items.append(item.last())
+                        while j < item.format_length():
+                            if cur_col == col and cur_row == row:
+                                return expr_range_items[j]
+                            j += 1
+                            cur_col += 1
+
+                    else:
+                        if cur_col == col and cur_row == row:
+                            return item
+                        cur_col += 1
+                cur_row += 1
+                cur_col = 1
+            elif isinstance(entry, ExprRange):
+                j = 0
+                expr_range_items = entry.get_range_expansion()
+                expr_range_items.append(entry.body)
+                expr_range_items.append(entry.last())
+                while j < entry.format_length():
+                    if isinstance(expr_range_items[j], ExprTuple):
+                        for item in expr_range_items[j]:
+                            if isinstance(item, ExprRange):
+                                nested_expr_range_items = item.get_range_expansion()
+                                nested_expr_range_items.append(item.body)
+                                nested_expr_range_items.append(item.last())
+                                k = 0
+                                while k < item.format_length():
+                                    if cur_col == col and cur_row == row:
+                                        return nested_expr_range_items[k]
+                                    k += 1
+                                    cur_col += 1
+                            else:
+                                if cur_col == col and cur_row == row:
+                                    return item
+                                cur_col += 1
+
+                    j += 1
+                    cur_row += 1
+                    cur_col = 1
+
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
 
