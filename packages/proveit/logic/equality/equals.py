@@ -202,125 +202,24 @@ class Equals(TransitiveRelation):
                            "'conclude_via_transitivity'.")
 
     """
-    I'm going to check this Equals.conclude_via_substitutjions
-    attempt in for our records and then abandon it.  I don't believe
-    the algorithm below will work, but Deepak informed us that he
-    wrote algorithms for this "Equivalence Closure Problem":
-    
-        Journal of Systems Science and Complexity volume 32, pages 317–355 (2019),
-        "A Modular Associative Commutative (AC)Congruence Closure Algorithm" (doi: 10.4230/LIPIcs.FSCD.2021.15)
-        Kapur D. (1997) Shostak's congruence closure as completion. In: Comon H. (eds) Rewriting Techniques and Applications. RTA 1997. Lecture Notes in Computer Science, vol 1232. Springer, Berlin, Heidelberg. https://doi.org/10.1007/3-540-62950-5_59
-    """
+    Abandoning, but keeping a stub in case we want to revisit this.
 
     @prover
     def conclude_via_substitutions(self, *equalities, **defaults_config):
         '''
         Prove that this Equals expression is true by using the
         supplied proven equalities and performing substitutions.
+        
+        This is the "Equivalence Closure Problem" which Deepak Kapur
+        has written papers on:
+        Journal of Systems Science and Complexity volume 32, pages 317–355 (2019),
+        https://10.4230/LIPIcs.FSCD.2021.15
+        https://doi.org/10.1007/3-540-62950-5_59
+        
+        His algorithms are O(n log n) for binary functions and
+        O(n^2) in general.
         '''
-        
-        from proveit import Judgment
-        from proveit import expression_depth, generate_inner_expressions
-        
-        # Check that the equalities are actually equalities proven
-        # under the active assumptions.
-        for equality in equalities:
-            if isinstance(equality, Judgment):
-                equality = equality.expr
-            if not isinstance(equality, Equals):
-                raise TypeError("Each of the 'equalities' must be a "
-                                "proven equality, not %s"%equality.__class__)
-            if not equality.proven():
-                raise ValueError("Equality, %s, must be proven under the "
-                                 "active assumptions: %s"
-                                 %(equality, defaults.assumptions))
-        
-        # First, sort the expressions on either side of equalities
-        # by their depth so we can make appropriate cascading
-        # replacements in a single pass.
-        # Representatives of equality sets will be chosen, arbitrarily
-        # but conveniently, to be one with the smallest depth.
-        # Use a tie-breaker to make the algorithm deterministic for a 
-        # given ordering of equalities -- the representative will be
-        # the last occurrence (reading equalities top-to-down then 
-        # left-to-right) with the minimum depth.
-        expr_depths = dict() # map expressions to depths
-        tie_breaker = dict()
-        # Map each expression to a set of expressions 
-        # directly equal to it:
-        expr_to_eq_set = dict() 
-        _i = 0
-        for equality in equalities:
-            for expr in (equality.lhs, equality.rhs):
-                # Each side is equal to either side:
-                expr_to_eq_set.setdefault(expr, set()).update(
-                        (equality.lhs, equality.rhs))
-                expr_depths[expr] = expression_depth(expr)
-                tie_breaker[expr] = _i
-                _i -= 1
-        expressions_by_depth = sorted(
-                expr_depths.keys(), key=lambda expr: (
-                        expr_depths[expr], tie_breaker[expr]))
-        
-        # Make each non-representative, "canonical" expression to the
-        # representative in its equality set.  A "canonical" expression 
-        # uses representatives in its sub-expressions.
-        expr_to_canonical = dict()
-        canonical_expr_to_representative = dict()
-        representatives = set()
-        
-        def equate_to_canonical_form(expr):
-            '''
-            Prove that the given expression is equivalent to
-            its canonical form.  We just require 
-            canonical_expr_to_representative to be populated for 
-            depths up to the expr depth.
-            '''
-            orig_expr = expr
-            while True:
-                for non_rep, rep in canonical_expr_to_representative.iteritems():
-                    # Replace all occurrences of the non-representative
-                    # expression with the representative expression.
-                    for inner_expr in generate_inner_expressions(
-                            expr, non_rep):
-                        expr = inner_expr.substitute(rep)
-                        break # expression has changed
-            
-            expr_to_canonical[orig_expr] = expr
-            return expr
-        
-        for _k, expr in enumerate(expressions_by_depth):
-            # See if this expression is equal to a representative
-            representative = expr # subject to change
-            for eq_expr in expr_to_eq_set[expr]:
-                if eq_expr in expr_to_canonical:
-                    eq_expr = expr_to_canonical[eq_expr]
-                    if eq_expr in representatives:
-                        # Found a representative expr.
-                        representative = eq_expr
-                        break
-            # Convert this expression and its representative to
-            # "canonical" versions.
-            canonical_expr = equate_to_canonical_form(expr).rhs
-            if canonical_expr in canonical_expr_to_representative:
-                # We already have a representative for this
-                # canonical expression; don't overwrite it
-                break
-            if expr == representative:
-                # Use the canonical form as the representative.
-                representative = canonical_expr
-            canonical_expr_to_representative[canonical_expr] = (
-                    representative)
-            representatives.add(representative)
-        
-        # Now convert the left and right sides of self to
-        # canonical forms and show they are the same (or raise an
-        # exception if they aren't).
-        lhs_eq = equate_to_canonical_form(self.lhs)
-        rhs_eq = equate_to_canonical_form(self.rhs)
-        if lhs_eq.rhs != rhs_eq.rhs:
-            raise ProofFailure
-        return lhs_eq.apply_transitivity(rhs_eq)
+    """
 
     @staticmethod
     def WeakRelationClass():
