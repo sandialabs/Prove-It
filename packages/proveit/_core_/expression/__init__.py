@@ -3,7 +3,8 @@ from .expr import (Expression, traverse_inner_expressions, used_vars,
                    expression_depth, MakeNotImplemented,
                    ImproperReplacement)
 from .style_options import StyleOptions
-from .inner_expr import InnerExpr, generate_inner_expressions
+from .inner_expr import (InnerExpr, InnerExprGenerator,
+                         generate_inner_expressions)
 from .fencing import maybe_fenced_string, maybe_fenced_latex, maybe_fenced
 from .operation import (
     Operation, IndexedVar, Function,

@@ -81,7 +81,7 @@ class InnerExpr:
 
     '''
 
-    def __init__(self, top_level, _inner_expr_path=tuple(),
+    def __init__(self, top_level, inner_expr_path=tuple(),
                  assumptions=USE_DEFAULTS):
         '''
         Create an InnerExpr with the given top-level Expression
@@ -89,7 +89,9 @@ class InnerExpr:
         that corresponds with an item/attribute of the current
         inner expression, a new InnerExpr is generated, extending the
         path from the top level to the corresponding inner expression.
-        The _inner_expr_path is used internally for this purpose.
+        
+        If the inner_expr_path is supplied, it uses this path to start
+        out at a specific inner expression of the top level expression.
 
         Assumptions are only needed when a slice of an ExprTuple
         will be taken and getting the number of elements of
@@ -97,7 +99,7 @@ class InnerExpr:
         repl_lambda().
         '''
         from proveit import Judgment
-        self.inner_expr_path = tuple(_inner_expr_path)
+        self.inner_expr_path = tuple(inner_expr_path)
         self.expr_hierarchy = [top_level]
         if assumptions is None: assumptions = defaults.assumptions
         self.assumptions = tuple(assumptions)
@@ -677,21 +679,62 @@ class InnerExpr:
     def __repr__(self):
         return self._expr_rep().__repr__()
 
+
+class InnerExprGenerator:
+    """
+    Iterator for InnerExpr objects of a given top-level expression.
+    Optionally skip over branches via the 'skip_over_branch' method.
+    """
+    
+    def __init__(self, expr):
+        '''
+        Iterate over the InnerExpr objects of the given top-level
+        expression. 
+        '''
+        # Queue of InnerExpr's.
+        self.next_inner_exprs = deque([InnerExpr(expr)])
+        # Track the last yielded expression tree for the purpose
+        # of choosing whether or not to traverse deeper into that
+        # branch or not:
+        self._last_out = None
+    
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        '''
+        Yield the next InnerExpr object, traversing in a breadth-first
+        search manner and optionally skipping over branches via the
+        'skip_over_branch' method.
+        '''
+        next_inner_exprs = self.next_inner_exprs
+        last_out = self._last_out
+        if last_out is not None:
+            # Append the sub-expressions of last yielded InnerExpr 
+            # for deeper exploration.
+            for k, sub_expr in enumerate(last_out.sub_expr_iter()):
+                next_inner_exprs.append(last_out.sub_expr(k))
+        if len(next_inner_exprs) == 0:
+            raise StopIteration() # No more in the queue.
+        # Pop out the next InnerExpr object from the queue.
+        next_inner_expr = next_inner_exprs.popleft()
+        self._last_out = next_inner_expr
+        return next_inner_expr
+    
+    def skip_over_branch(self):
+        '''
+        Do not generate inner expressions that dig any deeper into
+        the last inner expression, skipping over that branch of the
+        expression tree.
+        '''
+        self._last_out = None
+
 def generate_inner_expressions(expr, inner):
     '''
     Yield the InnerExpr objects that represent 'inner' as an 
     inner expression of 'expr'.  There may be multiple occurrences.
     They are found using a breadth-first search approach.
     '''
-    next_inner_exprs = deque([InnerExpr(expr)])
-    while len(next_inner_exprs) > 0:
-        # Get the next InnerExpr object to process.
-        next_inner_expr = next_inner_exprs.popleft()
-        cur_sub_expr = next_inner_expr.cur_sub_expr()
-        if cur_sub_expr == inner:
-            # Found it!
-            yield next_inner_expr
-        # Append the sub-expressions of next_inner_expr for deeper
-        # exploration.
-        for k, sub_expr in enumerate(cur_sub_expr.sub_expr_iter()):
-            next_inner_exprs.append(next_inner_expr.sub_expr(k))
+    for inner_expr in InnerExprGenerator(expr):
+        if inner_expr.cur_sub_expr() == inner:
+            yield inner_expr
