@@ -165,9 +165,13 @@ class LessEq(NumberOrderingRelation):
         From a <= b, derive and return -b <= -a.
         Assumptions may be required to prove that a, and b are in Real.
         '''
-        from . import negated_less_eq
-        new_rel = negated_less_eq.instantiate(
-                {a: self.lower, b: self.upper})
+        # from . import negated_less_eq
+        # new_rel = negated_less_eq.instantiate(
+        #         {a: self.lower, b: self.upper})
+        # return new_rel.with_mimicked_style(self)
+        from proveit.numbers.negation import negated_weak_bound
+        new_rel = negated_weak_bound.instantiate(
+                {x: self.lower, y: self.upper})
         return new_rel.with_mimicked_style(self)
 
     @prover
