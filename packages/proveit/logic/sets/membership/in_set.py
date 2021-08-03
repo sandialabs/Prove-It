@@ -150,7 +150,7 @@ class InSet(Relation):
             elem_simplification = self.element.simplification()
             if elem_simplification.lhs == elem_simplification.rhs:
                 elem_simplification = None  # reflection doesn't count
-        except SimplificationError:
+        except (SimplificationError, ProofFailure):
             pass
 
         # If the element simplification succeeded, prove the membership

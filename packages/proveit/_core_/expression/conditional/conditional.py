@@ -101,30 +101,36 @@ class Conditional(Expression):
     def with_conjunction_delimiter(self):
         return self.with_styles(condition_delimiter='and')
 
-    def _formatted_condition(self, format_type):
+    def _formatted_condition(self, format_type, **kwargs):
         from proveit.logic import And
         if self.get_style('condition_delimiter') == 'comma':
             if (isinstance(self.condition, And)
                     and self.condition.operands.num_entries() > 1):
                 return self.condition.operands.formatted(
                     format_type, fence=False, sub_fence=False,
-                    operator_or_operators=', ')
+                    operator_or_operators=', ', **kwargs)
         return self.condition.formatted(format_type)
 
     def string(self, **kwargs):
-        formatted_condition = self._formatted_condition('string')
-        inner_str = self.value.string() + ' if ' + formatted_condition
-        if kwargs.get('fence', True):
-            return '{' + inner_str + '.'
-        return inner_str
+        return self.formatted('string', **kwargs)
 
     def latex(self, **kwargs):
-        formatted_condition = self._formatted_condition('latex')
-        inner_str = (self.value.latex() + r' \textrm{ if } '
-                     + formatted_condition)
-        if kwargs.get('fence', True):
-            inner_str = r'\left\{' + inner_str + r'\right..'
-        return inner_str
+        return self.formatted('latex', **kwargs)
+
+    def formatted(self, format_type, fence=True, **kwargs):
+        if format_type == "string":
+            formatted_condition = self._formatted_condition('string', **kwargs)
+            inner_str = self.value.formatted('string', **kwargs) + ' if ' + formatted_condition
+            if fence:
+                return '{' + inner_str + '.'
+            return inner_str
+        else:
+            formatted_condition = self._formatted_condition('latex', **kwargs)
+            inner_str = (self.value.formatted('latex', **kwargs) + r' \textrm{ if } '
+                         + formatted_condition)
+            if fence:
+                inner_str = r'\left\{' + inner_str + r'\right..'
+            return inner_str
 
     def basic_replaced(self, repl_map, *,
                        allow_relabeling=False, requirements=None):

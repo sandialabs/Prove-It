@@ -1,5 +1,5 @@
 from proveit import (defaults, equality_prover, Literal, Operation,
-                     prover, TransRelUpdater)
+                     Function, prover, TransRelUpdater)
 from proveit import f, x, y, alpha, S  # a_etc, x_etc, y_etc, z_etc,
 from proveit.logic import Equals
 from proveit.numbers import one, num, subtract
@@ -132,7 +132,7 @@ class TensorProd(Operation):
             _z_sub = self.factors[factor_idx + 1:]
             return distribute_tensor_prod_over_summation.instantiate(
                 {_m: _m_sub, _n: _n_sub, _x: _x_sub,
-                Operation(f, index, styles=None): _f_sub, _S: _S_sub,
+                Function(f, index, styles=None): _f_sub, _S: _S_sub,
                 _y: _y_sub, _z: _z_sub})
         else:
             raise ValueError(self, defaults.assumptions,
