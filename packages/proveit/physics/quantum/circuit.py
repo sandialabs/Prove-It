@@ -86,7 +86,7 @@ class Input(Function):
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
     
-    def formatted(self, format_type, solo=True, fence=False):
+    def formatted(self, format_type, solo=True, fence=False, **kwargs):
         formatted_state = self.state.formatted(format_type, fence=False)
         if format_type == 'latex':
             spacing = '@C=1em @R=.7em'
@@ -129,7 +129,7 @@ class Output(Function):
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
 
-    def formatted(self, format_type, solo=True, fence=False):
+    def formatted(self, format_type, solo=True, fence=False, **kwargs):
         formatted_state = self.state.formatted(format_type, fence=False)
         if format_type == 'latex':
 
@@ -447,7 +447,7 @@ class MultiQubitGate(Function):
         return empty_multi_qubit_gate_reduction.instantiate(
             {U: self.gate})
 
-    def formatted(self, format_type, representation=None, solo=True, **kwargs):
+    def formatted(self, format_type, representation=None, solo=True, show_mqp_set=None, **kwargs):
         if representation is None:
             representation = self.get_style('representation', 'explicit')
 
@@ -499,23 +499,29 @@ class MultiQubitGate(Function):
                 out_str += formatted_gate_operation
             else:
                 from proveit.numbers import is_literal_int
-                if isinstance(
-                        self.gate_set, Set) and all(
-                        is_literal_int(entry) for entry in self.gate_set.operands):
-                    # everything is a literal
-                    if solo:
+                if show_mqp_set is None:
+                    if isinstance(
+                            self.gate_set, Set) and all(
+                            is_literal_int(entry) for entry in self.gate_set.operands):
+                        # everything is a literal
+                        if solo:
+                            out_str += r'\gate{' + formatted_gate_operation + \
+                                r'{\Big \{} ' + self.gate_set.formatted(format_type) + r'}'
+                        else:
+                            out_str += formatted_gate_operation
+                    # elif isinstance(self.gate, IdentityOp()):
+                    #     out_str += formatted_gate_operation + \
+                    #                r'{\Big \{} ' + self.gate_set.formatted(format_type) + r'}'
+                    else:
                         out_str += r'\gate{' + formatted_gate_operation + \
                             r'{\Big \{} ' + self.gate_set.formatted(format_type) + r'}'
+                        #out_str += formatted_gate_operation + r'{\Big \{}' + self.gate_set.formatted(format_type)
+                else:
+                    if show_mqp_set:
+                        out_str += r'\gate{' + formatted_gate_operation + \
+                                   r'{\Big \{} ' + self.gate_set.formatted(format_type) + r'}'
                     else:
                         out_str += formatted_gate_operation
-                # elif isinstance(self.gate, IdentityOp()):
-                #     out_str += formatted_gate_operation + \
-                #                r'{\Big \{} ' + self.gate_set.formatted(format_type) + r'}'
-                else:
-                    out_str += r'\gate{' + formatted_gate_operation + \
-                        r'{\Big \{} ' + self.gate_set.formatted(format_type) + r'}'
-                    #out_str += formatted_gate_operation + r'{\Big \{}' + self.gate_set.formatted(format_type)
-
             if solo:
                 out_str = r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n' + '& ' + out_str
                 out_str += ' \n' + r'} \hspace{2em}'
@@ -1335,7 +1341,6 @@ class Circuit(Function):
                         pass
             first = 0
 
-
     def _find_wires(self):
         '''
         Takes a Circuit object and determines where wires should be
@@ -1356,21 +1361,34 @@ class Circuit(Function):
         # k is each row
         col = 0
         # col is each column
-        #print(self.array.get_row_length())
-        for entry in self.array.get_formatted_sub_expressions(format_type='string', orientation='horizontal',
-                                                              default_style='implicit', operator_or_operators=None):
+
+        for entry in self.array.get_formatted_sub_expressions(format_type='string',
+                                                              orientation='horizontal',
+                                                              default_style='implicit',
+                                                              operator_or_operators=None):
 
             if col == self.array.get_row_length() + 1:
                 # we add one to accommodate for the wrapping slash
                 col = 0
                 k += 1
-            #print('[%i, %i]: %s' % (k, col, entry))
+            # print('[%i, %i]: %s' % (k, col, entry))
             if 'MultiQubitGate' in entry:
                 if str(col) not in col_with_mqg:
                     col_with_mqg[str(col)] = {
                         'top': k, 'bottom': k}
                 else:
                     col_with_mqg[str(col)]['bottom'] = k
+                if k == self.array.get_col_height():
+                    from proveit import ProofFailure
+                    try:
+                        from proveit.logic import Equals
+                        Equals(self.array.get_element_at(
+                               col_with_mqg[str(col)]['top'], col + 1).indices[-1],
+                               self.array.get_array_height()).prove()
+                    except ProofFailure as e:
+                           print("Unable to prove that the MultiQubitGate in row %i column %i does "
+                                 "NOT extend past the end of the circuit: \n"
+                                 % (col_with_mqg[str(col)]['top'], col + 1) + str(e))
 
             col += 1
         # for entry in self.array:
@@ -1840,6 +1858,13 @@ class Circuit(Function):
 
         return wire_placement
 
+    def _display_mqg_set(self):
+        '''
+        determines whether or not we display the mqg set
+        returns true or false
+        '''
+        return None
+
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
 
@@ -1881,7 +1906,8 @@ class Circuit(Function):
         add = ' '
         # what we add in front of the entry
         for entry in self.array.get_formatted_sub_expressions(
-                format_type, orientation, default_style, operator_or_operators, solo=False):
+                format_type, orientation, default_style, operator_or_operators,
+                solo=False, show_mqp_set=self._display_mqg_set()):
             #print(entry)
             if column == self.array.get_row_length() + 1:
                 # we add one to compensate for the added wrapping slash
