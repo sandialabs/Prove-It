@@ -132,7 +132,6 @@ class Conditional(Expression):
                 inner_str = r'\left\{' + inner_str + r'\right..'
             return inner_str
 
-
     def basic_replaced(self, repl_map, *,
                        allow_relabeling=False, requirements=None):
         '''
@@ -176,27 +175,42 @@ class Conditional(Expression):
         Properly handle the Conditional scope while doing 
         auto-simplification replacements.
         '''
-        subbed_cond = self.condition._auto_simplified(
-                requirements=requirements, 
+        recursion_fn = lambda expr, requirements, stored_replacements : (
+                     expr._auto_simplified(
+                        requirements=requirements, 
+                        stored_replacements=stored_replacements))
+        subbed_val, subbed_cond = self._equality_replaced_sub_exprs(
+                recursion_fn, requirements=requirements,
                 stored_replacements=stored_replacements)
-        # Add the 'condition' as an assumption for the 'value' scope.
-        with defaults.temporary() as temp_defaults:
-            prev_num_assumptions = len(defaults.assumptions)
-            temp_defaults.assumptions = (
-                    defaults.assumptions + (subbed_cond,))
-            if len(defaults.assumptions) > prev_num_assumptions:
-                # Since the assumptions have changed, we can no longer
-                # use the stored_replacements from before.
-                stored_replacements = dict()
-            subbed_val = self.value._auto_simplified(
-                    requirements=requirements,
-                    stored_replacements=stored_replacements)
         if (subbed_val._style_id == self.value._style_id and
                 subbed_cond._style_id == self.condition._style_id):
             # Nothing change, so don't remake anything.
             return self
         return Conditional(subbed_val, subbed_cond,
-                           styles=self._style_data.styles)
+                           styles=self._style_data.styles)        
+
+    def _equality_replaced_sub_exprs(self, recursion_fn, *, requirements, 
+                                     stored_replacements):
+        '''
+        Helper for Conditional._auto_simplified_sub_exprs and
+        Expression._manual_equality_replaced.  The 'recursion_fn'
+        allows this to satisfy both roles.
+        '''
+        subbed_cond = recursion_fn(self.condition, requirements=requirements, 
+                                   stored_replacements=stored_replacements)
+        # Add the 'condition' as an assumption for the 'value' scope.
+        assumptions_with_condition = defaults.assumptions + (subbed_cond,)
+        with defaults.temporary() as temp_defaults:
+            prev_num_assumptions = len(defaults.assumptions)
+            temp_defaults.assumptions = assumptions_with_condition
+            if len(defaults.assumptions) > prev_num_assumptions:
+                # Since the assumptions have changed, we can no longer
+                # use the stored_replacements from before.
+                stored_replacements = dict()
+            subbed_val = recursion_fn(self.value,
+                    requirements=requirements,
+                    stored_replacements=stored_replacements)
+        return (subbed_val, subbed_cond)
 
     @equality_prover('simplified', 'simplify')
     def simplification(self, **defaults_config):
@@ -394,3 +408,24 @@ class Conditional(Expression):
                              "condition_substitution on %s (the 'condition' "
                              "is not matched on either side)"
                              %(equality, self))
+
+    @equality_prover('sub_expr_substituted', 'sub_expr_substitute')
+    def sub_expr_substitution(self, new_sub_exprs, **defaults_config):
+        '''
+        Given new sub-expressions to replace existing sub-expressions,
+        return the equality between this Expression and the new
+        one with the new sub-expressions.
+        '''
+        from proveit.logic import Equals
+        from proveit.relation import TransRelUpdater
+        assert len(new_sub_exprs)==2, (
+                "Expecting 2 sub-expressions: value and condition")
+        eq = TransRelUpdater(self)
+        expr = self
+        if new_sub_exprs[0] != self.sub_expr(0):
+            expr = eq.update(expr.value_substitution(
+                    Equals(self.sub_expr(0), new_sub_exprs[0])))
+        if new_sub_exprs[1] != self.sub_expr(1):
+            expr = eq.update(expr.conditional_substitution(
+                    Equals(self.sub_expr(1), new_sub_exprs[1])))
+        return eq.relation
