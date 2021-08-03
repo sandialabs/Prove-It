@@ -33,6 +33,7 @@ class ExprType(type):
                  'equality_replaced', '_manual_equality_replaced',
                  '_auto_simplified', '_auto_simplified_sub_exprs',
                  '_range_reduction', 'relabeled',
+                 'sub_expr_substitution',
                  '_make', '_checked_make', '_reduced', '_used_vars',
                  '_possibly_free_var_ranges', '_parameterized_var_ranges',
                  '_repr_html_', '_core_info',
@@ -924,6 +925,17 @@ class Expression(metaclass=ExprType):
         It also may be desirable to store the judgment for future automation.
         '''
         return iter(())
+    
+    @equality_prover('sub_expr_substituted', 'sub_expr_substitute')
+    def sub_expr_substitution(self, new_sub_exprs, **defaults_config):
+        '''
+        Given new sub-expressions to replace existing sub-expressions,
+        return the equality between this Expression and the new
+        one with the new sub-expressions.
+        '''
+        raise NotImplementedError(
+                "sub_expr_substitution method not implemented "
+                "for %s"%self.__class__)
 
     """
     def is_simplified(self):
@@ -1064,29 +1076,62 @@ class Expression(metaclass=ExprType):
         Helper method for equality_replaced which handles the manual
         replacements.
         '''
-        from proveit import ExprRange
+        from proveit import ExprRange, Judgment, Lambda, Conditional
+        from proveit.logic import Equals
         if self in defaults.preserved_exprs:
             # This expression should be preserved, so don't make
             # any equality-based replacement.
             return self
         if self in equality_repl_map:
             replacement = equality_repl_map[self]
-            requirements.append(replacement)
-            return replacement.expr.rhs
+            if replacement.proven():
+                # The replacement must be proven under current
+                # assumptions (in the current scope) to be applicable.
+                requirements.append(replacement)
+                return replacement.expr.rhs
         elif self in stored_replacements:
             # We've handled this one before, so reuse it.
             return stored_replacements[self]
         # Recurse into the sub-expressions.
+        new_requirements = []
         sub_exprs = self._sub_expressions
-        subbed_sub_exprs = \
-            tuple(sub_expr._manual_equality_replaced(
-                    equality_repl_map, requirements=requirements,
+        if isinstance(self, Lambda):
+            # Can't use assumptions involving lambda parameter 
+            # variables. Also, don't replace lambda parameters.
+            inner_assumptions = \
+                [assumption for assumption in defaults.assumptions if
+                 free_vars(assumption, err_inclusively=True).isdisjoint(
+                     self.parameter_vars)]
+            with defaults.temporary() as temp_defaults:
+                temp_defaults.assumptions = inner_assumptions
+                # Since the assumptions have changed, we can no longer
+                # use the stored_replacements from before.
+                subbed_body = self.body._manual_equality_replaced(
+                        equality_repl_map, requirements=new_requirements, 
+                        stored_replacements=dict())
+            subbed_sub_exprs = (self.parameters, subbed_body)
+        elif isinstance(self, Conditional):
+            # Add the condition as an assumption for the equality
+            # replacement of the value.
+            recursion_fn = lambda expr, requirements, stored_replacements : (
+                         expr._manual_equality_replaced(
+                                 equality_repl_map,
+                                 requirements=requirements, 
+                                 stored_replacements=stored_replacements))
+            subbed_sub_exprs = self._equality_replaced_sub_exprs(
+                    recursion_fn, requirements=requirements,
                     stored_replacements=stored_replacements)
-                  for sub_expr in sub_exprs)
+        else:
+            subbed_sub_exprs = \
+                tuple(sub_expr._manual_equality_replaced(
+                        equality_repl_map, requirements=new_requirements,
+                        stored_replacements=stored_replacements)
+                      for sub_expr in sub_exprs)
+            
         if all(subbed_sub._style_id == sub._style_id for
                subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
             # Nothing changed, so don't remake anything.
-            replaced_expr = self
+            new_expr = self
         else:
             if isinstance(self, ExprRange):
                 # This is an ExprRange.  If the start and end indices
@@ -1096,16 +1141,34 @@ class Expression(metaclass=ExprType):
                 # via a singlular range reduction.
                 subbed_sub_exprs = ExprRange._proper_sub_expr_replacements(
                     sub_exprs, subbed_sub_exprs)
-            replaced_expr = self.__class__._checked_make(
+            new_expr = self.__class__._checked_make(
                 self._core_info, subbed_sub_exprs,
                 style_preferences=self._style_data.styles)   
-        if replaced_expr in equality_repl_map:
-            # Check if the revised expression has a replacement.
-            replacement = equality_repl_map[replaced_expr]
-            requirements.append(replacement)
-            replaced_expr = replacement.expr.rhs        
-        stored_replacements[self] = replaced_expr
-        return replaced_expr
+        # Check if the revised expression has a replacement.
+        if (new_expr is not self) and new_expr in equality_repl_map:
+            replacement = equality_repl_map[new_expr]
+            # The replacement must be proven under current
+            # assumptions (in the current scope) to be applicable.           
+            if replacement.proven():
+                # The revised expression has a replacement, so use it
+                # and make one requirement that encompasses the cascade
+                # of replacements (sub-expressions and at this level).
+                replacement1 = Equals(
+                        self, new_expr).conclude_via_direct_substitution()
+                requirement = replacement1.apply_transitivity(
+                        replacement)
+                new_expr = requirement.rhs
+                assert (requirement.proven() and 
+                        isinstance(requirement, Judgment) and
+                        isinstance(requirement.expr, Equals) and
+                        requirement.expr.lhs == self and
+                        requirement.expr.rhs == new_expr)
+                requirements.append(requirement)
+        else:
+            # Use each sub-expression replacement as-is.
+            requirements.extend(new_requirements)
+        stored_replacements[self] = new_expr
+        return new_expr
     
     def _auto_simplified(
             self, *, requirements, stored_replacements,
@@ -1118,7 +1181,6 @@ class Expression(metaclass=ExprType):
         from proveit._core_.proof import (
                 ProofFailure, UnsatisfiedPrerequisites)
         from proveit.logic import (Equals, SimplificationError,
-                                   EvaluationError,
                                    is_irreducible_value)
 
         if self in defaults.preserved_exprs:
@@ -1129,17 +1191,15 @@ class Expression(metaclass=ExprType):
             # We've handled this one before, so reuse it.
             return stored_replacements[self]
 
-        # Check for an equality replacement via equality_repl_map
-        # or as a simplification.  Note that 'replacements' override
-        # 'preserved_exprs'.
-        expr = self
         # Recurse into the sub-expressions.
-        expr = expr._auto_simplified_sub_exprs(
-                requirements=requirements, 
+        new_requirements = []
+        expr = self._auto_simplified_sub_exprs(
+                requirements=new_requirements, 
                 stored_replacements=stored_replacements)
         if (expr != self) and (expr in defaults.preserved_exprs):
             # The new expression should be preserved, so don't make
             # any further auto-simplification.
+            requirements.extend(new_requirements)
             return expr
         if auto_simplify_top_level is USE_DEFAULTS:
             auto_simplify_top_level = defaults.auto_simplify
@@ -1156,7 +1216,7 @@ class Expression(metaclass=ExprType):
                             must_evaluate=False)
                     if replacement.rhs == expr:
                         # Trivial simplification -- don't use it.
-                        return expr
+                        replacement = None
                 except (SimplificationError, UnsatisfiedPrerequisites, 
                         NotImplementedError, ProofFailure):
                     # Failure in the simplification attempt; 
@@ -1164,34 +1224,58 @@ class Expression(metaclass=ExprType):
                     pass
         if replacement is None:
             stored_replacements[self] = expr
+            requirements.extend(new_requirements)
             return expr
-        
-        # We have a replacement here; make sure it is a valid one.
-        if not isinstance(replacement, Judgment):
-            raise TypeError("'replacement' must be a "
-                            "proven equality as a Judgment: "
-                            "got %s for %s" % (replacement, expr))
-        if not isinstance(replacement.expr, Equals):
-            raise TypeError("'replacement' must be a "
-                            "proven equality: got %s for %s"
-                            % (replacement, expr))
-        if replacement.expr.lhs != expr:
-            raise TypeError("'replacement' must be a "
-                            "proven equality with 'self' on the "
-                            "left side: got %s for %s"
-                            % (replacement, expr))
-        if not replacement.is_applicable():
+        elif replacement.is_applicable():
+            # We have a replacement here; make sure it is a valid one.
+            if not isinstance(replacement, Judgment):
+                raise TypeError("'replacement' must be a "
+                                "proven equality as a Judgment: "
+                                "got %s for %s" % (replacement, expr))
+            if not isinstance(replacement.expr, Equals):
+                raise TypeError("'replacement' must be a "
+                                "proven equality: got %s for %s"
+                                % (replacement, expr))
+            if replacement.expr.lhs != expr:
+                raise TypeError("'replacement' must be a "
+                                "proven equality with 'self' on the "
+                                "left side: got %s for %s"
+                                % (replacement, expr))
+            
+            new_expr = replacement.expr.rhs
+            if new_expr != expr and expr != self:
+                # There was a simplification after sub-expressions have
+                # been simplified.  Make one requirement that 
+                # encompasses the cascade of simplifications 
+                # (sub-expressions and at this level).
+                replacement1 = Equals(self, expr)
+                if not replacement1.proven():
+                    replacement1.conclude_via_direct_substitution()
+                replacement = replacement1.apply_transitivity(
+                        replacement)
+                assert (replacement.proven() and 
+                        isinstance(replacement, Judgment) and
+                        isinstance(replacement.expr, Equals) and
+                        replacement.expr.lhs == self and
+                        replacement.expr.rhs == new_expr)
+                requirements.append(replacement)
+            elif expr != self:
+                # Just sub-expression simplifications.
+                requirements.extend(new_requirements)
+            else:
+                # Just the simplification at this level.
+                assert new_expr != expr
+                requirements.append(replacement)
+            stored_replacements[self] = new_expr
+            return new_expr
+        else:
             # The assumptions aren't adequate to use this reduction.
             return self
-        requirements.append(replacement)
-        replaced_expr = replacement.expr.rhs
-        stored_replacements[self] = replaced_expr
-        return replaced_expr
 
     def _auto_simplified_sub_exprs(
             self, *, requirements, stored_replacements):
         '''
-        Helper method for _auto_simplified do handle auto-simplification
+        Helper method for _auto_simplified to handle auto-simplification
         replacements for sub-expressions.
         '''
         from proveit import ExprRange

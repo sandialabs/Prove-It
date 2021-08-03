@@ -669,7 +669,7 @@ class Lambda(Expression):
     def _auto_simplified_sub_exprs(self, *, requirements, stored_replacements):
         '''
         Properly handle the Lambda scope while doing auto-simplification
-        replacements.
+        replacements.  Also, don't replace parameter variables.
         '''
         # Can't use assumptions involving lambda parameter variables
         inner_assumptions = \
@@ -680,10 +680,17 @@ class Lambda(Expression):
             temp_defaults.assumptions = inner_assumptions
             # Since the assumptions have changed, we can no longer use
             # the stored_replacements from before.
-            result = Expression._auto_simplified_sub_exprs(
-                    self, requirements=requirements,
+            subbed_body = self.body._auto_simplified(
+                    requirements=requirements, 
                     stored_replacements=dict())
-            return result
+            if subbed_body == self.body:
+                # Nothing change, so don't remake anything.
+                return self                
+            # Don't replace parameter variables.
+            subbed_sub_exprs = (self.parameters, subbed_body)
+            return self.__class__._checked_make(
+                    self._core_info, subbed_sub_exprs,
+                    style_preferences=self._style_data.styles)
 
     def _inner_scope_sub(self, repl_map, allow_relabeling, requirements):
         '''
@@ -1070,13 +1077,13 @@ class Lambda(Expression):
             _Q = Lambda(self.parameters, self.body.condition)
             return general_lambda_substitution.instantiate(
                     {i: _i, f: _f, g: _g, Q: _Q, 
-                    a_1_to_i: _a, b_1_to_i: _b, c_1_to_i: _c}
-                    ).derive_consequent()
+                    a_1_to_i: _a, b_1_to_i: _b, c_1_to_i: _c},
+                    preserve_expr=universal_eq).derive_consequent()
         else:
-            impl = lambda_substitution.instantiate(
+            return lambda_substitution.instantiate(
                     {i: _i, f: _f, g: _g, 
-                     a_1_to_i: _a, b_1_to_i: _b, c_1_to_i: _c})
-            return impl.derive_consequent()
+                     a_1_to_i: _a, b_1_to_i: _b, c_1_to_i: _c},
+                     preserve_expr=universal_eq).derive_consequent()
 
     @staticmethod
     def global_repl(master_expr, sub_expr, assumptions=USE_DEFAULTS):
