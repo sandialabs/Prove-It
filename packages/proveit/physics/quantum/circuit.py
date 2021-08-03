@@ -483,6 +483,8 @@ class MultiQubitGate(Function):
                 else:
                     formatted_gate_operation = r' /^{' + self.gate.number.formatted(format_type, fence=False) \
                               + r'} '
+            elif isinstance(self.gate, Gate):
+                formatted_gate_operation = self.gate.formatted(format_type, solo=False)
 
             # if r'\Qcircuit' in formatted_gate_operation:
             #     idx = formatted_gate_operation.index('\n')
@@ -495,7 +497,7 @@ class MultiQubitGate(Function):
             spacing = '@C=1em @R=.7em'
             out_str = ''
 
-            if formatted_gate_operation == 'X' and representation == 'implicit':
+            if (formatted_gate_operation == 'X' and representation == 'implicit') or 'targ' in formatted_gate_operation:
                 # this is formatted as a target.
                 out_str += r'\targ'
             elif formatted_gate_operation == 'CONTROL':
