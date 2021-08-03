@@ -185,7 +185,7 @@ class Proof:
             if all(required_proof.is_usable()
                    for required_proof in dependent.required_proofs):
                 dependent._meaning_data._unusable_proof = None  # it is usable again
-                dependent.proven_truth._addProof(
+                dependent.proven_truth._add_proof(
                     dependent)  # add it back as an option
         # Nothing should depend upon the old proof any longer.
         oldproof._dependents.clear()        
