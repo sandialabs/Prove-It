@@ -902,7 +902,11 @@ class TheoryFolderStorage:
         self.path = os.path.join(self.pv_it_dir, folder)
         if not os.path.isdir(self.path):
             # make the folder
-            os.makedirs(self.path)
+            try:
+                os.makedirs(self.path)
+            except (OSError, FileExistsError):
+                # maybe another processor beat us to it.
+                pass
 
         # For 'common', 'axioms', 'theorems' folders, we map
         # the object hash folder names to the name(s) of the
@@ -2444,7 +2448,14 @@ class StoredAxiom(StoredSpecialStmt):
 
 def remove_if_exists(path):
     if os.path.isfile(path):
-        os.remove(path)
+        try:
+            os.remove(path)
+        except FileNotFoundError:
+            # File was there and then gone.
+            # Can happen with multi-processing.
+            # Just continue.
+            pass
+            
 
 
 class StoredTheorem(StoredSpecialStmt):
@@ -2622,9 +2633,6 @@ class StoredTheorem(StoredSpecialStmt):
         presumptions_filename = os.path.join(proof_path, 'presumptions.txt')
 
         # Let's create the generic version.
-        # TODO: remove
-        if not os.path.isdir(proof_path):
-            os.mkdir(proof_path)
         if not os.path.isfile(presumptions_filename):
             with open(presumptions_filename, 'w') as f:
                 f.write(StoredTheorem.PRESUMPTIONS_HEADER + '\n')
@@ -2737,11 +2745,6 @@ class StoredTheorem(StoredSpecialStmt):
         # theorems whenever the proof is regenerated.
         proof_path = os.path.join(self.theory.get_path(), '_theory_nbs_',
                                   'proofs', self.name)
-
-        # For temporary backward compatibility, created the directory
-        # if necessary.  TODO: remove
-        if not os.path.isdir(proof_path):
-            os.mkdir(proof_path)
 
         '''
         # This is too specific and results in error during automation.

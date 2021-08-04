@@ -643,7 +643,81 @@ class Operation(Expression):
                     inner_operand = expr.inner_expr().operands[k]
                     expr = eq.update(inner_operand.simplification())
         return eq.relation
-    
+
+    @equality_prover('operator_substituted', 'operator_substitute')
+    def operator_substitution(self, equality, **defaults_config):
+        from proveit import f, g, n, x
+        from proveit.core_expr_types.operations import (
+                operator_substitution)
+        _n = self.operands.num_elements()
+        if equality.lhs == self.operator:
+            return operator_substitution.instantiate(
+                    {n:_n, x:self.operands, f:equality.lhs, g:equality.rhs})
+        elif equality.rhs == self.operator:
+            return operator_substitution.instantiate(
+                    {n:_n, x:self.operands, f:equality.rhs, g:equality.lhs})
+        else:
+            raise ValueError("%s is not an appropriate 'equality' for "
+                             "operator_substitution on %s (the 'operator' "
+                             "is not matched on either side)"
+                             %(equality, self))
+
+    @equality_prover('operands_substituted', 'operands_substitute')
+    def operands_substitution(self, equality, **defaults_config):
+        from proveit import f, n, x, y
+        from proveit.core_expr_types.operations import (
+                operands_substitution)
+        from proveit.logic.equality import substitution
+        if equality.lhs == self.operands:
+            _x, _y = equality.lhs, equality.rhs
+        elif equality.rhs == self.operands:
+            _x, _y = equality.rhs, equality.lhs
+        else:
+            raise ValueError("%s is not an appropriate 'equality' for "
+                             "operator_substitution on %s (the 'operator' "
+                             "is not matched on either side)"
+                             %(equality, self))
+        
+        if self.operands.is_single():
+            # This is a simple single-operand substitution.
+            return substitution.instantiate(
+                    {f:self.operator, x:_x[0], y:_y[0]})
+        
+        # More general mult-operand substitution:
+        _n = self.operands.num_elements()
+        if equality.lhs == self.operands:
+            return operands_substitution.instantiate(
+                    {n:_n, f:self.operator, x:equality.lhs, y:equality.rhs})
+        elif equality.rhs == self.operands:
+            return operands_substitution.instantiate(
+                    {n:_n, f:self.operator, x:equality.rhs, y:equality.lhs})
+        else:
+            raise ValueError("%s is not an appropriate 'equality' for "
+                             "operator_substitution on %s (the 'operator' "
+                             "is not matched on either side)"
+                             %(equality, self))
+     
+    @equality_prover('sub_expr_substituted', 'sub_expr_substitute')
+    def sub_expr_substitution(self, new_sub_exprs, **defaults_config):
+        '''
+        Given new sub-expressions to replace existing sub-expressions,
+        return the equality between this Expression and the new
+        one with the new sub-expressions.
+        '''
+        from proveit.logic import Equals
+        from proveit.relation import TransRelUpdater
+        assert len(new_sub_exprs)==2, (
+                "Expecting 2 sub-expressions: operator and operands")
+        eq = TransRelUpdater(self)
+        expr = self
+        if new_sub_exprs[0] != self.sub_expr(0):
+            expr = eq.update(expr.operator_substitution(
+                    Equals(self.sub_expr(0), new_sub_exprs[0])))
+        if new_sub_exprs[1] != self.sub_expr(1):
+            expr = eq.update(expr.operands_substitution(
+                    Equals(self.sub_expr(1), new_sub_exprs[1])))
+        return eq.relation
+
     def operands_are_irreducible(self):
         '''
         Return True iff all of the operands of this Operation are

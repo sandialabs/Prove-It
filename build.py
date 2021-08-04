@@ -1193,7 +1193,7 @@ if __name__ == '__main__':
         sys.stdout.flush()
         for path in all_paths:
             pv_it_dir = os.path.join(path, '__pv_it')
-            shutil.rmtree(pv_it_dir)
+            os.system('rm -fr "%s"'%pv_it_dir)
             '''
             # remove files from __pv_it folders except *.png, *.latex kinds.
             for sub in os.listdir(pv_it_dir):
@@ -1257,8 +1257,10 @@ if __name__ == '__main__':
                 Yield 'extra' notebooks (not in '_theory_nbs' folders).
                 '''
                 for main_path in paths:
-                    for path in itertools.chain(
-                            [main_path], find_theory_paths(main_path)):
+                    for _k, path in enumerate(itertools.chain(
+                            [main_path], find_theory_paths(main_path))):
+                        if _k > 0 and path==main_path:
+                            continue # avoid visiting main_path twice.
                         for sub_path in os.listdir(path):
                             full_path = os.path.join(path, sub_path)
                             if sub_path[0] == '_':
@@ -1266,10 +1268,10 @@ if __name__ == '__main__':
                                 continue
                             if (sub_path[-6:] == '.ipynb' and os.path.isfile(full_path)):
                                 yield full_path
-            mpi_build(notebook_path_generator(paths, '_theory_nbs_/demonstrations.ipynb'),
-                      no_latex=args.nolatex, git_clear=not args.nogitclear,
-                      no_execute=args.noexecute, export_to_html=True)
-            mpi_build(extra_notebook_gen(),
+            notebook_paths = itertools.chain(
+                notebook_path_generator(paths, '_theory_nbs_/demonstrations.ipynb'),
+                extra_notebook_gen())
+            mpi_build(notebook_paths,
                       no_latex=args.nolatex, git_clear=not args.nogitclear,
                       no_execute=args.noexecute, export_to_html=True)
                             

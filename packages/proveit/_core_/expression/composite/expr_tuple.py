@@ -482,6 +482,21 @@ class ExprTuple(Composite, Expression):
                 _k += 1
         return eq.relation
 
+    @equality_prover('sub_expr_substituted', 'sub_expr_substitute')
+    def sub_expr_substitution(self, new_sub_exprs, **defaults_config):
+        '''
+        Given new sub-expressions to replace existing sub-expressions,
+        return the equality between this Expression and the new
+        one with the new sub-expressions.
+        '''
+        from proveit.core_expr_types.tuples import tuple_eq_via_elem_eq
+        from proveit import a, b, i
+        _i = self.num_elements()
+        _a = self.entries
+        _b = new_sub_exprs
+        return tuple_eq_via_elem_eq.instantiate(
+                {i: _i, a: _a, b: _b})
+
     @equality_prover('substituted', 'substitute')
     def substitution(self, replacement_eq, start_idx=0,
                      **defaults_config):

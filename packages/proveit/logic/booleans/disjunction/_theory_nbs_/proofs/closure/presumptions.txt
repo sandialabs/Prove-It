@@ -1,4 +1,5 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.core_expr_types.conditionals.satisfied_condition_reduction
 proveit.core_expr_types.conditionals.singular_conjunction_condition_reduction
 proveit.core_expr_types.tuples.extended_range_from1_len
 proveit.core_expr_types.tuples.extended_range_from1_len_typical_eq
@@ -26,7 +27,7 @@ proveit.logic.booleans.negation.untrue_from_negation
 proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
 proveit.logic.equality.not_equals_symmetry
-proveit.logic.equality.sub_in_right_operands
+proveit.logic.equality.sub_in_right_operands_via_tuple
 proveit.logic.equality.sub_left_side_into
 proveit.logic.equality.sub_right_side_into
 proveit.logic.equality.unfold_not_equals
