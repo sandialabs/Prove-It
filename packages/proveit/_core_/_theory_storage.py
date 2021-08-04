@@ -2448,7 +2448,14 @@ class StoredAxiom(StoredSpecialStmt):
 
 def remove_if_exists(path):
     if os.path.isfile(path):
-        os.remove(path)
+        try:
+            os.remove(path)
+        except FileNotFoundError:
+            # File was there and then gone.
+            # Can happen with multi-processing.
+            # Just continue.
+            pass
+            
 
 
 class StoredTheorem(StoredSpecialStmt):
