@@ -140,14 +140,20 @@ class Equals(TransitiveRelation):
             # The responsibility then shifts to that method for
             # determining what strategies should be attempted
             # (with the recommendation that it should not attempt
-            # multiple non-trivial automation strategies).
-            eq = self.lhs.deduce_equality(self)
-            if eq.expr != self:
-                raise ValueError("'deduce_equality' not implemented "
-                                 "correctly; must deduce the 'equality' "
-                                 "that it is given if it can: "
-                                 "'%s' != '%s'" % (eq.expr, self))
-            return eq
+            # multiple non-trivial automation strategies), unless
+            # NotImplementedError is raised.
+            try:
+                eq = self.lhs.deduce_equality(self)
+                if eq.expr != self:
+                    raise ValueError("'deduce_equality' not implemented "
+                                     "correctly; must deduce the 'equality' "
+                                     "that it is given if it can: "
+                                     "'%s' != '%s'" % (eq.expr, self))
+                return eq
+            except NotImplementedError:
+                # 'deduce_equality' not implemented for this 
+                # particular case, so carry on with default approach.
+                pass
 
         '''
         If there is no 'deduce_equality' method, we'll try
@@ -218,6 +224,9 @@ class Equals(TransitiveRelation):
         h(c, d) = h'.
         '''
         from proveit import ExprRange
+        if self.proven():
+            # Already known.  Done.
+            return self.prove()
         def raise_different_structures():
             raise ValueError("%s and %s have different structures "
                              "and cannot be equated via direct "
@@ -275,38 +284,40 @@ class Equals(TransitiveRelation):
                 params = free_vars(equality,
                                    err_inclusively=True).intersection(
                         lambda_body_inner_expr.parameters)
+                equality = equality.prove(assumptions=assumptions)
+                
+                # If any assumptions are required that are introduced
+                # by inner conditions, we need to equate Conditionals.
+                inner_conditions = set(next_inner_lhs.conditions)
+                conditions = []
+                for assumption in equality.assumptions:
+                    if assumption in inner_conditions:
+                        conditions.append(assumption)
+                if len(conditions) > 0:
+                    # Wrap sub-expressions in Conditionals.
+                    lhs_sub_expr = Conditional(lhs_sub_expr, conditions)
+                    rhs_sub_expr = Conditional(rhs_sub_expr, conditions)
+                    # Make sure we replace the Conditional with
+                    # its value where the condition is redundant.
+                    replacement = lhs_sub_expr.satisfied_condition_reduction(
+                            assumptions=conditions)
+                    replacements.append(replacement)
+                    replacement = rhs_sub_expr.satisfied_condition_reduction(
+                            assumptions=conditions)
+                    replacements.append(replacement)
                 if len(params) > 0:
                     # We are substituting an inner scope with inner
                     # parameters.
-                    # Generalize the equality over the parameters, 
-                    # adding any of the assumptions that involve any
-                    # of the parameters as conditions.
-                    conditions = []
-                    for assumption in assumptions:
-                        assumption_free_vars = free_vars(
-                                assumption, err_inclusively=True)
-                        if not assumption_free_vars.isdisjoint(params):
-                            conditions.append(assumption)
-                    print('params/assumptions/conditions', params, assumptions, conditions)
+                    # Generalize the equality over the parameters
+                    # with appropriate conditions.
                     equality = equality.prove(assumptions=assumptions)
                     universal_eq = equality.generalize(params, 
                                                        conditions=conditions)
-                    if len(conditions) > 0:
-                        # We must equate Lambda's of Conditional.
-                        lhs_cond = Conditional(lhs_sub_expr, conditions)
-                        rhs_cond = Conditional(rhs_sub_expr, conditions)
-                        lhs_lambda = Lambda(params, lhs_cond)
-                        # Make sure we replace the Conditional with
-                        # its value where the condition is redundant.
-                        replacement = rhs_cond.satisfied_condition_reduction(
-                                assumptions=conditions)
-                        replacements.append(replacement)
-                        replacement = lhs_cond.satisfied_condition_reduction(
-                                assumptions=conditions)
-                        replacements.append(replacement)
-                    else:
-                        lhs_lambda = Lambda(params, lhs_sub_expr)
+                    lhs_lambda = Lambda(params, lhs_sub_expr)
                     equality = lhs_lambda.substitution(universal_eq)
+                elif len(conditions) > 0:
+                    # No parameters but using Conditionals.
+                    equality = Equals(lhs_sub_expr, rhs_sub_expr).prove()
                 repl_lambda = lambda_body_inner_expr.repl_lambda(
                         params_of_param=params)
                 lambda_body = repl_lambda.body
@@ -327,10 +338,9 @@ class Equals(TransitiveRelation):
         # Make the lambda map to use for substitutions.
         lambda_map = Lambda(lambda_parameters, lambda_body)
         if len(equalities) > 1:
-            # Prove that the lhs and rhs ExprTuples are equal.
-            tuple_eq = ExprTuple(
-                    *[_eq.lhs for _eq in equalities]).sub_expr_substitution(
-                    [_eq.rhs for _eq in equalities])
+            from proveit.core_expr_types.tuples import tuple_eq_via_elem_eq
+            tuple_eq = Equals(ExprTuple(*[_eq.lhs for _eq in equalities]),
+                              ExprTuple(*[_eq.rhs for _eq in equalities]))
             return tuple_eq.substitution(
                     lambda_map, replacements=replacements)
         else:
@@ -629,8 +639,15 @@ class Equals(TransitiveRelation):
                 # We must use operands_substitution for ExprTuple
                 # substitution.
                 from proveit.core_expr_types.operations import \
-                    operands_substitution
+                    operands_substitution, operands_substitution_via_tuple
                 _n = lambda_map.parameters.num_elements()
+                if self.proven():
+                    # If we know the tuples are equal, use the theorem
+                    # with this equality as a prerequisite.
+                    return operands_substitution_via_tuple.instantiate(
+                        {n: _n, f: lambda_map, x: self.lhs, y: self.rhs})
+                # Otherwise, we'll use the axiom in which the prerequisite
+                # is that the individual elements are equal.
                 return operands_substitution.instantiate(
                     {n: _n, f: lambda_map, x: self.lhs, y: self.rhs})
             # Regular single-operand substitution:
@@ -672,8 +689,13 @@ class Equals(TransitiveRelation):
                 # We must use sub_in_left_operands for ExprTuple
                 # substitution.
                 from proveit.logic.equality import \
-                    sub_in_left_operands
+                    sub_in_left_operands, sub_in_left_operands_via_tuple
                 _n = lambda_map.parameters.num_elements()
+                if self.proven():
+                    # If we know the tuples are equal, use the theorem
+                    # with this equality as a prerequisite.
+                    return sub_in_left_operands_via_tuple.instantiate(
+                        {n: _n, P: lambda_map, x: self.lhs, y: self.rhs})                    
                 return sub_in_left_operands.instantiate(
                     {n: _n, P: lambda_map, x: self.lhs, y: self.rhs})
     
@@ -741,8 +763,13 @@ class Equals(TransitiveRelation):
                 # We must use sub_in_right_operands for ExprTuple
                 # substitution.
                 from proveit.logic.equality import \
-                    sub_in_right_operands
+                    sub_in_right_operands, sub_in_right_operands_via_tuple
                 _n = lambda_map.parameters.num_elements()
+                if self.proven():
+                    # If we know the tuples are equal, use the theorem
+                    # with this equality as a prerequisite.
+                    return sub_in_right_operands_via_tuple.instantiate(
+                        {n: _n, P: lambda_map, x: self.lhs, y: self.rhs})
                 return sub_in_right_operands.instantiate(
                     {n: _n, P: lambda_map, x: self.lhs, y: self.rhs})
     
