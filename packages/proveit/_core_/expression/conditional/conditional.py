@@ -429,3 +429,19 @@ class Conditional(Expression):
             expr = eq.update(expr.conditional_substitution(
                     Equals(self.sub_expr(1), new_sub_exprs[1])))
         return eq.relation
+    
+    @equality_prover('equated', 'equate')
+    def deduce_equality(self, equality, **defaults_config):
+        from proveit.logic import Equals
+        if not isinstance(equality, Equals):
+            raise ValueError("The 'equality' should be an Equals expression")
+        if equality.lhs != self:
+            raise ValueError("The left side of 'equality' should be 'self'")
+        if (isinstance(equality.rhs, Conditional) and 
+                equality.lhs.condition==equality.rhs.condition):
+            value_eq = Equals(equality.lhs.value, equality.rhs.value)
+            value_eq.prove(assumptions=defaults.assumptions+(self.condition,))
+            return equality.lhs.value_substitution(value_eq)
+        raise NotImplementedError("Conditional.deduce_equality only implemented "
+                                  "for equating Conditionals with the same "
+                                  "condition.")
