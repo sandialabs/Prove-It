@@ -1,9 +1,4 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
-proveit.logic.booleans.conjunction.left_from_and
-proveit.logic.booleans.conjunction.right_from_and
-proveit.logic.booleans.implication.implies_f_f
-proveit.logic.booleans.implication.implies_f_t
-proveit.logic.booleans.implication.implies_t_t
 proveit.logic.booleans.implication.negated_reflex
 proveit.logic.booleans.implication.not_iff_via_not_left_impl
 proveit.logic.booleans.implication.not_iff_via_not_right_impl
