@@ -236,6 +236,12 @@ class ExprRange(Expression):
                 call_strs.append('with_explicit_parameterization()')
             if parameterization == 'implicit':
                 call_strs.append('with_implicit_parameterization()')
+        expansion = self.get_style('expansion', '1')
+        if expansion != '1':
+            call_strs.append('with_expansion(%d)'%int(expansion))
+        simplify = self.get_style('simplify', 'False')
+        if simplify != 'False':
+            call_strs.append('with_simplification()')
         return call_strs
 
     def style_options(self):
