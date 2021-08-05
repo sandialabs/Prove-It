@@ -4,9 +4,7 @@ proveit.core_expr_types.tuples.partition_front
 proveit.core_expr_types.tuples.range_from1_len
 proveit.core_expr_types.tuples.range_len
 proveit.core_expr_types.tuples.range_len_typical_eq
-proveit.core_expr_types.tuples.singular_range_reduction
 proveit.core_expr_types.tuples.tuple_len_0_typical_eq
-proveit.core_expr_types.tuples.tuple_portion_substitution
 proveit.linear_algebra.tensor_prod_associativity
 proveit.linear_algebra.unary_tensor_prod_reduction
 proveit.logic.booleans.conjunction.and_if_both
@@ -24,7 +22,7 @@ proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
 proveit.logic.equality.not_equals_symmetry
 proveit.logic.equality.rhs_via_equality
-proveit.logic.equality.sub_in_right_operands
+proveit.logic.equality.sub_in_right_operands_via_tuple
 proveit.logic.equality.sub_left_side_into
 proveit.logic.equality.sub_right_side_into
 proveit.logic.equality.unfold_not_equals
@@ -38,7 +36,6 @@ proveit.numbers.addition.disassociation
 proveit.numbers.addition.elim_zero_any
 proveit.numbers.addition.leftward_commutation
 proveit.numbers.addition.subtraction.add_cancel_triple_23
-proveit.numbers.addition.subtraction.add_cancel_triple_31
 proveit.numbers.addition.subtraction.add_cancel_triple_32
 proveit.numbers.addition.subtraction.negated_add
 proveit.numbers.addition.subtraction.subtract_from_add
@@ -143,6 +140,7 @@ proveit.numbers.numerals.decimals.posnat6
 proveit.numbers.numerals.decimals.posnat7
 proveit.numbers.numerals.decimals.posnat8
 proveit.numbers.numerals.decimals.posnat9
+proveit.numbers.numerals.decimals.range_1_expansion
 proveit.numbers.numerals.decimals.range_2_expansion
 proveit.numbers.numerals.decimals.tuple_len_1
 proveit.numbers.numerals.decimals.tuple_len_1_typical_eq
