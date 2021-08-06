@@ -29,7 +29,6 @@ class NumberOperation(Operation):
         to these particular InnerExpr objects.  Otherwise, all inner
         expressions are fair game.
         '''
-        print("Entering NumberOperation.deduce_bound()!")
         if isinstance(inner_expr_bound_or_bounds, Judgment):
             inner_expr_bound_or_bounds = inner_expr_bound_or_bounds.expr
         if isinstance(inner_expr_bound_or_bounds, ExprTuple):
@@ -40,7 +39,6 @@ class NumberOperation(Operation):
             inner_expr_bounds = inner_expr_bound_or_bounds
         inner_expr_bounds = deque(inner_expr_bounds)
         inner_relations = dict()
-        print("    inner_expr_bounds = {}".format(inner_expr_bounds))
         if len(inner_expr_bounds) == 0:
             raise ValueError("Expecting one or more 'inner_expr_bounds'")
         while len(inner_expr_bounds) > 0:
@@ -52,7 +50,6 @@ class NumberOperation(Operation):
                 inner_expr_bound = inner_expr_bound.relation
             elif isinstance(inner_expr_bound, Judgment):
                 inner_expr_bound = inner_expr_bound.expr
-                print("    inner_expr_bound was a Judgment!")
             inner = inner_expr_bound.lhs
             if inner == self:
                 raise ValueError(
@@ -63,9 +60,8 @@ class NumberOperation(Operation):
             # Apply bound to each inner expression as applicable.
             if inner_exprs_to_bound is None:
                 inner_exprs = generate_inner_expressions(self, inner)
-                print("    inner_exprs = {}".format(list(inner_exprs)))
             else:
-                inner_exprs = inner_exprs_to_bound                                
+                inner_exprs = inner_exprs_to_bound 
             for inner_expr in inner_exprs:
                 no_such_inner_expr = False
                 inner_expr_depth = len(inner_expr.expr_hierarchy)
