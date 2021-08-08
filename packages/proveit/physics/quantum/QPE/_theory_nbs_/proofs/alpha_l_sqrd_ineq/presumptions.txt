@@ -1,4 +1,5 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.core_expr_types.operations.operands_substitution_via_tuple
 proveit.core_expr_types.tuples.range_from1_len
 proveit.core_expr_types.tuples.range_from1_len_typical_eq
 proveit.core_expr_types.tuples.tuple_len_0_typical_eq
