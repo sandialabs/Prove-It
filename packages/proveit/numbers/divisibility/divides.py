@@ -408,11 +408,11 @@ class Divides(DividesRelation):
         if self.rhs == other.lhs:
             return divides_transitivity.instantiate(
                 {_x: self.lhs, _y: self.rhs, _z: other.rhs},
-                auto_simplify=False)
+                preserve_all=True)
         if self.lhs == other.rhs:
             return divides_transitivity.instantiate(
                 {_x: other.lhs, _y: other.rhs, _z: self.rhs},
-                auto_simplify=False)
+                preserve_all=True)
         else:
             raise TransitivityException(
                 self, defaults.assumptions,
