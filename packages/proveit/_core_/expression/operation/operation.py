@@ -20,7 +20,8 @@ class Operation(Expression):
         '''
         Operation.operation_class_of_operator.clear()
 
-    def __init__(self, operator, operand_or_operands, *, styles):
+    def __init__(self, operator, operand_or_operands=None, *, 
+                 operands=None, styles):
         '''
         Create an operation with the given operator and operands.
         The operator must be a Label (a Variable or a Literal).
@@ -33,20 +34,35 @@ class Operation(Expression):
         ExprTuple containing the one operand.
         '''
         from proveit._core_.expression.composite import (
-            single_or_composite_expression, Composite, ExprTuple)
+            composite_expression, single_or_composite_expression, 
+            Composite, ExprTuple)
         from proveit._core_.expression.label.label import Label
         from .indexed_var import IndexedVar
         if self.__class__ == Operation:
             raise TypeError("Do not create an object of type Operation; "
                             "use a derived class (e.g., Function) instead.")
         self.operator = operator
-        operand_or_operands = single_or_composite_expression(
-            operand_or_operands, do_singular_reduction=True)
-        if isinstance(operand_or_operands, Composite):
-            # a composite of multiple operands
-            self.operands = operand_or_operands
+        if (operand_or_operands==None) == (operands==None):
+            if operands==None:
+                raise ValueError(
+                    "Must supply either 'operand_or_operands' or 'operands' "
+                    "when constructing an Operation")
+            else:
+                raise ValueError(
+                    "Must supply 'operand_or_operands' or 'operands' but not "
+                    "both when constructing an Operation")
+        if operands is not None:
+            if not isinstance(operands, Expression):
+                operands = composite_expression(operands)
+            self.operands = operands
         else:
-            self.operands = ExprTuple(operand_or_operands) 
+            operand_or_operands = single_or_composite_expression(
+                operand_or_operands, do_singular_reduction=True)
+            if isinstance(operand_or_operands, Composite):
+                # a composite of multiple operands
+                self.operands = operand_or_operands
+            else:
+                self.operands = ExprTuple(operand_or_operands) 
         def raise_bad_operator_type(operator):
             raise TypeError('operator must be a Label or an indexed variable '
                             '(IndexedVar). %s is none of those.'
@@ -161,7 +177,7 @@ class Operation(Expression):
         return self.__class__.extract_init_arg_value(
             arg_name, self.operator, self.operands)
 
-    def _extractMyInitArgs(self):
+    def _extract_my_init_args(self):
         '''
         Call the _extract_init_args class method but will set "obj" to "self".
         This will cause extract_my_init_arg_value to be called instead of
@@ -205,6 +221,9 @@ class Operation(Expression):
         and no keyword arguments: construct the Operation by passing 
         the operator(s) and each operand individually.
         '''
+        from .function import Function
+        from proveit._core_.expression.composite import (
+            ExprTuple, Composite)
         implicit_operator = cls._implicit_operator()
         matches_implicit_operator = (operator == implicit_operator)
         if implicit_operator is not None and not matches_implicit_operator:
@@ -257,6 +276,14 @@ class Operation(Expression):
                 elif param.kind == Parameter.VAR_KEYWORD:
                     varkw = name
             pos_params = pos_params[1:] # skip 'self'
+
+            # Note: None keyword indicates that we should create a 
+            # generic Function for these all-in-one operands 
+            # (e.g. a variable representing an ExprTuple).
+            if cls==Function:
+                operands_kw = 'operands'
+            else:
+                operands_kw = None
             
             if (varkw is None):
                 # handle default implicit operator case
@@ -264,27 +291,40 @@ class Operation(Expression):
                     (len(pos_params) == 0 and var_params is not None) or (
                         len(pos_params) == operands.num_entries() 
                         and var_params is None)):
-                    # yield each operand separately
-                    for operand in operands:
-                        yield operand
-                    return
-
+                    if isinstance(operands, ExprTuple):
+                        # yield each operand separately
+                        for operand in operands:
+                            yield operand
+                        return
+                    elif not isinstance(operands, Composite):
+                        # Create a generic Operation
+                        yield operator
+                        yield (operands_kw, operands) 
+                        return
                 # handle default explicit operator case
-                if (implicit_operator is None) and (varkw is None):
+                elif (implicit_operator is None) and (varkw is None):
                     if var_params is None and len(pos_params) == 2:
                         # assume one argument for the operator and one
                         # argument for the operands
                         yield operator
-                        yield operands
+                        if isinstance(operands, Composite):
+                            yield operands
+                        else:
+                            yield (operands_kw, operands)
                         return
                     elif ((var_params is not None and len(pos_params) == 1) or 
                           (len(pos_params) == operands.num_entries() + 1 
                            and var_params is None)):
-                        # yield the operator and each operand separately
+                        # yield the operator
                         yield operator
-                        for operand in operands:
-                            yield operand
-                        return
+                        if isinstance(operands, ExprTuple):
+                            # yield each operand separately
+                            for operand in operands:
+                                yield operand
+                            return
+                        elif not isinstance(operands, Composite):
+                            yield (operands_kw, operands)
+                            return
                 raise NotImplementedError(
                     "Must implement 'extract_init_arg_value' for the "
                     "Operation of type %s if it does not fall into "
@@ -304,6 +344,7 @@ class Operation(Expression):
         consistent.  Override this method if a different behavior is 
         desired.
         '''
+        from .function import Function
         if len(core_info) != 1 or core_info[0] != 'Operation':
             raise ValueError(
                 "Expecting Operation core_info to contain exactly one item: 'Operation'")
@@ -319,6 +360,14 @@ class Operation(Expression):
                 args.append(arg)
             else:
                 kw, val = arg
+                if kw==None:
+                    # kw=None used to indicate that
+                    # we should create a generic Function
+                    # and use the 'operands' keyword
+                    # (e.g. to represent an ExprTuple of
+                    # operands with a variable).
+                    operation_class = Function
+                    kw = 'operands'
                 kw_args[kw] = val
         return operation_class(*args, **kw_args, styles=styles)
 
@@ -327,7 +376,7 @@ class Operation(Expression):
         Yield the argument values or (name, value) pairs
         that could be used to recreate the Operation.
         '''
-        for arg in self._extractMyInitArgs():
+        for arg in self._extract_my_init_args():
             yield arg
 
     def remake_with_style_calls(self):
@@ -351,14 +400,18 @@ class Operation(Expression):
     def string(self, **kwargs):
         # When there is a single operand, we must use the "function"-style
         # formatting.
-        if self.get_style('operation', 'function') == 'function':
+        from proveit._core_.expression.composite.expr_tuple import ExprTuple
+        if (isinstance(self.operands, ExprTuple) and 
+                self.get_style('operation', 'function') == 'function'):
             return self._function_formatted('string', **kwargs)
         return self._formatted('string', **kwargs)
 
     def latex(self, **kwargs):
         # When there is a single operand, we must use the "function"-style
         # formatting.
-        if self.get_style('operation', 'function') == 'function':
+        from proveit._core_.expression.composite.expr_tuple import ExprTuple
+        if (isinstance(self.operands, ExprTuple) and
+                self.get_style('operation', 'function') == 'function'):
             return self._function_formatted('latex', **kwargs)
         return self._formatted('latex', **kwargs)
 
@@ -386,64 +439,62 @@ class Operation(Expression):
         the operator that is obtained from self.operator.formatted(format_type).
 
         '''
-        if hasattr(self, 'operator'):
-            return Operation._formattedOperation(
-                format_type,
-                self.operator,
-                self.operands,
-                wrap_positions=self.wrap_positions(),
-                justification=self.get_style('justification', 'center'),
-                **kwargs)
-        else:
-            return Operation._formattedOperation(
-                format_type,
-                self.operators,
-                self.operands,
-                wrap_positions=self.wrap_positions(),
-                justification=self.get_style('justification', 'center'),
-                **kwargs)
+        return Operation._formatted_operation(
+            format_type,
+            self.operator,
+            self.operands,
+            wrap_positions=self.wrap_positions(),
+            justification=self.get_style('justification', 'center'),
+            **kwargs)
 
     @staticmethod
-    def _formattedOperation(
-            format_type,
-            operator_or_operators,
-            operands,
-            wrap_positions,
-            justification,
-            implicit_first_operator=False,
+    def _formatted_operation(
+            format_type, operator_or_operators, operands,
+            wrap_positions, justification, implicit_first_operator=False,
             **kwargs):
         from proveit import ExprRange, ExprTuple, composite_expression
-        if isinstance(
-                operator_or_operators,
-                Expression) and not isinstance(
-                operator_or_operators,
-                ExprTuple):
-            operator = operator_or_operators
+        if (isinstance(operator_or_operators, Expression) and 
+                not isinstance(operator_or_operators, ExprTuple)):
             # Single operator case.
-            # Different formatting when there is 0 or 1 element, unless
-            # it is an ExprRange.
-            if operands.num_entries() < 2:
-                if operands.num_entries() == 0 or not isinstance(
-                        operands[0], ExprRange):
-                    if format_type == 'string':
-                        return '[' + operator.string(fence=True) + '](' + operands.string(
-                            fence=False, sub_fence=False) + ')'
-                    else:
-                        return r'\left[' + operator.latex(fence=True) + r'\right]\left(' + operands.latex(
-                            fence=False, sub_fence=False) + r'\right)'
-                    raise ValueError(
-                        "Unexpected format_type: " + str(format_type))
-            fence = kwargs.get('fence', False)
-            sub_fence = kwargs.get('sub_fence', True)
-            do_wrapping = len(wrap_positions) > 0
-            formatted_str = ''
-            formatted_str += operands.formatted(format_type,
-                                                fence=fence,
-                                                sub_fence=sub_fence,
-                                                operator_or_operators=operator,
-                                                wrap_positions=wrap_positions,
-                                                justification=justification)
-            return formatted_str
+            operator = operator_or_operators
+            if isinstance(operands, ExprTuple):
+                # An ExprTuple of operands.
+                # Different formatting when there is 0 or 1 element, unless
+                # it is an ExprRange.
+                if operands.num_entries() < 2:
+                    if operands.num_entries() == 0 or not isinstance(
+                            operands[0], ExprRange):
+                        if format_type == 'string':
+                            return ('[' + operator.string(fence=True) + '](' 
+                                    + operands.string(fence=False, sub_fence=False) + ')')
+                        else:
+                            return (r'\left[' + operator.latex(fence=True) + r'\right]\left(' 
+                                    + operands.latex(fence=False, sub_fence=False) + r'\right)')
+                        raise ValueError(
+                            "Unexpected format_type: " + str(format_type))
+                fence = kwargs.get('fence', False)
+                sub_fence = kwargs.get('sub_fence', True)
+                do_wrapping = len(wrap_positions) > 0
+                formatted_str = ''
+                formatted_str += operands.formatted(format_type,
+                                                    fence=fence,
+                                                    sub_fence=sub_fence,
+                                                    operator_or_operators=operator,
+                                                    wrap_positions=wrap_positions,
+                                                    justification=justification)
+                return formatted_str
+            else:
+                # The operands ExprTuple are being represented by a Variable
+                # (or Operation) equating to an ExprTuple.  We will format this
+                # similarly as when we have 1 element except we drop the
+                # round parantheses.  For example, [+]a, where a represents
+                # the ExprTuple of operands for the '+' operation.
+                if format_type == 'string':
+                    return '[' + operator.string(fence=True) + ']' + operands.string(
+                        fence=False, sub_fence=False)
+                else:
+                    return (r'\left[' + operator.latex(fence=True) + r'\right]' 
+                            + operands.latex(fence=False, sub_fence=False))
         else:
             operators = operator_or_operators
             operands = composite_expression(operands)

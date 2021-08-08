@@ -1187,7 +1187,7 @@ class Judgment:
         html += '</span>'
         return html
 
-    def inner_expr(self):
+    def inner_expr(self, assumptions=USE_DEFAULTS):
         '''
         Return an InnerExpr object to wrap the Judgment and
         access any inner sub-expression (including assumptions or
@@ -1196,7 +1196,10 @@ class Judgment:
         or relabeling variables.
         '''
         from .expression.inner_expr import InnerExpr
-        return InnerExpr(self, assumptions=self.assumptions)
+        if assumptions==USE_DEFAULTS:
+            assumptions=defaults.assumptions
+        assumptions = tuple(assumptions) + self.assumptions
+        return InnerExpr(self, assumptions=assumptions)
 
 
 def as_expression(truth_or_expression):

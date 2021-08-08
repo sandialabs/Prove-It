@@ -539,13 +539,6 @@ class InnerExpr:
             involved_params = tuple()
         repl_lambda = self.repl_lambda(params_of_param
                                        =involved_params)
-        if (isinstance(cur_inner_expr, ExprTuple)
-                and len(self.expr_hierarchy) > 2
-                and isinstance(self.expr_hierarchy[-2], Operation)):
-            # When replacing operands of an operation, we need a
-            # a repl_lambda with a range of parameters.
-            repl_lambda = self[:].repl_lambda(
-                    params_of_param=involved_params)
         replacements = []
         if len(involved_params) > 0:
             # Change the equivalence to an appropriate
@@ -713,7 +706,12 @@ class InnerExprGenerator:
             # Append the sub-expressions of last yielded InnerExpr 
             # for deeper exploration.
             for k, sub_expr in enumerate(last_out.sub_expr_iter()):
-                next_inner_exprs.append(last_out.sub_expr(k))
+                if isinstance(last_out, Lambda) and k==0:
+                    # Skip the Lambda 'parameters'.
+                    continue
+                next_inner_expr = last_out.sub_expr(k)
+                last_sub_expr = last_out.cur_sub_expr()
+                next_inner_exprs.append(next_inner_expr)
         if len(next_inner_exprs) == 0:
             raise StopIteration() # No more in the queue.
         # Pop out the next InnerExpr object from the queue.
