@@ -168,7 +168,7 @@ class Exp(NumberOperation):
             expr = self
             eq = TransRelUpdater(expr)
             expr = eq.update(exp_nat_pos_expansion.instantiate(
-                    {x:self.base, n:self.exponent}))
+                    {x:self.base, n:self.exponent}, preserve_all=True))
             # We should come up with a better way of reducing
             # ExprRanges representing repetitions:
             _n = self.exponent.as_int()
