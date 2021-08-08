@@ -38,7 +38,7 @@ class And(Operation):
                     rel.get_style('direction', 'normal') == 'normal'
                     else rel.__class__.reversed_operator_str(format_type)
                     for rel in relations]
-            return Operation._formattedOperation(
+            return Operation._formatted_operation(
                 format_type,
                 formatted_operators,
                 operands,
