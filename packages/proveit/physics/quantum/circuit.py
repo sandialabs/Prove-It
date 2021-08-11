@@ -376,6 +376,9 @@ class MultiQubitGate(Function):
             self.indices = None
         self.gate_set = gate_set
         self.gate = gate
+        if isinstance(gate, MultiQubitGate):
+            raise ValueError("A MultiQubitGate should not have a "
+                             "MultiQubitGate as it's 'gate'")
         Function.__init__(self, MultiQubitGate._operator_,
                            (gate, gate_set), styles=styles)
 
