@@ -1,4 +1,5 @@
 from proveit import Literal, Operation
+from proveit import a, b
 # from proveit.basiclogic.generic_ops import BinaryOperation
 # from proveit.numbers.number_sets import NumberOp, Integer
 
@@ -109,10 +110,10 @@ class ModAdd(Operation):
         Operation.__init__(self, ModAdd._operator_, (a, b),
                            styles=styles)
 
-    def _closureTheorem(self, number_set):
-        from .theorems import mod_add_closure
-        if number_set == Integer:
-            return mod_add_closure
+    def deduce_in_interval(self):
+        from . import mod_add_closure
+        _a, _b = self.operands
+        return mod_add_closure.instantiate({a:_a, b:_b})
 
 
 class SubIndexed(Operation):
