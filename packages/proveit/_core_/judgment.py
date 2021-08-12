@@ -8,9 +8,11 @@ with possibly fewer assumptions, suffices).
 
 from proveit._core_.expression import Expression
 from proveit._core_._unique_data import meaning_data, style_data
+from proveit.decorators import prover
 from .defaults import defaults, USE_DEFAULTS
 import re
 from copy import copy
+from inspect import signature, Parameter
 
 
 class _ExprProofs:
@@ -79,6 +81,7 @@ class Judgment:
 
     # Call the begin_proof method to begin a proof of a Theorem.
     theorem_being_proven = None  # Theorem being proven.
+    theorem_being_proven_str = None # in string form.
     # Has the theorem_being_proven been proven yet in this session?
     has_been_proven = None  
     # Goes from None to False (after beginning a proof and disabling 
@@ -89,9 +92,11 @@ class Judgment:
     # purposes of the proof being proven and exclusions thereof:
     presumed_theorems_and_theories = None
     presuming_theorem_and_theory_exclusions = None
+    
+    # Set of theorems that have been presumed or their dependencies
+    # (direct or indirect).
+    presumed_theorems_and_dependencies = None
 
-     # set if theorems and theories excluded from presumptions
-    presuming_exclusions = None 
     qed_in_progress = False  # set to true when "%qed" is in progress
 
     # Judgments for which derive_side_effects is in progress, tracked to 
@@ -108,9 +113,11 @@ class Judgment:
         Judgment.lookup_dict.clear()
         Judgment.sideeffect_processed.clear()
         Judgment.theorem_being_proven = None
+        Judgment.theorem_being_proven_str = None
         Judgment.has_been_proven = None
-        Judgment.presuming_theorems = None
-        Judgment.presuming_prefixes = None
+        Judgment.presumed_theorems_and_theories = None
+        Judgment.presuming_theorem_and_theory_exclusions = None
+        Judgment.presumed_theorems_and_dependencies = None
         Judgment.qed_in_progress = False
         _ExprProofs.all_expr_proofs.clear()
         assert len(Judgment.in_progress_to_derive_sideeffects) == 0, (
@@ -157,7 +164,7 @@ class Judgment:
                 expr_proofs = _ExprProofs(self.expr)
             self._meaning_data._expr_proofs = expr_proofs
             # Initially, _proof is None but will be assigned and updated
-            # via _addProof()
+            # via _add_proof()
             self._meaning_data._proof = None
 
         # The style data is shared among Judgments with the same 
@@ -195,22 +202,21 @@ class Judgment:
         obj_ids = re.split(r";|\[|,|\]", unique_rep)
         return [obj_id for obj_id in obj_ids if len(obj_id) > 0]
 
-    def derive_side_effects(self, assumptions):
+    def derive_side_effects(self):
         '''
         Derive any side-effects that are obvious consequences arising 
         from this truth.  Called after the corresponding Proof is 
         complete.
         '''
-        from .proof import ProofFailure
+        from .proof import ProofFailure, UnsatisfiedPrerequisites
         if not defaults.automation:
             return  # automation disabled
         # Sort the assumptions according to hash key so that sets of
         # assumptions are unique for determining which side-effects have
-        # been processedalready.
+        # been processed already.
+        assumptions = defaults.assumptions
         sorted_assumptions = tuple(
-            sorted(
-                assumptions,
-                key=lambda expr: hash(expr)))
+            sorted(assumptions, key=lambda expr: hash(expr)))
         if (self.expr, sorted_assumptions) in Judgment.sideeffect_processed:
             return  # has already been processed
         if self not in Judgment.in_progress_to_derive_sideeffects:
@@ -226,8 +232,8 @@ class Judgment:
                         # use the default assumptions which are 
                         # temporarily set to the assumptions utilized
                         # in the last derivation step.
-                        side_effect(assumptions=assumptions)
-                    except ProofFailure:
+                        side_effect()
+                    except (ProofFailure, UnsatisfiedPrerequisites):
                         pass
                     except Exception as e:
                         raise Exception(
@@ -292,14 +298,15 @@ class Judgment:
         presumptions, exclusions = theorem.get_presumptions_and_exclusions()
 
         if str(self) in presumptions:
+            # A theorem may not presume itself!
             from .proof import CircularLogic
-            # extra sanity check (should be caught within
-            # get_all_presumed_theorem_names)
             raise CircularLogic(theorem, theorem)
 
         Judgment.theorem_being_proven = theorem
+        Judgment.theorem_being_proven_str = str(theorem)
         Judgment.presumed_theorems_and_theories = presumptions
         Judgment.presuming_theorem_and_theory_exclusions = exclusions
+        Judgment.presumed_theorems_and_dependencies = set()
         Theorem.update_usability()
 
         # change Judgment.has_been_proven
@@ -350,13 +357,15 @@ class Judgment:
         proof = self.proof()
         return proof is not None and proof.is_usable()
 
-    def is_sufficient(self, assumptions):
+    def is_applicable(self, assumptions=USE_DEFAULTS):
         '''
-        Return True iff the given assumptions satisfy the Judgment;
-        the Judgment is usable and requires a subset of the given 
-        assumptions.
+        Return True iff this Judgment is usable and applicable under 
+        the default assumptions.
         '''
-        return self.is_usable() and self.assumptions_set.issubset(assumptions)
+        if assumptions is USE_DEFAULTS:
+            assumptions = defaults.assumptions
+        return (self.is_usable() and 
+                self.assumptions_set.issubset(assumptions))
 
     def as_theorem_or_axiom(self):
         '''
@@ -408,7 +417,7 @@ class Judgment:
         for theorem in sorted(dependents):
             print(theorem)
 
-    def _discardProof(self, proof):
+    def _discard_proof(self, proof):
         '''
         Discard a disabled proof as an option in the _ExprProofs object.
         Don't change self._meaning_data._proof, now, however.  It will 
@@ -417,17 +426,19 @@ class Judgment:
         '''
         self._expr_proofs.discard(proof)
 
-    def _addProof(self, newproof=None):
+    def _add_proof(self, newproof=None):
         '''
         After a Proof is finished being constructed, record the best
-        proof for the Judgment which may be the new proof, 'proof',
-        or a pre-existing one.  Update all Judgments
-        with the same 'truth' expression that should be updated.
+        proof for the Judgment which may be the new proof, 'newproof',
+        or a pre-existing one.  Update other Judgments that use the
+        same 'truth' expression as needed.
         '''
-        # print 'record best', self.expr, 'under', self.assumptions
         # update Judgment.lookup_dict and use find all of the Judgments
         # with this expr to see if the proof should be updated with the
         # new proof.
+
+        if self._meaning_data._proof == newproof:
+            return # Not a new proof.
 
         if not newproof.is_usable():
             # Don't bother with a disabled proof unless it is the only
@@ -441,10 +452,11 @@ class Judgment:
         # Check to see if the new proof is applicable to any other 
         # Judgment.  It can replace an old proof if it became unusable 
         # or if the newer one uses fewer steps.
+        newproof_numsteps = newproof.num_steps()
         expr_judgments = Judgment.lookup_dict.setdefault(self.expr, set())
         expr_judgments.add(self)
         for expr_judgment in expr_judgments:
-            # Is 'proof' applicable to 'expr_judgment'?
+            # Is 'newproof' applicable to 'expr_judgment'?
             if newproof.proven_truth.assumptions_set.issubset(
                     expr_judgment.assumptions_set):
                 # replace if there was no pre-existing usable proof or 
@@ -453,16 +465,16 @@ class Judgment:
                 if (preexisting_proof is None or
                         not preexisting_proof.is_usable() or
                         newproof.num_steps() < preexisting_proof.num_steps()):
-                    expr_judgment._updateProof(
+                    expr_judgment._update_proof(
                         newproof)  # replace an old proof
 
-    def _reviseProof(self):
+    def _revise_proof(self):
         '''
         After a proof and its dependents have been disabled, we will see
         if there is another proof that is usable (see Proof.disable()).
         Return True iff the proof actually changed to something usable.
         '''
-        return self._updateProof(self._expr_proofs.best_proof(self))
+        return self._update_proof(self._expr_proofs.best_proof(self))
 
     """
     def _recordBestProof(self, new_proof):
@@ -478,7 +490,7 @@ class Judgment:
         same Judgment as a dependent will necessarily include the
         number of steps of the original proof plus more).
         '''
-        self._updateProof(self._expr_proofs.best_proof(self))
+        self._update_proof(self._expr_proofs.best_proof(self))
 
 
         from proof import Theorem
@@ -500,14 +512,14 @@ class Judgment:
             if self.assumptions_set == other.assumptions_set:
                 if not other._proof.is_usable():
                     # use the new proof since the old one is unusable.
-                    other._updateProof(new_proof)
+                    other._update_proof(new_proof)
                 elif new_proof.num_steps <= other._proof.num_steps:
                     if new_proof.required_proofs != other._proof.required_proofs:
                         # use the new (different) proof that does the job as well or better
                         if isinstance(new_proof, Theorem):
                             # newer proof is a theorem; record the existing proof as a possible proof for that theorem
                             new_proof._possibleProofs.append(other._proof)
-                        other._updateProof(new_proof)
+                        other._update_proof(new_proof)
                 else:
                     # the new proof was born obsolete, taking more steps than an existing one
                     if isinstance(other._proof, Theorem):
@@ -518,7 +530,7 @@ class Judgment:
                     born_obsolete = True
             elif self.assumptions_set.issubset(other.assumptions_set):
                 # use the new proof that does the job better
-                other._updateProof(new_proof)
+                other._update_proof(new_proof)
             elif self.assumptions_set.issuperset(other.assumptions_set) and other._proof.is_usable():
                 # the new proof was born obsolete, requiring more assumptions than an existing one
                 self._proof = other._proof # use an old proof that does the job better
@@ -540,9 +552,10 @@ class Judgment:
         Judgment.lookup_dict[self.expr] = kept_truths
     """
 
-    def _updateProof(self, new_proof):
+    def _update_proof(self, new_proof):
         '''
-        Update the proof of this Judgment.  Return True iff the proof actually changed to something usable.
+        Update the proof of this Judgment.  Return True iff the proof 
+        actually changed to something usable.
         '''
         meaning_data = self._meaning_data
 
@@ -568,7 +581,7 @@ class Judgment:
             return False  # no change
 
         # swap out the old proof for the new proof in all dependencies
-        meaning_data._proof._updateDependencies(new_proof)
+        meaning_data._proof._update_dependencies(new_proof)
         meaning_data._proof = new_proof  # set to the new proof
 
         return True
@@ -612,7 +625,6 @@ class Judgment:
         included.
         '''
         from proveit import defaults, USE_DEFAULTS
-        import inspect
 
         # called only if the attribute does not exist in Judgment 
         # directly
@@ -630,35 +642,25 @@ class Judgment:
                     new_style_expr = attr.__call__(*args, **kwargs)
                     return self.with_matching_styles(new_style_expr, [])
                 return call_method_for_new_style
-            argspec = inspect.getfullargspec(attr)
-            if ('assumptions' in argspec.args
-                    or 'assumptions' in argspec.kwonlyargs):
+            sig = signature(attr)
+            if ('defaults_config' in sig.parameters and
+                    (sig.parameters['defaults_config'].kind 
+                     == Parameter.VAR_KEYWORD)):
                 # The attribute is a callable function with
-                # 'assumptions' as an argument.
+                # 'defaults_config' as an argument (e.g., a prover).
                 # Automatically include the Judgment assumptions.
-
-                # note, index zero is self.
-                if 'assumptions' in argspec.args:
-                    assumptions_idx = argspec.args.index('assumptions') - 1
-                else:
-                    assumptions_idx = None  # 'assumptions' is kwonly
-
-                def call_method_with_judgment_assumptions(*args, **kwargs):
-                    if (assumptions_idx is not None and
-                            len(args) > assumptions_idx):
-                        args = list(args)
-                        assumptions = args[assumptions_idx]
-                        assumptions = defaults.checked_assumptions(assumptions)
-                        assumptions += self.assumptions
-                        args[assumptions_idx] = \
-                            defaults.checked_assumptions(assumptions)
-                    else:
-                        assumptions = kwargs.get('assumptions', USE_DEFAULTS)
-                        assumptions = defaults.checked_assumptions(assumptions)
-                        assumptions = tuple(assumptions) + self.assumptions
-                        kwargs['assumptions'] = \
-                            defaults.checked_assumptions(assumptions)
-                    return attr.__call__(*args, **kwargs)
+                def call_method_with_judgment_assumptions(
+                        *args, **defaults_config):
+                    if len(self.assumptions) > 0:
+                        # Include assumptions of the Judgment.
+                        assumptions = defaults_config.get(
+                                'assumptions', None)
+                        if assumptions is None: 
+                            assumptions=defaults.assumptions
+                        if not self.assumptions_set.issubset(assumptions):
+                            defaults_config['assumptions'] = \
+                                tuple(assumptions) + self.assumptions
+                    return attr.__call__(*args, **defaults_config)
                 return call_method_with_judgment_assumptions
 
         return attr
@@ -689,15 +691,15 @@ class Judgment:
                                 assumptions_dict.pop(assumption)))
             else:
                 new_style_assumptions.append(assumption)
-        new_style_judgment = \
-            Judgment(new_style_expr, new_style_assumptions)
         if ((new_style_expr._style_id == self.expr._style_id) and
                 all(new_style_assumption._style_id == old_assumption._style_id
                     for new_style_assumption, old_assumption in zip(
                             new_style_assumptions, self.assumptions))):
             # Nothing has changed.
             return self
-            
+        
+        new_style_judgment = \
+            Judgment(new_style_expr, new_style_assumptions)
         proof = new_style_judgment.proof()
         if proof is not None:
             # Update the style for the proof if there is one.
@@ -776,8 +778,9 @@ class Judgment:
         return self._checkedTruth(Specialization(self, num_forall_eliminations=0, relabel_map=relabel_map, assumptions=self.assumptions))
     """
 
+    @prover
     def instantiate(self, repl_map=None, *, num_forall_eliminations=None,
-                    assumptions=USE_DEFAULTS):
+                    **defaults_config):
         '''
         Performs an instantiation derivation step to be proven under the 
         given assumptions, in addition to the assumptions of the 
@@ -800,7 +803,14 @@ class Judgment:
         
         Replacements are made simultaneously.  For example, the 
         {x:y, y:x} mapping will swap x and y variables.
-
+        
+        If equality 'replacements' are specified or 'auto_simplify'
+        is True (in proveit.defaults which may be temporarily set
+        via keyword arguments), equality replacements may be made
+        in the process via equality judgements where the left-hand-side
+        is the expression being replaced and the right-hand-side is the
+        replacement.
+        
         Returns the proven instantiated Judgment, or throws an exception
         if the proof fails.  For the proof to succeed, all conditions of
         eliminated Forall operations, after replacements are made, must
@@ -811,30 +821,29 @@ class Judgment:
         '''
         from proveit import (Variable, Operation, Conditional, Lambda,
                              single_or_composite_expression,
-                             ExprTuple, IndexedVar)
+                             ExprTuple, ExprRange, IndexedVar)
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             get_param_var
         from proveit.logic import Forall
-        from .proof import Instantiation, ProofFailure
-
+        from .proof import Theorem, Instantiation, ProofFailure
+        
         if not self.is_usable():
             # If this Judgment is not usable, see if there is an alternate
             # under the set of assumptions that is usable.
             try:
-                alternate = self.expr.prove(assumptions, automation=False)
+                alternate = self.expr.prove(automation=False)
             except ProofFailure:
                 self.raise_unusable_proof()
-            return alternate.instantiate(repl_map, assumptions)
+            return alternate.instantiate(repl_map)
+        _proof = self.proof()
+        if isinstance(_proof, Theorem):
+            Theorem.all_used_theorems.add(_proof)
 
         # If no repl_map is provided, instantiate the 
         # "explicit_instance_vars" of the Forall with default mappings
         # (mapping instance variables to themselves)
         if repl_map is None:
             repl_map = {ivar: ivar for ivar in self.explicit_instance_vars()}
-
-        # Include the Judgment assumptions along with any provided 
-        # assumptions
-        assumptions = defaults.checked_assumptions(assumptions)
 
         # For any entrys in repl_map with Operation keys, convert
         # them to corresponding operator keys with Lambda substitutions.
@@ -882,7 +891,8 @@ class Judgment:
                     # ranges, etc.).    For example,
                     # (x_i, x_{i+1}, ..., x_j).
                     equiv_alt_expansions[key] = replacement
-            elif (isinstance(key, Operation) and isinstance(key.operator, Variable)):
+            elif (isinstance(key, Operation) 
+                    and isinstance(key.operator, Variable)):
                 operation = key
                 repl_var = operation.operator
                 replacement = Lambda(operation.operands, replacement)
@@ -938,12 +948,28 @@ class Judgment:
                         # default is to map instance variables to
                         # themselves
                         processed_repl_map[iparam_var] = iparam_var
-        return self._checkedTruth(
-            Instantiation(self,
-                          num_forall_eliminations=num_forall_eliminations,
-                          repl_map=processed_repl_map,
-                          equiv_alt_expansions=equiv_alt_expansions,
-                          assumptions=assumptions))
+        temporarily_preserved_exprs = set()
+        try:
+            # Do not simplify any of the replacement expressions since
+            # there is a directive to specifically use them.  However,
+            # defaults.replacements for double replacements.
+            temporarily_preserved_exprs = (
+                    set(processed_repl_map.values()) - 
+                    defaults.preserved_exprs)
+            for replacement in defaults.replacements:
+                temporarily_preserved_exprs.discard(replacement.lhs)
+            defaults.preserved_exprs.update(temporarily_preserved_exprs)
+
+            return self._checkedTruth(
+                Instantiation(self,
+                              num_forall_eliminations=num_forall_eliminations,
+                              repl_map=processed_repl_map,
+                              equiv_alt_expansions=equiv_alt_expansions,
+                              assumptions=defaults.assumptions))
+        finally:
+            # Revert the preserved_exprs set back to what it was.
+            defaults.preserved_exprs.difference_update(
+                    temporarily_preserved_exprs)
 
     def generalize(self, forall_var_or_vars_or_var_lists,
                    domain_lists=None, domain=None, conditions=tuple()):
@@ -1026,7 +1052,8 @@ class Judgment:
             hypothesis = hypothesis.expr  # we want the expression for this purpose
         return self._checkedTruth(Deduction(self, hypothesis))
 
-    def eliminate(self, *skolem_constants, assumptions=USE_DEFAULTS):
+    @prover
+    def eliminate(self, *skolem_constants, **defaults_config):
         '''
         Performs a Skolem constant elimination derivation step on this
         Judgment (KT), where this KT has the form S |– alpha and the
@@ -1037,16 +1064,30 @@ class Judgment:
         method.
         '''
         from proveit.logic import Exists
-        return Exists.eliminate(skolem_constants, self, assumptions)
+        return Exists.eliminate(skolem_constants, self)
 
-    def evaluation(self, assumptions=USE_DEFAULTS):
+    # Not a @prover since it just uses the assumptions of the Judgment. 
+    def simplify(self):
         '''
-        Calling evaluation on a Judgment results in deriving that its
-        expression is equal to TRUE, under the assumptions of the 
-        Judgment.
+        Prove a simplified form of this Judgment.
+        '''
+        with defaults.temporary() as temp_defaults:
+            # Use the assumptions of the Judgment
+            temp_defaults.assumptions = self.assumptions
+            # Don't exploit the evaluation of the Judgment; it
+            # must be TRUE (under its assumptions), but that's
+            # trivial and useless.
+            simplification = self.simplification(_no_eval_check=True)
+            return simplification.derive_right_via_equality()
+        
+    # Not a @prover since it just uses the assumptions of the Judgment. 
+    def evaluation(self):
+        '''
+        Prove that the Judgement expression equals TRUE
+        under the assumptions of the Judgment.
         '''
         from proveit.logic import evaluate_truth
-        return evaluate_truth(self.expr, self.assumptions)
+        return evaluate_truth(self.expr, assumptions=self.assumptions)
 
     def as_impl(self, hypothesis):
         '''
@@ -1146,7 +1187,7 @@ class Judgment:
         html += '</span>'
         return html
 
-    def inner_expr(self):
+    def inner_expr(self, assumptions=USE_DEFAULTS):
         '''
         Return an InnerExpr object to wrap the Judgment and
         access any inner sub-expression (including assumptions or
@@ -1155,7 +1196,10 @@ class Judgment:
         or relabeling variables.
         '''
         from .expression.inner_expr import InnerExpr
-        return InnerExpr(self)
+        if assumptions==USE_DEFAULTS:
+            assumptions=defaults.assumptions
+        assumptions = tuple(assumptions) + self.assumptions
+        return InnerExpr(self, assumptions=assumptions)
 
 
 def as_expression(truth_or_expression):

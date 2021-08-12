@@ -19,7 +19,7 @@ class TransRelUpdater:
         '''
         from proveit.logic import Equals
         self.expr = expr
-        self.relation = Equals(expr, expr).prove()
+        self.relation = Equals(expr, expr).conclude_via_reflexivity()
         self.assumptions = assumptions
 
     def update(self, relation, assumptions=None):
@@ -34,7 +34,9 @@ class TransRelUpdater:
         '''
         if assumptions is None:
             assumptions = self.assumptions
-        self.relation = self.relation.apply_transitivity(relation, assumptions)
+        relation_reversed = relation.is_reversed()
+        self.relation = self.relation.apply_transitivity(
+                relation, assumptions=assumptions, preserve_all=True)
         if relation.lhs == self.expr:
             self.expr = relation.rhs
         elif relation.rhs == self.expr:
@@ -42,4 +44,7 @@ class TransRelUpdater:
         else:
             raise ValueError("Relation %s should match expression %s "
                              "on one of its sides." % (relation, self.expr))
+        if relation_reversed != self.relation.is_reversed():
+            # Reverse to match the "direction" of the provided relation.
+            self.relation = self.relation.with_direction_reversed()
         return self.expr

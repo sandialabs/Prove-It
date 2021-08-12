@@ -11,7 +11,7 @@ from .min import Min
 # a <= b < c = d <= e.
 # number ordering is a funciton for creating such an expression
 # with this formatting style.
-from .number_ordering_relation import number_ordering
+from .number_ordering_relation import NumberOrderingRelation, number_ordering
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

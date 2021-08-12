@@ -14,6 +14,7 @@ import types  # Added for python 3
 import re
 import os
 import sys
+from collections import OrderedDict
 # from ._theory_storage import relurl#Comment out for Python 3
 from proveit._core_._theory_storage import relurl  # Comment in for Python 3
 
@@ -222,8 +223,12 @@ class TheoryInterface:
         '''
         import proveit
         sub_theory_folder = os.path.join('..', sub_theory_name)
-        notebook_name = os.path.join(sub_theory_folder, '_theory_nbs_',
-                                     'theory.ipynb')
+        theory_nb_folder = os.path.join(sub_theory_folder, '_theory_nbs_')
+        try:
+            os.makedirs(theory_nb_folder)
+        except (OSError, FileExistsError):
+            pass
+        notebook_name = os.path.join(theory_nb_folder, 'theory.ipynb')
         if not os.path.isdir(sub_theory_folder):
             import shutil
             os.mkdir(sub_theory_folder)
@@ -364,9 +369,8 @@ class ProveItMagicCommands:
     def reset(self):
         # You must call the parent constructor
         self.kind = None
-        self.definitions = dict()  # map name to expression
+        self.definitions = OrderedDict()  # map name to expression
         self.expr_names = dict()  # map expression to names
-        self.keys = []  # the keys of the definitions in the order they appear
         self.lower_case_names = set()
         self.theory = None
         self.ran_finish = False
@@ -522,6 +526,7 @@ class ProveItMagicCommands:
     def prepare_notebook(self, kind):
         import proveit
         proveit.defaults.automation = False
+        #proveit.defaults.use_consistent_styles = False
         theory = Theory()
         if kind == 'common':
             import_failure_filename = os.path.join(
@@ -530,16 +535,18 @@ class ProveItMagicCommands:
             if os.path.isfile(import_failure_filename):
                 # Start with a clean slate
                 os.remove(import_failure_filename)
-            proveit.defaultsimport_failure_filename = \
+            proveit.defaults.import_failure_filename = \
                 import_failure_filename
         proveit.defaults._running_proveit_notebook = (theory, kind)
 
     def begin_axioms(self):
         # theory based upon current working directory
-        if len(self.definitions) > 0 or self.kind is not None:
+        if self.kind is None:
+            self.definitions.clear()
+        if self.kind is not None:
             if self.kind != 'axioms':
                 raise ProveItMagicFailure(
-                    "Run %%begin_axioms in a separate notebook from %%begin_%s." %
+                    "Run %%begin axioms in a separate notebook from %%begin %s." %
                     self.kind)
             print(
                 "WARNING: Re-running %begin_axioms does not reset previously defined axioms.")
@@ -551,10 +558,12 @@ class ProveItMagicCommands:
 
     def begin_theorems(self):
         # theory based upon current working directory
-        if len(self.definitions) > 0 or self.kind is not None:
+        if self.kind is None:
+            self.definitions.clear()
+        if self.kind is not None:
             if self.kind != 'theorems':
                 raise ProveItMagicFailure(
-                    "Run %%begin_theorems in a separate notebook from %%begin_%s." %
+                    "Run %%begin theorems in a separate notebook from %%begin %s." %
                     self.kind)
             print(
                 "WARNING: Re-running %begin_theorems does not reset previously defined theorems.")
@@ -565,7 +574,9 @@ class ProveItMagicCommands:
         print("'%end theorems' will finalize the definitions")
 
     def begin_common(self):
-        if len(self.definitions) > 0 or self.kind is not None:
+        if self.kind is None:
+            self.definitions.clear()
+        if self.kind is not None:
             if self.kind != 'common':
                 raise ProveItMagicFailure(
                     "Run '%%begin common' in a separate notebook from %%begin_%s." %
@@ -585,11 +596,11 @@ class ProveItMagicCommands:
         # theory based upon current working directory
         self.theory = Theory(active_folder=kind)
         if kind == 'axioms':
-            self.theory._clearAxioms()
+            self.theory._clear_axioms()
         elif kind == 'theorems':
-            self.theory._clearTheorems()
+            self.theory._clear_theorems()
         elif kind == 'common':
-            self.theory._clearCommonExressions()
+            self.theory._clear_common_exressions()
         elif Judgment.theorem_being_proven is not None:
             kind = '_proof_' + Judgment.theorem_being_proven.name
         # clean unreferenced expressions:
@@ -660,11 +671,11 @@ class ProveItMagicCommands:
         # Add the special statements / expressions to the theory
         theory = self.theory
         if kind == 'axioms':
-            theory._setAxioms(self.keys, self.definitions)
+            theory._set_axioms(self.definitions)
         elif kind == 'theorems':
-            theory._setTheorems(self.keys, self.definitions)
+            theory._set_theorems(self.definitions)
         elif kind == 'common':
-            theory._set_common_expressions(self.keys, self.definitions)
+            theory._set_common_expressions(self.definitions)
 
         # clean unreferenced expressions, but only when "display latex"
         # is enabled (otherwise, references won't be complete).
@@ -1027,7 +1038,6 @@ class Assignments:
                 prove_it_magic.lower_case_names.remove(name.lower())
                 prev_def = prove_it_magic.definitions[name]
                 prove_it_magic.definitions.pop(name)
-                prove_it_magic.keys.remove(name)
                 continue
             if prove_it_magic.kind == 'axioms' or prove_it_magic.kind == 'theorems':
                 # Axiom and theorem variables should all be bound
@@ -1045,7 +1055,6 @@ class Assignments:
                 if name in prove_it_magic.definitions:
                     if prove_it_magic.definitions[name] != right_side:
                         print('WARNING: Redefining', name)
-                    prove_it_magic.keys.remove(name)
                 elif name.lower() in prove_it_magic.lower_case_names:
                     # allowed to come back around after it finished once
                     if not(
@@ -1057,7 +1066,6 @@ class Assignments:
             if isinstance(right_side, Expression):
                 prove_it_magic.expr_names.setdefault(
                     right_side, []).append(name)
-            prove_it_magic.keys.append(name)
 
     def html_line(self, name, right_side):
         lhs_html = name + ':'

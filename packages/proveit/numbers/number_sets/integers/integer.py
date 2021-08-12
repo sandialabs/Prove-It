@@ -1,44 +1,57 @@
-from proveit import USE_DEFAULTS
-from proveit import a
+import proveit
+from proveit import prover
+from proveit import a, x
 from proveit.numbers.number_sets.number_set import NumberSet
 
 
 class IntegerSet(NumberSet):
-    def __init__(self):
-        NumberSet.__init__(self, 'Integer', r'\mathbb{Z}', theory=__file__)
+    def __init__(self, *, styles=None):
+        NumberSet.__init__(self, 'Integer', r'\mathbb{Z}', 
+                           theory=__file__, styles=styles)
 
-    def membership_side_effects(self, judgment):
-        '''
-        Yield side-effects when proving 'n in Integer' for a given n.
-        '''
-        member = judgment.element
-        yield lambda assumptions: self.deduce_member_in_rational(member, assumptions)
-        # Added but commented the following out while we debate the
-        # wisdom of further side-effects
-        # yield lambda assumptions: self.deduce_member_in_real(member, assumptions)
+    def membership_object(self, element):
+        from .integer_membership import IntegerMembership    
+        return IntegerMembership(element)
 
-    def deduce_in_set_is_bool(self, element, assumptions=USE_DEFAULTS):
-        from . import in_ints_is_bool
-        return in_ints_is_bool.instantiate(
-            {a: element}, assumptions=assumptions)
 
-    def deduce_not_in_set_is_bool(self, element, assumptions=USE_DEFAULTS):
-        from . import not_in_ints_is_bool
-        return not_in_ints_is_bool.instantiate(
-            {a: element}, assumptions=assumptions)
+class IntegerNonZeroSet(NumberSet):
+    def __init__(self, *, styles=None):
+        NumberSet.__init__(self, 'IntegerNonZero', r'\mathbb{Z}^{\neq 0}', 
+                           theory=__file__, styles=styles, 
+                           fence_when_forced=True)
 
-    def deduce_membership_in_bool(self, member, assumptions=USE_DEFAULTS):
-        from . import int_membership_is_bool
-        from proveit import x
-        return int_membership_is_bool.instantiate(
-            {x: member}, assumptions=assumptions)
+    def membership_object(self, element):
+        from .integer_membership import IntegerNonZeroMembership    
+        return IntegerNonZeroMembership(element)
 
-    def deduce_member_in_rational(self, member, assumptions=USE_DEFAULTS):
-        from proveit.numbers.number_sets.rational_numbers import int_within_rational
-        return int_within_rational.derive_superset_membership(
-            member, assumptions)
 
-    def deduce_member_in_real(self, member, assumptions=USE_DEFAULTS):
-        from proveit.numbers.number_sets.real_numbers import int_within_real
-        return int_within_real.derive_superset_membership(
-            member, assumptions)
+class IntegerNegSet(NumberSet):
+    def __init__(self, *, styles=None):
+        NumberSet.__init__(self, 'IntegerNeg', r'\mathbb{Z}^{-}', 
+                           theory=__file__, styles=styles, 
+                           fence_when_forced=True)
+
+    def membership_object(self, element):
+        from .integer_membership import IntegerNegMembership    
+        return IntegerNegMembership(element)
+
+
+class IntegerNonPosSet(NumberSet):
+    def __init__(self, *, styles=None):
+        NumberSet.__init__(self, 'IntegerNonPos', r'\mathbb{Z}^{\leq 0}', 
+                           theory=__file__, styles=styles, 
+                           fence_when_forced=True)
+
+    def membership_object(self, element):
+        from .integer_membership import IntegerNonPosMembership    
+        return IntegerNonPosMembership(element)
+
+
+if proveit.defaults.automation:
+    from . import (nat_within_int,
+                   nat_pos_within_int,
+                   nat_pos_within_nonzero_int,
+                   nonzero_int_within_int,
+                   neg_int_within_int, neg_int_within_nonzero_int,
+                   neg_int_within_nonpos_int,
+                   nonpos_int_within_int)

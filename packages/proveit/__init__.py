@@ -3,11 +3,11 @@ if sys.version_info[0] < 3:
     raise Exception("Must use Python 3")
 
 from ._core_ import (
-    defaults, USE_DEFAULTS, InvalidAssumptions, Theory,
-    TheoryException,
+    defaults, USE_DEFAULTS, InvalidAssumptions, SimplificationDirectives,
+    Theory, TheoryException,
     Expression, traverse_inner_expressions, used_vars,
-    possibly_free_var_ranges, free_vars, attempt_to_simplify,
-    InnerExpr, expression_depth,
+    possibly_free_var_ranges, free_vars, expression_depth,
+    InnerExpr, InnerExprGenerator, generate_inner_expressions,
     Operation, IndexedVar, Function,
     OperationOverInstances, bundle, unbundle, OperationError,
     Conditional, ConditionalSet,
@@ -25,7 +25,13 @@ from ._core_ import (
     Deduction, Instantiation, Generalization,
     UnusableProof, ProofFailure,
     ModusPonensFailure, InstantiationFailure, GeneralizationFailure,
+    UnsatisfiedPrerequisites,
     StyleOptions, maybe_fenced_string, maybe_fenced_latex, maybe_fenced)
+
+# @prover and @equality_prover are useful decorators for many
+# Expression class methods:
+from .decorators import prover, relation_prover, equality_prover
+
 from .relation import (
     TransitiveRelation,
     TransitivityException,
@@ -47,6 +53,11 @@ from .relation import (
 # from . import _core_.magics
 from . import magics
 
+# So we can reset back to the basics.
+from .decorators import (_equality_prover_fn_to_tenses,
+                         _equality_prover_name_to_tenses)
+_basic_equality_prover_fn_to_tenses = _equality_prover_fn_to_tenses.copy()
+_basic_equality_prover_name_to_tenses = _equality_prover_name_to_tenses.copy()
 
 def reset():
     '''
@@ -63,6 +74,11 @@ def reset():
     Proof._clear_()
     Theory._clear_()
     defaults.reset()
+    _equality_prover_fn_to_tenses.clear()
+    _equality_prover_fn_to_tenses.update(_basic_equality_prover_fn_to_tenses)
+    _equality_prover_name_to_tenses.clear()
+    _equality_prover_name_to_tenses.update(
+        _basic_equality_prover_name_to_tenses)
     if hasattr(magics, 'prove_it_magic'):
         magics.prove_it_magic.reset()
     from proveit._core_._unique_data import clear_unique_data

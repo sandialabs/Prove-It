@@ -1,10 +1,11 @@
-from proveit import USE_DEFAULTS
+from proveit import prover
 from proveit.relation import TransitiveRelation, total_ordering
 
 
 class NumberOrderingRelation(TransitiveRelation):
-    def __init__(self, operator, lhs, rhs):
-        TransitiveRelation.__init__(self, operator, lhs, rhs)
+    def __init__(self, operator, lhs, rhs, *, styles):
+        TransitiveRelation.__init__(self, operator, lhs, rhs,
+                                    styles=styles)
         # The lower bound side of this inequality.
         # (regardless of the 'direction' style).
         self.lower = self.operands[0]
@@ -65,23 +66,20 @@ class NumberOrderingRelation(TransitiveRelation):
         new_rel = shifted_self.apply_transitivity(
             shifted_other)  # e.g., a + c < b + d
         # Match style (e.g., use '>' if 'direction' is 'reversed').
-        return new_rel.with_matching_style(self)
+        return new_rel.with_mimicked_style(self)
 
-    def square_both_sides(self, *, simplify=True, assumptions=USE_DEFAULTS):
+    @prover
+    def square_both_sides(self, **defaults_config):
         from proveit.numbers import two
         # Match style (e.g., use '>' if 'direction' is 'reversed').
-        new_rel = self.exponentiate_both_sides(two, simplify=simplify,
-                                               assumptions=assumptions)
+        new_rel = self.exponentiate_both_sides(two)
         # Match style (e.g., use '>' if 'direction' is 'reversed').
-        return new_rel.with_matching_style(self)
+        return new_rel.with_mimicked_style(self)
         
-
-    def square_root_both_sides(self, *, simplify=True,
-                               assumptions=USE_DEFAULTS):
+    @prover
+    def square_root_both_sides(self, **defaults_config):
         from proveit.numbers import frac, one, two, Exp
-        new_rel = self.exponentiate_both_sides(frac(one, two),
-                                               simplify=simplify,
-                                               assumptions=assumptions)
+        new_rel = self.exponentiate_both_sides(frac(one, two))
         if (isinstance(new_rel.lhs, Exp)
                 and new_rel.lhs.exponent == frac(one, two)):
             new_rel = new_rel.inner_expr().lhs.with_styles(exponent='radical')
@@ -89,7 +87,7 @@ class NumberOrderingRelation(TransitiveRelation):
                 and new_rel.rhs.exponent == frac(one, two)):
             new_rel = new_rel.inner_expr().rhs.with_styles(exponent='radical')
         # Match style (e.g., use '>' if 'direction' is 'reversed').
-        return new_rel.with_matching_style(self)
+        return new_rel.with_mimicked_style(self)
 
 
 def number_ordering(*relations):

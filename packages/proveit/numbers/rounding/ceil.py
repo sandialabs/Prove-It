@@ -1,22 +1,28 @@
-from proveit import defaults, Function, InnerExpr, Literal, USE_DEFAULTS
+from proveit import (defaults, Function, InnerExpr, Literal, USE_DEFAULTS,
+                     relation_prover, equality_prover)
 from proveit.numbers.number_sets import Integer, Natural, NaturalPos
 from proveit.numbers.rounding.rounding_methods import (
     apply_rounding_elimination, apply_rounding_extraction,
-    apply_reduced_simplification, rounding_deduce_in_number_set)
+    apply_shallow_simplification, rounding_deduce_in_number_set)
 
 
 class Ceil(Function):
     # operator of the Ceil operation.
     _operator_ = Literal(string_format='ceil', theory=__file__)
 
-    def __init__(self, A):
-        Function.__init__(self, Ceil._operator_, A)
+    def __init__(self, A, *, styles=None):
+        Function.__init__(self, Ceil._operator_, A, styles=styles)
 
     def latex(self, **kwargs):
         return r'\lceil ' + self.operand.latex(fence=False) + r'\rceil'
 
-    def do_reduced_simplification(self, assumptions=USE_DEFAULTS):
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         '''
+        Returns a proven simplification equation for this Ceil
+        expression assuming the operands have been simplified.
+        
         For the trivial case Ceil(x) where the operand x is already
         known to be or assumed to be an integer, derive and return this
         Ceil expression equated with the operand itself: Ceil(x) = x.
@@ -25,9 +31,10 @@ class Ceil(Function):
         form x = real + int, derive and return this Ceil expression
         equated with Ceil(real) + int.
         '''
-        return apply_reduced_simplification(self, assumptions)
+        return apply_shallow_simplification(self, must_evaluate=must_evaluate)
 
-    def rounding_elimination(self, assumptions=USE_DEFAULTS):
+    @equality_prover('rounding_eliminated', 'rounding_eliminate')
+    def rounding_elimination(self, **defaults_config):
         '''
         For the trivial case of Ceil(x) where the operand x is already
         an integer, derive and return this Ceil expression equated
@@ -42,12 +49,10 @@ class Ceil(Function):
         '''
         from . import ceil_of_integer
 
-        return apply_rounding_elimination(self, ceil_of_integer, assumptions)
+        return apply_rounding_elimination(self, ceil_of_integer)
 
-    def rounding_extraction(
-            self,
-            idx_to_extract=None,
-            assumptions=USE_DEFAULTS):
+    @equality_prover('rounding_extracted', 'rounding_extract')
+    def rounding_extraction(self, idx_to_extract=None, **defaults_config):
         '''
         For the case of Ceil(x) where the operand x = x_real + x_int,
         derive and return Ceil(x) = Ceil(x_real) + int (thus
@@ -71,9 +76,10 @@ class Ceil(Function):
         '''
         from . import ceil_of_real_plus_int
         return apply_rounding_extraction(
-            self, ceil_of_real_plus_int, idx_to_extract, assumptions)
+            self, ceil_of_real_plus_int, idx_to_extract)
 
-    def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
+    @relation_prover
+    def deduce_in_number_set(self, number_set, **defaults_config):
         '''
         Given a number set number_set, attempt to prove that the given
         Ceil expression is in that number set using the appropriate
@@ -83,12 +89,4 @@ class Ceil(Function):
         from proveit.numbers.rounding import ceil_real_pos_closure
 
         return rounding_deduce_in_number_set(
-            self, number_set, ceil_is_an_int, ceil_real_pos_closure,
-            assumptions)
-
-
-# Register these generic expression equivalence methods:
-InnerExpr.register_equivalence_method(
-    Ceil, 'rounding_elimination', 'rounding_eliminated', 'rounding_eliminate')
-InnerExpr.register_equivalence_method(
-    Ceil, 'rounding_extraction', 'rounding_extracted', 'rounding_extract')
+            self, number_set, ceil_is_an_int, ceil_real_pos_closure)

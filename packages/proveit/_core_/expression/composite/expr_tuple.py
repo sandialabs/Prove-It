@@ -1,9 +1,8 @@
-import types
 from .composite import Composite
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
-from proveit._core_.proof import ProofFailure
-from proveit._core_.defaults import USE_DEFAULTS
+from proveit._core_.defaults import defaults
 from proveit._core_.expression.style_options import StyleOptions
+from proveit.decorators import prover, equality_prover
 
 
 class ExprTuple(Composite, Expression):
@@ -19,7 +18,7 @@ class ExprTuple(Composite, Expression):
     n+4 elements.
     """
 
-    def __init__(self, *expressions):
+    def __init__(self, *expressions, styles=None):
         '''
         Initialize an ExprTuple from an iterable over Expression
         objects.
@@ -36,7 +35,8 @@ class ExprTuple(Composite, Expression):
             assert isinstance(entry, Expression)
             entries.append(entry)
         self.entries = tuple(entries)
-        Expression.__init__(self, ['ExprTuple'], self.entries)
+        Expression.__init__(self, ['ExprTuple'], self.entries,
+                            styles=styles)
 
     def style_options(self):
         options = StyleOptions(self)
@@ -66,13 +66,13 @@ class ExprTuple(Composite, Expression):
         return self.with_styles(justification=justification)
 
     @classmethod
-    def _make(sub_class, core_info, sub_expressions):
+    def _make(sub_class, core_info, sub_expressions, *, styles):
         if sub_class != ExprTuple:
             MakeNotImplemented(sub_class)
         if len(core_info) != 1 or core_info[0] != 'ExprTuple':
             raise ValueError("Expecting ExprTuple core_info to contain "
                              "exactly one item: 'ExprTuple'")
-        return ExprTuple(*sub_expressions)
+        return ExprTuple(*sub_expressions, styles=styles)
 
     def remake_arguments(self):
         '''
@@ -323,13 +323,13 @@ class ExprTuple(Composite, Expression):
 
         return out_str
 
-    def num_elements(self, assumptions=USE_DEFAULTS):
+    def num_elements(self, **defaults_config):
         '''
         Return the proven number of elements of this ExprTuple as an 
         Expression.  This includes the extent of all contained ranges.
         '''
         from proveit.core_expr_types import Len
-        return Len(self).computed(assumptions)
+        return Len(self).computed(**defaults_config)
 
     def has_matching_ranges(self, other_tuple):
         '''
@@ -353,8 +353,8 @@ class ExprTuple(Composite, Expression):
                     return False  # end indices don't match
         return True  # everything matches.
 
-    def _replaced(self, repl_map, allow_relabeling, assumptions,
-                  requirements, equality_repl_requirements):
+    def basic_replaced(self, repl_map, *,
+                       allow_relabeling=False, requirements=None):
         '''
         Returns this expression with sub-expressions replaced
         according to the replacement map (repl_map) dictionary.
@@ -375,24 +375,188 @@ class ExprTuple(Composite, Expression):
             # The full expression is to be replaced.
             return repl_map[self]
 
-        subbed_exprs = []
-        for expr in self.entries:
-            if isinstance(expr, ExprRange):
+        subbed_entries = []
+        for entry in self.entries:
+            if isinstance(entry, ExprRange):
                 # ExprRange.replaced is a generator that yields items
                 # to be embedded into the tuple.
-                subbed_exprs.extend(expr._replaced_entries(
-                    repl_map, allow_relabeling, assumptions,
-                    requirements, equality_repl_requirements))
+                subbed_entries.extend(entry._replaced_entries(
+                    repl_map, allow_relabeling, requirements))
             else:
-                subbed_expr = expr.replaced(repl_map, allow_relabeling,
-                                            assumptions, requirements,
-                                            equality_repl_requirements)
-                subbed_exprs.append(subbed_expr)
+                subbed_entry = entry.basic_replaced(
+                        repl_map, allow_relabeling=allow_relabeling, 
+                        requirements=requirements)
+                subbed_entries.append(subbed_entry)
+
+        if (len(subbed_entries) == len(self.entries) and 
+                all(subbed_entry._style_id == entry._style_id for
+                    subbed_entry, entry in 
+                    zip(subbed_entries, self.entries))):
+            # Nothing change, so don't remake anything.
+            return self
 
         return self.__class__._checked_make(
-            self._core_info, subbed_exprs)
+            self._core_info, subbed_entries, 
+            style_preferences=self._style_data.styles)
 
-    def merger(self, assumptions=USE_DEFAULTS):
+    def is_irreducible_value(self):
+        '''
+        An ExprTuple is irreducible if and only if all of its entries
+        are irreducible.
+        '''
+        from proveit.logic import is_irreducible_value
+        return all(is_irreducible_value(entry) for entry in self.entries)
+
+    @equality_prover('evaluated', 'evaluate')
+    def evaluation(self, **defaults_config):
+        '''
+        Proves that this ExprTuple is equal to an ExprTuple
+        with all of its entries evaluated (and ExprRanges reduced).
+        '''
+        return self.simplification(must_evaluate=True)
+
+    @equality_prover('simplified', 'simplify')
+    def simplification(self, *, must_evaluate=False, **defaults_config):
+        '''
+        Proves that this ExprTuple is equal to an ExprTuple
+        with all of its entries simplified (and ExprRanges reduced).
+        '''
+        from proveit.relation import TransRelUpdater
+        from proveit import ExprRange
+        expr = self
+        eq = TransRelUpdater(expr)
+        _k = 0
+        for entry in self.entries:
+            if isinstance(entry, ExprRange):
+                entry_simp = entry._range_reduction(preserve_all=True)
+                num_entries = entry_simp.rhs.num_entries()
+            else:
+                if must_evaluate:
+                    entry_simp = entry.evaluation()
+                else:
+                    entry_simp = entry.simplification()
+                num_entries = 1
+            if entry_simp.lhs != entry_simp.rhs:
+                expr = eq.update(expr.substitution(entry_simp, 
+                                                   start_idx=_k))
+            _k += num_entries
+        return eq.relation
+
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
+        '''
+        Proves that this ExprTuple is equal to an ExprTuple
+        with ExprRanges reduced unless these are "preserved"
+        expressions.
+        '''
+        from proveit.relation import TransRelUpdater
+        from proveit import ExprRange
+        from proveit.logic import is_irreducible_value, EvaluationError
+        expr = self
+        eq = TransRelUpdater(expr)
+        if defaults.preserve_all:
+            # Preserve all sub-expressions -- don't simplify.
+            return eq.relation
+        _k = 0
+        for entry in self.entries:
+            if isinstance(entry, ExprRange):
+                if entry in defaults.preserved_exprs:
+                    if must_evaluate:
+                        # An ExprRange is not irreducible.
+                        raise EvaluationError(self)
+                    # Preserve this entry -- don't simplify it.
+                    _k += ExprTuple(entry).num_entries()
+                    continue
+                entry_simp = entry._range_reduction(preserve_all=True)
+                if must_evaluate and not is_irreducible_value(entry_simp.rhs):
+                    raise EvaluationError(self)
+                if entry_simp.lhs != entry_simp.rhs:
+                    substitution = expr.substitution(
+                            entry_simp, start_idx=_k, preserve_all=True)
+                    expr = eq.update(substitution)
+                _k += entry_simp.rhs.num_entries()
+            else:
+                if must_evaluate and not is_irreducible_value(entry):
+                    raise EvaluationError(self)
+                _k += 1
+        return eq.relation
+
+    @equality_prover('sub_expr_substituted', 'sub_expr_substitute')
+    def sub_expr_substitution(self, new_sub_exprs, **defaults_config):
+        '''
+        Given new sub-expressions to replace existing sub-expressions,
+        return the equality between this Expression and the new
+        one with the new sub-expressions.
+        '''
+        from proveit.core_expr_types.tuples import tuple_eq_via_elem_eq
+        from proveit import a, b, i
+        _i = self.num_elements()
+        _a = self.entries
+        _b = new_sub_exprs
+        return tuple_eq_via_elem_eq.instantiate(
+                {i: _i, a: _a, b: _b})
+
+    @equality_prover('substituted', 'substitute')
+    def substitution(self, replacement_eq, start_idx=0,
+                     **defaults_config):
+        '''
+        Prove this ExprTuple equal to an ExprTuple with an element or
+        portion substituted.  Substitute the portion with the entry 
+        index starting with start_idx.  replacement_eq should be an 
+        Equals expression with the element or portion being substituted
+        on the left side, and the replacement element or portion on the 
+        right side.
+        
+        For example,
+        replacement_eq : |- (b_1, ..., b_0) = ()
+        ExprTuple(a, b_1, ..., b_0, c).substitution(replacement_eq, 1)
+        returns
+        |- (a, b_1, ..., b_0, c) = (a, c)
+        '''
+        from proveit.core_expr_types.tuples import (
+                tuple_elem_substitution, tuple_portion_substitution)
+        from proveit import Judgment, a, b, c, d, i, j, k
+        from proveit.logic import Equals
+        if isinstance(replacement_eq, Judgment):
+            replacement_eq = replacement_eq.expr
+        if not isinstance(replacement_eq, Equals):
+            raise TypeError("'replacement_eq' should be an Equals (or "
+                            "Judgment for an Equals).")
+        if isinstance(replacement_eq.lhs, ExprTuple):
+            if not isinstance(replacement_eq.rhs, ExprTuple):
+                raise TypeError("'replacement_eq.rhs' should be an ExprTuple"
+                                "if 'replacement_eq.lhs' is an ExprTuple.")
+            _a = self[:start_idx]
+            end_idx = start_idx + replacement_eq.lhs.num_entries()
+            _b = self[start_idx:end_idx]
+            _c = self[end_idx:]
+            _d = replacement_eq.rhs
+            if _b != replacement_eq.lhs:
+                raise ValueError(
+                        "The 'lhs' of %s expected to match the portion of %s "
+                        "starting at %d"%(replacement_eq, self, start_idx))
+            _i, _j, _k = _a.num_elements(), _b.num_elements(), _c.num_elements()
+            return tuple_portion_substitution.instantiate(
+                        {a:_a, b:_b, c:_c, d:_d, i:_i, j:_j, k:_k},
+                        preserve_all=True)
+        else:
+            _a = self[:start_idx]
+            _b = self[start_idx]
+            _c = self[start_idx+1:]
+            _d = replacement_eq.rhs
+            if _b != replacement_eq.lhs:
+                raise ValueError(
+                        "The 'lhs' of %s expected to match the portion of %s "
+                        "starting at %d"%(replacement_eq, self, start_idx))
+            _i, _k = _a.num_elements(), _c.num_elements()
+            return tuple_elem_substitution.instantiate(
+                    {a:_a, b:_b, c:_c, d:_d, i:_i, k:_k},
+                    preserve_all=True)
+            
+
+    @equality_prover('merged', 'merge')
+    def merger(self, **defaults_config):
         '''
         If this is an tuple of expressions that can be directly merged
         together into a single ExprRange, return this proven
@@ -411,7 +575,7 @@ class ExprTuple(Composite, Expression):
 
         # A convenience to allow successive update to the equation via
         # transitivities (starting with self=self).
-        eq = TransRelUpdater(self, assumptions)
+        eq = TransRelUpdater(self)
 
         # Determine the position of the first ExprRange item and get the
         # lambda map.
@@ -436,18 +600,14 @@ class ExprTuple(Composite, Expression):
             if len(front_singles.entries) == 2:
                 # Merge a pair of singular items.
                 front_merger = merge_pair.instantiate(
-                    {f: lambda_map, i: i_sub, j: j_sub},
-                    assumptions=assumptions)
+                    {f: lambda_map, i: i_sub, j: j_sub})
             else:
                 # Merge a series of singular items in one shot.
                 front_merger = merge_series.instantiate(
-                    {f: lambda_map, x: front_singles, i: i_sub, j: j_sub},
-                    assumptions=assumptions)
+                    {f: lambda_map, x: front_singles, i: i_sub, j: j_sub})
             eq.update(
                 front_merger.substitution(
-                    self.inner_expr()[
-                        :first_range_pos],
-                    assumptions=assumptions))
+                    self.inner_expr()[:first_range_pos]))
 
         if eq.expr.num_entries() == 1:
             # We have accomplished a merger down to one item.
@@ -469,39 +629,36 @@ class ExprTuple(Composite, Expression):
                     _i, _j = eq.expr[0].start_index, eq.expr[0].end_index
                     _k, _l = eq.expr[1].start_index, eq.expr[1].end_index
                     merger = \
-                        merge.instantiate({f: lambda_map, i: _i, j: _j, k: _k, l: _l},
-                                          assumptions=assumptions)
+                        merge.instantiate(
+                                {f: lambda_map, i: _i, j: _j, k: _k, l: _l})
                 else:
                     # Merge an ExprRange and a singular item.
                     _i, _j = eq.expr[0].start_index, eq.expr[0].end_index
                     _k = lambda_map.extract_argument(eq.expr[1])
                     if _k == Add(_j, one):
                         merger = merge_extension.instantiate(
-                            {f: lambda_map, i: _i, j: _j},
-                            assumptions=assumptions)
+                            {f: lambda_map, i: _i, j: _j})
                     else:
                         merger = merge_back.instantiate(
-                            {f: lambda_map, i: _i, j: _j, k: _k},
-                            assumptions=assumptions)
+                            {f: lambda_map, i: _i, j: _j, k: _k})
             else:
                 # Merge a singular item and ExprRange.
                 i_sub = lambda_map.extract_argument(eq.expr[0])
                 j_sub, k_sub = eq.expr[1].start_index, eq.expr[1].end_index
                 merger = \
-                    merge_front.instantiate({f: lambda_map, i: i_sub, j: j_sub,
-                                             k: k_sub}, assumptions=assumptions)
+                    merge_front.instantiate({f: lambda_map, i: i_sub, 
+                                             j: j_sub, k: k_sub})
             eq.update(merger)
             return eq.relation
 
         while eq.expr.num_entries() > 1:
-            front_merger = ExprTuple(*eq.expr[:2].entries).merger(assumptions)
+            front_merger = ExprTuple(*eq.expr[:2].entries).merger()
             eq.update(front_merger.substitution(
-                eq.expr.inner_expr(assumptions)[:2],
-                assumptions=assumptions))
+                eq.expr.inner_expr()[:2]))
         return eq.relation
 
-    def deduce_equality(self, equality, assumptions=USE_DEFAULTS,
-                        minimal_automation=False):
+    @equality_prover('equated', 'equate')
+    def deduce_equality(self, equality, **defaults_config):
         from proveit import ExprRange
         from proveit.logic import Equals
         if not isinstance(equality, Equals):
@@ -531,6 +688,86 @@ class ExprTuple(Composite, Expression):
                     return equiv_thm
         raise NotImplementedError("ExprTuple.deduce_equality not implemented "
                                   "for this case: %s." % self)
+    
+    @equality_prover("expanded_range", "expand_range")
+    def range_expansion(self, **defaults_config):
+        '''
+        For self an ExprTuple with a single entry that is an ExprRange
+        of the form f(i),...,f(j), where 0 <= (j-i) <= 9 (i.e. the
+        ExprRange represents 1 to 10 elements), derive and
+        return an equality between self and an ExprTuple with explicit
+        entries replacing the ExprRange. For example, if
+            self = ExprTuple(f(3),...,f(6)),
+        then self.range_expansion() would return:
+        |- ExprTuple(f(3),...,f(6)) = ExprTuple(f(3), f(4), f(5), f(6))
+        '''
+
+        # Check that we have a an ExprTuple with
+        # (1) a single entry
+        # (2) and the single entry is an ExprRange
+        # (these restrictions can be relaxed later to make the
+        # method more general)
+
+        # ExprTuple with single entry
+        if not self.num_entries() == 1:
+            raise ValueError(
+                    "ExprTuple.range_expansion() implemented only for "
+                    "ExprTuples with a single entry (and the single "
+                    "entry must be an ExprRange). Instead, the ExprTuple "
+                    "{0} has {1} entries.".format(self, self.num_entries))
+
+        # and the single entry is an ExprRange:
+        from proveit import ExprRange
+        if not isinstance(self.entries[0], ExprRange):
+            raise ValueError(
+                    "ExprTuple.range_expansion() implemented only for "
+                    "ExprTuples with a single entry (and the single "
+                    "entry must be an ExprRange). Instead, the ExprTuple "
+                    "is {0}.".format(self))
+
+        from proveit import Function
+        from proveit.logic import EvaluationError
+        from proveit.numbers import subtract
+
+        _the_expr_range = self[0]
+
+        # _n = self.num_elements()
+        try:
+            _n = subtract(self[0].end_index, self[0].start_index).evaluated()
+        except EvaluationError as the_error:
+            _diff = subtract(self[0].end_index, self[0].start_index)
+            print("EvaluationError: {0}. The ExprRange {1} must represent "
+                  "a known, finite number of elements, but all we know is "
+                  "that it represents {2} elements.".format(
+                    the_error, self[0], _diff))
+            raise EvaluationError(
+                subtract(self[0].end_index, self[0].start_index))
+        
+        _n = _n.as_int() + 1 # actual number of elems being represented
+        if not (1 <= _n and _n <= 9):
+            raise ValueError(
+                    "ExprTuple.range_expansion() implemented only for "
+                    "ExprTuples with a single entry, with the single "
+                    "entry being an ExprRange representing a finite "
+                    "number of elements n with 1 <= n <= 9. Instead, "
+                    "the ExprTuple is {0} with number of elements equal "
+                    "to {1}.".format(self[0], _n))
+
+        # id the correct theorem for the number of entries
+        import proveit.numbers.numerals.decimals
+        expansion_thm = proveit.numbers.numerals.decimals\
+                        .__getattr__('range_%d_expansion' % _n)
+
+        # instantiate and return the identified expansion theorem
+        _f, _i, _j = expansion_thm.instance_vars
+        _safe_var = self.safe_dummy_var()
+        _idx_param = _the_expr_range.parameter
+        _fxn_sub = _the_expr_range.body.basic_replaced(
+                {_idx_param: _safe_var})
+        _i_sub = _the_expr_range.start_index
+        _j_sub = _the_expr_range.end_index
+        return expansion_thm.instantiate(
+                {Function(_f, _safe_var): _fxn_sub, _i: _i_sub, _j: _j_sub})
 
     """
     TODO: change register_equivalence_method to allow and fascilitate these

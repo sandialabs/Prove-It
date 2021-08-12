@@ -1,4 +1,5 @@
-from proveit import Literal, Operation, USE_DEFAULTS
+from proveit import (Literal, Operation, USE_DEFAULTS, 
+                     prover, relation_prover, equality_prover)
 from proveit.logic.booleans.conjunction import compose
 from .implies import Implies
 from proveit import A, B, C
@@ -21,8 +22,9 @@ class Iff(TransitiveRelation):
     #   (populated in TransitivityRelation.derive_side_effects)
     known_right_sides = dict()
 
-    def __init__(self, A, B):
-        TransitiveRelation.__init__(self, Iff._operator_, A, B)
+    def __init__(self, A, B, *, styles=None):
+        TransitiveRelation.__init__(self, Iff._operator_, A, B,
+                                    styles=styles)
         self.A = A
         self.B = B
 
@@ -40,7 +42,8 @@ class Iff(TransitiveRelation):
         # A=B given A<=>B (assuming A and B are in booleans)
         yield self.derive_equality
 
-    def conclude(self, assumptions):
+    @prover
+    def conclude(self, **defaults_config):
         '''
         Try to automatically conclude this bi-directional implication by
         reducing its operands to true/false.
@@ -50,28 +53,30 @@ class Iff(TransitiveRelation):
             # should be proven via one of the imported theorems as a simple
             # special case
             try:
-                self.evaluation(assumptions)
+                self.shallow_simplification()
+                # self.evaluation()
             except BaseException:
                 return self.prove()
         try:
             # try to prove the bi-directional implication via evaluation reduction.
             # if that is possible, it is a relatively straightforward thing to
             # do.
-            return Operation.conclude(assumptions)
+            return Operation.conclude()
         except BaseException:
             pass
         try:
             # Use a breadth-first search approach to find the shortest
             # path to get from one end-point to the other.
-            return TransitiveRelation.conclude(self, assumptions)
+            return TransitiveRelation.conclude(self)
         except BaseException:
             pass
 
         # the last attempt is to introduce the Iff via implications each way, an
         # essentially direct consequence of the definition.
-        return self.conclude_by_definition(assumptions)
+        return self.conclude_by_definition()
 
-    def conclude_negation(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude_negation(self, **defaults_config):
         # implemented by Joaquin on 6/17/19
         from proveit.logic.booleans import FALSE, TRUE
         try:
@@ -82,47 +87,53 @@ class Iff(TransitiveRelation):
         except BaseException:
             pass
 
-    def derive_left_implication(self, assumptions=USE_DEFAULTS):
+    @prover
+    def derive_left_implication(self, **defaults_config):
         '''
         From (A<=>B) derive and return B=>A.
         '''
         from . import iff_implies_left
         return iff_implies_left.instantiate(
-            {A: self.A, B: self.B}, assumptions=assumptions)
+            {A: self.A, B: self.B})
 
-    def derive_left(self, assumptions=USE_DEFAULTS):
+    @prover
+    def derive_left(self, **defaults_config):
         '''
         From (A<=>B) derive and return A assuming B.
         '''
         from . import left_from_iff
         return left_from_iff.instantiate(
-            {A: self.A, B: self.B}, assumptions=assumptions)
+            {A: self.A, B: self.B})
 
-    def derive_right_implication(self, assumptions=USE_DEFAULTS):
+    @prover
+    def derive_right_implication(self, **defaults_config):
         '''
         From (A<=>B) derive and return A=>B.
         '''
         from . import iff_implies_right
         return iff_implies_right.instantiate(
-            {A: self.A, B: self.B}, assumptions=assumptions)
+            {A: self.A, B: self.B})
 
-    def derive_right(self, assumptions=USE_DEFAULTS):
+    @prover
+    def derive_right(self, **defaults_config):
         '''
         From (A<=>B) derive and return B assuming A.
         '''
         from . import right_from_iff
         return right_from_iff.instantiate(
-            {A: self.A, B: self.B}, assumptions=assumptions)
+            {A: self.A, B: self.B})
 
-    def derive_reversed(self, assumptions=USE_DEFAULTS):
+    @prover
+    def derive_reversed(self, **defaults_config):
         '''
         From (A<=>B) derive and return (B<=>A).
         '''
         from . import iff_symmetry
         return iff_symmetry.instantiate(
-            {A: self.A, B: self.B}, assumptions=assumptions)
+            {A: self.A, B: self.B})
 
-    def apply_transitivity(self, other_iff, assumptions=USE_DEFAULTS):
+    @prover
+    def apply_transitivity(self, other_iff, **defaults_config):
         '''
         From A <=> B (self) and the given B <=> C (other_iff) derive and return
         (A <=> C) assuming self and other_iff.
@@ -133,67 +144,87 @@ class Iff(TransitiveRelation):
         if self.B == other_iff.A:
             # from A <=> B, B <=> C, derive A <=> C
             return iff_transitivity.instantiate(
-                {A: self.A, B: self.B, C: other_iff.B}, assumptions=assumptions)
+                {A: self.A, B: self.B, C: other_iff.B},
+                preserve_all=True)
         elif self.A == other_iff.A:
             # from y = x and y = z, derive x = z
-            return self.derive_reversed(
-                assumptions).apply_transitivity(other_iff, assumptions)
+            return self.derive_reversed().apply_transitivity(other_iff)
         elif self.A == other_iff.B:
             # from y = x and z = y, derive x = z
-            return self.derive_reversed(assumptions).apply_transitivity(
-                other_iff.derive_reversed(assumptions))
+            return self.derive_reversed().apply_transitivity(
+                other_iff.derive_reversed())
         elif self.B == other_iff.B:
             # from x = y and z = y, derive x = z
             return self.apply_transitivity(
-                other_iff.derive_reversed(assumptions))
+                other_iff.derive_reversed())
         else:
-            assert False, 'transitivity cannot be applied unless there is something in common in the equalities'
+            assert False, ('transitivity cannot be applied unless there '
+                           'is something in common in the equalities')
 
-    def definition(self):
+    @equality_prover("defined", "define")
+    def definition(self, **defaults_config):
         '''
         Return (A <=> B) = [(A => B) and (B => A)] where self represents (A <=> B).
         '''
         from . import iff_def
         return iff_def.instantiate({A: self.A, B: self.B})
 
-    def conclude_by_definition(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude_by_definition(self, **defaults_config):
         '''
         Conclude (A <=> B) assuming both (A => B), (B => A).
         '''
         from . import iff_intro
-        return iff_intro.instantiate(
-            {A: self.A, B: self.B}, assumptions=assumptions)
+        return iff_intro.instantiate({A: self.A, B: self.B})
 
-    def evaluation(self, assumptions=USE_DEFAULTS, automation=True):
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         '''
-        Given operands that evaluate to TRUE or FALSE, derive and
-        return the equality of this expression with TRUE or FALSE.
+        If the operands that to TRUE or FALSE, we can 
+        evaluate this expression as TRUE or FALSE.
         '''
-        from . import iff_t_t, iff_t_f, iff_f_t, iff_f_f  # IMPORTANT: load in truth-table evaluations
-        return Operation.evaluation(self, assumptions, automation)
+        from proveit.logic import TRUE, FALSE
+        # Load in truth-table evaluations
+        from . import iff_t_t, iff_t_f, iff_f_t, iff_f_f
+        if must_evaluate:
+            start_over = False
+            for operand in self.operands:
+                if operand not in (TRUE, FALSE):
+                    # The simplification of the operands may not have
+                    # worked hard enough.  Let's work harder if we
+                    # must evaluate.
+                    operand.evaluation()
+                    start_over = True
+            if start_over: return self.evaluation()
+        # May now be able to evaluate via loaded truth tables.
+        return Operation.shallow_simplification(
+                self, must_evaluate=must_evaluate)
 
-    def deduce_in_bool(self, assumptions=USE_DEFAULTS):
+    @relation_prover
+    def deduce_in_bool(self, **defaults_config):
         '''
         Attempt to deduce, then return, that this 'iff' expression is in the set of BOOLEANS.
         '''
         from . import iff_closure
         return iff_closure.instantiate(
-            {A: self.A, B: self.B}, assumptions=assumptions)
+            {A: self.A, B: self.B})
 
-    def derive_equality(self, assumptions=USE_DEFAULTS):
+    @prover
+    def derive_equality(self, **defaults_config):
         '''
         From (A <=> B), derive (A = B) assuming A and B in BOOLEANS.
         '''
         from . import eq_from_iff, eq_from_mutual_impl
         # We must be able to prove this Iff to do this derivation --
         # then either eq_from_iff or eq_from_mutual_impl can be used.
-        self.prove(assumptions=assumptions)
+        self.prove()
         # eq_from_mutual_impl may make for a shorter proof; do it both ways (if
         # both are usable)
         if not eq_from_iff.is_usable():
             return eq_from_mutual_impl.instantiate(
-                {A: self.A, B: self.B}, assumptions=assumptions)
+                {A: self.A, B: self.B})
         eq_from_mutual_impl.instantiate(
-            {A: self.A, B: self.B}, assumptions=assumptions)
+            {A: self.A, B: self.B})
         return eq_from_iff.instantiate(
-            {A: self.A, B: self.B}, assumptions=assumptions)
+            {A: self.A, B: self.B})

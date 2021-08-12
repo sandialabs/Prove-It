@@ -1,20 +1,24 @@
-from proveit import Literal, Operation
-from proveit.numbers.number_sets import Real, RealPos
+from proveit import Literal, Function, relation_prover
+from proveit.numbers.number_sets import Real
+from proveit import a, n
 
-
-class Max(Operation):
+class Max(Function):
     # operator of the Max operation.
     _operator_ = Literal(
         string_format='Max',
         latex_format=r'{\rm Max}',
         theory=__file__)
 
-    def __init__(self, *operands):
-        Operation.__init__(self, Max._operator_, operands)
+    def __init__(self, *operands, styles=None):
+        Function.__init__(self, Max._operator_, operands, styles=styles)
 
-    def _closureTheorem(self, number_set):
-        from . import theorems
+    @relation_prover
+    def deduce_in_number_set(self, number_set, **defaults_config):
+        from . import max_real_closure
+        _a = self.operands
+        _n = _a.num_elements()
         if number_set == Real:
-            return theorems.max_real_closure
-        elif number_set == RealPos:
-            return theorems.max_real_pos_closure
+            return max_real_closure.instantiate({n:_n, a:_a})
+        else:
+            raise NotImplementedError(
+                    "Max.deduce_in_number_set only implemented for Reals.")

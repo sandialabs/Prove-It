@@ -1,12 +1,14 @@
 import inspect
 from proveit._core_.expression.expr import (
     Expression, MakeNotImplemented, free_vars)
+from proveit._core_.expression.label.var import Variable
 from proveit._core_.expression.lambda_expr.lambda_expr import Lambda, get_param_var
 from proveit._core_.expression.composite import (
     ExprTuple, is_single, single_or_composite_expression, 
     composite_expression, ExprRange)
 from proveit._core_.expression.conditional import Conditional
 from proveit._core_.defaults import USE_DEFAULTS
+from proveit.decorators import prover, equality_prover
 from .operation import Operation, OperationError
 from .function import Function
 
@@ -29,8 +31,9 @@ def _extract_domain_from_condition(ivar, condition):
                 and condition.end_index == ivar.end_index):
             # Replace the condition parameter with the ivar parameter
             # and see if the InSet element matches ivar.body.
-            cond_body_elem_with_repl_param = condition.body.element.replaced(
-                {condition.parameter: ivar.parameter})
+            cond_body_elem_with_repl_param = (
+                    condition.body.element.basic_replaced(
+                            {condition.parameter: ivar.parameter}))
             if cond_body_elem_with_repl_param == ivar.body:
                 if condition.parameter in free_vars(condition.body.domain,
                                                     err_inclusively=True):
@@ -67,7 +70,7 @@ class OperationOverInstances(Operation):
 
     def __init__(self, operator, instance_param_or_params, instance_expr, *,
                  domain=None, domains=None, condition=None, conditions=None,
-                 _lambda_map=None):
+                 styles=None, _lambda_map=None):
         '''
         Create an Operation for the given operator that is applied over
         instances of the given instance parameter(s), instance_param_or_params,
@@ -181,8 +184,8 @@ class OperationOverInstances(Operation):
                             # Use the same parameter for the domain
                             # as the instance parameter.
                             domain_body_with_new_param = \
-                                domain.body.replaced({domain.parameter:
-                                                      iparam.parameter})
+                                domain.body.basic_replaced(
+                                        {domain.parameter: iparam.parameter})
                             condition = ExprRange(
                                 iparam.parameter,
                                 InSet(iparam.body, domain_body_with_new_param),
@@ -258,7 +261,7 @@ class OperationOverInstances(Operation):
         if isinstance(lambda_map.body, Conditional):
             self.condition = lambda_map.body.condition
 
-        Operation.__init__(self, operator, [lambda_map])
+        Operation.__init__(self, operator, [lambda_map], styles=styles)
 
     def remake_with_style_calls(self):
         '''
@@ -331,8 +334,8 @@ class OperationOverInstances(Operation):
         elif arg_name == 'domain' or arg_name == 'domains':
             # return the proper single domain or list of domains
             domains = OperationOverInstances.explicit_domains(self)
-            if not hasattr(self, 'domain') or domains != [
-                    self.domain] * len(domains):
+            if (not hasattr(self, 'domain') or 
+                    domains != tuple([self.domain] * len(domains))):
                 if arg_name == 'domains' and len(domains) > 0:
                     return ExprTuple(*domains)
                 else:
@@ -351,7 +354,7 @@ class OperationOverInstances(Operation):
             return None
 
     @classmethod
-    def _make(cls, core_info, sub_expressions):
+    def _make(cls, core_info, sub_expressions, *, styles):
         if len(core_info) != 1 or core_info[0] != 'Operation':
             raise ValueError(
                 "Expecting Operation core_info to contain exactly one item: 'Operation'")
@@ -360,7 +363,7 @@ class OperationOverInstances(Operation):
                              "OperationOverInstances object: an operator and "
                              "operands with a single lambda_map entry.")
 
-        implicit_operator = cls._implicitOperator()
+        implicit_operator = cls._implicit_operator()
         if implicit_operator is None:
             raise OperationError(
                 "Expecting a '_operator_' attribute for class "
@@ -376,26 +379,37 @@ class OperationOverInstances(Operation):
         if (not isinstance(operands, ExprTuple) or 
                 not len(operands.entries) == 1):
             raise ValueError("Expecting operands to have a single entry.")
+        if isinstance(operands[0], Variable) and hasattr(cls, '_operator_'):
+            # If the operand is not a Variable, make an
+            # Operation instead.  This can come up when creating
+            # an InnerExpr replacement map when the inner expression
+            # the the operand of an OperationOverInstances.
+            return Function(cls._operator_, operands, styles=styles)
+            
         lambda_map = operands[0]
         if not isinstance(lambda_map, Lambda):
              raise ValueError("Expecting operands to have a single "
                               "lambda_map entry.")
-
-        args, varargs, varkw, defaults, kwonlyargs, kwonlydefaults, _ = \
-            inspect.getfullargspec(cls.__init__)
-        if '_lambda_map' not in kwonlyargs:
+        
+        sig = inspect.signature(cls.__init__)
+        Parameter = inspect.Parameter
+        if ('_lambda_map' not in sig.parameters or
+                sig.parameters['_lambda_map'].kind != Parameter.KEYWORD_ONLY):
             raise OperationError(
                 "'_lambda_map' must be a keyword only argument "
                 "for a constructor of a class %s derived from "
                 "OperationOverInstances." %
                 str(cls))
 
-        # Subtract 'self' from the number of args and set
-        # the rest to None.
-        num_remaining_args = len(args) - 1
+        npositional = 0
+        for param in sig.parameters.values():
+            if param.kind in (Parameter.POSITIONAL_ONLY, 
+                              Parameter.POSITIONAL_OR_KEYWORD):
+                npositional += 1
+        npositional -= 1 # exclude 'self'
         made_operation = cls(
-            *[None] * num_remaining_args,
-            _lambda_map=lambda_map)
+            *[None] * npositional,
+            styles=styles, _lambda_map=lambda_map)
         return made_operation
 
     def _all_instance_params(self):
@@ -493,6 +507,19 @@ class OperationOverInstances(Operation):
         Added by wdc on 6/06/2019.
         '''
         return list(self._all_conditions())
+
+    def _all_instance_exprs(self):
+        '''
+        '''
+        expr = self
+        while hasattr(expr, 'instance_expr'):
+            yield expr.instance_expr
+            expr = expr.instance_expr
+
+    def all_instance_exprs(self):
+        '''
+        '''
+        return list(self._all_instance_exprs())
 
     def explicit_instance_params(self):
         '''
@@ -829,46 +856,24 @@ class OperationOverInstances(Operation):
                     count += len(entry.formatted(format_type, fence=fence))
         return out_str
 
-    """
-    def instance_substitution(self, universality, assumptions=USE_DEFAULTS):
+    @equality_prover('instance_substituted', 'instance_substitute')
+    def instance_substitution(self, universal_eq, **defaults_config):
         '''
-        Equate this OperationOverInstances, Upsilon_{..x.. in S | ..Q(..x..)..} f(..x..),
+        Equate this OperationOverInstances, 
+        Upsilon_{x_1, ..., x_n | Q(x_1, ..., x_n)} f(x_1, ..., x_n),
         with one that substitutes instance expressions given some
-        universality = forall_{..x.. in S | ..Q(..x..)..} f(..x..) = g(..x..).
-        Derive and return the following type of equality assuming universality:
-        Upsilon_{..x.. in S | ..Q(..x..)..} f(..x..) = Upsilon_{..x.. in S | ..Q(..x..)..} g(..x..)
-        Works also when there is no domain S and/or no conditions ..Q...
+        universal_eq:
+            forall_{x_1, ..., x_n | Q(x_1, ..., x_n)} 
+                f(x_1, ..., x_n) = g(x_1, ..., x_n).
+        Derive and return the following type of equality assuming 
+        universal_eq:
+        Upsilon_{x_1, ..., x_n | Q(x_1, ..., x_n)} f(x_1, ..., x_n) 
+          = Upsilon_{x_1, ..., x_n | Q(x_1, ..., x_n)} g(x_1, ..., x_n)
         '''
-        from proveit.logic.equality import instance_substitution, no_domain_instance_substitution
-        from proveit.logic import Forall, Equals
-        from proveit import Judgment
-        from proveit import n, Qmulti, x_multi, y_multi, z_multi, f, g, Upsilon, S
-        if isinstance(universality, Judgment):
-            universality = universality.expr
-        if not isinstance(universality, Forall):
-            raise InstanceSubstitutionException("'universality' must be a forall expression", self, universality)
-        if len(universality.instance_vars) != len(self.instance_vars):
-            raise InstanceSubstitutionException("'universality' must have the same number of variables as the OperationOverInstances having instances substituted", self, universality)
-        if universality.domain != self.domain:
-            raise InstanceSubstitutionException("'universality' must have the same domain as the OperationOverInstances having instances substituted", self, universality)
-        # map from the forall instance variables to self's instance variables
-        i_var_substitutions = {forall_ivar:self_ivar for forall_ivar, self_ivar in zip(universality.instance_vars, self.instance_vars)}
-        if universality.conditions.substituted(i_var_substitutions) != self.conditions:
-            raise InstanceSubstitutionException("'universality' must have the same conditions as the OperationOverInstances having instances substituted", self, universality)
-        if not isinstance(universality.instance_expr, Equals):
-            raise InstanceSubstitutionException("'universality' must be an equivalence within Forall: " + str(universality))
-        if universality.instance_expr.lhs.substituted(i_var_substitutions) != self.instance_expr:
-            raise InstanceSubstitutionException("lhs of equivalence in 'universality' must match the instance expression of the OperationOverInstances having instances substituted", self, universality)
-        f_op, f_op_sub = Operation(f, self.instance_vars), self.instance_expr
-        g_op, g_op_sub = Operation(g, self.instance_vars), universality.instance_expr.rhs.substituted(i_var_substitutions)
-        Q_op, Q_op_sub = Operation(Qmulti, self.instance_vars), self.conditions
-        if self.has_domain():
-            return instance_substitution.instantiate({Upsilon:self.operator, Q_op:Q_op_sub, S:self.domain, f_op:f_op_sub, g_op:g_op_sub},
-                                                    relabel_map={x_multi:universality.instance_vars, y_multi:self.instance_vars, z_multi:self.instance_vars}, assumptions=assumptions).derive_consequent(assumptions=assumptions)
-        else:
-            return no_domain_instance_substitution.instantiate({Upsilon:self.operator, Q_op:Q_op_sub, f_op:f_op_sub, g_op:g_op_sub},
-                                                             relabel_map={x_multi:universality.instance_vars, y_multi:self.instance_vars, z_multi:self.instance_vars}, assumptions=assumptions).derive_consequent(assumptions=assumptions)
-
+        lambda_eq = self.operand.substitution(universal_eq)
+        return lambda_eq.substitution(self.inner_expr().operand)
+        
+    """
     def substitute_instances(self, universality, assumptions=USE_DEFAULTS):
         '''
         Assuming this OperationOverInstances, Upsilon_{..x.. in S | ..Q(..x..)..} f(..x..)
@@ -880,8 +885,8 @@ class OperationOverInstances(Operation):
         return substitution.derive_right_via_equality(assumptions=assumptions)
     """
 
-
-def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):
+@prover
+def bundle(expr, bundle_thm, num_levels=2, **defaults_config):
     '''
     Given a nested OperationOverInstances, derive or equate an
     equivalent form in which a given number of nested levels is
@@ -911,8 +916,8 @@ def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):
                 "May only 'bundle' nested OperationOverInstances, "
                 "not %s" %
                 bundled)
-        _m = bundled.instance_params.num_elements(assumptions)
-        _n = bundled.instance_expr.instance_params.num_elements(assumptions)
+        _m = bundled.instance_params.num_elements()
+        _n = bundled.instance_expr.instance_params.num_elements()
         _P = bundled.instance_expr.instance_expr
         _Q = bundled.effective_condition()
         _R = bundled.instance_expr.effective_condition()
@@ -942,12 +947,23 @@ def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):
         Pxy = Function(P, all_params)
         Qx = Function(Q, bundled.instance_params)
         Rxy = Function(R, all_params)
-        x_1_to_m = x_1_to_m.replaced({m: _m})
-        y_1_to_n = y_1_to_n.replaced({n: _n})
+        x_1_to_m = x_1_to_m.basic_replaced({m: _m})
+        y_1_to_n = y_1_to_n.basic_replaced({n: _n})
+
+        # We may need to auto-simplify, but we must preserve the
+        # different parts.
+        preserved_exprs = {expr, expr.instance_expr}
+        preserved_exprs.update(expr.conditions)
+        # Determine inner-most instance_expr and add it to the 
+        # preserved_exprs set
+        innermost_instance_expr = expr.all_instance_exprs()[-1]
+        preserved_exprs.update([innermost_instance_expr])
+
         instantiation = bundle_thm.instantiate(
             {m: _m, n: _n, ExprTuple(x_1_to_m): bundled.instance_params,
              ExprTuple(y_1_to_n): bundled.instance_expr.instance_params,
-             Pxy: _P, Qx: _Q, Rxy: _R}, assumptions=assumptions)
+             Pxy: _P, Qx: _Q, Rxy: _R}, preserved_exprs=preserved_exprs,
+             auto_simplify=True)
         if isinstance(instantiation.expr, Implies):
             bundled = instantiation.derive_consequent()
         elif isinstance(instantiation.expr, Equals):
@@ -973,9 +989,9 @@ def bundle(expr, bundle_thm, num_levels=2, *, assumptions=USE_DEFAULTS):
         # the bundled result.
         return eq.relation
 
-
-def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
-             assumptions=USE_DEFAULTS):
+@prover
+def unbundle(expr, unbundle_thm, num_param_entries=(1,), 
+             **defaults_config):
     '''
     Given a nested OperationOverInstances, derive or equate an
     equivalent form in which the parameter entries are split in
@@ -1024,8 +1040,8 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
         first_params = unbundled.instance_params[:-n_last_entries]
         first_param_vars = {get_param_var(param) for param in first_params}
         remaining_params = unbundled.instance_params[-n_last_entries:]
-        _m = first_params.num_elements(assumptions)
-        _n = remaining_params.num_elements(assumptions)
+        _m = first_params.num_elements()
+        _n = remaining_params.num_elements()
         _P = unbundled.instance_expr
         # Split up the conditions between the outer
         # OperationOverInstances and inner OperationOverInstances
@@ -1083,16 +1099,21 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
                              "form with an equality or implication  "
                              "correspondence, %s"
                              % (unbundle_thm, correspondence))
-
+        
         Qx = Function(Q, first_params)
         Rxy = Function(R, unbundled.instance_params)
         Pxy = Function(P, unbundled.instance_params)
-        x_1_to_m = x_1_to_m.replaced({m: _m})
-        y_1_to_n = y_1_to_n.replaced({n: _n})
+        x_1_to_m = x_1_to_m.basic_replaced({m: _m})
+        y_1_to_n = y_1_to_n.basic_replaced({n: _n})
+        # We may need to auto-simplify, but we must also preserve the
+        # various different original parts.
+        preserved_exprs = {expr, expr.instance_expr}
+        preserved_exprs.update(expr.conditions)
         instantiation = unbundle_thm.instantiate(
             {m: _m, n: _n, ExprTuple(x_1_to_m): first_params,
              ExprTuple(y_1_to_n): remaining_params,
-             Pxy: _P, Qx: _Q, Rxy: _R}, assumptions=assumptions)
+             Pxy: _P, Qx: _Q, Rxy: _R},
+             preserved_exprs=preserved_exprs, auto_simplify=True)
         if isinstance(instantiation.expr, Implies):
             unbundled = instantiation.derive_consequent()
         elif isinstance(instantiation.expr, Equals):
@@ -1116,14 +1137,3 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,), *,
         # Return the equality between the original expression and
         # the unbundled result.
         return eq.relation
-
-
-class InstanceSubstitutionException(Exception):
-    def __init__(self, msg, operation_over_instances, universality):
-        self.msg = msg
-        self.operation_over_instances = operation_over_instances
-        self.universality = universality
-
-    def __str__(self):
-        return self.msg + '.\n  operation_over_instances: ' + \
-            str(self.operation_over_instances) + '\n  universality: ' + str(self.universality)

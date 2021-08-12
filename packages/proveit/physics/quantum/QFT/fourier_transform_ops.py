@@ -13,14 +13,15 @@ class InverseFourierTransform(Operation):
         latex_format=r'{\mathrm {FT}}^{\dag}',
         theory=__file__)
 
-    def __init__(self, n):
+    def __init__(self, n, *, styles=None):
         '''
         QFT circuit for n qubits.
         '''
-        Operation.__init__(self, InverseFourierTransform._operator_, n)
+        Operation.__init__(self, InverseFourierTransform._operator_, n,
+                           styles=styles)
         self.nqubits = n
 
-    def _formatted(self, format_type, fence=False):
+    def _formatted(self, format_type, **kwargs):
         formatted_operator = self.operator.formatted(format_type, fence=False)
         formated_nqubits = self.nqubits.formatted(format_type, fence=False)
         return formatted_operator + '_{' + formated_nqubits + '}'

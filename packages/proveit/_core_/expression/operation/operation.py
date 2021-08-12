@@ -1,8 +1,8 @@
 import inspect
+from proveit.decorators import equality_prover
 from proveit._core_.expression.expr import Expression, ImproperReplacement
 from proveit._core_.expression.style_options import StyleOptions
-from proveit._core_.defaults import USE_DEFAULTS
-
+from proveit._core_.defaults import defaults, USE_DEFAULTS
 
 class Operation(Expression):
     # Map _operator_ Literals to corresponding Operation classes.
@@ -20,7 +20,8 @@ class Operation(Expression):
         '''
         Operation.operation_class_of_operator.clear()
 
-    def __init__(self, operator, operand_or_operands, styles=None):
+    def __init__(self, operator, operand_or_operands=None, *, 
+                 operands=None, styles):
         '''
         Create an operation with the given operator and operands.
         The operator must be a Label (a Variable or a Literal).
@@ -33,17 +34,35 @@ class Operation(Expression):
         ExprTuple containing the one operand.
         '''
         from proveit._core_.expression.composite import (
-            single_or_composite_expression, Composite, ExprTuple)
+            composite_expression, single_or_composite_expression, 
+            Composite, ExprTuple)
         from proveit._core_.expression.label.label import Label
         from .indexed_var import IndexedVar
+        if self.__class__ == Operation:
+            raise TypeError("Do not create an object of type Operation; "
+                            "use a derived class (e.g., Function) instead.")
         self.operator = operator
-        operand_or_operands = single_or_composite_expression(
-            operand_or_operands, do_singular_reduction=True)
-        if isinstance(operand_or_operands, Composite):
-            # a composite of multiple operands
-            self.operands = operand_or_operands
+        if (operand_or_operands==None) == (operands==None):
+            if operands==None:
+                raise ValueError(
+                    "Must supply either 'operand_or_operands' or 'operands' "
+                    "when constructing an Operation")
+            else:
+                raise ValueError(
+                    "Must supply 'operand_or_operands' or 'operands' but not "
+                    "both when constructing an Operation")
+        if operands is not None:
+            if not isinstance(operands, Expression):
+                operands = composite_expression(operands)
+            self.operands = operands
         else:
-            self.operands = ExprTuple(operand_or_operands) 
+            operand_or_operands = single_or_composite_expression(
+                operand_or_operands, do_singular_reduction=True)
+            if isinstance(operand_or_operands, Composite):
+                # a composite of multiple operands
+                self.operands = operand_or_operands
+            else:
+                self.operands = ExprTuple(operand_or_operands) 
         def raise_bad_operator_type(operator):
             raise TypeError('operator must be a Label or an indexed variable '
                             '(IndexedVar). %s is none of those.'
@@ -67,22 +86,17 @@ class Operation(Expression):
         Return the StyleOptions object for the Operation.
         '''
         from proveit._core_.expression.composite.expr_tuple import ExprTuple
-        trivial_op = False
-        if (isinstance(self.operands, ExprTuple) and 
-                len(self.operands.entries) > 0  and
-                not self.operands.is_single()):
-            # 'infix' is only a sensible option when there are
-            # multiple operands as an ExprTuple.
-            default_op_style = 'infix'
-        else:            
-            # With no operands or 1 operand, infix is not an option.
-            trivial_op = True
-            default_op_style= 'function'
+        trivial_op = not (isinstance(self.operands, ExprTuple) and 
+                          len(self.operands.entries) > 0  and
+                          not self.operands.is_single())
         options = StyleOptions(self)
+        # Note: when there are no operands or 1 operand, 'infix'
+        # is like the 'function' style except the operator is
+        # wrapped in square braces.
         options.add_option(
                 name = 'operation',
                 description = "'infix' or 'function' style formatting",
-                default = default_op_style,
+                default = 'infix',
                 related_methods = ())
         if not trivial_op:
             # Wrapping is only relevant if there is more than one
@@ -129,7 +143,7 @@ class Operation(Expression):
         return self.with_styles(justification=justification)
 
     @classmethod
-    def _implicitOperator(operation_class):
+    def _implicit_operator(operation_class):
         if hasattr(operation_class, '_operator_'):
             return operation_class._operator_
         return None
@@ -163,7 +177,7 @@ class Operation(Expression):
         return self.__class__.extract_init_arg_value(
             arg_name, self.operator, self.operands)
 
-    def _extractMyInitArgs(self):
+    def _extract_my_init_args(self):
         '''
         Call the _extract_init_args class method but will set "obj" to "self".
         This will cause extract_my_init_arg_value to be called instead of
@@ -207,13 +221,16 @@ class Operation(Expression):
         and no keyword arguments: construct the Operation by passing 
         the operator(s) and each operand individually.
         '''
-        implicit_operator = cls._implicitOperator()
+        from .function import Function
+        from proveit._core_.expression.composite import (
+            ExprTuple, Composite)
+        implicit_operator = cls._implicit_operator()
         matches_implicit_operator = (operator == implicit_operator)
         if implicit_operator is not None and not matches_implicit_operator:
             raise OperationError("An implicit operator may not be changed")
-        args, varargs, varkw, defaults, kwonlyargs, kwonlydefaults, _ = \
-            inspect.getfullargspec(cls.__init__)
-        args = args[1:]  # skip over the 'self' arg
+        sig = inspect.signature(cls.__init__)
+        Parameter = inspect.Parameter
+        init_params = sig.parameters
         if obj is None:
             def extract_init_arg_value_fn(arg): 
                 return cls.extract_init_arg_value(arg, operator, operands)
@@ -221,63 +238,93 @@ class Operation(Expression):
             extract_init_arg_value_fn = \
                 lambda arg: obj.extract_my_init_arg_value(arg)
         try:
-            arg_vals = [extract_init_arg_value_fn(arg) for arg in args]
-            if varargs is not None:
-                arg_vals += extract_init_arg_value_fn(varargs)
-            if defaults is None:
-                defaults = []
-            for k, (arg, val) in enumerate(zip(args, arg_vals)):
-                if len(defaults) - len(args) + k < 0:
+            first_param = True
+            for param_name, param in init_params.items():
+                if first_param:
+                    # Skip the 'self' parameter.
+                    first_param = False
+                    continue
+                param = init_params[param_name]
+                val = extract_init_arg_value_fn(param_name)
+                default = param.default
+                if default is param.empty or val != default:
+                    # Override the default if there is one.
                     if not isinstance(val, Expression):
                         raise TypeError(
-                            "extract_init_arg_val for %s should return an Expression but is returning a %s" %
-                            (arg, type(val)))
-                    yield val  # no default specified; just supply the value, not the argument name
-                else:
-                    if val == defaults[len(defaults) - len(args) + k]:
-                        continue  # using the default value
+                            "extract_init_arg_val for %s should return "
+                            "an Expression but is returning a %s" %
+                            (param_name, type(val)))
+                    if param.kind == Parameter.POSITIONAL_ONLY:
+                        yield val
                     else:
-                        yield (arg, val)  # override the default
-            if varkw is not None:
-                kw_arg_vals = extract_init_arg_value_fn(varkw)
-                for arg, val in kw_arg_vals.items():
-                    yield (arg, val)
-            if kwonlyargs is not None:
-                for kwonlyarg in kwonlyargs:
-                    val = extract_init_arg_value_fn(kwonlyarg)
-                    if val != kwonlydefaults[kwonlyarg]:
-                        yield (kwonlyarg, val)
+                        yield (param_name, val)
         except NotImplementedError:
-            # and (operation_class.extract_init_arg_value ==
-            # Operation.extract_init_arg_value):
-            if (varkw is None):
-                # try some default scenarios (that do not involve 
-                # keyword arguments) handle default implicit operator
-                # case
-                if implicit_operator and (
-                    (len(args) == 0 and varargs is not None) or (
-                        len(args) == operands.num_entries() and varargs is None)):
-                    # yield each operand separately
-                    for operand in operands:
-                        yield operand
-                    return
+            # Try some default scenarios that don't require
+            # extract_init_arg_value_fn to be implemented.
+            pos_params = []
+            var_params = None
+            kwonly_params = []
+            varkw = None
+            for name, param in init_params.items():
+                if param.kind in (Parameter.POSITIONAL_ONLY,
+                                  Parameter.POSITIONAL_OR_KEYWORD):
+                    pos_params.append(name)
+                elif param.kind == Parameter.VAR_POSITIONAL:
+                    var_params = name
+                elif param.kind == Parameter.KEYWORD_ONLY:
+                    kwonly_params.append(name)
+                elif param.kind == Parameter.VAR_KEYWORD:
+                    varkw = name
+            pos_params = pos_params[1:] # skip 'self'
 
-                # handle default explicit operator case
-                if (not implicit_operator) and (varkw is None):
-                    if varargs is None and len(args) == 2:
-                        # assume one argument for the operator and one
-                        # argument for the operands
-                        yield operator
-                        yield operands
-                        return
-                    elif ((varargs is not None and len(args) == 1) or 
-                          (len(args) == operands.num_entries() + 1 
-                           and varargs is None)):
-                        # yield the operator and each operand separately
-                        yield operator
+            # Note: None keyword indicates that we should create a 
+            # generic Function for these all-in-one operands 
+            # (e.g. a variable representing an ExprTuple).
+            if cls==Function:
+                operands_kw = 'operands'
+            else:
+                operands_kw = None
+            
+            if (varkw is None):
+                # handle default implicit operator case
+                if implicit_operator and (
+                    (len(pos_params) == 0 and var_params is not None) or (
+                        len(pos_params) == operands.num_entries() 
+                        and var_params is None)):
+                    if isinstance(operands, ExprTuple):
+                        # yield each operand separately
                         for operand in operands:
                             yield operand
                         return
+                    elif not isinstance(operands, Composite):
+                        # Create a generic Operation
+                        yield operator
+                        yield (operands_kw, operands) 
+                        return
+                # handle default explicit operator case
+                elif (implicit_operator is None) and (varkw is None):
+                    if var_params is None and len(pos_params) == 2:
+                        # assume one argument for the operator and one
+                        # argument for the operands
+                        yield operator
+                        if isinstance(operands, Composite):
+                            yield operands
+                        else:
+                            yield (operands_kw, operands)
+                        return
+                    elif ((var_params is not None and len(pos_params) == 1) or 
+                          (len(pos_params) == operands.num_entries() + 1 
+                           and var_params is None)):
+                        # yield the operator
+                        yield operator
+                        if isinstance(operands, ExprTuple):
+                            # yield each operand separately
+                            for operand in operands:
+                                yield operand
+                            return
+                        elif not isinstance(operands, Composite):
+                            yield (operands_kw, operands)
+                            return
                 raise NotImplementedError(
                     "Must implement 'extract_init_arg_value' for the "
                     "Operation of type %s if it does not fall into "
@@ -285,7 +332,7 @@ class Operation(Expression):
                     % str(cls))
 
     @classmethod
-    def _make(operation_class, core_info, sub_expressions):
+    def _make(operation_class, core_info, sub_expressions, *, styles):
         '''
         Make the appropriate Operation.  core_info should equal 
         ('Operation',).  The first of the sub_expressions should be 
@@ -297,6 +344,7 @@ class Operation(Expression):
         consistent.  Override this method if a different behavior is 
         desired.
         '''
+        from .function import Function
         if len(core_info) != 1 or core_info[0] != 'Operation':
             raise ValueError(
                 "Expecting Operation core_info to contain exactly one item: 'Operation'")
@@ -312,15 +360,23 @@ class Operation(Expression):
                 args.append(arg)
             else:
                 kw, val = arg
+                if kw==None:
+                    # kw=None used to indicate that
+                    # we should create a generic Function
+                    # and use the 'operands' keyword
+                    # (e.g. to represent an ExprTuple of
+                    # operands with a variable).
+                    operation_class = Function
+                    kw = 'operands'
                 kw_args[kw] = val
-        return operation_class(*args, **kw_args)
+        return operation_class(*args, **kw_args, styles=styles)
 
     def remake_arguments(self):
         '''
         Yield the argument values or (name, value) pairs
         that could be used to recreate the Operation.
         '''
-        for arg in self._extractMyInitArgs():
+        for arg in self._extract_my_init_args():
             yield arg
 
     def remake_with_style_calls(self):
@@ -344,14 +400,18 @@ class Operation(Expression):
     def string(self, **kwargs):
         # When there is a single operand, we must use the "function"-style
         # formatting.
-        if self.get_style('operation', 'function') == 'function':
+        from proveit._core_.expression.composite.expr_tuple import ExprTuple
+        if (isinstance(self.operands, ExprTuple) and 
+                self.get_style('operation', 'function') == 'function'):
             return self._function_formatted('string', **kwargs)
         return self._formatted('string', **kwargs)
 
     def latex(self, **kwargs):
         # When there is a single operand, we must use the "function"-style
         # formatting.
-        if self.get_style('operation', 'function') == 'function':
+        from proveit._core_.expression.composite.expr_tuple import ExprTuple
+        if (isinstance(self.operands, ExprTuple) and
+                self.get_style('operation', 'function') == 'function'):
             return self._function_formatted('latex', **kwargs)
         return self._formatted('latex', **kwargs)
 
@@ -379,64 +439,62 @@ class Operation(Expression):
         the operator that is obtained from self.operator.formatted(format_type).
 
         '''
-        if hasattr(self, 'operator'):
-            return Operation._formattedOperation(
-                format_type,
-                self.operator,
-                self.operands,
-                wrap_positions=self.wrap_positions(),
-                justification=self.get_style('justification', 'center'),
-                **kwargs)
-        else:
-            return Operation._formattedOperation(
-                format_type,
-                self.operators,
-                self.operands,
-                wrap_positions=self.wrap_positions(),
-                justification=self.get_style('justification', 'center'),
-                **kwargs)
+        return Operation._formatted_operation(
+            format_type,
+            self.operator,
+            self.operands,
+            wrap_positions=self.wrap_positions(),
+            justification=self.get_style('justification', 'center'),
+            **kwargs)
 
     @staticmethod
-    def _formattedOperation(
-            format_type,
-            operator_or_operators,
-            operands,
-            wrap_positions,
-            justification,
-            implicit_first_operator=False,
+    def _formatted_operation(
+            format_type, operator_or_operators, operands,
+            wrap_positions, justification, implicit_first_operator=False,
             **kwargs):
         from proveit import ExprRange, ExprTuple, composite_expression
-        if isinstance(
-                operator_or_operators,
-                Expression) and not isinstance(
-                operator_or_operators,
-                ExprTuple):
-            operator = operator_or_operators
+        if (isinstance(operator_or_operators, Expression) and 
+                not isinstance(operator_or_operators, ExprTuple)):
             # Single operator case.
-            # Different formatting when there is 0 or 1 element, unless
-            # it is an ExprRange.
-            if operands.num_entries() < 2:
-                if operands.num_entries() == 0 or not isinstance(
-                        operands[0], ExprRange):
-                    if format_type == 'string':
-                        return '[' + operator.string(fence=True) + '](' + operands.string(
-                            fence=False, sub_fence=False) + ')'
-                    else:
-                        return r'\left[' + operator.latex(fence=True) + r'\right]\left(' + operands.latex(
-                            fence=False, sub_fence=False) + r'\right)'
-                    raise ValueError(
-                        "Unexpected format_type: " + str(format_type))
-            fence = kwargs.get('fence', False)
-            sub_fence = kwargs.get('sub_fence', True)
-            do_wrapping = len(wrap_positions) > 0
-            formatted_str = ''
-            formatted_str += operands.formatted(format_type,
-                                                fence=fence,
-                                                sub_fence=sub_fence,
-                                                operator_or_operators=operator,
-                                                wrap_positions=wrap_positions,
-                                                justification=justification)
-            return formatted_str
+            operator = operator_or_operators
+            if isinstance(operands, ExprTuple):
+                # An ExprTuple of operands.
+                # Different formatting when there is 0 or 1 element, unless
+                # it is an ExprRange.
+                if operands.num_entries() < 2:
+                    if operands.num_entries() == 0 or not isinstance(
+                            operands[0], ExprRange):
+                        if format_type == 'string':
+                            return ('[' + operator.string(fence=True) + '](' 
+                                    + operands.string(fence=False, sub_fence=False) + ')')
+                        else:
+                            return (r'\left[' + operator.latex(fence=True) + r'\right]\left(' 
+                                    + operands.latex(fence=False, sub_fence=False) + r'\right)')
+                        raise ValueError(
+                            "Unexpected format_type: " + str(format_type))
+                fence = kwargs.get('fence', False)
+                sub_fence = kwargs.get('sub_fence', True)
+                do_wrapping = len(wrap_positions) > 0
+                formatted_str = ''
+                formatted_str += operands.formatted(format_type,
+                                                    fence=fence,
+                                                    sub_fence=sub_fence,
+                                                    operator_or_operators=operator,
+                                                    wrap_positions=wrap_positions,
+                                                    justification=justification)
+                return formatted_str
+            else:
+                # The operands ExprTuple are being represented by a Variable
+                # (or Operation) equating to an ExprTuple.  We will format this
+                # similarly as when we have 1 element except we drop the
+                # round parantheses.  For example, [+]a, where a represents
+                # the ExprTuple of operands for the '+' operation.
+                if format_type == 'string':
+                    return '[' + operator.string(fence=True) + ']' + operands.string(
+                        fence=False, sub_fence=False)
+                else:
+                    return (r'\left[' + operator.latex(fence=True) + r'\right]' 
+                            + operands.latex(fence=False, sub_fence=False))
         else:
             operators = operator_or_operators
             operands = composite_expression(operands)
@@ -468,8 +526,8 @@ class Operation(Expression):
                 formatted_str += ')' if format_type == 'string' else r'\right)'
             return formatted_str
 
-    def _replaced(self, repl_map, allow_relabeling,
-                  assumptions, requirements, equality_repl_requirements):
+    def basic_replaced(self, repl_map, *, 
+                       allow_relabeling=False, requirements=None):
         '''
         Returns this expression with sub-expressions substituted
         according to the replacement map (repl_map) dictionary.
@@ -504,13 +562,13 @@ class Operation(Expression):
 
         # Perform substitutions for the operator(s) and operand(s).
         subbed_operator = \
-            self.operator.replaced(repl_map, allow_relabeling,
-                                   assumptions, requirements,
-                                   equality_repl_requirements)
+            self.operator.basic_replaced(
+                    repl_map, allow_relabeling=allow_relabeling,
+                    requirements=requirements)
         subbed_operands = \
-            self.operands.replaced(repl_map, allow_relabeling,
-                                   assumptions, requirements,
-                                   equality_repl_requirements)
+            self.operands.basic_replaced(
+                    repl_map, allow_relabeling=allow_relabeling,
+                    requirements=requirements)
 
         # Check if the operator is being substituted by a Lambda map in
         # which case we should perform full operation substitution.
@@ -528,9 +586,7 @@ class Operation(Expression):
                     % (self.operator, subbed_operator))
             return Lambda._apply(
                 subbed_operator.parameters, subbed_operator.body,
-                *subbed_operands.entries, assumptions=assumptions,
-                requirements=requirements,
-                equality_repl_requirements=equality_repl_requirements)
+                *subbed_operands.entries, requirements=requirements)
         
         # If the operator is a literal operator of
         # an Operation class defined via an "_operator_" class
@@ -542,18 +598,186 @@ class Operation(Expression):
                 # the same manner in the setting of the new
                 # operation.
                 subbed_sub_exprs = (subbed_operator, subbed_operands)
-                substituted = op_class._checked_make(
-                    ['Operation'], sub_expressions=subbed_sub_exprs)
-                return substituted._auto_reduced(
-                    assumptions, requirements,
-                    equality_repl_requirements)
+                return op_class._checked_make(
+                    ['Operation'], sub_expressions=subbed_sub_exprs,
+                    style_preferences=self._style_data.styles)
         
         subbed_sub_exprs = (subbed_operator,
                             subbed_operands)
-        substituted = self.__class__._checked_make(
-            self._core_info, subbed_sub_exprs)
-        return substituted._auto_reduced(assumptions, requirements,
-                                         equality_repl_requirements)
+        return self.__class__._checked_make(
+            self._core_info, subbed_sub_exprs, 
+            style_preferences=self._style_data.styles)
+
+    @equality_prover('evaluated', 'evaluate')
+    def evaluation(self, **defaults_config):
+        '''
+        If possible, return a Judgment of this expression equal to an
+        irreducible value.  This Operation.evaluation version
+        simplifies the operands and then calls shallow_simplification
+        with must_evaluat=True.
+        '''
+        from proveit import UnsatisfiedPrerequisites, ProofFailure
+        from proveit.logic import EvaluationError, SimplificationError
+        
+        # Try to simplify the operands first.
+        reduction = self.simplification_of_operands()
+        
+        # After making sure the operands have been simplified,
+        # try 'shallow_simplification' with must_evaluate=True.
+        try:
+            if reduction.lhs == reduction.rhs:
+                # _no_eval_check is a directive to the @equality_prover wrapper 
+                # to tell it not to check for an existing evaluation if we have
+                # already checked.
+                return self.shallow_simplification(
+                    must_evaluate=True, _no_eval_check=True)
+            evaluation = reduction.rhs.shallow_simplification(
+                    must_evaluate=True)
+        except (SimplificationError, UnsatisfiedPrerequisites,
+                NotImplementedError, ProofFailure):
+            raise EvaluationError(self)
+        return reduction.apply_transitivity(evaluation)
+
+    @equality_prover('simplified', 'simplify')
+    def simplification(self, **defaults_config):
+        '''
+        If possible, return a Judgment of this expression equal to a
+        simplified form (according to strategies specified in 
+        proveit.defaults). 
+        
+        This Operation.simplification version tries calling
+        simplifies the operands and then calls 'shallow_simplification'.
+        '''
+        # Try to simplify the operands first.
+        reduction = self.simplification_of_operands()
+
+        # After making sure the operands have been simplified,
+        # try 'shallow_simplification'.
+        # Use the 'reduction' as a replacement in case it is needed.
+        # For example, consider 
+        #       1*b + 3*b
+        #   It's reduction is
+        #       1*b + 3*b = b + 3*b
+        #   But in the shallow simplification, we'll do a factorization
+        #   that will exploit the "reduction" fact which wouldn't
+        #   otherwise be used because (1*b + 3*b) is a preserved
+        #   expression since simplification is an @equality_prover.
+
+        if reduction.lhs == reduction.rhs:
+            # _no_eval_check is a directive to the @equality_prover wrapper 
+            # to tell it not to check for an existing evaluation if we have
+            # already checked.
+            return self.shallow_simplification(_no_eval_check=True)
+        else:
+            simplification = reduction.rhs.shallow_simplification(
+                replacements=[reduction])
+            return reduction.apply_transitivity(simplification)
+    
+    @equality_prover('simplified_operands', 'operands_simplify')
+    def simplification_of_operands(self, **defaults_config):
+        '''
+        Prove this Operation equal to a form in which its operands
+        have been simplified.
+        '''
+        from proveit.relation import TransRelUpdater
+        from proveit import ExprRange
+        from proveit.logic import is_irreducible_value
+        if any(isinstance(operand, ExprRange) for operand in self.operands):
+            # If there is any ExprRange in the operands, simplify the
+            # operands together as an ExprTuple.
+            return self.inner_expr().operands[:].simplification()
+        else:
+            expr = self
+            eq = TransRelUpdater(expr)
+            for k, operand in enumerate(self.operands):
+                if not is_irreducible_value(operand):
+                    inner_operand = expr.inner_expr().operands[k]
+                    expr = eq.update(inner_operand.simplification())
+        return eq.relation
+
+    @equality_prover('operator_substituted', 'operator_substitute')
+    def operator_substitution(self, equality, **defaults_config):
+        from proveit import f, g, n, x
+        from proveit.core_expr_types.operations import (
+                operator_substitution)
+        _n = self.operands.num_elements()
+        if equality.lhs == self.operator:
+            return operator_substitution.instantiate(
+                    {n:_n, x:self.operands, f:equality.lhs, g:equality.rhs})
+        elif equality.rhs == self.operator:
+            return operator_substitution.instantiate(
+                    {n:_n, x:self.operands, f:equality.rhs, g:equality.lhs})
+        else:
+            raise ValueError("%s is not an appropriate 'equality' for "
+                             "operator_substitution on %s (the 'operator' "
+                             "is not matched on either side)"
+                             %(equality, self))
+
+    @equality_prover('operands_substituted', 'operands_substitute')
+    def operands_substitution(self, equality, **defaults_config):
+        from proveit import f, n, x, y
+        from proveit.core_expr_types.operations import (
+                operands_substitution)
+        from proveit.logic.equality import substitution
+        if equality.lhs == self.operands:
+            _x, _y = equality.lhs, equality.rhs
+        elif equality.rhs == self.operands:
+            _x, _y = equality.rhs, equality.lhs
+        else:
+            raise ValueError("%s is not an appropriate 'equality' for "
+                             "operator_substitution on %s (the 'operator' "
+                             "is not matched on either side)"
+                             %(equality, self))
+        
+        if self.operands.is_single():
+            # This is a simple single-operand substitution.
+            return substitution.instantiate(
+                    {f:self.operator, x:_x[0], y:_y[0]})
+        
+        # More general mult-operand substitution:
+        _n = self.operands.num_elements()
+        if equality.lhs == self.operands:
+            return operands_substitution.instantiate(
+                    {n:_n, f:self.operator, x:equality.lhs, y:equality.rhs})
+        elif equality.rhs == self.operands:
+            return operands_substitution.instantiate(
+                    {n:_n, f:self.operator, x:equality.rhs, y:equality.lhs})
+        else:
+            raise ValueError("%s is not an appropriate 'equality' for "
+                             "operator_substitution on %s (the 'operator' "
+                             "is not matched on either side)"
+                             %(equality, self))
+     
+    @equality_prover('sub_expr_substituted', 'sub_expr_substitute')
+    def sub_expr_substitution(self, new_sub_exprs, **defaults_config):
+        '''
+        Given new sub-expressions to replace existing sub-expressions,
+        return the equality between this Expression and the new
+        one with the new sub-expressions.
+        '''
+        from proveit.logic import Equals
+        from proveit.relation import TransRelUpdater
+        assert len(new_sub_exprs)==2, (
+                "Expecting 2 sub-expressions: operator and operands")
+        eq = TransRelUpdater(self)
+        expr = self
+        if new_sub_exprs[0] != self.sub_expr(0):
+            expr = eq.update(expr.operator_substitution(
+                    Equals(self.sub_expr(0), new_sub_exprs[0])))
+        if new_sub_exprs[1] != self.sub_expr(1):
+            expr = eq.update(expr.operands_substitution(
+                    Equals(self.sub_expr(1), new_sub_exprs[1])))
+        return eq.relation
+
+    def operands_are_irreducible(self):
+        '''
+        Return True iff all of the operands of this Operation are
+        irreducible.
+        '''
+        from proveit.logic import is_irreducible_value
+        return all(is_irreducible_value(operand) for operand
+                   in self.operands.entries)
+
 
 class OperationError(Exception):
     def __init__(self, message):

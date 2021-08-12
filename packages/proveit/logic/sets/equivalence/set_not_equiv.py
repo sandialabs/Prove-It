@@ -1,4 +1,5 @@
-from proveit import Literal, Operation, USE_DEFAULTS
+from proveit import (Literal, Operation, USE_DEFAULTS, 
+                     prover, relation_prover, equality_prover)
 from .set_equiv import SetEquiv
 # from .equals import Equals
 from proveit.logic.irreducible_value import is_irreducible_value
@@ -20,8 +21,9 @@ class SetNotEquiv(Operation):
                          latex_format=r'\ncong',
                          theory=__file__)
 
-    def __init__(self, a, b):
-        Operation.__init__(self, SetNotEquiv._operator_, (a, b))
+    def __init__(self, a, b, *, styles=None):
+        Operation.__init__(self, SetNotEquiv._operator_, (a, b),
+                           styles=styles)
         self.lhs = self.operands[0]
         self.rhs = self.operands[1]
 
@@ -58,14 +60,15 @@ class SetNotEquiv(Operation):
     #     except:
     # return Operation.conclude(assumptions) # try the default (reduction)
 
-    def derive_reversed(self, assumptions=USE_DEFAULTS):
+    @prover
+    def derive_reversed(self,  **defaults_config):
         '''
         From A not_equiv B derive B not_equiv A.
         Derived automatically as a side-effect in side_effects() method.
         '''
         from . import set_not_equiv_reversal
-        return set_not_equiv_reversal.instantiate({A: self.lhs, B: self.rhs},
-                                                  assumptions=assumptions)
+        return set_not_equiv_reversal.instantiate(
+                {A: self.lhs, B: self.rhs})
 
     # Later consider a form of double negation like
     # Not(SetNotEquiv(A, B)) giving SetEquiv(A, B)
@@ -96,7 +99,8 @@ class SetNotEquiv(Operation):
     # return not_equals_false.instantiate({A:self.lhs},
     # assumptions=assumptions)
 
-    def definition(self):
+    @equality_prover('defined', 'define')
+    def definition(self,  **defaults_config):
         '''
         Return (A not_equiv B) = Not(A equiv B) where self represents
         (A not_equiv B).
@@ -104,21 +108,23 @@ class SetNotEquiv(Operation):
         from . import set_not_equiv_def
         return set_not_equiv_def.instantiate({A: self.lhs, B: self.rhs})
 
-    def unfold(self, assumptions=USE_DEFAULTS):
+    @prover
+    def unfold(self, **defaults_config):
         '''
         From (A not_equiv B) derive and return Not(A equiv B).
         '''
         from . import unfold_set_not_equiv
         return unfold_set_not_equiv.instantiate(
-            {A: self.lhs, B: self.rhs}, assumptions=assumptions)
+            {A: self.lhs, B: self.rhs})
 
-    def conclude_as_folded(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude_as_folded(self, **defaults_config):
         '''
         Conclude (A not_equiv B) from Not(A equiv B).
         '''
         from . import fold_set_not_equiv
         return fold_set_not_equiv.instantiate(
-            {A: self.lhs, B: self.rhs}, assumptions=assumptions)
+            {A: self.lhs, B: self.rhs})
 
     # def evaluation(self, assumptions=USE_DEFAULTS):
     #     '''
@@ -131,14 +137,15 @@ class SetNotEquiv(Operation):
     #     unfolded_evaluation = definition_equality.rhs.evaluation(assumptions)
     #     return Equals(self, unfolded_evaluation.rhs).prove(assumptions)
 
-    def derive_contradiction(self, assumptions=USE_DEFAULTS):
+    @prover
+    def derive_contradiction(self, **defaults_config):
         '''
         From A not_equiv B, and assuming (A equiv B),
         derive and return FALSE.
         '''
         from . import set_not_equiv_contradiction
         return set_not_equiv_contradiction.instantiate(
-            {A: self.lhs, B: self.rhs}, assumptions=assumptions)
+            {A: self.lhs, B: self.rhs})
 
     # def affirm_via_contradiction(self, conclusion, assumptions=USE_DEFAULTS):
     #     '''
@@ -158,7 +165,8 @@ class SetNotEquiv(Operation):
     #     from proveit.logic.booleans.implication import deny_via_contradiction
     #     return deny_via_contradiction(self, conclusion, assumptions)
 
-    def deduce_in_bool(self, assumptions=USE_DEFAULTS):
+    @relation_prover
+    def deduce_in_bool(self, **defaults_config):
         '''
         Deduce and return that this 'not equiv' statement is in
         the set of BOOLEANS.

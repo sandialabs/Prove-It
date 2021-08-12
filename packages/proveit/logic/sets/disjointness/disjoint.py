@@ -11,5 +11,6 @@ class Disjoint(Function):
     '''
     _operator_ = Literal('disjoint', r'\textrm{disjoint}', theory=__file__)
 
-    def __init__(self, *sets):
-        Function.__init__(self, Disjoint._operator_, sets)
+    def __init__(self, *sets, styles=None):
+        Function.__init__(self, Disjoint._operator_, sets,
+                          styles=styles)

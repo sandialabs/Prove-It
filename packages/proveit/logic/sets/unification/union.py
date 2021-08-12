@@ -9,11 +9,12 @@ class Union(Operation):
         latex_format=r'\cup',
         theory=__file__)
 
-    def __init__(self, *operands):
+    def __init__(self, *operands, styles=None):
         '''
         Union any number of sets: A union B union C
         '''
-        Operation.__init__(self, Union._operator_, operands)
+        Operation.__init__(self, Union._operator_, operands,
+                           styles=styles)
 
     def membership_object(self, element):
         from .union_membership import UnionMembership

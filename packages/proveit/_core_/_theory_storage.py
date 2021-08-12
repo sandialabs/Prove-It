@@ -304,13 +304,13 @@ class TheoryStorage:
             raise ValueError("Expecting 'axioms', 'theorems' or 'common', "
                              "not %s." % folder)
 
-    def set_common_expressions(self, names, definitions):
+    def set_common_expressions(self, definitions):
         '''
         Set the common expressions of the theory.
         '''
-        return self.set_special_expressions(names, definitions, 'common')
+        return self.set_special_expressions(definitions, 'common')
 
-    def set_special_expressions(self, names, definitions, kind):
+    def set_special_expressions(self, definitions, kind):
         '''
         Set the common expressions, axioms, or theorems of the theory.
         '''
@@ -332,9 +332,9 @@ class TheoryStorage:
             # "Retrieve" the proofs to make sure they are stored
             # for future needs.
             self.theory_folder_storage(kind + 's')
-        self._setSpecialObjects(names, definitions, kind)
+        self._set_special_objects(definitions, kind)
 
-    def _setSpecialObjects(self, names, definitions, kind):
+    def _set_special_objects(self, definitions, kind):
         folder = TheoryStorage._kind_to_folder(kind)
         name_to_hash_file = os.path.join(self.pv_it_dir, folder,
                                          'name_to_hash.txt')
@@ -356,7 +356,7 @@ class TheoryStorage:
 
         # determine hash ids
         obsolete_hash_ids = set()  # for modified statements
-        for name in names:
+        for name, obj in definitions.items():
             obj = definitions[name]
             if kind == 'common':
                 expr = obj
@@ -434,6 +434,7 @@ class TheoryStorage:
                     self.theory, kind, hash_id)
 
         # Now we'll write the new name to hash information.
+        names = definitions.keys()
         self._update_name_to_kind(names, kind)
         new_lines = []
         for name in names:
@@ -901,7 +902,11 @@ class TheoryFolderStorage:
         self.path = os.path.join(self.pv_it_dir, folder)
         if not os.path.isdir(self.path):
             # make the folder
-            os.makedirs(self.path)
+            try:
+                os.makedirs(self.path)
+            except (OSError, FileExistsError):
+                # maybe another processor beat us to it.
+                pass
 
         # For 'common', 'axioms', 'theorems' folders, we map
         # the object hash folder names to the name(s) of the
@@ -1889,9 +1894,8 @@ class TheoryFolderStorage:
             return constructor
         if isinstance(expr, NamedExprs):
             # convert to (name, value) tuple form
-            arg_str = ', '.join('(' +
-                                arg_to_string(arg).replace(' = ', ',') +
-                                ')' for arg in expr.remake_arguments())
+            arg_str = ', '.join('(%s, %s)'%(name, arg_to_string(expr))
+                                for name, expr in expr.remake_arguments())
         else:
             arg_str = ', '.join(arg_to_string(arg) for
                                 arg in expr.remake_arguments())
@@ -1905,7 +1909,7 @@ class TheoryFolderStorage:
             else:
                 assert isinstance(expr, NamedExprs)
                 # list of (name, value) tuples
-                composite_str = '[' + arg_str.replace(' = ', ':') + ']'
+                composite_str = '[' + arg_str + ']'
             if is_sub_expr and expr.__class__ in (ExprTuple,
                                                   NamedExprs, ExprArray):
                 # It is a sub-Expression and a standard composite class.
@@ -1966,7 +1970,8 @@ class TheoryFolderStorage:
                 styles,
                 sub_expressions):
             expr_class = expr_class_map[expr_class_str]
-            expr = expr_class._checked_make(expr_info, sub_expressions).with_styles(**styles)
+            expr = expr_class._checked_make(expr_info, sub_expressions, 
+                                            style_preferences=styles)
             return expr
         # Load the "special names" of the theory so we
         # will know, for future reference, if this is a special
@@ -2181,7 +2186,7 @@ class TheoryFolderStorage:
             # theory.  First, import the module of the theory
             # which should import any modules containing operation
             # classes with _operator_ Literals, then "retreive"
-            # Literals of the theory as currently references objects.
+            # Literals of the theory as currently referenced objects.
             importlib.import_module(self.theory.name)
             for literal in Literal.instances.values():
                 if literal.theory == self.theory:
@@ -2443,7 +2448,14 @@ class StoredAxiom(StoredSpecialStmt):
 
 def remove_if_exists(path):
     if os.path.isfile(path):
-        os.remove(path)
+        try:
+            os.remove(path)
+        except FileNotFoundError:
+            # File was there and then gone.
+            # Can happen with multi-processing.
+            # Just continue.
+            pass
+            
 
 
 class StoredTheorem(StoredSpecialStmt):
@@ -2606,7 +2618,8 @@ class StoredTheorem(StoredSpecialStmt):
         return self.theory._storage.get_all_presumed_theorem_names(self.name)
     """
 
-    def get_presumptions_and_exclusions(self):
+    def get_presumptions_and_exclusions(self, presumptions=None,
+                                        exclusions=None):
         '''
         Return the set of theorems and theories that are explicitly
         presumed by this theorem, and a set of exclusions (e.g.,
@@ -2615,15 +2628,11 @@ class StoredTheorem(StoredSpecialStmt):
         '''
         proof_path = os.path.join(self.theory.get_path(), '_theory_nbs_',
                                   'proofs', self.name)
-
-        presumptions = set()
-        exclusions = set()
+        if presumptions is None: presumptions = set()
+        if exclusions is None: exclusions = set()
         presumptions_filename = os.path.join(proof_path, 'presumptions.txt')
 
         # Let's create the generic version.
-        # TODO: remove
-        if not os.path.isdir(proof_path):
-            os.mkdir(proof_path)
         if not os.path.isfile(presumptions_filename):
             with open(presumptions_filename, 'w') as f:
                 f.write(StoredTheorem.PRESUMPTIONS_HEADER + '\n')
@@ -2737,11 +2746,6 @@ class StoredTheorem(StoredSpecialStmt):
         proof_path = os.path.join(self.theory.get_path(), '_theory_nbs_',
                                   'proofs', self.name)
 
-        # For temporary backward compatibility, created the directory
-        # if necessary.  TODO: remove
-        if not os.path.isdir(proof_path):
-            os.mkdir(proof_path)
-
         '''
         # This is too specific and results in error during automation.
         # With future work, maybe we can use this approach, but it's
@@ -2757,10 +2761,10 @@ class StoredTheorem(StoredSpecialStmt):
         from proveit._core_.proof import Theorem
         with open(os.path.join(proof_path, 'presumptions.txt'), 'w') as f:
             f.write(StoredTheorem.PRESUMPTIONS_HEADER + '\n')
-            usable_theorem_names = set(str(theorem) for theorem
-                                       in Theorem.all_theorems
-                                       if theorem.is_usable())
-            for theorem in sorted(usable_theorem_names):
+            used_theorem_names = set(str(theorem) for theorem
+                                     in Theorem.all_used_theorems
+                                     if theorem.is_usable())
+            for theorem in sorted(used_theorem_names):
                 f.write(str(theorem) + '\n')
             f.write(StoredTheorem.PRESUMPTION_EXCLUSION_HEADER + '\n')
 
@@ -2877,36 +2881,43 @@ class StoredTheorem(StoredSpecialStmt):
             processed.add(next_theorem)
         return (required_axioms, required_theorems)
 
-    def all_used_theorem_names(self):
+    def all_used_or_presumed_theorem_names(self, names=None):
         '''
-        Returns the set of names of theorems used to prove the given
-        theorem, directly or indirectly.
+        Returns the set of theorems used to prove the theorem or to be presumed
+        in the proof of the theorem, directly or indirectly (i.e., applied
+        recursively); this theorem itself is also included.
+        If a set of 'names' is provided, this will add the 
+        names to that set and skip over anything that is already in the set, 
+        making the assumption that its dependents have already been
+        included (e.g., if the same set is used in multiple calls to this
+        method for different theorems).
         '''
         from .theory import Theory, TheoryException
-        if not self.has_proof():
-            raise Exception('The theorem must be proven in order to '
-                            'obtain its requirements')
-        used_theorem_names = self.read_used_theorems()
-        all_used_theorem_names = set()
-        processed = set()
-        to_process = set(used_theorem_names)
+        my_name = str(self)
+        if names is None: 
+            names = set()
+        elif my_name in names:
+            return # already processed 'my_name', so nothing to do.
+        to_process = {my_name}
         while len(to_process) > 0:
             next_theorem_name = to_process.pop()
-            all_used_theorem_names.add(next_theorem_name)
+            if next_theorem_name in names:
+                continue
             try:
-                stored_theorem = Theory.get_stored_theorem(next_theorem_name)
+                if next_theorem_name == my_name:
+                    stored_theorem = self
+                else:
+                    stored_theorem = Theory.get_stored_theorem(next_theorem_name)
             except (KeyError, TheoryException):
                 # If it no longer exists, skip it.
                 continue
+            names.add(next_theorem_name)            
             if not stored_theorem.has_proof():
-                processed.add(next_theorem_name)
-                continue
-            used_theorem_names = stored_theorem.read_used_theorems()
-            for used_theorem_name in used_theorem_names:
-                if used_theorem_name not in processed:
-                    to_process.add(used_theorem_name)
-            processed.add(next_theorem_name)
-        return all_used_theorem_names
+                new_to_process, _ = stored_theorem.get_presumptions_and_exclusions()
+            else:
+                new_to_process = stored_theorem.read_used_theorems()
+            to_process.update(set(new_to_process) - names)
+        return names
 
     def _undoDependentCompletion(self):
         '''

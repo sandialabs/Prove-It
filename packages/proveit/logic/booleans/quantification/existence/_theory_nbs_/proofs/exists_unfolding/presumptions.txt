@@ -1,23 +1,15 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
 proveit.core_expr_types.tuples.range_from1_len
 proveit.core_expr_types.tuples.range_from1_len_typical_eq
-proveit.logic.booleans.fold_is_bool
-proveit.logic.booleans.in_bool_if_false
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.negation_intro
 proveit.logic.booleans.negation.untrue_from_negation
 proveit.logic.booleans.unfold_is_bool
-proveit.logic.booleans.unfold_is_bool_explicit
 proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
 proveit.logic.equality.not_equals_symmetry
 proveit.logic.equality.rhs_via_equality
-proveit.logic.equality.sub_left_side_into
 proveit.logic.equality.sub_right_side_into
-proveit.logic.equality.substitute_falsehood
-proveit.logic.equality.substitute_in_false
-proveit.logic.equality.substitute_in_true
-proveit.logic.equality.substitute_truth
 proveit.logic.equality.unfold_not_equals
 proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
@@ -26,12 +18,6 @@ proveit.numbers.number_sets.integers.nat_within_int
 proveit.numbers.number_sets.natural_numbers.nat_pos_within_nat
 proveit.numbers.number_sets.natural_numbers.natural_lower_bound
 proveit.numbers.number_sets.natural_numbers.natural_pos_lower_bound
-proveit.numbers.number_sets.natural_numbers.non_zero_if_is_nat_pos
 proveit.numbers.number_sets.rational_numbers.int_within_rational
-proveit.numbers.number_sets.rational_numbers.rational_neg_within_rational
-proveit.numbers.number_sets.rational_numbers.rational_non_neg_within_rational
-proveit.numbers.number_sets.rational_numbers.rational_pos_within_rational
-proveit.numbers.number_sets.rational_numbers.rational_pos_within_rational_non_neg
-proveit.numbers.number_sets.rational_numbers.zero_is_rational
 proveit.numbers.number_sets.real_numbers.rational_within_real
 # THEOREMS AND THEORIES TO EXCLUDE:

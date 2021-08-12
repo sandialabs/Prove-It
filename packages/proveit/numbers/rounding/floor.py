@@ -1,16 +1,17 @@
-from proveit import defaults, Function, InnerExpr, Literal, USE_DEFAULTS
+from proveit import (defaults, Function, InnerExpr, Literal, USE_DEFAULTS,
+                     relation_prover, equality_prover)
 from proveit.numbers.number_sets import Integer, Natural
 from proveit.numbers.rounding.rounding_methods import (
     apply_rounding_elimination, apply_rounding_extraction,
-    apply_reduced_simplification, rounding_deduce_in_number_set)
+    apply_shallow_simplification, rounding_deduce_in_number_set)
 
 
 class Floor(Function):
     # operator of the Floor operation.
     _operator_ = Literal(string_format='floor', theory=__file__)
 
-    def __init__(self, A):
-        Function.__init__(self, Floor._operator_, A)
+    def __init__(self, A, *, styles=None):
+        Function.__init__(self, Floor._operator_, A, styles=styles)
         # self.operand = A
 
     def _closureTheorem(self, number_set):
@@ -23,8 +24,13 @@ class Floor(Function):
     def latex(self, **kwargs):
         return r'\lfloor ' + self.operand.latex(fence=False) + r'\rfloor'
 
-    def do_reduced_simplification(self, assumptions=USE_DEFAULTS):
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         '''
+        Returns a proven simplification equation for this Floor
+        expression assuming the operands have been simplified.
+        
         For the trivial case Floor(x) where the operand x is already
         known to be or assumed to be an integer, derive and return this
         Floor expression equated with the operand itself: Floor(x) = x.
@@ -33,9 +39,10 @@ class Floor(Function):
         form x = real + int, derive and return this Floor expression
         equated with Floor(real) + int.
         '''
-        return apply_reduced_simplification(self, assumptions)
+        return apply_shallow_simplification(self, must_evaluate=must_evaluate)
 
-    def rounding_elimination(self, assumptions=USE_DEFAULTS):
+    @equality_prover('rounding_eliminated', 'rounding_eliminate')
+    def rounding_elimination(self, **defaults_config):
         '''
         For the trivial case of Floor(x) where the operand x is already
         an integer, derive and return this Floor expression equated
@@ -50,12 +57,10 @@ class Floor(Function):
         '''
         from . import floor_of_integer
 
-        return apply_rounding_elimination(self, floor_of_integer, assumptions)
+        return apply_rounding_elimination(self, floor_of_integer)
 
-    def rounding_extraction(
-            self,
-            idx_to_extract=None,
-            assumptions=USE_DEFAULTS):
+    @equality_prover('rounding_extracted', 'rounding_extract')
+    def rounding_extraction(self, idx_to_extract=None, **defaults_config):
         '''
         For the case of Floor(x) where the operand x = x_real + x_int,
         derive and return Floor(x) = Floor(x_real) + int (thus
@@ -79,9 +84,10 @@ class Floor(Function):
         '''
         from . import floor_of_real_plus_int
         return apply_rounding_extraction(
-            self, floor_of_real_plus_int, idx_to_extract, assumptions)
+            self, floor_of_real_plus_int, idx_to_extract)
 
-    def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
+    @relation_prover
+    def deduce_in_number_set(self, number_set, **defaults_config):
         '''
         Given a number set number_set, attempt to prove that the given
         Floor expression is in that number set using the appropriate
@@ -91,12 +97,4 @@ class Floor(Function):
         from proveit.numbers.rounding import floor_real_pos_closure
 
         return rounding_deduce_in_number_set(
-            self, number_set, floor_is_an_int, floor_real_pos_closure,
-            assumptions)
-
-
-# Register these generic expression equivalence methods:
-InnerExpr.register_equivalence_method(
-    Floor, 'rounding_elimination', 'rounding_eliminated', 'rounding_eliminate')
-InnerExpr.register_equivalence_method(
-    Floor, 'rounding_extraction', 'rounding_extracted', 'rounding_extract')
+            self, number_set, floor_is_an_int, floor_real_pos_closure)

@@ -1,10 +1,11 @@
-from proveit import Literal, ProofFailure, defaults, USE_DEFAULTS
+from proveit import Literal, ProofFailure, defaults, prover
 from proveit.logic import Equals, InSet, Membership
 
 
 class NumberSet(Literal):
-    def __init__(self, string, latex, theory):
-        Literal.__init__(self, string, latex, theory=theory)
+    def __init__(self, string, latex, *, theory, styles, fence_when_forced=False):
+        Literal.__init__(self, string, latex, theory=theory, styles=styles,
+                         fence_when_forced=fence_when_forced)
 
     def membership_object(self, element):
         return NumberMembership(element, self)
@@ -21,7 +22,7 @@ class NumberSet(Literal):
 
 class NumberMembership(Membership):
     def __init__(self, element, number_set):
-        Membership.__init__(self, element)
+        Membership.__init__(self, element, number_set)
         self.number_set = number_set
 
     def side_effects(self, judgment):
@@ -45,24 +46,13 @@ class NumberMembership(Membership):
         for side_effect in number_set.membership_side_effects(judgment):
             yield side_effect
 
-    def conclude(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude(self, **defaults_config):
         '''
         Try to deduce that the given element is in the number set under
         the given assumptions.
         '''
         element = self.element
-
-        # See if the element is known to be equal with something
-        # that is known to be in the number set.
-        assumptions_set = set(defaults.checked_assumptions(assumptions))
-        for eq, equiv_elem in Equals.known_relations_from_left(
-                element, assumptions_set):
-            try:
-                equiv_elem_in_set = InSet(equiv_elem, self.number_set)
-                equiv_elem_in_set.prove(assumptions, automation=False)
-                return eq.sub_left_side_into(equiv_elem_in_set, assumptions)
-            except ProofFailure:
-                pass
 
         '''
         # Maybe let's not simplify first.  If
@@ -79,13 +69,16 @@ class NumberMembership(Membership):
 
         # Try the 'deduce_in_number_set' method.
         if hasattr(element, 'deduce_in_number_set'):
-            return element.deduce_in_number_set(self.number_set,
-                                                assumptions=assumptions)
+            try:
+                return element.deduce_in_number_set(self.number_set)
+            except NotImplementedError as e:
+                if hasattr(self, 'conclude_as_last_resort'):
+                    return self.conclude_as_last_resort()
+                raise ProofFailure(InSet(self.element, self.number_set),
+                                   defaults.assumptions, str(e))
         else:
+            if hasattr(self, 'conclude_as_last_resort'):
+                return self.conclude_as_last_resort()
             msg = str(element) + " has no 'deduce_in_number_set' method."
             raise ProofFailure(InSet(self.element, self.number_set),
-                               assumptions, msg)
-
-    def deduce_in_bool(self, assumptions=USE_DEFAULTS):
-        return self.number_set.deduce_membership_in_bool(
-            self.element, assumptions=assumptions)
+                               defaults.assumptions, msg)

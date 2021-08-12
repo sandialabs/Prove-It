@@ -1,6 +1,7 @@
 from collections import deque
 from proveit import Expression, Operation, StyleOptions
-from proveit import defaults, USE_DEFAULTS, Judgment, ProofFailure
+from proveit import (defaults, USE_DEFAULTS, Judgment, ProofFailure,
+                     prover)
 from .sorter import TransitivitySorter
 
 
@@ -10,14 +11,18 @@ class Relation(Operation):
     are Equals, NotEquals, Less, Subset, etc.
     '''
 
-    def __init__(self, operator, lhs, rhs):
+    def __init__(self, operator, normal_lhs, normal_rhs, *, styles):
         # We need to pass along 'direction':'normal' rather than
         # relying about StyleOption defaults because we don't want
         # that to be overwritten by the style of the last expression
         # with the same meaning.
-        Operation.__init__(self, operator, (lhs, rhs),
-                           styles={'direction':'normal'})
-        assert(self.operands.is_double())
+        Operation.__init__(self, operator, (normal_lhs, normal_rhs),
+                           styles=styles)
+        assert self.operands.is_double(), "%s is not double"%self.operands
+        # lhs and rhs with the "direction" style of "normal"
+        # (not subject to reversal)
+        self.normal_lhs = self.operands[0]
+        self.normal_rhs = self.operands[1]
         # The 'lhs' and 'rhs' attributes will access the respective
         # operands, but this is effected in __getattr__ because
         # they will be switched when the 'direction' style is
@@ -82,31 +87,14 @@ class Relation(Operation):
         if self.is_reversed():
             operator_str = self.__class__.reversed_operator_str(format_type)
             operands = ExprTuple(*reversed(operands.entries))
-        return Operation._formattedOperation(
+        return Operation._formatted_operation(
                 format_type, fence=fence, subFence=subFence, 
                 operator_or_operators=operator_str, operands=operands,
                 wrap_positions=wrap_positions, 
                 justification=justification)
-            
-    def _simplify_both_sides(self, *, simplify, assumptions=USE_DEFAULTS):
-        '''
-        Simplify both sides iff 'simplify' is True.
-        '''
-        if simplify:
-            return self.simplify_both_sides(assumptions)
-        return self
 
-    def simplify_both_sides(self, assumptions=USE_DEFAULTS):
-        '''
-        Simplify both sides of the relation under the give assumptions
-        and return the new relation.
-        '''
-        relation = self
-        relation = relation.inner_expr().lhs.simplify(assumptions)
-        relation = relation.inner_expr().rhs.simplify(assumptions)
-        return relation
-
-    def do_something_on_both_sides(self, assumptions=USE_DEFAULTS):
+    @prover
+    def do_something_on_both_sides(self, **defaults_config):
         '''
         The entire purpose of this method is this docstring to be
         informative.  There may be on-the-fly methods created
@@ -132,10 +120,8 @@ class Relation(Operation):
         The method in the domain class must end in
         "_both_sides_of_<lower-case-relation-class-name>" and match
         this attribute name up to "..._both_sides" as in these
-        examples.  The corresponding method built on-the-fly
-        for the TransitiveRelation class will take an extra optional
-        'simplify' argument, True by default, for automatically
-        simplifying both sides of the new relation.
+        examples.  The corresponding @prover method is built on-the-fly
+        for the TransitiveRelation class.
         
         Also, 'lhs' and 'rhs' attributes are implemented here
         because they will be reversed if the 'direction' style
@@ -172,34 +158,26 @@ class Relation(Operation):
                     # is proven under the default assumptions, but
                     # we will try those ones first (the ones at the
                     # end will be popped off first).
-                    if known_membership.is_sufficient(defaults.assumptions):
+                    if known_membership.is_applicable(defaults.assumptions):
                         domain_methods.append((domain, domain_attr))
                     else:
                         domain_methods.insert(0, (domain, domain_attr))
 
-            def transform_both_sides(*args, **kwargs):
-                simplify = kwargs.get('simplify', True)
-                assumptions = kwargs.get('assumptions',
-                                         USE_DEFAULTS)
-                kwargs.pop('simplify', None)
+            @prover
+            def transform_both_sides(*args, **defaults_config):
                 while len(domain_methods) > 0:
                     domain, method = domain_methods.pop()
                     try:
-                        relation = method(self, *args, **kwargs)
+                        relation = method(self, *args)
                     except TypeError as e:
                         if len(domain_methods) == 0:
                             raise e
                         # otherwise, there are other methods to try.
-                if simplify:
-                    relation = relation.inner_expr().lhs.simplify(
-                        assumptions)
-                    relation = relation.inner_expr().rhs.simplify(
-                        assumptions)
                 # After doing the transformation, prove that one of
                 # the sides (the left side, arbitrarily) is still in
                 # the domain so it will have a known membership for
                 # next time.
-                InSet(relation.lhs, domain).prove(assumptions)
+                InSet(relation.lhs, domain).prove()
                 return relation
             if len(domain_methods) == 0:
                 raise AttributeError  # Default behaviour
@@ -214,9 +192,9 @@ class Relation(Operation):
 
     def __dir__(self):
         '''
-        Include the '_both_sides' methods dependent upon the known
-        memberships of the left/right sides of the relation
-        (see __getattr__).
+        Include 'lhs', 'rhs', and the '_both_sides' methods dependent 
+        upon the known memberships of the left/right sides of the 
+        relation (see __getattr__).
         '''
         both_sides_str = '_both_sides'
         relation_name_str = '_of_' + self.__class__.__name__.lower()
@@ -234,4 +212,4 @@ class Relation(Operation):
                 if name[-len(method_end_str):] == method_end_str:
                     both_sides_methods.append(name[:-len(relation_name_str)])
         return sorted(set(dir(self.__class__) + list(self.__dict__.keys())
-                          + both_sides_methods))
+                          + both_sides_methods + ('lhs', 'rhs')))

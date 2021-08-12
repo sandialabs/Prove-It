@@ -1,13 +1,16 @@
-from proveit import (Literal, Lambda, Function, Operation, 
+from proveit import (Literal, Lambda, Function, Operation,
                      OperationOverInstances, InnerExpr,
-                     Judgment, free_vars, maybe_fenced, USE_DEFAULTS, 
-                     ProofFailure, defaults)
+                     Judgment, free_vars, maybe_fenced, USE_DEFAULTS,
+                     ProofFailure, defaults,
+                     prover, relation_prover, equality_prover,
+                     UnsatisfiedPrerequisites)
+from proveit import a, b, c, f, i, j, k, l, m, x, P, Q, S
 from proveit.logic import Forall, InSet
-from proveit.numbers.number_sets import (
-        RealInterval, Interval, Real, Integer, Natural, Complex)
-from proveit.numbers.negation import Neg
-from proveit.numbers.ordering import LessEq, Less
-from proveit import a, b, f, x, P, Q, S
+from proveit.numbers import one, Add, Neg, subtract
+from proveit.numbers import (Complex, Integer, Interval, Natural,
+                             NaturalPos, Real, RealInterval)
+from proveit.numbers.ordering import Less, LessEq
+from proveit import TransRelUpdater
 
 
 class Sum(OperationOverInstances):
@@ -19,27 +22,30 @@ class Sum(OperationOverInstances):
     _init_argname_mapping_ = {'index_or_indices': 'instance_param_or_params',
                               'summand': 'instance_expr'}
 
-#    def __init__(self, summand-instance_expression, indices-instance_vars, domains):
-#    def __init__(self, instance_vars, instance_expr, conditions = tuple(), domain=EVERYTHING):
-#
     def __init__(self, index_or_indices, summand, *,
                  domain=None, domains=None, condition=None,
-                 conditions=None, _lambda_map=None):
+                 conditions=None, styles=None, _lambda_map=None):
         r'''
         Sum summand over indices over domains.
-        Arguments serve analogous roles to Forall arguments (found in basiclogic.booleanss):
+        Arguments serve analogous roles to Forall arguments (found in
+        basiclogic.booleanss):
         indices: instance vars
         summand: instance_expressions
         domains: conditions (except no longer optional)
         '''
+        if (domains is not None):
+            raise NotImplementedError("Sum class not yet implemented for "
+                                      "multiple domains nor for multiple "
+                                      "indices.")
+
         OperationOverInstances.__init__(
             self, Sum._operator_, index_or_indices, summand,
             domain=domain, domains=domains, condition=condition,
-            conditions=conditions, _lambda_map=_lambda_map)
-        if hasattr(self, 'instance_var'):
-            self.index = self.instance_var
-        if hasattr(self, 'instance_vars'):
-            self.indices = self.instance_vars
+            conditions=conditions, styles=styles, _lambda_map=_lambda_map)
+        if hasattr(self, 'instance_param'):
+            self.index = self.instance_param
+        if hasattr(self, 'instance_params'):
+            self.indices = self.instance_params
         self.summand = self.instance_expr
         """
         # think about this later
@@ -53,15 +59,19 @@ class Sum(OperationOverInstances):
             self.domain = Interval(zero,infinity)
         """
 
-    def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
-        from . import (summation_nat_closure, summation_int_closure, 
-                       summation_real_closure, summation_complex_closure)
+    @relation_prover
+    def deduce_in_number_set(self, number_set, **defaults_config):
+        from . import (summation_nat_closure, summation_nat_pos_closure,
+                       summation_int_closure, summation_real_closure,
+                       summation_complex_closure)
         _x = self.instance_param
         P_op, _P_op = Function(P, _x), self.instance_expr
         Q_op, _Q_op = Function(Q, _x), self.condition
-        self.summand
+
         if number_set == Natural:
             thm = summation_nat_closure
+        elif number_set == NaturalPos:
+            thm = summation_nat_pos_closure
         elif number_set == Integer:
             thm = summation_int_closure
         elif number_set == Real:
@@ -69,13 +79,16 @@ class Sum(OperationOverInstances):
         elif number_set == Complex:
             thm = summation_complex_closure
         else:
-            raise ProofFailure(
-                    InSet(self, number_set), assumptions,
-                    ("'deduce_in_number_set' not implemented for the %s set"
-                     % str(number_set)))
+            raise NotImplementedError(
+                "'Sum.deduce_in_number_set' not implemented for the %s set"
+                % str(number_set))
         impl = thm.instantiate(
-            { x: _x, P_op: _P_op, Q_op: _Q_op}, assumptions=assumptions)
-        return impl.derive_consequent(assumptions=assumptions)
+            { x: _x, P_op: _P_op, Q_op: _Q_op}, preserve_all=True)
+        antecedent = impl.antecedent
+        if not antecedent.proven():
+            # Conclude the antecedent via generalization.
+            antecedent.conclude_via_generalization()
+        return impl.derive_consequent()
 
     def _formatted(self, format_type, **kwargs):
         # MUST BE UPDATED TO DEAL WITH 'joining' NESTED LEVELS
@@ -94,184 +107,448 @@ class Sum(OperationOverInstances):
                     formatted_inner += " | "
                 formatted_inner += ', '.join(condition.formatted(format_type)
                                              for condition in explicit_conds)
-            formatted_inner += self.summand.formatted(format_type, fence=fence)
+            formatted_inner += self.summand.formatted(format_type, fence=True)
             return maybe_fenced(format_type, formatted_inner, fence=fence)
         else:
             return OperationOverInstances._formatted(self, format_type, fence)
 
-    def do_reduced_simplification(self, assumptions=USE_DEFAULTS):
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
         '''
-        For the trivial case of summing over only one item (currently implemented just
-        for a Interval where the endpoints are equal),
-        derive and return this summation expression equated the simplified form of
-        the single term.
-        Assumptions may be necessary to deduce necessary conditions for the simplification.
+        Returns a proven simplification equation for this Sum
+        expression assuming the operands have been simplified.
+
+        For the trivial case of summing over only one item (currently
+        implemented just for a Interval where the endpoints are equal),
+        derive and return this summation expression equated with the
+        simplified form of the single term.
+        Assumptions may be necessary to deduce necessary conditions
+        for the simplification.
+        NEEDS UPDATING
         '''
         from proveit.logic import SimplificationError
         from . import sum_single
-        if isinstance(
-                self.domain,
-                Interval) and self.domain.lower_bound == self.domain.upper_bound:
-            if self.instance_vars.is_single():
-                return sum_single.instantiate({Operation(
-                    f, self.instance_vars): self.summand}).instantiate({a: self.domain.lower_bound})
+        if (isinstance(self.domain,Interval) and
+            self.domain.lower_bound == self.domain.upper_bound):
+            if hasattr(self, 'index'):
+                return sum_single.instantiate(
+                    {Function(f, self.index): self.summand,
+                     a: self.domain.lower_bound})
         raise SimplificationError(
-            "Sum simplification only implemented for a summation over a Interval of one instance variable where the upper and lower bound is the same")
+            "Sum simplification only implemented for a summation over an "
+            "integer Interval of one instance variable where the upper "
+            "and lower bounds are the same.")
 
-    def simplified(self, assumptions=frozenset()):
-        '''
-        For the trivial case of summing over only one item (currently implemented just
-        for a Interval where the endpoints are equal),
-        derive and return this summation expression equated the simplified form of
-        the single term.
-        Assumptions may be necessary to deduce necessary conditions for the simplification.
-        '''
-        return self.simplification(assumptions).rhs
-
-    def reduce_geom_sum(self, assumptions=frozenset()):
+    @equality_prover('geom_sum_reduced', 'geom_sum_reduce')
+    def geom_sum_reduction(self, **defaults_config):
         r'''
-        If sum is geometric sum (finite or infinite), provide analytic expression for sum.
-        May need assumptions to proven prerequisite number set conditions.
+        If this summation is in the form of a geometric sum
+        (finite or infinite), equate it to an analytical form.
+
+        Examples:
+        ∑_{n=0}^{∞} x^n = 1 / (1 - x)
+        ∑_{n=j}^{k} x^n = (x^{k + 1} - x^j) / (x - 1)
         '''
         from theorems import inf_geom_sum, fin_geom_sum
-        m_val = self.indices[0]
+        from proveit.numbers import zero, infinity
+        _m = self.indices[0]
 
         try:
             #            self.r = extract_exp_base(self.summand)
-            x_val = self.summand.base
+            _x = self.summand.base
         except BaseException:
             raise ValueError("Summand not an exponential!")
         if not isinstance(self.domain, Interval):
             raise ValueError("Not explicitly summing over Interval!")
         else:
-            if self.domain.lower_bound == zero and self.domain.upper_bound == infinity:
+            if (self.domain.lower_bound == zero and
+                    self.domain.upper_bound == infinity):
                 # We're in the infinite geom sum domain!
-                deduce_in_complex(x_val, assumptions)
-                return inf_geom_sum.instantiate({x: x_val, m: m_val})
+                return inf_geom_sum.instantiate({x: _x, m: _m})
             else:
                 # We're in the finite geom sum domain!
-                k_val = self.domain.lower_bound
-                l_val = self.domain.upper_bound
-                deduce_in_integer(k_val, assumptions)
-                deduce_in_integer(l_val, assumptions)
-                deduce_in_complex(x_val, assumptions)
+                _k = self.domain.lower_bound
+                _l = self.domain.upper_bound
                 return fin_geom_sum.instantiate(
-                    {x: x_val, m: m_val, k: k_val, l: l_val})
+                    {x: _x, m: _m, k: _k, l: _l})
 #        else:
 #            print "Not a geometric sum!"
 
-    def shift(self, shift_amount, assumptions=frozenset()):
+    @equality_prover('shifted', 'shift')
+    def shifting(self, shift_amount, **defaults_config):
         '''
-        Shift the summation indices by the shift amount, deducing and returning
-        the equivalence of this summation with a index-shifted version.
+        Shift the summation indices by the shift_amount, and shift
+        the summand by a corresponding compensating amount, deducing
+        and returning the equivalence of this summation with the
+        index-shifted version.
+        This shift() method is implemented only for a Sum with a single
+        index and only when the domain is an integer Interval.
+        Eventually this should also be implemented for domains of
+        Natural, NaturalPos, etc.
+        Example: Let S = Sum(i, i+2, Interval(0, 10)). Then S.shift(one)
+        will return |- S = Sum(i, i+1, Interval(1, 11)).
         '''
-        from theorems import index_shift
-        if not self.indices.is_single() or not isinstance(self.domain, Interval):
-            raise Exception(
-                'Sum shift only implemented for summations with one index over a Interval')
-        f_op, f_op_sub = Operation(f, self.index), self.summand
-        deduce_in_integer(self.domain.lower_bound, assumptions)
-        deduce_in_integer(self.domain.upper_bound, assumptions)
-        deduce_in_integer(shift_amount, assumptions)
-        return index_shift.instantiate({f_op: f_op_sub, x: self.index}).instantiate(
-            {a: self.domain.lower_bound, b: self.domain.upper_bound, c: shift_amount})
-
-    def join(self, second_summation, assumptions=frozenset()):
-        '''
-        Join the "second summation" with "this" summation, deducing and returning
-        the equivalence of these summations added with the joined summation.
-        Both summation must be over Intervals.
-        The relation between the first summation upper bound, UB1, and the second
-        summation lower bound, LB2 must be explicitly either UB1 = LB2-1 or LB2=UB1+1.
-        '''
-        from theorems import sum_split_after, sum_split_before
-        from proveit.numbers.common import one
-        from proveit.numbers import Sub, Add
-        if not isinstance(
-                self.domain,
-                Interval) or not isinstance(
-                second_summation.domain,
-                Interval):
-            raise Exception(
-                'Sum joining only implemented for Interval domains')
-        if self.summand != second_summation.summand:
-            raise Exception(
-                'Sum joining only allowed when the summands are the same')
-        if self.domain.upper_bound == Sub(
-                second_summation.domain.lower_bound, one):
-            sum_split = sum_split_before
-            split_index = second_summation.domain.lower_bound
-        elif second_summation.domain.lower_bound == Add(self.domain.upper_bound, one):
-            sum_split = sum_split_after
-            split_index = self.domain.upper_bound
-        else:
-            raise Exception(
-                'Sum joining only implemented when there is an explicit increment of one from the upper bound and the second summations lower bound')
-        lower_bound, upper_bound = self.domain.lower_bound, second_summation.domain.upper_bound
-        deduce_in_integer(lower_bound, assumptions)
-        deduce_in_integer(upper_bound, assumptions)
-        deduce_in_integer(split_index, assumptions)
-        return sum_split.instantiate({Operation(f, self.instance_vars): self.summand}).instantiate(
-            {a: lower_bound, b: split_index, c: upper_bound, x: self.indices[0]}).derive_reversed()
-
-    def split(self, split_index, side='after', assumptions=frozenset()):
-        r'''
-        Splits summation over one Interval {a ... c} into two summations.
-        If side == 'after', it splits into a summation over {a ... split_index} plus
-        a summation over {split_index+1 ... c}.  If side == 'before', it splits into
-        a summation over {a ... split_index-1} plus a summation over {split_index ... c}.
-        As special cases, split_index==a with side == 'after' splits off the first single
-        term.  Also, split_index==c with side == 'before' splits off the last single term.
-        r'''
+        if not hasattr(self, 'index'):
+            raise NotImplementedError(
+                "Sum.shifting() only implemented for summations with a single "
+                "index over an Interval. The sum {} has indices {}."
+                .format(self, self.indices))
+        # The following constraint can eventually be modified to deal
+        # with a domain like all Natural … but for now limited to
+        # integer Interval domain.
         if not isinstance(self.domain, Interval):
-            raise Exception(
-                'Sum splitting only implemented for Interval domains')
+            raise NotImplementedError(
+                "Sum.shifting() only implemented for summations with a single "
+                "index over an Interval. The sum {} has domain {}."
+                .format(self, self.domain))
+
+        from . import index_shift
+
+        _x = self.index
+        _a = self.domain.lower_bound
+        _b = self.domain.upper_bound
+        _c = shift_amount
+
+        f_op, f_op_sub = Function(f, self.index), self.summand
+
+        """
+        # SHOULD BE HANDLED VIA AUTO-SIMPLIFICATION NOW.
+
+        # Create some (possible) reduction formulas for the shifted
+        # components, which will then be passed through to the
+        # instantiation as "reductions" for simpifying the final form
+        # of the indices and summand. Notice that when attempting to
+        # simplify the summand, we need to send along the assumption
+        # about the index domain. If the (supposed) reduction is
+        # trivial (like |– x = x), the eventual instantiation process
+        # will ignore/eliminate it.
+        replacements = list(defaults.replacements)
+        if (simplify_idx):
+            lower_bound_shifted = (
+                Add(_a, _c).simplification(
+                    shallow=True, assumptions=assumptions))
+            replacements.append(lower_bound_shifted)
+            upper_bound_shifted = (
+                Add(_b, _c).simplification(
+                    shallow=True, assumptions=assumptions))
+            replacements.append(upper_bound_shifted)
+        if (simplify_summand):
+            summand_shifted = f_op_sub.basic_replaced({_i:subtract(_i, _c)})
+            summand_shifted = (
+                summand_shifted.simplification(shallow=True,
+                    assumptions=[*assumptions, InSet(_i, Interval(_a, _b))]))
+            replacements.append(summand_shifted)
+        """
+
+        return index_shift.instantiate(
+            {f_op: f_op_sub, x: _x, a: _a, b: _b, c: _c})
+
+    @prover
+    def joining(self, second_summation, **defaults_config):
+        '''
+        Join the "second summation" with "this" (self) summation,
+        deducing and returning the equivalence of the sum of the self
+        and second_summation with the joined summation.
+        Both summations must be over integer Intervals.
+        The relation between the first summation upper bound, UB1,
+        and the second summation lower bound, LB2, must be *explicitly*
+        either UB1 = LB2-1 or LB2=UB1+1 *or* easily-derivable
+        mathematical equivalents of those equalities.
+        Example usage: let S1 = Sum(i, i^2, Interval(1,10)) and
+        S2 = Sum(i, i^2, Interval(1,10)). Then S1.join(S2) returns
+        |- S1 + S2 = Sum(i, i^2, Interval(1,20))
+        '''
+
+        if (not isinstance(self.domain,Interval) or
+            not isinstance(second_summation.domain,Interval)):
+            raise NotImplementedError(
+                "Sum.join() is only implemented for summations with a "
+                "single index over an integer Interval. The sum {0} has "
+                "indices {1} and domain {2}; the sum {3} has indices "
+                "{4} and domain {5}.".
+                format(self, self.indices, self.domain, second_summation,
+                       second_summation.indices, second_summation.domain))
+
+        if self.summand != second_summation.summand:
+            raise ValueError(
+                "Sum joining using Sum.join() is only allowed when the "
+                "summands are identical. The sum {0} has summand {1} "
+                "while the sum {2} has summand {3}. If the summands are "
+                "equal but do not appear identical, you will have to "
+                "establish an appropriate substituion before calling the "
+                "Sum.join() method.".
+                format(self, self.summand, second_summation,
+                       second_summation.summand))
+
+        from . import sum_split_after, sum_split_before
+        from proveit import a
+
+        _i = self.index
+        _a1 = self.domain.lower_bound
+        _b1 = self.domain.upper_bound
+        _a2 = second_summation.domain.lower_bound
+        _b2 = second_summation.domain.upper_bound
+        f_op, f_op_sub = Function(f, self.index), self.summand
+
+        # Create low-effort, simplified versions of transition index
+        # values, if possible
+        _b1_plus_1_simplified = Add(_b1, one).shallow_simplified()
+        _a2_minus_1_simplified = subtract(_a2, one).shallow_simplified()
+
+        # This breaks into four cases (despite the temptation to
+        # combine some of the cases):
+        if (_b1 == subtract(_a2, one)):
+            # UB1 == LB2 - 1 (literally)
+            sum_split = sum_split_before
+            split_index = _a2
+        elif (_a2 == Add(_b1, one)):
+            # LB2 == UB1 + 1 (literally)
+            sum_split = sum_split_after
+            split_index = _b1
+        elif (_b1 == _a2_minus_1_simplified):
+            # UB1 == LB2 - 1 (after simplification)
+            sum_split = sum_split_before
+            split_index = _a2
+        elif (_a2 == _b1_plus_1_simplified):
+            # LB2 == UB1 + 1 (after simplification)
+            sum_split = sum_split_after
+            split_index = _b1
+        else:
+            raise UnsatisfiedPrerequisites(
+                "Sum joining using Sum.join() only implemented for when "
+                "there is an explicit (or easily verified) increment "
+                "of one unit from the first summation's upper bound "
+                "to the second summation's lower bound (or decrement "
+                "of one unit from second summation's lower bound to "
+                "first summation's upper bound). We have first "
+                "summation upper bound of {0} with the second summation "
+                "lower bound of {1}. If these appear to have the "
+                "necessary relationship, you might need to prove this "
+                "before calling the Sum.join() method.".
+                format(_b1, _a2))
+
+        # Preserve the original summations that will be on the
+        # left side of the equation.
+        preserved_exprs = set(defaults.preserved_exprs)
+        preserved_exprs.add(self)
+        preserved_exprs.add(second_summation)
+
+        return sum_split.instantiate(
+            {f_op: f_op_sub, a: _a1, b: split_index, c: _b2, x: _i},
+            preserved_exprs=preserved_exprs).derive_reversed()
+
+    @equality_prover('partitioned', 'split')
+    def partition(self, split_index, side='after', **defaults_config):
+        r'''
+        Split summation over one integral Interval {a ... c} into two
+        summations. If side == 'after', it splits into a summation over
+        {a ... split_index} plus a summation over {split_index+1 ... c}.
+        If side == 'before', it splits into a summation over
+        {a ... split_index-1} plus a summation over {split_index ... c},
+        deducing and returning the equivalence of this summation with
+        the split version. When the simplify_idx is True, a shallow
+        simplification is applied to the new indices (for example,
+        a new index of i = 4 + 1 may be expressed as i = 5).
+        Eventually plan to accept and act on user-supplied reductions
+        as well, but not implemented at this time.
+        This split() method is implemented only for a Sum with a single
+        index and only when the domain is an integer Interval.
+        Eventually this should also be implemented for domains of
+        Natural, NaturalPos, etc.
+        As special cases, split_index==a with side == 'after' splits
+        off the first single term.  Also, split_index==c with
+        side == 'before' splits off the last single term.
+        Example usage: Let S = Sum(i, i+2, Interval(0, 10)). Then
+        S.split(four, side='after') will return
+        |- S = Sum(i, i+2, Interval(0, 4)) +
+               Sum(i, i+2, Interval(5, 10))
+        '''
+        # The following constraint can eventually be modified to allow
+        # a domain like Natural or NaturalPos, but for now limited
+        # to integer Interval domain.
+        if (not isinstance(self.domain, Interval) or
+                not hasattr(self, 'index')):
+            raise NotImplementedError(
+                "Sum.partition() only implemented for summations with a single "
+                "index over an integer Interval. The sum {} has indices {} "
+                "and domain {}."
+                .format(self, self.indices, self.domain))
+
+        # Special cases: splitting off last or first item
         if side == 'before' and self.domain.upper_bound == split_index:
-            return self.split_off_last()
+            return self.partition_last()
         if side == 'after' and self.domain.lower_bound == split_index:
-            return self.split_off_first()
-        if isinstance(self.domain, Interval) and self.instance_vars.is_single():
-            from theorems import sum_split_after, sum_split_before
-            sum_split = sum_split_after if side == 'after' else sum_split_before
-            deduce_in_integer(self.domain.lower_bound, assumptions)
-            deduce_in_integer(self.domain.upper_bound, assumptions)
-            deduce_in_integer(split_index, assumptions)
-            # Also needs lower_bound <= split_index and split_index <
-            # upper_bound
-            return sum_split.instantiate({Operation(f, self.instance_vars): self.summand}).instantiate(
-                {a: self.domain.lower_bound, b: split_index, c: self.domain.upper_bound, x: self.indices[0]})
-        raise Exception(
-            "split_off_last only implemented for a summation over a Interval of one instance variable")
+            return self.partition_first()
 
-    def split_off_last(self, assumptions=frozenset()):
-        from axioms import sum_split_last
-        if isinstance(self.domain, Interval) and self.instance_vars.is_single():
-            deduce_in_integer(self.domain.lower_bound, assumptions)
-            deduce_in_integer(self.domain.upper_bound, assumptions)
-            # Also needs lower_bound < upper_bound
-            return sum_split_last.instantiate({Operation(f, self.instance_vars): self.summand}).instantiate(
-                {a: self.domain.lower_bound, b: self.domain.upper_bound, x: self.indices[0]})
-        raise Exception(
-            "split_off_last only implemented for a summation over a Interval of one instance variable")
+        _i = self.index
+        _a = self.domain.lower_bound
+        _b = split_index
+        _c = self.domain.upper_bound
+        f_op, f_op_sub = Function(f, self.index), self.summand
 
-    def split_off_first(self, assumptions=frozenset()):
-        from theorems import sum_split_first  # only for associative summation
-        if isinstance(self.domain, Interval) and self.instance_vars.is_single():
-            deduce_in_integer(self.domain.lower_bound, assumptions)
-            deduce_in_integer(self.domain.upper_bound, assumptions)
-            # Also needs lower_bound < upper_bound
-            return sum_split_first.instantiate({Operation(f, self.instance_vars): self.summand}).instantiate(
-                {a: self.domain.lower_bound, b: self.domain.upper_bound, x: self.indices[0]})
-        raise Exception(
-            "split_off_last only implemented for a summation over a Interval of one instance variable")
+        """
+        # SHOULD BE HANDLED VIA AUTO-SIMPLIFICATION NOW.
 
-    def factorization(
-            self,
-            the_factor,
-            pull="left",
-            group_factor=True,
-            group_remainder=None,
-            assumptions=USE_DEFAULTS):
+        # Create a (possible) reduction formula for the split
+        # components' index expression, which will then be passed
+        # through to the instantiation as a "reduction" for simpifying
+        # the final form of the indices. If the (supposed) reduction is
+        # trivial (like |– x = x), the eventual instantiation process
+        # will ignore/eliminate it.
+        if (simplify_idx):
+            # 2 Cases to consider: side = 'after' vs. side = 'before'
+            if side == 'after':
+                # simplify lower index expr for 2nd sum of split
+                new_idx = Add(_b, one).simplification(
+                        shallow=True, assumptions=assumptions)
+            else:
+                # simplify upper index expr for 1st sum of split
+                new_idx = subtract(_b, one).simplification(
+                        shallow=True, assumptions=assumptions)
+            user_reductions = [*user_reductions, new_idx]
+        """
+
+        from . import sum_split_after, sum_split_before
+        sum_split = sum_split_after if side == 'after' else sum_split_before
+        return sum_split.instantiate(
+                {f_op: f_op_sub, a: _a, b: _b, c: _c, x: _i})
+
+    @equality_prover('last_partitioned', 'split_last')
+    def partition_last(self, **defaults_config):
+        '''
+        Split a summation over an integral Interval {a ... c} into a
+        sum of: a new summation over the integral Interval {a ... (c-1)}
+        and the final term evaluated at the upper bound, deducing and
+        returning the equivalence of this summation with
+        the new split version. When the simplify_idx is True, a shallow
+        simplification is applied to the new indices (for example,
+        a new index of i = 4 + 1 may be expressed as i = 5). When the
+        simplify_summand = True, a shallow simplification is applied to
+        the upper term that has been peeled off by itself.
+        Eventually plan to accept and act on user-supplied reductions
+        as well, but not implemented at this time.
+        This split_off_last() method is implemented only for a Sum
+        with a single index and only when the domain is an integer
+        Interval. Eventually this should also be implemented for
+        domains of Natural, NaturalPos, etc. split_off_last() is called
+        from Sum.split() for special cases.
+        Example usage: Let S = Sum(i, i+2, Interval(0, 10)). Then
+        S.split_off_last() will return
+        |- S = Sum(i, i+2, Interval(0, 9)) + 12
+        '''
+        if isinstance(self.domain, Interval) and hasattr(self, 'index'):
+
+            from . import sum_split_last
+
+            _i = self.index
+            _a = self.domain.lower_bound
+            _b = self.domain.upper_bound
+            f_op, f_op_sub = Function(f, self.index), self.summand
+
+            """
+            # SHOULD BE HANDLED VIA AUTO-SIMPLIFICATION NOW.
+
+            # Create (possible) reduction formulas for the upper
+            # index expression of the resulting sum, and for the
+            # resulting final term extracted from the sum, which will
+            # then be passed through to the instantiation as reductions
+            # for simpifying the final form of the indices and split-off
+            # term. If any (supposed) reduction is trivial
+            # (like |– x = x), the eventual instantiation process will
+            # ignore/eliminate it.
+            if (simplify_idx):
+                # Just 1 case to address:
+                # simplify upper index of resulting remaining sum
+                new_idx = subtract(_b, one).simplification(
+                            shallow=True, assumptions=assumptions)
+                user_reductions = [*user_reductions, new_idx]
+            if simplify_summand:
+                # Simplify the summand for the last item
+                new_summand = f_op_sub.basic_replaced({_i: _b})
+                new_summand = new_summand.simplification(shallow=True,
+                        assumptions=assumptions)
+                user_reductions = [*user_reductions, new_summand]
+            """
+
+            return sum_split_last.instantiate(
+                {f_op: f_op_sub, a: _a, b: _b, x: _i})
+        raise UnsatisfiedPrerequisites(
+                "Sum.partition_last() only implemented for summations with a "
+                "single index over an integer Interval. The sum {} has "
+                "index or indices {} and domain {}."
+                .format(self, self.indices, self.domain))
+
+    @equality_prover('first_partitioned', 'split_first')
+    def partition_first(self, **defaults_config):
+        '''
+        Split a summation over an integral Interval {a ... c} into a
+        sum of: the first term in the sum and a new summation over the
+        integral Interval {a+1 ... c}, deducing and
+        returning the equivalence of this summation with
+        the new split version. When the simplify_idx is True, a shallow
+        simplification is applied to the new indices (for example,
+        a new index of i = 4 + 1 may be expressed as i = 5). When the
+        simplify_summand = True, a shallow simplification is applied to
+        the lower term that has been peeled off by itself.
+        Eventually plan to accept and act on user-supplied reductions
+        as well, but not implemented at this time.
+        This split_off_last() method is implemented only for a Sum
+        with a single index and only when the domain is an integer
+        Interval. Eventually this should also be implemented for
+        domains of Natural, NaturalPos, etc. split_off_last() is called
+        from Sum.split() for special cases.
+        Example usage: Let S = Sum(i, i+2, Interval(1, 10)). Then
+        S.split_off_first() will return
+        |- S = 3 + Sum(i, i+2, Interval(2, 10))
+        '''
+
+        if isinstance(self.domain, Interval) and hasattr(self, 'index'):
+
+            from . import sum_split_first
+
+            _i = self.index
+            _a = self.domain.lower_bound
+            _b = self.domain.upper_bound
+            f_op, f_op_sub = Function(f, self.index), self.summand
+
+            """
+            # SHOULD BE HANDLED VIA AUTO-SIMPLIFICATION NOW.
+
+            # Create (possible) reduction formulas for the lower
+            # index expression of the resulting sum, and for the
+            # resulting first term extracted from the sum, which will
+            # then be passed through to the instantiation as reductions
+            # for simpifying the final form of the indices and split-off
+            # term. If any (supposed) reduction is trivial
+            # (like |– x = x), the eventual instantiation process will
+            # ignore/eliminate it.
+            if simplify_idx:
+                # Just 1 case to address:
+                # simplify lower index of resulting remaining sum
+                new_idx = Add(_a, one).simplification(
+                            shallow=True, assumptions=assumptions)
+                user_reductions = [*user_reductions, new_idx]
+            if simplify_summand:
+                # Simplify the summand for the first item
+                new_summand = f_op_sub.basic_replaced({_i: _a})
+                new_summand = new_summand.simplification(shallow=True,
+                        assumptions=assumptions)
+                user_reductions = [*user_reductions, new_summand]
+            """
+
+            return sum_split_first.instantiate(
+                {f_op: f_op_sub, a: _a, b: _b, x: _i})
+
+        raise NotImplementedError(
+                "Sum.split_off_first() only implemented for summations with a "
+                "single index over an integer Interval. The sum {} has "
+                "index or indices {} and domain {}."
+                .format(self, self.indices, self.domain))
+
+    @equality_prover('factorized', 'factor')
+    def factorization(self, the_factor, pull="left", group_factor=True,
+                      group_remainder=None, **defaults_config):
         '''
         If group_factor is True and the_factor is a product, it will be grouped together as a
         sub-product.  group_remainder is not relevant kept for compatibility with other factor
@@ -279,75 +556,70 @@ class Sum(OperationOverInstances):
         Give any assumptions necessary to prove that the operands are in Complex so that
         the associative and commutation theorems are applicable.
         '''
+        from proveit import ExprTuple, var_range, IndexedVar
         from proveit.numbers.multiplication import distribute_through_summation
-        from proveit.numbers import Mult
-        if not free_vars(the_factor).isdisjoint(self.indices):
-            raise Exception(
-                'Cannot factor anything involving summation indices out of a summation')
+        from proveit.numbers import Mult, one
+        if not free_vars(the_factor, err_inclusively=True).isdisjoint(
+                self.instance_params):
+            raise ValueError(
+                'Cannot factor anything involving summation indices '
+                'out of a summation')
         expr = self
         # for convenience updating our equation
-        eq = TransRelUpdater(expr, assumptions)
-        
-        assumptions = defaults.checked_assumptions(assumptions)
+        eq = TransRelUpdater(expr)
+
         # We may need to factor the summand within the summation
-        summand_assumptions = assumptions + self.condition
+        summand_assumptions = defaults.assumptions + self.conditions.entries
         summand_factorization = self.summand.factorization(
             the_factor,
             pull,
             group_factor=False,
             group_remainder=True,
             assumptions=summand_assumptions)
-        
-        
-        summand_instance_equivalence = summand_factor_eq.generalize(
-            self.indices, domain=self.domain).checked(assumptions)
-        
-        
-        eq = Equation(self.instance_substitution(
-            summand_instance_equivalence).checked(assumptions))
-        factor_operands = the_factor.operands if isinstance(
-            the_factor, Mult) else the_factor
-        x_dummy, z_dummy = self.safe_dummy_vars(2)
-        # Now do the actual factoring by reversing distribution
+        if summand_factorization.lhs != summand_factorization.rhs:
+            gen_summand_factorization = summand_factorization.generalize(
+                    self.instance_params, conditions=self.conditions)
+            expr = eq.update(expr.instance_substitution(gen_summand_factorization))
+        if isinstance(the_factor, Mult):
+            factors = the_factor.factors
+        else:
+            factors = ExprTuple(the_factor)
         if pull == 'left':
-            Pop, Pop_sub = Operation(
-                P, self.indices), summand_factor_eq.rhs.operands[-1]
-            x_sub = factor_operands
-            z_sub = []
+            _a = factors
+            _c = ExprTuple()
+            summand_remainder = expr.summand.factors[-1]
         elif pull == 'right':
-            Pop, Pop_sub = Operation(
-                P, self.indices), summand_factor_eq.rhs.operands[0]
-            x_sub = []
-            z_sub = factor_operands
-        # We need to deduce that the_factor is in Complex and that all
-        # instances of Pop_sup are in Complex.
-        deduce_in_complex(factor_operands, assumptions=assumptions)
-        deduce_in_complex(
-            Pop_sub,
-            assumptions=assumptions | {
-                InSet(
-                    idx,
-                    self.domain) for idx in self.indices}).generalize(
-            self.indices,
-            domain=self.domain).checked(assumptions)
-        # Now we instantiate distribut_through_summation_rev
-        spec1 = distribute_through_summation_rev.instantiate(
-            {
-                Pop: Pop_sub, S: self.domain, y_etc: self.indices, x_etc: Etcetera(
-                    Multi_variable(x_dummy)), z_etc: Etcetera(
-                    Multi_variable(z_dummy))}).checked()
-        eq.update(spec1.derive_conclusion().instantiate({Etcetera(
-            Multi_variable(x_dummy)): x_sub, Etcetera(Multi_variable(z_dummy)): z_sub}))
-        if group_factor and factor_operands.num_entries() > 1:
-            eq.update(
-                eq.eq_expr.rhs.group(
-                    end_idx=factor_operands.num_entries(),
-                    assumptions=assumptions))
-        return eq.eq_expr  # .checked(assumptions)
-    
-    def deduce_bound(self, summand_relation, assumptions=USE_DEFAULTS):
-        '''
-        Given a universally quantified ordering relation over all 
+            _a = ExprTuple()
+            _c = factors
+            summand_remainder = expr.summand.factors[0]
+        else:
+            raise ValueError("'pull' must be 'left' or 'right', not %s"
+                             %pull)
+        _b = self.instance_params
+        _i = _a.num_elements()
+        _j = _b.num_elements()
+        _k = _c.num_elements()
+        _P = Lambda(expr.instance_params, summand_remainder)
+        _Q = Lambda(expr.instance_params, expr.condition)
+        b_1_to_j = ExprTuple(var_range(b, one, _j))
+        _impl = distribute_through_summation.instantiate(
+                {i: _i, j: _j, k: _k, P:_P, Q:_Q, b_1_to_j:_b},
+                preserve_all=True)
+        quantified_eq = _impl.derive_consequent()
+        if hasattr(self, 'index'):
+            b_ = IndexedVar(b, one)
+            _b = self.index
+        else:
+            b_ = b
+        eq.update(quantified_eq.instantiate(
+                {a: _a, b_:_b, c: _c}))
+
+        return eq.relation
+
+    @relation_prover
+    def deduce_bound(self, summand_relation, **defaults_config):
+        r'''
+        Given a universally quantified ordering relation over all
         summand instances, return a bounding relation for the
         summation.  For example, using the summand relation
             \forall_{k in {m...n}} (a(k) <= b(k)),
@@ -375,9 +647,9 @@ class Sum(OperationOverInstances):
                              "quantified over a single parameter, not %s"
                              %summand_relation)
         summand_lambda = Lambda(self.instance_param, self.summand)
-        lesser_lambda = Lambda(summand_relation.instance_param, 
+        lesser_lambda = Lambda(summand_relation.instance_param,
                                summand_relation.instance_expr.normal_lhs)
-        greater_lambda = Lambda(summand_relation.instance_param, 
+        greater_lambda = Lambda(summand_relation.instance_param,
                                 summand_relation.instance_expr.normal_rhs)
         if summand_lambda not in (lesser_lambda, greater_lambda):
             raise ValueError("Expecting summand_relation to be a universally "
@@ -390,15 +662,12 @@ class Sum(OperationOverInstances):
         if isinstance(summand_relation.instance_expr, LessEq):
             # Use weak form
             sum_rel_impl = weak_summation_from_summands_bound.instantiate(
-                    {a:_a, b:_b, S:_S}, assumptions=assumptions)
+                    {a:_a, b:_b, S:_S})
         else:
             # Use strong form
             sum_rel_impl = strong_summation_from_summands_bound.instantiate(
-                    {a:_a, b:_b, S:_S}, assumptions=assumptions)
-        sum_relation = sum_rel_impl.derive_consequent(assumptions)
+                    {a:_a, b:_b, S:_S})
+        sum_relation = sum_rel_impl.derive_consequent()
         if summand_lambda == greater_lambda:
             return sum_relation.with_direction_reversed()
         return sum_relation
-
-InnerExpr.register_equivalence_method(
-    Sum, 'factorization', 'factorized', 'factor')

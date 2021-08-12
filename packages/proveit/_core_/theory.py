@@ -22,6 +22,7 @@ the theorem proofs, and it stores theorem proof dependencies.
 
 import os
 import json
+from collections import OrderedDict
 from ._theory_storage import TheoryStorage, TheoryFolderStorage, relurl
 from types import ModuleType
 
@@ -67,6 +68,7 @@ class Theory:
         Theory.storages.clear()
         TheoryFolderStorage.active_theory_folder_storage = None
         TheoryFolderStorage.proveit_object_to_storage.clear()
+        TheoryFolderStorage.owned_hash_folders.clear()
 
     # externals.txt at top level to track relative path to external
     # theories.
@@ -243,25 +245,31 @@ class Theory:
     def append_sub_theory_name(self, sub_theory_name):
         return self._storage.append_sub_theory_name(sub_theory_name)
 
-    def _setAxioms(self, axiom_names, axiom_definitions):
-        self._storage.set_special_expressions(axiom_names, axiom_definitions,
+    def _set_axioms(self, axiom_definitions):
+        if not isinstance(axiom_definitions, OrderedDict):
+            raise TypeError("'axioms_definitions' must be an OrderedDict")
+        self._storage.set_special_expressions(axiom_definitions,
                                               'axiom')
 
-    def _setTheorems(self, theorem_names, theorem_definitions):
+    def _set_theorems(self, theorem_definitions):
+        if not isinstance(theorem_definitions, OrderedDict):
+            raise TypeError("'theorem_definitions' must be an OrderedDict")
         self._storage.set_special_expressions(
-            theorem_names, theorem_definitions, 'theorem')
+            theorem_definitions, 'theorem')
 
-    def _clearAxioms(self):
+    def _clear_axioms(self):
         self._setAxioms([], dict())
 
-    def _clearTheorems(self):
+    def _clear_theorems(self):
         self._setTheorems([], dict())
 
-    def _clearCommonExressions(self):
+    def _clear_common_exressions(self):
         self._set_common_expressions([], dict(), clear=True)
 
-    def _set_common_expressions(self, expr_names, expr_definitions):
-        self._storage.set_common_expressions(expr_names, expr_definitions)
+    def _set_common_expressions(self, expr_definitions):
+        if not isinstance(expr_definitions, OrderedDict):
+            raise TypeError("'expr_definitions' must be an OrderedDict")
+        self._storage.set_common_expressions(expr_definitions)
 
     def get_axiom_names(self):
         '''
@@ -627,7 +635,6 @@ class TheoryPackage(ModuleType):
         the missing name is a common expression that hasn't been
         defined yet and return an UnsetCommonExpressionPlaceholder.
         '''
-        import importlib
         if name[0:2]=='__': 
             # don't handle internal Python attributes
             raise AttributeError 
@@ -662,11 +669,10 @@ class TheoryPackage(ModuleType):
                     return UnsetCommonExpressionPlaceholder(
                             self._theory,  name)
             raise AttributeError(
-                    "'%s' not found in the list of common expressions of "
-                    "'%s'\n(make sure to execute the appropriate "
-                    "'common.ipynb' notebook after any changes)"
-                    %(name, self._theory.name))
-        return getattr(module, name)
+                    "'%s' not found in the list of common expressions, "
+                    "axioms, or theorems of '%s'\n(make sure to execute "
+                    "the appropriate 'common.ipynb' notebook after any "
+                    "changes)"%(name, self._theory.name))
 
 class UnsetCommonExpressionPlaceholder(object):
     '''
@@ -699,7 +705,7 @@ class UnsetCommonExpressionPlaceholder(object):
         # import a common expression:
         import proveit
         import_failure_filename = \
-            proveit.defaultsimport_failure_filename
+            proveit.defaults.import_failure_filename
         assert proveit.defaults._running_proveit_notebook is not None, (
             "Should only use UnsetCommonExpressionPlaceholder when "
             "executing a common expression notebook.")

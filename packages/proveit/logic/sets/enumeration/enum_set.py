@@ -1,5 +1,6 @@
 from proveit import (defaults, ExprTuple, Function, InnerExpr, Literal,
-                     Function, var_range, USE_DEFAULTS)
+                     var_range, USE_DEFAULTS, prover, equality_prover,
+                     relation_prover)
 from proveit.abstract_algebra.generic_methods import (
     apply_commutation_thm, generic_permutation)
 
@@ -21,8 +22,8 @@ class Set(Function):
     _operator_ = Literal(string_format='Set',
                          latex_format=r'\textrm{Set}', theory=__file__)
 
-    def __init__(self, *elems):
-        Function.__init__(self, Set._operator_, elems)
+    def __init__(self, *elems, styles=None):
+        Function.__init__(self, Set._operator_, elems, styles=styles)
         self.elements = self.operands
 
     def membership_object(self, element):
@@ -39,7 +40,8 @@ class Set(Function):
     def latex(self, **kwargs):
         return r'\left\{' + self.elements.latex(fence=False) + r'\right\}'
 
-    def prove_by_cases(self, forall_stmt, assumptions=USE_DEFAULTS):
+    @prover
+    def prove_by_cases(self, forall_stmt, **defaults_config):
         '''
         For the enumerated set S = {x1, x2, ..., xn} (i.e. self),
         and given a universal quantification over the set S of the form
@@ -83,7 +85,7 @@ class Set(Function):
                 condition = And(*forall_stmt.conditions[1:])
 
             # Cardinality of the domain:
-            n_sub = forall_stmt.domain.operands.num_elements(assumptions)
+            n_sub = forall_stmt.domain.operands.num_elements()
 
             # Domain elements to substitute
             # Notice the n_sub is already a Numeral and not an int
@@ -105,7 +107,7 @@ class Set(Function):
             return true_for_each_then_true_for_all_conditioned.instantiate(
                 {n: n_sub, ExprTuple(var_range_update): var_range_sub,
                  x: x_sub, Px: Px_sub, Qx: Qx_sub},
-                num_forall_eliminations=3, assumptions=assumptions)
+                num_forall_eliminations=3)
 
         else:
             # forall_{x in A} P(x), assuming/knowing P(x) for each x
@@ -113,7 +115,7 @@ class Set(Function):
             # is the domain specification
 
             # Cardinality of the domain:
-            n_sub = forall_stmt.domain.operands.num_elements(assumptions)
+            n_sub = forall_stmt.domain.operands.num_elements()
 
             # Domain elements to substitute
             # Notice the n_sub is already a Numeral and not an int
@@ -131,11 +133,11 @@ class Set(Function):
 
             return true_for_each_then_true_for_all.instantiate(
                 {n: n_sub, ExprTuple(var_range_update): var_range_sub,
-                 x: x_sub, Px: Px_sub}, num_forall_eliminations=3,
-                assumptions=assumptions)
+                 x: x_sub, Px: Px_sub}, num_forall_eliminations=3)
 
+    @equality_prover('moved', 'move')
     def permutation_move(self, init_idx=None, final_idx=None,
-                         assumptions=USE_DEFAULTS):
+                         **defaults_config):
         '''
         Deduce that this Set expression is equal to a Set
         in which the element at index init_idx has been moved to
@@ -149,10 +151,10 @@ class Set(Function):
                                  rightward_permutation)
         return apply_commutation_thm(
             self, init_idx, final_idx, binary_permutation,
-            leftward_permutation, rightward_permutation, assumptions)
+            leftward_permutation, rightward_permutation)
 
-    def permutation_swap(self, idx01=None, idx02=None,
-                         assumptions=USE_DEFAULTS):
+    @equality_prover('swapped', 'swap')
+    def permutation_swap(self, idx01=None, idx02=None, **defaults_config):
         '''
         Deduce that this Set expression is equal to a Set in which the
         elements at indices idx01 and idx02 have swapped locations.
@@ -175,10 +177,10 @@ class Set(Function):
         new_order = list(range(0, self.operands.num_entries()))
         new_order[idx01], new_order[idx02] = new_order[idx02], new_order[idx01]
 
-        return self.permutation(new_order=new_order, assumptions=assumptions)
+        return self.permutation(new_order=new_order)
 
-    def permutation(self, new_order=None, cycles=None,
-                    assumptions=USE_DEFAULTS):
+    @equality_prover('permuted', 'permute')
+    def permutation(self, new_order=None, cycles=None, **defaults_config):
         '''
         Deduce that this Set expression is equal to a Set in which
         the elements at indices 0, 1, …, n-1 have been reordered as
@@ -189,10 +191,11 @@ class Set(Function):
             {a, b, c, d}.permutation_general(cycles=[(1, 2, 3)])
         would both return |- {a, b, c, d} = {a, c, d, b}.
         '''
-        return generic_permutation(self, new_order, cycles, assumptions)
+        return generic_permutation(self, new_order, cycles)
 
+    @prover
     def deduce_enum_subset_eq(self, subset_indices=None, subset=None,
-                              assumptions=USE_DEFAULTS):
+                              **defaults_config):
         '''
         Deduce that this Set expression has as an improper subset the
         set specified by either the indices in subset_indices list or
@@ -204,6 +207,34 @@ class Set(Function):
         This process is complicated by the fact that the Set class
         allows for multiplicity of elements without actually
         representing a multi-set (thus, for example, {a, a} = {a}).
+        Recall that the subset_eq and superset_eq notations are style-
+        variants of each other, so we are simply calling the
+        deduce_as_superset_eq_of() method then using the with_styles()
+        method to reverse the order of the relation.
+        '''
+
+        return self.deduce_as_superset_eq_of(
+            subset_indices=subset_indices, subset=subset,
+            assumptions=defaults.assumptions).with_styles(direction='normal')
+
+    @relation_prover
+    def deduce_as_superset_eq_of(self, subset_indices=None,
+                                 subset=None, **defaults_config):
+        '''
+        Deduce that this Set expression is an improper
+        superset of the set specified by either the indices in
+        subset_indices list or the Set() specified by subset (but not
+        both). For example, both
+        {a, b, c, d}.deduce_as_superset_of(subset_indices=[1, 3]) and
+        {a, b, c, d}.deduce_as_superset_of(subset=Set(b, d))
+        return |– {a, b, c, d} superset_eq {b, d}.
+        This process is complicated by the fact that the Set class
+        allows for multiplicity of elements without actually
+        representing a multi-set (thus, for example, {a, a} = {a}).
+        Recall that the superset_eq notation is simply a style option
+        for the subset_eq notation, so the code below develops the
+        subset_eq relation then returns the superset_eq by invoking
+        the with_styles() method.
         '''
 
         from proveit.logic import Set
@@ -267,8 +298,7 @@ class Set(Function):
                 from proveit.logic import Equals
                 for elem in error_elem_candidates:
                     for super_elem in self_set:
-                        if Equals(elem, super_elem).proven(
-                                assumptions=assumptions):
+                        if Equals(elem, super_elem).proven():
                             error_elems.discard(elem)
                             # add to dict for later processing
                             error_elem_equivalences_dict[elem] = super_elem
@@ -286,28 +316,27 @@ class Set(Function):
                 # substitutions are made
                 temp_subset = subset
                 from proveit import TransRelUpdater
-                eq = TransRelUpdater(temp_subset, assumptions)
+                eq = TransRelUpdater(temp_subset)
                 for key in error_elem_equivalences_dict:
                     temp_subset = eq.update(temp_subset.elem_substitution(
                         elem=key,
-                        sub_elem=error_elem_equivalences_dict[key],
-                        assumptions=assumptions))
+                        sub_elem=error_elem_equivalences_dict[key]))
                 subset = temp_subset
                 subset_to_substituted_subset_kt = eq.relation
                 subset_was_substituted = True
 
         # Derive the reduced form of the self Set. We could have done
         # this earlier, but delayed until after param checking.
-        # The eventual subset relationship will be based on the
-        # reduced forms of the specified Sets.
-        self_to_support_kt = self.reduction(assumptions=assumptions)
+        # The eventual subset/superset relationship will be based on
+        # the reduced forms of the specified Sets.
+        self_to_support_kt = self.reduction()
         self_reduced = self_to_support_kt.rhs
         self_reduced_entries = self_reduced.operands.entries
 
         # Derive the reduced form of the subset Set.
         # The eventual subset relationship will be based
         # on the reduced forms of the specified Sets.
-        subset_to_support_kt = subset.reduction(assumptions=assumptions)
+        subset_to_support_kt = subset.reduction()
         subset_reduced = subset_to_support_kt.rhs
         subset_reduced_operands = subset_reduced.operands
 
@@ -331,7 +360,7 @@ class Set(Function):
         new_order = subset_reduced_indices_list + remaining_indices
         # find superset permutation needed for thm application
         superset_perm_relation = generic_permutation(
-            self_reduced, new_order, assumptions=assumptions)
+                self_reduced, new_order)
         # construct the desired list of subset elems
         desired_subset = subset_reduced_operands
         # construct the desired complement list of elems
@@ -342,15 +371,13 @@ class Set(Function):
         # Organize info for theorem instantiation
         # then instantiate.
         from . import subset_eq_of_superset
-        # from proveit import m, n, aa, bb
         m, n, a, b = subset_eq_of_superset.all_instance_vars()
         desired_complement = ExprTuple(*desired_complement_list)
         _a, _b = (desired_subset, desired_complement)
-        _m = _a.num_elements(assumptions)
-        _n = _b.num_elements(assumptions)
+        _m = _a.num_elements()
+        _n = _b.num_elements()
         subset_of_permuted_superset = subset_eq_of_superset.instantiate(
-            {m: _m, n: _n, a: _a, b: _b},
-            assumptions=assumptions)
+                {m: _m, n: _n, a: _a, b: _b}, auto_simplify=False)
 
         # We now have |- reduced_subset \subseteq reduced_superset.
         # We back-sub to get the original subset as a subset_eq of the
@@ -377,35 +404,68 @@ class Set(Function):
             orig_subset_of_orig_superset = (
                 subset_to_substituted_subset_kt.sub_left_side_into(
                     substituted_subset_of_orig_superset))
-            return orig_subset_of_orig_superset
+            return orig_subset_of_orig_superset.with_styles(direction='reversed')
         else:
             # no substitutions into subset performed earlier, so no
             # back-substitution needed:
-            return substituted_subset_of_orig_superset
+            return substituted_subset_of_orig_superset.with_styles(direction='reversed')
 
+    @prover
     def deduce_enum_proper_subset(self, subset_indices=None, subset=None,
-                                  assumptions=USE_DEFAULTS):
+                              **defaults_config):
         '''
         Deduce that this Set expression has as a proper subset the
         set specified by either (a) the indices in the subset_indices
         list OR (b) the Set specified by subset (but not both).
         For example, both
-        {a, b, c, d}.deduce_enum_subset(subset_indices=[1, 3]) and
-        {a, b, c, d}.deduce_enum_subset(subset=Set(b, d))
+        {a, b, c, d}.deduce_enum_proper_subset(subset_indices=[1, 3]) and
+        {a, b, c, d}.deduce_enum_proper_subset(subset=Set(b, d))
         return |– {b, d} subset {a, b, c, d} (assuming the appropriate
         knowledge about either a or c (or both) not being elements of
         the subset {b, d}).
-        This proper subset method is more complex than the analogous
-        method for improper subsets. As with the improper subset case,
-        this process is complicated by the fact that the Set class
+        This process is complicated by the fact that the Set class
+        allows for multiplicity of elements without actually
+        representing a multi-set (thus, for example, {a, a} = {a}).
+        Recall that the subset_eq and superset_eq notations are style-
+        variants of each other, so we are simply calling the
+        deduce_as_proper_superset_of() method then using the
+        with_styles() method to reverse the order of the relation.
+        '''
+
+        return self.deduce_as_proper_superset_of(
+            subset_indices=subset_indices, subset=subset,
+            assumptions=defaults.assumptions).with_styles(direction='normal')
+
+    @relation_prover
+    def deduce_as_proper_superset_of(
+            self, subset_indices=None, subset=None, **defaults_config):
+        '''
+        Deduce that this Set expression is a proper superset of the
+        set specified by either (a) the indices in the subset_indices
+        list OR (b) the Set specified by subset (but not both).
+        For example, both
+        {a, b, c, d}.deduce_as_proper_superset_of(subset_indices=[1, 3])
+        and
+        {a, b, c, d}.deduce_as_proper_superset_of(subset=Set(b, d))
+        return |– {a, b, c, d} proper_superset {b, d} (assuming the
+        appropriate knowledge about either a or c (or both) not being
+        elements of the subset {b, d}).
+        This proper superset method is more complex than the analogous
+        method for improper supersets. As with the improper superset
+        case, this process is complicated by the fact that the Set class
         allows for multiplicity of elements without it actually
         representing a multi-set (thus, for example, {a, a} = {a}).
-        Subset deductions are based on the support sets (i.e. the sets
-        with all multiplicities reduced to 1) for the self
-        and subsets supplied. The process is further complicated by
-        the fact that elements in one set might not *appear* to be in
-        the other set but might be *equal* to elements in the other set,
-        making it challenging to confirm the proper subset relationship.
+        Subset/superset deductions are based on the support sets (i.e.
+        the sets with all multiplicities reduced to 1) for the self
+        superset and subsets supplied. The process is further
+        complicated by the fact that elements in one set might not
+        *appear* to be in the other set but might be *equal* to
+        elements in the other set, making it challenging to confirm
+        the proper subset relationship.
+        Recall that the superset notation is simply a style option
+        for the subset notation, so the code below develops the
+        subset relation then returns the superset by invoking
+        the with_styles() method.
         '''
 
         from proveit.logic import Set
@@ -441,7 +501,13 @@ class Set(Function):
 
         # Reformat assumptions if necessary. Among other things,
         # convert any assumptions=None to assumptions=()
-        assumptions = defaults.checked_assumptions(assumptions)
+        # assumptions = defaults.checked_assumptions(assumptions)
+        # should not bne needed anymore!!!
+        # but if need assumptions actively here will need explicitly:
+        # assumptions = defaults.assumptions
+        # actually, the switch causes eventual errors … but this might
+        # be because we haven't yet established this method as a @prover!
+        # so we have some work to do :o(
 
         # We should now have a subset Set, either explicitly provided
         # as an argument or derived from the subset_indices.
@@ -457,21 +523,20 @@ class Set(Function):
         from proveit.logic import Equals, is_irreducible_value
         from proveit import TransRelUpdater
         temp_subset = subset
-        eq_temp = TransRelUpdater(temp_subset, assumptions)
+        eq_temp = TransRelUpdater(temp_subset) 
         # perform substitutions to irreducible values when possible
         for elem in set(temp_subset.operands):
             if elem in Equals.known_equalities:
                 for kt in Equals.known_equalities[elem]:
-                    if set(kt.assumptions).issubset(set(assumptions)):
+                    if set(kt.assumptions).issubset(set(defaults.assumptions)):
                         if (kt.lhs == elem and is_irreducible_value(kt.rhs)
                                 and kt.lhs != kt.rhs):
                             temp_subset = eq_temp.update(
                                 temp_subset.elem_substitution(
-                                    elem=elem, sub_elem=kt.rhs,
-                                    assumptions=assumptions))
+                                    elem=elem, sub_elem=kt.rhs)) # might need assumptions here somewhere?
                             break
         # reduce multiplicities
-        temp_subset = eq_temp.update(temp_subset.reduction(assumptions))
+        temp_subset = eq_temp.update(temp_subset.reduction())
         subset = temp_subset
         subset_entries = subset.operands.entries
         subset_to_subset_subbed_reduced_kt = eq_temp.relation
@@ -504,8 +569,7 @@ class Set(Function):
                 # from proveit.logic import Equals
                 for elem in error_elem_candidates:
                     for super_elem in self_set:
-                        if Equals(elem, super_elem).proven(
-                                assumptions=assumptions):
+                        if Equals(elem, super_elem).proven():
                             error_elems.discard(elem)
                             break  # b/c we just need 1 instance
                 if len(error_elems) > 0:
@@ -544,8 +608,7 @@ class Set(Function):
             from proveit.logic import Equals, NotInSet
             for elem in non_subset_elem_candidates:
                 for subset_elem in subset_set:
-                    if Equals(elem, subset_elem).proven(
-                            assumptions=assumptions):
+                    if Equals(elem, subset_elem).proven():
                         non_subset_elem_remaining.discard(elem)
                         break
             # that might have reduced the set of remaining candidates
@@ -560,7 +623,7 @@ class Set(Function):
             else:
                 for elem in non_subset_elem_remaining:
                     try:
-                        NotInSet(elem, subset).prove(assumptions=assumptions)
+                        NotInSet(elem, subset).prove()
                         non_subset_elem_proven = elem
                         break
                     except Exception:
@@ -578,7 +641,7 @@ class Set(Function):
         # have done this earlier, but delayed until after param
         # checking. The eventual (proper) subset relationship will be
         # based on the reduced forms of the specified Sets.
-        self_to_support_kt = self.reduction(assumptions=assumptions)
+        self_to_support_kt = self.reduction()
         self_reduced = self_to_support_kt.rhs
         self_reduced_entries = self_reduced.operands.entries
         # while we're here, get the index of the non_subset_elem_proven
@@ -607,7 +670,7 @@ class Set(Function):
                      remaining_indices)
         # find superset permutation needed for thm application
         superset_perm_relation = generic_permutation(
-            self_reduced, new_order, assumptions=assumptions)
+            self_reduced, new_order)
         # construct the desired list of subset elems
         desired_subset = subset.operands
         # construct the desired complement list of elems
@@ -622,11 +685,10 @@ class Set(Function):
         _a = desired_subset
         _b = desired_complement_list[0]
         _c = ExprTuple(*desired_complement_list[1:])
-        _m = _a.num_elements(assumptions)
-        _n = _c.num_elements(assumptions)
+        _m = _a.num_elements()
+        _n = _c.num_elements()
         subset_of_permuted_superset = proper_subset_of_superset.instantiate(
-            {m: _m, n: _n, a: _a, b: _b, c: _c},
-            assumptions=assumptions)
+            {m: _m, n: _n, a: _a, b: _b, c: _c}, auto_simplify=False)
 
         # We now have
         # |- subset_subbed_reduced \propersubset superset_reduced.
@@ -636,44 +698,46 @@ class Set(Function):
         #     superset:
         reduced_subset_of_reduced_superset = (
             superset_perm_relation.sub_left_side_into(
-                subset_of_permuted_superset, assumptions=assumptions))
+                subset_of_permuted_superset))
         # (2) Replace reduced superset with original superset:
         reduced_subset_of_orig_superset = (
             self_to_support_kt.sub_left_side_into(
-                reduced_subset_of_reduced_superset,
-                assumptions=assumptions))
+                reduced_subset_of_reduced_superset))
         # (3) Replace the substituted, reduced subset with the original
         #     subset (might be trivial if subsitution and reduction
         #     were essentially identities):
         orig_subset_of_orig_superset = (
             subset_to_subset_subbed_reduced_kt.sub_left_side_into(
-                reduced_subset_of_orig_superset,
-                assumptions=assumptions))
+                reduced_subset_of_orig_superset))
 
-        return orig_subset_of_orig_superset
+        return orig_subset_of_orig_superset.with_styles(direction='reversed')
 
-    def reduction(self, assumptions=USE_DEFAULTS):
+    @equality_prover('reduced', 'reduce')
+    def reduction(self, **defaults_config):
         '''
         Deduce that this enum Set expression is equal to the Set's
         support -- i.e. equal to a Set with all multiplicities reduced
         to 1. For example, the Set(a, a, b, b, c, d)={a, a, b, b, c, d}
         is equal to its support {a, b, c, d}. The deduction is
         achieved by successively applying the element-by-element
-        reduction_elem() method until no further reduction is possible.
+        elem_multiplicity_reduction() method until no further reduction
+        is possible.
         '''
         from proveit import TransRelUpdater
-        eq = TransRelUpdater(self, assumptions)
+        eq = TransRelUpdater(self)
         # the following does not preserve the order, but we really
         # just want the size of the support set
         desired_operands = set(self.operands.entries)
         desired_num_operands = len(desired_operands)
         expr = self
         while expr.operands.num_entries() > desired_num_operands:
-            expr = eq.update(expr.reduction_elem(assumptions=assumptions))
+            expr = eq.update(expr.elem_multiplicity_reduction())
 
         return eq.relation
 
-    def reduction_elem(self, elem=None, idx=None, assumptions=USE_DEFAULTS):
+    @equality_prover('elem_multiplicity_reduced', 'elem_multiplicity_reduce')
+    def elem_multiplicity_reduction(
+            self, elem=None, idx=None, **defaults_config):
         '''
         Deduce that this enum Set expression is equal to a Set
         in which the multiply-occurring element specified either by
@@ -683,16 +747,19 @@ class Set(Function):
         method attempts to delete the first repeated element of the Set.
         If both elem and idx are specified, the elem param is ignored.
         Examples: Let S = Set(a, b, a, b, a, c). Then
-        S.reduction_elem() gives |-S = {a, b, b, a, c};
-        S.reduction_elem(elem=b) gives |- S = {a, b, a, a, c};
-        S.reduction_elem(idx=4) gives |- S = {a, b, a, b, c}.
+        S.elem_multiplicity_reduction() gives
+            |-S = {a, b, b, a, c};
+        S.elem_multiplicity_reduction(elem=b) gives
+            |- S = {a, b, a, a, c};
+        S.elem_multiplicity_reduction(idx=4) gives
+            |- S = {a, b, a, b, c}.
         Consider changing name to elem_reduction, then use elem_reduced
         as adj and elem_reduce as verb.
         '''
         n = self.operands.num_entries()
 
         # if user has specified position index idx,
-        # check for validity and use  idx if possible
+        # check for validity and use idx if possible
         if idx is not None and (idx < -n or idx >= n):
             raise IndexError("Index specification idx is out of bounds: {0}. "
                              "Need {1} ≤ idx ≤ {2}.".
@@ -770,27 +837,28 @@ class Set(Function):
         # extra element to the right or to the left of an id'd element
         idx_left = min(idx_to_keep, idx_to_elim)
         idx_right = max(idx_to_keep, idx_to_elim)
-        # so we break the set in into [ ]+[idx_left]+[ ]+[idx_right]+[ ]
+        # so we break the set into [ ]+[idx_left]+[ ]+[idx_right]+[ ]
         operands = self.operands
         _a, _x, _b, _c = (
             operands[0:idx_left],
             operands[idx_left],
             operands[idx_left + 1: idx_right],
             operands[idx_right + 1:])
-        _l = _a.num_elements(assumptions)
-        _m = _b.num_elements(assumptions)
-        _n = _c.num_elements(assumptions)
+        _l = _a.num_elements()
+        _m = _b.num_elements()
+        _n = _c.num_elements()
         if idx_to_keep < idx_to_elim:
             return reduction_right.instantiate(
-                {l: _l, m: _m, n: _n, a: _a, x: _x, b: _b, c: _c}, 
-                assumptions=assumptions)
+                {l: _l, m: _m, n: _n, a: _a, x: _x, b: _b, c: _c},
+                auto_simplify=False)
         else:
             return reduction_left.instantiate(
-                {l: _l, m: _m, n: _n, a: _a, x: _x, b: _b, c: _c}, 
-                assumptions=assumptions)
+                {l: _l, m: _m, n: _n, a: _a, x: _x, b: _b, c: _c},
+                auto_simplify=False)
 
+    @equality_prover('single_elem_substituted', 'single_elem_substitute')
     def single_elem_substitution(self, elem=None, idx=None, sub_elem=None,
-                                 assumptions=USE_DEFAULTS):
+                                 **defaults_config):
         '''
         Deduce that this enum Set expression is equal to a Set
         in which the element specified either by elem or by the
@@ -887,13 +955,13 @@ class Set(Function):
             operand_entries[idx],
             operand_entries[idx + 1:],
             sub_elem)
-        # --- Specialize and return.
+        # --- instantiate and return.
         return equal_element_equality.instantiate(
-            {m: m_sub, n: n_sub, aa: aa_sub, b: b_sub, cc: cc_sub, d: d_sub},
-            assumptions=assumptions)
+            {m: m_sub, n: n_sub, aa: aa_sub, b: b_sub, cc: cc_sub, d: d_sub})
 
+    @equality_prover('elem_substituted', 'elem_substitute')
     def elem_substitution(self, elem=None, sub_elem=None,
-                          assumptions=USE_DEFAULTS):
+                          **defaults_config):
         '''
         Deduce that this enum Set expression is equal to the Set
         obtained when every instance of elem in self is replaced by the
@@ -931,12 +999,12 @@ class Set(Function):
         num_elems_to_replace = self.operands.entries.count(elem)
 
         from proveit import TransRelUpdater
-        eq = TransRelUpdater(self, assumptions)
+        eq = TransRelUpdater(self)
 
         expr = self
         while num_elems_to_replace > 0:
             expr = eq.update(expr.single_elem_substitution(
-                elem=elem, sub_elem=sub_elem, assumptions=assumptions))
+                elem=elem, sub_elem=sub_elem, preserve_all=True))
             num_elems_to_replace -= 1
 
         return eq.relation
@@ -1017,12 +1085,3 @@ class Set(Function):
                              "proper subset (too many elements).")
 
 
-# Register these expression equivalence methods:
-InnerExpr.register_equivalence_method(
-    Set, 'permutation', 'permuted', 'permute')
-InnerExpr.register_equivalence_method(
-    Set, 'permutation_move', 'moved', 'move')
-InnerExpr.register_equivalence_method(
-    Set, 'permutation_swap', 'swapped', 'swap')
-InnerExpr.register_equivalence_method(
-    Set, 'reduction', 'reduced', 'reduce')

@@ -1,0 +1,9 @@
+# THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.core_expr_types.operations.operands_substitution_via_tuple
+proveit.logic.booleans.negation.negation_intro
+proveit.logic.equality.equals_reversal
+proveit.logic.equality.fold_not_equals
+proveit.logic.equality.not_equals_symmetry
+proveit.logic.equality.rhs_via_equality
+proveit.logic.equality.unfold_not_equals
+# THEOREMS AND THEORIES TO EXCLUDE:

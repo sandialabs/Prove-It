@@ -9,5 +9,6 @@ class Distinct(Function):
     '''
     _operator_ = Literal('distinct', r'\textrm{distinct}', theory=__file__)
 
-    def __init__(self, *elements):
-        Function.__init__(self, Distinct._operator_, elements)
+    def __init__(self, *elements, styles=None):
+        Function.__init__(self, Distinct._operator_, elements,
+                          styles=styles)

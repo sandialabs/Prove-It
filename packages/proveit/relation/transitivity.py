@@ -19,10 +19,8 @@ The default version handles the case when the "other" relation
 is an equality (in which case, substitution may simply be performed).
 """
 
-import itertools
-from collections import deque
-from proveit import Expression, Operation
 from proveit import defaults, USE_DEFAULTS, Judgment, ProofFailure
+from proveit.decorators import prover
 from .sorter import TransitivitySorter
 from .relation import Relation
 
@@ -35,12 +33,8 @@ class TransitiveRelation(Relation):
     TransitiveRelation which is also symmetric (x=y means that y=x).
     '''
 
-    def __init__(self, operator, lhs, rhs):
-        Relation.__init__(self,operator, lhs, rhs)
-        # lhs and rhs with the "direction" style of "normal"
-        # (not subject to reversal)
-        self.normal_lhs = self.operands[0]
-        self.normal_rhs = self.operands[1]
+    def __init__(self, operator, normal_lhs, normal_rhs, *, styles):
+        Relation.__init__(self,operator, normal_lhs, normal_rhs, styles=styles)
     
     def side_effects(self, judgment):
         '''
@@ -63,7 +57,8 @@ class TransitiveRelation(Relation):
         return
         yield  # makes this a generator as it should be
 
-    def conclude(self, assumptions):
+    @prover
+    def conclude(self, **defaults_config):
         '''
         Try to conclude the TransitivityRelation using other
         TransitivityRelations or Equals that are known to be true via transitivity.
@@ -74,16 +69,16 @@ class TransitiveRelation(Relation):
         # Use a breadth-first search approach to find the shortest
         # path to get from one end-point to the other.
         try:
-            return self.conclude_via_transitivity(assumptions)
+            return self.conclude_via_transitivity()
         except TransitivityException as e:
             # indicate the expression we were trying to prove
-            raise TransitivityException(self, assumptions, e.message)
+            raise TransitivityException(self, defaults.assumptions, e.message)
 
-    def conclude_via_transitivity(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude_via_transitivity(self, **defaults_config):
         from proveit.logic import Equals
-        assumptions = defaults.checked_assumptions(assumptions)
-        proven_relation = self.__class__._transitivitySearch(
-            self.normal_lhs, self.normal_rhs, assumptions=assumptions)
+        proven_relation = self.__class__._transitivity_search(
+            self.normal_lhs, self.normal_rhs)
         relation = proven_relation.expr
         if relation.__class__ != self.__class__:
             if self.__class__ == self.__class__._checkedWeakRelationClass():
@@ -92,12 +87,12 @@ class TransitiveRelation(Relation):
                 elif relation.__class__ == Equals:
                     # Derive a weaker relation via the strong relation
                     # of equality:
-                    return self.conclude_via_equality(assumptions)
+                    return self.conclude_via_equality()
             msg = ("Not able to conclude the desired relation of %s"
                    " from the proven relation of %s."
                    % (str(self), str(relation)))
-            raise TransitivityException(self, assumptions, msg)
-        return proven_relation
+            raise TransitivityException(self, defaults.assumptions, msg)
+        return proven_relation.with_matching_style(self)
 
     @classmethod
     def _RelationClasses(cls):
@@ -130,7 +125,7 @@ class TransitiveRelation(Relation):
             # stronger then weaker relations
             for _Relation in relation_classes:
                 for judgment in list(_Relation.known_left_sides.get(expr, [])):
-                    if judgment.is_sufficient(assumptions_set):
+                    if judgment.is_applicable(assumptions_set):
                         yield (judgment, judgment.normal_rhs)
 
     @classmethod
@@ -156,10 +151,11 @@ class TransitiveRelation(Relation):
             # stronger then weaker relations
             for _Relation in relation_classes:
                 for judgment in list(_Relation.known_right_sides.get(expr, [])):
-                    if judgment.is_sufficient(assumptions_set):
+                    if judgment.is_applicable(assumptions_set):
                         yield (judgment, judgment.normal_lhs)
 
-    def apply_transitivity(self, other, assumptions=USE_DEFAULTS):
+    @prover
+    def apply_transitivity(self, other, **defaults_config):
         '''
         Apply transitivity to derive a new relation from 
         'self' and 'other'.
@@ -170,7 +166,6 @@ class TransitiveRelation(Relation):
         '''
         from proveit.logic import Equals
         # print 'apply transitivity', self, other
-        assumptions = defaults.checked_assumptions(assumptions)
         if isinstance(other, Equals):
             if other.normal_lhs in (self.normal_lhs, self.normal_rhs):
                 subrule = other.sub_right_side_into
@@ -184,19 +179,18 @@ class TransitiveRelation(Relation):
             if common_expr == self.normal_lhs:
                 # replace the normal_lhs of self with its counterpart 
                 # from the "other" equality.
-                return subrule(self.inner_expr().normal_lhs, 
-                               assumptions=assumptions)
+                return subrule(self.inner_expr().normal_lhs)
             elif common_expr == self.normal_rhs:
                 # replace the normal_rhs of self with its counterpart 
                 # from the "other" equality.
-                return subrule(self.inner_expr().normal_rhs, 
-                               assumptions=assumptions)
+                return subrule(self.inner_expr().normal_rhs)
         raise NotImplementedError(
             'Must implement apply_transitivity appropriately for each '
             'kind of TransitiveRelation')
 
     @staticmethod
-    def apply_transitivities(chain, assumptions=USE_DEFAULTS):
+    @prover
+    def apply_transitivities(chain, **defaults_config):
         '''
         Apply transitvity rules on a list of relations in the given chain
         to proof the relation over the chain end points.
@@ -207,17 +201,15 @@ class TransitiveRelation(Relation):
         two neighbors in the chain can be joined vie apply_transitivity.
         The transitivity rule will be applied left to right.
         '''
-        assumptions = defaults.checked_assumptions(assumptions)
         if len(chain) == 0:
             raise TransitivityException(
-                None, assumptions, 'Empty transitivity relation train')
+                None, defaults.assumptions, 'Empty transitivity relation train')
         if not all(isinstance(element, Judgment) for element in chain):
             raise TypeError('Expecting chain elements to be Judgment objects')
         while len(chain) >= 2:
             first = chain.pop(0)
             second = chain.pop(0)
-            new_relation = first.apply_transitivity(
-                second, assumptions=assumptions)
+            new_relation = first.apply_transitivity(second)
             if not isinstance(new_relation, Judgment):
                 raise TypeError(
                     "apply_transitivity should return a Judgment, not %s" %
@@ -268,7 +260,7 @@ class TransitiveRelation(Relation):
         return Relation
     
     @classmethod
-    def sorted_items(cls, items, reorder=True, assumptions=USE_DEFAULTS):
+    def sorted_items(cls, items, reorder=True, **defaults_config):
         '''
         Return the given items in sorted order with respect to this
         TransitivityRelation class (cls) under the given assumptions
@@ -280,7 +272,6 @@ class TransitiveRelation(Relation):
         equality and strong relations are used in the sorting).
         '''
         from proveit.numbers import is_literal_int
-        assumptions = defaults.checked_assumptions(assumptions)
         if all(is_literal_int(item) for item in items):
             # All the items are integers.  Use efficient n log(n) sorting to
             # get them in the proper order and then use fixed_transitivity_sort
@@ -288,14 +279,15 @@ class TransitiveRelation(Relation):
             items = sorted(items, key=lambda item: item.as_int())
             reorder = False
         if reorder:
-            sorter = TransitivitySorter(cls, items, assumptions=assumptions)
+            sorter = TransitivitySorter(cls, items, 
+                                        assumptions=defaults.assumptions)
             return list(sorter)
         else:
-            return cls._fixed_transitivity_sort(
-                items, assumptions=assumptions).operands
+            return cls._fixed_transitivity_sort(items).operands
 
     @classmethod
-    def sort(cls, items, reorder=True, assumptions=USE_DEFAULTS):
+    @prover
+    def sort(cls, items, reorder=True, **defaults_config):
         '''
         Return the proven total ordering (conjunction of relations
         presented in the total ordering style) representing the sorted 
@@ -305,17 +297,14 @@ class TransitiveRelation(Relation):
         equality and strong relations are used in the sorting).
         '''
         automation = True
-        assumptions = defaults.checked_assumptions(assumptions)
         if reorder:
-            items = cls.sorted_items(items, reorder, assumptions)
+            items = cls.sorted_items(items, reorder)
             #print("sorted", items)
             automation = False  # Direct relations already proven.
-        return cls._fixed_transitivity_sort(items, assumptions=assumptions,
-                                            automation=automation)
+        return cls._fixed_transitivity_sort(items, automation=automation)
 
     @classmethod
     def mergesorted_items(cls, item_iterators,
-                          assumptions=USE_DEFAULTS,
                           skip_exact_reps=False,
                           skip_equiv_reps=False,
                           requirements=None):
@@ -332,8 +321,6 @@ class TransitiveRelation(Relation):
         this method on a weak relation class (otherwise, only
         equality and strong relations are used in the sorting).
         '''
-        assumptions = defaults.checked_assumptions(assumptions)
-
         # item_iterators may be actual iterators or something that
         # can produce an iterator. Convert them all to actual iterators.
         for k, iterator in enumerate(item_iterators):
@@ -360,7 +347,8 @@ class TransitiveRelation(Relation):
             requirements = []
 
         # Create a TransitivitySorter.
-        sorter = TransitivitySorter(cls, first_items, assumptions=assumptions,
+        sorter = TransitivitySorter(cls, first_items, 
+                                    assumptions=defaults.assumptions,
                                     skip_exact_reps=skip_exact_reps,
                                     skip_equiv_reps=skip_equiv_reps)
         # Yield items in sorted order from the TransitivitySorter,
@@ -381,8 +369,7 @@ class TransitiveRelation(Relation):
                 # next_item and prev_item are in different iterators,
                 # so their relationship is important for establishing
                 # the sorted order of the merger.
-                requirement = cls._transitivitySearch(prev_item, next_item,
-                                                      assumptions=assumptions,
+                requirement = cls._transitivity_search(prev_item, next_item,
                                                       automation=False)
                 requirements.append(requirement)
             for iterator in iterators:
@@ -399,9 +386,10 @@ class TransitiveRelation(Relation):
             prev_iters = set(iterators)
 
     @classmethod
-    def mergesort(cls, item_iterators, assumptions=USE_DEFAULTS,
-                  skip_exact_reps=False, skip_equiv_reps=False,
-                  requirements=None):
+    @prover
+    def mergesort(cls, item_iterators, skip_exact_reps=False, 
+                  skip_equiv_reps=False, requirements=None,
+                  **defaults_config):
         '''
         Return the proven Sequence, a judgment for an expression
         of type cls.SequenceClass(), representing the sorted sequence
@@ -410,19 +398,16 @@ class TransitiveRelation(Relation):
         this method on a weak relation class (otherwise, only
         equality and strong relations are used in the sorting).
         '''
-        assumptions = defaults.checked_assumptions(assumptions)
-        items = cls.mergesorted_items(item_iterators, assumptions,
+        items = cls.mergesorted_items(item_iterators,
                                       skip_exact_reps, skip_equiv_reps,
                                       requirements)
         items = list(items)
         #print("merge sorted", items)
-        return cls._fixed_transitivity_sort(items, assumptions=assumptions,
-                                            automation=False)
+        return cls._fixed_transitivity_sort(items, automation=False)
 
     @classmethod
     def insertion_point(cls, sorted_items, item_to_insert,
-                        equiv_group_pos='any',
-                        assumptions=USE_DEFAULTS, requirements=None):
+                        equiv_group_pos='any', requirements=None):
         '''
         Return the position to insert the "item to insert" into the
         sorted items to maintain the sorted order (according to
@@ -440,7 +425,6 @@ class TransitiveRelation(Relation):
         an arbitrary position relative to equivalent items.
         '''
         equiv_class = cls.EquivalenceClass()
-        assumptions = defaults.checked_assumptions(assumptions)
         if item_to_insert in sorted_items:
             point = sorted_items.index(item_to_insert)
         else:
@@ -452,7 +436,6 @@ class TransitiveRelation(Relation):
             skip_exact_reps = skip_equiv_reps = False
             # And don't skip exact representations
             for k, item in enumerate(cls.mergesorted_items(item_iterators,
-                                                           assumptions,
                                                            skip_exact_reps,
                                                            skip_equiv_reps,
                                                            requirements)):
@@ -474,12 +457,12 @@ class TransitiveRelation(Relation):
                 item1, item2 = sorted_items[prev_point], equiv_item
                 try:
                     relation = \
-                        cls._transitivitySearch(item1, item2, assumptions,
+                        cls._transitivity_aearch(item1, item2,
                                                 automation=False)
                 except ProofFailure:
                     msg = ("Unknown %s relationship between %s and %s"
                            % (cls, item1, item2))
-                    raise TransitivityException(None, assumptions, msg)
+                    raise TransitivityException(None, defaults.assumptions, msg)
                 if isinstance(relation.expr, equiv_class):
                     equiv_item = sorted_items[prev_point]
                     point -= 1
@@ -496,12 +479,12 @@ class TransitiveRelation(Relation):
                 item1, item2 = equiv_item, sorted_items[point]
                 try:
                     relation = \
-                        cls._transitivitySearch(item1, item2, assumptions,
+                        cls._transitivity_search(item1, item2,
                                                 automation=False)
                 except ProofFailure:
                     msg = ("Unknown %s relationship between %s and %s"
                            % (cls, item1, item2))
-                    raise TransitivityException(None, assumptions, msg)
+                    raise TransitivityException(None, defaults.assumptions, msg)
                 if isinstance(relation.expr, equiv_class):
                     equiv_item = sorted_items[point]
                     point += 1
@@ -514,8 +497,9 @@ class TransitiveRelation(Relation):
         return point
 
     @classmethod
-    def _transitivitySearch(cls, left_item, right_item,
-                            assumptions, automation=True):
+    @prover
+    def _transitivity_search(cls, left_item, right_item,
+                             **defaults_config):
         '''
         Performs a breadth-first, bidirectional (meet in the middle) search attempting
         to prove a relation between left_item and right_item according to the RelationClass
@@ -533,14 +517,13 @@ class TransitiveRelation(Relation):
             # Try the strong relation first.
             StrongClass = cls._checkedStrongRelationClass()
             relation = StrongClass(left_item, right_item)
-            return relation.prove(assumptions=assumptions, automation=False)
+            return relation.prove(automation=False)
         except (ProofFailure, NotImplementedError):
             # Try equality.
             try:
                 # Maybe the equality is known.
                 relation = equiv_class(left_item, right_item)
-                return relation.prove(assumptions=assumptions,
-                                      automation=False)
+                return relation.prove(automation=False)
             except ProofFailure:
                 pass
             # Try the weak relation if cls is weak.
@@ -549,30 +532,29 @@ class TransitiveRelation(Relation):
                     # Maybe the weak relation is known.
                     WeakClass = cls._checkedWeakRelationClass()
                     relation = WeakClass(left_item, right_item)
-                    return relation.prove(assumptions=assumptions,
-                                          automation=False)
+                    return relation.prove(automation=False)
                 except (ProofFailure, NotImplementedError):
                     pass
 
-        if not automation:
+        if not defaults.automation:
             relation = cls(left_item, right_item)
             msg = ('No proof found via applying transitivity amongst'
                    ' known proven relations.')
-            raise TransitivityException(relation, assumptions, msg)
+            raise TransitivityException(relation, defaults.assumptions, msg)
 
         sorter = TransitivitySorter(cls, [left_item, right_item],
-                                    assumptions=assumptions,
+                                    assumptions=defaults.assumptions,
                                     skip_exact_reps=False,
                                     skip_equiv_reps=False,
                                     presorted_pair=True)
         list(sorter)  # should prove desired relation
         # Return the proven relation.
-        return cls._transitivitySearch(left_item, right_item,
-                                       assumptions, automation=False)
+        return cls._transitivity_search(left_item, right_item,
+                                        automation=False)
 
     @classmethod
-    def _fixed_transitivity_sort(cls, items, assumptions,
-                                 automation=True):
+    @prover
+    def _fixed_transitivity_sort(cls, items, **defaults_config):
         '''
         Check that the given items are in sorted order, returning the
         proven total ordering (conjunction of relations presented in a 
@@ -581,14 +563,16 @@ class TransitiveRelation(Relation):
         don't generate new relations through transitivities; assume that
         we already have the necessary direct relationships proven.
         '''
-        items_list = list(
-            items)  # in case the items are a non-indexable iterable
+        from proveit import ExprTuple
+        if isinstance(items, ExprTuple):
+            items_list = items.entries
+        else:
+            # in case the items are a non-indexable iterable
+            items_list = list(items)
         relations = []
         for item1, item2 in zip(items_list[:-1], items_list[1:]):
-            relations.append(cls._transitivitySearch(item1, item2,
-                                                     assumptions=assumptions,
-                                                     automation=automation))
-        return total_ordering(*relations).prove(assumptions)
+            relations.append(cls._transitivity_search(item1, item2))
+        return total_ordering(*relations, prove=True)
 
 
 class TransitivityException(ProofFailure):
@@ -596,17 +580,26 @@ class TransitivityException(ProofFailure):
         ProofFailure.__init__(self, expr, assumptions, message)
 
 
-def total_ordering(*relations):
+def total_ordering(*relations, prove=False):
     '''
     Return a conjunction of relations in the total ordering style.
     For example, "a > b >= c = d > e" is a total ordering style for
-    "(a > b) and (b >= c) and (c = d) and (d > e)".
+    "(a > b) and (b >= c) and (c = d) and (d > e)".  If there is a
+    single relation, just return the relation.  If 'prove' is True,
+    return a proven Judgment.
     '''
+    from proveit import ExprRange
     from proveit.logic import And
+    if len(relations) == 1 and not isinstance(relations[0], ExprRange):
+        # Return a trivial, singular relation.
+        relation = relations[0]
+        if prove: relation = relation.prove()
+        return relation
+    # Return a conjunction with the proper style.
     conjunction = And(*relations)
     conjunction = conjunction.with_total_ordering_style()
-    if conjunction.operands.is_single():
-        # A single relation is a trivial total ordering.
-        return conjunction.operands[0]
+    if prove:
+        # Prove via composition.
+        # Allow automation to prove the length requirement.
+        return conjunction.conclude_via_composition(automation=True)
     return conjunction
-

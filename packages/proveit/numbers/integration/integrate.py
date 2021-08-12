@@ -14,7 +14,7 @@ class Integrate(OperationOverInstances):
 #    def __init__(self, instance_vars, instance_expr, conditions = tuple(), domain=EVERYTHING):
 #
     def __init__(self, index, integrand, domain, *, condition=None,
-                 conditions=None):
+                 conditions=None, styles=None):
         r'''
         Integrates integrand over indices over domain.
         Arguments serve analogous roles to Forall arguments (found in basiclogic.booleanss):
@@ -24,7 +24,8 @@ class Integrate(OperationOverInstances):
         '''
         OperationOverInstances.__init__(
             self, Integrate._operator_, index, integrand,
-            domain=domain, condition=condition, conditions=conditions)
+            domain=domain, condition=condition, conditions=conditions,
+            styles=styles)
         if len(self.instance_vars) != 1:
             raise ValueError('Only one index allowed per integral!')
         elif isinstance(self.domain, Interval):

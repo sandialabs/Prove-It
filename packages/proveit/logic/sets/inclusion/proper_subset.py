@@ -1,5 +1,5 @@
 from proveit import (as_expression, Literal, Operation, safe_dummy_var,
-                     USE_DEFAULTS)
+                     prover, relation_prover, ProofFailure, defaults)
 from proveit import A, B, C, x
 from proveit import f, S
 from .inclusion_relation import InclusionRelation
@@ -26,12 +26,12 @@ class ProperSubset(InclusionRelation):
     #   (populated in TransitivityRelation.side_effects)
     known_right_sides = dict()
 
-    def __init__(self, A, B):
+    def __init__(self, A, B, *, styles=None):
         '''
         Create the expression for (A proper_subset B).
         '''
         InclusionRelation.__init__(
-            self, ProperSubset._operator_, A, B)
+            self, ProperSubset._operator_, A, B, styles=styles)
 
     @staticmethod
     def reversed_operator_str(format_type):
@@ -46,37 +46,47 @@ class ProperSubset(InclusionRelation):
             return 'proper_superset'
         # Use the default.
         return Operation.remake_constructor(self)
-    
-    def unfold(self, assumptions=USE_DEFAULTS):
+
+    @prover
+    def conclude(self, **defaults_config):
+        '''
+        '''
+        #print("Entering the ProperSubset.conclude() method!")                   # for testing; delete later
+        raise ProofFailure(self, defaults.assumptions,
+                       "ProperSubset.conclude() not implemented.")
+
+    @prover
+    def unfold(self, **defaults_config):
         '''
         From A proper_subset B, derive and return
         (A subset_eq B) and (B set_not_equiv A)
         '''
         from . import unfold_proper_subset
         unfolded = unfold_proper_subset.instantiate(
-            {A: self.operands[0], B: self.operands[1]}, assumptions=assumptions)
+            {A: self.operands[0], B: self.operands[1]})
         return unfolded.inner_expr().operands[0].with_mimicked_style(self)
-    
-    def derive_relaxed(self, assumptions=USE_DEFAULTS):
+
+    @prover
+    def derive_relaxed(self, **defaults_config):
         '''
         From ProperSubset(A, B), derive SubsetEq(A, B).
         '''
         from . import relax_proper_subset
         new_rel = relax_proper_subset.instantiate(
-            {A: self.subset, B: self.superset}, assumptions=assumptions)
-        new_rel.with_mimicked_style(self)
-        return new_rel
+            {A: self.subset, B: self.superset})
+        return new_rel.with_mimicked_style(self)
 
-    def derive_superset_membership(self, element, assumptions=USE_DEFAULTS):
+    @prover
+    def derive_superset_membership(self, element, **defaults_config):
         '''
         From A subset B and x in A, derive x in B.
         '''
         from . import superset_membership_from_proper_subset
         return superset_membership_from_proper_subset.instantiate(
-            {A: self.subset, B: self.superset, x: element},
-            assumptions=assumptions)
+            {A: self.subset, B: self.superset, x: element})
 
-    def apply_transitivity(self, other, assumptions=USE_DEFAULTS):
+    @prover
+    def apply_transitivity(self, other, **defaults_config):
         '''
         Apply a transitivity rule to derive from this ProperSubset(A, B)
         expression and something of the form SubsetEq(B, C),
@@ -88,41 +98,40 @@ class ProperSubset(InclusionRelation):
             transitivity_subset_subset, transitivity_subset_eq_subset,
             transitivity_subset_subset_eq,)
         if isinstance(other, Equals) or isinstance(other, SetEquiv):
-            return InclusionRelation.apply_transitivity(
-                self, other, assumptions=assumptions)
+            return InclusionRelation.apply_transitivity(self, other)
         if other.subset == self.superset:
             if isinstance(other, ProperSubset):
                 new_rel = transitivity_subset_subset.instantiate(
                     {A: self.subset, B: self.superset, C: other.superset},
-                    assumptions=assumptions)
+                    preserve_all=True)
             elif isinstance(other, SubsetEq):
                 new_rel = transitivity_subset_subset_eq.instantiate(
                     {A: self.subset, B: self.superset, C: other.superset},
-                    assumptions=assumptions)
+                    preserve_all=True)
         elif other.superset == self.subset:
             if isinstance(other, ProperSubset):
                 new_rel = transitivity_subset_subset.instantiate(
                     {A: other.subset, B: other.superset, C: self.superset},
-                    assumptions=assumptions)
+                    preserve_all=True)
             elif isinstance(other, SubsetEq):
                 new_rel = transitivity_subset_eq_subset.instantiate(
                     {A: other.subset, B: other.superset, C: self.superset},
-                    assumptions=assumptions)
+                    preserve_all=True)
         else:
             raise ValueError(
                 "Cannot perform transitivity with {0} and {1}!".
                 format(self, other))
         return new_rel.with_mimicked_style(self)
 
-    def deduce_in_bool(self, assumptions=USE_DEFAULTS):
+    @relation_prover
+    def deduce_in_bool(self, **defaults_config):
         '''
         Deduce and return that this ProperSubset expression
         is in the Boolean set.
         '''
         from . import proper_subset_is_bool
         is_bool_stmt = proper_subset_is_bool.instantiate(
-                {A: self.normal_lhs, B: self.normal_rhs}, 
-                assumptions=assumptions)
+                {A: self.normal_lhs, B: self.normal_rhs})
         return is_bool_stmt.inner_expr().element.with_matching_style(self)
 
 # Provide aliases for ProperSubset to augment user's ease-of-use

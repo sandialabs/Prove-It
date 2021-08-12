@@ -1,5 +1,5 @@
 from proveit import (as_expression, Literal, Operation, safe_dummy_var,
-                     USE_DEFAULTS)
+                     USE_DEFAULTS, prover, relation_prover)
 from proveit import A, B, C, x
 from proveit import f, S
 from proveit.relation import Relation
@@ -10,18 +10,18 @@ class NotProperSubset(Relation):
                          latex_format=r'\not\subset',
                          theory=__file__)
 
-    def __init__(self, A, B):
+    def __init__(self, A, B, *, styles=None):
         '''
         Create the expression for (A not_proper_subset B)
         '''
         Operation.__init__(
-            self, NotProperSubset._operator_, (A, B))
+            self, NotProperSubset._operator_, (A, B), styles=styles)
         # Need 'direction' style
 
     @staticmethod
     def reversed_operator_str(format_type):
         '''
-        Reversing not_proper_subset gives not_proper_subset.
+        Reversing not_proper_subset gives not_proper_supset.
         '''
         return r'\not\supset' if format_type == 'latex' else 'not_proper_subset'
     
@@ -36,32 +36,34 @@ class NotProperSubset(Relation):
     def side_effects(self, judgment):
         yield self.unfold
 
-    def conclude(self, assumptions=USE_DEFAULTS):
-        return self.conclude_as_folded(assumptions)
+    @prover
+    def conclude(self, **defaults_config):
+        return self.conclude_as_folded()
 
-    def unfold(self, assumptions=USE_DEFAULTS):
+    @prover
+    def unfold(self, **defaults_config):
         '''
         From A not_proper_subset B, derive and return
         not(propersubset(A, B)).
         '''
         from . import unfold_not_proper_subset
         unfolded = unfold_not_proper_subset.instantiate(
-            {A: self.operands[0], B: self.operands[1]}, 
-            assumptions=assumptions)
+            {A: self.operands[0], B: self.operands[1]}, auto_simplify=False)
         return unfolded.inner_expr().operand.with_mimicked_style(self)
 
-    def conclude_as_folded(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude_as_folded(self, **defaults_config):
         '''
         Derive this folded version, A not_proper_subset B, from the
         unfolded version, not(A propersubset B).
         '''
         from . import fold_not_proper_subset
         concluded = fold_not_proper_subset.instantiate(
-            {A: self.operands[0], B: self.operands[1]}, 
-            assumptions=assumptions)
+            {A: self.operands[0], B: self.operands[1]})
         return concluded.with_matching_style(self)
 
-    def deduce_in_bool(self, assumptions=USE_DEFAULTS):
+    @relation_prover
+    def deduce_in_bool(self, **defaults_config):
         '''
         Deduce and return that this NotProperSubset statement is in the
         Boolean set.

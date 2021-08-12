@@ -13,8 +13,9 @@ class Prob(Operation):
     # the literal operator of the Prob operation class
     _operator_ = Literal('PROB', theory=__file__)
 
-    def __init__(self, event, random_variable):
-        Operation.__init__(self, Prob._operator_, (event, random_variable))
+    def __init__(self, event, random_variable, *, styles=None):
+        Operation.__init__(self, Prob._operator_, (event, random_variable),
+                           styles=styles)
         self.event = self.operands[0]
         self.random_variable = self.operands[1]
 
@@ -25,12 +26,12 @@ class Prob(Operation):
         return 'Pr_{' + formatted_var + '}[' + formatted_event + ']'
 
     def deduce_in_interval(self):
-        from axioms import prob_between_zero_and_one
+        from . import prob_between_zero_and_one
         return prob_between_zero_and_one.instantiate(
             {x: self.random_variable, X: self.event})
 
     def deduce_in_real(self):
-        from theorems import prob_in_real
+        from . import prob_in_real
         return prob_in_real.instantiate(
             {x: self.random_variable, X: self.event})
 

@@ -16,6 +16,7 @@ into their containers.
 '''
 
 
+from proveit._core_.defaults import defaults
 from proveit._core_.expression.expr import Expression
 
 
@@ -53,7 +54,7 @@ def composite_expression(expressions):
     from .named_exprs import NamedExprs
     from proveit._core_.judgment import Judgment
     from proveit._core_.theory import UnsetCommonExpressionPlaceholder
-
+    
     if isinstance(expressions, UnsetCommonExpressionPlaceholder):
         expressions.raise_attempted_use_error()
     if isinstance(expressions, Judgment):
