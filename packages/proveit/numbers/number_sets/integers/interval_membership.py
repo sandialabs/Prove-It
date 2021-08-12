@@ -25,7 +25,14 @@ class IntervalMembership(NumberMembership):
         [element <= upper_bound], derive and return
         [element in Interval(lower_bound, upper_bound)]
         '''
-        return self.domain.deduce_elem_in_set(self.element)
+        element = self.element
+        if hasattr(element, 'deduce_in_number_set'):
+            try:
+                return element.deduce_in_number_set(self.domain)
+            except (NotImplementedError, ProofFailure):
+                # If that didn't work, try 'deduce_elem_in_set'.
+                pass
+        return self.domain.deduce_elem_in_set(element)
 
     def side_effects(self, judgment):
         '''

@@ -40,7 +40,7 @@ class NumberOperation(Operation):
         inner_expr_bounds = deque(inner_expr_bounds)
         inner_relations = dict()
         if len(inner_expr_bounds) == 0:
-            raise ValueError("Expecting on or more 'inner_expr_bounds'")
+            raise ValueError("Expecting one or more 'inner_expr_bounds'")
         while len(inner_expr_bounds) > 0:
             inner_expr_bound = inner_expr_bounds.popleft()
             if isinstance(inner_expr_bound, TransRelUpdater):
@@ -59,9 +59,9 @@ class NumberOperation(Operation):
             no_such_number_op_inner_expr = True
             # Apply bound to each inner expression as applicable.
             if inner_exprs_to_bound is None:
-                inner_exprs = generate_inner_expressions(self, inner) 
+                inner_exprs = generate_inner_expressions(self, inner)
             else:
-                inner_exprs = inner_exprs_to_bound                                
+                inner_exprs = inner_exprs_to_bound 
             for inner_expr in inner_exprs:
                 no_such_inner_expr = False
                 inner_expr_depth = len(inner_expr.expr_hierarchy)

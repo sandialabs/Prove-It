@@ -226,7 +226,6 @@ class Add(NumberOperation):
 
         if is_irreducible_value(judgment.rhs):
             for term in addition.terms:
-                # print("adding known equalities:", term)
                 Add.known_equalities.setdefault(term, set()).add(judgment)
 
             if addition.terms.is_double():
