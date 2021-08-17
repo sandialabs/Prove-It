@@ -236,15 +236,24 @@ class Gate(Function):
         '''
         if len(operand) > 1:
             raise ValueError(
-                'Expected one operand, got %s instead.' %
+                'Expected on operand, got %s instead.' %
                 len(operand))
-
-        Function.__init__(self, Gate._operator_, operand, styles=styles)
-
         if len(operand) == 0:
             self.gate_operation = None
         else:
-            self.gate_operation = self.operands[0]
+            self.gate_operation = operand[0]
+        Function.__init__(self, Gate._operator_, operand, styles=styles)
+
+    def remake_with_style_calls(self):
+        '''
+        In order to reconstruct this Expression to have the same styles,
+        what "with..." method calls are most appropriate?
+        '''
+        representation = self.get_style('representation', 'explicit')
+        call_strs = []
+        if representation == 'implicit':
+            call_strs.append("with_styles(representation='implicit')")
+        return call_strs
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
@@ -273,14 +282,18 @@ class Gate(Function):
         Return the StyleOptions object for this Gate object.
         '''
         options = StyleOptions(self)
-        options.add_option(
-            name='representation',
-            description=(
-                "The 'implicit' option formats the identity operation as "
-                "a quantum wire and the X gate as a target. The 'explicit' "
-                "option formats the identity operation as a box containing the "
-                "I literal and the X gate as a box containing an X"),
-            default='wire',
+        if (self.gate_operation is not None and 
+                str(self.gate_operation) == 'X'):
+            # For an X gate, it may be displayed as
+            # 'X' (explicit) or as a target (implicit).
+            options.add_option(
+                name='representation',
+                description=(
+                    "The 'implicit' option formats the identity operation as "
+                    "a quantum wire and the X gate as a target. The 'explicit' "
+                    "option formats the identity operation as a box containing the "
+                    "I literal and the X gate as a box containing an X"),
+                default='explicit',
             related_methods=())
 
         return options
@@ -363,6 +376,9 @@ class MultiQubitGate(Function):
             self.indices = None
         self.gate_set = gate_set
         self.gate = gate
+        if isinstance(gate, MultiQubitGate):
+            raise ValueError("A MultiQubitGate should not have a "
+                             "MultiQubitGate as it's 'gate'")
         Function.__init__(self, MultiQubitGate._operator_,
                            (gate, gate_set), styles=styles)
 
@@ -373,8 +389,9 @@ class MultiQubitGate(Function):
         '''
         representation = self.get_style('representation')
         call_strs = []
-        if representation == 'implicit':
-            call_strs.append("with_styles(representation='implicit')")
+        if representation != 'explicit':
+            call_strs.append("with_styles(representation='%s')"
+                             %representation)
         return call_strs
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
@@ -496,6 +513,8 @@ class MultiQubitGate(Function):
                 else:
                     formatted_gate_operation = r' /^{' + self.gate.number.formatted(format_type, fence=False) \
                               + r'} '
+            elif isinstance(self.gate, Gate):
+                formatted_gate_operation = self.gate.formatted(format_type, solo=False)
 
             # if r'\Qcircuit' in formatted_gate_operation:
             #     idx = formatted_gate_operation.index('\n')
@@ -508,7 +527,7 @@ class MultiQubitGate(Function):
             spacing = '@C=1em @R=.7em'
             out_str = ''
 
-            if formatted_gate_operation == 'X' and representation == 'implicit':
+            if (formatted_gate_operation == 'X' and representation == 'implicit') or 'targ' in formatted_gate_operation:
                 # this is formatted as a target.
                 out_str += r'\targ'
             elif formatted_gate_operation == 'CONTROL':
@@ -585,6 +604,18 @@ class MultiWire(Function):
                           styles=styles)
         self.number = number
 
+    def remake_with_style_calls(self):
+        '''
+        In order to reconstruct this Expression to have the same styles,
+        what "with..." method calls are most appropriate?
+        '''
+        representation = self.get_style('representation', 'explicit')
+        call_strs = []
+        if representation != 'explicit':
+            call_strs.append("with_styles(representation='%s')"
+                             %representation)
+        return call_strs
+
     def style_options(self):
         from proveit._core_.expression.style_options import StyleOptions
 
@@ -597,7 +628,7 @@ class MultiWire(Function):
                          "objects as an IdentityOp. 'explicit' representation "
                          "displays MultiWire objects as a bundle using the "
                          "backslash notation. "),
-            default=None,
+            default='explicit',
             related_methods=('with_implicit_style'))
 
         return options

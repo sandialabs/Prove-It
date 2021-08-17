@@ -159,17 +159,21 @@ class SubsetEq(InclusionRelation):
         if other.subset == self.superset:
             if isinstance(other, ProperSubset):
                 new_rel = transitivity_subset_eq_subset.instantiate(
-                    {A: self.subset, B: self.superset, C: other.superset})
+                    {A: self.subset, B: self.superset, C: other.superset},
+                    preserve_all=True)
             elif isinstance(other, SubsetEq):
                 new_rel = transitivity_subset_eq_subset_eq.instantiate(
-                    {A: self.subset, B: self.superset, C: other.superset})
+                    {A: self.subset, B: self.superset, C: other.superset},
+                    preserve_all=True)
         elif other.superset == self.subset:
             if isinstance(other, ProperSubset):
                 new_rel = transitivity_subset_subset_eq.instantiate(
-                    {A: other.subset, B: other.superset, C: self.superset})
+                    {A: other.subset, B: other.superset, C: self.superset},
+                    preserve_all=True)
             elif isinstance(other, SubsetEq):
                 new_rel = transitivity_subset_eq_subset_eq.instantiate(
-                    {A: other.subset, B: other.superset, C: self.superset})
+                    {A: other.subset, B: other.superset, C: self.superset},
+                    preserve_all=True)
         else:
             raise ValueError(
                 "Cannot perform transitivity with {0} and {1}!".

@@ -5,7 +5,7 @@ from .expression import (
     possibly_free_var_ranges, free_vars,
     expression_depth, MakeNotImplemented,
     ImproperReplacement,
-    InnerExpr, generate_inner_expressions,
+    InnerExpr, InnerExprGenerator, generate_inner_expressions,
     Label, Literal, Variable, DuplicateLiteralError,
     safe_dummy_var, safe_dummy_vars, safe_default_or_dummy_var,
     Operation, IndexedVar, Function,

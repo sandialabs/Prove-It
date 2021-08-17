@@ -9,11 +9,10 @@ proveit.logic.booleans.unfold_is_bool
 proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
 proveit.logic.equality.not_equals_symmetry
-proveit.logic.equality.sub_left_side_into
-proveit.logic.equality.sub_right_side_into
 proveit.logic.equality.unfold_not_equals
 proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
+proveit.logic.sets.inclusion.unfold_subset_eq
 proveit.numbers.negation.negated_zero
 proveit.numbers.number_sets.complex_numbers.complex_nonzero_within_complex
 proveit.numbers.number_sets.complex_numbers.i_is_complex_nonzero
@@ -22,6 +21,9 @@ proveit.numbers.number_sets.complex_numbers.nat_within_complex
 proveit.numbers.number_sets.complex_numbers.nonzero_if_in_complex_nonzero
 proveit.numbers.number_sets.complex_numbers.real_nonzero_within_complex_nonzero
 proveit.numbers.number_sets.complex_numbers.real_within_complex
+proveit.numbers.number_sets.integers.int_interval_within_int
+proveit.numbers.number_sets.integers.interval_lower_bound
+proveit.numbers.number_sets.integers.interval_upper_bound
 proveit.numbers.number_sets.integers.nat_pos_within_int
 proveit.numbers.number_sets.integers.nat_pos_within_nonzero_int
 proveit.numbers.number_sets.integers.nat_within_int
@@ -101,6 +103,5 @@ proveit.numbers.numerals.decimals.posnat8
 proveit.numbers.numerals.decimals.posnat9
 proveit.numbers.ordering.less_is_not_eq
 proveit.numbers.ordering.relax_less
-proveit.physics.quantum.QPE.phase_is_real
 proveit.physics.quantum.QPE.psi_prime_t_formula
 # THEOREMS AND THEORIES TO EXCLUDE:

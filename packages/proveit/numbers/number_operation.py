@@ -40,7 +40,7 @@ class NumberOperation(Operation):
         inner_expr_bounds = deque(inner_expr_bounds)
         inner_relations = dict()
         if len(inner_expr_bounds) == 0:
-            raise ValueError("Expecting on or more 'inner_expr_bounds'")
+            raise ValueError("Expecting one or more 'inner_expr_bounds'")
         while len(inner_expr_bounds) > 0:
             inner_expr_bound = inner_expr_bounds.popleft()
             if isinstance(inner_expr_bound, TransRelUpdater):
@@ -59,9 +59,9 @@ class NumberOperation(Operation):
             no_such_number_op_inner_expr = True
             # Apply bound to each inner expression as applicable.
             if inner_exprs_to_bound is None:
-                inner_exprs = generate_inner_expressions(self, inner) 
+                inner_exprs = generate_inner_expressions(self, inner)
             else:
-                inner_exprs = inner_exprs_to_bound                                
+                inner_exprs = inner_exprs_to_bound 
             for inner_expr in inner_exprs:
                 no_such_inner_expr = False
                 inner_expr_depth = len(inner_expr.expr_hierarchy)
@@ -88,8 +88,11 @@ class NumberOperation(Operation):
                 container_relation = inner_relations.setdefault(
                         container, TransRelUpdater(container))
                 expr = container_relation.expr
+                # Don't simplify or make replacements if there
+                # is more to go:
+                preserve_all = (len(inner_expr_bounds) > 0)
                 container_relation.update(expr.bound_via_operand_bound(
-                        inner_expr_bound))
+                        inner_expr_bound, preserve_all=preserve_all))
                 # Append the relation for processing
                 if container is self:
                     # No further processing needed when the container
@@ -129,6 +132,12 @@ class NumberOperation(Operation):
 @relation_prover
 def deduce_in_number_set(expr, number_set, **defaults_config):
     from proveit.logic import InSet
+    membership = InSet(expr, number_set)
+    if membership.proven():
+        # Already proven. We're done.
+        return membership.prove()
     if hasattr(expr, 'deduce_in_number_set'):
+        # Use 'deduce_in_number_set' method.
         return expr.deduce_in_number_set(number_set)
-    return InSet(expr, number_set).prove()
+    # Try prove().
+    return membership.prove()

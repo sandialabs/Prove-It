@@ -3,7 +3,6 @@ proveit.core_expr_types.lambda_maps.general_lambda_substitution
 proveit.core_expr_types.tuples.range_from1_len
 proveit.core_expr_types.tuples.range_len
 proveit.core_expr_types.tuples.range_len_typical_eq
-proveit.core_expr_types.tuples.singular_range_reduction
 proveit.core_expr_types.tuples.tuple_len_0_typical_eq
 proveit.core_expr_types.tuples.tuple_portion_substitution
 proveit.linear_algebra.distribute_tensor_prod_over_sum
@@ -25,6 +24,8 @@ proveit.logic.booleans.unfold_is_bool
 proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
 proveit.logic.equality.not_equals_symmetry
+proveit.logic.equality.rhs_via_equality
+proveit.logic.equality.sub_in_right_operands_via_tuple
 proveit.logic.equality.sub_left_side_into
 proveit.logic.equality.sub_right_side_into
 proveit.logic.equality.unfold_not_equals
@@ -39,18 +40,15 @@ proveit.numbers.addition.add_real_pos_closure_bin
 proveit.numbers.addition.association
 proveit.numbers.addition.commutation
 proveit.numbers.addition.disassociation
-proveit.numbers.addition.elim_zero_any
 proveit.numbers.addition.right_add_eq
 proveit.numbers.addition.rightward_commutation
 proveit.numbers.addition.subtraction.add_cancel_basic
-proveit.numbers.addition.subtraction.add_cancel_triple_31
 proveit.numbers.addition.subtraction.add_cancel_triple_32
 proveit.numbers.addition.subtraction.negated_add
 proveit.numbers.addition.subtraction.sub_one_is_nat
 proveit.numbers.addition.subtraction.subtract_from_add
 proveit.numbers.addition.subtraction.subtract_from_add_reversed
 proveit.numbers.addition.subtraction.subtract_nat_closure_bin
-proveit.numbers.addition.subtraction.subtraction_disassociation
 proveit.numbers.exponentiation.add_one_right_in_exp
 proveit.numbers.exponentiation.complex_x_to_first_power_is_x
 proveit.numbers.exponentiation.exp_complex_closure
@@ -171,6 +169,7 @@ proveit.numbers.numerals.decimals.posnat6
 proveit.numbers.numerals.decimals.posnat7
 proveit.numbers.numerals.decimals.posnat8
 proveit.numbers.numerals.decimals.posnat9
+proveit.numbers.numerals.decimals.range_1_expansion
 proveit.numbers.numerals.decimals.tuple_len_1
 proveit.numbers.numerals.decimals.tuple_len_1_typical_eq
 proveit.numbers.numerals.decimals.tuple_len_2

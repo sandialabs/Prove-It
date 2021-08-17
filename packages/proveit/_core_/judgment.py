@@ -950,11 +950,14 @@ class Judgment:
                         processed_repl_map[iparam_var] = iparam_var
         temporarily_preserved_exprs = set()
         try:
-            # Preserve all replacement expressions -- don't simplify
-            # them given the directive to specifically use them.
+            # Do not simplify any of the replacement expressions since
+            # there is a directive to specifically use them.  However,
+            # defaults.replacements for double replacements.
             temporarily_preserved_exprs = (
                     set(processed_repl_map.values()) - 
                     defaults.preserved_exprs)
+            for replacement in defaults.replacements:
+                temporarily_preserved_exprs.discard(replacement.lhs)
             defaults.preserved_exprs.update(temporarily_preserved_exprs)
 
             return self._checkedTruth(
@@ -1184,7 +1187,7 @@ class Judgment:
         html += '</span>'
         return html
 
-    def inner_expr(self):
+    def inner_expr(self, assumptions=USE_DEFAULTS):
         '''
         Return an InnerExpr object to wrap the Judgment and
         access any inner sub-expression (including assumptions or
@@ -1193,7 +1196,10 @@ class Judgment:
         or relabeling variables.
         '''
         from .expression.inner_expr import InnerExpr
-        return InnerExpr(self, assumptions=self.assumptions)
+        if assumptions==USE_DEFAULTS:
+            assumptions=defaults.assumptions
+        assumptions = tuple(assumptions) + self.assumptions
+        return InnerExpr(self, assumptions=assumptions)
 
 
 def as_expression(truth_or_expression):

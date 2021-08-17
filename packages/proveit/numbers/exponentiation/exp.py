@@ -7,9 +7,9 @@ from proveit import a, b, c, k, m, n, x, S
 from proveit import (defaults, Literal, Function, ExprTuple, InnerExpr,
                      ProofFailure, maybe_fenced_string, USE_DEFAULTS,
                      StyleOptions)
-from proveit.logic import InSet, Membership
-from proveit.numbers import one, two, Div, frac, num, Real
-from proveit.numbers import NumberOperation
+from proveit.logic import InSet, Membership, NotEquals
+from proveit.numbers import zero, one, two, Div, frac, num, Real
+from proveit.numbers import Integer, NumberOperation
 
 
 class Exp(NumberOperation):
@@ -168,7 +168,7 @@ class Exp(NumberOperation):
             expr = self
             eq = TransRelUpdater(expr)
             expr = eq.update(exp_nat_pos_expansion.instantiate(
-                    {x:self.base, n:self.exponent}))
+                    {x:self.base, n:self.exponent}, preserve_all=True))
             # We should come up with a better way of reducing
             # ExprRanges representing repetitions:
             _n = self.exponent.as_int()
@@ -414,20 +414,28 @@ class Exp(NumberOperation):
         # Note: this is out-of-date.  Distribution handles this now,
         # except it doesn't deal with the negation part
         # (do we need it to?)
-        from proveit.numbers import Neg
-        from .theorems import int_exp_of_exp, int_exp_of_neg_exp
+        from proveit.numbers import Complex, deduce_in_number_set, Neg
+        # from .theorems import int_exp_of_exp, int_exp_of_neg_exp
+        from . import int_exp_of_exp, int_exp_of_neg_exp
         if isinstance(self.exponent, Neg):
             b_times_c = self.exponent.operand
             thm = int_exp_of_neg_exp
         else:
             b_times_c = self.exponent
             thm = int_exp_of_exp
-        if not hasattr(b_times_c, 'factor'):
-            raise ValueError('Exponent not factorable, may not raise the '
-                             'exponent factor.')
-        factor_eq = b_times_c.factor(exp_factor, pull='right',
-                                     group_remainder=True,
-                                     assumptions=assumptions)
+        # if not hasattr(b_times_c, 'factor'):
+        #     raise ValueError('Exponent not factorable, may not raise the '
+        #                      'exponent factor.')
+        # factor_eq = b_times_c.factor(exp_factor, pull='right',
+        #                              group_remainder=True,
+        #                              assumptions=assumptions)
+        if not hasattr(b_times_c, 'factorization'):
+            raise ValueError('Exponent {0} not factorable (for example, it '
+                             'does not appear to be in the Mult class); may '
+                             'not raise the exponent factor.'.
+                             format(b_times_c))
+        factor_eq = b_times_c.factorization(exp_factor, pull='right',
+                                     group_remainder=True)
         if factor_eq.lhs != factor_eq.rhs:
             # factor the exponent first, then raise this exponent factor
             factored_exp_eq = factor_eq.substitution(self)
@@ -437,9 +445,13 @@ class Exp(NumberOperation):
         n_sub = b_times_c.operands[1]
         a_sub = self.base
         b_sub = b_times_c.operands[0]
-        deduce_not_zero(a_sub, assumptions)
-        deduce_in_integer(n_sub, assumptions)
-        deduce_in_complex([a_sub, b_sub], assumptions)
+        # deduce_not_zero(a_sub, assumptions)
+        NotEquals(a_sub, zero).prove()
+        # deduce_in_integer(n_sub, assumptions)
+        deduce_in_number_set(n_sub, Integer)
+        # deduce_in_complex([a_sub, b_sub], assumptions)
+        deduce_in_number_set(a_sub, Complex)
+        deduce_in_number_set(b_sub, Complex)
         return thm.instantiate({n: n_sub}).instantiate(
             {a: a_sub, b: b_sub}).derive_reversed()
 

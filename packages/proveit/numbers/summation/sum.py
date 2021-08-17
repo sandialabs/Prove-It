@@ -83,7 +83,7 @@ class Sum(OperationOverInstances):
                 "'Sum.deduce_in_number_set' not implemented for the %s set"
                 % str(number_set))
         impl = thm.instantiate(
-            { x: _x, P_op: _P_op, Q_op: _Q_op})
+            { x: _x, P_op: _P_op, Q_op: _Q_op}, preserve_all=True)
         antecedent = impl.antecedent
         if not antecedent.proven():
             # Conclude the antecedent via generalization.

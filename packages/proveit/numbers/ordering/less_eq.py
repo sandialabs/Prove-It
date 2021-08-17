@@ -142,17 +142,21 @@ class LessEq(NumberOrderingRelation):
         elif other.lower == self.upper:
             if isinstance(other, Less):
                 new_rel = transitivity_less_eq_less.instantiate(
-                    {x: self.lower, y: self.upper, z: other.upper})
+                    {x: self.lower, y: self.upper, z: other.upper},
+                    preserve_all=True)
             elif isinstance(other, LessEq):
                 new_rel = transitivity_less_eq_less_eq.instantiate(
-                    {x: self.lower, y: self.upper, z: other.upper})
+                    {x: self.lower, y: self.upper, z: other.upper},
+                    preserve_all=True)
         elif other.upper == self.lower:
             if isinstance(other, Less):
                 new_rel = transitivity_less_less_eq.instantiate(
-                    {x: other.lower, y: other.upper, z: self.upper})
+                    {x: other.lower, y: other.upper, z: self.upper},
+                    preserve_all=True)
             elif isinstance(other, LessEq):
                 new_rel = transitivity_less_eq_less_eq.instantiate(
-                    {x: other.lower, y: other.upper, z: self.upper})
+                    {x: other.lower, y: other.upper, z: self.upper},
+                    preserve_all=True)
         else:
             raise ValueError(
                 "Cannot perform transitivity with %s and %s!" %
@@ -165,9 +169,13 @@ class LessEq(NumberOrderingRelation):
         From a <= b, derive and return -b <= -a.
         Assumptions may be required to prove that a, and b are in Real.
         '''
-        from . import negated_less_eq
-        new_rel = negated_less_eq.instantiate(
-                {a: self.lower, b: self.upper})
+        # from . import negated_less_eq
+        # new_rel = negated_less_eq.instantiate(
+        #         {a: self.lower, b: self.upper})
+        # return new_rel.with_mimicked_style(self)
+        from proveit.numbers.negation import negated_weak_bound
+        new_rel = negated_weak_bound.instantiate(
+                {x: self.lower, y: self.upper})
         return new_rel.with_mimicked_style(self)
 
     @prover

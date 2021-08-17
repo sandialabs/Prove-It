@@ -260,16 +260,20 @@ class SetEquiv(TransitiveRelation):
         # side-effect.
         if self.rhs == other_set_equiv.lhs:
             return set_equiv_transitivity.instantiate(
-                {A: self.lhs, B: self.rhs, C: other_set_equiv.rhs})
+                {A: self.lhs, B: self.rhs, C: other_set_equiv.rhs},
+                preserve_all=True)
         elif self.rhs == other_set_equiv.rhs:
             return set_equiv_transitivity.instantiate(
-                {A: self.lhs, B: self.rhs, C: other_set_equiv.lhs})
+                {A: self.lhs, B: self.rhs, C: other_set_equiv.lhs},
+                preserve_all=True)
         elif self.lhs == other_set_equiv.lhs:
             return set_equiv_transitivity.instantiate(
-                {A: self.rhs, B: self.lhs, C: other_set_equiv.rhs})
+                {A: self.rhs, B: self.lhs, C: other_set_equiv.rhs},
+                preserve_all=True)
         elif self.lhs == other_set_equiv.rhs:
             return set_equiv_transitivity.instantiate(
-                {A: self.rhs, B: self.lhs, C: other_set_equiv.lhs})
+                {A: self.rhs, B: self.lhs, C: other_set_equiv.lhs},
+                preserve_all=True)
         else:
             raise TransitivityException(
                 self, defaults.assumptions,
