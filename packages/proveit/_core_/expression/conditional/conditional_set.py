@@ -42,17 +42,20 @@ class ConditionalSet(Operation):
                 if item.condition == TRUE:
                     if _b is not None:
                         raise UnsatisfiedPrerequisites(
-                            "All conditions must be FALSE except one, both %s and %s are not FALSE" % (
-                            _b, item.string()))
+                            "All conditions must be FALSE except one, both %s and %s are not FALSE: %s" % (
+                            _b, item.string(), self))
                     _b = item.value
                     index = i
                 elif item.condition != FALSE:
                     raise UnsatisfiedPrerequisites(
-                            "All conditions must be FALSE except one, %s is not FALSE" % item.condition.string())
+                            "All conditions must be FALSE except one, %s is not FALSE: %s" % (item.condition.string(),
+                                                                                              self))
             else:
                 if _b is not None:
                     raise UnsatisfiedPrerequisites(
-                        "All conditions must be FALSE except one, both %s and %s are not FALSE" % (_b, item.string()))
+                        "All conditions must be FALSE except one, both %s and %s are not FALSE: %s" % (_b,
+                                                                                                       item.string(),
+                                                                                                       self))
                 else:
                     _b = item
                     index = i
