@@ -53,6 +53,7 @@ class Len(Operation):
         # and can circumvent any attempt that will not evaluate to
         # number.
         from proveit.numbers import one
+        #print(self.operands.entries[0].__class__)
         if not isinstance(self.operands, ExprTuple):
             # Don't know how to compute the length if the operand is
             # not a tuple. For example, it could be a variable that
@@ -73,11 +74,11 @@ class Len(Operation):
             if start_index == one:
                 from proveit.core_expr_types.tuples import range_from1_len
                 len_comp = range_from1_len.instantiate(
-                    {f: lambda_map, i: end_index})
+                    {f: lambda_map, i: end_index}, auto_simplify=False)
             else:
                 from proveit.core_expr_types.tuples import range_len
                 len_comp = range_len.instantiate(
-                    {f: lambda_map, i: start_index, j: end_index})
+                    {f: lambda_map, i: start_index, j: end_index}, auto_simplify=False)
         elif not has_range:
             # Case of all non-range entries.
             if len(entries) == 0:
@@ -98,7 +99,7 @@ class Len(Operation):
                 for param, entry in zip(len_thm.explicit_instance_params(),
                                         entries):
                     repl_map[param] = entry
-                return len_thm.instantiate(repl_map)
+                return len_thm.instantiate(repl_map, auto_simplify=False)
             else:
                 # raise NotImplementedError("Can't handle length computation "
                 #                        ">= 10 for %s"%self)
@@ -138,7 +139,6 @@ class Len(Operation):
             # len_of_ranges_with_repeated_indices,
             # len_of_ranges_with_repeated_indices_from_1,
             # or len_of_empty_range_of_range
-            #print("ELSE!")
             from proveit.core_expr_types.tuples import (
                 general_len, len_of_ranges_with_repeated_indices,
                 len_of_ranges_with_repeated_indices_from_1,

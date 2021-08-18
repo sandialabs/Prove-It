@@ -315,7 +315,6 @@ class ExprArray(ExprTuple):
                     row = self.get_row_length()
                 # we want the row length as if it was horizontal
                 if count != row:
-                    print(count)
                     raise ValueError(
                         'One or more rows are a different length.  Please double check your entries.')
             elif isinstance(expr, ExprRange):
@@ -366,8 +365,6 @@ class ExprArray(ExprTuple):
                         row = self.get_row_length()
                     # we want the row length as if it was horizontal
                     if count != row:
-                        print(count)
-                        print(row)
                         raise ValueError(
                             'One or more rows are a different length.  Please double check your entries.')
                     # start = None
@@ -582,18 +579,22 @@ class ExprArray(ExprTuple):
             self._format_length = output
         return self._format_length
 
-    def get_array_height(self, assumptions=[]):
+    def get_array_height(self, assumptions=None):
         '''
         Returns the proveit length of the array top to bottom.
         Similar to ExprRange.literal_int_extent().
         If you want the height of the formatted array, use .get_col_height()
         '''
-        from proveit import ExprRange
+        from proveit import ExprRange, defaults
         from proveit.core_expr_types import Len
         from proveit.numbers import Add, one, zero
         expr = zero
 
         if not hasattr(self, '_height'):
+            if assumptions is None:
+                assumptions = defaults.assumptions
+            else:
+                assumptions = defaults.assumptions + tuple(assumptions)
             for entry in self:
                 if isinstance(entry, ExprTuple):
                     expr = Add(expr, one).simplification(assumptions=assumptions).rhs

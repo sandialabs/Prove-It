@@ -376,6 +376,7 @@ class MultiQubitGate(Function):
             self.indices = None
         self.gate_set = gate_set
         self.gate = gate
+        self._set_representation = 'default'
         if isinstance(gate, MultiQubitGate):
             raise ValueError("A MultiQubitGate should not have a "
                              "MultiQubitGate as it's 'gate'")
@@ -435,13 +436,13 @@ class MultiQubitGate(Function):
             default='explicit',
             related_methods=())
 
-        options.add_option(
-            name='set_representation',
-            description=("'implicit' representation does not display the set "
-                         "but 'explicit representation does. "),
-            default='default',
-            related_methods=('with_explicit_set_representation',
-                             'with_implicit_set_representation'))
+        # options.add_option(
+        #     name='set_representation',
+        #     description=("'implicit' representation does not display the set "
+        #                  "but 'explicit representation does. "),
+        #     default='default',
+        #     related_methods=('with_explicit_set_representation',
+        #                      'with_implicit_set_representation'))
 
         return options
 
@@ -449,13 +450,13 @@ class MultiQubitGate(Function):
         '''
         display the MQG with explicit set representation
         '''
-        return self.with_styles(set_representation='explicit')
+        self._set_representation = 'explicit'
 
     def with_implicit_set_representation(self):
         '''
         display the MQG with implicit set representation
         '''
-        return self.with_styles(set_representation='implicit')
+        self._set_representation = 'implicit'
 
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
@@ -488,9 +489,9 @@ class MultiQubitGate(Function):
         if representation is None:
             representation = self.get_style('representation', 'explicit')
 
-        if self.get_style('set_representation', 'default') == 'default':
+        if self._set_representation == 'default':
             show_mqg_set = None
-        elif self.get_style('set_representation', 'default') == 'implicit':
+        elif self._set_representation == 'implicit':
             show_mqg_set = False
         else:
             show_mqg_set = True
@@ -1399,7 +1400,8 @@ class Circuit(Function):
                         pass
             first = 0
 
-    def _prove_valid_mqg_set(self, mqg):
+    #@prover
+    def _prove_valid_mqg_set(self, mqg, **defaults_config):
         '''
         proves that the mqg stops at the last row in the array
         '''
@@ -1407,9 +1409,9 @@ class Circuit(Function):
         try:
             from proveit.logic import Equals
             if mqg.indices is not None:
-                print(defaults.assumptions)
+                #print(defaults.assumptions)
                 return Equals(mqg.indices[-1],
-                              self.array.get_array_height()).prove()
+                              self.array.get_array_height()).prove(assumptions=defaults.assumptions)
             else:
                 return False
         except ProofFailure as e:
@@ -1524,7 +1526,7 @@ class Circuit(Function):
         #                 else:
         #                     col += 1
 
-        print(col_with_mqg)
+        #print(col_with_mqg)
 
         # This loop determines the actual wire placement
         _k = 1
@@ -1945,19 +1947,26 @@ class Circuit(Function):
         while row < self.array.get_row_length():
             while col < self.array.get_col_height():
                 mqg = self.array.get_element_at(row, col)
+                # print(mqg)
                 if isinstance(mqg, MultiQubitGate):
-                    if mqg.get_style('set_representation', 'default') is 'default':
+
+                    if mqg.get_style('set_representation', 'default') == 'default':
+                        # print(mqg.get_style('set_representation', 'default'))
                         from proveit.numbers import is_literal_int
                         if mqg.indices is not None:
                             index = mqg.indices[-1]
                             if not is_literal_int(index.simplification().rhs):
                                 proven = self._prove_valid_mqg_set(mqg)
-                                if proven:
+                                if proven is not False:
                                     mqg.with_implicit_set_representation()
+                                    # print('implicit style: ', mqg.get_style('set_representation', 'default'))
+                                else:
+                                    mqg.with_explicit_set_representation()
                             else:
                                 mqg.with_implicit_set_representation()
                         else:
                             mqg.with_explicit_set_representation()
+                    # print(mqg.get_style('set_representation', 'default'))
 
                 col += 1
             row += 1

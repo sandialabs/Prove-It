@@ -407,6 +407,17 @@ class ExprRange(Expression):
             return True
         return False
 
+    def _expr_simplification(self, expr):
+        '''
+        calls simplification on the given expression
+        '''
+        from proveit import UnsatisfiedPrerequisites, ProofFailure
+        from proveit.logic import SimplificationError
+        try:
+            return expr.simplified()
+        except (SimplificationError, UnsatisfiedPrerequisites, NotImplementedError, ProofFailure):
+            return expr
+
     def _update_expansion(self, num):
 
         prev = self.start_index
@@ -415,20 +426,20 @@ class ExprRange(Expression):
         from proveit.numbers import one, Add
         i = 1
         if self.get_style('simplify', 'False') == 'True':
-            output = [self.first().simplification().rhs]
+            output = [self._expr_simplification(self.first())]
         else:
             output = [self.first()]
         while i < expansion:
-            expr_map = {self.lambda_map.parameter: Add(prev, one).simplification().rhs}
+            expr_map = {self.lambda_map.parameter: self._expr_simplification(Add(prev, one))}
             try:
                 next_value = self._body_replaced(expr_map)
             except AttributeError:
                 next_value = self.basic_replaced(expr_map)
             if self.get_style('simplify', 'False') == 'True':
-                output.append(next_value.simplification().rhs)
+                output.append(self._expr_simplification(next_value))
             else:
                 output.append(next_value)
-            prev = Add(prev, one).simplification().rhs
+            prev = self._expr_simplification(Add(prev, one))
             indices.append(prev)
             i += 1
         self._range_expansion = output
@@ -525,19 +536,17 @@ class ExprRange(Expression):
             # e.g., x_1, ..., x_n
             formatted_sub_expressions.insert(1, ellipses)
 
-        if expansion >= 1:
-            # print(expansion)
+        if expansion > 1:
             for i, item in enumerate(self.get_range_expansion()[1:], 1):
                 formatted_sub_expressions.insert(i, item.formatted(format_type, **kwargs))
             try:
                 from proveit.numbers import Less
                 Less(self._expansion_indices[-1], self.end_index).prove()
             except ProofFailure:
-                print(self.last())
                 print("WARNING: unable to prove that %s < %s. This will be assumed for formatting purposes. "
                       "Please double check that your expansion is valid." % (self._expansion_indices[-1],
                                                                              self.end_index))
-        else:
+        elif expansion < 1:
             from proveit._core_.expression.style_options import StyleError
             raise StyleError("Style option 'expansion' must be >= 1")
 
