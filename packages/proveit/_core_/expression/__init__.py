@@ -12,7 +12,8 @@ from .operation import (
 from .conditional import Conditional, ConditionalSet
 from .lambda_expr import (
     Lambda, ParameterCollisionError, DisallowedParameterRelabeling,
-    LambdaApplicationError, ArgumentExtractionError)
+    LambdaApplicationError, ArgumentExtractionError,
+    Composition)
 from .composite import (
     Composite, composite_expression, single_or_composite_expression,
     ExprTuple, extract_var_tuple_indices, ExprTupleError,
