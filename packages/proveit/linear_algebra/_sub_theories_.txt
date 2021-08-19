@@ -1,0 +1,6 @@
+addition
+negation
+scalar_multiplication
+linear_maps
+matrices
+tensors

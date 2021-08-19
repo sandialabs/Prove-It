@@ -1,4 +1,4 @@
-from proveit import Literal, Operation  # , STRING, LATEX
+from proveit import Literal, Operation, NamedExprs
 # from proveit.logic import Equation
 # from proveit.logic.generic_ops import AssociativeOperation, BinaryOperation
 from proveit import x, alpha, beta
@@ -6,7 +6,43 @@ from proveit import x, alpha, beta
 pkg = __package__
 
 
-class MatrixProd(Operation):
+class MatrixSpace(Operation):
+    '''
+    A MatrixSpace represents the set of matrices with a specific
+    number of rows and columns applicable over a specific field. 
+    '''
+    _operator_ = Literal(string_format=r'MSpace', theory=__file__)
+    
+    def __init__(self, field, rows, columns, *, styles=None):
+        '''
+        Create F^{m x n} as the MatrixSpace for field F with
+        
+        '''
+        Operation.__init__(self, MatrixSpace._operator_,
+                           NamedExprs([('field', field), 
+                                       ('rows', rows),
+                                       ('columns', columns)]), 
+                           styles=styles)
+        self.field = field
+        self.rows = rows
+        self.columns = columns
+
+    def formatted(self, format_type, **kwargs):
+        times_operator = 'x' if format_type == 'string' else r'\times'
+        return self.field.formatted(format_type, fenced=True) + (
+                "^{%s %s %s}"%(
+                        self.rows.formatted(format_type, fence=True),
+                        times_operator,
+                        self.columns.formatted(format_type, fence=True)))
+
+    def string(self, **kwargs):
+        return self.formatted('string', **kwargs)
+
+    def latex(self, **kwargs):
+        return self.formatted('latex', **kwargs)
+
+
+class MatrixMult(Operation):
     '''
     Matrix dot product of any number of operands.
     '''
@@ -21,7 +57,7 @@ class MatrixProd(Operation):
         r'''
         Matrix dot product of any number of operands.
         '''
-        Operation.__init__(self, MatrixProd._operator_, operands,
+        Operation.__init__(self, MatrixMult._operator_, operands,
                            styles=styles)
 
     def formatted(self, format_type, fence=False, sub_fence=True):
@@ -43,27 +79,6 @@ class MatrixProd(Operation):
             fence=fence,
             sub_fence=sub_fence)
 
-
-class ScalarProd(Operation):
-    '''
-    Represents the product of a scalar and a matrix (or vector).
-    For example, ScalarProd(a, A) returns a A, the product of a scalar
-    'a' and the matrix A.
-    '''
-    # the literal operator of the MatrixProd operation
-    # perhaps use SCALAR_PROD for string?
-    # latex_format try using \; in place of a blank space
-    _operator_ = Literal(string_format=r'*', latex_format=r'\thinspace',
-                         theory=__file__)
-
-    def __init__(self, scalar, scaled, *, styles=None):
-        r'''
-        Product between a scalar and a matrix (or vector).
-        '''
-        Operation.__init__(self, ScalarProd._operator_, [scalar, scaled],
-                           styles=styles)
-        self.scalar = scalar
-        self.scaled = scaled
 
     # def do_reduced_simplification(self):
     #     '''

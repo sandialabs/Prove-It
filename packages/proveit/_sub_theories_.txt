@@ -2,6 +2,7 @@ core_expr_types
 logic
 numbers
 trigonometry
+abstract_algebra
 linear_algebra
 statistics
 physics

@@ -4,7 +4,7 @@ from proveit import f, x, y, alpha, S  # a_etc, x_etc, y_etc, z_etc,
 from proveit.logic import Equals
 from proveit.numbers import one, num, subtract
 from proveit.core_expr_types import Len
-from proveit.linear_algebra.matrix_ops import ScalarProd
+from proveit.linear_algebra import ScalarMult
 
 pkg = __package__
 
@@ -32,16 +32,16 @@ class TensorProd(Operation):
         the factored version. For example,
             TensorProd(a, cb, d).factorization(c)
         returns
-            |- TensorProd(a, ScalarProd(c, b), d).factorization(c) =
+            |- TensorProd(a, ScalarMult(c, b), d).factorization(c) =
                c TensorProd(a, b, d)
-        Note that this works only for explicit ScalarProd components
+        Note that this works only for explicit ScalarMult components
         within the TensorProd structure. Plans are to generalize this
         to not require an explicit ScalarProd object (instead allowing
         the more general Mult object).
         '''
         from . import factor_scalar_from_tensor_prod
         for k, operand in enumerate(self.operands):
-            if isinstance(operand, ScalarProd) and operand.scalar == scalar:
+            if isinstance(operand, ScalarMult) and operand.scalar == scalar:
                 _m, _n, _x, _y, _z, _alpha = (
                     factor_scalar_from_tensor_prod.all_instance_vars())
                 # organize and compute the instantiation subs

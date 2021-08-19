@@ -1,5 +1,10 @@
-from .matrix_ops import MatrixProd, ScalarProd
-from .tensor_prod import TensorExp, TensorProd
+from .vector_spaces import VecSpaces
+from .addition import VecAdd, VecSum
+from .negation import VecNeg
+from .scalar_multiplication import ScalarMult
+from .linear_maps import LinMap, LinMapAdd
+from .matrices import MatrixMult, MatrixSpace
+from .tensors import TensorExp, TensorProd
 from .lie_group_ops import SU
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
