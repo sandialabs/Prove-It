@@ -1,4 +1,5 @@
-from proveit import equality_prover, Function, Literal, TransRelUpdater
+from proveit import (equality_prover, Operation, Function, Literal, 
+                     TransRelUpdater)
 from proveit import x
 from proveit.linear_algebra import SU, TensorExp
 from proveit.numbers import one, num, Complex, Exp
@@ -66,6 +67,40 @@ class Ket(Function):
                     + self.label.formatted(format_type, fence=False)
                     + u'\u232A')
 
+class QuantumOpMult(Operation):
+    '''
+    A QuantumOpMult Operation can string together a bra (optional),
+    sequence of quantum operators, then a ket (optional) and represent
+    the right-to-left application of quantum operators.  The quantum
+    operators may be explicit lambda maps, complex numbers, or
+    complex matrices.  The formatting is the same as matrix products.
+    '''
+    
+    _operator_ = Literal(string_format=r'.', latex_format=r'\thinspace',
+                         theory=__file__)
+    
+    def __init__(self, *operands, styles=None):
+        Operation.__init__(self, QuantumOpMult._operator_, operands,
+                           styles=styles)
+    
+    def latex(self, **kwargs):    
+        # Turn sub-fence on since the operator is just a space that
+        # doesn't serve as a good delimiter of the operands.
+        kwargs['sub_fence'] = True
+        return Operation.latex(self, **kwargs)
+
+class Qmap(Function):
+    '''
+    A Qmap Function converts a quantum operation (which may
+    be a scalar, matrix, bra, or explicit map) into the corresponding
+    map.
+    '''
+    _operator_ = Literal(string_format=r'Qmap', latex_format=r'\textrm{Qmap}',
+                         theory=__file__)
+
+    def __init__(self, quantum_op, *, styles=None):
+        Operation.__init__(self, Qmap._operator_, quantum_op,
+                           styles=styles)
 
 class RegisterBra(Function):
     '''
