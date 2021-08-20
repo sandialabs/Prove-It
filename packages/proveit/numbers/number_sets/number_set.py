@@ -1,5 +1,5 @@
 from proveit import Literal, ProofFailure, defaults, prover
-from proveit.logic import Equals, InSet, Membership
+from proveit.logic import Equals, InSet, SetMembership
 
 
 class NumberSet(Literal):
@@ -20,9 +20,9 @@ class NumberSet(Literal):
         yield
 
 
-class NumberMembership(Membership):
+class NumberMembership(SetMembership):
     def __init__(self, element, number_set):
-        Membership.__init__(self, element, number_set)
+        SetMembership.__init__(self, element, number_set)
         self.number_set = number_set
 
     def side_effects(self, judgment):

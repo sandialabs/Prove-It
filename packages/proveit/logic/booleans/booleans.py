@@ -1,7 +1,7 @@
 from proveit import (Function, Literal, USE_DEFAULTS, ProofFailure,
                      defaults, prover, relation_prover, equality_prover)
 from proveit.logic.irreducible_value import IrreducibleValue
-from proveit.logic.sets.membership import Membership, Nonmembership
+from proveit.logic.sets.membership import SetMembership, SetNonmembership
 from proveit import A, C, P, Q
 
 
@@ -153,7 +153,7 @@ class BooleanSet(Literal):
                 preserve_expr=forall_stmt)
 
 
-class BooleanMembership(Membership):
+class BooleanMembership(SetMembership):
     '''
     Defines methods that apply to InSet(element, Boolean) objects
     via InSet.__getattr__ which calls Boolean.membership_object(element)
@@ -162,7 +162,7 @@ class BooleanMembership(Membership):
 
     def __init__(self, element):
         from . import Boolean
-        Membership.__init__(self, element, Boolean)
+        SetMembership.__init__(self, element, Boolean)
 
     def side_effects(self, judgment):
         '''
@@ -251,10 +251,11 @@ class BooleanMembership(Membership):
         return in_bool_is_bool.instantiate({A: self.element})
 
 
-class BooleanNonmembership(Nonmembership):
+class BooleanNonmembership(SetNonmembership):
 
     def __init__(self, element):
-        Nonmembership.__init__(self)
+        from . import Boolean
+        SetNonmembership.__init__(self, element, Boolean)
 
     @equality_prover("defined", "define")
     def definition(self, element, **defaults_config):

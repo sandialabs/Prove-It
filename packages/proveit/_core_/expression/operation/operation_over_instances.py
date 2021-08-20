@@ -19,14 +19,14 @@ def _extract_domain_from_condition(ivar, condition):
     return the domain (e.g., "S").  Return None if the condition is not
     a "domain" condition for the given instance variable(s).
     '''
-    from proveit.logic import InSet
+    from proveit.logic import InClass
     if isinstance(ivar, ExprRange):
         # See if the condition is a range of domain conditions
         # matching the instance variable range.
         # For example, x_1, ..., x_n as the instance variable
         # range matching x_1 in S_1, ..., x_n in S_n.
         if (isinstance(condition, ExprRange)
-                and isinstance(condition.body, InSet)
+                and isinstance(condition.body, InClass)
                 and condition.start_index == ivar.start_index
                 and condition.end_index == ivar.end_index):
             # Replace the condition parameter with the ivar parameter
@@ -43,7 +43,7 @@ def _extract_domain_from_condition(ivar, condition):
                         condition.parameter, condition.body.domain,
                         condition.start_index, condition.end_index)
             return condition.body.domain
-    elif isinstance(condition, InSet) and condition.element == ivar:
+    elif isinstance(condition, InClass) and condition.element == ivar:
         return condition.domain
     return None
 
@@ -98,7 +98,7 @@ class OperationOverInstances(Operation):
         _lambda_map is used internally for efficiently rebuilding an
         OperationOverInstances expression.
         '''
-        from proveit.logic import InSet
+        from proveit.logic import InSet, InClass
         from proveit._core_.expression.lambda_expr.lambda_expr import get_param_var
 
         if condition is not None:
@@ -169,6 +169,14 @@ class OperationOverInstances(Operation):
                             "of them can be the None value")
                 domain_conditions = []
                 for iparam, domain in zip(instance_params, domains):
+                    # If the domain is a proper class, indicated via
+                    # an 'is_proper_class' attribute, use InClass
+                    # instead of InSet.
+                    if (hasattr(domain, 'is_proper_class')
+                            and domain.is_proper_class):
+                        in_class = InClass
+                    else:
+                        in_class = InSet
                     if isinstance(iparam, ExprRange):
                         if isinstance(domain, ExprRange):
                             if ((iparam.start_index != domain.start_index) or
@@ -188,14 +196,15 @@ class OperationOverInstances(Operation):
                                         {domain.parameter: iparam.parameter})
                             condition = ExprRange(
                                 iparam.parameter,
-                                InSet(iparam.body, domain_body_with_new_param),
+                                in_class(iparam.body, domain_body_with_new_param),
                                 iparam.start_index, iparam.end_index)
                         else:
                             condition = ExprRange(
-                                iparam.parameter, InSet(iparam.body, domain),
+                                iparam.parameter, 
+                                in_class(iparam.body, domain),
                                 iparam.start_index, iparam.end_index)
                     else:
-                        condition = InSet(iparam, domain)
+                        condition = in_class(iparam, domain)
                     domain_conditions.append(condition)
                 conditions = domain_conditions + list(conditions)
             conditions = composite_expression(conditions)

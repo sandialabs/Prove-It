@@ -1,3 +1,4 @@
 booleans
 equality
 sets
+classes

@@ -13,3 +13,11 @@ class Groups(Function):
     def __init__(self, group_operator, *, styles=None):
         Function.__init__(self, Groups._operator_, group_operator, 
                           styles=styles)
+
+    @property
+    def is_proper_class(self):
+        '''
+        This is a proper class. This indicates that
+        InClass should be used instead of InSet when this is a domain.
+        '''
+        return True

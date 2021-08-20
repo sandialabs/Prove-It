@@ -17,3 +17,11 @@ class VecSpaces(Function):
     
     def __init__(self, field, *, styles=None):
         Function.__init__(self, VecSpaces._operator_, field, styles=styles)
+    
+    @property
+    def is_proper_class(self):
+        '''
+        Vector spaces are proper classes. This indicates that
+        InClass should be used instead of InSet when this is a domain.
+        '''
+        return True

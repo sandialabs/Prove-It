@@ -1,6 +1,5 @@
-from .in_set import InSet, SetMembership
-from .not_in_set import NotInSet, SetNonmembership
-
+from .membership import (InClass, NotInClass,
+                         ClassMembership, ClassNonmembership)
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.

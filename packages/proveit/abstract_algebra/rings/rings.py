@@ -14,3 +14,11 @@ class Rings(Function):
         Function.__init__(self, Rings._operator_, 
                           (add_operator, mult_operator), 
                           styles=styles)
+
+    @property
+    def is_proper_class(self):
+        '''
+        This is a proper class. This indicates that
+        InClass should be used instead of InSet when this is a domain.
+        '''
+        return True

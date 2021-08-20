@@ -1,7 +1,7 @@
 from proveit import (defaults, prover, relation_prover,
                      ProofFailure, UnsatisfiedPrerequisites)
 from proveit import a, b, n, x
-from proveit.logic import InSet, Membership, Nonmembership, NotInSet
+from proveit.logic import InSet, NotInSet, SetNonmembership
 from proveit.numbers.number_sets.real_numbers import Real
 from proveit.numbers.number_sets.real_numbers.interval import (
         IntervalOO, IntervalCO, IntervalOC, IntervalCC)
@@ -330,7 +330,7 @@ class IntervalCCMembership(RealIntervalMembership):
                 {a: _a, b: _b, x: _x}, auto_simplify=False)
 
 
-class RealIntervalNonmembership(Nonmembership):
+class RealIntervalNonmembership(SetNonmembership):
     '''
     UNDER CONSTRUCTION
     Defines methods that apply to non-membership in a continuous real
@@ -342,7 +342,7 @@ class RealIntervalNonmembership(Nonmembership):
     '''
 
     def __init__(self, element, domain):
-        Nonmembership.__init__(self, element, domain)
+        SetNonmembership.__init__(self, element, domain)
         self.domain = domain
 
     def side_effects(self, judgment):

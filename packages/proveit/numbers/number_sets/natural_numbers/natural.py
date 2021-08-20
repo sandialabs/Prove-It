@@ -1,6 +1,5 @@
 import proveit
 from proveit import prover, maybe_fenced_string
-from proveit.logic import Membership
 from proveit.numbers.number_sets.number_set import NumberSet
 from proveit import n
 

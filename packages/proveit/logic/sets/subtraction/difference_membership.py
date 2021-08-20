@@ -1,14 +1,14 @@
 from proveit import USE_DEFAULTS, equality_prover, prover
-from proveit.logic import Membership, Nonmembership
+from proveit.logic import SetMembership, SetNonmembership
 from proveit import m, x, y, A, B, S
 
-class DifferenceMembership(Membership):
+class DifferenceMembership(SetMembership):
     '''
     Defines methods that apply to membership in a difference set.
     '''
 
     def __init__(self, element, domain):
-        Membership.__init__(self, element, domain)
+        SetMembership.__init__(self, element, domain)
 
     def side_effects(self, judgment):
         '''
@@ -72,13 +72,13 @@ class DifferenceMembership(Membership):
             {x: self.element, A: _A, B: _B}, auto_simplify=False)
 
 
-class DifferenceNonmembership(Nonmembership):
+class DifferenceNonmembership(SetNonmembership):
     '''
     Defines methods that apply to non-membership in an difference set.
     '''
 
     def __init__(self, element, domain):
-        Nonmembership.__init__(self, element, domain)
+        SetNonmembership.__init__(self, element, domain)
 
     def side_effects(self, judgment):
         '''
