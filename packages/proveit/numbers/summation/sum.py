@@ -110,7 +110,8 @@ class Sum(OperationOverInstances):
             formatted_inner += self.summand.formatted(format_type, fence=True)
             return maybe_fenced(format_type, formatted_inner, fence=fence)
         else:
-            return OperationOverInstances._formatted(self, format_type, fence)
+            return OperationOverInstances._formatted(self, format_type, 
+                                                     fence=fence)
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
