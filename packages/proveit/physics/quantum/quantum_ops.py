@@ -66,41 +66,82 @@ class Ket(Function):
             return (left_str
                     + self.label.formatted(format_type, fence=False)
                     + u'\u232A')
-
-class QuantumOpMult(Operation):
+    
+class QuantumMult(Operation):
     '''
-    A QuantumOpMult Operation can string together a bra (optional),
-    sequence of quantum operators, then a ket (optional) and represent
-    the right-to-left application of quantum operators.  The quantum
-    operators may be explicit lambda maps, complex numbers, or
-    complex matrices.  The formatting is the same as matrix products.
+    A QuantumMult Operation can string together a sequences of
+    quantum operators and/or kets.  Properly defined, a ket is a vector
+    in a Hilbert space and a quantum operator acts (under QuantumMult)
+    as a linear map from a Hilbert space to either the same Hilbert 
+    space or a complex number.  The latter is denoted as a 'bra'.
+    Using 'op' to denote a quantum operator from Hilbert space to
+    Hilbert space, the following combinations are defined:
+        QuantumMult(bra, ket) : c-number
+        QuantumMult(op, ket)  : ket
+        QuantumMult(bra, op)  : bra
+        QuantumMult(op, op)   : op
+        QuantumMult(ket, bra) : op
+        QuantumMult(X, c-number) : X
+        QuantumMult(c-number, X) : X
+    where X is a ket, bra, op, or c-number.
+    
+    QuantumMult(ket, ket), QuantumMult(bra, bra),
+    QuantumMult(ket, op), QuantumMult(op, bra) are NOT defined.
+    
+    When a QuantumMult is applied to a single quantum operator, it 
+    denotes the mapping represented by the operand:
+        QuantumMult(op) : ket -> ket
+        QuantumMult(bra) : ket -> c-number
+        
+    The formatting is the same as for matrix multiplication with
+    just thin spaces in LaTeX except when there is a single
+    operand in which case we wrap the operand in square brackets
+    to denote that it represents the corresponding mapping.
     '''
     
     _operator_ = Literal(string_format=r'.', latex_format=r'\thinspace',
                          theory=__file__)
     
     def __init__(self, *operands, styles=None):
-        Operation.__init__(self, QuantumOpMult._operator_, operands,
+        Operation.__init__(self, QuantumMult._operator_, operands,
                            styles=styles)
     
+    def string(self, **kwargs):    
+        if self.operands.is_single():
+            # Single operand: wrap it in square braces to show
+            # we are treating it as an operator (a function).
+            return r'\left[' + self.operand.string() + r'\right]'
+        return Operation.string(self, **kwargs)
+        
     def latex(self, **kwargs):    
         # Turn sub-fence on since the operator is just a space that
         # doesn't serve as a good delimiter of the operands.
+        if self.operands.is_single():
+            # Single operand: wrap it in square braces to show
+            # we are treating it as an operator (a function).
+            return r'\left[' + self.operand.latex() + r'\right]'
         kwargs['sub_fence'] = True
         return Operation.latex(self, **kwargs)
 
-class Qmap(Function):
+class QmultCodomainLiteral(Literal):
     '''
-    A Qmap Function converts a quantum operation (which may
-    be a scalar, matrix, bra, or explicit map) into the corresponding
-    map.
+    A product (QuantumMult, specifically) of a sequence of bras, kets, 
+    and/or quantum operators, if and only if they are in a valid 
+    sequence, will yield a vector in a vector space over complex numbers
+    (including the complex numbers themselves), or a linear map between 
+    vectors between vectors spaces over complex numbers.  We regard this
+    as a proper class called the QmultCodomain.      
     '''
-    _operator_ = Literal(string_format=r'Qmap', latex_format=r'\textrm{Qmap}',
-                         theory=__file__)
+    def __init__(self, *, styles=None):
+        Literal.__init__(self, 'Q*', r'\mathcal{Q^*}', styles=styles)
 
-    def __init__(self, quantum_op, *, styles=None):
-        Operation.__init__(self, Qmap._operator_, quantum_op,
-                           styles=styles)
+    @property
+    def is_proper_class(self):
+        '''
+        Vector spaces are proper classes. This indicates that
+        InClass should be used instead of InSet when this is a domain.
+        '''
+        return True
 
 class RegisterBra(Function):
     '''
