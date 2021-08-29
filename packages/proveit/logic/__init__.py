@@ -21,7 +21,8 @@ from .sets import (
     NotProperSubset, superset_eq, not_superset_eq, proper_superset,
     not_proper_superset)
 from .sets import (Union, UnionAll, Intersect, IntersectAll, Difference,
-                   SetOfAll, PowerSet, Disjoint, Distinct, Card)
+                   SetOfAll, CartProd, CartExp,
+                   PowerSet, Disjoint, Distinct, Card)
 from .classes import InClass, NotInClass, ClassMembership, ClassNonmembership
 
 #from mapping.mapping_ops import Domain, CoDomain
