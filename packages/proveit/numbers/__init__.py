@@ -43,6 +43,8 @@ if proveit.defaults.automation:
     from .number_sets.real_numbers import e_is_real_pos, pi_is_real_pos
     from .number_sets.complex_numbers import (
             i_is_complex, i_is_complex_nonzero)
+    from proveit.abstract_algebra.fields import (
+            rational_field, real_field, complex_field)
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.
