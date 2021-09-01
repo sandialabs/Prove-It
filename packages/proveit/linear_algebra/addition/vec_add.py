@@ -94,4 +94,4 @@ class VecAdd(GroupAdd):
                 # General case
                 _n = terms.num_elements()
                 return closure.instantiate(
-                        {n:_n, K:field, V:vec_space, x_1_to_n:terms})                
+                        {n:_n, K:field, V:vec_space, x:terms})                

@@ -80,6 +80,8 @@ class VecSpacesMembership(ClassMembership):
         '''
         VecSpaces.known_vec_spaces_memberships.setdefault(
                 self.element, set()).add(judgment)
+        return # generator yielding nothing
+        yield
     
     def conclude(self):
         '''
@@ -91,4 +93,4 @@ class VecSpacesMembership(ClassMembership):
         raise NotImplementedError(
                 "VecSpacesMembership.conclude is only implemented when "
                 "the element has a 'deduce_as_vec_space' method; %s "
-                "dows not have such a method"%self.element.__class__)
+                "does not have such a method"%self.element.__class__)
