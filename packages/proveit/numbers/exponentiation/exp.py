@@ -410,7 +410,12 @@ class Exp(NumberOperation):
                         'fraction base')
     """
 
-    def raise_exp_factor(self, exp_factor, assumptions=USE_DEFAULTS):
+
+# @equality_prover('distributed', 'distribute')
+#     def distribution(self, **defaults_config):
+# we have renamed raise_exp_factor to factorization() ugh!!!
+    @equality_prover('factorized', 'factor')
+    def factorization(self, exp_factor, **defaults_config):
         # Note: this is out-of-date.  Distribution handles this now,
         # except it doesn't deal with the negation part
         # (do we need it to?)
@@ -440,8 +445,7 @@ class Exp(NumberOperation):
             # factor the exponent first, then raise this exponent factor
             factored_exp_eq = factor_eq.substitution(self)
             return factored_exp_eq.apply_transitivity(
-                factored_exp_eq.rhs.raise_exp_factor(exp_factor,
-                                                     assumptions=assumptions))
+                factored_exp_eq.rhs.factorization(exp_factor))
         n_sub = b_times_c.operands[1]
         a_sub = self.base
         b_sub = b_times_c.operands[0]
