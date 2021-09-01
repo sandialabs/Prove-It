@@ -16,6 +16,16 @@ class CartExp(Operation):
         self.base = base
         self.exponent = exponent
 
+    def membership_object(self, element):
+        from .cart_exp_membership import CartExpMembership
+        return CartExpMembership(element, self)
+
+    def string(self, **kwargs):
+        return self.formatted('string', **kwargs)
+
+    def latex(self, **kwargs):
+        return self.formatted('latex', **kwargs)
+
     def formatted(self, format_type, **kwargs):
         # begin building the inner_str
         inner_str = self.base.formatted(
