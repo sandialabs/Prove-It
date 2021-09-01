@@ -358,7 +358,6 @@ class Div(NumberOperation):
                 _x = expr.numerator
                 _y = one
                 replacements.append(Mult(_x, _y).one_elimination(1))
-
             # create POSSIBLE replacements for inadvertently generated
             # fractions of the form _x/1 (i.e. _z = 1)
             # or _y/1 (i.e. _w = 1):
@@ -367,11 +366,9 @@ class Div(NumberOperation):
             if _w == one:
                 replacements.append(frac(_y, _w).divide_by_one_elimination())
 
-            # expr_to_preserve = eq.relation.normal_rhs
-            # temp_expr = eq.update(thm.instantiate({x:_x, y:_y, z:_z, w:_w},
-            #         replacements=replacements, preserve_expr=expr_to_preserve))
             temp_expr = eq.update(thm.instantiate({x:_x, y:_y, z:_z, w:_w},
-                    replacements=replacements))
+                    replacements=replacements,
+                    preserve_expr=expr))
 
         return eq.relation
 
