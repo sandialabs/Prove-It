@@ -1,5 +1,5 @@
 from proveit import (Operation, Literal, relation_prover,
-                     maybe_fenced_string)
+                     prover, maybe_fenced_string)
 from proveit import n
 
 class CartExp(Operation):
@@ -41,7 +41,7 @@ class CartExp(Operation):
         return maybe_fenced_string(inner_str, **kwargs)
 
     @relation_prover
-    def deduce_as_vec_space(self, *, field, **defaults_config):
+    def deduce_as_vec_space(self, **defaults_config):
         '''
         For the Cartesian exponentiation of rational, real, or
         complex numbers, we can deduce that it is a member of
@@ -58,3 +58,25 @@ class CartExp(Operation):
             return complex_vec_space.instantiate({n:self.exponent})
         raise NotImplementedError("'deduce_as_vec_space' is not implemented "
                                   "to handle %s"%self)
+    
+    def containing_vec_space(self, field, **defaults_config):
+        '''
+        Return a vector space over the given field which contains
+        this Cartesian exponentiation.  Specifically.
+            C^n contains R^n and Q^n as well as C^n
+            R^n contains Q^n as well as R^n
+            Q^n only contains Q^n
+        '''
+        from proveit.numbers import Rational, Real, Complex
+        if field is None or field==self.base:
+            vec_space = self
+        elif ((field == Complex and self.base in (Rational, Real))
+              or (field == Real and self.base == Rational)):
+            vec_space = CartExp(field, self.exponent)
+        else:
+            raise NotImplementedError("'containing_vec_space' is not implemented "
+                                      "to handle %s over field %s"
+                                      %(self, field))
+        vec_space.deduce_as_vec_space()
+        return vec_space
+        

@@ -72,16 +72,23 @@ def apply_commutation_thm(expr, init_idx, final_idx, binary_thm, leftward_thm,
     return thm.instantiate(
         {l: _l, m: _m, n: _n, A: _A, B: _B, C: _C, D: _D})
 
-@prover
-def apply_association_thm(expr, start_idx, length, thm, **defaults_config):
-    from proveit.logic import Equals
-    beg = start_idx
+def start_and_end_indices(expr, *, start_index, length):
+    beg = start_index
     if beg < 0:
         beg = expr.operands.num_entries() + beg  # use wrap-around indexing
     end = beg + length
     if end > expr.operands.num_entries():
         raise IndexError("'start_idx+length' out of bounds: %d > %d." % (
                          end, expr.operands.num_entries()))
+    return beg, end
+
+@prover
+def apply_association_thm(expr, start_idx, length, thm, *,
+                          repl_map_extras=None,
+                          **defaults_config):
+    from proveit.logic import Equals
+    beg, end = start_and_end_indices(
+            expr, start_index=start_idx, length=length)
     if beg == 0 and end == expr.operands.num_entries():
         # association over the entire range is trivial:
         return Equals(expr, expr).prove()  # simply the self equality
@@ -95,18 +102,27 @@ def apply_association_thm(expr, start_idx, length, thm, **defaults_config):
     with expr.__class__.temporary_simplification_directives() as \
             tmp_directives:
         tmp_directives.ungroup = False
-        return thm.instantiate({i: _i, j: _j, k: _k, A: _A, B: _B, C: _C})
+        repl_map = dict() if repl_map_extras is None else repl_map_extras
+        repl_map.update({i: _i, j: _j, k: _k, A: _A, B: _B, C: _C})
+        return thm.instantiate(repl_map)
 
-@prover
-def apply_disassociation_thm(expr, idx, thm=None, **defaults_config):
+def checked_disassociation_index(expr, idx):
     if idx < 0:
         idx = expr.operands.num_entries() + idx  # use wrap-around indexing
     if idx >= expr.operands.num_entries():
         raise IndexError("'idx' out of range for disassociation")
     if not isinstance(expr.operands[idx], expr.__class__):
         raise ValueError(
-            "Expecting %d index of %s to be grouped (i.e., a nested expression of the same type)" %
-            (idx, str(expr)))
+            "Expecting %d index of %s to be grouped (i.e., a nested "
+            "expression of the same type)" %
+            (idx, str(expr)))  
+    return idx
+
+@prover
+def apply_disassociation_thm(expr, idx, thm=None, *,
+                             repl_map_extras=None, 
+                             **defaults_config):
+    idx = checked_disassociation_index(expr, idx)
     i, j, k, A, B, C = thm.all_instance_vars()
     _A = expr.operands[:idx]
     _B = expr.operands[idx].operands
@@ -114,7 +130,9 @@ def apply_disassociation_thm(expr, idx, thm=None, **defaults_config):
     _i = _A.num_elements()
     _j = _B.num_elements()
     _k = _C.num_elements()
-    return thm.instantiate({i: _i, j: _j, k: _k, A: _A, B: _B, C: _C})
+    repl_map = dict() if repl_map_extras is None else repl_map_extras
+    repl_map.update({i: _i, j: _j, k: _k, A: _A, B: _B, C: _C})
+    return thm.instantiate(repl_map)
 
 
 @prover

@@ -1,10 +1,14 @@
 from proveit import (defaults, equality_prover, Literal, Operation,
                      Function, prover, TransRelUpdater)
-from proveit import f, x, y, alpha, S  # a_etc, x_etc, y_etc, z_etc,
+from proveit import A, K, U, V, W
 from proveit.logic import Equals
 from proveit.numbers import one, num, subtract
 from proveit.core_expr_types import Len
-from proveit.linear_algebra import ScalarMult
+from proveit.abstract_algebra.generic_methods import (
+        start_and_end_indices, checked_disassociation_index,
+        apply_association_thm, apply_disassociation_thm, 
+        pairwise_evaluation)
+from proveit.linear_algebra import VecSpaces, ScalarMult
 
 pkg = __package__
 
@@ -74,9 +78,13 @@ class TensorProd(Operation):
         '''
 
         if self.operands.is_single():
-            from . import unary_tensor_prod_reduction
-            return unary_tensor_prod_reduction.instantiate(
-                {x:self.operands[0]}, preserve_all=True)
+            from . import unary_tensor_prod_def
+            _K = VecSpaces.get_field(may_be_none=True) 
+            _V = VecSpaces.known_vec_space(self.operand)
+            if _K is None:
+                _K = VecSpaces.known_field(_V)
+            return unary_tensor_prod_def.instantiate(
+                {K:_K, V:_V, A:self.operands[0]}, preserve_all=True)
 
         # Else simply return self=self.
         # Establishing some minimal infrastructure
@@ -89,7 +97,8 @@ class TensorProd(Operation):
 
 
     @equality_prover('distributed', 'distribute')
-    def distribution(self, factor_idx, **defaults_config):
+    def distribution(self, factor_idx, *, field=None,
+                     **defaults_config):
         '''
         Given a TensorProd factor at the (0-based) index location
         'factor_idx' that is a sum or summation, distribute over that
@@ -138,6 +147,67 @@ class TensorProd(Operation):
             raise ValueError(self, defaults.assumptions,
                 "Don't know how to distribute tensor product over " +
                 str(factor.__class__) + " factor")
+    
+    def known_vec_spaces(self, *, field=None):
+        '''
+        Return the known vector spaces for each of the operands.
+        '''
+        # TODO: appropriately handle an ExprRange opernd.
+        return [next(VecSpaces.yield_known_vec_spaces(operand, field=field))
+                for operand in self.operands]
+
+    @equality_prover('associated', 'associate')
+    def association(self, start_idx, length, *, field=None, 
+                    **defaults_config):
+        '''
+        Given numerical operands, deduce that this expression is equal 
+        to a form in which operands in the
+        range [start_idx, start_idx+length) are grouped together.
+        For example, (a ⊗ b ⊗ ... ⊗ y ⊗ z) = 
+            (a ⊗ b ... ⊗ (l ⊗ ... ⊗ m) ⊗ ... ⊗ y ⊗ z)
+        
+        For this to work, the operands must be known to be in
+        vector spaces of a common field.  If the field is not specified,
+        then VecSpaces.default_field is used.
+        '''
+        from . import association
+        _K = VecSpaces.get_field(field)
+        vec_spaces = VecSpaces.known_vec_spaces(self.operands, field=field)
+        beg, end = start_and_end_indices(self, start_index=start_idx,
+                                         length=length)
+        _U = vec_spaces[:beg]
+        _V = vec_spaces[beg:end]
+        _W = vec_spaces[end:]
+        eq = apply_association_thm(
+            self, start_idx, length, association,
+            repl_map_extras={K:_K, U:_U, V:_V, W:_W})
+        return eq
+
+    @equality_prover('disassociated', 'disassociate')
+    def disassociation(self, idx, *, field=None, 
+                       **defaults_config):
+        '''
+        Given numerical operands, deduce that this expression is equal 
+        to a form in which the operand
+        at index idx is no longer grouped together.
+        For example, (a + b ... + (l + ... + m) + ... + y+ z) 
+            = (a + b + ... + y + z)
+        
+        For this to work, the operands must be known to be in
+        vector spaces of a common field.  If the field is not specified,
+        then VecSpaces.default_field is used.
+        '''
+        from . import disassociation
+        idx = checked_disassociation_index(idx)
+        _K = VecSpaces.get_field(field)
+        _U = VecSpaces.known_vec_spaces(self.operands[:idx], field=field)
+        _V = VecSpaces.known_vec_spaces(self.operands[idx].operands, 
+                                        field=field)
+        _W = VecSpaces.known_vec_spaces(self.operands[idx:], field=field)  
+        eq = apply_disassociation_thm(
+                self, idx, disassociation,
+                repl_map_extras={K:_K, U:_U, V:_V, W:_W})
+        return eq
 
     @prover
     def equate_factors(self, tensor_equality, **defaults_config):
