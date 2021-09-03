@@ -718,6 +718,7 @@ class OperationOverInstances(Operation):
         Format the OperationOverInstances according to the style
         which may join nested operations of the same type.
         '''
+        from proveit.logic import InSet, InClass
 
         if with_wrapping is None:
             # style call to wrap the expression after the parameters
@@ -736,6 +737,15 @@ class OperationOverInstances(Operation):
         has_explicit_conditions = (explicit_conditions.num_entries() > 0)
         has_multi_domain = not self.has_one_domain()
         domain_conditions = ExprTuple(*self.domain_conditions())
+        # domain_membership_op will be the InSet operator if all
+        # of the domain conditions are the InSet type, or the InClass
+        # operator otherwise.
+        domain_membership_op = InSet._operator_
+        for domain_condition in domain_conditions:
+            if (not isinstance(domain_condition, InSet) or (
+                    isinstance(domain_condition, ExprRange) and
+                    isinstance(domain_condition.body, InClass))):
+                domain_membership_op = InClass._operator_
         out_str = ''
         formatted_params = ', '.join([param.formatted(format_type, abbrev=True)
                                       for param in explicit_iparams])
@@ -750,7 +760,7 @@ class OperationOverInstances(Operation):
                 else:
                     out_str += formatted_params
             if not has_multi_domain and self.domain is not None:
-                out_str += ' in '
+                out_str += ' %s '%domain_membership_op.string()
                 if has_multi_domain:
                     out_str += explicit_domains.formatted(
                         format_type, operator_or_operators='*', fence=False)
@@ -783,7 +793,7 @@ class OperationOverInstances(Operation):
                         out_str += self._wrap_params_formatted(
                             format_type=format_type, params=explicit_iparams, fence=False)
                 if not has_multi_domain and self.domain is not None:
-                    out_str += r' \in '
+                    out_str += ' %s '%domain_membership_op.latex()
                     out_str += self.domain.formatted(format_type, fence=False)
                 if has_explicit_conditions:
                     if has_explicit_iparams:
@@ -801,7 +811,7 @@ class OperationOverInstances(Operation):
                     else:
                         out_str += formatted_params
                 if not has_multi_domain and self.domain is not None:
-                    out_str += r' \in '
+                    out_str += ' %s '%domain_membership_op.latex()
                     out_str += self.domain.formatted(format_type, fence=False)
                 if has_explicit_conditions:
                     if has_explicit_iparams:
