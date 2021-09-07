@@ -22,7 +22,7 @@ class CartExpMembership(SetMembership):
     @prover
     def conclude(self, **defaults_config):
         '''
-        Try to deduce that the given element is in the CartExp set.
+        Try to conclude that the given element is in the CartExp set.
         '''
         element = self.element
         if hasattr(element, 'deduce_in_vec_space'):
