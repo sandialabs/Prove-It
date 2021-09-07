@@ -66,32 +66,31 @@ class Ket(Function):
             return (left_str
                     + self.label.formatted(format_type, fence=False)
                     + u'\u232A')
-    
-class QuantumMult(Operation):
+class Qmult(Operation):
     '''
-    A QuantumMult Operation can string together a sequences of
-    quantum operators and/or kets.  Properly defined, a ket is a vector
-    in a Hilbert space and a quantum operator acts (under QuantumMult)
+    A Qmult Operation can string together a sequences of quantum 
+    operators and/or kets.  Properly defined, a ket is a vector
+    in a Hilbert space and a quantum operator acts (under Qmult)
     as a linear map from a Hilbert space to either the same Hilbert 
     space or a complex number.  The latter is denoted as a 'bra'.
     Using 'op' to denote a quantum operator from Hilbert space to
     Hilbert space, the following combinations are defined:
-        QuantumMult(bra, ket) : c-number
-        QuantumMult(op, ket)  : ket
-        QuantumMult(bra, op)  : bra
-        QuantumMult(op, op)   : op
-        QuantumMult(ket, bra) : op
-        QuantumMult(X, c-number) : X
-        QuantumMult(c-number, X) : X
+        Qmult(bra, ket) : c-number
+        Qmult(op, ket)  : ket
+        Qmult(bra, op)  : bra
+        Qmult(op, op)   : op
+        Qmult(ket, bra) : op
+        Qmult(X, c-number) : X
+        Qmult(c-number, X) : X
     where X is a ket, bra, op, or c-number.
     
-    QuantumMult(ket, ket), QuantumMult(bra, bra),
-    QuantumMult(ket, op), QuantumMult(op, bra) are NOT defined.
+    Qmult(ket, ket), Qmult(bra, bra),
+    Qmult(ket, op), Qmult(op, bra) are NOT defined.
     
-    When a QuantumMult is applied to a single quantum operator, it 
+    When a Qmult is applied to a single quantum operator, it 
     denotes the mapping represented by the operand:
-        QuantumMult(op) : ket -> ket
-        QuantumMult(bra) : ket -> c-number
+        Qmult(op) : ket -> ket
+        Qmult(bra) : ket -> c-number
         
     The formatting is the same as for matrix multiplication with
     just thin spaces in LaTeX except when there is a single
@@ -103,7 +102,7 @@ class QuantumMult(Operation):
                          theory=__file__)
     
     def __init__(self, *operands, styles=None):
-        Operation.__init__(self, QuantumMult._operator_, operands,
+        Operation.__init__(self, Qmult._operator_, operands,
                            styles=styles)
     
     def string(self, **kwargs):    
@@ -125,7 +124,7 @@ class QuantumMult(Operation):
 
 class QmultCodomainLiteral(Literal):
     '''
-    A product (QuantumMult, specifically) of a sequence of bras, kets, 
+    A product (Qmult, specifically) of a sequence of bras, kets, 
     and/or quantum operators, if and only if they are in a valid 
     sequence, will yield a vector in a vector space over complex numbers
     (including the complex numbers themselves), or a linear map between 
