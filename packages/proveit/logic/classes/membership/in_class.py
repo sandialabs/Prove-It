@@ -4,10 +4,13 @@ from proveit.relation import Relation
 
 class InClass(Relation):
     '''
-    Class membership is similar to set membership.  It uses the same
-    notation in formatting, but it is a distinct concept.  In 
-    particular, we cannot apply subset comprehension on a class
-    (this, avoiding Russel's paradox).
+    Class membership denotes a collection of mathmematical objects
+    that satisfy a certain common property.  It is distinct from set
+    membership, however.  In particular, subsets of sets may be defined
+    via subset comprehension, but there is no such analogue for classes.
+    In this manner, classes can be more inclusive than sets without 
+    worrying about Russel's paradox.  A class that is not a set is 
+    called a proper class.  
     
     Note: Expressions objects that represent proper classes should have
     an attribute called 'is_proper_class' that is True.  This will
@@ -18,8 +21,10 @@ class InClass(Relation):
     # operator of the InClass operation.
     # The formatting is the same as InSet, but the operation is
     # distinct.
-    _operator_ = Literal(string_format='in', latex_format=r'\in',
-                         theory=__file__)
+    _operator_ = Literal(
+            string_format='in_c', 
+            latex_format=r'\underset{{\scriptscriptstyle c}}{\in}',
+            theory=__file__)
 
     # maps elements to InSet Judgments.
     # For example, map x to (x in S) if (x in S) is a Judgment.
@@ -81,9 +86,9 @@ class InClass(Relation):
         Reversing \in gives \ni.  Reversing "in" gives "contains".
         '''
         if formatType=='latex':
-            return '\ni'
+            return '\ni_{C}'
         else:
-            return 'contains'
+            return 'contains_C'
 
     def side_effects(self, judgment):
         '''

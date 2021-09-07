@@ -5,9 +5,14 @@ from proveit import x, S
 
 
 class NotInClass(Relation):
+    '''
+    NotInClass denotes the logical negation of class membership
+    (see InClass).
+    '''
+    
     # operator of the NotInSet operation
-    _operator_ = Literal(string_format='not-in',
-                         latex_format=r'\notin',
+    _operator_ = Literal(string_format='not-in_{C}',
+                         latex_format=r'\notin_{C}',
                          theory=__file__)
 
     # maps elements to NotInSet Judgments.
