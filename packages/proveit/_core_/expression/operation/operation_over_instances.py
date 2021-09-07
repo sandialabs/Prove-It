@@ -742,9 +742,10 @@ class OperationOverInstances(Operation):
         # operator otherwise.
         domain_membership_op = InSet._operator_
         for domain_condition in domain_conditions:
-            if (not isinstance(domain_condition, InSet) or (
-                    isinstance(domain_condition, ExprRange) and
-                    isinstance(domain_condition.body, InClass))):
+            if ((isinstance(domain_condition, ExprRange) and
+                 not isinstance(domain_condition.body, InSet)) or (
+                         not isinstance(domain_condition, ExprRange)
+                         and not isinstance(domain_condition, InSet))):
                 domain_membership_op = InClass._operator_
         out_str = ''
         formatted_params = ', '.join([param.formatted(format_type, abbrev=True)

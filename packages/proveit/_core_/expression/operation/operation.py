@@ -231,7 +231,8 @@ class Operation(Expression):
         implicit_operator = cls._implicit_operator()
         matches_implicit_operator = (operator == implicit_operator)
         if implicit_operator is not None and not matches_implicit_operator:
-            raise OperationError("An implicit operator may not be changed")
+            raise OperationError("An implicit operator may not be changed "
+                                 "(%s vs %s)"%(operator, implicit_operator))
         sig = inspect.signature(cls.__init__)
         Parameter = inspect.Parameter
         init_params = sig.parameters
