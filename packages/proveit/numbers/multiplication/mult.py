@@ -1263,36 +1263,13 @@ class Mult(NumberOperation):
             # exponentials of the form a^k.
             factor_bases = [factor.base for factor in self.factors]
             factor_exponents = [factor.exponent for factor in self.factors]
-            from proveit.numbers.exponentiation import (
-                    products_of_complex_powers)
-
-            # This one is not relevant now in this method; delete later
-            # (1) all same bases to combine with a single exponent,
-            # such as a^b a^c a^d = a^{b+c+d}
-            # if len(set(factor_bases)) == 1:
-
-            #     _m_sub = num(len(factor_exponents))
-            #     _a_sub = factor_bases[0]
-            #     _b_sub = factor_exponents
-            #     try:
-            #         return products_of_complex_powers.instantiate(
-            #                 {m: _m_sub, a: _a_sub, b: _b_sub})
-            #     except Exception as the_exception:
-            #         # something went wrong
-            #         error_msg = (
-            #                 error_msg +
-            #                 "All factors appeared to have same base, but "
-            #                 "attempt failed with error message: \n" +
-            #                 str(the_exception))
-            #         pass
 
             # (1) Simple case such as a^d b^d c^d, consisting of
             # exponential factors all of which have the same single
             # exponent. The more general case further below might
             # then re-call this sub-method after processing the factors.
             if len(set(factor_exponents)) == 1:
-
-                # Same exponent: equate $a^c b^c = (a b)^c$
+                # Same exponent: equate a^c b^c = (a b)^c
                 # Combining the exponents in this case is the reverse
                 # of distributing an exponent.
                 _new_prod = Mult(*factor_bases)
@@ -1300,13 +1277,10 @@ class Mult(NumberOperation):
                 try:
                     return _new_exp.distribution().derive_reversed()
                 except Exception as the_exception:
-                    # something went wrong; append to error message
-                    error_msg = (
-                            error_msg +
-                            "All factors appeared to have the same exponent, "
-                            "but attempt failed with error message: \n" +
-                            str(the_exception)) + "\n"
-                    pass
+                    raise Exception("An Exception! All factors appeared to "
+                        "have the same exponent, but the Exp.distribution() "
+                        "attempt failed with the following error message: "
+                        "{}".format(the_exception))
 
             # (2) More complex case such as a^{fd} b^{dg} c^{dg},
             # consisting of exponential factors, the exponents of which
@@ -1314,16 +1288,17 @@ class Mult(NumberOperation):
             # to factor out that exponent factor in each Mult factor,
             # then re-call the common_power_extraction() method on the
             # result, and Case (1) will then handle it.
-            # STILL need to handle more general case of something like
+            # This also handles the more general case of something like
             # a^d b^{dg}, where the exp_factor of 'd' might be a factor
             # in an exponent OR might be a stand-alone exponent
             temp_expr = self
             eq = TransRelUpdater(temp_expr)
             for idx in range(0, self.factors.num_elements().as_int()):
                 the_factor = self.factors[idx]
-                temp_expr = eq.update(
-                        temp_expr.inner_expr().operands[idx].factorization(
-                        exp_factor))
+                if temp_expr.operands[idx].exponent != exp_factor:
+                    temp_expr = eq.update(
+                            temp_expr.inner_expr().operands[idx].factorization(
+                            exp_factor))
             # eq.relation now has each factor with the specified the_factor
             # extracted to produce something along the lines of
             # |- a^{f j} b^{j, k} = (a^f)^j (b^k)^j
