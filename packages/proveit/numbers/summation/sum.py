@@ -150,13 +150,12 @@ class Sum(OperationOverInstances):
         ∑_{n=0}^{∞} x^n = 1 / (1 - x)
         ∑_{n=j}^{k} x^n = (x^{k + 1} - x^j) / (x - 1)
         '''
-        from theorems import inf_geom_sum, fin_geom_sum
+        from . import inf_geom_sum, gen_finite_geom_sum
         from proveit.numbers import zero, infinity
-        _m = self.indices[0]
 
         try:
             #            self.r = extract_exp_base(self.summand)
-            _x = self.summand.base
+            _x_sub = self.summand.base
         except BaseException:
             raise ValueError("Summand not an exponential!")
         if not isinstance(self.domain, Interval):
@@ -165,13 +164,17 @@ class Sum(OperationOverInstances):
             if (self.domain.lower_bound == zero and
                     self.domain.upper_bound == infinity):
                 # We're in the infinite geom sum domain!
-                return inf_geom_sum.instantiate({x: _x, m: _m})
+                _m = self.indices[0]
+                return inf_geom_sum.instantiate({x: _x_sub, m: _m})
             else:
                 # We're in the finite geom sum domain!
-                _k = self.domain.lower_bound
-                _l = self.domain.upper_bound
-                return fin_geom_sum.instantiate(
-                    {x: _x, m: _m, k: _k, l: _l})
+                _x, _j, _k = gen_finite_geom_sum.all_instance_params()
+                _i = gen_finite_geom_sum.instance_expr.instance_expr.lhs.indices
+                _i_sub = self.indices[0]
+                _j_sub = self.domain.lower_bound
+                _k_sub = self.domain.upper_bound
+                return gen_finite_geom_sum.instantiate(
+                    {x: _x_sub, _i: _i_sub, j: _j_sub, _k: _k_sub})
 #        else:
 #            print "Not a geometric sum!"
 
