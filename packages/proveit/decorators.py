@@ -239,9 +239,8 @@ def _wraps(func, wrapper):
     if wrapped.__doc__ is None:
         wrapped.__doc__ = ""
     wrapped.__doc__ += """
-    
-    Keyword arguments are accepted for temporarily changing any
-    of the attributes of proveit.defaults.
+        Keyword arguments are accepted for temporarily changing any
+        of the attributes of proveit.defaults.
     """
     return wrapped
 

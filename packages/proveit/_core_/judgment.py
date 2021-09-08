@@ -6,6 +6,7 @@ and its proof (as a Proof object, which may be updated if a newer proof,
 with possibly fewer assumptions, suffices).
 """
 
+from functools import wraps
 from proveit._core_.expression import Expression
 from proveit._core_._unique_data import meaning_data, style_data
 from proveit.decorators import prover
@@ -649,6 +650,7 @@ class Judgment:
                 # The attribute is a callable function with
                 # 'defaults_config' as an argument (e.g., a prover).
                 # Automatically include the Judgment assumptions.
+                @wraps(attr)
                 def call_method_with_judgment_assumptions(
                         *args, **defaults_config):
                     if len(self.assumptions) > 0:
