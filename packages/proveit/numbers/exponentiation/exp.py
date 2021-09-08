@@ -364,10 +364,26 @@ class Exp(NumberOperation):
                     {a: _a, b: _b, c: exponent})
         elif isinstance(base, Exp):
             _a = base.base
+            # if InSet(exponent, NaturalPos).proven():
+            #     _m, _n = base.exponent, exponent
+            #     return posnat_power_of_posnat_power.instantiate(
+            #         {a: _a, m: _m, n: _n})
+            # TRYING TO ANTICIPATE MORE POSSIBILITIES 
             if InSet(exponent, NaturalPos).proven():
-                _m, _n = base.exponent, exponent
-                return posnat_power_of_posnat_power.instantiate(
-                    {a: _a, m: _m, n: _n})
+                if InSet(base.exponent, NaturalPos).proven():
+                    _m, _n = base.exponent, exponent
+                    return posnat_power_of_posnat_power.instantiate(
+                        {a: _a, m: _m, n: _n})
+                else:
+                    _b, _c = base.exponent, exponent
+                    if InSet(base.exponent, RealPos).proven():
+                        thm = pos_power_of_pos_power
+                    elif InSet(base.exponent, Real).proven():
+                        thm = real_power_of_real_power
+                    else:  # Complex is the default
+                        thm = complex_power_of_complex_power
+                    return thm.instantiate(
+                        {a: _a, b: _b, c: _c})
             else:
                 _b, _c = base.exponent, exponent
                 if InSet(exponent, RealPos).proven():
@@ -410,10 +426,7 @@ class Exp(NumberOperation):
                         'fraction base')
     """
 
-
-# @equality_prover('distributed', 'distribute')
-#     def distribution(self, **defaults_config):
-# we have renamed raise_exp_factor to factorization() ugh!!!
+    # we have renamed raise_exp_factor to factorization() !!!
     @equality_prover('factorized', 'factor')
     def factorization(self, exp_factor, **defaults_config):
         # Note: this is out-of-date.  Distribution handles this now,
