@@ -45,7 +45,7 @@ class VecAdd(GroupAdd):
                 else:
                     candidate_vec_spaces.intersection_update(term_vec_spaces)
             try:
-                vec_space = next(candidate_vec_spaces)
+                vec_space = next(iter(candidate_vec_spaces))
             except StopIteration:
                 # No known common vector space membership over the 
                 # specified field.

@@ -68,11 +68,18 @@ class VecSpaces(Function):
         will be raised.
         '''
         from proveit.logic import SubsetEq
-        field = VecSpaces.field(field, may_by_none=True)
+        field = VecSpaces.get_field(field, may_be_none=True)
+        if vec not in InSet.known_memberships:
+            return # No known memberships to potentially yield.
         for membership in InSet.known_memberships[vec]:
+            if not membership.is_applicable():
+                # Skip it if it isn't usable under current default
+                # assumptions.
+                continue 
             # Check if the membership domain is a vector space over the
             # specified field.
             domain = membership.domain
+            is_known_vec_space = False
             if (field is None and 
                     domain in VecSpaces.known_vec_spaces_memberships):
                 is_known_vec_space = True
@@ -83,7 +90,12 @@ class VecSpaces(Function):
                 if hasattr(domain, 'containing_vec_space'):
                     # See if there is a vector space that contains
                     # 'domain' over the specified field.
-                    domain = domain.containing_vec_space(field)
+                    try:
+                        domain = domain.containing_vec_space(field)
+                    except NotImplementedError:
+                        # Presume that the field and domain are not
+                        # a good match and continue on.
+                        continue
                     if domain != membership.domain:
                         known_field = VecSpaces.known_field(domain)
                         if field is not None and known_field != field:
@@ -94,7 +106,7 @@ class VecSpaces(Function):
                                     %(domain, field))
                         # Make sure this new domain contains the
                         # old domain.
-                        SubsetEq(domain, membership.domain).prove()
+                        SubsetEq(membership.domain, domain).prove()
                     is_known_vec_space = True
                 elif hasattr(domain, 'deduce_as_vec_space'):
                     # See if we can prove that the domain is a vector
@@ -102,16 +114,16 @@ class VecSpaces(Function):
                     try:
                         domain_in_vec_space = domain.deduce_as_vec_space()
                         if (not isinstance(domain_in_vec_space, Judgment)
-                            or not not isinstance(domain_in_vec_space.expr, 
+                                or not isinstance(domain_in_vec_space.expr, 
                                                   InClass)
-                            or domain_in_vec_space.element != domain
-                            or not isinstance(domain_in_vec_space.domain,
-                                              VecSpaces)):
+                                or domain_in_vec_space.element != domain
+                                or not isinstance(domain_in_vec_space.domain,
+                                                  VecSpaces)):
                             raise ValueError(
                                     "'deduce_as_vec_space' was expected to "
-                                    "return something of the form "
-                                    "InClass(%s, VecSpaces(field)) but "
-                                    "returned %s instead"
+                                    "return a proven membership of %s"
+                                    "with a class of vector spaces; "
+                                    "received %s instead"
                                     %(domain, domain_in_vec_space))
                         is_known_vec_space = True
                     except NotImplementedError:
@@ -137,11 +149,30 @@ class VecSpaces(Function):
         Return the known vector space of the given vec under the
         specified field (or the default field).
         '''
-        field = VecSpaces.get_field(field, may_by_none=True)
+        field = VecSpaces.get_field(field, may_be_none=True)
         try:
             return next(VecSpaces.yield_known_vec_spaces(vec, field=field))
         except StopIteration:
-            over_field_msg = "" if field is None else "over %s"%field
+            # We may not know that 'vec' is in a vector space,
+            # but we may be able to deduce it in a straightforward
+            # manner provided it has a 'deduce_in_vec_space' method.
+            if hasattr(vec, 'deduce_in_vec_space'):
+                vec_in_space = vec.deduce_in_vec_space(field=field)
+                # Check that vec_in_space has the right form.
+                if (not isinstance(vec_in_space, Judgment) or
+                        not isinstance(vec_in_space.expr, InSet)):
+                    raise TypeError("'deduce_in_vec_space' expected to "
+                                    "return an InSet Judgment")
+                if vec_in_space.expr.element != vec:
+                    raise ValueError("'deduce_in_vec_space' expected to "
+                                     "return an InSet Judgment with "
+                                     "the 'vec' as the 'element'")
+                vec_space = vec_in_space.domain
+                if hasattr(vec_space, 'deduce_as_vec_space'):
+                    # Be sure to prove that this is a vector space.
+                    vec_space.deduce_as_vec_space()
+                return vec_space
+            over_field_msg = "" if field is None else " over %s"%field
             raise UnsatisfiedPrerequisites(
                     "%s is not known to be in a vector space%s"
                     %(vec, over_field_msg))
@@ -167,6 +198,8 @@ class VecSpaces(Function):
             raise UnsatisfiedPrerequisites("%s is not a known vector space"
                                            %vec_space)
 
+    
+
 
 class VecSpacesMembership(ClassMembership):
     def __init__(self, element, domain):
@@ -191,7 +224,7 @@ class VecSpacesMembership(ClassMembership):
         spaces.
         '''
         if hasattr(self.element, 'deduce_as_vec_space'):
-            return self.element.deduce_as_vec_space(field=self.field)
+            return self.element.deduce_as_vec_space()
         raise NotImplementedError(
                 "VecSpacesMembership.conclude is only implemented when "
                 "the element has a 'deduce_as_vec_space' method; %s "

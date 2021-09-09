@@ -1,14 +1,15 @@
-from proveit import (defaults, equality_prover, Literal, Operation,
-                     Function, prover, TransRelUpdater)
-from proveit import A, K, U, V, W
-from proveit.logic import Equals
+from proveit import (Judgment, defaults, relation_prover, equality_prover, 
+                     Literal, Operation, Function, Lambda, ExprRange,
+                     prover, TransRelUpdater, SimplificationDirectives)
+from proveit import a, b, c, d, e, f, i, j, k, A, K, S, U, V, W, alpha
+from proveit.logic import Equals, InClass
 from proveit.numbers import one, num, subtract
 from proveit.core_expr_types import Len
 from proveit.abstract_algebra.generic_methods import (
         start_and_end_indices, checked_disassociation_index,
         apply_association_thm, apply_disassociation_thm, 
         pairwise_evaluation)
-from proveit.linear_algebra import VecSpaces, ScalarMult
+from proveit.linear_algebra import VecSpaces, ScalarMult, VecAdd, VecSum
 
 pkg = __package__
 
@@ -19,50 +20,18 @@ class TensorProd(Operation):
     Example usage: TensorProd(x, y, z) represents the tensor product
     x \otimes y \otimes z.
     '''
+
     # the literal operator of the TensorProd operation
     _operator_ = Literal(string_format=r'otimes', latex_format=r'{\otimes}',
                          theory=__file__)
+
+    _simplification_directives_ = SimplificationDirectives(
+            ungroup = True, factor_scalars=True)
 
     def __init__(self, *operands, styles=None):
         Operation.__init__(self, TensorProd._operator_, operands,
                            styles=styles)
         self.factors = self.operands
-
-    @equality_prover('factorized', 'factor')
-    def factorization(self, scalar, **defaults_config):
-        '''
-        Factor the given scalar from one of the tensor product
-        multiplicands and return the original tensor product equal to
-        the factored version. For example,
-            TensorProd(a, cb, d).factorization(c)
-        returns
-            |- TensorProd(a, ScalarMult(c, b), d).factorization(c) =
-               c TensorProd(a, b, d)
-        Note that this works only for explicit ScalarMult components
-        within the TensorProd structure. Plans are to generalize this
-        to not require an explicit ScalarProd object (instead allowing
-        the more general Mult object).
-        '''
-        from . import factor_scalar_from_tensor_prod
-        for k, operand in enumerate(self.operands):
-            if isinstance(operand, ScalarMult) and operand.scalar == scalar:
-                _m, _n, _x, _y, _z, _alpha = (
-                    factor_scalar_from_tensor_prod.all_instance_vars())
-                # organize and compute the instantiation subs
-                _m_sub = Len(self.operands[:k]).computed()
-                _n_sub = subtract(subtract(
-                    Len(self.operands).computed(), _m_sub), one)
-                _x_sub = self.operands[:k]
-                _y_sub = operand.scaled
-                _z_sub = self.operands[k + 1:]
-                _alpha_sub = scalar
-                # instantiate and return
-                return factor_scalar_from_tensor_prod.instantiate(
-                    {_m: _m_sub, _n: _n_sub, _x: _x_sub, _y: _y_sub,
-                    _z: _z_sub, _alpha: _alpha_sub})
-        raise ValueError(
-            "Targeted scalar {0} not found in any of the tensor product "
-            "factors {1}".format(scalar, self.operands))
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
@@ -75,14 +44,14 @@ class TensorProd(Operation):
         (1) simplifying a TensorProd(x) (i.e. a TensorProd with a
             single operand x) to x itself. For example,
             TensorProd(x) = x.
+        (2) Ungrouping nested tensor products.
+        (3) Factoring out scalars.
         '''
 
         if self.operands.is_single():
             from . import unary_tensor_prod_def
-            _K = VecSpaces.get_field(may_be_none=True) 
             _V = VecSpaces.known_vec_space(self.operand)
-            if _K is None:
-                _K = VecSpaces.known_field(_V)
+            _K = VecSpaces.known_field(_V)
             return unary_tensor_prod_def.instantiate(
                 {K:_K, V:_V, A:self.operands[0]}, preserve_all=True)
 
@@ -92,69 +61,83 @@ class TensorProd(Operation):
         expr = self
         # for convenience updating our equation:
         eq = TransRelUpdater(expr)
+        
+        if TensorProd._simplification_directives_.ungroup:
+            # ungroup the expression (disassociate nested additions).
+            _n = 0
+            length = expr.operands.num_entries() - 1
+            # loop through all operands
+            while _n < length:
+                operand = expr.operands[_n]
+                # print("n, length", n, length)
+                if isinstance(operand, TensorProd):
+                    # if it is grouped, ungroup it
+                    expr = eq.update(expr.disassociation(
+                            _n, preserve_all=True))
+                length = expr.operands.num_entries()
+                _n += 1
+        
+        if TensorProd._simplification_directives_.factor_scalars:
+            # Next, pull out scalar factors
+            for _k, operand in enumerate(expr.operands):
+                if isinstance(operand, ScalarMult):
+                    # Just pull out the first one we see and let
+                    # recursive simplifications take care of any more.
+                    expr = eq.update(expr.scalar_factorization(_k))
+                    break
+        
         # Future processing possible here.
         return eq.relation
 
-
-    @equality_prover('distributed', 'distribute')
-    def distribution(self, factor_idx, *, field=None,
-                     **defaults_config):
+    @relation_prover
+    def deduce_in_vec_space(self, vec_space=None, *, field,
+                            **defaults_config):
         '''
-        Given a TensorProd factor at the (0-based) index location
-        'factor_idx' that is a sum or summation, distribute over that
-        TensorProd factor and return an equality to the original
-        TensorProd. For example, we could take the TensorProd
-            tens_prod = TensorProd(a, b+c, d)
-        and call tens_prod.distribution(1) to obtain:
-            |- TensorProd(a, b+c, d) =
-               TensorProd(a, b, d) + TensorProd(a, c, d)
+        Deduce that the tensor product of vectors is in a vector space
+        which is the tensor product of corresponding vectors spaces.
         '''
-        from . import (distribute_tensor_prod_over_sum,
-                       distribute_tensor_prod_over_summation)
-        from proveit.numbers import Add, Sum
-        factor = self.factors[factor_idx]
-        if isinstance(factor, Add):
-            _i, _j, _k, _x, _y, _z = (
-                    distribute_tensor_prod_over_sum.all_instance_vars())
-            _i_sub = Len(self.operands[:factor_idx]).computed()
-            _j_sub = Len(self.operands[factor_idx].operands).computed()
-            _k_sub = subtract(subtract(Len(self.operands).computed(),
-                    _i_sub), one)
-            _x_sub = self.factors[:factor_idx]
-            _y_sub = factor.terms
-            _z_sub = self.factors[factor_idx+1:]
-            return distribute_tensor_prod_over_sum.instantiate(
-                {_i: _i_sub, _j: _j_sub, _k: _k_sub,
-                 _x: _x_sub, _y: _y_sub, _z: _z_sub})
-        elif isinstance(factor, Sum):
-            index = factor.index
-            _m, _n, _f, _S, _x, _z = (
-                distribute_tensor_prod_over_summation.all_instance_vars())
-            _y = y # that's the index var in the summation in the thm
-            _m_sub = Len(self.factors[:factor_idx]).computed()
-            _n_sub = subtract(subtract(Len(self.operands).computed(),
-                     _m_sub), one)
-            _f_sub = factor.summand
-            _S_sub = factor.domain
-            _x_sub = self.factors[:factor_idx]
-            _y_sub = factor.index
-            _z_sub = self.factors[factor_idx + 1:]
-            return distribute_tensor_prod_over_summation.instantiate(
-                {_m: _m_sub, _n: _n_sub, _x: _x_sub,
-                Function(f, index, styles=None): _f_sub, _S: _S_sub,
-                _y: _y_sub, _z: _z_sub})
-        else:
-            raise ValueError(self, defaults.assumptions,
-                "Don't know how to distribute tensor product over " +
-                str(factor.__class__) + " factor")
-    
-    def known_vec_spaces(self, *, field=None):
+        from . import tensor_prod_is_in_tensor_prod_space
+        _a = self.operands
+        _i = _a.num_elements()
+        _K = VecSpaces.get_field(field)
+        vec_spaces = VecSpaces.known_vec_spaces(self.operands, field=_K)
+        return tensor_prod_is_in_tensor_prod_space.instantiate(
+                {K: _K, i: _i, V: vec_spaces, a: _a})      
+        
+    @relation_prover
+    def deduce_as_vec_space(self, **defaults_config):
         '''
-        Return the known vector spaces for each of the operands.
+        Deduce that the tensor product of vector spaces is a vector
+        space (the space containing tensor products over any vectors
+        within the corresponding vector spaces).
         '''
-        # TODO: appropriately handle an ExprRange opernd.
-        return [next(VecSpaces.yield_known_vec_spaces(operand, field=field))
-                for operand in self.operands]
+        from . import tensor_prod_of_vec_spaces_is_vec_space
+        _V = self.operands
+        _i = _V.num_elements()
+        _K = None
+        for operand in self.operands:
+            class_membership = operand.deduce_as_vec_space()
+            if (not isinstance(class_membership, Judgment) or
+                    not isinstance(class_membership.expr, InClass) or
+                    not isinstance(class_membership.expr.domain, VecSpaces)):
+                raise TypeError("'deduce_as_vec_space' expected to return "
+                                "a proven class membership of a "
+                                "VecSpaces domain; instead received: %s."
+                                %class_membership)
+            if class_membership.expr.element != operand:
+                raise ValueError("'deduce_as_vec_space' expected to return "
+                                 "a proven class membership for %s; instead "
+                                 "received %s."
+                                 %(operand, class_membership))
+            field = class_membership.expr.domain.field
+            if _K is None:
+                _K = field
+            elif _K != field:
+                raise ValueError("Vector spaces in tensor product have "
+                                 "different fields, %s ≠ %s"
+                                 %(_K, field))
+        return tensor_prod_of_vec_spaces_is_vec_space.instantiate(
+                {K: _K, i: _i, V: _V})
 
     @equality_prover('associated', 'associate')
     def association(self, start_idx, length, *, field=None, 
@@ -170,17 +153,12 @@ class TensorProd(Operation):
         vector spaces of a common field.  If the field is not specified,
         then VecSpaces.default_field is used.
         '''
-        from . import association
-        _K = VecSpaces.get_field(field)
-        vec_spaces = VecSpaces.known_vec_spaces(self.operands, field=field)
-        beg, end = start_and_end_indices(self, start_index=start_idx,
-                                         length=length)
-        _U = vec_spaces[:beg]
-        _V = vec_spaces[beg:end]
-        _W = vec_spaces[end:]
+        from . import tensor_prod_association
+        _V = VecSpaces.known_vec_space(self, field=field)
+        _K = VecSpaces.known_field(_V)
         eq = apply_association_thm(
-            self, start_idx, length, association,
-            repl_map_extras={K:_K, U:_U, V:_V, W:_W})
+            self, start_idx, length, tensor_prod_association,
+            repl_map_extras={K:_K, V:_V})
         return eq
 
     @equality_prover('disassociated', 'disassociate')
@@ -190,99 +168,216 @@ class TensorProd(Operation):
         Given numerical operands, deduce that this expression is equal 
         to a form in which the operand
         at index idx is no longer grouped together.
-        For example, (a + b ... + (l + ... + m) + ... + y+ z) 
-            = (a + b + ... + y + z)
+        For example, (a ⊗ b ... ⊗ (l ⊗ ... ⊗ m) ⊗ ... ⊗ y⊗ z) 
+            = (a ⊗ b ⊗ ... ⊗ y ⊗ z)
         
         For this to work, the operands must be known to be in
         vector spaces of a common field.  If the field is not specified,
         then VecSpaces.default_field is used.
         '''
-        from . import disassociation
-        idx = checked_disassociation_index(idx)
-        _K = VecSpaces.get_field(field)
-        _U = VecSpaces.known_vec_spaces(self.operands[:idx], field=field)
-        _V = VecSpaces.known_vec_spaces(self.operands[idx].operands, 
-                                        field=field)
-        _W = VecSpaces.known_vec_spaces(self.operands[idx:], field=field)  
+        from . import tensor_prod_disassociation
+        _V = VecSpaces.known_vec_space(self, field=field)
+        _K = VecSpaces.known_field(_V)
         eq = apply_disassociation_thm(
-                self, idx, disassociation,
-                repl_map_extras={K:_K, U:_U, V:_V, W:_W})
+                self, idx, tensor_prod_disassociation,
+                repl_map_extras={K:_K, V:_V})
         return eq
 
-    @prover
-    def equate_factors(self, tensor_equality, **defaults_config):
+    @equality_prover('distributed', 'distribute')
+    def distribution(self, idx, *, field=None,
+                     **defaults_config):
         '''
-        Operating on the 'self' TensorProd and taking as an argument
-        an equality between the 'self' TensorProd and another
-        TensorProd with the same number of factors all but one of
-        which agree with the factors of 'self', deduce and return a
-        logical equivalence between the TensorProd equality and the
-        equality of the two non-matching factors.
-        For example, letting tp_01 = a X b X c and tp_02 = a X d X c,
-        then calling tp.equate_factors(Equals(tp_01, tp_02))
-        deduces and returns
-        |- (a X b X c = (a X d X c)) IFF (b = d)
+        Given a TensorProd operand at the (0-based) index location
+        'idx' that is a sum or summation, prove the distribution over
+        that TensorProd factor and return an equality to the original
+        TensorProd. For example, we could take the TensorProd
+            tens_prod = TensorProd(a, b+c, d)
+        and call tens_prod.distribution(1) to obtain:
+            |- TensorProd(a, b+c, d) =
+               TensorProd(a, b, d) + TensorProd(a, c, d)
         '''
-        # First check various characteristics of the tensor_equality
+        from . import (tensor_prod_distribution_over_add,
+                       tensor_prod_distribution_over_summation)
+        _V = VecSpaces.known_vec_space(self, field=field)
+        _K = VecSpaces.known_field(_V)
+        sum_factor = self.operands[idx]
+        _a = self.operands[:idx]
+        _c = self.operands[idx+1:]
+        _i = _a.num_elements()
+        _k = _c.num_elements()
+        if isinstance(sum_factor, VecAdd):
+            _b = sum_factor.operands
+            _V = VecSpaces.known_vec_space(self, field=field)
+            _j = _b.num_elements()
+            return tensor_prod_distribution_over_add.instantiate(
+                {K:_K, i:_i, j:_j, k:_k, V:_V, a:_a, b:_b, c:_c})
+        elif isinstance(sum_factor, VecSum):
+            _S = sum_factor.domain
+            _b = sum_factor.instance_var
+            _f = Lambda(sum_factor.instance_var, sum_factor.summand)
+            return tensor_prod_distribution_over_summation.instantiate(
+                    {K:_K, f:_f, S:_S, i:_i, k:_k, V:_V, a:_a, b:_b, c:_c})
+        else:
+            raise ValueError(self, defaults.assumptions,
+                "Don't know how to distribute tensor product over " +
+                str(sum_factor.__class__) + " factor")
+
+    @equality_prover('scalar_factorized', 'factor_scalar')
+    def scalar_factorization(self, idx=None, *, field=None,
+                             **defaults_config):
+        '''
+        Prove the factorization of a scalar from one of the tensor 
+        product operands and return the original tensor product equal 
+        to the factored version.  If idx is provided, it will specify 
+        the (0-based) index location of the ScalarMult operand with the
+        multiplier to factor out.  If no idx is provided, the first 
+        ScalarMult operand will be targeted.
+        
+        For example,
+            TensorProd(a, ScalarMult(c, b), d).factorization(1)
+        returns
+            |- TensorProd(a, ScalarMult(c, b), d) =
+               c TensorProd(a, b, d)
+        
+        As a prerequisite, the operands must be known to be vectors in
+        vector spaces over a common field which contains the scalar
+        multiplier being factored.  If the field is not specified,
+        then VecSpaces.default_field is used.
+        '''
+        from . import factor_scalar_from_tensor_prod
+        if idx is None:
+            for _k, operand in enumerate(self.operands):
+                if isinstance(operand, ScalarMult):
+                    idx = _k
+                    break
+        elif idx < 0:
+            # use wrap-around indexing
+            idx = self.operand.num_entries() + idx
+        if not isinstance(self.operands[idx], ScalarMult):
+            raise TypeError("Expected the 'operand' and 'operand_idx' to be "
+                            "a ScalarMult")            
+        _V = VecSpaces.known_vec_space(self, field=field)
+        _K = VecSpaces.known_field(_V)
+        _alpha = self.operands[idx].scalar
+        _a = self.operands[:idx]
+        _b = self.operands[idx].scaled
+        _c = self.operands[idx+1:]
+        _i = _a.num_elements()
+        _k = _c.num_elements()
+        return factor_scalar_from_tensor_prod.instantiate(
+                {K:_K, alpha:_alpha, i:_i, k:_k, V:_V, a:_a, b:_b, c:_c})
+
+    @staticmethod
+    def _check_tensor_equality(tensor_equality, allow_unary=False):
+        '''
+        Check that the tensor_equality has the appropriate form.
+        '''
+        if isinstance(tensor_equality, Judgment):
+            tensor_equality = tensor_equality.expr
         if not isinstance(tensor_equality, Equals):
             raise ValueError("tensor_equality should be an Equals expression; "
                              " instead received: {}.".format(tensor_equality))
         if (not isinstance(tensor_equality.lhs, TensorProd) or
             not isinstance(tensor_equality.rhs, TensorProd)):
-            raise ValueError(
-                    "tensor_equality should be an Equals expression of "
-                    "tensor products; "
-                    "instead received: {}.".format(tensor_equality))
+            if allow_unary:
+                # If we are allowing the sides to by unary tensor 
+                # products, make it so.
+                tensor_equality = Equals(TensorProd(tensor_equality.lhs),
+                                         TensorProd(tensor_equality.rhs))
+            else:
+                raise ValueError(
+                        "tensor_equality should be an Equals expression of "
+                        "tensor products; "
+                        "instead received: {}.".format(tensor_equality))
         if (tensor_equality.lhs.factors.num_elements() !=
             tensor_equality.rhs.factors.num_elements()):
             raise ValueError(
                     "tensor_equality should be an Equals expression of tensor "
                     "products with the same number of factors; "
                     "instead received: {}.".format(tensor_equality))
+        return tensor_equality
 
-        if self == tensor_equality.rhs:
-            # reverse the equality so "self" is on the left
-            tensor_equality = tensor_equality.derive_reversed()
-        if not self == tensor_equality.lhs:
-            raise ValueError(
-                    "tensor_equality should be an Equals expression of "
-                    "tensor products with 'self' ({0}) on one side of the "
-                    "equality; "
-                    "instead received: {1}.".format(self, tensor_equality))
+    @staticmethod
+    @prover
+    def remove_vec_on_both_sides_of_equals(tensor_equality, idx,
+                                           rhs_idx = None, *,
+                                           field = None,
+                                           **defaults_config):
+        '''
+        From an equality with tensor products of vectors on
+        both sides, derive a similar equality but with the vector 
+        operand removed at the particular given zero-based index (idx).
+        A different index may be specified for the right side as the 
+        left side by setting rhs_idx (i.e., if entries don't line up 
+        due to differences of ExprRange entries), but the default will
+        be to use the same.
+        '''
+        from . import remove_vec_on_both_sides_of_equality
+        # First check various characteristics of the tensor_equality
+        TensorProd._check_tensor_equality(tensor_equality)
+        if idx < 0:
+            # use wrap-around indexing
+            idx = tensor_equality.num_entries() + idx
+        if rhs_idx is None:
+            rhs_idx = idx # use the same index on both sides by default
+        _a = tensor_equality.lhs.operands[:idx]
+        _b = tensor_equality.lhs.operands[idx]
+        _c = tensor_equality.lhs.operands[idx+1:]
+        _d = tensor_equality.rhs.operands[:rhs_idx]
+        _e = tensor_equality.rhs.operands[rhs_idx]
+        _f = tensor_equality.rhs.operands[rhs_idx+1:]
+        _i = _a.num_elements()
+        _k = _c.num_elements()
+        vec_space = VecSpaces.known_vec_space(tensor_equality.lhs, 
+                                              field=field)
+        _K = VecSpaces.known_field(vec_space)
+        _U = VecSpaces.known_vec_spaces(_a, field=_K)
+        _V = VecSpaces.known_vec_space(_b, field=_K)
+        _W = VecSpaces.known_vec_spaces(_c, field=_K)
+        return remove_vec_on_both_sides_of_equality.instantiate(
+                {K:_K, i:_i, k:_k, U:_U, V:_V, W:_W, 
+                 a:_a, b:_b, c:_c, d:_d, e:_e, f:_f}).derive_consequent()
 
-        non_identical_factor = -1 # track loc of non-ident factors
-        for k, (factor1, factor2) in (
-                enumerate(zip(tensor_equality.lhs.factors,
-                              tensor_equality.rhs.factors))):
-            if factor1 != factor2:
-                non_identical_factor = k
-                if ((tensor_equality.lhs.factors[:k] !=
-                    tensor_equality.rhs.factors[:k]) or
-                    (tensor_equality.lhs.factors[k+1:] !=
-                    tensor_equality.rhs.factors[k+1:])):
-                    raise ValueError(
-                            "tensor_equality should be an Equals expression "
-                            "of tensor products that are the same except for "
-                            "only one factor; "
-                            "instead received: {}.".format(tensor_equality))
-
-        # user-supplied tensor_equality looks ok, so import theorem
-        from . import tensor_prod_equiv_by_elimination
-
-        # organize and compute the instantiation subs
-        _m, _n, _a, _x, _y, _z = (
-                tensor_prod_equiv_by_elimination.all_instance_vars())
-        _m_sub = num(non_identical_factor)
-        _n_sub = subtract(subtract(self.factors.num_elements(),_m_sub), one)
-        _a_sub = self.factors[:non_identical_factor]
-        _x_sub = self.factors[non_identical_factor]
-        _y_sub = tensor_equality.rhs.factors[non_identical_factor]
-        _z_sub = self.factors[non_identical_factor+1:]
-
-        # instantiate and return equality
-        return tensor_prod_equiv_by_elimination.instantiate(
-            {_m: _m_sub, _n: _n_sub, _a: _a_sub,
-             _x: _x_sub, _y: _y_sub, _z: _z_sub})
+    @staticmethod
+    @prover
+    def insert_vec_on_both_sides_of_equals(tensor_equality, idx, vec,
+                                           rhs_idx = None, *,
+                                           field = None, 
+                                           **defaults_config):
+        '''
+        From an equality with tensor products of vectors on
+        both sides, derive a similar equality but with a vector 
+        operand inserted at the particular given zero-based index (idx).
+        A different index may be specified for the right side as the 
+        left side by setting rhs_idx (i.e., if entries don't line up 
+        due to differences of ExprRange entries), but the default will
+        be to use the same.
+        '''
+        from . import insert_vec_on_both_sides_of_equality
+        # First check various characteristics of the tensor_equality
+        tensor_equality = TensorProd._check_tensor_equality(
+                tensor_equality, allow_unary=True)
+        if idx < 0:
+            # use wrap-around indexing
+            idx = tensor_equality.num_entries() + idx
+        if rhs_idx is None:
+            rhs_idx = idx # use the same index on both sides by default
+        _a = tensor_equality.lhs.operands[:idx]
+        _b = vec
+        _c = tensor_equality.lhs.operands[idx:]
+        _d = tensor_equality.rhs.operands[:rhs_idx]
+        _e = tensor_equality.rhs.operands[rhs_idx:]
+        _i = _a.num_elements()
+        _k = _c.num_elements()
+        vec_space = VecSpaces.known_vec_space(tensor_equality.lhs, 
+                                              field=field)
+        _K = VecSpaces.known_field(vec_space)
+        _U = VecSpaces.known_vec_spaces(_a, field=_K)
+        _V = VecSpaces.known_vec_space(_b, field=_K)
+        _W = VecSpaces.known_vec_spaces(_c, field=_K)
+        return insert_vec_on_both_sides_of_equality.instantiate(
+                {K:_K, i:_i, k:_k, U:_U, V:_V, W:_W, 
+                 a:_a, b:_b, c:_c, d:_d, e:_e}).derive_consequent()
 
 
 class TensorExp(Operation):

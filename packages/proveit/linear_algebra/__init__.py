@@ -1,5 +1,5 @@
 from .vector_spaces import VecSpaces
-from .addition import VecAdd, VecSum
+from .addition import VecAdd, VecSum, VecZero
 from .negation import VecNeg
 from .scalar_multiplication import ScalarMult
 from .linear_maps import LinMap, LinMapAdd

@@ -1,7 +1,8 @@
 from proveit import (Operation, Literal, relation_prover,
-                     UnsatisfiedPrerequisites)
-from proveit import a, x, K, V
+                     equality_prover, UnsatisfiedPrerequisites)
+from proveit import a, x, K, V, alpha, beta
 from proveit.logic import InSet
+from proveit.abstract_algebra import plus, times
 from proveit.linear_algebra import VecSpaces
 
 class ScalarMult(Operation):
@@ -25,6 +26,39 @@ class ScalarMult(Operation):
                            styles=styles)
         self.scalar = scalar
         self.scaled = scaled
+
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
+        '''
+        Returns a proven simplification equation for this ScalarMult
+        expression assuming the operands have been simplified.
+        
+        Handles doubly-nested scalar multiplication.
+        '''
+        if isinstance(self.scaled, ScalarMult):
+            # Reduce a doubly nested scalar multiplication.
+            return self.double_scaling_reduction(preserve_all=True)
+        return Operation.shallow_simplification(
+                self, must_evaluate=must_evaluate)
+    
+    @equality_prover('double_scaling_reduced', 'double_scaling_reduce')
+    def double_scaling_reduction(self, **defaults_config):
+        from . import doubly_scaled_as_singly_scaled
+        if not isinstance(self.scaled, ScalarMult):
+            raise ValueError("'double_scaling_reduction' is only applicable "
+                             "for a doubly nested ScalarMult")
+        # Reduce doubly-nested ScalarMult
+        _x = self.scaled.scaled
+        _V = VecSpaces.known_vec_space(_x)
+        _K = VecSpaces.known_field(_V)
+        _alpha = self.scalar
+        _beta =  self.scaled.scalar
+        _plus = _K.plus_operator
+        _times = _K.times_operator
+        return doubly_scaled_as_singly_scaled.instantiate(
+                {plus:_plus, times:_times, K:_K, V:_V, 
+                 x:_x, alpha:_alpha, beta:_beta})        
 
     @relation_prover
     def deduce_in_vec_space(self, vec_space=None, *, field,
