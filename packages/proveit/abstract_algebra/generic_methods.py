@@ -92,7 +92,10 @@ def apply_association_thm(expr, start_idx, length, thm, *,
     if beg == 0 and end == expr.operands.num_entries():
         # association over the entire range is trivial:
         return Equals(expr, expr).prove()  # simply the self equality
-    i, j, k, A, B, C = thm.all_instance_vars()
+    if repl_map_extras is None:
+        repl_map_extras = dict()
+    i, j, k, A, B, C = [_var for _var in thm.all_instance_vars()
+                        if _var not in repl_map_extras]
     _A = expr.operands[:beg]
     _B = expr.operands[beg:end]
     _C = expr.operands[end:]
@@ -102,8 +105,8 @@ def apply_association_thm(expr, start_idx, length, thm, *,
     with expr.__class__.temporary_simplification_directives() as \
             tmp_directives:
         tmp_directives.ungroup = False
-        repl_map = dict() if repl_map_extras is None else repl_map_extras
-        repl_map.update({i: _i, j: _j, k: _k, A: _A, B: _B, C: _C})
+        repl_map = {i: _i, j: _j, k: _k, A: _A, B: _B, C: _C}
+        repl_map.update(repl_map_extras)
         return thm.instantiate(repl_map)
 
 def checked_disassociation_index(expr, idx):
@@ -123,15 +126,18 @@ def apply_disassociation_thm(expr, idx, thm=None, *,
                              repl_map_extras=None, 
                              **defaults_config):
     idx = checked_disassociation_index(expr, idx)
-    i, j, k, A, B, C = thm.all_instance_vars()
+    if repl_map_extras is None:
+        repl_map_extras = dict()
+    i, j, k, A, B, C = [var for var in thm.all_instance_vars()
+                        if var not in repl_map_extras]
     _A = expr.operands[:idx]
     _B = expr.operands[idx].operands
     _C = expr.operands[idx + 1:]
     _i = _A.num_elements()
     _j = _B.num_elements()
     _k = _C.num_elements()
-    repl_map = dict() if repl_map_extras is None else repl_map_extras
-    repl_map.update({i: _i, j: _j, k: _k, A: _A, B: _B, C: _C})
+    repl_map = {i: _i, j: _j, k: _k, A: _A, B: _B, C: _C}
+    repl_map.update(repl_map_extras)
     return thm.instantiate(repl_map)
 
 
