@@ -1,6 +1,6 @@
 from proveit import (Operation, Literal, relation_prover,
                      prover, maybe_fenced_string)
-from proveit import n
+from proveit import m, n, A, B
 
 class CartExp(Operation):
     '''
@@ -39,6 +39,22 @@ class CartExp(Operation):
         kwargs['fence'] = (
             kwargs['force_fence'] if 'force_fence' in kwargs else False)
         return maybe_fenced_string(inner_str, **kwargs)
+
+    @prover
+    def deduce_subset_eq_relation(self, subset, **defaults_config):
+        '''
+        Prove that this CartExp is a SubsetEq of 'subset' if
+        the 'subset' is also a CartExp with the same exponent,
+        and the base of self is a SubsetEq of the base of 'subset'.
+        '''
+        from . import cart_exp_subset_eq
+        if not isinstance(subset, CartExp) or subset.exponent != self.exponent:
+            raise NotImplementedError(
+                    "CartExp.deduce_subset_eq_relation only implemented "
+                    "to derive a subset relation between CartExp "
+                    "expressions with the same exponent")
+        return cart_exp_subset_eq.instantiate(
+                {m:self.exponent, A:subset.base, B:self.base})
 
     @relation_prover
     def deduce_as_vec_space(self, **defaults_config):
