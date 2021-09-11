@@ -1,14 +1,10 @@
 from proveit import (Judgment, defaults, relation_prover, equality_prover, 
-                     Literal, Operation, Function, Lambda, ExprRange,
+                     Literal, Operation, Lambda,
                      prover, TransRelUpdater, SimplificationDirectives)
-from proveit import a, b, c, d, e, f, i, j, k, A, K, S, U, V, W, alpha
+from proveit import a, b, c, d, e, f, i, j, k, A, K, Q, U, V, W, alpha
 from proveit.logic import Equals, InClass
-from proveit.numbers import one, num, subtract
-from proveit.core_expr_types import Len
 from proveit.abstract_algebra.generic_methods import (
-        start_and_end_indices, checked_disassociation_index,
-        apply_association_thm, apply_disassociation_thm, 
-        pairwise_evaluation)
+        apply_association_thm, apply_disassociation_thm)
 from proveit.linear_algebra import VecSpaces, ScalarMult, VecAdd, VecSum
 
 pkg = __package__
@@ -143,7 +139,7 @@ class TensorProd(Operation):
     def association(self, start_idx, length, *, field=None, 
                     **defaults_config):
         '''
-        Given numerical operands, deduce that this expression is equal 
+        Given vector operands, deduce that this expression is equal 
         to a form in which operands in the
         range [start_idx, start_idx+length) are grouped together.
         For example, (a ⊗ b ⊗ ... ⊗ y ⊗ z) = 
@@ -158,14 +154,14 @@ class TensorProd(Operation):
         _K = VecSpaces.known_field(_V)
         eq = apply_association_thm(
             self, start_idx, length, tensor_prod_association,
-            repl_map_extras={K:_K, V:_V})
-        return eq
+            repl_map_extras={K:_K, V:_V}).derive_consequent()
+        return eq.with_wrapping_at()
 
     @equality_prover('disassociated', 'disassociate')
     def disassociation(self, idx, *, field=None, 
                        **defaults_config):
         '''
-        Given numerical operands, deduce that this expression is equal 
+        Given vector operands, deduce that this expression is equal 
         to a form in which the operand
         at index idx is no longer grouped together.
         For example, (a ⊗ b ... ⊗ (l ⊗ ... ⊗ m) ⊗ ... ⊗ y⊗ z) 
@@ -180,17 +176,17 @@ class TensorProd(Operation):
         _K = VecSpaces.known_field(_V)
         eq = apply_disassociation_thm(
                 self, idx, tensor_prod_disassociation,
-                repl_map_extras={K:_K, V:_V})
-        return eq
+                repl_map_extras={K:_K, V:_V}).derive_consequent()
+        return eq.with_wrapping_at()
 
     @equality_prover('distributed', 'distribute')
     def distribution(self, idx, *, field=None,
                      **defaults_config):
         '''
         Given a TensorProd operand at the (0-based) index location
-        'idx' that is a sum or summation, prove the distribution over
-        that TensorProd factor and return an equality to the original
-        TensorProd. For example, we could take the TensorProd
+        'idx' that is a vector sum or summation, prove the distribution
+        over that TensorProd factor and return an equality to the 
+        original TensorProd. For example, we could take the TensorProd
             tens_prod = TensorProd(a, b+c, d)
         and call tens_prod.distribution(1) to obtain:
             |- TensorProd(a, b+c, d) =
@@ -209,16 +205,20 @@ class TensorProd(Operation):
             _b = sum_factor.operands
             _V = VecSpaces.known_vec_space(self, field=field)
             _j = _b.num_elements()
-            return tensor_prod_distribution_over_add.instantiate(
+            impl = tensor_prod_distribution_over_add.instantiate(
                 {K:_K, i:_i, j:_j, k:_k, V:_V, a:_a, b:_b, c:_c})
+            return impl.derive_consequent().with_wrapping_at()
         elif isinstance(sum_factor, VecSum):
-            _S = sum_factor.domain
-            _b = sum_factor.instance_var
-            _f = Lambda(sum_factor.instance_var, sum_factor.summand)
-            return tensor_prod_distribution_over_summation.instantiate(
-                    {K:_K, f:_f, S:_S, i:_i, k:_k, V:_V, a:_a, b:_b, c:_c})
+            _b = sum_factor.indices
+            _j = _b.num_elements()
+            _f = Lambda(sum_factor.indices, sum_factor.summand)
+            _Q = Lambda(sum_factor.indices, sum_factor.condition)
+            impl = tensor_prod_distribution_over_summation.instantiate(
+                    {K:_K, f:_f, Q:_Q, i:_i, j:_j, k:_k, 
+                     V:_V, a:_a, b:_b, c:_c})
+            return impl.derive_consequent().with_wrapping_at()
         else:
-            raise ValueError(self, defaults.assumptions,
+            raise ValueError(
                 "Don't know how to distribute tensor product over " +
                 str(sum_factor.__class__) + " factor")
 
@@ -264,8 +264,9 @@ class TensorProd(Operation):
         _c = self.operands[idx+1:]
         _i = _a.num_elements()
         _k = _c.num_elements()
-        return factor_scalar_from_tensor_prod.instantiate(
+        impl = factor_scalar_from_tensor_prod.instantiate(
                 {K:_K, alpha:_alpha, i:_i, k:_k, V:_V, a:_a, b:_b, c:_c})
+        return impl.derive_consequent().with_wrapping_at()
 
     @staticmethod
     def _check_tensor_equality(tensor_equality, allow_unary=False):
@@ -334,9 +335,10 @@ class TensorProd(Operation):
         _U = VecSpaces.known_vec_spaces(_a, field=_K)
         _V = VecSpaces.known_vec_space(_b, field=_K)
         _W = VecSpaces.known_vec_spaces(_c, field=_K)
-        return remove_vec_on_both_sides_of_equality.instantiate(
+        impl = remove_vec_on_both_sides_of_equality.instantiate(
                 {K:_K, i:_i, k:_k, U:_U, V:_V, W:_W, 
-                 a:_a, b:_b, c:_c, d:_d, e:_e, f:_f}).derive_consequent()
+                 a:_a, b:_b, c:_c, d:_d, e:_e, f:_f})
+        return impl.derive_consequent().with_mimicked_style(tensor_equality)
 
     @staticmethod
     @prover
@@ -375,9 +377,10 @@ class TensorProd(Operation):
         _U = VecSpaces.known_vec_spaces(_a, field=_K)
         _V = VecSpaces.known_vec_space(_b, field=_K)
         _W = VecSpaces.known_vec_spaces(_c, field=_K)
-        return insert_vec_on_both_sides_of_equality.instantiate(
+        impl = insert_vec_on_both_sides_of_equality.instantiate(
                 {K:_K, i:_i, k:_k, U:_U, V:_V, W:_W, 
-                 a:_a, b:_b, c:_c, d:_d, e:_e}).derive_consequent()
+                 a:_a, b:_b, c:_c, d:_d, e:_e})
+        return impl.derive_consequent().with_mimicked_style(tensor_equality)
 
 
 class TensorExp(Operation):

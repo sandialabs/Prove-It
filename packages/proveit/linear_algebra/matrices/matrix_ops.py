@@ -1,4 +1,5 @@
 from proveit import Literal, Operation, NamedExprs
+from proveit.logic import SetMembership
 # from proveit.logic import Equation
 # from proveit.logic.generic_ops import AssociativeOperation, BinaryOperation
 from proveit import x, alpha, beta
@@ -12,6 +13,9 @@ class MatrixSpace(Operation):
     number of rows and columns applicable over a specific field. 
     '''
     _operator_ = Literal(string_format=r'MSpace', theory=__file__)
+    
+    # Map elements to their known memberships in a matrix space.
+    known_memberships = dict()
     
     def __init__(self, field, rows, columns, *, styles=None):
         '''
@@ -40,6 +44,27 @@ class MatrixSpace(Operation):
 
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
+
+    def membership_object(self, element):
+        return MatrixSpaceMembership(element, self)
+
+
+class MatrixSpaceMembership(SetMembership):
+    '''
+    Defines methods that apply to InSet(element, LinMap(X, Y))
+    objects via InClass.__getattr__ which calls 
+    LinMap.membership_object(element)
+    to return a LinMapMembership object.    
+    '''
+
+    def __init__(self, element, domain):
+        SetMembership.__init__(self, element, domain)
+        
+    def side_effects(self, judgment):
+        MatrixSpace.known_memberships.setdefault(
+                self.element, set()).add(judgment)
+        return # generator yielding nothing
+        yield
 
 
 class MatrixMult(Operation):
