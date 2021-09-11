@@ -175,7 +175,8 @@ class Relation(Operation):
                     _class_attr = getattr(_class, method_name)
                     methods_and_domains_to_try.append((_class_attr, _domain))
             if len(methods_and_domains_to_try) == 0:
-                raise AttributeError  # Default behaviour
+                raise AttributeError("'%s' object has no attribute '%s'"
+                                     %(self.__class__, name))
             @prover
             @wraps(methods_and_domains_to_try[0][0])
             def transform_both_sides(*args, **defaults_config):
@@ -205,7 +206,8 @@ class Relation(Operation):
             transform_both_sides.__doc__ = (
                 methods_and_domains_to_try[0][0].__doc__)
             return transform_both_sides
-        raise AttributeError  # Default behaviour
+        raise AttributeError("'%s' object has no attribute '%s'"
+                             %(self.__class__, name))
 
     def __dir__(self):
         '''
