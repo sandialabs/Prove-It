@@ -1,1 +1,0 @@
-Quantum multiplication (Qmult) of bra's, ket's, and quantum operations

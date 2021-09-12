@@ -1,8 +1,5 @@
-from .algebra import Qmult, Bra, Ket, RegisterBra, RegisterKet
-from .quantum_ops import Meas, QubitRegisterSpace, RegisterSU
-from .circuit import Gate, Input, Output, Target
-# from .circuit import Circuit, MultiWire
-
+from .bra_ket import Bra, Ket, RegisterBra, RegisterKet
+from .qmult import Qmult
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.
