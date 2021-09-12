@@ -5,7 +5,8 @@ from proveit import a, b, c, d, e, f, i, j, k, A, K, Q, U, V, W, alpha
 from proveit.logic import Equals, InClass
 from proveit.abstract_algebra.generic_methods import (
         apply_association_thm, apply_disassociation_thm)
-from proveit.linear_algebra import VecSpaces, ScalarMult, VecAdd, VecSum
+from proveit.linear_algebra import (VecSpaces, ScalarMult, VecAdd, VecSum,
+                                    deduce_as_vec_space)
 
 pkg = __package__
 
@@ -112,19 +113,7 @@ class TensorProd(Operation):
         _i = _V.num_elements()
         _K = None
         for operand in self.operands:
-            class_membership = operand.deduce_as_vec_space()
-            if (not isinstance(class_membership, Judgment) or
-                    not isinstance(class_membership.expr, InClass) or
-                    not isinstance(class_membership.expr.domain, VecSpaces)):
-                raise TypeError("'deduce_as_vec_space' expected to return "
-                                "a proven class membership of a "
-                                "VecSpaces domain; instead received: %s."
-                                %class_membership)
-            if class_membership.expr.element != operand:
-                raise ValueError("'deduce_as_vec_space' expected to return "
-                                 "a proven class membership for %s; instead "
-                                 "received %s."
-                                 %(operand, class_membership))
+            class_membership = deduce_as_vec_space(operand)
             field = class_membership.expr.domain.field
             if _K is None:
                 _K = field
