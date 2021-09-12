@@ -1,4 +1,4 @@
-from proveit import (Literal, defaults, USE_DEFAULTS,
+from proveit import (Judgment, Literal, defaults, USE_DEFAULTS,
                      prover, equality_prover, relation_prover)
 from proveit.relation import Relation
 
@@ -262,6 +262,18 @@ class InClass(Relation):
         except BaseException:
             pass
         return evaluation
+    
+    @staticmethod
+    def check_proven_class_membership(membership, element, class_of_class):
+        if (not isinstance(membership, Judgment)
+                or not isinstance(membership.expr, InClass)
+                or membership.element != element
+                or not isinstance(membership.domain, class_of_class)):
+            raise ValueError(
+                    "Failed to meet expectation: %s is supposed to be a "
+                    "proven Judgment that %s is a member of a class "
+                    "represented by an Expression of type %s"
+                    %(membership, element, class_of_class))        
 
 
 class ClassMembership:
