@@ -95,7 +95,7 @@ class VecSpaces(Function):
                 vec_space = domain
             else:
                 try:
-                    vec_space = containing_vec_space(domain, field=field)
+                    vec_space = including_vec_space(domain, field=field)
                 except NotImplementedError:
                     pass
                 if vec_space is None:
@@ -133,26 +133,13 @@ class VecSpaces(Function):
             # We may not know that 'vec' is in a vector space,
             # but we may be able to deduce it in a straightforward
             # manner provided it has a 'deduce_in_vec_space' method.
-            if hasattr(vec, 'deduce_in_vec_space'):
-                vec_in_space = vec.deduce_in_vec_space(field=field)
-                # Check that vec_in_space has the right form.
-                if (not isinstance(vec_in_space, Judgment) or
-                        not isinstance(vec_in_space.expr, InSet)):
-                    raise TypeError("'deduce_in_vec_space' expected to "
-                                    "return an InSet Judgment")
-                if vec_in_space.expr.element != vec:
-                    raise ValueError("'deduce_in_vec_space' expected to "
-                                     "return an InSet Judgment with "
-                                     "the 'vec' as the 'element'")
-                vec_space = vec_in_space.domain
-                # Make sure we can prove vec_space is, in fact, a
-                # vector space.
-                deduce_as_vec_space(vec_space)
-                return vec_space
-            over_field_msg = "" if field is None else " over %s"%field
-            raise UnsatisfiedPrerequisites(
-                    "%s is not known to be in a vector space%s"
-                    %(vec, over_field_msg))
+            try:
+                return containing_vec_space(vec, field=field)
+            except NotImplementedError:
+                over_field_msg = "" if field is None else " over %s"%field
+                raise UnsatisfiedPrerequisites(
+                        "%s is not known to be in a vector space%s"
+                        %(vec, over_field_msg))
 
     @staticmethod
     def known_vec_spaces(vecs, *, field=None):
@@ -198,15 +185,43 @@ class VecSpacesMembership(ClassMembership):
         Attempt to conclude this membership in a class of vector
         spaces.
         '''
-        return deduce_as_vec_space(self.element)
+        return deduce_as_vec_space(self.element, field=self.field)
+
+def containing_vec_space(vec, *, field):
+    '''
+    Return a vector space over the given field which contains vec
+    as a member.  Call the 'deduce_in_vec_space' class method on
+    'vec' if there is one.  Raise a NotImplementedError otherwise.
+    '''
+    if hasattr(vec, 'deduce_in_vec_space'):
+        vec_in_space = vec.deduce_in_vec_space(field=field)
+        # Check that vec_in_space has the right form.
+        if (not isinstance(vec_in_space, Judgment) or
+                not isinstance(vec_in_space.expr, InSet)):
+            raise TypeError("'deduce_in_vec_space' expected to "
+                            "return an InSet Judgment")
+        if vec_in_space.expr.element != vec:
+            raise ValueError("'deduce_in_vec_space' expected to "
+                             "return an InSet Judgment with "
+                             "the 'vec' as the 'element'")
+        vec_space = vec_in_space.domain
+        # Make sure we can prove vec_space is, in fact, a
+        # vector space.
+        deduce_as_vec_space(vec_space, field=field)
+        return vec_space
+    raise NotImplementedError(
+            "'containing_vec_space' is only implemented when "
+            "the element has a 'deduce_in_vec_space' method; %s "
+            "does not have such a method"%vec.__class__)    
 
 @prover
-def deduce_as_vec_space(expr, **defaults_config):
+def deduce_as_vec_space(expr, *, field=None, **defaults_config):
     '''
     Prove that the given expression is contained in class of vector
     spaces over some field.
     '''
     from proveit.logic import CartExp
+    membership = None
     if isinstance(expr, CartExp):
         '''
         For the Cartesian exponentiation of rational, real, or
@@ -218,21 +233,29 @@ def deduce_as_vec_space(expr, **defaults_config):
                 rational_cart_exp_is_vec_space, real_cart_exp_is_vec_space, 
                 complex_cart_exp_is_vec_space)
         if expr.base == Rational:
-            return rational_cart_exp_is_vec_space.instantiate(
+            membership = rational_cart_exp_is_vec_space.instantiate(
                     {n:expr.exponent})
         elif expr.base == Real:
-            return real_cart_exp_is_vec_space.instantiate({n:expr.exponent})
+            membership = real_cart_exp_is_vec_space.instantiate({n:expr.exponent})
         elif expr.base == Complex:
-            return complex_cart_exp_is_vec_space.instantiate({
+            membership = complex_cart_exp_is_vec_space.instantiate({
                     n:expr.exponent})
-        raise NotImplementedError("'deduce_as_vec_space' is not implemented "
-                                  "to handle %s"%expr)
+        else:
+            raise NotImplementedError(
+                    "'deduce_as_vec_space' is not implemented "
+                    "to handle %s"%expr)
     if hasattr(expr, 'deduce_as_vec_space'):
         # If there is a 'deduce_as_vec_space' class method for the
         # expression, try that.
         membership = expr.deduce_as_vec_space()
+    if membership is not None:
         InClass.check_proven_class_membership(
                 membership, expr, VecSpaces)
+        if field is not None and membership.domain.field != field:
+            raise ValueError("'deduce_as_vec_space' proved membership in "
+                             "vector spaces over %s, not over the requested "
+                             "%s field"%(membership.domain.field, field))
+            
         return membership
     raise NotImplementedError(
             "'deduce_as_vec_space' is only implemented when "
@@ -240,14 +263,14 @@ def deduce_as_vec_space(expr, **defaults_config):
             "'deduce_as_vec_space' method; %s "
             "does not have such a method"%expr.__class__)
 
-def containing_vec_space(subset, *, field):
+def including_vec_space(subset, *, field):
     '''
-    Return a vector space over the given field which contains
+    Return a vector space over the given field which includes
     the 'subset'.  Handles the following CartExpr cases:
         C^n contains R^n and Q^n as well as C^n
         R^n contains Q^n as well as R^n
         Q^n only contains Q^n
-    Otherwise, call the 'containing_vec_space' class method on
+    Otherwise, call the 'including_vec_space' class method on
     'subset' if there is one.  Raise a NotImplementedError if all else
     fails.
     '''
@@ -260,13 +283,13 @@ def containing_vec_space(subset, *, field):
         elif ((field == Complex and subset.base in (Rational, Real))
               or (field == Real and subset.base == Rational)):
             vec_space = CartExp(field, subset.exponent)
-    if vec_space is None and hasattr(subset, 'containing_vec_space'):
-        vec_space = subset.containing_vec_space(field)
+    if vec_space is None and hasattr(subset, 'including_vec_space'):
+        vec_space = subset.including_vec_space(field)
     if vec_space is None:
         raise NotImplementedError(
-                "'containing_vec_space' is not implemented "
+                "'including_vec_space' is not implemented "
                 "to handle %s over field %s and %s has no "
-                "'containing_vec_space' method"
+                "'including_vec_space' method"
                 %(subset, field, subset))
     # Make sure it is a vector space
     deduce_as_vec_space(vec_space)

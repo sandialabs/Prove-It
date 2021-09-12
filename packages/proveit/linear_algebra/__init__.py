@@ -1,5 +1,5 @@
 from .vector_spaces import (VecSpaces, deduce_as_vec_space,
-                            containing_vec_space)
+                            containing_vec_space, including_vec_space)
 from .addition import VecAdd, VecSum, VecZero
 from .negation import VecNeg
 from .scalar_multiplication import ScalarMult

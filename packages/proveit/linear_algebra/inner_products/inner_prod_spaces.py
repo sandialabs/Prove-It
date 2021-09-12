@@ -1,8 +1,9 @@
 from proveit import (Function, Literal, Judgment, UnsatisfiedPrerequisites,
                      prover)
-from proveit import n
+from proveit import n, K, H
 from proveit.logic import InClass, ClassMembership, InSet
-from proveit.linear_algebra.vector_spaces import VecSpaces
+from proveit.linear_algebra.vector_spaces import (
+        VecSpaces, containing_vec_space)
 
 class InnerProdSpaces(VecSpaces):
     '''
@@ -85,29 +86,20 @@ class InnerProdSpaces(VecSpaces):
             return next(VecSpaces.yield_known_inner_prod_spaces(
                     vec, field=field))
         except StopIteration:
-            # We may not know that 'vec' is in an inner product space,
+            # We may not know that 'vec' is in a vector space,
             # but we may be able to deduce it in a straightforward
             # manner provided it has a 'deduce_in_vec_space' method.
-            if hasattr(vec, 'deduce_in_vec_space'):
-                vec_in_space = vec.deduce_in_vec_space(field=field)
-                # Check that vec_in_space has the right form.
-                if (not isinstance(vec_in_space, Judgment) or
-                        not isinstance(vec_in_space.expr, InSet)):
-                    raise TypeError("'deduce_in_vec_space' expected to "
-                                    "return an InSet Judgment")
-                if vec_in_space.expr.element != vec:
-                    raise ValueError("'deduce_in_vec_space' expected to "
-                                     "return an InSet Judgment with "
-                                     "the 'vec' as the 'element'")
-                vec_space = vec_in_space.domain
+            try:
+                vec_space = containing_vec_space(vec, field=field)
                 # Make sure we can prove vec_space is an inner product
                 # space.
                 deduce_as_inner_prod_space(vec_space)
-                return vec_space
-            over_field_msg = "" if field is None else " over %s"%field
-            raise UnsatisfiedPrerequisites(
-                    "%s is not known to be in a vector space%s"
-                    %(vec, over_field_msg))
+                return vec_space                
+            except NotImplementedError:
+                over_field_msg = "" if field is None else " over %s"%field
+                raise UnsatisfiedPrerequisites(
+                        "%s is not known to be in an inner product space%s"
+                        %(vec, over_field_msg))
 
     @staticmethod
     def known_inner_prod_spaces(vecs, *, field=None):
@@ -131,13 +123,23 @@ class InnerProdSpacesMembership(ClassMembership):
     
     def side_effects(self, judgment):
         '''
-        Remember known InnnerProdSpaces memberships.
+        Prove VecSpaces membership as a side-effect and
+        remember known InnerProdSpaces memberships.
         '''
         InnerProdSpaces.known_vec_spaces_memberships.setdefault(
                 self.element, set()).add(judgment)
-        return # generator yielding nothing
-        yield
+        yield self.deduce_vec_spaces_membership
     
+    @prover
+    def derive_vec_spaces_membership(self, **defaults_config):
+        '''
+        Derive that the element is a vector space if it is an inner
+        product space.
+        '''
+        from . import inner_prod_space_is_vec_space
+        return inner_prod_space_is_vec_space.instantiate(
+                {K:self.field, H:self.element})
+        
     def conclude(self):
         '''
         Attempt to conclude this membership in a class of inner product
