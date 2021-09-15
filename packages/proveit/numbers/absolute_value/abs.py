@@ -44,12 +44,17 @@ class Abs(NumberOperation):
         '''
         from . import abs_frac, abs_prod, abs_even
         from proveit import n, x
-        from proveit.numbers import Neg, Div, Mult
+        from proveit.numbers import zero, Neg, Div, Mult
         if isinstance(self.operand, Neg):
             return abs_even.instantiate({x: self.operand.operand})
         elif isinstance(self.operand, Div):
+            # before returning, first prove that the abs value of the
+            # original denom is not zero, and thus maintain that
+            # property
+            _b = self.operand.denominator
+            Abs(_b).not_equal(zero)
             return abs_frac.instantiate(
-                {a: self.operand.numerator, b: self.operand.denominator})
+                {a: self.operand.numerator, b: _b})
         elif isinstance(self.operand, Mult):
             _x = self.operand.operands
             _n = _x.num_elements()
