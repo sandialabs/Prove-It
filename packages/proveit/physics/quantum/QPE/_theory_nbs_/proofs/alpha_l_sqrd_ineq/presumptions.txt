@@ -1,4 +1,5 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.core_expr_types.operations.operands_substitution_via_tuple
 proveit.core_expr_types.tuples.range_from1_len
 proveit.core_expr_types.tuples.range_from1_len_typical_eq
 proveit.core_expr_types.tuples.tuple_len_0_typical_eq
@@ -22,7 +23,6 @@ proveit.logic.equality.unfold_not_equals
 proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.logic.sets.inclusion.unfold_subset_eq
-proveit.logic.sets.subtraction.all_but_one_membership_unfolding
 proveit.numbers.absolute_value.abs_complex_closure
 proveit.numbers.absolute_value.abs_diff_reversal
 proveit.numbers.absolute_value.abs_even
@@ -204,10 +204,10 @@ proveit.physics.quantum.QPE.all_abs_alpha_l_sqrd_are_real
 proveit.physics.quantum.QPE.alpha_l_summed_abs
 proveit.physics.quantum.QPE.delta_is_real
 proveit.physics.quantum.QPE.delta_not_eq_scaledNonzeroInt
-proveit.physics.quantum.QPE.l_non_zero
 proveit.physics.quantum.QPE.scaled_abs_delta_diff_interval
 proveit.physics.quantum.QPE.scaled_delta_minus_l__in__real
 proveit.physics.quantum.QPE.two_pow_t_is_nat_pos
+proveit.physics.quantum.QPE.two_pow_t_minus_one_is_nat_pos
 proveit.trigonometry.complex_unit_circle_chord_length
 proveit.trigonometry.real_closure
 proveit.trigonometry.sine_linear_bound_nonneg
