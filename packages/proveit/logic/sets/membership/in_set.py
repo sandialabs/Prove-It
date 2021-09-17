@@ -101,7 +101,7 @@ class InSet(Relation):
         through if possible.
         '''
         from proveit.logic import Equals, SubsetEq
-        from proveit import ProofFailure
+        from proveit import ProofFailure, UnsatisfiedPrerequisites
         from proveit.logic import SimplificationError
 
         # See if the element, or something known to be equal to
@@ -150,7 +150,8 @@ class InSet(Relation):
             elem_simplification = self.element.simplification()
             if elem_simplification.lhs == elem_simplification.rhs:
                 elem_simplification = None  # reflection doesn't count
-        except (SimplificationError, ProofFailure):
+        except (SimplificationError, ProofFailure, NotImplementedError,
+                UnsatisfiedPrerequisites):
             pass
 
         # If the element simplification succeeded, prove the membership
