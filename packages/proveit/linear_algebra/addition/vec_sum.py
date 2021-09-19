@@ -1,5 +1,5 @@
 from proveit import defaults, Literal, Lambda, relation_prover
-from proveit import f, x, K, S, V
+from proveit import b, f, j, K, Q, V
 from proveit.abstract_algebra import GroupSum
 from proveit.linear_algebra import VecSpaces
 
@@ -38,8 +38,9 @@ class VecSum(GroupSum):
                                                       field=field)
         _V = vec_space
         _K = VecSpaces.known_field(_V)
-        _x = self.instance_var
-        _f = Lambda(self.instance_var, self.summand)
-        _S = self.domain
+        _b = self.indices
+        _j = _b.num_elements()
+        _f = Lambda(self.indices, self.summand)
+        _Q = Lambda(self.indices, self.condition)
         return summation_closure.instantiate(
-                {K:_K, f:_f, S:_S, V:_V, x:_x}).derive_consequent()
+                {j:_j, K:_K, f:_f, Q:_Q, V:_V, b:_b}).derive_consequent()

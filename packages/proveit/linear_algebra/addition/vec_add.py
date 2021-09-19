@@ -1,4 +1,4 @@
-from proveit import (Literal, ExprRange, 
+from proveit import (Literal, ExprRange, ProofFailure,
                      UnsatisfiedPrerequisites, relation_prover)
 from proveit import a, b, n, x, y, K, V
 from proveit.core_expr_types import a_1_to_n, x_1_to_n
@@ -37,9 +37,14 @@ class VecAdd(GroupAdd):
             for term in terms:
                 term_vec_spaces = set(VecSpaces.yield_known_vec_spaces(
                         term, field=field))
-                if isinstance(term, ScalarMult):
-                    term_vec_spaces.update(VecSpaces.yield_known_vec_spaces(
-                        term.scaled, field=field))
+                if hasattr(term, 'deduce_in_vec_space'):
+                    try:
+                        vec_space_membership = term.deduce_in_vec_space(
+                                field=field)
+                        term_vec_spaces.add(vec_space_membership.domain)
+                    except (UnsatisfiedPrerequisites, NotImplementedError,
+                            ProofFailure):
+                        pass
                 if candidate_vec_spaces is None:
                     candidate_vec_spaces = term_vec_spaces
                 else:
@@ -51,7 +56,7 @@ class VecAdd(GroupAdd):
                 # specified field.
                 raise UnsatisfiedPrerequisites(
                         "%s is not known to be a vector in a vector "
-                        "space over %s"%(self.scaled, field))
+                        "space over %s"%(self, field))
         all_scaled = all((isinstance(term, ScalarMult)
                           or (isinstance(term, ExprRange) and
                               isinstance(term.body, ScalarMult)))

@@ -1,4 +1,5 @@
-from .matrix_ops import MatrixMult, MatrixSpace
+from .matrix_space import MatrixSpace
+from .matrix_ops import MatrixMult
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.

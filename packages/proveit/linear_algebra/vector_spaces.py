@@ -217,11 +217,14 @@ def containing_vec_space(vec, *, field):
 @prover
 def deduce_as_vec_space(expr, *, field=None, **defaults_config):
     '''
-    Prove that the given expression is contained in class of vector
+    Prove that the given expression is contained in the class of vector
     spaces over some field.
     '''
     from proveit.logic import CartExp
     membership = None
+    if field is not None and InClass(expr, VecSpaces(field)).proven():
+        # Already known as an appropriate vector space.
+        return InClass(expr, VecSpaces(field)).prove()
     if isinstance(expr, CartExp):
         '''
         For the Cartesian exponentiation of rational, real, or
@@ -230,15 +233,15 @@ def deduce_as_vec_space(expr, *, field=None, **defaults_config):
         '''
         from proveit.numbers import Rational, Real, Complex
         from . import (
-                rational_cart_exp_is_vec_space, real_cart_exp_is_vec_space, 
-                complex_cart_exp_is_vec_space)
+                rational_vec_set_is_vec_space, real_vec_set_is_vec_space, 
+                complex_vec_set_is_vec_space)
         if expr.base == Rational:
-            membership = rational_cart_exp_is_vec_space.instantiate(
+            membership = rational_vec_set_is_vec_space.instantiate(
                     {n:expr.exponent})
         elif expr.base == Real:
-            membership = real_cart_exp_is_vec_space.instantiate({n:expr.exponent})
+            membership = real_vec_set_is_vec_space.instantiate({n:expr.exponent})
         elif expr.base == Complex:
-            membership = complex_cart_exp_is_vec_space.instantiate({
+            membership = complex_vec_set_is_vec_space.instantiate({
                     n:expr.exponent})
         else:
             raise NotImplementedError(
@@ -283,8 +286,11 @@ def including_vec_space(subset, *, field):
         elif ((field == Complex and subset.base in (Rational, Real))
               or (field == Real and subset.base == Rational)):
             vec_space = CartExp(field, subset.exponent)
+    if ((field==Complex and (subset in (Rational, Real))) or
+            (field==Real and subset==Rational)):
+        vec_space = field
     if vec_space is None and hasattr(subset, 'including_vec_space'):
-        vec_space = subset.including_vec_space(field)
+        vec_space = subset.including_vec_space(field=field)
     if vec_space is None:
         raise NotImplementedError(
                 "'including_vec_space' is not implemented "

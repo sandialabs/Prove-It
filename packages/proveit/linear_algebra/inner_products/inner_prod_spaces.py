@@ -128,7 +128,7 @@ class InnerProdSpacesMembership(ClassMembership):
         '''
         InnerProdSpaces.known_vec_spaces_memberships.setdefault(
                 self.element, set()).add(judgment)
-        yield self.deduce_vec_spaces_membership
+        yield self.derive_vec_spaces_membership
     
     @prover
     def derive_vec_spaces_membership(self, **defaults_config):
@@ -149,12 +149,16 @@ class InnerProdSpacesMembership(ClassMembership):
 
 
 @prover
-def deduce_as_inner_prod_space(expr, **defaults_config):
+def deduce_as_inner_prod_space(expr, *, field=None,
+                               **defaults_config):
     '''
     Prove that the given expression is contained in class of inner
     product spaces over some field.
     '''
     from proveit.logic import CartExp
+    if field is not None and InClass(expr, InnerProdSpaces(field)).proven():
+        # Already known as an appropriate inner product space.
+        return InClass(expr, InnerProdSpaces(field)).prove()
     if isinstance(expr, CartExp):
         '''
         For the Cartesian exponentiation of rational, real, or
@@ -163,17 +167,17 @@ def deduce_as_inner_prod_space(expr, **defaults_config):
         '''
         from proveit.numbers import Rational, Real, Complex
         from . import (
-                rational_cart_exp_is_inner_prod_space, 
-                real_cart_exp_is_inner_prod_space, 
-                complex_cart_exp_is_inner_prod_space)
+                rational_vec_set_is_inner_prod_space, 
+                real_vec_set_is_inner_prod_space, 
+                complex_vec_set_is_inner_prod_space)
         if expr.base == Rational:
-            return rational_cart_exp_is_inner_prod_space.instantiate(
+            membership = rational_vec_set_is_inner_prod_space.instantiate(
                     {n:expr.exponent})
         elif expr.base == Real:
-            return real_cart_exp_is_inner_prod_space.instantiate(
+            membership = real_vec_set_is_inner_prod_space.instantiate(
                     {n:expr.exponent})
         elif expr.base == Complex:
-            return complex_cart_exp_is_inner_prod_space.instantiate(
+            membership = complex_vec_set_is_inner_prod_space.instantiate(
                     {n:expr.exponent})
         raise NotImplementedError("'deduce_as_inner_prod_space' is not implemented "
                                   "to handle %s"%expr)
@@ -181,8 +185,15 @@ def deduce_as_inner_prod_space(expr, **defaults_config):
         # If there is a 'deduce_as_inner_prod_space' class method for
         # the expression, try that.
         membership = expr.deduce_as_inner_prod_space()
+    if membership is not None:
         InClass.check_proven_class_membership(
                 membership, expr, InnerProdSpaces)
+        if field is not None and membership.domain.field != field:
+            raise ValueError("'deduce_as_inner_prod_space' proved membership "
+                             "in inner product spaces over %s, not over "
+                             "the requested %s field"
+                             %(membership.domain.field, field))
+            
         return membership
     raise NotImplementedError(
             "'deduce_as_inner_prod_space' is only implemented when "

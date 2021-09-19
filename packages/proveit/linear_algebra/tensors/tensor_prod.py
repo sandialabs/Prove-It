@@ -52,11 +52,8 @@ class TensorProd(Operation):
             return unary_tensor_prod_def.instantiate(
                 {K:_K, V:_V, A:self.operands[0]}, preserve_all=True)
 
-        # Else simply return self=self.
-        # Establishing some minimal infrastructure
-        # for future development
-        expr = self
         # for convenience updating our equation:
+        expr = self
         eq = TransRelUpdater(expr)
         
         if TensorProd._simplification_directives_.ungroup:

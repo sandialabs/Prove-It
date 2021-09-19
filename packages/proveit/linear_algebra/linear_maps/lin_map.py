@@ -1,4 +1,5 @@
-from proveit import Operation, Function, Literal
+from proveit import Operation, Function, Literal, prover
+from proveit import K, V, W
 from proveit.logic import SetMembership
 
 class LinMap(Function):
@@ -27,6 +28,17 @@ class LinMap(Function):
 
     def membership_object(self, element):
         return LinMapMembership(element, self)
+
+    @prover
+    def deduce_as_vec_space(self, **defaults_config):
+        '''
+        Prove that this linear map is a vector space.
+        '''
+        from proveit.linear_algebra import deduce_as_vec_space
+        from . import lin_map_is_vec_space
+        _K = deduce_as_vec_space(self.from_vspace).domain.field
+        _V, _W = self.from_vspace, self.to_vspace
+        return lin_map_is_vec_space.instantiate({K:_K, V:_V, W:_W})
 
 
 class LinMapMembership(SetMembership):
