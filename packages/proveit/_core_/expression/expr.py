@@ -1426,6 +1426,13 @@ class Expression(metaclass=ExprType):
         return Equals(self, self).conclude_via_reflexivity()
 
     @classmethod
+    def simplification_directive_keys(cls, **kwargs):
+        if not hasattr(cls, '_simplification_directives_'):
+            raise AttributeError("%s has no _simplification_directives_ attribute" % cls)
+        return [key for key in cls._simplification_directives_.__dict__.keys()
+                if key[0] != '_']
+
+    @classmethod
     def temporary_simplification_directives(cls):
         '''
         Returns a context manager for temporarily setting simplification
@@ -1443,6 +1450,8 @@ class Expression(metaclass=ExprType):
         will set the 'ungroup' attribute of 
         Add._simplification_directives_ to False but will restore it
         to its previous value upon exiting the 'with' block.
+        
+        See also change_simplification_directives.
         '''
         if not hasattr(cls, '_simplification_directives_'):
             raise AttributeError("%s has no _simplification_directives_ attribute" % cls)
@@ -1452,6 +1461,26 @@ class Expression(metaclass=ExprType):
                     "The '_simplification_directives_' of an Expression "
                     "class should be of type SimplificationDirectives")
         return simplification_directives.temporary()
+    
+    @classmethod
+    def change_simplification_directives(cls, **kwargs):
+        '''
+        Change the simplification directives for a class.  This change
+        is permanent, until it is changed back.
+        
+        See also tempary_simplification_directives.
+        '''
+        if not hasattr(cls, '_simplification_directives_'):
+            raise AttributeError("%s has no _simplification_directives_ attribute" % cls)
+        for key, val in kwargs.items():
+            if key not in cls._simplification_directives_.__dict__:
+                raise KeyError("'%s' is not a simplification directive "
+                               "for %s"%(key, cls))
+            if key[0] == '_':
+                raise ValueError("Changing private data of the "
+                                 "SimplificationDirective is not "
+                                 "allowed")
+            cls._simplification_directives_.__dict__[key] = val
 
     def order_of_appearance(self, sub_expressions):
         '''
