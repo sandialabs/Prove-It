@@ -1,4 +1,5 @@
-from .algebra import Qmult, Bra, Ket, RegisterBra, RegisterKet
+from .algebra import (HilbertSpaces, Qmult, QmultCodomain, Bra, Ket, 
+                      RegisterBra, RegisterKet)
 from .quantum_ops import Meas, QubitRegisterSpace, RegisterSU
 from .circuit import Gate, Input, Output, Target
 # from .circuit import Circuit, MultiWire

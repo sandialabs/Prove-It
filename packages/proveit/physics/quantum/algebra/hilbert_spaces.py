@@ -47,7 +47,8 @@ class HilbertSpacesLiteral(Literal):
                 yield vec_space
             else:
                 try:
-                    yield deduce_as_hilbert_space(vec_space)
+                    deduce_as_hilbert_space(vec_space)
+                    yield vec_space
                 except NotImplementedError:
                     # Not known you to prove 'vec_space' is an inner
                     # product space.
@@ -100,8 +101,8 @@ class HilbertSpacesMembership(ClassMembership):
         '''
         HilbertSpacesLiteral.known_spaces_memberships.setdefault(
                 self.element, set()).add(judgment)
-        yield self.deduce_inner_prod_spaces_membership
-        yield self.deduce_vec_spaces_membership
+        yield self.derive_inner_prod_spaces_membership
+        yield self.derive_vec_spaces_membership
     
     @prover
     def derive_inner_prod_spaces_membership(self, **defaults_config):
@@ -139,17 +140,19 @@ def deduce_as_hilbert_space(expr, **defaults_config):
     spaces over some field.
     '''
     from proveit.logic import CartExp
-    from . import hilbert_space_def
+    from . import HilbertSpaces, hilbert_space_def
+    if InClass(expr, HilbertSpaces).proven():
+        # Already known as an appropriate vector space.
+        return InClass(expr, HilbertSpaces).prove()
     if isinstance(expr, CartExp):
         '''
         For the Cartesian exponentiation of rational, real, or
         complex numbers, we can deduce that it is a member of
         the class of inner product spaces over the corresponding field.
         '''
-        from proveit.linear_algebra import (
-                complex_cart_exp_is_hilbert_space)
+        from .import complex_vec_set_is_hilbert_space
         if expr.base == Complex:
-            return complex_cart_exp_is_hilbert_space.instantiate(
+            return complex_vec_set_is_hilbert_space.instantiate(
                     {n:expr.exponent})
         raise NotImplementedError(
                 "'deduce_as_hilbert_space' is not implemented "
@@ -165,7 +168,7 @@ def deduce_as_hilbert_space(expr, **defaults_config):
         # If there is a 'deduce_as_inner_prod_space' class method for
         # the expression, try that since a Hilbert space is just
         # an inner product space over the complex number field. 
-        membership = expr.deduce_as_inner_prod_space()
+        membership = expr.deduce_as_inner_prod_space(field=Complex)
         InClass.check_proven_class_membership(
                 membership, expr, InnerProdSpaces)
         if membership.domain.field == Complex:
