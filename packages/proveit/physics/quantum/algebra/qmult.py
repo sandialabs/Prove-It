@@ -81,9 +81,10 @@ class Qmult(Operation):
         (2) Ungrouping nested tensor products.
         (3) Factoring out scalars.
         '''
-        from proveit.physics.quantum import Bra, Ket, HilbertSpaces
-        from proveit.physics.quantum.algebra import (
-                Hspace, varphi, var_ket_psi)
+        from proveit.physics.quantum import (
+                Bra, Ket, HilbertSpaces,
+                varphi, var_ket_psi)
+        from proveit.physics.quantum.algebra import Hspace
         yield_known_hilbert_spaces = HilbertSpaces.yield_known_hilbert_spaces
         
         if self.operands.is_single():
@@ -148,8 +149,9 @@ class Qmult(Operation):
         '''
         Equate the Qmult to a linear map, if possible.
         '''
-        from proveit.physics.quantum import Bra, Ket, HilbertSpaces
-        from proveit.physics.quantum.algebra import Hspace, varphi
+        from proveit.physics.quantum import (
+                Bra, Ket, HilbertSpaces, varphi)
+        from proveit.physics.quantum.algebra import Hspace
         from . import qmult_of_matrix, qmult_of_bra_as_map
 
         yield_known_hilbert_spaces = HilbertSpaces.yield_known_hilbert_spaces
@@ -380,9 +382,10 @@ class QmultCodomainMembership(ClassMembership):
         Prove that the 'element' is in the QmultCodomain
         (e.g., that a Qmult is well-formed).
         '''
+        from proveit.physics.quantum import (
+                Bra, Ket, varphi, var_ket_psi, HilbertSpaces)
         from proveit.physics.quantum.algebra import (
-                HilbertSpaces, Hspace, varphi, var_ket_psi, QmultCodomain)
-        from proveit.physics.quantum import Bra, Ket
+                Hspace, QmultCodomain)
         from . import (
                 qmult_complex_in_QmultCodomain,
                 qmult_complex_left_closure, qmult_complex_right_closure,
