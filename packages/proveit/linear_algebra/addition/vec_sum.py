@@ -1,5 +1,7 @@
 from proveit import defaults, Literal, Lambda, relation_prover
-from proveit import b, f, j, K, Q, V
+from proveit import IndexedVar, ExprTuple, ExprRange
+from proveit import b, f, j, K, Q, V, k, x
+from proveit.numbers import one
 from proveit.abstract_algebra import GroupSum
 from proveit.linear_algebra import VecSpaces
 
@@ -42,5 +44,12 @@ class VecSum(GroupSum):
         _j = _b.num_elements()
         _f = Lambda(self.indices, self.summand)
         _Q = Lambda(self.indices, self.condition)
+        # Need to distinguish two cases: _j == 1 vs. _j > 1, b/c we are
+        # not allowed to construct a single-element ExprRange
+        if _j == one:
+            b_1_to_j = IndexedVar(b, one)  # we are subbing for x_1
+            _b = _b[0]                     # using a bare elem
+        else:
+            b_1_to_j = ExprTuple(ExprRange(k, IndexedVar(x, k), one, _j))
         return summation_closure.instantiate(
-                {j:_j, K:_K, f:_f, Q:_Q, V:_V, b:_b}).derive_consequent()
+                {j:_j, K:_K, f:_f, Q:_Q, V:_V, b_1_to_j:_b}).derive_consequent()
