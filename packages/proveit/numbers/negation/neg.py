@@ -232,7 +232,14 @@ class Neg(NumberOperation):
                 thm = pos_times_neg
             else:
                 thm = neg_times_pos
-        if hasattr(self.operand, 'factorization'):
+        if self.operand == the_factor:
+            if thm == neg_times_pos:
+                thm = mult_neg_one_left
+            if thm == pos_times_neg:
+                thm = mult_neg_one_right
+            return thm.instantiate(
+                {x: self.operand}, auto_simplify=False).derive_reversed()
+        elif hasattr(self.operand, 'factorization'):
             operand_factor_eqn = self.operand.factorization(
                 the_factor, pull, group_factor=True, group_remainder=True,
                 preserve_all=True)
@@ -244,14 +251,7 @@ class Neg(NumberOperation):
                 ).derive_reversed()
             return eqn1.apply_transitivity(eqn2)
         else:
-            if self.operand != the_factor:
-                raise ValueError("%s is not a factor in %s!" % (the_factor, self))
-            if thm == neg_times_pos:
-                thm = mult_neg_one_left
-            if thm == pos_times_neg:
-                thm = mult_neg_one_right
-            return thm.instantiate(
-                {x: self.operand}, auto_simplify=False).derive_reversed()
+            raise ValueError("%s is not a factor in %s!" % (the_factor, self))
 
     @equality_prover('inner_neg_mult_simplified',
                         'inner_neg_mult_simplify')
