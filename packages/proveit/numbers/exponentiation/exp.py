@@ -427,6 +427,9 @@ class Exp(NumberOperation):
     """
 
     # we have renamed raise_exp_factor to factorization() !!!
+    # perhaps re-rename this to avoid factorization() interactions
+    # due to recursive calls to factorization() (because this is NOT
+    # multiplicative factorization!)
     @equality_prover('factorized', 'factor')
     def factorization(self, exp_factor, **defaults_config):
         # Note: this is out-of-date.  Distribution handles this now,
