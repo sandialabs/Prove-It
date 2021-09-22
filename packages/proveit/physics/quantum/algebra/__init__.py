@@ -1,4 +1,4 @@
-from .bra_ket import Bra, Ket, RegisterBra, RegisterKet
+from .bra_ket import Bra, Ket, NumBra, NumKet
 from .qmult import Qmult
 import proveit
 
@@ -13,4 +13,6 @@ sys.modules[__name__] = TheoryPackage(__name__, __file__, locals())
 
 if proveit.defaults.automation:
     # Import some fundamental theorems without quantifiers
-    from . import complex_set_is_hilbert_space
+    from . import (complex_set_is_hilbert_space,
+                   ket_zero_in_qubit_space,
+                   ket_one_in_qubit_space)

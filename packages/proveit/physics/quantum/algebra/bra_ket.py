@@ -1,4 +1,7 @@
 from proveit import Function, Literal, equality_prover
+from proveit import x
+from proveit.numbers import one
+from proveit.relation import TransRelUpdater
 
 class Bra(Function):
     '''
@@ -58,19 +61,21 @@ class Ket(Function):
             return (left_str
                     + self.label.formatted(format_type, fence=False)
                     + u'\u232A')
-
-class RegisterBra(Function):
+    
+class NumBra(Function):
     '''
-    Class to represent a Dirac bra vector that acknowledges the
-    size of the register. Intended params are not quite clear ...
+    Class to represent a Dirac bra vector in a computational-basis 
+    state (i.e., a Classical state) as the binary representation of 
+    its 'num' operand in the number of bits specified by the 'size'
+    operand.
     '''
-    # the literal operator of the RegisterBra operation
-    _operator_ = Literal(string_format='REGISTER_BRA', theory=__file__)
+    # the literal operator of the NumBra operation
+    _operator_ = Literal(string_format='NUM_BRA', theory=__file__)
 
-    def __init__(self, label, size, *, styles=None):
-        Function.__init__(self, RegisterBra._operator_, (label, size),
+    def __init__(self, num, size, *, styles=None):
+        Function.__init__(self, NumBra._operator_, (num, size),
                           styles=styles)
-        self.label = self.operands[0]   # value
+        self.num = self.operands[0]   # value
         self.size = self.operands[1]   # size of the register
 
     def _config_latex_tool(self, lt):
@@ -86,7 +91,7 @@ class RegisterBra(Function):
         return self.formatted('latex', **kwargs)
     
     def formatted(self, format_type, fence=False):
-        formatted_label = self.label.formatted(format_type, fence=False)
+        formatted_label = self.num.formatted(format_type, fence=False)
         formatted_size = self.size.formatted(format_type, fence=False)
         if format_type == 'latex':
             # can't seem to get the \prescript latex to work, so using
@@ -102,18 +107,20 @@ class RegisterBra(Function):
                 u'\u2329' + formatted_label + '|'
 
 
-class RegisterKet(Function):
+class NumKet(Function):
     '''
-    Class to represent a Dirac ket vector that acknowledges the
-    size of the register on which it is defined.
+    Class to represent a Dirac ket vector in a computational-basis 
+    state (i.e., a Classical state) as the binary representation of 
+    its 'num' operand in the number of bits specified by the 'size'
+    operand.
     '''
     # the literal operator of the RegisterKet operation
-    _operator_ = Literal(string_format='REGISTER_KET', theory=__file__)
+    _operator_ = Literal(string_format='NUM_KET', theory=__file__)
 
-    def __init__(self, label, size, *, styles=None):
-        Function.__init__(self, RegisterKet._operator_, (label, size),
+    def __init__(self, num, size, *, styles=None):
+        Function.__init__(self, NumKet._operator_, (num, size),
                           styles=styles)
-        self.label = self.operands[0]   # value for the ket
+        self.num = self.operands[0]   # value for the ket
         self.size = self.operands[1]   # size of the register
 
     def string(self, **kwargs):
@@ -123,7 +130,7 @@ class RegisterKet(Function):
         return self.formatted('latex', **kwargs)
     
     def formatted(self, format_type, fence=False, no_lvert=False):
-        formatted_label = self.label.formatted(format_type, fence=False)
+        formatted_label = self.num.formatted(format_type, fence=False)
         formatted_size = self.size.formatted(format_type, fence=False)
         left_str = r'\lvert ' if format_type == 'latex' else '|'
         if no_lvert:
@@ -161,3 +168,7 @@ class RegisterKet(Function):
         eq = TransRelUpdater(expr)
         # Future processing possible here.
         return eq.relation
+
+    def deduce_in_vec_space(self, vec_space=None, *, field,
+                            **defaults_config):
+        pass # TODO
