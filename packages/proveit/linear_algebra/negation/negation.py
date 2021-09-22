@@ -10,7 +10,7 @@ class VecNeg(Operation):
     _operator_ = Literal(string_format='-', theory=__file__)
     
     def __init__(self, *operands, styles=None):
-        Operation.__init__(self, operands, styles=styles)
+        Operation.__init__(self, VecNeg._operator_, operands, styles=styles)
 
     def string(self, **kwargs):
         return Neg.string(self, **kwargs)
