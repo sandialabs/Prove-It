@@ -689,7 +689,7 @@ class ExprTuple(Composite, Expression):
         raise NotImplementedError("ExprTuple.deduce_equality not implemented "
                                   "for this case: %s." % self)
     
-    @equality_prover("expanded_range", "expand_range")
+    @equality_prover('expanded_range', 'expand_range')
     def range_expansion(self, **defaults_config):
         '''
         For self an ExprTuple with a single entry that is an ExprRange
