@@ -254,15 +254,18 @@ class Implies(TransitiveRelation):
     @prover
     def apply_transitivity(self, other_impl, **defaults_config):
         '''
-        From A => B (self) and a given B => C (other_impl), derive and return A => C.
+        From A => B (self) and a given B => C (other_impl), 
+        derive and return A => C.
         '''
         from . import implication_transitivity
         if self.consequent == other_impl.antecedent:
             return implication_transitivity.instantiate(
-                {A: self.antecedent, B: self.consequent, C: other_impl.consequent})
+                {A: self.antecedent, B: self.consequent, 
+                 C: other_impl.consequent}, preserve_all=True)
         elif self.antecedent == other_impl.consequent:
             return implication_transitivity.instantiate(
-                {A: other_impl.antecedent, B: self.antecedent, C: self.consequent})
+                {A: other_impl.antecedent, B: self.antecedent, 
+                 C: self.consequent}, preserve_all=True)
 
     @prover
     def derive_via_contradiction(self, **defaults_config):

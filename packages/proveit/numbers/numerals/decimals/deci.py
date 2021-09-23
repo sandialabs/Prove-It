@@ -1,6 +1,7 @@
 from proveit import (Literal, USE_DEFAULTS, Operation, ExprRange, defaults,
                      prover, relation_prover, equality_prover)
 from proveit import a, b, c, d, k, m, n, x
+from proveit.logic import is_irreducible_value
 from proveit.numbers.number_sets.number_set import NumberSet, NumberMembership
 from proveit.numbers.numerals.numeral import NumeralSequence, Numeral
 from proveit.numbers.numerals import zero, one, two, three, four, five, six, seven, eight, nine
@@ -8,14 +9,14 @@ DIGITS = [zero, one, two, three, four, five, six, seven, eight, nine]
 
 
 class DecimalSequence(NumeralSequence):
-    # operator of the WholeDecimal operation.
+    # operator of the DecimalSequence operation.
     _operator_ = Literal(string_format='Decimal', theory=__file__)
 
     def __init__(self, *digits, styles=None):
         NumeralSequence.__init__(self, DecimalSequence._operator_, *digits,
                                  styles=styles)
         for digit in self.digits:
-            if isinstance(digit, Literal) and digit not in DIGITS:
+            if is_irreducible_value(digit) and digit not in DIGITS:
                 raise Exception(
                     'A DecimalSequence may only be composed of 0-9 digits')
 
@@ -36,7 +37,10 @@ class DecimalSequence(NumeralSequence):
                 return self.digit_repetition_reduction()
 
     def as_int(self):
-        return int(self.formatted('string'))
+        if all(digit in DIGITS for digit in self.digits):
+            return eval(self.formatted('string'))
+        raise ValueError("Cannot convert %s to an integer; its digits "
+                         "are not all irreducible")
 
     @relation_prover
     def deduce_in_number_set(self, number_set, **defaults_config):
@@ -264,35 +268,6 @@ class DecimalSequence(NumeralSequence):
         return eq.relation
     '''
 
-    def _formatted(self, format_type, operator=None, **kwargs):
-        from proveit import ExprRange
-        outstr = ''
-        fence = False
-        if operator is None:
-            operator = ' ~ '
-        if (self.digits.is_single() or 
-                not all(isinstance(digit, Numeral) for 
-                        digit in self.digits)):
-            outstr += r'\# ('
-            fence = True
-        for i, digit in enumerate(self.digits):
-            if i != 0 and fence:
-                add = operator
-            else:
-                add = ''
-            if isinstance(digit, Operation):
-                outstr += add + digit.formatted(format_type, fence=True)
-            elif isinstance(digit, ExprRange):
-                outstr += add + digit.formatted(format_type, operator=operator)
-            else:
-                outstr += add + digit.formatted(format_type)
-        if fence:
-            outstr += r')'
-        return outstr
-
-    def _function_formatted(self, format_type, **kwargs):
-        return self._formatted(format_type, **kwargs)
-
 
 class DigitSet(NumberSet):
     def __init__(self, *, styles=None):
@@ -300,12 +275,14 @@ class DigitSet(NumberSet):
             self, 'Digits', r'\mathbb{N}^{\leq 9}',
             theory=__file__, styles=styles)
 
-    def deduce_member_lower_bound(self, member, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_member_lower_bound(self, member, **defaults_config):
         from . import digits_lower_bound
         return digits_lower_bound.instantiate(
             {n: member}, assumptions=assumptions)
 
-    def deduce_member_upper_bound(self, member, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_member_upper_bound(self, member, **defaults_config):
         from . import digits_upper_bound
         return digits_upper_bound.instantiate(
             {n: member}, assumptions=assumptions)

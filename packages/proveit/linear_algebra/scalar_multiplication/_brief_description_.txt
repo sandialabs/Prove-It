@@ -1,0 +1,1 @@
+scalar multiplication of vectors

@@ -1,5 +1,5 @@
 from proveit import Literal, ProofFailure, defaults, prover
-from proveit.logic import Equals, InSet, Membership
+from proveit.logic import Equals, InSet, SetMembership
 
 
 class NumberSet(Literal):
@@ -19,10 +19,28 @@ class NumberSet(Literal):
         return
         yield
 
+    @property
+    def plus_operator(self):
+        '''
+        Add._operator_ is the default plus operation for number sets
+        (e.g., as groups or fields).
+        '''
+        from proveit.numbers import Add
+        return Add._operator_
 
-class NumberMembership(Membership):
+    @property
+    def times_operator(self):
+        '''
+        Mult._operator_ is the default times operation for number sets
+        (e.g., as fields or rings).
+        '''
+        from proveit.numbers import Mult
+        return Mult._operator_
+
+
+class NumberMembership(SetMembership):
     def __init__(self, element, number_set):
-        Membership.__init__(self, element, number_set)
+        SetMembership.__init__(self, element, number_set)
         self.number_set = number_set
 
     def side_effects(self, judgment):

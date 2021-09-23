@@ -1,83 +1,33 @@
 from proveit import (Literal, defaults, USE_DEFAULTS,
                      prover, equality_prover, relation_prover)
 from proveit.relation import Relation
+from proveit.logic.classes import InClass, ClassMembership
 
-class InSet(Relation):
+class InSet(InClass):
+    '''
+    Set membership is a special case of class membership, so we'll
+    derive from InClass for code re-use.  The operators are distinct
+    (though the formatting is the same).
+    '''
     # operator of the InSet operation
-    _operator_ = Literal(string_format='in',
-                         latex_format=r'\in',
+    _operator_ = Literal(string_format='in', latex_format=r'\in',
                          theory=__file__)
 
-    # maps elements to InSet Judgments.
-    # For example, map x to (x in S) if (x in S) is a Judgment.
-    known_memberships = dict()
-    
     # map (element, domain) pairs to corresponding InSet expressions
     inset_expressions = dict()
 
     def __init__(self, element, domain, *, styles=None):
-        Relation.__init__(self, InSet._operator_, element, domain,
-                          styles=styles)
-        self.element = self.operands[0]
-        self.domain = self.operands[1]
-        InSet.inset_expressions[(self.element, self.domain)] = self
-        if hasattr(self.domain, 'membership_object'):
-            self.membership_object = self.domain.membership_object(element)
-            if not isinstance(self.membership_object, Membership):
-                raise TypeError(
-                    "The 'membership_object' of %s is a %s which "
-                    "is not derived from %s as it should be." %
-                    (self.domain, self.membership_object.__class__, Membership))
+        InSet.inset_expressions[(element, domain)] = self
+        InClass.__init__(self, element, domain, operator=InSet._operator_,
+                         styles=styles)
 
-    def __dir__(self):
+    def negated(self):
         '''
-        If the domain has a 'membership_object' method, include
-        methods from the object it generates.
+        Return the negated membership expression,
+        element not in domain.
         '''
-        if 'membership_object' in self.__dict__:
-            return sorted(set(list(self.__dict__.keys()) +
-                              dir(self.membership_object)))
-        else:
-            return sorted(self.__dict__.keys())
-
-    def __getattr__(self, attr):
-        '''
-        If the domain has a 'membership_object' method, include
-        methods from the object it generates.
-        '''
-        if attr in ('lhs', 'rhs'):
-            return Relation.__getattr__(self, attr)
-        if 'membership_object' in self.__dict__:
-            return getattr(self.membership_object, attr)
-        raise AttributeError
-
-    @staticmethod
-    def reversed_operator_str(formatType):
-        '''
-        Reversing \in gives \ni.  Reversing "in" gives "contains".
-        '''
-        if formatType=='latex':
-            return '\ni'
-        else:
-            return 'contains'
-
-    def side_effects(self, judgment):
-        '''
-        Store the proven membership in known_memberships.
-        If the domain has a 'membership_object' method, side effects
-        will also be generated from the 'side_effects' object that it
-        generates.
-        '''
-        InSet.known_memberships.setdefault(self.element, set()).add(judgment)
-        if hasattr(self, 'membership_object'):
-            for side_effect in self.membership_object.side_effects(judgment):
-                yield side_effect
-
-    def negation_side_effects(self, judgment):
-        '''
-        Fold Not(x in S) as (x not-in S) as an automatic side-effect.
-        '''
-        yield self.deduce_not_in
+        from not_in_set import NotInSet
+        return NotInSet(self.element, self.domain)
 
     @prover
     def deduce_not_in(self, **defaults_config):
@@ -90,14 +40,14 @@ class InSet(Relation):
     @prover
     def conclude(self, **defaults_config):
         '''
-        Attempt to conclude that the element is in the domain.  First, 
+        Attempt to conclude that the element is in the domain.  First,
         see if it is known to be contained in a known subset of the
-        domain.  Next, check if the element has a known simplification; 
+        domain.  Next, check if the element has a known simplification;
         if so, try to derive membership via this simplification.
         If there isn't a known simplification, next try to call
         the 'self.domain.membership_object.conclude(..)' method to prove
         the membership.  If that fails, try simplifying the element
-        again, this time using automation to push the simplification 
+        again, this time using automation to push the simplification
         through if possible.
         '''
         from proveit.logic import Equals, SubsetEq
@@ -168,99 +118,15 @@ class InSet(Relation):
             if hasattr(self, 'membership_object'):
                 return self.membership_object.conclude()
 
-            raise ProofFailure(self, defaults.assumptions,
-                               "Unable to conclude automatically; "
-                               "the domain, %s, has no 'membership_object' "
-                               "method with a strategy for proving "
-                               "membership." % self.domain)
-    
-    @staticmethod
-    def yield_known_memberships(element, assumptions=USE_DEFAULTS):
-        '''
-        Yield the known memberships of the given element applicable
-        under the given assumptions.
-        '''
-        assumptions = defaults.checked_assumptions(assumptions)       
-        if element in InSet.known_memberships:
-            for known_membership in InSet.known_memberships[element]:
-                if known_membership.is_applicable(assumptions):
-                    yield known_membership
-
-    @equality_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, *, must_evaluate=False,
-                               **defaults_config):
-        '''
-        Attempt to evaluate whether some x ∊ S is TRUE or FALSE
-        using the 'definition' method of the domain's 
-        'membership_object' if there is one.
-        '''
-        from proveit.logic import TRUE, NotInSet, EvaluationError
-        # try a 'definition' method (via the membership object)
-        if not hasattr(self, 'membership_object'):
-            # Don't know what to do otherwise.
-            return Relation.shallow_simplification(
-                    self, must_evaluate=must_evaluate)
-        try:
-            definition = self.membership_object.definition()
-        except NotImplementedError:
-            # Don't know what to do otherwise.
-            return Relation.shallow_simplification(
-                    self, must_evaluate=must_evaluate)
-        try:
-            rhs_eval = definition.rhs.evaluation(automation=must_evaluate)
-        except EvaluationError as e:
-            if must_evaluate:
-                raise e
-            return Relation.shallow_simplification(self)
-        evaluation = definition.apply_transitivity(rhs_eval)
-        
-        # Try also to evaluate this by deducing membership
-        # or non-membership in case it generates a shorter proof.
-        try:
-            if evaluation.rhs == TRUE:
-                self.membership_object.conclude()
-            else:
-                not_in_domain = NotInSet(self.element, self.domain)
-                if hasattr(not_in_domain, 'nonmembership_object'):
-                    not_in_domain.nonmembership_object.conclude()
-        except BaseException:
-            pass
-        return evaluation
-
-
-class Membership:
+class SetMembership(ClassMembership):
     def __init__(self, element, domain):
         '''
         Base class for any 'membership object' returned by a domain's
         'membership_object' method.
         '''
-        self.element = element
-        self.domain = domain
         # The expression represented by this Membership.
-        if (self.element, self.domain) in InSet.inset_expressions:
-            self.expr = InSet.inset_expressions[(self.element, self.domain)]
+        if (element, domain) in InSet.inset_expressions:
+            expr = InSet.inset_expressions[(element, domain)]
         else:
-            self.expr = InSet(self.element, self.domain)
-
-    def side_effects(self, judgment):
-        raise NotImplementedError(
-            "Membership object, %s, has no 'side_effects' method implemented" % str(
-                self.__class__))
-
-    @prover
-    def conclude(self, **defaults_config):
-        raise NotImplementedError(
-            "Membership object, %s, has no 'conclude' method implemented" % str(
-                self.__class__))
-
-    @equality_prover('defined', 'define')
-    def definition(self, **defaults_config):
-        raise NotImplementedError(
-            "Membership object, %s, has no 'definition' method implemented" % str(
-                self.__class__))
-
-    @relation_prover
-    def deduce_in_bool(self, **defaults_config):
-        raise NotImplementedError(
-            "Membership object, %s, has no 'deduce_in_bool' method implemented" % str(
-                self.__class__))
+            expr = InSet(element, domain)
+        ClassMembership.__init__(self, element, domain, expr=expr)

@@ -183,17 +183,21 @@ class Less(NumberOrderingRelation):
         elif other.lower == self.upper:
             if isinstance(other, Less):
                 new_rel = transitivity_less_less.instantiate(
-                    {x: self.lower, y: self.upper, z: other.upper})
+                    {x: self.lower, y: self.upper, z: other.upper},
+                    preserve_all=True)
             elif isinstance(other, LessEq):
                 new_rel = transitivity_less_less_eq.instantiate(
-                    {x: self.lower, y: self.upper, z: other.upper})
+                    {x: self.lower, y: self.upper, z: other.upper},
+                    preserve_all=True)
         elif other.upper == self.lower:
             if isinstance(other, Less):
                 new_rel = transitivity_less_less.instantiate(
-                    {x: other.lower, y: self.lower, z: self.upper})
+                    {x: other.lower, y: self.lower, z: self.upper},
+                    preserve_all=True)
             elif isinstance(other, LessEq):
                 new_rel = transitivity_less_eq_less.instantiate(
-                    {x: other.lower, y: self.lower, z: self.upper})
+                    {x: other.lower, y: self.lower, z: self.upper},
+                    preserve_all=True)
         else:
             raise ValueError(
                 "Cannot perform transitivity with %s and %s!" %

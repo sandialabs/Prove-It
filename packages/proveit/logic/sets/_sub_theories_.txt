@@ -7,5 +7,6 @@ intersection
 subtraction
 comprehension
 power_set
+cartesian_products
 disjointness
 cardinality

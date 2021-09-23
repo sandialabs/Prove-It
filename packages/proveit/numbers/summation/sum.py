@@ -4,7 +4,7 @@ from proveit import (Literal, Lambda, Function, Operation,
                      ProofFailure, defaults,
                      prover, relation_prover, equality_prover,
                      UnsatisfiedPrerequisites)
-from proveit import a, b, c, f, i, j, k, l, m, x, P, Q, S
+from proveit import a, b, c, f, i, j, k, l, m, x, Q, S
 from proveit.logic import Forall, InSet
 from proveit.numbers import one, Add, Neg, subtract
 from proveit.numbers import (Complex, Integer, Interval, Natural,
@@ -65,8 +65,8 @@ class Sum(OperationOverInstances):
                        summation_int_closure, summation_real_closure,
                        summation_complex_closure)
         _x = self.instance_param
-        P_op, _P_op = Function(P, _x), self.instance_expr
-        Q_op, _Q_op = Function(Q, _x), self.condition
+        _f = Lambda(_x, self.instance_expr)
+        _Q = Lambda(_x, self.condition)
 
         if number_set == Natural:
             thm = summation_nat_closure
@@ -83,7 +83,7 @@ class Sum(OperationOverInstances):
                 "'Sum.deduce_in_number_set' not implemented for the %s set"
                 % str(number_set))
         impl = thm.instantiate(
-            { x: _x, P_op: _P_op, Q_op: _Q_op}, preserve_all=True)
+            { x: _x, f: _f, Q: _Q}, preserve_all=True)
         antecedent = impl.antecedent
         if not antecedent.proven():
             # Conclude the antecedent via generalization.
@@ -110,7 +110,8 @@ class Sum(OperationOverInstances):
             formatted_inner += self.summand.formatted(format_type, fence=True)
             return maybe_fenced(format_type, formatted_inner, fence=fence)
         else:
-            return OperationOverInstances._formatted(self, format_type, fence)
+            return OperationOverInstances._formatted(self, format_type, 
+                                                     fence=fence)
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
@@ -602,11 +603,11 @@ class Sum(OperationOverInstances):
         _i = _a.num_elements()
         _j = _b.num_elements()
         _k = _c.num_elements()
-        _P = Lambda(expr.instance_params, summand_remainder)
+        _f = Lambda(expr.instance_params, summand_remainder)
         _Q = Lambda(expr.instance_params, expr.condition)
         b_1_to_j = ExprTuple(var_range(b, one, _j))
         _impl = distribute_through_summation.instantiate(
-                {i: _i, j: _j, k: _k, P:_P, Q:_Q, b_1_to_j:_b},
+                {i: _i, j: _j, k: _k, f:_f, Q:_Q, b_1_to_j:_b},
                 preserve_all=True)
         quantified_eq = _impl.derive_consequent()
         if hasattr(self, 'index'):

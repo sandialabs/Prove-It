@@ -1,16 +1,16 @@
 from proveit import USE_DEFAULTS, equality_prover, prover
-from proveit.logic import Membership, Nonmembership
+from proveit.logic import SetMembership, SetNonmembership
 from proveit.numbers import num
 from proveit import m, A, x
 
 
-class UnionMembership(Membership):
+class UnionMembership(SetMembership):
     '''
     Defines methods that apply to membership in a union of sets.
     '''
 
     def __init__(self, element, domain):
-        Membership.__init__(self, element, domain)
+        SetMembership.__init__(self, element, domain)
 
     def side_effects(self, judgment):
         '''
@@ -64,13 +64,13 @@ class UnionMembership(Membership):
         return membership_folding.instantiate({m: _m, x: element, A: _A})
 
 
-class UnionNonmembership(Nonmembership):
+class UnionNonmembership(SetNonmembership):
     '''
     Defines methods that apply to non-membership in a union of sets.
     '''
 
     def __init__(self, element, domain):
-        Nonmembership.__init__(self, element, domain)
+        SetNonmembership.__init__(self, element, domain)
 
     def side_effects(self, judgment):
         '''

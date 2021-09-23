@@ -28,7 +28,6 @@ proveit.logic.sets.inclusion.inclusive_universal_quantification
 proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.logic.sets.inclusion.unfold_subset_eq
-proveit.numbers.absolute_value.abs_non_neg_elim
 proveit.numbers.addition.add_complex_closure_bin
 proveit.numbers.addition.add_int_closure_bin
 proveit.numbers.addition.add_nat_closure_bin
@@ -47,7 +46,7 @@ proveit.numbers.addition.subtraction.subtract_from_add_reversed
 proveit.numbers.addition.subtraction.subtraction_disassociation
 proveit.numbers.exponentiation.add_one_left_in_exp
 proveit.numbers.modular.full_modular_range_equiv_left_shift
-proveit.numbers.modular.mod_in_interval
+proveit.numbers.modular.mod_natpos_in_interval
 proveit.numbers.multiplication.elim_one_left
 proveit.numbers.multiplication.mult_def_rev
 proveit.numbers.multiplication.mult_neg_left

@@ -144,7 +144,8 @@ class Iff(TransitiveRelation):
         if self.B == other_iff.A:
             # from A <=> B, B <=> C, derive A <=> C
             return iff_transitivity.instantiate(
-                {A: self.A, B: self.B, C: other_iff.B})
+                {A: self.A, B: self.B, C: other_iff.B},
+                preserve_all=True)
         elif self.A == other_iff.A:
             # from y = x and y = z, derive x = z
             return self.derive_reversed().apply_transitivity(other_iff)

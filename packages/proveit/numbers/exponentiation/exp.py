@@ -1,13 +1,12 @@
 from proveit import (Literal, Function, ExprTuple, InnerExpr, ProofFailure,
                      maybe_fenced_string, USE_DEFAULTS, defaults,
                      StyleOptions, prover, equality_prover, relation_prover)
-from proveit.logic import InSet, Membership
 import proveit
 from proveit import a, b, c, k, m, n, x, S
 from proveit import (defaults, Literal, Function, ExprTuple, InnerExpr,
                      ProofFailure, maybe_fenced_string, USE_DEFAULTS,
                      StyleOptions)
-from proveit.logic import InSet, Membership, NotEquals
+from proveit.logic import InSet, SetMembership, NotEquals
 from proveit.numbers import zero, one, two, Div, frac, num, Real
 from proveit.numbers import Integer, NumberOperation
 
@@ -168,7 +167,7 @@ class Exp(NumberOperation):
             expr = self
             eq = TransRelUpdater(expr)
             expr = eq.update(exp_nat_pos_expansion.instantiate(
-                    {x:self.base, n:self.exponent}))
+                    {x:self.base, n:self.exponent}, preserve_all=True))
             # We should come up with a better way of reducing
             # ExprRanges representing repetitions:
             _n = self.exponent.as_int()
@@ -635,13 +634,13 @@ class Exp(NumberOperation):
             % str(number_set))
 
 
-class ExpSetMembership(Membership):
+class ExpSetMembership(SetMembership):
     '''
     Defines methods that apply to membership in an exponentiated set.
     '''
 
     def __init__(self, element, domain):
-        Membership.__init__(self, element, domain)
+        SetMembership.__init__(self, element, domain)
         self.domain = domain
 
     @prover

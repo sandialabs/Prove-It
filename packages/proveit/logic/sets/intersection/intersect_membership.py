@@ -1,16 +1,16 @@
 from proveit import USE_DEFAULTS, equality_prover, prover
-from proveit.logic import Membership, Nonmembership
+from proveit.logic import SetMembership, SetNonmembership
 from proveit.numbers import num
 from proveit import m, x, A
 
 
-class IntersectMembership(Membership):
+class IntersectMembership(SetMembership):
     '''
     Defines methods that apply to membership in an intersection of sets.
     '''
 
     def __init__(self, element, domain):
-        Membership.__init__(self, element, domain)
+        SetMembership.__init__(self, element, domain)
 
     def side_effects(self, judgment):
         '''
@@ -67,13 +67,13 @@ class IntersectMembership(Membership):
             {m: _m, x: element, A: _A})
 
 
-class IntersectNonmembership(Nonmembership):
+class IntersectNonmembership(SetNonmembership):
     '''
     Defines methods that apply to non-membership in an intersection of sets.
     '''
 
     def __init__(self, element, domain):
-        Nonmembership.__init__(self, element, domain)
+        SetNonmembership.__init__(self, element, domain)
 
     def side_effects(self, judgment):
         '''

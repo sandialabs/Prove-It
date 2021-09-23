@@ -235,7 +235,9 @@ class Equals(TransitiveRelation):
         rhs_inner_gen = InnerExprGenerator(self.rhs)
         lambda_body = self.lhs
         lambda_parameters = []
-        equalities = []
+        # Equating all entries (elements and ranges).
+        all_equalities_lhs = []
+        all_equalities_rhs = []
         replacements = []
         while True:
             try:
@@ -268,28 +270,29 @@ class Equals(TransitiveRelation):
                 # skip over this entire branch.
                 lhs_inner_gen.skip_over_branch()
                 rhs_inner_gen.skip_over_branch()
-            elif (not isinstance(lhs_sub_expr, ExprRange) and
-                  not isinstance(rhs_sub_expr, ExprRange) and
-                  Equals(lhs_sub_expr, rhs_sub_expr).proven(assumptions)):
+                continue
+            if (not isinstance(lhs_sub_expr, ExprRange) and
+                not isinstance(lhs_sub_expr, ExprRange) and
+                    Equals(lhs_sub_expr, rhs_sub_expr).proven(assumptions)):
                 # These sub-expressions are known to be equal,
                 # so let's replace the corresponding location
                 # with a lambda parameter for our lambda expression.
-                equality = Equals(lhs_sub_expr, rhs_sub_expr)
                 # Create the InnerExpr for the lambda_body for
                 # the current inner expression path and use this
                 # to create the new lambda_body and extend the
                 # parameters.
+                equality = Equals(lhs_sub_expr, rhs_sub_expr)
                 lambda_body_inner_expr = InnerExpr(
                         lambda_body, inner_expr_path=inner_expr_path)
                 params = free_vars(equality,
                                    err_inclusively=True).intersection(
                         lambda_body_inner_expr.parameters)
-                equality = equality.prove(assumptions=assumptions)
                 
                 # If any assumptions are required that are introduced
                 # by inner conditions, we need to equate Conditionals.
                 inner_conditions = set(next_inner_lhs.conditions)
                 conditions = []
+                equality = equality.prove(assumptions=assumptions)
                 for assumption in equality.assumptions:
                     if assumption in inner_conditions:
                         conditions.append(assumption)
@@ -310,7 +313,6 @@ class Equals(TransitiveRelation):
                     # parameters.
                     # Generalize the equality over the parameters
                     # with appropriate conditions.
-                    equality = equality.prove(assumptions=assumptions)
                     universal_eq = equality.generalize(params, 
                                                        conditions=conditions)
                     lhs_lambda = Lambda(params, lhs_sub_expr)
@@ -325,7 +327,8 @@ class Equals(TransitiveRelation):
                 # We can skip over this branch now.
                 lhs_inner_gen.skip_over_branch()
                 rhs_inner_gen.skip_over_branch()
-                equalities.append(equality)                
+                all_equalities_lhs.append(equality.lhs)
+                all_equalities_rhs.append(equality.rhs)
             else:
                 # These sub-expressions are different. They could
                 # have known equalities at a deeper level, but let's
@@ -337,16 +340,18 @@ class Equals(TransitiveRelation):
         
         # Make the lambda map to use for substitutions.
         lambda_map = Lambda(lambda_parameters, lambda_body)
-        if len(equalities) > 1:
-            from proveit.core_expr_types.tuples import tuple_eq_via_elem_eq
-            tuple_eq = Equals(ExprTuple(*[_eq.lhs for _eq in equalities]),
-                              ExprTuple(*[_eq.rhs for _eq in equalities]))
-            return tuple_eq.substitution(
-                    lambda_map, replacements=replacements)
-        else:
-            return equalities[0].substitution(lambda_map,
+        if (len(all_equalities_lhs)==1 and 
+                not isinstance(all_equalities_lhs[0], ExprRange)):
+            # Just one, basic equality which we already know.
+            return equality.substitution(lambda_map,
                              replacements=replacements)
-        
+        else:
+            # Multi-operand substitution.
+            from proveit.core_expr_types.tuples import tuple_eq_via_elem_eq
+            tuple_eq = Equals(ExprTuple(*all_equalities_lhs),
+                              ExprTuple(*all_equalities_rhs))
+            return tuple_eq.substitution(
+                    lambda_map, replacements=replacements)        
     
     """
     Abandoning, but keeping a stub in case we want to revisit this:
@@ -496,23 +501,26 @@ class Equals(TransitiveRelation):
         # because it is derived as a side-effect.
         if self.rhs == other_equality.lhs:
             return equals_transitivity.instantiate(
-                {x: self.lhs, y: self.rhs, z: other_equality.rhs})
+                {x: self.lhs, y: self.rhs, z: other_equality.rhs},
+                preserve_all=True)
         elif self.rhs == other_equality.rhs:
             return equals_transitivity.instantiate(
-                {x: self.lhs, y: self.rhs, z: other_equality.lhs})
+                {x: self.lhs, y: self.rhs, z: other_equality.lhs},
+                preserve_all=True)
         elif self.lhs == other_equality.lhs:
             return equals_transitivity.instantiate(
-                {x: self.rhs, y: self.lhs, z: other_equality.rhs})
+                {x: self.rhs, y: self.lhs, z: other_equality.rhs},
+                preserve_all=True)
         elif self.lhs == other_equality.rhs:
             return equals_transitivity.instantiate(
-                {x: self.rhs, y: self.lhs, z: other_equality.lhs})
+                {x: self.rhs, y: self.lhs, z: other_equality.lhs},
+                preserve_all=True)
         else:
             raise TransitivityException(
-                self,
+                None,
                 defaults.assumptions,
                 'Transitivity cannot be applied unless there is something in common in the equalities: %s vs %s' %
-                (str(self),
-                 str(other)))
+                (str(self), str(other)))
 
     @prover
     def derive_via_boolean_equality(self, **defaults_config):

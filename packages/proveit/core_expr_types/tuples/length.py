@@ -9,38 +9,31 @@ class Len(Operation):
     # operator of the Length operation.
     _operator_ = Literal(string_format='length', theory=__file__)
 
-    def __init__(self, operand, *, styles=None):
+    def __init__(self, operands, *, styles=None):
         '''
-        Len takes a single operand which should properly be an
-        ExprTuple or an expression (such as a variable) that
-        represents a tuple.
+        Len can take an explicit ExprTuple as operands, or
+        it may take an expression (such as a varaible) that
+        represents a tuple.  Either way, this expression is
+        taken as the 'operands'.
         '''
-        operand = single_or_composite_expression(operand)
-        if isinstance(operand, ExprTuple):
-            # Nest an ExprTuple operand in an extra ExprTuple as
-            # a clear indication that Len has a single operand
-            # that is an ExprTuple rather than multiple operands.
-            operand = ExprTuple(operand)
+        if isinstance(operands, ExprRange):
+            # An ExprRange cannot represent an ExprTuple,
+            # so we must want this wrapped in an ExprTuple.
+            operands = ExprTuple(operands)
         # In order to always recognize that Len only takes a single
         # operand, we must wrap it as an ExprTuple with one entry.
-        Operation.__init__(self, Len._operator_, operand, styles=styles)
+        Operation.__init__(self, Len._operator_, operands=operands, styles=styles)
 
     @staticmethod
-    def extract_init_arg_value(
-            arg_name,
-            operator_or_operators,
-            operand_or_operands):
-        if arg_name == 'operand':
-            if isinstance(operand_or_operands, ExprTuple):
-                return operand_or_operands[0]
-            else:
-                return operand_or_operands
+    def extract_init_arg_value(arg_name, operator, operands):
+        if arg_name == 'operands':
+            return operands
 
     def string(self, **kwargs):
-        return '|' + self.operand.string() + '|'
+        return '|' + self.operands.string() + '|'
 
     def latex(self, **kwargs):
-        return '|' + self.operand.latex() + '|'
+        return '|' + self.operands.latex() + '|'
 
     @equality_prover('computed', 'compute')
     def computation(self, **defaults_config):
@@ -60,13 +53,13 @@ class Len(Operation):
         # and can circumvent any attempt that will not evaluate to
         # number.
         from proveit.numbers import one
-        if not isinstance(self.operand, ExprTuple):
+        if not isinstance(self.operands, ExprTuple):
             # Don't know how to compute the length if the operand is
             # not a tuple. For example, it could be a variable that
             # represent a tuple.  So just return the self equality.
             from proveit.logic import Equals
             return Equals(self, self).conclude_via_reflexivity()
-        entries = self.operand.entries
+        entries = self.operands.entries
         has_range = any(isinstance(entry, ExprRange) for entry in entries)
         if (len(entries) == 1 and has_range
                 and not isinstance(entries[0].body, ExprRange)):
@@ -283,12 +276,12 @@ class Len(Operation):
         length requirements when instantiating a range of parameters.
         '''
         from proveit.numbers import one
-        if not isinstance(self.operand, ExprTuple):
+        if not isinstance(self.operands, ExprTuple):
             raise ValueError("Len.typical_eq may only be performed "
                              "on a Len operating on an ExprTuple, not %s"
                              % self)
 
-        entries = self.operand.entries
+        entries = self.operands.entries
         if (len(entries) == 1 and isinstance(entries[0], ExprRange) and
                 not isinstance(entries[0].body, ExprRange)):
             # Treat the special case something of the form
@@ -369,10 +362,10 @@ class Len(Operation):
 
             # Try a special-case "typical equality".
             if isinstance(equality.rhs, Len):
-                if (isinstance(equality.rhs.operand, ExprTuple)
-                        and isinstance(self.operand, ExprTuple)):
-                    if (equality.rhs.operand.num_entries() == 1 and
-                            isinstance(equality.rhs.operand[0], ExprRange)):
+                if (isinstance(equality.rhs.operands, ExprTuple)
+                        and isinstance(self.operands, ExprTuple)):
+                    if (equality.rhs.operands.num_entries() == 1 and
+                            isinstance(equality.rhs.operands[0], ExprRange)):
                         try:
                             eq = self.typical_eq()
                             if eq.expr == equality:
@@ -445,15 +438,15 @@ class Len(Operation):
         from proveit.core_expr_types.tuples import (
             range_len_is_nat, range_from1_len_is_nat)
         from proveit.numbers import Natural, one
-        operand = self.operand
+        operands = self.operands
         if number_set == Natural:
-            if (operand.num_entries() == 1
-                    and isinstance(operand[0], ExprRange)):
+            if (operands.num_entries() == 1
+                    and isinstance(operands[0], ExprRange)):
                 # Special case of proving that the length
                 # of a single range is in the set of Natural numbers.
-                range_start = operand[0].start_index
-                range_end = operand[0].end_index
-                range_lambda = operand[0].lambda_map
+                range_start = operands[0].start_index
+                range_end = operands[0].end_index
+                range_lambda = operands[0].lambda_map
                 if range_start == one:
                     return range_from1_len_is_nat.instantiate(
                         {f: range_lambda, i: range_end},

@@ -31,7 +31,6 @@ proveit.numbers.negation.int_neg_closure
 proveit.numbers.negation.int_nonpos_closure
 proveit.numbers.negation.negated_weak_bound
 proveit.numbers.negation.negated_zero
-proveit.numbers.negation.real_closure
 proveit.numbers.number_sets.complex_numbers.complex_nonzero_within_complex
 proveit.numbers.number_sets.complex_numbers.i_is_complex_nonzero
 proveit.numbers.number_sets.complex_numbers.int_within_complex
@@ -39,7 +38,6 @@ proveit.numbers.number_sets.complex_numbers.nat_within_complex
 proveit.numbers.number_sets.complex_numbers.nonzero_if_in_complex_nonzero
 proveit.numbers.number_sets.complex_numbers.real_nonzero_within_complex_nonzero
 proveit.numbers.number_sets.complex_numbers.real_within_complex
-proveit.numbers.number_sets.integers.in_interval
 proveit.numbers.number_sets.integers.int_interval_within_int
 proveit.numbers.number_sets.integers.interval_lower_bound
 proveit.numbers.number_sets.integers.interval_upper_bound
@@ -51,7 +49,6 @@ proveit.numbers.number_sets.integers.neg_int_within_int
 proveit.numbers.number_sets.integers.neg_int_within_nonpos_int
 proveit.numbers.number_sets.integers.neg_int_within_nonzero_int
 proveit.numbers.number_sets.integers.negative_if_in_neg_int
-proveit.numbers.number_sets.integers.nonneg_int_is_natural
 proveit.numbers.number_sets.integers.nonpos_if_in_nonpos_int
 proveit.numbers.number_sets.integers.nonpos_int_within_int
 proveit.numbers.number_sets.integers.nonzero_if_in_nonzero_int

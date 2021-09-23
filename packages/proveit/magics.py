@@ -227,12 +227,11 @@ class TheoryInterface:
         try:
             os.makedirs(theory_nb_folder)
         except (OSError, FileExistsError):
-            pass
+            pass        
         notebook_name = os.path.join(theory_nb_folder, 'theory.ipynb')
-        if not os.path.isdir(sub_theory_folder):
+        init_name = os.path.join(sub_theory_folder, '__init__.py')
+        if not os.path.isfile(init_name):
             import shutil
-            os.mkdir(sub_theory_folder)
-            init_name = os.path.join(sub_theory_folder, '__init__.py')
             proveit_path = os.path.split(proveit.__file__)[0]
             # Create an '__init__.py' file from the template.
             template_filename = os.path.join(proveit_path, '..', 

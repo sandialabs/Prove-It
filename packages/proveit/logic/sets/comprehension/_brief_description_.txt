@@ -1,1 +1,1 @@
-Define a set according to the properties of its members.
+Define a subset according to the properties of its members.

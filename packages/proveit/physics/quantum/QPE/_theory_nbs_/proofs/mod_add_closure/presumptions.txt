@@ -14,7 +14,7 @@ proveit.logic.equality.unfold_not_equals
 proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.numbers.addition.add_int_closure_bin
-proveit.numbers.modular.mod_int_closure
+proveit.numbers.modular.mod_natpos_in_interval
 proveit.numbers.negation.negated_zero
 proveit.numbers.number_sets.complex_numbers.complex_nonzero_within_complex
 proveit.numbers.number_sets.complex_numbers.i_is_complex_nonzero
@@ -23,12 +23,16 @@ proveit.numbers.number_sets.complex_numbers.nat_within_complex
 proveit.numbers.number_sets.complex_numbers.nonzero_if_in_complex_nonzero
 proveit.numbers.number_sets.complex_numbers.real_nonzero_within_complex_nonzero
 proveit.numbers.number_sets.complex_numbers.real_within_complex
+proveit.numbers.number_sets.integers.int_interval_within_int
+proveit.numbers.number_sets.integers.interval_lower_bound
+proveit.numbers.number_sets.integers.interval_upper_bound
 proveit.numbers.number_sets.integers.nat_pos_within_int
 proveit.numbers.number_sets.integers.nat_pos_within_nonzero_int
 proveit.numbers.number_sets.integers.nat_within_int
 proveit.numbers.number_sets.integers.neg_int_within_int
 proveit.numbers.number_sets.integers.neg_int_within_nonpos_int
 proveit.numbers.number_sets.integers.neg_int_within_nonzero_int
+proveit.numbers.number_sets.integers.nonneg_int_is_natural
 proveit.numbers.number_sets.integers.nonpos_int_within_int
 proveit.numbers.number_sets.integers.nonzero_if_in_nonzero_int
 proveit.numbers.number_sets.integers.nonzero_int_within_int
@@ -102,5 +106,7 @@ proveit.numbers.numerals.decimals.posnat8
 proveit.numbers.numerals.decimals.posnat9
 proveit.numbers.ordering.less_is_not_eq
 proveit.numbers.ordering.relax_less
+proveit.numbers.ordering.transitivity_less_eq_less_eq
 proveit.physics.quantum.QPE.two_pow_t_is_nat_pos
+proveit.physics.quantum.QPE.two_pow_t_less_one_is_nat_pos
 # THEOREMS AND THEORIES TO EXCLUDE:

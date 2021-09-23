@@ -137,7 +137,7 @@ class Add(NumberOperation):
                     # not negated after all -- revert to the "implicit first
                     # operator" default
                     implicit_first_operator = False
-            return Operation._formattedOperation(
+            return Operation._formatted_operation(
                 format_type,
                 operators,
                 operands,
@@ -146,7 +146,7 @@ class Add(NumberOperation):
                 implicit_first_operator=implicit_first_operator,
                 **kwargs)
         else:
-            return Operation._formattedOperation(
+            return Operation._formatted_operation(
                 format_type,
                 self.operator,
                 self.operands,

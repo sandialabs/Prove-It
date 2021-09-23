@@ -6,6 +6,7 @@ and its proof (as a Proof object, which may be updated if a newer proof,
 with possibly fewer assumptions, suffices).
 """
 
+from functools import wraps
 from proveit._core_.expression import Expression
 from proveit._core_._unique_data import meaning_data, style_data
 from proveit.decorators import prover
@@ -649,6 +650,7 @@ class Judgment:
                 # The attribute is a callable function with
                 # 'defaults_config' as an argument (e.g., a prover).
                 # Automatically include the Judgment assumptions.
+                @wraps(attr)
                 def call_method_with_judgment_assumptions(
                         *args, **defaults_config):
                     if len(self.assumptions) > 0:
@@ -1187,7 +1189,7 @@ class Judgment:
         html += '</span>'
         return html
 
-    def inner_expr(self):
+    def inner_expr(self, assumptions=USE_DEFAULTS):
         '''
         Return an InnerExpr object to wrap the Judgment and
         access any inner sub-expression (including assumptions or
@@ -1196,7 +1198,10 @@ class Judgment:
         or relabeling variables.
         '''
         from .expression.inner_expr import InnerExpr
-        return InnerExpr(self, assumptions=self.assumptions)
+        if assumptions==USE_DEFAULTS:
+            assumptions=defaults.assumptions
+        assumptions = tuple(assumptions) + self.assumptions
+        return InnerExpr(self, assumptions=assumptions)
 
 
 def as_expression(truth_or_expression):
