@@ -20,6 +20,11 @@ class DecimalSequence(NumeralSequence):
                 raise Exception(
                     'A DecimalSequence may only be composed of 0-9 digits')
 
+    def _prefix(self):
+        # No prefix for a DecimalSequence (unlike binary or hex
+        # which needs a prefix to indicate type of number it is).
+        return ""
+
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
                                **defaults_config):
