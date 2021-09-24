@@ -21,6 +21,7 @@ class MatrixMult(Operation):
         Operation.__init__(self, MatrixMult._operator_, operands,
                            styles=styles)
 
+    '''
     def formatted(self, format_type, fence=False, sub_fence=True):
         # Temporary hack to get quantum bra and ket products to display properly.
         # This should eventually be done differently because we shouldn't need to
@@ -39,7 +40,7 @@ class MatrixMult(Operation):
             format_type=format_type,
             fence=fence,
             sub_fence=sub_fence)
-
+    '''
 
     # def do_reduced_simplification(self):
     #     '''
