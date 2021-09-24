@@ -1,6 +1,6 @@
 from proveit import Function, Literal, equality_prover
-from proveit import x
-from proveit.numbers import one
+from proveit import n, k, x
+from proveit.numbers import one, Complex
 from proveit.relation import TransRelUpdater
 
 class Bra(Function):
@@ -171,4 +171,16 @@ class NumKet(Function):
 
     def deduce_in_vec_space(self, vec_space=None, *, field,
                             **defaults_config):
-        pass # TODO
+        from . import num_ket_in_register_space
+        if field != Complex:
+            raise NotImplementedError(
+                    "NumKet.deduce_in_vec_space only implemented for a "
+                    "complex field, not %s."%field)
+        num_ket_is_vec = num_ket_in_register_space.instantiate(
+                {n:self.size, k:self.num})
+        if vec_space is not None and num_ket_is_vec != num_ket_is_vec.domain:
+            raise NotImplementedError(
+                    "NumKet.deduce_in_vec_space only implemented to deduce "
+                    "membership in %s, not %s"%(num_ket_is_vec.domain,
+                                                vec_space))
+        return num_ket_is_vec
