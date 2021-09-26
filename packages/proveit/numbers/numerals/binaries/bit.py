@@ -34,12 +34,12 @@ class BitMembership(NumberMembership):
     @prover
     def conclude(self, **defaults_config):
         from proveit import ProofFailure
-        from . import bit_set_membership
-        # if we know the element is 0-9, then we can show it is a digit
+        from . import b_in_bits
+        # if we know the element is 0-1, then we can show it is a bit
         try:
             return NumberMembership.conclude(self)
         except ProofFailure:
-            return bit_set_membership.instantiate({b:self.element})
+            return b_in_bits.instantiate({b:self.element})
 
     def side_effects(self, judgment):
         '''
