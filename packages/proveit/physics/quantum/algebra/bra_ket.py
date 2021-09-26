@@ -1,5 +1,5 @@
 from proveit import Function, Literal, equality_prover
-from proveit import n, k, x
+from proveit import b, n, k, x
 from proveit.numbers import one, Complex
 from proveit.relation import TransRelUpdater
 
@@ -146,19 +146,20 @@ class NumKet(Function):
     def shallow_simplification(self, *, must_evaluate=False,
                                **defaults_config):
         '''
-        Returns a proven simplification equation for this RegisterKet
+        Returns a proven simplification equation for this NumKet
         expression assuming the operands have been simplified.
         
         Currently deals only with:
-        (1) simplifying a RegisterKet with register size = 1 to a
+        (1) simplifying a NumKet with register size = 1 to a
             simple Ket. It's not immediately clear that we always want
             to do such a thing, but here goes.
         '''
 
         if self.size == one:
-            from . import single_qubit_register_ket
-            return single_qubit_register_ket.instantiate(
-                    {x: self.label}, preserve_all=True)
+            # from . import single_qubit_register_ket
+            from . import single_qubit_num_ket
+            return single_qubit_num_ket.instantiate(
+                    {b: self.num}, preserve_all=True)
 
         # Else simply return self=self.
         # Establishing some minimal infrastructure
