@@ -254,14 +254,28 @@ class InnerExpr:
                 kwargs['assumptions'] = (assumptions +
                                          tuple(self.conditions))
                 equality = equiv_method(*args, **kwargs)
+                for key in list(kwargs.keys()):
+                    # Pass through keyword arguments for
+                    # temporarily reconfiguring the defaults.
+                    # (with some exceptions below).
+                    if not hasattr(defaults, key):
+                        kwargs.pop(key)
+                kwargs.pop('assumptions')
+                if equiv_method.__name__ in ('simplification',
+                                             'shallow_simplification'):
+                    # When simplifying an inner expression, just
+                    # simplify that part and nothing else.
+                    kwargs['auto_simplify'] = False
                 if equiv_method_type == 'equiv':
-                    return self.substitution(equality, 
+                    return self.substitution(equality, **kwargs,
                                              assumptions=assumptions)
                 elif equiv_method_type == 'rhs':
-                    return self.substitution(equality,
+
+                    return self.substitution(equality, **kwargs,
                                              assumptions=assumptions).rhs
                 elif equiv_method_type == 'action':
-                    return self.substitute(equality, assumptions=assumptions)
+                    return self.substitute(equality, assumptions=assumptions,
+                                           **kwargs)
             if equiv_method_type == 'equiv':
                 inner_equiv.__doc__ = "Generate an equivalence of the top-level expression with a new form by replacing the inner expression via '%s'." % equiv_method_name
             elif equiv_method_type == 'rhs':

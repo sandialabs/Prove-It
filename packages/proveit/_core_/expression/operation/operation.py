@@ -689,10 +689,14 @@ class Operation(Expression):
         else:
             expr = self
             eq = TransRelUpdater(expr)
-            for k, operand in enumerate(self.operands):
-                if not is_irreducible_value(operand):
-                    inner_operand = expr.inner_expr().operands[k]
-                    expr = eq.update(inner_operand.simplification())
+            with defaults.temporary() as temp_defaults:
+                # No auto-simplification or replacements here;
+                # just simplify operands one at a time.
+                temp_defaults.preserve_all = True
+                for k, operand in enumerate(self.operands):
+                    if not is_irreducible_value(operand):
+                        inner_operand = expr.inner_expr().operands[k]
+                        expr = eq.update(inner_operand.simplification())
         return eq.relation
 
     @equality_prover('operator_substituted', 'operator_substitute')
