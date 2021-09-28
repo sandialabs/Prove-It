@@ -20,7 +20,7 @@ class DecimalSequence(NumeralSequence):
                 raise Exception(
                     'A DecimalSequence may only be composed of 0-9 digits')
 
-    def _prefix(self):
+    def _prefix(self, format_type):
         # No prefix for a DecimalSequence (unlike binary or hex
         # which needs a prefix to indicate type of number it is).
         return ""
