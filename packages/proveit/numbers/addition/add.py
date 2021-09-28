@@ -1104,7 +1104,7 @@ class Add(NumberOperation):
                     _b.append(term_factorization.rhs.operands[0])
                 # substitute in the factorized term
                 expr = eq.update(term_factorization.substitution(
-                    expr.inner_expr().terms[_i]))
+                    expr.inner_expr().terms[_i], preserve_all=True))
             else:
                 if term != the_factor:
                     raise ValueError(
