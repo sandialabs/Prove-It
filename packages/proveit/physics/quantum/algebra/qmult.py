@@ -382,6 +382,8 @@ class QmultCodomainMembership(ClassMembership):
         Prove that the 'element' is in the QmultCodomain
         (e.g., that a Qmult is well-formed).
         '''
+        from proveit import ProofFailure
+        from proveit.numbers import deduce_in_number_set
         from proveit.physics.quantum import (
                 Bra, Ket, varphi, var_ket_psi, HilbertSpaces)
         from proveit.physics.quantum.algebra import (
@@ -417,6 +419,7 @@ class QmultCodomainMembership(ClassMembership):
                 if isinstance(op, Bra):
                     thm = None
                     _varphi = op.operand
+                    Ket(_varphi).deduce_in_vec_space(field=Complex)
                     for _Hspace in yield_known_hilbert_spaces(Ket(_varphi)):
                         # Prove membership in the target space
                         # while we are at it.
@@ -457,7 +460,7 @@ class QmultCodomainMembership(ClassMembership):
                                 preserve_all=True)
                     return qmult_nested_closure.instantiate({A:op})
                 
-                # Handle unary complex.
+                # Handle unary complex (soft, first attempt).
                 if InSet(op, Complex).proven():
                     return qmult_complex_in_QmultCodomain.instantiate({c:op})
                 
@@ -521,7 +524,16 @@ class QmultCodomainMembership(ClassMembership):
                             op.deduce_in_vec_space(field=Complex)
                         else:
                             break # No need for a second attempt.
-                        
+
+                # Second attempt to prove the element is complex.
+                try:
+                    deduce_in_number_set(op, Complex)
+                    # Complex elements are in QmultCodomain
+                    return qmult_complex_in_QmultCodomain.instantiate(
+                            {c:op})
+                except (ProofFailure, NotImplementedError):
+                    pass
+
             elif element.operands.is_double():
                 # Binary Qmult closure
                 op1, op2 = element.operands
@@ -692,6 +704,7 @@ class QmultCodomainMembership(ClassMembership):
             if isinstance(element, Bra):
                 thm = None
                 _varphi = element.operand
+                Ket(_varphi).deduce_in_vec_space(field=Complex)
                 for _Hspace in yield_known_hilbert_spaces(Ket(_varphi)):
                     # Prove membership in the target space
                     # while we are at it.
@@ -712,7 +725,8 @@ class QmultCodomainMembership(ClassMembership):
                         "Cannot prove %s membership in %s"%
                         (element, self, QmultCodomain))                
             
-            # Handle complex numbers as as special case.
+            # Handle complex numbers as as special case
+            # (first, soft attempt).
             if InSet(element, Complex).proven():
                 # Complex elements are in QmultCodomain
                 return complex_in_QmultCodomain.instantiate({c:element})
@@ -741,6 +755,14 @@ class QmultCodomainMembership(ClassMembership):
                         element.deduce_in_vec_space(field=Complex)
                     else:
                         break # No need for a second attempt.
+            
+            # Second attempt to prove the element is complex.
+            try:
+                deduce_in_number_set(element, Complex)
+                # Complex elements are in QmultCodomain
+                return complex_in_QmultCodomain.instantiate({c:element})
+            except (ProofFailure, NotImplementedError):
+                pass
 
         raise UnsatisfiedPrerequisites(
                 "%s is not known to be a complex number, vector in a "
@@ -758,20 +780,19 @@ def containing_hilbert_space_linmap_sets(qobj):
     from . import HilbertSpaces
     from .hilbert_spaces import deduce_as_hilbert_space
     known_linmap_memberships = LinMap.known_memberships
-    if not isinstance(qobj, Qmult):
-        qobj = Qmult(qobj)
     # Prove the membership of qobj in Q* to prove
     # the side-effect linear map membership as well.
     #QmultCodomain.membership_object(qobj).conclude()
-    if qobj in known_linmap_memberships:
-        for linmap_membership in known_linmap_memberships[qobj]:
-            linmap = linmap_membership.domain
-            if not isinstance(linmap, LinMap):
-                raise TypeError("Expecting LinMap.known_memberships to "
-                                "contain known memberships of LinMap "
-                                "domains.")
-            for vec_space in linmap.operands:
-                deduce_as_hilbert_space(vec_space)
-            if all(InClass(V, HilbertSpaces).proven() for V 
-                   in linmap.operands):
-                yield linmap
+    for qobj in (qobj, Qmult(qobj)):
+        if qobj in known_linmap_memberships:
+            for linmap_membership in known_linmap_memberships[qobj]:
+                linmap = linmap_membership.domain
+                if not isinstance(linmap, LinMap):
+                    raise TypeError("Expecting LinMap.known_memberships to "
+                                    "contain known memberships of LinMap "
+                                    "domains.")
+                for vec_space in linmap.operands:
+                    deduce_as_hilbert_space(vec_space)
+                if all(InClass(V, HilbertSpaces).proven() for V 
+                       in linmap.operands):
+                    yield linmap
