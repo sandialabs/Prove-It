@@ -106,6 +106,33 @@ class NumBra(Function):
             return '{' + formatted_size + '}_' + \
                 u'\u2329' + formatted_label + '|'
 
+    def deduce_in_vec_space(self, vec_space=None, *, field,
+                            **defaults_config):
+        '''
+        Prove that this NumBra is a linear map from the Hilbert space 
+        vector set of CartExp(Complex, 2^size) to the complex numbers.
+        '''
+        from . import num_bra_is_lin_map 
+        if field != Complex:
+            raise NotImplementedError(
+                    "NumBra.deduce_in_vec_space only implemented for a "
+                    "complex field, not %s."%field)
+        membership = num_bra_is_lin_map.instantiate(
+                {n:self.size, k:self.num})
+        if vec_space is not None and vec_space != membership.domain:
+            raise NotImplementedError(
+                    "NumBra.deduce_in_vec_space only implemented to deduce "
+                    "membership in %s, not %s"%(membership.domain,
+                                                vec_space))
+        return membership
+
+        
+        
+        num_ket_in_vec_space = NumKet.deduce_in_vec_space(field=Complex)
+        hspace = num_ket_in_vec_space.domain
+        return num_bra_is_lin_map.instantiate(
+                {})
+
 
 class NumKet(Function):
     '''
@@ -172,16 +199,20 @@ class NumKet(Function):
 
     def deduce_in_vec_space(self, vec_space=None, *, field,
                             **defaults_config):
+        '''
+        Prove that this NumKet is in a Hilbert space vector set of
+        CartExp(Complex, 2^size).
+        '''
         from . import num_ket_in_register_space
         if field != Complex:
             raise NotImplementedError(
                     "NumKet.deduce_in_vec_space only implemented for a "
                     "complex field, not %s."%field)
-        num_ket_is_vec = num_ket_in_register_space.instantiate(
+        membership = num_ket_in_register_space.instantiate(
                 {n:self.size, k:self.num})
-        if vec_space is not None and num_ket_is_vec != num_ket_is_vec.domain:
+        if vec_space is not None and vec_space != membership.domain:
             raise NotImplementedError(
                     "NumKet.deduce_in_vec_space only implemented to deduce "
-                    "membership in %s, not %s"%(num_ket_is_vec.domain,
+                    "membership in %s, not %s"%(membership.domain,
                                                 vec_space))
-        return num_ket_is_vec
+        return membership

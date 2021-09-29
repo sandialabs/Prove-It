@@ -76,6 +76,7 @@ class ScalarMult(Operation):
             try:
                 vec_space = next(VecSpaces.yield_known_vec_spaces(
                         self.scaled, field=field))
+                field = VecSpaces.known_field(vec_space)
             except StopIteration:
                 # No known vector space membership over the specified
                 # field.

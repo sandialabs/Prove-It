@@ -57,6 +57,7 @@ class VecAdd(GroupAdd):
                 raise UnsatisfiedPrerequisites(
                         "%s is not known to be a vector in a vector "
                         "space over %s"%(self, field))
+        field = VecSpaces.known_field(vec_space)
         all_scaled = all((isinstance(term, ScalarMult)
                           or (isinstance(term, ExprRange) and
                               isinstance(term.body, ScalarMult)))
