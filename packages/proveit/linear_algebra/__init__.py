@@ -8,7 +8,7 @@ from .inner_products import (InnerProdSpaces, InnerProd,
 from .linear_maps import LinMap, LinMapAdd
 from .matrices import MatrixMult, MatrixSpace
 from .tensors import TensorExp, TensorProd
-from .lie_group_ops import SU
+from .lie_algebra import SU
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
