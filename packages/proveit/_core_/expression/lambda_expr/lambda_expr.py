@@ -112,6 +112,8 @@ class Lambda(Expression):
             self.parameter_or_parameters = self.parameters
         self.parameter_vars = tuple(parameter_vars)
         self.parameter_var_set = frozenset(parameter_vars)
+        self.parameter_of_var = {param_var: param for param_var, param
+                                 in zip(self.parameter_vars, self.parameters)}
 
         # Parameter variables may not occur multiple times.
         if len(self.parameter_var_set) != self.parameters.num_entries():
@@ -752,6 +754,16 @@ class Lambda(Expression):
                 # First, let's see if there is an associated
                 # expansion for this key.
                 key_repl = repl_map.get(key, None)
+                for_repl_map_temporarily = None
+                if isinstance(key, Variable) and isinstance(key_repl, ExprTuple):
+                    if key in self.parameter_var_set:
+                        # Relabel a range of parameters via a 
+                        # replacement for just a variable.
+                        param = self.parameter_of_var[key]
+                        param_tuple = ExprTuple(param)
+                        if param not in repl_map:
+                            for_repl_map_temporarily = {param_tuple: key_repl}
+                        key_repl = {param_tuple}
                 if isinstance(key_repl, set):
                     # There are one or more expansions for a variable
                     # that occurs as a local Lambda parameter.
@@ -793,10 +805,12 @@ class Lambda(Expression):
                     # indices are (1, ..., n) or (n+1) but not
                     # otherwise).
                     try:
+                        if for_repl_map_temporarily is not None:
+                            repl_map.update(for_repl_map_temporarily)
                         if not _mask_var_range(
                                 var, key_repl, mask_start, mask_end,
                                 allow_relabeling, repl_map, inner_repl_map,
-                                requirements):
+                                relabel_map, requirements):
                             # No valid variable range form that carves
                             # out the masked indices.  All we can do
                             # is indicate that the 'param_of_var' is
@@ -807,6 +821,11 @@ class Lambda(Expression):
                     except ValueError as e:
                         raise ImproperReplacement(
                             self, repl_map, str(e))
+                    finally:
+                        # Remove the temporary additions to repl_map.
+                        if for_repl_map_temporarily is not None:
+                            for key in for_repl_map_temporarily.keys():
+                                repl_map.pop(key)
                 elif isinstance(key, Variable) and isinstance(value, Variable):
                     # A simple relabeling is allowed to propagate
                     # through as long as the variable is not indexed
@@ -1174,6 +1193,14 @@ class Lambda(Expression):
             self.parameters, self.parameter_vars, self.body,
             exclusions=exclusions)
 
+    def _contained_parameter_vars(self):
+        '''
+        Return all of the Variables of this Expression that may
+        are parameter variables of a contained Lambda.
+        '''
+        return self.parameter_var_set.union(
+                self.body._contained_parameter_vars())
+
 
 def _guaranteed_to_be_independent(expr, parameter_vars):
     '''
@@ -1438,7 +1465,7 @@ def extract_param_replacements(parameters, parameter_vars, body,
 
 def _mask_var_range(
         var, var_range_forms, mask_start, mask_end, allow_relabeling,
-        repl_map, inner_repl_map, requirements):
+        repl_map, inner_repl_map, relabel_map, requirements):
     '''
     Given a variable 'var' (e.g., 'x'), a set of equivalent forms
     of ranges over indices over that variable (e.g.,
@@ -1564,8 +1591,8 @@ def _mask_var_range(
                     req = Forall(fully_masking_repl.entries,
                                  Equals(repl, fully_masking_repl))
                     requirements.append(req.prove())
-            # Update the `inner_repl_map` to effect the relabeling.
-            inner_repl_map.update(masked_region_repl_map)
+            # Update the `relabel_map` for some relabeling.
+            relabel_map.update(masked_region_repl_map)
             return True
 
     # No relabeling.  Map the masked region entries to themselves

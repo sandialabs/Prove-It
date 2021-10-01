@@ -1200,6 +1200,27 @@ class Judgment:
             assumptions=defaults.assumptions
         assumptions = tuple(assumptions) + self.assumptions
         return InnerExpr(self, assumptions=assumptions)
+    
+    def _used_vars(self):
+        '''
+        Return all of the used Variables of this Judgment,
+        including those in assumptions.
+        Call externally via the used_vars method in expr.py.
+        '''
+        return self.expr._used_vars().union(
+                *[assumption._used_vars() for
+                  assumption in self.assumptions])
+
+    def _contained_parameter_vars(self):
+        '''
+        Return all of the used parameter variables contained in this
+        Judgment, including those in assumptions.
+        Call externally via the contained_parameter_vars method
+        in expr.py.
+        '''
+        return self.expr._contained_parameter_vars().union(
+                *[assumption._contained_parameter_vars() for
+                  assumption in self.assumptions])
 
 
 def as_expression(truth_or_expression):

@@ -1321,6 +1321,14 @@ class Expression(metaclass=ExprType):
         return set().union(*[expr._used_vars() for
                              expr in self._sub_expressions])
 
+    def _contained_parameter_vars(self):
+        '''
+        Return all of the Variables of this Expression that may
+        are parameter variables of a contained Lambda.
+        '''
+        return set().union(*[expr._contained_parameter_vars() for
+                             expr in self._sub_expressions])
+
     def _possibly_free_var_ranges(self, exclusions=None):
         '''
         Return the dictionary mapping Variables to forms w.r.t. ranges
@@ -1524,6 +1532,13 @@ def used_vars(expr):
     included those in sub-expressions.
     '''
     return expr._used_vars()
+
+def contained_parameter_vars(expr):
+    '''
+    Return all of the Variables of this Expression that may
+    are parameter variables of a contained Lambda.
+    '''
+    return expr._contained_parameter_vars()
 
 
 def possibly_free_var_ranges(expr, exclusions=None):
