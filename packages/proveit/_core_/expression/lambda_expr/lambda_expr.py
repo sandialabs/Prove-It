@@ -856,8 +856,7 @@ class Lambda(Expression):
         #            (x_{1+1}, ..., x_{n+1})}
         # we can ignore those for this purpose as the real replacements
         # will be what the members of this set map to.
-        restricted_vars = non_param_body_free_vars - inner_repl_map.keys()
-        restricted_vars.update(
+        restricted_vars = non_param_body_free_vars.union(
             *[free_vars(value, err_inclusively=True) for key, value
               in inner_repl_map.items()
               if (key not in self.parameter_var_set
