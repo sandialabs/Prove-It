@@ -1090,7 +1090,10 @@ class Instantiation(Proof):
         relabel_params = []
         relabel_param_replacements = []
         for key, repl in repl_map.items():
-            key_var = get_param_var(key)
+            if isinstance(key, ExprTuple):
+                key_var = get_param_var(key[0])
+            else:
+                key_var = get_param_var(key)
             if key_var in instantiating_vars:
                 # If it is a variable being instantiated,
                 # it is not a relabeling param.
