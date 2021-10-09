@@ -22,7 +22,8 @@ class Floor(Function):
             return theorems.floor_real_closure
 
     def latex(self, **kwargs):
-        return r'\lfloor ' + self.operand.latex(fence=False) + r'\rfloor'
+        return (r'\left\lfloor ' + self.operand.latex(fence=False) 
+                + r'\right\rfloor')
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,

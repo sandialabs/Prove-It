@@ -14,7 +14,8 @@ class Ceil(Function):
         Function.__init__(self, Ceil._operator_, A, styles=styles)
 
     def latex(self, **kwargs):
-        return r'\lceil ' + self.operand.latex(fence=False) + r'\rceil'
+        return (r'\left\lceil ' + self.operand.latex(fence=False) 
+                + r'\right\rceil')
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
