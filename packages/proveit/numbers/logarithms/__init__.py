@@ -1,5 +1,4 @@
-from .exp import sqrt, sqrd, Exp, exp
-
+from .log import Log
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.
