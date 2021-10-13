@@ -705,6 +705,9 @@ class ExpSetMembership(SetMembership):
 # outside any specific class:
 # special Exp case of square root
 
+def exp(exponent, *, styles=None):
+    from proveit.numbers import e # Euler's number
+    return Exp(e, exponent, styles=styles)
 
 def sqrt(base):
     '''

@@ -1,7 +1,4 @@
-# still working on: the ModAdd class
-from .phase_est_ops import (ModAdd, Pfail, PhaseEst, Psuccess, 
-                            QPE, QPE1, SubIndexed)
-
+from .log import Log
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.
