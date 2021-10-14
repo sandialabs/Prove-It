@@ -601,18 +601,12 @@ class Sum(OperationOverInstances):
         _k = _c.num_elements()
         _P = Lambda(expr.instance_params, summand_remainder)
         _Q = Lambda(expr.instance_params, expr.condition)
-        b_1_to_j = ExprTuple(var_range(b, one, _j))
         _impl = distribute_through_summation.instantiate(
-                {i: _i, j: _j, k: _k, P:_P, Q:_Q, b_1_to_j:_b},
+                {i: _i, j: _j, k: _k, P:_P, Q:_Q, b:_b},
                 preserve_all=True)
         quantified_eq = _impl.derive_consequent()
-        if hasattr(self, 'index'):
-            b_ = IndexedVar(b, one)
-            _b = self.index
-        else:
-            b_ = b
         eq.update(quantified_eq.instantiate(
-                {a: _a, b_:_b, c: _c}))
+                {a: _a, c: _c}))
 
         return eq.relation
 
