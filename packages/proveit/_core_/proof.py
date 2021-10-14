@@ -1509,12 +1509,15 @@ class Instantiation(Proof):
                         active_equiv_alt_expansions.update(
                             {key:equiv_alt_expansions[key] for key 
                              in equiv_alt_expansion_keys})
-                        if new_operands is None:
+                        if (new_operands is None 
+                                and isinstance(param, ExprRange)):
                             # For the equivalent alternative expansion 
                             # to be used, we need to include the 
                             # parameter and corresponding operands; 
                             # in this case, it is a trivial identity 
                             # replacement.
+                            if new_param is None:
+                                new_param = param
                             new_operands = (new_param,)
                     if new_operands is not None:
                         params.append(new_param)

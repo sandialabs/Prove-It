@@ -112,8 +112,6 @@ class Lambda(Expression):
             self.parameter_or_parameters = self.parameters
         self.parameter_vars = tuple(parameter_vars)
         self.parameter_var_set = frozenset(parameter_vars)
-        self.parameter_of_var = {param_var: param for param_var, param
-                                 in zip(self.parameter_vars, self.parameters)}
 
         # Parameter variables may not occur multiple times.
         if len(self.parameter_var_set) != self.parameters.num_entries():
@@ -568,7 +566,6 @@ class Lambda(Expression):
                         "(with no shift in ExprRange indices): "
                         "%s is not found in %s."
                         % (var_tuple, repl_map.keys()))
-                assert len(expansion_set) == 1
                 # We need to ensure that the tuples of indices match.
                 orig_params = list(expansion_set)[0]
                 indices_eq_req = Equals(extract_var_tuple_indices(var_tuple),
@@ -712,12 +709,14 @@ class Lambda(Expression):
 
         # First, we may replace indices of any of the parameters.
         parameters = []
+        var_to_param = dict()
         for param in self.parameters:
             if isinstance(param, IndexedVar):
                 subbed_index = param.index.basic_replaced(
                         repl_map, allow_relabeling=allow_relabeling, 
                         requirements=requirements)
-                parameters.append(IndexedVar(param.var, subbed_index))
+                param_var = param.var
+                param = IndexedVar(param_var, subbed_index)
             elif isinstance(param, ExprRange):
                 param_var = get_param_var(param)
                 subbed_start = \
@@ -729,9 +728,11 @@ class Lambda(Expression):
                         repl_map, allow_relabeling=allow_relabeling, 
                         requirements=requirements)
                 range_param = var_range(param_var, subbed_start, subbed_end)
-                parameters.append(range_param)
+                param = range_param
             else:
-                parameters.append(param)
+                param_var = param
+            parameters.append(param)
+            var_to_param[param_var] = param
 
         # Within the lambda scope, we can instantiate lambda parameters
         # in a manner that retains the validity of the parameters as
@@ -756,20 +757,26 @@ class Lambda(Expression):
                 for_repl_map_temporarily = None
                 if (isinstance(key, Variable) and 
                         isinstance(value, ExprTuple)):
-                    if key in self.parameter_of_var:
+                    if key in var_to_param:
                         # Relabel a range of parameters via a 
                         # replacement for just a variable.
-                        param = self.parameter_of_var[key]
-                        repl_map.pop(key) # Temporarily remove key
-                        param = param.basic_replaced(
-                            repl_map, allow_relabeling=allow_relabeling,
-                            requirements=requirements)
-                        repl_map[key] = value # Restore the key
-                        param_tuple = ExprTuple(param)
-                        if param_tuple not in repl_map:
-                            for_repl_map_temporarily = (
-                                {param_tuple: value})
-                        value = {param_tuple}
+                        param = var_to_param[key]
+                        if isinstance(param, IndexedVar):
+                            if value.num_entries()>0:
+                                # May relabel a parameter entry that 
+                                # becomes an IndexedVar with the first
+                                # entry of the variable's replacement.
+                                key = param
+                                value = value[0]
+                        else:
+                            # May relabel a range of parameters
+                            # acccording to the variable's tuple
+                            # replacmenet.
+                            param_tuple = ExprTuple(param)
+                            if param_tuple not in repl_map:
+                                for_repl_map_temporarily = (
+                                    {param_tuple: value})
+                            value = {param_tuple}
                 if isinstance(value, set):
                     # There are one or more expansions for a variable
                     # that occurs as a local Lambda parameter.
@@ -779,8 +786,8 @@ class Lambda(Expression):
                     # of indices but there is masking otherwise.
                     var = key
                     assert isinstance(var, Variable)
-                    if var in self.parameter_of_var:
-                        param_of_var = self.parameter_of_var[var]
+                    if var in var_to_param:
+                        param_of_var = var_to_param[var]
                     else:
                         # The key is not being masked in any way,
                         # so just carry this through to the
@@ -796,14 +803,6 @@ class Lambda(Expression):
                     else:
                         assert isinstance(param_of_var, IndexedVar)
                         mask_start = mask_end = [param_of_var.index]
-                    # Make replacements in the masked_ start/end:
-                    for mask_indices in (mask_start, mask_end):
-                        for _, idx in enumerate(mask_indices):
-                            mask_indices[_] = \
-                                idx.basic_replaced(
-                                        repl_map, 
-                                        allow_relabeling=allow_relabeling,
-                                        requirements=requirements)
                     # We may only use the variable range forms of
                     # value that carve out the masked indices (e.g.
                     # (x_1, ..., x_n, x_{n+1}) is usable if the masked
@@ -880,7 +879,8 @@ class Lambda(Expression):
         #            (x_{1+1}, ..., x_{n+1})}
         # we can ignore those for this purpose as the real replacements
         # will be what the members of this set map to.
-        restricted_vars = non_param_body_free_vars.union(
+        restricted_vars = non_param_body_free_vars - inner_repl_map.keys()
+        restricted_vars.update(
             *[free_vars(value, err_inclusively=True) for key, value
               in inner_repl_map.items()
               if (key not in self.parameter_var_set
