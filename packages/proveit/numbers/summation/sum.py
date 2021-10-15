@@ -580,7 +580,8 @@ class Sum(OperationOverInstances):
         if summand_factorization.lhs != summand_factorization.rhs:
             gen_summand_factorization = summand_factorization.generalize(
                     self.instance_params, conditions=self.conditions)
-            expr = eq.update(expr.instance_substitution(gen_summand_factorization))
+            expr = eq.update(expr.instance_substitution(gen_summand_factorization,
+                                                        preserve_all=True))
         if isinstance(the_factor, Mult):
             factors = the_factor.factors
         else:
@@ -605,9 +606,9 @@ class Sum(OperationOverInstances):
         _impl = distribute_through_summation.instantiate(
                 {i: _i, j: _j, k: _k, f:_f, Q:_Q, b:_b},
                 preserve_all=True)
-        quantified_eq = _impl.derive_consequent()
-        eq.update(quantified_eq.instantiate(
-                {a: _a, c: _c}))
+        quantified_eq = _impl.derive_consequent(preserve_all=True)
+        eq.update(quantified_eq.instantiate({a: _a, c: _c}, 
+                                            preserve_all=True))
 
         return eq.relation
 
