@@ -1,7 +1,8 @@
 from proveit import (Operation, Literal, Lambda, ExprTuple, ExprRange,
                      UnsatisfiedPrerequisites, SimplificationDirectives,
                      prover, equality_prover, relation_prover)
-from proveit import b, c, f, i, j, l, m, n, A, B, C, M, Q, X, Y
+from proveit import (a, b, c, f, i, j, l, m, n, A, B, C, M, Q, X, Y,
+                     alpha)
 from proveit.relation import TransRelUpdater
 from proveit.logic import Equals, InSet, ClassMembership, InClass
 from proveit.numbers import Complex, subtract, one
@@ -46,7 +47,7 @@ class Qmult(Operation):
                          theory=__file__)
 
     _simplification_directives_ = SimplificationDirectives(
-            ungroup = True, factor_scalars=True)
+            ungroup = True, factor_scalars=True, use_scalar_mult=True)
 
     def __init__(self, *operands, styles=None):
         Operation.__init__(self, Qmult._operator_, operands,
@@ -81,6 +82,7 @@ class Qmult(Operation):
         (2) Ungrouping nested tensor products.
         (3) Factoring out scalars.
         '''
+        from proveit.linear_algebra import ScalarMult
         from proveit.physics.quantum import (
                 Bra, Ket, HilbertSpaces,
                 varphi, var_ket_psi)
@@ -135,12 +137,23 @@ class Qmult(Operation):
                     # if it is grouped, ungroup it
                     expr = eq.update(expr.disassociation(
                             _n, preserve_all=True))
+                elif isinstance(operand, ScalarMult):
+                    # ungroup contained ScalarMult's
+                    expr = eq.update(expr.scalar_mult_absorption(
+                            _n, preserve_all=True))                    
                 length = expr.operands.num_entries()
                 _n += 1
         
         if Qmult._simplification_directives_.factor_scalars:
             # Next, pull out scalar factors
             expr = eq.update(expr.factorization_of_scalars())
+        
+        if Qmult._simplification_directives_.use_scalar_mult:
+            # Finally, use ScalarMult for any scalar operands.
+            if (isinstance(expr, Qmult) and 
+                    expr.operands.num_entries() > 1 and 
+                    InSet(expr.operands[0], Complex).proven()):
+                expr = eq.update(expr.scalar_mult_factorization())
         
         return eq.relation
 
@@ -220,7 +233,6 @@ class Qmult(Operation):
         and/or quantum operations), deduce that this expression is equal 
         to a form in which the operand
         at index idx is no longer grouped together.
-        range [start_idx, start_idx+length) are grouped together.
         For example, (A B ... (L ... M) ... Y Z) = (A B ... Y Z).
         '''
         from . import qmult_disassociation
@@ -228,6 +240,29 @@ class Qmult(Operation):
                 self, idx, qmult_disassociation)
         return eq.with_wrapping_at()
 
+    @equality_prover('scalar_mult_absorbed', 'scalar_mult_absorb')
+    def scalar_mult_absorption(self, idx, **defaults_config):
+        '''
+        Given a valid Qmult operation (valid sequence of bras, kets,
+        and/or quantum operations), equate it to a form in which
+        a ScalarMult operand at the given index is absorbed into 
+        the Qmult.
+        For example, (A B ... (c · M) ... Y Z) = (A B ... c M ... Y Z).
+        '''
+        from proveit.linear_algebra import ScalarMult
+        from . import scalar_mult_absorption
+        if not isinstance(self.operands[idx], ScalarMult):
+            raise ValueError("The operand of %s at index %d is not "
+                             "a ScalarMult"%(self, idx))
+        _A = self.operands[:idx]
+        _alpha_B = self.operands[idx]
+        _B = _alpha_B.scaled
+        _C = self.operands[idx+1:]
+        _alpha = _alpha_B.scalar
+        _l = _A.num_elements()
+        _n = _C.num_elements()
+        return scalar_mult_absorption.instantiate(
+                {l:_l, n:_n, A:_A, alpha:_alpha, B:_B, C:_C})
 
     @equality_prover('scalars_factored', 'factor_scalars')
     def factorization_of_scalars(self, **defaults_config):
@@ -239,6 +274,8 @@ class Qmult(Operation):
         where a, b, c, d, and e are complex numbers, '*' denotes
         number multiplication, and spaces, here, denote the Qmult
         operation.
+        
+        Also see scalar_mult_factorization.
         '''
         from . import (QmultCodomain, qmult_pulling_scalar_out_front,
                        qmult_pulling_scalars_out_front,
@@ -296,6 +333,36 @@ class Qmult(Operation):
             expr.operands[0].deduce_in_number_set(Complex)
         
         return eq.relation
+    
+    
+    @equality_prover('scalar_mult_factorized', 'scalar_mult_factor')
+    def scalar_mult_factorization(self, **defaults_config):
+        '''
+        Given a Qmult with a scalar operand at the beginning,
+        equate it with a ScalarMult version.  For example
+        
+            ((a*b*c*d*e) A B C D) = ((a*b*c*d*e) · (A B C D))
+        
+        where '·' denotes scalar multiplication and '*' is number
+        multplication.
+        
+        If Qmult.factorization_of_scalars is performed first, it
+        will be in the proper form for doing scalar_mult_factorization.
+        '''
+        from . import scalar_mult_factorization
+        
+        # Factor the scalar operand (if there is one at the beginning)
+        # as a ScalarMult.
+        if self.operands.num_entries() > 1:
+            _a = self.operands[0]
+            _B = self.operands[1:]
+            _j = _B.num_elements()
+            return scalar_mult_factorization.instantiate(
+                    {j:_j, a:_a, B:_B})
+        
+        raise NotImplementedError(
+                "Qmult.scalar_mult_factorization is only implemented "
+                "when there are more than one Qmult entries")
 
     @equality_prover('distributed', 'distribute')
     def distribution(self, idx, *, field=None,
@@ -329,8 +396,8 @@ class Qmult(Operation):
             _f = Lambda(sum_factor.indices, sum_factor.summand)
             _Q = Lambda(sum_factor.indices, sum_factor.condition)
             impl = qmult_distribution_over_summation.instantiate(
-                    {f:_f, Q:_Q, j:_j, m:_m, n:_n, b:_b,
-                     A:_A, C:_C})
+                    {f:_f, Q:_Q, j:_j, m:_m, n:_n, 
+                     b:_b, A:_A, C:_C})
             return impl.derive_consequent().with_wrapping_at()
         else:
             raise ValueError(
@@ -419,7 +486,7 @@ class QmultCodomainMembership(ClassMembership):
                 if isinstance(op, Bra):
                     thm = None
                     _varphi = op.operand
-                    Ket(_varphi).deduce_in_vec_space(field=Complex)
+                    #Ket(_varphi).deduce_in_vec_space(field=Complex)
                     for _Hspace in yield_known_hilbert_spaces(Ket(_varphi)):
                         # Prove membership in the target space
                         # while we are at it.
@@ -704,7 +771,7 @@ class QmultCodomainMembership(ClassMembership):
             if isinstance(element, Bra):
                 thm = None
                 _varphi = element.operand
-                Ket(_varphi).deduce_in_vec_space(field=Complex)
+                #Ket(_varphi).deduce_in_vec_space(field=Complex)
                 for _Hspace in yield_known_hilbert_spaces(Ket(_varphi)):
                     # Prove membership in the target space
                     # while we are at it.
