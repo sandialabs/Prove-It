@@ -1,6 +1,6 @@
 from proveit import (Operation, Literal, relation_prover,
                      equality_prover, UnsatisfiedPrerequisites)
-from proveit import a, x, K, V, alpha, beta
+from proveit import a, b, x, K, V, alpha, beta
 from proveit.logic import InSet
 from proveit.abstract_algebra import plus, times
 from proveit.linear_algebra import VecSpaces
@@ -36,11 +36,23 @@ class ScalarMult(Operation):
         
         Handles doubly-nested scalar multiplication.
         '''
+        from proveit.numbers import Complex
+        if (InSet(self.scalar, Complex).proven() 
+                and InSet(self.scaled, Complex).proven()):
+            # If the operands are both complex numbers, this will
+            # ScalarMult will reduce to number multiplication.
+            return self.number_mult_reduction()
         if isinstance(self.scaled, ScalarMult):
             # Reduce a doubly nested scalar multiplication.
             return self.double_scaling_reduction(preserve_all=True)
         return Operation.shallow_simplification(
                 self, must_evaluate=must_evaluate)
+
+    @equality_prover('number_mult_reduced', 'number_mult_reduce')
+    def number_mult_reduction(self, **defaults_config):
+        from . import scalar_mult_extends_number_mult
+        return scalar_mult_extends_number_mult.instantiate(
+                {a:self.scalar, b:self.scaled})
     
     @equality_prover('double_scaling_reduced', 'double_scaling_reduce')
     def double_scaling_reduction(self, **defaults_config):
