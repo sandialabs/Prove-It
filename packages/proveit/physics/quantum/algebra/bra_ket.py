@@ -126,13 +126,6 @@ class NumBra(Function):
                                                 vec_space))
         return membership
 
-        
-        
-        num_ket_in_vec_space = NumKet.deduce_in_vec_space(field=Complex)
-        hspace = num_ket_in_vec_space.domain
-        return num_bra_is_lin_map.instantiate(
-                {})
-
 
 class NumKet(Function):
     '''
