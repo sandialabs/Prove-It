@@ -538,10 +538,12 @@ class InnerExpr:
         current inner expression on the left side or it may be the
         replacement.
         '''
-        cur_inner_expr = self.expr_hierarchy[-1]
-        
         equality = self._eq_from_equality_or_replacement(
                 equality_or_replacement, prove_equality=True)
+        # Make sure to preserve the left and right sides of the
+        # original expression.
+        preserved_exprs = set(defaults.preserved_exprs)
+        preserved_exprs.update({equality.lhs, equality.rhs})
 
         if len(self.parameters) > 0:
             # Determine which parameters, if any, are involved
@@ -586,14 +588,17 @@ class InnerExpr:
                 # We need to perform replacements before we
                 # are ready to prove the left side.
                 substitution = equality.substitution(
-                    repl_lambda, replacements=replacements)
+                    repl_lambda, replacements=replacements,
+                    preserved_exprs=preserved_exprs)
                 return substitution.derive_right_via_equality(
                         preserve_all=True)
             return equality.sub_right_side_into(
-                repl_lambda, replacements=replacements)        
+                repl_lambda, replacements=replacements,
+                preserved_exprs=preserved_exprs)        
         else:
             return equality.substitution(
-                repl_lambda, replacements=replacements)
+                repl_lambda, replacements=replacements,
+                preserved_exprs=preserved_exprs)
 
     @equality_prover('substituted', 'substitute')
     def substitution(self, equality_or_replacement, **defaults_config):
