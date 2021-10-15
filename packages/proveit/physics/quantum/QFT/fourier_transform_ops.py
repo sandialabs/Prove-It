@@ -1,4 +1,7 @@
 from proveit import Literal, Operation
+from proveit import n
+from proveit.logic import SubsetEq
+from proveit.numbers import Complex
 
 
 class InverseFourierTransform(Operation):
@@ -25,3 +28,20 @@ class InverseFourierTransform(Operation):
         formatted_operator = self.operator.formatted(format_type, fence=False)
         formated_nqubits = self.nqubits.formatted(format_type, fence=False)
         return formatted_operator + '_{' + formated_nqubits + '}'
+
+    def deduce_in_vec_space(self, vec_space=None, *, field,
+                            **defaults_config):
+        from . import invFT_in_SU
+        if field != Complex:
+            raise NotImplementedError(
+                    "NumKet.deduce_in_vec_space only implemented for a "
+                    "complex field, not %s."%field)
+        _SUdomain = invFT_in_SU.instantiate({n:self.nqubits}).domain
+        vspace = _SUdomain.including_vec_space(field=Complex)
+        if vec_space is not None and vec_space != vspace:
+            raise NotImplementedError(
+                    "InverseFourierTransofrm.deduce_in_vec_space only "
+                    "implemented to deduce membership in %s, not %s"
+                    %(vspace, vec_space))
+        sub_rel = SubsetEq(_SUdomain, vspace)
+        return sub_rel.derive_superset_membership(self)
