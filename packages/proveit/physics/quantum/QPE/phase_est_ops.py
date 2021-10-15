@@ -132,9 +132,9 @@ class ModAdd(Operation):
 
     @prover
     def deduce_in_interval(self, **defaults_config):
-        from . import mod_add_closure
+        from . import _mod_add_closure
         _a, _b = self.operands
-        return mod_add_closure.instantiate({a:_a, b:_b})
+        return _mod_add_closure.instantiate({a:_a, b:_b})
 
     @prover
     def deduce_in_number_set(self, number_set, **defaults_config):
