@@ -751,7 +751,8 @@ class Mult(NumberOperation):
         Examples:
             a (b + c + a) d = a b d + a c d + a a d
             a (b - c) d = a b d - a c d
-            a \left(\sum_x f(x)\right c = \sum_x a f(x) c
+            a (\sum_x f(x)) c = \sum_x a f(x) c
+            (a/b)*(c/d) = (a*b)/(c*d)
         Give any assumptions necessary to prove that the operands are in
         the Complex numbers so that the associative and commutation
         theorems are applicable.
