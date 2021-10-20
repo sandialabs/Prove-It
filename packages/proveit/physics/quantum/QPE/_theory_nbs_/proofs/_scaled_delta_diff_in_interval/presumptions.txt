@@ -1,5 +1,9 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
 proveit.core_expr_types.tuples.tuple_len_0_typical_eq
+proveit.linear_algebra.inner_products.complex_set_is_inner_prod_space
+proveit.linear_algebra.inner_products.inner_prod_space_is_vec_space
+proveit.linear_algebra.inner_products.rational_set_is_inner_prod_space
+proveit.linear_algebra.inner_products.real_set_is_inner_prod_space
 proveit.logic.booleans.false_eq_false
 proveit.logic.booleans.from_not_false
 proveit.logic.booleans.in_bool_if_true
@@ -12,6 +16,7 @@ proveit.logic.equality.fold_not_equals
 proveit.logic.equality.not_equals_symmetry
 proveit.logic.equality.sub_right_side_into
 proveit.logic.equality.unfold_not_equals
+proveit.logic.sets.cartesian_products.cart_exp_unfold_abstract
 proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.logic.sets.inclusion.unfold_subset_eq
@@ -136,5 +141,10 @@ proveit.numbers.numerals.decimals.tuple_len_2
 proveit.numbers.numerals.decimals.tuple_len_2_typical_eq
 proveit.numbers.ordering.less_is_not_eq
 proveit.numbers.ordering.relax_less
-proveit.physics.quantum.QPE.delta_diff_in_interval
+proveit.physics.quantum.QPE._delta_diff_in_interval
+proveit.physics.quantum.algebra.complex_set_is_hilbert_space
+proveit.physics.quantum.algebra.hilbert_space_is_inner_prod_space
+proveit.physics.quantum.algebra.hilbert_space_is_vec_space
+proveit.physics.quantum.algebra.ket_one_in_qubit_space
+proveit.physics.quantum.algebra.ket_zero_in_qubit_space
 # THEOREMS AND THEORIES TO EXCLUDE:

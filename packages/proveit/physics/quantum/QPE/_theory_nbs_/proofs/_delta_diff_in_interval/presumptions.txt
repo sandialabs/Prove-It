@@ -1,5 +1,9 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
 proveit.core_expr_types.tuples.tuple_len_0_typical_eq
+proveit.linear_algebra.inner_products.complex_set_is_inner_prod_space
+proveit.linear_algebra.inner_products.inner_prod_space_is_vec_space
+proveit.linear_algebra.inner_products.rational_set_is_inner_prod_space
+proveit.linear_algebra.inner_products.real_set_is_inner_prod_space
 proveit.logic.booleans.conjunction.and_if_both
 proveit.logic.booleans.conjunction.left_from_and
 proveit.logic.booleans.conjunction.right_from_and
@@ -18,6 +22,7 @@ proveit.logic.equality.rhs_via_equality
 proveit.logic.equality.sub_left_side_into
 proveit.logic.equality.sub_right_side_into
 proveit.logic.equality.unfold_not_equals
+proveit.logic.sets.cartesian_products.cart_exp_unfold_abstract
 proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.logic.sets.inclusion.unfold_subset_eq
@@ -37,6 +42,7 @@ proveit.numbers.division.distribute_frac_through_subtract
 proveit.numbers.division.div_real_closure
 proveit.numbers.division.frac_cancel_left
 proveit.numbers.division.frac_one_denom
+proveit.numbers.division.neg_frac_neg_numerator
 proveit.numbers.division.prod_of_fracs
 proveit.numbers.division.strong_div_from_numer_bound__pos_denom
 proveit.numbers.division.weak_div_from_numer_bound__pos_denom
@@ -160,8 +166,13 @@ proveit.numbers.ordering.negative_if_real_neg
 proveit.numbers.ordering.relax_less
 proveit.numbers.ordering.transitivity_less_eq_less_eq
 proveit.numbers.ordering.transitivity_less_less_eq
-proveit.physics.quantum.QPE.delta_is_real
-proveit.physics.quantum.QPE.scaled_delta_in_interval
-proveit.physics.quantum.QPE.two_pow_t_is_nat_pos
-proveit.physics.quantum.QPE.two_pow_t_minus_one_is_nat_pos
+proveit.physics.quantum.QPE._delta_is_real
+proveit.physics.quantum.QPE._scaled_delta_in_interval
+proveit.physics.quantum.QPE._two_pow_t_is_nat_pos
+proveit.physics.quantum.QPE._two_pow_t_minus_one_is_nat_pos
+proveit.physics.quantum.algebra.complex_set_is_hilbert_space
+proveit.physics.quantum.algebra.hilbert_space_is_inner_prod_space
+proveit.physics.quantum.algebra.hilbert_space_is_vec_space
+proveit.physics.quantum.algebra.ket_one_in_qubit_space
+proveit.physics.quantum.algebra.ket_zero_in_qubit_space
 # THEOREMS AND THEORIES TO EXCLUDE:
