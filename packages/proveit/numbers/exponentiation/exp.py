@@ -188,7 +188,7 @@ class Exp(NumberOperation):
                         # The simplification of the operands may not have
                         # worked hard enough.  Let's work harder if we
                         # must evaluate.
-                        operand.evalution()
+                        operand.evaluation()
                 return self.evaluation()
             raise EvaluationError(self)
 
