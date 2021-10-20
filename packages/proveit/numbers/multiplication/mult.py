@@ -1075,13 +1075,11 @@ class Mult(NumberOperation):
                 base = operand_bases.innermost_body()
                 exponent = operand_exponents.innermost_body()
                 operand_parameters = operand.parameters()
-                if not free_vars(base, err_inclusively=True).isdisjoint(
-                        operand_parameters):
+                if not free_vars(base).isdisjoint(operand_parameters):
                     # Can't have the same base unless the base
                     # is independent of range parameters.
                     same_base = False
-                if not free_vars(exponent, err_inclusively=True).isdisjoint(
-                        operand_parameters):
+                if not free_vars(exponent).isdisjoint(operand_parameters):
                     # Can't have the same exponent unless the exponent
                     # is independent of range parameters.
                     same_exponent = False

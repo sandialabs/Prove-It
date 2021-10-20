@@ -1045,13 +1045,12 @@ class Assignments:
                 # entirely unbound because it would be challenging
                 # to consider partially bound instances and it isn't
                 # so critical -- it's just a good convention.
-                if len(free_vars(right_side, err_inclusively=False)) > 0:
+                if len(free_vars(right_side)) > 0:
                     raise ValueError(
                         '%s should not have free variables; variables '
                         'must all be bound (e.g. universally quantified). '
                         ' Free variables: %s'
-                        % (prove_it_magic.kind,
-                           free_vars(right_side, err_inclusively=False)))
+                        % (prove_it_magic.kind, free_vars(right_side)))
                 if name in prove_it_magic.definitions:
                     if prove_it_magic.definitions[name] != right_side:
                         print('WARNING: Redefining', name)

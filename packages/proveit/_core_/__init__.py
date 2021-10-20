@@ -2,7 +2,7 @@
 
 from .expression import (
     Expression, traverse_inner_expressions, used_vars,
-    possibly_free_var_ranges, free_vars,
+    free_var_ranges, free_vars,
     expression_depth, MakeNotImplemented,
     ImproperReplacement,
     InnerExpr, InnerExprGenerator, generate_inner_expressions,
@@ -11,8 +11,9 @@ from .expression import (
     Operation, IndexedVar, Function,
     OperationOverInstances, bundle, unbundle, OperationError,
     Conditional, ConditionalSet,
-    Lambda, ParameterCollisionError, DisallowedParameterRelabeling,
-    LambdaApplicationError, ArgumentExtractionError,
+    Lambda, ParameterCollisionError, ParameterMaskingError,
+    ParameterRelabelingError, LambdaApplicationError, 
+    ArgumentExtractionError,
     Composite, composite_expression,
     single_or_composite_expression,
     ExprTuple, ExprTupleError, extract_var_tuple_indices,

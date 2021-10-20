@@ -91,8 +91,7 @@ class ExprRange(Expression):
         self.parameter = self.lambda_map.parameter
         self.body = self.lambda_map.body
         self.is_parameter_independent = (
-            self.parameter not in
-            free_vars(self.body, err_inclusively=True))
+            self.parameter not in free_vars(self.body))
 
     @classmethod
     def _make(sub_class, core_info, sub_expressions, *, styles):
@@ -580,11 +579,12 @@ class ExprRange(Expression):
             index, assumptions=assumptions, requirements=requirements,
             equality_repl_requirements=equality_repl_requirements)
 
-    def _possibly_free_var_ranges(self, exclusions=None):
+    def _free_var_ranges(self, exclusions=None):
         '''
         Return the dictionary mapping Variables to forms w.r.t. ranges
-        of indices (or solo) in which the variable occurs as free or
-        not explicitly and completely masked.  Examples of "forms":
+        of indices (or solo) in which the variable occurs as free
+        (not within a lambda map that parameterizes the base variable).
+        Examples of "forms":
             x
             x_i
             x_1, ..., x_n
@@ -621,7 +621,7 @@ class ExprRange(Expression):
         else:
             body_exclusions = None
         body_forms_dict = \
-            self.body._possibly_free_var_ranges(exclusions=body_exclusions)
+            self.body._free_var_ranges(exclusions=body_exclusions)
         # deep copy body_forms_dict into forms_dict
         forms_dict = {var: set(ranges) for var, ranges
                       in body_forms_dict.items()}
@@ -633,7 +633,7 @@ class ExprRange(Expression):
                 forms_dict.pop(param)
         for expr in self._sub_expressions[1:]:
             # Skip the first sub-expression. We've already treated that.
-            for var, forms in expr._possibly_free_var_ranges(
+            for var, forms in expr._free_var_ranges(
                     exclusions=exclusions).items():
                 forms_dict.setdefault(var, set()).update(forms)
         # The var ranges of the body that depend upon self.parameter
@@ -652,7 +652,7 @@ class ExprRange(Expression):
 
     def _parameterized_var_ranges(self, body_forms_dict=None):
         '''
-        Yield each of body._possibly_free_var_ranges() that involves the
+        Yield each of body._free_var_ranges() that involves the
         ExprRange parameter as a free variable.
         For example, for ((x_1 < x_{1+1}) and ... and (x_n < x_{n+1})),
         the following will be yielded if k is the ExprRange parameter:
@@ -665,7 +665,7 @@ class ExprRange(Expression):
         if i is the ExprRange parameter.
         '''
         if body_forms_dict is None:
-            body_forms_dict = self.body._possibly_free_var_ranges()
+            body_forms_dict = self.body._free_var_ranges()
         param = self.parameter
         for var, forms in body_forms_dict.items():
             for form in forms:
@@ -673,7 +673,7 @@ class ExprRange(Expression):
                     continue
                 if form == self.parameter:
                     continue  # don't count the parameter itself.
-                var_forms_of_form = form._possibly_free_var_ranges()
+                var_forms_of_form = form._free_var_ranges()
                 if (param in var_forms_of_form
                         and param in var_forms_of_form[param]):
                     yield form
@@ -969,7 +969,7 @@ class ExprRange(Expression):
         # parameterized_var_ranges are expanded, all of the new indices
         # must match the original indices, not just the length.
         excluded_var_ranges = \
-            self.body._possibly_free_var_ranges(
+            self.body._free_var_ranges(
                 exclusions=parameterized_var_ranges)
         if self.parameter in excluded_var_ranges:
             indices_must_match = True
@@ -1005,7 +1005,7 @@ class ExprRange(Expression):
             occurrence_map = dict(repl_map)
             occurrence_map.pop(var)
             for idx in var_indices:
-                if orig_parameter in free_vars(idx, err_inclusively=True):
+                if orig_parameter in free_vars(idx):
                     if param_index is not None:
                         raise ImproperReplacement(
                             self, repl_map,
@@ -1037,7 +1037,7 @@ class ExprRange(Expression):
             occurrence = occurrence.basic_replaced(
                 occurrence_map, allow_relabeling=allow_relabeling, 
                 requirements=requirements)
-            if safe_dummy_var in free_vars(occurrence, err_inclusively=True):
+            if safe_dummy_var in free_vars(occurrence):
                 # There was an instance of the original parameter with a
                 # different shift than what we used.  That's not allowed.
                 raise ImproperReplacement(
@@ -1433,7 +1433,7 @@ class ExprRange(Expression):
             old_shifted_param = Add(self.parameter, old_shift)
             safe_var = safe_dummy_var(self.body)
             shifted_body = self.body.basic_replaced({old_shifted_param: safe_var})
-            if self.parameter in free_vars(shifted_body, err_inclusively=True):
+            if self.parameter in free_vars(shifted_body):
                 raise ValueError("The given 'old_shift' of %s does apply "
                                  "to %s" % (old_shift, self.lambda_map))
             _f = Lambda(self.parameter,

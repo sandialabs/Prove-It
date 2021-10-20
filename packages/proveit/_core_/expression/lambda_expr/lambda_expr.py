@@ -121,7 +121,7 @@ class Lambda(Expression):
         # Parameter variables may not occur as free variables of
         # any of the parameter indexes.
         free_vars_of_param_indices = \
-            self._possibly_free_vars_of_parameter_indices()
+            self._free_vars_of_parameter_indices()
         if not free_vars_of_param_indices.isdisjoint(self.parameter_var_set):
             raise ParameterCollisionError(
                 self.parameters, ("Parameter variables may not occur as "
@@ -142,16 +142,6 @@ class Lambda(Expression):
         assert isinstance(body, Expression)
         self.body = body
 
-        # Parameter variables that are indexed and not fully and
-        # explicitly covered under the currently introduced range
-        # cannot be relabeled.
-        free_var_ranges = \
-            Lambda._possibly_free_var_ranges_static(
-                self.parameters, self.parameter_vars, self.body)
-        self.nonrelabelable_param_vars = \
-            {var for var, var_form in free_var_ranges.items()
-             if var in self.parameter_var_set}
-
         sub_exprs = (self.parameters, self.body)
         Expression.__init__(self, ['Lambda'], sub_exprs, styles=styles)
 
@@ -168,9 +158,9 @@ class Lambda(Expression):
         parameters, body = sub_expressions
         return Lambda(parameters, body, styles=styles)
 
-    def _possibly_free_vars_of_parameter_indices(self):
+    def _free_vars_of_parameter_indices(self):
         '''
-        Return the set of (possibly) free variables of the indices of all
+        Return the set of free variables of the indices of all
         of the parameters of this Lambda expression.
         '''
         from proveit._core_.expression.composite import ExprRange
@@ -180,12 +170,12 @@ class Lambda(Expression):
             if (isinstance(parameter, ExprRange) and
                     isinstance(parameter.body, IndexedVar)):
                 free_vars_of_indices.update(
-                    free_vars(parameter.start_index, err_inclusively=True))
+                    free_vars(parameter.start_index))
                 free_vars_of_indices.update(
-                    free_vars(parameter.end_index, err_inclusively=True))
+                    free_vars(parameter.end_index))
             elif isinstance(parameter, IndexedVar):
                 free_vars_of_indices.update(
-                    free_vars(parameter.index, err_inclusively=True))
+                    free_vars(parameter.index))
         return free_vars_of_indices
 
     def _canonical_version(self, stored_canonical_version=None):
@@ -197,37 +187,46 @@ class Lambda(Expression):
         that, instead of building it from scratch, after we
         check that it is valid.
         '''
-        from proveit._core_.expression.composite import ExprRange
+        from proveit._core_.expression.operation.indexed_var import (
+            IndexedVar)
 
         if hasattr(self, '_canonical_expr'):
             return self._canonical_expr
 
-        # Except for the variables in self.nonrelabelable_param_vars,
-        # relabel them to something deterministic independent of the
-        # original labels.
-        # Note: If there are any direct indexed variable parameters
-        # (as opposed to a range of indexed variables) that are
-        # relabelable, replace them with the variable being indexed
-        # in the canonical version
+        # Relabel parameter variables to something deterministic
+        # independent of the original labels.
         parameter_vars = self.parameter_vars
         parameters = self.parameters
-        bound_parameter_vars = \
-            [param_var if isinstance(param, ExprRange) else param
-             for param_var, param in zip(parameter_vars, parameters)
-             if param_var not in self.nonrelabelable_param_vars]
-
+        effective_param_vars = []
+        for param, param_var in zip(parameters, parameter_vars):
+            if isinstance(param, IndexedVar):
+                # There is an IndexedVar parameter (e.g., x_1).
+                # To be a proper form, the only occurrence of x in
+                # the body must be x_1 and we should relabel it to a
+                # simple variable in the canonical form.
+                forms_dict = self.body._free_var_ranges()
+                var_forms = forms_dict.get(param_var, {param})
+                if var_forms != {param}:
+                    # Invalid form
+                    raise ParameterMaskingError(
+                        "With a %s parameter, the body of %s should "
+                        "only contain occurrences of %s of the form %s "
+                        "but contains all of these forms: %s"
+                        %(param, self, param_var, param, var_forms))
+                effective_param_vars.append(param)
+            else:
+                effective_param_vars.append(param_var)
+                
         # Assign canonical labels to the parameters using the first
         # available dummy variable, skipping over free variables that
         # happen to match any of these dummy variables.
         canonical_parameters = parameters._canonical_version()
         canonical_body = self.body._canonical_version()
-        canonical_body_free_vars = free_vars(canonical_body,
-                                             err_inclusively=True)
-        canonical_parameters_free_vars = free_vars(canonical_parameters,
-                                                   err_inclusively=True)
+        canonical_body_free_vars = free_vars(canonical_body)
+        canonical_parameters_free_vars = free_vars(canonical_parameters)
         lambda_free_vars = set(canonical_body_free_vars)
         lambda_free_vars.update(canonical_parameters_free_vars)
-        lambda_free_vars.difference_update(bound_parameter_vars)
+        lambda_free_vars.difference_update(effective_param_vars)
         internally_bound_vars = (used_vars(canonical_body) -
                                  canonical_body_free_vars)
         start_index = len(internally_bound_vars)
@@ -238,7 +237,7 @@ class Lambda(Expression):
                 start_index += 1
             dummy_index += 1
         canonical_param_vars = list(reversed(
-            safe_dummy_vars(len(bound_parameter_vars), *lambda_free_vars,
+            safe_dummy_vars(len(effective_param_vars), *lambda_free_vars,
                             start_index=start_index)))
 
         with defaults.temporary() as temp_defaults:
@@ -251,12 +250,12 @@ class Lambda(Expression):
             #temp_defaults.use_consistent_styles = False
             # Canonical Lambda styles are always empty.
             canonical_styles = dict()
-            if canonical_param_vars != bound_parameter_vars:
+            if canonical_param_vars != effective_param_vars:
                 # Create the canonical version via relabeling.
                 relabel_map = \
                     {param_var: canonical_param_var
                      for param_var, canonical_param_var
-                     in zip(bound_parameter_vars, canonical_param_vars)}
+                     in zip(effective_param_vars, canonical_param_vars)}
                 canonical_parameters = parameters.basic_replaced(
                     relabel_map)._canonical_version()
                 canonical_body = canonical_body.basic_replaced(
@@ -673,8 +672,7 @@ class Lambda(Expression):
         # Can't use assumptions involving lambda parameter variables
         inner_assumptions = \
             [assumption for assumption in defaults.assumptions if
-             free_vars(assumption, err_inclusively=True).isdisjoint(
-                 self.parameter_vars)]        
+             free_vars(assumption).isdisjoint(self.parameter_vars)]        
         with defaults.temporary() as temp_defaults:
             temp_defaults.assumptions = inner_assumptions
             # Since the assumptions have changed, we can no longer use
@@ -704,7 +702,7 @@ class Lambda(Expression):
         parameter_vars = self.parameter_vars
         # Free variables of the body but excluding the parameter
         # variables.
-        non_param_body_free_vars = (free_vars(self.body, err_inclusively=True)
+        non_param_body_free_vars = (free_vars(self.body)
                                     - self.parameter_var_set)
 
         # First, we may replace indices of any of the parameters.
@@ -746,7 +744,7 @@ class Lambda(Expression):
         inner_repl_map = dict()
         relabel_map = dict()
         for key, value in repl_map.items():
-            if not _guaranteed_to_be_independent(key, self.parameter_var_set):
+            if not free_vars(key).isdisjoint(self.parameter_var_set):
                 # If any of the free variables of the key occur as
                 # parameter variables, either that replacement is
                 # masked within this scope, or there is an allowed
@@ -816,10 +814,8 @@ class Lambda(Expression):
                         relabel_map[var_range_form] = _replacement
                 elif isinstance(key, Variable) and isinstance(value, Variable):
                     # A simple relabeling is allowed to propagate
-                    # through as long as the variable is not indexed
-                    # over a range that is not covered here.
-                    if (allow_relabeling and
-                            key not in self.nonrelabelable_param_vars):
+                    # through.
+                    if allow_relabeling:
                         relabel_map[key] = value
                     # Otherwise, it is a simple, fair masking.
                 elif (isinstance(key, IndexedVar) and key in parameters):
@@ -865,8 +861,7 @@ class Lambda(Expression):
         # will be what the members of this set map to.
         restricted_vars = non_param_body_free_vars - inner_repl_map.keys()
         restricted_vars.update(
-            *[free_vars(value, err_inclusively=True) for key, value
-              in inner_repl_map.items()
+            *[free_vars(value) for key, value in inner_repl_map.items()
               if (key not in self.parameter_var_set
                   and not isinstance(value, set))])
         for param, param_var in zip(parameters, parameter_vars):
@@ -877,14 +872,6 @@ class Lambda(Expression):
             else:
                 param_var_repl = relabel_map.get(param_var, param_var)
             if param_var_repl in restricted_vars:
-                # Avoid this collision by relabeling to a safe dummy
-                # variable.
-                if param_var in self.nonrelabelable_param_vars:
-                    raise DisallowedParameterRelabeling(
-                        param_var, self,
-                        " Thus, a collision of variable names induced "
-                        "by the following replacement map could not be "
-                        "avoided: %s." % relabel_map)
                 dummy_var = safe_dummy_var(*restricted_vars)
                 if isinstance(param, IndexedVar):
                     relabel_map[param] = dummy_var
@@ -930,8 +917,7 @@ class Lambda(Expression):
         new_param_vars = [get_param_var(new_param) for new_param in new_params]
         inner_assumptions = \
             [assumption for assumption in defaults.assumptions if
-             free_vars(assumption, err_inclusively=True).isdisjoint(
-                 new_param_vars)]
+             free_vars(assumption).isdisjoint(new_param_vars)]
         
         return new_params, inner_repl_map, tuple(inner_assumptions)
 
@@ -958,12 +944,10 @@ class Lambda(Expression):
         relabeled = self.basic_replaced(relabel_map, allow_relabeling=True)
         for orig_param_var, new_param_var in zip(self.parameter_vars,
                                                  relabeled.parameter_vars):
-            # Presume that if one of the parameters did not actually
-            # get relabeled, that it was because the relabeling was
-            # not allowed.
+            # Check that the relabeling happened properly.
             if (new_param_var !=
                     relabel_map.get(orig_param_var, orig_param_var)):
-                raise DisallowedParameterRelabeling(orig_param_var, self)
+                raise ParameterRelabelingError(self, relabel_map)
         assert relabeled == self, (
             "Relabeled version should be 'equal' to original")
         return relabeled
@@ -1144,31 +1128,30 @@ class Lambda(Expression):
                 {sub_expr: lambda_param}))
 
     @staticmethod
-    def _possibly_free_var_ranges_static(parameters, parameter_vars, body,
-                                         exclusions=None):
+    def _free_var_ranges_static(parameters, parameter_vars, body,
+                                exclusions=None):
         '''
-        Static method version of _possibly_free_var_ranges.
+        Static method version of _free_var_ranges.
         '''
         forms_dict = dict()
         for expr in (parameters, body):
-            forms_dict.update(expr._possibly_free_var_ranges(
+            forms_dict.update(expr._free_var_ranges(
                 exclusions=exclusions))
-        for param, param_var in zip(parameters, parameter_vars):
-            if param_var in forms_dict.keys():
-                forms_dict[param_var].discard(param)
-                # Note: If you have a parameter of x_1 or a parameter of
-                # x_1, ..., x_n, then 'x' itself is masked although
-                # x_{n+1} would not be masked.  Therefore, remove 'x':
-                forms_dict[param_var].discard(param_var)
-                if len(forms_dict[param_var]) == 0:
-                    forms_dict.pop(param_var)
+        for param_var in parameter_vars:
+            # A lambda parameter variable effectively masks all
+            # occurrences of that variable (this is enforced during
+            # relabling/instantiation where we ensure that the
+            # lambda parameter range covers the occurrences being
+            # replaced.
+            forms_dict.pop(param_var, None)
         return forms_dict
 
-    def _possibly_free_var_ranges(self, exclusions=None):
+    def _free_var_ranges(self, exclusions=None):
         '''
         Return the dictionary mapping Variables to forms w.r.t. ranges
-        of indices (or solo) in which the variable occurs as free or
-        not explicitly and completely masked.  Examples of "forms":
+        of indices (or solo) in which the variable occurs as free
+        (not within a lambda map that parameterizes the base variable).        
+        Examples of "forms":
             x
             x_i
             x_1, ..., x_n
@@ -1178,7 +1161,7 @@ class Lambda(Expression):
         forms_dict = dict()
         if exclusions is not None and self in exclusions:
             return forms_dict  # this is excluded
-        return Lambda._possibly_free_var_ranges_static(
+        return Lambda._free_var_ranges_static(
             self.parameters, self.parameter_vars, self.body,
             exclusions=exclusions)
 
@@ -1189,21 +1172,6 @@ class Lambda(Expression):
         '''
         return self.parameter_var_set.union(
                 self.body._contained_parameter_vars())
-
-
-def _guaranteed_to_be_independent(expr, parameter_vars):
-    '''
-    Return True if we can guarantee that the given expression
-    is independent of the given parameters.  It may not be clear
-    in some cases.  For example, if
-    expr : x_1 + ... + x_n
-    parameters : x_i, ..., x_j
-    In such a case, we must return False since there is no guarantee
-    of independence.
-    '''
-    if free_vars(expr, err_inclusively=True).isdisjoint(parameter_vars):
-        return True
-    return False
 
 
 def extract_complete_param_replacements(parameters, parameter_vars, body,
@@ -1452,7 +1420,6 @@ def extract_param_replacements(parameters, parameter_vars, body,
                          "or unproven length equality for "
                          "correspondence with %s." % str(parameter))
 
-
 class ParameterCollisionError(Exception):
     def __init__(self, parameters, main_msg):
         self.parameters = parameters
@@ -1462,20 +1429,28 @@ class ParameterCollisionError(Exception):
         return ("%s.  %s does not satisfy this criterion."
                 % (self.main_msg, self.parameters))
 
-
-class DisallowedParameterRelabeling(Exception):
-    def __init__(self, param_var, lambda_expr, extra_msg=''):
-        self.param_var = param_var
-        self.lambda_expr = lambda_expr
-        self.extra_msg = extra_msg
+class ParameterMaskingError(Exception):
+    '''
+    Lambda's are not allowed to mask a range of parameters while the
+    body contains parameters outside of this range (partial masking).
+    We only catch this when it is easy/convenient or when it really 
+    matters.  We catch it for a simple indexed parameter (effectively
+    a singular range) while generating the canonical form or while
+    instantiating/relabeling (as an ImproperReplacement).
+    '''
+    def __init__(self, msg):
+        self.msg = msg
 
     def __str__(self):
-        return ("Cannot relabel %s in %s; relabeling is only allowed when "
-                "all occurrences of a range of parameters matches the exact "
-                "range appearing as parameters (otherwise, the bound verses "
-                "free portions of the range may be ambiguous).%s"
-                % (self.param_var, self.lambda_expr, self.extra_msg))
+        return self.msg
 
+class ParameterRelabelingError(Exception):
+    def __init__(self, expr, relabel_map):
+        self.expr = expr
+        self.relabel_map = relabel_map
+
+    def __str__(self):
+        return "Invalid relabeling of %s: %s"%(self.expr, self.relabel_map)
 
 class LambdaApplicationError(Exception):
     def __init__(self, parameters, body, operands,
