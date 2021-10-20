@@ -1,5 +1,9 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
 proveit.core_expr_types.tuples.tuple_len_0_typical_eq
+proveit.linear_algebra.inner_products.complex_set_is_inner_prod_space
+proveit.linear_algebra.inner_products.inner_prod_space_is_vec_space
+proveit.linear_algebra.inner_products.rational_set_is_inner_prod_space
+proveit.linear_algebra.inner_products.real_set_is_inner_prod_space
 proveit.logic.booleans.false_eq_false
 proveit.logic.booleans.from_not_false
 proveit.logic.booleans.in_bool_if_true
@@ -11,6 +15,7 @@ proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
 proveit.logic.equality.not_equals_symmetry
 proveit.logic.equality.unfold_not_equals
+proveit.logic.sets.cartesian_products.cart_exp_unfold_abstract
 proveit.logic.sets.equivalence.set_equiv_is_bool
 proveit.logic.sets.inclusion.fold_subset_eq
 proveit.logic.sets.inclusion.relax_proper_subset
@@ -114,5 +119,10 @@ proveit.numbers.numerals.decimals.tuple_len_1
 proveit.numbers.ordering.less_is_not_eq
 proveit.numbers.ordering.relax_less
 proveit.numbers.ordering.transitivity_less_less_eq
-proveit.physics.quantum.QPE.two_pow_t_minus_one_is_nat_pos
+proveit.physics.quantum.QPE._two_pow_t_minus_one_is_nat_pos
+proveit.physics.quantum.algebra.complex_set_is_hilbert_space
+proveit.physics.quantum.algebra.hilbert_space_is_inner_prod_space
+proveit.physics.quantum.algebra.hilbert_space_is_vec_space
+proveit.physics.quantum.algebra.ket_one_in_qubit_space
+proveit.physics.quantum.algebra.ket_zero_in_qubit_space
 # THEOREMS AND THEORIES TO EXCLUDE:
