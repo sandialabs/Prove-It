@@ -35,7 +35,7 @@ class ExprType(type):
                  '_range_reduction', 'relabeled',
                  'sub_expr_substitution',
                  '_make', '_checked_make', '_reduced', '_used_vars',
-                 '_possibly_free_var_ranges', '_parameterized_var_ranges',
+                 '_free_var_ranges', '_parameterized_var_ranges',
                  '_repr_html_', '_core_info',
                  '_sub_expressions', '_canonical_expr',
                  '_meaning_data', '_meaning_id',
@@ -1102,8 +1102,7 @@ class Expression(metaclass=ExprType):
             # variables. Also, don't replace lambda parameters.
             inner_assumptions = \
                 [assumption for assumption in defaults.assumptions if
-                 free_vars(assumption, err_inclusively=True).isdisjoint(
-                     self.parameter_vars)]
+                 free_vars(assumption).isdisjoint(self.parameter_vars)]
             with defaults.temporary() as temp_defaults:
                 temp_defaults.assumptions = inner_assumptions
                 # Since the assumptions have changed, we can no longer
@@ -1329,23 +1328,26 @@ class Expression(metaclass=ExprType):
         return set().union(*[expr._contained_parameter_vars() for
                              expr in self._sub_expressions])
 
-    def _possibly_free_var_ranges(self, exclusions=None):
+    def _free_var_ranges(self, exclusions=None):
         '''
         Return the dictionary mapping Variables to forms w.r.t. ranges
-        of indices (or solo) in which the variable occurs as free or
-        not explicitly and completely masked.  Examples of "forms":
+        of indices (or solo) in which the variable occurs as free
+        (not within a lambda map that parameterizes the base variable).
+        Examples of "forms":
             x
             x_i
             x_1, ..., x_n
             x_{i, 1}, ..., x_{i, n_i}
             x_{1, 1}, ..., x_{1, n_1}, ......, x_{m, 1}, ..., x_{m, n_m}
-        For example,
+        
+        Note: Lambda maps are not supposed to partially masked ranges
+        of parameters.  For example,
         (x_1, ..., x_n) -> x_1 + ... + x_n + x_{n+1}
-        would report {x_{n+1}} for the x entry but not x_1, ..., x_n.
-        In another example,
-        (x_1, ..., x_n) -> x_1 + ... + x_k + x_{k+1} + ... + x_{n}
-        would report {x_1, ..., x_k, x_{k+1}, ..., x_{n}} for the x
-        entry because the masking is not "explicit" (obvious).
+        is not proper.  However, it won't be caught until it
+        really matters (an instantiation or relabeling is attempted
+        that reveals the issue).  Meanwhile, we simply assume
+        the masking is complete and report no ranges for x in
+        this case (x is masked by the lambda map).
 
         If this Expression is in the exclusion set, or contributes
         directly to a form that is in the exclusions set, skip over it.
@@ -1361,7 +1363,7 @@ class Expression(metaclass=ExprType):
             return forms_dict  # this is excluded
         for expr in self._sub_expressions:
             for var, forms in \
-                    expr._possibly_free_var_ranges(
+                    expr._free_var_ranges(
                         exclusions=exclusions).items():
                 forms_dict.setdefault(var, set()).update(forms)
         return forms_dict
@@ -1570,11 +1572,12 @@ def contained_parameter_vars(expr):
     return expr._contained_parameter_vars()
 
 
-def possibly_free_var_ranges(expr, exclusions=None):
+def free_var_ranges(expr, exclusions=None):
     '''
     Return the dictionary mapping Variables to forms w.r.t. ranges
-    of indices (or solo) in which the variable occurs as free or
-    not explicitly and completely masked.  Examples of "forms":
+    of indices (or solo) in which the variable occurs as free
+    (not within a lambda map that parameterizes the base variable).    
+    Examples of "forms":
         x
         x_i
         x_1, ..., x_n
@@ -1596,55 +1599,36 @@ def possibly_free_var_ranges(expr, exclusions=None):
     if x_{i, 1}, ..., x_{i, n_i} is in the exclusion set,
     then 'a' will be the only free variable reported.
     '''
-    return expr._guaranteed_free_var_ranges(exclusions=exclusions)
+    return expr._free_var_ranges(exclusions=exclusions)
 
 
-def free_vars(expr, *, err_inclusively):
+def free_vars(expr):
     '''
-    Returns the set of variables that are free, the variable itself
-    or some indices of the variable.
-    For example,
-        (x_1, ..., x_n) -> x_1 + ... + x_n + x_{n+1}
-    x and n are both free.  And in
-        (x_1, ..., x_n) -> x_1 + ... + x_k + x_{k+1} + ... + x_{n}
-    n, and k are free assuming 1 <= k <= n.
-    What actually gets reported depends upon the "err_inclusively"
-    flag.  If "err_inclusively" is True, the latter example
-    will report x, n, and k because it is not clear that
-    x is completely bound without assumptions on k.  If
-    "err_inclusively" is False, the first example will just report
-    n because it requires some extra work to determine that x
-    is not comletely bound.
-    '''
-    if err_inclusively:
-        return {var for var in expr._possibly_free_var_ranges().keys()}
-    else:
-        return _entirely_unbound_vars(expr)
-
-
-def _entirely_unbound_vars(expr):
-    '''
-    Returns the set of variables for that are entirely unbound in
+    Returns the set of variables for that are free (unbound) in
     the given expression.
     For example, given
-        (x_1, ..., x_n) -> x_1 + ... + x_n + x_{n+1}
-    n is entirely unbound.  Even though there is an index for which
-    x is unbound, it is partially bound and therefore not returned.
+        (x_1, ..., x_n) -> x_1 + ... + x_{m}
+    n is free.  Even though there is ambiguity about the range
+    of indices of x on the right versus the left without knowing
+    m relative to n, lambda maps in Prove-It are not allowed to
+    partially mask a range of parameters (in this example, m>n
+    is not allowed).  However, this restriction isn't enforced
+    until it really matters.  When the ranges of x are relabeled
+    or instantiated, then Prove-It will check that this
+    restriction is satisfied.
     Axioms and theorems must not have any variables that are
-    entirely unbound.  They should not have any partially unbound
-    variables either, but Prove-It does not check for this since
-    the check would be more involved and it isn't so critical.
+    entirely free.
     '''
     from proveit._core_.expression.label.var import Variable
     from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
     if isinstance(expr, Variable):
         return {expr}
-    ubound_vars = set()
+    fvars = set()
     for sub_expr in expr._sub_expressions:
-        ubound_vars.update(_entirely_unbound_vars(sub_expr))
+        fvars.update(free_vars(sub_expr))
     if isinstance(expr, Lambda):
-        return ubound_vars.difference(expr.parameter_vars)
-    return ubound_vars
+        return fvars.difference(expr.parameter_vars)
+    return fvars
 
 
 def expression_depth(expr):
@@ -1691,12 +1675,3 @@ class ImproperReplacement(Exception):
     def __str__(self):
         return ("Improper replacement of %s via %s:\n%s"
                 % (self.orig_expr, self.repl_map, self.message))
-
-
-class _NoExpandedIteration(Exception):
-    '''
-    Used internally for _expandingIterRanges.
-    '''
-
-    def __init__(self):
-        pass

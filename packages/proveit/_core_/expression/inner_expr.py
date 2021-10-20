@@ -211,8 +211,7 @@ class InnerExpr:
                     else:
                         sub_expr = sub_expr.sub_expr(j)
                 fvars = free_vars(
-                    composite_expression(getattr(sub_expr,attr)),
-                    err_inclusively=False)
+                    composite_expression(getattr(sub_expr,attr)))
                 if repl_lambda.parameter_var_set.issubset(fvars):
                     return deeper_inner_expr
         # No match found at this depth -- let's continue to the next
@@ -548,7 +547,7 @@ class InnerExpr:
         if len(self.parameters) > 0:
             # Determine which parameters, if any, are involved
             # in the equivalence.
-            fvars = free_vars(equality, err_inclusively=True)
+            fvars = free_vars(equality)
             involved_params = [param for param in self.parameters
                                if param in fvars]
         else:
@@ -633,8 +632,7 @@ class InnerExpr:
             # If no parameters are involved, we can use
             # substitute_truth or substitute_false as a simple proof.
             if len(self.parameters) > 0:
-                fvars = free_vars(equality_or_replacement,
-                                  err_inclusively=True)
+                fvars = free_vars(equality_or_replacement)
                 involved_params = [param for param in self.parameters
                                    if param in fvars]
             else:

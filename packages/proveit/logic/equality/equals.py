@@ -284,8 +284,7 @@ class Equals(TransitiveRelation):
                 equality = Equals(lhs_sub_expr, rhs_sub_expr)
                 lambda_body_inner_expr = InnerExpr(
                         lambda_body, inner_expr_path=inner_expr_path)
-                params = free_vars(equality,
-                                   err_inclusively=True).intersection(
+                params = free_vars(equality).intersection(
                         lambda_body_inner_expr.parameters)
                 
                 # If any assumptions are required that are introduced

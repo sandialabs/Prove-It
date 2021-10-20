@@ -560,8 +560,7 @@ class Sum(OperationOverInstances):
         from proveit import ExprTuple, var_range, IndexedVar
         from proveit.numbers.multiplication import distribute_through_summation
         from proveit.numbers import Mult, one
-        if not free_vars(the_factor, err_inclusively=True).isdisjoint(
-                self.instance_params):
+        if not free_vars(the_factor).isdisjoint(self.instance_params):
             raise ValueError(
                 'Cannot factor anything involving summation indices '
                 'out of a summation')
