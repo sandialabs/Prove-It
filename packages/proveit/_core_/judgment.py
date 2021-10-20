@@ -864,6 +864,17 @@ class Judgment:
                                 "should be wrapped in an ExprTuple."
                                 %replacement)
             '''
+            if isinstance(key, ExprTuple) and key.is_single():
+                # The key is an ExprTuple but is single -- so
+                # just take it, and its replacement, out of
+                # ExprTuple wrappers.
+                if not (isinstance(replacement, ExprTuple)
+                        and replacement.is_single()):
+                    raise TypeError(
+                        "%s is not the expected kind of replacement "
+                        "for an ExprTuple key, %s"%(replacement, key))
+                key = key[0]
+                replacement = replacement[0]
             if isinstance(key, Variable) or isinstance(key, IndexedVar):
                 processed_repl_map[key] = replacement
             elif isinstance(key, ExprTuple) and key.num_entries() > 0:

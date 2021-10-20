@@ -112,8 +112,6 @@ class Lambda(Expression):
             self.parameter_or_parameters = self.parameters
         self.parameter_vars = tuple(parameter_vars)
         self.parameter_var_set = frozenset(parameter_vars)
-        self.parameter_of_var = {param_var: param for param_var, param
-                                 in zip(self.parameter_vars, self.parameters)}
 
         # Parameter variables may not occur multiple times.
         if len(self.parameter_var_set) != self.parameters.num_entries():
@@ -568,7 +566,6 @@ class Lambda(Expression):
                         "(with no shift in ExprRange indices): "
                         "%s is not found in %s."
                         % (var_tuple, repl_map.keys()))
-                assert len(expansion_set) == 1
                 # We need to ensure that the tuples of indices match.
                 orig_params = list(expansion_set)[0]
                 indices_eq_req = Equals(extract_var_tuple_indices(var_tuple),
@@ -712,12 +709,14 @@ class Lambda(Expression):
 
         # First, we may replace indices of any of the parameters.
         parameters = []
+        var_to_param = dict()
         for param in self.parameters:
             if isinstance(param, IndexedVar):
                 subbed_index = param.index.basic_replaced(
                         repl_map, allow_relabeling=allow_relabeling, 
                         requirements=requirements)
-                parameters.append(IndexedVar(param.var, subbed_index))
+                param_var = param.var
+                param = IndexedVar(param_var, subbed_index)
             elif isinstance(param, ExprRange):
                 param_var = get_param_var(param)
                 subbed_start = \
@@ -729,9 +728,11 @@ class Lambda(Expression):
                         repl_map, allow_relabeling=allow_relabeling, 
                         requirements=requirements)
                 range_param = var_range(param_var, subbed_start, subbed_end)
-                parameters.append(range_param)
+                param = range_param
             else:
-                parameters.append(param)
+                param_var = param
+            parameters.append(param)
+            var_to_param[param_var] = param
 
         # Within the lambda scope, we can instantiate lambda parameters
         # in a manner that retains the validity of the parameters as
@@ -753,23 +754,28 @@ class Lambda(Expression):
 
                 # First, let's see if there is an associated
                 # expansion for this key.
-                for_repl_map_temporarily = None
+                tmp_replacement = None
                 if (isinstance(key, Variable) and 
                         isinstance(value, ExprTuple)):
-                    if key in self.parameter_of_var:
+                    if key in var_to_param:
                         # Relabel a range of parameters via a 
                         # replacement for just a variable.
-                        param = self.parameter_of_var[key]
-                        repl_map.pop(key) # Temporarily remove key
-                        param = param.basic_replaced(
-                            repl_map, allow_relabeling=allow_relabeling,
-                            requirements=requirements)
-                        repl_map[key] = value # Restore the key
-                        param_tuple = ExprTuple(param)
-                        if param_tuple not in repl_map:
-                            for_repl_map_temporarily = (
-                                {param_tuple: value})
-                        value = {param_tuple}
+                        param_of_var = var_to_param[key]
+                        if isinstance(param, IndexedVar):
+                            if value.num_entries()>0:
+                                # May relabel a parameter entry that 
+                                # becomes an IndexedVar with the first
+                                # entry of the variable's replacement.
+                                key = param
+                                value = value[0]
+                        else:
+                            # May relabel a range of parameters
+                            # acccording to the variable's tuple
+                            # replacement.
+                            param_tuple = ExprTuple(param_of_var)
+                            if param_tuple not in repl_map:
+                                tmp_replacement = value
+                            value = {param_tuple}
                 if isinstance(value, set):
                     # There are one or more expansions for a variable
                     # that occurs as a local Lambda parameter.
@@ -779,8 +785,8 @@ class Lambda(Expression):
                     # of indices but there is masking otherwise.
                     var = key
                     assert isinstance(var, Variable)
-                    if var in self.parameter_of_var:
-                        param_of_var = self.parameter_of_var[var]
+                    if var in var_to_param:
+                        param_of_var = var_to_param[var]
                     else:
                         # The key is not being masked in any way,
                         # so just carry this through to the
@@ -790,47 +796,24 @@ class Lambda(Expression):
                         # The parameter is the Variable itself, so
                         # it masks all occurrences of that Variable.
                         continue  # No inner replacement for this.
-                    if isinstance(param_of_var, ExprRange):
-                        mask_start = extract_start_indices(param_of_var)
-                        mask_end = extract_end_indices(param_of_var)
-                    else:
-                        assert isinstance(param_of_var, IndexedVar)
-                        mask_start = mask_end = [param_of_var.index]
-                    # Make replacements in the masked_ start/end:
-                    for mask_indices in (mask_start, mask_end):
-                        for _, idx in enumerate(mask_indices):
-                            mask_indices[_] = \
-                                idx.basic_replaced(
-                                        repl_map, 
-                                        allow_relabeling=allow_relabeling,
-                                        requirements=requirements)
-                    # We may only use the variable range forms of
-                    # value that carve out the masked indices (e.g.
-                    # (x_1, ..., x_n, x_{n+1}) is usable if the masked
-                    # indices are (1, ..., n) or (n+1) but not
-                    # otherwise).
-                    try:
-                        if for_repl_map_temporarily is not None:
-                            repl_map.update(for_repl_map_temporarily)
-                        if not _mask_var_range(
-                                var, value, mask_start, mask_end,
-                                allow_relabeling, repl_map, inner_repl_map,
-                                relabel_map, requirements):
-                            # No valid variable range form that carves
-                            # out the masked indices.  All we can do
-                            # is indicate that the 'param_of_var' is
-                            # unchanged and no other expansion is
-                            # allowed.
-                            inner_repl_map[var] = {ExprTuple(param_of_var)}
-                            inner_repl_map[param_of_var] = param_of_var
-                    except ValueError as e:
+                    # We may relabel or mask the full range
+                    # of parameters (but partial masking is
+                    # not allowed!).
+                    var_range_forms = value
+                    var_range_form = ExprTuple(param_of_var)
+                    if var_range_form not in var_range_forms:
                         raise ImproperReplacement(
-                            self, repl_map, str(e))
-                    finally:
-                        # Remove the temporary additions to repl_map.
-                        if for_repl_map_temporarily is not None:
-                            for key in for_repl_map_temporarily.keys():
-                                repl_map.pop(key)
+                            self, repl_map, 
+                            ("Partial masking not allowed. "
+                             "%s is not in %s"
+                             %(param_of_var, var_range_forms)))
+                    if tmp_replacement is not None:
+                        _replacement = tmp_replacement
+                    else:
+                        _replacement = repl_map[var_range_form]
+                    if allow_relabeling and valid_params(_replacement):
+                        relabel_map[var] = repl_map[var]
+                        relabel_map[var_range_form] = _replacement
                 elif isinstance(key, Variable) and isinstance(value, Variable):
                     # A simple relabeling is allowed to propagate
                     # through as long as the variable is not indexed
@@ -880,7 +863,8 @@ class Lambda(Expression):
         #            (x_{1+1}, ..., x_{n+1})}
         # we can ignore those for this purpose as the real replacements
         # will be what the members of this set map to.
-        restricted_vars = non_param_body_free_vars.union(
+        restricted_vars = non_param_body_free_vars - inner_repl_map.keys()
+        restricted_vars.update(
             *[free_vars(value, err_inclusively=True) for key, value
               in inner_repl_map.items()
               if (key not in self.parameter_var_set
@@ -1467,155 +1451,6 @@ def extract_param_replacements(parameters, parameter_vars, body,
         raise ValueError("Parameter/argument length mismatch "
                          "or unproven length equality for "
                          "correspondence with %s." % str(parameter))
-
-def _mask_var_range(
-        var, var_range_forms, mask_start, mask_end, allow_relabeling,
-        repl_map, inner_repl_map, relabel_map, requirements):
-    '''
-    Given a variable 'var' (e.g., 'x'), a set of equivalent forms
-    of ranges over indices over that variable (e.g.,
-    {(x_1, ..., x_{n+1}), (x_1, x_2, ..., x_n, x_{n+1}),
-     (x_1, ..., x_n, x_{n+1})}),
-    a starting and ending indices for a 'masked' range of indices,
-    and a replacement map, update the `inner_repl_map` valid with
-    masking the 'masked' range.  Specifically, only the forms of
-    ranges with explicit coverage of the 'masked' range are valid to
-    use.  In our previous example, if start_index==1 and end_index==n
-    then only (x_1, x_2, ..., x_n, x_{n+1}) and (x_1, ..., x_n, x_{n+1})
-    could be used and (x_1, ..., x_{n+1}) would be ignored.
-    To mask the 'masked' range, entries within that range will
-    map to themselves rather than the corresponding replacements.
-    However, if allow_relabeling is true, and the corresponding
-    replacements of the masked entries map to valid parameters, then
-    we can perform relabeling.  When relabeling and there are multiple
-    forms covering the masked range, we will need to add the
-    requirements that those forms are equal for all instances
-    of those parameter variables.  For example, to relabel
-    x_1, ..., x_n to y_1, ..., y_i, z_{i+1}, ..., z_n in the scenario
-    above where we also have
-    (x_1, x_2, ..., x_n, x_{n+1}) :
-        (y_1, y_2, ..., y_i, z_{i+1}, ..., z_n, q)
-    we would require that
-    \forall_{y_1, ..., y_i, z_{i+1}, ..., z_n}
-        (y_1, ..., y_i, z_{i+1}, ..., z_n) =
-        (y_1, y_2, ..., y_i, z_{i+1}, ..., z_n)
-
-    In the multiple index setting, we need to check all of the indices.
-    Consider
-        (x_{m, i_{m}}, ..., x_{m, j_{m}}, ......,
-         x_{n, i_{n}}, ..., x_{n, j_{n}}).
-    Here, we need to match with all indices:
-        (m, i_m) for the start and (n, j_n) for the end.
-
-    Return True iff there are one or more valid range forms that
-    carve out the masked region.
-    '''
-    from proveit import (Variable, IndexedVar, ExprTuple, ExprRange,
-                         single_or_composite_expression)
-    from proveit._core_.expression.composite.expr_range import \
-        extract_start_indices, extract_end_indices
-    valid_var_range_forms = set()
-    masked_region_repl_map = dict()
-    fully_masking_var_range = None
-    for var_range_form in var_range_forms:
-        masked_entries = []
-        has_start = has_end = False
-        for entry in var_range_form:
-            if isinstance(entry, IndexedVar):
-                entry_start_indices = entry_end_indices \
-                    = [entry.index]
-            else:
-                assert isinstance(entry, ExprRange)
-                entry_start_indices = extract_start_indices(entry)
-                entry_end_indices = extract_end_indices(entry)
-            if entry_start_indices == mask_start:
-                has_start = True
-            if has_start and not has_end:
-                masked_entries.append(entry)
-            if entry_end_indices == mask_end:
-                has_end = True
-        if has_start and has_end:
-            # Add entries for this var_tuple expansion into
-            # `cur_repl_map` first; these will be divied into
-            # `inner_repl_map` (unmasked) and mased_region_repl
-            # (masked).
-            expansion = repl_map[var_range_form]
-            valid_var_range_forms.add(var_range_form)
-            cur_repl_map = dict()
-            try:
-                extract_complete_param_replacements(
-                    var_range_form, [var] * var_range_form.num_entries(),
-                    var_range_form, expansion, requirements, cur_repl_map)
-            except LambdaApplicationError as e:
-                raise ValueError(
-                    "Unable to match the tuple of indexed "
-                    "variables %s to its expansion %s.  "
-                    "Got error %s."
-                    % (var_range_form, expansion, str(e)))
-            # Divy `cur_repl_map` entries into `inner_repl_map`
-            # (unmasked) and mased_region_repl (masked).
-            if len(masked_entries) == 1:
-                fully_masking_var_range = \
-                    single_or_composite_expression(masked_entries[0])
-                if isinstance(fully_masking_var_range, IndexedVar):
-                    # Handle reduction to IndexedVar.
-                    masked_region_repl_map[fully_masking_var_range] = (
-                        cur_repl_map[masked_entries[0]])
-            #inner_repl_map[var_range_form] = expansion
-            masked_region_repl = []
-            for masked_entry in masked_entries:
-                if isinstance(masked_entry, ExprRange):
-                    masked_region_repl.extend(
-                        cur_repl_map.pop(ExprTuple(masked_entry)).entries)
-                else:
-                    masked_region_repl.append(cur_repl_map.pop(masked_entry))
-            masked_region_repl = ExprTuple(*masked_region_repl)
-            masked_region_repl_map[ExprTuple(*masked_entries)] \
-                = masked_region_repl
-            inner_repl_map.update(cur_repl_map)
-
-    if len(valid_var_range_forms) == 0:
-        # No valid variable range forms which carve out the masked
-        # region.
-        return False
-    # Record the range forms that are valid, carving out the
-    # masked region.
-    inner_repl_map[var] = valid_var_range_forms
-
-    # If relabeling is allowed and we know the replacement for
-    # the full masked region and it is a tuple of valid parameters,
-    # then do relabeling for the masked region under the requirement
-    # that all of the replacements of the masked region are equal
-    # for all instances of the parameter variables.
-    # Otherwise, we need to map the masked region entries to themselvs.
-    if (allow_relabeling and fully_masking_var_range is not None):
-        fully_masking_repl = masked_region_repl_map[fully_masking_var_range]
-        if isinstance(fully_masking_var_range, IndexedVar):
-            # Relabel an IndexedVar to a Variable
-            relabel_map[fully_masking_var_range] = (
-                fully_masking_repl)
-            return True
-        elif valid_params(fully_masking_repl):
-            # Do "fancy" variable range relabeling.
-            from proveit.logic import Forall, Equals
-            # Add requirements when there are multiple replacements
-            # of the masked region to make sure they are all equal.
-            for masked_var_range, repl in masked_region_repl_map.items():
-                if masked_var_range != fully_masking_var_range:
-                    req = Forall(fully_masking_repl.entries,
-                                 Equals(repl, fully_masking_repl))
-                    requirements.append(req.prove())
-            # Update the `relabel_map` for some relabeling.
-            relabel_map.update(masked_region_repl_map)
-            return True
-
-    # No true relabeling.  'Relabel' the masked region entries to
-    # themselves to effect proper masking.
-    for masked_var_range in masked_region_repl_map.keys():
-        for masked_entry in masked_var_range:
-            masked_entry_key = single_or_composite_expression(masked_entry)
-            relabel_map[masked_entry_key] = masked_entry_key
-    return True
 
 
 class ParameterCollisionError(Exception):

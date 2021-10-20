@@ -707,7 +707,7 @@ class Mult(NumberOperation):
                     preserve_expr=self.operands[0]))
         _x = self.operands[1]
         _n = num(reps)
-        eq.update(mult_def.instantiate({n: _n, a: [_x] * reps, x: _x},
+        eq.update(mult_def.instantiate({n: _n, x: _x},
                                         auto_simplify=False))
         return eq.relation
 
