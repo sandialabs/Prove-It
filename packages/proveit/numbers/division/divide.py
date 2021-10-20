@@ -2,17 +2,20 @@ from proveit import (Judgment, Expression, Literal, Operation,
                      maybe_fenced_latex, defaults,
                      Function, ExprTuple, InnerExpr, USE_DEFAULTS,
                      UnsatisfiedPrerequisites, relation_prover,
-                     equality_prover)
+                     equality_prover, SimplificationDirectives)
 from proveit import TransRelUpdater
 from proveit import a, b, c, m, n, w, x, y, z
 from proveit.numbers import NumberOperation
 
 class Div(NumberOperation):
-    # operator of the Add operation
+    # operator of the Div operation
     _operator_ = Literal(
         string_format='/',
         latex_format=r'\div',
         theory=__file__)
+
+    _simplification_directives_ = SimplificationDirectives(
+            factor_negation = True)
 
     def __init__(self, numerator, denominator, *, styles=None):
         r'''
@@ -75,7 +78,7 @@ class Div(NumberOperation):
         Specifically, cancels common factors and eliminates ones.
         '''
         from proveit.logic import is_irreducible_value
-        from proveit.numbers import one
+        from proveit.numbers import one, Neg
         expr = self
         # for convenience updating our equation
         eq = TransRelUpdater(expr)
@@ -98,7 +101,12 @@ class Div(NumberOperation):
 
         if expr.denominator == one:
             # eliminate division by one
-            eq.update(expr.divide_by_one_elimination(auto_simplify=False))
+            expr = eq.update(expr.divide_by_one_elimination(auto_simplify=False))
+
+        if (Div._simplification_directives_.factor_negation and
+            isinstance(self.numerator, Neg)):
+            # we have something like (-a)/b but want -(a/b)
+            eq.update(expr.neg_extraction())
             return eq.relation  # no more division simplifications.
 
         return eq.relation
@@ -358,7 +366,6 @@ class Div(NumberOperation):
                 _x = expr.numerator
                 _y = one
                 replacements.append(Mult(_x, _y).one_elimination(1))
-
             # create POSSIBLE replacements for inadvertently generated
             # fractions of the form _x/1 (i.e. _z = 1)
             # or _y/1 (i.e. _w = 1):
@@ -367,11 +374,9 @@ class Div(NumberOperation):
             if _w == one:
                 replacements.append(frac(_y, _w).divide_by_one_elimination())
 
-            # expr_to_preserve = eq.relation.normal_rhs
-            # temp_expr = eq.update(thm.instantiate({x:_x, y:_y, z:_z, w:_w},
-            #         replacements=replacements, preserve_expr=expr_to_preserve))
             temp_expr = eq.update(thm.instantiate({x:_x, y:_y, z:_z, w:_w},
-                    replacements=replacements))
+                    replacements=replacements,
+                    preserve_expr=expr))
 
         return eq.relation
 
@@ -428,6 +433,110 @@ class Div(NumberOperation):
             raise Exception(
                 "Unsupported operand type to distribute over: " +
                 str(self.numerator.__class__))
+
+    @equality_prover('neg_extracted', 'neg_extract')
+    def neg_extraction(self, neg_loc=None, **defaults_config):
+        '''
+        Factor out a negation from the numerator (default) or
+        denominator (specified with neg_loc='denominator'),
+        returning the equality between the original self and the
+        resulting fraction with the negative (Neg) out in front.
+        For example, given expr = (-x)/y, then expr.neg_extraction()
+        (with suitable assumptions or info about x and y) returns:
+        |- (-x)/y = -(x/y).
+        The theorems being applied require numerator and denom elements
+        to be Complex with denom != 0. If neg_loc is None, attempts
+        to find a suitable Neg component to extract. 
+        Implemented in a naive way for cases in which the Neg is one
+        of several factors in the numerator or denominator, giving for
+        example:
+        |- (x(-z))/y = -((xz)/y)
+        '''
+        from proveit.numbers import Mult, Neg
+        if neg_loc is None:
+            # Check if entire numerator is a Neg
+            if isinstance(self.numerator, Neg):
+                neg_loc = 'numerator'
+            elif isinstance(self.numerator, Mult):
+                # check if one of the numerator's factors is a Neg:
+                for factor in self.numerator.factors:
+                    if isinstance(factor, Neg):
+                        neg_loc = 'numerator_factor'
+                        numerator_factor = factor
+                        break
+            elif isinstance(self.denominator, Neg):
+                neg_loc = 'denominator'
+            elif isinstance(self.denominator, Mult):
+                # check if one of the denominator's factors is a Neg:
+                for factor in self.denominator.factors:
+                    if isinstance(factor, Neg):
+                        neg_loc = 'denominator_factor'
+                        denominator_factor = factor
+                        break
+                if neg_loc is None:
+                    raise ValueError(
+                            "No Neg expression component found to extract. "
+                            "The expression supplied was: {}".format(self)) 
+            else:
+                raise ValueError(
+                        "No Neg expression component found to extract. "
+                        "The expression supplied was: {}".format(self))
+        if neg_loc == 'numerator' and not isinstance(self.numerator, Neg):
+            raise ValueError(
+                    "The numerator version of Div.neg_extraction() can "
+                    "only be applied if the entire numerator is negated "
+                    "(i.e. inside a Neg). The numerator supplied was: "
+                    "{}".format(self.numerator))
+        if neg_loc == 'denominator' and not isinstance(self.denominator, Neg):
+            raise ValueError(
+                    "The denominator version of Div.neg_extraction() can "
+                    "only be applied if the entire denominator is negated "
+                    "(i.e. inside a Neg). The denominator supplied was: "
+                    "{}".format(self.denominator))
+        # add error checks here for neg_loc values 'numerator_factor'
+        # and 'denominator_factor'
+        from proveit.numbers.division import (
+                neg_frac_neg_numerator, neg_frac_neg_denominator,
+                neg_frac_neg_numerator_gen, neg_frac_neg_denominator_gen)
+
+        # Case (1) Neg(x)/y = Neg(x/y)
+        if neg_loc == 'numerator':
+            _x, _y = neg_frac_neg_numerator.instance_params
+            _x_sub = self.numerator.operand
+            _y_sub = self.denominator
+            return neg_frac_neg_numerator.instantiate(
+                    {_x: _x_sub, _y: _y_sub})
+
+        # Case (2) x/Neg(y) = Neg(x/y)
+        if neg_loc == 'denominator':
+            _x, _y = neg_frac_neg_denominator.instance_params
+            _x_sub = self.numerator
+            _y_sub = self.denominator.operand
+            return neg_frac_neg_denominator.instantiate(
+                    {_x: _x_sub, _y: _y_sub})
+
+        # Case (3) Neg is a factor in the numerator
+        # -- first pull the Neg out in front of the numerator
+        # -- then re-call the exp_extraction() method
+        if neg_loc == 'numerator_factor':
+            intermed_equality = (
+                    self.inner_expr().numerator.neg_simplifications())
+            return intermed_equality.inner_expr().rhs.neg_extract()
+        
+        # # Case (4) Neg is a factor in the denominator
+        # -- first pull the Neg out in front of the numerator
+        # -- then re-call the exp_extraction() method
+        if neg_loc == 'denominator_factor':
+            intermed_equality = (
+                    self.inner_expr().denominator.neg_simplifications())
+            return intermed_equality.inner_expr().rhs.neg_extract()
+
+        # Other cases here?
+        # Consider more generality by allowing user to specify the
+        # neg_loc = 'numerator/denominator_factor' and allowing
+        # a 0-based index for the factor. Related: see more general
+        # neg_frac_neg theorems in division pkg.
+
 
     @equality_prover('combined_exponents', 'combine_exponents')
     def exponent_combination(self, start_idx=None, end_idx=None,

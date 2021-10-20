@@ -188,7 +188,7 @@ class Exp(NumberOperation):
                         # The simplification of the operands may not have
                         # worked hard enough.  Let's work harder if we
                         # must evaluate.
-                        operand.evalution()
+                        operand.evaluation()
                 return self.evaluation()
             raise EvaluationError(self)
 
@@ -363,10 +363,26 @@ class Exp(NumberOperation):
                     {a: _a, b: _b, c: exponent})
         elif isinstance(base, Exp):
             _a = base.base
+            # if InSet(exponent, NaturalPos).proven():
+            #     _m, _n = base.exponent, exponent
+            #     return posnat_power_of_posnat_power.instantiate(
+            #         {a: _a, m: _m, n: _n})
+            # TRYING TO ANTICIPATE MORE POSSIBILITIES 
             if InSet(exponent, NaturalPos).proven():
-                _m, _n = base.exponent, exponent
-                return posnat_power_of_posnat_power.instantiate(
-                    {a: _a, m: _m, n: _n})
+                if InSet(base.exponent, NaturalPos).proven():
+                    _m, _n = base.exponent, exponent
+                    return posnat_power_of_posnat_power.instantiate(
+                        {a: _a, m: _m, n: _n})
+                else:
+                    _b, _c = base.exponent, exponent
+                    if InSet(base.exponent, RealPos).proven():
+                        thm = pos_power_of_pos_power
+                    elif InSet(base.exponent, Real).proven():
+                        thm = real_power_of_real_power
+                    else:  # Complex is the default
+                        thm = complex_power_of_complex_power
+                    return thm.instantiate(
+                        {a: _a, b: _b, c: _c})
             else:
                 _b, _c = base.exponent, exponent
                 if InSet(exponent, RealPos).proven():
@@ -409,7 +425,12 @@ class Exp(NumberOperation):
                         'fraction base')
     """
 
-    def raise_exp_factor(self, exp_factor, assumptions=USE_DEFAULTS):
+    # we have renamed raise_exp_factor to factorization() !!!
+    # perhaps re-rename this to avoid factorization() interactions
+    # due to recursive calls to factorization() (because this is NOT
+    # multiplicative factorization!)
+    @equality_prover('factorized', 'factor')
+    def factorization(self, exp_factor, **defaults_config):
         # Note: this is out-of-date.  Distribution handles this now,
         # except it doesn't deal with the negation part
         # (do we need it to?)
@@ -439,8 +460,7 @@ class Exp(NumberOperation):
             # factor the exponent first, then raise this exponent factor
             factored_exp_eq = factor_eq.substitution(self)
             return factored_exp_eq.apply_transitivity(
-                factored_exp_eq.rhs.raise_exp_factor(exp_factor,
-                                                     assumptions=assumptions))
+                factored_exp_eq.rhs.factorization(exp_factor))
         n_sub = b_times_c.operands[1]
         a_sub = self.base
         b_sub = b_times_c.operands[0]

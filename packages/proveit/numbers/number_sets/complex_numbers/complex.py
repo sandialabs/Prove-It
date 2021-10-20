@@ -241,6 +241,40 @@ class ComplexSet(NumberSet):
         new_rel = new_rel.inner_expr().rhs.with_styles(exponent='radical')
         return new_rel
 
+    @staticmethod
+    @prover
+    def abs_both_sides_of_equals(relation, **defaults_config):
+        '''
+        Apply absolute value (Abs) to both sides of an Equals relation
+        specified by 'relation', returning the equality of the absolute
+        values. The original equality relation 'relation' must either
+        be a known judgment, proveable, or assumed. For example:
+            Complex.abs_both_sides_of_equals(
+            Equals(a, b),
+            assumptions=[InSet(a, Complex), InSet(a, Complex),
+                         Equals(a, b)])
+        will return: assumptions |- |a| = |b|.
+        '''
+        from proveit.logic import Equals
+        from proveit.numbers.absolute_value import abs_eq
+        if not isinstance(relation, Equals):
+            TypeError("'relation' expected to be Equals")
+        return abs_eq.instantiate(
+            {x: relation.lhs, y: relation.rhs})
+
+    # @staticmethod
+    # @prover
+    # def abs_both_sides_of_notequals(relation, =**defaults_config):
+    #     '''
+    #     UNDER CONSTRUCTION
+    #     '''
+    #     from proveit.logic import NotEquals
+    #     from proveit.numbers.exponentiation import exp_neq
+    #     if not isinstance(relation, NotEquals):
+    #         TypeError("'relation' expected to be NotEquals")
+    #     return exp_neq.instantiate(
+    #         {a: exponent, x: relation.lhs, y: relation.rhs})
+
 class ComplexNonZeroSet(NumberSet):
     def __init__(self, *, styles=None):
         NumberSet.__init__(self, 'ComplexNonZero', r'\mathbb{C}^{\neq 0}',

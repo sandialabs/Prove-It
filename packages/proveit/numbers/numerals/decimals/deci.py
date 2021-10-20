@@ -283,14 +283,12 @@ class DigitSet(NumberSet):
     @prover
     def deduce_member_lower_bound(self, member, **defaults_config):
         from . import digits_lower_bound
-        return digits_lower_bound.instantiate(
-            {n: member}, assumptions=assumptions)
+        return digits_lower_bound.instantiate({n: member})
 
     @prover
     def deduce_member_upper_bound(self, member, **defaults_config):
         from . import digits_upper_bound
-        return digits_upper_bound.instantiate(
-            {n: member}, assumptions=assumptions)
+        return digits_upper_bound.instantiate({n: member})
 
     def membership_object(self, element):
         return DeciMembership(element, self)

@@ -6,7 +6,7 @@ from proveit.logic.classes import InClass, ClassMembership
 class InSet(InClass):
     '''
     Set membership is a special case of class membership, so we'll
-    derive from InClass for code re-use.  The operators are distinct 
+    derive from InClass for code re-use.  The operators are distinct
     (though the formatting is the same).
     '''
     # operator of the InSet operation

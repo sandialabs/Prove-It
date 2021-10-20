@@ -1095,7 +1095,7 @@ class Add(NumberOperation):
                     group_remainder=True, preserve_all=True)
                 if not isinstance(term_factorization.rhs, Mult):
                     raise ValueError(
-                        'Expecting right hand size of factorization to be a product')
+                        'Expecting right hand side of factorization to be a product')
                 if pull == 'left':
                     # the grouped remainder on the right
                     _b.append(term_factorization.rhs.operands[-1])
