@@ -48,9 +48,9 @@ class VecSum(GroupSum):
                 return vec_sum_single.instantiate(
                     {Function(v, self.index): self.summand,
                      a: self.domain.lower_bound})
+        inner_assumptions = defaults.assumptions + self.conditions.entries
         if hasattr(self.summand, 'deduce_in_number_set'):
             # Maybe we can reduce the VecSum to a number Sum.
-            inner_assumptions = defaults.assumptions + self.conditions.entries
             self.summand.deduce_in_number_set(
                     Complex, assumptions=inner_assumptions)
         if InSet(self.summand, Complex).proven(assumptions=inner_assumptions):
