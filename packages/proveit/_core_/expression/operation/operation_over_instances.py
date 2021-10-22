@@ -35,8 +35,7 @@ def _extract_domain_from_condition(ivar, condition):
                     condition.body.element.basic_replaced(
                             {condition.parameter: ivar.parameter}))
             if cond_body_elem_with_repl_param == ivar.body:
-                if condition.parameter in free_vars(condition.body.domain,
-                                                    err_inclusively=True):
+                if condition.parameter in free_vars(condition.body.domain):
                     # There is a range of domains matching a range of
                     # parameters.
                     return ExprRange(
@@ -1069,7 +1068,7 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,),
         if isinstance(condition, And):
             _nQ = 0
             for cond in condition.operands:
-                cond_vars = free_vars(cond, err_inclusively=True)
+                cond_vars = free_vars(cond)
                 if first_param_vars.isdisjoint(cond_vars):
                     break
                 _nQ += 1
@@ -1086,8 +1085,7 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,),
                 _R = condition.operands[-1]
             else:
                 _R = And(*condition.operands[_nQ:].entries)
-        elif first_param_vars.isdisjoint(free_vars(condition,
-                                                   err_inclusively=True)):
+        elif first_param_vars.isdisjoint(free_vars(condition)):
             _Q = condition
             _R = And()
         else:

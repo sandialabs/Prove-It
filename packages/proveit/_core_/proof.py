@@ -1589,8 +1589,9 @@ class Generalization(Proof):
             forall_{x, y in Integer | f(x, y)} forall_{z | g(y, z), h(z)} ...
         '''
         from proveit import Judgment
+        from proveit._core_.expression.expr import free_vars
         from proveit._core_.expression.lambda_expr.lambda_expr import \
-            (get_param_var, _guaranteed_to_be_independent)
+            (get_param_var)
         from proveit._core_.expression.composite.expr_tuple import ExprTuple
         from proveit.logic import Forall
         if not isinstance(instance_truth, Judgment):
@@ -1623,8 +1624,8 @@ class Generalization(Proof):
                 else:
                     # use all applicable conditions in the supplied order
                     condition_applicability = \
-                        [not _guaranteed_to_be_independent(remaining_cond,
-                                                           new_forall_vars)
+                        [not free_vars(remaining_cond).isdisjoint(
+                            new_forall_vars)
                          for remaining_cond in remaining_conditions]
                     new_conditions = \
                         [remaining_cond for applicable, remaining_cond
@@ -1645,8 +1646,8 @@ class Generalization(Proof):
                 Generalization._checkGeneralization(generalized_expr, expr)
                 expr = generalized_expr
             for assumption in assumptions:
-                if not _guaranteed_to_be_independent(
-                        assumption, introduced_forall_vars):
+                if not free_vars(assumption).isdisjoint(
+                        introduced_forall_vars):
                     raise GeneralizationFailure(
                         generalized_expr,
                         assumptions,

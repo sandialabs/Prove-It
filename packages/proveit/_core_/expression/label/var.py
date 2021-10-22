@@ -52,11 +52,12 @@ class Variable(Label):
     def _used_vars(self):
         return {self}
 
-    def _possibly_free_var_ranges(self, exclusions=None):
+    def _free_var_ranges(self, exclusions=None):
         '''
         Return the dictionary mapping Variables to forms w.r.t. ranges
-        of indices (or solo) in which the variable occurs as free or
-        not explicitly and completely masked.  Examples of "forms":
+        of indices (or solo) in which the variable occurs as free
+        (not within a lambda map that parameterizes the base variable).
+        Examples of "forms":
             x
             x_i
             x_1, ..., x_n
@@ -66,24 +67,6 @@ class Variable(Label):
         if exclusions is not None and self in exclusions:
             return dict()  # this is excluded
         return {self: {self}}
-
-    """
-    def _free_vars(self, exclusions=frozenset()):
-        if self in exclusions:
-            return set() # this is excluded
-        return {self}
-
-    def _check_param_occurrences(self, param_var, allowed_forms):
-        '''
-        When a Lambda expression introduces a variable in a new scope
-        with a parameter entry that is an IndexedVar or a range
-        of IndexedVars, its occurrences must all match that
-        index or range exactly.  Raise a ValueError if the check fails.
-        '''
-        if self==param_var and self not in allowed_forms:
-            # Invalid occurrence of the parameter variable.
-            raise ValueError("Invalid occurrence of the parameter variable")
-    """
 
 
 def dummy_var(n):

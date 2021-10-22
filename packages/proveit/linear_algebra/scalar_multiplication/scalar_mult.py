@@ -1,6 +1,6 @@
 from proveit import (Operation, Literal, relation_prover,
                      equality_prover, TransRelUpdater, UnsatisfiedPrerequisites)
-from proveit import a, x, K, V, alpha, beta
+from proveit import a, b, x, K, V, alpha, beta
 from proveit.logic import InSet
 from proveit.abstract_algebra import plus, times
 from proveit.linear_algebra import VecSpaces
@@ -41,6 +41,13 @@ class ScalarMult(Operation):
         (2) ScalarMult identity -- for example, taking ScalarMult(1, v)
             to v.
         '''
+        from proveit.numbers import Complex
+        if (InSet(self.scalar, Complex).proven() 
+                and InSet(self.scaled, Complex).proven()):
+            # If the operands are both complex numbers, this will
+            # ScalarMult will reduce to number multiplication.
+            return self.number_mult_reduction()
+        
         expr = self
         # A convenience to allow successive updating of the equation
         # via transitivities (starting with self=self).
@@ -59,11 +66,11 @@ class ScalarMult(Operation):
 
         return eq.relation
 
-        # if isinstance(self.scaled, ScalarMult):
-        #     # Reduce a doubly nested scalar multiplication.
-        #     return self.double_scaling_reduction(preserve_all=True)
-        # return Operation.shallow_simplification(
-        #         self, must_evaluate=must_evaluate)
+    @equality_prover('number_mult_reduced', 'number_mult_reduce')
+    def number_mult_reduction(self, **defaults_config):
+        from . import scalar_mult_extends_number_mult
+        return scalar_mult_extends_number_mult.instantiate(
+                {a:self.scalar, b:self.scaled})
     
     @equality_prover('double_scaling_reduced', 'double_scaling_reduce')
     def double_scaling_reduction(self, **defaults_config):
@@ -83,25 +90,22 @@ class ScalarMult(Operation):
                 {plus:_plus, times:_times, K:_K, V:_V, 
                  x:_x, alpha:_alpha, beta:_beta})
 
-    @equality_prover('double_scaling_reduced', 'double_scaling_reduce')
+    @equality_prover('multi_scaling_reduced', 'multi_scaling_reduce')
     def multi_scaling_reduction(self, **defaults_config):
-        from . import doubly_scaled_as_singly_scaled
-        
         expr = self
 
         # A convenience to allow successive updates to the equation via
         # transitivities (starting with self=self).
         eq = TransRelUpdater(self)
 
-        while isinstance(self.scaled, ScalarMult):
+        while (isinstance(expr.scaled, ScalarMult) and
+               isinstance(expr.scaled.scaled, ScalarMult)):
+            # For all but the last reduction, use preserve_all=True.
             expr = eq.update(expr.double_scaling_reduction(preserve_all=True))
-            self = expr
-
-        # Then simplify the accumulated scalar itself before returning
-        # (notice we don't simplify the entire expr, else we end up
-        # calling ScalarMult.shallow_simplification() from which the
-        # multi_scaling_reduction() method itself is called)
-        eq.update(expr.inner_expr().scalar.simplification())
+        
+        if isinstance(expr.scaled, ScalarMult):
+            # For the last reduction, we may allow simplification.
+            expr = eq.update(expr.double_scaling_reduction())
 
         return eq.relation
 

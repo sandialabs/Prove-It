@@ -1,8 +1,9 @@
-from proveit import (defaults, equality_prover, Function, Literal,
-                     Lambda, relation_prover )
-from proveit import IndexedVar, ExprTuple, ExprRange
-from proveit import a, b, c, f, i, j, k, v, x, K, Q, V
-from proveit.numbers import one, Interval
+from proveit import (defaults, Literal, Function, Lambda, 
+                     relation_prover, equality_prover,
+                     UnsatisfiedPrerequisites)
+from proveit import a, b, c, f, i, j, v, K, Q, V
+from proveit.logic import InSet
+from proveit.numbers import Interval
 from proveit.abstract_algebra import GroupSum
 from proveit.linear_algebra import VecSpaces
 
@@ -26,6 +27,50 @@ class VecSum(GroupSum):
                           condition=condition, conditions=conditions,
                           styles=styles, _lambda_map=_lambda_map)
 
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
+        '''
+        Returns a proven simplification equation for this VecSum
+        expression assuming the operands have been simplified.
+        For the trivial case of summing over only one item (currently
+        implemented just for a Interval where the endpoints are equal),
+        derive and return this vector summation expression equated with
+        the simplified form of the single term.
+        Also reduce the VecSum to a number Sum if applicable.
+        '''
+        from proveit.numbers import Complex
+        from . import vec_sum_single
+        if (isinstance(self.domain,Interval) and
+                self.domain.lower_bound == self.domain.upper_bound):
+            # Reduce singular summation.
+            if hasattr(self, 'index'):
+                return vec_sum_single.instantiate(
+                    {Function(v, self.index): self.summand,
+                     a: self.domain.lower_bound})
+        inner_assumptions = defaults.assumptions + self.conditions.entries
+        if hasattr(self.summand, 'deduce_in_number_set'):
+            # Maybe we can reduce the VecSum to a number Sum.
+            self.summand.deduce_in_number_set(
+                    Complex, assumptions=inner_assumptions)
+        if InSet(self.summand, Complex).proven(assumptions=inner_assumptions):
+            # If the operands are all complex numbers, this will
+            # VecAdd will reduce to number Add.
+            return self.number_sum_reduction()
+        return GroupSum.shallow_simplification(
+                self, must_evaluate=must_evaluate)
+
+    @equality_prover('number_sum_reduced', 'number_sum_reduce')
+    def number_sum_reduction(self, **defaults_config):
+        from . import scalar_sum_extends_number_sum
+        _b = self.indices
+        _f = Lambda(_b, self.summand)
+        _Q = Lambda(_b, self.condition)
+        _j = _b.num_elements()
+        impl = scalar_sum_extends_number_sum.instantiate(
+                {j:_j, b:_b, f:_f, Q:_Q})
+        return impl.derive_consequent()
+
     @relation_prover
     def deduce_in_vec_space(self, vec_space=None, *, field=None,
                             **defaults_config):
@@ -44,43 +89,11 @@ class VecSum(GroupSum):
         _b = self.indices
         _j = _b.num_elements()
         _f = Lambda(self.indices, self.summand)
+        if not hasattr(self, 'condition'):
+            print(self)
         _Q = Lambda(self.indices, self.condition)
-        # Need to distinguish two cases: _j == 1 vs. _j > 1, b/c we are
-        # not allowed to construct a single-element ExprRange
-        if _j == one:
-            b_1_to_j = IndexedVar(b, one)  # we are subbing for x_1
-            _b = _b[0]                     # using a bare elem
-        else:
-            b_1_to_j = ExprTuple(ExprRange(k, IndexedVar(x, k), one, _j))
         return summation_closure.instantiate(
-                {j:_j, K:_K, f:_f, Q:_Q, V:_V, b_1_to_j:_b}).derive_consequent()
-
-    @equality_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, *, must_evaluate=False,
-                               **defaults_config):
-        '''
-        Returns a proven simplification equation for this VecSum
-        expression assuming the operands have been simplified.
-        For the trivial case of summing over only one item (currently
-        implemented just for a Interval where the endpoints are equal),
-        derive and return this vector summation expression equated with
-        the simplified form of the single term.
-        Assumptions may be necessary to deduce necessary conditions
-        for the simplification.
-        '''
-        from proveit.logic import SimplificationError
-        # from . import sum_single
-        from . import vec_sum_single
-        if (isinstance(self.domain,Interval) and
-            self.domain.lower_bound == self.domain.upper_bound):
-            if hasattr(self, 'index'):
-                return vec_sum_single.instantiate(
-                    {Function(v, self.index): self.summand,
-                     a: self.domain.lower_bound})
-        raise SimplificationError(
-            "Sum simplification only implemented for a summation over an "
-            "integer Interval of one instance variable where the upper "
-            "and lower bounds are the same.")
+                {j:_j, K:_K, f:_f, Q:_Q, V:_V, b:_b}).derive_consequent()
 
     @equality_prover('shifted', 'shift')
     def shifting(self, shift_amount, **defaults_config):
@@ -227,7 +240,7 @@ class VecSum(GroupSum):
             _v_op, _v_op_sub = Function(_v, self.index), self.summand
 
             return vec_sum_split_last.instantiate(
-                {_v_op: _v_op_sub, _a: _a_sub, _b: _b_sub, _i: _i})
+                {_v_op: _v_op_sub, _a: _a_sub, _b: _b_sub, _i: _i_sub})
 
         raise UnsatisfiedPrerequisites(
                 "VecSum.partitioning_last() only implemented for vector"

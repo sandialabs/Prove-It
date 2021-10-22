@@ -751,7 +751,8 @@ class Mult(NumberOperation):
         Examples:
             a (b + c + a) d = a b d + a c d + a a d
             a (b - c) d = a b d - a c d
-            a \left(\sum_x f(x)\right c = \sum_x a f(x) c
+            a (\sum_x f(x)) c = \sum_x a f(x) c
+            (a/b)*(c/d) = (a*b)/(c*d)
         Give any assumptions necessary to prove that the operands are in
         the Complex numbers so that the associative and commutation
         theorems are applicable.
@@ -1075,13 +1076,11 @@ class Mult(NumberOperation):
                 base = operand_bases.innermost_body()
                 exponent = operand_exponents.innermost_body()
                 operand_parameters = operand.parameters()
-                if not free_vars(base, err_inclusively=True).isdisjoint(
-                        operand_parameters):
+                if not free_vars(base).isdisjoint(operand_parameters):
                     # Can't have the same base unless the base
                     # is independent of range parameters.
                     same_base = False
-                if not free_vars(exponent, err_inclusively=True).isdisjoint(
-                        operand_parameters):
+                if not free_vars(exponent).isdisjoint(operand_parameters):
                     # Can't have the same exponent unless the exponent
                     # is independent of range parameters.
                     same_exponent = False

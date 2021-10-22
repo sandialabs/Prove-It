@@ -1,7 +1,8 @@
 from proveit import (Literal, ExprRange, ProofFailure,
-                     UnsatisfiedPrerequisites, relation_prover)
-from proveit import a, b, n, x, y, K, V
-from proveit.core_expr_types import a_1_to_n, x_1_to_n
+                     UnsatisfiedPrerequisites, relation_prover,
+                     equality_prover)
+from proveit import a, b, i, n, x, y, K, V
+from proveit.logic import InSet
 from proveit.abstract_algebra import GroupAdd
 from proveit.linear_algebra import VecSpaces
 
@@ -18,6 +19,30 @@ class VecAdd(GroupAdd):
         GroupAdd.__init__(self, VecAdd._operator_,
                           operands, styles=styles)
         self.terms = self.operands
+
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
+        '''
+        Returns a proven simplification equation for this ScalarMult
+        expression assuming the operands have been simplified.
+        
+        Handles doubly-nested scalar multiplication.
+        '''
+        from proveit.numbers import Complex
+        if all(InSet(operand, Complex).proven() for operand in self.operands):
+            # If the operands are all complex numbers, this will
+            # VecAdd will reduce to number Add.
+            return self.number_add_reduction()
+        return GroupAdd.shallow_simplification(
+                self, must_evaluate=must_evaluate)
+
+    @equality_prover('number_add_reduced', 'number_add_reduce')
+    def number_add_reduction(self, **defaults_config):
+        from . import scalar_add_extends_number_add
+        _a = self.operands
+        _i = _a.num_elements()
+        return scalar_add_extends_number_add.instantiate({a:_a, i:_i})
 
     @relation_prover
     def deduce_in_vec_space(self, vec_space=None, *, field,
