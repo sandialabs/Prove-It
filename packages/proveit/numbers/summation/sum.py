@@ -170,8 +170,10 @@ class Sum(OperationOverInstances):
             else:
                 # We're in the finite geom sum domain!
                 _x, _j, _k = gen_finite_geom_sum.all_instance_params()
-                _i = gen_finite_geom_sum.instance_expr.instance_expr.lhs.indices
-                _i_sub = self.indices[0]
+                # _i = gen_finite_geom_sum.instance_expr.instance_expr.lhs.indices
+                _i = gen_finite_geom_sum.instance_expr.instance_expr.lhs.index
+                # _i_sub = self.indices[0]
+                _i_sub = self.index
                 _j_sub = self.domain.lower_bound
                 _k_sub = self.domain.upper_bound
                 return gen_finite_geom_sum.instantiate(
