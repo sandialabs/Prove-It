@@ -63,7 +63,6 @@ class TensorProd(Operation):
             # loop through all operands
             while _n < length:
                 operand = expr.operands[_n]
-                # print("n, length", n, length)
                 if isinstance(operand, TensorProd):
                     # if it is grouped, ungroup it
                     expr = eq.update(expr.disassociation(
@@ -77,7 +76,8 @@ class TensorProd(Operation):
                 if isinstance(operand, ScalarMult):
                     # Just pull out the first one we see and let
                     # recursive simplifications take care of any more.
-                    expr = eq.update(expr.scalar_factorization(_k))
+                    expr = eq.update(expr.scalar_factorization(
+                            _k, preserve_all=True))
                     break
         
         # Future processing possible here.
@@ -191,17 +191,24 @@ class TensorProd(Operation):
             _b = sum_factor.operands
             _V = VecSpaces.known_vec_space(self, field=field)
             _j = _b.num_elements()
+            # use preserve_all=True in the following instantiation
+            # because the instantiation is an intermediate step;
+            # otherwise auto_simplification can over-do things
             impl = tensor_prod_distribution_over_add.instantiate(
-                {K:_K, i:_i, j:_j, k:_k, V:_V, a:_a, b:_b, c:_c})
+                {K:_K, i:_i, j:_j, k:_k, V:_V, a:_a, b:_b, c:_c},
+                preserve_all=True)
             return impl.derive_consequent().with_wrapping_at()
         elif isinstance(sum_factor, VecSum):
             _b = sum_factor.indices
             _j = _b.num_elements()
             _f = Lambda(sum_factor.indices, sum_factor.summand)
             _Q = Lambda(sum_factor.indices, sum_factor.condition)
+            # use preserve_all=True in the following instantiation
+            # because the instantiation is an intermediate step;
+            # otherwise auto_simplification can over-do things
             impl = tensor_prod_distribution_over_summation.instantiate(
                     {K:_K, f:_f, Q:_Q, i:_i, j:_j, k:_k, 
-                     V:_V, a:_a, b:_b, c:_c})
+                     V:_V, a:_a, b:_b, c:_c}, preserve_all=True)
             return impl.derive_consequent().with_wrapping_at()
         else:
             raise ValueError(
@@ -250,8 +257,12 @@ class TensorProd(Operation):
         _c = self.operands[idx+1:]
         _i = _a.num_elements()
         _k = _c.num_elements()
+        # we use preserve_all=True in the following instantiation
+            # because it is an intermediate step; otherwise
+            # auto_simplification can over-do things
         impl = factor_scalar_from_tensor_prod.instantiate(
-                {K:_K, alpha:_alpha, i:_i, k:_k, V:_V, a:_a, b:_b, c:_c})
+                {K:_K, alpha:_alpha, i:_i, k:_k, V:_V, a:_a, b:_b, c:_c},
+                preserve_all=True)
         return impl.derive_consequent().with_wrapping_at()
 
     @staticmethod
