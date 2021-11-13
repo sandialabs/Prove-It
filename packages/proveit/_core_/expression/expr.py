@@ -1207,8 +1207,11 @@ class Expression(metaclass=ExprType):
         replacement = None
         if (auto_simplify_top_level and not is_irreducible_value(expr)
               and not isinstance(expr, ExprRange)):
-            # Look for a known evaluation.
-            replacement = Equals.get_known_evaluation(expr)
+            if defaults.auto_simplify_with_known_evaluations:
+                # Look for a known evaluation.
+                replacement = Equals.get_known_evaluation(expr)
+            else:
+                replacement = None
             if (replacement is None and 
                     hasattr(expr, 'shallow_simplification')):
                 # Attempt a shallow simplification (after recursion).
