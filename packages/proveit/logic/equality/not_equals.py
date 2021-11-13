@@ -46,16 +46,6 @@ class NotEquals(Relation):
         if Not(Equals(self.lhs, self.rhs)).proven():
             # Conclude (x ≠ y) by knowing that Not(x = y) is true. 
             return self.conclude_as_folded()
-        if hasattr(self.lhs, 'not_equal'):
-            # If there is a 'not_equal' method, use that.
-            # The responsibility then shifts to that method for
-            # determining what strategies should be attempted
-            # (with the recommendation that it should not attempt
-            # multiple non-trivial automation strategies).
-            # A good practice is to try the 'conclude_as_folded'
-            # strategy if it doesn't fall into any specially-handled
-            # case.
-            return self.lhs.not_equal(self.rhs)
         # See if either side has a simplification.
         simplifications = []
         for operand in self.operands:
@@ -83,6 +73,16 @@ class NotEquals(Relation):
             # The right side has a known simplification; use it.
             neq = NotEquals(self.lhs, rhs_simp.rhs).prove()
             return neq.inner_expr().rhs.substitute(self.rhs)
+        if hasattr(self.lhs, 'not_equal'):
+            # If there is a 'not_equal' method, use that.
+            # The responsibility then shifts to that method for
+            # determining what strategies should be attempted
+            # (with the recommendation that it should not attempt
+            # multiple non-trivial automation strategies).
+            # A good practice is to try the 'conclude_as_folded'
+            # strategy if it doesn't fall into any specially-handled
+            # case.
+            return self.lhs.not_equal(self.rhs)
         return self.conclude_as_folded()
 
     @prover
