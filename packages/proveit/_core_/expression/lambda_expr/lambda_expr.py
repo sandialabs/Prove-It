@@ -810,7 +810,7 @@ class Lambda(Expression):
                     else:
                         _replacement = repl_map[var_range_form]
                     if allow_relabeling and valid_params(_replacement):
-                        relabel_map[var] = repl_map[var]
+                        relabel_map[var] = value
                         relabel_map[var_range_form] = _replacement
                 elif isinstance(key, Variable) and isinstance(value, Variable):
                     # A simple relabeling is allowed to propagate
