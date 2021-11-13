@@ -1,4 +1,4 @@
-from proveit import (Literal, Operation, USE_DEFAULTS, 
+from proveit import (Literal, Operation, USE_DEFAULTS, ProofFailure,
                      UnsatisfiedPrerequisites, prover, equality_prover)
 from .equals import Equals
 from proveit.logic.irreducible_value import is_irreducible_value
@@ -33,7 +33,7 @@ class NotEquals(Relation):
 
     @prover
     def conclude(self, **defaults_config):
-        from proveit.logic import FALSE, Not
+        from proveit.logic import SimplificationError, FALSE, Not
         if is_irreducible_value(self.lhs) and is_irreducible_value(self.rhs):
             # prove that two irreducible values are not equal
             return self.lhs.not_equal(self.rhs)
@@ -56,6 +56,33 @@ class NotEquals(Relation):
             # strategy if it doesn't fall into any specially-handled
             # case.
             return self.lhs.not_equal(self.rhs)
+        # See if either side has a simplification.
+        simplifications = []
+        for operand in self.operands:
+            try:
+                simplification = operand.simplification()
+                if simplification.rhs == operand:
+                    simplification = None # reflection doesn't count
+            except (SimplificationError, ProofFailure):
+                pass
+            simplifications.append(simplification)
+        lhs_simp = simplifications[0]
+        rhs_simp = simplifications[1]
+        if lhs_simp is not None and rhs_simp is not None:
+            # There are known simplifications of lhs and rhs.
+            # Use them.
+            neq = NotEquals(lhs_simp.rhs, rhs_simp.rhs).prove()
+            neq = neq.inner_expr().lhs.substitute(self.lhs)
+            neq = neq.inner_expr().rhs.substitute(self.rhs)
+            return neq
+        elif lhs_simp is not None:
+            # The left side has a known simplification; use it.
+            neq = NotEquals(lhs_simp.rhs, self.rhs).prove()
+            return neq.inner_expr().lhs.substitute(self.lhs)
+        elif rhs_simp is not None:
+            # The right side has a known simplification; use it.
+            neq = NotEquals(self.lhs, rhs_simp.rhs).prove()
+            return neq.inner_expr().rhs.substitute(self.rhs)
         return self.conclude_as_folded()
 
     @prover
