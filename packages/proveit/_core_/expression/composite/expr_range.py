@@ -356,6 +356,8 @@ class ExprRange(Expression):
             expr_map = {self.lambda_map.parameter: self.start_index}
             self._first = self._body_replaced(expr_map)
             self._first_style = self.get_styles()
+            self.get_range_expansion()
+            self.last()
         return self._first
 
     def last(self):
@@ -367,6 +369,8 @@ class ExprRange(Expression):
             expr_map = {self.lambda_map.parameter: self.end_index}
             self._last = self._body_replaced(expr_map)
             self._last_style = self.get_styles()
+            self.get_range_expansion()
+            self.first()
         return self._last
 
     def format_length(self):
@@ -446,7 +450,7 @@ class ExprRange(Expression):
         self._expansion_indices = indices
         self._stored_expansion_style = self.get_styles()
 
-    def get_range_expansion(self):
+    def get_range_expansion(self, reformat=False):
         '''
         returns a list of the expression objects before the ellipses including self.first().
         For use when the ExprRange has the expansion style option, otherwise
@@ -455,10 +459,12 @@ class ExprRange(Expression):
         '''
         default_expansion = str(1)
         expansion = int(self.get_style("expansion", default_expansion))
-
         if (not hasattr(self, '_range_expansion')
                 or len(self._range_expansion) != expansion
                 or self.get_styles() != self._stored_expansion_style):
+            reformat = True
+
+        if reformat:
             self._update_expansion(expansion)
         return self._range_expansion
 
@@ -537,7 +543,7 @@ class ExprRange(Expression):
             formatted_sub_expressions.insert(1, ellipses)
 
         if expansion > 1:
-            for i, item in enumerate(self.get_range_expansion()[1:], 1):
+            for i, item in enumerate(self.get_range_expansion(reformat=True)[1:], 1):
                 formatted_sub_expressions.insert(i, item.formatted(format_type, **kwargs))
             try:
                 from proveit.numbers import Less
