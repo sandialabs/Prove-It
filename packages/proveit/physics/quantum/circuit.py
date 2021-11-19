@@ -451,12 +451,14 @@ class MultiQubitGate(Function):
         display the MQG with explicit set representation
         '''
         self._set_representation = 'explicit'
+        return self
 
     def with_implicit_set_representation(self):
         '''
         display the MQG with implicit set representation
         '''
         self._set_representation = 'implicit'
+        return self
 
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
@@ -495,6 +497,8 @@ class MultiQubitGate(Function):
             show_mqg_set = False
         else:
             show_mqg_set = True
+
+        # print(show_mqg_set)
 
         formatted_gate_operation = self.gate.formatted(format_type, solo=False, fence=False)
 
@@ -1944,34 +1948,43 @@ class Circuit(Function):
         '''
         row = 1
         col = 1
-        while row < self.array.get_row_length():
-            while col < self.array.get_col_height():
+        mqg_representation = []
+        while row < self.array.get_col_height() + 1:
+            while col < self.array.get_row_length() + 1:
                 mqg = self.array.get_element_at(row, col)
                 # print(mqg)
                 if isinstance(mqg, MultiQubitGate):
 
-                    if mqg.get_style('set_representation', 'default') == 'default':
+                    if mqg._set_representation == 'default':
                         # print(mqg.get_style('set_representation', 'default'))
                         from proveit.numbers import is_literal_int
                         if mqg.indices is not None:
                             index = mqg.indices[-1]
+                            print('checking literal int')
                             if not is_literal_int(index.simplification().rhs):
+                                print('FINISHED literal int')
+                                print('calling _prove_valid_mqg_set')
                                 proven = self._prove_valid_mqg_set(mqg)
-                                if proven is not False:
+                                print('FINISHED calling _prove_valid_mqg_set')
+                                if proven:
                                     mqg.with_implicit_set_representation()
                                     # print('implicit style: ', mqg.get_style('set_representation', 'default'))
                                 else:
                                     mqg.with_explicit_set_representation()
                             else:
+                                print('FINISHED checking literal int')
                                 mqg.with_implicit_set_representation()
                         else:
                             mqg.with_explicit_set_representation()
+                    mqg_representation.append(row)
+                    mqg_representation.append(col)
+                    mqg_representation.append(mqg._set_representation)
                     # print(mqg.get_style('set_representation', 'default'))
 
                 col += 1
             row += 1
             col = 1
-
+        return mqg_representation
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
 
@@ -1993,7 +2006,7 @@ class Circuit(Function):
         default_style = ('explicit' if format_type == 'string' else 'implicit')
         out_str = ''
 
-        self._display_mqg_set()
+
 
         if self.array.num_entries() == 0 and fence:
             # for an empty list, show the parenthesis to show something.
@@ -2007,6 +2020,7 @@ class Circuit(Function):
 
         if format_type == 'latex':
             out_str += r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n'
+            self._display_mqg_set()
 
         wires = self._find_wires()
         #print(wires)
@@ -2015,7 +2029,7 @@ class Circuit(Function):
         column = 0
         add = ' '
         # what we add in front of the entry
-        for entry in self.array.get_formatted_sub_expressions(
+        for entry in self.array.get_formatted_sub_expressions_2(
                 format_type, orientation, default_style, operator_or_operators,
                 solo=False):
             #print(entry)
