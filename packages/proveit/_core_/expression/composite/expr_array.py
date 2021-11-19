@@ -30,6 +30,7 @@ class ExprArray(ExprTuple):
 
         # check each column for same expression throughout
         self.check_range()
+        self._python_array = None
 
     @classmethod
     def _make(sub_class, core_info, sub_expressions, *, styles):
@@ -190,55 +191,141 @@ class ExprArray(ExprTuple):
         TODO: it would be cool if this was smart enough to return
         elements that were contained in ExprRanges, but for now it is constrained to the formatted dimensions
         '''
+        # indicates whether the ellipses is vertical or horizontal
+        # stores multiple styles/forms of the ellipses within stored array
         from proveit import ExprRange
-        cur_row = 1
-        cur_col = 1
-        for entry in self:
-            if isinstance(entry, ExprTuple):
-                for item in entry.entries:
-                    if isinstance(item, ExprRange):
-                        j = 0
-                        expr_range_items = item.get_range_expansion()
-                        expr_range_items.append(item.body)
-                        expr_range_items.append(item.last())
-                        while j < item.format_length():
-                            if cur_col == col and cur_row == row:
-                                return expr_range_items[j]
-                            j += 1
-                            cur_col += 1
-
-                    else:
-                        if cur_col == col and cur_row == row:
-                            return item
-                        cur_col += 1
-                cur_row += 1
-                cur_col = 1
-            elif isinstance(entry, ExprRange):
-                j = 0
-                expr_range_items = entry.get_range_expansion()
-                expr_range_items.append(entry.body)
-                expr_range_items.append(entry.last())
-                while j < entry.format_length():
-                    if isinstance(expr_range_items[j], ExprTuple):
-                        for item in expr_range_items[j]:
-                            if isinstance(item, ExprRange):
-                                nested_expr_range_items = item.get_range_expansion()
-                                nested_expr_range_items.append(item.body)
-                                nested_expr_range_items.append(item.last())
-                                k = 0
-                                while k < item.format_length():
-                                    if cur_col == col and cur_row == row:
-                                        return nested_expr_range_items[k]
-                                    k += 1
-                                    cur_col += 1
-                            else:
-                                if cur_col == col and cur_row == row:
-                                    return item
+        if self._python_array is None:
+            self._python_array = []
+            cur_row = 1
+            cur_col = 1
+            row_list = []
+            for entry in self:
+                if isinstance(entry, ExprTuple):
+                    for item in entry.entries:
+                        if isinstance(item, ExprRange):
+                            j = 0
+                            expr_range_items = item.get_range_expansion()
+                            expr_range_items.append([item.body, r'\vdots', r'\cdots'])
+                            expr_range_items.append(item.last())
+                            while j < item.format_length():
+                                # if cur_col == col and cur_row == row:
+                                #     return expr_range_items[j]
+                                row_list.append(expr_range_items[j])
+                                j += 1
                                 cur_col += 1
 
-                    j += 1
+                        else:
+                            # if cur_col == col and cur_row == row:
+                            #     return item
+                            row_list.append(item)
+                            cur_col += 1
                     cur_row += 1
                     cur_col = 1
+                    self._python_array.append(row_list)
+                    row_list = []
+                elif isinstance(entry, ExprRange):
+                    j = 0
+                    expr_range_items = entry.get_range_expansion()
+                    if isinstance(entry.body, ExprTuple):
+                        parameter_list = []
+                        for value in entry.body:
+                            if isinstance(value, ExprRange):
+                                parameter_list.extend([list([x, r'\cdots', r'\vdots']) for x in value.get_range_expansion()])
+                                parameter_list.append([value.body, r'\ddots', 'center'])
+                                parameter_list.append([value.last(), r'\cdots', r'\vdots'])
+                            else:
+                                parameter_list.append([value, r'\cdots', r'\vdots'])
+                        expr_range_items.append(parameter_list)
+                    elif isinstance(entry.body, ExprRange):
+                        expr_range_items.extend([list([x, r'\cdots', r'\vdots']) for x in entry.body.get_range_expansion()])
+                        expr_range_items.append([entry.body.body, r'\ddots', 'center'])
+                        expr_range_items.append([entry.body.last(), r'\cdots', r'\vdots'])
+                    else:
+                        expr_range_items.append([entry.body, r'\cdots', r'\vdots'])
+                    expr_range_items.append(entry.last())
+                    while j < entry.format_length():
+                        if isinstance(expr_range_items[j], ExprTuple):
+                            for item in expr_range_items[j]:
+                                if isinstance(item, ExprRange):
+                                    nested_expr_range_items = item.get_range_expansion()
+                                    nested_expr_range_items.append([item.body, r'\vdots', r'\cdots'])
+                                    nested_expr_range_items.append(item.last())
+                                    k = 0
+                                    while k < item.format_length():
+                                        # if cur_col == col and cur_row == row:
+                                        #     return nested_expr_range_items[k]
+                                        row_list.append(nested_expr_range_items[k])
+                                        k += 1
+                                        cur_col += 1
+                                else:
+                                    # if cur_col == col and cur_row == row:
+                                    #     return item
+                                    row_list.append(item)
+                                    cur_col += 1
+                        # elif isinstance(expr_range_items[j], list):
+                        #     k = j
+                        #     parameter_list = []
+                        #     while k < entry.format_length() and isinstance(expr_range_items[k], list):
+                        #         parameter_list.append(expr_range_items[k])
+                        #         k += 1
+                        #     j = k
+                        #     row_list.append(parameter_list)
+                        elif isinstance(expr_range_items[j], ExprRange):
+                            if isinstance(expr_range_items[j].first(), ExprTuple):
+                                nested_expr_range_items = expr_range_items[j].get_range_expansion()
+                                nested_expr_range_items.append([expr_range_items[j].body, r'\vdots', r'\cdots'])
+                                nested_expr_range_items.append(expr_range_items[j].last())
+
+                                for element in nested_expr_range_items:
+                                    # if cur_col == col and cur_row == row:
+                                    #     return nested_expr_range_items[k]
+                                    row_list.extend([item if not isinstance(item, list)
+                                                     else [[x, r'\vdots', r'\cdots'] for x in item[0]]
+                                                     for item in element])
+
+
+                                    j += 1
+                                    cur_row += 1
+                                    cur_col = 1
+                                    self._python_array.append(row_list)
+                                    row_list = []
+                            else:
+                                nested_expr_range_items = expr_range_items[j].get_range_expansion()
+                                nested_expr_range_items.append([expr_range_items[j].body, r'\vdots', r'\cdots'])
+                                nested_expr_range_items.append(expr_range_items[j].last())
+                                k = 0
+                                while k < expr_range_items[j].format_length():
+                                    # if cur_col == col and cur_row == row:
+                                    #     return nested_expr_range_items[k]
+                                    row_list.append(nested_expr_range_items[k])
+                                    k += 1
+                                    cur_col += 1
+                        else:
+                            #print(expr_range_items[j])
+                            #print(row_list)
+                            row_list.extend(expr_range_items[j])
+                            #print(row_list)
+
+                        j += 1
+                        cur_row += 1
+                        cur_col = 1
+                        self._python_array.append(row_list)
+                        row_list = []
+
+        if self.get_style('orientation', 'horizontal') == 'vertical':
+            return self._get_vertical_array_element(row, col)
+
+        return self._python_array[row - 1][col - 1]
+
+    def _get_vertical_array_element(self, row, col):
+        '''
+        access the correct element assuming the array is now vertical
+        '''
+        if isinstance(self._python_array[col-1][row-1], list):
+            obj = self._python_array[col-1][row-1]
+            return [obj[0], obj[-1], obj[-2]]
+
+        return self._python_array[col-1][row-1]
 
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
@@ -603,6 +690,45 @@ class ExprArray(ExprTuple):
                         .simplification(assumptions=assumptions).rhs
             self._height = expr
         return self._height
+
+    def get_formatted_sub_expressions_2(self,
+                                        format_type, #'latex' or 'string'
+                                        orientation, # array orientation 'horizontal' or 'vertical'
+                                        default_style, # used in get_style(parameterization, default_style) 'implicit' or 'explicit'
+                                        operator_or_operators,
+                                        solo=True,
+                                        **kwargs): # used for circuit elements, solo should be true if the array is not contained in a circuit.
+        # sub_fence = False, fence=False, solo=solo
+        # yield each element of the array as a string
+        # center_parameter style option 'implicit' 'explicit' for showing the center parameter (Aij)
+        # originally didn't include '&' before entries in the first column... does it work if we do include & before every array entry?
+        # if orientation is 'vertical' we rotate the original array 90 degrees clockwise.  Therefore the 'cdots' become 'vdots' and vice versa
+        row = 1
+        col = 1
+        while row <= self.get_col_height():
+            while col <= self.get_row_length():
+                cur_obj = self.get_element_at(row, col)
+                #print(cur_obj)
+                if isinstance(cur_obj, list):
+                    if cur_obj[-1] == 'center':
+                        if self.get_style('center_parameter', 'include') == 'exclude':
+                            outstr = r'& \ddots'
+                        else:
+                            outstr = '& ' + cur_obj[0].formatted(format_type=format_type, solo=solo, **kwargs)
+                    else:
+                        outstr = '& ' + cur_obj[-1]
+                else:
+                    outstr = '& ' + cur_obj.formatted(format_type=format_type, solo=solo, **kwargs)
+                if col == self.get_row_length():
+                    if row != self.get_col_height():
+                        yield outstr + r' \\ ' + ' \n'
+                    else:
+                        yield outstr + ' \n'
+                else:
+                    yield outstr
+                col += 1
+            row += 1
+            col = 1
 
     def get_formatted_sub_expressions(
             self,
@@ -1509,7 +1635,7 @@ class ExprArray(ExprTuple):
         if fence:
             out_str = '(' if format_type == 'string' else r'\left('
 
-        length = self.get_row_length()
+        length = self.get_row_length() + 1
 
         if format_type == 'latex':
             out_str += r'\begin{array} {%s} ' % (
@@ -1517,35 +1643,36 @@ class ExprArray(ExprTuple):
 
         formatted_sub_expressions = []
 
-        for entry in self.get_formatted_sub_expressions(
-                format_type, orientation, default_style, operator_or_operators, solo=solo):
+        for entry in self.get_formatted_sub_expressions_2(
+                format_type=format_type, orientation=orientation, default_style=default_style,
+                operator_or_operators=operator_or_operators, solo=solo, **kwargs):
             formatted_sub_expressions.append(entry)
         # print(formatted_sub_expressions)
-        if orientation == "vertical":
-            # up until now, the formatted_sub_expression is still
-            # in the order of the horizontal orientation regardless of
-            # orientation type
-            k = 1
-            vert = []
-
-            m = self.get_row_length()
-            # print(m)
-            # print(self.get_row_length())
-            while k <= self.get_col_height():
-                i = 1
-                j = k
-                for var in self.get_formatted_sub_expressions(
-                        format_type, orientation, default_style, operator_or_operators):
-                    if i == j:
-                        vert.append(var)
-                        m = m - 1
-                        if m == 0:
-                            vert.append(r' \\' + ' \n ')
-                            m = self.get_row_length()
-                        j += self.get_col_height()
-                    i += 1
-                k += 1
-            formatted_sub_expressions = vert
+        # if orientation == "vertical":
+        #     # up until now, the formatted_sub_expression is still
+        #     # in the order of the horizontal orientation regardless of
+        #     # orientation type
+        #     k = 1
+        #     vert = []
+        #
+        #     m = self.get_row_length()
+        #     # print(m)
+        #     # print(self.get_row_length())
+        #     while k <= self.get_col_height():
+        #         i = 1
+        #         j = k
+        #         for var in self.get_formatted_sub_expressions_2(
+        #                 format_type, orientation, default_style, operator_or_operators):
+        #             if i == j:
+        #                 vert.append(var)
+        #                 m = m - 1
+        #                 if m == 0:
+        #                     vert.append(r' \\' + ' \n ')
+        #                     m = self.get_row_length()
+        #                 j += self.get_col_height()
+        #             i += 1
+        #         k += 1
+        #     formatted_sub_expressions = vert
 
         if operator_or_operators is None:
             operator_or_operators = ','
@@ -1611,7 +1738,7 @@ class ExprArray(ExprTuple):
                     "also, operator ranges must be in correspondence with operand ranges.")
 
         if format_type == 'latex':
-            out_str += r' \end{array}' + ' \n'
+            out_str += r'\end{array}' + ' \n'
         if fence:
             out_str += ')' if format_type == 'string' else r'\right)'
         return out_str
