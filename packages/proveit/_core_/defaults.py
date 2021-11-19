@@ -58,7 +58,13 @@ class Defaults:
         # replacements, corresponding expressions in preserved_exprs
         # will be discarded.  That is, whichever is done last is the
         # directive that is followed.
-        self.preserved_exprs = set()        
+        self.preserved_exprs = set()
+        
+        # If an expression has a known evaluation, use it in the 
+        # auto-simplification where auto-simplification is 
+        # enabled/allowed (e.g., the original expression is not
+        # preserved.
+        self.auto_simplify_with_known_evaluations = False
 
         """
         # Map expression classes to directives that should be

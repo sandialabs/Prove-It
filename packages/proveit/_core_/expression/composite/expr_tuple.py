@@ -473,7 +473,7 @@ class ExprTuple(Composite, Expression):
                     # Preserve this entry -- don't simplify it.
                     _k += ExprTuple(entry).num_entries()
                     continue
-                entry_simp = entry._range_reduction(preserve_all=True)
+                entry_simp = entry._range_reduction()
                 if must_evaluate and not is_irreducible_value(entry_simp.rhs):
                     raise EvaluationError(self)
                 if entry_simp.lhs != entry_simp.rhs:

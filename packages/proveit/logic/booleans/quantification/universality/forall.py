@@ -218,10 +218,10 @@ class Forall(OperationOverInstances):
                              "on a Forall expression with a single instance "
                              "variable over a domain and no other conditions.")
         _x = self.instance_param
-        P_op, _P_op = Function(P, _x), self.instance_expr
-        return inclusive_universal_quantification.instantiate(
-                {x:_x, P_op:_P_op, A:superset_domain, B:self.domain}
-                ).derive_consequent()
+        _P = Lambda(_x, self.instance_expr)
+        _impl = inclusive_universal_quantification.instantiate(
+                {x:_x, P: _P, A:superset_domain, B:self.domain})
+        return _impl.derive_consequent()
 
     @prover
     def bundle(self, num_levels=2, **defaults_config):
@@ -343,14 +343,7 @@ class Forall(OperationOverInstances):
         from proveit.numbers import one
         from . import forall_in_bool
         _x = self.instance_params
-        P_op, _P_op = Function(P, _x), self.instance_expr
+        _P = Lambda(_x, self.instance_expr)
         _n = _x.num_elements()
-        # Need to distinguish two cases: _n == 1 vs. _n > 1, b/c we are
-        # not allowed to construct a single-element ExprRange
-        if _n == one:
-            x_1_to_n = IndexedVar(x, one)  # we are subbing for x_1
-            _x = _x[0]                     # using a bare elem
-        else:
-            x_1_to_n = ExprTuple(ExprRange(k, IndexedVar(x, k), one, _n))
         return forall_in_bool.instantiate(
-            {n: _n, P_op: _P_op, x_1_to_n: _x}, preserve_expr=self)
+            {n: _n, P: _P, x: _x})
