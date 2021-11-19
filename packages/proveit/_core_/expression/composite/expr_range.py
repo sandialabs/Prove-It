@@ -92,6 +92,8 @@ class ExprRange(Expression):
         self.body = self.lambda_map.body
         self.is_parameter_independent = (
             self.parameter not in free_vars(self.body))
+        self._expansion_indices = [self.start_index]
+        self.get_range_expansion()
 
     @classmethod
     def _make(sub_class, core_info, sub_expressions, *, styles):
@@ -240,24 +242,25 @@ class ExprRange(Expression):
             call_strs.append('with_expansion(%d)'%int(expansion))
         simplify = self.get_style('simplify', 'False')
         if simplify != 'False':
-            call_strs.append('with_simplification()')
+            if simplify == 'True':
+                call_strs.append('with_simplification()')
         return call_strs
 
     def style_options(self):
         options = StyleOptions(self)
         options.add_option(
-            name = 'parameterization',
-            description = (
+            name='parameterization',
+            description=(
                     "'implicit' (default for LaTeX formatting) hides "
                     "the parameter the ExprRange so the parameterization "
                     "may be ambiguous (e.g., x_{1+1}, ..., x_{n+1}); "
                     "'explicit' (default for string formatting) reveals "
                     "the parameterization "
                     "(e.g. x_{1+1}, ..x_{k+1}.., x_{n+1})."),
-            default = None,
-            related_methods = ('with_explicit_parameterization',
-                               'with_implicit_parameterization',
-                               'with_default_parameterization_style'))
+            default=None,
+            related_methods=('with_explicit_parameterization',
+                             'with_implicit_parameterization',
+                             'with_default_parameterization_style'))
 
         options.add_option(
             name='expansion',
@@ -265,14 +268,14 @@ class ExprRange(Expression):
                 "The default expansion is 1 (a single operand before the "
                 "ellipses). Enter a positive integer to increase the number "
                 "of operands before the ellipses."),
-            default = str(1),
+            default=str(1),
             related_methods=('with_expansion', 'get_range_expansion'))
         options.add_option(
-            name = 'simplify',
-            description = (
+            name='simplify',
+            description=(
                     "If 'True', simplify the formatted instances."),
-            default = 'False',
-            related_methods = ('with_simplification',)
+            default='False',
+            related_methods=('with_simplification',)
         )
         return options
 
@@ -309,6 +312,7 @@ class ExprRange(Expression):
         '''
         Simplify the formatted instances for the style.
         '''
+
         return self.with_styles(simplify='True')
     
     def _body_replaced(self, expr_map):
@@ -323,16 +327,11 @@ class ExprRange(Expression):
             with defaults.temporary() as temp_defaults:
                 temp_defaults.auto_simplify = True
                 temp_defaults.replacements = []
-                expansion = int(self.get_style("expansion", str(1)))
-                expanded_value = Add(self.start_index, num(expansion - 1)).simplification().rhs
-                second_value = Add(self.start_index, num(1)).simplification().rhs
-                temp_defaults.assumptions = defaults.assumptions \
-                                            + tuple([Less(expanded_value, self.end_index),
-                                                     Less(self.start_index, self.end_index),
-                                                     Less(second_value, self.end_index),
-                                                     NotEquals(expanded_value, self.end_index),
-                                                     NotEquals(second_value, self.end_index),
-                                                     NotEquals(self.start_index, self.end_index)])
+                assumptions = []
+                for entry in self._expansion_indices:
+                    assumptions.append(Less(entry, self.end_index))
+                    assumptions.append(NotEquals(entry, self.end_index))
+                temp_defaults.assumptions = defaults.assumptions + tuple(assumptions)
                 return self.body.complete_replaced(expr_map)
         else:
             return self.body.basic_replaced(expr_map)
@@ -343,17 +342,21 @@ class ExprRange(Expression):
         the ellipses. The default expansion is one operand before
         the ellipses.
         '''
-        num = str(num)
-        return self.with_styles(expansion=num)
+        self.with_styles(expansion=str(num))
+        self._update_expansion(num)
+        return self.with_styles(expansion=str(num))
 
     def first(self):
         '''
         Return the first instance of the range
         (and store for future use).
         '''
-        if not hasattr(self, '_first'):
+        if not hasattr(self, '_first') or self.get_styles() != self._first_style:
             expr_map = {self.lambda_map.parameter: self.start_index}
             self._first = self._body_replaced(expr_map)
+            self._first_style = self.get_styles()
+            self.get_range_expansion()
+            self.last()
         return self._first
 
     def last(self):
@@ -361,16 +364,19 @@ class ExprRange(Expression):
         Return the last instance of the range
         (and store for future use).
         '''
-        if not hasattr(self, '_last'):
+        if not hasattr(self, '_last') or self.get_styles() != self._last_style:
             expr_map = {self.lambda_map.parameter: self.end_index}
             self._last = self._body_replaced(expr_map)
+            self._last_style = self.get_styles()
+            self.get_range_expansion()
+            self.first()
         return self._last
 
-    def format_length(self, format_type='latex'):
+    def format_length(self):
         '''
         The length of the ExprRange when it is formatted according to the expansion.
         '''
-        return len(self._formatted_checkpoints(format_type=format_type))
+        return int(self.get_style('expansion', str(1))) + 2
 
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
@@ -404,35 +410,62 @@ class ExprRange(Expression):
             return True
         return False
 
-    def get_range_expansion(self):
+    def _expr_simplification(self, expr):
         '''
-        returns a list of the expression objects before the ellipses including self.first().
-        For use when the ExprRange has the expansion style option, otherwise
-        this method just returns a list containing self.first().
+        calls simplification on the given expression
         '''
-        default_expansion = str(1)
-        expansion = int(self.get_style("expansion", default_expansion))
+        from proveit import UnsatisfiedPrerequisites, ProofFailure
+        from proveit.logic import SimplificationError
+        try:
+            return expr.simplified()
+        except (SimplificationError, UnsatisfiedPrerequisites, NotImplementedError, ProofFailure):
+            return expr
+
+    def _update_expansion(self, num):
+
+        prev = self.start_index
+        indices = [prev]
+        expansion = num
         from proveit.numbers import one, Add
         i = 1
-        prev = self.start_index
-        output = [self.first()]
+        if self.get_style('simplify', 'False') == 'True':
+            output = [self._expr_simplification(self.first())]
+        else:
+            output = [self.first()]
         while i < expansion:
-            expr_map = {self.lambda_map.parameter: Add(prev, one).simplification().rhs}
+            expr_map = {self.lambda_map.parameter: self._expr_simplification(Add(prev, one))}
             try:
                 next_value = self._body_replaced(expr_map)
             except AttributeError:
                 next_value = self.basic_replaced(expr_map)
-            output.append(next_value)
-            prev = Add(prev, one).simplification().rhs
+            if self.get_style('simplify', 'False') == 'True':
+                output.append(self._expr_simplification(next_value))
+            else:
+                output.append(next_value)
+            prev = self._expr_simplification(Add(prev, one))
+            indices.append(prev)
             i += 1
-        if self.get_style("simplify", 'False') == 'True':
-            try:
-                from proveit.numbers import Less
-                Less(prev, self.end_index).prove()
-            except ProofFailure:
-                print("WARNING: unable to prove that %s < %s. This will be assumed for formatting purposes. "
-                      "Please double check that your expansion is valid." % (prev, self.end_index))
-        return output
+        self._range_expansion = output
+        self._expansion_indices = indices
+        self._stored_expansion_style = self.get_styles()
+
+    def get_range_expansion(self, reformat=False):
+        '''
+        returns a list of the expression objects before the ellipses including self.first().
+        For use when the ExprRange has the expansion style option, otherwise
+        this method just returns a list containing self.first().
+        (and store for future use)
+        '''
+        default_expansion = str(1)
+        expansion = int(self.get_style("expansion", default_expansion))
+        if (not hasattr(self, '_range_expansion')
+                or len(self._range_expansion) != expansion
+                or self.get_styles() != self._stored_expansion_style):
+            reformat = True
+
+        if reformat:
+            self._update_expansion(expansion)
+        return self._range_expansion
 
     def _formatted_checkpoints(self, format_type, *,
                                use_explicit_parameterization=None,
@@ -459,6 +492,7 @@ class ExprRange(Expression):
         except:
             first = self.first()
             last = self.last()
+
         check_points = [first, last]
         if use_explicit_parameterization and not self.is_parameter_independent:
             check_points.insert(1, self.body)
@@ -507,29 +541,25 @@ class ExprRange(Expression):
             # e.g., x_1, ..., x_n
             formatted_sub_expressions.insert(1, ellipses)
 
-        if expansion >= 1:
-            # print(expansion)
-            from proveit.numbers import one, Add
-            i = 1
-            prev = self.start_index
-            while i < expansion:
-                expr_map = {self.lambda_map.parameter: Add(prev, one).simplification().rhs}
-                try:
-                    next_value = self._body_replaced(expr_map)
-                except AttributeError:
-                    next_value = self.basic_replaced(expr_map)
-                formatted_sub_expressions.insert(i, next_value.formatted(format_type, operator=operator,
-                                                 **kwargs))
-                prev = Add(prev, one).simplification().rhs
-                i += 1
-
-        else:
+        if expansion > 1:
+            for i, item in enumerate(self.get_range_expansion(reformat=True)[1:], 1):
+                formatted_sub_expressions.insert(i, item.formatted(format_type, **kwargs))
+            try:
+                from proveit.numbers import Less
+                Less(self._expansion_indices[-1], self.end_index).prove()
+            except ProofFailure:
+                print("WARNING: unable to prove that %s < %s. This will be assumed for formatting purposes. "
+                      "Please double check that your expansion is valid." % (self._expansion_indices[-1],
+                                                                             self.end_index))
+        elif expansion < 1:
             from proveit._core_.expression.style_options import StyleError
             raise StyleError("Style option 'expansion' must be >= 1")
+
         return formatted_sub_expressions
 
     def formatted(self, format_type, fence=False, sub_fence=True,
                   operator=None, **kwargs):
+
         if operator is None:
             # comma is the default formatted operator
             formatted_operator = ', '

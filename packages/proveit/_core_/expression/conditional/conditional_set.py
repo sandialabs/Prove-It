@@ -21,9 +21,13 @@ class ConditionalSet(Operation):
         Reduce a conditional set with one and only one TRUE condition
         where the other conditions are FALSE if applicable.
         '''
-        return self.single_case_via_elimination()
-
+        try:
+            return self.single_case_via_elimination()
+        except UnsatisfiedPrerequisites as _e:
+            raise NotImplementedError('shallow_simplification is only implemented '
+                                      'if all conditions are known to be TRUE or FALSE', _e)
     # single_case_via_elimination
+
     @equality_prover('reduced_to_true_case', 'reduce_to_true_case')
     def single_case_via_elimination(self, **defaults_config):
         '''
@@ -42,17 +46,20 @@ class ConditionalSet(Operation):
                 if item.condition == TRUE:
                     if _b is not None:
                         raise UnsatisfiedPrerequisites(
-                            "All conditions must be FALSE except one, both %s and %s are not FALSE" % (
-                            _b, item.string()))
+                            "All conditions must be FALSE except one, both %s and %s are not FALSE: %s" % (
+                            _b, item.string(), self))
                     _b = item.value
                     index = i
                 elif item.condition != FALSE:
                     raise UnsatisfiedPrerequisites(
-                            "All conditions must be FALSE except one, %s is not FALSE" % item.condition.string())
+                            "All conditions must be FALSE except one, %s is not FALSE: %s" % (item.condition.string(),
+                                                                                              self))
             else:
                 if _b is not None:
                     raise UnsatisfiedPrerequisites(
-                        "All conditions must be FALSE except one, both %s and %s are not FALSE" % (_b, item.string()))
+                        "All conditions must be FALSE except one, both %s and %s are not FALSE: %s" % (_b,
+                                                                                                       item.string(),
+                                                                                                       self))
                 else:
                     _b = item
                     index = i
