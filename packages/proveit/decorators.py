@@ -311,8 +311,7 @@ def equality_prover(past_tense, present_tense):
                     past_tense, present_tense)
         is_evaluation_method = (name == 'evaluation')
         is_shallow_simplification_method = (name == 'shallow_simplification')
-        is_simplification_method = (is_shallow_simplification_method or
-                                    name == 'simplification')
+        is_simplification_method = (name == 'simplification')
         decorated_relation_prover = _make_decorated_relation_prover(func)
 
         def wrapper(*args, **kwargs):   
