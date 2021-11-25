@@ -1135,8 +1135,7 @@ class Add(NumberOperation):
         _k = _c.num_elements()
         distribution = distribute_through_sum.instantiate(
             {i: _i, j: _j, k: _k, a: _a, b: _b, c: _c}, 
-            preserve_expr=expr, replacements=replacements,
-            auto_simplify=False)
+            preserve_expr=expr, replacements=replacements)
         eq.update(distribution.derive_reversed())
         return eq.relation
 
