@@ -51,10 +51,9 @@ class InnerExpr:
        (note that the second "a - 1" is singled out, distinct from
        the first "a - 1" because the subexpr object tracks the
        sub-expression by "location").
-    2. inner_expr.with_subtraction_at([]) will return an
+    2. inner_expr.with... will return an
        expression that is the same but with an altered style for the
-       inner exrpession part:
-           [((a - 1) + b + (a + (-1))/d) < e]
+       inner expression part.
        The InnerExpr class looks specifically for attributes of the
        inner expression class that start with 'with' and assumes
        they function to alter the style.
