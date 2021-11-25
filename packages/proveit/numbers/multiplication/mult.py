@@ -18,7 +18,7 @@ class Mult(NumberOperation):
                          theory=__file__)
 
     _simplification_directives_ = SimplificationDirectives(
-            ungroup = True)
+            ungroup = True, irreducibles_in_front = True)
 
     def __init__(self, *operands, styles=None):
         r'''
@@ -265,7 +265,34 @@ class Mult(NumberOperation):
             # Start over now that the terms are all evaluated to
             # irreductible values.
             return self.evaluation()
-
+        
+        if Mult._simplification_directives_.irreducibles_in_front:
+            # Move irreducibles to the front.
+            irreducible_factor_index_ranges = []
+            _prev_was_irreducible = False
+            for _k, factor in enumerate(self.factors):
+                if is_irreducible_value(factor):
+                    if _prev_was_irreducible:
+                        # Update a range of irreducible factors.
+                        irreducible_factor_index_ranges[-1][-1] = _k
+                    else:
+                        # Start a new range of irreducibles.
+                        irreducible_factor_index_ranges.append([_k, _k])
+                    _prev_was_irreducible = True
+                else:
+                    _prev_was_irreducible = False
+            if len(irreducible_factor_index_ranges) > 0:
+                # Move one or more irreducible factors to the front.
+                offset = 0
+                for factor_index_range in reversed(
+                        irreducible_factor_index_ranges):
+                    # Move group of irreducibles to the front.
+                    start, end = factor_index_range
+                    expr = eq.update(expr.group_commutation(
+                            start+offset, 0, end-start+1, 
+                            auto_simplify=False))
+                    offset += end - start + 1
+        
         return eq.relation # Should be self=self.
 
     @equality_prover('simplified_negations', 'simplify_negations')
