@@ -49,50 +49,25 @@ class Add(NumberOperation):
                 operand.lambda_map.body,
                 Neg))
 
-    def style_options(self):
-        '''
-        Return the StyleOptions object for this Add expression.
-        '''
-        options = Operation.style_options(self)
-        # The default style will be to use subtraction notation 
-        # (relevant where operands are negated).
-        # Call 'with_subtraction_at' to alter the style relative
-        # to this default..
-        subtraction_positions = [_k for _k, operand in enumerate(
-            self.operands) if Add._isNegatedOperand(operand)]
-        default_sub_pos_style = \
-            '(' + ' '.join(str(pos) for pos in subtraction_positions) + ')'
-        options.add_option(
-            name='subtraction_positions',
-            description=("Position(s) to use subtraction notation instead "
-                         "of adding the negation at the specified indices"),
-            default=default_sub_pos_style,
-            related_methods=('with_subtraction_at', 
-                             'subtraction_positions'))
-        return options
-
-    def with_subtraction_at(self, *subtraction_positions):
-        return self.with_styles(
-            subtraction_positions='(' +
-            ' '.join(
-                str(pos) for pos in subtraction_positions) +
-            ')')
-
-    def subtraction_positions(self):
-        '''
-        Return a list of subtraction notation positions according to the current style setting.
-        '''
-        return [int(pos_str) for pos_str in self.get_style(
-            'subtraction_positions').strip('()').split(' ') if pos_str != '']
-
     def _formatted(self, format_type, **kwargs):
         '''
         Override Operation._formatted so to enable subtraction notation where desired.
         '''
         from proveit import ExprRange
         from proveit.numbers import Neg
-        subtraction_positions = self.subtraction_positions()
-        if len(subtraction_positions) > 0 and self.operands.num_entries() > 1:
+        
+        # Where should we use subtraction notation 
+        subtraction_positions = []        
+        for _k, operand in enumerate(self.operands.entries):
+            if isinstance(operand, Neg):
+                if operand.use_subtraction_notation():
+                    subtraction_positions.append(_k)
+            elif isinstance(operand, ExprRange):
+                if isinstance(operand.body, Neg):
+                    if operand.body.use_subtraction_notation():
+                        subtraction_positions.append(_k)
+        
+        if len(subtraction_positions) > 0:
             operators = []
             operands = list(self.operands.entries)
             for operand in operands:
@@ -155,10 +130,10 @@ class Add(NumberOperation):
                 **kwargs)
 
     def remake_constructor(self):
-        # Added by JML on 9/10/19
+        from proveit.numbers import Neg
         if (self.operands.is_double() 
-                and self.subtraction_positions() == (1,) 
-                and Add._isNegatedOperand(self.operands[1])):
+                and isinstance(self.operands[1], Neg)
+                and self.operands[1].use_subtraction_notation()):
             return 'subtract'  # use a different constructor if using the subtraction style
         return Operation.remake_constructor(self)
 
@@ -169,8 +144,8 @@ class Add(NumberOperation):
         '''
         from proveit.numbers import Neg
         if (self.operands.is_double() 
-                and self.subtraction_positions() == (1,) 
-                and Add._isNegatedOperand(self.operands[1])):
+                and isinstance(self.operands[1], Neg)
+                and self.operands[1].use_subtraction_notation()):
             yield self.operands[0]
             assert isinstance(
                 self.operands[1], Neg), "The second operand must be negated"
@@ -178,24 +153,6 @@ class Add(NumberOperation):
         else:
             for operand in self.operands:
                 yield operand
-
-    def remake_with_style_calls(self):
-        '''
-        In order to reconstruct this Expression to have the same styles,
-        what "with..." method calls are most appropriate?  Return a
-        tuple of strings with the calls to make.  The default for the
-        Operation class is to include appropriate 'with_wrapping_at'
-        and 'with_justification' calls.
-        '''
-        call_strs = Operation.remake_with_style_calls(self)
-        subtraction_positions = self.subtraction_positions()
-        default_subtraction_positions = [
-            _k for _k, operand in enumerate(
-                self.operands.entries) if Add._isNegatedOperand(operand)]
-        if subtraction_positions != default_subtraction_positions:
-            call_strs.append('with_subtraction_at(' + ','.join(str(pos)
-                                                               for pos in subtraction_positions) + ')')
-        return call_strs
 
     def _closureTheorem(self, number_set):
         from . import add_nat_closure, add_real_closure, add_complex_closure, add_int_closure
@@ -414,18 +371,8 @@ class Add(NumberOperation):
             _i = _a.num_elements()
             _j = _c.num_elements()
             _k = _d.num_elements()
-            spec = general_thm.instantiate(
+            return general_thm.instantiate(
                 {i: _i, j: _j, k: _k, a: _a, b: _b, c: _c, d: _d})
-            # set the proper subtraction styles to match the original
-            sub_positions = self.subtraction_positions()
-            if isinstance(spec.lhs, Add):
-                spec.inner_expr().lhs.with_subtraction_at(*sub_positions)
-            def update_pos(p): return p if p < idx1 else (
-                p - 1 if p < idx2 else p - 2)
-            if isinstance(spec.rhs, Add):
-                spec.inner_expr().rhs.with_subtraction_at(
-                    *[update_pos(p) for p in sub_positions])
-            return spec
 
     @equality_prover('eliminated_zeros', 'eliminate_zeros')   
     def zero_eliminations(self, **defaults_config):
@@ -1135,8 +1082,7 @@ class Add(NumberOperation):
         _k = _c.num_elements()
         distribution = distribute_through_sum.instantiate(
             {i: _i, j: _j, k: _k, a: _a, b: _b, c: _c}, 
-            preserve_expr=expr, replacements=replacements,
-            auto_simplify=False)
+            preserve_expr=expr, replacements=replacements)
         eq.update(distribution.derive_reversed())
         return eq.relation
 

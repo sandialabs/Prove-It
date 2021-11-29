@@ -19,6 +19,47 @@ class Neg(NumberOperation):
     def __init__(self, A, *, styles=None):
         NumberOperation.__init__(self, Neg._operator_, A, styles=styles)
 
+    def style_options(self):
+        '''
+        Return the StyleOptions object for this Neg expression.
+        '''
+        options = Operation.style_options(self)
+        options.add_option(
+            name='notation_in_add',
+            description=("When contained in an Add, use 'subtraction' "
+                         "or 'explicit_negation': "
+                         "For example, 'a - b' versus 'a + (-b)'."),
+            default='subtraction',
+            related_methods=('with_subtraction_notation', 
+                             'without_subtraction_notation'))
+        return options
+    
+    def with_subtraction_notation(self):
+        return self.with_styles(notation_in_add='subtraction')
+
+    def without_subtraction_notation(self):
+        return self.with_styles(notation_in_add='explicit_negation')
+    
+    def use_subtraction_notation(self):
+        '''
+        Return True if subtraction notation should be used within
+        an Add operation: e.g., a - b.
+        '''
+        return self.get_style('notation_in_add') == 'subtraction'
+
+    def remake_with_style_calls(self):
+        '''
+        In order to reconstruct this Expression to have the same styles,
+        what "with..." method calls are most appropriate?  Return a
+        tuple of strings with the calls to make.  The default for the
+        Operation class is to include appropriate 'with_wrapping_at'
+        and 'with_justification' calls.
+        '''
+        call_strs = Operation.remake_with_style_calls(self)
+        if not self.use_subtraction_notation():
+            call_strs.append('without_subtraction_notation()')
+        return call_strs
+
     def is_irreducible_value(self):
         from proveit.numbers import zero
         if isinstance(self.operand, Neg):

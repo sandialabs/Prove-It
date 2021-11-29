@@ -151,7 +151,6 @@ class Exp(NumberOperation):
                                      Rational, Abs)
         from . import (exp_zero_eq_one, exponentiated_zero,
                        exponentiated_one, exp_nat_pos_expansion)
-        from . import complex_x_to_first_power_is_x
 
         if self.exponent == zero:
             return exp_zero_eq_one.instantiate({a: self.base})  # =1
@@ -193,7 +192,7 @@ class Exp(NumberOperation):
             raise EvaluationError(self)
 
         if self.exponent == one:
-            return complex_x_to_first_power_is_x.instantiate({x: self.base})
+            return self.power_of_one_reduction()
         if (isinstance(self.base, Exp) and
             isinstance(self.base.exponent, Div) and
             self.base.exponent.numerator == one and
@@ -234,6 +233,14 @@ class Exp(NumberOperation):
                 expr = eq.update(expr.simplification())
 
         return eq.relation
+    
+    @equality_prover('power_of_one_reduced', 'power_of_one_reduce')
+    def power_of_one_reduction(self, **defaults_config):
+        from . import complex_x_to_first_power_is_x
+        if self.exponent != one:
+            raise ValueError("'power_of_one_reduction' only applicable when "
+                             "the exponent is 1, not %s"%self.exponent)
+        return complex_x_to_first_power_is_x.instantiate({x: self.base})
 
     @relation_prover
     def not_equal(self, other, **defaults_config):
@@ -500,16 +507,21 @@ class Exp(NumberOperation):
         the_exponents = self.exponent.operands
 
         # list the new exponential factors
-        the_new_factors = [Exp(self.base, new_exp) for new_exp in the_exponents]
+        the_new_factors = [Exp(self.base, new_exp) if new_exp != one 
+                           else self.base for new_exp in the_exponents]
 
         # create the new equivalent product (Mult)
         mult_equiv = Mult(*the_new_factors)
 
         # use the Mult.exponent_combination() to deduce equality to self
         exp_separated = mult_equiv.exponent_combination()
+        
+        replacements = list(defaults.replacements)
+        if defaults.auto_simplify:
+            replacements.append(mult_equiv.shallow_simplification())
 
         # reverse the equality relationship and return
-        return exp_separated.derive_reversed()
+        return exp_separated.derive_reversed(replacements=replacements)
 
 
     def lower_outer_exp(self, assumptions=frozenset()):
