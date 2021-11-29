@@ -99,6 +99,7 @@ class Lambda(Expression):
         The 'body' attribute will be the lambda function body
         Expression.  The body may be singular or a composite.
         '''
+        from proveit._core_.expression.label.var import Variable
         from proveit._core_.expression.composite import (
             composite_expression, single_or_composite_expression)
         self.parameters = composite_expression(parameter_or_parameters)
@@ -142,6 +143,20 @@ class Lambda(Expression):
         assert isinstance(body, Expression)
         self.body = body
 
+        # For any parameter that is a range of indexed variables
+        # (or just an indexed variable), make sure that corresponding
+        # parameter variable does not occur in a non-indexed form
+        # in the body.  For example, forall_{b_1, ..., b_n} f(b)
+        # is not a valid form.
+        for param, param_var in zip(self.parameters, self.parameter_vars):
+            if not isinstance(param, Variable):
+                body_var_ranges = body._free_var_ranges()
+                if param_var in body_var_ranges:
+                    if param_var in body_var_ranges[param_var]:
+                        raise ValueError(
+                            "With %s being parameterized, %s may not occur "
+                            "in a non-indexed form in the body: %s"
+                            %(param, param_var, body))
         sub_exprs = (self.parameters, self.body)
         Expression.__init__(self, ['Lambda'], sub_exprs, styles=styles)
 
