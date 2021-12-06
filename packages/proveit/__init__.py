@@ -20,7 +20,7 @@ from ._core_ import (
     MakeNotImplemented, ImproperReplacement,
     Composite, composite_expression, single_or_composite_expression,
     ExprTuple, ExprTupleError, extract_var_tuple_indices,
-    ExprArray, NamedExprs, ExprRange,
+    ExprArray, VertExprArray, NamedExprs, ExprRange,
     var_range, RangeInstanceError,
     Judgment, as_expression, as_expressions,
     Proof, Assumption, Axiom, Theorem, ModusPonens,

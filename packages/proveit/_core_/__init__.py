@@ -18,7 +18,7 @@ from .expression import (
     Composite, composite_expression,
     single_or_composite_expression,
     ExprTuple, ExprTupleError, extract_var_tuple_indices,
-    ExprArray, NamedExprs, ExprRange,
+    ExprArray, VertExprArray, NamedExprs, ExprRange,
     var_range, RangeInstanceError,
     StyleOptions, maybe_fenced_string,
     maybe_fenced_latex, maybe_fenced)
