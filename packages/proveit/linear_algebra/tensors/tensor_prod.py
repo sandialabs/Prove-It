@@ -2,7 +2,7 @@ from proveit import (Judgment, defaults, relation_prover, equality_prover,
                      Literal, Operation, Lambda,
                      prover, TransRelUpdater, SimplificationDirectives)
 from proveit import a, b, c, d, e, f, i, j, k, A, K, Q, U, V, W, alpha
-from proveit.logic import Equals, InClass
+from proveit.logic import Equals, InClass, SetMembership
 from proveit.abstract_algebra.generic_methods import (
         apply_association_thm, apply_disassociation_thm)
 from proveit.linear_algebra import (VecSpaces, ScalarMult, VecAdd, VecSum,
@@ -29,6 +29,12 @@ class TensorProd(Operation):
         Operation.__init__(self, TensorProd._operator_, operands,
                            styles=styles)
         self.factors = self.operands
+
+    def membership_object(self, element):
+        # This is a little bit odd, where a TensorProd can
+        # itself be an element of a TensorProd
+        from .tensor_prod_membership import TensorProdMembership
+        return TensorProdMembership(element, self)
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
