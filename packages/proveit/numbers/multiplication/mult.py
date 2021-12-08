@@ -993,54 +993,60 @@ class Mult(NumberOperation):
         # OR
         # (2) all like-exponents
         #     a^z b^z c^z = (abc)^z
-        # for the moment assuming we have all exponential factors of
-        # the form Exp(a, b) instead of something like a^b * a
-        if (all(isinstance(factor, Exp) for factor in self.factors)):
+        replacements = list(defaults.replacements)
+        factors = []
+        for factor in self.factors:
+            if not isinstance(factor, Exp):
+                # Exploit a^1 = a.
+                factor = Exp(factor, one)
+                replacements.append(factor.power_of_one_reduction())
+            factors.append(factor)
+        factor_bases = [factor.base for factor in factors]
+        factor_exponents = [factor.exponent for factor in factors]
+        from proveit.numbers.exponentiation import (
+            products_of_complex_powers)
 
-            factor_bases = [factor.base for factor in self.factors]
-            factor_exponents = [factor.exponent for factor in self.factors]
-            from proveit.numbers.exponentiation import (
-                    products_of_complex_powers)
+        # (1) all same bases to combine with a single exponent,
+        # such as a^b a^c a^d = a^{b+c+d}
+        if len(set(factor_bases)) == 1:
 
-            # (1) all same bases to combine with a single exponent,
-            # such as a^b a^c a^d = a^{b+c+d}
-            if len(set(factor_bases)) == 1:
+            _m_sub = num(len(factor_exponents))
+            _a_sub = factor_bases[0]
+            _b_sub = factor_exponents
+            try:
+                return products_of_complex_powers.instantiate(
+                    {m: _m_sub, a: _a_sub, b: _b_sub},
+                    replacements=replacements)
+            except Exception as the_exception:
+                # something went wrong
+                error_msg = (
+                    error_msg +
+                    "All factors appeared to have same base, but "
+                    "attempt failed with error message: \n" +
+                    str(the_exception))
+                pass
 
-                _m_sub = num(len(factor_exponents))
-                _a_sub = factor_bases[0]
-                _b_sub = factor_exponents
-                try:
-                    return products_of_complex_powers.instantiate(
-                            {m: _m_sub, a: _a_sub, b: _b_sub})
-                except Exception as the_exception:
-                    # something went wrong
-                    error_msg = (
-                            error_msg +
-                            "All factors appeared to have same base, but "
-                            "attempt failed with error message: \n" +
-                            str(the_exception))
-                    pass
+        # (2) all same exponent to combine with a single base,
+        # such as a^d b^d c^d = (a b c)^d.
+        # Less common but sometimes useful.
+        if len(set(factor_exponents)) == 1:
 
-            # (2) all same exponent to combine with a single base,
-            # such as a^d b^d c^d = (a b c)^d.
-            # Less common but sometimes useful.
-            if len(set(factor_exponents)) == 1:
-
-                # Same exponent: equate $a^c b^c = (a b)^c$
-                # Combining the exponents in this case is the reverse
-                # of disibuting an exponent.
-                _new_prod = Mult(*factor_bases)
-                _new_exp = Exp(_new_prod, factor_exponents[0])
-                try:
-                    return _new_exp.distribution().derive_reversed()
-                except Exception as the_exception:
-                    # something went wrong; append to error message
-                    error_msg = (
-                            error_msg +
-                            "All factors appeared to have the same exponent, "
-                            "but attempt failed with error message: \n" +
-                            str(the_exception)) + "\n"
-                    pass
+            # Same exponent: equate $a^c b^c = (a b)^c$
+            # Combining the exponents in this case is the reverse
+            # of disibuting an exponent.
+            _new_prod = Mult(*factor_bases)
+            _new_exp = Exp(_new_prod, factor_exponents[0])
+            try:
+                return _new_exp.distribution(
+                    replacements=replacements).derive_reversed()
+            except Exception as the_exception:
+                # something went wrong; append to error message
+                error_msg = (
+                    error_msg +
+                    "All factors appeared to have the same exponent, "
+                    "but attempt failed with error message: \n" +
+                    str(the_exception)) + "\n"
+                pass
 
         exp_operand_msg = (
             'Combine exponents only implemented for a product '
