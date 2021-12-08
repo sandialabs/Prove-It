@@ -1,4 +1,5 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.core_expr_types.conditionals.satisfied_condition_reduction
 proveit.core_expr_types.lambda_maps.general_lambda_substitution
 proveit.core_expr_types.tuples.tuple_len_0_typical_eq
 proveit.linear_algebra.inner_products.complex_set_is_inner_prod_space
@@ -25,6 +26,7 @@ proveit.logic.sets.cartesian_products.cart_exp_unfold_abstract
 proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.logic.sets.inclusion.unfold_subset_eq
+proveit.numbers.addition.add_complex_closure
 proveit.numbers.addition.add_complex_closure_bin
 proveit.numbers.addition.add_int_closure_bin
 proveit.numbers.addition.add_nat_closure_bin
@@ -58,6 +60,7 @@ proveit.numbers.multiplication.distribute_through_sum
 proveit.numbers.multiplication.elim_one_left
 proveit.numbers.multiplication.elim_one_right
 proveit.numbers.multiplication.mult_complex_closure
+proveit.numbers.multiplication.mult_complex_closure_bin
 proveit.numbers.multiplication.rightward_commutation
 proveit.numbers.negation.complex_closure
 proveit.numbers.negation.int_closure
