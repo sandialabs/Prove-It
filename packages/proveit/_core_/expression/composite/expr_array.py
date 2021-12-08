@@ -1,6 +1,7 @@
 from .expr_tuple import ExprTuple
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.expression.style_options import StyleOptions
+from proveit._core_.defaults import USE_DEFAULTS
 
 
 class ExprArray(ExprTuple):
@@ -154,6 +155,56 @@ class ExprArray(ExprTuple):
             format_cell_entries[_i][_j + 1] = (expr, 'implicit', inner_role)
         
         return format_cell_entries
+
+    def get_outer_format_cell_element_positions(self, assumptions=USE_DEFAULTS,
+                                         _remembered_simplifications=None):
+        '''
+        Returns a list of element positions in correspondence with
+        each row/column of this ExprArray/VertExprArray.  This 
+        simply returns ExprTuple.get_format_cell_element_positions.
+
+        The assumptions dictate simplifications that may apply to
+        the element positions.
+        '''
+        return ExprTuple.get_format_cell_element_positions(
+                assumptions, _remembered_simplifications)
+
+    def get_inner_format_cell_element_positions(
+            self, assumptions=USE_DEFAULTS, _remembered_simplifications=None):
+        '''
+        Returns a list of element positions in correspondence with
+        each column/row of this ExprArray/VertExprArray.  Raises
+        a ValueError if these positions are not consistent among
+        the different rows/columns of this ExprArray/VertExprArray.
+
+        The assumptions dictate simplifications that may apply to
+        the element positions.
+        '''
+        from proveit import ExprRange, VertExprArray
+        if _remembered_simplifications is None:
+            _remembered_simplifications = dict()
+        element_positions = None
+        for outer_entry in self.entries:
+            if isinstance(outer_entry, ExprRange):
+                outer_entry = outer_entry.body
+            if isinstance(outer_entry, ExprTuple):
+                cur_elem_positions = (
+                        outer_entry.get_format_cell_element_positions(
+                                assumptions, _remembered_simplifications))
+                if element_positions is None:
+                    element_positions = cur_elem_positions
+                else:
+                    if element_positions != cur_elem_positions:
+                        if isinstance(self, VertExprArray):
+                            raise ValueError(
+                                    "Rwos do not line up across different "
+                                    "columns in VertExprArray: %s"%self)
+                        else:
+                            raise ValueError(
+                                    "Columns do not line up across different "
+                                    "rows in ExprArray: %s"%self)
+        return element_positions
+
     
     def get_latex_formatted_cells(self, orientation='horizontal'):
         '''
@@ -235,7 +286,12 @@ class ExprArray(ExprTuple):
 
     def latex(self, orientation='horizontal', fence=False, **kwargs):
         justification = self.get_style('justification', 'center')
-                
+        
+        # Check that the columns are properly aligned by calculating
+        # element positions of each column.
+        self.get_inner_format_cell_element_positions()
+        
+        # Get latex-formatted cells.
         formatted_cells = self.get_latex_formatted_cells(
                 orientation=orientation)
         

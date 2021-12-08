@@ -448,6 +448,13 @@ class ExprRange(Expression):
         self._range_expansion = output
         self._expansion_indices = indices
         self._stored_expansion_style = self.get_styles()
+    
+    def get_expansion_count(self):
+        '''
+        Return the number of 'first' elements to use according to the
+        'expansion' style.
+        '''
+        return int(self.get_style("expansion", str(1)))
 
     def get_range_expansion(self, reformat=False):
         '''
@@ -456,8 +463,7 @@ class ExprRange(Expression):
         this method just returns a list containing self.first().
         (and store for future use)
         '''
-        default_expansion = str(1)
-        expansion = int(self.get_style("expansion", default_expansion))
+        expansion = self.get_expansion_count()
         if (not hasattr(self, '_range_expansion')
                 or len(self._range_expansion) != expansion
                 or self.get_styles() != self._stored_expansion_style):

@@ -332,7 +332,8 @@ class ExprTuple(Composite, Expression):
         from proveit.core_expr_types import Len
         return Len(self).computed(**defaults_config)
 
-    def get_format_cell_entries(self, assumptions=USE_DEFAULTS):
+    def get_format_cell_entries(self, assumptions=USE_DEFAULTS,
+                                _remembered_simplifications=None):
         '''
         Returns a list of entries in correspondence with
         each format cell of this ExprTuple.  Each entry is a pair
@@ -361,7 +362,8 @@ class ExprTuple(Composite, Expression):
                 # Append to element_positions.
                 if isinstance(item, ExprRange):
                     # An ExprRange covers multiple format cells.
-                    range_items = item.get_range_expansion()
+                    range_items = item.get_range_expansion(
+                            _remembered_simplifications)
                     cell_entries.extend(
                             (range_item, _k) for _k, range_item in
                             enumerate(range_items))
@@ -374,7 +376,8 @@ class ExprTuple(Composite, Expression):
                     cell_entries.append((item, 'normal'))
         return cell_entries
     
-    def get_format_cell_element_positions(self, assumptions=USE_DEFAULTS):
+    def get_format_cell_element_positions(self, assumptions=USE_DEFAULTS,
+                                          _remembered_simplifications=None):
         '''
         Returns a list of element positions in correspondence with
         each format cell of this ExprTuple 
@@ -391,7 +394,24 @@ class ExprTuple(Composite, Expression):
         the element positions.
         '''
         from .expr_range import ExprRange
+        from proveit import Judgment
+        from proveit.logic import Equals
         from proveit.numbers import Add, zero, one, subtract
+
+        # We will simplify element positions as we go, remembering and
+        # reusing the simplifications for efficiency.
+        if _remembered_simplifications is None:
+            _remembered_simplifications = dict()        
+        def _simplified(expr):
+            if expr in _remembered_simplifications:
+                simplification = _remembered_simplifications[expr]
+            else:
+                simplification = expr.simplification()
+                _remembered_simplifications[expr] = simplification
+            assert isinstance(simplification, Judgment)
+            assert isinstance(simplification.expr, Equals)
+            assert simplification.expr.lhs == expr
+            return simplification.expr.rhs
         
         element_positions = []
         with defaults.temporary() as tmp_defaults:
@@ -403,18 +423,18 @@ class ExprTuple(Composite, Expression):
                 if element_pos is zero:
                     element_pos = one # short-cut 0+1=1.
                 else:
-                    element_pos = Add(element_pos, one).simplified()
+                    element_pos = _simplified(Add(element_pos, one))
 
                 # Append to element_positions.
                 if isinstance(item, ExprRange):
                     # An ExprRange covers multiple format cells.
-                    range_expansion = item.expansion
+                    range_expansion = item.get_expansion_count()
                     start_element_pos = element_pos
                     # Append for the first cells of an expanded
                     # ExprRange:
                     for _ in range(range_expansion-1):
                         element_positions.append(element_pos)
-                        element_pos = Add(element_pos, one).simplified()
+                        element_pos = _simplified(Add(element_pos, one))
                     # Append for the last of the first cell(s) of
                     # the ExprRange:
                     element_positions.append(element_pos)
@@ -424,7 +444,8 @@ class ExprTuple(Composite, Expression):
                     element_pos = Add(
                             start_element_pos, 
                             subtract(item.end_index, 
-                                     item.start_index)).simplified()
+                                     item.start_index))
+                    element_pos = _simplified(element_pos)
                     element_positions.append(element_pos)
                 else:
                     # One format cells for a regular entry.
