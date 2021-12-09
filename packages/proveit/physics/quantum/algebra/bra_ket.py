@@ -1,4 +1,4 @@
-from proveit import Function, Literal, equality_prover
+from proveit import Function, Literal, equality_prover, prover
 from proveit import b, n, k, x
 from proveit.numbers import one, Complex
 from proveit.relation import TransRelUpdater
@@ -190,6 +190,7 @@ class NumKet(Function):
         # Future processing possible here.
         return eq.relation
 
+    @prover
     def deduce_in_vec_space(self, vec_space=None, *, field,
                             **defaults_config):
         '''

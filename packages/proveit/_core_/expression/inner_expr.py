@@ -5,6 +5,7 @@ from .conditional import Conditional
 from .composite import ExprTuple, Composite, NamedExprs, composite_expression
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 from proveit.decorators import prover, equality_prover
+# from proveit.logic import InSet
 from collections import deque
 
 
@@ -536,6 +537,7 @@ class InnerExpr:
         current inner expression on the left side or it may be the
         replacement.
         '''
+        assumptions = defaults.assumptions
         equality = self._eq_from_equality_or_replacement(
                 equality_or_replacement, prove_equality=True)
         # Make sure to preserve the left and right sides of the
@@ -581,22 +583,32 @@ class InnerExpr:
                               lhs_lambda_body).substitution(
                                       gen_equality, preserve_all=True)
 
+            # (re-)construct assumptions without assumptions that
+            # should be eliminated with the substitution (such as
+            # summation domain when substituting for summand)
+            assumptions = [_assumption for _assumption in assumptions
+                           if set(free_vars(_assumption)).
+                           isdisjoint(involved_params)]
+
         if return_proven_rhs:
             if len(replacements) > 0:
                 # We need to perform replacements before we
                 # are ready to prove the left side.
                 substitution = equality.substitution(
                     repl_lambda, replacements=replacements,
-                    preserved_exprs=preserved_exprs)
+                    preserved_exprs=preserved_exprs,
+                    assumptions=assumptions)
                 return substitution.derive_right_via_equality(
                         preserve_all=True)
             return equality.sub_right_side_into(
                 repl_lambda, replacements=replacements,
-                preserved_exprs=preserved_exprs)        
+                preserved_exprs=preserved_exprs,
+                assumptions=assumptions)        
         else:
             return equality.substitution(
                 repl_lambda, replacements=replacements,
-                preserved_exprs=preserved_exprs)
+                preserved_exprs=preserved_exprs,
+                assumptions=assumptions)
 
     @equality_prover('substituted', 'substitute')
     def substitution(self, equality_or_replacement, **defaults_config):

@@ -290,3 +290,107 @@ class VecSum(GroupSum):
                 "summations with a single index over an integer Interval. "
                 "The VecSum {0} has index or indices {1} and domain {2}."
                 .format(self, self.indices, self.domain))
+
+    @equality_prover('tensor_prod_factored', 'tensor_prod_factor')
+    def tensor_prod_factoring(self, idx, field=None, **defaults_config):
+        '''
+        For a VecSum with a TensorProd operand and a (0-based) index
+        idx, factor TensorProd vectors other than the vector at idx
+        out of the VecSum and return an equality between the original
+        VecSum and the new TensorProd. For example, we could take the
+        VecSum vec_sum = VecSum(TensorProd(x, f(i), y))
+        and call vec_sum.tensor_prod_factoring(1) to obtain:
+            |- VecSum(TensorProd(x, f(i), y)) = 
+               TensorProd(x, VecSum(f(i)), y)
+        Note that any vectors inside the TensorProd that depend on the
+        index of summation cannot be pulled out of the VecSum and thus
+        will cause the method to fail if not chosen to remain inside
+        the VecSum.
+        Note that this method only works when self has a single
+        index of summation.
+        Later versions of this method should generalize to allow
+        multiple (contiguous) indices to be specified as arguments
+        to indicate multple VecProd factors to remain within the VecSum
+        (the contiguity is required since tensor products are not
+        commutative).
+        '''
+
+        # Check that the VecSum instance expression is a TensorProd;
+        # otherwise, this method does not apply
+        from proveit.linear_algebra import TensorProd
+        if not isinstance(self.instance_expr, TensorProd):
+            raise ValueError(
+                "tensor_prod_factoring() requires the VecSum instance " +
+                "expression to be a TensorProd; instead the instance " +
+                "expression is {}".format(self.instance_expr))
+
+        # Check that the provided idx is within bounds
+        # (it should refer to an actual TensorProd operand)
+        tensor_prod_factors_list = list(self.instance_expr.operands.entries)
+        if idx >= len(tensor_prod_factors_list):
+            raise ValueError(
+                    "idx value {0} provided for tensor_prod_factoring() "
+                    "method is out-of-bounds; the TensorProd summand has "
+                    "{1} factors: {2}, and thus possibly indices 0-{3}".
+                    format(idx, len(tensor_prod_factors_list),
+                           tensor_prod_factors_list,
+                           len(tensor_prod_factors_list)-1))
+
+        # Check that the TensorProd factors to be factored out do not
+        # rely on the VecSum index of summation
+        tensor_prod_factors_list = list(self.instance_expr.operands.entries)
+        summation_index = self.index
+        for i in range(len(tensor_prod_factors_list)):
+            if i != idx:
+                the_factor = tensor_prod_factors_list[i]
+                factor_operands = (
+                        get_all_operands([the_factor]))
+                if summation_index in factor_operands:
+                    raise ValueError(
+                            "TensorProd factor {0} cannot be factored "
+                            "out of the given VecSum summation because "
+                            "it is a function of the summation index {1}.".
+                            format(the_factor, summation_index))
+        
+        # Everything checks out as best we can tell, so import
+        # and instantiate the theorem
+        from proveit.linear_algebra.tensors import (
+                tensor_prod_distribution_over_summation)
+        from proveit import K, f, Q, i, j, k, V, a, b, c
+        _V_sub = VecSpaces.known_vec_space(self, field=field)
+        _K_sub = VecSpaces.known_field(_V_sub)
+        _a_sub = self.summand.operands[:idx]
+        _c_sub = self.summand.operands[idx+1:]
+        _i_sub = _a_sub.num_elements()
+        _k_sub = _c_sub.num_elements()
+        _b_sub = self.indices
+        _j_sub = _b_sub.num_elements()
+        _f_sub = Lambda(self.indices, self.summand.operands[idx])
+        _Q_sub = Lambda(self.indices, self.condition)
+
+        impl = tensor_prod_distribution_over_summation.instantiate(
+                {K:_K_sub, f:_f_sub, Q:_Q_sub, i:_i_sub, j:_j_sub,
+                 k:_k_sub, V:_V_sub, a:_a_sub, b:_b_sub, c:_c_sub},
+                 preserve_all=True)
+
+        return impl.derive_consequent().derive_reversed().with_wrapping_at()
+
+def get_all_operands(obj_list):
+    '''
+    For the list obj_list of objects, recursively
+    determine and return a list of all operands, including
+    the original list objects. For example,
+    get_all_operands([Add(i, Mult(j, 3))])
+    returns [i + j*3, i, j*3, j, 3].
+    '''
+    operand_list = []
+    for elem in obj_list:
+        if hasattr(elem, 'operands'):
+            operand_list = (
+                    operand_list +
+                    [elem] +
+                    get_all_operands(list(elem.operands.entries)))
+        else:
+            operand_list = operand_list + [elem]
+
+    return operand_list 
