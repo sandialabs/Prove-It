@@ -1,0 +1,1 @@
+Define a set as all combinations of elements of other sets.

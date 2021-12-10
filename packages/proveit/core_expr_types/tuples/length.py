@@ -132,8 +132,7 @@ class Len(Operation):
                     {f: range_lambda, b: entries[1], i: range_end})
             else:
                 len_comp = extended_range_len.instantiate(
-                    {f: range_lambda, b: entries[1],
-                     i: range_start, j: range_end})
+                    {f: range_lambda, i: range_start, j: range_end})
         else:
             # Handle the general cases via general_len_val,
             # len_of_ranges_with_repeated_indices,

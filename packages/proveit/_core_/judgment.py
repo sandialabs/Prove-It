@@ -6,6 +6,7 @@ and its proof (as a Proof object, which may be updated if a newer proof,
 with possibly fewer assumptions, suffices).
 """
 
+from functools import wraps
 from proveit._core_.expression import Expression
 from proveit._core_._unique_data import meaning_data, style_data
 from proveit.decorators import prover
@@ -649,6 +650,7 @@ class Judgment:
                 # The attribute is a callable function with
                 # 'defaults_config' as an argument (e.g., a prover).
                 # Automatically include the Judgment assumptions.
+                @wraps(attr)
                 def call_method_with_judgment_assumptions(
                         *args, **defaults_config):
                     if len(self.assumptions) > 0:
@@ -862,6 +864,17 @@ class Judgment:
                                 "should be wrapped in an ExprTuple."
                                 %replacement)
             '''
+            if isinstance(key, ExprTuple) and key.is_single():
+                # The key is an ExprTuple but is single -- so
+                # just take it, and its replacement, out of
+                # ExprTuple wrappers.
+                if not (isinstance(replacement, ExprTuple)
+                        and replacement.is_single()):
+                    raise TypeError(
+                        "%s is not the expected kind of replacement "
+                        "for an ExprTuple key, %s"%(replacement, key))
+                key = key[0]
+                replacement = replacement[0]
             if isinstance(key, Variable) or isinstance(key, IndexedVar):
                 processed_repl_map[key] = replacement
             elif isinstance(key, ExprTuple) and key.num_entries() > 0:
@@ -1200,6 +1213,27 @@ class Judgment:
             assumptions=defaults.assumptions
         assumptions = tuple(assumptions) + self.assumptions
         return InnerExpr(self, assumptions=assumptions)
+    
+    def _used_vars(self):
+        '''
+        Return all of the used Variables of this Judgment,
+        including those in assumptions.
+        Call externally via the used_vars method in expr.py.
+        '''
+        return self.expr._used_vars().union(
+                *[assumption._used_vars() for
+                  assumption in self.assumptions])
+
+    def _contained_parameter_vars(self):
+        '''
+        Return all of the used parameter variables contained in this
+        Judgment, including those in assumptions.
+        Call externally via the contained_parameter_vars method
+        in expr.py.
+        '''
+        return self.expr._contained_parameter_vars().union(
+                *[assumption._contained_parameter_vars() for
+                  assumption in self.assumptions])
 
 
 def as_expression(truth_or_expression):

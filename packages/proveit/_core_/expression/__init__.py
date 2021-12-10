@@ -1,5 +1,5 @@
 from .expr import (Expression, traverse_inner_expressions, used_vars,
-                   possibly_free_var_ranges, free_vars,
+                   free_var_ranges, free_vars,
                    expression_depth, MakeNotImplemented,
                    ImproperReplacement)
 from .style_options import StyleOptions
@@ -11,12 +11,14 @@ from .operation import (
     OperationOverInstances, bundle, unbundle, OperationError)
 from .conditional import Conditional, ConditionalSet
 from .lambda_expr import (
-    Lambda, ParameterCollisionError, DisallowedParameterRelabeling,
-    LambdaApplicationError, ArgumentExtractionError)
+    Lambda, Composition,
+    ParameterCollisionError, ParameterMaskingError,
+    ParameterRelabelingError, LambdaApplicationError, 
+    ArgumentExtractionError)
 from .composite import (
     Composite, composite_expression, single_or_composite_expression,
     ExprTuple, extract_var_tuple_indices, ExprTupleError,
-    ExprArray, NamedExprs, ExprRange,
+    ExprArray, VertExprArray, NamedExprs, ExprRange,
     var_range, RangeInstanceError)
 from .label import (Label, Literal, Variable, DuplicateLiteralError,
                     safe_dummy_var, safe_dummy_vars, safe_default_or_dummy_var)

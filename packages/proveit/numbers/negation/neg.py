@@ -19,6 +19,47 @@ class Neg(NumberOperation):
     def __init__(self, A, *, styles=None):
         NumberOperation.__init__(self, Neg._operator_, A, styles=styles)
 
+    def style_options(self):
+        '''
+        Return the StyleOptions object for this Neg expression.
+        '''
+        options = Operation.style_options(self)
+        options.add_option(
+            name='notation_in_add',
+            description=("When contained in an Add, use 'subtraction' "
+                         "or 'explicit_negation': "
+                         "For example, 'a - b' versus 'a + (-b)'."),
+            default='subtraction',
+            related_methods=('with_subtraction_notation', 
+                             'without_subtraction_notation'))
+        return options
+    
+    def with_subtraction_notation(self):
+        return self.with_styles(notation_in_add='subtraction')
+
+    def without_subtraction_notation(self):
+        return self.with_styles(notation_in_add='explicit_negation')
+    
+    def use_subtraction_notation(self):
+        '''
+        Return True if subtraction notation should be used within
+        an Add operation: e.g., a - b.
+        '''
+        return self.get_style('notation_in_add') == 'subtraction'
+
+    def remake_with_style_calls(self):
+        '''
+        In order to reconstruct this Expression to have the same styles,
+        what "with..." method calls are most appropriate?  Return a
+        tuple of strings with the calls to make.  The default for the
+        Operation class is to include appropriate 'with_wrapping_at'
+        and 'with_justification' calls.
+        '''
+        call_strs = Operation.remake_with_style_calls(self)
+        if not self.use_subtraction_notation():
+            call_strs.append('without_subtraction_notation()')
+        return call_strs
+
     def is_irreducible_value(self):
         from proveit.numbers import zero
         if isinstance(self.operand, Neg):
@@ -28,8 +69,8 @@ class Neg(NumberOperation):
     @relation_prover
     def deduce_in_number_set(self, number_set, **defaults_config):
         '''
-        given a number set, attempt to prove that the given expression is in that
-        number set using the appropriate closure theorem
+        given a number set, attempt to prove that the given expression
+        is in that number set using the appropriate closure theorem
         '''
         from . import (nat_closure, nat_pos_closure, 
                        int_closure, int_nonzero_closure, 
@@ -166,12 +207,15 @@ class Neg(NumberOperation):
     @equality_prover('distributed', 'distribute')
     def distribution(self, **defaults_config):
         '''
-        Distribute negation through a sum, deducing and returning
-        the equality between the original and distributed forms.
+        Distribute negation through a sum (Add) or over a fraction
+        (Div), deducing and returning the equality between the
+        original and distributed forms.
         '''
         from . import distribute_neg_through_binary_sum
-        from . import distribute_neg_through_subtract, distribute_neg_through_sum
-        from proveit.numbers import Add
+        from . import (
+                distribute_neg_through_subtract, distribute_neg_through_sum)
+        from . import distribute_neg_through_div_numerator
+        from proveit.numbers import Add, Div
 
         if isinstance(self.operand, Add):
             # Distribute negation through a sum.
@@ -180,7 +224,8 @@ class Neg(NumberOperation):
                 # special case of 2 operands
                 if isinstance(add_expr.operands[1], Neg):
                     return distribute_neg_through_subtract.instantiate(
-                        {a: add_expr.operands[0], b: add_expr.operands[1].operand})
+                        {a: add_expr.operands[0],
+                         b: add_expr.operands[1].operand})
                 else:
                     return distribute_neg_through_binary_sum.instantiate(
                         {a: add_expr.operands[0], b: add_expr.operands[1]})
@@ -190,9 +235,16 @@ class Neg(NumberOperation):
                 _n = _x.num_elements()
                 return distribute_neg_through_sum.instantiate(
                         {n: _n, x: _x})
+        elif isinstance(self.operand, Div):
+            # distribute the negation over the fraction
+            _x_sub = self.operand.numerator
+            _y_sub = self.operand.denominator
+            return distribute_neg_through_div_numerator.instantiate(
+                    {x: _x_sub, y: _y_sub})
         else:
             raise Exception(
-                'Only negation distribution through a sum or subtract is implemented')
+                "Only negation distribution through a sum, subtract, or "
+                "fraction (Div) is implemented.")
 
     @equality_prover('factorized', 'factor')
     def factorization(self, the_factor, pull="left", group_factor=None,
@@ -208,7 +260,8 @@ class Neg(NumberOperation):
         theorems are applicable.
         FACTORING FROM NEGATION FROM A SUM NOT IMPLEMENTED YET.
         '''
-        from . import neg_times_pos, pos_times_neg, mult_neg_one_left, mult_neg_one_right
+        from . import (neg_times_pos, pos_times_neg, mult_neg_one_left,
+                       mult_neg_one_right)
         if isinstance(the_factor, Neg):
             if pull == 'left':
                 thm = neg_times_pos
@@ -220,7 +273,14 @@ class Neg(NumberOperation):
                 thm = pos_times_neg
             else:
                 thm = neg_times_pos
-        if hasattr(self.operand, 'factorization'):
+        if self.operand == the_factor:
+            if thm == neg_times_pos:
+                thm = mult_neg_one_left
+            if thm == pos_times_neg:
+                thm = mult_neg_one_right
+            return thm.instantiate(
+                {x: self.operand}, auto_simplify=False).derive_reversed()
+        elif hasattr(self.operand, 'factorization'):
             operand_factor_eqn = self.operand.factorization(
                 the_factor, pull, group_factor=True, group_remainder=True,
                 preserve_all=True)
@@ -232,14 +292,7 @@ class Neg(NumberOperation):
                 ).derive_reversed()
             return eqn1.apply_transitivity(eqn2)
         else:
-            if self.operand != the_factor:
-                raise ValueError("%s is not a factor in %s!" % (the_factor, self))
-            if thm == neg_times_pos:
-                thm = mult_neg_one_left
-            if thm == pos_times_neg:
-                thm = mult_neg_one_right
-            return thm.instantiate(
-                {x: self.operand}, auto_simplify=False).derive_reversed()
+            raise ValueError("%s is not a factor in %s!" % (the_factor, self))
 
     @equality_prover('inner_neg_mult_simplified',
                         'inner_neg_mult_simplify')

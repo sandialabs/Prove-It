@@ -36,10 +36,6 @@ def _make_decorated_prover(func):
         preserve_expr = kwargs.pop('preserve_expr', None)
         if len(args) > 0:
             _self = args[0]
-            if is_conclude_method:
-                # If the method starts with conclude 'conclude', we must
-                # preserve _self.
-                preserve_expr = _self
             if isinstance(_self, Judgment) or isinstance(_self, InnerExpr):
                 # Include the assumptions of the Judgment or InnerExpr
                 assumptions = kwargs.get('assumptions', None)
@@ -48,6 +44,14 @@ def _make_decorated_prover(func):
                 if not _self.assumptions_set.issubset(assumptions):
                     assumptions = tuple(assumptions) + _self.assumptions
                     kwargs['assumptions'] = assumptions
+            if is_conclude_method:
+                # If the method starts with conclude 'conclude', we must
+                # preserve _self.
+                if (not isinstance(_self, Expression) 
+                        and hasattr(_self, 'expr')):
+                    preserve_expr = _self.expr
+                else:
+                    preserve_expr = _self
         defaults_to_change = set(kwargs.keys()).intersection(
                 defaults.__dict__.keys())
         # Check to see if there are any unexpected keyword
@@ -230,7 +234,7 @@ def _make_decorated_relation_prover(func):
     return decorated_relation_prover
 
 
-def _wraps(func, wrapper):
+def _wraps(func, wrapper, extra_doc=None):
     '''
     Perform functools.wraps as well as add an extra message to the doc
     string.
@@ -239,10 +243,11 @@ def _wraps(func, wrapper):
     if wrapped.__doc__ is None:
         wrapped.__doc__ = ""
     wrapped.__doc__ += """
-    
-    Keyword arguments are accepted for temporarily changing any
-    of the attributes of proveit.defaults.
+        Keyword arguments are accepted for temporarily changing any
+        of the attributes of proveit.defaults.
     """
+    if extra_doc is not None:
+        wrapped.__doc__ += extra_doc
     return wrapped
 
 def prover(func):
@@ -306,8 +311,7 @@ def equality_prover(past_tense, present_tense):
                     past_tense, present_tense)
         is_evaluation_method = (name == 'evaluation')
         is_shallow_simplification_method = (name == 'shallow_simplification')
-        is_simplification_method = (is_shallow_simplification_method or
-                                    name == 'simplification')
+        is_simplification_method = (name == 'simplification')
         decorated_relation_prover = _make_decorated_relation_prover(func)
 
         def wrapper(*args, **kwargs):   
@@ -380,7 +384,13 @@ def equality_prover(past_tense, present_tense):
             return proven_truth
 
         _equality_prover_fn_to_tenses[wrapper] = (past_tense, present_tense)
-        return _wraps(func, wrapper)
+        extra_doc = """
+        '%s' returns the right-hand side of '%s'.
+        '%s', called on an InnerExpr of a Judgment,
+        substitutes the right-hand side of '%s' for
+        the inner expression.            
+        """%(past_tense, name, present_tense, name)
+        return _wraps(func, wrapper, extra_doc=extra_doc)
 
     return wrapper_maker
 

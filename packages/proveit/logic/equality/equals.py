@@ -284,8 +284,7 @@ class Equals(TransitiveRelation):
                 equality = Equals(lhs_sub_expr, rhs_sub_expr)
                 lambda_body_inner_expr = InnerExpr(
                         lambda_body, inner_expr_path=inner_expr_path)
-                params = free_vars(equality,
-                                   err_inclusively=True).intersection(
+                params = free_vars(equality).intersection(
                         lambda_body_inner_expr.parameters)
                 
                 # If any assumptions are required that are introduced
@@ -639,28 +638,24 @@ class Equals(TransitiveRelation):
 
         lambda_map = Equals._lambda_expr(lambda_map, self.lhs)
         
-        with defaults.temporary() as temp_defaults:
-            # Don't do any auto-simplifications
-            # while performing manual substitution.
-            temp_defaults.auto_simplify = False
-            if not lambda_map.parameters.is_single():
-                # We must use operands_substitution for ExprTuple
-                # substitution.
-                from proveit.core_expr_types.operations import \
-                    operands_substitution, operands_substitution_via_tuple
-                _n = lambda_map.parameters.num_elements()
-                if self.proven():
-                    # If we know the tuples are equal, use the theorem
-                    # with this equality as a prerequisite.
-                    return operands_substitution_via_tuple.instantiate(
-                        {n: _n, f: lambda_map, x: self.lhs, y: self.rhs})
-                # Otherwise, we'll use the axiom in which the prerequisite
-                # is that the individual elements are equal.
-                return operands_substitution.instantiate(
+        if not lambda_map.parameters.is_single():
+            # We must use operands_substitution for ExprTuple
+            # substitution.
+            from proveit.core_expr_types.operations import \
+                operands_substitution, operands_substitution_via_tuple
+            _n = lambda_map.parameters.num_elements()
+            if self.proven():
+                # If we know the tuples are equal, use the theorem
+                # with this equality as a prerequisite.
+                return operands_substitution_via_tuple.instantiate(
                     {n: _n, f: lambda_map, x: self.lhs, y: self.rhs})
-            # Regular single-operand substitution:
-            return substitution.instantiate(
-                {f: lambda_map, x: self.lhs, y: self.rhs})
+            # Otherwise, we'll use the axiom in which the prerequisite
+            # is that the individual elements are equal.
+            return operands_substitution.instantiate(
+                {n: _n, f: lambda_map, x: self.lhs, y: self.rhs})
+        # Regular single-operand substitution:
+        return substitution.instantiate(
+            {f: lambda_map, x: self.lhs, y: self.rhs})
 
     @prover
     def sub_left_side_into(self, lambda_map, **defaults_config):
@@ -688,52 +683,47 @@ class Equals(TransitiveRelation):
                 # Reverse it for a shorter proof.
                 return reversed_eq.sub_right_side_into(lambda_map)
         
-        with defaults.temporary() as temp_defaults:
-            # Don't do any auto-simplifications
-            # while performing manual substitution.
-            temp_defaults.auto_simplify = False
-            
-            if not lambda_map.parameters.is_single():
-                # We must use sub_in_left_operands for ExprTuple
-                # substitution.
-                from proveit.logic.equality import \
-                    sub_in_left_operands, sub_in_left_operands_via_tuple
-                _n = lambda_map.parameters.num_elements()
-                if self.proven():
-                    # If we know the tuples are equal, use the theorem
-                    # with this equality as a prerequisite.
-                    return sub_in_left_operands_via_tuple.instantiate(
-                        {n: _n, P: lambda_map, x: self.lhs, y: self.rhs})                    
-                return sub_in_left_operands.instantiate(
-                    {n: _n, P: lambda_map, x: self.lhs, y: self.rhs})
+        if not lambda_map.parameters.is_single():
+            # We must use sub_in_left_operands for ExprTuple
+            # substitution.
+            from proveit.logic.equality import \
+                sub_in_left_operands, sub_in_left_operands_via_tuple
+            _n = lambda_map.parameters.num_elements()
+            if self.proven():
+                # If we know the tuples are equal, use the theorem
+                # with this equality as a prerequisite.
+                return sub_in_left_operands_via_tuple.instantiate(
+                    {n: _n, P: lambda_map, x: self.lhs, y: self.rhs})                    
+            return sub_in_left_operands.instantiate(
+                {n: _n, P: lambda_map, x: self.lhs, y: self.rhs})
     
-            try:
-                # try some alternative proofs that may be shorter, if
-                # they are usable
-                if self.rhs == TRUE:
-                    # substitute_truth may provide a shorter proof
-                    # option
-                    substitute_truth.instantiate(
-                            {x: self.lhs, P: lambda_map})
-                elif self.lhs == TRUE:
-                    # substitute_in_true may provide a shorter proof
-                    # option
-                    substitute_in_true.instantiate(
-                            {x: self.rhs, P: lambda_map})
-                elif self.rhs == FALSE:
-                    # substitute_falsehood may provide a shorter proof
-                    # option
-                    substitute_falsehood.instantiate(
-                            {x: self.lhs, P: lambda_map})
-                elif self.lhs == FALSE:
-                    # substitute_in_false may provide a shorter proof
-                    # option
-                    substitute_in_false.instantiate(
-                            {x: self.rhs, P: lambda_map})
-            except BaseException:
-                pass
-            return sub_left_side_into.instantiate(
-                {x: self.lhs, y: self.rhs, P: lambda_map})
+        try:
+            # try some alternative proofs that may be shorter, if
+            # they are usable
+            if self.rhs == TRUE:
+                # substitute_truth may provide a shorter proof
+                # option
+                substitute_truth.instantiate(
+                    {x: self.lhs, P: lambda_map})
+            elif self.lhs == TRUE:
+                # substitute_in_true may provide a shorter proof
+                # option
+                substitute_in_true.instantiate(
+                    {x: self.rhs, P: lambda_map})
+            elif self.rhs == FALSE:
+                # substitute_falsehood may provide a shorter proof
+                # option
+                substitute_falsehood.instantiate(
+                    {x: self.lhs, P: lambda_map})
+            elif self.lhs == FALSE:
+                # substitute_in_false may provide a shorter proof
+                # option
+                substitute_in_false.instantiate(
+                    {x: self.rhs, P: lambda_map})
+        except BaseException:
+            pass
+        return sub_left_side_into.instantiate(
+            {x: self.lhs, y: self.rhs, P: lambda_map})
 
     @prover
     def sub_right_side_into(self, lambda_map, **defaults_config):
@@ -762,52 +752,47 @@ class Equals(TransitiveRelation):
         
         lambda_map = Equals._lambda_expr(lambda_map, self.lhs)
 
-        with defaults.temporary() as temp_defaults:
-            # Don't do any auto-simplifications
-            # while performing manual substitution.
-            temp_defaults.auto_simplify = False
-
-            if not lambda_map.parameters.is_single():
-                # We must use sub_in_right_operands for ExprTuple
-                # substitution.
-                from proveit.logic.equality import \
-                    sub_in_right_operands, sub_in_right_operands_via_tuple
-                _n = lambda_map.parameters.num_elements()
-                if self.proven():
-                    # If we know the tuples are equal, use the theorem
-                    # with this equality as a prerequisite.
-                    return sub_in_right_operands_via_tuple.instantiate(
-                        {n: _n, P: lambda_map, x: self.lhs, y: self.rhs})
-                return sub_in_right_operands.instantiate(
+        if not lambda_map.parameters.is_single():
+            # We must use sub_in_right_operands for ExprTuple
+            # substitution.
+            from proveit.logic.equality import \
+                sub_in_right_operands, sub_in_right_operands_via_tuple
+            _n = lambda_map.parameters.num_elements()
+            if self.proven():
+                # If we know the tuples are equal, use the theorem
+                # with this equality as a prerequisite.
+                return sub_in_right_operands_via_tuple.instantiate(
                     {n: _n, P: lambda_map, x: self.lhs, y: self.rhs})
+            return sub_in_right_operands.instantiate(
+                {n: _n, P: lambda_map, x: self.lhs, y: self.rhs})
     
-            try:
-                # try some alternative proofs that may be shorter, if 
-                # they are usable
-                if self.lhs == TRUE:
-                    # substitute_truth may provide a shorter proof
-                    # options
-                    substitute_truth.instantiate(
-                            {x: self.rhs, P: lambda_map})
-                elif self.rhs == TRUE:
-                    # substitute_in_true may provide a shorter proof
-                    # options
-                    substitute_in_true.instantiate(
-                            {x: self.lhs, P: lambda_map})
-                elif self.lhs == FALSE:
-                    # substitute_falsehood may provide a shorter proof
-                    # options
-                    substitute_falsehood.instantiate(
-                            {x: self.rhs, P: lambda_map})
-                elif self.rhs == FALSE:
-                    # substitute_in_false may provide a shorter proof
-                    # options
-                    substitute_in_false.instantiate(
-                            {x: self.lhs, P: lambda_map})
-            except BaseException:
-                pass
-            return sub_right_side_into.instantiate(
-                {x: self.lhs, y: self.rhs, P: lambda_map})
+        try:
+            # try some alternative proofs that may be shorter, if 
+            # they are usable
+            if self.lhs == TRUE:
+                # substitute_truth may provide a shorter proof
+                # options
+                substitute_truth.instantiate(
+                    {x: self.rhs, P: lambda_map})
+            elif self.rhs == TRUE:
+                # substitute_in_true may provide a shorter proof
+                # options
+                substitute_in_true.instantiate(
+                    {x: self.lhs, P: lambda_map})
+            elif self.lhs == FALSE:
+                # substitute_falsehood may provide a shorter proof
+                # options
+                substitute_falsehood.instantiate(
+                    {x: self.rhs, P: lambda_map})
+            elif self.rhs == FALSE:
+                # substitute_in_false may provide a shorter proof
+                # options
+                substitute_in_false.instantiate(
+                    {x: self.lhs, P: lambda_map})
+        except BaseException:
+            pass
+        return sub_right_side_into.instantiate(
+            {x: self.lhs, y: self.rhs, P: lambda_map})
 
     @prover
     def derive_right_via_equality(self, **defaults_config):

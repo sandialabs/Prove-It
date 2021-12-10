@@ -36,7 +36,7 @@ class Operation(Expression):
         from proveit._core_.expression.composite import (
             composite_expression, single_or_composite_expression, 
             Composite, ExprTuple)
-        from proveit._core_.expression.label.label import Label
+        from proveit._core_.expression.lambda_expr import Lambda
         from .indexed_var import IndexedVar
         if self.__class__ == Operation:
             raise TypeError("Do not create an object of type Operation; "
@@ -62,13 +62,12 @@ class Operation(Expression):
                 # a composite of multiple operands
                 self.operands = operand_or_operands
             else:
-                self.operands = ExprTuple(operand_or_operands) 
+                self.operands = ExprTuple(operand_or_operands)
         def raise_bad_operator_type(operator):
-            raise TypeError('operator must be a Label or an indexed variable '
-                            '(IndexedVar). %s is none of those.'
-                            % str(operator))
-        if (not isinstance(self.operator, Label) and 
-                not isinstance(self.operator, IndexedVar)):
+            raise TypeError("An operator may not be an explicit Lambda map "
+                            "like %s; this is necessary to avoid a Curry's "
+                            "paradox." % str(operator))
+        if isinstance(self.operator, Lambda):
             raise_bad_operator_type(self.operator)
         if (isinstance(self.operands, ExprTuple) and 
                 self.operands.is_single()):
@@ -159,6 +158,11 @@ class Operation(Expression):
         be overridden if you cannot simply pass the operands directly
         into the __init__ method.
         '''
+        from proveit import NamedExprs
+        if isinstance(operands, NamedExprs):
+            # If the operands are NamedExprs, presume the arguments
+            # correspond to the names of the sub-expressions.
+            return operands[arg_name]
         raise NotImplementedError(
             "'%s.extract_init_arg_value' must be appropriately implemented; "
             "__init__ arguments do not fall into a simple 'default' "
@@ -227,7 +231,8 @@ class Operation(Expression):
         implicit_operator = cls._implicit_operator()
         matches_implicit_operator = (operator == implicit_operator)
         if implicit_operator is not None and not matches_implicit_operator:
-            raise OperationError("An implicit operator may not be changed")
+            raise OperationError("An implicit operator may not be changed "
+                                 "(%s vs %s)"%(operator, implicit_operator))
         sig = inspect.signature(cls.__init__)
         Parameter = inspect.Parameter
         init_params = sig.parameters
@@ -244,6 +249,8 @@ class Operation(Expression):
                     # Skip the 'self' parameter.
                     first_param = False
                     continue
+                if param_name=='styles':
+                    continue # skip the styles parameter
                 param = init_params[param_name]
                 val = extract_init_arg_value_fn(param_name)
                 default = param.default
@@ -689,10 +696,14 @@ class Operation(Expression):
         else:
             expr = self
             eq = TransRelUpdater(expr)
-            for k, operand in enumerate(self.operands):
-                if not is_irreducible_value(operand):
-                    inner_operand = expr.inner_expr().operands[k]
-                    expr = eq.update(inner_operand.simplification())
+            with defaults.temporary() as temp_defaults:
+                # No auto-simplification or replacements here;
+                # just simplify operands one at a time.
+                temp_defaults.preserve_all = True
+                for k, operand in enumerate(self.operands):
+                    if not is_irreducible_value(operand):
+                        inner_operand = expr.inner_expr().operands[k]
+                        expr = eq.update(inner_operand.simplification())
         return eq.relation
 
     @equality_prover('operator_substituted', 'operator_substitute')

@@ -18,7 +18,7 @@ class Mult(NumberOperation):
                          theory=__file__)
 
     _simplification_directives_ = SimplificationDirectives(
-            ungroup = True)
+            ungroup = True, irreducibles_in_front = True)
 
     def __init__(self, *operands, styles=None):
         r'''
@@ -265,7 +265,34 @@ class Mult(NumberOperation):
             # Start over now that the terms are all evaluated to
             # irreductible values.
             return self.evaluation()
-
+        
+        if Mult._simplification_directives_.irreducibles_in_front:
+            # Move irreducibles to the front.
+            irreducible_factor_index_ranges = []
+            _prev_was_irreducible = False
+            for _k, factor in enumerate(self.factors):
+                if is_irreducible_value(factor):
+                    if _prev_was_irreducible:
+                        # Update a range of irreducible factors.
+                        irreducible_factor_index_ranges[-1][-1] = _k
+                    else:
+                        # Start a new range of irreducibles.
+                        irreducible_factor_index_ranges.append([_k, _k])
+                    _prev_was_irreducible = True
+                else:
+                    _prev_was_irreducible = False
+            if len(irreducible_factor_index_ranges) > 0:
+                # Move one or more irreducible factors to the front.
+                offset = 0
+                for factor_index_range in reversed(
+                        irreducible_factor_index_ranges):
+                    # Move group of irreducibles to the front.
+                    start, end = factor_index_range
+                    expr = eq.update(expr.group_commutation(
+                            start+offset, 0, end-start+1, 
+                            auto_simplify=False))
+                    offset += end - start + 1
+        
         return eq.relation # Should be self=self.
 
     @equality_prover('simplified_negations', 'simplify_negations')
@@ -707,7 +734,7 @@ class Mult(NumberOperation):
                     preserve_expr=self.operands[0]))
         _x = self.operands[1]
         _n = num(reps)
-        eq.update(mult_def.instantiate({n: _n, a: [_x] * reps, x: _x},
+        eq.update(mult_def.instantiate({n: _n, x: _x},
                                         auto_simplify=False))
         return eq.relation
 
@@ -751,7 +778,8 @@ class Mult(NumberOperation):
         Examples:
             a (b + c + a) d = a b d + a c d + a a d
             a (b - c) d = a b d - a c d
-            a \left(\sum_x f(x)\right c = \sum_x a f(x) c
+            a (\sum_x f(x)) c = \sum_x a f(x) c
+            (a/b)*(c/d) = (a*b)/(c*d)
         Give any assumptions necessary to prove that the operands are in
         the Complex numbers so that the associative and commutation
         theorems are applicable.
@@ -904,7 +932,7 @@ class Mult(NumberOperation):
         |- a^b a^{-c} = a^{b-c},
         |- a^b a      = a^{b+1},
         |- a a^b      = a^{1+b},
-        |- a^c b^c    = (a b)^c.
+        |- a^c b^c    = (a b)^c. Maybe handle this case with something else?
         This also should work more generally with more than 2 factors,
         for example taking a^b a^c a^d to
         |- (a^b a^c a^d) = a^{b+c+d}.
@@ -1075,13 +1103,11 @@ class Mult(NumberOperation):
                 base = operand_bases.innermost_body()
                 exponent = operand_exponents.innermost_body()
                 operand_parameters = operand.parameters()
-                if not free_vars(base, err_inclusively=True).isdisjoint(
-                        operand_parameters):
+                if not free_vars(base).isdisjoint(operand_parameters):
                     # Can't have the same base unless the base
                     # is independent of range parameters.
                     same_base = False
-                if not free_vars(exponent, err_inclusively=True).isdisjoint(
-                        operand_parameters):
+                if not free_vars(exponent).isdisjoint(operand_parameters):
                     # Can't have the same exponent unless the exponent
                     # is independent of range parameters.
                     same_exponent = False
@@ -1167,6 +1193,153 @@ class Mult(NumberOperation):
             return exp.distribution().derive_reversed()
         raise ValueError('Product is not in a correct form to '
                          'combine exponents: ' + str(self))
+
+    @equality_prover('common_power_extracted', 'common_power_extract')
+    def common_power_extraction(self, start_idx=None, end_idx=None,
+                                exp_factor=None,
+                                **defaults_config):
+        '''
+        Derive and return this Mult expression equated to the
+        expression in which some or all of the exponential factors
+        in which a common factor occurs in the exponent, have been
+        grouped and rewritten to be raised as a group to that common
+        power.
+        For example:
+        |- a^c b^c    = (a b)^c
+        |- a^{c d} b^{c k} = (a^{d} b^{k})^c
+        This also should work more generally with more than 2 factors,
+        for example taking a^k b^k c^k to
+        |- (a^k b^k c^k) = (a b c)^k (Careful here … makes clear we need special cases!)
+        The start_idx and end_idx can be used to apply the process to
+        a contiguous subset of factors within a larger set of factors.
+        Does NOT automatically attempt to reduce a resulting new
+        product.
+        Planned but not implemented: allow user to specify non-
+        contiguous factors to combine. For example, given self as
+        a^k b^c d^k e^d
+        allow user to specify indices 0, 2 to produce something like
+        |- a^k b^c d^k e^d = (a d)^k b^c e^d
+        '''
+        from proveit import ExprRange, free_vars
+        from proveit.logic import And
+        from proveit.numbers.exponentiation import (
+            product_of_posnat_powers, products_of_posnat_powers,
+            product_of_pos_powers, products_of_pos_powers,
+            product_of_real_powers, products_of_real_powers,
+            product_of_complex_powers, products_of_complex_powers)
+        from proveit.numbers.exponentiation import (
+            add_one_right_in_exp, add_one_left_in_exp,
+            add_one_left_in_exp_poss_zero_base)
+        from proveit.numbers import Exp
+
+        error_msg = ""
+
+        # If the start_idx and/or end_idx has been specified
+        if start_idx is not None or end_idx is not None:
+
+            # Compensate for potential missing indices in this block:
+            # omission of either start or end idx defaults to a pair
+            # of contiguous multiplicands
+            # ALSO should eventually check that the given indices
+            # do NOT constitute the entire Mult expression; if we are
+            # dealing with the entire expression, then the association
+            # step should not be necessary (?)
+            if end_idx is None:
+                end_idx = min(start_idx + 1, self.factors.num_entries())
+            elif start_idx is None:
+                start_idx = max(0, end_idx - 1)
+
+            assoc_length = end_idx - start_idx + 1
+
+            # associate the factors intended for combination
+            # warning: 2nd arg of association() fxn is length not index
+            if (assoc_length == self.factors.num_elements().as_int()):
+                # we have (inadvertently?) selected the entire expr,
+                # so don't group factors; just call the same method
+                # without specifying the indices
+                return self.common_power_extraction(exp_factor=exp_factor)
+            else:
+                grouped = self.association(start_idx, assoc_length,
+                                           preserve_all=True)
+            # isolate the targeted factors and combine them as desired
+            # using call to this same method
+            inner_combination = (
+                    grouped.rhs.factors[start_idx].
+                    common_power_extraction(exp_factor=exp_factor))
+            # substitute the combined factors back into the
+            # grouped expression and return the deduced equality
+            return inner_combination.sub_right_side_into(grouped)
+
+        # Else neither the start_idx nor the end_idx has been specified,
+        # indicating we intend to extract a common factor from all
+        # the exponents of all exponential factors, like this:
+        #     a^{i z} b^{j z} c^{k z} = (a^i b^j c^k)^z
+        # for the moment assuming we have all exponential factors of
+        # the form Exp(a, b) instead of something like a^b * a
+        # NOTE: would be nice to generalize to deal with
+        # exp_factor = None case, where we then search for and extract
+        # ALL factors that all the exponents have in common.
+        # For now, assume that exp_factor is NOT None.
+        if exp_factor is None:
+            raise NotImplementedError(
+                    "'common_power_extraction()' not implemented for "
+                    "cases in which kwarg exp_factor is not supplied.")
+        if (all(isinstance(factor, Exp) for factor in self.factors)):
+            # then we are dealing with factors that are ALL explicit
+            # exponentials of the form a^k.
+            factor_bases = [factor.base for factor in self.factors]
+            factor_exponents = [factor.exponent for factor in self.factors]
+
+            # (1) Simple case such as a^d b^d c^d, consisting of
+            # exponential factors all of which have the same single
+            # exponent. The more general case further below might
+            # then re-call this sub-method after processing the factors.
+            if len(set(factor_exponents)) == 1:
+                # Same exponent: equate a^c b^c = (a b)^c
+                # Combining the exponents in this case is the reverse
+                # of distributing an exponent.
+                _new_prod = Mult(*factor_bases)
+                _new_exp = Exp(_new_prod, factor_exponents[0])
+                try:
+                    return _new_exp.distribution().derive_reversed()
+                except Exception as the_exception:
+                    raise Exception("An Exception! All factors appeared to "
+                        "have the same exponent, but the Exp.distribution() "
+                        "attempt failed with the following error message: "
+                        "{}".format(the_exception))
+
+            # (2) More complex case such as a^{fd} b^{dg} c^{dg},
+            # consisting of exponential factors, the exponents of which
+            # have the exp_factor as a factor somewhere. Strategy is
+            # to factor out that exponent factor in each Mult factor,
+            # then re-call the common_power_extraction() method on the
+            # result, and Case (1) will then handle it.
+            # This also handles the more general case of something like
+            # a^d b^{dg}, where the exp_factor of 'd' might be a factor
+            # in an exponent OR might be a stand-alone exponent
+            temp_expr = self
+            eq = TransRelUpdater(temp_expr)
+            for idx in range(0, self.factors.num_elements().as_int()):
+                the_factor = self.factors[idx]
+                if temp_expr.operands[idx].exponent != exp_factor:
+                    temp_expr = eq.update(
+                            temp_expr.inner_expr().operands[idx].factorization(
+                            exp_factor))
+            # eq.relation now has each factor with the specified the_factor
+            # extracted to produce something along the lines of
+            # |- a^{f j} b^{j, k} = (a^f)^j (b^k)^j
+            # this now corresponds to case (1) above, so we should be able
+            # to call this method again to handle that:
+            eq.update(temp_expr.inner_expr().common_power_extraction(
+                    exp_factor=exp_factor))
+            return eq.relation
+        
+        raise ValueError(
+                    "'Mult.common_power_extraction()' method works only "
+                    "when all the specified multiplicands are instances "
+                    "of Exp (i.e. each factor must be an exponential). "
+                    "The method was instead called on the expression "
+                    "{}".format(self))
 
     @equality_prover('commuted', 'commute')
     def commutation(self, init_idx=None, final_idx=None, **defaults_config):

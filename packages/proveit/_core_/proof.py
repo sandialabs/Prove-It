@@ -1074,24 +1074,51 @@ class Instantiation(Proof):
         '''
         from proveit import (Variable, Function, Lambda, ExprTuple, 
                              ExprRange, IndexedVar)
+        from proveit._core_.expression.expr import contained_parameter_vars
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             (get_param_var, valid_params, LambdaApplicationError)
         from proveit._core_.expression.label.var import safe_dummy_var
+        
+        # Determine the set of variables that will be instantiated
+        # via eliminated foralls.
+        instantiating_vars = Instantiation._get_nested_param_vars(
+                orig_judgment.expr, num_forall_eliminations)
+        orig_contained_param_vars = contained_parameter_vars(orig_judgment)
         
         # Prepare the 'relabel_params' for basic relabeling that 
         # can apply to both sides of the turnstile.
         relabel_params = []
         relabel_param_replacements = []
         for key, repl in repl_map.items():
+            if isinstance(key, ExprTuple):
+                key_var = get_param_var(key[0])
+            else:
+                key_var = get_param_var(key)
+            if key_var in instantiating_vars:
+                # If it is a variable being instantiated,
+                # it is not a relabeling param.
+                continue
+            elif key_var not in orig_contained_param_vars:
+                raise ValueError("'%s' is not one of the variables that may "
+                                 "be instantiated or relabeled in %s."
+                                 %(key, orig_judgment))                
             if ((isinstance(key, Variable) or isinstance(key, IndexedVar))
-                    and isinstance(repl, Variable)):
+                    and (isinstance(repl, Variable)
+                         or (isinstance(repl, ExprTuple) 
+                             and valid_params(repl)))):
                 relabel_params.append(key)
                 relabel_param_replacements.append(repl)
-            elif (isinstance(key, ExprTuple) and isinstance(repl, ExprTuple)
+            elif (isinstance(key, ExprTuple)
                     and key.num_entries()==1
-                    and valid_params(key) and valid_params(repl)):
+                    and valid_params(key)
+                    and isinstance(repl, ExprTuple)
+                    and valid_params(repl)):
                 relabel_params.append(key.entries[0])
                 relabel_param_replacements.extend(repl.entries)
+            else:
+                raise ValueError("'%s' is not a proper relabeling for '%s' "
+                                 "and '%s' is not properly instantiated in %s."
+                                 %(repl, key, key_var, orig_judgment))
 
         prev_default_assumptions = set(defaults.assumptions)
         try:
@@ -1292,15 +1319,15 @@ class Instantiation(Proof):
         return out
 
     @staticmethod
-    def _get_nested_params(expr, num_nested_foralls):
+    def _get_nested_param_vars(expr, num_nested_foralls):
         '''
         Assuming the given 'expr' has at least 'num_nested_foralls'
         levels of directly nested universal quantifications,
-        return the list of parameters for these quantifications.
+        return the set of parameter varaibles for these quantifications.
         '''
         from proveit import Lambda, Conditional
         from proveit.logic import Forall
-        parameters = []
+        param_vars = set()
         orig_expr = expr
         for _ in range(num_nested_foralls):
             if not isinstance(expr, Forall):
@@ -1312,11 +1339,11 @@ class Instantiation(Proof):
             if not isinstance(lambda_expr, Lambda):
                 raise TypeError(
                     "Forall Operation 'operand' must be a Lambda")
-            parameters.extend(lambda_expr.parameters)
+            param_vars.update(lambda_expr.parameter_var_set)
             expr = lambda_expr.body
             if isinstance(expr, Conditional):
                 expr = expr.value
-        return parameters
+        return param_vars
 
     @staticmethod
     def _instantiated_expr(original_judgment, 
@@ -1333,7 +1360,7 @@ class Instantiation(Proof):
         substituting all  of the corresponding instance variables
         according to repl_map.
         '''
-        from proveit import (Lambda, Conditional, ExprTuple,
+        from proveit import (Variable, Lambda, Conditional, ExprTuple,
                              ExprRange, IndexedVar)
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             get_param_var
@@ -1411,8 +1438,14 @@ class Instantiation(Proof):
                     param_var_repl = repl_map.get(param_var, None)
                     new_param = None
                     new_operands = None
-                    if (isinstance(param, ExprRange) 
-                            or isinstance(param, IndexedVar)):
+                    if (isinstance(param_var_repl, Variable)
+                            and isinstance(param, ExprRange)):
+                        # Instantiate a variable with a variable
+                        # even though the param is an ExprRange.
+                        new_param = param_var
+                        new_operands = (param_var_repl,)
+                    elif (isinstance(param, ExprRange) 
+                             or isinstance(param, IndexedVar)):
                         subbed_param = instantiate(param)
                         subbed_param_tuple = ExprTuple(subbed_param)
                         new_param = subbed_param
@@ -1476,12 +1509,15 @@ class Instantiation(Proof):
                         active_equiv_alt_expansions.update(
                             {key:equiv_alt_expansions[key] for key 
                              in equiv_alt_expansion_keys})
-                        if new_operands is None:
+                        if (new_operands is None 
+                                and isinstance(param, ExprRange)):
                             # For the equivalent alternative expansion 
                             # to be used, we need to include the 
                             # parameter and corresponding operands; 
                             # in this case, it is a trivial identity 
                             # replacement.
+                            if new_param is None:
+                                new_param = param
                             new_operands = (new_param,)
                     if new_operands is not None:
                         params.append(new_param)
@@ -1553,8 +1589,9 @@ class Generalization(Proof):
             forall_{x, y in Integer | f(x, y)} forall_{z | g(y, z), h(z)} ...
         '''
         from proveit import Judgment
+        from proveit._core_.expression.expr import free_vars
         from proveit._core_.expression.lambda_expr.lambda_expr import \
-            (get_param_var, _guaranteed_to_be_independent)
+            (get_param_var)
         from proveit._core_.expression.composite.expr_tuple import ExprTuple
         from proveit.logic import Forall
         if not isinstance(instance_truth, Judgment):
@@ -1587,8 +1624,8 @@ class Generalization(Proof):
                 else:
                     # use all applicable conditions in the supplied order
                     condition_applicability = \
-                        [not _guaranteed_to_be_independent(remaining_cond,
-                                                           new_forall_vars)
+                        [not free_vars(remaining_cond).isdisjoint(
+                            new_forall_vars)
                          for remaining_cond in remaining_conditions]
                     new_conditions = \
                         [remaining_cond for applicable, remaining_cond
@@ -1609,8 +1646,8 @@ class Generalization(Proof):
                 Generalization._checkGeneralization(generalized_expr, expr)
                 expr = generalized_expr
             for assumption in assumptions:
-                if not _guaranteed_to_be_independent(
-                        assumption, introduced_forall_vars):
+                if not free_vars(assumption).isdisjoint(
+                        introduced_forall_vars):
                     raise GeneralizationFailure(
                         generalized_expr,
                         assumptions,

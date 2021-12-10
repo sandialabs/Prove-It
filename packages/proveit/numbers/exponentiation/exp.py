@@ -1,13 +1,12 @@
 from proveit import (Literal, Function, ExprTuple, InnerExpr, ProofFailure,
                      maybe_fenced_string, USE_DEFAULTS, defaults,
                      StyleOptions, prover, equality_prover, relation_prover)
-from proveit.logic import InSet, Membership
 import proveit
 from proveit import a, b, c, k, m, n, x, S
 from proveit import (defaults, Literal, Function, ExprTuple, InnerExpr,
                      ProofFailure, maybe_fenced_string, USE_DEFAULTS,
                      StyleOptions)
-from proveit.logic import InSet, Membership, NotEquals
+from proveit.logic import InSet, SetMembership, NotEquals
 from proveit.numbers import zero, one, two, Div, frac, num, Real
 from proveit.numbers import Integer, NumberOperation
 
@@ -152,7 +151,6 @@ class Exp(NumberOperation):
                                      Rational, Abs)
         from . import (exp_zero_eq_one, exponentiated_zero,
                        exponentiated_one, exp_nat_pos_expansion)
-        from . import complex_x_to_first_power_is_x
 
         if self.exponent == zero:
             return exp_zero_eq_one.instantiate({a: self.base})  # =1
@@ -189,12 +187,12 @@ class Exp(NumberOperation):
                         # The simplification of the operands may not have
                         # worked hard enough.  Let's work harder if we
                         # must evaluate.
-                        operand.evalution()
+                        operand.evaluation()
                 return self.evaluation()
             raise EvaluationError(self)
 
         if self.exponent == one:
-            return complex_x_to_first_power_is_x.instantiate({x: self.base})
+            return self.power_of_one_reduction()
         if (isinstance(self.base, Exp) and
             isinstance(self.base.exponent, Div) and
             self.base.exponent.numerator == one and
@@ -235,6 +233,14 @@ class Exp(NumberOperation):
                 expr = eq.update(expr.simplification())
 
         return eq.relation
+    
+    @equality_prover('power_of_one_reduced', 'power_of_one_reduce')
+    def power_of_one_reduction(self, **defaults_config):
+        from . import complex_x_to_first_power_is_x
+        if self.exponent != one:
+            raise ValueError("'power_of_one_reduction' only applicable when "
+                             "the exponent is 1, not %s"%self.exponent)
+        return complex_x_to_first_power_is_x.instantiate({x: self.base})
 
     @relation_prover
     def not_equal(self, other, **defaults_config):
@@ -364,10 +370,26 @@ class Exp(NumberOperation):
                     {a: _a, b: _b, c: exponent})
         elif isinstance(base, Exp):
             _a = base.base
+            # if InSet(exponent, NaturalPos).proven():
+            #     _m, _n = base.exponent, exponent
+            #     return posnat_power_of_posnat_power.instantiate(
+            #         {a: _a, m: _m, n: _n})
+            # TRYING TO ANTICIPATE MORE POSSIBILITIES 
             if InSet(exponent, NaturalPos).proven():
-                _m, _n = base.exponent, exponent
-                return posnat_power_of_posnat_power.instantiate(
-                    {a: _a, m: _m, n: _n})
+                if InSet(base.exponent, NaturalPos).proven():
+                    _m, _n = base.exponent, exponent
+                    return posnat_power_of_posnat_power.instantiate(
+                        {a: _a, m: _m, n: _n})
+                else:
+                    _b, _c = base.exponent, exponent
+                    if InSet(base.exponent, RealPos).proven():
+                        thm = pos_power_of_pos_power
+                    elif InSet(base.exponent, Real).proven():
+                        thm = real_power_of_real_power
+                    else:  # Complex is the default
+                        thm = complex_power_of_complex_power
+                    return thm.instantiate(
+                        {a: _a, b: _b, c: _c})
             else:
                 _b, _c = base.exponent, exponent
                 if InSet(exponent, RealPos).proven():
@@ -410,7 +432,12 @@ class Exp(NumberOperation):
                         'fraction base')
     """
 
-    def raise_exp_factor(self, exp_factor, assumptions=USE_DEFAULTS):
+    # we have renamed raise_exp_factor to factorization() !!!
+    # perhaps re-rename this to avoid factorization() interactions
+    # due to recursive calls to factorization() (because this is NOT
+    # multiplicative factorization!)
+    @equality_prover('factorized', 'factor')
+    def factorization(self, exp_factor, **defaults_config):
         # Note: this is out-of-date.  Distribution handles this now,
         # except it doesn't deal with the negation part
         # (do we need it to?)
@@ -440,8 +467,7 @@ class Exp(NumberOperation):
             # factor the exponent first, then raise this exponent factor
             factored_exp_eq = factor_eq.substitution(self)
             return factored_exp_eq.apply_transitivity(
-                factored_exp_eq.rhs.raise_exp_factor(exp_factor,
-                                                     assumptions=assumptions))
+                factored_exp_eq.rhs.factorization(exp_factor))
         n_sub = b_times_c.operands[1]
         a_sub = self.base
         b_sub = b_times_c.operands[0]
@@ -481,16 +507,21 @@ class Exp(NumberOperation):
         the_exponents = self.exponent.operands
 
         # list the new exponential factors
-        the_new_factors = [Exp(self.base, new_exp) for new_exp in the_exponents]
+        the_new_factors = [Exp(self.base, new_exp) if new_exp != one 
+                           else self.base for new_exp in the_exponents]
 
         # create the new equivalent product (Mult)
         mult_equiv = Mult(*the_new_factors)
 
         # use the Mult.exponent_combination() to deduce equality to self
         exp_separated = mult_equiv.exponent_combination()
+        
+        replacements = list(defaults.replacements)
+        if defaults.auto_simplify:
+            replacements.append(mult_equiv.shallow_simplification())
 
         # reverse the equality relationship and return
-        return exp_separated.derive_reversed()
+        return exp_separated.derive_reversed(replacements=replacements)
 
 
     def lower_outer_exp(self, assumptions=frozenset()):
@@ -615,13 +646,13 @@ class Exp(NumberOperation):
             % str(number_set))
 
 
-class ExpSetMembership(Membership):
+class ExpSetMembership(SetMembership):
     '''
     Defines methods that apply to membership in an exponentiated set.
     '''
 
     def __init__(self, element, domain):
-        Membership.__init__(self, element, domain)
+        SetMembership.__init__(self, element, domain)
         self.domain = domain
 
     @prover
@@ -686,6 +717,9 @@ class ExpSetMembership(Membership):
 # outside any specific class:
 # special Exp case of square root
 
+def exp(exponent, *, styles=None):
+    from proveit.numbers import e # Euler's number
+    return Exp(e, exponent, styles=styles)
 
 def sqrt(base):
     '''

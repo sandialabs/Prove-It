@@ -51,10 +51,9 @@ class InnerExpr:
        (note that the second "a - 1" is singled out, distinct from
        the first "a - 1" because the subexpr object tracks the
        sub-expression by "location").
-    2. inner_expr.with_subtraction_at([]) will return an
+    2. inner_expr.with... will return an
        expression that is the same but with an altered style for the
-       inner exrpession part:
-           [((a - 1) + b + (a + (-1))/d) < e]
+       inner expression part.
        The InnerExpr class looks specifically for attributes of the
        inner expression class that start with 'with' and assumes
        they function to alter the style.
@@ -211,8 +210,7 @@ class InnerExpr:
                     else:
                         sub_expr = sub_expr.sub_expr(j)
                 fvars = free_vars(
-                    composite_expression(getattr(sub_expr,attr)),
-                    err_inclusively=False)
+                    composite_expression(getattr(sub_expr,attr)))
                 if repl_lambda.parameter_var_set.issubset(fvars):
                     return deeper_inner_expr
         # No match found at this depth -- let's continue to the next
@@ -254,14 +252,28 @@ class InnerExpr:
                 kwargs['assumptions'] = (assumptions +
                                          tuple(self.conditions))
                 equality = equiv_method(*args, **kwargs)
+                for key in list(kwargs.keys()):
+                    # Pass through keyword arguments for
+                    # temporarily reconfiguring the defaults.
+                    # (with some exceptions below).
+                    if not hasattr(defaults, key):
+                        kwargs.pop(key)
+                kwargs.pop('assumptions')
+                if equiv_method.__name__ in ('simplification',
+                                             'shallow_simplification'):
+                    # When simplifying an inner expression, just
+                    # simplify that part and nothing else.
+                    kwargs['auto_simplify'] = False
                 if equiv_method_type == 'equiv':
-                    return self.substitution(equality, 
+                    return self.substitution(equality, **kwargs,
                                              assumptions=assumptions)
                 elif equiv_method_type == 'rhs':
-                    return self.substitution(equality,
+
+                    return self.substitution(equality, **kwargs,
                                              assumptions=assumptions).rhs
                 elif equiv_method_type == 'action':
-                    return self.substitute(equality, assumptions=assumptions)
+                    return self.substitute(equality, assumptions=assumptions,
+                                           **kwargs)
             if equiv_method_type == 'equiv':
                 inner_equiv.__doc__ = "Generate an equivalence of the top-level expression with a new form by replacing the inner expression via '%s'." % equiv_method_name
             elif equiv_method_type == 'rhs':
@@ -524,15 +536,17 @@ class InnerExpr:
         current inner expression on the left side or it may be the
         replacement.
         '''
-        cur_inner_expr = self.expr_hierarchy[-1]
-        
         equality = self._eq_from_equality_or_replacement(
                 equality_or_replacement, prove_equality=True)
+        # Make sure to preserve the left and right sides of the
+        # original expression.
+        preserved_exprs = set(defaults.preserved_exprs)
+        preserved_exprs.update({equality.lhs, equality.rhs})
 
         if len(self.parameters) > 0:
             # Determine which parameters, if any, are involved
             # in the equivalence.
-            fvars = free_vars(equality, err_inclusively=True)
+            fvars = free_vars(equality)
             involved_params = [param for param in self.parameters
                                if param in fvars]
         else:
@@ -572,14 +586,17 @@ class InnerExpr:
                 # We need to perform replacements before we
                 # are ready to prove the left side.
                 substitution = equality.substitution(
-                    repl_lambda, replacements=replacements)
+                    repl_lambda, replacements=replacements,
+                    preserved_exprs=preserved_exprs)
                 return substitution.derive_right_via_equality(
                         preserve_all=True)
             return equality.sub_right_side_into(
-                repl_lambda, replacements=replacements)        
+                repl_lambda, replacements=replacements,
+                preserved_exprs=preserved_exprs)        
         else:
             return equality.substitution(
-                repl_lambda, replacements=replacements)
+                repl_lambda, replacements=replacements,
+                preserved_exprs=preserved_exprs)
 
     @equality_prover('substituted', 'substitute')
     def substitution(self, equality_or_replacement, **defaults_config):
@@ -614,8 +631,7 @@ class InnerExpr:
             # If no parameters are involved, we can use
             # substitute_truth or substitute_false as a simple proof.
             if len(self.parameters) > 0:
-                fvars = free_vars(equality_or_replacement,
-                                  err_inclusively=True)
+                fvars = free_vars(equality_or_replacement)
                 involved_params = [param for param in self.parameters
                                    if param in fvars]
             else:

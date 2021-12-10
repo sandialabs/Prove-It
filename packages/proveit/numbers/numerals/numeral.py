@@ -233,21 +233,58 @@ class NumeralSequence(Operation, IrreducibleValue):
     def not_equal(self, other, **defaults_config):
         # same method works for Numeral and NumeralSequence.
         return Numeral.not_equals(self, other)
+    
+    def _prefix(self, format_type):
+        raise NotImplementedError("'_prefix' must be implemented for each "
+                                  "NumeralSequence")
 
-    def _formatted(self, format_type, **kwargs):
+    def _formatted(self, format_type, operator=None, **kwargs):
         from proveit import ExprRange
         outstr = ''
-
-        for digit in self.digits:
-            if isinstance(digit, Operation):
-                outstr += digit.formatted(format_type, fence=True)
-            elif isinstance(digit, ExprRange):
-                outstr += digit.formatted(format_type, operator=' ')
+        fence = False
+        if operator is None:
+            operator = ' ~ '
+        prefix = self._prefix(format_type)
+        if (self.digits.is_single() or 
+                not all(isinstance(digit, Numeral) for 
+                        digit in self.digits)):
+            # for binary, we use #b(...)
+            # for hex, we use #x(...)
+            # for decimal, #(...)
+            if format_type == 'latex':
+                outstr += r'\texttt{\#}'
             else:
-                outstr += digit.formatted(format_type)
+                outstr += '#'
+            outstr += prefix
+            outstr += '('
+            fence = True
+        else:
+            if prefix != '':
+                # for binary, we use 0b
+                # for hex, we use 0x
+                # for decimal, no prefix
+                if format_type == 'latex':
+                    outstr += r'\texttt{0}'
+                else:
+                    outstr += '0'
+            outstr += prefix
+        for i, digit in enumerate(self.digits):
+            if i != 0 and fence:
+                add = operator
+            else:
+                add = ''
+            if isinstance(digit, Operation):
+                outstr += add + digit.formatted(format_type, fence=True)
+            elif isinstance(digit, ExprRange):
+                outstr += add + digit.formatted(format_type, operator=operator)
+            else:
+                outstr += add + digit.formatted(format_type)
+        if fence:
+            outstr += r')'
         return outstr
-        # return ''.join(digit.formatted(format_type) for digit in self.digits)
 
+    def _function_formatted(self, format_type, **kwargs):
+        return self._formatted(format_type, **kwargs)
 
 def is_literal_int(expr):
     from proveit.numbers import Neg

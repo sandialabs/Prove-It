@@ -11,5 +11,7 @@ import sys
 from proveit._core_.theory import TheoryPackage
 sys.modules[__name__] = TheoryPackage(__name__, __file__, locals())
 
+# TODO: change Digits to Digit (consistent with Integer, Real, etc)
 from .decimals import Digits, DIGITS, DecimalSequence, num
+from .binaries import Bit, BITS, BinarySequence
 sys.modules[__name__].__dict__.update(locals())

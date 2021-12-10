@@ -109,7 +109,7 @@ def complex_polar_coordinates(expr, *, radius_must_be_nonneg=True,
         # reduction: 1*exp(i * theta) = orig_expr
         if len(inner_reductions) > 0:
             reduction = reduction.inner_expr().rhs.substitute(
-                    inner_reductions.pop().rhs)
+                    inner_reductions.pop().rhs, preserve_all=True)
         # Add the reduction and return the coordinates.
         add_reduction(reduction, _r, _theta)
         return (_r, _theta)        
@@ -201,7 +201,7 @@ def complex_polar_coordinates(expr, *, radius_must_be_nonneg=True,
     # reduction: ... * expr[i * theta0] * ... = orig_expr
     if len(inner_reductions) > 0:
         reduction = expr.inner_expr().operands[1].substitution(
-                inner_reductions.pop().rhs)
+                inner_reductions.pop().rhs, preserve_all=True)
     else:
         reduction = Equals(expr, expr).conclude_via_reflexivity()
     if not expr.operands.is_double() or complex_exp_factor_idx != 1:

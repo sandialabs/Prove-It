@@ -1,6 +1,6 @@
 from .composite import Composite
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
-from proveit._core_.defaults import defaults
+from proveit._core_.defaults import defaults, USE_DEFAULTS
 from proveit._core_.expression.style_options import StyleOptions
 from proveit.decorators import prover, equality_prover
 
@@ -35,6 +35,7 @@ class ExprTuple(Composite, Expression):
             assert isinstance(entry, Expression)
             entries.append(entry)
         self.entries = tuple(entries)
+        
         Expression.__init__(self, ['ExprTuple'], self.entries,
                             styles=styles)
 
@@ -179,7 +180,7 @@ class ExprTuple(Composite, Expression):
             # more entries.
             return [] 
         return [int(pos_str) for pos_str in self.get_style(
-            'wrap_positions').strip('()').split(' ') if pos_str != '']
+            'wrap_positions', '').strip('()').split(' ') if pos_str != '']
 
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
@@ -331,6 +332,126 @@ class ExprTuple(Composite, Expression):
         from proveit.core_expr_types import Len
         return Len(self).computed(**defaults_config)
 
+    def get_format_cell_entries(self, assumptions=USE_DEFAULTS,
+                                _remembered_simplifications=None):
+        '''
+        Returns a list of entries in correspondence with
+        each format cell of this ExprTuple.  Each entry is a pair
+        tuple with the first item containing an Expression 
+        corresponding to the entry and the second indicating the 'role' 
+        of the cell.  The role is 'normal' unless it is part of an 
+        ExprRange.  A contained ExprRange will cover multiple format 
+        cells dependent upon its 'expansion' style; it includes the 
+        'expansion' number of cells at the beginning, an 'ellipsis'
+        cell, and a cell for the last element.  The beginning cells 
+        have consecutive integers for their role starting with 0, the 
+        last cell has -1 for its role, and the 'ellipsis' cell has 
+        'implicit' or 'explicit' for its role depending upon the
+        'parameterization' style option of the ExprRange.
+        
+        The assumptions dictate simplifications that may apply to
+        ExprRange elements.
+        '''
+        from .expr_range import ExprRange
+        
+        cell_entries = []
+        with defaults.temporary() as tmp_defaults:
+            if assumptions is not None:
+                tmp_defaults.assumptions = assumptions
+            for item in self.entries:
+                # Append to element_positions.
+                if isinstance(item, ExprRange):
+                    # An ExprRange covers multiple format cells.
+                    range_items = item.get_range_expansion(
+                            _remembered_simplifications)
+                    cell_entries.extend(
+                            (range_item, _k) for _k, range_item in
+                            enumerate(range_items))
+                    parameterization = item.get_style('parameterization',
+                                                      'implicit')
+                    cell_entries.append((item.body, parameterization))
+                    cell_entries.append((item.last(), -1))
+                else:
+                    # One format cells for a regular entry.
+                    cell_entries.append((item, 'normal'))
+        return cell_entries
+    
+    def get_format_cell_element_positions(self, assumptions=USE_DEFAULTS,
+                                          _remembered_simplifications=None):
+        '''
+        Returns a list of element positions in correspondence with
+        each format cell of this ExprTuple 
+        (see ExprTuple.get_format_cell_entries).
+        The element position starts as a 'one' (from proveit.numbers) 
+        and adds one in correspondence with each format cell except the 
+        'ellipsis' cell and the last cell of each ExprRange.  The 
+        element position of the 'ellipsis' cells is 'None' (it isn't 
+        defined).  The element position of the last cell of the 
+        ExprRange will be ('end_index' - 'start_index') of the ExprRange
+        added to the element position of the first cell.
+
+        The assumptions dictate simplifications that may apply to
+        the element positions.
+        '''
+        from .expr_range import ExprRange
+        from proveit import Judgment
+        from proveit.logic import Equals
+        from proveit.numbers import Add, zero, one, subtract
+
+        # We will simplify element positions as we go, remembering and
+        # reusing the simplifications for efficiency.
+        if _remembered_simplifications is None:
+            _remembered_simplifications = dict()        
+        def _simplified(expr):
+            if expr in _remembered_simplifications:
+                simplification = _remembered_simplifications[expr]
+            else:
+                simplification = expr.simplification()
+                _remembered_simplifications[expr] = simplification
+            assert isinstance(simplification, Judgment)
+            assert isinstance(simplification.expr, Equals)
+            assert simplification.expr.lhs == expr
+            return simplification.expr.rhs
+        
+        element_positions = []
+        with defaults.temporary() as tmp_defaults:
+            if assumptions is not None:
+                tmp_defaults.assumptions = assumptions
+            element_pos = zero # We will add 1 before using this.
+            for item in self.entries:
+                # Add one to the element_pos.
+                if element_pos is zero:
+                    element_pos = one # short-cut 0+1=1.
+                else:
+                    element_pos = _simplified(Add(element_pos, one))
+
+                # Append to element_positions.
+                if isinstance(item, ExprRange):
+                    # An ExprRange covers multiple format cells.
+                    range_expansion = item.get_expansion_count()
+                    start_element_pos = element_pos
+                    # Append for the first cells of an expanded
+                    # ExprRange:
+                    for _ in range(range_expansion-1):
+                        element_positions.append(element_pos)
+                        element_pos = _simplified(Add(element_pos, one))
+                    # Append for the last of the first cell(s) of
+                    # the ExprRange:
+                    element_positions.append(element_pos)
+                    # Use None for the 'ellipsis' cell:
+                    element_positions.append(None) 
+                    # Append for the last cell of the ExprRange:
+                    element_pos = Add(
+                            start_element_pos, 
+                            subtract(item.end_index, 
+                                     item.start_index))
+                    element_pos = _simplified(element_pos)
+                    element_positions.append(element_pos)
+                else:
+                    # One format cells for a regular entry.
+                    element_positions.append(element_pos)
+        return element_positions
+    
     def has_matching_ranges(self, other_tuple):
         '''
         Return True iff the `other_tuple` matches this ExprTuple
@@ -468,7 +589,7 @@ class ExprTuple(Composite, Expression):
                     # Preserve this entry -- don't simplify it.
                     _k += ExprTuple(entry).num_entries()
                     continue
-                entry_simp = entry._range_reduction(preserve_all=True)
+                entry_simp = entry._range_reduction()
                 if must_evaluate and not is_irreducible_value(entry_simp.rhs):
                     raise EvaluationError(self)
                 if entry_simp.lhs != entry_simp.rhs:
@@ -689,7 +810,7 @@ class ExprTuple(Composite, Expression):
         raise NotImplementedError("ExprTuple.deduce_equality not implemented "
                                   "for this case: %s." % self)
     
-    @equality_prover("expanded_range", "expand_range")
+    @equality_prover('expanded_range', 'expand_range')
     def range_expansion(self, **defaults_config):
         '''
         For self an ExprTuple with a single entry that is an ExprRange

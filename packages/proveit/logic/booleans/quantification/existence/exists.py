@@ -1,7 +1,7 @@
 from proveit import (Lambda, Conditional, OperationOverInstances, Judgment,
-                     prover)
+                     prover, relation_prover)
 from proveit import defaults, Literal, Function, ExprTuple, USE_DEFAULTS
-from proveit import n, x, A, B, P, Q, R, S, Px
+from proveit import n, x, y, z, A, B, P, Q, R, S, Px
 
 
 class Exists(OperationOverInstances):
@@ -202,11 +202,12 @@ class Exists(OperationOverInstances):
         '''
         from proveit.logic.booleans.quantification.existence \
             import exists_unfolding
-        _n = self.instance_params.num_elements()
-        _P = Lambda(self.instance_params, self.operand.body.value)
-        _Q = Lambda(self.instance_params, self.operand.body.condition)
+        _x = _y = self.instance_params
+        _n = _x.num_elements()
+        _P = Lambda(_x, self.operand.body.value)
+        _Q = Lambda(_x, self.operand.body.condition)
         return exists_unfolding.instantiate(
-            {n: _n, P: _P, Q: _Q}).derive_consequent()
+            {n: _n, P: _P, Q: _Q, x: _x, y: _y}).derive_consequent()
 
     @prover
     def definition(self, **defaults_config):
@@ -217,11 +218,12 @@ class Exists(OperationOverInstances):
         '''
         from proveit.logic.booleans.quantification.existence \
             import exists_def
-        _n = self.instance_params.num_elements()
-        _P = Lambda(self.instance_params, self.operand.body.value)
-        _Q = Lambda(self.instance_params, self.operand.body.condition)
+        _x = _y = self.instance_params
+        _n = _x.num_elements()
+        _P = Lambda(_x, self.operand.body.value)
+        _Q = Lambda(_x, self.operand.body.condition)
         return exists_def.instantiate(
-            {n: _n, P: _P, Q: _Q}, preserve_expr=self)
+            {n: _n, P: _P, Q: _Q, x: _x, y: _y}, preserve_expr=self)
 
     @prover
     def deduce_not_exists(self, **defaults_config):
@@ -238,7 +240,8 @@ class Exists(OperationOverInstances):
             conditions=self.conditions)
         return not_exists_expr.conclude_as_folded()
 
-    def conclude_via_example(self, example_instance, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude_via_example(self, example_instance, **defaults_config):
         '''
         Conclude and return this
         [exists_{..y.. in S | ..Q(..x..)..} P(..y..)] 
@@ -255,8 +258,9 @@ class Exists(OperationOverInstances):
             raise Exception(
                 'Number in example_instance list must match number of '
                 'instance variables in the Exists expression')
-        P_op, P_op_sub = Function(P, self.instance_vars), self.instance_expr
-        Q_op, Q_op_sub = Function(Qmulti, self.instance_vars), self.conditions
+        _y = self.instance_params
+        _P = Lambda(_y, self.instance_expr)
+        _Q = Lambda(_y, self.condition)
         # P(..x..) where ..x.. is the given example_instance
         example_mapping = {
             instance_var: example_instance_elem for instance_var,
@@ -273,15 +277,8 @@ class Exists(OperationOverInstances):
                 example_conditions.append(InSet(i_var, self.domain))
         # exists_{..y.. | ..Q(..x..)..} P(..y..)]
         return existence_by_example.instantiate(
-            {
-                P_op: P_op_sub,
-                Q_op: Q_op_sub,
-                S: self.domain},
-            assumptions=assumptions,
-            relabel_map={
-                x_multi: example_instance,
-                y_multi: self.instance_vars}).derive_consequent(
-            assumptions=assumptions)
+            {P: _P, Q: _Q, S: self.domain,
+             x: example_instance, y: _y}).derive_consequent()
 
     @prover
     def conclude_via_domain_inclusion(self, subset_domain,
@@ -300,99 +297,85 @@ class Exists(OperationOverInstances):
                              "on a Forall expression with a single instance "
                              "variable over a domain and no other conditions.")
         _x = self.instance_param
-        P_op, _P_op = Function(P, _x), self.instance_expr
-        return inclusive_existential_quantification.instantiate(
-                {x:_x, P_op:_P_op, A:subset_domain, B:self.domain}
-                ).derive_consequent()        
+        _P = Lambda(_x, self.instance_expr)
+        _impl = inclusive_existential_quantification.instantiate(
+            {x:_x, P:_P, A:subset_domain, B:self.domain})
+        return _impl.derive_consequent()
 
-    def derive_negated_forall(self, assumptions=USE_DEFAULTS):
+    @prover
+    def derive_negated_forall(self, **defaults_config):
         '''
         From [exists_{x | Q(x)} Not(P(x))], derive and 
         return Not(forall_{x | Q(x)} P(x)).
         From [exists_{x | Q(x)} P(x)], derive and 
         return Not(forall_{x | Q(x)} (P(x) != TRUE)).
         '''
-        raise NotImplementedError("Need to update")
-        from . import exists_def
+        from . import exists_unfolding
         from . import exists_not_implies_not_forall
         from proveit.logic import Not
-        Q_op, Q_op_sub = Function(Qmulti, self.instance_vars), self.conditions
+        _x = self.instance_params
+        _Q = Lambda(_x, self.condition)
         if isinstance(self.instance_expr, Not):
-            P_op, P_op_sub = Function(
-                P, self.instance_vars), self.instance_expr.operand
-            return exists_not_implies_not_forall.instantiate(
-                {
-                    P_op: P_op_sub,
-                    Q_op: Q_op_sub,
-                    S: self.domain},
-                assumptions=assumptions,
-                relabel_map={
-                    x_multi: self.instance_vars}).derive_consequent(assumptions)
+            _P = Lambda(_x, self.instance_expr.operand)
+            _impl = exists_not_implies_not_forall.instantiate(
+                {P: _P, Q: _Q, S: self.domain, x: _x}) 
+            return _impl.derive_consequent()
         else:
-            P_op, P_op_sub = Function(
-                P, self.instance_vars), self.instance_expr
-            return exists_def.instantiate(
-                {
-                    P_op: P_op_sub,
-                    Q_op: Q_op_sub,
-                    S: self.domain},
-                assumptions=assumptions,
-                relabel_map={
-                    x_multi: self.instance_vars}).derive_right_via_equality(assumptions)
+            _P = Lambda(_x, self.instance_expr)
+            _impl = exists_unfolding.instantiate(
+                {P: _P, Q: _Q, S: self.domain, x:_x})
+            return _impl.derive_consequent()
 
-    def substitute_domain(self, superset, assumptions=USE_DEFAULTS):
+    @prover
+    def substitute_domain(self, superset, **defaults_config):
         '''
         Substitute the domain with a superset.
-        From [exists_{x in A| Q(x)} P(x)], derive and return [exists_{x in B| Q(x)} P(x)]
+        From [exists_{x in A| Q(x)} P(x)], derive and return 
+        [exists_{x in B| Q(x)} P(x)]
         given A subseteq B.
         '''
-        raise NotImplementedError("Need to update")
+        from proveit.logic import And
         from . import exists_in_superset
-        P_op, P_op_sub = Function(P, self.instance_vars), self.instance_expr
-        Q_op, Q_op_sub = Function(Qmulti, self.instance_vars), self.conditions
-        return exists_in_superset.instantiate(
-            {
-                P_op: P_op_sub,
-                Q_op: Q_op_sub,
-                A: self.domain,
-                B: superset},
-            assumptions=assumptions,
-            relabel_map={
-                x_multi: self.instance_vars,
-                y_multi: self.instance_vars}).derive_consequent(assumptions)
+        _x = self.instance_params
+        _P = Lambda(_x, self.instance_expr)
+        if self.conditions.num_entries() == 1:
+            _Q = Lambda(_x, self.condition)
+        else:
+            _Q = Lambda(_x, And(self.conditions[1:]))
+        _impl = exists_in_superset.instantiate(
+            {P: _P, Q: _Q, A: self.domain, B: superset, x: _x, y: _x})
+        return _impl.derive_consequent()
 
+    """
     def elim_domain(self, assumptions=USE_DEFAULTS):
         '''
         From [exists_{x in S | Q(x)} P(x)], derive and return [exists_{x | Q(x)} P(x)],
         eliminating the domain which is a weaker form.
         '''
-        raise NotImplementedError("Need to update")
         from . import exists_in_general
-        P_op, P_op_sub = Function(P, self.instance_vars), self.instance_expr
-        Q_op, Q_op_sub = Function(Qmulti, self.instance_vars), self.conditions
+        _x = self.instance_vars
+        _P = Lambda(_x, self.instance_expr)
+        _Q = Lambda(_x, self.condition)
         return exists_in_general.instantiate(
-            {
-                P_op: P_op_sub,
-                Q_op: Q_op_sub,
-                S: self.domain},
-            assumptions=assumptions,
-            relabel_map={
-                x_multi: self.instance_vars,
-                y_multi: self.instance_vars}).derive_consequent(assumptions)
+            {P: _P, Q: _Q, S: self.domain, x: _x, y: _x},
+            preserve_all=True).derive_consequent()
+    """
 
-    def deduce_in_bool(self, assumptions=USE_DEFAULTS):
+    @relation_prover
+    def deduce_in_bool(self, **defaults_config):
         '''
         Deduce, then return, that this exists expression is in the set of BOOLEANS as
         all exists expressions are (they are taken to be false when not true).
         '''
-        raise NotImplementedError("Need to update")
         from . import exists_is_bool
-        P_op, P_op_sub = Function(P, self.instance_vars), self.instance_expr
-        Q_op, Q_op_sub = Function(Qmulti, self.instance_vars), self.conditions
-        return exists_is_bool.instantiate({P_op: P_op_sub, Q_op: Q_op_sub, S: self.domain}, relabel_map={
-                                          x_multi: self.instance_vars}, assumptions=assumptions)
+        _x = self.instance_params
+        _P = Lambda(_x, self.instance_expr)
+        _Q = Lambda(_x, self.condition)
+        return exists_is_bool.instantiate(
+            {P: _P, Q: _Q, S: self.domain, x: _x})
 
-    def substitute_instances(self, universality, assumptions=USE_DEFAULTS):
+    @prover
+    def substitute_instances(self, universality, **defaults_config):
         '''
         Derive from this Exists operation, Exists_{..x.. in S | ..Q(..x..)..} P(..x..),
         one that substitutes instance expressions given some
@@ -403,12 +386,11 @@ class Exists(OperationOverInstances):
         Exists_{..x.. in S | ..Q(..x..)..} R(..x..)
         Works also when there is no domain S and/or no conditions ..Q...
         '''
-        raise NotImplementedError("Need to update")
+        raise NotImplementedError("Need to test/update")
         from . import existential_implication, no_domain_existential_implication
         from proveit import Etcetera
         from proveit.logic import Forall
         from proveit._generic_ import InstanceSubstitutionException
-        from proveit import n, Qmulti, x_multi, y_multi, z_multi, S
         if isinstance(universality, Judgment):
             universality = universality.expr
         if not isinstance(universality, Forall):
@@ -447,36 +429,16 @@ class Exists(OperationOverInstances):
                     "'universality' must have the same conditions as the Exists operation having instances substituted, in addition to the Exists instance expression",
                     self,
                     universality)
-            P_op, P_op_sub = Function(
-                P, self.instance_vars), self.instance_expr
-            Q_op, Q_op_sub = Function(
-                Qmulti, self.instance_vars), self.conditions
-            R_op, R_op_sub = Function(
-                R, self.instance_vars), universality.instance_expr.substituted(i_var_substitutions)
-            if self.has_domain():
-                return existential_implication.instantiate(
-                    {
-                        S: self.domain,
-                        P_op: P_op_sub,
-                        Q_op: Q_op_sub,
-                        R_op: R_op_sub},
-                    relabel_map={
-                        x_multi: universality.instance_vars,
-                        y_multi: self.instance_vars,
-                        z_multi: self.instance_vars},
-                    assumptions=assumptions).derive_consequent(assumptions).derive_consequent(assumptions)
-            else:
-                return no_domain_existential_implication.instantiate(
-                    {
-                        P_op: P_op_sub,
-                        Q_op: Q_op_sub,
-                        R_op: R_op_sub},
-                    relabel_map={
-                        x_multi: universality.instance_vars,
-                        y_multi: self.instance_vars,
-                        z_multi: self.instance_vars},
-                    assumptions=assumptions).derive_consequent(assumptions).derive_consequent(assumptions)
+            _x = universality.instance_vars,
+            _y = self.instance_params
+            _P = Lambda(_y, self.instance_expr)
+            _Q = Lambda(_y, self.condition)
+            _R = Lambda(_y, universality.instance_expr.substituted(
+                i_var_substitutions))
+            _impl = existential_implication.instantiate(
+                {P: _P, Q: _Q, R: _R, S: self.domain, x: _x, y: _y, z: _y})
+            return _impl.derive_consequent().derive_consequent()
         # Default to the OperationOverInstances version which works with
-        # universally quantified equivalences.
+        # universally quantified equalities.
         return OperationOverInstances.substitute(
-            self, universality, assumptions=assumptions)
+            self, universality)

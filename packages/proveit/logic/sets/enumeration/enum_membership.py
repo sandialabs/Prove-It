@@ -1,17 +1,17 @@
 from proveit import (defaults, USE_DEFAULTS, ExprTuple,
                      prover, equality_prover, relation_prover)
-from proveit.logic import Membership, Nonmembership
+from proveit.logic import SetMembership, SetNonmembership
 from proveit.numbers import num
 from proveit import a, b, c, m, n, x, y
 
 
-class EnumMembership(Membership):
+class EnumMembership(SetMembership):
     '''
     Defines methods that apply to membership in an enumerated set.
     '''
 
     def __init__(self, element, domain):
-        Membership.__init__(self, element, domain)
+        SetMembership.__init__(self, element, domain)
 
     def side_effects(self, judgment):
         '''
@@ -131,13 +131,13 @@ class EnumMembership(Membership):
                     {n: _n, x: self.element, y: _y})
 
 
-class EnumNonmembership(Nonmembership):
+class EnumNonmembership(SetNonmembership):
     '''
     Defines methods that apply to non-membership in an enumerated set.
     '''
 
     def __init__(self, element, domain):
-        Nonmembership.__init__(self, element, domain)
+        SetNonmembership.__init__(self, element, domain)
 
     def side_effects(self, judgment):
         '''
