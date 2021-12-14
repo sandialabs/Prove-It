@@ -1,8 +1,8 @@
-from proveit import (Expression, Function, Literal, 
+from proveit import (Expression, Function, Literal, ExprTuple,
                      ExprArray, VertExprArray, StyleOptions)
 from proveit.logic import Set
 from proveit.physics.quantum.circuits.qcircuit_elements import (
-        Gate, MultiQuditGate, Input, Output)
+        Gate, MultiQuditGate, Ghost, Input, Output)
 
 class Qcircuit(Function):
     '''
@@ -67,11 +67,14 @@ class Qcircuit(Function):
         '''
         Return the set of (row, col) locations of the circuit
         grid where we should have a vertical wire to the next row.
-        We will raise an exception if there are rowset inconsistencies
-        among MultiQuditGate entries.
+        We also check for MultiQuditGate consistencies, raising
+        ValueError or TypeError if there is an inconsistency.
         '''
+        from proveit.physics.quantum import (
+                CONTROL, CLASSICAL_CONTROL, SWAP)
         down_wire_locations = set()
-        position_set_to_python_set = dict()
+        qudit_position_to_row = {pos:row for row, pos in 
+                                 enumerate(format_row_element_positions)}
         
         # Iterate over each column.
         for col, col_entries in enumerate(format_cell_entries):
@@ -83,75 +86,183 @@ class Qcircuit(Function):
             
             # Iterate over each row. Map qudit position sets of
             # MultiQuditGates sets of rows that may be involved. 
-            qudit_positions_to_rows = dict()
+            qudit_positions_of_column = set()
+            has_generic_multiquditgate = False
             for row, entry in enumerate(col_entries):
                 entry = entry[0] # the actual Expression of the entry
+                gate_op = entry.gate_operation
                 qudit_position = format_row_element_positions[row]
                 if isinstance(entry, MultiQuditGate):
                     # MultiQuditGate entry.
                     qudit_positions = entry.qudit_positions
+                    qudit_positions_of_column.add(qudit_positions)
+                    is_multi_gate = False
                     if isinstance(qudit_positions, Set):
-                        # MultiQuditGate entry has an explicit Set of
-                        # qudit_positions.
-                        # Remember this Set as a python set so we
-                        # can check membership efficiently.
-                        if qudit_positions in position_set_to_python_set:
-                            python_set = position_set_to_python_set[
-                                    qudit_positions]
-                        else:
-                            python_set = set(qudit_positions.operands)
-                            position_set_to_python_set[qudit_positions] = (
-                                    python_set)
-                        if qudit_position not in python_set:
-                            # Uh-oh, the current qudit_position is not
-                            # contained in the explicit set of qudit
-                            # positions.
+                        # Explicit qudit positions for a control or
+                        # swap operation (order doesn't matter).
+                        if gate_op not in (CONTROL, CLASSICAL_CONTROL, SWAP):
                             raise ValueError(
-                                    "%s not explicitly contained in "
-                                    "%s.  The Qcircuit may have an error "
-                                    "or qudit positions may not be "
-                                    "simplifying in a consistent manner.")
-                    # Mark this format row as one corresponding with
-                    # the qudit_positions of the MultiQuditGate.
-                    qudit_positions_to_rows.setdefault(
-                            qudit_positions, set()).add(row)
-            # For each set of qudit positions, record the last 
-            # corresponding format row.  Also, make sure all qudit
-            # positions of MultiQuditGates are accounted for with each
-            # MultiQuditGate that has explicit qudit positions in the
-            # column.
-            qudit_positions_to_maxrow = dict()
-            for qudit_positions, rows in qudit_positions_to_rows.items():
-                if isinstance(qudit_positions, Set):
-                    num_qudit_positions = len(set(qudit_positions.operands))
-                    if num_qudit_positions != len(rows):
-                        # We checked each row as they came along, so
-                        # there must be more qudit_positions if the
-                        # counts differ:
-                        assert num_qudit_positions > len(row)
+                                    "For a multi-gate, %s, use an ExprTuple "
+                                    "for the qudit_positions rather than "
+                                    "a Set (order matters)."%str(gate_op))
+                        qudit_positions = qudit_positions.operands                        
+                    elif isinstance(qudit_positions, ExprTuple):
+                        # Explicit qudit positions for a multi-gate
+                        # (order does matter)
+                        if gate_op not in (CONTROL, CLASSICAL_CONTROL, SWAP):
+                            raise ValueError(
+                                    "For MultiQuditGates %s operations; "
+                                    "use a Set for the qudit_positions "
+                                    "rather than ExprTuple (order does "
+                                    "not matter)."%gate_op)
+                        is_multi_gate = True
+                    else:
+                        # A "generic" MultiQuditGate (no explicit
+                        # qudit_positions).
+                        has_generic_multiquditgate = True
+
+                    if qudit_positions.contains_range():
                         raise ValueError(
-                                "There are only %d MultiQudit gates having "
-                                "the %d qudit positions of %s in column %d."
-                                %(len(row), num_qudit_positions, 
-                                  qudit_positions, col))
-                qudit_positions_to_maxrow[qudit_positions] = max(rows)
+                                "Explicit qudit positions "
+                                "should not contain an ExprRange.")
+                    
+                    if is_multi_gate:
+                        # A multi-gate.  The qudit_positions must
+                        # be consecutive and all entries beyond the
+                        # top must be proper "Ghost" entries.
+                        for _k, multigate_position in qudit_position:
+                            next_position = (
+                                    format_row_element_positions[row+_k])
+                            if (next_position != multigate_position):
+                                raise ValueError(
+                                        "Multi-gate qudit positions "
+                                        "must match consecutive rows: "
+                                        "%s ≠ %s."
+                                        %(multigate_position,
+                                          next_position))
+                            if _k > 0:
+                                entry_below = col_entries[row+_k]
+                                if not isinstance(entry_below, Ghost):
+                                    raise TypeError(
+                                            "Entry below a multi-gate for "
+                                            "%s operation expected to be "
+                                            "a Ghost, but got %s"
+                                            %(entry.gate_operation, 
+                                              entry_below))
+                                if (entry_below.gate_operation != 
+                                        entry.gate_operation):
+                                    raise TypeError(
+                                            "Entry below a multi-gate for "
+                                            "%s operation expected to be "
+                                            "a Ghost for this operation, "
+                                            "not for %s."
+                                            %(entry.gate_operation, 
+                                              entry_below.gate_operation))
+                    else:
+                        # For a control or a swap, make sure the 
+                        # qudit_positions all exist and have 
+                        # appropriate entries.
+
+                        # If it is a SWAP, it involve two qudits.
+                        if (gate_op == SWAP and 
+                                qudit_positions.num_entries() != 2):
+                            raise ValueError(
+                                    "For a SWAP, please use "
+                                    "two qudit_positions, not %d"
+                                    %qudit_positions.num_entries())
+                        
+                        # Other cases (e.g., a control with many
+                        # targets), should have 
+                        contains_cur_pos = False
+                        for _other_pos in qudit_positions:
+                            if _other_pos == qudit_position:
+                                # The current position is contained.
+                                contains_cur_pos = True
+                                continue
+                            if _other_pos not in qudit_position_to_row:
+                                raise ValueError(
+                                        "The qudit position of %s for a "
+                                        "%s MultiQuditGate is not a known "
+                                        "qudit_position of the Qcircuit, "
+                                        "it is not in %s"
+                                        %(_other_pos, gate_op,
+                                          qudit_position_to_row.keys()))
+                            _other_row = qudit_position_to_row[_other_pos]
+                            _other_entry = col_entries[_other_row][0]
+                            if gate_op == SWAP:
+                                if _other_entry != entry:
+                                    raise ValueError(
+                                            "For a SWAP, please use "
+                                            "two MultiQuditGates that are "
+                                            "the same: %s ≠ %s."
+                                            %(_other_entry, entry))
+                            elif isinstance(_other_entry, Ghost):
+                                raise ValueError(
+                                        "A %s MultiQuditGate should not "
+                                        "target part of a mult-gate except "
+                                        "the top.")
+                            elif (qudit_positions.num_entries() == 2 and
+                                  gate_op == CONTROL and
+                                  _other_entry.gate_operation == CONTROL):
+                                # This a symmetrically-formed 
+                                # controlled-Z (control on both ends).
+                                # That's okay.
+                                continue
+                            if not (isinstance(_other_entry, Gate) or
+                                    (isinstance(_other_entry, MultiQuditGate)
+                                    and isinstance(_other_entry.qudit_positions,
+                                                   ExprTuple))):
+                                raise ValueError(
+                                        "With exception to a symmetrically "
+                                        "formed controlled-Z, the target "
+                                        "of a control must be a gate or "
+                                        "a multi-gate, not %s."
+                                        %_other_entry)
+                        if not contains_cur_pos:
+                            raise ValueError(
+                                    "The qudit positions of a MultiQuditGate "
+                                    "must contain that of the MultiQuditGate "
+                                    "itself, but %s is not in %s"
+                                    %(qudit_position, qudit_positions))
             
-            # Now we can add 'down wire' locations appropriately for
-            # this column.
-            for row, entry in enumerate(col_entries):
-                entry = entry[0] # the actual Expression of the entry
-                if isinstance(entry, MultiQuditGate):
-                    qudit_positions = entry.qudit_positions
-                    if row < qudit_positions_to_maxrow[qudit_positions]:
-                        # Add a wire down from this location since it
-                        # is not the last row of the MultiQuditGate
-                        # qudit positions.
-                        down_wire_locations.add((row, col))
+            if has_generic_multiquditgate:
+                # If there is a generic MultiQuditGate, we need
+                # a vertical wire from top to bottom since anything
+                # could be the target.
+                for row, _ in enumerate(col_entries):
+                    down_wire_locations.add((row, col))
+            else:
+                # For each set of qudit positions, record the last 
+                # corresponding format row.
+                qudit_positions_to_maxrow = dict()
+                for qudit_positions in qudit_positions_of_column:
+                    if isinstance(qudit_positions, Set):
+                        positions_as_tuple = qudit_positions.operands
+                    else:
+                        positions_as_tuple = qudit_positions
+                    assert isinstance(positions_as_tuple, ExprTuple)
+                    maxrow = max(qudit_position_to_row[qudit_position] for
+                                 qudit_position in positions_as_tuple.entries)
+                    qudit_positions_to_maxrow[qudit_positions] = maxrow
+                
+                # Now we can add 'down wire' locations appropriately for
+                # this column.
+                for row, entry in enumerate(col_entries):
+                    entry = entry[0] # the actual Expression of the entry
+                    if isinstance(entry, MultiQuditGate):
+                        qudit_positions = entry.qudit_positions
+                        if row < qudit_positions_to_maxrow[qudit_positions]:
+                            # Add a wire down from this location since it
+                            # is not the last row of the MultiQuditGate
+                            # qudit positions.
+                            down_wire_locations.add((row, col))
         
         # Return all 'down wire' location.
         return down_wire_locations
 
     def latex(self, fence=False, **kwargs):
+        from proveit.physics.quantum import (
+                CONTROL, CLASSICAL_CONTROL, SWAP)
         spacing = self.get_style('spacing')
             
         # Get the element positions corresponding to each row of the
@@ -221,22 +332,25 @@ class Qcircuit(Function):
                         elif isinstance(entry, Output):
                             formatted_entry = r'\rstick{%s}'%formatted_entry
                     if isinstance(entry, MultiQuditGate):
-                        if entry.get_style('representation') == 'block':
+                        if isinstance(entry.qudit_positions, ExprTuple):
+                            gate_op = entry.gate_operation
+                            assert gate_op not in (
+                                    CONTROL, CLASSICAL_CONTROL, SWAP)
+                            # The top of a multi-gate (not a 
+                            # control or swap and has explicit 
+                            # qudit positions).
+                            qudit_positions = entry.qudit_positions
+                            if qudit_positions.contains_range():
+                                raise ValueError(
+                                        "Explicit qudit positions "
+                                        "should not contain an "
+                                        "ExprRange.")
+                            nqdits = entry.qudit_positions.num_entries()
                             assert formatted_entry[:5] == r'\gate'
-                            if (row-1, col) not in down_wire_locations:
-                                # Add up the length of the block.
-                                _bl = 0
-                                while (entry==format_col_entries[row+_bl]):
-                                    _bl += 1
-                                # The top-most of a block gate.
-                                formatted_entry = (
-                                        r'\multigate{%d}'%_bl +
-                                        formatted_entry[5:])
-                            else:
-                                # Not the top-most of a block gate,
-                                # so we must use 'ghost'.
-                                formatted_entry = (
-                                        r'\ghost' + formatted_entry[5:])
+                            # The top-most of a block gate.
+                            formatted_entry = (
+                                    r'\multigate{%d}'%(nqdits-1) +
+                                    formatted_entry[5:])
                     if (row, col) in down_wire_locations:
                         formatted_entry += r' \qwx[1]'                                
                     formatted_row_entries.append(formatted_entry)

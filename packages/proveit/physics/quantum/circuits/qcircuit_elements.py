@@ -159,27 +159,16 @@ class Gate(QcircuitElement):
         '''
         QcircuitElement.__init__(self, Gate._operator_, operand, styles=styles)
         self.gate_operation = self.operand
-
-    def remake_with_style_calls(self):
-        '''
-        In order to reconstruct this Expression to have the same styles,
-        what "with..." method calls are most appropriate?
-        '''
-        representation = self.get_style('representation', 'explicit')
-        call_strs = []
-        if representation == 'implicit':
-            call_strs.append("with_styles(representation='implicit')")
-        return call_strs
-
+    
     def style_options(self):
         '''
         Return the StyleOptions object for this Gate object.
         '''
-        from proveit.physics.quantum import I
+        from proveit.physics.quantum import I, X
         options = StyleOptions(self)
         if self.operand == I:
-            # For an X gate, it may be displayed as
-            # 'X' (explicit) or as a target (implicit).
+            # For an I gate, it may be displayed as
+            # 'I' (explicit) or as a wire (implicit).
             options.add_option(
                 name='representation',
                 description=(
@@ -187,8 +176,37 @@ class Gate(QcircuitElement):
                     "a quantum wire versus an 'explicit' gate (box) applying I."),
                 default='implicit',
             related_methods=())
+        if self.operand == X:
+            # For an X gate, it may be displayed as
+            # 'X' (explicit) or as a target (implicit).
+            options.add_option(
+                name='representation',
+                description=(
+                    "The 'implicit' option formats the X gate as "
+                    "a target rather than 'X'."),
+                default='explicit',
+            related_methods=())
 
         return options
+    
+    def with_implicit_representation(self):
+        return self.with_styles(representation='implicit')
+
+    def with_explicit_representation(self):
+        return self.with_styles(representation='explicit')
+    
+    def remake_with_style_calls(self):
+        '''
+        In order to reconstruct this Expression to have the same styles,
+        what "with..." method calls are most appropriate?
+        '''
+        representation = self.get_style('representation', 'default')
+        call_strs = []
+        if representation == 'implicit':
+            call_strs.append("with_implicit_representation()")
+        elif representation == 'explicit':
+            call_strs.append("with_explicit_representation()")
+        return call_strs
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
@@ -207,6 +225,36 @@ class Gate(QcircuitElement):
                 {U: self.gate_operation.state})
         return QcircuitElement.shallow_simplification(
                 self, must_evaluate=must_evaluate)
+
+    def circuit_elem_latex(self, *, solo):
+        '''
+        Display the LaTeX for this Gate circuit element.
+        '''
+        from proveit.physics.quantum import I, X, MEAS
+        if self.gate_operation == MEAS:
+            return r'\meter'
+        if self.operand == I:
+            if self.get_style('representation') == 'implicit':
+                return r'\qw'
+        if self.operand == X:
+            if self.get_style('representation') == 'implicit':
+                return r'\targ'
+        return r'\gate{' + self.gate_operation.latex() + r'}'
+
+class Ghost(QcircuitElement):
+    '''
+    Represents a portion of a multi-gate that isn't the top-most
+    portion.  The top-most portion should be a MultiQuditGate.
+    '''
+    # the literal operator of the Gate operation class
+    _operator_ = Literal('GHOST', theory=__file__)
+
+    def __init__(self, operand, *, styles=None):
+        '''
+        Create a quantum circuit gate performing the given operation.
+        '''
+        QcircuitElement.__init__(self, Gate._operator_, operand, styles=styles)
+        self.gate_operation = self.operand
 
     def operand_latex(self, wrapper=None):
         '''
@@ -230,44 +278,69 @@ class Gate(QcircuitElement):
         '''
         Display the LaTeX for this Gate circuit element.
         '''
-        from proveit.physics.quantum import I, MEAS
-        if self.gate_operation == MEAS:
-            return r'\meter'
-        if self.operand == I:
-            if self.get_style('representation') == 'implicit':
-                return r'\qw'
-        return r'\gate{' + self.gate_operation.latex() + r'}'
-
+        if solo:
+            # Put ':' above and below to denote that this just
+            # represents a portion of a multi-gate.
+            return (r'\gate{\begin{array}{c} : \\ %s \\ : \end{array}}'
+                    %self.gate_operation.latex())
+        else:
+            # A \ghost for a \multigate.
+            return r'\ghost{%s}'%self.gate_operation.latex()
 
 class MultiQuditGate(QcircuitElement):
     '''
-    Represents a connection of multiple gates.  In a Qcircuit, 
-    each row that contains a member of a multi-qudit gate must contain a
-    MultiQuditGate object where the arguments are 
-        1- the gate operation, and 
-        2- an Expression representing qudit positions, where a qudit
-           may be an individual qubit or a register of multiple qubits
-           (e.g. using MultiWires).
-    If #2 is a Set Expression, these are regarded as explicit qudit
-    positions and must equal the Set of row element positions
-    of the Qcircuit involved in the multi-qudit gate.
-    If there are consecutive rows with the same gate operation involved
-    in the same multi-qudit gate, they may be expressed as a block
-    gate (a '\multigate' as it is expressed in \Qcircuit LaTeX) if its
-    representation style is 'block'.
+    A MultiQuditGate is a quantum circuit element that expresses
+    an operation involving multiple rows that each may represent
+    one or more qubits (a qudit).
+    
+    The sub-expressions are the gate operation and the qudit_positions.
+    The qudit_positions may be an ExprTuple, Set, or an expression
+    representing either of these.
+    
+    A generic MultiQuditGate will use an expression to represent
+    a ExprTuple or Set of qudit_positions that is not an ExprTuple
+    or Set.  
+    
+    For controlled gate, there should be a MultiQuditGate at the
+    control with a CONTROL gate_operation, and the qudit_positions
+    should be a Set with the positions of the control and the targets.
+    It should use a Set since order doesn't matter.  The targets can be
+    normal Gate elements but may be multi-gates.
+    
+    A multi-gate (a tall box covering multiple rows) should use a
+    MultiQuditGate at the top row of the multi-gate and Ghost elements
+    for the other rows.  The qudit_positions should be an ExprTuple
+    of the consecutive positions starting with the top 
+    "representative".  The order doesn't matter; we must not allow
+    the qudits involved in a mult-gate to be permuted.  A controlled 
+    gate may have multi-gate target(s); the top "representative" should
+    be used as the target.
+    
+    A Toffoli gate should be treated as multiple controlled gates with
+    the same target.
+    
+    A swap gate should be redudant with two MultiQuditGates using
+    SWAP as the gate operation of each.  Each one should list its own 
+    position as the first of the qudit_positions and the other as the 
+    second.  Although this is redundant, it ensures that there is one 
+    way to represent this symmetric operation.
+    
+    A controlled-Z expressed in a symmetric manner (with a filled-in
+    control dot on each end), should be implemented in the redundant
+    manner of the swap gate, but with CONTROL as the gate_operation.
     '''
     # the literal operator of the Gate operation class
     _operator_ = Literal('MULTI_QUDIT_GATE', theory=__file__)
 
-    def __init__(self, gate, qudit_positions, *, styles=None):
+    def __init__(self, gate_operation, qudit_positions, *, styles=None):
         '''
         Create a quantum circuit gate performing the given operation.
         '''
         Function.__init__(self, MultiQuditGate._operator_,
-                           (gate, qudit_positions), styles=styles)
+                           (gate_operation, qudit_positions), styles=styles)
         self.gate_operation = self.operands[0]
         self.qudit_positions = self.operands[1]
-        if isinstance(gate, MultiQuditGate):
+        if isinstance(gate_operation, MultiQuditGate):
             raise TypeError("A MultiQuditGate should not have a "
                             "MultiQuditGate as it's 'gate'")
 
@@ -335,7 +408,7 @@ class MultiQuditGate(QcircuitElement):
         else:
             # This is either being shown on its own, or it lacks
             # explicit qudit positions.
-            return (r'\gate{%s {\Big \{} %s}'
+            return (r'\gate{%s : %s}'
                     %(self.gate_operation.latex(), 
                       self.qudit_positions.latex()))
 
