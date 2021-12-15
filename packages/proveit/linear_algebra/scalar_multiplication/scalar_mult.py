@@ -84,11 +84,8 @@ class ScalarMult(Operation):
         _K = VecSpaces.known_field(_V)
         _alpha = self.scalar
         _beta =  self.scaled.scalar
-        _plus = _K.plus_operator
-        _times = _K.times_operator
         return doubly_scaled_as_singly_scaled.instantiate(
-                {plus:_plus, times:_times, K:_K, V:_V, 
-                 x:_x, alpha:_alpha, beta:_beta})
+                {K:_K, V:_V, x:_x, alpha:_alpha, beta:_beta})
 
     @equality_prover('multi_scaling_reduced', 'multi_scaling_reduce')
     def multi_scaling_reduction(self, **defaults_config):
