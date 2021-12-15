@@ -176,15 +176,8 @@ class ScalarMult(Operation):
             # No vector space given, so we'll have to look for
             # a known membership of 'scaled' in a vector space.
             # This may be arbitrarily chosen.
-            try:
-                vec_space = next(VecSpaces.yield_known_vec_spaces(
-                        self.scaled, field=field))
-                field = VecSpaces.known_field(vec_space)
-            except StopIteration:
-                # No known vector space membership over the specified
-                # field.
-                raise UnsatisfiedPrerequisites(
-                        "%s is not known to be a vector in a vector "
-                        "space over %s"%(self.scaled, field))
+            vec_space = VecSpaces.known_vec_space(
+                        self.scaled, field=field)
+            field = VecSpaces.known_field(vec_space)
         return scalar_mult_closure.instantiate(
                 {K:field, V:vec_space, a:self.scalar, x:self.scaled})
