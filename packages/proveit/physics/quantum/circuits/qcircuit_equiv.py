@@ -1,6 +1,6 @@
 from proveit import Literal, Lambda, TransitiveRelation, USE_DEFAULTS
 
-class CircuitEquiv(TransitiveRelation):
+class QcircuitEquiv(TransitiveRelation):
     '''
     Class to capture the equivalence of 2 circuits A and B.
     CircuitEquiv(A, B) is a claim that the inputs and outputs of A are
@@ -20,7 +20,7 @@ class CircuitEquiv(TransitiveRelation):
     known_right_sides = dict()
 
     def __init__(self, a, b, *, styles=None):
-        TransitiveRelation.__init__(self, CircuitEquiv._operator_, a, b,
+        TransitiveRelation.__init__(self, QcircuitEquiv._operator_, a, b,
                                     styles=styles)
         self.a = a
         self.b = b

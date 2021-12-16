@@ -1,5 +1,6 @@
-from proveit import (Expression, Function, Literal, ExprTuple,
-                     ExprArray, VertExprArray, StyleOptions)
+from proveit import (Expression, Function, Literal, 
+                     ConditionalSet, Conditional,
+                     ExprTuple, ExprArray, VertExprArray, StyleOptions)
 from proveit.logic import Set
 from proveit.physics.quantum.circuits.qcircuit_elements import (
         Gate, MultiQuditGate, Ghost, Input, Output)
@@ -14,18 +15,19 @@ class Qcircuit(Function):
     # the literal operator of the Qcircuit operation class
     _operator_ = Literal('QCIRCUIT', theory=__file__)
     
-    def __init__(self, *operands, styles=None):
+    def __init__(self, vert_expr_array, *, styles=None):
         '''
         Initialize a Qcircuit from either or VertExprArray or
         columns to generate a VertExprArray.
         '''
-        if len(operands)==1 and isinstance(operands[0], VertExprArray):
-            vert_expr_array = operands[0]
-        else:
-            vert_expr_array = VertExprArray(*operands)
         Function.__init__(self, Qcircuit._operator_,
                           vert_expr_array, styles=styles)
         self.vert_expr_array = vert_expr_array
+    
+    @classmethod
+    def extract_init_arg_value(cls, arg_name, operator, operands):
+        if arg_name == 'vert_expr_array':
+            return operands
 
     def style_options(self):
         '''
@@ -87,13 +89,15 @@ class Qcircuit(Function):
             # Iterate over each row. Map qudit position sets of
             # MultiQuditGates sets of rows that may be involved. 
             qudit_positions_of_column = set()
+            # No vertical wire through multigate (blockade):
+            multigate_blockade = set() 
             has_generic_multiquditgate = False
             for row, entry in enumerate(col_entries):
                 entry = entry[0] # the actual Expression of the entry
-                gate_op = entry.gate_operation
                 qudit_position = format_row_element_positions[row]
                 if isinstance(entry, MultiQuditGate):
                     # MultiQuditGate entry.
+                    gate_op = entry.gate_operation
                     qudit_positions = entry.qudit_positions
                     qudit_positions_of_column.add(qudit_positions)
                     is_multi_gate = False
@@ -109,7 +113,7 @@ class Qcircuit(Function):
                     elif isinstance(qudit_positions, ExprTuple):
                         # Explicit qudit positions for a multi-gate
                         # (order does matter)
-                        if gate_op not in (CONTROL, CLASSICAL_CONTROL, SWAP):
+                        if gate_op in (CONTROL, CLASSICAL_CONTROL, SWAP):
                             raise ValueError(
                                     "For MultiQuditGates %s operations; "
                                     "use a Set for the qudit_positions "
@@ -130,7 +134,8 @@ class Qcircuit(Function):
                         # A multi-gate.  The qudit_positions must
                         # be consecutive and all entries beyond the
                         # top must be proper "Ghost" entries.
-                        for _k, multigate_position in qudit_position:
+                        for _k, multigate_position in enumerate(
+                                qudit_positions):
                             next_position = (
                                     format_row_element_positions[row+_k])
                             if (next_position != multigate_position):
@@ -141,7 +146,8 @@ class Qcircuit(Function):
                                         %(multigate_position,
                                           next_position))
                             if _k > 0:
-                                entry_below = col_entries[row+_k]
+                                multigate_blockade.add(row+_k-1)
+                                entry_below = col_entries[row+_k][0]
                                 if not isinstance(entry_below, Ghost):
                                     raise TypeError(
                                             "Entry below a multi-gate for "
@@ -245,17 +251,24 @@ class Qcircuit(Function):
                                  qudit_position in positions_as_tuple.entries)
                     qudit_positions_to_maxrow[qudit_positions] = maxrow
                 
-                # Now we can add 'down wire' locations appropriately for
-                # this column.
+                # Now we can add 'down wire' locations appropriately 
+                # for this column.
+                add_down_wires_to_row = 0
                 for row, entry in enumerate(col_entries):
-                    entry = entry[0] # the actual Expression of the entry
+                    entry = entry[0] # the actual Expression of the 
+                    # entry
                     if isinstance(entry, MultiQuditGate):
                         qudit_positions = entry.qudit_positions
-                        if row < qudit_positions_to_maxrow[qudit_positions]:
-                            # Add a wire down from this location since it
-                            # is not the last row of the MultiQuditGate
-                            # qudit positions.
-                            down_wire_locations.add((row, col))
+                        add_down_wires_to_row = max(
+                                add_down_wires_to_row,
+                                qudit_positions_to_maxrow[qudit_positions])
+                    if (row < add_down_wires_to_row 
+                            and row not in multigate_blockade):
+                        # Add a wire down from this location since it 
+                        # is before the last row of MultiQuditGate
+                        # qudit positions, and it isn't blocked by a
+                        # multigate.
+                        down_wire_locations.add((row, col))
         
         # Return all 'down wire' location.
         return down_wire_locations
@@ -324,12 +337,22 @@ class Qcircuit(Function):
                     if formatted_entry in (r'\cdots', r'\vdots', r'\ddots'):
                         # Wrap ellipses in \gate, \lstick, or \rstick
                         # as appropriate.
-                        if (isinstance(entry, Gate) or 
-                                isinstance(entry, MultiQuditGate)):
+                        _entry = entry
+                        # If the entry is a conditional set, use the
+                        # value of any of the conditionals to determine
+                        # the type.
+                        while (isinstance(_entry, ConditionalSet) or
+                               isinstance(_entry, Conditional)):
+                            if isinstance(_entry, ConditionalSet):
+                                _entry = _entry.conditionals[0]
+                            if isinstance(_entry, Conditional):
+                                _entry = _entry.value
+                        if (isinstance(_entry, Gate) or 
+                                isinstance(_entry, MultiQuditGate)):
                             formatted_entry = r'\gate{%s}'%formatted_entry
-                        elif isinstance(entry, Input):
+                        elif isinstance(_entry, Input):
                             formatted_entry = r'\lstick{%s}'%formatted_entry
-                        elif isinstance(entry, Output):
+                        elif isinstance(_entry, Output):
                             formatted_entry = r'\rstick{%s}'%formatted_entry
                     if isinstance(entry, MultiQuditGate):
                         if isinstance(entry.qudit_positions, ExprTuple):
@@ -374,7 +397,7 @@ class Qcircuit(Function):
         
         out_str += ' \n' + r'} \hspace{2em}'
         if fence:
-            out_str = r'\right)'
+            out_str += r'\right)'
         return out_str
 
     """

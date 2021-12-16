@@ -143,7 +143,7 @@ class Output(QcircuitElement):
         '''
         Display the LaTeX for this Output circuit element.
         '''
-        return r'\rstick{' + self.state.latex() + r'}'
+        return r'\rstick{' + self.state.latex() + r'} \qw'
 
 
 class Gate(QcircuitElement):
@@ -236,10 +236,15 @@ class Gate(QcircuitElement):
         if self.operand == I:
             if self.get_style('representation') == 'implicit':
                 return r'\qw'
-        if self.operand == X:
-            if self.get_style('representation') == 'implicit':
-                return r'\targ'
-        return r'\gate{' + self.gate_operation.latex() + r'}'
+        if (self.operand == X and
+                self.get_style('representation') == 'implicit'):
+            return r'\targ'
+        elif isinstance(self.gate_operation, Input):
+            return r'\gate{INPUT(' + self.gate_operation.state.latex() + r')}'
+        elif isinstance(self.gate_operation, Output):
+            return r'\gate{OUTPUT(' + self.gate_operation.state.latex() + r')}'
+        else:
+            return r'\gate{' + self.gate_operation.latex() + r'}'
 
 class Ghost(QcircuitElement):
     '''
@@ -253,7 +258,7 @@ class Ghost(QcircuitElement):
         '''
         Create a quantum circuit gate performing the given operation.
         '''
-        QcircuitElement.__init__(self, Gate._operator_, operand, styles=styles)
+        QcircuitElement.__init__(self, Ghost._operator_, operand, styles=styles)
         self.gate_operation = self.operand
 
     def operand_latex(self, wrapper=None):
@@ -392,7 +397,8 @@ class MultiQuditGate(QcircuitElement):
         from proveit.physics.quantum import (CONTROL, CLASSICAL_CONTROL, 
                                              X, SWAP)
         
-        if not solo and isinstance(self.qudit_positions, Set):
+        if not solo and (isinstance(self.qudit_positions, Set) or
+                         isinstance(self.qudit_positions, ExprTuple)):
             # This will be shown in the context of a broader Qcircuit
             # and has explicit qudit positions.
             if self.gate_operation == CONTROL:
@@ -421,7 +427,8 @@ class MultiQuditGate(QcircuitElement):
         '''
         from proveit.numbers import is_literal_int
         from proveit.logic.equality import Equals
-        if (isinstance(self.gate_set, Set) and self.gate_set.operands.is_single()
+        if (isinstance(self.qudit_positions, ExprTuple) 
+                and self.qudit_positions.is_single()
                 and is_literal_int(self.gate_set.operands[0])):
             try:
                 return self.unary_reduction()
@@ -430,32 +437,38 @@ class MultiQuditGate(QcircuitElement):
                 # to be in NaturalPos.
                 pass
 
-        if (isinstance(self.gate_set, Set) and 
-                self.gate_set.operands.num_entries() == 0):
+        if (isinstance(self.qudit_positions, ExprTuple) and 
+                self.qudit_positions.num_entries() == 0):
             return self.empty_set_reduction()
             # need to implement an empty set reduction theorem
         return Equals(self, self).conclude_via_reflexivity()
 
     @equality_prover('unary_reduced', 'unary_reduce')
     def unary_reduction(self, **defaults_config):
-        from proveit.physics.quantum import unary_multi_qubit_gate_reduction
-
-        if not self.gate_set.operands.is_single():
-            raise ValueError("Expression must have a single operand in "
-                             "order to invoke unary_reduction")
-        operand = self.gate_set.operands[0]
-        return unary_multi_qubit_gate_reduction.instantiate(
-            {U: self.gate, A: operand})
+        from proveit.physics.quantum.circuits import (
+                unary_multi_qudit_gate_reduction)
+        if not isinstance(self.qudit_positions, ExprTuple):
+            raise TypeError("'qudit_positions' must be an ExprTuple in "
+                            "order to invoke unary_reduction")
+        if not self.qudit_positions.is_single():
+            raise ValueError("'qudit_positions' must be a singular "
+                             "ExprTuple in order to invoke unary_reduction")
+        operand = self.qudit_positions.operands[0]
+        return unary_multi_qudit_gate_reduction.instantiate(
+            {U: self.gate_operation, A: operand})
 
     @equality_prover('empty_set_reduced', 'empty_set_reduce')
-    def empty_set_reduction(self, **defaults_config):
-        from proveit.physics.quantum import empty_multi_qubit_gate_reduction
-        if not self.gate_set.operands.num_entries() == 0:
-            raise ValueError("Expression must have an empty Set() in "
-                             "order to invoke empty_set_reduction")
-        #operand = self.gate_set
-        return empty_multi_qubit_gate_reduction.instantiate(
-            {U: self.gate})
+    def empty_reduction(self, **defaults_config):
+        from proveit.physics.quantum.circuits import (
+                empty_multi_qudit_gate_reduction)
+        if not isinstance(self.qudit_positions, ExprTuple):
+            raise TypeError("'qudit_positions' must be an ExprTuple in "
+                            "order to invoke empty_reduction")
+        if self.qudit_positions.num_entries() != 0:
+            raise ValueError("'qudit_positions' must be an empty "
+                             "ExprTuple in order to invoke empty_reduction")
+        return empty_multi_qudit_gate_reduction.instantiate(
+            {U: self.gate_operation})
 
 
 class MultiWire(QcircuitElement):

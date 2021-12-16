@@ -1,5 +1,7 @@
 from .qcircuit import Qcircuit
-from .qcircuit_elements import Gate, MultiQuditGate, Input, Output
+from .qcircuit_elements import (Gate, MultiQuditGate, Ghost,
+                                Input, Output, MultiWire)
+from .qcircuit_equiv import QcircuitEquiv
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

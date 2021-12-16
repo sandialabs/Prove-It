@@ -1,7 +1,12 @@
 from .algebra import (HilbertSpaces, Qmult, QmultCodomain, Bra, Ket, 
                       NumBra, NumKet)
 from .quantum_ops import Meas, QubitRegisterSpace, RegisterSU
-from .circuits import Gate, MultiQuditGate, Input, Output, Target
+
+# There is a tricky chicken-and-egg issue if we include these
+# imports.  Let's just exclude them for now.
+#from .circuits import (Gate, MultiQuditGate, Ghost,
+#                       Input, Output, MultiWire, target)
+
 #from .circuit import Gate, Input, Output, Target
 # from .circuit import Circuit, MultiWire
 
