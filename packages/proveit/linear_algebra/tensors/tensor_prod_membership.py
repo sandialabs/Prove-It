@@ -1,8 +1,8 @@
-from proveit import USE_DEFAULTS, equality_prover, prover
-from proveit.linear_algebra import TensorProd
+from proveit import USE_DEFAULTS, equality_prover, Lambda, prover
+from proveit.linear_algebra import ScalarMult, TensorProd, VecSum
 from proveit.logic import SetMembership, SetNonmembership
 from proveit.numbers import num
-from proveit import a, i, m, x, A, K, V
+from proveit import a, b, f, i, j, m, x, A, K, Q, V
 
 
 class TensorProdMembership(SetMembership):
@@ -53,21 +53,6 @@ class TensorProdMembership(SetMembership):
     #     return membership_unfolding.instantiate(
     #         {m: _m, x: element, A: _A}, auto_simplify=False)
 
-    # @prover
-    # def conclude(self, **defaults_config):
-    #     '''
-    #     Called on self = [elem in (A U B U ...)], and knowing or
-    #     assuming [[elem in A] OR [elem in B] OR ...], derive and
-    #     return self.
-    #     '''
-    #     from . import membership_folding
-    #     element = self.element
-    #     operands = self.domain.operands
-    #     _A = operands
-    #     _m = _A.num_elements()
-    #     return membership_folding.instantiate({m: _m, x: element, A: _A})
-
-
     @prover
     def conclude(self, **defaults_config):
 
@@ -91,5 +76,33 @@ class TensorProdMembership(SetMembership):
             return tensor_prod_is_in_tensor_prod_space.instantiate(
                     {a: _a_sub, i: _i_sub, K: _K_sub,  V: vec_spaces})
 
-        raise ValueError("Element {0} is not a TensorProd.".
-                         format(self.element))
+        if isinstance(self.element, ScalarMult):
+            from proveit.linear_algebra.scalar_multiplication import (
+                    scalar_mult_closure)
+            from proveit.linear_algebra import VecSpaces
+            self.domain.deduce_as_vec_space()
+            _V_sub = VecSpaces.known_vec_space(self.element.scaled, field=None)
+            _K_sub = VecSpaces.known_field(_V_sub)
+            _a_sub = self.element.scalar
+            _x_sub = self.element.scaled
+            return scalar_mult_closure.instantiate(
+                    {V: _V_sub, K: _K_sub, a: _a_sub, x: _x_sub})
+
+        if isinstance(self.element, VecSum):
+            from proveit.linear_algebra.addition import summation_closure
+            from proveit.linear_algebra import VecSpaces
+            self.domain.deduce_as_vec_space()
+            print("HERE!")
+            _V_sub = VecSpaces.known_vec_space(self.element.summand)
+            _K_sub = VecSpaces.known_field(_V_sub)
+            _b_sub = self.element.indices
+            _j_sub = _b_sub.num_elements()
+            _f_sub = Lambda(self.element.indices, self.element.summand)
+            _Q_sub = Lambda(self.element.indices, self.element.condition)
+            imp = summation_closure.instantiate(
+                        {V: _V_sub, K: _K_sub, b: _b_sub, j: _j_sub,
+                         f: _f_sub, Q: _Q_sub})
+            return imp.derive_consequent()
+
+        raise ValueError("Element {0} is neither a TensorProd "
+                         "nor a ScalarMult.".format(self.element))
