@@ -93,7 +93,7 @@ class ExprRange(Expression):
         self.is_parameter_independent = (
             self.parameter not in free_vars(self.body))
         self._expansion_indices = [self.start_index]
-        self.get_range_expansion()
+        #self.get_range_expansion()
 
     @classmethod
     def _make(sub_class, core_info, sub_expressions, *, styles):
@@ -351,26 +351,35 @@ class ExprRange(Expression):
         Return the first instance of the range
         (and store for future use).
         '''
+        """
         if not hasattr(self, '_first') or self.get_styles() != self._first_style:
             expr_map = {self.lambda_map.parameter: self.start_index}
             self._first = self._body_replaced(expr_map)
             self._first_style = self.get_styles()
-            self.get_range_expansion()
-            self.last()
+            #self.get_range_expansion()
+            #self.last()
         return self._first
+        """
+        expr_map = {self.lambda_map.parameter: self.start_index}
+        return self._body_replaced(expr_map)
+        
 
     def last(self):
         '''
         Return the last instance of the range
         (and store for future use).
         '''
+        """
         if not hasattr(self, '_last') or self.get_styles() != self._last_style:
             expr_map = {self.lambda_map.parameter: self.end_index}
             self._last = self._body_replaced(expr_map)
             self._last_style = self.get_styles()
-            self.get_range_expansion()
-            self.first()
+            #self.get_range_expansion()
+            #self.first()
         return self._last
+        """
+        expr_map = {self.lambda_map.parameter: self.end_index}
+        return self._body_replaced(expr_map)
 
     def format_length(self):
         '''
@@ -486,6 +495,7 @@ class ExprRange(Expression):
             expansion = int(self.get_style("expansion", default_expansion))
 
         # reduce for formatting purposes
+        '''
         try:
             if self.first().auto_reduction() is not None:
                 first = self.first().auto_reduction()
@@ -498,6 +508,9 @@ class ExprRange(Expression):
         except:
             first = self.first()
             last = self.last()
+        '''
+        first = self.first()
+        last = self.last()
 
         check_points = [first, last]
         if use_explicit_parameterization and not self.is_parameter_independent:
