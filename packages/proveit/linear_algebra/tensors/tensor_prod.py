@@ -82,7 +82,11 @@ class TensorProd(Operation):
                 if isinstance(operand, ScalarMult):
                     # Just pull out the first one we see and let
                     # recursive simplifications take care of any more.
-                    expr = eq.update(expr.scalar_factorization(_k))
+                    # To make sure this happens we turn auto_simplify
+                    # on, and those simpiflications should all be fair
+                    # game as part of shallow_simplification.
+                    expr = eq.update(expr.scalar_factorization(
+                        _k, auto_simplify=True))
                     break
         
         # Future processing possible here.
