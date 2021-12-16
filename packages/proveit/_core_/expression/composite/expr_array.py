@@ -24,7 +24,7 @@ class ExprArray(ExprTuple):
     @classmethod
     def _make(sub_class, core_info, sub_expressions, *, styles):
         if sub_class != ExprArray:
-            MakeNotImplemented(sub_class)
+            raise MakeNotImplemented(sub_class)
         if len(core_info) != 1 or core_info[0] != 'ExprTuple':
             raise ValueError("An ExprArray is an ExprTuple of ExprTuples, "
                              "so the ExprArray core_info should contain "
@@ -208,7 +208,7 @@ class ExprArray(ExprTuple):
                     if element_positions != cur_elem_positions:
                         if isinstance(self, VertExprArray):
                             raise ValueError(
-                                    "Rwos do not line up across different "
+                                    "Rows do not line up across different "
                                     "columns in VertExprArray: %s"%self)
                         else:
                             raise ValueError(
