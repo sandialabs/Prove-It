@@ -35,9 +35,9 @@ class ScalarMult(Operation):
         Returns a proven simplification equation for this ScalarMult
         expression assuming the operands have been simplified.
         Handles:
-        (1) Multiply-nested scalar multiplication -- for example,
-            taking ScalarMult(a, ScalarMult(b, ScalarMult(c, v)))
-            to ScalarMult(Mult(a, b, c), v)
+        (1) Doubly-nested scalar multiplication -- for example,
+            taking ScalarMult(a, ScalarMult(b, v))
+            to ScalarMult(ScalarMult(a, b), v)
         (2) ScalarMult identity -- for example, taking ScalarMult(1, v)
             to v.
         '''
@@ -53,14 +53,12 @@ class ScalarMult(Operation):
         # via transitivities (starting with self=self).
         eq = TransRelUpdater(self)
 
-        # (1) Simplify multiply-nested scalar multiplications
-        # if isinstance(self.scaled, ScalarMult):
+        # (1) Simplify doubly-nested scalar multiplication
         if isinstance(expr.scaled, ScalarMult):
-            # Reduce multiply-nested scalar multiplications.
-            # return self.multi_scaling_reduction(preserve_all=True)
-            expr = eq.update(self.multi_scaling_reduction(preserve_all=True))
+            # Reduce a double-nested scalar multiplication.
+            expr = eq.update(self.double_scaling_reduction())
 
-        # (2) Simplify multiplicative idenity
+        # (2) Simplify multiplicative identity
         if expr.scalar == one:
             expr = eq.update(expr.scalar_one_elimination(preserve_all=True))
 
@@ -84,30 +82,8 @@ class ScalarMult(Operation):
         _K = VecSpaces.known_field(_V)
         _alpha = self.scalar
         _beta =  self.scaled.scalar
-        _plus = _K.plus_operator
-        _times = _K.times_operator
         return doubly_scaled_as_singly_scaled.instantiate(
-                {plus:_plus, times:_times, K:_K, V:_V, 
-                 x:_x, alpha:_alpha, beta:_beta})
-
-    @equality_prover('multi_scaling_reduced', 'multi_scaling_reduce')
-    def multi_scaling_reduction(self, **defaults_config):
-        expr = self
-
-        # A convenience to allow successive updates to the equation via
-        # transitivities (starting with self=self).
-        eq = TransRelUpdater(self)
-
-        while (isinstance(expr.scaled, ScalarMult) and
-               isinstance(expr.scaled.scaled, ScalarMult)):
-            # For all but the last reduction, use preserve_all=True.
-            expr = eq.update(expr.double_scaling_reduction(preserve_all=True))
-        
-        if isinstance(expr.scaled, ScalarMult):
-            # For the last reduction, we may allow simplification.
-            expr = eq.update(expr.double_scaling_reduction())
-
-        return eq.relation
+                {K:_K, V:_V, x:_x, alpha:_alpha, beta:_beta})
 
     @equality_prover('scalar_one_eliminated', 'scalar_one_eliminate')
     def scalar_one_elimination(self, **defaults_config):
@@ -179,15 +155,8 @@ class ScalarMult(Operation):
             # No vector space given, so we'll have to look for
             # a known membership of 'scaled' in a vector space.
             # This may be arbitrarily chosen.
-            try:
-                vec_space = next(VecSpaces.yield_known_vec_spaces(
-                        self.scaled, field=field))
-                field = VecSpaces.known_field(vec_space)
-            except StopIteration:
-                # No known vector space membership over the specified
-                # field.
-                raise UnsatisfiedPrerequisites(
-                        "%s is not known to be a vector in a vector "
-                        "space over %s"%(self.scaled, field))
+            vec_space = VecSpaces.known_vec_space(
+                        self.scaled, field=field)
+            field = VecSpaces.known_field(vec_space)
         return scalar_mult_closure.instantiate(
                 {K:field, V:vec_space, a:self.scalar, x:self.scaled})

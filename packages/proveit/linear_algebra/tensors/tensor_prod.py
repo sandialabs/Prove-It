@@ -2,7 +2,7 @@ from proveit import (Judgment, defaults, relation_prover, equality_prover,
                      Literal, Operation, Lambda,
                      prover, TransRelUpdater, SimplificationDirectives)
 from proveit import a, b, c, d, e, f, i, j, k, A, K, Q, U, V, W, alpha
-from proveit.logic import Equals, InClass
+from proveit.logic import Equals, InClass, SetMembership
 from proveit.abstract_algebra.generic_methods import (
         apply_association_thm, apply_disassociation_thm)
 from proveit.linear_algebra import (VecSpaces, ScalarMult, VecAdd, VecSum,
@@ -29,6 +29,12 @@ class TensorProd(Operation):
         Operation.__init__(self, TensorProd._operator_, operands,
                            styles=styles)
         self.factors = self.operands
+
+    def membership_object(self, element):
+        # This is a little bit odd, where a TensorProd can
+        # itself be an element of a TensorProd
+        from .tensor_prod_membership import TensorProdMembership
+        return TensorProdMembership(element, self)
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
@@ -63,7 +69,6 @@ class TensorProd(Operation):
             # loop through all operands
             while _n < length:
                 operand = expr.operands[_n]
-                # print("n, length", n, length)
                 if isinstance(operand, TensorProd):
                     # if it is grouped, ungroup it
                     expr = eq.update(expr.disassociation(
@@ -77,7 +82,11 @@ class TensorProd(Operation):
                 if isinstance(operand, ScalarMult):
                     # Just pull out the first one we see and let
                     # recursive simplifications take care of any more.
-                    expr = eq.update(expr.scalar_factorization(_k))
+                    # To make sure this happens we turn auto_simplify
+                    # on, and those simpiflications should all be fair
+                    # game as part of shallow_simplification.
+                    expr = eq.update(expr.scalar_factorization(
+                        _k, auto_simplify=True))
                     break
         
         # Future processing possible here.
@@ -191,17 +200,24 @@ class TensorProd(Operation):
             _b = sum_factor.operands
             _V = VecSpaces.known_vec_space(self, field=field)
             _j = _b.num_elements()
+            # use preserve_all=True in the following instantiation
+            # because the instantiation is an intermediate step;
+            # otherwise auto_simplification can over-do things
             impl = tensor_prod_distribution_over_add.instantiate(
-                {K:_K, i:_i, j:_j, k:_k, V:_V, a:_a, b:_b, c:_c})
+                {K:_K, i:_i, j:_j, k:_k, V:_V, a:_a, b:_b, c:_c},
+                preserve_all=True)
             return impl.derive_consequent().with_wrapping_at()
         elif isinstance(sum_factor, VecSum):
             _b = sum_factor.indices
             _j = _b.num_elements()
             _f = Lambda(sum_factor.indices, sum_factor.summand)
             _Q = Lambda(sum_factor.indices, sum_factor.condition)
+            # use preserve_all=True in the following instantiation
+            # because the instantiation is an intermediate step;
+            # otherwise auto_simplification can over-do things
             impl = tensor_prod_distribution_over_summation.instantiate(
                     {K:_K, f:_f, Q:_Q, i:_i, j:_j, k:_k, 
-                     V:_V, a:_a, b:_b, c:_c})
+                     V:_V, a:_a, b:_b, c:_c}, preserve_all=True)
             return impl.derive_consequent().with_wrapping_at()
         else:
             raise ValueError(
