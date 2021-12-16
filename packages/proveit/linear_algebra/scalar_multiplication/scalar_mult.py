@@ -35,9 +35,9 @@ class ScalarMult(Operation):
         Returns a proven simplification equation for this ScalarMult
         expression assuming the operands have been simplified.
         Handles:
-        (1) Multiply-nested scalar multiplication -- for example,
-            taking ScalarMult(a, ScalarMult(b, ScalarMult(c, v)))
-            to ScalarMult(Mult(a, b, c), v)
+        (1) Doubly-nested scalar multiplication -- for example,
+            taking ScalarMult(a, ScalarMult(b, v))
+            to ScalarMult(ScalarMult(a, b), v)
         (2) ScalarMult identity -- for example, taking ScalarMult(1, v)
             to v.
         '''
@@ -53,14 +53,12 @@ class ScalarMult(Operation):
         # via transitivities (starting with self=self).
         eq = TransRelUpdater(self)
 
-        # (1) Simplify multiply-nested scalar multiplications
-        # if isinstance(self.scaled, ScalarMult):
+        # (1) Simplify doubly-nested scalar multiplication
         if isinstance(expr.scaled, ScalarMult):
-            # Reduce multiply-nested scalar multiplications.
-            # return self.multi_scaling_reduction(preserve_all=True)
-            expr = eq.update(self.multi_scaling_reduction(preserve_all=True))
+            # Reduce a double-nested scalar multiplication.
+            expr = eq.update(self.double_scaling_reduction())
 
-        # (2) Simplify multiplicative idenity
+        # (2) Simplify multiplicative identity
         if expr.scalar == one:
             expr = eq.update(expr.scalar_one_elimination(preserve_all=True))
 
@@ -86,25 +84,6 @@ class ScalarMult(Operation):
         _beta =  self.scaled.scalar
         return doubly_scaled_as_singly_scaled.instantiate(
                 {K:_K, V:_V, x:_x, alpha:_alpha, beta:_beta})
-
-    @equality_prover('multi_scaling_reduced', 'multi_scaling_reduce')
-    def multi_scaling_reduction(self, **defaults_config):
-        expr = self
-
-        # A convenience to allow successive updates to the equation via
-        # transitivities (starting with self=self).
-        eq = TransRelUpdater(self)
-
-        while (isinstance(expr.scaled, ScalarMult) and
-               isinstance(expr.scaled.scaled, ScalarMult)):
-            # For all but the last reduction, use preserve_all=True.
-            expr = eq.update(expr.double_scaling_reduction(preserve_all=True))
-        
-        if isinstance(expr.scaled, ScalarMult):
-            # For the last reduction, we may allow simplification.
-            expr = eq.update(expr.double_scaling_reduction())
-
-        return eq.relation
 
     @equality_prover('scalar_one_eliminated', 'scalar_one_eliminate')
     def scalar_one_elimination(self, **defaults_config):
