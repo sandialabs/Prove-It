@@ -238,8 +238,9 @@ class Qcircuit(Function):
                 for row, _ in enumerate(col_entries):
                     down_wire_locations.add((row, col))
             else:
-                # For each set of qudit positions, record the last 
-                # corresponding format row.
+                # Map minimum rows of qudit_positions to the
+                # maximum of maximum rows of qudit_positions.
+                minrow_to_maxrow = dict()
                 qudit_positions_to_maxrow = dict()
                 for qudit_positions in qudit_positions_of_column:
                     if isinstance(qudit_positions, Set):
@@ -247,21 +248,22 @@ class Qcircuit(Function):
                     else:
                         positions_as_tuple = qudit_positions
                     assert isinstance(positions_as_tuple, ExprTuple)
-                    maxrow = max(qudit_position_to_row[qudit_position] for
-                                 qudit_position in positions_as_tuple.entries)
-                    qudit_positions_to_maxrow[qudit_positions] = maxrow
+                    pos_rows = [qudit_position_to_row[qudit_position] for
+                                qudit_position in positions_as_tuple.entries]
+                    maxrow = max(pos_rows)
+                    minrow = min(pos_rows)
+                    minrow_to_maxrow[minrow] = max(
+                        minrow_to_maxrow.get(minrow, 0), maxrow)
                 
                 # Now we can add 'down wire' locations appropriately 
                 # for this column.
                 add_down_wires_to_row = 0
                 for row, entry in enumerate(col_entries):
                     entry = entry[0] # the actual Expression of the 
-                    # entry
-                    if isinstance(entry, MultiQuditGate):
-                        qudit_positions = entry.qudit_positions
+                    if row in minrow_to_maxrow:
+                        maxrow = minrow_to_maxrow[row]
                         add_down_wires_to_row = max(
-                                add_down_wires_to_row,
-                                qudit_positions_to_maxrow[qudit_positions])
+                                add_down_wires_to_row, maxrow)
                     if (row < add_down_wires_to_row 
                             and row not in multigate_blockade):
                         # Add a wire down from this location since it 
