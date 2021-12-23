@@ -59,7 +59,7 @@ class ScalarMult(Operation):
             expr = eq.update(self.double_scaling_reduction())
 
         # (2) Simplify multiplicative identity
-        if expr.scalar == one:
+        if isinstance(expr, ScalarMult) and expr.scalar == one:
             expr = eq.update(expr.scalar_one_elimination(preserve_all=True))
 
         return eq.relation
