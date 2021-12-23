@@ -1,4 +1,5 @@
 from proveit import (Literal, defaults, USE_DEFAULTS,
+                     single_or_composite_expression,
                      prover, equality_prover, relation_prover)
 from proveit.relation import Relation
 from proveit.logic.classes import InClass, ClassMembership
@@ -17,6 +18,8 @@ class InSet(InClass):
     inset_expressions = dict()
 
     def __init__(self, element, domain, *, styles=None):
+        element = single_or_composite_expression(element)
+        domain = single_or_composite_expression(domain)
         InSet.inset_expressions[(element, domain)] = self
         InClass.__init__(self, element, domain, operator=InSet._operator_,
                          styles=styles)
