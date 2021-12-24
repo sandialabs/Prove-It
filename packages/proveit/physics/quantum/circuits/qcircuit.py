@@ -1,9 +1,10 @@
 from proveit import (Expression, Function, Literal, 
-                     ConditionalSet, Conditional,
-                     ExprTuple, ExprArray, VertExprArray, StyleOptions)
+                     ConditionalSet, Conditional, ExprRange,
+                     ExprTuple, ExprArray, VertExprArray, StyleOptions,
+                     free_vars)
 from proveit.logic import Set
 from proveit.physics.quantum.circuits.qcircuit_elements import (
-        Gate, MultiQuditGate, Ghost, Input, Output)
+        Gate, MultiQubitGate, Input, Output)
 
 class Qcircuit(Function):
     '''
@@ -69,191 +70,210 @@ class Qcircuit(Function):
         '''
         Return the set of (row, col) locations of the circuit
         grid where we should have a vertical wire to the next row.
-        We also check for MultiQuditGate consistencies, raising
+        We also check for MultiQubitGate consistencies, raising
         ValueError or TypeError if there is an inconsistency.
         '''
         from proveit.physics.quantum import (
                 CONTROL, CLASSICAL_CONTROL, SWAP)
         down_wire_locations = set()
-        qudit_position_to_row = {pos:row for row, pos in 
+        qubit_position_to_row = {pos:row for row, pos in 
                                  enumerate(format_row_element_positions)}
         
         # Iterate over each column.
         for col, col_entries in enumerate(format_cell_entries):
-            if isinstance(col_entries, Expression):
+            if not isinstance(col_entries, list):
                 # An Expression represents the entire column.
                 # There are no multi-qubit gates to worry about.
                 continue
-            assert isinstance(col_entries, list)
             
-            # Iterate over each row. Map qudit position sets of
-            # MultiQuditGates sets of rows that may be involved. 
-            qudit_positions_of_column = set()
+            # Iterate over each row. Map qubit position sets of
+            # MultiQubitGates sets of rows that may be involved. 
+            qubit_positions_of_column = set()
             # No vertical wire through multigate (blockade):
             multigate_blockade = set() 
-            has_generic_multiquditgate = False
+            has_generic_multiqubitgate = False
+            active_multigate = None
             for row, entry in enumerate(col_entries):
-                entry = entry[0] # the actual Expression of the entry
-                qudit_position = format_row_element_positions[row]
-                if isinstance(entry, MultiQuditGate):
-                    # MultiQuditGate entry.
-                    gate_op = entry.gate_operation
-                    qudit_positions = entry.qudit_positions
-                    qudit_positions_of_column.add(qudit_positions)
+                entry_expr = entry[0] # the actual Expression of the entry
+                qubit_pos = format_row_element_positions[row]
+                if isinstance(entry_expr, MultiQubitGate):
+                    # MultiQubitGate entry.
+                    gate_op = entry_expr.gate_operation
+                    qubit_positions = entry_expr.qubit_positions
+                    qubit_positions_of_column.add(qubit_positions)
                     is_multi_gate = False
-                    if isinstance(qudit_positions, Set):
-                        # Explicit qudit positions for a control or
+                    if isinstance(qubit_positions, Set):
+                        # Explicit qubit positions for a control or
                         # swap operation (order doesn't matter).
                         if gate_op not in (CONTROL, CLASSICAL_CONTROL, SWAP):
                             raise ValueError(
                                     "For a multi-gate, %s, use an ExprTuple "
-                                    "for the qudit_positions rather than "
+                                    "for the qubit_positions rather than "
                                     "a Set (order matters)."%str(gate_op))
-                        qudit_positions = qudit_positions.operands                        
-                    elif isinstance(qudit_positions, ExprTuple):
-                        # Explicit qudit positions for a multi-gate
+                        qubit_positions = qubit_positions.operands                        
+                        if qubit_positions.contains_range():
+                            raise ValueError(
+                                    "Explicit qubit positions "
+                                    "should not contain an ExprRange.")
+                    elif isinstance(qubit_positions, ExprTuple):
+                        # Explicit qubit positions for a multi-gate
                         # (order does matter)
                         if gate_op in (CONTROL, CLASSICAL_CONTROL, SWAP):
                             raise ValueError(
-                                    "For MultiQuditGates %s operations; "
-                                    "use a Set for the qudit_positions "
+                                    "For MultiQubitGates %s operations; "
+                                    "use a Set for the qubit_positions "
                                     "rather than ExprTuple (order does "
                                     "not matter)."%gate_op)
                         is_multi_gate = True
                     else:
-                        # A "generic" MultiQuditGate (no explicit
-                        # qudit_positions).
-                        has_generic_multiquditgate = True
-
-                    if qudit_positions.contains_range():
-                        raise ValueError(
-                                "Explicit qudit positions "
-                                "should not contain an ExprRange.")
-                    
+                        # A "generic" MultiQubitGate (no explicit
+                        # qubit_positions).
+                        has_generic_multiqubitgate = True
+                        
                     if is_multi_gate:
-                        # A multi-gate.  The qudit_positions must
-                        # be consecutive and all entries beyond the
-                        # top must be proper "Ghost" entries.
-                        for _k, multigate_position in enumerate(
-                                qudit_positions):
-                            next_position = (
-                                    format_row_element_positions[row+_k])
-                            if (next_position != multigate_position):
+                        # A multi-gate.  The qubit_positions must
+                        # be an ExprTuple of an ExprRange covering
+                        # all of the involved qubits and each entry
+                        # must be the same MultiQubitGate expression.
+                        if (qubit_positions.num_entries() != 1 or
+                                not isinstance(qubit_positions[0], ExprRange)):
+                            raise ValueError(
+                                    "To format a multigate in a Qcircuit, the " 
+                                    "qubit_positions must be an ExprTuple "
+                                    "with a single ExprRange, not %s"
+                                    %qubit_positions)
+                        qubit_positions_range = qubit_positions[0]
+                        if (qubit_positions_range.body !=
+                                qubit_positions_range.parameter):
+                            raise ValueError(
+                                    "To format a multigate in a Qcircuit, the " 
+                                    "qubit_positions must be an ExprTuple "
+                                    "with a single, simple ExprRange, not %s"
+                                    %qubit_positions)
+                        if active_multigate is None:
+                            start_index = qubit_positions_range.start_index
+                            if qubit_pos != start_index:
                                 raise ValueError(
-                                        "Multi-gate qudit positions "
-                                        "must match consecutive rows: "
-                                        "%s ≠ %s."
-                                        %(multigate_position,
-                                          next_position))
-                            if _k > 0:
-                                multigate_blockade.add(row+_k-1)
-                                entry_below = col_entries[row+_k][0]
-                                if not isinstance(entry_below, Ghost):
-                                    raise TypeError(
-                                            "Entry below a multi-gate for "
-                                            "%s operation expected to be "
-                                            "a Ghost, but got %s"
-                                            %(entry.gate_operation, 
-                                              entry_below))
-                                if (entry_below.gate_operation != 
-                                        entry.gate_operation):
-                                    raise TypeError(
-                                            "Entry below a multi-gate for "
-                                            "%s operation expected to be "
-                                            "a Ghost for this operation, "
-                                            "not for %s."
-                                            %(entry.gate_operation, 
-                                              entry_below.gate_operation))
+                                        "Mismatch of starting qubit position "
+                                        "of a multigate: %s ≠ %s"
+                                        %(qubit_pos, start_index))
+                            active_multigate = entry_expr
+                        else:
+                            if entry_expr != active_multigate:
+                                raise ValueError(
+                                        "The MultiQubitGate expressions "
+                                        "composing a multigate must be the "
+                                        "same: %s %s"%(entry_expr,
+                                                       active_multigate))
+                            if qubit_pos == qubit_positions_range.end_index:
+                                active_multigate = None
+                        if active_multigate is not None:
+                            # There is a continuing multigate, so block
+                            # any down wire from this row.
+                            multigate_blockade.add(row)
+                    elif active_multigate is not None:
+                        raise ValueError(
+                                "The MultiQubitGate expressions "
+                                "composing a multigate must be consecutive "
+                                "up until the end qubit positions: "
+                                "encountered %s before end of %s"
+                                %(entry_expr, active_multigate))
                     else:
                         # For a control or a swap, make sure the 
-                        # qudit_positions all exist and have 
+                        # qubit_positions all exist and have 
                         # appropriate entries.
 
-                        # If it is a SWAP, it involve two qudits.
+                        # If it is a SWAP, it involve two qubits.
                         if (gate_op == SWAP and 
-                                qudit_positions.num_entries() != 2):
+                                qubit_positions.num_entries() != 2):
                             raise ValueError(
                                     "For a SWAP, please use "
-                                    "two qudit_positions, not %d"
-                                    %qudit_positions.num_entries())
+                                    "two qubit_positions, not %d"
+                                    %qubit_positions.num_entries())
                         
                         # Other cases (e.g., a control with many
                         # targets), should have 
                         contains_cur_pos = False
-                        for _other_pos in qudit_positions:
-                            if _other_pos == qudit_position:
+                        for _other_pos in qubit_positions:
+                            if _other_pos == qubit_pos:
                                 # The current position is contained.
                                 contains_cur_pos = True
                                 continue
-                            if _other_pos not in qudit_position_to_row:
+                            if _other_pos not in qubit_position_to_row:
                                 raise ValueError(
-                                        "The qudit position of %s for a "
-                                        "%s MultiQuditGate is not a known "
-                                        "qudit_position of the Qcircuit, "
+                                        "The qubit position of %s for a "
+                                        "%s MultiQubitGate is not a known "
+                                        "qubit_position of the Qcircuit, "
                                         "it is not in %s"
                                         %(_other_pos, gate_op,
-                                          qudit_position_to_row.keys()))
-                            _other_row = qudit_position_to_row[_other_pos]
-                            _other_entry = col_entries[_other_row][0]
+                                          qubit_position_to_row.keys()))
+                            _other_row = qubit_position_to_row[_other_pos]
+                            _other_entry_expr = col_entries[_other_row][0]
                             if gate_op == SWAP:
-                                if _other_entry != entry:
+                                if _other_entry_expr != entry_expr:
                                     raise ValueError(
                                             "For a SWAP, please use "
-                                            "two MultiQuditGates that are "
+                                            "two MultiQubitGates that are "
                                             "the same: %s ≠ %s."
-                                            %(_other_entry, entry))
-                            elif isinstance(_other_entry, Ghost):
-                                raise ValueError(
-                                        "A %s MultiQuditGate should not "
-                                        "target part of a mult-gate except "
-                                        "the top.")
-                            elif (qudit_positions.num_entries() == 2 and
+                                            %(_other_entry_expr, entry_expr))
+                            if isinstance(_other_entry_expr, MultiQubitGate):
+                                other_qpositions = (
+                                        _other_entry_expr.qubit_positions)
+                                if (isinstance(other_qpositions, ExprTuple) and
+                                        other_qpositions.num_entries() == 1 and
+                                        isinstance(other_qpositions[0], 
+                                                   ExprRange)):
+                                    if (other_qpositions[0].start_index
+                                            != _other_pos):
+                                        raise ValueError(
+                                                "A %s MultiQubitGate should "
+                                                "not target part of a "
+                                                "mult-gate except the top.")
+                            elif (qubit_positions.num_entries() == 2 and
                                   gate_op == CONTROL and
-                                  _other_entry.gate_operation == CONTROL):
+                                  _other_entry_expr.gate_operation == CONTROL):
                                 # This a symmetrically-formed 
                                 # controlled-Z (control on both ends).
                                 # That's okay.
                                 continue
-                            if not (isinstance(_other_entry, Gate) or
-                                    (isinstance(_other_entry, MultiQuditGate)
-                                    and isinstance(_other_entry.qudit_positions,
+                            if not (isinstance(_other_entry_expr, Gate) or
+                                    (isinstance(_other_entry_expr, MultiQubitGate)
+                                    and isinstance(_other_entry_expr.qubit_positions,
                                                    ExprTuple))):
                                 raise ValueError(
                                         "With exception to a symmetrically "
                                         "formed controlled-Z, the target "
                                         "of a control must be a gate or "
                                         "a multi-gate, not %s."
-                                        %_other_entry)
+                                        %_other_entry_expr)
                         if not contains_cur_pos:
                             raise ValueError(
-                                    "The qudit positions of a MultiQuditGate "
-                                    "must contain that of the MultiQuditGate "
+                                    "The qubit positions of a MultiQubitGate "
+                                    "must contain that of the MultiQubitGate "
                                     "itself, but %s is not in %s"
-                                    %(qudit_position, qudit_positions))
+                                    %(qubit_pos, qubit_positions))
             
-            if has_generic_multiquditgate:
-                # If there is a generic MultiQuditGate, we need
+            if has_generic_multiqubitgate:
+                # If there is a generic MultiQubitGate, we need
                 # a vertical wire from top to bottom since anything
                 # could be the target.
                 for row, _ in enumerate(col_entries):
                     down_wire_locations.add((row, col))
             else:
-                # Map minimum rows of qudit_positions to the
-                # maximum of maximum rows of qudit_positions.
+                # Map minimum rows of qubit_positions to the
+                # maximum of maximum rows of qubit_positions
+                # (except for multigates where we skip vertical wires).
                 minrow_to_maxrow = dict()
-                qudit_positions_to_maxrow = dict()
-                for qudit_positions in qudit_positions_of_column:
-                    if isinstance(qudit_positions, Set):
-                        positions_as_tuple = qudit_positions.operands
-                    else:
-                        positions_as_tuple = qudit_positions
-                    assert isinstance(positions_as_tuple, ExprTuple)
-                    pos_rows = [qudit_position_to_row[qudit_position] for
-                                qudit_position in positions_as_tuple.entries]
-                    maxrow = max(pos_rows)
-                    minrow = min(pos_rows)
-                    minrow_to_maxrow[minrow] = max(
-                        minrow_to_maxrow.get(minrow, 0), maxrow)
+                for qubit_positions in qubit_positions_of_column:
+                    if isinstance(qubit_positions, Set):
+                        positions_as_tuple = qubit_positions.operands
+                        assert isinstance(positions_as_tuple, ExprTuple)
+                        pos_rows = [qubit_position_to_row[_qubit_pos] for
+                                    _qubit_pos in positions_as_tuple.entries]
+                        maxrow = max(pos_rows)
+                        minrow = min(pos_rows)
+                        minrow_to_maxrow[minrow] = max(
+                            minrow_to_maxrow.get(minrow, 0), maxrow)
                 
                 # Now we can add 'down wire' locations appropriately 
                 # for this column.
@@ -267,17 +287,54 @@ class Qcircuit(Function):
                     if (row < add_down_wires_to_row 
                             and row not in multigate_blockade):
                         # Add a wire down from this location since it 
-                        # is before the last row of MultiQuditGate
-                        # qudit positions, and it isn't blocked by a
+                        # is before the last row of MultiQubitGate
+                        # qubit positions, and it isn't blocked by a
                         # multigate.
                         down_wire_locations.add((row, col))
         
         # Return all 'down wire' location.
         return down_wire_locations
 
+    @staticmethod
+    def _is_multirowcenter(center_entry):
+        '''
+        Return True iff the given entry is the center of an
+        ExprRange over identity gates (a multiwire) or the center
+        of an ExprRange over MultiQubitGates that represent a 
+        multigate.
+        '''
+        from proveit.numbers import one
+        from proveit.physics.quantum import I
+        print('center_entry', center_entry)
+        if center_entry[-1] not in ('implicit', 'explicit'):
+            print("Not in center")
+            return False # Not the center of an ExprRange.
+        range_expr = center_entry[0]
+        assert isinstance(range_expr, ExprRange)
+        range_expr_body = range_expr.body
+        if range_expr_body == Gate(I) and range_expr.start_index==one:
+            return True # A multiwire
+        if not isinstance(range_expr_body, MultiQubitGate):
+            # Not a multiwire or multigate.
+            print("Not a multigate")
+            return False
+        range_expr_param = range_expr.parameter
+        if range_expr_param in free_vars(range_expr_body):
+            # Cannot represent a multigate if the ExprRange body
+            # depends upon the parameter.
+            print("Not a proper multigate")
+            return False
+        if isinstance(range_expr_body.qubit_positions, ExprTuple):
+            # A confirmed multigate with an ExprTuple of qubit
+            # positions.
+            return True
+        print("Not proper multigate")
+        return False
+
     def latex(self, fence=False, **kwargs):
         from proveit.physics.quantum import (
                 CONTROL, CLASSICAL_CONTROL, SWAP)
+        from proveit.numbers import one
         spacing = self.get_style('spacing')
             
         # Get the element positions corresponding to each row of the
@@ -327,55 +384,73 @@ class Qcircuit(Function):
         # Find locations where we should add a downward wire.
         down_wire_locations = Qcircuit._find_down_wire_locations(
                 format_cell_entries, format_row_element_positions)
-        for row in range(height):
+        row = 0
+        formatted_entries = []
+        while row < height:
             formatted_row_entries = []
+            collapsible_multirow = True
             for col in range(width):
+                print(row, col)
                 format_col_entries = format_cell_entries[col]
                 formatted_col_entries = formatted_cells[col]
-                # MUST FIGURE OUT WHAT TO DO WITH outer_explicit_formatted_cell and inner_explicit_formatted_cell: TODO
                 if isinstance(formatted_col_entries, list):
                     formatted_entry = formatted_col_entries[row]
+                    print("collapsible_multirow?", col)
+                    if (collapsible_multirow and 
+                            row+1 < len(format_col_entries)):
+                        next_row_entry = format_col_entries[row+1]
+                        if not Qcircuit._is_multirowcenter(next_row_entry):
+                            collapsible_multirow = False
+                    else:
+                        collapsible_multirow = False
                     entry = format_col_entries[row][0]
                     if formatted_entry in (r'\cdots', r'\vdots', r'\ddots'):
                         # Wrap ellipses in \gate, \lstick, or \rstick
                         # as appropriate.
-                        _entry = entry
+                        _expr = entry
+                        if isinstance(_expr, ExprRange):
+                            _expr = _expr.body
                         # If the entry is a conditional set, use the
                         # value of any of the conditionals to determine
                         # the type.
-                        while (isinstance(_entry, ConditionalSet) or
-                               isinstance(_entry, Conditional)):
-                            if isinstance(_entry, ConditionalSet):
-                                _entry = _entry.conditionals[0]
-                            if isinstance(_entry, Conditional):
-                                _entry = _entry.value
-                        if (isinstance(_entry, Gate) or 
-                                isinstance(_entry, MultiQuditGate)):
+                        while (isinstance(_expr, ConditionalSet) or
+                               isinstance(_expr, Conditional)):
+                            if isinstance(_expr, ConditionalSet):
+                                _expr = _expr.conditionals[0]
+                            if isinstance(_expr, Conditional):
+                                _expr = _expr.value
+                        if (isinstance(_expr, Gate) or 
+                                isinstance(_expr, MultiQubitGate)):
                             formatted_entry = r'\gate{%s}'%formatted_entry
-                        elif isinstance(_entry, Input):
+                        elif isinstance(_expr, Input):
                             formatted_entry = r'\lstick{%s}'%formatted_entry
-                        elif isinstance(_entry, Output):
+                        elif isinstance(_expr, Output):
                             formatted_entry = r'\rstick{%s}'%formatted_entry
-                    if isinstance(entry, MultiQuditGate):
-                        if isinstance(entry.qudit_positions, ExprTuple):
+                    if isinstance(entry, MultiQubitGate):
+                        if isinstance(entry.qubit_positions, ExprTuple):
                             gate_op = entry.gate_operation
                             assert gate_op not in (
                                     CONTROL, CLASSICAL_CONTROL, SWAP)
                             # The top of a multi-gate (not a 
                             # control or swap and has explicit 
-                            # qudit positions).
-                            qudit_positions = entry.qudit_positions
-                            if qudit_positions.contains_range():
-                                raise ValueError(
-                                        "Explicit qudit positions "
-                                        "should not contain an "
-                                        "ExprRange.")
-                            nqdits = entry.qudit_positions.num_entries()
+                            # qubit positions).
+                            qubit_positions = entry.qubit_positions
+                            assert qubit_positions.num_entries()==1
+                            assert isinstance(qubit_positions[0], ExprRange)
                             assert formatted_entry[:5] == r'\gate'
-                            # The top-most of a block gate.
-                            formatted_entry = (
-                                    r'\multigate{%d}'%(nqdits-1) +
-                                    formatted_entry[5:])
+                            qubit_pos = format_row_element_positions[row]
+                            if (qubit_positions[0].start_index == qubit_pos):
+                                # The top-most of a multi-gate.
+                                formatted_entry = (
+                                        # The '#' is a placeholder.
+                                        # We'll go back through and
+                                        # replace these later.
+                                        r'\multigate{#}' +
+                                        formatted_entry[5:])
+                            else:
+                                # Non-top of a multi-gate.
+                                formatted_entry = (
+                                        r'\ghost' + formatted_entry[5:])
                     if (row, col) in down_wire_locations:
                         formatted_entry += r' \qwx[1]'                                
                     formatted_row_entries.append(formatted_entry)
@@ -387,12 +462,56 @@ class Qcircuit(Function):
                                      %formatted_col_entries)
                     if row==0:
                         # An expression represents the entire row: top
+                        # Since the height may change as a result
+                        # of collapsing multiwires/gates, just use '#'
+                        # as a placeholder for now.
                         formatted_row_entries.append(
-                                r'\multigate{%d}{%s}'%(height, formatted_col))
+                                r'\multigate{#}{%s}'%(formatted_col))
                     else:
                         # An expression represents the entire row: not top
                         formatted_col = formatted_col_entries
                         formatted_row_entries.append(r'\ghost{%s}'%formatted_col)
+            if collapsible_multirow:
+                # Collapse multiwires and multigates into a single row.
+                row += 1                
+                for col in range(width):
+                    formatted_entry = formatted_row_entries[col]
+                    print('formatted_entry', formatted_entry)
+                    if formatted_entry[:3] == r'\qw':
+                        # format a multiwire
+                        _expr = format_cell_entries[col][row][0]
+                        assert isinstance(_expr, ExprRange)
+                        assert _expr.start_index == one
+                        size = _expr.end_index
+                        formatted_row_entries[col] = (
+                                r'{ /^{' + size.latex() + r'} } '
+                                + formatted_row_entries[col])
+                    else:
+                        assert (formatted_entry[:6] == r'\ghost' or
+                                formatted_entry[:10] == r'\multigate')
+                row += 2
+            else:
+                row += 1
+            formatted_entries.append(formatted_row_entries)
+            
+        # Generate row contributions to out_str.
+        height = len(formatted_entries)
+        for row, formatted_row_entries in enumerate(formatted_entries):
+            for col, formatted_entry in enumerate(formatted_row_entries):
+                if formatted_entry[:13] == r'\multigate{#}':
+                    # replace the '#' placeholder in a multigate with
+                    # the appropriate number of rows.
+                    _nrows = 1
+                    while (row+_nrows < height and 
+                           formatted_entries[row+_nrows][col][:6]==r'\ghost'):
+                        _nrows += 1
+                    if _nrows == 1:
+                        formatted_entries[row][col] = (
+                                r'\gate' + formatted_entry[13:])
+                    else:
+                        formatted_entries[row][col] = (
+                                r'\multigate{%d}'%(_nrows-1) + 
+                                formatted_entry[13:])
             out_str += '& ' + ' & '.join(formatted_row_entries) 
             if row != height-1:
                 out_str += r' \\' + '\n'

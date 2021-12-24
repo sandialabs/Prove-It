@@ -1,6 +1,7 @@
 from .qcircuit import Qcircuit
-from .qcircuit_elements import (Gate, MultiQuditGate, Ghost,
-                                Input, Output, MultiWire)
+from .qcircuit_elements import (Gate, MultiQubitGate,
+                                Input, Output, 
+                                multi_gate_entries, multi_wire)
 from .qcircuit_equiv import QcircuitEquiv
 
 
