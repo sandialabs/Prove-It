@@ -374,7 +374,7 @@ class ExprTuple(Composite, Expression):
                             enumerate(range_items))
                     parameterization = item.get_style('parameterization',
                                                       'implicit')
-                    cell_entries.append((item.body, parameterization))
+                    cell_entries.append((item, parameterization))
                     cell_entries.append((item.last(), -1))
                 else:
                     # One format cells for a regular entry.

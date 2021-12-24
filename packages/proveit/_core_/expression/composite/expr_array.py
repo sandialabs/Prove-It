@@ -1,4 +1,5 @@
 from .expr_tuple import ExprTuple
+from .expr_range import ExprRange
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_.defaults import USE_DEFAULTS
@@ -120,6 +121,8 @@ class ExprArray(ExprTuple):
         for _i, outer_entry in enumerate(
                 ExprTuple.get_format_cell_entries(self)):
             outer_expr, outer_role = outer_entry
+            if isinstance(outer_expr, ExprRange):
+                outer_expr = outer_expr.body
             if isinstance(outer_expr, ExprTuple):
                 # An explicit inner list.
                 inner_format_cell_entries = []
@@ -134,7 +137,7 @@ class ExprArray(ExprTuple):
                 format_cell_entries.append(inner_format_cell_entries)
             else:
                 # Represent an entire inner list with an entry.
-                format_cell_entries.append((outer_expr, outer_role))
+                format_cell_entries.append(outer_entry)
         
         # Where roles are 'explicit' outside and inside, we'll make 
         # surrounding roles be implicit for a more compact 
@@ -304,7 +307,8 @@ class ExprArray(ExprTuple):
                             # 'explicit' outer and inner role.  Format
                             # the body at the center of a range of
                             # tuples of ranges.
-                            formatted_cell = expr.latex(**cell_latex_kwargs)
+                            formatted_cell = expr.body.latex(
+                                    **cell_latex_kwargs)
                         else:
                             formatted_cell = outer_explicit_formatted_cell(
                                     expr.latex(**cell_latex_kwargs))
@@ -312,7 +316,7 @@ class ExprArray(ExprTuple):
                         formatted_cell = inner_ellipsis
                     elif inner_role == 'explicit':
                         formatted_cell = inner_explicit_formatted_cell(
-                                expr.latex(**cell_latex_kwargs))
+                                expr.body.latex(**cell_latex_kwargs))
                     else:
                         # default:
                         formatted_cell = expr.latex(**cell_latex_kwargs)
@@ -326,7 +330,7 @@ class ExprArray(ExprTuple):
                     formatted_cells.append(outer_ellipsis)
                 elif role == 'explicit':
                     formatted_cells.append(outer_explicit_formatted_cell(
-                            expr.latex(**cell_latex_kwargs)))
+                            expr.body.latex(**cell_latex_kwargs)))
                 else:
                     formatted_cells.append(expr.latex(**cell_latex_kwargs))
         return formatted_cells
