@@ -305,9 +305,7 @@ class Qcircuit(Function):
         '''
         from proveit.numbers import one
         from proveit.physics.quantum import I
-        print('center_entry', center_entry)
         if center_entry[-1] not in ('implicit', 'explicit'):
-            print("Not in center")
             return False # Not the center of an ExprRange.
         range_expr = center_entry[0]
         assert isinstance(range_expr, ExprRange)
@@ -316,19 +314,16 @@ class Qcircuit(Function):
             return True # A multiwire
         if not isinstance(range_expr_body, MultiQubitGate):
             # Not a multiwire or multigate.
-            print("Not a multigate")
             return False
         range_expr_param = range_expr.parameter
         if range_expr_param in free_vars(range_expr_body):
             # Cannot represent a multigate if the ExprRange body
             # depends upon the parameter.
-            print("Not a proper multigate")
             return False
         if isinstance(range_expr_body.qubit_positions, ExprTuple):
             # A confirmed multigate with an ExprTuple of qubit
             # positions.
             return True
-        print("Not proper multigate")
         return False
 
     def latex(self, fence=False, **kwargs):
@@ -390,12 +385,10 @@ class Qcircuit(Function):
             formatted_row_entries = []
             collapsible_multirow = True
             for col in range(width):
-                print(row, col)
                 format_col_entries = format_cell_entries[col]
                 formatted_col_entries = formatted_cells[col]
                 if isinstance(formatted_col_entries, list):
                     formatted_entry = formatted_col_entries[row]
-                    print("collapsible_multirow?", col)
                     if (collapsible_multirow and 
                             row+1 < len(format_col_entries)):
                         next_row_entry = format_col_entries[row+1]
@@ -476,7 +469,6 @@ class Qcircuit(Function):
                 row += 1                
                 for col in range(width):
                     formatted_entry = formatted_row_entries[col]
-                    print('formatted_entry', formatted_entry)
                     if formatted_entry[:3] == r'\qw':
                         # format a multiwire
                         _expr = format_cell_entries[col][row][0]
