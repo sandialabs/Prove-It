@@ -26,6 +26,11 @@ class ExprTuple(Composite, Expression):
         from proveit._core_ import Judgment
         from .composite import single_or_composite_expression
         entries = []
+        if isinstance(expressions, str):
+            # We should check for strings in particular because this
+            # will otherwise lead to an infinite recursion.
+            raise TypeError("ExprTuple accepts Expressions, not a str: %s"
+            %expressions)
         for entry in expressions:
             if isinstance(entry, Judgment):
                 # Extract the Expression from the Judgment:
@@ -369,7 +374,7 @@ class ExprTuple(Composite, Expression):
                             enumerate(range_items))
                     parameterization = item.get_style('parameterization',
                                                       'implicit')
-                    cell_entries.append((item.body, parameterization))
+                    cell_entries.append((item, parameterization))
                     cell_entries.append((item.last(), -1))
                 else:
                     # One format cells for a regular entry.

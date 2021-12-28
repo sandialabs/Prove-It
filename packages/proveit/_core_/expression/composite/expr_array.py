@@ -1,4 +1,5 @@
 from .expr_tuple import ExprTuple
+from .expr_range import ExprRange
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_.defaults import USE_DEFAULTS
@@ -6,22 +7,25 @@ from proveit._core_.defaults import USE_DEFAULTS
 
 class ExprArray(ExprTuple):
     '''
-    An ExprArray is simply an ExprTuple of ExprTuples or ExprRanges.
-    The array is broken up into different rows after each ExprTuple
-    or ExprRange. Each column MUST contain the same type of expression.
+    An ExprArray represents a 2-dimensional array.  It is simply
+    an ExprTuple of ExprTuples (or Expressions representing ExprTuples).
+    By default, each inner ExprTuple is a row of the array (row-major
+    order).  For the opposite orientation (column-major order), use
+    VertExprArray.
     '''
 
-    def __init__(self, *expressions, styles=None):
+    def __init__(self, *rows_or_columns, styles=None):
         '''
         Initialize an ExprArray from an iterable over ExprTuple
-        objects or Expressions that represent ExprTuples.
+        objects or Expressions that represent ExprTuples, each
+        representing a row (or a column if it is a VertExprArray).
         '''
-        ExprTuple.__init__(self, *expressions, styles=styles)
+        ExprTuple.__init__(self, *rows_or_columns, styles=styles)
 
     @classmethod
     def _make(sub_class, core_info, sub_expressions, *, styles):
         if sub_class != ExprArray:
-            MakeNotImplemented(sub_class)
+            raise MakeNotImplemented(sub_class)
         if len(core_info) != 1 or core_info[0] != 'ExprTuple':
             raise ValueError("An ExprArray is an ExprTuple of ExprTuples, "
                              "so the ExprArray core_info should contain "
@@ -76,7 +80,7 @@ class ExprArray(ExprTuple):
                 entries.append(value)
         return ExprTuple(entries)
     
-    def get_format_cell_entries(self):
+    def get_format_cell_entries(self, format_cell_entries=None):
         '''
         Returns a list of (for the most part) lists of entries in 
         correspondence with each format cell of this ExprArray.  It is
@@ -91,10 +95,13 @@ class ExprArray(ExprTuple):
         parameterization, the explicit parameterization will be
         shown compactly only in the center of the range of ranges
         but will be made implicit in the cells above/below/left/right.
-        
+                
         The 'role' information will be used to determine how to format
         the cell with respect to using horizontal/vertical ellipses,
         etc.
+
+        If 'format_cell_entries' is provided, append to it rather
+        than creating a new list.
         '''
         
         # TODO: Check alignment 'implicit'/'explicit' cells, making
@@ -104,11 +111,18 @@ class ExprArray(ExprTuple):
         # first by simply composing outer and inner roles.
         # Remember coordinates of entries that are 'explicit' outside
         # and inside -- we'll edit their surrounding entries next.
-        format_cell_entries = []
+        if format_cell_entries is None:
+            format_cell_entries = []
+        else:
+            if not isinstance(format_cell_entries, list):
+                raise TypeError("Expecting 'format_cell_entries' to be a "
+                                "list")
         doubly_explicit_coordinates = []
         for _i, outer_entry in enumerate(
                 ExprTuple.get_format_cell_entries(self)):
             outer_expr, outer_role = outer_entry
+            if isinstance(outer_expr, ExprRange):
+                outer_expr = outer_expr.body
             if isinstance(outer_expr, ExprTuple):
                 # An explicit inner list.
                 inner_format_cell_entries = []
@@ -123,7 +137,7 @@ class ExprArray(ExprTuple):
                 format_cell_entries.append(inner_format_cell_entries)
             else:
                 # Represent an entire inner list with an entry.
-                format_cell_entries.append((outer_expr, outer_role))
+                format_cell_entries.append(outer_entry)
         
         # Where roles are 'explicit' outside and inside, we'll make 
         # surrounding roles be implicit for a more compact 
@@ -197,7 +211,7 @@ class ExprArray(ExprTuple):
                     if element_positions != cur_elem_positions:
                         if isinstance(self, VertExprArray):
                             raise ValueError(
-                                    "Rwos do not line up across different "
+                                    "Rows do not line up across different "
                                     "columns in VertExprArray: %s"%self)
                         else:
                             raise ValueError(
@@ -205,10 +219,39 @@ class ExprArray(ExprTuple):
                                     "rows in ExprArray: %s"%self)
         return element_positions
 
+    @staticmethod
+    def vertical_explicit_cell_latex(expr_latex):
+        '''
+        Return the formatted cell, given the LaTeX of the 
+        expression of the cell, with two vertical dots above and below 
+        to denote an explicit parameterization of a vertical ExprRange.
+        '''
+        # Wrap with two vertical dots above and below.
+        return r'\begin{array}{c}:\\ %s \\:\end{array}'%expr_latex
     
-    def get_latex_formatted_cells(self, orientation='horizontal'):
+    @staticmethod
+    def horizontal_explicit_cell_latex(expr_latex):
+        '''
+        Return the formatted cell, given the LaTeX of the expression of 
+        the cell, with two centered dots before and after to denote an 
+        explicit parameterization of a horizontal ExprRange.
+        '''
+        # Wrap with two horizontal dots before and after.
+        return  (r'\cdot \cdot ' + expr_latex + r' \cdot \cdot')    
+    
+    def get_latex_formatted_cells(self, orientation='horizontal',
+                                  vertical_explicit_cell_latex_fn=None,
+                                  horizontal_explicit_cell_latex_fn=None,
+                                  format_cell_entries=None,
+                                  **cell_latex_kwargs):
         '''
         Return cells of this ExprArray formatted for LaTeX.
+        
+        The entries themselves may optionally be passed back via
+        format_cell_entries (provide an empty list).
+        
+        The 'cell_latex_kwargs' will be passed as keyword arguments
+        to the 'latex' calls for formatting each cell.
         '''
         # Depending upon the orientation, outer/inner ellipses
         # are vertical/horizontal dots.
@@ -216,23 +259,28 @@ class ExprArray(ExprTuple):
                           else r'\cdots')
         inner_ellipsis = (r'\cdots' if orientation=='horizontal'
                           else r'\vdots')
-        # These function will switch if the orientation is 'vertical'.
-        def outer_explicit_formatted_cell(expr):
-            # Wrap with two vertical dots above and below.
-            return r'\begin{array}{c}:\\ %s \\:\end{array}'%expr.latex()
-        def inner_explicit_formatted_cell(expr):
-            # Wrap with two horizontal dots before and after.
-            return  r'\cdot \cdot ' + expr.latex() + r' \cdot \cdot'
-        # Switch if the  orientation is 'vertical':
-        if orientation != 'horizontal':
-            if orientation != 'vertical':
-                raise ValueError("'orientation' must be 'horizontal' or "
-                                 "'vertical', not %s"%orientation)
-            inner_explicit_formatted_cell, outer_explicit_formatted_cell = (
-                outer_explicit_formatted_cell, inner_explicit_formatted_cell)
+        
+        if vertical_explicit_cell_latex_fn is None:
+            vertical_explicit_cell_latex_fn = (
+                    ExprArray.vertical_explicit_cell_latex)
+        if horizontal_explicit_cell_latex_fn is None:
+            horizontal_explicit_cell_latex_fn = (
+                    ExprArray.horizontal_explicit_cell_latex)
+
+        if orientation == 'horizontal':
+            outer_explicit_formatted_cell, inner_explicit_formatted_cell = (
+                    vertical_explicit_cell_latex_fn,
+                    horizontal_explicit_cell_latex_fn)
+        elif orientation == 'vertical':
+            outer_explicit_formatted_cell, inner_explicit_formatted_cell = (
+                    horizontal_explicit_cell_latex_fn,
+                    vertical_explicit_cell_latex_fn)
+        else:
+            raise ValueError("'orientation' must be 'horizontal' or "
+                             "'vertical', not %s"%orientation)
         
         formatted_cells = []
-        format_cell_entries = self.get_format_cell_entries()
+        format_cell_entries = self.get_format_cell_entries(format_cell_entries)
         for inner_format_cell_entries in format_cell_entries:
             if isinstance(inner_format_cell_entries, list):
                 # Explicit inner list.
@@ -259,16 +307,19 @@ class ExprArray(ExprTuple):
                             # 'explicit' outer and inner role.  Format
                             # the body at the center of a range of
                             # tuples of ranges.
-                            formatted_cell = expr.latex()
+                            formatted_cell = expr.body.latex(
+                                    **cell_latex_kwargs)
                         else:
                             formatted_cell = outer_explicit_formatted_cell(
-                                    expr)
+                                    expr.latex(**cell_latex_kwargs))
                     elif inner_role == 'implicit':
                         formatted_cell = inner_ellipsis
                     elif inner_role == 'explicit':
-                        formatted_cell = inner_explicit_formatted_cell(expr)
+                        formatted_cell = inner_explicit_formatted_cell(
+                                expr.body.latex(**cell_latex_kwargs))
                     else:
-                        formatted_cell = expr.latex() # default
+                        # default:
+                        formatted_cell = expr.latex(**cell_latex_kwargs)
                     inner_formatted_cells.append(formatted_cell)                        
                 formatted_cells.append(inner_formatted_cells)
             else:
@@ -279,9 +330,9 @@ class ExprArray(ExprTuple):
                     formatted_cells.append(outer_ellipsis)
                 elif role == 'explicit':
                     formatted_cells.append(outer_explicit_formatted_cell(
-                            outer_ellipsis))
+                            expr.body.latex(**cell_latex_kwargs)))
                 else:
-                    formatted_cells.append(expr.latex())
+                    formatted_cells.append(expr.latex(**cell_latex_kwargs))
         return formatted_cells
 
     def latex(self, orientation='horizontal', fence=False, **kwargs):
@@ -356,6 +407,6 @@ class ExprArray(ExprTuple):
         
         out_str += r'\end{array}' + '\n'
         if fence:
-            out_str = r'\right('
+            out_str = r'\right)'
         return out_str
         

@@ -289,7 +289,8 @@ class Equals(TransitiveRelation):
                 
                 # If any assumptions are required that are introduced
                 # by inner conditions, we need to equate Conditionals.
-                inner_conditions = set(next_inner_lhs.conditions)
+                inner_conditions = set(next_inner_lhs.conditions).intersection(
+                        next_inner_rhs.conditions)
                 conditions = []
                 equality = equality.prove(assumptions=assumptions)
                 for assumption in equality.assumptions:
@@ -351,7 +352,19 @@ class Equals(TransitiveRelation):
                               ExprTuple(*all_equalities_rhs))
             return tuple_eq.substitution(
                     lambda_map, replacements=replacements)        
+
+    """
+    (0 = (t - ((t - 1) + 1)), 
+     t - ((t - 1) + 1) if 0 = (t - ((t - 1) + 1))) = 
+     (TRUE, 
+      0 if 0 = (t - ((t - 1) + 1)))    
     
+    {MULTI_QUDIT_GATE(CONTROL, {t - ((t - 1) + 1), t}) if 0 = (t - ((t - 1) + 1)). = 
+    {MULTI_QUDIT_GATE(CONTROL, {0, t}) if TRUE.
+    [{0 = (t - ((t - 1) + 1))} |- {t - ((t - 1) + 1) if 0 = (t - ((t - 1) + 1)). = (t - ((t - 1) + 1)), 
+     {0 = (t - ((t - 1) + 1))} |- {0 if 0 = (t - ((t - 1) + 1)). = 0]
+    """
+ 
     """
     Abandoning, but keeping a stub in case we want to revisit this:
     @prover

@@ -103,8 +103,9 @@ class Div(NumberOperation):
             # eliminate division by one
             expr = eq.update(expr.divide_by_one_elimination(auto_simplify=False))
 
-        if (Div._simplification_directives_.factor_negation and
-            isinstance(self.numerator, Neg)):
+        if (isinstance(expr, Div) and
+              Div._simplification_directives_.factor_negation and
+              isinstance(expr.numerator, Neg)):
             # we have something like (-a)/b but want -(a/b)
             eq.update(expr.neg_extraction())
             return eq.relation  # no more division simplifications.
@@ -520,7 +521,8 @@ class Div(NumberOperation):
         # -- then re-call the exp_extraction() method
         if neg_loc == 'numerator_factor':
             intermed_equality = (
-                    self.inner_expr().numerator.neg_simplifications())
+                    self.inner_expr().numerator.neg_simplifications(
+                        preserve_all=True))
             return intermed_equality.inner_expr().rhs.neg_extract()
         
         # # Case (4) Neg is a factor in the denominator
@@ -528,7 +530,8 @@ class Div(NumberOperation):
         # -- then re-call the exp_extraction() method
         if neg_loc == 'denominator_factor':
             intermed_equality = (
-                    self.inner_expr().denominator.neg_simplifications())
+                    self.inner_expr().denominator.neg_simplifications(
+                        preserve_all=True))
             return intermed_equality.inner_expr().rhs.neg_extract()
 
         # Other cases here?
