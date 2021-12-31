@@ -33,7 +33,7 @@ class ExprRange(Expression):
     '''
 
     def __init__(self, parameter, body, start_index, end_index, *,
-                 parameterization=None, lambda_map=None,
+                 parameterization=None, lambda_map=None, order=None,
                  styles=None):
         '''
         Create an ExprRange that represents a range of expressions
@@ -76,11 +76,23 @@ class ExprRange(Expression):
             if styles is None: styles = dict()
             styles['parameterization'] = parameterization
 
+        if order not in (None, 'decreasing', 'increasing'):
+            raise ValueError("'order' must be 'increasing', "
+                             "'decreasing', or None; not %s" % order)
+        if order is not None:
+            if styles is None: styles = dict()
+            styles['order'] = order
+
         Expression.__init__(self, ['ExprRange'],
                             [lambda_map, start_index, end_index],
                             styles=styles)
-        self.start_index = singular_expression(start_index)
-        self.end_index = singular_expression(end_index)
+        if order == 'decreasing':
+            from proveit.numbers import Neg
+            self.start_index = singular_expression(Neg(start_index))
+            self.end_index = singular_expression(Neg(end_index))
+        else:
+            self.start_index = singular_expression(start_index)
+            self.end_index = singular_expression(end_index)
         if self.start_index == self.end_index:
             raise ValueError(
                     "Do not create an ExprRange with the same start and "
@@ -88,8 +100,14 @@ class ExprRange(Expression):
                     "Note that nested_range/var_range automatically "
                     "perform this reduction.")
         self.lambda_map = lambda_map
-        self.parameter = self.lambda_map.parameter
-        self.body = self.lambda_map.body
+
+        if order == 'decreasing':
+            self.parameter = Neg(self.lambda_map.parameter)
+            expr_map = {self.lambda_map.parameter: Neg(self.lambda_map.parameter)}
+            self.body = self.lambda_map.body.basic_replaced(expr_map)
+        else:
+            self.parameter = self.lambda_map.parameter
+            self.body = self.lambda_map.body
         self.is_parameter_independent = (
             self.parameter not in free_vars(self.body))
         self._expansion_indices = [self.start_index]
@@ -237,9 +255,18 @@ class ExprRange(Expression):
                 call_strs.append('with_explicit_parameterization()')
             if parameterization == 'implicit':
                 call_strs.append('with_implicit_parameterization()')
+
+        order = self.get_style('order', 'default')
+        if order != 'default':
+            if order == 'decreasing':
+                call_strs.append('with_decreasing_order()')
+            if order == 'increasing':
+                call_strs.append('with_increasing_order()')
+
         expansion = self.get_style('expansion', '1')
         if expansion != '1':
             call_strs.append('with_expansion(%d)'%int(expansion))
+
         simplify = self.get_style('simplify', 'False')
         if simplify != 'False':
             if simplify == 'True':
@@ -261,6 +288,14 @@ class ExprRange(Expression):
             related_methods=('with_explicit_parameterization',
                              'with_implicit_parameterization',
                              'with_default_parameterization_style'))
+        options.add_option(
+            name='order',
+            description=(
+                "The default order is 'increasing' (a_1 ... a_3) "
+                "but to represent a 'decreasing' ExprRange (a_6 ... a_2) "
+                "the order must be set to 'decreasing'"),
+            default='increasing',
+            related_methods=('with_decreasing_order', 'with_increasing_order'))
 
         options.add_option(
             name='expansion',
@@ -314,6 +349,21 @@ class ExprRange(Expression):
         '''
 
         return self.with_styles(simplify='True')
+
+    def with_decreasing_order(self):
+        '''
+        Used to indicate an ExprRange with decreasing order (a_4 ... a_2)
+        '''
+
+        return self.with_styles(order='decreasing')
+
+    def with_increasing_order(self):
+        '''
+        Revert the order of an ExprRange so that the largest
+        element is the last element
+        '''
+
+        return self.with_styles(order='increasing')
     
     def _body_replaced(self, expr_map):
         '''
@@ -362,7 +412,6 @@ class ExprRange(Expression):
         """
         expr_map = {self.lambda_map.parameter: self.start_index}
         return self._body_replaced(expr_map)
-        
 
     def last(self):
         '''
@@ -483,7 +532,7 @@ class ExprRange(Expression):
         return self._range_expansion
 
     def _formatted_checkpoints(self, format_type, *,
-                               use_explicit_parameterization=None,
+                               use_explicit_parameterization=None, order=None,
                                ellipses=None, operator=None, expansion=None,
                                **kwargs):
         if use_explicit_parameterization is None:
@@ -493,6 +542,10 @@ class ExprRange(Expression):
         if expansion is None:
             default_expansion = str(1)
             expansion = int(self.get_style("expansion", default_expansion))
+
+        if order is None:
+            default_order = 'increasing'
+            order = self.get_style("order", default_order)
 
         # reduce for formatting purposes
         '''
@@ -509,8 +562,15 @@ class ExprRange(Expression):
             first = self.first()
             last = self.last()
         '''
-        first = self.first()
-        last = self.last()
+        if order == 'decreasing':
+            from proveit.numbers import Neg
+            expr_map = {Neg(self.lambda_map.parameter): self.start_index.operand}
+            first = self._body_replaced(expr_map)
+            expr_map = {Neg(self.lambda_map.parameter): self.end_index.operand}
+            last = self._body_replaced(expr_map)
+        else:
+            first = self.first()
+            last = self.last()
 
         check_points = [first, last]
         if use_explicit_parameterization and not self.is_parameter_independent:
