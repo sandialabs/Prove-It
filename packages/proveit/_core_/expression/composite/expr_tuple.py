@@ -653,6 +653,11 @@ class ExprTuple(Composite, Expression):
             if not isinstance(replacement_eq.rhs, ExprTuple):
                 raise TypeError("'replacement_eq.rhs' should be an ExprTuple"
                                 "if 'replacement_eq.lhs' is an ExprTuple.")
+            if (start_idx==0 and 
+                replacement_eq.lhs.num_entries()==self.num_entries()):
+                # Replacing the entire ExprTuple:
+                return replacement_eq.prove()
+
             _a = self[:start_idx]
             end_idx = start_idx + replacement_eq.lhs.num_entries()
             _b = self[start_idx:end_idx]

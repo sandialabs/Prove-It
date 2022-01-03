@@ -6,6 +6,7 @@ from proveit._core_.expression.label.var import safe_dummy_var, safe_dummy_vars
 from proveit._core_.expression.composite import is_single
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 from proveit.decorators import equality_prover
+from collections import deque
 
 def get_param_var(parameter, *, _required_indices=None):
     '''
@@ -415,7 +416,8 @@ class Lambda(Expression):
             out_str += r'\right]'
         return out_str
 
-    def apply(self, *operands, equiv_alt_expansions=None,
+    def apply(self, *operands, param_to_num_operand_entries=None,
+              equiv_alt_expansions=None,
               allow_relabeling=False, assumptions=USE_DEFAULTS, 
               requirements=None):
         '''
@@ -489,18 +491,22 @@ class Lambda(Expression):
                 temp_defaults.assumptions = assumptions
                 return Lambda._apply(
                     self.parameters, self.body, *operands,
+                    param_to_operands_map=param_to_operands_map,
                     equiv_alt_expansions=equiv_alt_expansions,
                     allow_relabeling=allow_relabeling, 
                     requirements=requirements,
                     parameter_vars=self.parameter_vars)
         return Lambda._apply(
             self.parameters, self.body, *operands,
+            param_to_num_operand_entries=param_to_num_operand_entries,
             equiv_alt_expansions=equiv_alt_expansions,
             allow_relabeling=allow_relabeling, requirements=requirements,
             parameter_vars=self.parameter_vars)
 
     @staticmethod
-    def _apply(parameters, body, *operands, equiv_alt_expansions=None,
+    def _apply(parameters, body, *operands, 
+               param_to_num_operand_entries=None, 
+               equiv_alt_expansions=None,
                allow_relabeling=False, requirements=None,
                parameter_vars=None):
         '''
@@ -531,7 +537,7 @@ class Lambda(Expression):
         repl_map = dict()
         extract_complete_param_replacements(
             parameters, parameter_vars, body, operands,
-            requirements, repl_map)
+            param_to_num_operand_entries, requirements, repl_map)
 
         # Add repl_map entries resulting from equiv_alt_expansions.
 
@@ -599,8 +605,8 @@ class Lambda(Expression):
                 try:
                     extract_complete_param_replacements(
                         var_tuple, [param_var] * var_tuple.num_entries(),
-                        var_tuple, expansion_tuple, requirements, 
-                        cur_repl_map_extensions)
+                        var_tuple, expansion_tuple, None,
+                        requirements, cur_repl_map_extensions)
                 except LambdaApplicationError as e:
                     raise LambdaApplicationError(
                         parameters, body, operands, equiv_alt_expansions,
@@ -1190,7 +1196,9 @@ class Lambda(Expression):
 
 
 def extract_complete_param_replacements(parameters, parameter_vars, body,
-                                        operands, requirements, repl_map):
+                                        operands, 
+                                        param_to_num_operand_entries,
+                                        requirements, repl_map):
     '''
     Match all operands with parameters in order by checking
     tuple lengths.  Add a repl_map entry to map each
@@ -1200,8 +1208,10 @@ def extract_complete_param_replacements(parameters, parameter_vars, body,
     operands_iter = iter(operands)
     try:
         extract_param_replacements(parameters, parameter_vars, body,
-                                   operands_iter, requirements,
-                                   repl_map, is_complete=True)
+                                   operands_iter, 
+                                   param_to_num_operand_entries,
+                                   requirements, repl_map, 
+                                   is_complete=True)
     except ValueError as e:
         raise LambdaApplicationError(
             parameters, body, operands, [], str(e))
@@ -1218,11 +1228,14 @@ def extract_complete_param_replacements(parameters, parameter_vars, body,
 
 
 def extract_param_replacements(parameters, parameter_vars, body,
-                               operands_iter, requirements,
-                               repl_map, is_complete=False):
+                               operands_iter, param_to_num_operand_entries,
+                               requirements, repl_map, is_complete=False):
     '''
     Match the operands, as needed, with parameters in order by checking
-    tuple lengths.  Add a repl_map entry to map each
+    tuple lengths.  If provided (not None), param_to_num_operand_entries
+    indicates how many operand entries should correspond with each
+    parameter to speed making matches and disambiguate which parameter
+    empty ranges belong to.  Add a repl_map entry to map each
     parameter entry (or ExprTuple-wrapped entry) to corresponding
     operand(s) (ExprTuple-wrapped as appropriate).
     '''
@@ -1237,19 +1250,34 @@ def extract_param_replacements(parameters, parameter_vars, body,
     # For example, (x_1, ..., x_n, y) has an element-wise lenght of
     # n+1.
     try:
-        # prev_empty_param_tuple is used to keep instantiatiations as
-        # intended rather than putting empty ranges into the next
-        # parameter slot.
-        prev_empty_param_tuple = None
         for parameter, param_var in zip(parameters, parameter_vars):
             if isinstance(parameter, ExprRange):
                 from proveit.numbers import zero, one
+
                 # This is a parameter range which corresponds with
                 # one or more operand entries in order to match the
                 # element-wise length.
                 param_indices = extract_var_tuple_indices(
                     ExprTuple(parameter))
                 param_len = Len(param_indices)
+                
+                # If we know how many operand entries are associated
+                # with the parameter, we can avoid work and possibly
+                # avoid ambiguity when assigning empty ranges.
+                if param_to_num_operand_entries is not None:
+                    num_operand_entries = (
+                        param_to_num_operand_entries[parameter])
+                    param_operands = [next(operands_iter) for _ 
+                                      in range(num_operand_entries)]
+                    param_tuple = ExprTuple(parameter)
+                    param_operands_tuple = ExprTuple(*param_operands)
+                    param_operands_len = Len(param_operands_tuple)
+                    len_req = Equals(param_operands_len, param_len)
+                    requirements.append(len_req.prove())
+                    repl_map[param_var] = {param_tuple}
+                    repl_map[param_tuple] = param_operands_tuple
+                    continue
+                
                 try:
                     # Maybe a known integer value for param_len.
                     int_param_len = parameter.literal_int_extent()
@@ -1323,19 +1351,6 @@ def extract_param_replacements(parameters, parameter_vars, body,
                         min_int_param_operands_len += 1
                         if max_int_param_operands_len is not None:
                             max_int_param_operands_len += 1
-                    # If the previous parameter was assigned an
-                    # empty tuple and this entry length is 0,
-                    # assign the previous parameter to this entry
-                    # instead.
-                    if (prev_empty_param_tuple is not None and 
-                            max_int_param_operands_len == 0):
-                        # This keeps instantiations with empty
-                        # ranges as intended rather than putting
-                        # an empty range into the next slot.
-                        repl_map[prev_empty_param_tuple] = ExprTuple(
-                                operand_entry)
-                        prev_empty_param_tuple = None
-                        continue
                     # Append this operand entry to the param_operands.
                     param_operands.append(operand_entry)
                         
@@ -1346,46 +1361,10 @@ def extract_param_replacements(parameters, parameter_vars, body,
                 # to the actual operands to be replaced.
                 param_tuple = ExprTuple(parameter)
                 repl_map[param_var] = {param_tuple}
-                
-                """
-                # This didn't solve the problem that it was intended
-                # to solve, so I'm commenting this out, but we could
-                # resurrect it if we decide we want to be proactive
-                # about range reductions when doing lambda applications.
-                
-                # Perform range reductions of parameters via length 
-                # requirements (0 or 1).
-                reduced_param_operands = []
-                for param_operand in param_operands:
-                    if (isinstance(param_operand, ExprRange) and
-                            not defaults.preserve_all and 
-                            param_operand not in defaults.preserved_exprs):
-                        param_operand_len_eq = (
-                                Len(ExprTuple(param_operand)).computation())
-                        if param_operand_len_eq.rhs == zero:
-                            # skip 0-length range
-                            requirements.append(param_operand_len_eq)
-                        elif param_operand_len_eq.rhs == one:
-                            # reduce 1-length range to the single item
-                            requirements.append(param_operand_len_eq)
-                            reduced_param_operands.append(
-                                    param_operand.body.basic_replaced(
-                                {param_operand.parameter: 
-                                    param_operand.start_index}))
-                        else:
-                            reduced_param_operands.append(param_operand)
-                    else:
-                        reduced_param_operands.append(param_operand)
-                repl_map[param_tuple] = ExprTuple(*reduced_param_operands)
-                """
-                
                 repl_map[param_tuple] = ExprTuple(*param_operands)
-                prev_empty_param_tuple = (
-                        param_tuple if len(param_operands) == 0 else None)
-                    
             else:
                 # This is a singular parameter which should match
-                # with a singular operator or range(s) with known
+                # with a singular operand or range(s) with known
                 # length summing up to 1 (may have zero length
                 # ranges).
                 operand = next(operands_iter)
@@ -1411,12 +1390,6 @@ def extract_param_replacements(parameters, parameter_vars, body,
                         elif operand_len_val == zero:
                             # Keep going until we get a length
                             # of 1.
-                            if prev_empty_param_tuple is not None:
-                                # Associate 0-legnth range with the previous 
-                                # 0-length parameter range.
-                                repl_map[prev_empty_param_tuple] = ExprTuple(
-                                        operand)
-                                prev_empty_param_tuple = None                                
                             operand = next(operands_iter)
                         else:
                             # No good.
@@ -1429,7 +1402,6 @@ def extract_param_replacements(parameters, parameter_vars, body,
                             # a singular parameter.
                             break
                 repl_map[parameter] = operand
-                prev_empty_param_tuple = None
     except StopIteration:
         raise ValueError("Parameter/argument length mismatch "
                          "or unproven length equality for "
