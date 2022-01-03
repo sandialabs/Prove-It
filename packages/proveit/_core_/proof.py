@@ -1084,6 +1084,12 @@ class Instantiation(Proof):
         instantiating_vars = Instantiation._get_nested_param_vars(
                 orig_judgment.expr, num_forall_eliminations)
         orig_contained_param_vars = contained_parameter_vars(orig_judgment)
+
+        # Map parameters to the number of corresponding operand
+        # entries to speed matching parameters and operands and
+        # disambiguate parameter ownership of emtpy ranges of
+        # operands.
+        param_to_num_operand_entries = dict()
         
         # Prepare the 'relabel_params' for basic relabeling that 
         # can apply to both sides of the turnstile.
@@ -1106,19 +1112,22 @@ class Instantiation(Proof):
                     and (isinstance(repl, Variable)
                          or (isinstance(repl, ExprTuple) 
                              and valid_params(repl)))):
-                relabel_params.append(key)
+                _param = key
                 relabel_param_replacements.append(repl)
+                param_to_num_operand_entries[_param] = 1
             elif (isinstance(key, ExprTuple)
                     and key.num_entries()==1
                     and valid_params(key)
                     and isinstance(repl, ExprTuple)
                     and valid_params(repl)):
-                relabel_params.append(key.entries[0])
+                _param = key.entries[0]
                 relabel_param_replacements.extend(repl.entries)
+                param_to_num_operand_entries[_param] = repl.num_entries()
             else:
                 raise ValueError("'%s' is not a proper relabeling for '%s' "
                                  "and '%s' is not properly instantiated in %s."
                                  %(repl, key, key_var, orig_judgment))
+            relabel_params.append(_param)
 
         prev_default_assumptions = set(defaults.assumptions)
         try:
@@ -1139,6 +1148,7 @@ class Instantiation(Proof):
             for assumption in orig_judgment.assumptions:
                 subbed_assumption = Lambda._apply(
                     relabel_params, assumption, *relabel_param_replacements,
+                    param_to_num_operand_entries=param_to_num_operand_entries,
                     allow_relabeling=True, equiv_alt_expansions=None,
                     requirements=requirements)
                 with defaults.temporary() as temp_defaults:
@@ -1166,6 +1176,7 @@ class Instantiation(Proof):
             instantiated_expr = \
                 Instantiation._instantiated_expr(orig_judgment, 
                     relabel_params, relabel_param_replacements,
+                    param_to_num_operand_entries,
                     num_forall_eliminations, repl_map,
                     equiv_alt_expansions, assumptions, requirements,
                     equality_repl_requirements)
@@ -1348,6 +1359,7 @@ class Instantiation(Proof):
     @staticmethod
     def _instantiated_expr(original_judgment, 
                            relabel_params, relabel_param_replacements,
+                           param_to_num_operand_entries,
                            num_forall_eliminations,
                            repl_map, equiv_alt_expansions,
                            assumptions, requirements,
@@ -1393,7 +1405,9 @@ class Instantiation(Proof):
             if len(params) == 0:
                 return expr
             instantiated = Lambda._apply(
-                params, expr, *operands, allow_relabeling=True,
+                params, expr, *operands, 
+                param_to_num_operand_entries=param_to_num_operand_entries,
+                allow_relabeling=True,
                 equiv_alt_expansions=active_equiv_alt_expansions,
                 requirements=requirements)
             new_equality_repl_requirements = []
@@ -1477,7 +1491,7 @@ class Instantiation(Proof):
                                               "of %s, versus %s."
                                               % (subbed_param_tuple,
                                                  param_var_repl, param_var,
-                                                 new_operands))                            
+                                                 new_operands))
                             new_operands = new_operands.entries
                         elif (not isinstance(subbed_param, ExprRange)
                               and subbed_param in repl_map):
@@ -1493,7 +1507,7 @@ class Instantiation(Proof):
                                               "%s: %s, from instantiation "
                                               "of %s, versus %s."
                                               % (subbed_param, param_var_repl, 
-                                                 param_var, new_operands))                           
+                                                 param_var, new_operands))
                         elif param_var_repl is not None:
                             # We have an implicit range instantiation.
                             # For example, x: (a, b, c).
@@ -1522,6 +1536,8 @@ class Instantiation(Proof):
                     if new_operands is not None:
                         params.append(new_param)
                         operands.extend(new_operands)
+                        param_to_num_operand_entries[new_param]=(
+                            len(new_operands))
                 
                 # If there is a condition of the universal quantifier
                 # being eliminated, produce the instantiated condition,
@@ -1662,7 +1678,7 @@ class Generalization(Proof):
             defaults.assumptions = prev_default_assumptions
 
     def step_type(self):
-        return 'generalizaton'
+        return 'generalization'
 
     @staticmethod
     def _checkGeneralization(generalized_expr, instance_expr):
