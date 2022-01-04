@@ -3,7 +3,7 @@ from proveit import (Expression, Literal, Operation, Conditional,
                      prover, relation_prover, equality_prover,
                      SimplificationDirectives, TransRelUpdater)
 from proveit.logic.equality import SimplificationError
-from proveit import j, k, l, m, n, A, B, C, D, E, F, G
+from proveit import i, j, k, l, m, n, A, B, C, D, E, F, G
 from proveit.logic.booleans.booleans import in_bool
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, group_commutation, group_commute
 
@@ -444,22 +444,22 @@ class And(Operation):
         '''
         from proveit import ExprRange
         from proveit.numbers import one
-        from . import redundant_conjunction
+        from . import redundant_conjunction, redundant_conjunction_general
         if (self.operands.num_entries() != 1 or
                 not isinstance(self.operands[0], ExprRange) or
                 not self.operands[0].is_parameter_independent):
             raise ValueError("`And.conclude_as_redundant` only allowed for a "
                              "conjunction of the form "
                              "A and ..n repeats.. and A, not %s" % self)
-        if self.operands[0].start_index != one:
-            raise NotImplementedError(
-                "'conclude_as_redundant' only implemented "
-                "when the start index is 1.  Just need to "
-                "do an ExprRange shift to implement it more "
-                "completely")
-        _A = self.operands[0].body
-        return redundant_conjunction.instantiate(
+        if self.operands[0].start_index == one:
+            return redundant_conjunction.instantiate(
             {n: self.operands[0].end_index, A: _A})
+
+        _i = self.operands[0].start_index
+        _j = self.operands[0].end_index
+        _A = self.operands[0].body
+        return redundant_conjunction_general.instantiate(
+            {i: _i, j: _j, A: _A})
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
