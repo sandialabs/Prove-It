@@ -101,12 +101,13 @@ class ExprRange(Expression):
                     "perform this reduction.")
         self.lambda_map = lambda_map
 
+        self.parameter = self.lambda_map.parameter
         if order == 'decreasing':
-            self.parameter = Neg(self.lambda_map.parameter)
+            # self.parameter = Neg(self.lambda_map.parameter)
             expr_map = {self.lambda_map.parameter: Neg(self.lambda_map.parameter)}
             self.body = self.lambda_map.body.basic_replaced(expr_map)
         else:
-            self.parameter = self.lambda_map.parameter
+
             self.body = self.lambda_map.body
         self.is_parameter_independent = (
             self.parameter not in free_vars(self.body))
