@@ -330,3 +330,52 @@ class Neg(NumberOperation):
         _n = _c.num_elements()
         return mult_neg_any_double.instantiate(
             {m: _m, n: _n, a: _a, b: _b, c: _c})
+
+    @relation_prover
+    def bound_via_operand_bound(self, operand_relation, **defaults_config):
+        '''
+        Deduce a bound on this Neg object given a bound on its
+        operand. For example, suppose x = Neg(y) and we know that
+        y >= 2. Then x.bound_via_operand_bound(y >= 2) returns
+        x <= 2.
+        Also see NumberOperation.deduce_bound and compare to the
+        bound_via_operand_bound() method found in the Div class.
+        '''
+        from proveit import Judgment
+        from proveit.numbers import Less, LessEq, NumberOrderingRelation
+        if isinstance(operand_relation, Judgment):
+            operand_relation = operand_relation.expr
+        if not isinstance(operand_relation, NumberOrderingRelation):
+            raise TypeError(
+                "In Neg.bound_via_operand_bound(), the 'operand_relation' "
+                "argument is expected to be a number relation (<, >, ≤, or ≥), "
+                "but instead was {}.".format(operand_relation))
+
+        lhs = operand_relation.lhs
+
+        if lhs != self.operand:
+            raise ValueError(
+                    "In Neg.bound_via_operand_bound(), the left side of "
+                    "the 'operand_relation' argument {0} is expected to "
+                    "match the Neg() operand {1}.".
+                    format(operand_relation, self.operand))
+
+        _x_sub = operand_relation.normal_lhs
+        _y_sub = operand_relation.normal_rhs
+
+        if isinstance(operand_relation, LessEq):
+            from proveit.numbers.negation import negated_weak_bound
+            bound = negated_weak_bound.instantiate({x: _x_sub, y: _y_sub})
+        elif isinstance(operand_relation, Less):
+            from proveit.numbers.negation import negated_strong_bound
+            bound = negated_strong_bound.instantiate({x: _x_sub, y: _y_sub})
+        else:
+            raise TypeError(
+                    "In Neg.bound_via_operand_bound(), the 'operand_relation' "
+                    "argument is expected to be a 'Less', 'LessEq', 'greater', "
+                    "or 'greater_eq' relation. Instead we have {}.".
+                    format(operand_relation))
+
+        if bound.rhs == self:
+            return bound.with_direction_reversed()
+        return bound
