@@ -1196,7 +1196,8 @@ class ExprRange(Expression):
                     # to use the 'extract_param_replacements' method).
                     extract_param_replacements(
                         parameters, parameter_vars, body,
-                        expansion_iter, requirements, entry_repl_map)
+                        expansion_iter, None,
+                        requirements, entry_repl_map)
                     # Mark as a non-ExprRange entry by simply appending
                     # None.
                     expansion_entry_ranges.append(None)
