@@ -7,7 +7,7 @@ from proveit import a, b, c, k, m, n, x, y, S
 from proveit import (defaults, Literal, Function, ExprTuple, InnerExpr,
                      ProofFailure, maybe_fenced_string, USE_DEFAULTS,
                      StyleOptions)
-from proveit.logic import InSet, SetMembership, NotEquals
+from proveit.logic import Equals, InSet, SetMembership, NotEquals
 from proveit.numbers import zero, one, two, Div, frac, num, Real
 from proveit.numbers import Integer, NumberOperation
 
@@ -653,7 +653,7 @@ class Exp(NumberOperation):
         bound on its operand. For example, suppose x = Exp(y, 2) and
         we know that y >= 2. Then x.bound_via_operand_bound(y >= 2)
         returns x >= 2^2 = 4.
-        In particular, this method currently works only for expressions
+        This method currently works MAINLY for expressions
         of the form Exp(x, a) for non-negative real x and real exponent
         'a', where we know something of the form x < y (or x ≤ y, x > y, 
         x ≥ y) involving the base of the exponential expression.
@@ -661,15 +661,18 @@ class Exp(NumberOperation):
         exponent 'a' and zero, which might need to be pre-proven or
         provided as an assumption (e.g. in the form 'a > 0' or
         InSet(a, RealNeg), etc).
+        A special case also deals with a negative base raised to the
+        power of 2.
         Future development will address operand_relations
-        involving the exponent 'a'.
+        involving the exponent 'a' and expand the special negative
+        base case to include all even and odd exponent cases.
         Also see NumberOperation.deduce_bound and compare to the
         bound_via_operand_bound() method found in the Div and Neg
         classes.
         '''
         from proveit import Judgment
         from proveit.numbers import (
-                greater, greater_eq, Less, LessEq,
+                two, greater, greater_eq, Less, LessEq,
                 NumberOrderingRelation, RealNonNeg)
         if isinstance(operand_relation, Judgment):
             operand_relation = operand_relation.expr
@@ -696,21 +699,25 @@ class Exp(NumberOperation):
         _a_sub = self.exponent
 
         # confirm that the base involved is non-negative real
-        if not InSet(_x_sub, RealNonNeg).proven():
-            raise UnsatisfiedPrerequisites(
-                    "In Exp.bound_via_operand_bound(), We must know "
-                    "that {0} is a non-negative Real.".
-                    format(_x_sub))
+
+        # if not InSet(_x_sub, RealNonNeg).proven():
+        #     raise UnsatisfiedPrerequisites(
+        #             "In Exp.bound_via_operand_bound(), We must know "
+        #             "that {0} is a non-negative Real.".
+        #             format(_x_sub))
 
         # Several cases to consider:
-        # (1) a > 0, 0 ≤ x < y
-        # (2) a > 0, 0 ≤ x ≤ y
-        # (3) a ≥ 0, 0 < x < y
-        # (4) a ≥ 0, 0 < x ≤ y
-        # (5) a < 0, 0 < x < y
-        # (6) a < 0, 0 < x ≤ y
-        # (7) a ≤ 0, 0 < x < y
-        # (8) a ≤ 0, 0 < x ≤ y
+        #  (1) a > 0, 0 ≤ x < y
+        #  (2) a > 0, 0 ≤ x ≤ y
+        #  (3) a ≥ 0, 0 < x < y
+        #  (4) a ≥ 0, 0 < x ≤ y
+        #  (5) a < 0, 0 < x < y
+        #  (6) a < 0, 0 < x ≤ y
+        #  (7) a ≤ 0, 0 < x < y
+        #  (8) a ≤ 0, 0 < x ≤ y
+        # =====================
+        #  (9) a = 2, y < x < 0
+        # (10) a = 2, y ≤ x < 0
 
         # Cases (1) and (2): exponent a > 0
         if (greater(_a_sub, zero).proven() and
@@ -776,6 +783,28 @@ class Exp(NumberOperation):
             elif isinstance(operand_relation, LessEq):
                 from proveit.numbers.exponentiation import exp_nonpos_lesseq
                 bound = exp_nonpos_lesseq.instantiate(
+                        {x: _x_sub, y: _y_sub, a: _a_sub})
+            else:
+                raise TypeError(
+                    "In Exp.bound_via_operand_bound(), the 'operand_relation' "
+                    "argument is expected to be a 'Less', 'LessEq', 'greater', "
+                    "or 'greater_eq' relation. Instead we have {}.".
+                    format(operand_relation))
+
+        # Cases (9) and (10): exponent a = 2
+        # with x < y < 0 or x ≤ y < 0
+
+        elif (_a_sub == two and
+            Less(_y_sub, zero).proven()):
+            if isinstance(operand_relation, Less):
+                from proveit.numbers.exponentiation import (
+                        exp_even_neg_base_less)
+                bound = exp_even_neg_base_less.instantiate(
+                        {x: _x_sub, y: _y_sub, a: _a_sub})
+            elif isinstance(operand_relation, LessEq):
+                from proveit.numbers.exponentiation import (
+                        exp_even_neg_base_lesseq)
+                bound = exp_even_neg_base_lesseq.instantiate(
                         {x: _x_sub, y: _y_sub, a: _a_sub})
             else:
                 raise TypeError(
