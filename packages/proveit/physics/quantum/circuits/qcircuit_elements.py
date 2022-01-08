@@ -16,12 +16,20 @@ from proveit.logic import Set
 pkg = __package__  # can probably delete later
 
 
+extra_commands = r"""
+\newcommand{\qin}[1]{*+<.6em>{#1}}
+\newcommand{\qout}[1]{*+<.6em>{#1} \qw}
+\newcommand{\multiqin}[2]{*+<1em,.9em>{\hphantom{#2}} \POS [0,0]="i",[0,0].[#1,0]="e",!C *{#2},"e"+CR="a","e"+UR="b","e"+DR="c","a"."b"."c" *\frm{)},"i"}
+\newcommand{\ghostqin}[1]{*+<1em,.9em>{\hphantom{#1}}}
+\newcommand{\multiqout}[2]{*+<1em,.9em>{\hphantom{#2}} \POS [0,0]="i",[0,0].[#1,0]="e",!C *{#2},"e"+CL="a","e"+UL="b","e"+DL="c","a"."b"."c" *\frm{(},"i" \qw}
+\newcommand{\ghostqout}[1]{*+<1em,.9em>{\hphantom{#1}} \qw}
+"""
+
 def config_latex_tool(lt):
-    if 'tikz' not in lt.packages:
-        lt.packages.append('tikz')
-    preamble_entry = r'\usetikzlibrary{quantikz}' + '\n'
-    if preamble_entry not in lt.preamble:
-        lt.preamble += preamble_entry
+    if 'qcircuit' not in lt.packages:
+        lt.packages.append('qcircuit')
+    if extra_commands not in lt.preamble:
+        lt.preamble += extra_commands
 
 # quantum circuit gate literals
 
@@ -88,8 +96,10 @@ class QcircuitElement(Function):
         if not within_qcircuit:
             # Do display it properly on its own, we need to
             # wrap it in a \Qcircuit latex command.
-            out_str = r'\begin{tikzcd}' + '\n' + out_str + '\n'
-            out_str += r'\end{tikzcd}'
+            spacing = '@C=1em @R=.7em'
+            out_str = (r'\begin{array}{c} \Qcircuit' + spacing + 
+                       '{' + '\n' + '& ' + out_str + r' & \qw')
+            out_str += ' \n' + r'} \end{array}'
         return out_str
     
     def circuit_elem_latex(self, *, solo):
@@ -125,7 +135,7 @@ class Input(QcircuitElement):
         '''
         Display the LaTeX for this Input circuit element.
         '''
-        return r'\lstick{' + self.state.latex() + r'}'
+        return r'\qin{' + self.state.latex() + r'}'
 
 
 class Output(QcircuitElement):
@@ -147,7 +157,7 @@ class Output(QcircuitElement):
         '''
         Display the LaTeX for this Output circuit element.
         '''
-        return r'\rstick{' + self.state.latex() + r'} \qw'
+        return r'& \qout{' + self.state.latex() + r'}'
 
 class Measure(QcircuitElement):
     '''
@@ -167,7 +177,7 @@ class Measure(QcircuitElement):
         '''
         Display the LaTeX for this Output circuit element.
         '''
-        return r'\meterD{' + self.basis.latex() + r'}'
+        return r'& \measureD{' + self.basis.latex() + r'}'
 
 class Gate(QcircuitElement):
     '''

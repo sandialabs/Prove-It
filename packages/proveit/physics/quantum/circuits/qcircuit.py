@@ -4,14 +4,14 @@ from proveit import (Expression, Function, Literal,
                      free_vars)
 from proveit.logic import Set
 from proveit.physics.quantum.circuits.qcircuit_elements import (
-        Gate, MultiQubitElem, Input, Output, config_latex_tool)
+        Gate, MultiQubitElem, Input, Output, Measure, config_latex_tool)
 
 class Qcircuit(Function):
     '''
     A quantum circuit represented in column-major order.
     '''
     
-    #DEFAULT_SPACING = '@C=1em @R=.7em'
+    DEFAULT_SPACING = '@C=1em @R=.7em'
 
     # the literal operator of the Qcircuit operation class
     _operator_ = Literal('QCIRCUIT', theory=__file__)
@@ -35,7 +35,6 @@ class Qcircuit(Function):
         Return the StyleOptions object for this Circuit.
         '''
         options = StyleOptions(self)
-        """
         options.add_option(
             name = 'spacing',
             description = (
@@ -44,7 +43,6 @@ class Qcircuit(Function):
                     "R is the row spacing"),
             default = Qcircuit.DEFAULT_SPACING,
             related_methods = ())
-        """
         return options
 
     def remake_with_style_calls(self):
@@ -56,11 +54,9 @@ class Qcircuit(Function):
         and 'with_justification' calls.
         '''
         call_strs = []
-        """
         spacing = self.get_style('spacing')
         if spacing != Qcircuit.DEFAULT_SPACING:
             call_strs.append('with_style(spacing="' + spacing + '")')
-        """
         return call_strs
         
     def _config_latex_tool(self, lt):
@@ -332,7 +328,7 @@ class Qcircuit(Function):
         from proveit.physics.quantum import (
                 CONTROL, CLASSICAL_CONTROL, SWAP)
         from proveit.numbers import one
-        #spacing = self.get_style('spacing')
+        spacing = self.get_style('spacing')
             
         # Get the element positions corresponding to each row of the
         # array, raising a ValueError if there are inconsistencies.
@@ -342,18 +338,14 @@ class Qcircuit(Function):
         
         # When we have an explicit parameterization of a
         # horizontal or vertical ExprArray, we put two dots before&after
-        # or above&below.  If this is for a gate, input, or output,
-        # we should wrap the gate/lstick/rstick around these dots.
-        def inside_gate_wrapper(explicit_cell_latex_fn):
+        # or above&below.  Wrap this with the appropriate kind of
+        # circuit element: \gate, \qin, \qout, etc.
+        def inside_elem_wrapper(explicit_cell_latex_fn):
             def new_explicit_cell_latex_fn(expr_latex):
-                if expr_latex[:6] == r'\gate{' and  expr_latex[-1]=='}':
-                    return r'\gate{%s}'%explicit_cell_latex_fn(expr_latex[6:-1])
-                elif expr_latex[:8] == r'\lstick{' and  expr_latex[-1]=='}':
-                    return r'\lstick{%s}'%explicit_cell_latex_fn(
-                            expr_latex[8:-1])
-                elif expr_latex[:8] == r'\rstick{' and  expr_latex[-1]=='}':
-                    return r'\rstick{%s}'%explicit_cell_latex_fn(
-                            expr_latex[8:-1])
+                assert expr_latex[-1] == '}'
+                _i = expr_latex.find('{')
+                return expr_latex[:_i] + (
+                        '{%s}'%explicit_cell_latex_fn(expr_latex[_i:-1]))
             return new_explicit_cell_latex_fn
         
         # Get latex-formatted cells.  Indicate that these should be
@@ -361,9 +353,9 @@ class Qcircuit(Function):
         format_cell_entries = []
         formatted_cells = vert_expr_array.get_latex_formatted_cells(
                 format_cell_entries=format_cell_entries,
-                vertical_explicit_cell_latex_fn=inside_gate_wrapper(
+                vertical_explicit_cell_latex_fn=inside_elem_wrapper(
                         ExprArray.vertical_explicit_cell_latex),
-                horizontal_explicit_cell_latex_fn=inside_gate_wrapper(
+                horizontal_explicit_cell_latex_fn=inside_elem_wrapper(
                         ExprArray.horizontal_explicit_cell_latex),
                 within_qcircuit=True)
         
@@ -376,8 +368,7 @@ class Qcircuit(Function):
         out_str = ''
         if fence:
             out_str = r'\left('
-        #out_str += r'\hspace{2em} \Qcircuit' + spacing + '{' + '\n'
-        out_str += r'\begin{tikzcd}' + '\n'
+        out_str += r'\begin{array}{c} \Qcircuit' + spacing + '{' + '\n'
         
         # Find locations where we should add a downward wire.
         down_wire_locations = Qcircuit._find_down_wire_locations(
@@ -419,9 +410,11 @@ class Qcircuit(Function):
                                 isinstance(_expr, MultiQubitElem)):
                             formatted_entry = r'& \gate{%s}'%formatted_entry
                         elif isinstance(_expr, Input):
-                            formatted_entry = r'\lstick{%s}'%formatted_entry
+                            formatted_entry = r'\qin{%s}'%formatted_entry
                         elif isinstance(_expr, Output):
-                            formatted_entry = r'\rstick{%s}'%formatted_entry
+                            formatted_entry = r'\qout{%s}'%formatted_entry
+                        elif isinstance(_expr, Measure):
+                            formatted_entry = r'\measureD{%s}'%formatted_entry
                     if isinstance(entry, MultiQubitElem):
                         if isinstance(entry.qubit_positions, ExprTuple):
                             elem = entry.element
@@ -433,7 +426,15 @@ class Qcircuit(Function):
                             qubit_positions = entry.qubit_positions
                             assert qubit_positions.num_entries()==1
                             assert isinstance(qubit_positions[0], ExprRange)
-                            _i = formatted_entry.find('{')
+                            _i = 0
+                            _j = formatted_entry.find('{')
+                            if formatted_entry[:2] == "& ":
+                                _prefix = "& "
+                                _i = 2
+                            else:
+                                _prefix = ""
+                            assert formatted_entry[_i] == '\\'
+                            _i += 1 # skip the '\'
                             qubit_pos = format_row_element_positions[row]
                             if (qubit_positions[0].start_index == qubit_pos):
                                 # The top-most of a multi-gate.
@@ -441,11 +442,18 @@ class Qcircuit(Function):
                                         # The '#' is a placeholder.
                                         # We'll go back through and
                                         # replace these later.
-                                        formatted_entry[:_i] + '[wires=#]'
-                                        + formatted_entry[_i:])
+                                        _prefix +
+                                        r"\multi" + formatted_entry[_i:_j]
+                                        + '{#}' + formatted_entry[_j:])
                             else:
                                 # Non-top of a multi-gate.
-                                formatted_entry = '&'
+                                if (formatted_entry[_i:_j] == r'gate' or
+                                        formatted_entry[_i:_i+13] == 
+                                        r'multimeasure'):
+                                    _i = _j # use regular "\ghost" 
+                                formatted_entry = (
+                                        _prefix + r'\ghost' 
+                                        + formatted_entry[_i:])
                     if (row, col) in down_wire_locations:
                         formatted_entry += r' \qwx[1]'                                
                     formatted_row_entries.append(formatted_entry)
@@ -455,17 +463,20 @@ class Qcircuit(Function):
                     formatted_col = (r'\begin{array}{c} \uparrow \\'
                                      '%s \\ \downarrow\end{array}'
                                      %formatted_col_entries)
+                    _prefix = '' if col==0 else '& '
                     if row==0:
                         # An expression represents the entire row: top
                         # Since the height may change as a result
                         # of collapsing multiwires/gates, just use '#'
                         # as a placeholder for now.
                         formatted_row_entries.append(
-                                r'& \gate[wires=#]{%s}'%(formatted_col))
+                                _prefix +
+                                r'\multigate{#}{%s}'%formatted_col)
                     else:
                         # An expression represents the entire row: not top
                         formatted_col = formatted_col_entries
-                        formatted_row_entries.append('&')
+                        formatted_row_entries.append(
+                                _prefix + '\ghost{%s}'%formatted_col)
             if collapsible_multirow:
                 # Collapse multiwires and multigates into a single row.
                 row += 1                
@@ -478,11 +489,12 @@ class Qcircuit(Function):
                         assert _expr.start_index == one
                         size = _expr.end_index
                         formatted_row_entries[col] = (
-                                r'& \qwbundle{%s}'%size.latex()
-                                + formatted_entry[5:])
+                                r'& { /^{' + size.latex() + r'} } '
+                                + formatted_entry[2:])
                     else:
-                        assert (formatted_entry == '&' or
-                                'wires=#' in formatted_entry)
+                        assert (formatted_entry[:6] == r'\ghost' or
+                                formatted_entry[:8] == r'& \ghost' or
+                                '{#}' in formatted_entry)
                 row += 2
             else:
                 row += 1
@@ -493,20 +505,20 @@ class Qcircuit(Function):
         for row, formatted_row_entries in enumerate(formatted_entries):
             for col, formatted_entry in enumerate(formatted_row_entries):
                 _i = formatted_entry.find('{')
-                if _i >= 0 and '[wires=#]' in formatted_entry[:_i]:
+                if _i >= 0 and formatted_entry[_i:_i+3]=='{#}':
                     # replace the '#' placeholder in a multigate with
                     # the appropriate number of rows.
                     _nrows = 1
                     while (row+_nrows < height and 
-                           formatted_entries[row+_nrows][col]=='&'):
+                           r'\ghost' in formatted_entries[row+_nrows][col][:8]):
                         _nrows += 1
                     if _nrows == 1:
                         formatted_entries[row][col] = (
-                                formatted_entry.replace('[wires=#]', '', 1))
+                                formatted_entry.replace('{#}', '', 1))
                     else:
                         formatted_entries[row][col] = (
                                 formatted_entry.replace(
-                                        '[wires=#]', '[wires=%d]'%_nrows, 1))
+                                        '{#}', '{%d}'%(_nrows-1), 1))
             out_str += ' '.join(formatted_row_entries) 
             if row == height-1:
                 out_str += '\n'                
@@ -514,7 +526,7 @@ class Qcircuit(Function):
                 out_str += r' \\' + '\n'
         
 
-        out_str += r'\end{tikzcd}' + '\n'
+        out_str += r'} \end{array}'
         if fence:
             out_str += r'\right)'
         return out_str
