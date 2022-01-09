@@ -332,22 +332,10 @@ class MultiQubitElem(QcircuitElement):
         '''
         Create a quantum circuit gate performing the given operation.
         '''
-        from proveit.physics.quantum import (CONTROL, CLASSICAL_CONTROL, 
-                                             SWAP)
         Function.__init__(self, MultiQubitElem._operator_,
                            (element, qubit_positions), styles=styles)
         self.element = self.operands[0]
         self.qubit_positions = self.operands[1]
-        if element in (CONTROL, CLASSICAL_CONTROL, SWAP):
-            return # these are valid
-        if (not isinstance(element, Input) and 
-                not isinstance(element, Output) and
-                not isinstance(element, Measure) and
-                not isinstance(element, Gate)):
-            raise TypeError("A MultiQubitElem must be either of "
-                            "CONTROL, CLASSICAL_CONTROL, SWAP, "
-                            "or an Input, Ouput, Measure, or Gate "
-                            "QcircuitElement.")
 
     def style_options(self):
         from proveit._core_.expression.style_options import StyleOptions
@@ -406,7 +394,7 @@ class MultiQubitElem(QcircuitElement):
                 out_str += r'\control{} \qw'
             elif self.element == CLASSICAL_CONTROL:
                 out_str += r'\control{} \cw'
-            if self.element == Gate(X):
+            elif self.element == Gate(X):
                 if self.get_style('representation') == 'implicit':
                     out_str += r'\targ'
             elif self.element == SWAP:
@@ -417,7 +405,8 @@ class MultiQubitElem(QcircuitElement):
             # This is either being shown on its own, or it lacks
             # explicit qubit positions.
             out_str = self.element.latex(within_qcircuit=True)
-            assert out_str[-1] == '}'
+            if out_str[-1] != '}':
+                out_str = '\gate{%s}'%out_str
             out_str = (out_str[:-1] + r'~\mbox{on}~' +
                        self.qubit_positions.latex() + '}')
         return out_str
@@ -473,6 +462,10 @@ class MultiQubitElem(QcircuitElement):
                              "ExprTuple in order to invoke empty_reduction")
         return empty_multi_qubit_gate_reduction.instantiate(
             {U: self.gate_operation})
+
+def control_elem(control_qubit_idx, target_qubit_idx):
+    from proveit.physics.quantum import CONTROL
+    return MultiQubitElem(CONTROL, Set(control_qubit_idx, target_qubit_idx))
 
 def multi_elem_entries(element, qubit_start_end_indices):
     '''

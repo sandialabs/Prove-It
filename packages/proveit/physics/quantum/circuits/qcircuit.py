@@ -513,6 +513,8 @@ class Qcircuit(Function):
                            r'\ghost' in formatted_entries[row+_nrows][col][:8]):
                         _nrows += 1
                     if _nrows == 1:
+                        formatted_entry = (
+                                formatted_entry.replace('multi', '', 1))
                         formatted_entries[row][col] = (
                                 formatted_entry.replace('{#}', '', 1))
                     else:
