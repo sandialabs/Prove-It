@@ -5,7 +5,8 @@ from proveit import (Judgment, Expression, Literal, Operation,
                      equality_prover, SimplificationDirectives)
 from proveit import TransRelUpdater
 from proveit import a, b, c, m, n, w, x, y, z
-from proveit.numbers import NumberOperation
+from proveit.logic import Equals, NotEquals
+from proveit.numbers import zero, NumberOperation
 
 class Div(NumberOperation):
     # operator of the Div operation
@@ -15,7 +16,7 @@ class Div(NumberOperation):
         theory=__file__)
 
     _simplification_directives_ = SimplificationDirectives(
-            factor_negation = True)
+            factor_negation = True, reduce_zero_numerator = True)
 
     def __init__(self, numerator, denominator, *, styles=None):
         r'''
@@ -103,28 +104,37 @@ class Div(NumberOperation):
             # eliminate division by one
             expr = eq.update(expr.divide_by_one_elimination(auto_simplify=False))
 
+        # if (Div._simplification_directives_.factor_negation and
+        #     isinstance(self.numerator, Neg)):
+        #     # we have something like (-a)/b but want -(a/b)
+        #     eq.update(expr.neg_extraction())
+        #     return eq.relation  # no more division simplifications.
+
         if (Div._simplification_directives_.factor_negation and
             isinstance(self.numerator, Neg)):
             # we have something like (-a)/b but want -(a/b)
-            eq.update(expr.neg_extraction())
-            return eq.relation  # no more division simplifications.
+            expr = eq.update(expr.neg_extraction())
+            # return eq.relation  # no more division simplifications.
+
+        if (Div._simplification_directives_.reduce_zero_numerator and
+            isinstance(expr, Div)):
+            if ((expr.numerator==zero or Equals(expr.numerator, zero).proven())
+                and NotEquals(expr.denominator, zero).proven()):
+                # we have something like 0/x so reduce to 0
+                expr = eq.update(expr.zero_numerator_reduction())
 
         return eq.relation
 
-    """
-    # outdated.  obsolete.
-    def combine_exponents(self, assumptions=USE_DEFAULTS):
-        from . import frac_int_exp, frac_nat_pos_exp
-        from proveit.numbers import Exp
-        if isinstance(self.numerator, Exp) and isinstance(self.denominator, Exp):
-            if self.numerator.exponent == self.denominator.exponent:
-                exponent = self.numerator.exponent
-                try:
-                    return frac_nat_pos_exp.instantiate({n:exponent}).instantiate({a:self.numerator.base, b:self.denominator.base})
-                except:
-                    return frac_int_exp.instantiate({n:exponent}).instantiate({a:self.numerator.base, b:self.denominator.base})
-        raise Exception('Unable to combine exponents of this fraction')
-    """
+    @equality_prover('zero_numerator_reduced', 'zero_numerator_reduce')
+    def zero_numerator_reduction(self, **defaults_config):
+        '''
+        Deduce and return an equality between self of the form 0/x
+        and the number 0. Will need to know or assume that the
+        denominator x is non-zero.
+        '''
+        from proveit.numbers.division import frac_zero_numer
+        _x_sub = self.denominator
+        return frac_zero_numer.instantiate({x: _x_sub})
 
     @equality_prover('all_canceled', 'all_cancel')
     def cancelations(self, **defaults_config):
