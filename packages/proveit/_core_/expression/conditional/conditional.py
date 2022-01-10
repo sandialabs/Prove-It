@@ -118,15 +118,20 @@ class Conditional(Expression):
         return self.formatted('latex', **kwargs)
 
     def formatted(self, format_type, fence=True, **kwargs):
+        with defaults.temporary() as temp_defaults:
+            # Add the condition as an assumption when formatting the
+            # value.
+            temp_defaults.assumptions = defaults.assumptions + (self.condition,)
+            formatted_value = self.value.formatted(format_type, **kwargs)
         if format_type == "string":
             formatted_condition = self._formatted_condition('string', **kwargs)
-            inner_str = self.value.formatted('string', **kwargs) + ' if ' + formatted_condition
+            inner_str = formatted_value + ' if ' + formatted_condition
             if fence:
                 return '{' + inner_str + '.'
             return inner_str
         else:
             formatted_condition = self._formatted_condition('latex', **kwargs)
-            inner_str = (self.value.formatted('latex', **kwargs) + r' \textrm{ if } '
+            inner_str = (formatted_value + r' \textrm{ if } '
                          + formatted_condition)
             if fence:
                 inner_str = r'\left\{' + inner_str + r'\right..'

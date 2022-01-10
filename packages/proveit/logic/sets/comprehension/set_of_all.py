@@ -1,5 +1,5 @@
 from proveit import (Literal, OperationOverInstances, Operation, ExprTuple,
-                     single_or_composite_expression, USE_DEFAULTS)
+                     single_or_composite_expression, defaults)
 from proveit import x, y, f, P, Q, S
 
 
@@ -39,8 +39,18 @@ class SetOfAll(OperationOverInstances):
         out_str = ''
         explicit_conditions = ExprTuple(*self.explicit_conditions())
         inner_fence = (explicit_conditions.num_entries() > 0)
-        formatted_instance_element = self.instance_element.formatted(
-            format_type, fence=inner_fence)
+        instance_element = self.instance_element
+        if hasattr(self, 'condition'):
+            with defaults.temporary() as temp_defaults:
+                # Add the condition as an assumption when formatting 
+                # the instance expression.
+                temp_defaults.assumptions = defaults.assumptions + (
+                        self.condition,)
+                formatted_instance_element =  instance_element.formatted(
+                    format_type, fence=inner_fence)
+        else:
+            formatted_instance_element = instance_element.formatted(
+                    format_type, fence=inner_fence)
         explicit_domains = self.explicit_domains()
         domain_conditions = ExprTuple(*self.domain_conditions())
         if format_type == 'latex':

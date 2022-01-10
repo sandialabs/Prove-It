@@ -1,4 +1,5 @@
 import inspect
+from proveit._core_.defaults import defaults
 from proveit._core_.expression.expr import (
     Expression, MakeNotImplemented, free_vars)
 from proveit._core_.expression.label.var import Variable
@@ -749,6 +750,18 @@ class OperationOverInstances(Operation):
         out_str = ''
         formatted_params = ', '.join([param.formatted(format_type, abbrev=True)
                                       for param in explicit_iparams])
+        if hasattr(self, 'condition'):
+            with defaults.temporary() as temp_defaults:
+                # Add the condition as an assumption when formatting 
+                # the instance expression.
+                temp_defaults.assumptions = defaults.assumptions + (
+                        self.condition,)
+                formatted_instance_expr =  instance_expr.formatted(
+                    format_type, fence=True)
+        else:
+            formatted_instance_expr = instance_expr.formatted(
+                    format_type, fence=True)
+            
         if format_type == 'string':
             if fence:
                 out_str += '['
@@ -773,7 +786,7 @@ class OperationOverInstances(Operation):
                     format_type, fence=False)
                 # out_str += ', '.join(condition.formatted(format_type) for condition in self.conditions
                 # if condition not in implicit_conditions)
-            out_str += '} ' + instance_expr.formatted(format_type, fence=True)
+            out_str += '} ' + formatted_instance_expr
             if fence:
                 out_str += ']'
         if format_type == 'latex':
@@ -800,8 +813,8 @@ class OperationOverInstances(Operation):
                         out_str += "~|~"
                     out_str += self._wrap_params_formatted(
                         format_type=format_type, params=explicit_conditions, fence=False)
-                out_str += r'\end{array}' + '\n' + r'}~  \\' + '\n' + \
-                    instance_expr.formatted(format_type, fence=True)
+                out_str += (r'\end{array}' + '\n' + r'}~  \\' + '\n' 
+                    + formatted_instance_expr)
             else:
                 out_str += self.operator.formatted(format_type) + r'_{'
                 if has_explicit_iparams:
@@ -824,12 +837,10 @@ class OperationOverInstances(Operation):
                     raise NotImplementedError(
                             "'with_wrapping' not implemented in "
                             "OperationOverInstances")
-                    print(instance_expr.formatted(format_type, fence=True))
-                    out_str += r'}~ ' + \
-                        instance_expr.formatted(format_type, fence=True)
+                    print(formatted_instance_expr)
+                    out_str += r'}~ ' + formatted_instance_expr
                 else:
-                    out_str += '}~' + \
-                        instance_expr.formatted(format_type, fence=True)
+                    out_str += '}~' + formatted_instance_expr
             if fence:
                 out_str += r'\right]'
         # print(out_str)
