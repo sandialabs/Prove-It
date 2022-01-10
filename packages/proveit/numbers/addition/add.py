@@ -1018,11 +1018,13 @@ class Add(NumberOperation):
     def factorization(self, the_factor, pull="left", group_factor=True,
                       **defaults_config):
         '''
-        Factor out "the_factor" from this sum, pulling it either to the "left" or "right".
-        If group_factor is True and the_factor is a product, these operands are grouped
-        together as a sub-product.  Returns the equality that equates self to this new version.
-        Give any assumptions necessary to prove that the operands are in the Complex numbers so that
-        the associative and commutation theorems are applicable.
+        Factor out "the_factor" from this sum, pulling it either to
+        the "left" or "right". If group_factor is True and the_factor
+        is a product, these operands are grouped together as a
+        sub-product.  Returns the equality that equates self to this
+        new version. Give any assumptions necessary to prove that the
+        operands are in the Complex numbers so that the associative
+        and commutation theorems are applicable.
         '''
         from proveit.numbers.multiplication import distribute_through_sum
         from proveit.numbers import one, Mult
@@ -1042,7 +1044,10 @@ class Add(NumberOperation):
                     group_remainder=True, preserve_all=True)
                 if not isinstance(term_factorization.rhs, Mult):
                     raise ValueError(
-                        'Expecting right hand side of factorization to be a product')
+                        "Expecting right hand side of each factorization "
+                        "to be a product. Instead obtained: {0} for term "
+                        "number {1} (0-based index).".
+                        format(term_factorization.rhs, _i))
                 if pull == 'left':
                     # the grouped remainder on the right
                     _b.append(term_factorization.rhs.operands[-1])
@@ -1055,7 +1060,8 @@ class Add(NumberOperation):
             else:
                 if term != the_factor:
                     raise ValueError(
-                        "Factor, %s, is not present in the term at index %d of %s!" %
+                        "Factor, %s, is not present in the term at "
+                        "index %d of %s!" %
                         (the_factor, _i, self))
                 if pull == 'left':
                     replacements.append(Mult(term, one).one_elimination(1))
