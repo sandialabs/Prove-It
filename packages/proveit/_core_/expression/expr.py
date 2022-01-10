@@ -1506,6 +1506,13 @@ class Expression(metaclass=ExprType):
             for expr in sub_expr.order_of_appearance(sub_expressions):
                 yield expr
 
+    def literals_as_variables(self, *literals):
+        '''
+        Return this expression with instances of the given literals
+        converted to corresponding variables.  
+        '''
+        return self.basic_replaced({lit:lit.as_variable() for lit in literals})
+
     def _repr_html_(self, unofficial_name_kind_theory=None):
         '''
         Generate html to show a png compiled from the latex (that may be recalled
