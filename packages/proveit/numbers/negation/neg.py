@@ -9,7 +9,7 @@ from proveit.numbers.number_sets import (
         RationalNonNeg, RationalNonPos,
         Real, RealNonZero, RealPos, RealNeg, RealNonNeg, RealNonPos,
         Complex, ComplexNonZero)
-from proveit import a, b, c, m, n, x, y, B
+from proveit import a, b, c, i, j, m, n, x, y, B
 from proveit.numbers import NumberOperation
 
 class Neg(NumberOperation):
@@ -304,7 +304,9 @@ class Neg(NumberOperation):
         See Mult.neg_simplification where this may be used indirectly.
         '''
         from proveit.numbers import Mult
-        from . import mult_neg_left_double, mult_neg_right_double, mult_neg_any_double
+        from proveit.numbers.multiplication import (
+                mult_neg_left_double, mult_neg_right_double,
+                mult_neg_any_double)
 
         mult_expr = self.operand
         if not isinstance(mult_expr, Mult):
@@ -319,17 +321,20 @@ class Neg(NumberOperation):
         if mult_expr.operands.is_double():
             if idx == 0:
                 return mult_neg_left_double.instantiate(
-                    {a: mult_expr.operands[1]})
+                    {x: mult_expr.operands[0].operand,
+                     y: mult_expr.operands[1]})
             else:
                 return mult_neg_right_double.instantiate(
-                    {a: mult_expr.operands[0]})
-        _a = mult_expr.operands[:idx]
-        _b = mult_expr.operands[idx]
-        _c = mult_expr.operands[idx + 1:]
-        _m = _a.num_elements()
-        _n = _c.num_elements()
+                    {x: mult_expr.operands[0],
+                     y: mult_expr.operands[1].operand})
+
+        _a_sub = mult_expr.operands[:idx]
+        _b_sub = mult_expr.operands[idx].operand
+        _c_sub = mult_expr.operands[idx + 1:]
+        _i_sub = _a_sub.num_elements()
+        _j_sub = _c_sub.num_elements()
         return mult_neg_any_double.instantiate(
-            {m: _m, n: _n, a: _a, b: _b, c: _c})
+            {i: _i_sub, j: _j_sub, a: _a_sub, b: _b_sub, c: _c_sub})
 
     @relation_prover
     def bound_via_operand_bound(self, operand_relation, **defaults_config):
