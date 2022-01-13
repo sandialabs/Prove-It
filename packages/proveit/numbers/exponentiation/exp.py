@@ -721,6 +721,10 @@ def exp(exponent, *, styles=None):
     from proveit.numbers import e # Euler's number
     return Exp(e, exponent, styles=styles)
 
+def exp2pi_i(*exp_factors):
+    from proveit.numbers import Mult, pi, i
+    return exp(Mult(*((two, pi, i) + exp_factors)))
+
 def sqrt(base):
     '''
     Special function for square root version of an exponential.

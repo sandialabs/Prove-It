@@ -27,7 +27,7 @@ from .multiplication import Mult
 from .division import Div, frac
 from .divisibility import Divides, DividesProper, GCD
 from .modular import Mod, ModAbs
-from .exponentiation import Exp, exp, sqrt, sqrd
+from .exponentiation import Exp, exp, exp2pi_i, sqrt, sqrd
 from .logarithms import Log
 from .summation import Sum
 from .product import Prod
