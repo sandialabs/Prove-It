@@ -100,6 +100,7 @@ class Qcircuit(Function):
                     qubit_positions = entry_expr.qubit_positions
                     qubit_positions_of_column.add(qubit_positions)
                     is_multi_gate = False
+                    is_generic_gate = False
                     if isinstance(qubit_positions, Set):
                         # Explicit qubit positions for a control or
                         # swap operation (order doesn't matter).
@@ -126,6 +127,7 @@ class Qcircuit(Function):
                     else:
                         # A "generic" MultiQubitElem (no explicit
                         # qubit_positions).
+                        is_generic_gate = True
                         has_generic_multiqubitelem = True
                         
                     if is_multi_gate:
@@ -176,7 +178,7 @@ class Qcircuit(Function):
                                 "up until the end qubit positions: "
                                 "encountered %s before end of %s"
                                 %(entry_expr, active_multigate))
-                    else:
+                    elif not is_generic_gate:
                         # For a control or a swap, make sure the 
                         # qubit_positions all exist and have 
                         # appropriate entries.
@@ -360,7 +362,7 @@ class Qcircuit(Function):
                 within_qcircuit=True)
         
         width = len(formatted_cells)
-        height = 0
+        height = 1
         for formatted_col_entries in formatted_cells:
             if isinstance(formatted_col_entries, list):
                 height = max(height, len(formatted_col_entries))
@@ -461,22 +463,20 @@ class Qcircuit(Function):
                     # Use up and down arrows above and below to denote 
                     # an expression representing an entire column.
                     formatted_col = (r'\begin{array}{c} \uparrow \\'
-                                     '%s \\ \downarrow\end{array}'
+                                     r'%s \\ \downarrow\end{array}'
                                      %formatted_col_entries)
-                    _prefix = '' if col==0 else '& '
                     if row==0:
                         # An expression represents the entire row: top
                         # Since the height may change as a result
                         # of collapsing multiwires/gates, just use '#'
                         # as a placeholder for now.
                         formatted_row_entries.append(
-                                _prefix +
-                                r'\multigate{#}{%s}'%formatted_col)
+                                r'& \multigate{#}{%s}'%formatted_col)
                     else:
                         # An expression represents the entire row: not top
                         formatted_col = formatted_col_entries
                         formatted_row_entries.append(
-                                _prefix + '\ghost{%s}'%formatted_col)
+                                '& \ghost{%s}'%formatted_col)
             if collapsible_multirow:
                 # Collapse multiwires and multigates into a single row.
                 row += 1                

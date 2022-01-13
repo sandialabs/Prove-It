@@ -98,7 +98,13 @@ class QcircuitElement(Function):
             # wrap it in a \Qcircuit latex command.
             spacing = '@C=1em @R=.7em'
             out_str = (r'\begin{array}{c} \Qcircuit' + spacing + 
-                       '{' + '\n' + '& ' + out_str + r' & \qw')
+                       '{' + '\n' + '& ' + out_str)
+            circuit_elem = self
+            if isinstance(self, MultiQubitElem):
+                circuit_elem = self.element
+            if (not isinstance(circuit_elem, Output) and
+                    not isinstance(circuit_elem, Measure)):
+                out_str += r' & \qw'
             out_str += ' \n' + r'} \end{array}'
         return out_str
     
@@ -405,8 +411,8 @@ class MultiQubitElem(QcircuitElement):
             # This is either being shown on its own, or it lacks
             # explicit qubit positions.
             out_str = self.element.latex(within_qcircuit=True)
-            if out_str[-1] != '}':
-                out_str = '\gate{%s}'%out_str
+            if not isinstance(self.element, QcircuitElement):
+                out_str = '& \gate{%s}'%out_str
             out_str = (out_str[:-1] + r'~\mbox{on}~' +
                        self.qubit_positions.latex() + '}')
         return out_str
