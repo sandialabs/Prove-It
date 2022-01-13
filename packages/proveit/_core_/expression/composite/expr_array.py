@@ -217,6 +217,9 @@ class ExprArray(ExprTuple):
                             raise ValueError(
                                     "Columns do not line up across different "
                                     "rows in ExprArray: %s"%self)
+        if element_positions is None:
+            from proveit.numbers import one
+            return [one] # only ExprRanges -- they start at qubit 1.
         return element_positions
 
     @staticmethod
@@ -350,7 +353,7 @@ class ExprArray(ExprTuple):
         # convenience assuming the orientation is 'horizontal' but the
         # roles will be switched if it is 'vertical'.
         height = len(formatted_cells)
-        width = 0
+        width = 1
         for formatted_row_entries in formatted_cells:
             if isinstance(formatted_row_entries, list):
                 width = max(width, len(formatted_row_entries))
