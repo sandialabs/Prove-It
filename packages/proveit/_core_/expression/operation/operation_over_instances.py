@@ -282,12 +282,17 @@ class OperationOverInstances(Operation):
         '''
         with_wrapping = (self.get_style('with_wrapping', 'False') == 'True')
         wrap_params = (self.get_style('wrap_params', 'False') == 'True')
+        condition_wrapping = self.get_style('condition_wrapping', 'No')
         justification = self.get_style('justification')
         call_strs = []
         if with_wrapping:
             call_strs.append('with_wrapping()')
         if wrap_params:
             call_strs.append('wrap_params()')
+        if condition_wrapping == 'before':
+            call_strs.append('with_wrapping_before_condition()')
+        elif condition_wrapping == 'after':
+            call_strs.append('with_wrapping_after_condition()')            
         if justification != 'center':
             call_strs.append('with_justification("' + justification + '")')
         return call_strs
@@ -662,6 +667,12 @@ class OperationOverInstances(Operation):
             default = None, 
             related_methods = ('with_wrapping',))
         options.add_option(
+            name = 'condition_wrapping',
+            description = ("Wrap 'before' or 'after' the condition (or None)."),
+            default = None,
+            related_methods = ('with_wrap_after_condition',
+                               'with_wrap_before_condition')),
+        options.add_option(
             name = 'wrap_params',
             description = ("If 'True', wraps every two parameters "
                            "AND wraps the Expression after the parameters"),
@@ -688,6 +699,15 @@ class OperationOverInstances(Operation):
         \forall_{a, b, c, d, e, f, g} P(a, b, c, d, e, f, g)
         '''
         return self.with_styles(with_wrapping=str(wrap))
+    
+    def with_wrap_before_condition(self):
+        return self.with_styles(condition_wrapping='before')
+
+    def with_wrap_after_condition(self):
+        return self.with_styles(condition_wrapping='after')
+
+    def with_no_condition_wrapping(self):
+        return self.with_styles(condition_wrapping=None)
 
     def wrap_params(self, wrap=True):
         '''
@@ -722,10 +742,15 @@ class OperationOverInstances(Operation):
 
         if with_wrapping is None:
             # style call to wrap the expression after the parameters
-            with_wrapping = self.get_style('with_wrapping', 'False')
+            with_wrapping = (
+                    self.get_style('with_wrapping', 'False') == 'True')
         if wrap_params is None:
             # style call to wrap the expression after the parameters
-            wrap_params = self.get_style('wrap_params', 'False')
+            wrap_params = (
+                    self.get_style('wrap_params', 'False') == 'True')
+        condition_wrapping = self.get_style(
+                'condition_wrapping', 'No')
+        if condition_wrapping == 'No': condition_wrapping=None
         if justification is None:
             justification = self.get_style('justification', 'center')
         # override this default as desired
@@ -735,6 +760,9 @@ class OperationOverInstances(Operation):
         instance_expr = self.instance_expr
         has_explicit_iparams = (len(explicit_iparams) > 0)
         has_explicit_conditions = (explicit_conditions.num_entries() > 0)
+        if not has_explicit_conditions:
+            # No explicit conditions to wrap
+            condition_wrapping = None
         has_multi_domain = not self.has_one_domain()
         domain_conditions = ExprTuple(*self.domain_conditions())
         # domain_membership_op will be the InSet operator if all
@@ -792,7 +820,9 @@ class OperationOverInstances(Operation):
         if format_type == 'latex':
             if fence:
                 out_str += r'\left['
-            if wrap_params == 'True':
+            if with_wrapping:
+                out_str += r'\begin{array}{l}'                
+            if wrap_params:
                 out_str += self.operator.formatted(
                     format_type) + r'_{ \scriptsize \begin{array}{' + justification[0] + '}' + '\n'
                 if has_explicit_iparams:
@@ -813,10 +843,14 @@ class OperationOverInstances(Operation):
                         out_str += "~|~"
                     out_str += self._wrap_params_formatted(
                         format_type=format_type, params=explicit_conditions, fence=False)
-                out_str += (r'\end{array}' + '\n' + r'}~  \\' + '\n' 
-                    + formatted_instance_expr)
+                out_str += r'\end{array}' + '\n' + r'}~ '
+                if with_wrapping:
+                    out_str += r'\\' + '\n'
+                out_str += formatted_instance_expr
             else:
                 out_str += self.operator.formatted(format_type) + r'_{'
+                if condition_wrapping is not None:
+                    out_str += r'\scriptsize \begin{array}{l}'
                 if has_explicit_iparams:
                     if has_multi_domain:
                         out_str += domain_conditions.formatted(
@@ -827,20 +861,22 @@ class OperationOverInstances(Operation):
                     out_str += ' %s '%domain_membership_op.latex()
                     out_str += self.domain.formatted(format_type, fence=False)
                 if has_explicit_conditions:
+                    if condition_wrapping == 'before':
+                        out_str += r' \\'
                     if has_explicit_iparams:
                         out_str += "~|~"
+                    if condition_wrapping == 'after':
+                        out_str += r'\\ '
                     out_str += explicit_conditions.formatted(
                         format_type, fence=False)
-                # out_str += ', '.join(condition.formatted(format_type) for condition in self.conditions
-                # if condition not in implicit_conditions)
-                if with_wrapping == 'True':
-                    raise NotImplementedError(
-                            "'with_wrapping' not implemented in "
-                            "OperationOverInstances")
-                    print(formatted_instance_expr)
-                    out_str += r'}~ ' + formatted_instance_expr
-                else:
-                    out_str += '}~' + formatted_instance_expr
+                if condition_wrapping is not None:
+                    out_str += r'\end{array}'
+                out_str += '}~'
+                if with_wrapping:
+                    out_str += r'\\' + '\n'
+                out_str += formatted_instance_expr
+            if with_wrapping:
+                out_str += r'\end{array}'                
             if fence:
                 out_str += r'\right]'
         # print(out_str)
