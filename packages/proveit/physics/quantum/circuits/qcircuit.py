@@ -231,7 +231,7 @@ class Qcircuit(Function):
                                                 "mult-gate except the top.")
                             elif (qubit_positions.num_entries() == 2 and
                                   elem == CONTROL and
-                                  _other_entry_expr.element == CONTROL):
+                                  _other_entry_expr == CONTROL):
                                 # This a symmetrically-formed 
                                 # controlled-Z (control on both ends).
                                 # That's okay.
@@ -257,7 +257,7 @@ class Qcircuit(Function):
                 # If there is a generic MultiQubitElem, we need
                 # a vertical wire from top to bottom since anything
                 # could be the target.
-                for row, _ in enumerate(col_entries):
+                for row, _ in enumerate(col_entries[:-1]):
                     down_wire_locations.add((row, col))
             else:
                 # Map minimum rows of qubit_positions to the
@@ -328,8 +328,8 @@ class Qcircuit(Function):
 
     def latex(self, fence=False, **kwargs):
         from proveit.physics.quantum import (
-                CONTROL, CLASSICAL_CONTROL, SWAP)
-        from proveit.numbers import one
+                CONTROL, CLASSICAL_CONTROL, SWAP, SPACE)
+        from proveit.numbers import one, Add, subtract
         spacing = self.get_style('spacing')
             
         # Get the element positions corresponding to each row of the
@@ -379,8 +379,12 @@ class Qcircuit(Function):
         formatted_entries = []
         while row < height:
             formatted_row_entries = []
-            collapsible_multirow = True
+            collapsible_multirow = (height > 1)
+            # Continue with a wire except after a space, measurement,
+            # or output:
+            continue_wire = True 
             for col in range(width):
+                continue_wire = True
                 format_col_entries = format_cell_entries[col]
                 formatted_col_entries = formatted_cells[col]
                 if isinstance(formatted_col_entries, list):
@@ -414,10 +418,16 @@ class Qcircuit(Function):
                         elif isinstance(_expr, Input):
                             formatted_entry = r'\qin{%s}'%formatted_entry
                         elif isinstance(_expr, Output):
-                            formatted_entry = r'\qout{%s}'%formatted_entry
+                            formatted_entry = r'& \qout{%s}'%formatted_entry
+                            continue_wire = False
                         elif isinstance(_expr, Measure):
-                            formatted_entry = r'\measureD{%s}'%formatted_entry
+                            formatted_entry = r'& \measureD{%s}'%formatted_entry
+                            continue_wire = False
                     if isinstance(entry, MultiQubitElem):
+                        if (isinstance(entry.element, Output) or
+                                isinstance(entry.element, Measure)
+                                or entry.element == SPACE):
+                            continue_wire = False
                         if isinstance(entry.qubit_positions, ExprTuple):
                             elem = entry.element
                             assert elem not in (
@@ -456,6 +466,10 @@ class Qcircuit(Function):
                                 formatted_entry = (
                                         _prefix + r'\ghost' 
                                         + formatted_entry[_i:])
+                    elif (isinstance(entry, Output) or
+                          isinstance(entry, Measure) or
+                          entry == SPACE):
+                        continue_wire = False
                     if (row, col) in down_wire_locations:
                         formatted_entry += r' \qwx[1]'                                
                     formatted_row_entries.append(formatted_entry)
@@ -477,6 +491,7 @@ class Qcircuit(Function):
                         formatted_col = formatted_col_entries
                         formatted_row_entries.append(
                                 '& \ghost{%s}'%formatted_col)
+            multiwire_size = None
             if collapsible_multirow:
                 # Collapse multiwires and multigates into a single row.
                 row += 1                
@@ -487,17 +502,34 @@ class Qcircuit(Function):
                         _expr = format_cell_entries[col][row][0]
                         assert isinstance(_expr, ExprRange)
                         assert _expr.start_index == one
-                        size = _expr.end_index
+                        multiwire_size = _expr.end_index
                         formatted_row_entries[col] = (
-                                r'& { /^{' + size.latex() + r'} } '
+                                r'& { /^{' + multiwire_size.latex() + r'} } '
                                 + formatted_entry[2:])
                     else:
                         assert (formatted_entry[:6] == r'\ghost' or
                                 formatted_entry[:8] == r'& \ghost' or
                                 '{#}' in formatted_entry)
+                    if continue_wire and (multiwire_size is None):
+                        # We want the multi-wire size for the continued
+                        # wire, so let's figure that out.
+                        start = format_row_element_positions[row - 1]
+                        end = format_row_element_positions[row + 1]
+                        if start == one:
+                            multiwire_size = end
+                        else:
+                            multiwire_size = Add(subtract(end, start), one)
+                            multiwire_size = multiwire_size.simplified()
                 row += 2
             else:
                 row += 1
+            if continue_wire:
+                if multiwire_size is None:
+                    formatted_entry = r'& \qw'
+                else:
+                    formatted_entry = (r'& { /^{%s} } \qw'
+                                       %multiwire_size.latex())
+                formatted_row_entries.append(formatted_entry)
             formatted_entries.append(formatted_row_entries)
             
         # Generate row contributions to out_str.
