@@ -184,7 +184,7 @@ class Div(NumberOperation):
                                  % (term_to_cancel, self))
             # Factor the term_to_cancel from the numerator to the left.
             expr = eq.update(expr.inner_expr().numerator.factorization(
-                term_to_cancel, group_factor=True, group_remainder=True,
+                term_to_cancel, group_factors=True, group_remainder=True,
                 preserve_all=True))
         if term_to_cancel != self.denominator:
             if (not isinstance(self.denominator, Mult) or
@@ -193,7 +193,7 @@ class Div(NumberOperation):
                                  % (term_to_cancel, self))
             # Factor the term_to_cancel from the denominator to the left.
             expr = eq.update(expr.inner_expr().denominator.factorization(
-                term_to_cancel, group_factor=True, group_remainder=True,
+                term_to_cancel, group_factors=True, group_remainder=True,
                 preserve_all=True))
         if expr.numerator == expr.denominator == term_to_cancel:
             # Perhaps it reduced to the trivial x/x = 1 case via
@@ -256,19 +256,17 @@ class Div(NumberOperation):
         return frac_one_denom.instantiate({x: self.numerator})
 
     @equality_prover('factorized', 'factor')
-    def factorization(self, the_factor, pull="left",
-                      group_factor=True, group_remainder=True,
+    def factorization(self, the_factors, pull="left",
+                      group_factors=True, group_remainder=True,
                       **defaults_config):
         '''
         Return the proven factorization (equality with the factored
-        form) from pulling "the_factor" from this division to the "left"
-        or "right".  If there are multiple occurrences, the first
-        occurrence is used.  If group_factor is True and the_factor is
-        a product, these operands are grouped together as a sub-product.
-        If group_remainder is True and there are multiple remaining
-        operands (those not in "the_factor"), then these remaining
-        operands are grouped together as a sub-product.
-        The group_remainder parameter is not relevant but kept
+        form) from pulling the factor(s) from this division to the 
+        "left" or "right".  If there are multiple occurrences, the first
+        occurrence is used.
+        If group_factors is True, the factors are
+        grouped together as a sub-product.
+        The group_remainder parameter is not relevant here but kept
         for consistency with other factorization methods.
 
         Examples:
@@ -288,13 +286,13 @@ class Div(NumberOperation):
         from . import mult_frac_left, mult_frac_right, prod_of_fracs
         expr = self
         eq = TransRelUpdater(expr)
-        if the_factor == self:
+        if the_factors == self:
             return eq.relation # self = self
-        if isinstance(the_factor, Div):
-            the_factor_numer = the_factor.numerator
-            the_factor_denom = the_factor.denominator
+        if isinstance(the_factors, Div):
+            the_factor_numer = the_factors.numerator
+            the_factor_denom = the_factors.denominator
         else:
-            the_factor_numer = the_factor
+            the_factor_numer = the_factors
             the_factor_denom = one
         replacements = []
         # Factor out a fraction.
@@ -303,8 +301,8 @@ class Div(NumberOperation):
             # x or y may be 1.
             if the_factor_numer not in (one, expr.numerator):
                 expr = eq.update(expr.inner_expr().numerator.factorization(
-                        the_factor.numerator, pull=pull,
-                        group_factor=True, group_remainder=True))
+                        the_factors.numerator, pull=pull,
+                        group_factors=True, group_remainder=True))
             if pull == 'left':
                 # factor (x*y)/z into (x/z)*y
                 thm = mult_frac_left
@@ -334,7 +332,7 @@ class Div(NumberOperation):
             if the_factor_denom not in (one, expr.denominator):
                 expr = eq.update(expr.inner_expr().denominator.factorization(
                         the_factor_denom, pull=pull,
-                        group_factor=True))
+                        group_factors=True))
                 assert expr.denominator.operands.num_entries() == 2
                 _z = expr.denominator.operands.entries[0]
                 _w = expr.denominator.operands.entries[1]
@@ -352,7 +350,7 @@ class Div(NumberOperation):
             if the_factor_numer not in (one, expr.numerator):
                 expr = eq.update(expr.inner_expr().numerator.factorization(
                         the_factor_numer, pull=pull,
-                        group_factor=True, group_remainder=True))
+                        group_factors=True, group_remainder=True))
                 assert expr.numerator.operands.num_entries() == 2
                 # Factor (x*y)/(z*w) into (x/z)*(y/w)
                 _x = expr.numerator.operands.entries[0]

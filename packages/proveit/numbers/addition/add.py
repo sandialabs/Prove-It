@@ -1015,14 +1015,15 @@ class Add(NumberOperation):
         return (idx, num) if also_return_num else idx
 
     @equality_prover('factorized', 'factor')
-    def factorization(self, the_factor, pull="left", group_factor=True,
+    def factorization(self, the_factors, pull="left", 
+                      group_factors=True, group_remainder=True,
                       **defaults_config):
         '''
-        Factor out "the_factor" from this sum, pulling it either to the "left" or "right".
-        If group_factor is True and the_factor is a product, these operands are grouped
-        together as a sub-product.  Returns the equality that equates self to this new version.
-        Give any assumptions necessary to prove that the operands are in the Complex numbers so that
-        the associative and commutation theorems are applicable.
+        Factor out the factor(s) from this sum, pulling it either to 
+        the "left" or "right".
+        If group_factors is True, the factors are grouped
+        together as a sub-product.
+        Returns the equality that equates self to this new version.
         '''
         from proveit.numbers.multiplication import distribute_through_sum
         from proveit.numbers import one, Mult
@@ -1033,12 +1034,16 @@ class Add(NumberOperation):
         eq = TransRelUpdater(expr)
         replacements = list(defaults.replacements)
         _b = []
+        if not isinstance(the_factors, Expression):
+            # If 'the_factors' is not an Expression, assume it is
+            # an iterable and make it a Mult.
+            the_factors = Mult(*the_factors)
         # factor the_factor from each term
         for _i in range(expr.terms.num_entries()):
             term = expr.terms[_i]
             if hasattr(term, 'factorization'):
                 term_factorization = term.factorization(
-                    the_factor, pull, group_factor=group_factor,
+                    the_factors, pull, group_factors=group_factors,
                     group_remainder=True, preserve_all=True)
                 if not isinstance(term_factorization.rhs, Mult):
                     raise ValueError(
@@ -1053,19 +1058,19 @@ class Add(NumberOperation):
                 expr = eq.update(term_factorization.substitution(
                     expr.inner_expr().terms[_i], preserve_all=True))
             else:
-                if term != the_factor:
+                if term != the_factors:
                     raise ValueError(
                         "Factor, %s, is not present in the term at index %d of %s!" %
-                        (the_factor, _i, self))
+                        (the_factors, _i, self))
                 if pull == 'left':
                     replacements.append(Mult(term, one).one_elimination(1))
                 else:
                     replacements.append(Mult(one, term).one_elimination(0))
                 _b.append(one)
-        if not group_factor and isinstance(the_factor, Mult):
-            factor_sub = the_factor.operands
+        if not group_factors and isinstance(the_factors, Mult):
+            factor_sub = the_factors.operands
         else:
-            factor_sub = ExprTuple(the_factor)
+            factor_sub = ExprTuple(the_factors)
         if pull == 'left':
             _a = factor_sub
             _c = ExprTuple()

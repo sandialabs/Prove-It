@@ -247,13 +247,13 @@ class Neg(NumberOperation):
                 "fraction (Div) is implemented.")
 
     @equality_prover('factorized', 'factor')
-    def factorization(self, the_factor, pull="left", group_factor=None,
+    def factorization(self, the_factors, pull="left", group_factors=None,
                       group_remainder=None, **defaults_config):
         '''
-        Pull out a factor from a negated expression, pulling it either
-        to the "left" or "right".  group_factor and group_remainder are 
-        not relevant but kept for compatibility with other factor 
-        methods.
+        Pull out the factor(s) from a negated expression, pulling it 
+        either to the "left" or "right".  group_factors and 
+        group_remainder are not relevant here but kept for 
+        compatibility with other factor methods.
         Returns the equality that equates self to this new version.
         Give any assumptions necessary to prove that the operands are 
         in the Complex numbers so that the associative and commutation 
@@ -262,18 +262,18 @@ class Neg(NumberOperation):
         '''
         from . import (neg_times_pos, pos_times_neg, mult_neg_one_left,
                        mult_neg_one_right)
-        if isinstance(the_factor, Neg):
+        if isinstance(the_factors, Neg):
             if pull == 'left':
                 thm = neg_times_pos
             else:
                 thm = pos_times_neg
-            the_factor = the_factor.operand
+            the_factors = the_factors.operand
         else:
             if pull == 'left':
                 thm = pos_times_neg
             else:
                 thm = neg_times_pos
-        if self.operand == the_factor:
+        if self.operand == the_factors:
             if thm == neg_times_pos:
                 thm = mult_neg_one_left
             if thm == pos_times_neg:
@@ -282,7 +282,7 @@ class Neg(NumberOperation):
                 {x: self.operand}, auto_simplify=False).derive_reversed()
         elif hasattr(self.operand, 'factorization'):
             operand_factor_eqn = self.operand.factorization(
-                the_factor, pull, group_factor=True, group_remainder=True,
+                the_factors, pull, group_factors=True, group_remainder=True,
                 preserve_all=True)
             eqn1 = operand_factor_eqn.substitution(self.inner_expr().operand)
             new_operand = operand_factor_eqn.rhs
@@ -292,7 +292,8 @@ class Neg(NumberOperation):
                 ).derive_reversed()
             return eqn1.apply_transitivity(eqn2)
         else:
-            raise ValueError("%s is not a factor in %s!" % (the_factor, self))
+            raise ValueError("%s is not a factor in %s!" 
+                             % (the_factors, self))
 
     @equality_prover('inner_neg_mult_simplified',
                         'inner_neg_mult_simplify')

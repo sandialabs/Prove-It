@@ -1,6 +1,7 @@
-from proveit import (defaults, Literal, ExprTuple, InnerExpr, Judgment,
-                     ProofFailure, prover, relation_prover, equality_prover,
-                     SimplificationDirectives, TransRelUpdater)
+from proveit import (
+        defaults, Expression, Literal, ExprTuple, InnerExpr, 
+        Judgment, ProofFailure, prover, relation_prover, equality_prover,
+        SimplificationDirectives, TransRelUpdater)
 from proveit import a, b, c, d, e, i, j, k, m, n, w, x, y, z
 from proveit.logic import Equals, InSet
 from proveit.numbers import one, Add, num, NumberOperation
@@ -586,7 +587,7 @@ class Mult(NumberOperation):
                 assert isinstance(canceling_numer_expr, Mult)
                 pull = 'right' if numer_idx == 0 else 'left'
                 expr = eq.update(canceling_numer_inner_expr.factorization(
-                    term_to_cancel, pull=pull, group_factor=True,
+                    term_to_cancel, pull=pull, group_factors=True,
                     group_remainder=True))
                 canceling_numer_inner_expr, canceling_numer_expr = \
                     updated_canceling_numer_inner_expr()
@@ -594,7 +595,7 @@ class Mult(NumberOperation):
                 assert isinstance(canceling_denom_expr, Mult)
                 pull = 'right' if denom_idx == 0 else 'left'
                 expr = eq.update(canceling_denom_inner_expr.factorization(
-                    term_to_cancel, pull=pull, group_factor=True,
+                    term_to_cancel, pull=pull, group_factors=True,
                     group_remainder=True))
                 canceling_numer_inner_expr, canceling_numer_expr = \
                     updated_canceling_numer_inner_expr()
@@ -871,32 +872,98 @@ class Mult(NumberOperation):
                 str(operand.__class__))
 
     @equality_prover('factorized', 'factor')
-    def factorization(self, the_factor_or_index, pull="left",
-                      group_factor=True, group_remainder=False,
+    def factorization(self, the_factors_or_index, pull="left",
+                      group_factors=True, group_remainder=False,
                       **defaults_config):
         '''
         Return the proven factorization (equality with the factored
-        form) from pulling "the_factor" from this product to the "left"
-        or "right".  If there are multiple occurrences, the first
-        occurrence is used.  If group_factor is True and the_factor is
-        a product, these operands are grouped together as a sub-product.
+        form) from pulling the factor(s) from this product to the 
+        "left" or "right".  the_factors_or_index may be an iterable or 
+        a Mult; in either case, the individual factors will be pulled
+        together in the pull direction.
+        If there are multiple occurrences, the first
+        occurrence is used.  If group_factors is True, the factors are 
+        grouped together as a sub-product.
         If group_remainder is True and there are multiple remaining
-        operands (those not in "the_factor"), then these remaining
+        operands, then these remaining
         '''
         expr = self
         eq = TransRelUpdater(expr)
-        if the_factor_or_index == self:
+        if the_factors_or_index == self:
             return eq.relation  # self = self
-        if isinstance(the_factor_or_index, int):
-            idx, num = the_factor_or_index, 1
+
+        if isinstance(the_factors_or_index, Expression):
+            try:
+                # Let's just see if the entire expression is a factor.
+                the_factors_or_index = self.operands.entries.index(
+                        the_factors_or_index)
+            except ValueError:
+                pass
+            if isinstance(the_factors_or_index, Mult):
+                the_factors_or_index = the_factors_or_index.operands.entries
+            elif isinstance(the_factors_or_index, ExprTuple):
+                the_factors_or_index = the_factors_or_index.entries
+        if isinstance(the_factors_or_index, int):
+            idx = the_factors_or_index
+            num = 1
             the_factor = self.operands[idx]
+            expr = eq.update(expr.commutation(
+                    idx, 0 if pull=='left' else -num,
+                    preserve_expr=the_factor))    
+            all_factors = [the_factor]
         else:
-            the_factor = the_factor_or_index
-            idx, num = self.index(the_factor, also_return_num=True)
-        expr = eq.update(self.group_commutation(
-            idx, 0 if pull == 'left' else -num, length=num,
-            preserve_expr=the_factor))
-        if group_factor and num > 1:
+            # Assume the_factors is iterable at this point.
+            factors_iter = iter(the_factors_or_index)
+            all_factors = []
+            my_factors = self.operands.entries
+            the_slice = None
+            num = 0
+            try:
+                # Handle all but the last, always looking ahead one
+                # to see if consecutive factors can move together.
+                while True:
+                    next_factor = next(factors_iter)
+                    all_factors.append(next_factor)
+                    next_idx = my_factors.index(next_factor)
+                    if the_slice is None:
+                        # We want to look ahead one if possible.
+                        the_slice = slice(next_idx, next_idx+1)
+                        continue
+                    if next_idx == the_slice.stop:
+                        # Extend the slice then look at the next one.
+                        the_slice = slice(the_slice.start, next_idx+1)
+                        continue
+                    # Go ahead and move 'the_slice'
+                    idx = the_slice.start
+                    length = the_slice.stop - idx
+                    # Preserve all until the last one.
+                    expr = eq.update(expr.group_commutation(
+                        idx, num if pull == 'left' else -num-length, 
+                        length=length,
+                        preserve_all=True))
+                    num += length
+                    the_slice = slice(next_idx, next_idx+1)
+            except StopIteration:
+                # Handle the last slice.
+                preserved_exprs = (
+                        defaults.preserved_exprs.union(all_factors))
+                disassociate = (len(all_factors) > 1 or
+                                not group_factors)
+                idx = the_slice.start
+                length = the_slice.stop - idx
+                # Don't simplify if our goal is to group the factors
+                # or remainder.  Simplification could defeat this 
+                # purpose.
+                preserve_all=(group_factors or group_remainder)
+                expr = eq.update(expr.group_commutation(
+                    idx, num if pull == 'left' else -num-length, 
+                    length=length, disassociate=disassociate,
+                    preserved_exprs=preserved_exprs,
+                    preserve_all=preserve_all))
+                num += length
+        
+        # Group the factors if needed.
+        if group_factors and len(all_factors) > 1:
             # use 0:num type of convention like standard python
             if pull == 'left':
                 expr = eq.update(expr.association(
@@ -904,11 +971,12 @@ class Mult(NumberOperation):
             elif pull == 'right':
                 expr = eq.update(expr.association(
                         -num, num, preserve_all=True))
-        if group_remainder and self.operands.num_entries() - num > 1:
+        num_factor_operands = 1 if group_factors else num
+        if (group_remainder and 
+                expr.operands.num_entries() - num_factor_operands > 1):
             # if the factor has been group, effectively there is just 1
             # factor operand now
-            num_factor_operands = 1 if group_factor else num
-            num_remainder_operands = (self.operands.num_entries() -
+            num_remainder_operands = (expr.operands.num_entries() -
                                       num_factor_operands)
             if pull == 'left':
                 expr = eq.update(expr.association(
@@ -1476,7 +1544,7 @@ class Mult(NumberOperation):
                 # Not so simple.  Let's make it simpler by
                 # factoring it into a binary multiplication.
                 expr = eq.update(expr.factorization(
-                        idx, pull='left', group_factor=True,
+                        idx, pull='left', group_factors=True,
                         group_remainder=True))
                 expr = eq.update(expr.bound_via_factor_bound(factor_relation))
                 # Put things back as the were before the factorization.

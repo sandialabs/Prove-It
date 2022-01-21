@@ -2,6 +2,7 @@ from proveit import (as_expression, defaults, Literal,
                      ProofFailure, TransitiveRelation, 
                      TransitivityException, USE_DEFAULTS,
                      prover, relation_prover)
+from proveit import a, b, k
 from proveit.logic import Equals, InSet, NotEquals
 from proveit.numbers import zero, Complex, Integer, NaturalPos
 
@@ -47,12 +48,11 @@ class DividesRelation(TransitiveRelation):
             yield self.eliminate_common_exponent
 
         # for (ka)|(kb)
-        if (isinstance(self.lhs, Mult) and self.lhs.operands.is_double() and
-                isinstance(self.rhs, Mult) and self.rhs.operands.is_double()):
+        if (isinstance(self.lhs, Mult) and isinstance(self.rhs, Mult)):
             operands_intersection = (set(self.lhs.operands).
                                      intersection(set(self.lhs.operands)))
             if(len(operands_intersection) > 0):
-                yield self.eliminate_common_factor
+                yield self.eliminate_common_factors
 
     @staticmethod
     def WeakRelationClass():
@@ -349,40 +349,41 @@ class Divides(DividesRelation):
             {_k: self.lhs, _a: self.rhs, _n: exponent})
 
     @prover
-    def eliminate_common_factor(self, **defaults_config):
+    def eliminate_common_factors(self, **defaults_config):
         '''
-        From self of the form (k a)|(k b), derive and return a|b.
-        k must be a non-zero complex number. This method
-        is called from the DividesRelation side_effects() method.
-        Need to generalize this later for more than two operands on
-        each side! Could use sets for detecting common factors.
+        Eliminate all factors in common between the divisor and the
+        dividend.  For example, from (k a)|(k b), derive and return a|b.
+        k must be a non-zero complex number.
         '''
         from proveit.numbers import Mult
         if (isinstance(self.lhs, Mult) and
                 isinstance(self.rhs, Mult)):
-
-            if (self.lhs.operands.is_double() and
-                    self.rhs.operands.is_double()):
-
-                lhs1 = self.lhs.operands[0]
-                lhs2 = self.lhs.operands[1]
-                rhs1 = self.rhs.operands[0]
-                rhs2 = self.rhs.operands[1]
-
-                if (lhs1 == rhs1 and InSet(lhs1, Complex).proven() and
-                        NotEquals(lhs1, zero).proven()):
-
-                    from . import common_factor_elimination
-                    from proveit import a, b, k
-                    return common_factor_elimination.instantiate(
-                        {a: lhs2, b: rhs2, k: lhs1})
-
-                else:
-                    err_msg = ("Error!")
-
-            else:
-                err_msg = ("In using Divides.eliminate_common_factor(), "
-                           "each product can have only two multiplicands.")
+            from . import common_factor_elimination
+            rhs_factors = set(self.rhs.operands.entries)
+            common_factors = [factor for factor in self.lhs.factors
+                              if factor in rhs_factors]
+            # Pull the common factors out to the front.
+            if len(common_factors) == 0:
+                return self.prove() # No common factors to eliminate.
+            lhs_factorization = self.lhs.factorization(
+                    common_factors, pull='left',
+                    group_factors=True, group_remainder=True,
+                    preserve_all=True)
+            rhs_factorization = self.rhs.factorization(
+                    common_factors, pull='left',
+                    group_factors=True, group_remainder=True,
+                    preserve_all=True)
+            # Prove this "divides" but substituting factorized forms.
+            divides_proof = self.prove()
+            if lhs_factorization.lhs != lhs_factorization.rhs:
+                divides_proof = lhs_factorization.sub_right_side_into(
+                        divides_proof)
+            if rhs_factorization.lhs != rhs_factorization.rhs:
+                divides_proof = rhs_factorization.sub_right_side_into(divides_proof)
+            lhs1, lhs2 = lhs_factorization.rhs.operands
+            rhs1, rhs2 = rhs_factorization.rhs.operands
+            return common_factor_elimination.instantiate(
+                    {a: lhs2, b: rhs2, k: lhs1})
         else:
             err_msg = ("In using Divides.eliminate_common_factor(), "
                        "the lhs {0} and rhs {1} must both be products.".

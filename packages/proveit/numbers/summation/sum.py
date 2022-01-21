@@ -1,4 +1,4 @@
-from proveit import (Literal, Lambda, Function, Operation,
+from proveit import (Expression, Literal, Lambda, Function, Operation,
                      OperationOverInstances, InnerExpr,
                      Judgment, free_vars, maybe_fenced, USE_DEFAULTS,
                      ProofFailure, defaults,
@@ -553,19 +553,24 @@ class Sum(OperationOverInstances):
                 .format(self, self.indices, self.domain))
 
     @equality_prover('factorized', 'factor')
-    def factorization(self, the_factor, pull="left", group_factor=True,
+    def factorization(self, the_factors, pull="left", group_factors=True,
                       group_remainder=None, **defaults_config):
         '''
-        If group_factor is True and the_factor is a product, it will be grouped together as a
-        sub-product.  group_remainder is not relevant kept for compatibility with other factor
-        methods.  Returns the equality that equates self to this new version.
-        Give any assumptions necessary to prove that the operands are in Complex so that
-        the associative and commutation theorems are applicable.
+        Return the proven factorization (equality with the factored
+        form) from pulling the factor(s) from this summation to the 
+        "left" or "right".
+        If group_factors is True, the factors will be grouped together 
+        as a sub-product.  group_remainder is not relevant kept for 
+        compatibility with other factor methods.
         '''
         from proveit import ExprTuple, var_range, IndexedVar
         from proveit.numbers.multiplication import distribute_through_summation
         from proveit.numbers import Mult, one
-        if not free_vars(the_factor).isdisjoint(self.instance_params):
+        if not isinstance(the_factors, Expression):
+            # If 'the_factors' is not an Expression, assume it is
+            # an iterable and make it a Mult.
+            the_factors = Mult(*the_factors)            
+        if not free_vars(the_factors).isdisjoint(self.instance_params):
             raise ValueError(
                 'Cannot factor anything involving summation indices '
                 'out of a summation')
@@ -576,9 +581,9 @@ class Sum(OperationOverInstances):
         # We may need to factor the summand within the summation
         summand_assumptions = defaults.assumptions + self.conditions.entries
         summand_factorization = self.summand.factorization(
-            the_factor,
+            the_factors,
             pull,
-            group_factor=False,
+            group_factors=group_factors,
             group_remainder=True,
             assumptions=summand_assumptions)
         if summand_factorization.lhs != summand_factorization.rhs:
@@ -586,10 +591,10 @@ class Sum(OperationOverInstances):
                     self.instance_params, conditions=self.conditions)
             expr = eq.update(expr.instance_substitution(gen_summand_factorization,
                                                         preserve_all=True))
-        if isinstance(the_factor, Mult):
-            factors = the_factor.factors
+        if not group_factors and isinstance(the_factors, Mult):
+            factors = the_factors.factors
         else:
-            factors = ExprTuple(the_factor)
+            factors = ExprTuple(the_factors)
         if pull == 'left':
             _a = factors
             _c = ExprTuple()
@@ -611,8 +616,8 @@ class Sum(OperationOverInstances):
                 {i: _i, j: _j, k: _k, f:_f, Q:_Q, b:_b},
                 preserve_all=True)
         quantified_eq = _impl.derive_consequent(preserve_all=True)
-        eq.update(quantified_eq.instantiate({a: _a, c: _c}, 
-                                            preserve_all=True))
+        eq.update(quantified_eq.instantiate(
+                {a: _a, c: _c}, preserve_all=True))
 
         return eq.relation
 
