@@ -1272,7 +1272,8 @@ class Add(NumberOperation):
         return relation    
 
     @relation_prover
-    def bound_by_term(self, term_or_idx, **defaults_config):
+    def bound_by_term(self, term_or_idx, use_weak_bound=False,
+                      **defaults_config):
         '''
         Deduce that this sum is bound by the given term (or term at
         the given index).
@@ -1311,11 +1312,12 @@ class Add(NumberOperation):
                     "In order to use Add.bound_by_term, the "
                     "'other' terms must all be known to be contained "
                     "in RealPos, RealNeg, RealNonNeg, RealNonPos")
-        # If a strong bound is applicable, use that.
-        if RealPos in relevant_number_sets:
-            return self.deduce_strong_lower_bound_by_term(term_or_idx)
-        if RealNeg in relevant_number_sets:
-            return self.deduce_strong_upper_bound_by_term(term_or_idx)
+        if not use_weak_bound:
+            # If a strong bound is applicable, use that.
+            if RealPos in relevant_number_sets:
+                return self.deduce_strong_lower_bound_by_term(term_or_idx)
+            if RealNeg in relevant_number_sets:
+                return self.deduce_strong_upper_bound_by_term(term_or_idx)
         if RealNonNeg in relevant_number_sets:
             return self.deduce_weak_lower_bound_by_term(term_or_idx)
         if RealNonPos in relevant_number_sets:
