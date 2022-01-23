@@ -1,6 +1,6 @@
 from .qcircuit import Qcircuit
 from .qcircuit_elements import (Gate, MultiQubitElem,
-                                Input, Output, control_elem,
+                                Input, Output, Measure, control_elem,
                                 multi_gate_entries, 
                                 multi_input_entries, multi_output_entries,
                                 multi_measure_entries, multi_wire)

@@ -64,7 +64,8 @@ class Qcircuit(Function):
     
     @staticmethod
     def _find_down_wire_locations(format_cell_entries,
-                                  format_row_element_positions):
+                                  format_row_element_positions,
+                                  qubit_position_to_row):
         '''
         Return the set of (row, col) locations of the circuit
         grid where we should have a vertical wire to the next row.
@@ -74,8 +75,6 @@ class Qcircuit(Function):
         from proveit.physics.quantum import (
                 CONTROL, CLASSICAL_CONTROL, SWAP)
         down_wire_locations = set()
-        qubit_position_to_row = {pos:row for row, pos in 
-                                 enumerate(format_row_element_positions)}
         
         # Iterate over each column.
         for col, col_entries in enumerate(format_cell_entries):
@@ -373,8 +372,11 @@ class Qcircuit(Function):
         out_str += r'\begin{array}{c} \Qcircuit' + spacing + '{' + '\n'
         
         # Find locations where we should add a downward wire.
+        qubit_position_to_row = {pos:row for row, pos in 
+                                 enumerate(format_row_element_positions)}
         down_wire_locations = Qcircuit._find_down_wire_locations(
-                format_cell_entries, format_row_element_positions)
+                format_cell_entries, format_row_element_positions,
+                qubit_position_to_row)
         row = 0
         formatted_entries = []
         while row < height:
@@ -397,9 +399,65 @@ class Qcircuit(Function):
                     else:
                         collapsible_multirow = False
                     entry = format_col_entries[row][0]
+                    if isinstance(entry, ExprRange):
+                        entry = entry.body
+                    if isinstance(entry, MultiQubitElem):
+                        if (isinstance(entry.element, Output) or
+                                isinstance(entry.element, Measure)
+                                or entry.element == SPACE):
+                            continue_wire = False
+                        if isinstance(entry.qubit_positions, ExprTuple):
+                            elem = entry.element
+                            assert elem not in (
+                                    CONTROL, CLASSICAL_CONTROL, SWAP)
+                            # A multi-gate/input/output (not a 
+                            # control or swap and has explicit 
+                            # qubit positions).
+                            qubit_positions = entry.qubit_positions
+                            assert qubit_positions.num_entries()==1
+                            assert isinstance(qubit_positions[0], ExprRange)
+                            top_qubit_pos = qubit_positions[0].start_index
+                            top_row = qubit_position_to_row[top_qubit_pos]
+                            formatted_entry = formatted_col_entries[top_row]
+                            if formatted_entry == r'\cdots':
+                                # The only possible ellipses along the
+                                # top row of a multi-circuit-entry is
+                                # \cdots of a multigate.
+                                formatted_entry = r'& \gate{\cdots}'
+                            _i = 0
+                            _j = formatted_entry.find('{')
+                            if formatted_entry[:2] == "& ":
+                                _prefix = "& "
+                                _i = 2
+                            else:
+                                _prefix = ""
+                            assert formatted_entry[_i] == '\\'
+                            _i += 1 # skip the '\'
+                            if row==top_row:
+                                # The top-most of a multi-gate.
+                                formatted_entry = (
+                                        # The '#' is a placeholder.
+                                        # We'll go back through and
+                                        # replace these later.
+                                        _prefix +
+                                        r"\multi" + formatted_entry[_i:_j]
+                                        + '{#}' + formatted_entry[_j:])
+                            else:
+                                # Non-top of a multi-gate.
+                                if (formatted_entry[_i:_j] == r'gate' or
+                                        formatted_entry[_i:_i+7] == 
+                                        r'measure'):
+                                    _i = _j # use regular "\ghost" 
+                                formatted_entry = (
+                                        _prefix + r'\ghost' 
+                                        + formatted_entry[_i:])
+                    elif (isinstance(entry, Output) or
+                          isinstance(entry, Measure) or
+                          entry == SPACE):
+                        continue_wire = False
                     if formatted_entry in (r'\cdots', r'\vdots', r'\ddots'):
-                        # Wrap ellipses in \gate, \lstick, or \rstick
-                        # as appropriate.
+                        # Wrap ellipses in \gate, \qin, \qout, 
+                        # or \measure... as appropriate.
                         _expr = entry
                         if isinstance(_expr, ExprRange):
                             _expr = _expr.body
@@ -423,53 +481,6 @@ class Qcircuit(Function):
                         elif isinstance(_expr, Measure):
                             formatted_entry = r'& \measureD{%s}'%formatted_entry
                             continue_wire = False
-                    if isinstance(entry, MultiQubitElem):
-                        if (isinstance(entry.element, Output) or
-                                isinstance(entry.element, Measure)
-                                or entry.element == SPACE):
-                            continue_wire = False
-                        if isinstance(entry.qubit_positions, ExprTuple):
-                            elem = entry.element
-                            assert elem not in (
-                                    CONTROL, CLASSICAL_CONTROL, SWAP)
-                            # The top of a multi-gate (not a 
-                            # control or swap and has explicit 
-                            # qubit positions).
-                            qubit_positions = entry.qubit_positions
-                            assert qubit_positions.num_entries()==1
-                            assert isinstance(qubit_positions[0], ExprRange)
-                            _i = 0
-                            _j = formatted_entry.find('{')
-                            if formatted_entry[:2] == "& ":
-                                _prefix = "& "
-                                _i = 2
-                            else:
-                                _prefix = ""
-                            assert formatted_entry[_i] == '\\'
-                            _i += 1 # skip the '\'
-                            qubit_pos = format_row_element_positions[row]
-                            if (qubit_positions[0].start_index == qubit_pos):
-                                # The top-most of a multi-gate.
-                                formatted_entry = (
-                                        # The '#' is a placeholder.
-                                        # We'll go back through and
-                                        # replace these later.
-                                        _prefix +
-                                        r"\multi" + formatted_entry[_i:_j]
-                                        + '{#}' + formatted_entry[_j:])
-                            else:
-                                # Non-top of a multi-gate.
-                                if (formatted_entry[_i:_j] == r'gate' or
-                                        formatted_entry[_i:_i+13] == 
-                                        r'multimeasure'):
-                                    _i = _j # use regular "\ghost" 
-                                formatted_entry = (
-                                        _prefix + r'\ghost' 
-                                        + formatted_entry[_i:])
-                    elif (isinstance(entry, Output) or
-                          isinstance(entry, Measure) or
-                          entry == SPACE):
-                        continue_wire = False
                     if (row, col) in down_wire_locations:
                         formatted_entry += r' \qwx[1]'                                
                     formatted_row_entries.append(formatted_entry)
