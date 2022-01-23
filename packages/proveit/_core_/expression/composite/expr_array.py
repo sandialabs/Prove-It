@@ -1,6 +1,6 @@
 from .expr_tuple import ExprTuple
 from .expr_range import ExprRange
-from proveit._core_.expression.expr import Expression, MakeNotImplemented
+from proveit._core_.expression.expr import MakeNotImplemented
 from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_.defaults import USE_DEFAULTS
 
@@ -103,10 +103,6 @@ class ExprArray(ExprTuple):
         If 'format_cell_entries' is provided, append to it rather
         than creating a new list.
         '''
-        
-        # TODO: Check alignment 'implicit'/'explicit' cells, making
-        # sure they represent the same number of elements.
-        
         # Construct the list of (for the most part) lists of entries
         # first by simply composing outer and inner roles.
         # Remember coordinates of entries that are 'explicit' outside
@@ -412,4 +408,11 @@ class ExprArray(ExprTuple):
         if fence:
             out_str = r'\right)'
         return out_str
-        
+
+    def num_elements(self, **defaults_config):
+        '''
+        Return the proven number of elements of this ExprArray as an 
+        ExprTuple.  This includes the extent of all contained ranges.
+        '''
+        from proveit.core_expr_types import Len
+        return Len(self[:]).computed(**defaults_config)

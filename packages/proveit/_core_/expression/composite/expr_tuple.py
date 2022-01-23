@@ -524,7 +524,26 @@ class ExprTuple(Composite, Expression):
         return self.__class__._checked_make(
             self._core_info, subbed_entries, 
             style_preferences=self._style_data.styles)
-
+    
+    def find_sub_tuple(self, sub_tuple, start=0, end=None):
+        '''
+        Return the lowest index (within start and end if provided)
+        in this ExprTuple where the given sub_tuple is found. 
+        Return -1 if it is not found.  This is analogous to
+        string.find.
+        '''
+        if end is None: end = self.num_entries()  
+        if isinstance(sub_tuple, ExprTuple):
+            sub_tuple = sub_tuple.entries
+        _N = len(sub_tuple)
+        entries = self.entries
+        
+        # Iterate from start to end until we match the pattern.
+        for i in range(start, end):
+            if entries[i] == sub_tuple[0] and entries[i:i+_N] == sub_tuple:
+                return i
+        return -1
+    
     def is_irreducible_value(self):
         '''
         An ExprTuple is irreducible if and only if all of its entries
