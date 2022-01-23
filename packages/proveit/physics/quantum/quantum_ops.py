@@ -2,7 +2,8 @@ from proveit import (equality_prover, Operation, Function, Literal,
                      TransRelUpdater)
 from proveit import x
 from proveit.linear_algebra import SU, TensorExp
-from proveit.numbers import one, num, Complex, Exp
+from proveit.logic import CartExp
+from proveit.numbers import one, two, Complex, Exp
 
 pkg = __package__  # delete this later; will no longer be needed
 
@@ -27,10 +28,9 @@ def QubitRegisterSpace(num_Qbits):
     Transplanted here beginning 2/13/2020 by wdc, from the old
     physics/quantum/common.py
     '''
-    # need some extra curly brackets around the Exp() expression
-    # to allow the latex superscript to work on something
-    # already superscripted
-    return TensorExp({Exp(Complex, num(2))}, num_Qbits)
+    if num_Qbits == 1:
+        return CartExp(Complex, two)
+    return CartExp(Complex, Exp(two, num_Qbits))
 
 
 def RegisterSU(n):
@@ -38,4 +38,4 @@ def RegisterSU(n):
     Transplanted here beginning 2/13/2020 by wdc, from the old
     physics/quantum/common.py
     '''
-    return SU(Exp(num(2), n))
+    return SU(Exp(two, n))
