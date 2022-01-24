@@ -1,10 +1,12 @@
 from proveit import (Expression, Function, Literal, 
                      ConditionalSet, Conditional, ExprRange,
-                     ExprTuple, ExprArray, VertExprArray, StyleOptions,
-                     free_vars)
-from proveit.logic import Set
+                     ExprTuple, ExprArray, VertExprArray, ProofFailure,
+                     StyleOptions, free_vars)
+from proveit.logic import Equals, Set
+from proveit.numbers import Interval, one, Add
 from proveit.physics.quantum.circuits.qcircuit_elements import (
-        Gate, MultiQubitElem, Input, Output, Measure, config_latex_tool)
+        QcircuitElement, Gate, MultiQubitElem, Input, Output, Measure, 
+        config_latex_tool)
 
 class Qcircuit(Function):
     '''
@@ -65,7 +67,7 @@ class Qcircuit(Function):
     @staticmethod
     def _find_down_wire_locations(format_cell_entries,
                                   format_row_element_positions,
-                                  qubit_position_to_row):
+                                  qubit_pos_to_row):
         '''
         Return the set of (row, col) locations of the circuit
         grid where we should have a vertical wire to the next row.
@@ -85,128 +87,158 @@ class Qcircuit(Function):
             
             # Iterate over each row. Map qubit position sets of
             # MultiQubitElems sets of rows that may be involved. 
-            qubit_positions_of_column = set()
-            # No vertical wire through multigate (blockade):
-            multigate_blockade = set() 
+            multiqubit_positions_of_column = set()
+            # No vertical wire through multi-gate/input/output/measure
+            # (blockade):
+            multiqubit_blockade = set() 
             has_generic_multiqubitelem = False
-            active_multigate = None
+            # Active multiqubit element operation/state/basis
+            # of a multiqubit gate/input/output/measure:
+            active_multiqubit_op = None
+            # "part" of the active multiqubit operation to come next:
+            next_part = None 
             for row, entry in enumerate(col_entries):
-                entry_expr = entry[0] # the actual Expression of the entry
+                 # The actual Expression of the entry
+                entry_expr = entry[0]
+                if isinstance(entry_expr, ExprRange):
+                    elem_param = entry_expr.parameter
+                    start = entry_expr.start_index
+                    if next_part is not None:
+                        # The middle part of a ExprRange for a
+                        # multiqubit gate/input/output/measure.
+                        assert next_part == Add(start, one)
+                    end = entry_expr.end_index
+                    entry_expr = entry_expr.body
+                else:
+                    elem_param = start = end = None
                 qubit_pos = format_row_element_positions[row]
                 if isinstance(entry_expr, MultiQubitElem):
                     # MultiQubitElem entry.
                     elem = entry_expr.element
-                    qubit_positions = entry_expr.qubit_positions
-                    qubit_positions_of_column.add(qubit_positions)
-                    is_multi_gate = False
-                    is_generic_gate = False
-                    if isinstance(qubit_positions, Set):
-                        # Explicit qubit positions for a control or
-                        # swap operation (order doesn't matter).
-                        if elem not in (CONTROL, CLASSICAL_CONTROL, SWAP):
+                    targets = entry_expr.targets
+                    if (next_part is not None and 
+                            not isinstance(targets, Interval)):
+                        raise ValueError(
+                                "The MultiQubitElem expressions "
+                                "composing a multiqubit gate/input/output"
+                                "/measure must be consecutive "
+                                "up until the end qubit positions: "
+                                "encountered %s before end of %s"
+                                %(entry_expr, active_multiqubit_op))
+                    if isinstance(targets, Interval):
+                        # A multi-gate/input/output/measure.  
+                        # The targets must an Interval covering all of 
+                        # the involved qubits and elements must 
+                        # indicate consecutive "parts" starting from 1.
+                        multiqubit_positions_of_column.add((targets.lower_bound,
+                                                       targets.upper_bound))
+                        if isinstance(elem, Gate):
+                            elem_type = 'gate'
+                            op_type = 'operation'
+                        elif isinstance(elem, Input):
+                            elem_type = 'input'
+                            op_type = 'state'
+                        elif isinstance(elem, Output):
+                            elem_type = 'output'
+                            op_type = 'state'
+                        elif isinstance(elem, Measure):
+                            elem_type = 'measure'
+                            op_type = 'basis'
+                        else:
                             raise ValueError(
-                                    "For a multi-gate, %s, use an ExprTuple "
-                                    "for the qubit_positions rather than "
-                                    "a Set (order matters)."%str(elem))
-                        qubit_positions = qubit_positions.operands                        
-                        if qubit_positions.contains_range():
+                                    "A MultiQubitElem element should be "
+                                    "a Gate/Input/Output/Measure")
+                        if not hasattr(elem, 'part'):
                             raise ValueError(
-                                    "Explicit qubit positions "
-                                    "should not contain an ExprRange.")
-                    elif isinstance(qubit_positions, ExprTuple):
-                        # Explicit qubit positions for a multi-gate
-                        # (order does matter)
-                        if elem in (CONTROL, CLASSICAL_CONTROL, SWAP):
-                            raise ValueError(
-                                    "For MultiQubitElems %s operations; "
-                                    "use a Set for the qubit_positions "
-                                    "rather than ExprTuple (order does "
-                                    "not matter)."%elem)
-                        is_multi_gate = True
-                    else:
-                        # A "generic" MultiQubitElem (no explicit
-                        # qubit_positions).
-                        is_generic_gate = True
-                        has_generic_multiqubitelem = True
-                        
-                    if is_multi_gate:
-                        # A multi-gate.  The qubit_positions must
-                        # be an ExprTuple of an ExprRange covering
-                        # all of the involved qubits and each entry
-                        # must be the same MultiQubitElem expression.
-                        if (qubit_positions.num_entries() != 1 or
-                                not isinstance(qubit_positions[0], ExprRange)):
-                            raise ValueError(
-                                    "To format a multigate in a Qcircuit, the " 
-                                    "qubit_positions must be an ExprTuple "
-                                    "with a single ExprRange, not %s"
-                                    %qubit_positions)
-                        qubit_positions_range = qubit_positions[0]
-                        if (qubit_positions_range.body !=
-                                qubit_positions_range.parameter):
-                            raise ValueError(
-                                    "To format a multigate in a Qcircuit, the " 
-                                    "qubit_positions must be an ExprTuple "
-                                    "with a single, simple ExprRange, not %s"
-                                    %qubit_positions)
-                        if active_multigate is None:
-                            start_index = qubit_positions_range.start_index
+                                    "A MultiQubitElem element should be "
+                                    "a QcircuitElement with a 'part' "
+                                    "designation")
+                        elem_part = elem.part
+                        # element operation/state/basis:
+                        elem_op = next(elem.operands.items())[1]
+
+                        if next_part is None:
+                            start_index = targets.lower_bound
                             if qubit_pos != start_index:
                                 raise ValueError(
                                         "Mismatch of starting qubit position "
                                         "of a multigate: %s ≠ %s"
                                         %(qubit_pos, start_index))
-                            active_multigate = entry_expr
+                            next_part = one
+                            active_multiqubit_op = elem_op
                         else:
-                            if entry_expr != active_multigate:
+                            if elem_op != active_multiqubit_op:
                                 raise ValueError(
                                         "The MultiQubitElem expressions "
-                                        "composing a multigate must be the "
-                                        "same: %s %s"%(entry_expr,
-                                                       active_multigate))
-                            if qubit_pos == qubit_positions_range.end_index:
-                                active_multigate = None
-                        if active_multigate is not None:
+                                        "composing a multi%s must use "
+                                        "the same %s: %s ≠ %s"%
+                                        (elem_type, op_type, 
+                                         elem_op, active_multiqubit_op))
+                        if elem_param is not None:
+                            if elem_part != elem_param:
+                                raise ValueError(
+                                        "An ExprRange of multi%ss should be "
+                                        "parameterized by the parts: "
+                                        "%s ≠ %s"%(elem_part, elem_param))
+                        else:
+                            try:
+                                Equals(elem_part, next_part).prove()
+                            except ProofFailure:
+                                raise ValueError(
+                                        "Part indices must be provably "
+                                        "consecutive starting from 1: "
+                                        "%s ≠ %s"%(elem_part, next_part))
+                        if qubit_pos == targets.upper_bound:
+                            active_multiqubit_op = None
+                        elif elem_param is None:
+                            next_part = Add(elem_part, one)
+                        else:
+                            next_part = end # next up, end of range.
+                        if active_multiqubit_op is not None:
                             # There is a continuing multigate, so block
                             # any down wire from this row.
-                            multigate_blockade.add(row)
-                    elif active_multigate is not None:
-                        raise ValueError(
-                                "The MultiQubitElem expressions "
-                                "composing a multigate must be consecutive "
-                                "up until the end qubit positions: "
-                                "encountered %s before end of %s"
-                                %(entry_expr, active_multigate))
-                    elif not is_generic_gate:
+                            multiqubit_blockade.add(row)
+                    elif isinstance(targets, Set):
+                        # Explicit targets for a control, swap,
+                        # or multi-qubit gate/input/output/measure
+                        # operation.
+                        if elem not in (CONTROL, CLASSICAL_CONTROL, SWAP):
+                            if not isinstance(targets, Interval):
+                                raise ValueError(
+                                        "To format a multi-gate/input/output/"
+                                        "measure in a Qcircuit, the targets must " 
+                                        "be an Interval, not %s"
+                                        %targets)
+                        multiqubit_positions_of_column.add(
+                                (qubit_pos,) + targets.operands.entries)
+                        
                         # For a control or a swap, make sure the 
-                        # qubit_positions all exist and have 
-                        # appropriate entries.
+                        # targets all exist and have appropriate
+                        # entries.
 
-                        # If it is a SWAP, it involve two qubits.
-                        if (elem == SWAP and 
-                                qubit_positions.num_entries() != 2):
+                        # If it is a SWAP, it should have 1 target
+                        # (and that target should target this qubit
+                        # mutually).
+                        if (elem == SWAP and not targets.operands.is_single()):
                             raise ValueError(
-                                    "For a SWAP, please use "
-                                    "two qubit_positions, not %d"
-                                    %qubit_positions.num_entries())
+                                    "For a SWAP, please use 1 target, "
+                                    "not %d"%targets.num_entries())
                         
                         # Other cases (e.g., a control with many
                         # targets), should have 
-                        contains_cur_pos = False
-                        for _other_pos in qubit_positions:
+                        for _other_pos in targets.operands:
                             if _other_pos == qubit_pos:
-                                # The current position is contained.
-                                contains_cur_pos = True
-                                continue
-                            if _other_pos not in qubit_position_to_row:
                                 raise ValueError(
-                                        "The qubit position of %s for a "
-                                        "%s MultiQubitElem is not a known "
-                                        "qubit_position of the Qcircuit, "
-                                        "it is not in %s"
+                                        "A %s should not have itself as "
+                                        "a target."%elem)
+                            if _other_pos not in qubit_pos_to_row:
+                                raise ValueError(
+                                        "The target of %s for a %s "
+                                        "is not an explicit qubit position "
+                                        "of the Qcircuit, it is not in %s"
                                         %(_other_pos, elem,
-                                          qubit_position_to_row.keys()))
-                            _other_row = qubit_position_to_row[_other_pos]
+                                          qubit_pos_to_row.keys()))
+                            _other_row = qubit_pos_to_row[_other_pos]
                             _other_entry_expr = col_entries[_other_row][0]
                             if elem == SWAP:
                                 if _other_entry_expr != entry_expr:
@@ -216,41 +248,52 @@ class Qcircuit(Function):
                                             "the same: %s ≠ %s."
                                             %(_other_entry_expr, entry_expr))
                             if isinstance(_other_entry_expr, MultiQubitElem):
-                                other_qpositions = (
-                                        _other_entry_expr.qubit_positions)
-                                if (isinstance(other_qpositions, ExprTuple) and
-                                        other_qpositions.num_entries() == 1 and
-                                        isinstance(other_qpositions[0], 
-                                                   ExprRange)):
-                                    if (other_qpositions[0].start_index
+                                other_targets = (
+                                        _other_entry_expr.targets)
+                                if isinstance(other_targets, Interval):
+                                    if (other_targets.lower_bound
                                             != _other_pos):
                                         raise ValueError(
                                                 "A %s MultiQubitElem should "
                                                 "not target part of a "
                                                 "mult-gate except the top.")
-                            elif (qubit_positions.num_entries() == 2 and
-                                  elem == CONTROL and
-                                  _other_entry_expr == CONTROL):
-                                # This a symmetrically-formed 
-                                # controlled-Z (control on both ends).
-                                # That's okay.
-                                continue
-                            if not (isinstance(_other_entry_expr, Gate) or
-                                    (isinstance(_other_entry_expr, MultiQubitElem)
-                                    and isinstance(_other_entry_expr.qubit_positions,
-                                                   ExprTuple))):
+                                    if (_other_entry_expr.element.part != one):
+                                        raise ValueError(
+                                                "A %s MultiQubitElem should "
+                                                "not target part of a "
+                                                "mult-gate except part 1.")
+                                elif _other_entry_expr == CONTROL:
+                                    # A CONTROL may only target another
+                                    # CONTRROL if it is mutual.
+                                    valid = False
+                                    if (targets.is_single() and
+                                            other_targets.is_single() and
+                                            other_targets[0] in 
+                                            qubit_pos_to_row):
+                                        other_target = other_targets[0]
+                                        other_target_row = (
+                                            qubit_pos_to_row[other_target])
+                                        if other_target_row == row:
+                                            valid = True
+                                    if not valid:
+                                        raise ValueError(
+                                                "A CONTROL may only target "
+                                                "another CONTROL if it is "
+                                                "mutual: %s and %s aren't "
+                                                "mutual on %s and %s."
+                                                %(targets, other_targets,
+                                                  row, _other_row))                                
+                            elif not isinstance(_other_entry_expr, Gate):
                                 raise ValueError(
                                         "With exception to a symmetrically "
                                         "formed controlled-Z, the target "
                                         "of a control must be a gate or "
                                         "a multi-gate, not %s."
                                         %_other_entry_expr)
-                        if not contains_cur_pos:
-                            raise ValueError(
-                                    "The qubit positions of a MultiQubitElem "
-                                    "must contain that of the MultiQubitElem "
-                                    "itself, but %s is not in %s"
-                                    %(qubit_pos, qubit_positions))
+                    else:
+                        # A "generic" MultiQubitElem (no explicit
+                        # targets).
+                        has_generic_multiqubitelem = True
             
             if has_generic_multiqubitelem:
                 # If there is a generic MultiQubitElem, we need
@@ -259,20 +302,17 @@ class Qcircuit(Function):
                 for row, _ in enumerate(col_entries[:-1]):
                     down_wire_locations.add((row, col))
             else:
-                # Map minimum rows of qubit_positions to the
-                # maximum of maximum rows of qubit_positions
+                # Map minimum rows of multiqubit_positions to the
+                # maximum of maximum rows of multiqubit_positions
                 # (except for multigates where we skip vertical wires).
                 minrow_to_maxrow = dict()
-                for qubit_positions in qubit_positions_of_column:
-                    if isinstance(qubit_positions, Set):
-                        positions_as_tuple = qubit_positions.operands
-                        assert isinstance(positions_as_tuple, ExprTuple)
-                        pos_rows = [qubit_position_to_row[_qubit_pos] for
-                                    _qubit_pos in positions_as_tuple.entries]
-                        maxrow = max(pos_rows)
-                        minrow = min(pos_rows)
-                        minrow_to_maxrow[minrow] = max(
-                            minrow_to_maxrow.get(minrow, 0), maxrow)
+                for multiqubit_positions in multiqubit_positions_of_column:
+                    pos_rows = [qubit_pos_to_row[_qubit_pos] for
+                                _qubit_pos in multiqubit_positions]
+                    maxrow = max(pos_rows)
+                    minrow = min(pos_rows)
+                    minrow_to_maxrow[minrow] = max(
+                        minrow_to_maxrow.get(minrow, 0), maxrow)
                 
                 # Now we can add 'down wire' locations appropriately 
                 # for this column.
@@ -284,7 +324,7 @@ class Qcircuit(Function):
                         add_down_wires_to_row = max(
                                 add_down_wires_to_row, maxrow)
                     if (row < add_down_wires_to_row 
-                            and row not in multigate_blockade):
+                            and row not in multiqubit_blockade):
                         # Add a wire down from this location since it 
                         # is before the last row of MultiQubitElem
                         # qubit positions, and it isn't blocked by a
@@ -315,13 +355,8 @@ class Qcircuit(Function):
             # Not a multiwire or multigate.
             return False
         range_expr_param = range_expr.parameter
-        if range_expr_param in free_vars(range_expr_body):
-            # Cannot represent a multigate if the ExprRange body
-            # depends upon the parameter.
-            return False
-        if isinstance(range_expr_body.qubit_positions, ExprTuple):
-            # A confirmed multigate with an ExprTuple of qubit
-            # positions.
+        if isinstance(range_expr_body.targets, Interval):
+            # A confirmed multigate with an Interval of "targets".
             return True
         return False
 
@@ -406,17 +441,17 @@ class Qcircuit(Function):
                                 isinstance(entry.element, Measure)
                                 or entry.element == SPACE):
                             continue_wire = False
-                        if isinstance(entry.qubit_positions, ExprTuple):
+                        if isinstance(entry.targets, Interval):
                             elem = entry.element
+                            # Double-checking (should have been checked
+                            # in _find_down_wire_locations):
                             assert elem not in (
                                     CONTROL, CLASSICAL_CONTROL, SWAP)
                             # A multi-gate/input/output (not a 
                             # control or swap and has explicit 
                             # qubit positions).
-                            qubit_positions = entry.qubit_positions
-                            assert qubit_positions.num_entries()==1
-                            assert isinstance(qubit_positions[0], ExprRange)
-                            top_qubit_pos = qubit_positions[0].start_index
+                            targets = entry.targets
+                            top_qubit_pos = targets.lower_bound
                             top_row = qubit_position_to_row[top_qubit_pos]
                             formatted_entry = formatted_col_entries[top_row]
                             if formatted_entry == r'\cdots':
@@ -499,7 +534,6 @@ class Qcircuit(Function):
                                 r'& \multigate{#}{%s}'%formatted_col)
                     else:
                         # An expression represents the entire row: not top
-                        formatted_col = formatted_col_entries
                         formatted_row_entries.append(
                                 '& \ghost{%s}'%formatted_col)
             multiwire_size = None
