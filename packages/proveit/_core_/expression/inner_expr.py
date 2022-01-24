@@ -198,6 +198,7 @@ class InnerExpr:
                                               self.inner_expr_path + (i,),
                                               assumptions=self.assumptions)
                 if (isinstance(cur_inner_expr, Operation) 
+                        and isinstance(cur_inner_expr.operands, ExprTuple)
                         and cur_inner_expr.operands == attr_expr):
                     # The 'operands' attribute of an Operation is a
                     # special case.  Take the full slice and we don't
@@ -684,7 +685,7 @@ class InnerExpr:
         else:
             named_expr_dict += [('$%s$' % lambda_params[0].latex(), 
                                  cur_sub_expr)]
-        return NamedExprs(named_expr_dict)
+        return NamedExprs(*named_expr_dict)
 
     def cur_sub_expr(self):
         return self.expr_hierarchy[-1]

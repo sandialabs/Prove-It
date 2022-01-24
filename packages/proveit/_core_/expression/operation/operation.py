@@ -35,7 +35,7 @@ class Operation(Expression):
         '''
         from proveit._core_.expression.composite import (
             composite_expression, single_or_composite_expression, 
-            Composite, ExprTuple)
+            Composite, ExprTuple, NamedExprs)
         from proveit._core_.expression.lambda_expr import Lambda
         from .indexed_var import IndexedVar
         if self.__class__ == Operation:
@@ -78,6 +78,11 @@ class Operation(Expression):
             core_type = 'IndexedVar'
         else:
             core_type = 'Operation'
+        if isinstance(self.operands, NamedExprs):
+            # Make attributes to make the keys of the NamedExprs 
+            # operands.
+            for key in self.operands.keys():
+                setattr(self, key, self.operands[key])
         Expression.__init__(self, [core_type], sub_exprs, styles=styles)
 
     def style_options(self):
@@ -162,7 +167,10 @@ class Operation(Expression):
         if isinstance(operands, NamedExprs):
             # If the operands are NamedExprs, presume the arguments
             # correspond to the names of the sub-expressions.
-            return operands[arg_name]
+            if arg_name in operands:
+                return operands[arg_name]
+            else:
+                return None
         raise NotImplementedError(
             "'%s.extract_init_arg_value' must be appropriately implemented; "
             "__init__ arguments do not fall into a simple 'default' "
@@ -687,7 +695,7 @@ class Operation(Expression):
         have been simplified.
         '''
         from proveit.relation import TransRelUpdater
-        from proveit import ExprRange
+        from proveit import ExprRange, NamedExprs
         from proveit.logic import is_irreducible_value
         if any(isinstance(operand, ExprRange) for operand in self.operands):
             # If there is any ExprRange in the operands, simplify the
@@ -700,10 +708,20 @@ class Operation(Expression):
                 # No auto-simplification or replacements here;
                 # just simplify operands one at a time.
                 temp_defaults.preserve_all = True
-                for k, operand in enumerate(self.operands):
-                    if not is_irreducible_value(operand):
-                        inner_operand = expr.inner_expr().operands[k]
-                        expr = eq.update(inner_operand.simplification())
+                operands = self.operands
+                if isinstance(operands, NamedExprs):
+                    # operands as NamedExprs
+                    for key in operands.keys():
+                        operand = operands[key]
+                        if not is_irreducible_value(operand):
+                            inner_operand = getattr(expr.inner_expr(), key)
+                            expr = eq.update(inner_operand.simplification())
+                else:
+                    # operands as ExprTuple
+                    for k, operand in enumerate(operands):
+                        if not is_irreducible_value(operand):
+                            inner_operand = expr.inner_expr().operands[k]
+                            expr = eq.update(inner_operand.simplification())
         return eq.relation
 
     @equality_prover('operator_substituted', 'operator_substitute')
