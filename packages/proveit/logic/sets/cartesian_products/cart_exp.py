@@ -56,4 +56,34 @@ class CartExp(Operation):
         return cart_exp_subset_eq.instantiate(
                 {m:self.exponent, A:subset.base, B:self.base})
 
+    @prover
+    def deduce_as_vec_space(self, field=None, **defaults_config):
+        '''
+        Prove that this CartExp expression is contained in the class
+        of vector spaces over some field.
+        '''
+        from proveit.linear_algebra import deduce_as_vec_space
+        # return deduce_as_vec_space(self) # <- produces inf loop
+        '''
+        For the Cartesian exponentiation of rational, real, or
+        complex numbers, we can deduce that it is a member of
+        the class of vector spaces over the corresponding field.
+        '''
+        from proveit.numbers import Rational, Real, Complex
+        from proveit.linear_algebra import (
+                rational_vec_set_is_vec_space, real_vec_set_is_vec_space, 
+                complex_vec_set_is_vec_space)
+        if self.base == Rational:
+            membership = rational_vec_set_is_vec_space.instantiate(
+                    {n:self.exponent})
+        elif self.base == Real:
+            membership = real_vec_set_is_vec_space.instantiate({n:self.exponent})
+        elif self.base == Complex:
+            membership = complex_vec_set_is_vec_space.instantiate({
+                    n:self.exponent})
+        else:
+            raise NotImplementedError(
+                    "'deduce_as_vec_space' is not implemented "
+                    "to handle %s"%expr)
 
+        return membership
