@@ -54,7 +54,7 @@ class VecSum(GroupSum):
             self.summand.deduce_in_number_set(
                     Complex, assumptions=inner_assumptions)
         if InSet(self.summand, Complex).proven(assumptions=inner_assumptions):
-            # If the operands are all complex numbers, this will
+            # If the operands are all complex numbers, this
             # VecAdd will reduce to number Add.
             return self.number_sum_reduction()
         return GroupSum.shallow_simplification(
@@ -70,6 +70,46 @@ class VecSum(GroupSum):
         impl = scalar_sum_extends_number_sum.instantiate(
                 {j:_j, b:_b, f:_f, Q:_Q})
         return impl.derive_consequent()
+
+    @equality_prover('vec_sum_eliminated', 'vec_sum_eliminate')
+    def vec_sum_elimination(self, field=None, **defaults_config):
+        '''
+        For a VecSum in which the summand does not depend on the 
+        summation index, return an equality between this VecSum and
+        the equivalent expression in which the VecSum is eliminated.
+        For example, suppose self = VecSum(i, v, Interval(2, 4)).
+        Then self.vec_sum_elimination() would return
+        |- self = 3*v
+        where the 3*v is actually ScalarMult(3, v).
+        The method works only for a VecSum over a single summation
+        index, and simply returns self = self if the VecSum elimination
+        is not possible due to the summand being dependent on the
+        index of summation.
+        '''
+
+        expr = self
+        summation_index = expr.index
+        eq = TransRelUpdater(expr)
+
+        if summation_index not in free_vars(expr.summand):
+            vec_space_membership = expr.summand.deduce_in_vec_space(
+                field=field,
+                assumptions = defaults.assumptions + expr.conditions.entries)
+            _V_sub = vec_space_membership.domain
+            _K_sub = VecSpaces.known_field(_V_sub)
+            _j_sub = expr.condition.domain.lower_bound
+            _k_sub = expr.condition.domain.upper_bound
+            _v_sub = expr.summand
+            from proveit.linear_algebra.addition import vec_sum_of_constant_vec
+            eq.update(vec_sum_of_constant_vec.instantiate(
+                    {V: _V_sub, K: _K_sub, j: _j_sub, k: _k_sub, v: _v_sub}))
+
+        else:
+            print("VecSum cannot be eliminated. The summand {0} appears "
+                  "to depend on the index of summation {1}".
+                  format(expr.summand, summation_index))
+
+        return eq.relation
 
     @relation_prover
     def deduce_in_vec_space(self, vec_space=None, *, field=None,
@@ -319,55 +359,32 @@ class VecSum(GroupSum):
         '''
         expr = self
         summation_index = expr.index
-        summand_conditions = expr.conditions
-        assumptions = defaults.assumptions + summand_conditions.entries
+        assumptions = defaults.assumptions + expr.conditions.entries
+        assumptions_with_conditions = (
+                defaults.assumptions + expr.conditions.entries)
 
-        # for convenience updating our equation:
-        # this begins with expr = expr
+        # for convenience in updating our equation:
+        # this begins with eq.relation as expr = expr
         eq = TransRelUpdater(expr)
 
-        # instead of beginning with a shallow_simplification on the
-        # summand regardless of its class, perform a shallow_simplification
-        # only if the summand is a ScalarMult, which will remove nested
-        # ScalarMults and multiplicative identities. That seems a simple
-        # simplification without changing too much the intent of the
-        # user.
+        # If the summand is a ScalarMult, perform a
+        # shallow_simplification(), which will remove nested
+        # ScalarMults and multiplicative identities. This is
+        # intended to simplify without changing too much the
+        # intent of the user. This might even transform the
+        # ScalarMult object into something else.
         from proveit.linear_algebra import ScalarMult, TensorProd
         if isinstance(expr.summand, ScalarMult):
-            tensor_prod_summand = False
-            the_scalar = expr.summand.scalar
             expr = eq.update(
                     expr.inner_expr().summand.shallow_simplification())
+        if isinstance(expr.summand, ScalarMult):
+            # had to re-check, b/c the shallow_simplification might
+            # have transformed the ScalarMult into the scaled object
+            tensor_prod_summand = False # not clearly useful; review please
+            the_scalar = expr.summand.scalar
+            
         elif isinstance(expr.summand, TensorProd):
-            tensor_prod_summand = True
-
-        ###############################################################
-        # A kludgy piece here - when dealing with the ScalarMult
-        # version of the summand, it still helps to form the analogous
-        # Non-scalar version of the already-associated expression and
-        # call the VecSpaces.known_vec_space() on it. Something
-        # mysterious going on there that isn't being handled when
-        # calling the known_vec_space() on the ScalarMult version.
-        # if tensor_prod_summand:
-        #     _V_sub = VecSpaces.known_vec_space(expr, field=field)
-        # else:
-        #     temp_tensor_prod_version = VecSum(
-        #         expr.index, expr.summand.scaled, domain=expr.domain)
-        #     _V_sub = VecSpaces.known_vec_space(
-        #             temp_tensor_prod_version, field=field)
-        #     print("_V_sub successful!")
-        #     print("Called on:")
-        #     display(temp_tensor_prod_version)
-            # but later the system doesn't seem to be able to
-            # tell that a component of the tensor product is in
-            # a vector space! Very sad!
-
-        # temporarily try/confirm -- can we simply do this instead?
-        # regardless of whether we have a ScalarMult or TensorProd
-        # summand?
-        _V_sub = VecSpaces.known_vec_space(expr, field=field)
-
-        ###############################################################
+            tensor_prod_summand = True # not clearly useful; review please
 
         if isinstance(expr.summand, ScalarMult):
             if summation_index not in free_vars(expr.summand.scalar):
@@ -375,10 +392,9 @@ class VecSum(GroupSum):
                 # can be pulled out in front of the VecSum
                 from proveit.linear_algebra.scalar_multiplication import (
                     distribution_over_vec_sum)
-                # playing with the following
-                _V_sub = VecSpaces.known_vec_space(
-                        expr, field=field) # change expr.summand.scaled to expr?
-                # end playing
+                summand_in_vec_space = expr.summand.deduce_in_vec_space(
+                        field=field, assumptions=assumptions_with_conditions)
+                _V_sub = summand_in_vec_space.domain
                 _K_sub = VecSpaces.known_field(_V_sub)
                 _b_sub = expr.indices
                 _j_sub = _b_sub.num_elements()
@@ -388,27 +404,27 @@ class VecSum(GroupSum):
                 imp = distribution_over_vec_sum.instantiate(
                         {V: _V_sub, K: _K_sub, b: _b_sub, j: _j_sub,
                          f: _f_sub, Q: _Q_sub, k: _k_sub},
-                         assumptions=assumptions)
-                expr = eq.update(imp.derive_consequent().derive_reversed())
+                         assumptions=assumptions_with_conditions)
+                expr = eq.update(imp.derive_consequent(
+                    assumptions=assumptions_with_conditions).derive_reversed())
             else:
-                # The scalar portion is dependent on summation index;
-                # if the scalar itself is a Mult of things, go through
-                # and pull out individual factors that are not dependent
-                # on the summation index
+                # The scalar portion is dependent on summation index.
+                # If the scalar itself is a Mult of things, go through
+                # and pull to the front of the Mult all individual
+                # factors that are not dependent on the summation index.
                 from proveit.numbers import Mult
                 if isinstance(expr.summand.scalar, Mult):
                     # start by flattening the Mult if possible: Not needed?
-                    expr = eq.update(expr.inner_expr().summand.scalar.shallow_simplification())
+                    expr = eq.update(expr.inner_expr().
+                            summand.scalar.shallow_simplification())
 
-                    # Repeatedly pull index-independent factors to the
-                    # front of the Mult factors
+                    # Repeatedly pull index-independent factors #
+                    # to the front of the Mult factors          #
 
                     # prepare to count the extractable and
-                    # unextractablecount factors
+                    # unextractable factors
                     _num_factored = 0
                     _num_unfactored = len(expr.summand.scalar.operands.entries)
-                    # prepare to use conditions in assumptions
-                    summation_conditions = expr.conditions.entries
 
                     # go through factors from back to front
                     for the_factor in reversed(
@@ -418,8 +434,7 @@ class VecSum(GroupSum):
                             expr = eq.update(
                                 expr.inner_expr().summand.scalar.factorization(
                                     the_factor,
-                                    assumptions=
-                                    defaults.assumptions+summation_conditions))
+                                    assumptions=assumptions_with_conditions))
                             _num_factored += 1
                             _num_unfactored -= 1
 
@@ -428,48 +443,75 @@ class VecSum(GroupSum):
                         expr = eq.update(
                             expr.inner_expr().summand.scalar.association(
                                 0, _num_factored,
-                                assumptions=defaults.assumptions+summation_conditions))
+                                assumptions=assumptions_with_conditions))
                     # group the unfactorable factors
                     if _num_unfactored > 1:
                         expr = eq.update(
                             expr.inner_expr().summand.scalar.association(
                                 1, _num_unfactored,
-                                assumptions=defaults.assumptions+summation_conditions))
+                                assumptions=assumptions_with_conditions))
 
-                    # finally, extract any factorable factors
-                    from proveit.linear_algebra.scalar_multiplication import (
-                            distribution_over_vec_sum_with_scalar_mult)
-                    # Mult._simplification_directives_.ungroup = False
-                    _V_sub = VecSpaces.known_vec_space(expr, field=field)
-                    _K_sub = VecSpaces.known_field(_V_sub)
-                    _b_sub = expr.indices
-                    _j_sub = _b_sub.num_elements()
-                    _f_sub = Lambda(expr.indices, expr.summand.scaled)
-                    _Q_sub = Lambda(expr.indices, expr.condition)
-                    _c_sub = Lambda(expr.indices,
-                                    expr.summand.scalar.operands[1])
-                    _k_sub = expr.summand.scalar.operands[0]
-                    # when instantiating, we set preserve_expr=expr;
-                    # otherwise auto_simplification disassociates inside
-                    # the Mult.
-                    impl = distribution_over_vec_sum_with_scalar_mult.instantiate(
-                            {V:_V_sub, K:_K_sub, b: _b_sub, j: _j_sub,
-                             f: _f_sub, Q: _Q_sub, c:_c_sub, k: _k_sub},
-                             preserve_expr=expr,
-                            assumptions=
-                            defaults.assumptions+expr.conditions.entries)
-                    eq.update(impl.derive_consequent(
-                            assumptions=
-                            defaults.assumptions+expr.conditions.entries).
-                            derive_reversed())
+                    # finally, extract any factorable scalar factors
+                    if _num_factored > 0:
+                        from proveit.linear_algebra.scalar_multiplication import (
+                                distribution_over_vec_sum_with_scalar_mult)
+                        # Mult._simplification_directives_.ungroup = False
+                        # _V_sub = VecSpaces.known_vec_space(expr, field=field)
+                        summand_in_vec_space = (
+                                expr.summand.deduce_in_vec_space(
+                                        field = field,
+                                        assumptions =
+                                        assumptions_with_conditions))
+                        _V_sub = summand_in_vec_space.domain
+                        _K_sub = VecSpaces.known_field(_V_sub)
+                        _b_sub = expr.indices
+                        _j_sub = _b_sub.num_elements()
+                        _f_sub = Lambda(expr.indices, expr.summand.scaled)
+                        _Q_sub = Lambda(expr.indices, expr.condition)
+                        _c_sub = Lambda(expr.indices,
+                                        expr.summand.scalar.operands[1])
+                        _k_sub = expr.summand.scalar.operands[0]
+                        # when instantiating, we set preserve_expr=expr;
+                        # otherwise auto_simplification disassociates inside
+                        # the Mult.
+                        impl = distribution_over_vec_sum_with_scalar_mult.instantiate(
+                                {V:_V_sub, K:_K_sub, b: _b_sub, j: _j_sub,
+                                 f: _f_sub, Q: _Q_sub, c:_c_sub, k: _k_sub},
+                                 preserve_expr=expr,
+                                assumptions=assumptions_with_conditions)
+                        expr = eq.update(impl.derive_consequent(
+                                assumptions=assumptions_with_conditions).
+                                derive_reversed())
 
                 else:
-                    # The scalar component is not a Mult.
+                    # The scalar component is dependent on summation
+                    # index but is not a Mult.
                     # Revert everything and return self = self.
                     print("Found summation index {0} in the scalar {1} "
                           "and the scalar is not a Mult object.".
                       format(summation_index, expr.summand.scalar))
                     eq = TransRelUpdater(self)
+
+        # ============================================================ #
+        # VECTOR FACTORS                                               #
+        # ============================================================ #
+        # After the scalar factors (if any) have been dealt with,
+        # proceed with the vector factors in any remaining TensorProd
+        # in the summand.
+        # Notice that we are not guaranteed at this point that we even
+        # have a TensorProd to factor, and if we do have a TensorProd
+        # we have not identified the non-index-dependent factors to 
+        # extract.
+        # After processing above for scalar factors, we might now have
+        # (1) expr = VecSum (we didn't find scalar factors to extract),
+        # inside of which we might have a ScalarMult or a TensorProd;
+        # or (2) expr = ScalarMult (we found some scalar factors to
+        # extract), with a VecSum as the scaled component.
+
+        if isinstance(expr, VecSum):
+            expr = eq.update(expr.tensor_prod_factoring())
+        elif isinstance(expr, ScalarMult) and isinstance(expr.scaled, VecSum):
+            expr = eq.update(expr.inner_expr().scaled.tensor_prod_factoring())
 
         return eq.relation
 
@@ -486,28 +528,36 @@ class VecSum(GroupSum):
         vec_sum = VecSum(TensorProd(x, f(i), y, z))
         and call vec_sum.tensor_prod_factoring(idx_beg=1, idx_end=2)
         to obtain:
+
             |- VecSum(TensorProd(x, f(i), y, z)) = 
                TensorProd(x, VecSum(TensorProd(f(i), y)), z)
-        Note that any vectors inside the TensorProd that depend on the
-        index of summation cannot be pulled out of the VecSum and thus
-        will cause the method to fail if not chosen to remain inside
-        the VecSum.
+
+        This method should work even if the summand is a nested
+        ScalarMult. Note that any vectors inside the TensorProd that
+        depend on the index of summation cannot be pulled out of the
+        VecSum and thus will cause the method to fail if not chosen
+        to remain inside the VecSum. If all idx args are 'None',
+        method will factor out all possible vector factors, including
+        the case where all factors could be removed and the VecSum
+        eliminated entirely.
         Note that this method only works when self has a single
         index of summation.
-        Later versions of this method should generalize to allow
-        multiple (contiguous) indices to be specified as arguments
-        to indicate multple VecProd factors to remain within the VecSum
-        (the contiguity is required since tensor products are not
-        commutative).
         '''
         expr = self
         the_summand = self.summand
+
+        eq = TransRelUpdater(expr)
 
         # Check that 
         #    (1) the_summand is a TensorProd
         # or (2) the_summand is a ScalarMult;
         # otherwise, this method does not apply
         from proveit.linear_algebra import ScalarMult, TensorProd
+        if isinstance(the_summand, ScalarMult):
+            # try shallow simplification first to remove nested
+            # ScalarMults and multiplicative identities
+            expr = eq.update(expr.inner_expr().summand.shallow_simplification())
+            the_summand = expr.summand
         if isinstance(the_summand, TensorProd):
             tensor_prod_expr = the_summand
             tensor_prod_summand = True
@@ -525,6 +575,39 @@ class VecSum(GroupSum):
                 "to be a TensorProd or a ScalarMult (with its 'scaled' "
                 "attribute a TensorProd); instead the "
                 "summand is {}".format(self.instance_expr))
+
+        if idx is None and idx_beg is None and idx_end is None:
+            # prepare to take out all possible factors, including
+            # the complete elimination of the VecSum if possible
+            if expr.index not in free_vars(expr.summand):
+                # summand does not depend on index of summation
+                # so we can eliminate the VecSum entirely
+                return expr.vec_sum_elimination(field=field)
+            if expr.index in free_vars(tensor_prod_expr):
+                # identify the extractable vs. non-extractable
+                # TensorProd factors (and there must be at least
+                # one such non-extractable factor)
+                
+                idx_beg = -1
+                idx_end = -1
+                for i in range(len(expr.summand.operands.entries)):
+                    if expr.index in free_vars(tensor_prod_expr.operands[i]):
+                        if idx_beg == -1:
+                            idx_beg = i
+                            idx_end = idx_beg
+                        else:
+                            idx_end = i
+            else:
+                # The alternative is that the summand is
+                # a ScalarMult with the scalar (but not the scaled)
+                # being dependent on the index of summation. It's not
+                # obvious what's best to do in this case, but we set
+                # things up to factor out all but the last of the
+                # TensorProd factors (so we'll factor out at least
+                # 1 factor)
+                idx_beg = len(tensor_prod_expr.operands.entries) - 1
+                idx_end = idx_beg
+
 
         # Check that the provided idxs are within bounds
         # (it should refer to an actual TensorProd operand)
@@ -571,7 +654,6 @@ class VecSum(GroupSum):
         # depending on whether:
         # (1) the_summand is a TensorProd, or
         # (2) the_summand is a ScalarMult (with a TensorProd 'scaled')
-        eq = TransRelUpdater(expr)
         if tensor_prod_summand:
             from proveit.linear_algebra.tensors import (
                 tensor_prod_distribution_over_summation)
@@ -580,48 +662,34 @@ class VecSum(GroupSum):
                 tensor_prod_distribution_over_summation_with_scalar_mult)
         if idx_beg != idx_end:
             # need to associate the elements and change idx value
-            # but process is slightly different the two cases
+            # but process is slightly different in the two cases
             if tensor_prod_summand:
                 expr = eq.update(expr.inner_expr().summand.association(
                         idx_beg, idx_end-idx_beg+1))
+                tensor_prod_expr = expr.summand
             else:
                 expr = eq.update(expr.inner_expr().summand.scaled.association(
                         idx_beg, idx_end-idx_beg+1))
-                # expr.summand.scaled.deduce_in_vec_space(field=field)
-            idx = idx_beg
-        # A kludgy piece here - when dealing with the ScalarMult
-        # version of the summand, it still helps to form the analogous
-        # Non-scalar version of the already-associated expression and
-        # call the VecSpaces.known_vec_space() on it. Something
-        # mysterious going on there that isn't being handled when
-        # calling the known_vec_space() on the ScalarMult version.
-        if tensor_prod_summand:
-            _V_sub = VecSpaces.known_vec_space(expr, field=field)
-        else:
-            from proveit import i 
-            temp_tensor_prod_version = VecSum(
-                i, expr.summand.scaled, domain=expr.domain)
-            _V_sub = VecSpaces.known_vec_space(
-                    temp_tensor_prod_version, field=field)
+                tensor_prod_expr = expr.summand.scaled
+        idx = idx_beg
 
         from proveit import K, f, Q, i, j, k, V, a, b, c, s
+        # actually, maybe it doesn't matter and we can deduce the 
+        # vector space regardless: (Adding this temp 12/26/21)
+        vec_space_membership = expr.summand.deduce_in_vec_space(
+            field=field,
+            assumptions = defaults.assumptions + expr.conditions.entries)
+        _V_sub = vec_space_membership.domain
         # Substitutions regardless of Case
         _K_sub = VecSpaces.known_field(_V_sub)
         _b_sub = expr.indices
         _j_sub = _b_sub.num_elements()
         _Q_sub = Lambda(expr.indices, expr.condition)
-        # Case-specific substitutions:
-        if tensor_prod_summand:
-            _a_sub = expr.summand.operands[:idx]
-            _c_sub = expr.summand.operands[idx+1:]
-            _f_sub = Lambda(expr.indices, expr.summand.operands[idx])
-        else:
-            _a_sub = expr.summand.scaled.operands[:idx]
-            _c_sub = expr.summand.scaled.operands[idx+1:]
-            _f_sub = Lambda(expr.indices, expr.summand.scaled.operands[idx])
-            # _f_sub = Lambda(expr.indices, 
-            #                 ScalarMult(expr.summand.scalar,
-            #                            expr.summand.scaled.operands[idx]) )
+        # Case-specific substitutions, using updated tensor_prod_expr:
+        _a_sub = tensor_prod_expr.operands[:idx]
+        _c_sub = tensor_prod_expr.operands[idx+1:]
+        _f_sub = Lambda(expr.indices, tensor_prod_expr.operands[idx])
+        if not tensor_prod_summand:
             _s_sub = Lambda(expr.indices, expr.summand.scalar)
         # Case-dependent substitutions:
         _i_sub = _a_sub.num_elements()
@@ -639,99 +707,11 @@ class VecSum(GroupSum):
                      k:_k_sub, V:_V_sub, a:_a_sub, b:_b_sub, c:_c_sub,
                      s: _s_sub}, preserve_expr=expr))
 
-        expr = eq.update(impl.derive_consequent().derive_reversed())
+        expr = eq.update(impl.derive_consequent(
+                assumptions = defaults.assumptions + expr.conditions.entries).
+                derive_reversed())
 
         return eq.relation
-
-    # @equality_prover('tensor_prod_factored', 'tensor_prod_factor')
-    # def tensor_prod_factoring(self, idx, field=None, **defaults_config):
-    #     '''
-    #     For a VecSum with a TensorProd operand and a (0-based) index
-    #     idx, factor TensorProd vectors other than the vector at idx
-    #     out of the VecSum and return an equality between the original
-    #     VecSum and the new TensorProd. For example, we could take the
-    #     VecSum vec_sum = VecSum(TensorProd(x, f(i), y))
-    #     and call vec_sum.tensor_prod_factoring(1) to obtain:
-    #         |- VecSum(TensorProd(x, f(i), y)) = 
-    #            TensorProd(x, VecSum(f(i)), y)
-    #     Note that any vectors inside the TensorProd that depend on the
-    #     index of summation cannot be pulled out of the VecSum and thus
-    #     will cause the method to fail if not chosen to remain inside
-    #     the VecSum.
-    #     Note that this method only works when self has a single
-    #     index of summation.
-    #     Later versions of this method should generalize to allow
-    #     multiple (contiguous) indices to be specified as arguments
-    #     to indicate multple VecProd factors to remain within the VecSum
-    #     (the contiguity is required since tensor products are not
-    #     commutative).
-    #     '''
-
-    #     # Check that the VecSum instance expression is a TensorProd
-    #     # otherwise, this method does not apply
-    #     from proveit.linear_algebra import TensorProd
-    #     if not isinstance(self.instance_expr, TensorProd):
-    #         raise ValueError(
-    #             "tensor_prod_factoring() requires the VecSum instance " +
-    #             "expression to be a TensorProd; instead the instance " +
-    #             "expression is {}".format(self.instance_expr))
-
-    #     # Check that the provided idx is within bounds
-    #     # (it should refer to an actual TensorProd operand)
-    #     tensor_prod_factors_list = list(self.instance_expr.operands.entries)
-    #     if idx >= len(tensor_prod_factors_list):
-    #         raise ValueError(
-    #                 "idx value {0} provided for tensor_prod_factoring() "
-    #                 "method is out-of-bounds; the TensorProd summand has "
-    #                 "{1} factors: {2}, and thus possibly indices 0-{3}".
-    #                 format(idx, len(tensor_prod_factors_list),
-    #                        tensor_prod_factors_list,
-    #                        len(tensor_prod_factors_list)-1))
-
-    #     # Check that the TensorProd factors to be factored out do not
-    #     # rely on the VecSum index of summation
-    #     tensor_prod_factors_list = list(self.instance_expr.operands.entries)
-    #     summation_index = self.index
-    #     for i in range(len(tensor_prod_factors_list)):
-    #         if i != idx:
-    #             the_factor = tensor_prod_factors_list[i]
-    #             if summation_index in free_vars(the_factor):
-    #                 raise ValueError(
-    #                         "TensorProd factor {0} cannot be factored "
-    #                         "out of the given VecSum summation because "
-    #                         "it is a function of the summation index {1}.".
-    #                         format(the_factor, summation_index))
-    #             # factor_operands = (
-    #             #         get_all_operands([the_factor]))
-    #             # if summation_index in factor_operands:
-    #             #     raise ValueError(
-    #             #             "TensorProd factor {0} cannot be factored "
-    #             #             "out of the given VecSum summation because "
-    #             #             "it is a function of the summation index {1}.".
-    #             #             format(the_factor, summation_index))
-        
-    #     # Everything checks out as best we can tell, so import
-    #     # and instantiate the theorem
-    #     from proveit.linear_algebra.tensors import (
-    #             tensor_prod_distribution_over_summation)
-    #     from proveit import K, f, Q, i, j, k, V, a, b, c
-    #     _V_sub = VecSpaces.known_vec_space(self, field=field)
-    #     _K_sub = VecSpaces.known_field(_V_sub)
-    #     _a_sub = self.summand.operands[:idx]
-    #     _c_sub = self.summand.operands[idx+1:]
-    #     _i_sub = _a_sub.num_elements()
-    #     _k_sub = _c_sub.num_elements()
-    #     _b_sub = self.indices
-    #     _j_sub = _b_sub.num_elements()
-    #     _f_sub = Lambda(self.indices, self.summand.operands[idx])
-    #     _Q_sub = Lambda(self.indices, self.condition)
-
-    #     impl = tensor_prod_distribution_over_summation.instantiate(
-    #             {K:_K_sub, f:_f_sub, Q:_Q_sub, i:_i_sub, j:_j_sub,
-    #              k:_k_sub, V:_V_sub, a:_a_sub, b:_b_sub, c:_c_sub},
-    #              preserve_all=True)
-
-    #     return impl.derive_consequent().derive_reversed().with_wrapping_at()
 
 def get_all_operands(obj_list):
     '''
