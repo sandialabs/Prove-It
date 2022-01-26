@@ -675,12 +675,29 @@ class Judgment:
         return sorted(set(dir(self.__class__) +
                           list(self.__dict__.keys()) + dir(self.expr)))
 
+    def with_matching_style(self, expr):
+        '''
+        Return the Judgement with the style for the right of the
+        turnstile matching the given expression.
+        '''
+        if expr != self.expr:
+            raise ValueError(
+                "Cannot match styles when expressions are do "
+                "not have the same meaning: %s ≠ %s."%(self.expr, expr))
+        if expr._style_id == self.expr._style_id:
+            return self # Nothing has changed
+        return Judgment(expr, self.assumptions)
+
     def with_matching_styles(self, expr, assumptions):
         '''
-        Return the Judgement expression with the styles matching
+        Return the Judgement with the styles matching
         those of the given expression and assumptions.
         '''
-        new_style_expr = self.expr.with_matching_style(expr)
+        if expr != self.expr:
+            raise ValueError(
+                "Cannot match styles when expressions are do "
+                "not have the same meaning: %s ≠ %s."%(self.expr, expr))
+        new_style_expr = expr
         # storing the assumptions in a trivial dictionary will be useful
         # for popping them out.
         assumptions_dict = {
@@ -689,8 +706,7 @@ class Judgment:
         for assumption in self.assumptions:
             if assumption in assumptions_dict:
                 new_style_assumptions.append(
-                        assumption.with_matching_style(
-                                assumptions_dict.pop(assumption)))
+                        assumptions_dict.pop(assumption))
             else:
                 new_style_assumptions.append(assumption)
         if ((new_style_expr._style_id == self.expr._style_id) and

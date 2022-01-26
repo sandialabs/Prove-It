@@ -60,7 +60,7 @@ class Less(NumberOrderingRelation):
             from . import negative_if_real_neg
             concluded = negative_if_real_neg.instantiate(
                 {a: self.lower})
-            return concluded.with_matching_style(self)            
+            return concluded
         if self.lower == zero:
             # Special case with lower bound of zero.
             if InSet(self.upper, RealPos).proven():
@@ -128,14 +128,14 @@ class Less(NumberOrderingRelation):
                              "applicable if one side of the Less "
                              "expression is an addition and the other "
                              "side is one of the terms")
-        return concluded.with_matching_style(self)
+        return concluded
 
     @prover
     def conclude_via_equality(self, **defaults_config):
         from . import relax_equal_to_less_eq
         concluded = relax_equal_to_less_eq.instantiate(
             {x: self.operands[0], y: self.operands[1]})
-        return concluded.with_matching_style(self)
+        return concluded
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):

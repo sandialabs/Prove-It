@@ -655,37 +655,19 @@ class Expression(metaclass=ExprType):
         new_style_expr._style_data.styles = dict(styles)
         new_style_expr._style_id = new_style_expr._style_data._unique_id
         return new_style_expr
-    
+
     def with_matching_style(self, expr_with_different_style):
         '''
-        Alter the styles of this expression to match that of the
-        given "expr_with_different_style" which should be an
-        Expression with the same meaning as 'self'.
+        Return the expression with the diffent style after making
+        sure it as the same meaning as this original expression.
         '''
         if self != expr_with_different_style:
             raise ValueError(
-                "'with_matching_style' must an expression with "
+                "'with_matching_style' must be an expression with "
                 "the same meaning as self: %s ≠ %s."%
                 (self, expr_with_different_style))
-        return self._with_matching_style(expr_with_different_style)
+        return expr_with_different_style
 
-    def _with_matching_style(self, expr_with_different_style):
-        '''
-        Helper function for 'with_matching_style'.
-        '''
-        if self._style_id == expr_with_different_style._style_id:
-            return self # no difference in style actually; do nothing
-        for my_sub_expr, other_sub_expr in zip(
-                self.sub_expr_iter(), expr_with_different_style.sub_expr_iter()):
-            my_sub_expr._with_matching_style(other_sub_expr)
-        # Note, within lambda maps, "meanings" may diverge.
-        # We only "guarantee" the new styles exist where "meanings"
-        # are the same.
-        ignore_inapplicable_styles = (self != expr_with_different_style)
-        return self._with_these_styles(
-                expr_with_different_style.get_styles(),
-                ignore_inapplicable_styles = ignore_inapplicable_styles)
-    
     def with_mimicked_style(self, other_expr):
         '''
         Given an 'other_expr' with the same style options as

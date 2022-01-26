@@ -56,7 +56,7 @@ class LessEq(NumberOrderingRelation):
             from . import non_pos_if_real_non_pos
             concluded = non_pos_if_real_non_pos.instantiate(
                 {a: self.lower})
-            return concluded.with_matching_style(self)            
+            return concluded
         if self.lower == zero:
             # Special case with lower bound of zero.
             if InSet(self.upper, RealNonNeg).proven():

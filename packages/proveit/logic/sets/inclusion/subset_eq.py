@@ -66,7 +66,7 @@ class SubsetEq(InclusionRelation):
                 concluded = comprehension_is_subset.instantiate(
                     {S: set_of_all.domain, Q_op: Q_op_sub},
                     relabel_map={x: set_of_all.all_instance_vars()[0]})
-                return concluded.with_matching_style(self)
+                return concluded
 
         _A, _B = self.operands.entries
         if hasattr(_B, 'deduce_subset_eq_relation'):
