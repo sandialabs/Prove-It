@@ -58,6 +58,7 @@ proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.logic.sets.inclusion.unfold_subset_eq
 proveit.numbers.addition.add_complex_closure_bin
+proveit.numbers.addition.add_int_closure
 proveit.numbers.addition.add_int_closure_bin
 proveit.numbers.addition.add_nat_closure_bin
 proveit.numbers.addition.add_nat_pos_from_non_neg
@@ -68,8 +69,7 @@ proveit.numbers.addition.commutation
 proveit.numbers.addition.disassociation
 proveit.numbers.addition.elim_zero_any
 proveit.numbers.addition.elim_zero_left
-proveit.numbers.addition.right_add_eq
-proveit.numbers.addition.rightward_commutation
+proveit.numbers.addition.leftward_commutation
 proveit.numbers.addition.subtraction.add_cancel_basic
 proveit.numbers.addition.subtraction.add_cancel_triple_23
 proveit.numbers.addition.subtraction.add_cancel_triple_32
@@ -82,7 +82,6 @@ proveit.numbers.addition.weak_bound_via_left_term_bound
 proveit.numbers.division.distribute_frac_through_sum
 proveit.numbers.division.divide_complex_closure
 proveit.numbers.division.prod_of_fracs
-proveit.numbers.exponentiation.add_one_right_in_exp
 proveit.numbers.exponentiation.complex_x_to_first_power_is_x
 proveit.numbers.exponentiation.exp_complex_closure
 proveit.numbers.exponentiation.exp_complex_nonzero_closure
