@@ -4,7 +4,7 @@ from proveit import a, b, x, K, V, alpha, beta
 from proveit.logic import InSet
 from proveit.abstract_algebra import plus, times
 from proveit.linear_algebra import VecSpaces
-from proveit.numbers import one
+from proveit.numbers import one, Complex
 
 class ScalarMult(Operation):
     '''
@@ -59,7 +59,8 @@ class ScalarMult(Operation):
             expr = eq.update(self.double_scaling_reduction())
 
         # (2) Simplify multiplicative identity
-        if expr.scalar == one:
+        #     (if expr is still a ScalarMult)
+        if isinstance(expr, ScalarMult) and expr.scalar == one:
             expr = eq.update(expr.scalar_one_elimination(preserve_all=True))
 
         return eq.relation
@@ -78,7 +79,16 @@ class ScalarMult(Operation):
                              "for a doubly nested ScalarMult")
         # Reduce doubly-nested ScalarMult
         _x = self.scaled.scaled
-        _V = VecSpaces.known_vec_space(_x)
+        # _V = VecSpaces.known_vec_space(_x)
+        # the following is a little klunky, but trying to avoid the
+        # use of a default field=Real if we're actually dealing with
+        # complex scalars somewhere in the vector
+        from proveit import free_vars
+        if any([InSet(elem, Complex).proven() for
+                elem in free_vars(self)]):
+            _V = VecSpaces.known_vec_space(self, field=Complex)
+        else:
+            _V = VecSpaces.known_vec_space(self)
         _K = VecSpaces.known_field(_V)
         _alpha = self.scalar
         _beta =  self.scaled.scalar
