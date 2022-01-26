@@ -193,6 +193,9 @@ class Lambda(Expression):
                 free_vars_of_indices.update(
                     free_vars(parameter.index))
         return free_vars_of_indices
+    
+    def canonical_version(self):
+        return self._canonical_version()
 
     def _canonical_version(self, stored_canonical_version=None):
         '''
@@ -236,8 +239,8 @@ class Lambda(Expression):
         # Assign canonical labels to the parameters using the first
         # available dummy variable, skipping over free variables that
         # happen to match any of these dummy variables.
-        canonical_parameters = parameters._canonical_version()
-        canonical_body = self.body._canonical_version()
+        canonical_parameters = parameters.canonical_version()
+        canonical_body = self.body.canonical_version()
         canonical_body_free_vars = free_vars(canonical_body)
         canonical_parameters_free_vars = free_vars(canonical_parameters)
         lambda_free_vars = set(canonical_body_free_vars)
@@ -273,9 +276,9 @@ class Lambda(Expression):
                      for param_var, canonical_param_var
                      in zip(effective_param_vars, canonical_param_vars)}
                 canonical_parameters = parameters.basic_replaced(
-                    relabel_map)._canonical_version()
+                    relabel_map).canonical_version()
                 canonical_body = canonical_body.basic_replaced(
-                    relabel_map)._canonical_version()
+                    relabel_map).canonical_version()
                 canonical_expr = Lambda(canonical_parameters, canonical_body)
             elif (self._style_data.styles == canonical_styles and
                   canonical_body._style_id == self.body._style_id and

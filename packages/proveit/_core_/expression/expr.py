@@ -28,7 +28,7 @@ class ExprType(type):
 
     # These attributes should not be overridden by classes outside
     # of the core.
-    protected = ('_apply', '_canonical_version',
+    protected = ('_apply', 'canonical_version',
                  'replaced', 'basic_replaced', '_replaced_entries', 
                  'equality_replaced', '_manual_equality_replaced',
                  '_auto_simplified', '_auto_simplified_sub_exprs',
@@ -311,7 +311,7 @@ class Expression(metaclass=ExprType):
                     self._labeled_meaning_id] = styles
         """
 
-    def _canonical_version(self):
+    def canonical_version(self):
         '''
         Retrieve (and create if necessary) the canonical version of this
         expression in which deterministic 'dummy' variables are used as
@@ -332,11 +332,11 @@ class Expression(metaclass=ExprType):
                 labeled_to_canonical_meaning_data[self._labeled_meaning_data])
             self._meaning_id = self._meaning_data._unique_id
             # Now we can set the _canonical_expr via the '_meaning_data'.
-            return self._canonical_version()
+            return self.canonical_version()
 
         # Get the canonical versions of the sub-expressions.
         canonical_sub_expressions = tuple(
-            sub_expr._canonical_version()
+            sub_expr.canonical_version()
             for sub_expr in self._sub_expressions)
         # Get the styles of the sub expressions.
         sub_expression_styles = tuple(sub_expr._style_data
@@ -371,7 +371,7 @@ class Expression(metaclass=ExprType):
         canonical_expr = self.__class__._checked_make(
             self._core_info, canonical_sub_expressions, 
             style_preferences=canonical_styles)
-        assert canonical_expr._canonical_version() == canonical_expr, (
+        assert canonical_expr.canonical_version() == canonical_expr, (
                 "The canonical version of a canonical expression should "
                 "be itself.")
         self._canonical_expr = canonical_expr
@@ -385,9 +385,9 @@ class Expression(metaclass=ExprType):
         '''
         if hasattr(self, '_meaning_id'):
             return self._meaning_id
-        canonical_expr = self._canonical_version()
+        canonical_expr = self.canonical_version()
         if hasattr(self, '_meaning_id'):
-            # It may have been set via the '_canonical_version' call.
+            # It may have been set via the 'canonical_version' call.
             return self._meaning_id
         if canonical_expr is self:
             # The "true" meaning data is the "labeled" meaning data.
