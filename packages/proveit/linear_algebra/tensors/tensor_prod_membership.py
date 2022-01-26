@@ -92,7 +92,9 @@ class TensorProdMembership(SetMembership):
             from proveit.linear_algebra.addition import summation_closure
             from proveit.linear_algebra import VecSpaces
             self.domain.deduce_as_vec_space()
-            print("HERE!")
+            # might want to change the following to use
+            # vec_space_membership = self.element.summand.deduce_in_vec_space()
+            # then _V_sub = vec_space_membership.domain
             _V_sub = VecSpaces.known_vec_space(self.element.summand)
             _K_sub = VecSpaces.known_field(_V_sub)
             _b_sub = self.element.indices
