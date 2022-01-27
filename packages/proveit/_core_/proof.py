@@ -1146,6 +1146,10 @@ class Instantiation(Proof):
             requirements = []
             equality_repl_requirements = set()
             for assumption in orig_judgment.assumptions:
+                assumption_was_expr_range = False
+                if isinstance(assumption, ExprRange):
+                    assumption = ExprTuple(assumption)
+                    assumption_was_expr_range = True
                 subbed_assumption = Lambda._apply(
                     relabel_params, assumption, *relabel_param_replacements,
                     param_to_num_operand_entries=param_to_num_operand_entries,
@@ -1156,8 +1160,8 @@ class Instantiation(Proof):
                     subbed_assumption = subbed_assumption.equality_replaced(
                             requirements=requirements)
                 equality_repl_requirements.update(requirements)
-                if isinstance(assumption, ExprRange):
-                    # An iteration of assumptions to expand.
+                if assumption_was_expr_range:
+                    # Expand a tuple of assumptions.
                     orig_subbed_assumptions.extend(subbed_assumption)
                 else:
                     orig_subbed_assumptions.append(subbed_assumption)
