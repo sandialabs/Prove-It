@@ -216,9 +216,12 @@ class And(Operation):
                 # (A or not(A)) is an unfolded Boolean
                 return  # stop to avoid infinite recursion.
         yield self.derive_in_bool
-        for i, operand in enumerate(self.operands):
-            if not isinstance(operand, ExprRange):
-                yield lambda : self.derive_any(i)
+        for _i, operand in enumerate(self.operands):
+            if (isinstance(operand, ExprRange) and 
+                    self.operands.num_entries()==1):
+                yield lambda : self.derive_quantification()
+            else:
+                yield lambda : self.derive_any(_i)
 
         # yield self.derive_commutation
 
@@ -251,6 +254,8 @@ class And(Operation):
         r'''
         From (A and ... and X and ... and Z) derive X.
         index_or_expr specifies X, either by index or the expression.
+        If X is an ExprRange, derive the universally quantified
+        form of And(X).
         '''
         from proveit import ExprRange
         from . import (any_from_and, left_from_and, right_from_and,
@@ -261,12 +266,11 @@ class And(Operation):
             idx = list(self.operands).index(index_or_expr)
         if idx < 0 or idx >= self.operands.num_entries():
             raise IndexError("Operand out of range: " + str(idx))
-        has_range_operands = any(isinstance(operand, ExprRange)
-                                 for operand in self.operands)
-        if self.operands.num_entries() == 1 and not has_range_operands:
+        contains_range = self.operands.contains_range()
+        if self.operands.num_entries() == 1 and not contains_range:
             # Derive A from And(A).
             return from_unary_and.instantiate({A: self.operands[0]})
-        if self.operands.is_double() and not has_range_operands:
+        if self.operands.is_double() and not contains_range:
             # Two operand special case:
             if idx == 0:
                 return left_from_and.instantiate(
@@ -280,7 +284,7 @@ class And(Operation):
             operand_to_extract = self.operands[idx]
             if isinstance(operand_to_extract, ExprRange):
                 # Derive the conjunction of a range of operands.
-                return self.derive_some_from_and(idx)
+                return self.derive_some(idx)
             else:
                 A_sub = self.operands[:idx]
                 B_sub = self.operands[idx]
@@ -311,6 +315,50 @@ class And(Operation):
         n_val = Len(C_sub).computed()
         return some_from_and.instantiate({l: l_val, m: m_val, n: n_val,
                                           A: A_sub, B: B_sub, C: C_sub})
+
+    @prover
+    def derive_quantification(self, instance_param=None, **defaults_config):
+        '''
+        From P(i) and ... and P(j), represented as a single ExprRange
+        in a conjunction, prove 
+        forall_{k in {i .. j}} P(k).
+        If 'instance_param' is provided, use it as the 'k' parameter.
+        Otherwise, use the parameter of the ExprRange.
+        '''
+        from proveit import ExprRange
+        from proveit.logic import InSet
+        from proveit.numbers import Interval
+        from . import quantification_from_conjunction
+        if (self.operands.num_entries() != 1 or 
+                not isinstance(self.operands[0], ExprRange)):
+            raise ValueError("'derive_quantification' may only be used "
+                             "on a conjunction with a single ExprRange "
+                             "operand entry.")
+        expr_range = self.operands[0]
+        _i = expr_range.start_index
+        _j = expr_range.end_index
+        _k = expr_range.parameter if instance_param is None else instance_param
+        _P = expr_range.lambda_map
+        proven_quantification = quantification_from_conjunction.instantiate(
+                {i:_i, j:_j, k:_k, P:_P}).derive_consequent()
+        if defaults.automation:
+            # While we are at it, as an "unofficial" side-effect,
+            # let's instantatiate forall_{k in {i .. j}} P(k) to derive
+            # {k in {i .. j}} |- P(k)
+            # and induce side-effects for P(k).
+            assumptions = defaults.assumptions + (
+                    InSet(_k, Interval(_i, _j)), )
+            proven_quantification.instantiate(assumptions=assumptions)
+            # We'll do it with the canonical variable as well for good
+            # measure, if it is any different.
+            canonical_version = proven_quantification.canonical_version()
+            if canonical_version._style_id != proven_quantification._style_id:
+                _k = canonical_version.instance_var
+                assumptions = defaults.assumptions + (
+                        InSet(_k, Interval(_i, _j)), )
+                canonical_version.instantiate(assumptions=assumptions)
+            
+        return proven_quantification
 
     @prover
     def derive_left(self, **defaults_config):
@@ -475,9 +523,7 @@ class And(Operation):
         a generalization of the conclude_as_redundant() method above.
         '''
         from proveit import ExprRange, Lambda
-        from proveit.numbers import one
-        from . import redundant_conjunction, redundant_conjunction_general
-        from . import conjunction_over_expr_range
+        from . import conjunction_from_quantification
         if (self.operands.num_entries() != 1 or
                 not isinstance(self.operands[0], ExprRange)):
             raise ValueError(
@@ -492,7 +538,7 @@ class And(Operation):
         _j_sub = the_expr_range.end_index
         _k_sub = the_expr_range.parameter
         _P_sub = Lambda(the_expr_range.parameter, the_expr_range.body)
-        impl =  conjunction_over_expr_range.instantiate(
+        impl =  conjunction_from_quantification.instantiate(
             {i: _i_sub, j: _j_sub, k: _k_sub, P: _P_sub})
         return impl.derive_consequent()
 
