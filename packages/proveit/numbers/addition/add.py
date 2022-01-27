@@ -358,7 +358,8 @@ class Add(NumberOperation):
 
         if self.operands.is_double():
             return basic_thm.instantiate({a: canceled_op})
-        elif self.operands.num_entries() == 3:
+        elif (not self.operands.contains_range() 
+                and self.operands.num_entries() == 3):
             # _k is the 3rd index, completing i and j in the set {0,1,2}.
             _k = {0, 1, 2}.difference([idx1, idx2]).pop()
             thm = triple_thms[2 - _k]
@@ -697,7 +698,6 @@ class Add(NumberOperation):
         elif len(order) == 1:
             # All operands are like terms.  Simplify by combining them.
             key = order[0]
-            
             # If all the operands are the same, combine via multiplication.
             if (all(operand == expr.operands[0] for operand in expr.operands)
                     and not (expr.operands.num_entries() == 1 and
@@ -706,7 +706,7 @@ class Add(NumberOperation):
                 expr = eq.update(
                     expr.conversion_to_multiplication(auto_simplify=True))
                 return eq.relation
-            elif key != one:
+            elif key != one and expr.operands.num_entries() > 1:
                 # for all the keys that are not basic numbers, 
                 # derive the multiplication from the addition
                 # make sure all the operands in the key are products 
