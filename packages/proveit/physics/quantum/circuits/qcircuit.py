@@ -103,11 +103,11 @@ class Qcircuit(Function):
                 if isinstance(entry_expr, ExprRange):
                     elem_param = entry_expr.parameter
                     start = entry_expr.start_index
+                    end = entry_expr.end_index
                     if next_part is not None:
                         # The middle part of a ExprRange for a
                         # multiqubit gate/input/output/measure.
                         assert next_part == Add(start, one)
-                    end = entry_expr.end_index
                     entry_expr = entry_expr.body
                 else:
                     elem_param = start = end = None
@@ -164,6 +164,12 @@ class Qcircuit(Function):
                                         "Mismatch of starting qubit position "
                                         "of a multigate: %s ≠ %s"
                                         %(qubit_pos, start_index))
+                            if targets.upper_bound not in qubit_pos_to_row:
+                                raise ValueError(
+                                        "%s is not known to as the top qubit "
+                                        "position corresponding to any row: "
+                                        "%s"%(targets.upper_bound, 
+                                              qubit_pos_to_row))
                             next_part = one
                             active_multiqubit_op = elem_op
                         else:
@@ -190,6 +196,7 @@ class Qcircuit(Function):
                                         "%s ≠ %s"%(elem_part, next_part))
                         if qubit_pos == targets.upper_bound:
                             active_multiqubit_op = None
+                            next_part = None
                         elif elem_param is None:
                             next_part = Add(elem_part, one)
                         else:
@@ -433,15 +440,17 @@ class Qcircuit(Function):
                             collapsible_multirow = False
                     else:
                         collapsible_multirow = False
-                    entry = format_col_entries[row][0]
+                    entry, outer_role, inner_role = format_col_entries[row]
                     if isinstance(entry, ExprRange):
                         entry = entry.body
+                    multi_op = False
                     if isinstance(entry, MultiQubitElem):
                         if (isinstance(entry.element, Output) or
                                 isinstance(entry.element, Measure)
                                 or entry.element == SPACE):
                             continue_wire = False
                         if isinstance(entry.targets, Interval):
+                            multi_op = True
                             elem = entry.element
                             # Double-checking (should have been checked
                             # in _find_down_wire_locations):
@@ -454,11 +463,14 @@ class Qcircuit(Function):
                             top_qubit_pos = targets.lower_bound
                             top_row = qubit_position_to_row[top_qubit_pos]
                             formatted_entry = formatted_col_entries[top_row]
-                            if formatted_entry == r'\cdots':
-                                # The only possible ellipses along the
-                                # top row of a multi-circuit-entry is
-                                # \cdots of a multigate.
-                                formatted_entry = r'& \gate{\cdots}'
+                            if outer_role in ('implicit', 'explicit'):
+                                # Implicit/explicit ellipsis along the
+                                # top row of a multi-circuit-entry.
+                                formatted_entry = (r'& \gate{%s}'
+                                                   %formatted_entry)
+                                # We can forget about roles -- we've
+                                # taken care of it.
+                                inner_role = outer_role = None
                             _i = 0
                             _j = formatted_entry.find('{')
                             if formatted_entry[:2] == "& ":
@@ -490,7 +502,9 @@ class Qcircuit(Function):
                           isinstance(entry, Measure) or
                           entry == SPACE):
                         continue_wire = False
-                    if formatted_entry in (r'\cdots', r'\vdots', r'\ddots'):
+                    if (not multi_op and 
+                            not {inner_role, outer_role}.isdisjoint(
+                                    ('implicit', 'explicit'))):
                         # Wrap ellipses in \gate, \qin, \qout, 
                         # or \measure... as appropriate.
                         _expr = entry
@@ -514,7 +528,7 @@ class Qcircuit(Function):
                             formatted_entry = r'& \qout{%s}'%formatted_entry
                             continue_wire = False
                         elif isinstance(_expr, Measure):
-                            formatted_entry = r'& \measureD{%s}'%formatted_entry
+                            formatted_entry = r'& %s \qw'%formatted_entry
                             continue_wire = False
                     if (row, col) in down_wire_locations:
                         formatted_entry += r' \qwx[1]'                                
@@ -632,3 +646,13 @@ class Qcircuit(Function):
             #           assumptions=assumptions)
             pass
     """
+
+class QcircuitSet(Literal):
+    '''
+    Represents the set of all consistent quantum circuits.
+    '''
+    def __init__(self, *, styles=None):
+        Literal.__init__(
+            self, string_format='QC', latex_format=r'\mathbb{Q.C.}',
+            styles=styles)
+    

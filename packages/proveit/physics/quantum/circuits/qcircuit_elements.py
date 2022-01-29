@@ -198,13 +198,35 @@ class Measure(QcircuitElement):
         QcircuitElement.__init__(self, Measure._operator_, operands, 
                                  styles=styles)
 
+    def style_options(self):
+        '''
+        Return the StyleOptions object for this Gate object.
+        '''
+        from proveit.physics.quantum import Z
+        options = StyleOptions(self)
+        if self.basis == Z:
+            # For an Z measurement, we can use an implicit meter
+            # representation.
+            options.add_option(
+                name='representation',
+                description=(
+                    "The 'implicit' option formats the Z-measurement "
+                    "as a generic meter."),
+                default='implicit',
+            related_methods=())
+
+        return options
+
     def circuit_elem_latex(self, *, solo, show_part_num):
         '''
         Display the LaTeX for this Output circuit element.
         '''
+        from proveit.physics.quantum import Z
         if show_part_num and hasattr(self, 'part'):            
             return r'& \measureD{%s~\mbox{part}~%s}'%(
                     self.basis.latex, self.part.latex())
+        if self.basis==Z and self.get_style('Z', 'implicit')=='implicit':
+            return r'& \meter'
         return r'& \measureD{' + self.basis.latex() + r'}'
 
 class Gate(QcircuitElement):
@@ -467,8 +489,14 @@ def multi_elem_entries(element_from_part, start_qubit_idx, end_qubit_idx,
     try:
         lhs = subtract(part_end, one)
         rhs = subtract(end_qubit_idx, start_qubit_idx)
-        lhs = lhs.simplified()
-        rhs = rhs.simplified()
+        try:
+            lhs = lhs.simplified()
+        except:
+            pass
+        try:
+            rhs = rhs.simplified()
+        except:
+            pass
         Equals(lhs, rhs).prove()
     except ProofFailure:
         raise ValueError("Part indices must span the range of the "
