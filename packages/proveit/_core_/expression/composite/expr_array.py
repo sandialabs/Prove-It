@@ -286,6 +286,10 @@ class ExprArray(ExprTuple):
                 inner_formatted_cells = []
                 for entry in inner_format_cell_entries:
                     expr, outer_role, inner_role = entry
+                    if isinstance(expr, ExprRange):
+                        range_nestings = expr.nested_range_depth()
+                    else:
+                        range_nestings = 1
                     if outer_role == 'implicit':
                         if inner_role in ('implicit', 'explicit'):
                             # Use diagonal dots where the outer role
@@ -295,7 +299,7 @@ class ExprArray(ExprTuple):
                         else:
                             # Use vertical/horizontal dots where the
                             # outer role is 'implicit'.
-                            formatted_cell = outer_ellipsis
+                            formatted_cell = outer_ellipsis*range_nestings
                     elif outer_role == 'explicit':
                         if inner_role == 'implicit':
                             # Use diagonal dots where the inner role
@@ -312,7 +316,7 @@ class ExprArray(ExprTuple):
                             formatted_cell = outer_explicit_formatted_cell(
                                     expr.latex(**cell_latex_kwargs))
                     elif inner_role == 'implicit':
-                        formatted_cell = inner_ellipsis
+                        formatted_cell = inner_ellipsis*range_nestings
                     elif inner_role == 'explicit':
                         formatted_cell = inner_explicit_formatted_cell(
                                 expr.body.latex(**cell_latex_kwargs))

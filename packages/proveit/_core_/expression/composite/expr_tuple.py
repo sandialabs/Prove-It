@@ -364,18 +364,10 @@ class ExprTuple(Composite, Expression):
             if assumptions is not None:
                 tmp_defaults.assumptions = assumptions
             for item in self.entries:
-                # Append to element_positions.
+                # Append to cell entries.
                 if isinstance(item, ExprRange):
                     # An ExprRange covers multiple format cells.
-                    range_items = item.get_range_expansion(
-                            _remembered_simplifications)
-                    cell_entries.extend(
-                            (range_item, _k) for _k, range_item in
-                            enumerate(range_items))
-                    parameterization = item.get_style('parameterization',
-                                                      'implicit')
-                    cell_entries.append((item, parameterization))
-                    cell_entries.append((item.last(), -1))
+                    item._append_format_cell_entries(cell_entries)
                 else:
                     # One format cells for a regular entry.
                     cell_entries.append((item, 'normal'))
@@ -433,25 +425,8 @@ class ExprTuple(Composite, Expression):
                 # Append to element_positions.
                 if isinstance(item, ExprRange):
                     # An ExprRange covers multiple format cells.
-                    range_expansion = item.get_expansion_count()
-                    start_element_pos = element_pos
-                    # Append for the first cells of an expanded
-                    # ExprRange:
-                    for _ in range(range_expansion-1):
-                        element_positions.append(element_pos)
-                        element_pos = _simplified(Add(element_pos, one))
-                    # Append for the last of the first cell(s) of
-                    # the ExprRange:
-                    element_positions.append(element_pos)
-                    # Use None for the 'ellipsis' cell:
-                    element_positions.append(None) 
-                    # Append for the last cell of the ExprRange:
-                    element_pos = Add(
-                            start_element_pos, 
-                            subtract(item.end_index, 
-                                     item.start_index))
-                    element_pos = _simplified(element_pos)
-                    element_positions.append(element_pos)
+                    element_pos = item._append_format_cell_element_positions(
+                            element_pos, element_positions)
                 else:
                     # One format cells for a regular entry.
                     element_positions.append(element_pos)

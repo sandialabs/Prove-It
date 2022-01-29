@@ -315,7 +315,7 @@ class ExprRange(Expression):
 
         return self.with_styles(simplify='True')
     
-    def _body_replaced(self, expr_map):
+    def _body_replaced(self, index):
         '''
         Return the body replaced according the the expression map.
         First attempt to do this with auto-simplification.  If that
@@ -323,6 +323,7 @@ class ExprRange(Expression):
         '''
         from proveit.numbers import Less, num, Add
         from proveit.logic import NotEquals
+        expr_map = {self.lambda_map.parameter: index}
         if self.get_style('simplify', 'False') == 'True':            
             with defaults.temporary() as temp_defaults:
                 temp_defaults.auto_simplify = True
@@ -360,8 +361,7 @@ class ExprRange(Expression):
             #self.last()
         return self._first
         """
-        expr_map = {self.lambda_map.parameter: self.start_index}
-        return self._body_replaced(expr_map)
+        return self._body_replaced(self.start_index)
         
 
     def last(self):
@@ -378,8 +378,7 @@ class ExprRange(Expression):
             #self.first()
         return self._last
         """
-        expr_map = {self.lambda_map.parameter: self.end_index}
-        return self._body_replaced(expr_map)
+        return self._body_replaced(self.end_index)
 
     def format_length(self):
         '''
@@ -442,11 +441,8 @@ class ExprRange(Expression):
         else:
             output = [self.first()]
         while i < expansion:
-            expr_map = {self.lambda_map.parameter: self._expr_simplification(Add(prev, one))}
-            try:
-                next_value = self._body_replaced(expr_map)
-            except AttributeError:
-                next_value = self.basic_replaced(expr_map)
+            index = self._expr_simplification(Add(prev, one))
+            next_value = self._body_replaced(index)
             if self.get_style('simplify', 'False') == 'True':
                 output.append(self._expr_simplification(next_value))
             else:
@@ -627,6 +623,132 @@ class ExprRange(Expression):
         return self.lambda_map.apply(
             index, assumptions=assumptions, requirements=requirements,
             equality_repl_requirements=equality_repl_requirements)
+
+    def _append_format_cell_entries(self, cell_entries):
+        '''
+        Append to a list of entries in correspondence with
+        each format cells of an ExprTuple containing this ExprRange.
+        Each entry is a pair tuple with the first item containing an 
+        Expression  corresponding to the entry and the second 
+        indicating the 'role'  of the cell. The beginning cells of
+        the ExprRange will have consecutive integers for their role 
+        starting with 0, the last cell has -1 for its role, and the 
+        'ellipsis' cell has 'implicit' or 'explicit' for its role 
+        depending upon the 'parameterization' style option of the 
+        ExprRange.
+        
+        The assumptions dictate simplifications that may apply to
+        ExprRange elements.
+        '''
+        from proveit.logic import InSet
+        from proveit.numbers import one, Add, Integer
+
+        index = None
+        expansion = int(self.get_style("expansion", str(1)))
+        start_index = self.start_index
+        end_index = self.end_index
+        with defaults.temporary() as tmp_defaults:
+            # For formatting purposes, let's just assume that
+            # the start and end indices are integers and that the
+            # indices at the beginning are less than the end index.
+            new_assumptions = []
+            for _idx in (start_index, end_index):
+                assumption = InSet(_idx, Integer)
+                if not assumption.proven():
+                    new_assumptions.append(assumption)
+            assumptions = defaults.assumptions + tuple(new_assumptions)
+            tmp_defaults.assumptions = assumptions
+            for _k in range(0, expansion):
+                if index is None:
+                    index = start_index
+                else:
+                    index = Add(index, one).simplified()
+                next_entry = self._body_replaced(index)
+                if isinstance(next_entry, ExprRange):
+                    # Recurse through the entries of an inner ExprRange.
+                    next_entry._append_format_cell_entries(cell_entries)
+                else:
+                    # Append the next entry.
+                    cell_entries.append((next_entry, _k))
+            parameterization = self.get_style('parameterization',
+                                              'implicit')
+            cell_entries.append((self, parameterization))
+            last_entry = self._body_replaced(end_index)
+            if isinstance(last_entry, ExprRange):
+                # Recurse through the entries of an inner ExprRange.
+                last_entry._append_format_cell_entries(cell_entries)
+            else:
+                # Append the last entry.
+                cell_entries.append((last_entry, -1))        
+
+    def _append_format_cell_element_positions(
+            self, start_element_pos, element_positions):
+        '''
+        Append to a list of element positions in correspondence with
+        each format cell of an ExprTuple containing this ExprRange
+        (see ExprTuple.get_format_cell_entries).
+        Start with the given start_pos as the first position of the
+        ExprRange.  The element position of an 'ellipsis' cell is
+        'None' (it isn't defined).  The element position of the last
+        cell will be ('end_index' - 'start_index') of the ExprRange
+        added to the element position of the first cell.
+        '''
+        from proveit.logic import InSet
+        from proveit.numbers import one, Integer, Add, subtract
+        element_pos = start_element_pos
+        expansion = int(self.get_style("expansion", str(1)))
+        start_index = self.start_index
+        end_index = self.end_index
+        index = None
+        nested_ranges = isinstance(self.body, ExprRange)
+        with defaults.temporary() as tmp_defaults:
+            # For formatting purposes, let's just assume that
+            # the start and end indices are integers.
+            new_assumptions = []
+            for _idx in (start_index, end_index):
+                assumption = InSet(_idx, Integer)
+                if not assumption.proven():
+                    new_assumptions.append(assumption)
+            assumptions = defaults.assumptions + tuple(new_assumptions)
+            tmp_defaults.assumptions = assumptions
+            for _k in range(0, expansion):
+                if element_pos is start_element_pos:
+                    if nested_ranges:
+                        index = start_index
+                else:
+                    element_pos = Add(element_pos, one).simplified()
+                    if nested_ranges:
+                        index = Add(index, one).simplified()
+                if nested_ranges:
+                    # Use recursion for a nested ExprRange.
+                    next_entry = self._body_replaced(index)
+                    element_pos= (
+                            next_entry._append_format_cell_element_positions(
+                                    element_pos, element_positions))
+                else:
+                    # Append the next element position.
+                    element_positions.append(element_pos)
+            # Use None for the 'ellipsis' cell:
+            element_positions.append(None) 
+            if nested_ranges:
+                # Do the final cells when we have a nested ExprRange.
+                last_entry = self._body_replaced(end_index)
+                # Work backworks from the end.
+                net_range_len = ExprTuple(self).num_elements()
+                last_range_len = ExprTuple(last_entry).num_elements()
+                element_pos = Add(start_element_pos,
+                                  subtract(net_range_len, last_range_len))
+                element_pos = (
+                        next_entry._append_format_cell_element_positions(
+                                element_pos.simplified(), element_positions))
+            else:
+                # Append for the last cell of the ExprRange:
+                element_pos = Add(
+                        start_element_pos, 
+                        subtract(self.end_index, 
+                                 self.start_index)).simplified()
+                element_positions.append(element_pos)
+        return element_pos
 
     def _free_var_ranges(self, exclusions=None):
         '''
