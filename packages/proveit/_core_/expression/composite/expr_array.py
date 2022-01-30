@@ -117,14 +117,34 @@ class ExprArray(ExprTuple):
         for _i, outer_entry in enumerate(
                 ExprTuple.get_format_cell_entries(self)):
             outer_expr, outer_role = outer_entry
+            orig_outer_expr = outer_expr
             if isinstance(outer_expr, ExprRange):
-                outer_expr = outer_expr.body
+                outer_expr = outer_expr.innermost_body()
+                # But then wrap the inner_expr's below with the
+                # ExprRange's -- something like that??? TODO
             if isinstance(outer_expr, ExprTuple):
                 # An explicit inner list.
                 inner_format_cell_entries = []
                 for _j, inner_entry in enumerate(
                         outer_expr.get_format_cell_entries()):
                     inner_expr, inner_role = inner_entry
+                    if (orig_outer_expr != outer_expr and
+                            not isinstance(inner_expr, ExprRange)):
+                        # The other_expr was originally an ExprRange
+                        # but the inner_expr is not.  In this case, we
+                        # want to show the entry expr as an ExprRange
+                        # for the outer orientation with this inner
+                        # exrpession.  That is, lLet's wrap the 
+                        # inner_expr with the ExprRange(s) in the same
+                        # way as the original ExprRange.
+                        _expr_ranges = [orig_outer_expr]
+                        while isinstance(_expr_ranges[-1].body, ExprRange):
+                            _expr_ranges.append(_expr_ranges[-1].body)
+                        for _er in reversed(_expr_ranges):
+                            inner_expr = ExprRange(
+                                    _er.parameter, inner_expr,
+                                    _er.start_index, _er.end_index)
+                            inner_expr = inner_expr.with_mimicked_style(_er)
                     # Compose outer and inner roles.
                     inner_format_cell_entries.append(
                             (inner_expr, outer_role, inner_role))
@@ -219,24 +239,27 @@ class ExprArray(ExprTuple):
         return element_positions
 
     @staticmethod
-    def vertical_explicit_cell_latex(expr_latex):
+    def vertical_explicit_cell_latex(expr_latex, nested_range_depth):
         '''
         Return the formatted cell, given the LaTeX of the 
         expression of the cell, with two vertical dots above and below 
         to denote an explicit parameterization of a vertical ExprRange.
         '''
         # Wrap with two vertical dots above and below.
-        return r'\begin{array}{c}:\\ %s \\:\end{array}'%expr_latex
+        n = nested_range_depth
+        return (r'\begin{array}{c}' + r':\\ '*n + expr_latex 
+                + r' \\:'*n + '\end{array}')
     
     @staticmethod
-    def horizontal_explicit_cell_latex(expr_latex):
+    def horizontal_explicit_cell_latex(expr_latex, nested_range_depth):
         '''
         Return the formatted cell, given the LaTeX of the expression of 
         the cell, with two centered dots before and after to denote an 
         explicit parameterization of a horizontal ExprRange.
         '''
         # Wrap with two horizontal dots before and after.
-        return  (r'\cdot \cdot ' + expr_latex + r' \cdot \cdot')    
+        n = nested_range_depth
+        return  (r'\cdot \cdot '*n + expr_latex + r' \cdot \cdot'*n)    
     
     def get_latex_formatted_cells(self, orientation='horizontal',
                                   vertical_explicit_cell_latex_fn=None,
@@ -252,12 +275,20 @@ class ExprArray(ExprTuple):
         The 'cell_latex_kwargs' will be passed as keyword arguments
         to the 'latex' calls for formatting each cell.
         '''
+        from .vert_expr_array import VertExprArray
         # Depending upon the orientation, outer/inner ellipses
         # are vertical/horizontal dots.
-        outer_ellipsis = (r'\vdots' if orientation=='horizontal'
-                          else r'\cdots')
-        inner_ellipsis = (r'\cdots' if orientation=='horizontal'
-                          else r'\vdots')
+        def vert_ellipses(nested_range_depth):
+            n = nested_range_depth
+            if n == 1: return r'\vdots'
+            return (r'\begin{array}{c}' + r'\\ '.join([r'\vdots']*n)
+                    + r'\end{array}')
+        def horiz_ellipses(nested_range_depth):
+            return r'\cdots'*nested_range_depth
+        outer_ellipsis = (vert_ellipses if orientation=='horizontal'
+                          else horiz_ellipses)
+        inner_ellipsis = (horiz_ellipses if orientation=='horizontal'
+                          else vert_ellipses)
         
         if vertical_explicit_cell_latex_fn is None:
             vertical_explicit_cell_latex_fn = (
@@ -265,15 +296,31 @@ class ExprArray(ExprTuple):
         if horizontal_explicit_cell_latex_fn is None:
             horizontal_explicit_cell_latex_fn = (
                     ExprArray.horizontal_explicit_cell_latex)
-
+        def vertical_expr_to_latex(expr, **cell_latex_kwargs):
+            # When formatting an ExprRange in a cell, show it as a
+            # vertical array.
+            if isinstance(expr, ExprRange):
+                expr = VertExprArray([expr])
+            return expr.latex(**cell_latex_kwargs)
+        def horizonal_expr_to_latex(expr, **cell_latex_kwargs):
+            # When formatting an ExprRange in a cell, show it as a
+            # horizontal array.
+            if isinstance(expr, ExprRange):
+                expr = ExprArray([expr])
+            return expr.latex(**cell_latex_kwargs)
+        
         if orientation == 'horizontal':
             outer_explicit_formatted_cell, inner_explicit_formatted_cell = (
                     vertical_explicit_cell_latex_fn,
                     horizontal_explicit_cell_latex_fn)
+            outer_expr_to_latex, inner_expr_to_latex = (
+                    vertical_expr_to_latex, horizonal_expr_to_latex)
         elif orientation == 'vertical':
             outer_explicit_formatted_cell, inner_explicit_formatted_cell = (
                     horizontal_explicit_cell_latex_fn,
                     vertical_explicit_cell_latex_fn)
+            outer_expr_to_latex, inner_expr_to_latex = (
+                    horizonal_expr_to_latex, vertical_expr_to_latex)
         else:
             raise ValueError("'orientation' must be 'horizontal' or "
                              "'vertical', not %s"%orientation)
@@ -287,9 +334,9 @@ class ExprArray(ExprTuple):
                 for entry in inner_format_cell_entries:
                     expr, outer_role, inner_role = entry
                     if isinstance(expr, ExprRange):
-                        range_nestings = expr.nested_range_depth()
+                        nested_range_depth = expr.nested_range_depth()
                     else:
-                        range_nestings = 1
+                        nested_range_depth = 1
                     if outer_role == 'implicit':
                         if inner_role in ('implicit', 'explicit'):
                             # Use diagonal dots where the outer role
@@ -299,7 +346,7 @@ class ExprArray(ExprTuple):
                         else:
                             # Use vertical/horizontal dots where the
                             # outer role is 'implicit'.
-                            formatted_cell = outer_ellipsis*range_nestings
+                            formatted_cell = outer_ellipsis(nested_range_depth)
                     elif outer_role == 'explicit':
                         if inner_role == 'implicit':
                             # Use diagonal dots where the inner role
@@ -314,12 +361,14 @@ class ExprArray(ExprTuple):
                                     **cell_latex_kwargs)
                         else:
                             formatted_cell = outer_explicit_formatted_cell(
-                                    expr.latex(**cell_latex_kwargs))
+                                    outer_expr_to_latex(expr.body), 
+                                    nested_range_depth)
                     elif inner_role == 'implicit':
-                        formatted_cell = inner_ellipsis*range_nestings
+                        formatted_cell = inner_ellipsis(nested_range_depth)
                     elif inner_role == 'explicit':
                         formatted_cell = inner_explicit_formatted_cell(
-                                expr.body.latex(**cell_latex_kwargs))
+                                inner_expr_to_latex(expr.body), 
+                                nested_range_depth)
                     else:
                         # default:
                         formatted_cell = expr.latex(**cell_latex_kwargs)
@@ -328,12 +377,18 @@ class ExprArray(ExprTuple):
             else:
                 # The entire inner list is represented by one entry.
                 expr, role = inner_format_cell_entries
+                if isinstance(expr, ExprRange):
+                    nested_range_depth = expr.nested_range_depth()
+                else:
+                    nested_range_depth = 1
                 if role == 'implicit':
                     # Use vertical/horizontal dots
-                    formatted_cells.append(outer_ellipsis)
+                    formatted_cells.append(
+                            outer_ellipsis(nested_range_depth))
                 elif role == 'explicit':
                     formatted_cells.append(outer_explicit_formatted_cell(
-                            expr.body.latex(**cell_latex_kwargs)))
+                            outer_expr_to_latex(expr.body), 
+                            nested_range_depth))
                 else:
                     formatted_cells.append(expr.latex(**cell_latex_kwargs))
         return formatted_cells
