@@ -465,7 +465,7 @@ class Operation(Expression):
     @staticmethod
     def _formatted_operation(
             format_type, operator_or_operators, operands,
-            wrap_positions, justification, implicit_first_operator=False,
+            wrap_positions, justification,
             **kwargs):
         from proveit import ExprRange, ExprTuple, composite_expression
         if (isinstance(operator_or_operators, Expression) and 
@@ -533,7 +533,6 @@ class Operation(Expression):
                                                 fence=False,
                                                 sub_fence=sub_fence,
                                                 operator_or_operators=operators,
-                                                implicit_first_operator=implicit_first_operator,
                                                 wrap_positions=wrap_positions)
             if do_wrapping and format_type == 'latex':
                 formatted_str += r' \end{array}'

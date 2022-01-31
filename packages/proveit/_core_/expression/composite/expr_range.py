@@ -268,7 +268,7 @@ class ExprRange(Expression):
                 "The default expansion is 1 (a single operand before the "
                 "ellipses). Enter a positive integer to increase the number "
                 "of operands before the ellipses."),
-            default=str(1),
+            default=str(2),
             related_methods=('with_expansion', 'get_range_expansion'))
         options.add_option(
             name='simplify',
@@ -343,8 +343,6 @@ class ExprRange(Expression):
         the ellipses. The default expansion is one operand before
         the ellipses.
         '''
-        self.with_styles(expansion=str(num))
-        self._update_expansion(num)
         return self.with_styles(expansion=str(num))
 
     def first(self):
@@ -418,173 +416,71 @@ class ExprRange(Expression):
             return True
         return False
 
-    def _expr_simplification(self, expr):
-        '''
-        calls simplification on the given expression
-        '''
-        from proveit import UnsatisfiedPrerequisites, ProofFailure
-        from proveit.logic import SimplificationError
-        try:
-            return expr.simplified()
-        except (SimplificationError, UnsatisfiedPrerequisites, NotImplementedError, ProofFailure):
-            return expr
-
-    def _update_expansion(self, num):
-
-        prev = self.start_index
-        indices = [prev]
-        expansion = num
-        from proveit.numbers import one, Add
-        i = 1
-        if self.get_style('simplify', 'False') == 'True':
-            output = [self._expr_simplification(self.first())]
+    def _formatted_entries(self, format_type, *,
+                           operator_or_operators=', ',
+                           implicit_first_operator=False, **kwargs):
+        format_cell_entries = []
+        self._append_format_cell_entries(format_cell_entries)
+        if (isinstance(operator_or_operators, ExprRange) and
+                operator_or_operators.is_parameter_independent):
+            operator_or_operators = operator_or_operators.body
+        if isinstance(operator_or_operators, ExprRange):
+            operator_or_operators = (
+                    operator_or_operators.with_mimicked_style(self))
+            formatted_operator_entries = []
+            operator_or_operators._append_format_cell_entries(
+                    formatted_operator_entries)
+            # Grab just the expression, not the "role".
+            formatted_operators = [(expr.formatted(format_type)+' '
+                                    if (not isinstance(expr, ExprRange))
+                                       else '') for
+                                   expr, role in formatted_operator_entries]
+        elif isinstance(operator_or_operators, Expression):
+            _operator = operator_or_operators.formatted(format_type)
+            formatted_operators = [_operator+' ']*len(format_cell_entries)
         else:
-            output = [self.first()]
-        while i < expansion:
-            index = self._expr_simplification(Add(prev, one))
-            next_value = self._body_replaced(index)
-            if self.get_style('simplify', 'False') == 'True':
-                output.append(self._expr_simplification(next_value))
+            formatted_operators = [operator_or_operators]*len(
+                    format_cell_entries)
+        if implicit_first_operator:
+            formatted_operators[0] = ''
+        formatted_entries = []
+        for (expr, role), formatted_operator in zip(format_cell_entries, 
+                                                    formatted_operators):
+            if isinstance(expr, ExprRange):
+                nested_range_depth = expr.nested_range_depth()
             else:
-                output.append(next_value)
-            prev = self._expr_simplification(Add(prev, one))
-            indices.append(prev)
-            i += 1
-        self._range_expansion = output
-        self._expansion_indices = indices
-        self._stored_expansion_style = self.get_styles()
-    
-    def get_expansion_count(self):
-        '''
-        Return the number of 'first' elements to use according to the
-        'expansion' style.
-        '''
-        return int(self.get_style("expansion", str(1)))
-
-    def get_range_expansion(self, reformat=False):
-        '''
-        returns a list of the expression objects before the ellipses including self.first().
-        For use when the ExprRange has the expansion style option, otherwise
-        this method just returns a list containing self.first().
-        (and store for future use)
-        '''
-        expansion = self.get_expansion_count()
-        if (not hasattr(self, '_range_expansion')
-                or len(self._range_expansion) != expansion
-                or self.get_styles() != self._stored_expansion_style):
-            reformat = True
-
-        if reformat:
-            self._update_expansion(expansion)
-        return self._range_expansion
-
-    def _formatted_checkpoints(self, format_type, *,
-                               use_explicit_parameterization=None,
-                               ellipses=None, operator=None, expansion=None,
-                               **kwargs):
-        if use_explicit_parameterization is None:
-            use_explicit_parameterization = (
-                self._use_explicit_parameterization(format_type))
-
-        if expansion is None:
-            default_expansion = str(1)
-            expansion = int(self.get_style("expansion", default_expansion))
-
-        # reduce for formatting purposes
-        '''
-        try:
-            if self.first().auto_reduction() is not None:
-                first = self.first().auto_reduction()
-            else:
-                first = self.first()
-            if self.last().auto_reduction() is not None:
-                last = self.last().auto_reduction()
-            else:
-                last = self.last()
-        except:
-            first = self.first()
-            last = self.last()
-        '''
-        first = self.first()
-        last = self.last()
-
-        check_points = [first, last]
-        if use_explicit_parameterization and not self.is_parameter_independent:
-            check_points.insert(1, self.body)
-        formatted_sub_expressions = \
-            [sub_expr.formatted(format_type, operator=operator,
-                                **kwargs)
-             for sub_expr in check_points]
-        if self.is_parameter_independent:
-            from proveit.numbers import one, Add
-            repeats_str = (r'\textrm{ repeats}' if format_type == 'latex'
-                           else 'repeats')
-            if self.start_index == one:
-                formatted_sub_expressions.insert(
-                    1, '%s %s' % (self.end_index.formatted(format_type),
-                                  repeats_str))
-            else:
-                to_str = (r'\textrm{ to }' if format_type == 'latex' else 'to')
-                from_str = (r'\textrm{from }' if format_type == 'latex'
-                            else 'from')
-                formatted_sub_expressions.insert(
-                    1, ('%s %s %s %s'
-                        % (from_str,
-                           self.start_index.formatted(format_type), to_str,
-                           self.end_index.formatted(format_type))))
-        if ellipses is None:
-            if use_explicit_parameterization or self.is_parameter_independent:
-                # Use the format:
-                # x_1, ..x_k.., x_n
-                # Or for nested ExprRanges:
-                # x_{1,1}, ..x_{1,k}.., x_{1,n},
-                # ....x_{j,1}, ..x_{j,k}.., x_{j,n}....,
-                # x_{m,1}, ..x_{m,k}.., x_{m,n}
-                ellipsis = '..'
-            else:
+                nested_range_depth = 1
+            if role == 'implicit':
                 ellipsis = ('\ldots' if format_type == 'latex'
                             else '...')
-            # When ranges are nested, double-up (or triple-up, etc)
-            # the ellipsis to make the nested structure clear.
-            ellipses = ellipsis * self.nested_range_depth()
-        if use_explicit_parameterization or self.is_parameter_independent:
-            # e.g., ..x_k..
-            formatted_sub_expressions[1] = \
-                ellipses + formatted_sub_expressions[1] + ellipses
-        else:
-            # Insert the ellipses between the two "checkpoints".
-            # e.g., x_1, ..., x_n
-            formatted_sub_expressions.insert(1, ellipses)
-
-        if expansion > 1:
-            for i, item in enumerate(self.get_range_expansion(reformat=True)[1:], 1):
-                formatted_sub_expressions.insert(i, item.formatted(format_type, **kwargs))
-            try:
-                from proveit.numbers import Less
-                Less(self._expansion_indices[-1], self.end_index).prove()
-            except ProofFailure:
-                print("WARNING: unable to prove that %s < %s. This will be assumed for formatting purposes. "
-                      "Please double check that your expansion is valid." % (self._expansion_indices[-1],
-                                                                             self.end_index))
-        elif expansion < 1:
-            from proveit._core_.expression.style_options import StyleError
-            raise StyleError("Style option 'expansion' must be >= 1")
-
-        return formatted_sub_expressions
+                ellipsis = ellipsis * nested_range_depth
+                formatted_entries.append(formatted_operator+ellipsis)
+            else:
+                ellipsis = '..' * nested_range_depth
+                if role == 'param_independent':
+                    formatted_entries.append(
+                            formatted_operator +
+                            ellipsis + expr.formatted_repeats(format_type) 
+                            + ellipsis)
+                elif role == 'explicit':
+                    formatted_body = expr.body.formatted(format_type)    
+                    formatted_entries.append(
+                            formatted_operator + 
+                            ellipsis + formatted_body + ellipsis)
+                else:
+                    formatted_expr = expr.formatted(format_type)
+                    formatted_entries.append(formatted_operator+formatted_expr)
+        return formatted_entries
 
     def formatted(self, format_type, fence=False, sub_fence=True,
-                  operator=None, **kwargs):
+                  operator=', ', **kwargs):
 
-        if operator is None:
-            # comma is the default formatted operator
-            formatted_operator = ', '
-        elif isinstance(operator, str):
+        if isinstance(operator, str):
             formatted_operator = operator
         else:
             formatted_operator = operator.formatted(format_type)
-        formatted_sub_expressions = self._formatted_checkpoints(
-            format_type, fence=sub_fence, with_ellipses=True,
-            operator=operator, reduce=True)
+        formatted_sub_expressions = self._formatted_entries(
+            format_type, operator_or_operators='')
         # Normally the range will be wrapped in an ExprTuple and
         # fencing will be handled externally.  When it isn't, we don't
         # want to fence it  anyway.
@@ -633,9 +529,10 @@ class ExprRange(Expression):
         indicating the 'role'  of the cell. The beginning cells of
         the ExprRange will have consecutive integers for their role 
         starting with 0, the last cell has -1 for its role, and the 
-        'ellipsis' cell has 'implicit' or 'explicit' for its role 
-        depending upon the 'parameterization' style option of the 
-        ExprRange.
+        'ellipsis' cell has 'implicit', 'explicit', or 
+        'param_independent' for its role depending upon whether it
+        is parameter independent and, if not, the 'parameterization' 
+        style option of the ExprRange.
         
         The assumptions dictate simplifications that may apply to
         ExprRange elements.
@@ -662,7 +559,7 @@ class ExprRange(Expression):
                 if index is None:
                     index = start_index
                 else:
-                    index = Add(index, one).simplified()
+                    index = simplified(Add(index, one))
                 next_entry = self._body_replaced(index)
                 if isinstance(next_entry, ExprRange):
                     # Recurse through the entries of an inner ExprRange.
@@ -670,9 +567,12 @@ class ExprRange(Expression):
                 else:
                     # Append the next entry.
                     cell_entries.append((next_entry, _k))
-            parameterization = self.get_style('parameterization',
-                                              'implicit')
-            cell_entries.append((self, parameterization))
+            if self.is_parameter_independent:
+                cell_entries.append((self, "param_independent"))
+            else:
+                parameterization = self.get_style('parameterization',
+                                                  'implicit')
+                cell_entries.append((self, parameterization))
             last_entry = self._body_replaced(end_index)
             if isinstance(last_entry, ExprRange):
                 # Recurse through the entries of an inner ExprRange.
@@ -749,6 +649,24 @@ class ExprRange(Expression):
                                  self.start_index)).simplified()
                 element_positions.append(element_pos)
         return element_pos
+    
+    def formatted_repeats(self, format_type):
+        from proveit.numbers import one
+        if not self.is_parameter_independent:
+            raise ValueError("'formatted_repeats' intended to be used only "
+                             "when the parameter is independent.")
+        if self.start_index == one:
+            repeats_str = r' \times' if format_type=='latex' else ' repeats'
+            return '%s%s' % (self.end_index.formatted(format_type),
+                             repeats_str)
+        else:
+            to_str = (r'\textrm{ to }' if format_type == 'latex' else 'to')
+            from_str = (r'\textrm{from }' if format_type == 'latex'
+                        else 'from')
+            return ('%s %s %s %s'
+                    % (from_str,
+                       self.start_index.formatted(format_type), to_str,
+                       self.end_index.formatted(format_type)))
 
     def _free_var_ranges(self, exclusions=None):
         '''
@@ -885,6 +803,7 @@ class ExprRange(Expression):
         if is_literal_int(start_index) and is_literal_int(end_index):
             if end_index.as_int() + 1 == start_index.as_int():
                 empty_req.prove()
+        first = self.first()
         if empty_req.proven():
             # We can do an empty range reduction
             # Temporarily disable automation to avoid infinite
@@ -898,8 +817,8 @@ class ExprRange(Expression):
                 # recursion.
                 from proveit.core_expr_types.tuples import \
                     empty_outside_range_of_range
-                nest_end_index = self.first().end_index
-                nest_start_index = self.first().start_index
+                nest_end_index = first.end_index
+                nest_start_index = first.start_index
                 lambda_map = Lambda(
                     (self.parameter, self.body.parameter), self.body.body)
                 return empty_outside_range_of_range.instantiate(
@@ -921,12 +840,12 @@ class ExprRange(Expression):
             # straightforward to prove that the entire range is empty.
             from proveit.numbers import is_literal_int
             empty_req = Equals(
-                Add(self.first().end_index, one), self.first().start_index)
+                Add(first.end_index, one), first.start_index)
             if is_literal_int(
-                    self.first().start_index) and is_literal_int(
-                    self.first().end_index):
-                if self.first().end_index.as_int() + \
-                        1 == self.first().start_index.as_int():
+                    first.start_index) and is_literal_int(
+                    first.end_index):
+                if first.end_index.as_int() + \
+                        1 == first.start_index.as_int():
                     empty_req.prove()
             if empty_req.proven():
                 # We can do an empty range reduction on the entire expression
@@ -935,8 +854,8 @@ class ExprRange(Expression):
                 from proveit.core_expr_types.tuples import \
                     empty_inside_range_of_range
                 # Preserve 'self' on the left side of the reduction.
-                nest_end_index = self.first().end_index
-                nest_start_index = self.first().start_index
+                nest_end_index = first.end_index
+                nest_start_index = first.start_index
                 lambda_map = Lambda(
                     (self.parameter, self.body.parameter), 
                     self.body.body)
@@ -1806,3 +1725,10 @@ class RangeInstanceError(Exception):
 
     def __str__(self):
         return self.msg
+
+# temporarily here
+def simplified(expr):
+    try:
+        return expr.simplified()
+    except:
+        return expr

@@ -337,8 +337,21 @@ class ExprArray(ExprTuple):
                         nested_range_depth = expr.nested_range_depth()
                     else:
                         nested_range_depth = 1
-                    if outer_role == 'implicit':
-                        if inner_role in ('implicit', 'explicit'):
+                    if outer_role == 'param_independent':
+                        if inner_role == 'param_independent':
+                            # Use diagonal dots it is parameter
+                            # independent in both directions.
+                            formatted_cell = r'\ddots'
+                        else:
+                            # Express a repetition of an outer range 
+                            # where the body is parameter independent.
+                            formatted_cell = outer_explicit_formatted_cell(
+                                    outer_expr_to_latex(
+                                            expr.formatted_repeats('latex')), 
+                                    nested_range_depth)                        
+                    elif outer_role == 'implicit':
+                        if inner_role in ('implicit', 'explicit',
+                                          'param_independent'):
                             # Use diagonal dots where the outer role
                             # is implicit and we are in the center of
                             # a range of tuples of ranges.
@@ -348,7 +361,7 @@ class ExprArray(ExprTuple):
                             # outer role is 'implicit'.
                             formatted_cell = outer_ellipsis(nested_range_depth)
                     elif outer_role == 'explicit':
-                        if inner_role == 'implicit':
+                        if inner_role in ('implicit', 'param_independent'):
                             # Use diagonal dots where the inner role
                             # is implicit and we are in the center of
                             # a range of tuples of ranges.
@@ -363,12 +376,18 @@ class ExprArray(ExprTuple):
                             formatted_cell = outer_explicit_formatted_cell(
                                     outer_expr_to_latex(expr.body), 
                                     nested_range_depth)
-                    elif inner_role == 'implicit':
-                        formatted_cell = inner_ellipsis(nested_range_depth)
+                    elif inner_role == 'param_independent':
+                        # Express a repetition of an inner range 
+                        # where the body is parameter independent.
+                        formatted_cell = inner_explicit_formatted_cell(
+                                expr.formatted_repeats('latex'), 
+                                nested_range_depth)                     
                     elif inner_role == 'explicit':
                         formatted_cell = inner_explicit_formatted_cell(
                                 inner_expr_to_latex(expr.body), 
                                 nested_range_depth)
+                    elif inner_role == 'implicit':
+                        formatted_cell = inner_ellipsis(nested_range_depth)
                     else:
                         # default:
                         formatted_cell = expr.latex(**cell_latex_kwargs)
@@ -381,14 +400,20 @@ class ExprArray(ExprTuple):
                     nested_range_depth = expr.nested_range_depth()
                 else:
                     nested_range_depth = 1
-                if role == 'implicit':
-                    # Use vertical/horizontal dots
-                    formatted_cells.append(
-                            outer_ellipsis(nested_range_depth))
-                elif role == 'explicit':
+                if role == 'param_independent':
+                    # Express a repetition of an inner range 
+                    # where the body is parameter independent.
+                    formatted_cell = outer_explicit_formatted_cell(
+                            expr.formatted_repeats('latex'), 
+                            nested_range_depth)
+                elif role == 'explicit' or role == 'param_independent':
                     formatted_cells.append(outer_explicit_formatted_cell(
                             outer_expr_to_latex(expr.body), 
                             nested_range_depth))
+                elif role == 'implicit':
+                    # Use vertical/horizontal dots
+                    formatted_cells.append(
+                            outer_ellipsis(nested_range_depth))
                 else:
                     formatted_cells.append(expr.latex(**cell_latex_kwargs))
         return formatted_cells

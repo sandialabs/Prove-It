@@ -198,8 +198,7 @@ class ExprTuple(Composite, Expression):
             format_type,
             fence=True,
             sub_fence=False,
-            operator_or_operators=None,
-            implicit_first_operator=False,
+            operator_or_operators=',',
             wrap_positions=None,
             justification=None,
             **kwargs):
@@ -224,103 +223,65 @@ class ExprTuple(Composite, Expression):
         if do_wrapping and format_type == 'latex':
             out_str += r'\begin{array}{%s} ' % justification[0]
 
-        formatted_sub_expressions = []
-        # Track whether or not ExprRange operands are using
-        # "explicit" parameterization, becuase the operators must
-        # follow suit.
-        using_explicit_parameterization = []
-        for sub_expr in self:
+        implicit_first_operator = False
+        if isinstance(operator_or_operators, list):
+            operators = operator_or_operators
+        elif isinstance(operator_or_operators, ExprTuple):
+            operators = list(operator_or_operators.entries)
+        else:
+            implicit_first_operator = True
+            operators = [operator_or_operators]*self.num_entries()
+        if self.num_entries() == len(operators) + 1:
+            # operators between operands -- put a blank 'operator' at
+            # the beginning.
+            operators = [''] + operators
+        if len(operators) != self.num_entries():
+            raise ValueError("There should be the same number of operators "
+                             "as operands, or 1 less for them to appear "
+                             "just between operands: "
+                             "%s with %d vs %s with %d"%(
+                                     operators, len(operators), 
+                                     self.entries, self.num_entries()))
+        formatted_entries = []
+        is_first_expr = True
+        for sub_expr, operator in zip(self, operators):
             if isinstance(sub_expr, ExprRange):
-                # Handle an ExprRange entry; here the "sub-expressions"
-                # are really ExprRange "checkpoints" (first, last, as
-                # well as the ExprRange body in the middle if using
-                # an 'explicit' style for 'parameterization) as well as
-                # ellipses between the checkpoints..
-                using_explicit_parameterization.append(
-                    sub_expr._use_explicit_parameterization(format_type))
-                if isinstance(sub_expr.body, ExprTuple):
-                    _fence = True
-                else:
-                    _fence = sub_fence
-                formatted_sub_expressions += sub_expr._formatted_checkpoints(
-                    format_type, fence=_fence, with_ellipses=True,
-                    operator=operator_or_operators)
-            elif isinstance(sub_expr, ExprTuple):
-                # always fence nested expression lists
-                formatted_sub_expressions.append(
-                    sub_expr.formatted(format_type, fence=True))
+                implicit_first_operator = (
+                        is_first_expr and 
+                        not isinstance(operator, ExprRange))
+                formatted_entries += sub_expr._formatted_entries(
+                    format_type, 
+                    implicit_first_operator=implicit_first_operator,
+                    operator_or_operators=operator)
             else:
-                formatted_sub_expressions.append(
-                    sub_expr.formatted(format_type, fence=sub_fence))
+                if is_first_expr and implicit_first_operator:
+                    operator = ''
+                elif isinstance(operator, Expression):
+                    operator = operator.formatted(format_type) + ' '
+                else:
+                    operator = operator + ' '
+                if isinstance(sub_expr, ExprTuple):
+                    # always fence nested expression lists
+                    formatted_entries.append(
+                        operator+sub_expr.formatted(format_type, 
+                                                    fence=True))
+                else:
+                    formatted_entries.append(
+                        operator+sub_expr.formatted(format_type, 
+                                                    fence=sub_fence))
+            is_first_expr = False
 
         # put the formatted operator between each of formatted_sub_expressions
         for wrap_position in wrap_positions:
             if wrap_position % 2 == 1:
                 # wrap after operand (before next operation)
-                formatted_sub_expressions[(wrap_position - 1) // 2] += r' \\ '
+                formatted_entries[(wrap_position - 1) // 2] += r' \\ '
             else:
                 # wrap after operation (before next operand)
-                formatted_sub_expressions[wrap_position // 2] = r' \\ ' + \
-                    formatted_sub_expressions[wrap_position // 2]
-        if operator_or_operators is None:
-            operator_or_operators = ','
-        elif isinstance(operator_or_operators, Expression) and not isinstance(operator_or_operators, ExprTuple):
-            operator_or_operators = operator_or_operators.formatted(
-                format_type)
-        if isinstance(operator_or_operators, str):
-            # single operator
-            formatted_operator = operator_or_operators
-            if operator_or_operators == ',':
-                # e.g.: a, b, c, d
-                out_str += (formatted_operator +
-                            ' ').join(formatted_sub_expressions)
-            else:
-                # e.g.: a + b + c + d
-                out_str += (' ' + formatted_operator +
-                            ' ').join(formatted_sub_expressions)
-        else:
-            # assume all different operators
-            formatted_operators = []
-            for operator in operator_or_operators:
-                if isinstance(operator, ExprRange):
-                    # Handle an ExprRange entry; here the "operators"
-                    # are really ExprRange "checkpoints" (first, last,
-                    # as well as the ExprRange body in the middle if
-                    # using an 'explicit' style for 'parameterization').
-                    # For the 'ellipses', we will just use a
-                    # placeholder.
-                    be_explicit = using_explicit_parameterization.pop(0)
-                    formatted_operators += operator._formatted_checkpoints(
-                        format_type, fence=sub_fence, ellipses='',
-                        use_explicit_parameterization=be_explicit)
-                elif isinstance(operator, str):
-                    formatted_operators.append(operator)
-                else:
-                    formatted_operators.append(operator.formatted(format_type))
-            if len(formatted_sub_expressions) == len(formatted_operators):
-                # operator preceeds each operand
-                if implicit_first_operator:
-                    # first operator is implicit
-                    out_str = formatted_sub_expressions[0]
-                else:
-                    # no space after first operator
-                    out_str = formatted_operators[0] + \
-                        formatted_sub_expressions[0]
-                out_str += ' '  # space before next operator
-                out_str += ' '.join(formatted_operator + ' ' + formatted_operand for formatted_operator,
-                                    formatted_operand in zip(formatted_operators[1:], formatted_sub_expressions[1:]))
-            elif len(formatted_sub_expressions) == len(formatted_operators) + 1:
-                # operator between each operand
-                out_str = ' '.join(
-                    formatted_operand +
-                    ' ' +
-                    formatted_operator for formatted_operand,
-                    formatted_operator in zip(
-                        formatted_sub_expressions,
-                        formatted_operators))
-                out_str += ' ' + formatted_sub_expressions[-1]
-            elif len(formatted_sub_expressions) != len(formatted_operators):
-                raise ValueError("May only perform ExprTuple formatting if the number of operators is equal to the number of operands (precedes each operand) or one less (between each operand); also, operator ranges must be in correpsondence with operand ranges.")
+                formatted_entries[wrap_position // 2] = r' \\ ' + \
+                    formatted_entries[wrap_position // 2]
+        # The operators are
+        out_str += ' '.join(formatted_entries)
 
         if do_wrapping and format_type == 'latex':
             out_str += r' \end{array}'
@@ -351,8 +312,9 @@ class ExprTuple(Composite, Expression):
         cell, and a cell for the last element.  The beginning cells 
         have consecutive integers for their role starting with 0, the 
         last cell has -1 for its role, and the 'ellipsis' cell has 
-        'implicit' or 'explicit' for its role depending upon the
-        'parameterization' style option of the ExprRange.
+        'implicit', 'explicit', or 'param_independent' for its role 
+        depending upon whether it is parameter independent and, if not,
+        the 'parameterization' style option of the ExprRange.
         
         The assumptions dictate simplifications that may apply to
         ExprRange elements.
