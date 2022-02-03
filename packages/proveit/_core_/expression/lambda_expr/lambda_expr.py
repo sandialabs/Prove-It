@@ -494,7 +494,7 @@ class Lambda(Expression):
                 temp_defaults.assumptions = assumptions
                 return Lambda._apply(
                     self.parameters, self.body, *operands,
-                    param_to_operands_map=param_to_operands_map,
+                    param_to_num_operand_entries=param_to_num_operand_entries,
                     equiv_alt_expansions=equiv_alt_expansions,
                     allow_relabeling=allow_relabeling, 
                     requirements=requirements,
