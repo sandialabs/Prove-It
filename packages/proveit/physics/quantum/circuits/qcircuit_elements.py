@@ -6,7 +6,8 @@ from proveit import (Literal, Function, NamedExprs, safe_dummy_var,
 from proveit import A, B, C, D, E, F, G, h, i, j, k, m, n, p, Q, R, S, U
 from proveit._core_.expression.composite import ExprArray, ExprTuple, ExprRange
 from proveit.logic import Equals, Set
-from proveit.numbers import one, Interval, Add, subtract
+from proveit.numbers import one, num, Interval, Add, Neg, subtract
+
 
 # from proveit.physics.quantum import Xgate, Ygate, Zgate, Hgate
 # not clear yet what to substitute for ExpressionTensor -- perhaps ExprArray
@@ -223,11 +224,11 @@ class Measure(QcircuitElement):
         '''
         from proveit.physics.quantum import Z
         if show_part_num and hasattr(self, 'part'):            
-            return r'& \measureD{%s~\mbox{part}~%s}'%(
+            return r'& \measure{%s~\mbox{part}~%s}'%(
                     self.basis.latex, self.part.latex())
         if self.basis==Z and self.get_style('Z', 'implicit')=='implicit':
             return r'& \meter'
-        return r'& \measureD{' + self.basis.latex() + r'}'
+        return r'& \measure{' + self.basis.latex() + r'}'
 
 class Gate(QcircuitElement):
     '''
@@ -485,10 +486,10 @@ def multi_elem_entries(element_from_part, start_qubit_idx, end_qubit_idx,
             yield ExprRange(param, 
                             multi_qubit_gate_from_part(param),
                             part_start, part_end)
-        part = Add(part_end, one)
+        part = Add(part_end, one).quick_simplified()
+    lhs = Add(part_end, num(-1)).quick_simplified()
+    rhs = Add(end_qubit_idx, Neg(start_qubit_idx)).quick_simplified()  
     try:
-        lhs = subtract(part_end, one)
-        rhs = subtract(end_qubit_idx, start_qubit_idx)
         try:
             lhs = lhs.simplified()
         except:

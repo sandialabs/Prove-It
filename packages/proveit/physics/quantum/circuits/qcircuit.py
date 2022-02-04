@@ -3,7 +3,7 @@ from proveit import (Expression, Function, Literal,
                      ExprTuple, ExprArray, VertExprArray, ProofFailure,
                      StyleOptions, free_vars)
 from proveit.logic import Equals, Set
-from proveit.numbers import Interval, one, Add
+from proveit.numbers import Interval, zero, one, num, Add, Neg
 from proveit.physics.quantum.circuits.qcircuit_elements import (
         QcircuitElement, Gate, MultiQubitElem, Input, Output, Measure, 
         config_latex_tool)
@@ -99,18 +99,13 @@ class Qcircuit(Function):
             next_part = None 
             for row, entry in enumerate(col_entries):
                  # The actual Expression of the entry
-                entry_expr = entry[0]
+                entry_expr, outer_role, inner_role = entry
                 if isinstance(entry_expr, ExprRange):
                     elem_param = entry_expr.parameter
-                    start = entry_expr.start_index
                     end = entry_expr.end_index
-                    if next_part is not None:
-                        # The middle part of a ExprRange for a
-                        # multiqubit gate/input/output/measure.
-                        assert next_part == Add(start, one)
                     entry_expr = entry_expr.body
                 else:
-                    elem_param = start = end = None
+                    elem_param = end = None
                 qubit_pos = format_row_element_positions[row]
                 if isinstance(entry_expr, MultiQubitElem):
                     # MultiQubitElem entry.
@@ -130,8 +125,13 @@ class Qcircuit(Function):
                         # The targets must an Interval covering all of 
                         # the involved qubits and elements must 
                         # indicate consecutive "parts" starting from 1.
-                        multiqubit_positions_of_column.add((targets.lower_bound,
-                                                       targets.upper_bound))
+                        start_index = targets.lower_bound
+                        end_index = targets.upper_bound
+                        # This trick will remove any empty range:
+                        start_index = Add(start_index, zero).quick_simplified()
+                        end_index = Add(end_index, zero).quick_simplified()
+                        multiqubit_positions_of_column.add(
+                                (start_index, end_index))
                         if isinstance(elem, Gate):
                             elem_type = 'gate'
                             op_type = 'operation'
@@ -158,17 +158,18 @@ class Qcircuit(Function):
                         elem_op = next(elem.operands.items())[1]
 
                         if next_part is None:
-                            start_index = targets.lower_bound
-                            if qubit_pos != start_index:
+                            diff = Add(qubit_pos, 
+                                       Neg(start_index)).quick_simplified()
+                            if diff != zero:
                                 raise ValueError(
                                         "Mismatch of starting qubit position "
                                         "of a multigate: %s ≠ %s"
                                         %(qubit_pos, start_index))
-                            if targets.upper_bound not in qubit_pos_to_row:
+                            if end_index not in qubit_pos_to_row:
                                 raise ValueError(
-                                        "%s is not known to as the top qubit "
+                                        "%s is not known as the top qubit "
                                         "position corresponding to any row: "
-                                        "%s"%(targets.upper_bound, 
+                                        "%s"%(end_index, 
                                               qubit_pos_to_row))
                             next_part = one
                             active_multiqubit_op = elem_op
@@ -180,25 +181,26 @@ class Qcircuit(Function):
                                         "the same %s: %s ≠ %s"%
                                         (elem_type, op_type, 
                                          elem_op, active_multiqubit_op))
-                        if elem_param is not None:
+                        if inner_role in ('implicit', 'explicit', 
+                                          'param_independent'):
                             if elem_part != elem_param:
                                 raise ValueError(
                                         "An ExprRange of multi%ss should be "
                                         "parameterized by the parts: "
-                                        "%s ≠ %s"%(elem_part, elem_param))
-                        else:
-                            try:
-                                Equals(elem_part, next_part).prove()
-                            except ProofFailure:
+                                        "%s ≠ %s"%(elem_type, elem_part, 
+                                                   elem_param))
+                        elif outer_role not in ('implicit', 'explicit', 
+                                                'param_independent'):
+                            if elem_part != next_part:
                                 raise ValueError(
-                                        "Part indices must be provably "
-                                        "consecutive starting from 1: "
-                                        "%s ≠ %s"%(elem_part, next_part))
-                        if qubit_pos == targets.upper_bound:
+                                        "Part indices must be consecutive "
+                                        "starting from 1: %s ≠ %s"%(
+                                                elem_part, next_part))
+                        if qubit_pos == end_index:
                             active_multiqubit_op = None
                             next_part = None
                         elif elem_param is None:
-                            next_part = Add(elem_part, one)
+                            next_part = Add(elem_part, one).quick_simplified()
                         else:
                             next_part = end # next up, end of range.
                         if active_multiqubit_op is not None:
@@ -258,8 +260,10 @@ class Qcircuit(Function):
                                 other_targets = (
                                         _other_entry_expr.targets)
                                 if isinstance(other_targets, Interval):
-                                    if (other_targets.lower_bound
-                                            != _other_pos):
+                                    other_top_pos = Add(
+                                            other_targets.lower_bound, 
+                                            zero).quick_simplified()
+                                    if (other_top_pos != _other_pos):
                                         raise ValueError(
                                                 "A %s MultiQubitElem should "
                                                 "not target part of a "
@@ -351,7 +355,8 @@ class Qcircuit(Function):
         '''
         from proveit.numbers import one
         from proveit.physics.quantum import I
-        if center_entry[-1] not in ('implicit', 'explicit'):
+        if center_entry[-1] not in ('implicit', 'explicit', 
+                       'param_independent'):
             return False # Not the center of an ExprRange.
         range_expr = center_entry[0]
         assert isinstance(range_expr, ExprRange)
@@ -370,7 +375,6 @@ class Qcircuit(Function):
     def latex(self, fence=False, **kwargs):
         from proveit.physics.quantum import (
                 CONTROL, CLASSICAL_CONTROL, SWAP, SPACE)
-        from proveit.numbers import one, Add, subtract
         spacing = self.get_style('spacing')
             
         # Get the element positions corresponding to each row of the
@@ -384,11 +388,18 @@ class Qcircuit(Function):
         # or above&below.  Wrap this with the appropriate kind of
         # circuit element: \gate, \qin, \qout, etc.
         def inside_elem_wrapper(explicit_cell_latex_fn):
-            def new_explicit_cell_latex_fn(expr_latex):
-                assert expr_latex[-1] == '}'
+            def new_explicit_cell_latex_fn(expr_latex, nested_range_depth):
                 _i = expr_latex.find('{')
-                return expr_latex[:_i] + (
-                        '{%s}'%explicit_cell_latex_fn(expr_latex[_i:-1]))
+                if (_i > 0 and (
+                        expr_latex[:_i] in (r'\gate', r'\qin', r'\qout')
+                        or expr_latex[:8]==r'\measure')):
+                    print("THERE", expr_latex)
+                    assert expr_latex[-1] == '}'
+                    return expr_latex[:_i] + (
+                            '{%s}'%explicit_cell_latex_fn(
+                                    expr_latex[_i:-1], nested_range_depth))
+                return explicit_cell_latex_fn(
+                        expr_latex, nested_range_depth)
             return new_explicit_cell_latex_fn
         
         # Get latex-formatted cells.  Indicate that these should be
@@ -419,11 +430,52 @@ class Qcircuit(Function):
         down_wire_locations = Qcircuit._find_down_wire_locations(
                 format_cell_entries, format_row_element_positions,
                 qubit_position_to_row)
+        
+        # Map VertExprArray rows to number of rows the may be collapsed
+        # into one in the Qcircuit where applicable (with matching
+        # multi-wire/gate/input/output/measure).
+        row_to_collapse_count = dict()
+        for row in range(height):
+            is_multirow_center = True
+            multirow_front_expansions = set()
+            multirow_back_expansions = set()
+            for col in range(width):
+                format_col_entries = format_cell_entries[col]
+                if not isinstance(format_col_entries, list):
+                    # The entire column is represented by a single
+                    # expression, so let's skip this.
+                    continue
+                entry = format_col_entries[row]
+                if not Qcircuit._is_multirowcenter(entry):
+                    is_multirow_center = False
+                else:
+                    range_expr = entry[0]
+                    front_expansion = int(range_expr.get_style(
+                            'front_expansion'))
+                    back_expansion = int(range_expr.get_style(
+                            'back_expansion'))
+                    multirow_front_expansions.add(front_expansion)
+                    multirow_back_expansions.add(back_expansion)
+            if len(multirow_front_expansions) == 0:
+                # Must only have entire columns represented.
+                is_multirow_center = False
+            if is_multirow_center:
+                # For the VertExprArray to be lined up properly,
+                # the ExprRange expansions must be the same along a
+                # row.
+                assert (len(multirow_front_expansions) == 1 and
+                        len(multirow_back_expansions) == 1), (
+                                "Should have been caught in ExprArray "
+                                "alignment check.")
+                front_expansion = next(iter(multirow_front_expansions))
+                back_expansion = next(iter(multirow_back_expansions))
+                row_to_collapse_count[row-front_expansion] = (
+                        front_expansion, back_expansion)
+        # Generate the formatted entries.
         row = 0
         formatted_entries = []
         while row < height:
             formatted_row_entries = []
-            collapsible_multirow = (height > 1)
             # Continue with a wire except after a space, measurement,
             # or output:
             continue_wire = True 
@@ -433,13 +485,6 @@ class Qcircuit(Function):
                 formatted_col_entries = formatted_cells[col]
                 if isinstance(formatted_col_entries, list):
                     formatted_entry = formatted_col_entries[row]
-                    if (collapsible_multirow and 
-                            row+1 < len(format_col_entries)):
-                        next_row_entry = format_col_entries[row+1]
-                        if not Qcircuit._is_multirowcenter(next_row_entry):
-                            collapsible_multirow = False
-                    else:
-                        collapsible_multirow = False
                     entry, outer_role, inner_role = format_col_entries[row]
                     if isinstance(entry, ExprRange):
                         entry = entry.body
@@ -460,10 +505,13 @@ class Qcircuit(Function):
                             # control or swap and has explicit 
                             # qubit positions).
                             targets = entry.targets
-                            top_qubit_pos = targets.lower_bound
+                            top_qubit_pos = Add(
+                                    targets.lower_bound,
+                                    zero).quick_simplified()
                             top_row = qubit_position_to_row[top_qubit_pos]
                             formatted_entry = formatted_col_entries[top_row]
-                            if outer_role in ('implicit', 'explicit'):
+                            if outer_role in ('implicit', 'explicit',
+                                              'param_independent'):
                                 # Implicit/explicit ellipsis along the
                                 # top row of a multi-circuit-entry.
                                 formatted_entry = (r'& \gate{%s}'
@@ -504,7 +552,8 @@ class Qcircuit(Function):
                         continue_wire = False
                     if (not multi_op and 
                             not {inner_role, outer_role}.isdisjoint(
-                                    ('implicit', 'explicit'))):
+                                    ('implicit', 'explicit',
+                                     'param_independent'))):
                         # Wrap ellipses in \gate, \qin, \qout, 
                         # or \measure... as appropriate.
                         _expr = entry
@@ -528,7 +577,8 @@ class Qcircuit(Function):
                             formatted_entry = r'& \qout{%s}'%formatted_entry
                             continue_wire = False
                         elif isinstance(_expr, Measure):
-                            formatted_entry = r'& %s \qw'%formatted_entry
+                            formatted_entry = (r'& \measure{%s} \qw'
+                                               %formatted_entry)
                             continue_wire = False
                     if (row, col) in down_wire_locations:
                         formatted_entry += r' \qwx[1]'                                
@@ -551,9 +601,10 @@ class Qcircuit(Function):
                         formatted_row_entries.append(
                                 '& \ghost{%s}'%formatted_col)
             multiwire_size = None
-            if collapsible_multirow:
+            if row in row_to_collapse_count:
                 # Collapse multiwires and multigates into a single row.
-                row += 1                
+                front_expansion, back_expansion = row_to_collapse_count[row]
+                row += front_expansion
                 for col in range(width):
                     formatted_entry = formatted_row_entries[col]
                     if formatted_entry[:5] == r'& \qw':
@@ -574,12 +625,11 @@ class Qcircuit(Function):
                         # wire, so let's figure that out.
                         start = format_row_element_positions[row - 1]
                         end = format_row_element_positions[row + 1]
-                        if start == one:
-                            multiwire_size = end
-                        else:
-                            multiwire_size = Add(subtract(end, start), one)
-                            multiwire_size = multiwire_size.simplified()
-                row += 2
+                        multiwire_size = Add(
+                                end, Neg(start),
+                                num(front_expansion+back_expansion-1))
+                        multiwire_size = multiwire_size.quick_simplified()
+                row += back_expansion + 1
             else:
                 row += 1
             if continue_wire:
