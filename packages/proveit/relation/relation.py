@@ -89,8 +89,8 @@ class Relation(Operation):
             operator_str = self.__class__.reversed_operator_str(format_type)
             operands = ExprTuple(*reversed(operands.entries))
         return Operation._formatted_operation(
-                format_type, fence=fence, subFence=subFence, 
-                operator_or_operators=operator_str, operands=operands,
+                format_type, operator_str, operands,
+                fence=fence, subFence=subFence, 
                 wrap_positions=wrap_positions, 
                 justification=justification)
 
