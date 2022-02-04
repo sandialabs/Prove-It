@@ -1162,7 +1162,8 @@ class Instantiation(Proof):
                 equality_repl_requirements.update(requirements)
                 if assumption_was_expr_range:
                     # Expand a tuple of assumptions.
-                    orig_subbed_assumptions.extend(subbed_assumption)
+                    orig_subbed_assumptions.extend(
+                            subbed_assumption.entries)
                 else:
                     orig_subbed_assumptions.append(subbed_assumption)
 
