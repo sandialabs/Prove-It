@@ -86,9 +86,38 @@ class ConditionalSet(Operation):
             formatted_conditionals = []
             for conditional in self.conditionals:
                 if isinstance(conditional, ExprRange):
-                    formatted_conditionals.append(conditional.first().formatted(format_type, fence=False, **kwargs))
-                    formatted_conditionals.append(r' \vdots')
-                    formatted_conditionals.append(conditional.last().formatted(format_type, fence=False, **kwargs))
+                    format_cell_entries = []
+                    conditional._append_format_cell_entries(
+                            format_cell_entries)
+                    for expr, role in format_cell_entries:
+                        if isinstance(expr, ExprRange):
+                            nested_range_depth = expr.nested_range_depth()
+                        else:
+                            nested_range_depth = 1
+                        if role == 'implicit':
+                            if nested_range_depth == 1:
+                                formatted_conditionals.append(r' \vdots')
+                            else:
+                                formatted_conditionals.append(
+                                        r'\begin{array}{c}' +
+                                        r' \vdots \\ '*nested_range_depth
+                                        + r'\end{array}')
+                        elif role in ('explicit', 'param_independent'):
+                            if role == 'explicit':
+                                formatted_body = expr.body.latex()
+                            else:
+                                assert role == 'param_independent'
+                                formatted_body = expr.formatted_repeats(
+                                        format_type='latex')                                
+                            formatted_conditionals.append(
+                                    r'\begin{array}{c}' 
+                                    + r' :\\ '*nested_range_depth +
+                                    formatted_body 
+                                    + r' \\: '*nested_range_depth +
+                                    r'\end{array}')
+                        else:
+                            formatted_conditionals.append(
+                                    expr.latex(fence=False))
                 else:
                     formatted_conditionals.append(conditional.formatted('latex', fence=False, **kwargs))
             inner_str = r' \\ '.join(formatted_conditionals)

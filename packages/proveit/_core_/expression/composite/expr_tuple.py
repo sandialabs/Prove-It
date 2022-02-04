@@ -195,10 +195,11 @@ class ExprTuple(Composite, Expression):
 
     def formatted(
             self,
-            format_type,
+            format_type, *,
             fence=True,
             sub_fence=False,
             operator_or_operators=',',
+            implicit_first_operator=True,
             wrap_positions=None,
             justification=None,
             **kwargs):
@@ -223,13 +224,11 @@ class ExprTuple(Composite, Expression):
         if do_wrapping and format_type == 'latex':
             out_str += r'\begin{array}{%s} ' % justification[0]
 
-        implicit_first_operator = False
         if isinstance(operator_or_operators, list):
             operators = operator_or_operators
         elif isinstance(operator_or_operators, ExprTuple):
             operators = list(operator_or_operators.entries)
         else:
-            implicit_first_operator = True
             operators = [operator_or_operators]*self.num_entries()
         if self.num_entries() == len(operators) + 1:
             # operators between operands -- put a blank 'operator' at
@@ -242,46 +241,45 @@ class ExprTuple(Composite, Expression):
                              "%s with %d vs %s with %d"%(
                                      operators, len(operators), 
                                      self.entries, self.num_entries()))
-        formatted_entries = []
-        is_first_expr = True
+        formatted_entries = [] # in (operator, element/ellipsis) pairs
+        implicit_operator = implicit_first_operator
         for sub_expr, operator in zip(self, operators):
             if isinstance(sub_expr, ExprRange):
-                implicit_first_operator = (
-                        is_first_expr and 
-                        not isinstance(operator, ExprRange))
                 formatted_entries += sub_expr._formatted_entries(
                     format_type, 
-                    implicit_first_operator=implicit_first_operator,
+                    implicit_first_operator=implicit_operator,
                     operator_or_operators=operator)
             else:
-                if is_first_expr and implicit_first_operator:
+                if implicit_operator:
                     operator = ''
                 elif isinstance(operator, Expression):
-                    operator = operator.formatted(format_type) + ' '
-                else:
+                    operator = operator.formatted(format_type)
+                if len(formatted_entries) > 0:
+                    if operator != ',':
+                        operator = ' ' + operator
                     operator = operator + ' '
                 if isinstance(sub_expr, ExprTuple):
                     # always fence nested expression lists
                     formatted_entries.append(
-                        operator+sub_expr.formatted(format_type, 
-                                                    fence=True))
+                        [operator, sub_expr.formatted(format_type, 
+                                                      fence=True)])
                 else:
                     formatted_entries.append(
-                        operator+sub_expr.formatted(format_type, 
-                                                    fence=sub_fence))
-            is_first_expr = False
+                        [operator, sub_expr.formatted(format_type, 
+                                                      fence=sub_fence)])
+            implicit_operator = False
 
         # put the formatted operator between each of formatted_sub_expressions
         for wrap_position in wrap_positions:
             if wrap_position % 2 == 1:
                 # wrap after operand (before next operation)
-                formatted_entries[(wrap_position - 1) // 2] += r' \\ '
+                formatted_entries[(wrap_position - 1) // 2][1] += r' \\ '
             else:
                 # wrap after operation (before next operand)
-                formatted_entries[wrap_position // 2] = r' \\ ' + \
-                    formatted_entries[wrap_position // 2]
+                formatted_entries[wrap_position // 2][0] += r' \\ '
         # The operators are
-        out_str += ' '.join(formatted_entries)
+        out_str += ''.join(''.join([operator, operand]) for
+                            operator, operand in formatted_entries)
 
         if do_wrapping and format_type == 'latex':
             out_str += r' \end{array}'
@@ -290,13 +288,26 @@ class ExprTuple(Composite, Expression):
 
         return out_str
 
-    def num_elements(self, **defaults_config):
+    def num_elements(self, proven=True, **defaults_config):
         '''
-        Return the proven number of elements of this ExprTuple as an 
+        Return the number of elements of this ExprTuple as an 
         Expression.  This includes the extent of all contained ranges.
+        If proven==True, a proof is constructed in the process.
         '''
+        from .expr_range import ExprRange
         from proveit.core_expr_types import Len
-        return Len(self).computed(**defaults_config)
+        from proveit.numbers import Add, zero, one
+        if proven:
+            return Len(self).computed(**defaults_config)
+        # Do the quick-and-dirty calculation with no proof.
+        count = zero
+        for entry in self:
+            if isinstance(entry, ExprRange):
+                count = Add(count, 
+                            entry.num_elements(proven=False)).quick_simplified()
+            else:
+                count = Add(count, one).quick_simplified()
+        return count
 
     def get_format_cell_entries(self, assumptions=USE_DEFAULTS,
                                 _remembered_simplifications=None):
@@ -335,8 +346,7 @@ class ExprTuple(Composite, Expression):
                     cell_entries.append((item, 'normal'))
         return cell_entries
     
-    def get_format_cell_element_positions(self, assumptions=USE_DEFAULTS,
-                                          _remembered_simplifications=None):
+    def get_format_cell_element_positions(self, assumptions=USE_DEFAULTS):
         '''
         Returns a list of element positions in correspondence with
         each format cell of this ExprTuple 
@@ -353,25 +363,8 @@ class ExprTuple(Composite, Expression):
         the element positions.
         '''
         from .expr_range import ExprRange
-        from proveit import Judgment
-        from proveit.logic import Equals
-        from proveit.numbers import Add, zero, one, subtract
+        from proveit.numbers import Add, zero, one
 
-        # We will simplify element positions as we go, remembering and
-        # reusing the simplifications for efficiency.
-        if _remembered_simplifications is None:
-            _remembered_simplifications = dict()        
-        def _simplified(expr):
-            if expr in _remembered_simplifications:
-                simplification = _remembered_simplifications[expr]
-            else:
-                simplification = expr.simplification()
-                _remembered_simplifications[expr] = simplification
-            assert isinstance(simplification, Judgment)
-            assert isinstance(simplification.expr, Equals)
-            assert simplification.expr.lhs == expr
-            return simplification.expr.rhs
-        
         element_positions = []
         with defaults.temporary() as tmp_defaults:
             if assumptions is not None:
@@ -379,11 +372,7 @@ class ExprTuple(Composite, Expression):
             element_pos = zero # We will add 1 before using this.
             for item in self.entries:
                 # Add one to the element_pos.
-                if element_pos is zero:
-                    element_pos = one # short-cut 0+1=1.
-                else:
-                    element_pos = _simplified(Add(element_pos, one))
-
+                element_pos = Add(element_pos, one).quick_simplified()
                 # Append to element_positions.
                 if isinstance(item, ExprRange):
                     # An ExprRange covers multiple format cells.

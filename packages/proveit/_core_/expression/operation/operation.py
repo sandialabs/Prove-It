@@ -455,17 +455,16 @@ class Operation(Expression):
 
         '''
         return Operation._formatted_operation(
-            format_type,
-            self.operator,
-            self.operands,
+            format_type, self.operator, self.operands,
+            implicit_first_operator=True,
             wrap_positions=self.wrap_positions(),
             justification=self.get_style('justification', 'center'),
             **kwargs)
 
     @staticmethod
     def _formatted_operation(
-            format_type, operator_or_operators, operands,
-            wrap_positions, justification,
+            format_type, operator_or_operators, operands, *,
+            wrap_positions, justification, implicit_first_operator=True,
             **kwargs):
         from proveit import ExprRange, ExprTuple, composite_expression
         if (isinstance(operator_or_operators, Expression) and 
@@ -491,12 +490,12 @@ class Operation(Expression):
                 sub_fence = kwargs.get('sub_fence', True)
                 do_wrapping = len(wrap_positions) > 0
                 formatted_str = ''
-                formatted_str += operands.formatted(format_type,
-                                                    fence=fence,
-                                                    sub_fence=sub_fence,
-                                                    operator_or_operators=operator,
-                                                    wrap_positions=wrap_positions,
-                                                    justification=justification)
+                formatted_str += operands.formatted(
+                        format_type, fence=fence, sub_fence=sub_fence,
+                        operator_or_operators=operator,
+                        implicit_first_operator=implicit_first_operator,
+                        wrap_positions=wrap_positions,
+                        justification=justification)
                 return formatted_str
             else:
                 # The operands ExprTuple are being represented by a Variable
@@ -529,11 +528,11 @@ class Operation(Expression):
                 formatted_str = '(' if format_type == 'string' else r'\left('
             if do_wrapping and format_type == 'latex':
                 formatted_str += r'\begin{array}{%s} ' % justification[0]
-            formatted_str += operands.formatted(format_type,
-                                                fence=False,
-                                                sub_fence=sub_fence,
-                                                operator_or_operators=operators,
-                                                wrap_positions=wrap_positions)
+            formatted_str += operands.formatted(
+                    format_type, fence=False, sub_fence=sub_fence,
+                    operator_or_operators=operators,
+                    implicit_first_operator=implicit_first_operator,
+                    wrap_positions=wrap_positions)
             if do_wrapping and format_type == 'latex':
                 formatted_str += r' \end{array}'
             if fence:

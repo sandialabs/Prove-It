@@ -186,8 +186,7 @@ class ExprArray(ExprTuple):
         
         return format_cell_entries
 
-    def get_outer_format_cell_element_positions(self, assumptions=USE_DEFAULTS,
-                                         _remembered_simplifications=None):
+    def get_outer_format_cell_element_positions(self):
         '''
         Returns a list of element positions in correspondence with
         each row/column of this ExprArray/VertExprArray.  This 
@@ -196,11 +195,9 @@ class ExprArray(ExprTuple):
         The assumptions dictate simplifications that may apply to
         the element positions.
         '''
-        return ExprTuple.get_format_cell_element_positions(
-                assumptions, _remembered_simplifications)
+        return ExprTuple.get_format_cell_element_positions()
 
-    def get_inner_format_cell_element_positions(
-            self, assumptions=USE_DEFAULTS, _remembered_simplifications=None):
+    def get_inner_format_cell_element_positions(self):
         '''
         Returns a list of element positions in correspondence with
         each column/row of this ExprArray/VertExprArray.  Raises
@@ -211,16 +208,13 @@ class ExprArray(ExprTuple):
         the element positions.
         '''
         from proveit import ExprRange, VertExprArray
-        if _remembered_simplifications is None:
-            _remembered_simplifications = dict()
         element_positions = None
         for outer_entry in self.entries:
             if isinstance(outer_entry, ExprRange):
                 outer_entry = outer_entry.body
             if isinstance(outer_entry, ExprTuple):
                 cur_elem_positions = (
-                        outer_entry.get_format_cell_element_positions(
-                                assumptions, _remembered_simplifications))
+                        outer_entry.get_format_cell_element_positions())
                 if element_positions is None:
                     element_positions = cur_elem_positions
                 else:
