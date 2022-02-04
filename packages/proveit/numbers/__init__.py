@@ -18,8 +18,7 @@ from .absolute_value import Abs
 from .numerals import (num, Numeral, DecimalSequence, Digits, DIGITS,
                        BinarySequence, Bit, BITS, is_literal_int)
 from .numerals import zero, one, two, three, four, five, six, seven, eight, nine, hexa, hexb, hexc, hexd, hexe, hexf
-from .addition import (Add, subtract, dist_subtract, dist_add,
-                       const_shift_decomposition, const_shift_composition)
+from .addition import (Add, subtract, dist_subtract, dist_add)
 from .negation import Neg
 from .ordering import (NumberOrderingRelation, number_ordering,
                        Less, LessEq, greater, greater_eq, Min, Max)

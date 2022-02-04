@@ -1,18 +1,19 @@
+import bisect
+from collections import deque
+
 from proveit import (Expression, Judgment, Literal, Operation, ExprTuple,
                      ExprRange, defaults, USE_DEFAULTS, StyleOptions, 
                      prover, relation_prover, equality_prover,
                      maybe_fenced_latex, ProofFailure, InnerExpr,
                      UnsatisfiedPrerequisites,
-                     SimplificationDirectives)
+                     SimplificationDirectives, TransRelUpdater)
 from proveit import a, b, c, d, i, j, k, l, n, x, y
 from proveit.logic import Equals, EvaluationError
 from proveit.logic.irreducible_value import is_irreducible_value
+from proveit.numbers import NumberOperation
 from proveit.numbers.numerals.decimals import DIGITS
 import proveit.numbers.numerals.decimals
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, group_commutation, pairwise_evaluation
-from proveit import TransRelUpdater
-import bisect
-from proveit.numbers import NumberOperation
 
 
 class Add(NumberOperation):
@@ -116,17 +117,17 @@ class Add(NumberOperation):
                 format_type,
                 operators,
                 operands,
-                self.wrap_positions(),
-                self.get_style('justification', 'left'),
                 implicit_first_operator=implicit_first_operator,
+                wrap_positions=self.wrap_positions(),
+                justification=self.get_style('justification', 'left'),
                 **kwargs)
         else:
             return Operation._formatted_operation(
                 format_type,
                 self.operator,
                 self.operands,
-                self.wrap_positions(),
-                self.get_style('justification', 'left'),
+                wrap_positions=self.wrap_positions(),
+                justification=self.get_style('justification', 'left'),
                 **kwargs)
 
     def remake_constructor(self):
@@ -739,6 +740,230 @@ class Add(NumberOperation):
             # irreductible values.
             return self.evaluation()
         return eq.relation
+    
+    def quick_simplified(self):
+        '''
+        Return a simplified version of this Add expression
+        without any proof.  In particular, integers are extracted,
+        added, and placed at the end.  Cancelations are made on
+        individual terms as well as expression ranges or portions of
+        expression ranges.  We freely assume terms represent numbers
+        and expression ranges are well-formed.
+        This quick-n-dirty approach can be good
+        enough for the purposes of displaying expressions involving
+        expression ranges.
+        '''
+        from proveit.numbers import is_literal_int, num, Neg
+        
+        # Extract any literal integers and expand nested sums.  
+        # While we are at it, determing the extremal shifts at the 
+        # heads and tails of expression ranges.
+        terms = [] # split into sign, abs_term pairs
+        int_sum = 0
+        remaining_terms = deque(self.terms)
+        sign=1
+        # Map non-shifted head to latest shift of ExprRange terms:
+        latest_head_shift = dict() # (Lambda, index expr) -> int
+        # Map non-shiftted tail to earliest shift of ExprRange terms:
+        earliest_tail_shift = dict() # (Lambda, index expr) -> int
+        all_abs_terms = set()
+        while len(remaining_terms):
+            term = remaining_terms.popleft()
+            if term == Neg:
+                # Just an indication to switch the sign back.
+                sign = -sign
+                continue
+            if is_literal_int(term):
+                int_sum += sign*term.as_int()
+                continue
+            if isinstance(term, Neg):
+                # Switch the sign and indicate to switch the sign
+                # back later.
+                sign = -sign
+                remaining_terms.appendleft(Neg)
+                term = term.operand
+            if isinstance(term, Add):
+                remaining_terms.extendleft(reversed(term.terms.entries))
+                continue
+            if isinstance(term, ExprRange):
+                start_base, start_shift = split_int_shift(term.start_index)
+                end_base, end_shift = split_int_shift(term.end_index)
+                lambda_map = term.lambda_map
+                latest_head_shift[(lambda_map, start_base)] = max(
+                        start_shift, latest_head_shift.get(
+                                (lambda_map, start_base), start_shift))
+                earliest_tail_shift[(lambda_map, end_base)] = min(
+                        end_shift, earliest_tail_shift.get(
+                                (lambda_map, end_base), end_shift))
+            all_abs_terms.add(term)
+            terms.append((sign, term))
+        term = None
+                
+        # Extend the "latest heads" and "earliest tails" if there
+        # are individual terms that match them so we can maximize
+        # cancelations.
+        for extremal_shifts, step in ((latest_head_shift, 1),
+                                      (earliest_tail_shift, -1)):
+            for (lambda_map, base), shift in extremal_shifts.items():
+                while True:
+                    index = Add(base, num(shift)).quick_simplified()
+                    _expr = lambda_map.apply(index)
+                    if _expr in all_abs_terms:
+                        shift += step
+                    else:
+                        break
+                extremal_shifts[(lambda_map, base)] = shift
+        
+        # Expand ExprRange heads and tails to their extremal shifts
+        if len(latest_head_shift) > 0:
+            old_terms = terms
+            terms = []
+            for sign, abs_term in old_terms:
+                if isinstance(abs_term, ExprRange):
+                    start_base, start_shift = split_int_shift(abs_term.start_index)
+                    end_base, end_shift = split_int_shift(abs_term.end_index)
+                    lambda_map = abs_term.lambda_map
+                    latest_start = latest_head_shift[(lambda_map, start_base)]
+                    earliest_end = earliest_tail_shift[(lambda_map, end_base)]
+                    if start_base == end_base:
+                        # For finite ranges, expand all elements.
+                        latest_start = end_shift+1
+                    # Peel off elements before the latest start.
+                    shift = start_shift
+                    while shift < latest_start:
+                        index = Add(start_base, num(shift)).quick_simplified()
+                        terms.append((sign, lambda_map.apply(index)))
+                        shift += 1
+                    if start_base == end_base and shift > end_shift:
+                        continue # already expanded all elements.
+                    start_index = Add(start_base,
+                                      num(latest_start)).quick_simplified()
+                    end_index = Add(end_base, 
+                                    num(earliest_end)).quick_simplified()
+                    terms.append((sign, ExprRange(abs_term.parameter, 
+                                                  abs_term.body,
+                                                  start_index, end_index)))
+                    shift = earliest_end + 1
+                    # Peel off elements after the earliest end.
+                    while shift <= end_shift:
+                        index = Add(end_base, num(shift)).quick_simplified()
+                        terms.append((sign, lambda_map.apply(index)))
+                        shift += 1
+                else:
+                    terms.append((sign, abs_term))
+        
+        # Do cancelations of opposite terms.
+        # Also check for clearly empty ExprRanges.
+        abs_term_to_neg_idx = dict()
+        abs_term_to_pos_idx = dict()
+        cancelation_indices = set()
+        for idx, (sign, abs_term) in enumerate(terms):
+            if sign == -1:
+                if abs_term in abs_term_to_pos_idx:
+                    # Neg term cancels with previous positive term.
+                    other_idx = abs_term_to_pos_idx.pop(abs_term)
+                    cancelation_indices.add(idx)
+                    cancelation_indices.add(other_idx)
+                else:
+                    # Store for possible cancelation ahead.
+                    abs_term_to_neg_idx[abs_term] = idx
+            else:
+                if abs_term in abs_term_to_neg_idx:
+                    # Positive term cancels with previous Neg term.
+                    other_idx = abs_term_to_neg_idx.pop(abs_term)
+                    cancelation_indices.add(idx)
+                    cancelation_indices.add(other_idx)
+                else:
+                    # Store for possible cancelation ahead.
+                    abs_term_to_pos_idx[abs_term] = idx
+        terms = [term for idx, term in enumerate(terms) if 
+                 idx not in cancelation_indices]
+        
+        # Re-extend heads and tails of ExprRanges that may have been
+        # split apart, now that we've had a chance to find cancelations.
+        if len(latest_head_shift) > 0 and len(terms) > 0:
+            # Try to prepend heads going in reverse
+            old_terms = terms
+            reversed_terms = []
+            following_term = None
+            for sign, abs_term in reversed(old_terms):
+                if following_term is not None:
+                    if (sign==following_term[0] 
+                            and isinstance(following_term[1], ExprRange)):
+                        # See if the current term prepends the head of
+                        # the following range.
+                        start_base, start_shift = split_int_shift(
+                                following_term[1].start_index)
+                        lambda_map = following_term[1].lambda_map
+                        index = Add(start_base, 
+                                    num(start_shift-1)).quick_simplified()
+                        if abs_term == lambda_map.apply(index):
+                            # Prepend the head.
+                            following_term[1] = ExprRange(
+                                    following_term[1].parameter, 
+                                    following_term[1].body,
+                                    index, following_term[1].end_index)
+                            continue
+                    reversed_terms.append(following_term)
+                following_term = [sign, abs_term]
+            reversed_terms.append(following_term) # get the last one
+            
+            # Try to extend tails, reversing again.
+            terms = []
+            prev_term = None
+            for sign, abs_term in reversed(reversed_terms):
+                if prev_term is not None:
+                    if (sign==prev_term[0] and 
+                            isinstance(prev_term[1], ExprRange)):
+                        # See if the current term extends the tail of
+                        # the previous range.
+                        end_base, end_shift = split_int_shift(
+                                prev_term[1].end_index)
+                        lambda_map = prev_term[1].lambda_map
+                        index = Add(end_base, 
+                                    num(end_shift+1)).quick_simplified()
+                        if abs_term == lambda_map.apply(index):
+                            # Extend the tail.
+                            prev_term[1] = ExprRange(
+                                    prev_term[1].parameter, prev_term[1].body,
+                                    prev_term[1].start_index, index)
+                            continue
+                    terms.append(prev_term)
+                prev_term = [sign, abs_term]
+            terms.append(prev_term) # get the last one
+        
+        # Merge the sign and abs_term into each term.
+        for idx, (sign, abs_term) in enumerate(terms):
+            if sign==1:
+                terms[idx] = abs_term
+            else:
+                assert sign==-1
+                if isinstance(abs_term, ExprRange):
+                    terms[idx] = Neg(Add(abs_term))
+                else:
+                    terms[idx] = Neg(abs_term)
+        
+        if int_sum == 0:
+            if len(terms) == 0:
+                return num(0)
+            if len(terms) == 1 and not isinstance(terms[0], ExprRange):
+                return terms[0]
+            return Add(*terms)
+        else:
+            if len(terms) == 0:
+                return num(int_sum)
+            return Add(*(terms + [num(int_sum)]))
+
+    def quick_simplification(self):
+        '''
+        Return a simplification of this Add expression
+        without any proof.  In particular, integers are extracted,
+        added, and placed at the end.
+        This quick-n-dirty approach can be good
+        enough for the purposes of displaying expressions involving
+        expression ranges.
+        '''
+        return Equals(self, self.quick_simplified())        
 
     def _integerBinaryEval(self, assumptions=USE_DEFAULTS):
         '''
@@ -1470,37 +1695,24 @@ def dist_add(*terms):
             expanded_terms.append(term)
     return Add(*expanded_terms)
 
-
-def const_shift_decomposition(idx):
+def split_int_shift(expr):
     '''
-    Return a tuple whose sum is the given 'idx' where the
-    first element is an Expression and the second element is an
-    integer.  There are three cases:
-        1) given an integer i as an Expression, return (zero, i).
-        2) given x+i where i is an integer as an Expression,
-            return (x, i).
-        3) given x, return (x, 0).
+    If the expression contains an additive integer shift term,
+    return the remaining terms and the shift independently as a pair.
+    Otherwise, return the expression paired with a zero shift.
     '''
-    from proveit.numbers import zero, is_literal_int
-    if is_literal_int(idx):
-        return (zero, idx.as_int())
-    elif (isinstance(idx, Add) and idx.operands.num_entries() == 2
-          and is_literal_int(idx.operands[1])):
-        return (idx.operands[0], idx.operands[1].as_int())
-    return (idx, 0)
-
-
-def const_shift_composition(idx, shift):
-    '''
-    Return an expression representing the 'idx' shifted by amount
-    'shift' where 'shift' is a Python integer.  This will be
-    Add(idx, num(shift)) except for the special cases when
-    shift==0 or idx==zero and it reduces.
-    '''
-    from proveit.numbers import num, zero
-    assert isinstance(shift, int)
-    if shift == 0:
-        return idx
-    if idx == zero:
-        return num(shift)
-    return Add(idx, num(shift))
+    from proveit.numbers import is_literal_int, zero
+    if isinstance(expr, Add):
+        expr = expr.quick_simplified()
+        if (isinstance(expr, Add) and is_literal_int(expr.terms[-1])):
+            shift = expr.terms[-1].as_int()
+            if expr.terms.num_entries() == 1:
+                return shift
+            elif (expr.terms.num_entries() == 2 and 
+                    not isinstance(expr.terms[0], ExprRange)):
+                return expr.terms[0], shift
+            else:
+                return Add(expr.terms[:-1]), shift
+    if is_literal_int(expr):
+        return zero, expr.as_int()
+    return expr, 0

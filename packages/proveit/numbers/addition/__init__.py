@@ -1,5 +1,4 @@
-from .add import (Add, subtract, dist_subtract, dist_add,
-                  const_shift_decomposition, const_shift_composition)
+from .add import (Add, subtract, dist_subtract, dist_add)
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
