@@ -28,8 +28,9 @@ class ExprType(type):
 
     # These attributes should not be overridden by classes outside
     # of the core.
-    protected = ('_apply', 'canonical_version',
-                 'replaced', 'basic_replaced', '_replaced_entries', 
+    protected = {'_apply', 'canonical_version',
+                 'replaced', 'basic_replaced', 'body_replaced',
+                 '_replaced_entries', 
                  'equality_replaced', '_manual_equality_replaced',
                  '_auto_simplified', '_auto_simplified_sub_exprs',
                  '_range_reduction', 'relabeled',
@@ -40,7 +41,7 @@ class ExprType(type):
                  '_sub_expressions', '_canonical_expr',
                  '_meaning_data', '_meaning_id',
                  '_style_data', '_style_id',
-                 'is_parameter_independent', 'literal_int_extent')
+                 'is_parameter_independent', 'literal_int_extent'}
 
     def __new__(meta, name, bases, attrs):
         # Tip from

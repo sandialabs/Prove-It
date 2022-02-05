@@ -172,7 +172,7 @@ class ExprRange(Expression):
                 self._core_info, subbed_sub_exprs,
                 style_preferences=self._style_data.styles)
         return replaced
-    
+        
     def _singular_reduced(self, repl_map, *, _subbed_index,
                        allow_relabeling=False, requirements=None):
         '''
@@ -284,11 +284,13 @@ class ExprRange(Expression):
                 default = '()',
                 related_methods = ('with_wrapping_at',))
         options.add_option(
-            name='simplify',
+            name='case_simplify',
             description=(
-                    "If 'True', simplify the formatted instances."),
+                    "If 'True', simplify formatted instances "
+                    "that are ConditionalSets under proper index "
+                    "assumptions"),
             default='False',
-            related_methods=('with_simplification',)
+            related_methods=('with_case_simplification',)
         )
         return options
 
@@ -321,37 +323,12 @@ class ExprRange(Expression):
         '''
         return self.without_style('parameterization')
     
-    def with_simplification(self):
+    def with_case_simplification(self):
         '''
         Simplify the formatted instances for the style.
         '''
 
-        return self.with_styles(simplify='True')
-    
-    def body_replaced(self, index):
-        '''
-        Return the body replaced according the the expression map.
-        First attempt to do this with auto-simplification.  If that
-        fails, do it without auto-simplification.
-        '''
-        from proveit.numbers import Less, num, Add
-        from proveit.logic import NotEquals
-        expr_map = {self.lambda_map.parameter: index}
-        if self.get_style('simplify', 'False') == 'True':            
-            with defaults.temporary() as temp_defaults:
-                temp_defaults.auto_simplify = True
-                temp_defaults.replacements = []
-                assumptions = []
-                #for entry in range(self.get_front_expansion()):
-                #    assumptions.append(Less(entry, self.end_index))
-                #    assumptions.append(NotEquals(entry, self.end_index))
-                temp_defaults.assumptions = defaults.assumptions + tuple(assumptions)
-                instance = self.body.complete_replaced(expr_map)
-        else:
-            instance = self.body.basic_replaced(expr_map)
-        if isinstance(instance, Add):
-            return instance.quick_simplified()
-        return instance
+        return self.with_styles(case_simplify='True')
 
     def with_front_expansion(self, num):
         '''
@@ -399,6 +376,132 @@ class ExprRange(Expression):
         '''
         return [int(pos_str) for pos_str in self.get_style(
             'wrap_positions', '').strip('()').split(' ') if pos_str != '']
+
+    def body_replaced(self, index):
+        '''
+        Return the body replaced according the the expression map.
+        First attempt to do this with auto-simplification.  If that
+        fails, do it without auto-simplification.
+        '''
+        from proveit import ConditionalSet
+        from proveit.logic import Not, Equals, NotEquals, InSet
+        from proveit.numbers import Less, num, Add, zero, Interval
+        from proveit.numbers.addition.add import split_int_shift
+        expr_map = {self.lambda_map.parameter: index}
+        # For purposes of displaying/exploring, we will assume
+        # that the expanded indices are in a proper order and that
+        # the front expansion does not overlap with the back expansion.
+        with defaults.temporary() as temp_defaults:
+            temp_defaults.automation = False
+            temp_defaults.preserve_all = True
+            assumptions = []
+            index = Add(index, zero).quick_simplified()
+            index_base, index_shift = split_int_shift(index)
+            start_base, start_shift = split_int_shift(self.start_index)
+            end_base, end_shift = split_int_shift(self.end_index)
+            if index_base not in (start_base, end_base):
+                raise ValueError(
+                        "'index' %s must be a literal integer shift "
+                        "from %s or %s"%(index, start_base, end_base))
+            for base, other_shift_range in (
+                    (start_base, range(
+                            start_shift, 
+                            start_shift+self.get_front_expansion())),
+                    (end_base, range(
+                            end_shift-self.get_back_expansion()+1, 
+                            end_shift+1))):
+                for other_shift in other_shift_range:
+                    other_index = Add(base, 
+                                      num(other_shift)).quick_simplified()
+                    if index_base == base:
+                        if other_shift == index_shift:
+                            assert index == other_index
+                            # Trivial, but include it anyways so
+                            # we won't need any automation:
+                            assumptions.append(Equals(index, other_index))
+                        else:
+                            assumptions.append(NotEquals(index, other_index))
+                            if other_shift < index_shift:
+                                assumptions.append(Less(other_index, index))
+                            else:
+                                assumptions.append(Less(index, other_index))                            
+                    else:
+                        if base == start_base:
+                            assumptions.append(Less(other_index, index))
+                        else:
+                            assumptions.append(Less(index, other_index))
+                        assumptions.append(NotEquals(index, other_index))
+            # To avoid automation, we need to include many variants.
+            net_assumptions = list(defaults.assumptions)
+            for assumption in assumptions:
+                net_assumptions.append(assumption)
+                lhs, rhs = assumption.operands
+                if isinstance(assumption, Equals):
+                    net_assumptions.append(Not(NotEquals(lhs, rhs)))
+                    if lhs != rhs:
+                        net_assumptions.append(Equals(rhs, lhs))
+                        net_assumptions.append(Not(NotEquals(rhs, lhs)))
+                if isinstance(assumption, NotEquals):
+                    net_assumptions.append(Not(Equals(lhs, rhs)))
+                    if lhs != rhs:
+                        net_assumptions.append(NotEquals(rhs, lhs))
+                        net_assumptions.append(Not(Equals(rhs, lhs)))
+                if isinstance(assumption, Less):
+                    net_assumptions.append(Not(Less(rhs, lhs)))
+            temp_defaults.assumptions = net_assumptions
+            instance = self.body.basic_replaced(expr_map)
+            if self.get_style('case_simplify') == 'True':
+                if isinstance(instance, ConditionalSet):
+                    # Effect the simplification of the conditional set
+                    # if possible without automation and with no proof
+                    # (display/inspection purposes only).
+                    new_conditionals = []
+                    for conditional_entry in instance.conditionals:
+                        conditional = conditional_entry
+                        extra_assumptions = []
+                        while isinstance(conditional, ExprRange):
+                            # An range of conditionals: add the 
+                            # assumption that the range parameter is
+                            # within the Interval and dig into the body.
+                            extra_assumptions.append(
+                                    InSet(conditional.parameter,
+                                          Interval(conditional.start_index,
+                                                   conditional.end_index)))
+                            conditional = conditional.body
+                        if isinstance(conditional, Conditional):
+                            # Check the condition of the conditional.
+                            # If proven, use just the value.
+                            # If disproven, skip this entry.
+                            condition = conditional.condition
+                            if len(extra_assumptions) > 0:
+                                with defaults.temporary() as tmp_defaults2:
+                                    tmp_defaults2.assumptions = (
+                                            defaults.assumptions +
+                                            extra_assumptions)
+                                    proven_condition = condition.proven()
+                                    dispoven_condition = condition.disproven()
+                            else:
+                                proven_condition = condition.proven()
+                                dispoven_condition = condition.disproven()
+                            if proven_condition:
+                                new_conditionals.append(conditional.value)
+                                continue
+                            elif dispoven_condition:
+                                # Skip over this conditional with the
+                                # false condition.
+                                continue
+                        new_conditionals.append(conditional_entry)
+                    if len(new_conditionals) == 1:
+                        # All but one condition is disproven.  If the
+                        # remaining condition is proven, this will be
+                        # the value of that conditional.
+                        instance = new_conditionals[0]
+                    elif tuple(new_conditionals) != instance.conditionals:
+                        # Create the simplified ConditionalSet.
+                        instance = ConditionalSet(*new_conditionals)
+        if isinstance(instance, Add):
+            return instance.quick_simplified()
+        return instance
 
     def first(self):
         '''
@@ -638,41 +741,30 @@ class ExprRange(Expression):
         back_expansion = self.get_back_expansion()
         start_index = self.start_index
         end_index = self.end_index
-        with defaults.temporary() as tmp_defaults:
-            # For formatting purposes, let's just assume that
-            # the start and end indices are integers and that the
-            # indices at the beginning are less than the end index.
-            new_assumptions = []
-            for _idx in (start_index, end_index):
-                assumption = InSet(_idx, Integer)
-                if not assumption.proven():
-                    new_assumptions.append(assumption)
-            assumptions = defaults.assumptions + tuple(new_assumptions)
-            tmp_defaults.assumptions = assumptions
-            for _k in range(0, front_expansion):
-                index = Add(start_index, num(_k)).quick_simplified()
-                next_entry = self.body_replaced(index)
-                if isinstance(next_entry, ExprRange):
-                    # Recurse through the entries of an inner ExprRange.
-                    next_entry._append_format_cell_entries(cell_entries)
-                else:
-                    # Append the next entry.
-                    cell_entries.append((next_entry, _k))
-            if self.is_parameter_independent:
-                cell_entries.append((self, "param_independent"))
+        for _k in range(0, front_expansion):
+            index = Add(start_index, num(_k)).quick_simplified()
+            next_entry = self.body_replaced(index)
+            if isinstance(next_entry, ExprRange):
+                # Recurse through the entries of an inner ExprRange.
+                next_entry._append_format_cell_entries(cell_entries)
             else:
-                parameterization = self.get_style('parameterization',
-                                                  'implicit')
-                cell_entries.append((self, parameterization))
-            for _k in range(-back_expansion, 0):
-                index = Add(end_index, num(_k+1)).quick_simplified()
-                next_entry = self.body_replaced(index)
-                if isinstance(next_entry, ExprRange):
-                    # Recurse through the entries of an inner ExprRange.
-                    next_entry._append_format_cell_entries(cell_entries)
-                else:
-                    # Append the next entry.
-                    cell_entries.append((next_entry, _k))
+                # Append the next entry.
+                cell_entries.append((next_entry, _k))
+        if self.is_parameter_independent:
+            cell_entries.append((self, "param_independent"))
+        else:
+            parameterization = self.get_style('parameterization',
+                                              'implicit')
+            cell_entries.append((self, parameterization))
+        for _k in range(-back_expansion, 0):
+            index = Add(end_index, num(_k+1)).quick_simplified()
+            next_entry = self.body_replaced(index)
+            if isinstance(next_entry, ExprRange):
+                # Recurse through the entries of an inner ExprRange.
+                next_entry._append_format_cell_entries(cell_entries)
+            else:
+                # Append the next entry.
+                cell_entries.append((next_entry, _k))
 
     def _append_format_cell_element_positions(
             self, start_element_pos, element_positions):
@@ -695,59 +787,49 @@ class ExprRange(Expression):
         end_index = self.end_index
         index = None
         nested_ranges = isinstance(self.body, ExprRange)
-        with defaults.temporary() as tmp_defaults:
-            # For formatting purposes, let's just assume that
-            # the start and end indices are integers.
-            new_assumptions = []
-            for _idx in (start_index, end_index):
-                assumption = InSet(_idx, Integer)
-                if not assumption.proven():
-                    new_assumptions.append(assumption)
-            assumptions = defaults.assumptions + tuple(new_assumptions)
-            tmp_defaults.assumptions = assumptions
-            # Do the front expansion.
-            for _k in range(0, front_expansion):
-                if _k > 0:
-                    element_pos = Add(element_pos, one).quick_simplified()
-                if nested_ranges:
-                    index = Add(start_index, num(_k)).quick_simplified()
-                if nested_ranges:
-                    # Use recursion for a nested ExprRange.
-                    next_entry = self.body_replaced(index)
-                    element_pos= (
-                            next_entry._append_format_cell_element_positions(
-                                    element_pos, element_positions))
-                else:
-                    # Append the next element position.
-                    element_positions.append(element_pos)
-            # Use None for the 'ellipsis' cell:
-            element_positions.append(None) 
-            # Set 'element_pos' to just before the first of the back
-            # expansion.  Do this by going to the very end and then
-            # backtracking.
-            net_range_len = self.num_elements(proven=False)
-            element_pos = Add(start_element_pos, net_range_len, 
-                              num(-1)).quick_simplified()
-            for _k in range(-back_expansion, 0):
-                index = Add(end_index, num(_k+1)).quick_simplified()
-                entry = self.body_replaced(index)
-                range_len = ExprTuple(entry).num_elements(proven=False)
-                 # back up
-                element_pos = Add(element_pos, Neg(range_len)).quick_simplified()
-            # Do the back expansion.
-            for _k in range(-back_expansion, 0):
+        # Do the front expansion.
+        for _k in range(0, front_expansion):
+            if _k > 0:
                 element_pos = Add(element_pos, one).quick_simplified()
-                if nested_ranges:
-                    index = Add(end_index, num(_k+1)).quick_simplified()
-                if nested_ranges:
-                    # Use recursion for a nested ExprRange.
-                    next_entry = self.body_replaced(index)
-                    element_pos= (
-                            next_entry._append_format_cell_element_positions(
-                                    element_pos, element_positions))
-                else:
-                    # Append the next element position.
-                    element_positions.append(element_pos)
+            if nested_ranges:
+                index = Add(start_index, num(_k)).quick_simplified()
+            if nested_ranges:
+                # Use recursion for a nested ExprRange.
+                next_entry = self.body_replaced(index)
+                element_pos= (
+                        next_entry._append_format_cell_element_positions(
+                                element_pos, element_positions))
+            else:
+                # Append the next element position.
+                element_positions.append(element_pos)
+        # Use None for the 'ellipsis' cell:
+        element_positions.append(None) 
+        # Set 'element_pos' to just before the first of the back
+        # expansion.  Do this by going to the very end and then
+        # backtracking.
+        net_range_len = self.num_elements(proven=False)
+        element_pos = Add(start_element_pos, net_range_len, 
+                          num(-1)).quick_simplified()
+        for _k in range(-back_expansion, 0):
+            index = Add(end_index, num(_k+1)).quick_simplified()
+            entry = self.body_replaced(index)
+            range_len = ExprTuple(entry).num_elements(proven=False)
+             # back up
+            element_pos = Add(element_pos, Neg(range_len)).quick_simplified()
+        # Do the back expansion.
+        for _k in range(-back_expansion, 0):
+            element_pos = Add(element_pos, one).quick_simplified()
+            if nested_ranges:
+                index = Add(end_index, num(_k+1)).quick_simplified()
+            if nested_ranges:
+                # Use recursion for a nested ExprRange.
+                next_entry = self.body_replaced(index)
+                element_pos= (
+                        next_entry._append_format_cell_element_positions(
+                                element_pos, element_positions))
+            else:
+                # Append the next element position.
+                element_positions.append(element_pos)
         return element_pos
     
     def formatted_repeats(self, format_type):

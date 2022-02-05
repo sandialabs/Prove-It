@@ -782,6 +782,7 @@ class OperationOverInstances(Operation):
             with defaults.temporary() as temp_defaults:
                 # Add the condition as an assumption when formatting 
                 # the instance expression.
+                temp_defaults.automation = False
                 temp_defaults.assumptions = defaults.assumptions + (
                         self.condition,)
                 formatted_instance_expr =  instance_expr.formatted(

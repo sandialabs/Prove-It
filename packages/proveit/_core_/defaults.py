@@ -325,8 +325,23 @@ class TemporarySetter(object):
         Restore the original values of the object.
         '''
         # Restore to the state of when we "entered".
+        # Turn off automation while we do this, however, to
+        # avoid unnecessarily deriving side-effects of assumptions if 
+        # those assumptions happen to change to revert.
+        if 'automation' in self._original_values:
+            automation = self._original_values['automation']
+        elif 'automation' in self._obj.__dict__:
+            automation = self._obj.__dict__['automation']
+        else:
+            automation = None
+        if automation is not None:
+            self._obj.__dict__['automation'] = False
+
         for attr, val in self._original_values.items():
             self._obj.__dict__[attr] = val
+
+        if automation is not None:
+            self._obj.__dict__['automation'] = automation
         
 
 """

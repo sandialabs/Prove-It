@@ -121,6 +121,7 @@ class Conditional(Expression):
         with defaults.temporary() as temp_defaults:
             # Add the condition as an assumption when formatting the
             # value.
+            temp_defaults.automation = False
             temp_defaults.assumptions = defaults.assumptions + (self.condition,)
             formatted_value = self.value.formatted(format_type, **kwargs)
         if format_type == "string":

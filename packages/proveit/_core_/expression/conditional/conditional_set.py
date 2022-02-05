@@ -18,15 +18,14 @@ class ConditionalSet(Operation):
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, must_evaluate=False, **defaults_config):
         '''
-        Reduce a conditional set with one and only one TRUE condition
-        where the other conditions are FALSE if applicable.
+        If one and only one TRUE condition is satisfied, reduce
+        the ConditionalSet to that one case.
         '''
         try:
             return self.single_case_via_elimination()
         except UnsatisfiedPrerequisites as _e:
             raise NotImplementedError('shallow_simplification is only implemented '
                                       'if all conditions are known to be TRUE or FALSE', _e)
-    # single_case_via_elimination
 
     @equality_prover('reduced_to_true_case', 'reduce_to_true_case')
     def single_case_via_elimination(self, **defaults_config):
