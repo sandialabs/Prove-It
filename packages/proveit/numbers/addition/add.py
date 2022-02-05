@@ -7,7 +7,7 @@ from proveit import (Expression, Judgment, Literal, Operation, ExprTuple,
                      maybe_fenced_latex, ProofFailure, InnerExpr,
                      UnsatisfiedPrerequisites,
                      SimplificationDirectives, TransRelUpdater)
-from proveit import a, b, c, d, i, j, k, l, n, x, y
+from proveit import a, b, c, d, i, j, k, l, n, x, y, free_vars
 from proveit.logic import Equals, EvaluationError
 from proveit.logic.irreducible_value import is_irreducible_value
 from proveit.numbers import NumberOperation
@@ -810,6 +810,10 @@ class Add(NumberOperation):
                     _expr = lambda_map.apply(index)
                     if _expr in all_abs_terms:
                         shift += step
+                        if (lambda_map.parameter not in
+                                free_vars(lambda_map.body)):
+                            # avoid an infinite loop
+                            break
                     else:
                         break
                 extremal_shifts[(lambda_map, base)] = shift
@@ -1701,7 +1705,9 @@ def split_int_shift(expr):
     return the remaining terms and the shift independently as a pair.
     Otherwise, return the expression paired with a zero shift.
     '''
-    from proveit.numbers import is_literal_int, zero
+    from proveit.numbers import is_literal_int, zero, Neg
+    if isinstance(expr, Neg):
+        expr = Add(expr) # wrap in an Add so we can do quick_simplified
     if isinstance(expr, Add):
         expr = expr.quick_simplified()
         if (isinstance(expr, Add) and is_literal_int(expr.terms[-1])):
