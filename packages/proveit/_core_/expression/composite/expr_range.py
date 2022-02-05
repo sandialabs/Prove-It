@@ -56,6 +56,23 @@ class ExprRange(Expression):
         must both be None.
         '''
         from proveit import Variable
+
+        if order not in (None, 'decreasing', 'increasing'):
+            raise ValueError("'order' must be 'increasing', "
+                             "'decreasing', or None; not %s" % order)
+        if order is not None:
+            if styles is None: styles = dict()
+            styles['order'] = order
+
+        if order == 'decreasing':
+            from proveit.numbers import Neg
+            start_index = Neg(start_index)
+            end_index = Neg(end_index)
+
+        if order == 'decreasing' and body is not None:
+
+            expr_map = {parameter: Neg(parameter)}
+            body = body.basic_replaced(expr_map)
         if lambda_map is not None:
             # Use the provided 'lambda_map' instead of creating one.
             lambda_map = lambda_map
@@ -76,23 +93,14 @@ class ExprRange(Expression):
             if styles is None: styles = dict()
             styles['parameterization'] = parameterization
 
-        if order not in (None, 'decreasing', 'increasing'):
-            raise ValueError("'order' must be 'increasing', "
-                             "'decreasing', or None; not %s" % order)
-        if order is not None:
-            if styles is None: styles = dict()
-            styles['order'] = order
-
         Expression.__init__(self, ['ExprRange'],
                             [lambda_map, start_index, end_index],
                             styles=styles)
-        if order == 'decreasing':
-            from proveit.numbers import Neg
-            self.start_index = singular_expression(Neg(start_index))
-            self.end_index = singular_expression(Neg(end_index))
-        else:
-            self.start_index = singular_expression(start_index)
-            self.end_index = singular_expression(end_index)
+
+        self.start_index = singular_expression(start_index)
+        self.end_index = singular_expression(end_index)
+
+
         if self.start_index == self.end_index:
             raise ValueError(
                     "Do not create an ExprRange with the same start and "
@@ -102,13 +110,12 @@ class ExprRange(Expression):
         self.lambda_map = lambda_map
 
         self.parameter = self.lambda_map.parameter
-        if order == 'decreasing':
-            # self.parameter = Neg(self.lambda_map.parameter)
-            expr_map = {self.lambda_map.parameter: Neg(self.lambda_map.parameter)}
-            self.body = self.lambda_map.body.basic_replaced(expr_map)
-        else:
-
-            self.body = self.lambda_map.body
+        # if order == 'decreasing':
+        #     # self.parameter = Neg(self.lambda_map.parameter)
+        #     expr_map = {self.lambda_map.parameter: Neg(self.lambda_map.parameter)}
+        #     self.body = body
+        # else:
+        self.body = self.lambda_map.body
         self.is_parameter_independent = (
             self.parameter not in free_vars(self.body))
         self._expansion_indices = [self.start_index]
@@ -240,6 +247,8 @@ class ExprRange(Expression):
         yield self.lambda_map.body
         yield self.start_index
         yield self.end_index
+        # if self.get_style('order', 'increasing') == 'decreasing':
+        #     yield ('order', r"'decreasing'")
 
     def remake_with_style_calls(self):
         '''
@@ -289,6 +298,10 @@ class ExprRange(Expression):
             related_methods=('with_explicit_parameterization',
                              'with_implicit_parameterization',
                              'with_default_parameterization_style'))
+        # TODO check to make sure that self has correct decreasing order structure - start and end indices are both negated
+        # possibly not worth it - every occurence of the parameter is negated
+        from proveit.numbers import Neg
+        #if isinstance(self.start_indices(), Neg) and isinstance(self.end_index, Neg):
         options.add_option(
             name='order',
             description=(
@@ -566,6 +579,7 @@ class ExprRange(Expression):
         if order == 'decreasing':
             from proveit.numbers import Neg
             expr_map = {Neg(self.lambda_map.parameter): self.start_index.operand}
+            # constructed differently will raise issues
             first = self._body_replaced(expr_map)
             expr_map = {Neg(self.lambda_map.parameter): self.end_index.operand}
             last = self._body_replaced(expr_map)
@@ -624,13 +638,14 @@ class ExprRange(Expression):
         if expansion > 1:
             for i, item in enumerate(self.get_range_expansion(reformat=True)[1:], 1):
                 formatted_sub_expressions.insert(i, item.formatted(format_type, **kwargs))
-            try:
-                from proveit.numbers import Less
-                Less(self._expansion_indices[-1], self.end_index).prove()
-            except ProofFailure:
-                print("WARNING: unable to prove that %s < %s. This will be assumed for formatting purposes. "
-                      "Please double check that your expansion is valid." % (self._expansion_indices[-1],
-                                                                             self.end_index))
+            # We no longer try to prove that the expansion is valid, it is understood as an aesthetic choice
+            # try:
+            #     from proveit.numbers import Less
+            #     Less(self._expansion_indices[-1], self.end_index).prove()
+            # except ProofFailure:
+            #     print("WARNING: unable to prove that %s < %s. This will be assumed for formatting purposes. "
+            #           "Please double check that your expansion is valid." % (self._expansion_indices[-1],
+            #                                                                  self.end_index))
         elif expansion < 1:
             from proveit._core_.expression.style_options import StyleError
             raise StyleError("Style option 'expansion' must be >= 1")
@@ -820,9 +835,14 @@ class ExprRange(Expression):
         # empty range, then it should be straightforward to
         # prove that the range is empty.
         from proveit.numbers import is_literal_int
+        default_order = 'increasing'
+        if self.get_style('order', default_order) == 'decreasing':
+            decreasing = True
+        else:
+            decreasing = False
         empty_req = Equals(Add(end_index, one), start_index)
         if is_literal_int(start_index) and is_literal_int(end_index):
-            if end_index.as_int() + 1 == start_index.as_int():
+            if end_index.as_int() + 1 == start_index.as_int(): # or (decreasing and start_index.as_int() + 1 == end_index.as_int()):
                 empty_req.prove()
         if empty_req.proven():
             # We can do an empty range reduction
@@ -841,17 +861,29 @@ class ExprRange(Expression):
                 nest_start_index = self.first().start_index
                 lambda_map = Lambda(
                     (self.parameter, self.body.parameter), self.body.body)
-                return empty_outside_range_of_range.instantiate(
-                    {f: lambda_map, m: start_index, n: end_index,
-                     i: nest_start_index, j: nest_end_index},
-                     preserve_expr=tuple_wrapped_self)
+                if decreasing:
+                    return empty_outside_range_of_range.instantiate(
+                        {f: lambda_map, m: start_index, n: end_index,
+                         i: nest_start_index, j: nest_end_index},
+                         preserve_expr=tuple_wrapped_self).inner_expr().lhs[0].with_decreasing_order()
+                else:
+                    return empty_outside_range_of_range.instantiate(
+                        {f: lambda_map, m: start_index, n: end_index,
+                         i: nest_start_index, j: nest_end_index},
+                        preserve_expr=tuple_wrapped_self)
             else:
                 from proveit.core_expr_types.tuples import \
                     empty_range_def
                 # Preserve 'self' on the left side of the reduction.
-                return empty_range_def.instantiate(
-                    {f: lambda_map, i: start_index, j: end_index},
-                    preserve_expr=tuple_wrapped_self)
+                if decreasing:
+                    empty_range = empty_range_def.instantiate(
+                        {f: lambda_map, i: start_index, j: end_index},
+                        preserve_expr=tuple_wrapped_self)
+                    return empty_range.inner_expr().lhs[0].with_decreasing_order()
+                else:
+                    return empty_range_def.instantiate(
+                        {f: lambda_map, i: start_index, j: end_index},
+                        preserve_expr=tuple_wrapped_self)
         elif self.nested_range_depth() > 1:
             # this is a nested range so the inner range could be empty.
 
@@ -879,10 +911,16 @@ class ExprRange(Expression):
                 lambda_map = Lambda(
                     (self.parameter, self.body.parameter), 
                     self.body.body)
-                return empty_inside_range_of_range.instantiate(
-                    {f: lambda_map, m: start_index, n: end_index, 
-                     i: nest_start_index, j: nest_end_index},
-                     preserve_expr=tuple_wrapped_self)
+                if decreasing:
+                    return empty_inside_range_of_range.instantiate(
+                        {f: lambda_map, m: start_index, n: end_index,
+                         i: nest_start_index, j: nest_end_index},
+                        preserve_expr=tuple_wrapped_self).inner_expr().lhs[0].with_decreasing_order()
+                else:
+                    return empty_inside_range_of_range.instantiate(
+                        {f: lambda_map, m: start_index, n: end_index,
+                         i: nest_start_index, j: nest_end_index},
+                         preserve_expr=tuple_wrapped_self)
         # If nothing else is applicable, we will return the trivial 
         # reflexive equality.
         if must_reduce:
@@ -1499,24 +1537,43 @@ class ExprRange(Expression):
             partition_front, partition_back, partition)
 
         lambda_map = self.lambda_map
+        default_order = 'increasing'
+        if self.get_style('order', default_order) == 'decreasing':
+            from proveit.numbers import Neg
+            before_split_idx = Neg(before_split_idx)
+            decreasing = True
+        else:
+            decreasing = False
         start_index, end_index = self.start_index, self.end_index
         if end_index == Add(before_split_idx, one):
             # special case which uses the axiom:
-            return range_extension_def.instantiate(
+            judgement = range_extension_def.instantiate(
                 {f: lambda_map, i: start_index, j: before_split_idx})
         elif before_split_idx == self.start_index:
             # special case when peeling off the front
-            return partition_front.instantiate(
+            judgement = partition_front.instantiate(
                 {f: lambda_map, i: self.start_index, j: self.end_index})
         elif (before_split_idx == subtract(end_index, one) or
               Equals(before_split_idx, subtract(end_index, one)).proven()):
             # special case when peeling off the back
-            return partition_back.instantiate(
+            judgement = partition_back.instantiate(
                 {f: lambda_map, i: start_index, j: end_index})
         else:
-            return partition.instantiate(
+            judgement = partition.instantiate(
                 {f: lambda_map, i: start_index, j: before_split_idx,
                  k: end_index})
+
+        if decreasing:
+            lhs_done = judgement.inner_expr().lhs[0].with_decreasing_order()
+            i = 0
+            prev = lhs_done
+            for item in lhs_done.inner_expr().rhs:
+                final = prev.inner_expr().rhs[i].with_decreasing_order()
+                i += 1
+                prev = final
+            return final
+        else:
+            return judgement
 
     @prover
     def shift_equivalence(self, *, old_shift=None, new_start=None,
@@ -1535,11 +1592,21 @@ class ExprRange(Expression):
         from proveit.numbers import Add, Neg, subtract
         from proveit._core_.expression.label.var import safe_dummy_var
         from proveit.core_expr_types.tuples import (
-            shift_equivalence, shift_equivalence_both)
+            shift_equivalence, negated_shift_equivalence, negated_shift_equivalence_both, shift_equivalence_both)
+
+        default_order = 'increasing'
+        if self.get_style('order', default_order) == 'decreasing':
+            from proveit.numbers import Neg
+            decreasing = True
+            print("we are decreasing")
+        else:
+            decreasing = False
 
         if old_shift is None:
             _f = self.lambda_map
         else:
+            if decreasing:
+                old_shift = Neg(old_shift)
             old_shifted_param = Add(self.parameter, old_shift)
             safe_var = safe_dummy_var(self.body)
             shifted_body = self.body.basic_replaced({old_shifted_param: safe_var})
@@ -1552,20 +1619,28 @@ class ExprRange(Expression):
         _i, _j = self.start_index, self.end_index
 
         if new_shift is not None:
+            if decreasing:
+                new_shift = Neg(new_shift)
             net_shift = new_shift
             if old_shift is not None:
                 net_shift = subtract(new_shift, old_shift).simplified()
             if new_start is None:
                 # new start = _i - new_shift
                 new_start = subtract(_i, net_shift).simplified()
+            elif decreasing:
+                new_start = Neg(new_start)
             if new_end is None:
                 # new_end = _j - new_shift
                 new_end = subtract(_j, net_shift).simplified()
+            elif decreasing:
+                new_end = Neg(new_end)
         elif new_start is None:
             # new_start = new_end + i - j
             new_end = Add(new_start, _i, Neg(_j)).simplified()
         elif new_end is None:
             # new_end = new_start + j - i
+            if decreasing:
+                new_start = Neg(new_start)
             new_end = Add(new_start, _j, Neg(_i)).simplified()
 
         _k, _l = new_start, new_end
@@ -1578,11 +1653,26 @@ class ExprRange(Expression):
                 new_shift = Add(_i, old_shift, Neg(_k)).simplified()
 
         if old_shift is None:
-            return shift_equivalence.instantiate(
-                {f: _f, a: new_shift, i: _i, j: _j, k: _k, l: _l})
+            if decreasing:
+                print("correct!")
+                judgement = negated_shift_equivalence.instantiate(
+                    {f: _f, a: new_shift, i: _i.operand, j: _j.operand, k: _k, l: _l})
+            else:
+                judgement = shift_equivalence.instantiate(
+                    {f: _f, a: new_shift, i: _i, j: _j, k: _k, l: _l})
         else:
-            return shift_equivalence_both.instantiate(
-                {f: _f, a: old_shift, b: new_shift, i: _i, j: _j, k: _k, l: _l})
+            if decreasing:
+                judgement = negated_shift_equivalence_both.instantiate(
+                    {f: _f, a: old_shift, b: new_shift, i: _i.operand, j: _j.operand, k: _k, l: _l})
+            else:
+                judgement = shift_equivalence_both.instantiate(
+                    {f: _f, a: old_shift, b: new_shift, i: _i, j: _j, k: _k, l: _l})
+
+        # if decreasing:
+        #     lhs_done = judgement.inner_expr().lhs[0].with_decreasing_order()
+        #     return lhs_done.inner_expr().rhs[0].with_decreasing_order()
+        # else:
+        return judgement
 
     """
     def _var_index_shifts_in_ranges(self, var, shifts):
