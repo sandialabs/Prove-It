@@ -1,6 +1,9 @@
-from proveit import (Literal, Lambda, TransitiveRelation, Judgment,
-                     prover, USE_DEFAULTS)
+from proveit import (Literal, Lambda, VertExprArray, TransitiveRelation, 
+                     TransitivityException,
+                     as_expression, Judgment, prover, 
+                     defaults, USE_DEFAULTS)
 from proveit import j, k, l, m, A, B, C, D
+from proveit.relation import TransRelUpdater
 from .qcircuit import Qcircuit
 
 class QcircuitEquiv(TransitiveRelation):
@@ -27,6 +30,15 @@ class QcircuitEquiv(TransitiveRelation):
                                     styles=styles)
         self.a = a
         self.b = b
+
+    def side_effects(self, judgment):
+        '''
+        In addition to the TransitiveRelation side-effects, also
+        attempt derive_reversed.
+        '''        
+        for side_effect in TransitiveRelation.side_effects(self, judgment):
+            yield side_effect
+        yield self.derive_reversed
 
     @staticmethod
     def _lambda_expr(
@@ -85,20 +97,122 @@ class QcircuitEquiv(TransitiveRelation):
         return substitution.instantiate({f: lambda_map, x: self.lhs, y: self.rhs},
                                         assumptions=assumptions)
     """
+
+    @prover
+    def conclude(self, **defaults_config):
+        '''
+        Try to prove that this QcircuitEquiv is true via automation.
+        '''
+        lhs_cols, rhs_cols = (self.lhs.vert_expr_array.entries, 
+                              self.rhs.vert_expr_array.entries)
+        if (len(lhs_cols) == len(rhs_cols) and
+                all(lhs_col == rhs_col for lhs_col, rhs_col in zip(
+                        lhs_cols[1:-1], rhs_cols[1:-1]))):
+            # All inner columns are the same.  Try to
+            # prove by consolidating inputs/outputs.
+            return self.conclude_via_inout_consolidation()
+
+    @prover
+    def conclude_via_inout_consolidation(self, **defaults_config):
+        '''
+        Prove this circuit equivalence by consolidating the input
+        (at the beginning) and/or output (at the end).
+        '''
+        lhs_cols, rhs_cols = (self.lhs.vert_expr_array.entries, 
+                              self.rhs.vert_expr_array.entries)
+        if len(lhs_cols) != len(rhs_cols):
+            raise ValueError(
+                    "Cannot perform 'conclude_via_inout_consolidation' "
+                    "if the number of columns is different: %s ≠ %s."
+                    %(len(lhs_cols), len(rhs_cols)))
+        if not all(lhs_col == rhs_col for lhs_col, rhs_col in zip(
+                lhs_cols[1:-1], rhs_cols[1:-1])):
+            raise ValueError(
+                    "Cannot perform 'conclude_via_inout_consolidation' "
+                    "if the inner columns do not all match.")
+        expr = self.lhs
+        # Use this updater to go from the lhs to the rhs via
+        # transitive equivalences.
+        equiv = TransRelUpdater(expr)
+        if lhs_cols[0] != rhs_cols[0]:
+            # The first column does not match, so try to consolidate
+            # inputs.
+            lhs_consolidation = Qcircuit(
+                    VertExprArray(lhs_cols[0])).input_consolidation()
+            expr = equiv.update(lhs_consolidation.substitution(expr))
+            rhs_consolidation = Qcircuit(
+                    VertExprArray(rhs_cols[0])).input_consolidation()
+            input_equiv = QcircuitEquiv(lhs_consolidation.rhs, 
+                                        rhs_consolidation.rhs).prove()
+            expr = equiv.update(input_equiv.substitution(expr))
+            expr = equiv.update(rhs_consolidation.substitution(expr))
+        if lhs_cols[-1] != rhs_cols[-1]:
+            # The first column does not match, so try to consolidate
+            # inputs.
+            lhs_consolidation = Qcircuit(
+                    VertExprArray(lhs_cols[-1])).output_consolidation()
+            expr = equiv.update(lhs_consolidation.substitution(expr))
+            rhs_consolidation = Qcircuit(
+                    VertExprArray(rhs_cols[-1])).output_consolidation()
+            output_equiv = QcircuitEquiv(lhs_consolidation.rhs, 
+                                         rhs_consolidation.rhs).prove()
+            expr = equiv.update(output_equiv.substitution(expr))
+            expr = equiv.update(rhs_consolidation.substitution(expr))
+        return equiv.relation
+
+    @prover
+    def apply_transitivity(self, other, **defaults_config):
+        '''
+        Apply a transitivity rule to derive from this x<y expression
+        and something of the form y<z, y<=z, z>y, z>=y, or y=z to
+        obtain x<z.
+        '''
+        from proveit.logic import Equals
+        from . import equiv_transitivity
+        other = as_expression(other)
+        if isinstance(other, Equals):
+            return TransitiveRelation.apply_transitivity(
+                self, other)  # handles this special case
+        elif self.rhs == other.lhs:
+            return equiv_transitivity.instantiate(
+                {A: self.lhs, B: self.rhs, C: other.rhs},
+                preserve_all=True)
+        elif self.rhs == other.rhs:
+            return equiv_transitivity.instantiate(
+                {A: self.lhs, B: self.rhs, C: other.lhs},
+                preserve_all=True)
+        elif self.lhs == other.lhs:
+            return equiv_transitivity.instantiate(
+                {A: self.rhs, B: self.lhs, C: other.rhs},
+                preserve_all=True)
+        elif self.lhs == other.rhs:
+            return equiv_transitivity.instantiate(
+                {A: self.rhs, B: self.lhs, C: other.lhs},
+                preserve_all=True)
+        else:
+            raise TransitivityException(
+                None,
+                defaults.assumptions,
+                'Transitivity cannot be applied unless there is something '
+                'in common in the equalities: %s vs %s' %
+                (str(self), str(other)))
     
     @prover
-    def _sub_one_side_into(self, circuit_or_lambda_map, *,
-                           which_side, **defaults_config):
+    def derive_reversed(self, **defaults_config):
         '''
-        Helper method for sub_[left/right]_side_into.
+        From A ≅ B, derive B ≅ A.
         '''
-        lhs, rhs = self.lhs, self.rhs
-        if which_side=='left':
-            old, new = rhs, lhs
-        elif which_side=='right':
-            old, new = lhs, rhs
-        else:
-            raise ValueError("'which_side' must either be 'left' or 'right'")
+        from . import equiv_reflexivity
+        return equiv_reflexivity.instantiate(
+                {A:self.lhs, B:self.rhs})
+    
+    @prover # Note: this should NOT be an @equality_prover.
+    def substitution(self, circuit_or_lambda_map, **defaults_config):
+        '''
+        From A ≅ B, and given a quantum circuit containing A, Q(A), 
+        derive Q(A)≅Q(B).
+        '''      
+        old, new = self.lhs, self.rhs
         
         if isinstance(circuit_or_lambda_map, Judgment):
             circuit_or_lambda_map = circuit_or_lambda_map.expr
@@ -129,7 +243,21 @@ class QcircuitEquiv(TransitiveRelation):
             impl = circuit_equiv_temporal_sub.instantiate(
                     {j:_j, k:_k, l:_l, m:_m, A:_A, B:_B, C:_C, D:_D})
             equiv = impl.derive_consequent()
-            return equiv.derive_right_via_equiv()
+            return equiv
+        raise NotImplementedError()
+        
+    @prover
+    def _sub_one_side_into(self, circuit_or_lambda_map, *,
+                           which_side, **defaults_config):
+        '''
+        Helper method for sub_[left/right]_side_into.
+        '''
+        equiv = self
+        if which_side=='left':
+            equiv = self.derive_reversed()
+        elif which_side!='right':
+            raise ValueError("'which_side' must either be 'left' or 'right'")
+        return equiv.substitution(circuit_or_lambda_map).derive_right_via_equiv()
 
     def sub_left_side_into(self, circuit_or_lambda_map, 
                            assumptions=USE_DEFAULTS):

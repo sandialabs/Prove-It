@@ -1,9 +1,10 @@
 from proveit import (Expression, Function, Literal, 
                      ConditionalSet, Conditional, ExprRange,
                      ExprTuple, ExprArray, VertExprArray, ProofFailure,
-                     StyleOptions, free_vars)
+                     StyleOptions, free_vars, prover, relation_prover)
+from proveit import i, j, k, l, m, n, A, U, V, N
 from proveit.logic import Equals, Set
-from proveit.numbers import Interval, zero, one, num, Add, Neg
+from proveit.numbers import Interval, zero, one, num, Add, Neg, subtract
 from proveit.physics.quantum.circuits.qcircuit_elements import (
         QcircuitElement, Gate, MultiQubitElem, Input, Output, Measure, 
         config_latex_tool)
@@ -393,7 +394,6 @@ class Qcircuit(Function):
                 if (_i > 0 and (
                         expr_latex[:_i] in (r'\gate', r'\qin', r'\qout')
                         or expr_latex[:8]==r'\measure')):
-                    print("THERE", expr_latex)
                     assert expr_latex[-1] == '}'
                     return expr_latex[:_i] + (
                             '{%s}'%explicit_cell_latex_fn(
@@ -673,7 +673,113 @@ class Qcircuit(Function):
         if fence:
             out_str += r'\right)'
         return out_str
+    
+    @prover
+    def concatenate(self, extension, **defaults_config):
+        '''
+        If this is a valid quantum circuit (in Q.C.), and
+        the given extension is also valid quantum circuit,
+        and the outputs of this circuit and the inputs of the
+        following circuit match, we can join them together
+        into a longer valid circuit (in Q. C.).
+        '''
+        from . import concatenation
+        _U = self.vert_expr_array[:-1]
+        _V = extension.vert_expr_array[1:]
+        _i = _U.num_elements()
+        _j = _V.num_elements()
+        self_out = self.vert_expr_array[-1]
+        ext_in = extension.vert_expr_array[0]
+        _A, _m, _n, _N = self._extract_input_or_output(Output, self_out)
+        _A_, _m_, _n_, _N_ = self._extract_input_or_output(Input, ext_in)
+        if _A != _A_ or _m != _m_ or _n != _n_ or _N != _N_:
+            raise ValueError("This output must match the extension's "
+                             "input in order to concatenate")
+        impl = concatenation.instantiate(
+                {i:_i, j:_j, m:_m, A:_A, U:_U, V:_V, n:_n, N:_N})
+        return impl.derive_consequent()
 
+    @prover
+    def trivially_expand(self, wires_above, wires_below, **defaults_config):
+        '''
+        If this is a valid quantum circuit (in Q.C.), prove an expanded
+        form with plain wires added above and/or below is also valid.
+        '''
+        from . import trivial_expansion
+        _A = self.vert_expr_array
+        _m = wires_above
+        _n = wires_below
+        _k = _A.num_elements()
+        _l = _A[0].num_elements()
+        impl = trivial_expansion.instantiate(
+                {k:_k, l:_l, m:_m, n:_n, A:_A})
+        return impl.derive_consequent()
+
+    @relation_prover
+    def input_consolidation(self, **defaults_config):
+        '''
+        Return a quantum circuit equivalence between this quantum
+        circuit and one in which all of the inputs have been
+        consolidated into one encompassing input state (as the
+        tensor product of the original input states).
+        '''
+        from . import input_consolidation
+        return self._in_or_out_consolidation(
+                Input, self.vert_expr_array[0], input_consolidation)
+
+    @relation_prover
+    def output_consolidation(self, **defaults_config):
+        '''
+        Return a quantum circuit equivalence between this quantum
+        circuit and one in which all of the outputs have been
+        consolidated into one encompassing output state (as the
+        tensor product of the original output states).
+        '''
+        from . import output_consolidation
+        return self._in_or_out_consolidation(
+                Output, self.vert_expr_array[-1], output_consolidation)
+
+    def _in_or_out_consolidation(self, elem_type, col, thm):
+        _A, _m, _n, _N = self._extract_input_or_output(elem_type, col)
+        consolidation = thm.instantiate(
+                {m:_m, n:_n, A:_A, N:_N})
+        if not self.vert_expr_array.is_single():
+            return consolidation.substitution(self)
+        return consolidation
+    
+    def _extract_input_or_output(self, elem_type, col):
+        _A = []
+        _n = []
+        for entry in col.entries:
+            if isinstance(entry, ExprRange):
+                body = entry.innermost_body()
+                if (isinstance(body, MultiQubitElem)
+                        and isinstance(body.element, elem_type)):
+                    _A.append(body.element.state)
+                    _n.append(entry.num_elements(proven=False))
+                    continue
+            elif isinstance(entry, elem_type):
+                _A.append(entry.state)
+                _n.append(one)
+                continue
+            if elem_type == Input:
+                raise ValueError(
+                        "In perform an 'input_consolidation', the first "
+                        "column of the Qcircuit must contain all valid "
+                        "Input elements: %s is not suitable."%entry)
+            else:
+                assert elem_type == Output
+                raise ValueError(
+                        "In perform an 'output_consolidation', the last "
+                        "column of the Qcircuit must contain all valid "
+                        "Output elements: %s is not suitable."%entry)
+        _A = ExprTuple(*_A)
+        _N = Add(*_n)
+        _n = ExprTuple(*_n)
+        _m = _A.num_elements()
+        return (_A, _m, _n, _N)
+        
+    
     """
     def replace_equiv_circ(self, current, new, assumptions=USE_DEFAULTS):
         '''

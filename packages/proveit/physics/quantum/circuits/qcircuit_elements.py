@@ -474,9 +474,10 @@ def multi_elem_entries(element_from_part, start_qubit_idx, end_qubit_idx,
                          "indices, starting from one and covering the range "
                          "from %s to %s"%(start_qubit_idx, end_qubit_idx))
     for part_start, part_end in part_start_and_ends:
-        try:
-            Equals(part, part_start).prove()
-        except ProofFailure:
+        #try:
+        #    Equals(part, part_start).prove()
+        #except ProofFailure:
+        if part != part_start:
             raise ValueError("Part indices must be provably consecutive "
                              "starting from 1: %s ≠ %s"%(part_start, part))
         if part_start == part_end: # just a single element
