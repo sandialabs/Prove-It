@@ -393,10 +393,6 @@ class ExprRange(Expression):
         '''
         Used to indicate an ExprRange with decreasing order (a_4 ... a_2)
         '''
-        if not self._decreasing_order_allowed():
-            raise ValueError("%s is not in a valid form to display in "
-                             "decreasing order (parameter occurrences "
-                             "must be negated)")
         return self.with_styles(order='decreasing')
 
     def with_increasing_order(self):
