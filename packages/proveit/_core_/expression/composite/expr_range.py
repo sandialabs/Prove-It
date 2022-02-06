@@ -56,6 +56,7 @@ class ExprRange(Expression):
         must both be None.
         '''
         from proveit import Variable
+        from proveit._core_.theory import UnsetCommonExpressionPlaceholder
         if lambda_map is not None:
             # Use the provided 'lambda_map' instead of creating one.
             lambda_map = lambda_map
@@ -76,11 +77,14 @@ class ExprRange(Expression):
             if styles is None: styles = dict()
             styles['parameterization'] = parameterization
 
+        for index in (start_index, end_index):
+            if isinstance(index, UnsetCommonExpressionPlaceholder):
+                index.raise_attempted_use_error()
+        self.start_index = start_index = singular_expression(start_index)
+        self.end_index = end_index = singular_expression(end_index)
         Expression.__init__(self, ['ExprRange'],
                             [lambda_map, start_index, end_index],
                             styles=styles)
-        self.start_index = singular_expression(start_index)
-        self.end_index = singular_expression(end_index)
         if self.start_index == self.end_index:
             raise ValueError(
                     "Do not create an ExprRange with the same start and "
@@ -248,6 +252,7 @@ class ExprRange(Expression):
         return call_strs
 
     def style_options(self):
+        from proveit.numbers import Add, one, zero
         options = StyleOptions(self)
         options.add_option(
             name='parameterization',
@@ -262,21 +267,26 @@ class ExprRange(Expression):
             related_methods=('with_explicit_parameterization',
                              'with_implicit_parameterization',
                              'with_default_parameterization_style'))
-
-        options.add_option(
-            name='front_expansion',
-            description=(
-                "The number of instances to display at the front of the "
-                "range (e.g., before the ellipsis). Default is 2."),
-            default=str(2),
-            related_methods=('with_front_expansion', 'get_front_expansion'))
-        options.add_option(
-            name='back_expansion',
-            description=(
-                "The number of instances to display at the back of the "
-                "range (e.g., after the ellipsis). Default is 1."),
-            default=str(1),
-            related_methods=('with_back_expansion', 'get_back_expansion'))
+        if (Add(self.start_index, one).quick_simplified() !=
+                Add(self.end_index, zero).quick_simplified()):
+            # Front_expansion and back_expansion options are available
+            # as long as this doesn't trivially/obviously have just 2 
+            # elements. e.g., x_1, ..., x_2 should only use 1 for the
+            # front and back expansion.
+            options.add_option(
+                name='front_expansion',
+                description=(
+                    "The number of instances to display at the front of the "
+                    "range (e.g., before the ellipsis). Default is 2."),
+                default=str(2),
+                related_methods=('with_front_expansion', 'get_front_expansion'))
+            options.add_option(
+                name='back_expansion',
+                description=(
+                    "The number of instances to display at the back of the "
+                    "range (e.g., after the ellipsis). Default is 1."),
+                default=str(1),
+                related_methods=('with_back_expansion', 'get_back_expansion'))
         options.add_option(
                 name='wrap_positions',
                 description=("position(s) at which wrapping is to occur; "
@@ -337,6 +347,9 @@ class ExprRange(Expression):
         '''
         if not isinstance(num, int) or num < 1:
             print("front_expansion must be an integer of at least 1")
+        # Make sure the expansion doesn't induce an obvious overlap.
+        self._check_nonobvious_overlapping_expansion(
+                num, self.get_back_expansion())
         return self.with_styles(front_expansion=str(num))
 
     def with_back_expansion(self, num):
@@ -346,7 +359,24 @@ class ExprRange(Expression):
         '''
         if not isinstance(num, int) or num <= 1:
             print("back_expansion must be an integer of at least 1")
+        self._check_nonobvious_overlapping_expansion(
+                num, self.get_back_expansion())
         return self.with_styles(back_expansion=str(num))
+
+    def _check_nonobvious_overlapping_expansion(
+            self, front_expansion, back_expansion):
+        from proveit.numbers.addition.add import split_int_shift, Add
+        start_base, start_shift = split_int_shift(self.start_index)
+        end_base, end_shift = split_int_shift(self.end_index)
+        if start_base == end_base:
+            last_of_front_shift = start_shift+front_expansion-1
+            first_of_back_shift = end_shift-back_expansion+1
+            if last_of_front_shift >= first_of_back_shift:
+                raise ValueError(
+                        "The front and back expansions are not allowed "
+                        "to form an obvious overlap: %s ≥ %s"
+                        %(Add(start_base, last_of_front_shift),
+                          Add(end_base, first_of_back_shift)))
 
     def with_wrapping_at(self, *wrap_positions):
         return self.with_styles(
@@ -360,14 +390,14 @@ class ExprRange(Expression):
         Get the number of instances to display at the front of the 
         range (e.g., before the ellipsis).
         '''
-        return int(self.get_style('front_expansion'))
+        return int(self.get_style('front_expansion', 1))
 
     def get_back_expansion(self):
         '''
         Get the number of instances to display at the back of the 
         range (e.g., after the ellipsis).
         '''
-        return int(self.get_style('back_expansion'))
+        return int(self.get_style('back_expansion', 1))
 
     def wrap_positions(self):
         '''
