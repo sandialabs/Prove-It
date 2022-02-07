@@ -75,50 +75,51 @@ class ConditionalSet(Operation):
         return self.formatted('latex', **kwargs)
 
     def formatted(self, format_type, fence=None, **kwargs):
+        from proveit import ExprRange
         #print(solo)
         if format_type == 'string':
-            inner_str = '; '.join(conditional.formatted('string', fence=False, **kwargs)
-                                  for conditional in self.conditionals)
+            inner_str = self.conditionals.formatted(
+                    'string', fence=False, operator_or_operators=';')
             return '{' + inner_str + '.'
         else:
-            from proveit import ExprRange
             formatted_conditionals = []
             for conditional in self.conditionals:
                 if isinstance(conditional, ExprRange):
-                    format_cell_entries = []
-                    conditional._append_format_cell_entries(
-                            format_cell_entries)
-                    for expr, role in format_cell_entries:
-                        if isinstance(expr, ExprRange):
-                            nested_range_depth = expr.nested_range_depth()
-                        else:
-                            nested_range_depth = 1
-                        if role == 'implicit':
-                            if nested_range_depth == 1:
-                                formatted_conditionals.append(r' \vdots')
+                    for cell_info in conditional._yield_format_cell_info():
+                        (expr, role), assumptions = cell_info
+                        with defaults.temporary() as tmp_defaults:
+                            tmp_defaults.automation = False
+                            tmp_defaults.assumptions = assumptions
+                            if isinstance(expr, ExprRange):
+                                nested_range_depth = expr.nested_range_depth()
+                            else:
+                                nested_range_depth = 1
+                            if role == 'implicit':
+                                if nested_range_depth == 1:
+                                    formatted_conditionals.append(r' \vdots')
+                                else:
+                                    formatted_conditionals.append(
+                                            r'\begin{array}{c}' +
+                                            r' \vdots \\ '*nested_range_depth
+                                            + r'\end{array}')
+                            elif role in ('explicit', 'param_independent'):
+                                if role == 'explicit':
+                                    formatted_body = expr.body.latex()
+                                else:
+                                    assert role == 'param_independent'
+                                    formatted_body = expr.formatted_repeats(
+                                            format_type='latex')                                
+                                formatted_conditionals.append(
+                                        r'\begin{array}{c}' 
+                                        + r' :\\ '*nested_range_depth +
+                                        formatted_body 
+                                        + r' \\: '*nested_range_depth +
+                                        r'\end{array}')
                             else:
                                 formatted_conditionals.append(
-                                        r'\begin{array}{c}' +
-                                        r' \vdots \\ '*nested_range_depth
-                                        + r'\end{array}')
-                        elif role in ('explicit', 'param_independent'):
-                            if role == 'explicit':
-                                formatted_body = expr.body.latex()
-                            else:
-                                assert role == 'param_independent'
-                                formatted_body = expr.formatted_repeats(
-                                        format_type='latex')                                
-                            formatted_conditionals.append(
-                                    r'\begin{array}{c}' 
-                                    + r' :\\ '*nested_range_depth +
-                                    formatted_body 
-                                    + r' \\: '*nested_range_depth +
-                                    r'\end{array}')
-                        else:
-                            formatted_conditionals.append(
-                                    expr.latex(fence=False))
+                                        expr.latex(fence=False))
                 else:
-                    formatted_conditionals.append(conditional.formatted('latex', fence=False, **kwargs))
+                    formatted_conditionals.append(conditional.latex(fence=False))
             inner_str = r' \\ '.join(formatted_conditionals)
             inner_str = r'\begin{array}{ccc}' + inner_str + r'\end{array}'
             inner_str = r'\left\{' + inner_str + r'\right..'

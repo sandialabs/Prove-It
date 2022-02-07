@@ -2,7 +2,7 @@ from .expr_tuple import ExprTuple
 from .expr_range import ExprRange
 from proveit._core_.expression.expr import MakeNotImplemented
 from proveit._core_.expression.style_options import StyleOptions
-from proveit._core_.defaults import USE_DEFAULTS
+from proveit._core_.defaults import defaults, USE_DEFAULTS
 
 
 class ExprArray(ExprTuple):
@@ -114,9 +114,9 @@ class ExprArray(ExprTuple):
                 raise TypeError("Expecting 'format_cell_entries' to be a "
                                 "list")
         doubly_explicit_coordinates = []
-        for _i, outer_entry in enumerate(
-                ExprTuple.get_format_cell_entries(self)):
-            outer_expr, outer_role = outer_entry
+        for _i, outer_cell_info in enumerate(
+                ExprTuple.yield_format_cell_info(self)):
+            (outer_expr, outer_role), assumptions = outer_cell_info
             orig_outer_expr = outer_expr
             if isinstance(outer_expr, ExprRange):
                 outer_expr = outer_expr.innermost_body()
@@ -124,36 +124,40 @@ class ExprArray(ExprTuple):
                 # ExprRange's -- something like that??? TODO
             if isinstance(outer_expr, ExprTuple):
                 # An explicit inner list.
-                inner_format_cell_entries = []
-                for _j, inner_entry in enumerate(
-                        outer_expr.get_format_cell_entries()):
-                    inner_expr, inner_role = inner_entry
-                    if (orig_outer_expr != outer_expr and
-                            not isinstance(inner_expr, ExprRange)):
-                        # The other_expr was originally an ExprRange
-                        # but the inner_expr is not.  In this case, we
-                        # want to show the entry expr as an ExprRange
-                        # for the outer orientation with this inner
-                        # exrpession.  That is, lLet's wrap the 
-                        # inner_expr with the ExprRange(s) in the same
-                        # way as the original ExprRange.
-                        _expr_ranges = [orig_outer_expr]
-                        while isinstance(_expr_ranges[-1].body, ExprRange):
-                            _expr_ranges.append(_expr_ranges[-1].body)
-                        for _er in reversed(_expr_ranges):
-                            inner_expr = ExprRange(
-                                    _er.parameter, inner_expr,
-                                    _er.start_index, _er.end_index)
-                            inner_expr = inner_expr.with_mimicked_style(_er)
-                    # Compose outer and inner roles.
-                    inner_format_cell_entries.append(
-                            (inner_expr, outer_role, inner_role))
-                    if outer_role == inner_role == 'explicit':
-                        doubly_explicit_coordinates.append((_i, _j))
+                with defaults.temporary() as tmp_defaults:
+                    tmp_defaults.automation = False
+                    tmp_defaults.assumptions = assumptions
+                    inner_format_cell_entries = []
+                    for _j, inner_cell_info in enumerate(
+                            outer_expr.yield_format_cell_info()):
+                        (inner_expr, inner_role), _ = inner_cell_info
+                        if (orig_outer_expr != outer_expr and
+                                not isinstance(inner_expr, ExprRange)):
+                            # The other_expr was originally an 
+                            # ExprRange but the inner_expr is not.  In 
+                            # this case, we want to show the entry expr
+                            # as an ExprRange for the outer orientation
+                            # with this inner expression.  That is, 
+                            # let's wrap the inner_expr with the
+                            # ExprRange(s) in the same way as the 
+                            # original ExprRange.
+                            _expr_ranges = [orig_outer_expr]
+                            while isinstance(_expr_ranges[-1].body, ExprRange):
+                                _expr_ranges.append(_expr_ranges[-1].body)
+                            for _er in reversed(_expr_ranges):
+                                inner_expr = ExprRange(
+                                        _er.parameter, inner_expr,
+                                        _er.start_index, _er.end_index)
+                                inner_expr = inner_expr.with_mimicked_style(_er)
+                        # Compose outer and inner roles.
+                        inner_format_cell_entries.append(
+                                (inner_expr, outer_role, inner_role))
+                        if outer_role == inner_role == 'explicit':
+                            doubly_explicit_coordinates.append((_i, _j))
                 format_cell_entries.append(inner_format_cell_entries)
             else:
                 # Represent an entire inner list with an entry.
-                format_cell_entries.append(outer_entry)
+                format_cell_entries.append((outer_expr, outer_role))
         
         # Where roles are 'explicit' outside and inside, we'll make 
         # surrounding roles be implicit for a more compact 

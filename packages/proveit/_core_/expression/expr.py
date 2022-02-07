@@ -29,7 +29,7 @@ class ExprType(type):
     # These attributes should not be overridden by classes outside
     # of the core.
     protected = {'_apply', 'canonical_version',
-                 'replaced', 'basic_replaced', 'body_replaced',
+                 'replaced', 'basic_replaced', 'instance_context',
                  '_replaced_entries', 
                  'equality_replaced', '_manual_equality_replaced',
                  '_auto_simplified', '_auto_simplified_sub_exprs',

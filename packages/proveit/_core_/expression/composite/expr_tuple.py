@@ -255,7 +255,7 @@ class ExprTuple(Composite, Expression):
                 elif isinstance(operator, Expression):
                     operator = operator.formatted(format_type)
                 if len(formatted_entries) > 0:
-                    if operator != ',':
+                    if operator not in (',', ';'):
                         operator = ' ' + operator
                     operator = operator + ' '
                 if isinstance(sub_expr, ExprTuple):
@@ -309,48 +309,39 @@ class ExprTuple(Composite, Expression):
                 count = Add(count, one).quick_simplified()
         return count
 
-    def get_format_cell_entries(self, assumptions=USE_DEFAULTS,
-                                _remembered_simplifications=None):
+    def yield_format_cell_info(self):
         '''
-        Returns a list of entries in correspondence with
-        each format cell of this ExprTuple.  Each entry is a pair
-        tuple with the first item containing an Expression 
-        corresponding to the entry and the second indicating the 'role' 
-        of the cell.  The role is 'normal' unless it is part of an 
-        ExprRange.  A contained ExprRange will cover multiple format 
-        cells dependent upon its 'expansion' style; it includes the 
-        'expansion' number of cells at the beginning, an 'ellipsis'
-        cell, and a cell for the last element.  The beginning cells 
-        have consecutive integers for their role starting with 0, the 
-        last cell has -1 for its role, and the 'ellipsis' cell has 
-        'implicit', 'explicit', or 'param_independent' for its role 
-        depending upon whether it is parameter independent and, if not,
-        the 'parameterization' style option of the ExprRange.
-        
-        The assumptions dictate simplifications that may apply to
-        ExprRange elements.
+        Yield information pertaining to each format cell of this
+        ExprTuple in the format:
+            ((expr, role), assumptions)
+        The expr is the Expression of the entry.  Temporary assumptions
+        may be made about the comparison of ExprRange indices at 
+        distinct format cells (useful from case simplification of nested
+        ExprRanges) and yielded.  The 'role' is defined as follows.
+        The beginning cells of the ExprRange will have consecutive 
+        integers for their role  starting with 0, the last cell has -1 
+        for its role, and the 'ellipsis' cell has 'implicit', 
+        'explicit', or 'param_independent' for its role depending upon
+        whether it is parameter independent and, if not, the 
+        'parameterization' style option of the ExprRange.
         '''
         from .expr_range import ExprRange
         
-        cell_entries = []
-        with defaults.temporary() as tmp_defaults:
-            if assumptions is not None:
-                tmp_defaults.assumptions = assumptions
-            for item in self.entries:
-                # Append to cell entries.
-                if isinstance(item, ExprRange):
-                    # An ExprRange covers multiple format cells.
-                    item._append_format_cell_entries(cell_entries)
-                else:
-                    # One format cells for a regular entry.
-                    cell_entries.append((item, 'normal'))
-        return cell_entries
+        for item in self.entries:
+            # Append to cell entries.
+            if isinstance(item, ExprRange):
+                # An ExprRange covers multiple format cells.
+                for info in item.yield_format_cell_info():
+                    yield info
+            else:
+                # One format cells for a regular entry.
+                yield (item, 'normal'), defaults.assumptions
     
-    def get_format_cell_element_positions(self, assumptions=USE_DEFAULTS):
+    def get_format_cell_element_positions(self):
         '''
         Returns a list of element positions in correspondence with
         each format cell of this ExprTuple 
-        (see ExprTuple.get_format_cell_entries).
+        (see ExprTuple.yield_format_cell_info).
         The element position starts as a 'one' (from proveit.numbers) 
         and adds one in correspondence with each format cell except the 
         'ellipsis' cell and the last cell of each ExprRange.  The 
@@ -366,21 +357,18 @@ class ExprTuple(Composite, Expression):
         from proveit.numbers import Add, zero, one
 
         element_positions = []
-        with defaults.temporary() as tmp_defaults:
-            if assumptions is not None:
-                tmp_defaults.assumptions = assumptions
-            element_pos = zero # We will add 1 before using this.
-            for item in self.entries:
-                # Add one to the element_pos.
-                element_pos = Add(element_pos, one).quick_simplified()
-                # Append to element_positions.
-                if isinstance(item, ExprRange):
-                    # An ExprRange covers multiple format cells.
-                    element_pos = item._append_format_cell_element_positions(
-                            element_pos, element_positions)
-                else:
-                    # One format cells for a regular entry.
-                    element_positions.append(element_pos)
+        element_pos = zero # We will add 1 before using this.
+        for item in self.entries:
+            # Add one to the element_pos.
+            element_pos = Add(element_pos, one).quick_simplified()
+            # Append to element_positions.
+            if isinstance(item, ExprRange):
+                # An ExprRange covers multiple format cells.
+                element_pos = item._append_format_cell_element_positions(
+                        element_pos, element_positions)
+            else:
+                # One format cells for a regular entry.
+                element_positions.append(element_pos)
         return element_positions
     
     def has_matching_ranges(self, other_tuple):
