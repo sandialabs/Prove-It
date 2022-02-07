@@ -109,6 +109,8 @@ def _make_decorated_prover(func):
         def checked_truth(proven_truth):
             # Check that the proven_truth is a Judgment and has
             # appropriate assumptions.
+            if proven_truth is None and is_conclude_method:
+                return proven_truth # we'll raise an exception later.
             if not isinstance(proven_truth, Judgment):
                 raise TypeError("@prover method %s is expected to return "
                                 "a proven Judgment, not %s of type %s."
@@ -151,6 +153,10 @@ def _make_decorated_prover(func):
                         "The @prover method %s beginning with 'conclude' "
                         "expected to be a method for an Expression type "
                         "or the object must have an 'expr' attribute."%func)                
+            if proven_truth is None:
+                raise ValueError("@prover method %s is not implemented "
+                                 "for %s."
+                                %(func, expr))
             if func.__name__.startswith('conclude_negation'):
                 from proveit.logic import Not
                 not_expr = Not(expr)
