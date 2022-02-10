@@ -5,7 +5,14 @@ from proveit import (Judgment, Expression, Literal, Operation,
                      equality_prover)
 from proveit import TransRelUpdater
 from proveit import a, b, c, m, n, w, x, y, z
-from proveit.numbers import NumberOperation
+from proveit.numbers import NumberOperation, deduce_number_set
+from proveit.numbers.number_sets import (
+    Natural, NaturalPos,
+    Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
+    Rational, RationalNonZero, RationalPos, RationalNeg, RationalNonNeg,
+    RationalNonPos,
+    Real, RealNonZero, RealNeg, RealPos, RealNonNeg, RealNonPos,
+    Complex, ComplexNonZero)
 
 class Div(NumberOperation):
     # operator of the Add operation
@@ -437,8 +444,7 @@ class Div(NumberOperation):
         $a^c/b^c$ to $(a/b)^c$.
         '''
         from proveit.logic import InSet
-        from proveit.numbers import (Exp, NaturalPos, RealPos, Real,
-                                     Complex)
+        from proveit.numbers import Exp
         from proveit.numbers.exponentiation import (
             quotient_of_posnat_powers, quotient_of_pos_powers,
             quotient_of_real_powers, quotient_of_complex_powers)
@@ -453,6 +459,7 @@ class Div(NumberOperation):
                 possible_exponent_types = [NaturalPos, RealPos, Real,
                                            Complex]
                 for exponent in exponents:
+                    deduce_number_set(exponent)
                     while len(possible_exponent_types) > 1:
                         exponent_type = possible_exponent_types[0]
                         if InSet(exponent, exponent_type).proven():
@@ -497,29 +504,90 @@ class Div(NumberOperation):
         theorem.
         '''
         from proveit import a, b
+        from proveit.numbers import Less, zero
         from proveit.numbers.division import (
-            div_rational_closure, div_rational_non_zero_closure,
-            div_rational_pos_closure, div_rational_non_neg_closure,
-            div_real_closure, divide_real_pos_closure, divide_complex_closure)
-        from proveit.numbers import (
-            Rational, RationalNonZero, RationalPos, RationalNonNeg,
-            Real, RealPos, Complex)
+            div_rational_closure, div_rational_nonzero_closure,
+            div_rational_pos_closure, 
+            div_rational_pos_from_double_neg,
+            div_rational_neg_from_neg_denom,
+            div_rational_neg_from_neg_numer,
+            div_rational_nonneg_closure,
+            div_rational_nonneg_from_double_neg,
+            div_rational_nonpos_from_neg_denom,
+            div_rational_nonpos_from_nonpos_numer,
+            div_real_closure, div_real_nonzero_closure,
+            div_real_pos_closure,
+            div_real_pos_from_double_neg,
+            div_real_neg_from_neg_denom,
+            div_real_neg_from_neg_numer,
+            div_real_nonneg_closure, 
+            div_real_nonneg_from_double_neg,
+            div_real_nonpos_from_neg_denom,
+            div_real_nonpos_from_nonpos_numer,
+            div_complex_nonzero_closure,
+            div_complex_closure)
 
         thm = None
         if number_set == Rational:
             thm = div_rational_closure
         elif number_set == RationalNonZero:
-            thm = div_rational_non_zero_closure
+            thm = div_rational_nonzero_closure
         elif number_set == RationalPos:
-            thm = div_rational_pos_closure
+            deduce_number_set(self.denominator)
+            if Less(self.denominator, zero).proven():
+                thm = div_rational_pos_double_neg
+            else:
+                thm = div_rational_pos_closure
+        elif number_set == RationalNeg:
+            deduce_number_set(self.denominator)
+            if Less(self.denominator, zero).proven():
+                thm = div_rational_neg_from_neg_denom
+            else:
+                thm = div_rational_neg_from_neg_numer
         elif number_set == RationalNonNeg:
-            thm = div_rational_non_neg_closure
+            deduce_number_set(self.denominator)
+            if Less(self.denominator, zero).proven():
+                thm = div_rational_nonneg_double_neg
+            else:
+                thm = div_rational_nonneg_closure
+        elif number_set == RationalNonPos:
+            deduce_number_set(self.denominator)
+            if Less(self.denominator, zero).proven():
+                thm = div_rational_nonpos_neg_denom
+            else:
+                thm = div_rational_nonpos_neg_numer
         elif number_set == Real:
             thm = div_real_closure
+        elif number_set == RealNonZero:
+            thm = div_real_nonzero_closure
         elif number_set == RealPos:
-            thm = divide_real_pos_closure
+            deduce_number_set(self.denominator)
+            if Less(self.denominator, zero).proven():
+                thm = div_real_pos_double_neg
+            else:
+                thm = div_real_pos_closure
+        elif number_set == RealNeg:
+            deduce_number_set(self.denominator)
+            if Less(self.denominator, zero).proven():
+                thm = div_real_neg_from_neg_denom
+            else:
+                thm = div_real_neg_from_neg_numer
+        elif number_set == RealNonNeg:
+            deduce_number_set(self.denominator)
+            if Less(self.denominator, zero).proven():
+                thm = div_real_nonneg_double_neg
+            else:
+                thm = div_real_nonneg_closure
+        elif number_set == RealNonPos:
+            deduce_number_set(self.denominator)
+            if Less(self.denominator, zero).proven():
+                thm = div_real_nonpos_neg_denom
+            else:
+                thm = div_real_nonpos_neg_numer
+        elif number_set == ComplexNonZero:
+            thm = div_complex_nonzero_closure
         elif number_set == Complex:
-            thm = divide_complex_closure
+            thm = div_complex_closure
         if thm is not None:
             return thm.instantiate({a: self.numerator, b: self.denominator})
         raise NotImplementedError(
@@ -527,10 +595,70 @@ class Div(NumberOperation):
             % str(number_set))
 
     @relation_prover
+    def deduce_number_set(self, **defaults_config):
+        '''
+        Prove membership of this expression in the most 
+        restrictive standard number set we can readily know.
+        '''
+        numer_ns = deduce_number_set(self.numerator).domain
+        denom_ns = deduce_number_set(self.denominator).domain
+        if RationalPos.includes(numer_ns) and RationalPos.includes(denom_ns):
+            return self.deduce_in_number_set(RationalPos)
+        if RationalNeg.includes(numer_ns) and RationalNeg.includes(denom_ns):
+            return self.deduce_in_number_set(RationalPos)
+        if RationalNeg.includes(numer_ns) and RationalPos.includes(denom_ns):
+            return self.deduce_in_number_set(RationalNeg)
+        if RationalPos.includes(numer_ns) and RationalNeg.includes(denom_ns):
+            return self.deduce_in_number_set(RationalNeg)
+        if (RationalNonNeg.includes(numer_ns) 
+                and RationalPos.includes(denom_ns)):
+            return self.deduce_in_number_set(RationalNonNeg)
+        if (RationalNonPos.includes(numer_ns) 
+                and RationalPos.includes(denom_ns)):
+            return self.deduce_in_number_set(RationalNonPos)
+        if (RationalNonNeg.includes(numer_ns) 
+                and RationalNeg.includes(denom_ns)):
+            return self.deduce_in_number_set(RationalNonPos)
+        if (RationalNonPos.includes(numer_ns) 
+                and RationalNeg.includes(denom_ns)):
+            return self.deduce_in_number_set(RationalNonNeg)
+        if (RationalNonZero.includes(numer_ns) and 
+               RationalNonZero.includes(denom_ns)):
+            return self.deduce_in_number_set(RationalNonZero)
+        if Rational.includes(numer_ns) and RationalNonZero.includes(denom_ns):
+            return self.deduce_in_number_set(Rational)
+        if RealPos.includes(numer_ns) and RealPos.includes(denom_ns):
+            return self.deduce_in_number_set(RealPos)
+        if RealNeg.includes(numer_ns) and RealNeg.includes(denom_ns):
+            return self.deduce_in_number_set(RealPos)
+        if RealPos.includes(numer_ns) and RealNeg.includes(denom_ns):
+            return self.deduce_in_number_set(RealNeg)
+        if RealNeg.includes(numer_ns) and RealPos.includes(denom_ns):
+            return self.deduce_in_number_set(RealNeg)
+        if RealNonNeg.includes(numer_ns) and RealPos.includes(denom_ns):
+            return self.deduce_in_number_set(RealNonNeg)
+        if RealNonPos.includes(numer_ns) and RealPos.includes(denom_ns):
+            return self.deduce_in_number_set(RealNonPos)
+        if RealNonNeg.includes(numer_ns) and RealNeg.includes(denom_ns):
+            return self.deduce_in_number_set(RealNonPos)
+        if RealNonPos.includes(numer_ns) and RealNeg.includes(denom_ns):
+            return self.deduce_in_number_set(RealNonNeg)
+        if Real.includes(numer_ns) and RealNonZero.includes(denom_ns):
+            return self.deduce_in_number_set(Real)
+        if RealNonZero.includes(numer_ns) and RealNonZero.includes(denom_ns):
+            return self.deduce_in_number_set(RealNonZero)
+        if Real.includes(numer_ns) and RealNonZero.includes(denom_ns):
+            return self.deduce_in_number_set(Real)
+        if (ComplexNonZero.includes(numer_ns) 
+                and ComplexNonZero.includes(denom_ns)):
+            return self.deduce_in_number_set(ComplexNonZero)
+        return self.deduce_in_number_set(Complex)
+
+    @relation_prover
     def bound_via_operand_bound(self, operand_relation, **defaults_config):
         '''
         Deduce a bound of this division (fraction) given a bound on
-        either the numerator or the denominatory.
+        either the numerator or the denominator.
         '''
         from proveit.numbers import NumberOrderingRelation
         if isinstance(operand_relation, Judgment):
@@ -574,6 +702,10 @@ class Div(NumberOperation):
         _a = self.denominator
         _x = relation.normal_lhs
         _y = relation.normal_rhs
+        try:
+            deduce_number_set(self.denominator)
+        except UnsatisfiedPrerequisites:
+            pass
         if greater(self.denominator, zero).proven():
             if isinstance(relation, Less):
                 bound = strong_div_from_numer_bound__pos_denom.instantiate(
@@ -635,6 +767,11 @@ class Div(NumberOperation):
             ordering.operands[0].apply_transitivity(ordering.operands[1])
         except:
             pass # We'll generate an appropriate error below.
+        try:
+            deduce_number_set(self.numerator)
+            deduce_number_set(self.denominator)
+        except UnsatisfiedPrerequisites:
+            pass
         pos_numer = greater_eq(self.numerator, zero).proven()
         neg_numer = LessEq(self.numerator, zero).proven()
         pos_denom = greater(self.denominator, zero).proven()

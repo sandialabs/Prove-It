@@ -46,7 +46,7 @@ class LessEq(NumberOrderingRelation):
         a ≤ b.
         '''
         from proveit.logic import InSet
-        from proveit.numbers import Add, zero, RealNonNeg
+        from proveit.numbers import Add, zero, RealNonNeg, deduce_number_set
         from . import non_neg_if_real_non_neg
         if Equals(self.lower, self.upper).proven():
             # We know that a = b, therefore a ≤ b.
@@ -59,6 +59,7 @@ class LessEq(NumberOrderingRelation):
             return concluded.with_matching_style(self)            
         if self.lower == zero:
             # Special case with lower bound of zero.
+            deduce_number_set(self.upper)
             if InSet(self.upper, RealNonNeg).proven():
                 return non_neg_if_real_non_neg.instantiate(
                         {a: self.upper})
@@ -257,11 +258,12 @@ class LessEq(NumberOrderingRelation):
         Multiply both sides of the relation by the 'multiplier'
         on the left.
         '''
-        from proveit.numbers import greater_eq, zero
+        from proveit.numbers import greater_eq, zero, deduce_number_set
         from proveit.numbers.multiplication import (
             weak_bound_via_right_factor_bound,
             reversed_weak_bound_via_right_factor_bound)
         was_reversed = False
+        deduce_number_set(multiplier)
         if greater_eq(multiplier, zero).proven():
             new_rel = weak_bound_via_right_factor_bound.instantiate(
                 {a: multiplier, x: self.lower, y: self.upper})
@@ -285,11 +287,12 @@ class LessEq(NumberOrderingRelation):
         Multiply both sides of the relation by the 'multiplier'
         on the right.
         '''
-        from proveit.numbers import zero
+        from proveit.numbers import zero, deduce_number_set
         from proveit.numbers.multiplication import (
             weak_bound_via_left_factor_bound,
             reversed_weak_bound_via_left_factor_bound)
         was_reversed = False
+        deduce_number_set(multiplier)
         if LessEq(zero, multiplier).proven():
             new_rel = weak_bound_via_left_factor_bound.instantiate(
                 {a: multiplier, x: self.lower, y: self.upper})
@@ -312,10 +315,11 @@ class LessEq(NumberOrderingRelation):
         '''
         Divide both sides of the relation by the 'divisor'.
         '''
-        from proveit.numbers import Less, zero
+        from proveit.numbers import Less, zero, deduce_number_set
         from proveit.numbers.division import (
             weak_div_from_numer_bound__pos_denom, 
             weak_div_from_numer_bound__neg_denom)
+        deduce_number_set(divisor)
         if Less(zero, divisor).proven():
             thm = weak_div_from_numer_bound__pos_denom
         elif Less(divisor, zero).proven():
@@ -353,11 +357,12 @@ class LessEq(NumberOrderingRelation):
         '''
         Exponentiate both sides of the relation by the 'exponent'.
         '''
-        from proveit.numbers import Less, zero
+        from proveit.numbers import Less, zero, deduce_number_set
         from proveit.numbers.exponentiation import (
             exp_pos_lesseq, exp_nonneg_lesseq,
             exp_neg_lesseq, exp_nonpos_lesseq)
         # We need to know how the exponent relates to zero.
+        deduce_number_set(exponent)
         LessEq.sort([zero, exponent])
         if Less(zero, exponent).proven():
             new_rel = exp_pos_lesseq.instantiate(

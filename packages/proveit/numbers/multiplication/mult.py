@@ -1,11 +1,17 @@
-from proveit import (defaults, Literal, ExprTuple, InnerExpr, Judgment,
+from proveit import (defaults, Literal, ExprTuple, ExprRange,
+                     InnerExpr, Judgment,
                      ProofFailure, prover, relation_prover, equality_prover,
                      SimplificationDirectives, TransRelUpdater)
 from proveit import a, b, c, d, e, i, j, k, m, n, w, x, y, z
 from proveit.logic import Equals, InSet
-from proveit.numbers import one, Add, num, NumberOperation
-from proveit.numbers.number_sets import (Integer, Natural, NaturalPos, Real,
-                                         RealNonNeg, RealPos, Complex)
+from proveit.numbers import one, Add, num, NumberOperation, deduce_number_set
+from proveit.numbers.number_sets import (
+    Natural, NaturalPos,
+    Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
+    Rational, RationalNonZero, RationalPos, RationalNeg, RationalNonNeg,
+    RationalNonPos,
+    Real, RealNonZero, RealNeg, RealPos, RealNonNeg, RealNonPos,
+    Complex, ComplexNonZero)
 import proveit.numbers.numerals.decimals
 from proveit.numbers.numerals.decimals import DIGITS
 from proveit.abstract_algebra.generic_methods import (
@@ -40,14 +46,28 @@ class Mult(NumberOperation):
             mult_nat_closure_bin,
             mult_nat_pos_closure,
             mult_nat_pos_closure_bin,
+            mult_int_nonzero_closure,
+            mult_int_nonzero_closure_bin,
+            mult_rational_closure,
+            mult_rational_closure_bin,
+            mult_rational_pos_closure,
+            mult_rational_pos_closure_bin,
+            mult_rational_nonneg_closure,
+            mult_rational_nonneg_closure_bin,
+            mult_rational_nonzero_closure,
+            mult_rational_nonzero_closure_bin,
             mult_real_closure,
             mult_real_closure_bin,
             mult_real_pos_closure,
             mult_real_pos_closure_bin,
-            mult_real_non_neg_closure,
-            mult_real_non_neg_closure_bin,
+            mult_real_nonneg_closure,
+            mult_real_nonneg_closure_bin,
+            mult_real_nonzero_closure,
+            mult_real_nonzero_closure_bin,
             mult_complex_closure,
-            mult_complex_closure_bin)
+            mult_complex_closure_bin,
+            mult_complex_nonzero_closure,
+            mult_complex_nonzero_closure_bin)
         if hasattr(self, 'number_set'):
             number_set = number_set.number_set
         bin = False
@@ -69,6 +89,36 @@ class Mult(NumberOperation):
                 bin = True
             else:
                 thm = mult_nat_pos_closure
+        elif number_set == IntegerNonZero:
+            if self.operands.is_double():
+                thm = mult_int_nonzero_closure_bin
+                bin = True
+            else:
+                thm = mult_int_nonzero_closure
+        elif number_set == Rational:
+            if self.operands.is_double():
+                thm = mult_rational_closure_bin
+                bin = True
+            else:
+                thm = mult_rational_closure
+        elif number_set == RationalPos:
+            if self.operands.is_double():
+                thm = mult_rational_pos_closure_bin
+                bin = True
+            else:
+                thm = mult_rational_pos_closure
+        elif number_set == RationalNonNeg:
+            if self.operands.is_double():
+                thm = mult_rational_nonneg_closure_bin
+                bin = True
+            else:
+                thm = mult_rational_nonneg_closure
+        elif number_set == RationalNonZero:
+            if self.operands.is_double():
+                thm = mult_rational_nonzero_closure_bin
+                bin = True
+            else:
+                thm = mult_rational_nonzero_closure
         elif number_set == Real:
             if self.operands.is_double():
                 thm = mult_real_closure_bin
@@ -81,18 +131,30 @@ class Mult(NumberOperation):
                 bin = True
             else:
                 thm = mult_real_pos_closure
+        elif number_set == RealNonNeg:
+            if self.operands.is_double():
+                thm = mult_real_nonneg_closure_bin
+                bin = True
+            else:
+                thm = mult_real_nonneg_closure
+        elif number_set == RealNonZero:
+            if self.operands.is_double():
+                thm = mult_real_nonzero_closure_bin
+                bin = True
+            else:
+                thm = mult_real_nonzero_closure
         elif number_set == Complex:
             if self.operands.is_double():
                 thm = mult_complex_closure_bin
                 bin = True
             else:
                 thm = mult_complex_closure
-        elif number_set == RealNonNeg:
+        elif number_set == ComplexNonZero:
             if self.operands.is_double():
-                thm = mult_real_non_neg_closure_bin
+                thm = mult_complex_nonzero_closure_bin
                 bin = True
             else:
-                thm = mult_real_non_neg_closure
+                thm = mult_complex_nonzero_closure
         else:
             raise NotImplementedError(
                 "'Mult.deduce_in_number_set()' not implemented for the "
@@ -101,6 +163,71 @@ class Mult(NumberOperation):
             return thm.instantiate({a: self.operands[0], b: self.operands[1]})
         return thm.instantiate({n: self.operands.num_elements(),
                                 a: self.operands})
+
+    @relation_prover
+    def deduce_number_set(self, **defaults_config):
+        '''
+        Prove membership of this expression in the most 
+        restrictive standard number set we can readily know.
+        '''
+        number_set_map = {
+            NaturalPos: NaturalPos,
+            IntegerNeg: Integer,
+            Natural: Natural,
+            IntegerNonPos: Integer,
+            IntegerNonZero: Integer,
+            Integer: Integer,
+            RationalPos: RationalPos,
+            RationalNeg: Rational,
+            RationalNonNeg: RationalNonNeg,
+            RationalNonPos: Rational,
+            RationalNonZero: Rational,
+            Rational: Rational,
+            RealPos: RealPos,
+            RealNeg: Real,
+            RealNonNeg: RealNonNeg,
+            RealNonPos: Real,
+            RealNonZero: Real,
+            Real: Real,
+            ComplexNonZero: Complex,
+            Complex: Complex
+        }
+        
+        priorities = {NaturalPos:(0,0), Natural:(0,1), Integer:(0,2),
+                      RationalPos:(1,0), RationalNonNeg:(1,1), Rational:(1,2),
+                      RealPos:(2,0), RealNonNeg:(2,1), Real:(2,2), 
+                      Complex:(3,2)}
+        major_minor_to_set = {
+            (major, minor):ns for ns, (major, minor) in priorities.items()}
+        nonzero_sets = {NaturalPos, IntegerNeg, IntegerNonZero, 
+                        RationalPos, RationalNeg, RationalNonZero,
+                        RealPos, RealNeg, RealNonZero, ComplexNonZero}
+        major_to_nonzero = {Natural: IntegerNonZero,
+                            Rational: RationalNonZero,
+                            Real: RealNonZero,
+                            Complex: ComplexNonZero}
+
+        major = minor = -1
+        all_nonzero = True
+        for factor in self.factors:
+            factor_membership = deduce_number_set(factor)
+            if isinstance(factor, ExprRange):
+                # e.g. a_1 in S and ... and a_n in S
+                factor_ns = factor_membership.operands[0].body.domain
+            else:
+                factor_ns = factor_membership.domain
+            factor_ns = number_set_map[factor_ns]
+            if all_nonzero and factor_ns not in nonzero_sets:
+                all_nonzero = False
+            _major, _minor = priorities[factor_ns]
+            major = max(_major, major)
+            minor = max(_minor, minor)
+        if major == minor == -1:
+            major, minor = 3, 2 # Complex
+        number_set = major_minor_to_set[(major, minor)]
+        if all_nonzero and number_set in major_to_nonzero:
+            number_set = major_to_nonzero # restrict to nonzero subset
+        return self.deduce_in_number_set(number_set)
 
     @prover
     def deduce_divided_by(self, divisor, **defaults_config):
@@ -792,12 +919,6 @@ class Mult(NumberOperation):
             _j = _b.num_elements()
             equiv = distribute_through_abs_sum.instantiate(
                 {i: _i, j: _j, k: _k, a: _a, b: _b, c: _c})
-            # As a convenient "side-effect" of this derivation,
-            # if we know that the original was positive,
-            # so is the new one.
-            if all(InSet(operand, RealPos).proven() for
-                   operand in self.operands):
-                InSet(self, RealPos).prove()
             return equiv
         elif isinstance(operand, Div):
             raise NotImplementedError("Mult.distribution must be updated "
@@ -1110,6 +1231,7 @@ class Mult(NumberOperation):
             possible_exponent_types = [NaturalPos, RealPos, Real,
                                        Complex]
             for exponent in operand_exponents:
+                deduce_number_set(exponent)
                 while len(possible_exponent_types) > 1:
                     exponent_type = possible_exponent_types[0]
                     if isinstance(exponent, ExprRange):
@@ -1273,6 +1395,8 @@ class Mult(NumberOperation):
             expr = eq.update(relation)
         else:
             thm = None
+            for factor in self.factors:
+                deduce_number_set(factor)
             if (isinstance(factor_relation, Less) and
                     all(greater(factor, zero).proven() for
                         factor in self.factors)):

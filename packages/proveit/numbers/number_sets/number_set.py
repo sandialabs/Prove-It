@@ -1,11 +1,19 @@
-from proveit import Literal, ProofFailure, defaults, prover
-from proveit.logic import Equals, InSet, Membership
+from proveit import (Literal, ProofFailure, UnsatisfiedPrerequisites,
+                     defaults, prover)
+from proveit.logic import Equals, InSet, Membership, SubsetEq
 
 
 class NumberSet(Literal):
     def __init__(self, string, latex, *, theory, styles, fence_when_forced=False):
         Literal.__init__(self, string, latex, theory=theory, styles=styles,
                          fence_when_forced=fence_when_forced)
+
+    def includes(self, other_set):
+        '''
+        Return True of this NumberSet includes the 'other'
+        set.
+        '''
+        return SubsetEq(other_set, self).proven()
 
     def membership_object(self, element):
         return NumberMembership(element, self)
@@ -52,6 +60,8 @@ class NumberMembership(Membership):
         Try to deduce that the given element is in the number set under
         the given assumptions.
         '''
+        from proveit.numbers import deduce_number_set
+
         element = self.element
 
         '''
@@ -66,6 +76,13 @@ class NumberMembership(Membership):
                 # Substitute into the original.
                 return simplification.sub_left_side_into(elem_in_set, assumptions)
         '''
+        try:
+            deduce_number_set(element)
+        except (ProofFailure, UnsatisfiedPrerequisites):
+            pass
+        membership = InSet(element, self.number_set)
+        if membership.proven():
+            return membership.prove()
 
         # Try the 'deduce_in_number_set' method.
         if hasattr(element, 'deduce_in_number_set'):

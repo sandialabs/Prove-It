@@ -1,4 +1,5 @@
 from proveit import (Literal, USE_DEFAULTS, Operation, ExprRange, defaults,
+                     UnsatisfiedPrerequisites,
                      prover, relation_prover, equality_prover)
 from proveit import a, b, c, d, k, m, n, x
 from proveit.numbers.number_sets.number_set import NumberSet, NumberMembership
@@ -80,8 +81,10 @@ class DecimalSequence(NumeralSequence):
     @relation_prover
     def deduce_in_natural_pos(self, **defaults_config):
         from . import deci_sequence_is_nat_pos
+        _a = self.digits[0]
+        _b = self.digits[1:]
         return deci_sequence_is_nat_pos.instantiate(
-            {n: self.operands.num_elements(), a: self.digits})
+            {n: _b.num_elements(), a:_a, b:_b})
         # from proveit import ProofFailure
         # if Numeral._inNaturalPosStmts is None:
         #     from proveit.numbers.numerals.decimals import posnat1, posnat2, posnat3, posnat4, posnat5
@@ -92,6 +95,20 @@ class DecimalSequence(NumeralSequence):
         #     raise ProofFailure(self, [],
         #                        "Cannot prove %d in NaturalPos" % self.n)
         # return Numeral._inNaturalPosStmts[self.n]
+
+    @relation_prover
+    def deduce_number_set(self, **defaults_config):
+        from proveit.numbers import deduce_number_set, greater
+        _a = self.digits[0]
+        _b = self.digits[1:]
+        try:
+            deduce_number_set(_a)
+        except UnsatisfiedPrerequisites:
+            pass
+        if greater(_a, zero).proven():
+            return self.deduce_in_natural_pos()
+        else:
+            return self.deduce_in_natural()
 
     @equality_prover('single_digit_reduced', 'single_digit_reduce')
     def single_digit_reduction(self, **defaults_config):

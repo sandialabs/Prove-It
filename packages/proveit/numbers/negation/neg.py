@@ -10,7 +10,7 @@ from proveit.numbers.number_sets import (
         Real, RealNonZero, RealPos, RealNeg, RealNonNeg, RealNonPos,
         Complex, ComplexNonZero)
 from proveit import a, b, c, m, n, x, y, B
-from proveit.numbers import NumberOperation
+from proveit.numbers import NumberOperation, deduce_number_set
 
 class Neg(NumberOperation):
     # operator of the Neg operation.
@@ -83,6 +83,36 @@ class Neg(NumberOperation):
             return complex_nonzero_closure.instantiate({a: self.operand})
         raise NotImplementedError(
             "No negation closure theorem for set %s" %str(number_set))
+
+    def deduce_number_set(self, **defaults_config):
+        '''
+        Prove membership of this expression in the most 
+        restrictive standard number set we can readily know.
+        '''
+        number_set_map = {
+            NaturalPos: IntegerNeg,
+            IntegerNeg: NaturalPos,
+            Natural: IntegerNonPos,
+            IntegerNonPos: Natural,
+            IntegerNonZero: IntegerNonZero,
+            Integer: Integer,
+            RationalPos: RationalNeg,
+            RationalNeg: RationalPos,
+            RationalNonNeg: RationalNonPos,
+            RationalNonPos: RationalNonNeg,
+            RationalNonZero: RationalNonZero,
+            Rational: Rational,
+            RealPos: RealNeg,
+            RealNeg: RealPos,
+            RealNonNeg: RealNonPos,
+            RealNonPos: RealNonNeg,
+            RealNonZero: RealNonZero,
+            Real: Real,
+            ComplexNonZero: ComplexNonZero,
+            Complex: Complex
+            }
+        operand_ns = deduce_number_set(self.operand).domain
+        return self.deduce_in_number_set(number_set_map[operand_ns])
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,

@@ -8,7 +8,8 @@ from proveit import a, b, c, f, i, j, k, l, m, x, P, Q, S
 from proveit.logic import Forall, InSet
 from proveit.numbers import one, Add, Neg, subtract
 from proveit.numbers import (Complex, Integer, Interval, Natural,
-                             NaturalPos, Real, RealInterval)
+                             NaturalPos, Real, RealInterval,
+                             deduce_number_set)
 from proveit.numbers.ordering import Less, LessEq
 from proveit import TransRelUpdater
 
@@ -89,6 +90,16 @@ class Sum(OperationOverInstances):
             # Conclude the antecedent via generalization.
             antecedent.conclude_via_generalization()
         return impl.derive_consequent()
+
+    @relation_prover
+    def deduce_number_set(self, **defaults_config):
+        '''
+        Prove membership of this expression in the most 
+        restrictive standard number set we can readily know.
+        '''
+        summand_ns = deduce_number_set(self.summand, 
+                                       assumptions=self.conditions).domain
+        return self.deduce_in_number_set(summand_ns)
 
     def _formatted(self, format_type, **kwargs):
         # MUST BE UPDATED TO DEAL WITH 'joining' NESTED LEVELS

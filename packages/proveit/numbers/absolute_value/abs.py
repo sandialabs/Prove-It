@@ -1,10 +1,11 @@
 from proveit import (defaults, Literal, Operation, ExprRange, InnerExpr,
-                     ProofFailure, USE_DEFAULTS, relation_prover,
+                     UnsatisfiedPrerequisites, ProofFailure, 
+                     USE_DEFAULTS, relation_prover,
                      equality_prover)
 from proveit import a, b, c, n, r, x, theta
 from proveit.logic import InSet
 from proveit.logic.sets import ProperSubset, SubsetEq
-from proveit.numbers import NumberOperation
+from proveit.numbers import NumberOperation, deduce_number_set
 
 
 class Abs(NumberOperation):
@@ -149,6 +150,10 @@ class Abs(NumberOperation):
 
         # Check if we have an established relationship between
         # self.operand and zero.
+        try:
+            deduce_number_set(self.operand)
+        except UnsatisfiedPrerequisites:
+            pass
         if (LessEq(zero, self.operand).proven() or
                 LessEq(self.operand, zero).proven()):
             # Either |x| = x or |x| = -x depending upon the sign

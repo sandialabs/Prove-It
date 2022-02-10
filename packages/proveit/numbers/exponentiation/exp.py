@@ -9,8 +9,14 @@ from proveit import (defaults, Literal, Function, ExprTuple, InnerExpr,
                      StyleOptions)
 from proveit.logic import InSet, Membership, NotEquals
 from proveit.numbers import zero, one, two, Div, frac, num, Real
-from proveit.numbers import Integer, NumberOperation
-
+from proveit.numbers import Integer, NumberOperation, deduce_number_set
+from proveit.numbers.number_sets import (
+    Natural, NaturalPos,
+    Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
+    Rational, RationalNonZero, RationalPos, RationalNeg, RationalNonNeg,
+    RationalNonPos,
+    Real, RealNonZero, RealNeg, RealPos, RealNonNeg, RealNonPos,
+    Complex, ComplexNonZero)
 
 class Exp(NumberOperation):
     '''
@@ -220,6 +226,10 @@ class Exp(NumberOperation):
             from . import (square_abs_rational_simp,
                                      square_abs_real_simp)
             # |a|^2 = a if a is real
+            try:
+                deduce_number_set(self.base)
+            except UnsatisfiedPrerequisites:
+                pass
             rational_base = InSet(self.base, Rational).proven()
             real_base = InSet(self.base, Real).proven()
             thm = None
@@ -258,6 +268,8 @@ class Exp(NumberOperation):
         from proveit.logic import InSet
         from proveit.numbers import RationalPos
         from . import exp_rational_non_zero__not_zero, exp_not_eq_zero
+        deduce_number_set(self.base)
+        deduce_number_set(self.exponent)
         if (not exp_not_eq_zero.is_usable() or (
                 InSet(self.base, RationalPos).proven() and
                 InSet(self.exponent, RationalPos).proven())):
@@ -313,6 +325,7 @@ class Exp(NumberOperation):
             complex_power_of_quotient, complex_power_of_complex_power)
         base = self.base
         exponent = self.exponent
+        deduce_number_set(exponent)
         if isinstance(base, Mult):
             if self.base.operands.is_double():
                 _a, _b = self.base.operands
@@ -414,7 +427,7 @@ class Exp(NumberOperation):
         # Note: this is out-of-date.  Distribution handles this now,
         # except it doesn't deal with the negation part
         # (do we need it to?)
-        from proveit.numbers import Complex, deduce_in_number_set, Neg
+        from proveit.numbers import deduce_in_number_set, Neg
         # from .theorems import int_exp_of_exp, int_exp_of_neg_exp
         from . import int_exp_of_exp, int_exp_of_neg_exp
         if isinstance(self.exponent, Neg):
@@ -541,12 +554,9 @@ class Exp(NumberOperation):
             exp_complex_closure, exp_complex_nonzero_closure,
             sqrt_complex_closure, sqrt_real_closure,
             sqrt_real_pos_closure, sqrt_real_non_neg_closure)
-        from proveit.numbers import (
-            Natural, NaturalPos, Integer,
-            Rational, RationalPos, RationalNonZero,
-            Real, RealNonNeg, RealPos, Complex, ComplexNonZero)
         from proveit.numbers import zero
 
+        deduce_number_set(self.exponent)
         if number_set == NaturalPos:
             return exp_natpos_closure.instantiate(
                 {a: self.base, b: self.exponent})
@@ -614,6 +624,35 @@ class Exp(NumberOperation):
             "'Exp.deduce_in_number_set' not implemented for the %s set"
             % str(number_set))
 
+    @relation_prover
+    def deduce_number_set(self, **defaults_config):
+        '''
+        Prove membership of this expression in the most 
+        restrictive standard number set we can readily know.
+        '''
+        base_ns = deduce_number_set(self.base).domain
+        exp_ns = deduce_number_set(self.exponent).domain
+        if Natural.includes(base_ns) and Natural.includes(exp_ns):
+            return self.deduce_in_number_set(NaturalPos)
+        if Integer.includes(base_ns) and Natural.includes(exp_ns):
+            return self.deduce_in_number_set(Integer)
+        if RationalPos.includes(base_ns) and Integer.includes(exp_ns):
+            return self.deduce_in_number_set(RationalPos)
+        if (RationalNonZero.includes(base_ns) 
+                and Integer.includes(exp_ns)):
+            return self.deduce_in_number_set(RationalNonZero)
+        if Rational.includes(base_ns) and Natural.includes(exp_ns):
+            return self.deduce_in_number_set(Rational)
+        if RealPos.includes(base_ns) and Real.includes(exp_ns):
+            return self.deduce_in_number_set(RealPos)
+        if RealNonNeg.includes(base_ns) and Real.includes(exp_ns):
+            return self.deduce_in_number_set(RealNonNeg)
+        if Real.includes(base_ns) and Natural.includes(exp_ns):
+            return self.deduce_in_number_set(Real)
+        if ComplexNonZero.includes(base_ns):
+            return self.deduce_in_number_set(ComplexNonZero)
+        return self.deduce_in_number_set(Complex)
+            
 
 class ExpSetMembership(Membership):
     '''
