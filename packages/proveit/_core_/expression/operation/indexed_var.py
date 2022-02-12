@@ -74,15 +74,16 @@ class IndexedVar(Function):
             Expression.basic_replaced(self, repl_map, 
                                       allow_relabeling=allow_relabeling,
                                       requirements=requirements)
-        if base_var_sub is None:
-            # base_var wasn't in repl_map in the first place, so
-            # attempting to remove it had no effect.
-            return replaced_sans_base_var_sub
         try:
             if replaced_sans_base_var_sub in repl_map:
                 return repl_map[replaced_sans_base_var_sub]
+            elif base_var_sub is None:
+                # base_var wasn't in repl_map in the first place, so
+                # attempting to remove it had no effect.
+                return replaced_sans_base_var_sub
         finally:
-            repl_map[base_var] = base_var_sub
+            if base_var_sub is not None:
+                repl_map[base_var] = base_var_sub
         # As the last resort, do the replacement with the
         # base_var in the repl_map.
         return Expression.basic_replaced(
