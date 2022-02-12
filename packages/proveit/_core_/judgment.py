@@ -434,6 +434,7 @@ class Judgment:
         or a pre-existing one.  Update other Judgments that use the
         same 'truth' expression as needed.
         '''
+        from .proof import _ShowProof
         # update Judgment.lookup_dict and use find all of the Judgments
         # with this expr to see if the proof should be updated with the
         # new proof.
@@ -453,7 +454,7 @@ class Judgment:
         # Check to see if the new proof is applicable to any other 
         # Judgment.  It can replace an old proof if it became unusable 
         # or if the newer one uses fewer steps.
-        newproof_numsteps = newproof.num_steps()
+        #newproof_numsteps = newproof.num_steps()
         expr_judgments = Judgment.lookup_dict.setdefault(self.expr, set())
         expr_judgments.add(self)
         for expr_judgment in expr_judgments:
@@ -463,6 +464,8 @@ class Judgment:
                 # replace if there was no pre-existing usable proof or 
                 # the new proof has fewer steps
                 preexisting_proof = expr_judgment.proof()
+                if isinstance(preexisting_proof, _ShowProof):
+                    continue
                 if (preexisting_proof is None or
                         not preexisting_proof.is_usable() or
                         newproof.num_steps() < preexisting_proof.num_steps()):
@@ -636,8 +639,8 @@ class Judgment:
         attr = getattr(self.expr, name)
 
         if hasattr(attr, '__call__'):
-            if name[:5] == 'with_':
-                # 'with_...' methods change the style.  We want to
+            if name[:4] == 'with':
+                # 'with...' methods change the style.  We want to
                 # change the style and the return the judgment.
                 def call_method_for_new_style(*args, **kwargs):
                     new_style_expr = attr.__call__(*args, **kwargs)
@@ -901,7 +904,7 @@ class Judgment:
                     raise TypeError(
                         "%s is not the expected kind of Expression "
                         "as a repl_map key:\n%s" %
-                        str(e))
+                        (key, str(e)))
                 if key.num_entries() == 1:
                     # Replacement key for replacing a range of indexed
                     # variables, or range of ranges of indexed variables
