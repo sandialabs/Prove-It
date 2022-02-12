@@ -615,15 +615,16 @@ class Expression(metaclass=ExprType):
         '''
         return self._style_id == expr._style_id
 
-    def with_styles(self, **kwargs):
+    def with_styles(self, ignore_inapplicable_styles=False, **kwargs):
         '''
-        Alter the styles of this expression, and anything containing this
-        particular expression object, according to kwargs.
+        Alter the styles of this expression, and anything containing 
+        this particular expression object, according to kwargs.
         '''
         styles = dict(self._style_data.styles)
         # update the _styles, _style_rep, and _style_id
         styles.update(kwargs)
-        return self._with_these_styles(styles)
+        return self._with_these_styles(
+                styles, ignore_inapplicable_styles=ignore_inapplicable_styles)
     
     def with_default_style(self, name):
         '''
@@ -669,18 +670,22 @@ class Expression(metaclass=ExprType):
                 (self, expr_with_different_style))
         return expr_with_different_style
 
-    def with_mimicked_style(self, other_expr):
+    def with_mimicked_style(self, other_expr, *,
+                            ignore_inapplicable_styles=False):
         '''
         Given an 'other_expr' with the same style options as
         'self', return self with a style that mimicks that
         of 'other_expr' just at the top level.
         '''
-        if (self.style_options().options != 
-                other_expr.style_options().options):
-            raise ValueError(
-                "'other_expr' must be an expression with "
-                "the same style options as 'self'.")
-        return self.with_styles(**other_expr.get_styles())
+        if not ignore_inapplicable_styles:
+            if (self.style_options().options != 
+                    other_expr.style_options().options):
+                raise ValueError(
+                    "'other_expr' must be an expression with "
+                    "the same style options as 'self'.")
+        return self.with_styles(
+                **other_expr.get_styles(),
+                ignore_inapplicable_styles=ignore_inapplicable_styles)
 
     def style_names(self):
         '''
