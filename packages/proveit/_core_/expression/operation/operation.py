@@ -114,7 +114,9 @@ class Operation(Expression):
                 default = '()',
                 related_methods = (
                         'with_wrapping_at', 'with_wrap_before_operator',
-                        'with_wrap_after_operator', 'wrap_positions'))
+                        'with_wrap_after_operator', 
+                        'without_wrapping',
+                        'wrap_positions'))
             options.add_option(
                 name = 'justification',
                 description = (
@@ -130,6 +132,9 @@ class Operation(Expression):
             ' '.join(
                 str(pos) for pos in wrap_positions) +
             ')')
+
+    def without_wrapping(self, *wrap_positions):
+        return self.with_wrapping_at()
 
     def with_wrap_before_operator(self):
         if self.operands.num_entries() != 2:
