@@ -724,7 +724,10 @@ class ExprTuple(Composite, Expression):
     @equality_prover('equated', 'equate')
     def deduce_equality(self, equality, **defaults_config):
         from proveit import ExprRange
+        from proveit import a, b, i
         from proveit.logic import Equals
+        from proveit.core_expr_types.tuples import tuple_eq_via_elem_eq
+        from proveit.relation import TransRelUpdater
         if not isinstance(equality, Equals):
             raise ValueError("The 'equality' should be an Equals expression")
         if equality.lhs != self:
@@ -750,8 +753,40 @@ class ExprTuple(Composite, Expression):
                     equiv_thm = proveit.numbers.numerals.decimals\
                         .__getattr__('count_to_%d_range' % _n)
                     return equiv_thm
-        raise NotImplementedError("ExprTuple.deduce_equality not implemented "
-                                  "for this case: %s." % self)
+        
+        lhs, rhs = equality.lhs, equality.rhs
+        if (lhs.num_entries() == rhs.num_entries() == 1
+                and isinstance(lhs[0], ExprRange) 
+                and isinstance(rhs[0], ExprRange)):
+            # Prove the equality of two ExprRanges.
+            r_range = rhs[0]
+            expr = lhs
+            if expr[0].is_decreasing():
+                # We could handle different styles later, but
+                # let's be consistent with increasing order for now
+                # to make this easier to implement.
+                expr = expr.inner_expr()[0].with_increasing_order()
+            eq = TransRelUpdater(expr)
+            if expr[0].start_index != r_range.start_index:
+                # Shift indices so they have the same start.
+                expr = eq.update(expr[0].shift_equivalence(
+                        new_start=r_range.start_index))
+            if expr[0].lambda_map != r_range.lambda_map:
+                # Change the lambda map.
+                expr = eq.update(expr[0].range_fn_transformation(
+                        r_range.lambda_map))
+            if expr[0].end_index != r_range.end_index:
+                # Make the end indices be the same:
+                end_eq = Equals(expr[0].end_index, r_range.end_index).prove()
+                expr = eq.update(end_eq.substitution(
+                        expr.inner_expr()[0].end_index))
+            return eq.relation
+        
+        # Try tuple_eq_via_elem_eq as the last resort.
+        _i = lhs.num_elements()
+        _a = lhs
+        _b = rhs
+        return tuple_eq_via_elem_eq.instantiate({i:_i, a:_a, b:_b})
     
     @equality_prover('expanded_range', 'expand_range')
     def range_expansion(self, **defaults_config):
