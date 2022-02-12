@@ -18,7 +18,7 @@ from .lambda_expr import (
 from .composite import (
     Composite, composite_expression, single_or_composite_expression,
     ExprTuple, extract_var_tuple_indices, ExprTupleError,
-    ExprArray, VertExprArray, NamedExprs, ExprRange,
-    var_range, RangeInstanceError)
+    ExprArray, var_array, horiz_var_array, VertExprArray, vert_var_array,
+    NamedExprs, ExprRange, var_range, RangeInstanceError)
 from .label import (Label, Literal, Variable, DuplicateLiteralError,
                     safe_dummy_var, safe_dummy_vars, safe_default_or_dummy_var)

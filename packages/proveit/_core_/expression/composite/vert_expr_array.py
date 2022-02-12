@@ -1,5 +1,5 @@
 from proveit._core_.expression.expr import MakeNotImplemented
-from .expr_array import ExprArray
+from .expr_array import ExprArray, var_array
 
 class VertExprArray(ExprArray):
     '''
@@ -28,15 +28,16 @@ class VertExprArray(ExprArray):
                                   vertical_explicit_cell_latex_fn=None,
                                   horizontal_explicit_cell_latex_fn=None,
                                   format_cell_entries=None,
-                                  **cell_latex_kwargs):
+                                  col_row_to_latex_kwargs=None):
         return ExprArray.get_latex_formatted_cells(
                 self, orientation,
                 vertical_explicit_cell_latex_fn
                 =vertical_explicit_cell_latex_fn,
                 horizontal_explicit_cell_latex_fn
                 =horizontal_explicit_cell_latex_fn,
-                format_cell_entries=format_cell_entries,
-                **cell_latex_kwargs)
+                # col/row are switched in name, but either way
+                # it is (outer index, inner index) order.
+                row_col_to_latex_kwargs=col_row_to_latex_kwargs)
     
     def get_format_row_element_positions(self):
         return self.get_inner_format_cell_element_positions()
@@ -49,3 +50,8 @@ class VertExprArray(ExprArray):
         ExprArray._config_latex_tool(self, lt)
         if 'multirow' not in lt.packages:
             lt.packages.append('multirow')
+
+vert_var_array = (
+        lambda var, start_index_or_indices, end_index_or_indices :
+            var_array(var, start_index_or_indices, end_index_or_indices,
+                      array_type=VertExprArray))

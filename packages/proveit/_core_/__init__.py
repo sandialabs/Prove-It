@@ -18,8 +18,8 @@ from .expression import (
     Composite, composite_expression,
     single_or_composite_expression,
     ExprTuple, ExprTupleError, extract_var_tuple_indices,
-    ExprArray, VertExprArray, NamedExprs, ExprRange,
-    var_range, RangeInstanceError,
+    ExprArray, var_array, horiz_var_array, VertExprArray, vert_var_array,
+    NamedExprs, ExprRange, var_range, RangeInstanceError,
     StyleOptions, maybe_fenced_string,
     maybe_fenced_latex, maybe_fenced)
 from .judgment import Judgment, as_expression, as_expressions

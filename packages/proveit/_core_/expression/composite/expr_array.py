@@ -148,7 +148,8 @@ class ExprArray(ExprTuple):
                                 inner_expr = ExprRange(
                                         _er.parameter, inner_expr,
                                         _er.start_index, _er.end_index)
-                                inner_expr = inner_expr.with_mimicked_style(_er)
+                                inner_expr = inner_expr.with_mimicked_style(
+                                        _er, ignore_inapplicable_styles=True)
                         # Compose outer and inner roles.
                         inner_format_cell_entries.append(
                                 (inner_expr, outer_role, inner_role))
@@ -263,15 +264,21 @@ class ExprArray(ExprTuple):
                                   vertical_explicit_cell_latex_fn=None,
                                   horizontal_explicit_cell_latex_fn=None,
                                   format_cell_entries=None,
-                                  **cell_latex_kwargs):
+                                  row_col_to_latex_kwargs=None):
         '''
         Return cells of this ExprArray formatted for LaTeX.
         
-        The entries themselves may optionally be passed back via
-        format_cell_entries (provide an empty list).
+        The entries themselves may optionally be passed in or
+        passed back via format_cell_entries (passed in if it is not
+        empty, passed back if it is).
         
-        The 'cell_latex_kwargs' will be passed as keyword arguments
-        to the 'latex' calls for formatting each cell.
+        If row_col_to_latex_kwargs is provided, each (row, col)
+        pair should map to keyword arguments to be passed to the
+        to the 'latex' calls for formatting each cell.  These are
+        zero-based cell indices (not the 1-based element indices).
+        For VertExprArray.get_latex_formatted_cells, this is labeled
+        col_row_to_latex_kwargs but either way corresponds to 
+        (outer index, inner index).
         '''
         from .vert_expr_array import VertExprArray
         # Depending upon the orientation, outer/inner ellipses
@@ -287,7 +294,8 @@ class ExprArray(ExprTuple):
                           else horiz_ellipses)
         inner_ellipsis = (horiz_ellipses if orientation=='horizontal'
                           else vert_ellipses)
-        
+        if row_col_to_latex_kwargs is None:
+            row_col_to_latex_kwargs = _RowColToEmpty_kwargs()        
         if vertical_explicit_cell_latex_fn is None:
             vertical_explicit_cell_latex_fn = (
                     ExprArray.vertical_explicit_cell_latex)
@@ -324,12 +332,17 @@ class ExprArray(ExprTuple):
                              "'vertical', not %s"%orientation)
         
         formatted_cells = []
-        format_cell_entries = self.get_format_cell_entries(format_cell_entries)
-        for inner_format_cell_entries in format_cell_entries:
+        if format_cell_entries is None or len(format_cell_entries) == 0:
+            format_cell_entries = self.get_format_cell_entries(
+                    format_cell_entries)
+        for outer_idx, inner_format_cell_entries in enumerate(
+                format_cell_entries):
             if isinstance(inner_format_cell_entries, list):
                 # Explicit inner list.
                 inner_formatted_cells = []
-                for entry in inner_format_cell_entries:
+                for inner_idx, entry in enumerate(inner_format_cell_entries):
+                    cell_latex_kwargs = row_col_to_latex_kwargs[(outer_idx, 
+                                                                 inner_idx)]
                     expr, outer_role, inner_role = entry
                     if isinstance(expr, ExprRange):
                         nested_range_depth = expr.nested_range_depth()
@@ -392,6 +405,7 @@ class ExprArray(ExprTuple):
                     inner_formatted_cells.append(formatted_cell)                        
                 formatted_cells.append(inner_formatted_cells)
             else:
+                cell_latex_kwargs = row_col_to_latex_kwargs[(outer_idx,)]                
                 # The entire inner list is represented by one entry.
                 expr, role = inner_format_cell_entries
                 if isinstance(expr, ExprRange):
@@ -498,3 +512,34 @@ class ExprArray(ExprTuple):
         '''
         from proveit.core_expr_types import Len
         return Len(self[:]).computed(**defaults_config)
+
+class _RowColToEmpty_kwargs:
+    '''
+    Default for row_col_to_latex_kwargs which returns an empty
+    keyword arguments for any (row, col) key.
+    '''
+    def __init__(self):
+        self.empty_dict = dict()
+    
+    def __getitem__(self, row_col):
+        return self.empty_dict
+
+def var_array(var, start_index_or_indices, end_index_or_indices,
+              array_type=ExprArray):
+    from proveit import (safe_dummy_vars, composite_expression,
+                         IndexedVar)
+    from .vert_expr_array import VertExprArray
+    start_indices = composite_expression(start_index_or_indices)
+    end_indices = composite_expression(end_index_or_indices)
+    if array_type not in (ExprArray, VertExprArray, ExprTuple):
+        raise ValueError("Not a valid array type: %s"%array_type)
+    if not (start_indices.num_entries() == end_indices.num_entries() == 2):
+        raise ValueError("Expecting two start indices and two end indices "
+                         "when creating a Variable array")
+    _i, _j = safe_dummy_vars(2, var, start_indices, end_indices)
+    return array_type(ExprRange(
+            _i, [ExprRange(_j, IndexedVar(var, [_i, _j]),
+                           start_indices[1], end_indices[1])],
+            start_indices[0], end_indices[0]))
+
+horiz_var_array = var_array
