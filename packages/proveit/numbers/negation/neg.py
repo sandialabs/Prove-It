@@ -1,6 +1,7 @@
 from proveit import (Expression, Literal, Operation, maybe_fenced_string, 
                      maybe_fenced_latex, InnerExpr, defaults, USE_DEFAULTS, 
-                     ProofFailure, relation_prover, equality_prover)
+                     ProofFailure, relation_prover, equality_prover,
+                     SimplificationDirectives)
 from proveit.logic import is_irreducible_value
 from proveit.numbers.number_sets import (
         Natural, NaturalPos, 
@@ -15,6 +16,9 @@ from proveit.numbers import NumberOperation
 class Neg(NumberOperation):
     # operator of the Neg operation.
     _operator_ = Literal(string_format='-', theory=__file__)
+
+    _simplification_directives_ = SimplificationDirectives(
+            distribute_over_add = True)
 
     def __init__(self, A, *, styles=None):
         NumberOperation.__init__(self, Neg._operator_, A, styles=styles)
@@ -132,11 +136,12 @@ class Neg(NumberOperation):
         Returns a proven simplification equation for this Neg
         expression assuming the operands have been simplified.
         
-        Handle negation of 0 and double negation specifically.
+        Handle negation of 0, double negation, and distribution
+        of a sum.
         '''
         from proveit.logic import EvaluationError
         from . import negated_zero
-        from proveit.numbers import zero
+        from proveit.numbers import Add, zero
         
         if must_evaluate and not is_irreducible_value(self.operand):
             # The simplification of the operands may not have
@@ -147,10 +152,17 @@ class Neg(NumberOperation):
         
         if self.operand == zero:
             return negated_zero
+        
         # Handle double negation:
         if isinstance(self.operand, Neg):
             # simplify double negation
             return self.double_neg_simplification()
+        
+        if Neg._simplification_directives_.distribute_over_add:
+            # Handle distribution:
+            if isinstance(self.operand, Add):
+                return self.distribution(auto_simplify=True)
+        
         return Expression.shallow_simplification(self)
 
     @equality_prover('double_neg_simplified', 'double_neg_simplify')
@@ -305,7 +317,9 @@ class Neg(NumberOperation):
         See Mult.neg_simplification where this may be used indirectly.
         '''
         from proveit.numbers import Mult
-        from . import mult_neg_left_double, mult_neg_right_double, mult_neg_any_double
+        from proveit.numbers.multiplication import (
+                mult_neg_left_double, mult_neg_right_double, 
+                mult_neg_any_double)
 
         mult_expr = self.operand
         if not isinstance(mult_expr, Mult):
@@ -320,10 +334,10 @@ class Neg(NumberOperation):
         if mult_expr.operands.is_double():
             if idx == 0:
                 return mult_neg_left_double.instantiate(
-                    {a: mult_expr.operands[1]})
+                    {x: mult_expr.operands[1]})
             else:
                 return mult_neg_right_double.instantiate(
-                    {a: mult_expr.operands[0]})
+                    {x: mult_expr.operands[0]})
         _a = mult_expr.operands[:idx]
         _b = mult_expr.operands[idx]
         _c = mult_expr.operands[idx + 1:]
@@ -331,3 +345,14 @@ class Neg(NumberOperation):
         _n = _c.num_elements()
         return mult_neg_any_double.instantiate(
             {m: _m, n: _n, a: _a, b: _b, c: _c})
+
+def negated(expr):
+    ''' 
+    Returns the negated form of this expression.
+    If the original is a Neg expression, return its operand
+    (accounting for the double-negation);
+    otherwise, return the Neg of the original.
+    '''
+    if isinstance(expr, Neg):
+        return expr.operand
+    return Neg(expr)
