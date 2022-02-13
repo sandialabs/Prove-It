@@ -672,12 +672,8 @@ class ExprRange(Expression):
                             # Add.
                             lhs, rhs = condition.lhs, condition.rhs
                             new_lhs, new_rhs = lhs, rhs
-                            if (isinstance(lhs, Add) or 
-                                    isinstance(lhs, Not)):
-                                new_lhs = lhs.quick_simplified()
-                            if (isinstance(rhs, Add) or 
-                                    isinstance(rhs, Not)):
-                                new_rhs = rhs.quick_simplified()
+                            new_lhs = quick_simplified_index(lhs)
+                            new_rhs = quick_simplified_index(rhs)
                             if lhs != new_lhs or rhs != new_rhs:
                                 condition = condition.basic_replaced(
                                         {lhs:new_lhs, rhs:new_rhs})
@@ -1883,8 +1879,10 @@ class ExprRange(Expression):
         return nested_range(parameters, new_inner_body, start_indices,
                             end_indices)
 
-    @prover
-    def partition(self, before_split_idx, **defaults_config):
+    @equality_prover("partitioned", "split")
+    def partition(self, before_split_idx, *, 
+                  force_to_treat_as_increasing=False,
+                  **defaults_config):
         '''
         Return the equation between this range within an ExprTuple
         and a split version in the following manner:
@@ -1904,7 +1902,9 @@ class ExprRange(Expression):
 
         lambda_map = self.lambda_map
         default_order = 'increasing'
-        if self.get_style('order', default_order) == 'decreasing':
+        if force_to_treat_as_increasing:
+            decreasing = False
+        elif self.get_style('order', default_order) == 'decreasing':
             from proveit.numbers import Neg
             before_split_idx = Neg(before_split_idx)
             decreasing = True
@@ -1958,9 +1958,10 @@ class ExprRange(Expression):
                  g:new_lambda_map, k:new_lambda_map.parameter},
                  preserve_expr=ExprTuple(self)).derive_consequent()
 
-    @prover
+    @equality_prover("shifted", "shift")
     def shift_equivalence(self, *, old_shift=None, new_start=None,
                           new_end=None, new_shift=None,
+                          force_to_treat_as_increasing=False,
                           **defaults_config):
         '''
         Return the equation between this range within an ExprTuple
@@ -1978,7 +1979,9 @@ class ExprRange(Expression):
             shift_equivalence, negated_shift_equivalence, negated_shift_equivalence_both, shift_equivalence_both)
 
         default_order = 'increasing'
-        if self.get_style('order', default_order) == 'decreasing':
+        if force_to_treat_as_increasing:
+            decreasing = False
+        elif self.get_style('order', default_order) == 'decreasing':
             from proveit.numbers import Neg
             decreasing = True
             print("we are decreasing")
