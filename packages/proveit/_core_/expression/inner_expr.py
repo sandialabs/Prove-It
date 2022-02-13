@@ -149,6 +149,7 @@ class InnerExpr:
         of this Composite will return the SubExprRepl with the extended
         path to this item.
         '''
+        from proveit import ExprRange
         cur_inner_expr = self.expr_hierarchy[-1]
         if isinstance(cur_inner_expr, ExprTuple):
             # For an ExprTuple, the item key is either the index of the
@@ -388,7 +389,7 @@ class InnerExpr:
         Returns the lambda function/map that would replace this
         particular inner expression within the top-level expression.
         '''
-        from proveit import Judgment, var_range
+        from proveit import Judgment, var_range, ExprRange
         
         if params_of_param is None:
             params_of_param = self.parameters
@@ -404,6 +405,10 @@ class InnerExpr:
         cur_sub_expr = self.expr_hierarchy[-1]
         cur_idx = self.inner_expr_path[-1] if len(
             self.inner_expr_path) > 0 else None
+        skip_innermost = False
+        if isinstance(cur_sub_expr, ExprRange) and cur_idx is not None:
+            cur_idx = slice(cur_idx, cur_idx+1)
+            cur_sub_expr = ExprTuple(cur_sub_expr)
 
         if isinstance(cur_idx, slice):
             # When there is a slice of an ExprTuple at the bottom level,
@@ -424,6 +429,7 @@ class InnerExpr:
             lambda_params = var_range(dummy_var, one, sub_tuple_len)
             lambda_body = ExprTuple(*(parent_tuple[:start].entries + (lambda_params,)
                                       + parent_tuple[stop:].entries))
+            skip_innermost = True
             """
         elif isinstance(cur_sub_expr, Composite):
             dummy_vars = top_level_expr.safe_dummy_vars(len(cur_sub_expr))
@@ -458,10 +464,12 @@ class InnerExpr:
             # Don't auto-simplify anything when creating the replacement
             # map.
             temp_defaults.auto_simplify = False
-            lambda_body = self._rebuild(lambda_body)
+            lambda_body = self._rebuild(lambda_body,
+                                        skip_innermost=skip_innermost)
         return Lambda(lambda_params, lambda_body)
+                      
 
-    def _rebuild(self, inner_expr_replacement):
+    def _rebuild(self, inner_expr_replacement, skip_innermost=False):
         '''
         Rebuild the expression replacing the inner expression with the
         given 'inner_expr_replacement'.
@@ -469,10 +477,11 @@ class InnerExpr:
         from proveit import Judgment
         inner_expr = inner_expr_replacement
         # Work from the inside out.
-        for expr, idx in reversed(list(zip(self.expr_hierarchy,
+        for expr, idx in reversed(list(zip(self.expr_hierarchy[:-1],
                                            self.inner_expr_path))):
-            if isinstance(idx, slice):
+            if isinstance(idx, slice) or skip_innermost:
                 continue
+            skip_innermost = False # no longer the innermost
             if isinstance(expr, Judgment):
                 if idx < 0:
                     raise ValueError("Cannot call an InnerExpr.repl_lambda "
@@ -502,7 +511,7 @@ class InnerExpr:
         'equality_or_replacement' is appropriate and return the
         corresponding equality expression.
         '''
-        from proveit import Judgment
+        from proveit import Judgment, ExprRange
         from proveit.logic import Equals
 
         cur_inner_expr = self.expr_hierarchy[-1]
@@ -511,9 +520,12 @@ class InnerExpr:
                 raise TypeError("When given a Judgment, "
                                 "'equality_or_replacement' must prove"
                                 "an Equals expression")
-            if equality_or_replacement.lhs != cur_inner_expr:
+            expected_lhs = cur_inner_expr
+            if isinstance(cur_inner_expr, ExprRange):
+                expected_lhs = ExprTuple(expected_lhs)
+            if equality_or_replacement.lhs != expected_lhs:
                 raise ValueError("Expecting lhs of %s to be %s"%
-                                 (equality_or_replacement, cur_inner_expr))
+                                 (equality_or_replacement, expected_lhs))
             if prove_equality:
                 return equality_or_replacement
             else:

@@ -190,6 +190,7 @@ def _make_decorated_relation_prover(func):
     
     def decorated_relation_prover(*args, **kwargs):
         from proveit._core_.expression.expr import Expression
+        from proveit._core_.expression.composite import ExprRange, ExprTuple
         from proveit.relation import Relation  
         
         # 'preserve' the 'self' or 'self.expr' expression so it will 
@@ -223,19 +224,22 @@ def _make_decorated_relation_prover(func):
                     "@relation_prover, %s, expected to prove a "
                     "Relation expression, not %s of type %s."
                     %(func, proven_expr, proven_expr.__class__))
-        if proven_expr.lhs != expr:
+        expected_lhs = expr
+        if isinstance(expr, ExprRange):
+            expected_lhs = ExprTuple(expr)
+        if proven_expr.lhs != expected_lhs:
             raise TypeError(
                     "@relation_prover, %s, expected to prove a "
                     "relation with %s on its left side "
                     "('lhs').  %s does not satisfy this "
-                    "requirement."%(func, expr, proven_expr))
+                    "requirement."%(func, expected_lhs, proven_expr))
 
         # Make the style consistent with the original expression.
-        if not proven_expr.lhs.has_same_style(expr):
+        if not proven_expr.lhs.has_same_style(expected_lhs):
             # Make the left side of the proven truth have a style
             # that matches the original expression.
             inner_lhs = proven_truth.inner_expr().lhs
-            proven_truth = inner_lhs.with_matching_style(expr)
+            proven_truth = inner_lhs.with_matching_style(expected_lhs)
         return proven_truth
     return decorated_relation_prover
 
@@ -372,6 +376,11 @@ def equality_prover(past_tense, present_tense):
                                         expr)
                     else:
                         proven_truth = Equals.get_known_evaluation(expr)
+                # For an 'evaluation' or 'simplification', we should
+                # force auto_simplify on and preserve_all off to
+                # simplify as much as possible.
+                kwargs['auto_simplify'] = True
+                kwargs['preserve_all'] = False
             if proven_truth is None:
                 proven_truth = decorated_relation_prover(*args, **kwargs)
             proven_expr = proven_truth.expr
