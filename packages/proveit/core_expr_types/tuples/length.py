@@ -129,10 +129,11 @@ class Len(Operation):
             range_end = entries[0].end_index
             if range_start == one:
                 len_comp = extended_range_from1_len.instantiate(
-                    {f: range_lambda, b: entries[1], i: range_end})
+                    {f: range_lambda, x: entries[1], i: range_end})
             else:
                 len_comp = extended_range_len.instantiate(
-                    {f: range_lambda, i: range_start, j: range_end})
+                    {f: range_lambda, x:entries[1], 
+                     i: range_start, j: range_end})
         else:
             # Handle the general cases via general_len_val,
             # len_of_ranges_with_repeated_indices,
@@ -322,7 +323,7 @@ class Len(Operation):
         elif (len(entries) == 2 and not isinstance(entries[1], ExprRange)
                 and not isinstance(entries[0].body, ExprRange)):
             # Case of an extended range:
-            # |(a_1, ..., a_n, b| = n+1
+            # |(a_1, ..., a_n, b| = |(1, ..., n_1)|
             from proveit.core_expr_types.tuples import \
                 (extended_range_len_typical_eq,
                  extended_range_from1_len_typical_eq)
@@ -332,11 +333,11 @@ class Len(Operation):
             range_end = entries[0].end_index
             if range_start == one:
                 return extended_range_from1_len_typical_eq.instantiate(
-                    {f: range_lambda, b: entries[1], i: range_end},
+                    {f: range_lambda, x: entries[1], i: range_end},
                     auto_simplify=False)
             else:
                 return extended_range_len_typical_eq.instantiate(
-                    {f: range_lambda, b: entries[1],
+                    {f: range_lambda, x: entries[1],
                      i: range_start, j: range_end}, auto_simplify=False)
         raise NotImplementedError("Len.typical_eq not implemented for "
                                   "this case: %s.  Try Len.deduce_equality "
