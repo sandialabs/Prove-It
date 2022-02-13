@@ -432,6 +432,7 @@ class Exp(NumberOperation):
                         'fraction base')
     """
 
+    """
     # we have renamed raise_exp_factor to factorization() !!!
     # perhaps re-rename this to avoid factorization() interactions
     # due to recursive calls to factorization() (because this is NOT
@@ -480,6 +481,7 @@ class Exp(NumberOperation):
         deduce_in_number_set(b_sub, Complex)
         return thm.instantiate({n: n_sub}).instantiate(
             {a: a_sub, b: b_sub}).derive_reversed()
+    """
 
     @equality_prover('exponent_separated', 'exponent_separate')
     def exponent_separation(self, **defaults_config):
