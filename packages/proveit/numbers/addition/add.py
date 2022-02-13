@@ -744,14 +744,16 @@ class Add(NumberOperation):
     def quick_simplified(self):
         '''
         Return a simplified version of this Add expression
-        without any proof.  In particular, integers are extracted,
-        added, and placed at the end.  Cancelations are made on
+        without any proof.  In particular, negations are distributed
+        nested additionas are ungrouped, integers are extracted,
+        added, and placed at the end, and cancelations are made on
         individual terms as well as expression ranges or portions of
         expression ranges.  We freely assume terms represent numbers
         and expression ranges are well-formed.
         This quick-n-dirty approach can be good
         enough for the purposes of displaying expressions involving
-        expression ranges.
+        expression ranges.  See also the quick_simplified_index 
+        function defined in number_operation.py.
         '''
         from proveit.numbers import is_literal_int, num, Neg
         
@@ -781,7 +783,8 @@ class Add(NumberOperation):
                 # back later.
                 sign = -sign
                 remaining_terms.appendleft(Neg)
-                term = term.operand
+                remaining_terms.appendleft(term.operand)
+                continue
             if isinstance(term, Add):
                 remaining_terms.extendleft(reversed(term.terms.entries))
                 continue
@@ -960,12 +963,8 @@ class Add(NumberOperation):
 
     def quick_simplification(self):
         '''
-        Return a simplification of this Add expression
-        without any proof.  In particular, integers are extracted,
-        added, and placed at the end.
-        This quick-n-dirty approach can be good
-        enough for the purposes of displaying expressions involving
-        expression ranges.
+        Return a simplification of this Add expression without any 
+        proof.  See Add.quick_simplified for more details.
         '''
         return Equals(self, self.quick_simplified())        
 

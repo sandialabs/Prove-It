@@ -12,14 +12,15 @@ from .number_sets import (
 
 from .number_sets import Interval, RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC
 from .number_sets import e, pi, i, infinity
-from .number_operation import NumberOperation, deduce_in_number_set
+from .number_operation import (NumberOperation, deduce_in_number_set,
+                               quick_simplified_index)
 from .rounding import Floor, Ceil, Round
 from .absolute_value import Abs
 from .numerals import (num, Numeral, DecimalSequence, Digits, DIGITS,
                        BinarySequence, Bit, BITS, is_literal_int)
 from .numerals import zero, one, two, three, four, five, six, seven, eight, nine, hexa, hexb, hexc, hexd, hexe, hexf
 from .addition import (Add, subtract, dist_subtract, dist_add)
-from .negation import Neg
+from .negation import Neg, negated
 from .ordering import (NumberOrderingRelation, number_ordering,
                        Less, LessEq, greater, greater_eq, Min, Max)
 from .multiplication import Mult
@@ -33,6 +34,7 @@ from .product import Prod
 from .integration import Integrate
 
 import proveit
+
 
 if proveit.defaults.automation:
     # Import some fundamental theorems without quantifiers

@@ -141,3 +141,26 @@ def deduce_in_number_set(expr, number_set, **defaults_config):
         return expr.deduce_in_number_set(number_set)
     # Try prove().
     return membership.prove()
+
+def quick_simplified_index(expr):
+    '''
+    Return a simplified version of this expression with a 
+    quick-n-dirty approach suitable for additively shifted and/or
+    negated integer indices and nested versions thereof.
+    In particular, negations are distributed nested additionas are 
+    ungrouped, literal integers are extracted, added, and placed at the
+    end, and cancelations are made on ndividual terms as well as 
+    expression ranges or portions of expression ranges.  We freely 
+    assume terms represent numbers and expression ranges are 
+    well-formed.
+    Used for ExprRange formatting and for hints along the way when
+    provably expanding ExprRanges through an instantiation (this
+    provides hints, but there will be proven requirements to ensure it
+    is right).
+    '''
+    from proveit.numbers import Add, Neg
+    if isinstance(expr, Neg):
+        return Add(expr).quick_simplified()
+    elif isinstance(expr, Add):
+        return expr.quick_simplified()
+    return expr
