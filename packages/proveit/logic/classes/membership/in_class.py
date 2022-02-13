@@ -222,6 +222,16 @@ class InClass(Relation):
                 if known_membership.is_applicable(assumptions):
                     yield known_membership
 
+    """
+    DON'T OVERSIMPLIFY!!
+    We definitey do not want to "simplify" by evaluating the
+    membership.  It may be reasonable to simplify according to
+    the membership 'definition' if there is a 'membership_object',
+    but that is also likely undesirable.  In fact, it is kind of
+    backwards.  For example,
+        "x in BOOL" is a simpler expression
+        than "(x = T) or (x = F)"
+    
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
                                **defaults_config):
@@ -262,6 +272,7 @@ class InClass(Relation):
         except BaseException:
             pass
         return evaluation
+    """
     
     @staticmethod
     def check_proven_class_membership(membership, element, class_of_class):
