@@ -340,7 +340,9 @@ class And(Operation):
         _k = expr_range.parameter if instance_param is None else instance_param
         _P = expr_range.lambda_map
         proven_quantification = quantification_from_conjunction.instantiate(
-                {i:_i, j:_j, k:_k, P:_P}).derive_consequent()
+                {i:_i, j:_j, k:_k, P:_P},
+                preserve_expr=self).derive_consequent()
+            
         if defaults.automation:
             # While we are at it, as an "unofficial" side-effect,
             # let's instantatiate forall_{k in {i .. j}} P(k) to derive
@@ -498,22 +500,22 @@ class And(Operation):
         '''
         from proveit import ExprRange
         from proveit.numbers import one
-        from . import redundant_conjunction
+        from . import redundant_conjunction, redundant_conjunction_general
         if (self.operands.num_entries() != 1 or
                 not isinstance(self.operands[0], ExprRange) or
                 not self.operands[0].is_parameter_independent):
             raise ValueError("`And.conclude_as_redundant` only allowed for a "
                              "conjunction of the form "
                              "A and ..n repeats.. and A, not %s" % self)
-        if self.operands[0].start_index != one:
-            raise NotImplementedError(
-                "'conclude_as_redundant' only implemented "
-                "when the start index is 1.  Just need to "
-                "do an ExprRange shift to implement it more "
-                "completely")
-        _A = self.operands[0].body
-        return redundant_conjunction.instantiate(
-            {n: self.operands[0].end_index, A: _A})
+        expr_range = self.operands[0]
+        _A = expr_range.body
+        if expr_range.start_index == one:
+            return redundant_conjunction.instantiate(
+                {n: expr_range.end_index, A: _A})
+        else:
+            _i, _j = expr_range.start_index, expr_range.end_index
+            return redundant_conjunction_general.instantiate(
+                {i:_i, j:_j, A:_A})
 
     @prover
     def conclude_over_expr_range(self, **defaults_config):
