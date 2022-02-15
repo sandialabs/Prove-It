@@ -14,8 +14,8 @@ class NotProperSubset(Relation):
         '''
         Create the expression for (A not_proper_subset B)
         '''
-        Operation.__init__(
-            self, NotProperSubset._operator_, (A, B), styles=styles)
+        Relation.__init__(
+            self, NotProperSubset._operator_, A, B, styles=styles)
         # Need 'direction' style
 
     @staticmethod

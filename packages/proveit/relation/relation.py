@@ -107,6 +107,28 @@ class Relation(Operation):
         assumption).
         '''
         raise Exception(self.do_something_on_both_sides.__doc__)
+    
+    @property
+    def lhs(self):
+        '''
+        The left-hand side depends upon whether or not the relation
+        is reversed in its style.
+        '''
+        if self.is_reversed():
+            return self.normal_rhs
+        else:
+            return self.normal_lhs
+
+    @property
+    def rhs(self):
+        '''
+        The right-hand side depends upon whether or not the relation
+        is reversed in its style.
+        '''
+        if self.is_reversed():
+            return self.normal_lhs
+        else:
+            return self.normal_rhs
 
     def __getattr__(self, name):
         '''
@@ -123,22 +145,7 @@ class Relation(Operation):
         this attribute name up to "..._both_sides" as in these
         examples.  The corresponding @prover method is built on-the-fly
         for the TransitiveRelation class.
-        
-        Also, 'lhs' and 'rhs' attributes are implemented here
-        because they will be reversed if the 'direction' style
-        is 'reversed'.
         '''
-        if name in ('lhs', 'rhs'):
-            # For some reason, self.getStyleData('direction', None)
-            # leads to errors, but 
-            # self._styleData.styles.get('direction', None) is fine.
-            if self._style_data.styles.get('direction', 'normal') == 'reversed':
-                if name=='lhs': return self.operands[1]
-                else: return self.operands[0]
-            else:
-                if name=='lhs': return self.operands[0]
-                else: return self.operands[1]
-        
         both_sides_str = '_both_sides'
         if name[-len(both_sides_str):] == both_sides_str:
             from proveit.logic import InSet
@@ -206,9 +213,8 @@ class Relation(Operation):
             transform_both_sides.__doc__ = (
                 methods_and_domains_to_try[0][0].__doc__)
             return transform_both_sides
-        raise AttributeError("'%s' object has no attribute '%s'"
-                             %(self.__class__, name))
-
+        return self.__getattribute__(name)
+    
     def __dir__(self):
         '''
         Include 'lhs', 'rhs', and the '_both_sides' methods dependent 

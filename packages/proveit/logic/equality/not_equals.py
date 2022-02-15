@@ -14,10 +14,8 @@ class NotEquals(Relation):
         theory=__file__)
 
     def __init__(self, a, b, *, styles=None):
-        Operation.__init__(self, NotEquals._operator_, (a, b),
+        Relation.__init__(self, NotEquals._operator_, a, b,
                            styles=styles)
-        self.lhs = self.operands[0]
-        self.rhs = self.operands[1]
 
     def side_effects(self, judgment):
         '''
