@@ -1104,11 +1104,8 @@ class ExprRange(Expression):
                         and param in var_forms_of_form[param]):
                     yield form
 
-    # This is NOT an @equality_prover because the returned
-    # equality does not have the ExprRange directly on the left
-    # side, rather it is wrapped in an ExprTuple.
-    @prover
-    def _range_reduction(self, must_reduce=False, **defaults_config):
+    @equality_prover("reduced", "reduce")
+    def reduction(self, must_reduce=False, **defaults_config):
         '''
         Prove this ExprRange, wrapped in an ExprTuple, equal
         to an ExprTuple form that is possibly reduced (e.g.,
@@ -1240,7 +1237,7 @@ class ExprRange(Expression):
         the original expr_range.
         '''
         try:
-            reduction = self._range_reduction(must_reduce=True)
+            reduction = self.reduction(must_reduce=True)
         except UnsatisfiedPrerequisites:
             yield self
         if reduction.lhs != reduction.rhs:
@@ -1621,8 +1618,7 @@ class ExprRange(Expression):
                     # with the parameter changed to our 'new_param'.
                     param_repl_map = {entry.parameter: new_param}
                     new_body = entry.body.basic_replaced(param_repl_map)
-                    entry_repl_map[indexed_var_or_range.basic_replaced(
-                        param_repl_map)] = new_body
+                    entry_repl_map[indexed_var_or_range] = new_body
                     expansion_entry_ranges.append(entry)
                     # Advance the "expansion iter".
                     next(expansion_iter)

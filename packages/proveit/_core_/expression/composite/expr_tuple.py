@@ -487,7 +487,7 @@ class ExprTuple(Composite, Expression):
         _k = 0
         for entry in self.entries:
             if isinstance(entry, ExprRange):
-                entry_simp = entry._range_reduction(preserve_all=True)
+                entry_simp = entry.reduction(preserve_all=True)
                 num_entries = entry_simp.rhs.num_entries()
             else:
                 if must_evaluate:
@@ -527,7 +527,7 @@ class ExprTuple(Composite, Expression):
                     # Preserve this entry -- don't simplify it.
                     _k += ExprTuple(entry).num_entries()
                     continue
-                entry_simp = entry._range_reduction()
+                entry_simp = entry.reduction()
                 if must_evaluate and not is_irreducible_value(entry_simp.rhs):
                     raise EvaluationError(self)
                 if entry_simp.lhs != entry_simp.rhs:
