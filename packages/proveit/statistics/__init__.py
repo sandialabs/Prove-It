@@ -1,4 +1,5 @@
-from .probability_ops import Prob
+from .prob import Prob
+from .prob_of_all import ProbOfAll
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.
