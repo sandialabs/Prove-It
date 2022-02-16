@@ -39,6 +39,18 @@ class LessEq(NumberOrderingRelation):
         # Use the default.
         return Operation.remake_constructor(self)
 
+    def side_effects(self, judgment):
+        '''
+        In addition to the NumberOrderingRelation side-effects, also
+        derive a ≠ b from a < b as a side-effect.
+        '''
+        from proveit.numbers import is_literal_int
+        for side_effect in NumberOrderingRelation.side_effects(
+                self, judgment):
+            yield side_effect
+        # if is_literal_int(self.lhs) or is_literal_int(self.rhs):
+        #     yield self.derive_one_side_in_real_subset
+
     @prover
     def conclude(self, **defaults_config):
         '''
@@ -378,6 +390,15 @@ class LessEq(NumberOrderingRelation):
                             "without knowing the exponent's relation with "
                             "zero"%(self, exponent))
         return new_rel.with_mimicked_style(self)
+
+    @prover
+    def derive_one_side_in_real_subset(self, **defaults_config):
+        # FINISH THIS UP
+        # check for one side or the other equal to some literal number
+        # go for RealPos, RealNeg, RealNonNeg, etc
+        # using conclude_via_transitivity
+        # actually can put this one level up in the number_ordering_relation
+        pass
 
 
 def greater_eq(a, b):
