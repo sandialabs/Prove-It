@@ -82,8 +82,7 @@ class Sum(OperationOverInstances):
             raise NotImplementedError(
                 "'Sum.deduce_in_number_set' not implemented for the %s set"
                 % str(number_set))
-        impl = thm.instantiate(
-            { x: _x, f: _f, Q: _Q}, preserve_all=True)
+        impl = thm.instantiate({ x: _x, f: _f, Q: _Q})
         antecedent = impl.antecedent
         if not antecedent.proven():
             # Conclude the antecedent via generalization.
@@ -654,8 +653,8 @@ class Sum(OperationOverInstances):
         if summand_lambda not in (lesser_lambda, greater_lambda):
             raise ValueError("Expecting summand_relation to be a universally "
                              "quantified number relation (< or <=) "
-                             "involving the summand, %d, not %s"%
-                             (self.summand, summand_relation))
+                             "involving the summand {0} not {1}.".
+                             format(self.summand, summand_relation))
         _a = lesser_lambda
         _b = greater_lambda
         _S = self.domain
