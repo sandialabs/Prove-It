@@ -33,6 +33,8 @@ from .summation import Sum
 from .product import Prod
 from .integration import Integrate
 
+from .functions import MonDecFuncs
+
 import proveit
 
 if proveit.defaults.automation:
