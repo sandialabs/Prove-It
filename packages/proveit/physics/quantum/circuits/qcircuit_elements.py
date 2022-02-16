@@ -87,7 +87,8 @@ class QcircuitElement(Function):
     def __init__(self,  operator, operands, *, styles=None):
         Function.__init__(self, operator, operands, styles=styles)
 
-    def latex(self, *, within_qcircuit=False, show_part_num=True, **kwargs):
+    def latex(self, *, within_qcircuit=False, 
+              show_explicitly=True, **kwargs):
         '''
         Format the latex of the QcircuitElement.
         If within_qcircuit is false, we must wrap the LaTeX within
@@ -95,8 +96,8 @@ class QcircuitElement(Function):
         If a 'wrapper' function is given, use it to
         generate dressed-up latex for the operand.
         '''
-        out_str = self.circuit_elem_latex(solo=not within_qcircuit,
-                                          show_part_num=show_part_num)
+        out_str = self.circuit_elem_latex(
+                show_explicitly=show_explicitly)
         if not within_qcircuit:
             # Do display it properly on its own, we need to
             # wrap it in a \Qcircuit latex command.
@@ -112,12 +113,13 @@ class QcircuitElement(Function):
             out_str += ' \n' + r'} \end{array}'
         return out_str
     
-    def circuit_elem_latex(self, *, solo, show_part_num):
+    def circuit_elem_latex(self, *, show_explicitly):
         '''
         LaTeX of the circuit element that may be inserted within a
         \Qcircuit LaTeX command given the LaTeX of the operand.
-        If 'solo' is True, it is represented on its own and not within
-        a broader circuit.
+        If 'show_explicitly' is True, show targets of  MultiQubitGates
+        explicitly and show 'part' numbers parts of a 
+        multi-gate/input/output/measure operation explicitly.
         '''
         raise NotImplementedError("Must implement for each QcircuitElement")
     
@@ -145,11 +147,11 @@ class Input(QcircuitElement):
         QcircuitElement.__init__(self, Input._operator_, operands, 
                                  styles=styles)
 
-    def circuit_elem_latex(self, *, solo, show_part_num):
+    def circuit_elem_latex(self, *, show_explicitly):
         '''
         Display the LaTeX for this Input circuit element.
         '''
-        if show_part_num and hasattr(self, 'part'):
+        if show_explicitly and hasattr(self, 'part'):
             return r'\qin{%s~\mbox{part}~%s}'%(self.state.latex(), self.part.latex())
         return r'\qin{' + self.state.latex() + r'}'
 
@@ -173,11 +175,11 @@ class Output(QcircuitElement):
         QcircuitElement.__init__(self, Output._operator_, 
                                  operands, styles=styles)
 
-    def circuit_elem_latex(self, *, solo, show_part_num):
+    def circuit_elem_latex(self, *, show_explicitly):
         '''
         Display the LaTeX for this Output circuit element.
         '''
-        if show_part_num and hasattr(self, 'part'):
+        if show_explicitly and hasattr(self, 'part'):
             return r'& \qout{%s~\mbox{part}~%s}'%(self.state.latex(), self.part.latex())
         return r'& \qout{' + self.state.latex() + r'}'
 
@@ -218,12 +220,12 @@ class Measure(QcircuitElement):
 
         return options
 
-    def circuit_elem_latex(self, *, solo, show_part_num):
+    def circuit_elem_latex(self, *, show_explicitly):
         '''
         Display the LaTeX for this Output circuit element.
         '''
         from proveit.physics.quantum import Z
-        if show_part_num and hasattr(self, 'part'):            
+        if show_explicitly and hasattr(self, 'part'):            
             return r'& \measure{%s~\mbox{part}~%s}'%(
                     self.basis.latex, self.part.latex())
         if self.basis==Z and self.get_style('Z', 'implicit')=='implicit':
@@ -314,7 +316,7 @@ class Gate(QcircuitElement):
         return QcircuitElement.shallow_simplification(
                 self, must_evaluate=must_evaluate)
 
-    def circuit_elem_latex(self, *, solo, show_part_num):
+    def circuit_elem_latex(self, *, show_explicitly):
         '''
         Display the LaTeX for this Gate circuit element.
         '''
@@ -322,7 +324,7 @@ class Gate(QcircuitElement):
         out_str = '& '
         #if self.gate_operation == MEAS:
         #    out_str += r'\meter'
-        if show_part_num and hasattr(self, 'part'):
+        if show_explicitly and hasattr(self, 'part'):
             out_str += r'\gate{%s~\mbox{part}~%s}'%(
                     self.operation.latex(), self.part.latex())
         elif (self.operation == I and 
@@ -386,18 +388,27 @@ class MultiQubitElem(QcircuitElement):
                                             ("targets", targets)), 
                                  styles=styles)
 
-    def circuit_elem_latex(self, *, solo, show_part_num):
+    def circuit_elem_latex(self, *, show_explicitly):
         '''
-        Display the LaTeX for this MultiQubitElem circuit element.
-        If solo=True, the MultiQubitElem will be display on its own
-        rather than in the context of a broader Qcircuit.
+        If 'show_explicit_targets' is True, show targets of 
+        MultiQubitGates explicitly.  If 'show_part_num' is True,
+        show 'part' numbers parts of a multi-gate/input/output/measure
+        operation explicitly.
         '''
         from proveit.physics.quantum import (CONTROL, CLASSICAL_CONTROL,
                                              SWAP)
         
         out_str = '& '
-        if not solo and (isinstance(self.targets, Set) or 
-                         isinstance(self.targets, Interval)):
+        if show_explicitly:            
+            # This is either being shown on its own, or it lacks
+            # explicit targets.
+            out_str = self.element.latex(within_qcircuit=True, 
+                                         show_explicitly=True)
+            if not isinstance(self.element, QcircuitElement):
+                out_str = '& \gate{%s}'%out_str
+            out_str = (out_str[:-1] + r'~\mbox{on}~' +
+                       self.targets.latex() + '}')
+        else:
             # This will be shown in the context of a broader Qcircuit
             # and has explicit qubit positions.
             if self.element == CONTROL:
@@ -408,16 +419,7 @@ class MultiQubitElem(QcircuitElement):
                 out_str += r'\qswap'
             else:
                 out_str = self.element.latex(within_qcircuit=True,
-                                             show_part_num=False)
-        else:
-            # This is either being shown on its own, or it lacks
-            # explicit targets.
-            out_str = self.element.latex(within_qcircuit=True, 
-                                         show_part_num=True)
-            if not isinstance(self.element, QcircuitElement):
-                out_str = '& \gate{%s}'%out_str
-            out_str = (out_str[:-1] + r'~\mbox{on}~' +
-                       self.targets.latex() + '}')
+                                             show_explicitly=False)
         return out_str
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
@@ -454,7 +456,7 @@ def swap_elem(target_qubit_idx):
     return MultiQubitElem(SWAP, Set(target_qubit_idx))
 
 def multi_elem_entries(element_from_part, start_qubit_idx, end_qubit_idx,
-                       *part_start_and_ends):
+                       *part_start_and_ends, check_part_index_span=True):
     '''
     Yield consecutive vertical entries for MultiQubitElem to 
     represent all parts of a multi-qubit operation in a quantum circuit
@@ -488,25 +490,26 @@ def multi_elem_entries(element_from_part, start_qubit_idx, end_qubit_idx,
                             multi_qubit_gate_from_part(param),
                             part_start, part_end)
         part = Add(part_end, one).quick_simplified()
-    lhs = Add(part_end, num(-1)).quick_simplified()
-    rhs = Add(end_qubit_idx, Neg(start_qubit_idx)).quick_simplified()  
-    try:
+    if not check_part_index_span:
+        lhs = Add(part_end, num(-1)).quick_simplified()
+        rhs = Add(end_qubit_idx, Neg(start_qubit_idx)).quick_simplified()  
         try:
-            lhs = lhs.simplified()
-        except:
-            pass
-        try:
-            rhs = rhs.simplified()
-        except:
-            pass
-        Equals(lhs, rhs).prove()
-    except ProofFailure:
-        raise ValueError("Part indices must span the range of the "
-                         "multi qubit operation: %s ≠ %s"
-                         %(lhs, rhs))
+            try:
+                lhs = lhs.simplified()
+            except:
+                pass
+            try:
+                rhs = rhs.simplified()
+            except:
+                pass
+            Equals(lhs, rhs).prove()
+        except ProofFailure:
+            raise ValueError("Part indices must span the range of the "
+                             "multi qubit operation: %s ≠ %s"
+                             %(lhs, rhs))
 
 def multi_gate_entries(gate_operation, start_qubit_idx, end_qubit_idx,
-                       *part_start_and_ends):
+                       *part_start_and_ends, check_part_index_span=True):
     '''
     Yield consecutive vertical entries for MultiQubitElem to 
     represent all parts of a multi-gate in a quantum circuit
@@ -517,11 +520,12 @@ def multi_gate_entries(gate_operation, start_qubit_idx, end_qubit_idx,
     '''
     for entry in multi_elem_entries(
             lambda part : Gate(gate_operation, part=part), 
-            start_qubit_idx, end_qubit_idx, *part_start_and_ends):
+            start_qubit_idx, end_qubit_idx, *part_start_and_ends,
+            check_part_index_span=check_part_index_span):
         yield entry
 
 def multi_input_entries(state, start_qubit_idx, end_qubit_idx,
-                       *part_start_and_ends):
+                       *part_start_and_ends, check_part_index_span=True):
     '''
     Yield consecutive vertical entries for MultiQubitElem to 
     represent all parts of a multi-gate in a quantum circuit
@@ -532,12 +536,13 @@ def multi_input_entries(state, start_qubit_idx, end_qubit_idx,
     '''
     for entry in multi_elem_entries(
             lambda part : Input(state, part=part), 
-            start_qubit_idx, end_qubit_idx, *part_start_and_ends):
+            start_qubit_idx, end_qubit_idx, *part_start_and_ends,
+            check_part_index_span=check_part_index_span):
 
         yield entry
 
 def multi_output_entries(state, start_qubit_idx, end_qubit_idx,
-                         *part_start_and_ends):
+                         *part_start_and_ends, check_part_index_span=True):
     '''
     Yield consecutive vertical entries for MultiQubitElem to 
     represent all parts of a multi-gate in a quantum circuit
@@ -548,11 +553,12 @@ def multi_output_entries(state, start_qubit_idx, end_qubit_idx,
     '''
     for entry in multi_elem_entries(
             lambda part : Output(state, part=part), 
-            start_qubit_idx, end_qubit_idx, *part_start_and_ends):
+            start_qubit_idx, end_qubit_idx, *part_start_and_ends,
+            check_part_index_span=check_part_index_span):
         yield entry
 
 def multi_measure_entries(basis, start_qubit_idx, end_qubit_idx,
-                          *part_start_and_ends):
+                          *part_start_and_ends, check_part_index_span=True):
     '''
     Yield consecutive vertical entries for MultiQubitElem to 
     represent all parts of a multi-gate in a quantum circuit
@@ -562,8 +568,9 @@ def multi_measure_entries(basis, start_qubit_idx, end_qubit_idx,
     range from the 'start_qubit_idx' to the 'end_qubit_idx.
     '''
     for entry in multi_elem_entries(
-            lambda part : Measure(state, part=part), 
-            start_qubit_idx, end_qubit_idx, *part_start_and_ends):
+            lambda part : Measure(basis, part=part), 
+            start_qubit_idx, end_qubit_idx, *part_start_and_ends,
+            check_part_index_span=check_part_index_span):
         yield entry
 
 def multi_wire(size):

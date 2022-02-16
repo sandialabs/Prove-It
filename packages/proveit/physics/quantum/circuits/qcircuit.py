@@ -1,10 +1,13 @@
-from proveit import (Expression, Function, Literal, 
+from proveit import (Expression, Function, Literal, IndexedVar,
                      ConditionalSet, Conditional, ExprRange,
                      ExprTuple, ExprArray, VertExprArray, ProofFailure,
-                     StyleOptions, free_vars, prover, relation_prover)
+                     StyleOptions, free_vars, prover, relation_prover,
+                     defaults, safe_dummy_var, TransRelUpdater)
 from proveit import i, j, k, l, m, n, A, U, V, N
-from proveit.logic import Equals, Set
-from proveit.numbers import Interval, zero, one, num, Add, Neg, subtract
+from proveit.core_expr_types import n_k
+from proveit.logic import Equals, Set, InSet
+from proveit.numbers import (Interval, zero, one, two, num, Add, Neg, Mult,
+                             subtract, is_literal_int, quick_simplified_index)
 from proveit.physics.quantum.circuits.qcircuit_elements import (
         QcircuitElement, Gate, MultiQubitElem, Input, Output, Measure, 
         config_latex_tool)
@@ -68,22 +71,28 @@ class Qcircuit(Function):
     @staticmethod
     def _find_down_wire_locations(format_cell_entries,
                                   format_row_element_positions,
-                                  qubit_pos_to_row):
+                                  qubit_pos_to_row,
+                                  implicit_format_col_row_pairs):
         '''
         Return the set of (row, col) locations of the circuit
         grid where we should have a vertical wire to the next row.
         We also check for MultiQubitElem consistencies, raising
         ValueError or TypeError if there is an inconsistency.
+        
+        Populate col_row_to_latex_kwargs appropriately while we
+        are at it: (col, row) -> kwargs for formatting.
         '''
         from proveit.physics.quantum import (
-                CONTROL, CLASSICAL_CONTROL, SWAP)
+                CONTROL, CLASSICAL_CONTROL, SWAP, I)
         down_wire_locations = set()
-        
+                
         # Iterate over each column.
         for col, col_entries in enumerate(format_cell_entries):
             if not isinstance(col_entries, list):
                 # An Expression represents the entire column.
                 # There are no multi-qubit gates to worry about.
+                # (It shouldn't make a difference, but use 
+                # 'explicit_kwargs' just in case.)
                 continue
             
             # Iterate over each row. Map qubit position sets of
@@ -92,7 +101,9 @@ class Qcircuit(Function):
             # No vertical wire through multi-gate/input/output/measure
             # (blockade):
             multiqubit_blockade = set() 
-            has_generic_multiqubitelem = False
+            has_generic_multigateelem = False
+            top_nontrivial_row = None
+            bottom_nontrivial_row = None
             # Active multiqubit element operation/state/basis
             # of a multiqubit gate/input/output/measure:
             active_multiqubit_op = None
@@ -102,12 +113,30 @@ class Qcircuit(Function):
                  # The actual Expression of the entry
                 entry_expr, outer_role, inner_role = entry
                 if isinstance(entry_expr, ExprRange):
+                    assert not {inner_role, outer_role}.isdisjoint(
+                            {'implicit', 'explicit', 'param_independent'})
                     elem_param = entry_expr.parameter
-                    end = entry_expr.end_index
                     entry_expr = entry_expr.body
                 else:
-                    elem_param = end = None
+                    elem_param = None
+                if not (isinstance(entry_expr, Gate) and 
+                        entry_expr.operation == I):
+                    if top_nontrivial_row is None:
+                        top_nontrivial_row = row
+                    bottom_nontrivial_row = row
                 qubit_pos = format_row_element_positions[row]
+                # Explicit formatting is the default but may be changed
+                # to implicit formatting below if there is a reason.
+                if qubit_pos is None and active_multiqubit_op is None:
+                    # This is an 'ellipsis' portion but there is no
+                    # active_multiqubit_op, so just use explicit
+                    # keyword args for formatting and move on.
+                    if (isinstance(entry_expr, Gate) and 
+                            entry_expr.operation == I):
+                        # Just an identity -- do this to allow a
+                        # multiwire collapse if possible.
+                        implicit_format_col_row_pairs.add((col, row))
+                    continue
                 if isinstance(entry_expr, MultiQubitElem):
                     # MultiQubitElem entry.
                     elem = entry_expr.element
@@ -129,10 +158,8 @@ class Qcircuit(Function):
                         start_index = targets.lower_bound
                         end_index = targets.upper_bound
                         # This trick will remove any empty range:
-                        start_index = Add(start_index, zero).quick_simplified()
-                        end_index = Add(end_index, zero).quick_simplified()
-                        multiqubit_positions_of_column.add(
-                                (start_index, end_index))
+                        start_index = quick_simplified_index(start_index)
+                        end_index = quick_simplified_index(end_index)
                         if isinstance(elem, Gate):
                             elem_type = 'gate'
                             op_type = 'operation'
@@ -158,20 +185,22 @@ class Qcircuit(Function):
                         # element operation/state/basis:
                         elem_op = next(elem.operands.items())[1]
 
-                        if next_part is None:
+                        if active_multiqubit_op is None:
                             diff = Add(qubit_pos, 
                                        Neg(start_index)).quick_simplified()
                             if diff != zero:
-                                raise ValueError(
-                                        "Mismatch of starting qubit position "
-                                        "of a multigate: %s ≠ %s"
-                                        %(qubit_pos, start_index))
+                                # There is no obvious match for the 
+                                # starting qubit position of the 
+                                # multigate; so, let's use explicit 
+                                # formatting.
+                                has_generic_multigateelem = True
+                                continue
                             if end_index not in qubit_pos_to_row:
-                                raise ValueError(
-                                        "%s is not known as the top qubit "
-                                        "position corresponding to any row: "
-                                        "%s"%(end_index, 
-                                              qubit_pos_to_row))
+                                # The end index is not known as the
+                                # qubit position on any row; so, let's 
+                                # use explicit formatting.
+                                has_generic_multigateelem = True
+                                continue
                             next_part = one
                             active_multiqubit_op = elem_op
                         else:
@@ -192,7 +221,8 @@ class Qcircuit(Function):
                                                    elem_param))
                         elif outer_role not in ('implicit', 'explicit', 
                                                 'param_independent'):
-                            if elem_part != next_part:
+                            if (next_part is not None 
+                                    and elem_part != next_part):
                                 raise ValueError(
                                         "Part indices must be consecutive "
                                         "starting from 1: %s ≠ %s"%(
@@ -203,11 +233,16 @@ class Qcircuit(Function):
                         elif elem_param is None:
                             next_part = Add(elem_part, one).quick_simplified()
                         else:
-                            next_part = end # next up, end of range.
+                            # We don't yet know the next part after an
+                            # ellipses -- that's okay.
+                            next_part = None
                         if active_multiqubit_op is not None:
                             # There is a continuing multigate, so block
                             # any down wire from this row.
                             multiqubit_blockade.add(row)
+                        multiqubit_positions_of_column.add(
+                                (start_index, end_index))
+                        implicit_format_col_row_pairs.add((col, row))
                     elif isinstance(targets, Set):
                         # Explicit targets for a control, swap,
                         # or multi-qubit gate/input/output/measure
@@ -302,17 +337,27 @@ class Qcircuit(Function):
                                         "of a control must be a gate or "
                                         "a multi-gate, not %s."
                                         %_other_entry_expr)
+                        implicit_format_col_row_pairs.add((col, row))
                     else:
-                        # A "generic" MultiQubitElem (no explicit
-                        # targets).
-                        has_generic_multiqubitelem = True
+                        if (not isinstance(entry_expr.element, QcircuitElement)
+                                or isinstance(entry_expr.element, Gate)):
+                            # A "generic" unknown or multi-gate element 
+                            # (no explicit targets).
+                            has_generic_multigateelem = True
+                elif not isinstance(entry_expr, QcircuitElement):
+                    # The entry is not a QcircuitElement -- it could
+                    # represent any kind of element.
+                    has_generic_multigateelem = True
             
-            if has_generic_multiqubitelem:
+            if has_generic_multigateelem:
                 # If there is a generic MultiQubitElem, we need
-                # a vertical wire from top to bottom since anything
+                # a vertical wire from topmost nontrivial row to 
+                # the bottommost nontrivial row since anything
                 # could be the target.
-                for row, _ in enumerate(col_entries[:-1]):
-                    down_wire_locations.add((row, col))
+                if top_nontrivial_row is not None:
+                    for row in range(top_nontrivial_row,
+                                     bottom_nontrivial_row):
+                        down_wire_locations.add((row, col))
             else:
                 # Map minimum rows of multiqubit_positions to the
                 # maximum of maximum rows of multiqubit_positions
@@ -401,35 +446,50 @@ class Qcircuit(Function):
                 return explicit_cell_latex_fn(
                         expr_latex, nested_range_depth)
             return new_explicit_cell_latex_fn
+
+        # Find locations where we should add a downward wire.
+        # At the same time, we will determine which cells should use
+        # an "implicit" representation (where we don't explicitly
+        # show part numbers or targets because it is clear from the
+        # diagram.) 
+        qubit_position_to_row = {pos:row for row, pos in 
+                                 enumerate(format_row_element_positions)}
+        format_cell_entries = vert_expr_array.get_format_cell_entries()
+        implicit_format_col_row_pairs = set()
+        down_wire_locations = Qcircuit._find_down_wire_locations(
+                format_cell_entries, format_row_element_positions,
+                qubit_position_to_row, implicit_format_col_row_pairs)
+        explicit_kwargs = {'within_qcircuit':True, 'show_explicitly':True}
+        implicit_kwargs = {'within_qcircuit':True, 'show_explicitly':False}
+        width = len(format_cell_entries)
+        height = 1
+        col_row_to_latex_kwargs = dict()
+        for col in range(width):
+            format_col_entries = format_cell_entries[col]
+            if isinstance(format_col_entries, list):
+                height = max(height, len(format_col_entries))
+                for row in range(height):
+                    if (col, row) in implicit_format_col_row_pairs:
+                        col_row_to_latex_kwargs[(col, row)] = implicit_kwargs
+                    else:
+                        col_row_to_latex_kwargs[(col, row)] = explicit_kwargs
+            else:
+                col_row_to_latex_kwargs[(col,)] = explicit_kwargs
         
         # Get latex-formatted cells.  Indicate that these should be
         # formatted in the context of being within a Qcircuit
-        format_cell_entries = []
         formatted_cells = vert_expr_array.get_latex_formatted_cells(
                 format_cell_entries=format_cell_entries,
                 vertical_explicit_cell_latex_fn=inside_elem_wrapper(
                         ExprArray.vertical_explicit_cell_latex),
                 horizontal_explicit_cell_latex_fn=inside_elem_wrapper(
                         ExprArray.horizontal_explicit_cell_latex),
-                within_qcircuit=True)
-        
-        width = len(formatted_cells)
-        height = 1
-        for formatted_col_entries in formatted_cells:
-            if isinstance(formatted_col_entries, list):
-                height = max(height, len(formatted_col_entries))
-        
+                col_row_to_latex_kwargs=col_row_to_latex_kwargs)
+                
         out_str = ''
         if fence:
             out_str = r'\left('
-        out_str += r'\begin{array}{c} \Qcircuit' + spacing + '{' + '\n'
-        
-        # Find locations where we should add a downward wire.
-        qubit_position_to_row = {pos:row for row, pos in 
-                                 enumerate(format_row_element_positions)}
-        down_wire_locations = Qcircuit._find_down_wire_locations(
-                format_cell_entries, format_row_element_positions,
-                qubit_position_to_row)
+        out_str += r'\begin{array}{c} \Qcircuit' + spacing + '{' + '\n'        
         
         # Map VertExprArray rows to number of rows the may be collapsed
         # into one in the Qcircuit where applicable (with matching
@@ -446,14 +506,13 @@ class Qcircuit(Function):
                     # expression, so let's skip this.
                     continue
                 entry = format_col_entries[row]
-                if not Qcircuit._is_multirowcenter(entry):
+                if ((col, row) not in implicit_format_col_row_pairs or 
+                        not Qcircuit._is_multirowcenter(entry)):
                     is_multirow_center = False
                 else:
                     range_expr = entry[0]
-                    front_expansion = int(range_expr.get_style(
-                            'front_expansion'))
-                    back_expansion = int(range_expr.get_style(
-                            'back_expansion'))
+                    front_expansion = range_expr.get_front_expansion()
+                    back_expansion = range_expr.get_back_expansion()
                     multirow_front_expansions.add(front_expansion)
                     multirow_back_expansions.add(back_expansion)
             if len(multirow_front_expansions) == 0:
@@ -479,6 +538,12 @@ class Qcircuit(Function):
             # Continue with a wire except after a space, measurement,
             # or output:
             continue_wire = True 
+            if row in row_to_collapse_count:
+                # Collapse multiwires and multigates into a single row.
+                front_expansion, back_expansion = row_to_collapse_count[row]
+                next_row = row + front_expansion + 1 + back_expansion
+            else:
+                next_row = row + 1
             for col in range(width):
                 continue_wire = True
                 format_col_entries = format_cell_entries[col]
@@ -494,7 +559,8 @@ class Qcircuit(Function):
                                 isinstance(entry.element, Measure)
                                 or entry.element == SPACE):
                             continue_wire = False
-                        if isinstance(entry.targets, Interval):
+                        if (isinstance(entry.targets, Interval) and 
+                                (col, row) in implicit_format_col_row_pairs):
                             multi_op = True
                             elem = entry.element
                             # Double-checking (should have been checked
@@ -558,7 +624,7 @@ class Qcircuit(Function):
                         # or \measure... as appropriate.
                         _expr = entry
                         if isinstance(_expr, ExprRange):
-                            _expr = _expr.body
+                            _expr = _expr.innermost_body()
                         # If the entry is a conditional set, use the
                         # value of any of the conditionals to determine
                         # the type.
@@ -568,8 +634,11 @@ class Qcircuit(Function):
                                 _expr = _expr.conditionals[0]
                             if isinstance(_expr, Conditional):
                                 _expr = _expr.value
+                        if isinstance(_expr, MultiQubitElem):
+                            _expr = _expr.element
                         if (isinstance(_expr, Gate) or 
-                                isinstance(_expr, MultiQubitElem)):
+                                not isinstance(_expr, QcircuitElement)):
+                            # A gate/multigate or unknown element.
                             formatted_entry = r'& \gate{%s}'%formatted_entry
                         elif isinstance(_expr, Input):
                             formatted_entry = r'\qin{%s}'%formatted_entry
@@ -580,8 +649,13 @@ class Qcircuit(Function):
                             formatted_entry = (r'& \measure{%s} \qw'
                                                %formatted_entry)
                             continue_wire = False
-                    if (row, col) in down_wire_locations:
-                        formatted_entry += r' \qwx[1]'                                
+                    elif not isinstance(entry, QcircuitElement):
+                        # This entry is not a Qcircuit element,
+                        # so it could represent anything.  Wrap it
+                        # in \gate.
+                        formatted_entry = r'& \gate{%s}'%formatted_entry
+                    if (next_row-1, col) in down_wire_locations:
+                        formatted_entry += r' \qwx[1]'                          
                     formatted_row_entries.append(formatted_entry)
                 else:
                     # Use up and down arrows above and below to denote 
@@ -690,13 +764,15 @@ class Qcircuit(Function):
         _j = _V.num_elements()
         self_out = self.vert_expr_array[-1]
         ext_in = extension.vert_expr_array[0]
-        _A, _m, _n, _N = self._extract_input_or_output(Output, self_out)
-        _A_, _m_, _n_, _N_ = self._extract_input_or_output(Input, ext_in)
-        if _A != _A_ or _m != _m_ or _n != _n_ or _N != _N_:
+        out_repl_map = self._repl_map_for_input_or_output(Output, 
+                                                          self_out)
+        in_repl_map = self._repl_map_for_input_or_output(Input, 
+                                                         ext_in)
+        if out_repl_map != in_repl_map:
             raise ValueError("This output must match the extension's "
                              "input in order to concatenate")
-        impl = concatenation.instantiate(
-                {i:_i, j:_j, m:_m, A:_A, U:_U, V:_V, n:_n, N:_N})
+        repl_map = out_repl_map.update({i:_i, j:_j, U:_U, V:_V})
+        impl = concatenation.instantiate(repl_map)
         return impl.derive_consequent()
 
     @prover
@@ -740,44 +816,174 @@ class Qcircuit(Function):
                 Output, self.vert_expr_array[-1], output_consolidation)
 
     def _in_or_out_consolidation(self, elem_type, col, thm):
-        _A, _m, _n, _N = self._extract_input_or_output(elem_type, col)
+        repl_map = self._repl_map_for_input_or_output(elem_type, col)
+        defaults.test_repl_map = repl_map
+        consolidation = thm.instantiate(repl_map)
+        # Now consolidate ExprRanges that may have been split
+        # in the process of lining up N_{k-1} entries with N_k entries.
+        
+        '''
+        _A, _m, _n, _N = Qcircuit._extract_input_or_output(elem_type, col)
+        _k = safe_dummy_var(_m)
+        N_0_to_m = ExprRange(_k, IndexedVar(N, _k), zero, _m)
+        
+        # There is a bit of gymnastics here to match ExprRange
+        # indices which we shoulb be able to simplify in the future.
+        
+        N_alt1 = N_0_to_m.partition(zero).rhs
+        N_alt2 = N_0_to_m.partition(subtract(_m, one)).rhs
+
+        # Need these proofs::
+        _0_to_m = ExprRange(_k, _k, zero, _m)
+        _0_to_m.partition(zero)
+        _0_to_m.partition(subtract(_m, one))
+        
+        defaults.test_repl_map = {A:_A, m:_m, n:_n, N:_N, N_alt1:_N, N_alt2:_N}
         consolidation = thm.instantiate(
-                {m:_m, n:_n, A:_A, N:_N})
+                {A:_A, m:_m, n:_n, N:_N, N_alt1:_N, N_alt2:_N})
+        '''
+        
+        defaults.test_out = consolidation
+        
         if not self.vert_expr_array.is_single():
             return consolidation.substitution(self)
-        return consolidation
+        return consolidation.without_wrapping()
     
-    def _extract_input_or_output(self, elem_type, col):
+    @staticmethod
+    def _repl_map_for_input_or_output(elem_type, col):
+        from proveit.numbers import zero, one, Add
+        repl_map = dict()
+        
+        # Get the input/output states and the number of qubits for
+        # each.
         _A = []
         _n = []
         for entry in col.entries:
             if isinstance(entry, ExprRange):
                 body = entry.innermost_body()
+                if isinstance(body, elem_type):
+                    _A.append(ExprRange(entry.parameter, body.state,
+                                        entry.start_index, entry.end_index,
+                                        styles=entry.get_styles()))
+                    _n.append(ExprRange(entry.parameter, one, 
+                                        entry.start_index, entry.end_index,
+                                        styles=entry.get_styles()))
+                    continue # Good
                 if (isinstance(body, MultiQubitElem)
                         and isinstance(body.element, elem_type)):
                     _A.append(body.element.state)
                     _n.append(entry.num_elements(proven=False))
-                    continue
+                    continue # Good
             elif isinstance(entry, elem_type):
                 _A.append(entry.state)
                 _n.append(one)
-                continue
+                continue # Good
             if elem_type == Input:
                 raise ValueError(
-                        "In perform an 'input_consolidation', the first "
+                        "To perform an 'input_consolidation', the first "
                         "column of the Qcircuit must contain all valid "
                         "Input elements: %s is not suitable."%entry)
             else:
                 assert elem_type == Output
                 raise ValueError(
-                        "In perform an 'output_consolidation', the last "
+                        "To perform an 'output_consolidation', the last "
                         "column of the Qcircuit must contain all valid "
                         "Output elements: %s is not suitable."%entry)
         _A = ExprTuple(*_A)
-        _N = Add(*_n)
+        repl_map[m] = _m = _A.num_elements()
         _n = ExprTuple(*_n)
-        _m = _A.num_elements()
-        return (_A, _m, _n, _N)
+                
+        # Get the partial sums for the numbers of qubits.
+        _N = [zero]
+        _Nk = zero
+        for _k, _nk in enumerate(_n.entries):
+            if isinstance(_nk, ExprRange):
+                if _nk.is_parameter_independent:
+                    # n_i, ..., n_j = x, ..., x
+                    # N_k = N_{i-1} + (k-i+1)*x
+                    param = safe_dummy_var(_nk, _Nk)
+                    body = Add(_Nk, Mult(Add(param, Neg(_nk.start_index), 
+                                             one),
+                                         _nk.body))
+                    start, end = _nk.start_index, _nk.end_index
+                    assumptions = defaults.assumptions + (
+                            InSet(param, Interval(start, end)),)                    
+                    body = body.simplified(assumptions=assumptions)
+                    Nks = ExprRange(param, body, start, end)
+                    _Nk = Add(_Nk, subtract(end, start), one).simplified()
+                else:
+                    raise NotImplementedError(
+                            "An ExprRange of parameter independent qubit "
+                            "counts is not currently supported")
+                _N.append(Nks)
+            else:
+                _Nk = Add(_Nk, _nk).simplified()
+                _N.append(_Nk)
+        repl_map[N] = _N = ExprTuple(*_N)
+        
+        # Now we need to partition ranges so we can align the entries of
+        # N_{0}, ..., N_{m-1} with
+        # N_{1}, ..., N_{m} and n_{1}, ..., n_{m}
+        
+        _k = safe_dummy_var(_m)
+        # N_0, ..., N_m
+        N_0_to_m = ExprRange(_k, IndexedVar(N, _k), zero, _m)
+        # N_0, N_1, ..., N_m
+        N_0_1_to_m = N_0_to_m.partition(zero).rhs
+        # N_0, ..., N_{m-1}, N_m
+        N_0_to_mm1_m = N_0_to_m.partition(subtract(_m, one)).rhs
+
+        # Need these proofs as well (would be good to automate)
+        _0_to_m = ExprRange(_k, _k, zero, _m)
+        _0_to_m.partition(zero)
+        _0_to_m.partition(subtract(_m, one))
+        
+        expr_for_nk = _n
+        expr_for_Ak = _A
+        expr_for_Nk = expr_for_Nkm1 = _N
+        eq_for_Ak = TransRelUpdater(_A)
+        eq_for_nk = TransRelUpdater(_n)
+        eq_for_Nk = TransRelUpdater(_N)
+        eq_for_Nkm1 = TransRelUpdater(_N)
+        _idx = 0
+        for entry in _N:
+            if isinstance(entry, ExprRange):
+                # We must split off the first of the entry
+                # for the N_1, ..., N_m segment and the last entry for
+                # the N_0, ..., N_{m-1} segment so the entries line up.
+                expr_for_Nk = eq_for_Nk.update(
+                        expr_for_Nk.inner_expr()[_idx].partition(
+                                entry.start_index,
+                                force_to_treat_as_increasing=True))
+                # We have to do the same for n_1, ..., n_k and 
+                # A_1, ..., A_k to match N_1, ..., N_k:
+                # (uses _idx-1 since there is no n_0).
+                expr_for_nk = eq_for_nk.update(
+                        expr_for_nk.inner_expr()[_idx-1].partition(
+                                entry.start_index,
+                                force_to_treat_as_increasing=True))                
+                expr_for_Ak = eq_for_Ak.update(
+                        expr_for_Ak.inner_expr()[_idx-1].partition(
+                                entry.start_index,
+                                force_to_treat_as_increasing=True))                
+                # Shift the start index in N_0, ..., N_{m-1} to line
+                # it up with N_1, ..., N_{m}:
+                expr_for_Nkm1 = eq_for_Nkm1.update(
+                        expr_for_Nkm1.inner_expr()[_idx].shift_equivalence(
+                                new_start=expr_for_Nk[_idx+1].start_index,
+                                force_to_treat_as_increasing=True))
+                expr_for_Nkm1 = eq_for_Nkm1.update(
+                        expr_for_Nkm1.inner_expr()[_idx].partition(
+                                subtract(expr_for_Nkm1[_idx].end_index, one),
+                                force_to_treat_as_increasing=True))
+                _idx += 2 # Add an extra 1 to account for new partition.
+            else:
+                _idx += 1
+        repl_map[A] = expr_for_Ak
+        repl_map[n] = expr_for_nk
+        repl_map[N_0_1_to_m] = expr_for_Nk
+        repl_map[N_0_to_mm1_m] = expr_for_Nkm1
+        return repl_map
         
     
     """
@@ -802,13 +1008,3 @@ class Qcircuit(Function):
             #           assumptions=assumptions)
             pass
     """
-
-class QcircuitSet(Literal):
-    '''
-    Represents the set of all consistent quantum circuits.
-    '''
-    def __init__(self, *, styles=None):
-        Literal.__init__(
-            self, string_format='QC', latex_format=r'\mathbb{Q.C.}',
-            styles=styles)
-    

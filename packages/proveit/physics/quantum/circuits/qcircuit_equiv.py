@@ -243,7 +243,7 @@ class QcircuitEquiv(TransitiveRelation):
             impl = circuit_equiv_temporal_sub.instantiate(
                     {j:_j, k:_k, l:_l, m:_m, A:_A, B:_B, C:_C, D:_D})
             equiv = impl.derive_consequent()
-            return equiv
+            return equiv.without_wrapping()
         raise NotImplementedError()
         
     @prover
