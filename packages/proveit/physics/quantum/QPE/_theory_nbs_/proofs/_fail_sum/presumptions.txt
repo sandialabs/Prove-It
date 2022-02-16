@@ -55,8 +55,10 @@ proveit.numbers.addition.subtraction.negated_add
 proveit.numbers.addition.subtraction.subtract_from_add
 proveit.numbers.addition.subtraction.subtract_from_add_reversed
 proveit.numbers.addition.subtraction.subtraction_disassociation
-proveit.numbers.exponentiation.add_one_left_in_exp
-proveit.numbers.modular.full_modular_range_equiv_left_shift
+proveit.numbers.addition.weak_bound_via_left_term_bound
+proveit.numbers.exponentiation.complex_x_to_first_power_is_x
+proveit.numbers.exponentiation.products_of_complex_powers
+proveit.numbers.modular.complete_interval_left_shift_image
 proveit.numbers.modular.mod_natpos_in_interval
 proveit.numbers.multiplication.elim_one_left
 proveit.numbers.multiplication.mult_def_rev
@@ -74,7 +76,6 @@ proveit.numbers.negation.negated_weak_bound
 proveit.numbers.negation.negated_zero
 proveit.numbers.negation.real_closure
 proveit.numbers.negation.real_neg_closure
-proveit.numbers.negation.real_nonpos_closure
 proveit.numbers.number_sets.complex_numbers.complex_nonzero_within_complex
 proveit.numbers.number_sets.complex_numbers.i_is_complex_nonzero
 proveit.numbers.number_sets.complex_numbers.int_within_complex
@@ -135,6 +136,7 @@ proveit.numbers.number_sets.real_numbers.nat_pos_within_real_pos
 proveit.numbers.number_sets.real_numbers.nat_within_real
 proveit.numbers.number_sets.real_numbers.nat_within_real_nonneg
 proveit.numbers.number_sets.real_numbers.nonneg_if_in_real_nonneg
+proveit.numbers.number_sets.real_numbers.nonpos_if_in_real_nonpos
 proveit.numbers.number_sets.real_numbers.nonzero_if_in_real_nonzero
 proveit.numbers.number_sets.real_numbers.pi_is_real_pos
 proveit.numbers.number_sets.real_numbers.positive_if_in_real_pos
@@ -181,7 +183,6 @@ proveit.numbers.numerals.decimals.tuple_len_2
 proveit.numbers.numerals.decimals.tuple_len_2_typical_eq
 proveit.numbers.numerals.decimals.tuple_len_3
 proveit.numbers.numerals.decimals.tuple_len_3_typical_eq
-proveit.numbers.ordering.less_eq_add_left
 proveit.numbers.ordering.less_eq_add_right
 proveit.numbers.ordering.less_eq_shift_add_left
 proveit.numbers.ordering.less_eq_shift_add_right
@@ -190,7 +191,6 @@ proveit.numbers.ordering.less_shift_add_right
 proveit.numbers.ordering.less_than_an_increase
 proveit.numbers.ordering.less_than_successor
 proveit.numbers.ordering.negative_if_real_neg
-proveit.numbers.ordering.non_pos_if_real_non_pos
 proveit.numbers.ordering.relax_equal_to_less_eq
 proveit.numbers.ordering.relax_less
 proveit.numbers.ordering.transitivity_less_eq_less
