@@ -12,7 +12,8 @@ from .number_sets import (
 
 from .number_sets import Interval, RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC
 from .number_sets import e, pi, i, infinity
-from .number_operation import NumberOperation, deduce_in_number_set
+from .number_operation import (NumberOperation, deduce_in_number_set,
+                               sorted_number_sets, deduce_number_set)
 from .rounding import Floor, Ceil, Round
 from .absolute_value import Abs
 from .numerals import (num, Numeral, DecimalSequence, Digits, DIGITS,

@@ -22,3 +22,7 @@ class Max(Function):
         else:
             raise NotImplementedError(
                     "Max.deduce_in_number_set only implemented for Reals.")
+
+    @relation_prover
+    def deduce_number_set(self, **defaults_config):
+        return self.deduce_in_number_set(Real)

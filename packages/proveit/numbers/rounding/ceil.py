@@ -3,7 +3,8 @@ from proveit import (defaults, Function, InnerExpr, Literal, USE_DEFAULTS,
 from proveit.numbers.number_sets import Integer, Natural, NaturalPos
 from proveit.numbers.rounding.rounding_methods import (
     apply_rounding_elimination, apply_rounding_extraction,
-    apply_shallow_simplification, rounding_deduce_in_number_set)
+    apply_shallow_simplification, rounding_deduce_in_number_set,
+    rounding_deduce_number_set)
 
 
 class Ceil(Function):
@@ -91,3 +92,11 @@ class Ceil(Function):
 
         return rounding_deduce_in_number_set(
             self, number_set, ceil_is_an_int, ceil_real_pos_closure)
+
+    @relation_prover
+    def deduce_number_set(self, **defaults_config):
+        '''
+        Prove membership of this expression in the most 
+        restrictive standard number set we can readily know.
+        '''
+        return rounding_deduce_number_set(self)

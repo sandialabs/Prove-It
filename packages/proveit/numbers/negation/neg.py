@@ -1,16 +1,16 @@
 from proveit import (Expression, Literal, Operation, maybe_fenced_string, 
-                     maybe_fenced_latex, InnerExpr, defaults, USE_DEFAULTS, 
+                     maybe_fenced_latex, InnerExpr, defaults, USE_DEFAULTS,
                      ProofFailure, relation_prover, equality_prover)
 from proveit.logic import is_irreducible_value
 from proveit.numbers.number_sets import (
-        Natural, NaturalPos, 
+        Natural, NaturalPos,
         Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
         Rational, RationalNonZero, RationalPos, RationalNeg,
         RationalNonNeg, RationalNonPos,
         Real, RealNonZero, RealPos, RealNeg, RealNonNeg, RealNonPos,
         Complex, ComplexNonZero)
-from proveit import a, b, c, i, j, m, n, x, y, B
-from proveit.numbers import NumberOperation
+from proveit import a, b, c, m, n, x, y, B
+from proveit.numbers import NumberOperation, deduce_number_set
 
 class Neg(NumberOperation):
     # operator of the Neg operation.
@@ -30,16 +30,16 @@ class Neg(NumberOperation):
                          "or 'explicit_negation': "
                          "For example, 'a - b' versus 'a + (-b)'."),
             default='subtraction',
-            related_methods=('with_subtraction_notation', 
+            related_methods=('with_subtraction_notation',
                              'without_subtraction_notation'))
         return options
-    
+
     def with_subtraction_notation(self):
         return self.with_styles(notation_in_add='subtraction')
 
     def without_subtraction_notation(self):
         return self.with_styles(notation_in_add='explicit_negation')
-    
+
     def use_subtraction_notation(self):
         '''
         Return True if subtraction notation should be used within
@@ -72,15 +72,15 @@ class Neg(NumberOperation):
         given a number set, attempt to prove that the given expression
         is in that number set using the appropriate closure theorem
         '''
-        from . import (nat_closure, nat_pos_closure, 
-                       int_closure, int_nonzero_closure, 
+        from . import (nat_closure, nat_pos_closure,
+                       int_closure, int_nonzero_closure,
                        int_neg_closure, int_nonpos_closure,
                        rational_closure, rational_nonzero_closure,
                        rational_pos_closure, rational_neg_closure,
                        rational_nonneg_closure, rational_nonpos_closure,
-                       real_closure, real_nonzero_closure, 
+                       real_closure, real_nonzero_closure,
                        real_pos_closure, real_neg_closure,
-                       real_nonneg_closure, real_nonpos_closure, 
+                       real_nonneg_closure, real_nonpos_closure,
                        complex_closure, complex_nonzero_closure)
         if number_set == Natural:
             return nat_closure.instantiate({a: self.operand})
@@ -125,26 +125,56 @@ class Neg(NumberOperation):
         raise NotImplementedError(
             "No negation closure theorem for set %s" %str(number_set))
 
+    def deduce_number_set(self, **defaults_config):
+        '''
+        Prove membership of this expression in the most
+        restrictive standard number set we can readily know.
+        '''
+        number_set_map = {
+            NaturalPos: IntegerNeg,
+            IntegerNeg: NaturalPos,
+            Natural: IntegerNonPos,
+            IntegerNonPos: Natural,
+            IntegerNonZero: IntegerNonZero,
+            Integer: Integer,
+            RationalPos: RationalNeg,
+            RationalNeg: RationalPos,
+            RationalNonNeg: RationalNonPos,
+            RationalNonPos: RationalNonNeg,
+            RationalNonZero: RationalNonZero,
+            Rational: Rational,
+            RealPos: RealNeg,
+            RealNeg: RealPos,
+            RealNonNeg: RealNonPos,
+            RealNonPos: RealNonNeg,
+            RealNonZero: RealNonZero,
+            Real: Real,
+            ComplexNonZero: ComplexNonZero,
+            Complex: Complex
+            }
+        operand_ns = deduce_number_set(self.operand).domain
+        return self.deduce_in_number_set(number_set_map[operand_ns])
+
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
                                **defaults_config):
         '''
         Returns a proven simplification equation for this Neg
         expression assuming the operands have been simplified.
-        
+
         Handle negation of 0 and double negation specifically.
         '''
         from proveit.logic import EvaluationError
         from . import negated_zero
         from proveit.numbers import zero
-        
+
         if must_evaluate and not is_irreducible_value(self.operand):
             # The simplification of the operands may not have
             # worked hard enough.  Let's work harder if we
             # must evaluate.
             self.operand.evalution()
             return self.evaluation()
-        
+
         if self.operand == zero:
             return negated_zero
         # Handle double negation:
@@ -251,12 +281,12 @@ class Neg(NumberOperation):
                       group_remainder=None, **defaults_config):
         '''
         Pull out a factor from a negated expression, pulling it either
-        to the "left" or "right".  group_factor and group_remainder are 
-        not relevant but kept for compatibility with other factor 
+        to the "left" or "right".  group_factor and group_remainder are
+        not relevant but kept for compatibility with other factor
         methods.
         Returns the equality that equates self to this new version.
-        Give any assumptions necessary to prove that the operands are 
-        in the Complex numbers so that the associative and commutation 
+        Give any assumptions necessary to prove that the operands are
+        in the Complex numbers so that the associative and commutation
         theorems are applicable.
         FACTORING FROM NEGATION FROM A SUM NOT IMPLEMENTED YET.
         '''

@@ -2,7 +2,7 @@ from proveit import Function, Literal, USE_DEFAULTS, prover, relation_prover, eq
 from proveit import theta
 from proveit.logic import InSet
 from proveit.numbers import Real, RealPos, RealNeg, RealNonNeg, RealNonPos
-from proveit.numbers import Abs
+from proveit.numbers import Abs, deduce_number_set
 
 class Sin(Function):
     # operator of the Sin operation.
@@ -24,8 +24,9 @@ class Sin(Function):
         from . import (sine_interval, sine_nonneg_interval,
                        sine_pos_interval, sine_nonpos_interval,
                        sine_neg_interval)
-        from proveit.numbers import zero, pi, Less, LessEq, Neg
+        from proveit.numbers import (zero, pi, Less, LessEq, Neg)
         _theta = self.angle
+        deduce_number_set(_theta)
         if (Less(zero, _theta).proven() and
                 Less(_theta, pi).proven()):
             return sine_pos_interval.instantiate({theta:_theta})
@@ -58,6 +59,8 @@ class Sin(Function):
         from . import (sine_linear_bound, sine_linear_bound_pos,
                        sine_linear_bound_nonneg, sine_linear_bound_neg,
                        sine_linear_bound_nonpos)
+
+        deduce_number_set(self.angle)
 
         if isinstance(self.angle, Abs):
             bound = sine_linear_bound.instantiate(
@@ -100,4 +103,8 @@ class Sin(Function):
         raise NotImplementedError(
                 "'Sin.deduce_in_number_set()' not implemented for the "
                 "%s set" % str(number_set))        
+
+    @relation_prover
+    def deduce_number_set(self, **defaults_config):
+        return self.deduce_in_interval()
 
