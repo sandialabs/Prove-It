@@ -1,7 +1,10 @@
-from proveit import Literal, maybe_fenced, OperationOverInstances
+from proveit import ( defaults,
+        Lambda, Literal, maybe_fenced, OperationOverInstances,
+        relation_prover)
 from proveit.numbers import (
-        zero, infinity, Interval, IntervalCC, IntervalCO, IntervalOC,
-        IntervalOO, Neg, Real, RealNeg, RealNonNeg, RealNonPos, RealPos)
+        zero, one, infinity, Interval, IntervalCC, IntervalCO, IntervalOC,
+        IntervalOO, Neg, NumberOperation, Real, RealNeg, RealNonNeg,
+        RealNonPos, RealPos)
 
 
 class Integrate(OperationOverInstances):
@@ -48,16 +51,16 @@ class Integrate(OperationOverInstances):
         # If domain expressed as a special number set,
         # re-express domain as a continuous interval before
         # feeding as argument to OperationOverInstances.__init__().
-        if domain == Real:
-            domain = IntervalOO(Neg(infinity), infinity)
-        elif domain == RealPos:
-            domain = IntervalOO(zero, infinity)
-        elif domain == RealNonNeg:
-            domain = IntervalCO(zero, infinity)
-        elif domain == RealNeg:
-            domain = IntervalOO(Neg(infinity), zero)
-        elif domain == RealNonPos:
-            domain = IntervalOC(Neg(infinity), zero)
+        # if domain == Real:
+        #     domain = IntervalOO(Neg(infinity), infinity)
+        # elif domain == RealPos:
+        #     domain = IntervalOO(zero, infinity)
+        # elif domain == RealNonNeg:
+        #     domain = IntervalCO(zero, infinity)
+        # elif domain == RealNeg:
+        #     domain = IntervalOO(Neg(infinity), zero)
+        # elif domain == RealNonPos:
+        #     domain = IntervalOC(Neg(infinity), zero)
 
         OperationOverInstances.__init__(
             self, Integrate._operator_, index_or_indices, integrand,
@@ -92,6 +95,49 @@ class Integrate(OperationOverInstances):
         # if number_set == Complex:
         #    return complex.theorems.integration_closure
 
+    # borrowed from / based on / Sum.deduce_in_number_set()
+    # delete this comment after testing
+    @relation_prover
+    def deduce_in_number_set(self, number_set, **defaults_config):
+        from . import (integration_real_neg_closure,
+                       integration_real_non_pos_closure,
+                       integration_real_non_neg_closure,
+                       integration_real_pos_closure,
+                       integration_real_closure)
+
+        _x_sub = self.instance_params
+        _f_sub = Lambda(_x_sub, self.instance_expr)
+        _S_sub = self.domain
+        _n_sub = _x_sub.num_elements()
+
+        if number_set == RealNeg:
+            thm = integration_real_neg_closure
+        elif number_set == RealNonPos:
+            thm = integration_real_non_pos_closure
+        elif number_set == RealNonNeg:
+            thm = integration_real_non_neg_closure
+        elif number_set == RealPos:
+            thm = integration_real_pos_closure
+        elif number_set == Real:
+            thm = integration_real_closure
+        else:
+            raise NotImplementedError(
+                "'Integrate.deduce_in_number_set()' not implemented "
+                "for the set {}".format(number_set))
+        from proveit import n, x, f, S
+        # Setting auto_simplify=True because the conjunction in the
+        # integrate conditions needs to be simplified; there is no
+        # danger of oversimplification since 'self' will be preserved
+        # and domain is just the number set.
+        impl = thm.instantiate(
+            { n: _n_sub, x: _x_sub, f: _f_sub, S: _S_sub}, auto_simplify=True)
+        antecedent = impl.antecedent
+        # probably already doing this automatically now:
+        # if not antecedent.proven():
+        #     # Conclude the antecedent via generalization.
+        #     antecedent.conclude_via_generalization()
+        return impl.derive_consequent()
+
 #     def formatted(self, format_type, fence=False):
 #         # if isinstance(self.domain,IntervalOO) or
 #         # isinstance(self.domain,IntervalOC) or
@@ -108,6 +154,12 @@ class Integrate(OperationOverInstances):
 #             format_type) + r'}' + self.integrand.formatted(format_type, fence=fence) + 'd' + self.index.formatted(format_type)
 
     def _formatted(self, format_type, **kwargs):
+        # ACTUALLY, notice that the open-interval versions
+        # probably lead to incorrect upper/lower bounds on the
+        # formatted integrals. For example, an integral over the
+        # open half-open interval (0, 1] would need to be formatted
+        # or expressed as a limit as 'a' approaches 0 from the right
+        # of the integral from 0 to 1.
         fence = kwargs['fence'] if 'fence' in kwargs else False
         if (isinstance(self.domain,IntervalCC) or
             isinstance(self.domain,IntervalCO) or
