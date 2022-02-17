@@ -29,16 +29,8 @@ class InSet(InClass):
         Return the negated membership expression,
         element not in domain.
         '''
-        from not_in_set import NotInSet
-        return NotInSet(self.element, self.domain)
-
-    @prover
-    def deduce_not_in(self, **defaults_config):
-        r'''
-        Deduce x not in S assuming not(A in S), where self = (x in S).
-        '''
         from .not_in_set import NotInSet
-        return NotInSet(self.element, self.domain).conclude_as_folded()
+        return NotInSet(self.element, self.domain)
 
 
 class SetMembership(ClassMembership):

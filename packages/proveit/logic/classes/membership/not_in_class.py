@@ -140,6 +140,9 @@ class NotInClass(Relation):
         '''
         from proveit import ProofFailure
         from proveit.logic import SubsetEq, SimplificationError
+        
+        if self.negated().disproven():
+            return self.conclude_as_folded()
 
         # See if the element, or something known to be equal to
         # the element, is known to be a nonmember of the domain or a 
