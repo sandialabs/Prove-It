@@ -445,13 +445,18 @@ class Operation(Expression):
     def _function_formatted(self, format_type, **kwargs):
         from proveit._core_.expression.composite.expr_tuple import ExprTuple
         formatted_operator = self.operator.formatted(format_type, fence=True)
+        lparen = r'\left(' if format_type=='latex' else '('
+        rparen = r'\right)' if format_type=='latex' else ')'
         if (hasattr(self, 'operand') and 
                 not isinstance(self.operand, ExprTuple)):
-            return '%s(%s)' % (formatted_operator,
-                               self.operand.formatted(format_type, fence=False))
-        return '%s(%s)' % (formatted_operator,
-                           self.operands.formatted(
-                               format_type, fence=False, sub_fence=False))
+            formatted_operand = self.operand.formatted(
+                    format_type, fence=False)
+        else:
+            formatted_operand = self.operands.formatted(
+                    format_type, fence=False, sub_fence=False)
+
+        return (formatted_operator + lparen + formatted_operand + rparen)
+
 
     def _formatted(self, format_type, **kwargs):
         '''
