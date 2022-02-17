@@ -20,8 +20,14 @@ class Add(NumberOperation):
     # operator of the Add operation
     _operator_ = Literal(string_format='+', theory=__file__)
     
+    # By default, simplification will ungroup (disassociate) and
+    # grouped terms and move irreducible values to the end (to be 
+    # consistent with Add.quick_simplified and quick_simplified_index
+    # which puts literal integers at the end).
     _simplification_directives_ = SimplificationDirectives(
-            ungroup = True)
+            ungroup = True,
+            order_key = lambda term : (
+                    1 if is_irreducible_value(term) else 0))
 
     # Map terms to sets of Judgment equalities that involve
     # the term on the left hand side.
@@ -79,8 +85,8 @@ class Add(NumberOperation):
                         ExprRange(
                             operand.lambda_map.parameter_or_parameters,
                             self.operator,
-                            operand.start_index,
-                            operand.end_index))
+                            operand.true_start_index,
+                            operand.true_end_index))
                 else:
                     operators.append(self.operator)
             implicit_first_operator = True  # the first operator is implicit if it is a '+'
@@ -101,13 +107,13 @@ class Add(NumberOperation):
                         operators[pos] = ExprRange(
                             operand.lambda_map.parameter,
                             Neg._operator_,
-                            operand.start_index,
-                            operand.end_index)
+                            operand.true_start_index,
+                            operand.true_end_index)
                         operands[pos] = ExprRange(
                             operand.lambda_map.parameter,
                             operand.lambda_map.body.operand,
-                            operand.start_index,
-                            operand.end_index) .with_styles(
+                            operand.true_start_index,
+                            operand.true_end_index) .with_styles(
                             **operand.get_styles())
                 elif pos == 0:
                     # not negated after all -- revert to the "implicit first
@@ -265,10 +271,10 @@ class Add(NumberOperation):
         if (self.operands.num_entries() == 1 
                 and isinstance(self.operands[0], ExprRange)
                 and self.operands[0].is_parameter_independent
-                and self.operands[0].start_index == one):
+                and self.operands[0].true_start_index == one):
             expr_range = self.operands[0]
             return repeated_addition_to_mult.instantiate(
-                {x: expr_range.body, n: expr_range.end_index})
+                {x: expr_range.body, n: expr_range.true_end_index})
         _n = self.operands.num_elements()
         _a = self.operands
         _x = self.operands[1]
@@ -648,6 +654,7 @@ class Add(NumberOperation):
 
         # separate the types of operands in a dictionary
         hold, order = expr._create_dict()
+        order_key = Add._simplification_directives_.order_key
 
         # Have the basic numbers come at the end.
         #if order[-1] != one and one in hold:
@@ -660,7 +667,7 @@ class Add(NumberOperation):
             # The indices keep moving as we reorder, so keep on top of this.
             old2new = {_k: _k for _k in range(expr.operands.num_entries())}
             new2old = {_k: _k for _k in range(expr.operands.num_entries())}
-            for key in order:
+            for key in sorted(order, key=order_key):
                 for orig_idx in hold[key]:
                     start_idx = old2new[orig_idx]
                     if start_idx == pos:
@@ -789,8 +796,8 @@ class Add(NumberOperation):
                 remaining_terms.extendleft(reversed(term.terms.entries))
                 continue
             if isinstance(term, ExprRange):
-                start_base, start_shift = split_int_shift(term.start_index)
-                end_base, end_shift = split_int_shift(term.end_index)
+                start_base, start_shift = split_int_shift(term.true_start_index)
+                end_base, end_shift = split_int_shift(term.true_end_index)
                 lambda_map = term.lambda_map
                 latest_head_shift[(lambda_map, start_base)] = max(
                         start_shift, latest_head_shift.get(
@@ -827,8 +834,8 @@ class Add(NumberOperation):
             terms = []
             for sign, abs_term in old_terms:
                 if isinstance(abs_term, ExprRange):
-                    start_base, start_shift = split_int_shift(abs_term.start_index)
-                    end_base, end_shift = split_int_shift(abs_term.end_index)
+                    start_base, start_shift = split_int_shift(abs_term.true_start_index)
+                    end_base, end_shift = split_int_shift(abs_term.true_end_index)
                     lambda_map = abs_term.lambda_map
                     latest_start = latest_head_shift[(lambda_map, start_base)]
                     earliest_end = earliest_tail_shift[(lambda_map, end_base)]
@@ -900,7 +907,7 @@ class Add(NumberOperation):
                         # See if the current term prepends the head of
                         # the following range.
                         start_base, start_shift = split_int_shift(
-                                following_term[1].start_index)
+                                following_term[1].true_start_index)
                         lambda_map = following_term[1].lambda_map
                         index = Add(start_base, 
                                     num(start_shift-1)).quick_simplified()
@@ -909,7 +916,7 @@ class Add(NumberOperation):
                             following_term[1] = ExprRange(
                                     following_term[1].parameter, 
                                     following_term[1].body,
-                                    index, following_term[1].end_index)
+                                    index, following_term[1].true_end_index)
                             continue
                     reversed_terms.append(following_term)
                 following_term = [sign, abs_term]
@@ -925,7 +932,7 @@ class Add(NumberOperation):
                         # See if the current term extends the tail of
                         # the previous range.
                         end_base, end_shift = split_int_shift(
-                                prev_term[1].end_index)
+                                prev_term[1].true_end_index)
                         lambda_map = prev_term[1].lambda_map
                         index = Add(end_base, 
                                     num(end_shift+1)).quick_simplified()
@@ -933,7 +940,7 @@ class Add(NumberOperation):
                             # Extend the tail.
                             prev_term[1] = ExprRange(
                                     prev_term[1].parameter, prev_term[1].body,
-                                    prev_term[1].start_index, index)
+                                    prev_term[1].true_start_index, index)
                             continue
                     terms.append(prev_term)
                 prev_term = [sign, abs_term]
@@ -1529,7 +1536,7 @@ class Add(NumberOperation):
                     in_number_set = ExprRange(
                             term_entry.parameter,
                             InSet(term_entry.body, number_set),
-                            term_entry.start_index, term_entry.end_index)
+                            term_entry.true_start_index, term_entry.true_end_index)
                 else:
                     in_number_set = InSet(term_entry, number_set)
                 if not in_number_set.proven():
@@ -1652,8 +1659,8 @@ def subtract(a, b):
     from proveit.numbers import Neg
     if isinstance(b, ExprRange):
         b = ExprRange(b.lambda_map.parameter_or_parameters,
-                      Neg(b.lambda_map.body), b.start_index,
-                      b.end_index, b.get_styles())
+                      Neg(b.lambda_map.body), b.true_start_index,
+                      b.true_end_index, b.get_styles())
         # The default style will use subtractions where appropriate.
         return Add(a, b)
     return Add(a, Neg(b))
@@ -1672,8 +1679,8 @@ def dist_subtract(a, b):
                   for term in b.terms]
     elif isinstance(b, ExprRange):
         bterms = [ExprRange(b.lambda_map.parameter_or_parameters,
-                            Neg(b.lambda_map.body), b.start_index,
-                            b.end_index, b.get_styles())]
+                            Neg(b.lambda_map.body), b.true_start_index,
+                            b.true_end_index, b.get_styles())]
     else:
         bterms = [Neg(b)]
     if isinstance(a, Add):
