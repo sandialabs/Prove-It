@@ -1,7 +1,6 @@
 from .algebra import (HilbertSpaces, Qmult, QmultCodomain, Bra, Ket, 
                       NumBra, NumKet)
 from .quantum_ops import Meas, QubitRegisterSpace, RegisterSU
-from .circuits import QC
 
 # There is a tricky chicken-and-egg issue if we include these
 # imports.  Let's just exclude them for now.

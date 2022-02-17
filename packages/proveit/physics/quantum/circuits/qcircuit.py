@@ -690,10 +690,14 @@ class Qcircuit(Function):
                         formatted_row_entries[col] = (
                                 r'& { /^{' + multiwire_size.latex() + r'} } '
                                 + formatted_entry[2:])
+                    '''
                     else:
+                        # It can also by r'& \gate{\cdots}'.
+                        # Let's just forget about this check for now.
                         assert (formatted_entry[:6] == r'\ghost' or
                                 formatted_entry[:8] == r'& \ghost' or
                                 '{#}' in formatted_entry)
+                    '''
                     if continue_wire and (multiwire_size is None):
                         # We want the multi-wire size for the continued
                         # wire, so let's figure that out.

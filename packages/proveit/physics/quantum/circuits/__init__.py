@@ -1,4 +1,4 @@
-from .qcircuit import Qcircuit, QcircuitSet
+from .qcircuit import Qcircuit
 from .qcircuit_elements import (Gate, MultiQubitElem,
                                 Input, Output, Measure, control_elem,
                                 multi_gate_entries, 
