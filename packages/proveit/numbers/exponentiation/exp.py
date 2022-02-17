@@ -585,7 +585,9 @@ class Exp(NumberOperation):
             exp_real_pos_closure, exp_real_non_neg_closure,
             exp_complex_closure, exp_complex_nonzero_closure,
             sqrt_complex_closure, sqrt_real_closure,
-            sqrt_real_pos_closure, sqrt_real_non_neg_closure)
+            sqrt_real_pos_closure, sqrt_real_non_neg_closure,
+            sqrd_pos_closure, sqrd_non_neg_closure)
+
         from proveit.numbers import zero
 
         deduce_number_set(self.exponent)
