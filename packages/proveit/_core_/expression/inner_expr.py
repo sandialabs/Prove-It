@@ -480,6 +480,7 @@ class InnerExpr:
         for expr, idx in reversed(list(zip(self.expr_hierarchy[:-1],
                                            self.inner_expr_path))):
             if isinstance(idx, slice) or skip_innermost:
+                skip_innermost = False
                 continue
             skip_innermost = False # no longer the innermost
             if isinstance(expr, Judgment):
