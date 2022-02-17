@@ -93,9 +93,9 @@ class ExpressionInfo:
                 out_str += indent + \
                     'lambda_map: %d\n' % (expr_num_map[expr.lambda_map])
                 out_str += indent + \
-                    'start_index: %d\n' % (expr_num_map[expr.start_index])
+                    'start_index: %d\n' % (expr_num_map[expr.true_start_index])
                 out_str += indent + \
-                    'end_index: %d\n' % (expr_num_map[expr.end_index])
+                    'end_index: %d\n' % (expr_num_map[expr.true_end_index])
             else:
                 out_str += indent + r'sub-expressions: ' + \
                     ', '.join(str(expr_num_map[sub_expr]) for sub_expr in expr._sub_expressions) + '\n'
@@ -170,9 +170,9 @@ class ExpressionInfo:
                 sub_expressions += 'lambda_map:&nbsp;%d<br>' % (
                     expr_num_map[expr.lambda_map])
                 sub_expressions += 'start_index:&nbsp;%d<br>' % (
-                    expr_num_map[expr.start_index])
+                    expr_num_map[expr.true_start_index])
                 sub_expressions += 'end_index:&nbsp;%d<br>' % (
-                    expr_num_map[expr.end_index])
+                    expr_num_map[expr.true_end_index])
             else:
                 sub_expressions = ', '.join(
                     str(expr_num_map[sub_expr]) for sub_expr in expr._sub_expressions)

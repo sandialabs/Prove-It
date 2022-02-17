@@ -68,8 +68,8 @@ class Len(Operation):
             # |(f(1), ..., f(n))| = n
             # |(f(i), ..., f(j))| = j-i+1
             range_entry = entries[0]
-            start_index = range_entry.start_index
-            end_index = range_entry.end_index
+            start_index = range_entry.true_start_index
+            end_index = range_entry.true_end_index
             lambda_map = range_entry.lambda_map
             if start_index == one:
                 from proveit.core_expr_types.tuples import range_from1_len
@@ -125,8 +125,8 @@ class Len(Operation):
                 extended_range_len, extended_range_from1_len
             assert isinstance(entries[0], ExprRange)
             range_lambda = entries[0].lambda_map
-            range_start = entries[0].start_index
-            range_end = entries[0].end_index
+            range_start = entries[0].true_start_index
+            range_end = entries[0].true_end_index
             if range_start == one:
                 len_comp = extended_range_from1_len.instantiate(
                     {f: range_lambda, x: entries[1], i: range_end})
@@ -154,8 +154,8 @@ class Len(Operation):
                         # Return an ExprRange of lambda maps.
                         return ExprRange(entry.parameter,
                                          entry.body.lambda_map,
-                                         entry.start_index,
-                                         entry.end_index)
+                                         entry.true_start_index,
+                                         entry.true_end_index)
                     else:
                         return entry.lambda_map
                 # For individual elements, just map to the
@@ -167,11 +167,11 @@ class Len(Operation):
                     if isinstance(entry.body, ExprRange):
                         # Return an ExprRange of lambda maps.
                         return ExprRange(entry.parameter,
-                                         entry.body.start_index,
-                                         entry.start_index,
-                                         entry.end_index)
+                                         entry.body.true_start_index,
+                                         entry.true_start_index,
+                                         entry.true_end_index)
                     else:
-                        return entry.start_index
+                        return entry.true_start_index
                 return one  # for individual elements, use start=end=1
 
             def entry_end(entry):
@@ -179,11 +179,11 @@ class Len(Operation):
                     if isinstance(entry.body, ExprRange):
                         # Return an ExprRange of lambda maps.
                         return ExprRange(entry.parameter,
-                                         entry.body.end_index,
-                                         entry.start_index,
-                                         entry.end_index)
+                                         entry.body.true_end_index,
+                                         entry.true_start_index,
+                                         entry.true_end_index)
                     else:
-                        return entry.end_index
+                        return entry.true_end_index
                 return one  # for individual elements, use start=end=1
 
             def empty_range(_i, _j, _f):
@@ -193,8 +193,8 @@ class Len(Operation):
                 from proveit.numbers import is_literal_int, Add
                 from proveit.logic import Equals
                 from proveit import m
-                _m = entries[0].start_index
-                _n = entries[0].end_index
+                _m = entries[0].true_start_index
+                _n = entries[0].true_end_index
                 empty_req = Equals(Add(_n, one), _m)
                 if is_literal_int(_m) and is_literal_int(_n):
                     if _n.as_int() + 1 == _m.as_int():
@@ -216,10 +216,10 @@ class Len(Operation):
 
             from proveit.numbers import is_literal_int
             if len(entries) == 1 and isinstance(entries[0], ExprRange):
-                if (is_literal_int(entries[0].start_index) and 
-                        is_literal_int(entries[0].end_index)):
-                    if (entries[0].end_index.as_int() + 1 
-                            == entries[0].start_index.as_int()):
+                if (is_literal_int(entries[0].true_start_index) and 
+                        is_literal_int(entries[0].true_end_index)):
+                    if (entries[0].true_end_index.as_int() + 1 
+                            == entries[0].true_start_index.as_int()):
                         return empty_range(_i[0], _j[0], _f)
 
             len_comp = None
@@ -288,8 +288,8 @@ class Len(Operation):
             # |(f(i), ..., f(j))}.  For example:
             # |(f(i), ..., f(j)| = (i, ..., j)
             range_entry = entries[0]
-            start_index = range_entry.start_index
-            end_index = range_entry.end_index
+            start_index = range_entry.true_start_index
+            end_index = range_entry.true_end_index
             lambda_map = range_entry.lambda_map
             if start_index == one:
                 from proveit.core_expr_types.tuples import \
@@ -329,8 +329,8 @@ class Len(Operation):
                  extended_range_from1_len_typical_eq)
             assert isinstance(entries[0], ExprRange)
             range_lambda = entries[0].lambda_map
-            range_start = entries[0].start_index
-            range_end = entries[0].end_index
+            range_start = entries[0].true_start_index
+            range_end = entries[0].true_end_index
             if range_start == one:
                 return extended_range_from1_len_typical_eq.instantiate(
                     {f: range_lambda, x: entries[1], i: range_end},
@@ -444,8 +444,8 @@ class Len(Operation):
                     and isinstance(operands[0], ExprRange)):
                 # Special case of proving that the length
                 # of a single range is in the set of Natural numbers.
-                range_start = operands[0].start_index
-                range_end = operands[0].end_index
+                range_start = operands[0].true_start_index
+                range_end = operands[0].true_end_index
                 range_lambda = operands[0].lambda_map
                 if range_start == one:
                     return range_from1_len_is_nat.instantiate(

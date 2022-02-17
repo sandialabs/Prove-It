@@ -407,7 +407,7 @@ class Qcircuit(Function):
         range_expr = center_entry[0]
         assert isinstance(range_expr, ExprRange)
         range_expr_body = range_expr.body
-        if range_expr_body == Gate(I) and range_expr.start_index==one:
+        if range_expr_body == Gate(I) and range_expr.true_start_index==one:
             return True # A multiwire
         if not isinstance(range_expr_body, MultiQubitElem):
             # Not a multiwire or multigate.
@@ -685,8 +685,8 @@ class Qcircuit(Function):
                         # format a multiwire
                         _expr = format_cell_entries[col][row][0]
                         assert isinstance(_expr, ExprRange)
-                        assert _expr.start_index == one
-                        multiwire_size = _expr.end_index
+                        assert _expr.true_start_index == one
+                        multiwire_size = _expr.true_end_index
                         formatted_row_entries[col] = (
                                 r'& { /^{' + multiwire_size.latex() + r'} } '
                                 + formatted_entry[2:])
@@ -867,10 +867,10 @@ class Qcircuit(Function):
                 body = entry.innermost_body()
                 if isinstance(body, elem_type):
                     _A.append(ExprRange(entry.parameter, body.state,
-                                        entry.start_index, entry.end_index,
+                                        entry.true_start_index, entry.true_end_index,
                                         styles=entry.get_styles()))
                     _n.append(ExprRange(entry.parameter, one, 
-                                        entry.start_index, entry.end_index,
+                                        entry.true_start_index, entry.true_end_index,
                                         styles=entry.get_styles()))
                     continue # Good
                 if (isinstance(body, MultiQubitElem)
@@ -906,10 +906,10 @@ class Qcircuit(Function):
                     # n_i, ..., n_j = x, ..., x
                     # N_k = N_{i-1} + (k-i+1)*x
                     param = safe_dummy_var(_nk, _Nk)
-                    body = Add(_Nk, Mult(Add(param, Neg(_nk.start_index), 
+                    body = Add(_Nk, Mult(Add(param, Neg(_nk.true_start_index), 
                                              one),
                                          _nk.body))
-                    start, end = _nk.start_index, _nk.end_index
+                    start, end = _nk.true_start_index, _nk.true_end_index
                     assumptions = defaults.assumptions + (
                             InSet(param, Interval(start, end)),)                    
                     body = body.simplified(assumptions=assumptions)
@@ -957,28 +957,28 @@ class Qcircuit(Function):
                 # the N_0, ..., N_{m-1} segment so the entries line up.
                 expr_for_Nk = eq_for_Nk.update(
                         expr_for_Nk.inner_expr()[_idx].partition(
-                                entry.start_index,
+                                entry.true_start_index,
                                 force_to_treat_as_increasing=True))
                 # We have to do the same for n_1, ..., n_k and 
                 # A_1, ..., A_k to match N_1, ..., N_k:
                 # (uses _idx-1 since there is no n_0).
                 expr_for_nk = eq_for_nk.update(
                         expr_for_nk.inner_expr()[_idx-1].partition(
-                                entry.start_index,
+                                entry.true_start_index,
                                 force_to_treat_as_increasing=True))                
                 expr_for_Ak = eq_for_Ak.update(
                         expr_for_Ak.inner_expr()[_idx-1].partition(
-                                entry.start_index,
+                                entry.true_start_index,
                                 force_to_treat_as_increasing=True))                
                 # Shift the start index in N_0, ..., N_{m-1} to line
                 # it up with N_1, ..., N_{m}:
                 expr_for_Nkm1 = eq_for_Nkm1.update(
                         expr_for_Nkm1.inner_expr()[_idx].shift_equivalence(
-                                new_start=expr_for_Nk[_idx+1].start_index,
+                                new_start=expr_for_Nk[_idx+1].true_start_index,
                                 force_to_treat_as_increasing=True))
                 expr_for_Nkm1 = eq_for_Nkm1.update(
                         expr_for_Nkm1.inner_expr()[_idx].partition(
-                                subtract(expr_for_Nkm1[_idx].end_index, one),
+                                subtract(expr_for_Nkm1[_idx].true_end_index, one),
                                 force_to_treat_as_increasing=True))
                 _idx += 2 # Add an extra 1 to account for new partition.
             else:

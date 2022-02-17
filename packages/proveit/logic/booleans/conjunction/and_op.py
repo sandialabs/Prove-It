@@ -335,8 +335,8 @@ class And(Operation):
                              "on a conjunction with a single ExprRange "
                              "operand entry.")
         expr_range = self.operands[0]
-        _i = expr_range.start_index
-        _j = expr_range.end_index
+        _i = expr_range.true_start_index
+        _j = expr_range.true_end_index
         _k = expr_range.parameter if instance_param is None else instance_param
         _P = expr_range.lambda_map
         proven_quantification = quantification_from_conjunction.instantiate(
@@ -509,11 +509,11 @@ class And(Operation):
                              "A and ..n repeats.. and A, not %s" % self)
         expr_range = self.operands[0]
         _A = expr_range.body
-        if expr_range.start_index == one:
+        if expr_range.true_start_index == one:
             return redundant_conjunction.instantiate(
-                {n: expr_range.end_index, A: _A})
+                {n: expr_range.true_end_index, A: _A})
         else:
-            _i, _j = expr_range.start_index, expr_range.end_index
+            _i, _j = expr_range.true_start_index, expr_range.true_end_index
             return redundant_conjunction_general.instantiate(
                 {i:_i, j:_j, A:_A})
 
@@ -536,8 +536,8 @@ class And(Operation):
                     format(self))
 
         the_expr_range = self.operands[0]
-        _i_sub = the_expr_range.start_index
-        _j_sub = the_expr_range.end_index
+        _i_sub = the_expr_range.true_start_index
+        _j_sub = the_expr_range.true_end_index
         _k_sub = the_expr_range.parameter
         _P_sub = Lambda(the_expr_range.parameter, the_expr_range.body)
         impl =  conjunction_from_quantification.instantiate(

@@ -135,20 +135,20 @@ class DecimalSequence(NumeralSequence):
                 import proveit.numbers.numerals.decimals
 
                 # _m = expr.digits[:i].num_elements(assumptions)
-                # _n = digit.end_index
+                # _n = digit.true_end_index
                 # _k = expr.digits[i + 1:].num_elements(assumptions)
                 # _a = expr.digits[:i]
                 # _b = digit.body
                 # _d = expr.digits[i + 1:]
 
                 _m = eq.relation.rhs.digits[:idx].num_elements()
-                _n = digit.end_index
+                _n = digit.true_end_index
                 _k = expr.digits[i + 1:].num_elements()
                 _a = eq.relation.rhs.digits[:idx]
                 _b = digit.body
                 _d = expr.digits[i + 1:]
 
-                # if digit.end_index.as_int() >= 10:
+                # if digit.true_end_index.as_int() >= 10:
                 # Automatically reduce an Expression range of
                 # a single numeral to an Expression tuple
                 # (3 .. 4 repeats.. 3) = 3333
@@ -166,7 +166,7 @@ class DecimalSequence(NumeralSequence):
                     _n = num(_n.as_int() - 1)
                     idx += 1
 
-                #_n = digit.end_index
+                #_n = digit.true_end_index
                 len_thm = proveit.numbers.numerals.decimals \
                     .__getattr__('reduce_%s_repeats' % _n)
                 _x = digit.body
@@ -215,7 +215,7 @@ class DecimalSequence(NumeralSequence):
                     num2.digits[idx],
                     ExprRange) and num2.digits[idx].body == nine):
                 if isinstance(num2.digits[idx], ExprRange):
-                    count += num2.digits[idx].end_index
+                    count += num2.digits[idx].true_end_index
                 else:
                     count += 1
                 idx -= 1

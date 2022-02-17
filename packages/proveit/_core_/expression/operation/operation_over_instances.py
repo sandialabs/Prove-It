@@ -28,8 +28,8 @@ def _extract_domain_from_condition(ivar, condition):
         # range matching x_1 in S_1, ..., x_n in S_n.
         if (isinstance(condition, ExprRange)
                 and isinstance(condition.body, InClass)
-                and condition.start_index == ivar.start_index
-                and condition.end_index == ivar.end_index):
+                and condition.true_start_index == ivar.true_start_index
+                and condition.true_end_index == ivar.true_end_index):
             # Replace the condition parameter with the ivar parameter
             # and see if the InSet element matches ivar.body.
             cond_body_elem_with_repl_param = (
@@ -41,7 +41,7 @@ def _extract_domain_from_condition(ivar, condition):
                     # parameters.
                     return ExprRange(
                         condition.parameter, condition.body.domain,
-                        condition.start_index, condition.end_index)
+                        condition.true_start_index, condition.true_end_index)
             return condition.body.domain
     elif isinstance(condition, InClass) and condition.element == ivar:
         return condition.domain
@@ -179,16 +179,16 @@ class OperationOverInstances(Operation):
                         in_class = InSet
                     if isinstance(iparam, ExprRange):
                         if isinstance(domain, ExprRange):
-                            if ((iparam.start_index != domain.start_index) or
-                                    (iparam.end_index != domain.end_index)):
+                            if ((iparam.true_start_index != domain.true_start_index) or
+                                    (iparam.true_end_index != domain.true_end_index)):
                                 raise ValueError(
                                     "A range of parameters must match "
                                     "in start and end indices with the "
                                     "corresponding range of domains: "
                                     "%s vs %s and %s vs %s" %
-                                    (iparam.start_index,
-                                     domain.start_index,
-                                     iparam.end_index, domain.end_index))
+                                    (iparam.true_start_index,
+                                     domain.true_start_index,
+                                     iparam.true_end_index, domain.true_end_index))
                             # Use the same parameter for the domain
                             # as the instance parameter.
                             domain_body_with_new_param = \
@@ -197,12 +197,12 @@ class OperationOverInstances(Operation):
                             condition = ExprRange(
                                 iparam.parameter,
                                 in_class(iparam.body, domain_body_with_new_param),
-                                iparam.start_index, iparam.end_index)
+                                iparam.true_start_index, iparam.true_end_index)
                         else:
                             condition = ExprRange(
                                 iparam.parameter, 
                                 in_class(iparam.body, domain),
-                                iparam.start_index, iparam.end_index)
+                                iparam.true_start_index, iparam.true_end_index)
                     else:
                         condition = in_class(iparam, domain)
                     domain_conditions.append(condition)

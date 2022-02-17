@@ -305,7 +305,7 @@ class Qmult(Operation):
                 n_complex_entries += 1
             elif isinstance(operand, ExprRange):
                 if ExprRange(operand.parameter, InSet(operand.body, Complex),
-                             operand.start_index, operand.end_index).proven():
+                             operand.true_start_index, operand.true_end_index).proven():
                     # We have a range of complex numbers to pull out in
                     # front.
                     _A = expr.operands[:_idx]
@@ -740,7 +740,7 @@ class QmultCodomainMembership(ClassMembership):
                                 "is not handled; why not simplify the Qmult "
                                 "before proving it is well-formed")
                     expr_range = element.operands[-1]
-                    partition_idx = subtract(expr_range.end_index, one)
+                    partition_idx = subtract(expr_range.true_end_index, one)
                     partition = element.inner_expr().operands[-1].partition(
                             partition_idx)
                     membership = InClass(partition.rhs, QmultCodomain)

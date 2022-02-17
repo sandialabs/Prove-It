@@ -147,7 +147,8 @@ class ExprArray(ExprTuple):
                             for _er in reversed(_expr_ranges):
                                 inner_expr = ExprRange(
                                         _er.parameter, inner_expr,
-                                        _er.start_index, _er.end_index)
+                                        _er.true_start_index, 
+                                        _er.true_end_index)
                                 inner_expr = inner_expr.with_mimicked_style(
                                         _er, ignore_inapplicable_styles=True)
                         # Compose outer and inner roles.
@@ -158,7 +159,7 @@ class ExprArray(ExprTuple):
                 format_cell_entries.append(inner_format_cell_entries)
             else:
                 # Represent an entire inner list with an entry.
-                format_cell_entries.append((outer_expr, outer_role))
+                format_cell_entries.append((orig_outer_expr, outer_role))
         
         # Where roles are 'explicit' outside and inside, we'll make 
         # surrounding roles be implicit for a more compact 

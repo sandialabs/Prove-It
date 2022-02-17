@@ -85,7 +85,7 @@ class ConditionalSet(Operation):
             formatted_conditionals = []
             for conditional in self.conditionals:
                 if isinstance(conditional, ExprRange):
-                    for cell_info in conditional._yield_format_cell_info():
+                    for cell_info in conditional.yield_format_cell_info():
                         (expr, role), assumptions = cell_info
                         with defaults.temporary() as tmp_defaults:
                             tmp_defaults.automation = False

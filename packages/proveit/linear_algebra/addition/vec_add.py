@@ -105,9 +105,9 @@ class VecAdd(GroupAdd):
                 for term in terms:
                     if isinstance(term, ExprRange):
                         _a.append(ExprRange(term.parameter, term.body.scalar,
-                                            term.start_index, term.end_index))
+                                            term.true_start_index, term.true_end_index))
                         _x.append(ExprRange(term.parameter, term.body.scaled,
-                                            term.start_index, term.end_index))
+                                            term.true_start_index, term.true_end_index))
                     else:
                         _a.append(term.scalar)
                         _x.append(term.scaled)

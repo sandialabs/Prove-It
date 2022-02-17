@@ -49,6 +49,20 @@ def get_param_var(parameter, *, _required_indices=None):
         return var
     elif isinstance(parameter, IndexedVar):
         if _required_indices is not None:
+            """
+            if not _required_indices.issuperset(parameter.indices):
+                # TODO: WHAT ABOUT STATIC INDICES; for example, x_1
+                unexpected_indices = (set(parameter.indices) 
+                                      - _required_indices)
+                if len(unexpected_indices) > 1:
+                    msg = ("%s were not expected parameter indices"
+                           %unexpected_indices)
+                else:
+                    msg = ("%s is not an expected parameter index"
+                           %next(iter(unexpected_indices)))
+                raise ValueError(msg + " of %s, expecting %s."%(parameter,
+                                                               _required_indices))
+            """
             _required_indices.difference_update(parameter.indices)
         return parameter.var
     elif isinstance(parameter, Variable):
@@ -186,9 +200,9 @@ class Lambda(Expression):
             if (isinstance(parameter, ExprRange) and
                     isinstance(parameter.body, IndexedVar)):
                 free_vars_of_indices.update(
-                    free_vars(parameter.start_index))
+                    free_vars(parameter.true_start_index))
                 free_vars_of_indices.update(
-                    free_vars(parameter.end_index))
+                    free_vars(parameter.true_end_index))
             elif isinstance(parameter, IndexedVar):
                 free_vars_of_indices.update(
                     free_vars(parameter.index))
@@ -1388,7 +1402,7 @@ def extract_param_replacements(parameters, parameter_vars, body,
                             # automatically reduced when the start and
                             # end are the same).
                             operand = operand.body.basic_replaced(
-                                    {operand.parameter: operand.start_index})
+                                    {operand.parameter: operand.true_start_index})
                             break  # Good to go.
                         elif operand_len_val == zero:
                             # Keep going until we get a length

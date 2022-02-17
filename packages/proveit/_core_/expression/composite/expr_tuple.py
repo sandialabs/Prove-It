@@ -387,9 +387,9 @@ class ExprTuple(Composite, Expression):
                     != isinstance(other_entry, ExprRange)):
                 return False  # range vs singular mismatch
             if isinstance(entry, ExprRange):
-                if entry.start_index != other_entry.start_index:
+                if entry.true_start_index != other_entry.true_start_index:
                     return False  # start indices don't match
-                if entry.end_index != other_entry.end_index:
+                if entry.true_end_index != other_entry.true_end_index:
                     return False  # end indices don't match
         return True  # everything matches.
 
@@ -690,14 +690,14 @@ class ExprTuple(Composite, Expression):
                             "Cannot merge together ExprRanges "
                             "with different lambda maps: %s vs %s" %
                             (lambda_map, other_lambda_map))
-                    _i, _j = eq.expr[0].start_index, eq.expr[0].end_index
-                    _k, _l = eq.expr[1].start_index, eq.expr[1].end_index
+                    _i, _j = eq.expr[0].true_start_index, eq.expr[0].true_end_index
+                    _k, _l = eq.expr[1].true_start_index, eq.expr[1].true_end_index
                     merger = \
                         merge.instantiate(
                                 {f: lambda_map, i: _i, j: _j, k: _k, l: _l})
                 else:
                     # Merge an ExprRange and a singular item.
-                    _i, _j = eq.expr[0].start_index, eq.expr[0].end_index
+                    _i, _j = eq.expr[0].true_start_index, eq.expr[0].true_end_index
                     _k = lambda_map.extract_argument(eq.expr[1])
                     if _k == Add(_j, one):
                         merger = merge_extension.instantiate(
@@ -708,7 +708,7 @@ class ExprTuple(Composite, Expression):
             else:
                 # Merge a singular item and ExprRange.
                 i_sub = lambda_map.extract_argument(eq.expr[0])
-                j_sub, k_sub = eq.expr[1].start_index, eq.expr[1].end_index
+                j_sub, k_sub = eq.expr[1].true_start_index, eq.expr[1].true_end_index
                 merger = \
                     merge_front.instantiate({f: lambda_map, i: i_sub, 
                                              j: j_sub, k: k_sub})
@@ -743,8 +743,8 @@ class ExprTuple(Composite, Expression):
                     and equality.rhs.num_entries() == 1
                     and isinstance(equality.rhs[0], ExprRange)):
                 expr_range = equality.rhs[0]
-                if (expr_range.start_index == one and
-                        expr_range.end_index == num(_n)):
+                if (expr_range.true_start_index == one and
+                        expr_range.true_end_index == num(_n)):
                     if len(self.entries) >= 10:
                         raise NotImplementedError("counting range equality "
                                                   "not implemented for more "
@@ -767,19 +767,19 @@ class ExprTuple(Composite, Expression):
                 # to make this easier to implement.
                 expr = expr.inner_expr()[0].with_increasing_order()
             eq = TransRelUpdater(expr)
-            if expr[0].start_index != r_range.start_index:
+            if expr[0].true_start_index != r_range.true_start_index:
                 # Shift indices so they have the same start.
                 expr = eq.update(expr[0].shift_equivalence(
-                        new_start=r_range.start_index))
+                        new_start=r_range.true_start_index))
             if expr[0].lambda_map != r_range.lambda_map:
                 # Change the lambda map.
                 expr = eq.update(expr[0].range_fn_transformation(
                         r_range.lambda_map))
-            if expr[0].end_index != r_range.end_index:
+            if expr[0].true_end_index != r_range.true_end_index:
                 # Make the end indices be the same:
-                end_eq = Equals(expr[0].end_index, r_range.end_index).prove()
+                end_eq = Equals(expr[0].true_end_index, r_range.true_end_index).prove()
                 expr = eq.update(end_eq.substitution(
-                        expr.inner_expr()[0].end_index))
+                        expr.inner_expr()[0].true_end_index))
             return eq.relation
         
         # Try tuple_eq_via_elem_eq as the last resort.
@@ -832,15 +832,15 @@ class ExprTuple(Composite, Expression):
 
         # _n = self.num_elements()
         try:
-            _n = subtract(self[0].end_index, self[0].start_index).evaluated()
+            _n = subtract(self[0].true_end_index, self[0].true_start_index).evaluated()
         except EvaluationError as the_error:
-            _diff = subtract(self[0].end_index, self[0].start_index)
+            _diff = subtract(self[0].true_end_index, self[0].true_start_index)
             print("EvaluationError: {0}. The ExprRange {1} must represent "
                   "a known, finite number of elements, but all we know is "
                   "that it represents {2} elements.".format(
                     the_error, self[0], _diff))
             raise EvaluationError(
-                subtract(self[0].end_index, self[0].start_index))
+                subtract(self[0].true_end_index, self[0].true_start_index))
         
         _n = _n.as_int() + 1 # actual number of elems being represented
         if not (1 <= _n and _n <= 9):
@@ -863,8 +863,8 @@ class ExprTuple(Composite, Expression):
         _idx_param = _the_expr_range.parameter
         _fxn_sub = _the_expr_range.body.basic_replaced(
                 {_idx_param: _safe_var})
-        _i_sub = _the_expr_range.start_index
-        _j_sub = _the_expr_range.end_index
+        _i_sub = _the_expr_range.true_start_index
+        _j_sub = _the_expr_range.true_end_index
         return expansion_thm.instantiate(
                 {Function(_f, _safe_var): _fxn_sub, _i: _i_sub, _j: _j_sub})
 
@@ -926,7 +926,7 @@ def extract_var_tuple_indices(indexed_var_tuple):
             assert inner_indices.num_entries() == 1
             body = inner_indices[0]
             indices.append(ExprRange(entry.parameter, body,
-                                     entry.start_index, entry.end_index))
+                                     entry.true_start_index, entry.true_end_index))
         else:
             raise TypeError("'var_range' must be an ExprTuple only of "
                             "IndexedVar or (nested) ExprRange entries.")

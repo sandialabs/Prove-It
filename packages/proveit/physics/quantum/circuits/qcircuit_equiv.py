@@ -58,7 +58,7 @@ class QcircuitEquiv(TransitiveRelation):
                              "%s as 'lambda_map'" % lambda_map)
         if isinstance(lambda_map.parameters[0], ExprRange):
             from proveit.numbers import one
-            if lambda_map.parameters[0].start_index != one:
+            if lambda_map.parameters[0].true_start_index != one:
                 raise ValueError("When substituting a range, expecting "
                                  "the 'lambda_map' parameter range to "
                                  "have a starting index of 1; got "
@@ -87,8 +87,8 @@ class QcircuitEquiv(TransitiveRelation):
             from proveit.core_expr_types.operations import \
                 operands_substitution
             from proveit.numbers import one
-            assert lambda_map.parameters[0].start_index == one
-            n_sub = lambda_map.parameters[0].end_index
+            assert lambda_map.parameters[0].true_start_index == one
+            n_sub = lambda_map.parameters[0].true_end_index
             return operands_substitution.instantiate(
                 {n: n_sub, f: lambda_map, x: self.lhs, y: self.rhs},
                 assumptions=assumptions)
