@@ -761,7 +761,8 @@ def compose(*expressions, **defaults_config):
     Returns [A and B and ...], the And operator applied to the
     collection of given arguments, derived from each separately.
     '''
-    from proveit._core_.expression.composite import composite_expression
+    from proveit._core_.expression.composite import (
+            ExprRange, composite_expression)
     expressions = composite_expression(expressions)
     if expressions.num_entries() == 0:
         from proveit.logic.booleans.conjunction import \
@@ -771,6 +772,25 @@ def compose(*expressions, **defaults_config):
         from . import and_if_both
         return and_if_both.instantiate(
             {A: expressions[0], B: expressions[1]}, auto_simplify=False)
+    elif expressions.contains_range():
+        # If there are ranges, prove these portions separately
+        # (grouped together) and then disassociate.
+        new_expressions = []
+        to_expand = []
+        # Group the ExprRanges and record their entry indices.
+        for _k, entry in enumerate(expressions):
+            if isinstance(entry, ExprRange):
+                new_expressions.append(And(entry))
+                to_expand.append(_k)
+            else:
+                new_expressions.append(entry)
+        # Prove the composition with ExprRanges grouped:
+        composed = compose(*new_expressions)
+        # Disassociate each ExprRange in reverse order so we don't
+        # have to update indices.
+        for _idx in reversed(to_expand):
+            composed = composed.disassociate(_idx)
+        return composed
     else:
         from . import and_if_all
         _m = expressions.num_elements()
