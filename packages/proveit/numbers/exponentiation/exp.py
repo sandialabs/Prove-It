@@ -432,13 +432,14 @@ class Exp(NumberOperation):
                         'fraction base')
     """
 
-    """
-    # we have renamed raise_exp_factor to factorization() !!!
-    # perhaps re-rename this to avoid factorization() interactions
-    # due to recursive calls to factorization() (because this is NOT
-    # multiplicative factorization!)
-    @equality_prover('factorized', 'factor')
-    def factorization(self, exp_factor, **defaults_config):
+    @equality_prover('exp_factorized', 'exp_factor')
+    def exp_factorization(self, exp_factor, **defaults_config):
+        '''
+        Pull out one of the exponent factors to an exponent at
+        another level.  For example,
+            a^{b*n} = (a^b)^n
+            a^{-b*n} = (a^{-b})^n
+        '''
         # Note: this is out-of-date.  Distribution handles this now,
         # except it doesn't deal with the negation part
         # (do we need it to?)
@@ -468,7 +469,7 @@ class Exp(NumberOperation):
             # factor the exponent first, then raise this exponent factor
             factored_exp_eq = factor_eq.substitution(self)
             return factored_exp_eq.apply_transitivity(
-                factored_exp_eq.rhs.factorization(exp_factor))
+                factored_exp_eq.rhs.exp_factorization(exp_factor))
         n_sub = b_times_c.operands[1]
         a_sub = self.base
         b_sub = b_times_c.operands[0]
@@ -481,7 +482,6 @@ class Exp(NumberOperation):
         deduce_in_number_set(b_sub, Complex)
         return thm.instantiate({n: n_sub}).instantiate(
             {a: a_sub, b: b_sub}).derive_reversed()
-    """
 
     @equality_prover('exponent_separated', 'exponent_separate')
     def exponent_separation(self, **defaults_config):
@@ -526,6 +526,7 @@ class Exp(NumberOperation):
         return exp_separated.derive_reversed(replacements=replacements)
 
 
+    """
     def lower_outer_exp(self, assumptions=frozenset()):
         #
         from proveit.numbers import Neg
@@ -558,6 +559,7 @@ class Exp(NumberOperation):
         deduce_in_integer(n_, assumptions)
         deduce_in_complex([a_, b_], assumptions)
         return thm.instantiate({n: n_}).instantiate({a: a_, b: b_})
+    """
 
     @relation_prover
     def deduce_in_number_set(self, number_set, **defaults_config):

@@ -1394,11 +1394,10 @@ class Mult(NumberOperation):
             temp_expr = self
             eq = TransRelUpdater(temp_expr)
             for idx in range(0, self.factors.num_elements().as_int()):
-                the_factor = self.factors[idx]
                 if temp_expr.operands[idx].exponent != exp_factor:
                     temp_expr = eq.update(
-                            temp_expr.inner_expr().operands[idx].factorization(
-                            exp_factor))
+                            temp_expr.inner_expr().operands[idx]
+                            .exp_factorization(exp_factor, preserve_all=True))
             # eq.relation now has each factor with the specified the_factor
             # extracted to produce something along the lines of
             # |- a^{f j} b^{j, k} = (a^f)^j (b^k)^j
