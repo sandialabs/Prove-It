@@ -1,5 +1,5 @@
 from proveit import (Judgment, defaults, relation_prover, equality_prover, 
-                     Literal, Operation, Lambda,
+                     Literal, Operation, Lambda, UnsatisfiedPrerequisites,
                      prover, TransRelUpdater, SimplificationDirectives)
 from proveit import a, b, c, d, e, f, i, j, k, A, K, Q, U, V, W, alpha
 from proveit.logic import Equals, InClass, SetMembership
@@ -78,6 +78,11 @@ class TensorProd(Operation):
         
         if TensorProd._simplification_directives_.factor_scalars:
             # Next, pull out scalar factors
+            try:
+                VecSpaces.known_vec_space(self)
+            except ValueError:
+                raise UnsatisfiedPrerequisites(
+                        "No known vector space for %s"%self)
             for _k, operand in enumerate(expr.operands):
                 if isinstance(operand, ScalarMult):
                     # Just pull out the first one we see and let
@@ -383,48 +388,3 @@ class TensorProd(Operation):
                 {K:_K, i:_i, k:_k, U:_U, V:_V, W:_W, 
                  a:_a, b:_b, c:_c, d:_d, e:_e})
         return impl.derive_consequent().with_mimicked_style(tensor_equality)
-
-
-class TensorExp(Operation):
-    '''
-    '''
-
-    # the literal operator of the TensorExp operation
-    _operator_ = Literal(
-            string_format=r'otimes', latex_format=r'{\tiny\otimes}',
-            theory=__file__)
-
-    def __init__(self, base, exponent, *, styles=None):
-        r'''
-        Tensor exponentiation to any natural number exponent.
-        '''
-        Operation.__init__(self, TensorExp._operator_, (base, exponent),
-                           styles=styles)
-        self.base = self.operands[0]
-        self.exponent = self.operands[1]
-
-    def _formatted(self, format_type, fence=True):
-        # changed from formatted to _formatted 2/14/2020 (wdc)
-        formatted_base = self.base.formatted(format_type, fence=True)
-        formatted_exp = self.exponent.formatted(format_type, fence=True)
-        if format_type == 'latex':
-            return formatted_base + r'^{\otimes ' + formatted_exp + '}'
-        elif format_type == 'string':
-            return formatted_base + '^{otimes ' + formatted_exp + '}'
-
-    @equality_prover('do_reduced_simplified', 'do_reduced_simplify')
-    def do_reduced_simplification(self, **defaults_config):
-        '''
-        For the trivial cases of a one exponent, derive and return
-        this tensor-exponentiated expression equated with a simplified
-        form. Assumptions may be necessary to deduce necessary
-        conditions for the simplification. For example,
-        TensorExp(x, one).do_reduced_simplification()
-        '''
-        from proveit.numbers import zero, one
-        from . import tensor_exp_one
-        if self.exponent == one:
-            return tensor_exp_one.instantiate({x: self.base})
-        raise ValueError('Only trivial simplification is implemented '
-                         '(tensor exponent of one). Submitted tensor '
-                         'exponent was {}.'.format(self.exponent))

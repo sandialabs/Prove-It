@@ -19,13 +19,10 @@ class MatrixSpace(Operation):
         
         '''
         Operation.__init__(self, MatrixSpace._operator_,
-                           NamedExprs([('field', field), 
-                                       ('rows', rows),
-                                       ('columns', columns)]), 
+                           NamedExprs(('field', field), 
+                                      ('rows', rows),
+                                      ('columns', columns)), 
                            styles=styles)
-        self.field = field
-        self.rows = rows
-        self.columns = columns
 
     def formatted(self, format_type, **kwargs):
         times_operator = 'x' if format_type == 'string' else r'\times'

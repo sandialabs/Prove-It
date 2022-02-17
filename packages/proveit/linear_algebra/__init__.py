@@ -6,9 +6,8 @@ from .scalar_multiplication import ScalarMult
 from .inner_products import (InnerProdSpaces, InnerProd,
                              deduce_as_inner_prod_space)
 from .linear_maps import LinMap, LinMapAdd
-from .matrices import MatrixMult, MatrixSpace
+from .matrices import MatrixSpace, MatrixMult, MatrixExp, SU
 from .tensors import TensorExp, TensorProd
-from .lie_algebra import SU
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
