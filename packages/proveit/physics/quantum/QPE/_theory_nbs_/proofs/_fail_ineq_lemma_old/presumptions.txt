@@ -34,14 +34,13 @@ proveit.numbers.addition.add_int_closure_bin
 proveit.numbers.addition.add_nat_closure_bin
 proveit.numbers.addition.add_real_closure_bin
 proveit.numbers.addition.subtraction.nonzero_difference_if_different
-proveit.numbers.addition.subtraction.sub_one_is_nat
 proveit.numbers.addition.weak_bound_via_left_term_bound
 proveit.numbers.addition.weak_bound_via_right_term_bound
+proveit.numbers.division.div_complex_closure
+proveit.numbers.division.div_rational_pos_closure
 proveit.numbers.division.div_real_closure
-proveit.numbers.division.divide_complex_closure
 proveit.numbers.division.prod_of_fracs
 proveit.numbers.exponentiation.exp_complex_nonzero_closure
-proveit.numbers.exponentiation.exp_int_closure
 proveit.numbers.exponentiation.exp_real_closure_nat_power
 proveit.numbers.multiplication.distribute_through_sum
 proveit.numbers.multiplication.distribute_through_summation
@@ -74,7 +73,6 @@ proveit.numbers.number_sets.integers.nonpos_if_in_nonpos_int
 proveit.numbers.number_sets.integers.nonpos_int_within_int
 proveit.numbers.number_sets.integers.nonzero_if_in_nonzero_int
 proveit.numbers.number_sets.integers.nonzero_int_within_int
-proveit.numbers.number_sets.integers.pos_int_is_natural_pos
 proveit.numbers.number_sets.natural_numbers.nat_pos_within_nat
 proveit.numbers.number_sets.natural_numbers.natural_lower_bound
 proveit.numbers.number_sets.natural_numbers.natural_pos_lower_bound
