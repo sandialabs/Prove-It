@@ -1,6 +1,6 @@
 from proveit import (Literal, ProofFailure, UnsatisfiedPrerequisites,
                      defaults, prover)
-from proveit.logic import Equals, InSet, Membership, SubsetEq
+from proveit.logic import Equals, InSet, SetMembership, SubsetEq
 
 
 class NumberSet(Literal):
