@@ -253,21 +253,22 @@ class Defaults:
             # assumptions may have changed.
             # NOT USED ANYMORE
             #self._simplification_directives_id = None
-        if attr == 'replacements' and len(value) > 0:
-            from proveit import Judgment
-            from proveit.logic import Equals
-            # When we have replacements, don't preserve all (anymore?):
-            self.preserve_all = False
+        if attr == 'replacements':
             value = tuple(value) # replacements should be a tuple
-            for replacement in value:
-                if not isinstance(replacement, Judgment):
-                    raise TypeError("'replacements' should be Judgments")
-                if not isinstance(replacement.expr, Equals):
-                    raise TypeError("'replacements' should be equality "
-                                    "Judgments")
-                # Setting a replacement will override an existing
-                # preserved expression.
-                self.preserved_exprs.discard(replacement.lhs)
+            if len(value) > 0:
+                from proveit import Judgment
+                from proveit.logic import Equals
+                # When we have replacements, don't preserve all (anymore?):
+                self.preserve_all = False
+                for replacement in value:
+                    if not isinstance(replacement, Judgment):
+                        raise TypeError("'replacements' should be Judgments")
+                    if not isinstance(replacement.expr, Equals):
+                        raise TypeError("'replacements' should be equality "
+                                        "Judgments")
+                    # Setting a replacement will override an existing
+                    # preserved expression.
+                    self.preserved_exprs.discard(replacement.lhs)
         elif attr == 'preserve_all' and value==True:
             # When preserving all, we can nix replacements and turn
             # off auto-simplification.
