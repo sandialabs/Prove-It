@@ -289,7 +289,7 @@ class Expression(metaclass=ExprType):
         # and style -- this will contain the 'png' generated on demand.
         self._style_data = style_data(
             self._generate_unique_rep(lambda expr: hex(expr._style_id),
-                core_info, styles))
+                core_info, styles, style_options))
         # initialize the style options
         # formatting style options that don't affect the meaning of the
         # expression
@@ -408,7 +408,8 @@ class Expression(metaclass=ExprType):
         self._meaning_id = self._meaning_data._unique_id
         return self._meaning_id
 
-    def _generate_unique_rep(self, object_rep_fn, core_info=None, styles=None):
+    def _generate_unique_rep(self, object_rep_fn, core_info=None, 
+                             styles=None, style_options=None):
         '''
         Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.
         '''
@@ -416,9 +417,13 @@ class Expression(metaclass=ExprType):
             core_info = self._core_info
         if styles is None and hasattr(self, '_style_data'):
             styles = self._style_data.styles
+            style_options = self.style_options()
         if styles is not None:
+            canonical_styles = style_options.canonical_styles()
             style_str = ','.join(style_name + ':' + styles[style_name]
-                                 for style_name in sorted(styles.keys()))
+                                 for style_name in sorted(styles.keys())
+                                 if styles[style_name] != canonical_styles.get(
+                                         style_name, None))
         else:
             style_str = ''
         sub_expr_info = ','.join(object_rep_fn(expr)
@@ -641,7 +646,8 @@ class Expression(metaclass=ExprType):
         '''
         Helper for with_styles and without_style methods.
         '''
-        styles = self.style_options().standardized_styles(
+        style_options = self.style_options()
+        styles = style_options.standardized_styles(
                 styles, ignore_inapplicable_styles)
         if styles == self._style_data.styles:
             return self  # no change in styles, so just use the original
@@ -653,7 +659,7 @@ class Expression(metaclass=ExprType):
         new_style_expr = copy(self)
         new_style_expr._style_data = style_data(
             new_style_expr._generate_unique_rep(lambda expr: hex(expr._style_id),
-                styles=styles))
+                styles=styles, style_options=style_options))
         new_style_expr._style_data.styles = dict(styles)
         new_style_expr._style_id = new_style_expr._style_data._unique_id
         return new_style_expr
