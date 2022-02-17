@@ -66,6 +66,25 @@ class TransitiveRelation(Relation):
         truths (under the given assumptions), we can conclude that
         a<d (under these assumptions).
         '''
+        # First off, simplify both sides.
+        normal_lhs, normal_rhs = self.normal_lhs, self.normal_rhs
+        normal_lhs_simplification = normal_lhs.simplification()
+        normal_rhs_simplification = normal_rhs.simplification()
+        simp_normal_lhs = normal_lhs_simplification.rhs        
+        simp_normal_rhs = normal_rhs_simplification.rhs
+        if (simp_normal_lhs != normal_lhs) or (simp_normal_rhs != normal_rhs):
+            # Prove the simplified version first.
+            proven_simp_relation = self.__class__(
+                    simp_normal_lhs, simp_normal_rhs,
+                    styles=self.get_styles()).prove()
+            # Substitute the originals back in.
+            proven_relation = normal_lhs_simplification.sub_left_side_into(
+                    proven_simp_relation.inner_expr().normal_lhs,
+                    preserve_all=True)
+            return normal_rhs_simplification.sub_left_side_into(
+                    proven_relation.inner_expr().normal_rhs,
+                    preserve_all=True)
+        
         # Use a breadth-first search approach to find the shortest
         # path to get from one end-point to the other.
         try:
@@ -77,8 +96,12 @@ class TransitiveRelation(Relation):
     @prover
     def conclude_via_transitivity(self, **defaults_config):
         from proveit.logic import Equals
-        proven_relation = self.__class__._transitivity_search(
-            self.normal_lhs, self.normal_rhs)
+        try:
+            proven_relation = self.__class__._transitivity_search(
+                self.normal_lhs, self.normal_rhs)
+        except TransitivityException as e:
+            # indicate the expression we were trying to prove
+            raise TransitivityException(self, defaults.assumptions, e.message)
         relation = proven_relation.expr
         if relation.__class__ != self.__class__:
             if self.__class__ == self.__class__._checkedWeakRelationClass():
