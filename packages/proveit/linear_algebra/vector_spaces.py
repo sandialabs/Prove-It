@@ -1,7 +1,8 @@
-from proveit import (Function, Literal, Judgment, UnsatisfiedPrerequisites,
-                     prover)
+from proveit import (defaults, ExprRange, Function, Literal, Judgment,
+                     UnsatisfiedPrerequisites, prover)
 from proveit import n
 from proveit.logic import InClass, ClassMembership, InSet
+from proveit.numbers import Interval
 
 class VecSpaces(Function):
     '''
@@ -56,7 +57,7 @@ class VecSpaces(Function):
     def get_field(field=None, *, may_be_none=False):
         '''
         Return the given field if one is provide (not None), or the 
-        default_field if one was specified, or raise an excaption.
+        default_field if one was specified, or raise an exception.
         '''
         if field is not None:
             return field
@@ -147,9 +148,25 @@ class VecSpaces(Function):
         Return the known vector spaces of the given vecs under the
         specified field (or the default field).
         '''
-        # TODO: appropriately handle an ExprRange opernd.
-        return [VecSpaces.known_vec_space(operand, field=field)
-                for operand in vecs]    
+        # Effort to appropriately handle an ExprRange operand added
+        # here by wdc and ww on 1/3/2022.
+        vec_spaces = []
+        for vec in vecs:
+            if isinstance(vec, ExprRange):
+                # create our expr range
+                with defaults.temporary() as tmp_defaults:
+                    assumption = InSet(vec.parameter,
+                            Interval(vec.start_index, vec.end_index))
+                    tmp_defaults.assumptions = (
+                            defaults.assumptions + (assumption ,))
+                    body = VecSpaces.known_vec_space(vec.body, field=field)
+                vec_spaces.append(
+                    ExprRange(vec.parameter, body,
+                              vec.start_index, vec.end_index))
+            else:
+                vec_spaces.append(VecSpaces.known_vec_space(vec, field=field))
+
+        return vec_spaces
     
     @staticmethod
     def known_field(vec_space):

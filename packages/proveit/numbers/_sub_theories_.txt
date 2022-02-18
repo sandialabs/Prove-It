@@ -15,3 +15,4 @@ summation
 product
 differentiation
 integration
+functions

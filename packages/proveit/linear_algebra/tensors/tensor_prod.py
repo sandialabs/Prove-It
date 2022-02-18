@@ -1,5 +1,6 @@
-from proveit import (Judgment, defaults, relation_prover, equality_prover, 
-                     Literal, Operation, Lambda, UnsatisfiedPrerequisites,
+from proveit import (Judgment, defaults, ExprRange, relation_prover, 
+                     equality_prover, Literal, Operation, Lambda, 
+                     UnsatisfiedPrerequisites,
                      prover, TransRelUpdater, SimplificationDirectives)
 from proveit import a, b, c, d, e, f, i, j, k, A, K, Q, U, V, W, alpha
 from proveit.logic import Equals, InClass, SetMembership
@@ -124,7 +125,14 @@ class TensorProd(Operation):
         _i = _V.num_elements()
         _K = None
         for operand in self.operands:
-            class_membership = deduce_as_vec_space(operand)
+            if isinstance(operand, ExprRange):
+                assumption = operand.parameter_condition()
+                assumptions = (
+                            defaults.assumptions + (assumption ,))
+                class_membership = deduce_as_vec_space(
+                        operand.body, assumptions=assumptions)
+            else:
+                class_membership = deduce_as_vec_space(operand)
             field = class_membership.expr.domain.field
             if _K is None:
                 _K = field
@@ -139,45 +147,101 @@ class TensorProd(Operation):
     def association(self, start_idx, length, *, field=None, 
                     **defaults_config):
         '''
-        Given vector operands, deduce that this expression is equal 
-        to a form in which operands in the
+        Given vector operands, or all CartExp operands, deduce that
+        this expression is equal to a form in which operands in the
         range [start_idx, start_idx+length) are grouped together.
-        For example, (a ⊗ b ⊗ ... ⊗ y ⊗ z) = 
+        For example, calling
+        (a ⊗ b ⊗ ... ⊗ y ⊗ z).association(l, m-l+1)
+        would return
+        |- (a ⊗ b ⊗ ... ⊗ y ⊗ z) = 
             (a ⊗ b ... ⊗ (l ⊗ ... ⊗ m) ⊗ ... ⊗ y ⊗ z)
+        Or calling (R3 ⊗ R3 ⊗ R3).associate(1, 2) would return
+        |- (R3 ⊗ R3 ⊗ R3) = (R3 ⊗ (R3 ⊗ R3))
         
-        For this to work, the operands must be known to be in
-        vector spaces of a common field.  If the field is not specified,
-        then VecSpaces.default_field is used.
+        For this to work in the vectors case, the vector operands must
+        be known to be in vector spaces of a common field.  If the
+        field is not specified, then VecSpaces.default_field is used.
+        For this to work in the case of CartExp operands, all operands
+        must be (recursively) CartExps and each must be known to be
+        a vector space.
         '''
-        from . import tensor_prod_association
-        _V = VecSpaces.known_vec_space(self, field=field)
-        _K = VecSpaces.known_field(_V)
-        eq = apply_association_thm(
-            self, start_idx, length, tensor_prod_association,
-            repl_map_extras={K:_K, V:_V}).derive_consequent()
-        return eq.with_wrapping_at()
+        # ORIGINAL BELOW before augmenting for CartExp cases
+        # from . import tensor_prod_association
+        # _V = VecSpaces.known_vec_space(self, field=field)
+        # _K = VecSpaces.known_field(_V)
+        # eq = apply_association_thm(
+        #     self, start_idx, length, tensor_prod_association,
+        #     repl_map_extras={K:_K, V:_V}).derive_consequent()
+        # return eq.with_wrapping_at()
+
+        if not TensorProd.all_ops_are_cart_exp(self):
+            from . import tensor_prod_association
+            _V = VecSpaces.known_vec_space(self, field=field)
+            _K = VecSpaces.known_field(_V)
+            eq = apply_association_thm(
+                self, start_idx, length, tensor_prod_association,
+                repl_map_extras={K:_K, V:_V}).derive_consequent()
+            return eq.with_wrapping_at()
+        else:
+            from . import tensor_prod_vec_space_association
+            if field is None:
+                _K = VecSpaces.known_field(self.operands[0])
+            else:
+                _K = field
+            eq = apply_association_thm(
+                self, start_idx, length, tensor_prod_vec_space_association,
+                repl_map_extras={K:_K})
+            return eq.with_wrapping_at()
 
     @equality_prover('disassociated', 'disassociate')
     def disassociation(self, idx, *, field=None, 
                        **defaults_config):
         '''
-        Given vector operands, deduce that this expression is equal 
-        to a form in which the operand
-        at index idx is no longer grouped together.
-        For example, (a ⊗ b ... ⊗ (l ⊗ ... ⊗ m) ⊗ ... ⊗ y⊗ z) 
-            = (a ⊗ b ⊗ ... ⊗ y ⊗ z)
+        Given vector operands, or all CartExp operands, deduce that
+        this expression is equal to a form in which operand at index
+        idx is no longer grouped together.
+        For example, calling
+        (a ⊗ b ⊗ ... (l ⊗ ... ⊗ m) ... ⊗ y ⊗ z).association(l-1)
+        would return
+        |- (a ⊗ b ⊗ ... (l ⊗ ... ⊗ m) ... ⊗ y ⊗ z) = 
+            (a ⊗ b ⊗ ... ⊗ l ⊗ ... ⊗ m ⊗ ... ⊗ y ⊗ z)
+        Or calling (R3 ⊗ (R3 ⊗ R3)).disassociate(1) would return
+        |- (R3 ⊗ (R3 ⊗ R3)) = (R3 ⊗ R3 ⊗ R3) 
         
-        For this to work, the operands must be known to be in
-        vector spaces of a common field.  If the field is not specified,
-        then VecSpaces.default_field is used.
+        For this to work in the vectors case, the vector operands must
+        be known to be in vector spaces of a common field.  If the
+        field is not specified, then VecSpaces.default_field is used.
+        For this to work in the case of CartExp operands, all operands
+        must be (recursively) CartExps and each must be known to be
+        a vector space.
         '''
-        from . import tensor_prod_disassociation
-        _V = VecSpaces.known_vec_space(self, field=field)
-        _K = VecSpaces.known_field(_V)
-        eq = apply_disassociation_thm(
-                self, idx, tensor_prod_disassociation,
-                repl_map_extras={K:_K, V:_V}).derive_consequent()
-        return eq.with_wrapping_at()
+        # ORIGINAL BELOW before augmenting for CartExp cases
+        # from . import tensor_prod_disassociation
+        # _V = VecSpaces.known_vec_space(self, field=field)
+        # _K = VecSpaces.known_field(_V)
+        # eq = apply_disassociation_thm(
+        #         self, idx, tensor_prod_disassociation,
+        #         repl_map_extras={K:_K, V:_V}).derive_consequent()
+        # return eq.with_wrapping_at()
+
+        if not TensorProd.all_ops_are_cart_exp(self):
+            from . import tensor_prod_disassociation
+            _V = VecSpaces.known_vec_space(self, field=field)
+            _K = VecSpaces.known_field(_V)
+            eq = apply_disassociation_thm(
+                    self, idx, tensor_prod_disassociation,
+                    repl_map_extras={K:_K, V:_V}).derive_consequent()
+            return eq.with_wrapping_at()
+        else:
+            from . import tensor_prod_vec_space_disassociation
+            if field is None:
+                _K = VecSpaces.known_field(self.operands[0])
+            else:
+                _K = field
+            eq = apply_disassociation_thm(
+                    self, idx, tensor_prod_vec_space_disassociation,
+                    repl_map_extras={K:_K})
+            return eq.with_wrapping_at()
 
     @equality_prover('distributed', 'distribute')
     def distribution(self, idx, *, field=None,
@@ -388,3 +452,28 @@ class TensorProd(Operation):
                 {K:_K, i:_i, k:_k, U:_U, V:_V, W:_W, 
                  a:_a, b:_b, c:_c, d:_d, e:_e})
         return impl.derive_consequent().with_mimicked_style(tensor_equality)
+
+    @staticmethod
+    def all_ops_are_cart_exp(obj):
+        '''
+        Determine recursively if the expression object obj is a
+        CartExp or an expression whose operands are all CartExps or
+        themselves expressions whose operands are all CartExps, etc.,
+        returning True if so, otherwise returning False.
+        Let R3 = CartExp(Real, three) and C3 = CartExp(Complex, three).
+        Then, for example, if x = TensorProd(R3, R3), we would have
+        x.all_ops_are_cart_exp() = True.
+        If x = TensorProd(R3, TensorProd(C3, TensorProd(C3, R3))), we
+        would have x.all_ops_are_cart_exp() = True.
+        But x = TensorProd(a, b) or x = TensorProd(y, R3), then
+        x.all_ops_are_cart_exp() = False
+        '''
+        from proveit.logic import CartExp
+        if isinstance(obj, CartExp):
+            return True
+        elif not hasattr(obj, 'operands'):
+            return False
+        else:
+            return all([TensorProd.all_ops_are_cart_exp(op)
+                        for op in obj.operands])
+

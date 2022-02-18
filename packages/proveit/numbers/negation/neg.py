@@ -4,14 +4,14 @@ from proveit import (Expression, Literal, Operation, maybe_fenced_string,
                      SimplificationDirectives)
 from proveit.logic import is_irreducible_value
 from proveit.numbers.number_sets import (
-        Natural, NaturalPos, 
+        Natural, NaturalPos,
         Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
         Rational, RationalNonZero, RationalPos, RationalNeg,
         RationalNonNeg, RationalNonPos,
         Real, RealNonZero, RealPos, RealNeg, RealNonNeg, RealNonPos,
         Complex, ComplexNonZero)
-from proveit import a, b, c, m, n, x, y, B
-from proveit.numbers import NumberOperation
+from proveit import a, b, c, i, j, m, n, x, y, B
+from proveit.numbers import NumberOperation, deduce_number_set
 
 class Neg(NumberOperation):
     # operator of the Neg operation.
@@ -34,16 +34,16 @@ class Neg(NumberOperation):
                          "or 'explicit_negation': "
                          "For example, 'a - b' versus 'a + (-b)'."),
             default='subtraction',
-            related_methods=('with_subtraction_notation', 
+            related_methods=('with_subtraction_notation',
                              'without_subtraction_notation'))
         return options
-    
+
     def with_subtraction_notation(self):
         return self.with_styles(notation_in_add='subtraction')
 
     def without_subtraction_notation(self):
         return self.with_styles(notation_in_add='explicit_negation')
-    
+
     def use_subtraction_notation(self):
         '''
         Return True if subtraction notation should be used within
@@ -76,15 +76,15 @@ class Neg(NumberOperation):
         given a number set, attempt to prove that the given expression
         is in that number set using the appropriate closure theorem
         '''
-        from . import (nat_closure, nat_pos_closure, 
-                       int_closure, int_nonzero_closure, 
+        from . import (nat_closure, nat_pos_closure,
+                       int_closure, int_nonzero_closure,
                        int_neg_closure, int_nonpos_closure,
                        rational_closure, rational_nonzero_closure,
                        rational_pos_closure, rational_neg_closure,
                        rational_nonneg_closure, rational_nonpos_closure,
-                       real_closure, real_nonzero_closure, 
+                       real_closure, real_nonzero_closure,
                        real_pos_closure, real_neg_closure,
-                       real_nonneg_closure, real_nonpos_closure, 
+                       real_nonneg_closure, real_nonpos_closure,
                        complex_closure, complex_nonzero_closure)
         if number_set == Natural:
             return nat_closure.instantiate({a: self.operand})
@@ -129,6 +129,36 @@ class Neg(NumberOperation):
         raise NotImplementedError(
             "No negation closure theorem for set %s" %str(number_set))
 
+    def deduce_number_set(self, **defaults_config):
+        '''
+        Prove membership of this expression in the most
+        restrictive standard number set we can readily know.
+        '''
+        number_set_map = {
+            NaturalPos: IntegerNeg,
+            IntegerNeg: NaturalPos,
+            Natural: IntegerNonPos,
+            IntegerNonPos: Natural,
+            IntegerNonZero: IntegerNonZero,
+            Integer: Integer,
+            RationalPos: RationalNeg,
+            RationalNeg: RationalPos,
+            RationalNonNeg: RationalNonPos,
+            RationalNonPos: RationalNonNeg,
+            RationalNonZero: RationalNonZero,
+            Rational: Rational,
+            RealPos: RealNeg,
+            RealNeg: RealPos,
+            RealNonNeg: RealNonPos,
+            RealNonPos: RealNonNeg,
+            RealNonZero: RealNonZero,
+            Real: Real,
+            ComplexNonZero: ComplexNonZero,
+            Complex: Complex
+            }
+        operand_ns = deduce_number_set(self.operand).domain
+        return self.deduce_in_number_set(number_set_map[operand_ns])
+
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
                                **defaults_config):
@@ -137,9 +167,8 @@ class Neg(NumberOperation):
         expression assuming the operands have been simplified.
         
         Handle negation of 0, double negation, and distribution
-        of a sum.
+        over a sum.
         '''
-        from proveit.logic import EvaluationError
         from . import negated_zero
         from proveit.numbers import Add, zero
         
@@ -149,7 +178,7 @@ class Neg(NumberOperation):
             # must evaluate.
             self.operand.evalution()
             return self.evaluation()
-        
+
         if self.operand == zero:
             return negated_zero
         
@@ -267,8 +296,8 @@ class Neg(NumberOperation):
         group_remainder are not relevant here but kept for 
         compatibility with other factor methods.
         Returns the equality that equates self to this new version.
-        Give any assumptions necessary to prove that the operands are 
-        in the Complex numbers so that the associative and commutation 
+        Give any assumptions necessary to prove that the operands are
+        in the Complex numbers so that the associative and commutation
         theorems are applicable.
         FACTORING FROM NEGATION FROM A SUM NOT IMPLEMENTED YET.
         '''
@@ -334,17 +363,69 @@ class Neg(NumberOperation):
         if mult_expr.operands.is_double():
             if idx == 0:
                 return mult_neg_left_double.instantiate(
-                    {x: mult_expr.operands[1]})
+                    {x: mult_expr.operands[0].operand,
+                     y: mult_expr.operands[1]})
             else:
                 return mult_neg_right_double.instantiate(
-                    {x: mult_expr.operands[0]})
-        _a = mult_expr.operands[:idx]
-        _b = mult_expr.operands[idx]
-        _c = mult_expr.operands[idx + 1:]
-        _m = _a.num_elements()
-        _n = _c.num_elements()
+                    {x: mult_expr.operands[0],
+                     y: mult_expr.operands[1].operand})
+
+        _a_sub = mult_expr.operands[:idx]
+        _b_sub = mult_expr.operands[idx].operand
+        _c_sub = mult_expr.operands[idx + 1:]
+        _i_sub = _a_sub.num_elements()
+        _j_sub = _c_sub.num_elements()
         return mult_neg_any_double.instantiate(
-            {m: _m, n: _n, a: _a, b: _b, c: _c})
+            {i: _i_sub, j: _j_sub, a: _a_sub, b: _b_sub, c: _c_sub})
+
+    @relation_prover
+    def bound_via_operand_bound(self, operand_relation, **defaults_config):
+        '''
+        Deduce a bound on this Neg object given a bound on its
+        operand. For example, suppose x = Neg(y) and we know that
+        y >= 2. Then x.bound_via_operand_bound(y >= 2) returns
+        x <= 2.
+        Also see NumberOperation.deduce_bound and compare to the
+        bound_via_operand_bound() method found in the Div class.
+        '''
+        from proveit import Judgment
+        from proveit.numbers import Less, LessEq, NumberOrderingRelation
+        if isinstance(operand_relation, Judgment):
+            operand_relation = operand_relation.expr
+        if not isinstance(operand_relation, NumberOrderingRelation):
+            raise TypeError(
+                "In Neg.bound_via_operand_bound(), the 'operand_relation' "
+                "argument is expected to be a number relation (<, >, ≤, or ≥), "
+                "but instead was {}.".format(operand_relation))
+
+        lhs = operand_relation.lhs
+
+        if lhs != self.operand:
+            raise ValueError(
+                    "In Neg.bound_via_operand_bound(), the left side of "
+                    "the 'operand_relation' argument {0} is expected to "
+                    "match the Neg() operand {1}.".
+                    format(operand_relation, self.operand))
+
+        _x_sub = operand_relation.normal_lhs
+        _y_sub = operand_relation.normal_rhs
+
+        if isinstance(operand_relation, LessEq):
+            from proveit.numbers.negation import negated_weak_bound
+            bound = negated_weak_bound.instantiate({x: _x_sub, y: _y_sub})
+        elif isinstance(operand_relation, Less):
+            from proveit.numbers.negation import negated_strong_bound
+            bound = negated_strong_bound.instantiate({x: _x_sub, y: _y_sub})
+        else:
+            raise TypeError(
+                    "In Neg.bound_via_operand_bound(), the 'operand_relation' "
+                    "argument is expected to be a 'Less', 'LessEq', 'greater', "
+                    "or 'greater_eq' relation. Instead we have {}.".
+                    format(operand_relation))
+
+        if bound.rhs == self:
+            return bound.with_direction_reversed()
+        return bound
 
 def negated(expr):
     ''' 

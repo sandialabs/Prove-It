@@ -671,12 +671,10 @@ class InnerExpr:
                 replacement = equality.rhs
                 if cur_inner_expr == TRUE:            
                     return substitute_truth.instantiate(
-                        {P: self.repl_lambda(), x: replacement}, 
-                        preserve_all=True)
+                        {P: self.repl_lambda(), x: replacement})
                 elif cur_inner_expr == FALSE:
                     return substitute_falsehood.instantiate(
-                        {P: self.repl_lambda(), x: replacement}, 
-                        preserve_all=True)
+                        {P: self.repl_lambda(), x: replacement})
         return self._substitution(equality_or_replacement, 
                                   return_proven_rhs=True)            
 

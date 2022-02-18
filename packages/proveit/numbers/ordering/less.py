@@ -53,7 +53,7 @@ class Less(NumberOrderingRelation):
         a < b.
         '''
         from proveit.logic import InSet
-        from proveit.numbers import Add, zero, RealPos
+        from proveit.numbers import Add, zero, RealPos, deduce_number_set
         from . import positive_if_real_pos
         if self.upper == zero:
             # Special case with upper bound of zero.
@@ -63,6 +63,7 @@ class Less(NumberOrderingRelation):
             return concluded
         if self.lower == zero:
             # Special case with lower bound of zero.
+            deduce_number_set(self.upper)
             if InSet(self.upper, RealPos).proven():
                 positive_if_real_pos.instantiate({a: self.upper})
         if ((isinstance(self.lower, Add) and 
@@ -293,13 +294,14 @@ class Less(NumberOrderingRelation):
         Multiply both sides of the relation by the 'multiplier'
         on the left.
         '''
-        from proveit.numbers import Less, LessEq, zero
+        from proveit.numbers import Less, LessEq, zero, deduce_number_set
         from proveit.numbers.multiplication import (
                 strong_bound_via_right_factor_bound,
                 weak_bound_via_right_factor_bound,
                 reversed_strong_bound_via_right_factor_bound,
                 reversed_weak_bound_via_right_factor_bound)
         was_reversed = False
+        deduce_number_set(multiplier)
         if Less(zero, multiplier).proven():
             new_rel = strong_bound_via_right_factor_bound.instantiate(
                 {a: multiplier, x: self.lower, y: self.upper})
@@ -330,13 +332,14 @@ class Less(NumberOrderingRelation):
         Multiply both sides of the relation by the 'multiplier'
         on the right.
         '''
-        from proveit.numbers import LessEq, zero
+        from proveit.numbers import LessEq, zero, deduce_number_set
         from proveit.numbers.multiplication import (
                 strong_bound_via_left_factor_bound,
                 weak_bound_via_left_factor_bound,
                 reversed_strong_bound_via_left_factor_bound,
                 reversed_weak_bound_via_left_factor_bound)
         was_reversed = False
+        deduce_number_set(multiplier)
         if Less(zero, multiplier).proven():
             new_rel = strong_bound_via_left_factor_bound.instantiate(
                 {a: multiplier, x: self.lower, y: self.upper})
@@ -366,10 +369,11 @@ class Less(NumberOrderingRelation):
         '''
         Divide both sides of the relation by the 'divisor'.
         '''
-        from proveit.numbers import Less, zero
+        from proveit.numbers import Less, zero, deduce_number_set
         from proveit.numbers.division import (
             strong_div_from_numer_bound__pos_denom, 
             strong_div_from_numer_bound__neg_denom)
+        deduce_number_set(divisor)
         if Less(zero, divisor).proven():
             thm = strong_div_from_numer_bound__pos_denom
         elif Less(divisor, zero).proven():
@@ -407,10 +411,11 @@ class Less(NumberOrderingRelation):
         '''
         Exponentiate both sides of the relation by the 'exponent'.
         '''
-        from proveit.numbers import Less, LessEq, zero
+        from proveit.numbers import Less, LessEq, zero, deduce_number_set
         from proveit.numbers.exponentiation import (
             exp_pos_less, exp_nonneg_less, exp_neg_less, exp_nonpos_less)
         # We need to know how the exponent relates to zero.
+        deduce_number_set(exponent)
         LessEq.sort([zero, exponent])
         if Less(zero, exponent).proven():
             new_rel = exp_pos_less.instantiate(

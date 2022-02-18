@@ -50,7 +50,7 @@ def complex_polar_coordinates(expr, *, radius_must_be_nonneg=True,
     '''
     from . import complex_polar_negation, complex_polar_radius_negation
     from proveit.logic import InSet, Equals
-    from proveit.numbers import deduce_in_number_set
+    from proveit.numbers import deduce_in_number_set, deduce_number_set
     from proveit.numbers import zero, one, e, i, pi, Real, RealNonNeg, Complex
     from proveit.numbers import Add, LessEq, Neg, Mult, Exp
     orig_expr = expr
@@ -219,6 +219,9 @@ def complex_polar_coordinates(expr, *, radius_must_be_nonneg=True,
     assert expr.operands.is_double() and isinstance(expr.operands[1], Exp)
     # Check that r0 is real and that we know it's relation with zero.
     _r0 = expr.operands[0]
+    if isinstance(_r0, Mult):
+        for _factor in _r0.factors:
+            deduce_number_set(_factor)
     if (isinstance(_r0, Mult) and
             all(InSet(factor, RealNonNeg).proven() for 
                 factor in _r0.factors)):
@@ -314,7 +317,7 @@ def unit_length_complex_polar_angle(expr, *, reductions=None):
     '''
     from proveit import ExprRange
     from proveit.logic import Equals, InSet
-    from proveit.numbers import deduce_in_number_set
+    from proveit.numbers import deduce_in_number_set, deduce_number_set
     from proveit.numbers import zero, one, e, i, pi
     from proveit.numbers import Add, Neg, Mult, Exp, Real, Complex
     from . import unit_length_complex_polar_negation
@@ -383,6 +386,11 @@ def unit_length_complex_polar_angle(expr, *, reductions=None):
                 assert expr.exponent.factors.is_double()
                 assert expr.exponent.factors[0] == i
                 _theta = expr.exponent.factors[1]
+                if isinstance(_theta, Neg):
+                    deduce_number_set(_theta.operand)
+                if isinstance(_theta, Mult):
+                    for _factor in _theta.factors:
+                        deduce_number_set(_factor)
                 if (not automation and isinstance(_theta, Neg) and 
                         InSet(_theta.operand, Real).proven()):
                     deduce_in_number_set(_theta, Real)

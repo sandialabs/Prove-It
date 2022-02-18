@@ -1,5 +1,5 @@
 from proveit import (defaults, Literal, Operation, relation_prover)
-
+from proveit.numbers import deduce_in_number_set
 
 class ModAbs(Operation):
     # operator of the ModAbs operation.
@@ -41,3 +41,15 @@ class ModAbs(Operation):
         raise NotImplementedError(
             "'ModAbs.deduce_in_number_set()' not implemented for the %s set" 
             % str(number_set))
+
+    @relation_prover
+    def deduce_number_set(self, **defaults_config):
+        '''
+        Prove membership of this expression in the most 
+        restrictive standard number set we can readily know.
+        '''
+        operand_ns = deduce_number_set(self.operand).domain
+        if operand_ns.includes(Integer):
+            return self.deduce_in_number_set(Integer)
+        else:
+            return self.deduce_in_number_set(Real)

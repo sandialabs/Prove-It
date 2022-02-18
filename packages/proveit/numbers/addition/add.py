@@ -8,12 +8,16 @@ from proveit import (Expression, Judgment, Literal, Operation, ExprTuple,
                      UnsatisfiedPrerequisites,
                      SimplificationDirectives, TransRelUpdater)
 from proveit import a, b, c, d, i, j, k, l, n, x, y, free_vars
-from proveit.logic import Equals, EvaluationError
+from proveit.logic import And, Equals, EvaluationError, InSet
 from proveit.logic.irreducible_value import is_irreducible_value
 from proveit.numbers import NumberOperation
 from proveit.numbers.numerals.decimals import DIGITS
 import proveit.numbers.numerals.decimals
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, group_commutation, pairwise_evaluation
+from proveit import TransRelUpdater
+import bisect
+from proveit.numbers import (NumberOperation, sorted_number_sets,
+                             deduce_number_set)
 
 
 class Add(NumberOperation):
@@ -1087,7 +1091,16 @@ class Add(NumberOperation):
             add_int_closure,
             add_nat_closure_bin,
             add_nat_closure,
+            add_nat_pos_closure_bin,
+            add_nat_pos_closure,
             add_nat_pos_from_non_neg,
+            add_rational_closure_bin,
+            add_rational_closure,
+            add_rational_non_neg_closure,
+            add_rational_non_neg_closure_bin,
+            add_rational_pos_closure,
+            add_rational_pos_closure_bin,
+            add_rational_pos_from_non_neg,
             add_real_closure_bin,
             add_real_closure,
             add_real_non_neg_closure,
@@ -1100,8 +1113,10 @@ class Add(NumberOperation):
         from proveit.numbers.addition.subtraction import (
             subtract_nat_closure_bin, sub_one_is_nat)
         from proveit.numbers import (zero, one, Neg, greater,
-                                     Integer, Natural, Real, RealPos,
-                                     RealNonNeg, Complex, NaturalPos)
+                                     Integer, Natural, Rational,
+                                     RationalPos, RationalNonNeg,
+                                     Real, RealPos, RealNonNeg, 
+                                     Complex, NaturalPos)
         from proveit.logic import InSet
         if number_set == Integer:
             if self.operands.is_double():
@@ -1127,7 +1142,7 @@ class Add(NumberOperation):
             _a = self.operands
             _i = _a.num_elements()
             return add_nat_closure.instantiate({i: _i, a: _a})
-        if (number_set == NaturalPos or number_set == RealPos and not
+        if (number_set in {NaturalPos, RationalPos, RealPos} and not
                 all(InSet(operand, number_set).proven() for
                     operand in self.operands)):
             # Unless we know that all of the operands are in the
@@ -1146,6 +1161,8 @@ class Add(NumberOperation):
             # print(self.operands.num_entries())
             if number_set == NaturalPos:
                 temp_thm = add_nat_pos_from_non_neg
+            elif number_set == RationalPos:
+                temp_thm = add_rational_pos_from_non_neg
             else:
                 temp_thm = add_real_pos_from_non_neg
             #print(temp_thm, {i: num(val), j:num(self.operands.num_entries() - val - 1), a:self.operands[:val], b: self.operands[val], c: self.operands[val + 1:]})
@@ -1154,6 +1171,34 @@ class Add(NumberOperation):
             _i = _a.num_elements()
             _j = _c.num_elements()
             return temp_thm.instantiate({i: _i, j: _j, a: _a, b: _b, c: _c})
+        if number_set == NaturalPos:
+            if self.operands.is_double():
+                return add_nat_pos_closure_bin.instantiate(
+                    {a: self.operands[0], b: self.operands[1]})
+            _a = self.operands
+            _i = _a.num_elements()                
+            return add_nat_pos_closure.instantiate({i: _i, a: _a})
+        if number_set == RationalPos:
+            if self.operands.is_double():
+                return add_rational_pos_closure_bin.instantiate(
+                    {a: self.operands[0], b: self.operands[1]})
+            _a = self.operands
+            _i = _a.num_elements()                
+            return add_rational_pos_closure.instantiate({i: _i, a: _a})
+        if number_set == RationalNonNeg:
+            if self.operands.is_double():
+                return add_rational_non_neg_closure_bin.instantiate(
+                    {a: self.operands[0], b: self.operands[1]})
+            _a = self.operands
+            _i = _a.num_elements()
+            return add_rational_non_neg_closure.instantiate({i:_i, a: _a})
+        if number_set == Rational:
+            if self.operands.is_double():
+                return add_rational_closure_bin.instantiate(
+                    {a: self.operands[0], b: self.operands[1]})
+            _a = self.operands
+            _i = _a.num_elements()
+            return add_rational_closure.instantiate({i: _i, a: _a})
         if number_set == RealPos:
             if self.operands.is_double():
                 return add_real_pos_closure_bin.instantiate(
@@ -1183,8 +1228,76 @@ class Add(NumberOperation):
             _i = _a.num_elements()
             return add_complex_closure.instantiate({i: _i, a: _a})
         raise NotImplementedError(
-            "'deduce_in_number_set' not implemented for the %s set"
-            % str(number_set))
+            "'deduce_in_number_set' on %s not implemented for the %s set"
+            % (self, number_set))
+
+    @relation_prover
+    def deduce_number_set(self, **defaults_config):
+        '''
+        Prove membership of this expression in the most 
+        restrictive standard number set we can readily know.
+        '''
+        from proveit.numbers import (Integer, IntegerNeg, IntegerNonPos,
+                                     Natural, NaturalPos, IntegerNonZero,
+                                     Rational, RationalPos, RationalNonZero,
+                                     RationalNeg, RationalNonNeg,
+                                     RationalNonPos,
+                                     Real, RealPos, RealNeg, RealNonNeg,
+                                     RealNonPos, RealNonZero, Complex, 
+                                     ComplexNonZero)
+        number_set_map = {
+            NaturalPos: NaturalPos,
+            IntegerNeg: Integer,
+            Natural: Natural,
+            IntegerNonPos: Integer,
+            IntegerNonZero: Integer,
+            Integer: Integer,
+            RationalPos: RationalPos,
+            RationalNeg: Rational,
+            RationalNonNeg: RationalNonNeg,
+            RationalNonPos: Rational,
+            RationalNonZero: Rational,
+            Rational: Rational,
+            RealPos: RealPos,
+            RealNeg: Real,
+            RealNonNeg: RealNonNeg,
+            RealNonPos: Real,
+            RealNonZero: Real,
+            Real: Real,
+            ComplexNonZero: Complex,
+            Complex: Complex
+        }
+        
+        priorities = {NaturalPos:(0,0), Natural:(0,1), Integer:(0,2),
+                      RationalPos:(1,0), RationalNonNeg:(1,1), Rational:(1,2),
+                      RealPos:(2,0), RealNonNeg:(2,1), Real:(2,2), 
+                      Complex:(3,2)}
+        major_minor_to_set = {
+            (major, minor):ns for ns, (major, minor) in priorities.items()}
+
+        major = minor = -1
+        any_positive = False
+        for term in self.terms:
+            term_membership = deduce_number_set(term)
+            if isinstance(term, ExprRange):
+                # e.g. a_1 in S and ... and a_n in S
+                term_ns = term_membership.operands[0].body.domain
+            else:
+                term_ns = term_membership.domain
+            term_ns = number_set_map[term_ns]
+            if term_ns in {NaturalPos, RationalPos, RealPos}:
+                any_positive = True
+            _major, _minor = priorities[term_ns]
+            major = max(_major, major)
+            minor = max(_minor, minor)
+        if major == minor == -1:
+            major, minor = 3, 2 # Complex
+        elif minor==1 and any_positive:
+            # Everything is non-negative and at least one term
+            # is positive, so the sum is positive.
+            minor = 0
+        number_set = major_minor_to_set[(major, minor)]
+        return self.deduce_in_number_set(number_set)
 
     # IS THIS NECESSARY?
     def deduce_difference_in_natural(self, assumptions=USE_DEFAULTS):
@@ -1282,7 +1395,10 @@ class Add(NumberOperation):
                     group_remainder=True, preserve_all=True)
                 if not isinstance(term_factorization.rhs, Mult):
                     raise ValueError(
-                        'Expecting right hand side of factorization to be a product')
+                        "Expecting right hand side of each factorization "
+                        "to be a product. Instead obtained: {0} for term "
+                        "number {1} (0-based index).".
+                        format(term_factorization.rhs, _i))
                 if pull == 'left':
                     # the grouped remainder on the right
                     _b.append(term_factorization.rhs.operands[-1])
@@ -1295,7 +1411,8 @@ class Add(NumberOperation):
             else:
                 if term != the_factors:
                     raise ValueError(
-                        "Factor, %s, is not present in the term at index %d of %s!" %
+                        "Factor, %s, is not present in the term at "
+                        "index %d of %s!" %
                         (the_factors, _i, self))
                 if pull == 'left':
                     replacements.append(Mult(term, one).one_elimination(1))
@@ -1524,7 +1641,6 @@ class Add(NumberOperation):
         deduce_strong_lower_bound_by_term
         accordingly.
         '''
-        from proveit.logic import InSet
         from proveit.numbers import RealPos, RealNeg, RealNonNeg, RealNonPos
         relevant_number_sets = {RealPos, RealNeg, RealNonNeg, RealNonPos}
         for _k, term_entry in enumerate(self.terms.entries):
@@ -1532,11 +1648,13 @@ class Add(NumberOperation):
                 # skip the term doing the bounding.
                 continue
             for number_set in list(relevant_number_sets):
+                deduce_number_set(term_entry)
                 if isinstance(term_entry, ExprRange):
-                    in_number_set = ExprRange(
+                    in_number_set = And(ExprRange(
                             term_entry.parameter,
                             InSet(term_entry.body, number_set),
-                            term_entry.true_start_index, term_entry.true_end_index)
+                            term_entry.true_start_index, 
+                            term_entry.true_end_index))
                 else:
                     in_number_set = InSet(term_entry, number_set)
                 if not in_number_set.proven():

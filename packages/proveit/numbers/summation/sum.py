@@ -8,7 +8,8 @@ from proveit import a, b, c, f, i, j, k, l, m, x, Q, S
 from proveit.logic import Forall, InSet
 from proveit.numbers import one, Add, Neg, subtract
 from proveit.numbers import (Complex, Integer, Interval, Natural,
-                             NaturalPos, Real, RealInterval)
+                             NaturalPos, Real, RealInterval,
+                             deduce_number_set)
 from proveit.numbers.ordering import Less, LessEq
 from proveit import TransRelUpdater
 
@@ -82,13 +83,22 @@ class Sum(OperationOverInstances):
             raise NotImplementedError(
                 "'Sum.deduce_in_number_set' not implemented for the %s set"
                 % str(number_set))
-        impl = thm.instantiate(
-            { x: _x, f: _f, Q: _Q}, preserve_all=True)
+        impl = thm.instantiate({ x: _x, f: _f, Q: _Q})
         antecedent = impl.antecedent
         if not antecedent.proven():
             # Conclude the antecedent via generalization.
             antecedent.conclude_via_generalization()
         return impl.derive_consequent()
+
+    @relation_prover
+    def deduce_number_set(self, **defaults_config):
+        '''
+        Prove membership of this expression in the most 
+        restrictive standard number set we can readily know.
+        '''
+        summand_ns = deduce_number_set(self.summand, 
+                                       assumptions=self.conditions).domain
+        return self.deduce_in_number_set(summand_ns)
 
     def _formatted(self, format_type, **kwargs):
         # MUST BE UPDATED TO DEAL WITH 'joining' NESTED LEVELS
@@ -659,8 +669,8 @@ class Sum(OperationOverInstances):
         if summand_lambda not in (lesser_lambda, greater_lambda):
             raise ValueError("Expecting summand_relation to be a universally "
                              "quantified number relation (< or <=) "
-                             "involving the summand, %d, not %s"%
-                             (self.summand, summand_relation))
+                             "involving the summand {0} not {1}.".
+                             format(self.summand, summand_relation))
         _a = lesser_lambda
         _b = greater_lambda
         _S = self.domain

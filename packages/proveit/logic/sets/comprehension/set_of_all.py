@@ -1,6 +1,7 @@
-from proveit import (Literal, OperationOverInstances, Operation, ExprTuple,
-                     single_or_composite_expression, defaults)
-from proveit import x, y, f, P, Q, S
+from proveit import (
+        ExprTuple, Function, Literal, OperationOverInstances,
+        relation_prover, defaults)
+from proveit import x, y, Q, S
 
 
 class SetOfAll(OperationOverInstances):
@@ -86,17 +87,70 @@ class SetOfAll(OperationOverInstances):
         out_str += '}'
         return out_str
 
-    """
+
     # The below must be updated
+    # Being updated gradually by wdc starting 12/21/2021
+
+    @relation_prover
+    def unfold_membership(self, element, **defaults_config):
+        '''
+        From (x in {y | Q(y)})_{y in S}, derive and return
+        [(x in S) and Q(x)], where x is meant as the given element.
+        From (x in {y | ..Q(y)..})_{y in S}, derive and return
+        [(x in S) and ..Q(x)..], where x is meant as the given element.
+        From (x in {f(y) | ..Q(y)..})_{y in S}, derive and return
+        exists_{y in S | ..Q(y)..} x = f(y).
+        Also derive x in S, but this is not returned.
+        '''
+        from . import (unfold, unfold_basic_comprehension,
+                       in_superset_if_in_comprehension)
+        from proveit.logic import And
+        if len(self.explicit_conditions())==1:
+            explicit_conditions = self.explicit_conditions()[0]
+        else:
+            explicit_conditions = And(*self.explicit_conditions())
+        # why is the following line there before testing number of vars
+        _Q_op, _Q_op_sub = Function(Q, self.all_instance_vars()), explicit_conditions
+        if (len(self.all_instance_vars()) == 1 and
+            self.instance_element == self.instance_var):
+            # simple case of {x | Q(x)}_{x in S};
+            # derive x in S side-effect
+            print("(1) SetOfAll.unfold_membership(): inside first if.")
+            print("_Q_op = ")
+            display(_Q_op)
+            print("_Q_op_sub = ")
+            display(_Q_op_sub)
+            in_superset_if_in_comprehension.instantiate(
+                    {S: self.domain, _Q_op: _Q_op_sub,
+                     x: element, y: self.instance_var})
+            print("SetOfAll.unfold_membership(): end")
+            if len(self.explicit_conditions())==1:
+                _Q_op, _Q_op_sub = (
+                    Function(Q, self.all_instance_vars()), explicit_conditions)
+            #     return unfold_basic1_cond_comprehension.instantiate(
+            #             {S:self.domain, Q_op:Q_op_sub,
+            #              x:element, y:self.instance_vars[0]})
+            # else:
+            #     return unfold_basic_comprehension.instantiate({S:self.domain, Q_op:Q_op_sub, x:element}, {y:self.instance_vars[0]}, assumptions=assumptions)
+        # else:
+        #     f_op, f_sub = Function(f, self.instance_vars), self.instance_element
+        #     return unfold_comprehension.instantiate({S:self.domain,  Q_op:Q_op_sub, f_op:f_sub, x:element}, {y_multi:self.instance_vars}).derive_conclusion(assumptions)
+
+    """
 
     def unfold_membership(self, element, assumptions=USE_DEFAULTS):
         '''
-        From (x in {y | Q(y)})_{y in S}, derive and return [(x in S) and Q(x)], where x is meant as the given element.
-        From (x in {y | ..Q(y)..})_{y in S}, derive and return [(x in S) and ..Q(x)..], where x is meant as the given element.
-        From (x in {f(y) | ..Q(y)..})_{y in S}, derive and return exists_{y in S | ..Q(y)..} x = f(y).
+        From (x in {y | Q(y)})_{y in S}, derive and return
+        [(x in S) and Q(x)], where x is meant as the given element.
+        From (x in {y | ..Q(y)..})_{y in S}, derive and return
+        [(x in S) and ..Q(x)..], where x is meant as the given element.
+        From (x in {f(y) | ..Q(y)..})_{y in S}, derive and return
+        exists_{y in S | ..Q(y)..} x = f(y).
         Also derive x in S, but this is not returned.
         '''
-        from . import unfold_comprehension, unfold_basic_comprehension, unfold_basic1_cond_comprehension, in_superset_if_in_comprehension
+        from . import (unfold_comprehension, unfold_basic_comprehension,
+                       unfold_basic1_cond_comprehension,
+                       in_superset_if_in_comprehension)
         Q_op, Q_op_sub = Function(Qmulti, self.instance_var), self.conditions
         if len(self.instance_vars) == 1 and self.instance_element == self.instance_vars[0]:
             in_superset_if_in_comprehension.instantiate({S:self.domain, Q_op:Q_op_sub, x:element}, {y:self.instance_vars[0]}, assumptions=assumptions) # x in S side-effect

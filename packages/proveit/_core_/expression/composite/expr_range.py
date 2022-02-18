@@ -794,6 +794,12 @@ class ExprRange(Expression):
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
 
+    def parameter_condition(self):
+        from proveit.logic import InSet
+        from proveit.numbers import Interval
+        return InSet(self.parameter,
+                Interval(self.start_index, self.end_index))
+
     def nested_range_depth(self):
         '''
         Return the depth of nested ranges.  For example, if this

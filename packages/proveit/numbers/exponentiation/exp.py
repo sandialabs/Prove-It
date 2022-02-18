@@ -1,15 +1,22 @@
-from proveit import (Literal, Function, ExprTuple, InnerExpr, ProofFailure,
-                     maybe_fenced_string, USE_DEFAULTS, defaults,
-                     StyleOptions, prover, equality_prover, relation_prover)
+from proveit import (defaults, equality_prover, ExprTuple, Function,
+                     InnerExpr, Literal, maybe_fenced_string,
+                     ProofFailure, prover, relation_prover, StyleOptions,
+                     UnsatisfiedPrerequisites, USE_DEFAULTS)
 import proveit
-from proveit import a, b, c, k, m, n, x, S
+from proveit import a, b, c, k, m, n, x, y, S
 from proveit import (defaults, Literal, Function, ExprTuple, InnerExpr,
                      ProofFailure, maybe_fenced_string, USE_DEFAULTS,
                      StyleOptions)
-from proveit.logic import InSet, SetMembership, NotEquals
+from proveit.logic import Equals, InSet, SetMembership, NotEquals
 from proveit.numbers import zero, one, two, Div, frac, num, Real
-from proveit.numbers import Integer, NumberOperation
-
+from proveit.numbers import Integer, NumberOperation, deduce_number_set
+from proveit.numbers.number_sets import (
+    Natural, NaturalPos,
+    Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
+    Rational, RationalNonZero, RationalPos, RationalNeg, RationalNonNeg,
+    RationalNonPos,
+    Real, RealNonZero, RealNeg, RealPos, RealNonNeg, RealNonPos,
+    Complex, ComplexNonZero)
 
 class Exp(NumberOperation):
     '''
@@ -218,6 +225,10 @@ class Exp(NumberOperation):
             from . import (square_abs_rational_simp,
                                      square_abs_real_simp)
             # |a|^2 = a if a is real
+            try:
+                deduce_number_set(self.base)
+            except UnsatisfiedPrerequisites:
+                pass
             rational_base = InSet(self.base, Rational).proven()
             real_base = InSet(self.base, Real).proven()
             thm = None
@@ -233,7 +244,7 @@ class Exp(NumberOperation):
                 expr = eq.update(expr.simplification())
 
         return eq.relation
-    
+
     @equality_prover('power_of_one_reduced', 'power_of_one_reduce')
     def power_of_one_reduction(self, **defaults_config):
         from . import complex_x_to_first_power_is_x
@@ -264,6 +275,8 @@ class Exp(NumberOperation):
         from proveit.logic import InSet
         from proveit.numbers import RationalPos
         from . import exp_rational_non_zero__not_zero, exp_not_eq_zero
+        deduce_number_set(self.base)
+        deduce_number_set(self.exponent)
         if (not exp_not_eq_zero.is_usable() or (
                 InSet(self.base, RationalPos).proven() and
                 InSet(self.exponent, RationalPos).proven())):
@@ -319,6 +332,7 @@ class Exp(NumberOperation):
             complex_power_of_quotient, complex_power_of_complex_power)
         base = self.base
         exponent = self.exponent
+        deduce_number_set(exponent)
         if isinstance(base, Mult):
             if self.base.operands.is_double():
                 _a, _b = self.base.operands
@@ -374,7 +388,7 @@ class Exp(NumberOperation):
             #     _m, _n = base.exponent, exponent
             #     return posnat_power_of_posnat_power.instantiate(
             #         {a: _a, m: _m, n: _n})
-            # TRYING TO ANTICIPATE MORE POSSIBILITIES 
+            # TRYING TO ANTICIPATE MORE POSSIBILITIES
             if InSet(exponent, NaturalPos).proven():
                 if InSet(base.exponent, NaturalPos).proven():
                     _m, _n = base.exponent, exponent
@@ -443,7 +457,7 @@ class Exp(NumberOperation):
         # Note: this is out-of-date.  Distribution handles this now,
         # except it doesn't deal with the negation part
         # (do we need it to?)
-        from proveit.numbers import Complex, deduce_in_number_set, Neg
+        from proveit.numbers import deduce_in_number_set, Neg
         # from .theorems import int_exp_of_exp, int_exp_of_neg_exp
         from . import int_exp_of_exp, int_exp_of_neg_exp
         if isinstance(self.exponent, Neg):
@@ -509,7 +523,7 @@ class Exp(NumberOperation):
         the_exponents = self.exponent.operands
 
         # list the new exponential factors
-        the_new_factors = [Exp(self.base, new_exp) if new_exp != one 
+        the_new_factors = [Exp(self.base, new_exp) if new_exp != one
                            else self.base for new_exp in the_exponents]
 
         # create the new equivalent product (Mult)
@@ -517,7 +531,7 @@ class Exp(NumberOperation):
 
         # use the Mult.exponent_combination() to deduce equality to self
         exp_separated = mult_equiv.exponent_combination()
-        
+
         replacements = list(defaults.replacements)
         if defaults.auto_simplify:
             replacements.append(mult_equiv.shallow_simplification())
@@ -575,13 +589,12 @@ class Exp(NumberOperation):
             exp_real_pos_closure, exp_real_non_neg_closure,
             exp_complex_closure, exp_complex_nonzero_closure,
             sqrt_complex_closure, sqrt_real_closure,
-            sqrt_real_pos_closure, sqrt_real_non_neg_closure)
-        from proveit.numbers import (
-            Natural, NaturalPos, Integer,
-            Rational, RationalPos, RationalNonZero,
-            Real, RealNonNeg, RealPos, Complex, ComplexNonZero)
+            sqrt_real_pos_closure, sqrt_real_non_neg_closure,
+            sqrd_pos_closure, sqrd_non_neg_closure)
+
         from proveit.numbers import zero
 
+        deduce_number_set(self.exponent)
         if number_set == NaturalPos:
             return exp_natpos_closure.instantiate(
                 {a: self.base, b: self.exponent})
@@ -625,12 +638,16 @@ class Exp(NumberOperation):
         elif number_set == RealPos:
             if self.exponent == frac(one, two):
                 return sqrt_real_pos_closure.instantiate({a: self.base})
+            elif self.exponent == two:
+                return sqrd_pos_closure.instantiate({a: self.base})
             else:
                 return exp_real_pos_closure.instantiate(
                     {a: self.base, b: self.exponent})
         elif number_set == RealNonNeg:
             if self.exponent == frac(one, two):
                 return sqrt_real_non_neg_closure.instantiate({a: self.base})
+            elif self.exponent == two:
+                return sqrd_non_neg_closure.instantiate({a: self.base})
             else:
                 return exp_real_non_neg_closure.instantiate(
                     {a: self.base, b: self.exponent})
@@ -648,6 +665,211 @@ class Exp(NumberOperation):
         raise NotImplementedError(
             "'Exp.deduce_in_number_set' not implemented for the %s set"
             % str(number_set))
+
+    @relation_prover
+    def bound_via_operand_bound(self, operand_relation, **defaults_config):
+        '''
+        For simple cases, deduce a bound on this Exp object given a
+        bound on its operand. For example, suppose x = Exp(y, 2) and
+        we know that y >= 2. Then x.bound_via_operand_bound(y >= 2)
+        returns x >= 2^2 = 4.
+        This method currently works MAINLY for expressions
+        of the form Exp(x, a) for non-negative real x and real exponent
+        'a', where we know something of the form x < y (or x ≤ y, x > y,
+        x ≥ y) involving the base of the exponential expression.
+        The result also depends on knowing the relationship between the
+        exponent 'a' and zero, which might need to be pre-proven or
+        provided as an assumption (e.g. in the form 'a > 0' or
+        InSet(a, RealNeg), etc).
+        A special case also deals with a negative base raised to the
+        power of 2.
+        Future development will address operand_relations
+        involving the exponent 'a' and expand the special negative
+        base case to include all even and odd exponent cases.
+        Also see NumberOperation.deduce_bound and compare to the
+        bound_via_operand_bound() method found in the Div and Neg
+        classes.
+        '''
+        from proveit import Judgment
+        from proveit.numbers import (
+                two, greater, greater_eq, Less, LessEq,
+                NumberOrderingRelation, RealNonNeg)
+        if isinstance(operand_relation, Judgment):
+            operand_relation = operand_relation.expr
+        if not isinstance(operand_relation, NumberOrderingRelation):
+            raise TypeError(
+                    "In Exp.bound_via_operand_bound(), the "
+                    "'operand_relation' argument is expected to be a number "
+                    "relation (<, >, ≤, or ≥), but instead was {}.".
+                    format(operand_relation))
+
+        lhs = operand_relation.lhs
+        # should be able to generalize this later
+        # no need to limit to just lhs, right?
+        if lhs != self.base:
+            raise ValueError(
+                    "In Exp.bound_via_operand_bound(), the left side of "
+                    "the 'operand_relation' argument {0} is expected to "
+                    "match the Exp base operand {1}.".
+                    format(operand_relation, self.base))
+
+        # assign x and y subs according to std Less or LessEq relations
+        _x_sub = operand_relation.normal_lhs
+        _y_sub = operand_relation.normal_rhs
+        _a_sub = self.exponent
+
+        # confirm that the base involved is non-negative real
+
+        # if not InSet(_x_sub, RealNonNeg).proven():
+        #     raise UnsatisfiedPrerequisites(
+        #             "In Exp.bound_via_operand_bound(), We must know "
+        #             "that {0} is a non-negative Real.".
+        #             format(_x_sub))
+
+        # Several cases to consider:
+        #  (1) a > 0, 0 ≤ x < y
+        #  (2) a > 0, 0 ≤ x ≤ y
+        #  (3) a ≥ 0, 0 < x < y
+        #  (4) a ≥ 0, 0 < x ≤ y
+        #  (5) a < 0, 0 < x < y
+        #  (6) a < 0, 0 < x ≤ y
+        #  (7) a ≤ 0, 0 < x < y
+        #  (8) a ≤ 0, 0 < x ≤ y
+        # =====================
+        #  (9) a = 2, y < x < 0
+        # (10) a = 2, y ≤ x < 0
+
+        # Cases (1) and (2): exponent a > 0
+        if (greater(_a_sub, zero).proven() and
+            greater_eq(_x_sub, zero).proven()):
+            if isinstance(operand_relation, Less):
+                from proveit.numbers.exponentiation import exp_pos_less
+                bound = exp_pos_less.instantiate(
+                        {x: _x_sub, y: _y_sub, a: _a_sub})
+            elif isinstance(operand_relation, LessEq):
+                from proveit.numbers.exponentiation import exp_pos_lesseq
+                bound = exp_pos_lesseq.instantiate(
+                        {x: _x_sub, y: _y_sub, a: _a_sub})
+            else:
+                raise TypeError(
+                    "In Exp.bound_via_operand_bound(), the 'operand_relation' "
+                    "argument is expected to be a 'Less', 'LessEq', 'greater', "
+                    "or 'greater_eq' relation. Instead we have {}.".
+                    format(operand_relation))
+
+        # Cases (3) and (4): exponent a ≥ 0
+        elif (greater_eq(_a_sub, zero).proven() and
+            greater(_x_sub, zero).proven()):
+            if isinstance(operand_relation, Less):
+                from proveit.numbers.exponentiation import exp_nonneg_less
+                bound = exp_nonneg_less.instantiate(
+                        {x: _x_sub, y: _y_sub, a: _a_sub})
+            elif isinstance(operand_relation, LessEq):
+                from proveit.numbers.exponentiation import exp_nonneg_lesseq
+                bound = exp_nonneg_lesseq.instantiate(
+                        {x: _x_sub, y: _y_sub, a: _a_sub})
+            else:
+                raise TypeError(
+                    "In Exp.bound_via_operand_bound(), the 'operand_relation' "
+                    "argument is expected to be a 'Less', 'LessEq', 'greater', "
+                    "or 'greater_eq' relation. Instead we have {}.".
+                    format(operand_relation))
+
+        # Cases (5) and (6): exponent a < 0
+        elif (Less(_a_sub, zero).proven() and
+            greater(_x_sub, zero).proven()):
+            if isinstance(operand_relation, Less):
+                from proveit.numbers.exponentiation import exp_neg_less
+                bound = exp_neg_less.instantiate(
+                        {x: _x_sub, y: _y_sub, a: _a_sub})
+            elif isinstance(operand_relation, LessEq):
+                from proveit.numbers.exponentiation import exp_neg_lesseq
+                bound = exp_neg_lesseq.instantiate(
+                        {x: _x_sub, y: _y_sub, a: _a_sub})
+            else:
+                raise TypeError(
+                    "In Exp.bound_via_operand_bound(), the 'operand_relation' "
+                    "argument is expected to be a 'Less', 'LessEq', 'greater', "
+                    "or 'greater_eq' relation. Instead we have {}.".
+                    format(operand_relation))
+
+        # Cases (7) and (8): exponent a ≤ 0
+        elif (LessEq(_a_sub, zero).proven() and
+            greater(_x_sub, zero).proven()):
+            if isinstance(operand_relation, Less):
+                from proveit.numbers.exponentiation import exp_nonpos_less
+                bound = exp_nonpos_less.instantiate(
+                        {x: _x_sub, y: _y_sub, a: _a_sub})
+            elif isinstance(operand_relation, LessEq):
+                from proveit.numbers.exponentiation import exp_nonpos_lesseq
+                bound = exp_nonpos_lesseq.instantiate(
+                        {x: _x_sub, y: _y_sub, a: _a_sub})
+            else:
+                raise TypeError(
+                    "In Exp.bound_via_operand_bound(), the 'operand_relation' "
+                    "argument is expected to be a 'Less', 'LessEq', 'greater', "
+                    "or 'greater_eq' relation. Instead we have {}.".
+                    format(operand_relation))
+
+        # Cases (9) and (10): exponent a = 2
+        # with x < y < 0 or x ≤ y < 0
+
+        elif (_a_sub == two and
+            Less(_y_sub, zero).proven()):
+            if isinstance(operand_relation, Less):
+                from proveit.numbers.exponentiation import (
+                        exp_even_neg_base_less)
+                bound = exp_even_neg_base_less.instantiate(
+                        {x: _x_sub, y: _y_sub, a: _a_sub})
+            elif isinstance(operand_relation, LessEq):
+                from proveit.numbers.exponentiation import (
+                        exp_even_neg_base_lesseq)
+                bound = exp_even_neg_base_lesseq.instantiate(
+                        {x: _x_sub, y: _y_sub, a: _a_sub})
+            else:
+                raise TypeError(
+                    "In Exp.bound_via_operand_bound(), the 'operand_relation' "
+                    "argument is expected to be a 'Less', 'LessEq', 'greater', "
+                    "or 'greater_eq' relation. Instead we have {}.".
+                    format(operand_relation))
+
+        else:
+            raise ValueError(
+                    "In calling Exp.bound_via_operand_bound(), a "
+                    "specific matching case was not found for {}.".
+                    format(self))
+
+        if bound.rhs == self:
+            return bound.with_direction_reversed()
+        return bound
+
+    def deduce_number_set(self, **defaults_config):
+        '''
+        Prove membership of this expression in the most
+        restrictive standard number set we can readily know.
+        '''
+        base_ns = deduce_number_set(self.base).domain
+        exp_ns = deduce_number_set(self.exponent).domain
+        if Natural.includes(base_ns) and Natural.includes(exp_ns):
+            return self.deduce_in_number_set(NaturalPos)
+        if Integer.includes(base_ns) and Natural.includes(exp_ns):
+            return self.deduce_in_number_set(Integer)
+        if RationalPos.includes(base_ns) and Integer.includes(exp_ns):
+            return self.deduce_in_number_set(RationalPos)
+        if (RationalNonZero.includes(base_ns)
+                and Integer.includes(exp_ns)):
+            return self.deduce_in_number_set(RationalNonZero)
+        if Rational.includes(base_ns) and Natural.includes(exp_ns):
+            return self.deduce_in_number_set(Rational)
+        if RealPos.includes(base_ns) and Real.includes(exp_ns):
+            return self.deduce_in_number_set(RealPos)
+        if RealNonNeg.includes(base_ns) and Real.includes(exp_ns):
+            return self.deduce_in_number_set(RealNonNeg)
+        if Real.includes(base_ns) and Natural.includes(exp_ns):
+            return self.deduce_in_number_set(Real)
+        if ComplexNonZero.includes(base_ns):
+            return self.deduce_in_number_set(ComplexNonZero)
+        return self.deduce_in_number_set(Complex)
 
 
 class ExpSetMembership(SetMembership):
