@@ -133,8 +133,6 @@ class Equals(TransitiveRelation):
             # boolean.  Conclude equality via mutual implication.
             return Iff(self.lhs, self.rhs).derive_equality()
         
-        # check the equivalence set.
-
         if hasattr(self.lhs, 'deduce_equality'):
             # If there is a 'deduce_equality' method, use that.
             # The responsibility then shifts to that method for
@@ -188,25 +186,9 @@ class Equals(TransitiveRelation):
                 raise ProofFailure(self, defaults.assumptions,
                                    "Evaluation error: %s" % e.message)
 
-        # Try to prove equality via simplifying both sides.
-        lhs_simplification = self.lhs.simplification()
-        rhs_simplification = self.rhs.simplification()
-        simplified_lhs = lhs_simplification.rhs
-        simplified_rhs = rhs_simplification.rhs
-        try:
-            if simplified_lhs != self.lhs or simplified_rhs != self.rhs:
-                simplified_eq = Equals(
-                    simplified_lhs, simplified_rhs).prove()
-                return Equals.apply_transitivities(
-                    [lhs_simplification, simplified_eq, rhs_simplification])
-        except ProofFailure:
-            pass
-        
-        raise ProofFailure(self, defaults.assumptions,
-                           "Unable to automatically conclude by "
-                           "standard means.  To try to prove this via "
-                           "transitive relations, try "
-                           "'conclude_via_transitivity'.")
+        # Try to prove equality via standard TransitiveRelation
+        # strategies (simplify both sends then try transitivity).
+        return TransitiveRelation.conclude(self)
 
     @prover
     def conclude_via_direct_substitution(self, **defaults_config):

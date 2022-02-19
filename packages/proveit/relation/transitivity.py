@@ -66,24 +66,11 @@ class TransitiveRelation(Relation):
         truths (under the given assumptions), we can conclude that
         a<d (under these assumptions).
         '''
-        # First off, simplify both sides.
-        normal_lhs, normal_rhs = self.normal_lhs, self.normal_rhs
-        normal_lhs_simplification = normal_lhs.simplification()
-        normal_rhs_simplification = normal_rhs.simplification()
-        simp_normal_lhs = normal_lhs_simplification.rhs        
-        simp_normal_rhs = normal_rhs_simplification.rhs
-        if (simp_normal_lhs != normal_lhs) or (simp_normal_rhs != normal_rhs):
-            # Prove the simplified version first.
-            proven_simp_relation = self.__class__(
-                    simp_normal_lhs, simp_normal_rhs,
-                    styles=self.get_styles()).prove()
-            # Substitute the originals back in.
-            proven_relation = normal_lhs_simplification.sub_left_side_into(
-                    proven_simp_relation.inner_expr().normal_lhs,
-                    preserve_all=True)
-            return normal_rhs_simplification.sub_left_side_into(
-                    proven_relation.inner_expr().normal_rhs,
-                    preserve_all=True)
+        try:
+            # Try to conclude via simplification of each side.
+            return Relation.conclude(self)
+        except ProofFailure:
+            pass
         
         # Use a breadth-first search approach to find the shortest
         # path to get from one end-point to the other.

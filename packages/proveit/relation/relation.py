@@ -29,6 +29,38 @@ class Relation(Operation):
         # they will be switched when the 'direction' style is
         # 'reversed'.
 
+    @prover
+    def conclude(self, **defaults_config):
+        '''
+        Try to conclude the Relation by simplifying both
+        sides.
+        '''
+        normal_lhs, normal_rhs = self.normal_lhs, self.normal_rhs
+        try:
+            normal_lhs_simplification = normal_lhs.simplification()
+        except SimplificationError:
+            normal_lhs_simplification = Equals(normal_lhs, normal_lhs).prove()
+        try:
+            normal_rhs_simplification = normal_rhs.simplification()
+        except SimplificationError:
+            normal_rhs_simplification = Equals(normal_rhs, normal_rhs).prove()
+        simp_normal_lhs = normal_lhs_simplification.rhs
+        simp_normal_rhs = normal_rhs_simplification.rhs
+        if (simp_normal_lhs != normal_lhs) or (simp_normal_rhs != normal_rhs):
+            # Prove the simplified version first.
+            proven_simp_relation = self.__class__(
+                    simp_normal_lhs, simp_normal_rhs,
+                    styles=self.get_styles()).prove()
+            # Substitute the originals back in.
+            proven_relation = normal_lhs_simplification.sub_left_side_into(
+                    proven_simp_relation.inner_expr().normal_lhs,
+                    preserve_all=True)
+            return normal_rhs_simplification.sub_left_side_into(
+                    proven_relation.inner_expr().normal_rhs,
+                    preserve_all=True)
+        raise ProofFailure(self, defaults.assumptions,
+                           "Unable to conclude %s"%self)
+
     def style_options(self):
         '''
         Returns the StyleOptions object for this Relation.
