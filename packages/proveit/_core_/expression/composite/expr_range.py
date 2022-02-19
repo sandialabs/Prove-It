@@ -1220,7 +1220,7 @@ class ExprRange(Expression):
             decreasing = False
         empty_req = Equals(Add(simp_end_index, one), simp_start_index)
         if is_literal_int(simp_start_index) and is_literal_int(simp_end_index):
-            if end_index.as_int() + 1 == start_index.as_int(): # or (decreasing and start_index.as_int() + 1 == end_index.as_int()):
+            if simp_end_index.as_int() + 1 == simp_start_index.as_int():
                 empty_req.prove()
         first = self.first()
         if empty_req.proven():
@@ -1711,7 +1711,9 @@ class ExprRange(Expression):
                     # with the parameter changed to our 'new_param'.
                     param_repl_map = {entry.parameter: new_param}
                     new_body = entry.body.basic_replaced(param_repl_map)
-                    entry_repl_map[indexed_var_or_range] = new_body
+                    param_repl_map = {orig_parameter: new_param}
+                    entry_repl_map[indexed_var_or_range.basic_replaced(
+                        param_repl_map)] = new_body
                     expansion_entry_ranges.append(entry)
                     # Advance the "expansion iter".
                     next(expansion_iter)
@@ -1778,11 +1780,10 @@ class ExprRange(Expression):
                         entry_repl_maps, expansion_repl_maps):
                     entry_repl_map.update(expansion_repl_map)
 
-        def update_map(orig_repl_map, update):
+        def update_keys_and_values(orig_repl_map, update):
             '''
             Given an original replacement map, use the 'update' dictionary
-            to make replacements in all of its keys and values and then
-            add the update entrie(s).
+            to make replacements in all of its keys and values.
             '''
             new_repl_map = dict()
             for key, val in orig_repl_map.items():
@@ -1792,8 +1793,8 @@ class ExprRange(Expression):
                 else:
                     val = val.basic_replaced(update)
                 new_repl_map[key] = val
-            new_repl_map.update(update)
-            return new_repl_map
+            orig_repl_map.clear()
+            orig_repl_map.update(update)
 
         # Yield a replacement for each of the aligned entry of the
         # expansions.  May be a singular entry or an ExprRange entry
@@ -1824,10 +1825,12 @@ class ExprRange(Expression):
                     # translate the parameter.  We use
                     # 'quick_simplified' to figure out how to do this
                     # translation, but it will have to be proven to
-                    # match later one.
+                    # match later on.
                     shift = subtract(next_index, 
                                      true_start_index).quick_simplified()
                     param_repl = Add(new_param, shift)
+                    update_keys_and_values(full_entry_repl_map, 
+                                           {new_param:param_repl})
 
                 # Let's keep this simple and not worry about this
                 # "range assumptions".
@@ -1839,8 +1842,6 @@ class ExprRange(Expression):
                 #                         Interval(start_index, end_index))
 
                 entry_assumptions = inner_assumptions  # + [range_assumption]
-                full_entry_repl_map = update_map(
-                    full_entry_repl_map, {orig_parameter: new_param})
                 full_entry_repl_map[orig_parameter] = param_repl
                 with defaults.temporary() as temp_defaults:
                     temp_defaults.assumptions = entry_assumptions
@@ -1876,10 +1877,9 @@ class ExprRange(Expression):
                 # element.
                 if indices_must_match:
                     # The actual range parameter index is needed:
-                    param_repl_map = {orig_parameter: next_index}
-                    full_entry_repl_map = update_map(
-                        full_entry_repl_map, param_repl_map)
-                    #full_entry_repl_map[orig_parameter] = next_index
+                    full_entry_repl_map[orig_parameter] = next_index
+                    update_keys_and_values(full_entry_repl_map, 
+                                           {new_param:next_index})
 
                 with defaults.temporary() as temp_defaults:
                     temp_defaults.assumptions = inner_assumptions
