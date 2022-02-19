@@ -1137,6 +1137,11 @@ class Add(NumberOperation):
                     # (a-b) in Natural requires that b <= a.
                     return subtract_nat_closure_bin.instantiate(
                         {a: self.operands[0], b: self.operands[1].operand})
+                elif isinstance(self.operands[0], Neg):
+                    # Negated first term.  Try switching the order.
+                    new_add = Add(self.operands[1], self.operands[0])
+                    new_add_in_ns = new_add.deduce_in_number_set(number_set)
+                    return new_add_in_ns.inner_expr().domain.commute()
                 return add_nat_closure_bin.instantiate(
                     {a: self.operands[0], b: self.operands[1]})            
             _a = self.operands
@@ -1237,6 +1242,7 @@ class Add(NumberOperation):
         Prove membership of this expression in the most 
         restrictive standard number set we can readily know.
         '''
+        from proveit.numbers import Neg, one
         from proveit.numbers import (Integer, IntegerNeg, IntegerNonPos,
                                      Natural, NaturalPos, IntegerNonZero,
                                      Rational, RationalPos, RationalNonZero,
@@ -1274,6 +1280,16 @@ class Add(NumberOperation):
                       Complex:(3,2)}
         major_minor_to_set = {
             (major, minor):ns for ns, (major, minor) in priorities.items()}
+        
+        if self.terms.is_double():
+            # Look for a special case of n-1 in Nat or (-1+n) in Nat.
+            term_ns = None
+            if self.terms[1] == Neg(one):
+                term_ns = deduce_number_set(self.terms[0])
+            elif self.terms[0] == Neg(one):
+                term_ns = deduce_number_set(self.terms[1])                
+            if term_ns is not None and NaturalPos.includes(term_ns):
+                return self.deduce_in_number_set(Natural)
 
         major = minor = -1
         any_positive = False
