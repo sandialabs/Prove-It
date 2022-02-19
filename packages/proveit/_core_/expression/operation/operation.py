@@ -643,7 +643,8 @@ class Operation(Expression):
         from proveit.logic import EvaluationError, SimplificationError
         
         # Try to simplify the operands first.
-        reduction = self.simplification_of_operands()
+        reduction = self.simplification_of_operands(
+            simplify_with_known_evaluations=True)
         
         # After making sure the operands have been simplified,
         # try 'shallow_simplification' with must_evaluate=True.

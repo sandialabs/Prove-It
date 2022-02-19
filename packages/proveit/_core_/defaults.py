@@ -64,7 +64,7 @@ class Defaults:
         # auto-simplification where auto-simplification is 
         # enabled/allowed (e.g., the original expression is not
         # preserved.
-        self.auto_simplify_with_known_evaluations = False
+        self.simplify_with_known_evaluations = False
 
         """
         # Map expression classes to directives that should be

@@ -1201,7 +1201,7 @@ class Expression(metaclass=ExprType):
         replacement = None
         if (auto_simplify_top_level and not is_irreducible_value(expr)
               and not isinstance(expr, ExprRange)):
-            if defaults.auto_simplify_with_known_evaluations:
+            if defaults.simplify_with_known_evaluations:
                 # Look for a known evaluation.
                 replacement = Equals.get_known_evaluation(expr)
             else:

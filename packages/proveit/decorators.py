@@ -342,22 +342,27 @@ def equality_prover(past_tense, present_tense):
                                 "method for an Expression type or it must "
                                 "have an 'expr' attribute."%func)            
             proven_truth = None
+            if is_simplification_method or is_evaluation_method:
+                from proveit.logic import is_irreducible_value
+                if is_irreducible_value(expr):
+                    # Already irreducible.  Done.
+                    proven_truth = (
+                            Equals(expr, expr).conclude_via_reflexivity())
+
             # If _no_eval_check is set to True, don't bother
             # checking for an existing evaluation.  Used internally
             # in Operation.simplification, Operation.evaluation,
             # Conditional.simplification, and Judgment.simplify.
             _no_eval_check = kwargs.pop('_no_eval_check', False)
-            if not _no_eval_check and (is_simplification_method or 
-                                       is_evaluation_method):
-                from proveit.logic import (is_irreducible_value,
-                                           evaluate_truth)
-                if is_irreducible_value(expr):
-                    # Already irreducible.  Done.
-                    proven_truth = (
-                            Equals(expr, expr).conclude_via_reflexivity())
-                elif expr.proven():
+            if (not _no_eval_check and (
+                    is_evaluation_method or
+                    (defaults.simplify_with_known_evaluations 
+                     and is_simplification_method))):
+                from proveit.logic import evaluate_truth
+                if expr.proven():
                     # The expression is proven so it equals true.
-                    proven_truth = Equals(expr, TRUE).conclude_boolean_equality()
+                    proven_truth = Equals(
+                        expr, TRUE).conclude_boolean_equality()
                 else:
                     # See if there is a known evaluation (or if one may
                     # be derived via known equalities if 
