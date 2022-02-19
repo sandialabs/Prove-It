@@ -1013,11 +1013,13 @@ class Mult(NumberOperation):
                 the_factors_or_index = self.operands.entries.index(
                         the_factors_or_index)
             except ValueError:
-                pass
-            if isinstance(the_factors_or_index, Mult):
-                the_factors_or_index = the_factors_or_index.operands.entries
-            elif isinstance(the_factors_or_index, ExprTuple):
-                the_factors_or_index = the_factors_or_index.entries
+                if isinstance(the_factors_or_index, Mult):
+                    the_factors_or_index = (
+                        the_factors_or_index.operands.entries)
+                elif isinstance(the_factors_or_index, ExprTuple):
+                    the_factors_or_index = the_factors_or_index.entries
+                else:
+                    the_factors_or_index = [the_factors_or_index]
         if isinstance(the_factors_or_index, int):
             idx = the_factors_or_index
             num = 1
@@ -1027,7 +1029,8 @@ class Mult(NumberOperation):
                     preserve_expr=the_factor))    
             all_factors = [the_factor]
         else:
-            # Assume the_factors is iterable at this point.
+            # Look for one or more factors, pull them out,
+            # grouping where possible.
             factors_iter = iter(the_factors_or_index)
             all_factors = []
             my_factors = self.operands.entries
@@ -1039,7 +1042,12 @@ class Mult(NumberOperation):
                 while True:
                     next_factor = next(factors_iter)
                     all_factors.append(next_factor)
-                    next_idx = my_factors.index(next_factor)
+                    try:
+                        next_idx = my_factors.index(next_factor)
+                    except ValueError:
+                        raise ValueError(
+                            "%s not found as a direct factor of %s"
+                            %(next_factor, self))
                     if the_slice is None:
                         # We want to look ahead one if possible.
                         the_slice = slice(next_idx, next_idx+1)

@@ -129,7 +129,7 @@ class VecAdd(GroupAdd):
 
     @equality_prover('factorized', 'factor')
     def factorization(self, the_factor, pull="left",
-            group_factor=True, field=None, **defaults_config):
+            group_factors=True, field=None, **defaults_config):
         '''
         Deduce an equality between this VecAdd expression and a
         version in which either:
@@ -186,7 +186,7 @@ class VecAdd(GroupAdd):
                         shallow_simplification())
                 if hasattr(term.scalar, 'factorization'):
                     term_scalar_factorization = term.scalar.factorization(
-                        the_factor, pull, group_factor=group_factor,
+                        the_factor, pull, group_factors=group_factors,
                         group_remainder=True, preserve_all=True)
                     if not isinstance(term_scalar_factorization.rhs, Mult):
                         raise ValueError(
@@ -222,7 +222,7 @@ class VecAdd(GroupAdd):
                         replacements.append(Mult(one, term.scalar).one_elimination(0))
                     _b.append(ScalarMult(one, term.scaled))
 
-            if not group_factor and isinstance(the_factor, Mult):
+            if not group_factors and isinstance(the_factor, Mult):
                 factor_sub = the_factor.operands
             else:
                 factor_sub = ExprTuple(the_factor)
