@@ -190,13 +190,14 @@ class NotInClass(Relation):
                 "%s.conclude() has failed to find a proof for the "
                 "non-membership: %s"%(self.__class__, self))
 
-    def conclude_as_folded(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude_as_folded(self, **defaults_config):
         '''
         Attempt to conclude x not in C via Not(x in C).
         '''
         from . import fold_not_in_class
         return fold_not_in_class.instantiate(
-            {x: self.element, S: self.domain}, assumptions=assumptions)
+            {x: self.element, S: self.domain})
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
@@ -207,6 +208,14 @@ class NotInClass(Relation):
         'nonmembership_object' if there is one.
         '''
         from proveit.logic import TRUE, EvaluationError
+
+        if not must_evaluate:
+            # Don't oversimplify!
+            # Unless 'must_evaluate' is true, we'll forgo the
+            # treatment below.
+            return Relation.shallow_simplification(
+                    self, must_evaluate=must_evaluate)
+
         # try an 'definition' method (via the nonmembership object)
         if not hasattr(self, 'nonmembership_object'):
             # Don't know what to do otherwise.

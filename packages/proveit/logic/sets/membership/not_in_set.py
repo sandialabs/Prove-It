@@ -56,13 +56,14 @@ class NotInSet(NotInClass):
         return unfold_not_in_set.instantiate(
             {x: self.element, S: self.domain}, auto_simplify=False)
 
-    def conclude_as_folded(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude_as_folded(self, **defaults_config):
         '''
         Attempt to conclude x not in S via Not(x in S).
         '''
         from . import fold_not_in_set
         return fold_not_in_set.instantiate(
-            {x: self.element, S: self.domain}, assumptions=assumptions)
+            {x: self.element, S: self.domain})
 
 
 class SetNonmembership(ClassNonmembership):
