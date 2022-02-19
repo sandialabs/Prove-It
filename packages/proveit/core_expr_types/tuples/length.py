@@ -207,7 +207,7 @@ class Len(Operation):
                     _i = entry_map(_i)
                     _j = entry_map(_j)
                     return len_of_empty_range_of_ranges.instantiate(
-                        {m: _m, n: _n, f: _f, i: _i, j: _j})
+                        {m: _m, n: _n, f: _f, i: _i, j: _j}).with_wrapping_at()
 
             _f = [entry_map(entry) for entry in entries]
             _i = [entry_start(entry) for entry in entries]
@@ -240,15 +240,16 @@ class Len(Operation):
                     if _i[0] == one:
                         thm = len_of_ranges_with_repeated_indices_from_1
                         len_comp = thm.instantiate(
-                            {n: _n, f: _f, i: _j[0]})
+                            {n: _n, f: _f, i: _j[0]}).with_wrapping_at()
                     else:
                         thm = len_of_ranges_with_repeated_indices
                         len_comp = thm.instantiate(
-                            {n: _n, f: _f, i: _i[0], j: _j[0]})
+                            {n: _n, f: _f, 
+                             i: _i[0], j: _j[0]}).with_wrapping_at()
             if len_comp is None:
                 len_comp = general_len.instantiate(
                     {n: _n, f: _f, i: _i, j: _j}, 
-                    preserved_exprs=preserved_exprs)
+                    preserved_exprs=preserved_exprs).with_wrapping_at()
                 if not defaults.auto_simplify and len_comp.lhs != self:
                     # Make sure the left side is reduced to the
                     # original expression (self) which is preserved.
