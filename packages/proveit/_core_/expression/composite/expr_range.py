@@ -94,7 +94,7 @@ class ExprRange(Expression):
                     "a 'true_start_index' and 'true_end_index'.  Mixing "
                     "is not allowed.")
         if true_start_index is None:
-            if order == 'decreasing' and true_start_index is None:
+            if order == 'decreasing':
                 # If the order is decreasing, negate the indices and the
                 # parameter.
                 true_start_index = negated(start_index)
@@ -798,7 +798,8 @@ class ExprRange(Expression):
         from proveit.logic import InSet
         from proveit.numbers import Interval
         return InSet(self.parameter,
-                Interval(self.start_index, self.end_index))
+                Interval(self.true_start_index, 
+                         self.true_end_index))
 
     def nested_range_depth(self):
         '''
@@ -1297,16 +1298,15 @@ class ExprRange(Expression):
                 lambda_map = Lambda(
                     (self.parameter, self.body.parameter), 
                     self.body.body)
+                reduction = empty_inside_range_of_range.instantiate(
+                    {f: lambda_map, m: start_index, n: end_index,
+                     i: nest_start_index, j: nest_end_index},
+                    preserve_expr=tuple_wrapped_self)
                 if decreasing:
-                    return empty_inside_range_of_range.instantiate(
-                        {f: lambda_map, m: start_index, n: end_index,
-                         i: nest_start_index, j: nest_end_index},
-                        preserve_expr=tuple_wrapped_self).inner_expr().lhs[0].with_decreasing_order()
+                    return (reduction.inner_expr().lhs[0]
+                            .with_decreasing_order())
                 else:
-                    return empty_inside_range_of_range.instantiate(
-                        {f: lambda_map, m: start_index, n: end_index,
-                         i: nest_start_index, j: nest_end_index},
-                         preserve_expr=tuple_wrapped_self)
+                    return reduction
         # If nothing else is applicable, we will return the trivial 
         # reflexive equality.
         if must_reduce:
@@ -1318,29 +1318,12 @@ class ExprRange(Expression):
         if len(index_replacements) > 0:
             if simp_start_index != start_index:
                 reduction = start_index_simplification.sub_right_side_into(
-                        reduction.inner_expr().rhs[0].start_index)
+                        reduction.inner_expr().rhs[0].true_start_index)
             if simp_end_index != end_index:
                 reduction = end_index_simplification.sub_right_side_into(
-                        reduction.inner_expr().rhs[0].end_index)      
+                        reduction.inner_expr().rhs[0].true_end_index)      
         return reduction
-            
-
-    def _possibly_reduced_range_entries(self, requirements):
-        '''
-        If the given ExprRange has a reduction (as an empty), 
-        add this reduction as a requirement and yield the
-        entries of the reduced version.  Otherwise, just yield
-        the original expr_range.
-        '''
-        try:
-            reduction = self.reduction(must_reduce=True)
-        except UnsatisfiedPrerequisites:
-            yield self
-        if reduction.lhs != reduction.rhs:
-            requirements.append(reduction)
-        for entry in reduction.rhs:
-            yield entry
-
+    
     def _replaced_entries(self, repl_map, allow_relabeling, requirements):
         '''
         Returns this expression with sub-expressions replaced
@@ -1568,8 +1551,14 @@ class ExprRange(Expression):
             # corresponding variable range.
             occurrence_map = dict(repl_map)
             occurrence_map.pop(var)
+            subbed_occurrence = occurrence.basic_replaced(
+                occurrence_map, allow_relabeling=allow_relabeling, 
+                requirements=requirements)
+            shift_map = dict()
             for idx in var_indices:
                 if orig_parameter in free_vars(idx):
+                    # Absorb a shift into the start and end indices
+                    # for the repl_map lookup.
                     if param_index is not None:
                         raise ImproperReplacement(
                             self, repl_map,
@@ -1591,13 +1580,13 @@ class ExprRange(Expression):
                     param_index = idx
                     # Since we are absorbing the shift into the 
                     # indices, map idx to a non-shifted parameter:
-                    occurrence_map[idx] = orig_parameter
                     if idx != orig_parameter:
+                        shift_map[idx] = orig_parameter
                         # We'll map the original parameter to a safe 
                         # dummy var so we can detect if there are other 
                         # instances of the original parameter with a 
                         # different shift.
-                        occurrence_map[orig_parameter] = safe_dummy_var
+                        shift_map[orig_parameter] = safe_dummy_var
             if param_index is None:
                 raise ImproperReplacement(
                     self, repl_map,
@@ -1605,9 +1594,12 @@ class ExprRange(Expression):
                     "occurrence with the range parameter %s; not used as "
                     "an index."
                     % (self, occurrence, orig_parameter))
-            subbed_occurrence = occurrence.basic_replaced(
-                occurrence_map, allow_relabeling=allow_relabeling, 
-                requirements=requirements)
+            if len(shift_map) > 0:
+                shifted_occurrence = subbed_occurrence.basic_replaced(
+                    shift_map, allow_relabeling=allow_relabeling, 
+                    requirements=requirements)
+            else:
+                shifted_occurrence = subbed_occurrence
             if safe_dummy_var in free_vars(occurrence):
                 # There was an instance of the original parameter with a
                 # different shift than what we used.  That's not allowed.
@@ -1618,7 +1610,7 @@ class ExprRange(Expression):
                     % (self, occurrence, orig_parameter))
 
             _styles = subbed_styles
-            var_range = ExprRange(orig_parameter, subbed_occurrence,
+            var_range = ExprRange(orig_parameter, shifted_occurrence,
                                   true_start_index=start_with_absorbed_shift,
                                   true_end_index=end_with_absorbed_shift,
                                   styles=_styles)
@@ -1629,9 +1621,12 @@ class ExprRange(Expression):
             var = get_param_var(occurrence)
             if var_tuple not in inner_repl_map:
                 def key_var(key): 
-                    return (get_param_var(key[0]) if
-                            isinstance(key, ExprTuple)
-                            else get_param_var(key))
+                    try:
+                        return (get_param_var(key[0]) if
+                                isinstance(key, ExprTuple)
+                                else get_param_var(key))
+                    except (TypeError, ValueError):
+                        return None
                 var_replacements = \
                     {key: value for key, value in inner_repl_map.items() if
                      key_var(key) == var}
@@ -1651,7 +1646,8 @@ class ExprRange(Expression):
                     self, repl_map,
                     "Invalid replacement %s for %s; it must be an "
                     "ExprTuple." % (var_tuple, repl))
-            expansions_dict[occurrence] = repl.entries
+            
+            expansions_dict[subbed_occurrence] = repl.entries
 
         def raise_failed_expansion_match(first_expansion, expansion,
                                          first_indexed_var_or_range,
@@ -1711,9 +1707,8 @@ class ExprRange(Expression):
                     # with the parameter changed to our 'new_param'.
                     param_repl_map = {entry.parameter: new_param}
                     new_body = entry.body.basic_replaced(param_repl_map)
-                    param_repl_map = {orig_parameter: new_param}
                     entry_repl_map[indexed_var_or_range.basic_replaced(
-                        param_repl_map)] = new_body
+                        {orig_parameter:new_param})] = new_body
                     expansion_entry_ranges.append(entry)
                     # Advance the "expansion iter".
                     next(expansion_iter)
@@ -1723,7 +1718,7 @@ class ExprRange(Expression):
                     # for a nested ExprRange (which is why we need
                     # to use the 'extract_param_replacements' method).
                     extract_param_replacements(
-                        parameters, parameter_vars, body,
+                        parameters, parameter_vars,
                         expansion_iter, None,
                         requirements, entry_repl_map)
                     # Mark as a non-ExprRange entry by simply appending
@@ -1782,8 +1777,9 @@ class ExprRange(Expression):
 
         def update_keys_and_values(orig_repl_map, update):
             '''
-            Given an original replacement map, use the 'update' dictionary
-            to make replacements in all of its keys and values.
+            Given an original replacement map, use the 'update' 
+            dictionary to make replacements in all of its keys 
+            and values.
             '''
             new_repl_map = dict()
             for key, val in orig_repl_map.items():
@@ -1794,7 +1790,7 @@ class ExprRange(Expression):
                     val = val.basic_replaced(update)
                 new_repl_map[key] = val
             orig_repl_map.clear()
-            orig_repl_map.update(update)
+            orig_repl_map.update(new_repl_map)
 
         # Yield a replacement for each of the aligned entry of the
         # expansions.  May be a singular entry or an ExprRange entry
@@ -1829,8 +1825,6 @@ class ExprRange(Expression):
                     shift = subtract(next_index, 
                                      true_start_index).quick_simplified()
                     param_repl = Add(new_param, shift)
-                    update_keys_and_values(full_entry_repl_map, 
-                                           {new_param:param_repl})
 
                 # Let's keep this simple and not worry about this
                 # "range assumptions".
@@ -1877,9 +1871,9 @@ class ExprRange(Expression):
                 # element.
                 if indices_must_match:
                     # The actual range parameter index is needed:
-                    full_entry_repl_map[orig_parameter] = next_index
                     update_keys_and_values(full_entry_repl_map, 
                                            {new_param:next_index})
+                    full_entry_repl_map[orig_parameter] = next_index
 
                 with defaults.temporary() as temp_defaults:
                     temp_defaults.assumptions = inner_assumptions

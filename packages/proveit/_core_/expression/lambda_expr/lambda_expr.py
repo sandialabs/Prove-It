@@ -1224,7 +1224,7 @@ def extract_complete_param_replacements(parameters, parameter_vars, body,
     '''
     operands_iter = iter(operands)
     try:
-        extract_param_replacements(parameters, parameter_vars, body,
+        extract_param_replacements(parameters, parameter_vars,
                                    operands_iter, 
                                    param_to_num_operand_entries,
                                    requirements, repl_map, 
@@ -1244,7 +1244,7 @@ def extract_complete_param_replacements(parameters, parameter_vars, body,
         pass  # Good.  All operands were consumed.
 
 
-def extract_param_replacements(parameters, parameter_vars, body,
+def extract_param_replacements(parameters, parameter_vars,
                                operands_iter, param_to_num_operand_entries,
                                requirements, repl_map, is_complete=False):
     '''
