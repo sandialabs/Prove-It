@@ -129,11 +129,15 @@ class InnerExpr:
                     # while descending into a Conditional value, we
                     # pick up the condition as an assumption.
                     self.conditions.append(expr.condition)
-                expr = expr.sub_expr(idx)
-                if isinstance(expr, tuple):
+                next_expr = expr.sub_expr(idx)
+                if isinstance(next_expr, tuple):
                     # A slice `idx` will yield a tuple sub expression.
-                    # Convert it to an ExprTuple
-                    expr = ExprTuple(*expr)
+                    # Convert it to an ExprTuple unless it covers
+                    # all sub-expressions.
+                    if next_expr != expr._sub_expressions:
+                        expr = ExprTuple(*next_expr)
+                else:
+                    expr = next_expr
             self.expr_hierarchy.append(expr)
 
     def __eq__(self, other):
@@ -424,7 +428,7 @@ class InnerExpr:
             if stop is None:
                 stop = parent_tuple.num_entries()
             sub_tuple_len = cur_sub_expr.num_elements(
-                    assumptions=self.assumptions)
+                    assumptions=self.assumptions, auto_simplify=True)
             dummy_var = top_level_expr.safe_dummy_var()
             lambda_params = var_range(dummy_var, one, sub_tuple_len)
             lambda_body = ExprTuple(*(parent_tuple[:start].entries + (lambda_params,)
