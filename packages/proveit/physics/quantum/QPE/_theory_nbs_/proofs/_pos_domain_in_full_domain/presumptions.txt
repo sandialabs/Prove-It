@@ -1,5 +1,4 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
-proveit.core_expr_types.tuples.tuple_len_0_typical_eq
 proveit.linear_algebra.inner_products.complex_set_is_inner_prod_space
 proveit.linear_algebra.inner_products.inner_prod_space_is_vec_space
 proveit.linear_algebra.inner_products.rational_set_is_inner_prod_space
@@ -120,7 +119,6 @@ proveit.numbers.numerals.decimals.posnat6
 proveit.numbers.numerals.decimals.posnat7
 proveit.numbers.numerals.decimals.posnat8
 proveit.numbers.numerals.decimals.posnat9
-proveit.numbers.numerals.decimals.tuple_len_1
 proveit.numbers.ordering.less_is_not_eq
 proveit.numbers.ordering.less_shift_add_right
 proveit.numbers.ordering.relax_less

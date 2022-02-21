@@ -27,7 +27,6 @@ proveit.logic.sets.cartesian_products.cart_exp_unfold_abstract
 proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.logic.sets.inclusion.unfold_subset_eq
-proveit.logic.sets.membership.fold_not_in_set
 proveit.logic.sets.membership.unfold_not_in_set
 proveit.numbers.addition.commutation
 proveit.numbers.addition.subtraction.negated_add
