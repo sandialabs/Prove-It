@@ -523,7 +523,7 @@ class InnerExpr:
         if isinstance(equality_or_replacement, Judgment):
             if not isinstance(equality_or_replacement.expr, Equals):
                 raise TypeError("When given a Judgment, "
-                                "'equality_or_replacement' must prove"
+                                "'equality_or_replacement' must prove "
                                 "an Equals expression")
             expected_lhs = cur_inner_expr
             if isinstance(cur_inner_expr, ExprRange):
