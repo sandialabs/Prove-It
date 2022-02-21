@@ -1,5 +1,6 @@
 from proveit import (Judgment, Literal, defaults, USE_DEFAULTS,
-                     prover, equality_prover, relation_prover)
+                     prover, equality_prover, relation_prover,
+                     UnsatisfiedPrerequisites)
 from proveit.relation import Relation
 
 class InClass(Relation):
@@ -186,7 +187,8 @@ class InClass(Relation):
             elem_simplification = self.element.simplification()
             if elem_simplification.lhs == elem_simplification.rhs:
                 elem_simplification = None  # reflection doesn't count
-        except (SimplificationError, ProofFailure):
+        except (SimplificationError, ProofFailure,
+                UnsatisfiedPrerequisites, NotImplementedError):
             pass
 
         # If the element simplification succeeded, prove the membership

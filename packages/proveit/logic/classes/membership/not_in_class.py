@@ -1,5 +1,6 @@
 from proveit import (Literal, defaults, USE_DEFAULTS,
-                     prover, relation_prover, equality_prover)
+                     prover, relation_prover, equality_prover,
+                     ProofFailure, UnsatisfiedPrerequisites)
 from proveit.relation import Relation
 from proveit import x, S
 
@@ -166,7 +167,8 @@ class NotInClass(Relation):
             elem_simplification = self.element.simplification(automation=True)
             if elem_simplification.lhs == elem_simplification.rhs:
                 elem_simplification = None  # reflection doesn't count
-        except SimplificationError:
+        except (SimplificationError, ProofFailure,
+                UnsatisfiedPrerequisites, NotImplementedError):
             elem_simplification = None
 
         # If the element simplification succeeded, prove the
