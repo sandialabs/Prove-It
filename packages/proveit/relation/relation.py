@@ -35,6 +35,7 @@ class Relation(Operation):
         Try to conclude the Relation by simplifying both
         sides.
         '''
+        from proveit.logic import Equals, SimplificationError
         normal_lhs, normal_rhs = self.normal_lhs, self.normal_rhs
         try:
             normal_lhs_simplification = normal_lhs.simplification()
