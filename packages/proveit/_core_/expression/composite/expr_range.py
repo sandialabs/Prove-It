@@ -1551,6 +1551,7 @@ class ExprRange(Expression):
             # corresponding variable range.
             occurrence_map = dict(repl_map)
             occurrence_map.pop(var)
+            occurrence_map.pop(orig_parameter, None)
             subbed_occurrence = occurrence.basic_replaced(
                 occurrence_map, allow_relabeling=allow_relabeling, 
                 requirements=requirements)
