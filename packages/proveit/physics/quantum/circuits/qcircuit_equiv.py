@@ -1,9 +1,10 @@
 from proveit import (Literal, Lambda, VertExprArray, TransitiveRelation, 
-                     TransitivityException,
+                     InnerExpr, TransitivityException,
                      as_expression, Judgment, prover, 
                      defaults, USE_DEFAULTS)
-from proveit import j, k, l, m, A, B, C, D
+from proveit import j, k, l, m, A, B, C, D, Q
 from proveit.relation import TransRelUpdater
+from proveit.statistics import Prob
 from .qcircuit import Qcircuit
 
 class QcircuitEquiv(TransitiveRelation):
@@ -247,34 +248,83 @@ class QcircuitEquiv(TransitiveRelation):
         raise NotImplementedError()
         
     @prover
-    def _sub_one_side_into(self, circuit_or_lambda_map, *,
+    def _sub_one_side_into(self, prob_relation_or_inner_expr, *,
                            which_side, **defaults_config):
         '''
         Helper method for sub_[left/right]_side_into.
         '''
+        from . import lhs_prob_via_equiv, rhs_prob_via_equiv
         equiv = self
         if which_side=='left':
-            equiv = self.derive_reversed()
-        elif which_side!='right':
+            thm = lhs_prob_via_equiv
+            orig_circuit = equiv.rhs
+        elif which_side=='right':
+            thm = rhs_prob_via_equiv
+            orig_circuit = equiv.lhs
+        else:
             raise ValueError("'which_side' must either be 'left' or 'right'")
-        return equiv.substitution(circuit_or_lambda_map).derive_right_via_equiv()
+        if isinstance(prob_relation_or_inner_expr, InnerExpr):
+            # This should be an inner expresion of a probability 
+            # over a quantum circuit.
+            inner_expr = prob_relation_or_inner_expr
+            expr_hierarchy = inner_expr.expr_hierarchy
+            for _k, _expr in enumerate(reversed(expr_hierarchy)):
+                circuit_or_lambda_map = None
+                if isinstance(_expr, Prob) and isinstance(_expr.operand,
+                                                          Qcircuit):
+                    if _k == 2:
+                        # Just a quantum circuit in a probability
+                        circuit_or_lambda_map = _expr.operand
+                    else:
+                        # A portion of a quantum circuit.
+                        circuit_or_lambda_map= InnerExpr(
+                            _expr, inner_expr.inner_expr_path[-_k+2:])
+                    prob_relation_lambda = InnerExpr(
+                        expr_hierarchy[0],
+                        inner_expr.inner_expr_path[:-_k]).repl_lambda()
+                    break
+            if circuit_or_lambda_map is None:
+                raise NotImplementedError(
+                    "Qcircuit.sub_[left/right]_side_into only "
+                    "implemented to apply to an inner expr within "
+                    "a Prob on a Qcircuit")
+            if circuit_or_lambda_map != orig_circuit:
+                # Not a direct probability substitution.
+                if which_side == 'left':
+                    equiv = equiv.derive_reversed()
+                    thm = rhs_prob_via_equiv
+                equiv = equiv.substitution(circuit_or_lambda_map)
+        else:
+            # Find Prob(A) for 'right' or Prob(B) for 'left'
+            # and make a global replacement.
+            if not isinstance(prob_relation_or_inner_expr, Expression):
+                raise TypeError(
+                    "'prob_relation_or_inner_expr' must be an expression "
+                    "involving the Prob of a a quantum circuit or "
+                    "an InnerExpr within one")
+            orig_prob = Prob(orig_circuit)
+            prob_relation_lambda = Lambda.global_repl(
+                prob_relation_or_inner_expr, orig_prob)
 
-    def sub_left_side_into(self, circuit_or_lambda_map, 
+        # Prove the probability relation.
+        return thm.instantiate(
+            {Q:prob_relation_lambda, A:equiv.lhs, B:equiv.rhs})
+
+    def sub_left_side_into(self, prob_relation_or_inner_expr, 
                            assumptions=USE_DEFAULTS):
         '''
-        Derive a new quantum circuit from a proven one by
-        substituting the left side of the equivalence in place
-        of an occurrence of the right side.
-        When given an actual Qcircuit for 'circuit_or_lambda_map', just
-        find the sub-circuit to replace as a consecutive subset of
-        columns.  Specifying a lambda map, a specific portion may
-        be indicated over any subset of rows.
+        Derive a new quantum circuit probability relation from
+        another one by substituting the left side of the equivalence
+        in place of an occurrence of the right side.
+        If specifying a lambda map, it may lambda map for a
+        quanutum circuit or portion of one within a probability
+        relation.
         '''
-        return self._sub_one_side_into(circuit_or_lambda_map,
+        return self._sub_one_side_into(prob_relation_or_inner_expr,
                                        which_side = 'left')
 
-    def sub_right_side_into(self, circuit_or_lambda_map, 
-                           assumptions=USE_DEFAULTS):
+    def sub_right_side_into(self, prob_relation_or_lambda_map, 
+                            assumptions=USE_DEFAULTS):
         '''
         Derive a new quantum circuit from a proven one by
         substituting the right side of the equivalence in place
@@ -286,19 +336,3 @@ class QcircuitEquiv(TransitiveRelation):
         '''
         return self._sub_one_side_into(circuit_or_lambda_map,
                                        which_side = 'right')        
-
-    def derive_right_via_equiv(self):
-        '''
-        Derive from this equivalence that its right side is true
-        provided that its left side is true.
-        '''
-        from . import rhs_via_equiv
-        return rhs_via_equiv.instantiate({A:self.lhs, B:self.rhs})
-
-    def derive_left_via_equiv(self):
-        '''
-        Derive from this equivalence that its right side is true
-        provided that its left side is true.
-        '''
-        from . import lhs_via_equiv
-        return lhs_via_equiv.instantiate({A:self.lhs, B:self.rhs})
