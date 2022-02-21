@@ -13,7 +13,18 @@ class NumberSet(Literal):
         Return True of this NumberSet includes the 'other'
         set.
         '''
-        return SubsetEq(other_set, self).proven()
+        from proveit.numbers.number_operation import sorted_number_sets
+        if other_set == self: return True
+        if SubsetEq(other_set, self).proven():
+            return True
+        for number_set in sorted_number_sets:
+            if number_set in (other_set, self):
+                continue
+            if (SubsetEq(other_set, number_set).proven() and
+                    SubsetEq(number_set, self).proven()):
+                # One level of indirection is allowed
+                return True
+        return False # Not known to include the 'other'
 
     def membership_object(self, element):
         return NumberMembership(element, self)

@@ -8,7 +8,8 @@ from proveit import (Expression, Judgment, Literal, Operation, ExprTuple,
                      UnsatisfiedPrerequisites,
                      SimplificationDirectives, TransRelUpdater)
 from proveit import a, b, c, d, i, j, k, l, n, x, y, free_vars
-from proveit.logic import And, Equals, EvaluationError, InSet
+from proveit.logic import (And, Equals, NotEquals,
+                           EvaluationError, InSet)
 from proveit.logic.irreducible_value import is_irreducible_value
 from proveit.numbers import NumberOperation
 from proveit.numbers.numerals.decimals import DIGITS
@@ -18,6 +19,14 @@ from proveit import TransRelUpdater
 import bisect
 from proveit.numbers import (NumberOperation, sorted_number_sets,
                              deduce_number_set)
+from proveit.numbers import (Integer, IntegerNeg, IntegerNonPos,
+                             Natural, NaturalPos, IntegerNonZero,
+                             Rational, RationalPos, RationalNonZero,
+                             RationalNeg, RationalNonNeg,
+                             RationalNonPos,
+                             Real, RealPos, RealNeg, RealNonNeg,
+                             RealNonPos, RealNonZero, Complex, 
+                             ComplexNonZero)
 
 
 class Add(NumberOperation):
@@ -164,18 +173,6 @@ class Add(NumberOperation):
         else:
             for operand in self.operands:
                 yield operand
-
-    def _closureTheorem(self, number_set):
-        from . import add_nat_closure, add_real_closure, add_complex_closure, add_int_closure
-        from proveit.numbers import Real, Complex, Integer, Natural
-        if number_set == Real:
-            return add_real_closure
-        elif number_set == Complex:
-            return add_complex_closure
-        elif number_set == Integer:
-            return add_int_closure
-        elif number_set == Natural:
-            return add_nat_closure
 
     def equality_side_effects(self, judgment):
         '''
@@ -1113,10 +1110,7 @@ class Add(NumberOperation):
         from proveit.numbers.addition.subtraction import (
             subtract_nat_closure_bin, sub_one_is_nat)
         from proveit.numbers import (zero, one, Neg, greater,
-                                     Integer, Natural, Rational,
-                                     RationalPos, RationalNonNeg,
-                                     Real, RealPos, RealNonNeg, 
-                                     Complex, NaturalPos)
+                                     Less, LessEq, greater_eq)
         from proveit.logic import InSet
         if number_set == Integer:
             if self.operands.is_double():
@@ -1125,78 +1119,6 @@ class Add(NumberOperation):
             _a = self.operands
             _i = _a.num_elements()
             return add_int_closure.instantiate({i:_i, a: _a})
-        if number_set == Natural:
-            if self.operands.is_double():
-                if isinstance(self.operands[1], Neg):
-                    # A subtraction case:
-                    if self.operands[1].operand == one:
-                        # Special a-1 in Natural case.  If a is
-                        # in NaturalPos, we are good.
-                        return sub_one_is_nat.instantiate(
-                            {a: self.operands[0]})
-                    # (a-b) in Natural requires that b <= a.
-                    return subtract_nat_closure_bin.instantiate(
-                        {a: self.operands[0], b: self.operands[1].operand})
-                elif isinstance(self.operands[0], Neg):
-                    # Negated first term.  Try switching the order.
-                    new_add = Add(self.operands[1], self.operands[0])
-                    new_add_in_ns = new_add.deduce_in_number_set(number_set)
-                    return new_add_in_ns.inner_expr().domain.commute()
-                return add_nat_closure_bin.instantiate(
-                    {a: self.operands[0], b: self.operands[1]})            
-            _a = self.operands
-            _i = _a.num_elements()
-            return add_nat_closure.instantiate({i: _i, a: _a})
-        if (number_set in {NaturalPos, RationalPos, RealPos} and not
-                all(InSet(operand, number_set).proven() for
-                    operand in self.operands)):
-            # Unless we know that all of the operands are in the
-            # positive number set, our last resort will be if we know
-            # one of the operands is greater than zero.
-            val = -1
-            for _i, operand in enumerate(self.operands.entries):
-                if greater(operand, zero).proven():
-                    val = _i
-                    # print(b)
-                    break
-            if val == -1:
-                raise ProofFailure(InSet(self, number_set), defaults.assumptions,
-                                   "Expecting at least one value to be "
-                                   "known to be greater than zero")
-            # print(self.operands.num_entries())
-            if number_set == NaturalPos:
-                temp_thm = add_nat_pos_from_non_neg
-            elif number_set == RationalPos:
-                temp_thm = add_rational_pos_from_non_neg
-            else:
-                temp_thm = add_real_pos_from_non_neg
-            #print(temp_thm, {i: num(val), j:num(self.operands.num_entries() - val - 1), a:self.operands[:val], b: self.operands[val], c: self.operands[val + 1:]})
-            _a, _b, _c = (self.operands[:val], self.operands[val],
-                          self.operands[val + 1:])
-            _i = _a.num_elements()
-            _j = _c.num_elements()
-            return temp_thm.instantiate({i: _i, j: _j, a: _a, b: _b, c: _c})
-        if number_set == NaturalPos:
-            if self.operands.is_double():
-                return add_nat_pos_closure_bin.instantiate(
-                    {a: self.operands[0], b: self.operands[1]})
-            _a = self.operands
-            _i = _a.num_elements()                
-            return add_nat_pos_closure.instantiate({i: _i, a: _a})
-        if number_set == RationalPos:
-            if self.operands.is_double():
-                return add_rational_pos_closure_bin.instantiate(
-                    {a: self.operands[0], b: self.operands[1]})
-            _a = self.operands
-            _i = _a.num_elements()                
-            return add_rational_pos_closure.instantiate({i: _i, a: _a})
-        if number_set == RationalNonNeg:
-            if self.operands.is_double():
-                return add_rational_non_neg_closure_bin.instantiate(
-                    {a: self.operands[0], b: self.operands[1]})
-            _a = self.operands
-            _i = _a.num_elements()
-            return add_rational_non_neg_closure.instantiate({i:_i, a: _a})
         if number_set == Rational:
             if self.operands.is_double():
                 return add_rational_closure_bin.instantiate(
@@ -1204,20 +1126,6 @@ class Add(NumberOperation):
             _a = self.operands
             _i = _a.num_elements()
             return add_rational_closure.instantiate({i: _i, a: _a})
-        if number_set == RealPos:
-            if self.operands.is_double():
-                return add_real_pos_closure_bin.instantiate(
-                    {a: self.operands[0], b: self.operands[1]})
-            _a = self.operands
-            _i = _a.num_elements()                
-            return add_real_pos_closure.instantiate({i: _i, a: _a})
-        if number_set == RealNonNeg:
-            if self.operands.is_double():
-                return add_real_non_neg_closure_bin.instantiate(
-                    {a: self.operands[0], b: self.operands[1]})
-            _a = self.operands
-            _i = _a.num_elements()
-            return add_real_non_neg_closure.instantiate({i:_i, a: _a})
         if number_set == Real:
             if self.operands.is_double():
                 return add_real_closure_bin.instantiate(
@@ -1232,9 +1140,233 @@ class Add(NumberOperation):
             _a = self.operands
             _i = _a.num_elements()
             return add_complex_closure.instantiate({i: _i, a: _a})
+        
+        # Prove what we can in preparation.
+        for operand in self.operands:
+            deduce_number_set(operand)
+
+        # Handle special cases when all operands are in
+        # the desired number set.
+        if all(InSet(operand, number_set).proven() for
+               operand in self.operands):
+            if number_set == Natural:
+                if self.operands.is_double():
+                    return add_nat_closure_bin.instantiate(
+                        {a: self.operands[0], b: self.operands[1]})
+                _a = self.operands
+                _i = _a.num_elements()                
+                add_nat_closure.instantiate({i: _i, a: _a})
+            if number_set == NaturalPos:
+                if self.operands.is_double():
+                    return add_nat_pos_closure_bin.instantiate(
+                        {a: self.operands[0], b: self.operands[1]})
+                _a = self.operands
+                _i = _a.num_elements()                
+                add_nat_pos_closure.instantiate({i: _i, a: _a})
+            if number_set == RationalPos:
+                if self.operands.is_double():
+                    return add_rational_pos_closure_bin.instantiate(
+                        {a: self.operands[0], b: self.operands[1]})
+                _a = self.operands
+                _i = _a.num_elements()                
+                add_rational_pos_closure.instantiate({i: _i, a: _a})
+            if number_set == RationalNonNeg:
+                if self.operands.is_double():
+                    return add_rational_non_neg_closure_bin.instantiate(
+                        {a: self.operands[0], b: self.operands[1]})
+                _a = self.operands
+                _i = _a.num_elements()
+                return add_rational_non_neg_closure.instantiate({i:_i, a: _a})
+            if number_set == RealPos:
+                if self.operands.is_double():
+                    return add_real_pos_closure_bin.instantiate(
+                        {a: self.operands[0], b: self.operands[1]})
+                _a = self.operands
+                _i = _a.num_elements()                
+                return add_real_pos_closure.instantiate({i: _i, a: _a})
+            if number_set == RealNonNeg:
+                if self.operands.is_double():
+                    return add_real_non_neg_closure_bin.instantiate(
+                        {a: self.operands[0], b: self.operands[1]})
+                _a = self.operands
+                _i = _a.num_elements()
+                return add_real_non_neg_closure.instantiate({i:_i, a: _a})
+
+        # Try special case where one term is positive and the
+        # rest are non-negative.
+        if number_set in {NaturalPos, RationalPos, RealPos}:
+            val = None
+            for _i, operand in enumerate(self.operands.entries):
+                if greater(operand, zero).proven():
+                    val = _i
+                elif not greater_eq(operand, zero).proven():
+                    # Not non-negative
+                    val = None
+            if val is not None:
+                if number_set == NaturalPos:
+                    temp_thm = add_nat_pos_from_non_neg
+                elif number_set == RationalPos:
+                    temp_thm = add_rational_pos_from_non_neg
+                else:
+                    temp_thm = add_real_pos_from_non_neg
+                _a, _b, _c = (self.operands[:val], self.operands[val],
+                              self.operands[val + 1:])
+                _i = _a.num_elements()
+                _j = _c.num_elements()
+                return temp_thm.instantiate(
+                    {i: _i, j: _j, a: _a, b: _b, c: _c})
+
+        # Handle positive, negative, nonpos, nonneg, or nonzero
+        major_number_set = None
+        if number_set in {IntegerNonZero, RationalNonZero, RealNonZero,
+                          ComplexNonZero}:
+            # Prove it is not zero and prove it is in the corresponding
+            # major number set (Integer, Rational, Real, or Complex)
+            self.not_equal(zero, try_deduce_number_set=False)
+            to_major_number_set = {IntegerNonZero:Integer,
+                                   RationalNonZero:Rational,
+                                   RealNonZero:Real,
+                                   ComplexNonZero:Complex}
+            major_number_set = to_major_number_set[number_set]
+        if number_set in {NaturalPos, RationalPos, RealPos}:
+            # Prove it is positive and prove it is in the corresponding
+            # major number set (Integer, Rational, Real)
+            self.deduce_positive(try_deduce_number_set=False)
+            to_major_number_set = {NaturalPos:Integer,
+                                   RationalPos:Rational,
+                                   RealPos:Real}
+            major_number_set = to_major_number_set[number_set]
+        if number_set in {IntegerNeg, RationalNeg, RealNeg}:
+            # Prove it is negative and prove it is in the corresponding
+            # major number set (Integer, Rational, Real)
+            self.deduce_negative(try_deduce_number_set=False)
+            to_major_number_set = {IntegerNeg:Integer,
+                                   RationalNeg:Rational,
+                                   RealNeg:Real}
+            major_number_set = to_major_number_set[number_set]
+        if number_set in {IntegerNonPos, RationalNonPos, RealNonPos}:
+            # Prove it is non-positive and prove it is in the 
+            # corresponding major number set (Integer, Rational, Real)
+            self.deduce_non_positive(try_deduce_number_set=False)
+            to_major_number_set = {IntegerNonPos:Integer,
+                                   RationalNonPos:Rational,
+                                   RealNonPos:Real}
+            major_number_set = to_major_number_set[number_set]
+        if number_set in {Natural, RationalNonNeg, RealNonNeg}:
+            # Prove it is non-positive and prove it is in the 
+            # corresponding major number set (Integer, Rational, Real)
+            self.deduce_non_negative(try_deduce_number_set=False)
+            to_major_number_set = {Natural:Integer,
+                                   RationalNonNeg:Rational,
+                                   RealNonNeg:Real}
+            major_number_set = to_major_number_set[number_set]
+
+        if major_number_set is not None:
+            self.deduce_in_number_set(major_number_set)
+            # Now it should just go through.
+            return InSet(self, number_set).prove()
+
         raise NotImplementedError(
             "'deduce_in_number_set' on %s not implemented for the %s set"
             % (self, number_set))
+
+    def deduce_positive(self, *, try_deduce_number_set=True,
+                        **defaults_config):
+        '''
+        Prove the sum is positive.
+        '''
+        from proveit.numbers import greater, zero, Neg
+        from .subtraction import pos_difference
+
+        if greater(self, zero).proven():
+            # Already known
+            return greater(self, zero).prove()
+        
+        if self.terms.is_double() and isinstance(self.terms[1], Neg):
+            # (a - b) with a > b => (a - b) is positive
+            _a, _b = self.terms[0], self.terms[1].operand
+            if greater(_a, _b).proven():
+                return pos_difference.instantiate({a:_a, b:_b})
+
+        if try_deduce_number_set:
+            # Try 'deduce_number_set'.
+            deduce_number_set(self)
+
+        return greater(self, zero).prove()
+
+    @relation_prover
+    def deduce_negative(self, *, try_deduce_number_set=True,
+                        **defaults_config):
+        '''
+        Prove the sum is negative.
+        '''
+        from proveit.numbers import Less, zero, Neg
+        from .subtraction import neg_difference
+
+        if Less(self, zero).proven():
+            # Already known
+            return Less(self, zero).prove()
+        
+        if self.terms.is_double() and isinstance(self.terms[1], Neg):
+            # (a - b) with a < b => (a - b) is negative
+            _a, _b = self.terms[0], self.terms[1].operand
+            if Less(_a, _b).proven():
+                return neg_difference.instantiate({a:_a, b:_b})
+
+        if try_deduce_number_set:
+            # Try 'deduce_number_set'.
+            deduce_number_set(self)
+
+        return Less(self, zero).prove()
+
+    def deduce_non_positive(self, *, try_deduce_number_set=True,
+                            **defaults_config):
+        '''
+        Prove the sum is non-positive.
+        '''
+        from proveit.numbers import LessEq, zero, Neg
+        from .subtraction import nonpos_difference
+
+        if LessEq(self, zero).proven():
+            # Already known
+            return LessEq(self, zero).prove()
+        
+        if self.terms.is_double() and isinstance(self.terms[1], Neg):
+            # (a - b) with a <= b => (a - b) is non-positive
+            _a, _b = self.terms[0], self.terms[1].operand
+            if LessEq(_a, _b).proven():
+                return nonpos_difference.instantiate({a:_a, b:_b})
+
+        if try_deduce_number_set:
+            # Try 'deduce_number_set'.
+            deduce_number_set(self)
+
+        return LessEq(self, zero).prove()
+
+    def deduce_non_negative(self, *, try_deduce_number_set=True,
+                            **defaults_config):
+        '''
+        Prove the sum is non-negative.
+        '''
+        from proveit.numbers import greater_eq, zero, Neg
+        from .subtraction import nonneg_difference
+
+        if greater_eq(self, zero).proven():
+            # Already known
+            return greater_eq(self, zero).prove()
+        
+        if self.terms.is_double() and isinstance(self.terms[1], Neg):
+            # (a - b) with a >= b => (a - b) is non-negative
+            _a, _b = self.terms[0], self.terms[1].operand
+            if greater_eq(_a, _b).proven():
+                return nonneg_difference.instantiate({a:_a, b:_b})
+
+        if try_deduce_number_set:
+            # Try 'deduce_number_set'.
+            deduce_number_set(self)
+
+        return greater_eq(self, zero).prove()
+
 
     @relation_prover
     def deduce_number_set(self, **defaults_config):
@@ -1242,15 +1374,8 @@ class Add(NumberOperation):
         Prove membership of this expression in the most 
         restrictive standard number set we can readily know.
         '''
-        from proveit.numbers import Neg, one
-        from proveit.numbers import (Integer, IntegerNeg, IntegerNonPos,
-                                     Natural, NaturalPos, IntegerNonZero,
-                                     Rational, RationalPos, RationalNonZero,
-                                     RationalNeg, RationalNonNeg,
-                                     RationalNonPos,
-                                     Real, RealPos, RealNeg, RealNonNeg,
-                                     RealNonPos, RealNonZero, Complex, 
-                                     ComplexNonZero)
+        from proveit.numbers import (Neg, one, greater, greater_eq,
+                                     Less, LessEq)
         number_set_map = {
             NaturalPos: NaturalPos,
             IntegerNeg: Integer,
@@ -1280,6 +1405,10 @@ class Add(NumberOperation):
                       Complex:(3,2)}
         major_minor_to_set = {
             (major, minor):ns for ns, (major, minor) in priorities.items()}
+        major_to_nonzero = [IntegerNonZero, RationalNonZero,
+                            RealNonZero, ComplexNonZero]
+        major_to_nonpos = [IntegerNonPos, RationalNonPos, RealNonPos]
+        major_to_neg = [IntegerNeg, RationalNeg, RealNeg]
         
         if self.terms.is_double():
             # Look for a special case of n-1 in Nat or (-1+n) in Nat.
@@ -1312,7 +1441,27 @@ class Add(NumberOperation):
             # Everything is non-negative and at least one term
             # is positive, so the sum is positive.
             minor = 0
-        number_set = major_minor_to_set[(major, minor)]
+
+        number_set = None
+        # Check for the special case of a - b where we know
+        # a > b, a < b, a ≥ b, a ≤ b, or a ≠ b
+        if self.terms.is_double() and isinstance(self.terms[1], Neg):
+            _a, _b = self.terms[0], self.terms[1].operand
+            if greater(_a, _b).proven():
+                minor = min(0, minor) # positive
+            elif greater_eq(_a, _b).proven():
+                minor = min(1, minor) # non-negative
+            elif Less(_a, _b).proven():
+                major = min(major, 2) # must be real
+                number_set = major_to_neg[major] # negative
+            elif LessEq(_a, _b).proven() and minor==2:
+                major = min(major, 2) # must be real
+                number_set = major_to_nonpos[major] # non-positive
+            elif NotEquals(_a, _b).proven() and minor==2:
+                number_set = major_to_nonzero[major] # non-zero
+
+        if number_set is None:
+            number_set = major_minor_to_set[(major, minor)]
         return self.deduce_in_number_set(number_set)
 
     # IS THIS NECESSARY?
@@ -1763,12 +1912,15 @@ class Add(NumberOperation):
         return thm.instantiate({i: _i, j: _j, a: _a, b: _b, c: _c})        
 
     @relation_prover
-    def not_equal(self, other, **defaults_config):
+    def not_equal(self, other, *, try_deduce_number_set=True,
+                  **defaults_config):
         '''
         Attempt to prove that self is not equal to other.
         '''
-        from proveit.logic import NotEquals
         from proveit.numbers import zero, Neg
+        if NotEquals(self, other).proven():
+            # Already known.
+            return NotEquals(self, other).prove()
         if other == zero:
             if self.terms.is_double():
                 if isinstance(self.terms[1], Neg):
@@ -1782,6 +1934,11 @@ class Add(NumberOperation):
                         # prove _a - _b ≠ 0.
                         return nonzero_difference_if_different.instantiate(
                                 {a:_a, b:_b})
+            if try_deduce_number_set:
+                # Try deducing the number set.
+                deduce_number_set(self)
+                if NotEquals(self, zero).proven():
+                    return NotEquals(self, zero).prove()
         # If it isn't a special case treated here, just use
         # conclude-as-folded.
         return NotEquals(self, other).conclude_as_folded()

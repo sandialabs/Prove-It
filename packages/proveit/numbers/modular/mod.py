@@ -2,7 +2,7 @@ from proveit import (defaults, Literal, Operation, ProofFailure,
                      relation_prover)
 # from proveit.numbers.number_sets import Integer, Real
 from proveit import a, b
-from proveit.logic import InSet
+from proveit.logic import InSet, SubsetEq
 from proveit.numbers import NumberOperation, deduce_number_set
 
 class Mod(NumberOperation):

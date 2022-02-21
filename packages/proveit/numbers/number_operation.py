@@ -2,7 +2,7 @@ from collections import deque
 from proveit import (Expression, Judgment, Operation, ExprTuple, ExprRange,
                      generate_inner_expressions, USE_DEFAULTS,
                      prover, relation_prover,
-                     UnsatisfiedPrerequisites)
+                     ProofFailure, UnsatisfiedPrerequisites)
 from proveit.relation import TransRelUpdater
 from .number_sets import (
     Natural, NaturalPos,
@@ -274,33 +274,55 @@ def deduce_number_set(expr, **defaults_config):
     in a standard number set that is as restrictive as we can
     readily know.
     '''
-    from proveit.logic import InSet, NotEquals
+    from proveit.logic import InSet, Equals, NotEquals
     from proveit.numbers import Less, LessEq, zero
+
+    # Find the first (most restrictive) number set that
+    # contains 'expr' or something equal to it.
     for number_set in sorted_number_sets:
-        if isinstance(expr, ExprRange):
-            membership = And(ExprRange(expr.parameter, 
-                                       InSet(expr.body, number_set),
-                                       expr.start_index,
-                                       expre.end_index))
-        else:
-            membership = InSet(expr, number_set)
-        if membership.proven():
-            break # found a known number set membership
+        membership = None
+        for eq_expr in Equals.yield_known_equal_expressions(expr):
+            if isinstance(eq_expr, ExprRange):
+                membership = And(ExprRange(eq_expr.parameter, 
+                                           InSet(eq_expr.body, number_set),
+                                           eq_expr.start_index,
+                                           eq_expr.end_index))
+            else:
+                membership = InSet(eq_expr, number_set)
+            if membership.proven():
+                break # found a known number set membership
+            else:
+                membership = None
+        if membership is not None:
+            membership = InSet(expr, number_set).prove()
+            break
 
     if hasattr(expr, 'deduce_number_set'):
         # Use 'deduce_number_set' method.
-        membership = expr.deduce_number_set()
-        if membership is not None:
-            assert isinstance(membership, Judgment)
-            if not isinstance(membership.expr, InSet):
+        try:
+            deduced_membership = expr.deduce_number_set()
+        except (UnsatisfiedPrerequisites, ProofFailure):
+            deduced_membership = None
+        if deduced_membership is not None:
+            assert isinstance(deduced_membership, Judgment)
+            if not isinstance(deduced_membership.expr, InSet):
                 raise TypeError("'deduce_number_set' expected to prove an "
                                 "InSet type expression")
-            if membership.expr.element != expr:
+            if deduced_membership.expr.element != expr:
                 raise TypeError("'deduce_number_set' was expected to prove "
                                 "that %s is in some number set"%expr)
-        number_set = membership.domain
+            # See if this deduced number set is more restrictive than
+            # what we had surmised already.
+            deduced_number_set = deduced_membership.domain
+            if membership is None:
+                membership = deduced_membership
+                number_set = deduced_number_set
+            elif (deduced_number_set != number_set and number_set.includes(
+                    deduced_number_set)):
+                number_set = deduced_number_set
+                membership = deduced_membership
 
-    if not membership.proven():
+    if membership is None:
         raise UnsatisfiedPrerequisites(
             "Unable to prove any number membership for %s"%expr)
 

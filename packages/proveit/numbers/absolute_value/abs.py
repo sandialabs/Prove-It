@@ -180,10 +180,7 @@ class Abs(NumberOperation):
         # |exp(i a)| = 1
         if isinstance(self.operand, Exp) and self.operand.base == e:
             try:
-                # Grab the polar coordinate angle without automation so we 
-                # don't waste time if it isn't in a unit complex polar form
-                # (or obviously equivalent to this form).
-                return self.unit_length_simplification(automation=False)
+                return self.unit_length_simplification()
             except ValueError:
                 # Not in a complex polar form.
                 pass
@@ -192,10 +189,7 @@ class Abs(NumberOperation):
         if (isinstance(self.operand, Add) and 
                 self.operand.operands.is_double()):
             try:
-                # Grab polar coordinates without automation so we don't
-                # waste time if it isn't in a complex polar form (or 
-                # obviously equivalent to this form).
-                return self.chord_length_simplification(automation=False)
+                return self.chord_length_simplification()
             except (ProofFailure, ValueError):
                 # Not in a complex polar form.
                 pass
@@ -251,24 +245,27 @@ class Abs(NumberOperation):
         set using the appropriate closure theorem.
         '''
         from proveit.numbers.absolute_value import (
-            abs_rational_closure, abs_rational_non_zero_closure,
-            abs_complex_closure, abs_nonzero_closure,
-            abs_complex_closure_non_neg_real)
+            abs_integer_closure, abs_integer_nonzero_closure, 
+            abs_rational_closure, abs_rational_nonzero_closure,
+            abs_complex_closure, abs_nonzero_closure)
         from proveit.numbers import (
-            Rational, RationalNonZero, RationalPos, RationalNeg,
-            RationalNonNeg, Real, RealNonNeg, RealPos)
+            Natural, NaturalPos, Integer, IntegerNonZero,
+            Rational, RationalNonZero, RationalPos, RationalNonNeg,
+            Real, RealNonNeg, RealPos, RealNonZero, ComplexNonZero)
 
         thm = None
-        if number_set in (RationalPos, RationalNonZero):
-            thm = abs_rational_non_zero_closure
-        elif number_set in (Rational, RationalNonNeg, RationalNeg):
+        if number_set in (NaturalPos, IntegerNonZero):
+            thm = abs_integer_nonzero_closure
+        elif number_set in (Integer, Natural):
+            thm = abs_integer_closure
+        elif number_set in (RationalPos, RationalNonZero):
+            thm = abs_rational_nonzero_closure
+        elif number_set in (Rational, RationalNonNeg):
             thm = abs_rational_closure
-        elif number_set == Real:
+        elif number_set in (RealPos, RealNonZero, ComplexNonZero):
+            thm = abs_nonzero_closure            
+        else:
             thm = abs_complex_closure
-        elif number_set == RealPos:
-            thm = abs_nonzero_closure
-        elif number_set == RealNonNeg:
-            thm = abs_complex_closure_non_neg_real
 
         if thm is not None:
             in_set = thm.instantiate({a: self.operand})
@@ -301,6 +298,31 @@ class Abs(NumberOperation):
         raise NotImplementedError(
             "'Abs.deduce_in_number_set()' not implemented for "
             "the %s set" % str(number_set))
+
+    @relation_prover
+    def deduce_number_set(self, **defaults_config):
+        '''
+        Prove membership of this expression in the most
+        restrictive standard number set we can readily know.
+        '''
+        from proveit.numbers import (
+            Integer, IntegerNonZero, NaturalPos, Natural,
+            Rational, RationalNonZero, RationalPos,
+            RationalNonNeg, Real, RealNonNeg, RealPos,
+            ComplexNonZero, Complex)
+        operand_ns = deduce_number_set(self.operand)
+        if IntegerNonZero.includes(operand_ns):
+            return self.deduce_in_number_set(NaturalPos)
+        if Integer.includes(operand_ns):
+            return self.deduce_in_number_set(Natural)
+        if RationalNonZero.includes(operand_ns):
+            return self.deduce_in_number_set(RationalPos)
+        if Rational.includes(operand_ns):
+            return self.deduce_in_number_set(RationalNonNeg)
+        if ComplexNonZero.includes(operand_ns):
+            return self.deduce_in_number_set(RealPos)
+        return self.deduce_in_number_set(RealNonNeg)
+        
 
     @equality_prover('unit_length_simplified', 'unit_length_simplify')
     def unit_length_simplification(self, **defaults_config):
@@ -340,9 +362,6 @@ class Abs(NumberOperation):
             raise_not_valid_form()
         
         replacements = set()
-        # Grab polar coordinates without automation so we don't
-        # waste time if it isn't in a complex polar form (or 
-        # obviously equivalent to this form).
         term1 = self.operand.terms[0]
         term2 = self.operand.terms[1]
         if isinstance(term2, Neg):

@@ -296,4 +296,18 @@ if proveit.defaults.automation:
     # imported when automation is used.
     # Fails before running the _axioms_ and _theorems_ notebooks for the first
     # time, but fine after that.
-    from . import real_within_complex, int_within_complex, nat_within_complex
+    from . import (
+        nat_within_complex, int_within_complex, int_nonpos_within_complex,
+        int_neg_within_complex_nonzero,  nat_pos_within_complex_nonzero,
+        int_nonzero_within_complex_nonzero,
+        rational_within_complex, rational_nonneg_within_complex,
+        rational_nonpos_within_complex,
+        rational_pos_within_complex_nonzero, 
+        rational_neg_within_complex_nonzero, 
+        rational_nonzero_within_complex_nonzero, 
+        real_within_complex, real_nonneg_within_complex,
+        real_nonpos_within_complex,
+        real_pos_within_complex_nonzero, 
+        real_neg_within_complex_nonzero, 
+        real_nonzero_within_complex_nonzero,
+        complex_nonzero_within_complex)

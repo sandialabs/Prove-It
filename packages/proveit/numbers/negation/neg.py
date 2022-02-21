@@ -129,6 +129,7 @@ class Neg(NumberOperation):
         raise NotImplementedError(
             "No negation closure theorem for set %s" %str(number_set))
 
+    @relation_prover
     def deduce_number_set(self, **defaults_config):
         '''
         Prove membership of this expression in the most

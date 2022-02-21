@@ -843,6 +843,7 @@ class Exp(NumberOperation):
             return bound.with_direction_reversed()
         return bound
 
+    @relation_prover
     def deduce_number_set(self, **defaults_config):
         '''
         Prove membership of this expression in the most
