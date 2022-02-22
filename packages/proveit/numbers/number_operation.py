@@ -188,6 +188,8 @@ sorted_number_sets = (
     RealNonZero, Real,
     ComplexNonZero, Complex)
 
+standard_number_sets = set(sorted_number_sets)
+
 # Map number sets to the positive number set it contains.
 pos_number_set = {
     NaturalPos: NaturalPos,
@@ -342,3 +344,21 @@ def deduce_number_set(expr, **defaults_config):
         # Just use what we have already proven.
         return membership.prove()
     return InSet(expr, number_set).prove()
+
+def standard_number_set(given_set, **defaults_config):
+    '''
+    For the number set given_set (which might, for example, be a
+    continuous interval, an integer interval, etc.), return the most
+    restrictive number set (such as Real, RealPos, Integer, etc.)
+    that is already known to contain the given_set, or return the
+    original given_set if no such standard set inclusion is already
+    known.
+    '''
+    for std_number_set in sorted_number_sets:
+        # return the first std set that includes our given_set
+        if std_number_set.includes(given_set):
+            return std_number_set
+
+    # return the original given_set if the
+    # for loop above didn't find anything
+    return given_set

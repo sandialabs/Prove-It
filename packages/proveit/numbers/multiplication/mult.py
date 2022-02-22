@@ -4,9 +4,11 @@ from proveit import (
         SimplificationDirectives, TransRelUpdater, free_vars)
 from proveit import a, b, c, d, e, i, j, k, m, n, w, x, y, z
 from proveit.logic import (
-        And, NotEquals, is_irreducible_value, EvaluationError, InSet)
+    And, Equals, NotEquals, is_irreducible_value, EvaluationError, 
+    InSet)
 from proveit.numbers import (
-        zero, one, num, NumberOperation, deduce_number_set)
+    zero, one, num, Add, NumberOperation, deduce_number_set,
+    standard_number_set)
 from proveit.numbers.number_sets import (
     Natural, NaturalPos,
     Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
@@ -172,6 +174,7 @@ class Mult(NumberOperation):
         Prove membership of this expression in the most 
         restrictive standard number set we can readily know.
         '''
+        from proveit.numbers import IntervalCC
         number_set_map = {
             NaturalPos: NaturalPos,
             IntegerNeg: Integer,
@@ -218,7 +221,19 @@ class Mult(NumberOperation):
                 factor_ns = factor_membership.operands[0].body.domain
             else:
                 factor_ns = factor_membership.domain
-            factor_ns = number_set_map[factor_ns]
+            # check if factor_ns is now a standard number set
+            if factor_ns not in number_set_map.keys():
+                # try to replace factor_ns with a std number set
+                factor_ns = standard_number_set(factor_ns)
+            if factor_ns in number_set_map.keys():
+                factor_ns = number_set_map[factor_ns]
+            else:
+                raise ValueError(
+                        "In Mult.deduce_number_set(), the factor {0} "
+                        "is not known to be in one of our standard "
+                        "number sets (such as Real, RealPos, etc.), "
+                        "and instead is just known to be in {1}.".
+                        format(factor, factor_ns))
             if all_nonzero and factor_ns not in nonzero_sets:
                 all_nonzero = False
             _major, _minor = priorities[factor_ns]

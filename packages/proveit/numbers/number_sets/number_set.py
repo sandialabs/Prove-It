@@ -1,5 +1,5 @@
-from proveit import (Literal, ProofFailure, UnsatisfiedPrerequisites,
-                     defaults, prover)
+from proveit import (x, defaults, Literal, ProofFailure, prover,
+                     UnsatisfiedPrerequisites)
 from proveit.logic import Equals, InSet, SetMembership, SubsetEq
 
 
@@ -10,20 +10,33 @@ class NumberSet(Literal):
 
     def includes(self, other_set):
         '''
-        Return True of this NumberSet includes the 'other'
-        set.
+        Return True if this NumberSet includes the 'other_set' set.
         '''
-        from proveit.numbers.number_operation import sorted_number_sets
+        from proveit.numbers.number_operation import (
+            sorted_number_sets, standard_number_sets, deduce_number_set)
         if other_set == self: return True
         if SubsetEq(other_set, self).proven():
             return True
+
+        if other_set not in standard_number_sets:    
+            # For example, 'other_set' could be an integer Interval
+            # or real IntervalCC, IntervalOC, ...), so let's see if
+            # we can prove that an arbitrary variable in the other_set
+            # is also in self.
+            assumptions = [InSet(x, other_set)]
+            deduce_number_set(x, assumptions=assumptions)
+            if InSet(x, self).proven(assumptions=assumptions):
+                SubsetEq(other_set, self).conclude_as_folded()
+                return True
+
+        # Try one level of indirection via SubsetEq.
         for number_set in sorted_number_sets:
             if number_set in (other_set, self):
                 continue
             if (SubsetEq(other_set, number_set).proven() and
                     SubsetEq(number_set, self).proven()):
-                # One level of indirection is allowed
                 return True
+
         return False # Not known to include the 'other'
 
     def membership_object(self, element):
