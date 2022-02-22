@@ -34,7 +34,7 @@ class RealIntervalMembership(NumberMembership):
         if hasattr(element, 'deduce_in_number_set'):
             try:
                 return element.deduce_in_number_set(self.domain)
-            except (NotImplementedError, ProofFailure):
+            except Exception:
                 # If that didn't work, try 'deduce_elem_in_set'.
                 pass
         return self.domain.deduce_elem_in_set(self.element)

@@ -8,7 +8,7 @@ from proveit.logic import (
     InSet)
 from proveit.numbers import (
     zero, one, num, Add, NumberOperation, deduce_number_set,
-    standard_number_set)
+    standard_number_set, is_literal_int)
 from proveit.numbers.number_sets import (
     Natural, NaturalPos,
     Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
@@ -380,7 +380,7 @@ class Mult(NumberOperation):
                     must_evaluate=must_evaluate))
             return eq.relation
 
-        if all(is_irreducible_value(factor) for factor in self.factors):
+        if all(is_literal_int(factor) for factor in self.factors):
             if self.operands.is_double():
                 if all(factor in DIGITS for factor in self.factors):
                     # Prove single-digit multiplication by importing the
@@ -410,6 +410,7 @@ class Mult(NumberOperation):
             # Move irreducibles to the front.
             irreducible_factor_index_ranges = []
             _prev_was_irreducible = False
+            _all_irreducible = True
             for _k, factor in enumerate(self.factors):
                 if is_irreducible_value(factor):
                     if _prev_was_irreducible:
@@ -421,7 +422,9 @@ class Mult(NumberOperation):
                     _prev_was_irreducible = True
                 else:
                     _prev_was_irreducible = False
-            if len(irreducible_factor_index_ranges) > 0:
+                    _all_irreducible = False
+            if (len(irreducible_factor_index_ranges) > 0 and
+                    not _all_irreducible):
                 # Move one or more irreducible factors to the front.
                 offset = 0
                 for factor_index_range in reversed(

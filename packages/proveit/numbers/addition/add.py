@@ -33,14 +33,13 @@ class Add(NumberOperation):
     # operator of the Add operation
     _operator_ = Literal(string_format='+', theory=__file__)
     
-    # By default, simplification will ungroup (disassociate) and
-    # grouped terms and move irreducible values to the end (to be 
-    # consistent with Add.quick_simplified and quick_simplified_index
-    # which puts literal integers at the end).
+    # The 'order_key' simplification directive can be used
+    # to sort terms in a particular order.  By default, there
+    # is no sorting -- it keeps the original order as much as
+    # possible but still combines like terms.
     _simplification_directives_ = SimplificationDirectives(
             ungroup = True,
-            order_key = lambda term : (
-                    1 if is_irreducible_value(term) else 0))
+            order_key = lambda term : 0)
 
     # Map terms to sets of Judgment equalities that involve
     # the term on the left hand side.
@@ -1264,7 +1263,7 @@ class Add(NumberOperation):
         if major_number_set is not None:
             self.deduce_in_number_set(major_number_set)
             # Now it should just go through.
-            return InSet(self, number_set).prove()
+            return InSet(self, number_set).conclude_as_last_resort()
 
         raise NotImplementedError(
             "'deduce_in_number_set' on %s not implemented for the %s set"
@@ -1414,9 +1413,9 @@ class Add(NumberOperation):
             # Look for a special case of n-1 in Nat or (-1+n) in Nat.
             term_ns = None
             if self.terms[1] == Neg(one):
-                term_ns = deduce_number_set(self.terms[0])
+                term_ns = deduce_number_set(self.terms[0]).domain
             elif self.terms[0] == Neg(one):
-                term_ns = deduce_number_set(self.terms[1])                
+                term_ns = deduce_number_set(self.terms[1]).domain         
             if term_ns is not None and NaturalPos.includes(term_ns):
                 return self.deduce_in_number_set(Natural)
 

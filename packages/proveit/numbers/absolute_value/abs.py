@@ -310,7 +310,7 @@ class Abs(NumberOperation):
             Rational, RationalNonZero, RationalPos,
             RationalNonNeg, Real, RealNonNeg, RealPos,
             ComplexNonZero, Complex)
-        operand_ns = deduce_number_set(self.operand)
+        operand_ns = deduce_number_set(self.operand).domain
         if IntegerNonZero.includes(operand_ns):
             return self.deduce_in_number_set(NaturalPos)
         if Integer.includes(operand_ns):
