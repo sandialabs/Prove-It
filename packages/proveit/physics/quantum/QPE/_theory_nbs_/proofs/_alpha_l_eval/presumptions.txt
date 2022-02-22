@@ -81,6 +81,7 @@ proveit.numbers.addition.add_real_non_neg_closure_bin
 proveit.numbers.addition.add_real_pos_closure
 proveit.numbers.addition.add_real_pos_closure_bin
 proveit.numbers.addition.add_real_pos_from_non_neg
+proveit.numbers.addition.subtraction.nonneg_difference
 proveit.numbers.addition.subtraction.sub_one_is_nat
 proveit.numbers.addition.subtraction.subtract_nat_closure_bin
 proveit.numbers.addition.unary_add_reduction
