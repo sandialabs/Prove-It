@@ -650,7 +650,7 @@ class Div(NumberOperation):
         elif number_set == RationalPos:
             deduce_number_set(self.denominator)
             if Less(self.denominator, zero).proven():
-                thm = div_rational_pos_double_neg
+                thm = div_rational_pos_from_double_neg
             else:
                 thm = div_rational_pos_closure
         elif number_set == RationalNeg:
@@ -662,7 +662,7 @@ class Div(NumberOperation):
         elif number_set == RationalNonNeg:
             deduce_number_set(self.denominator)
             if Less(self.denominator, zero).proven():
-                thm = div_rational_nonneg_double_neg
+                thm = div_rational_nonneg_from_double_neg
             else:
                 thm = div_rational_nonneg_closure
         elif number_set == RationalNonPos:
@@ -678,7 +678,7 @@ class Div(NumberOperation):
         elif number_set == RealPos:
             deduce_number_set(self.denominator)
             if Less(self.denominator, zero).proven():
-                thm = div_real_pos_double_neg
+                thm = div_real_pos_from_double_neg
             else:
                 thm = div_real_pos_closure
         elif number_set == RealNeg:
@@ -690,7 +690,7 @@ class Div(NumberOperation):
         elif number_set == RealNonNeg:
             deduce_number_set(self.denominator)
             if Less(self.denominator, zero).proven():
-                thm = div_real_nonneg_double_neg
+                thm = div_real_nonneg_from_double_neg
             else:
                 thm = div_real_nonneg_closure
         elif number_set == RealNonPos:
