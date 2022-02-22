@@ -287,8 +287,9 @@ def deduce_number_set(expr, **defaults_config):
             if isinstance(eq_expr, ExprRange):
                 membership = And(ExprRange(eq_expr.parameter, 
                                            InSet(eq_expr.body, number_set),
-                                           eq_expr.start_index,
-                                           eq_expr.end_index))
+                                           eq_expr.true_start_index,
+                                           eq_expr.true_end_index,
+                                           styles=eq_expr.styles))
             else:
                 membership = InSet(eq_expr, number_set)
             if membership.proven():

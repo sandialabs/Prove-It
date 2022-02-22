@@ -156,13 +156,13 @@ class VecSpaces(Function):
                 # create our expr range
                 with defaults.temporary() as tmp_defaults:
                     assumption = InSet(vec.parameter,
-                            Interval(vec.start_index, vec.end_index))
+                            Interval(vec.true_start_index, vec.true_end_index))
                     tmp_defaults.assumptions = (
                             defaults.assumptions + (assumption ,))
                     body = VecSpaces.known_vec_space(vec.body, field=field)
                 vec_spaces.append(
                     ExprRange(vec.parameter, body,
-                              vec.start_index, vec.end_index))
+                              vec.true_start_index, vec.true_end_index))
             else:
                 vec_spaces.append(VecSpaces.known_vec_space(vec, field=field))
 
