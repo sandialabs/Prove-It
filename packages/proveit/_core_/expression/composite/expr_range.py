@@ -107,7 +107,7 @@ class ExprRange(Expression):
                 true_start_index = start_index
                 true_end_index = end_index
                 
-        simp_true_start_index, simp_true_end_index = _simplified_indices(
+        simp_true_start_index, simp_true_end_index = simplified_indices(
                 true_start_index, true_end_index)
         if order == 'decreasing' and start_index is not None:
             (true_start_index, true_end_index) = (
@@ -259,7 +259,7 @@ class ExprRange(Expression):
                     for sub_expr in (self.true_start_index, self.true_end_index))
             else:
                 assert _subbed_end_index is not None
-            _subbed_start_index, _subbed_end_index = _simplified_indices(
+            _subbed_start_index, _subbed_end_index = simplified_indices(
                      _subbed_start_index, _subbed_end_index,
                      requirements=requirements)
             if _subbed_start_index == _subbed_end_index:
@@ -1575,9 +1575,9 @@ class ExprRange(Expression):
                         idx.basic_replaced({orig_parameter: subbed_end_index},
                                               requirements=requirements)
                     start_with_absorbed_shift, end_with_absorbed_shift = (
-                            _simplified_indices(start_with_absorbed_shift, 
-                                                end_with_absorbed_shift,
-                                                requirements=requirements))
+                            simplified_indices(start_with_absorbed_shift, 
+                                               end_with_absorbed_shift,
+                                               requirements=requirements))
                     param_index = idx
                     # Since we are absorbing the shift into the 
                     # indices, map idx to a non-shifted parameter:
@@ -2002,33 +2002,28 @@ class ExprRange(Expression):
         start_index, end_index = self.true_start_index, self.true_end_index
         if end_index == Add(before_split_idx, one):
             # special case which uses the axiom:
-            judgement = range_extension_def.instantiate(
+            judgment = range_extension_def.instantiate(
                 {f: lambda_map, i: start_index, j: before_split_idx})
         elif before_split_idx == self.true_start_index:
             # special case when peeling off the front
-            judgement = partition_front.instantiate(
+            judgment = partition_front.instantiate(
                 {f: lambda_map, i: self.true_start_index, j: self.true_end_index})
         elif (quick_simplified_index(before_split_idx) == 
                   quick_simplified_index(subtract(end_index, one))):
             # special case when peeling off the back
-            judgement = partition_back.instantiate(
+            judgment = partition_back.instantiate(
                 {f: lambda_map, i: start_index, j: end_index})
         else:
-            judgement = partition.instantiate(
+            judgment = partition.instantiate(
                 {f: lambda_map, i: start_index, j: before_split_idx,
                  k: end_index})
 
         if decreasing:
-            lhs_done = judgement.inner_expr().lhs[0].with_decreasing_order()
-            i = 0
-            prev = lhs_done
-            for item in lhs_done.inner_expr().rhs:
-                final = prev.inner_expr().rhs[i].with_decreasing_order()
-                i += 1
-                prev = final
-            return final
-        else:
-            return judgement
+            judgment = judgment.inner_expr().lhs[0].with_decreasing_order()
+            for i, item in enumerate(judgment.rhs):
+                if isinstance(item, ExprRange):
+                    judgment = judgment.inner_expr().rhs[i].with_decreasing_order()
+        return judgment
     
     @prover
     def range_fn_transformation(self, new_lambda_map, **defaults_config):
@@ -2130,24 +2125,24 @@ class ExprRange(Expression):
         if old_shift is None:
             if decreasing:
                 print("correct!")
-                judgement = negated_shift_equivalence.instantiate(
+                judgment = negated_shift_equivalence.instantiate(
                     {f: _f, a: new_shift, i: _i.operand, j: _j.operand, k: _k, l: _l})
             else:
-                judgement = shift_equivalence.instantiate(
+                judgment = shift_equivalence.instantiate(
                     {f: _f, a: new_shift, i: _i, j: _j, k: _k, l: _l})
         else:
             if decreasing:
-                judgement = negated_shift_equivalence_both.instantiate(
+                judgment = negated_shift_equivalence_both.instantiate(
                     {f: _f, a: old_shift, b: new_shift, i: _i.operand, j: _j.operand, k: _k, l: _l})
             else:
-                judgement = shift_equivalence_both.instantiate(
+                judgment = shift_equivalence_both.instantiate(
                     {f: _f, a: old_shift, b: new_shift, i: _i, j: _j, k: _k, l: _l})
 
         # if decreasing:
-        #     lhs_done = judgement.inner_expr().lhs[0].with_decreasing_order()
+        #     lhs_done = judgment.inner_expr().lhs[0].with_decreasing_order()
         #     return lhs_done.inner_expr().rhs[0].with_decreasing_order()
         # else:
-        return judgement
+        return judgment
 
     """
     def _var_index_shifts_in_ranges(self, var, shifts):
@@ -2181,16 +2176,24 @@ class ExprRange(Expression):
                         "only to be applied to an InnerExpr object.")
     """
 
-def _simplified_indices(*indices, requirements=None):
+def simplified_index(index, *, requirements=None):
+    return list(simplified_indices(index, requirements=requirements))[0]
+
+def simplified_indices(*indices, requirements=None):
     from proveit.logic import Equals
-    from proveit.numbers import quick_simplified_index
+    from proveit.numbers import Add, quick_simplified_index, is_literal_int
     for index in indices:
         simplified_index = quick_simplified_index(index)
         if requirements is not None:
             requirement = Equals(index, simplified_index)
             if requirement.lhs != requirement.rhs:
                 if defaults.automation:
-                    index.simplified() 
+                    with Add.temporary_simplification_directives() as directives:
+                        # Move literal integers to the end via the
+                        # 'order_key' simplification directive for Add.
+                        directives.order_key = lambda term : (
+                            1 if is_literal_int(term) else 0)
+                        index.simplified() 
                 try:
                     requirements.append(requirement.prove())
                 except ProofFailure as e:

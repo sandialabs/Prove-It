@@ -393,7 +393,8 @@ class InnerExpr:
         Returns the lambda function/map that would replace this
         particular inner expression within the top-level expression.
         '''
-        from proveit import Judgment, var_range, ExprRange
+        from proveit import (Judgment, var_range, ExprRange,
+                             simplified_index)
         
         if params_of_param is None:
             params_of_param = self.parameters
@@ -429,6 +430,7 @@ class InnerExpr:
                 stop = parent_tuple.num_entries()
             sub_tuple_len = cur_sub_expr.num_elements(
                     assumptions=self.assumptions, auto_simplify=True)
+            sub_tuple_len = simplified_index(sub_tuple_len)
             dummy_var = top_level_expr.safe_dummy_var()
             lambda_params = var_range(dummy_var, one, sub_tuple_len)
             lambda_body = ExprTuple(*(parent_tuple[:start].entries + (lambda_params,)

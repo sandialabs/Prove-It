@@ -22,6 +22,7 @@ from ._core_ import (
     ExprTuple, ExprTupleError, extract_var_tuple_indices,
     ExprArray, var_array, horiz_var_array, VertExprArray, vert_var_array,
     NamedExprs, ExprRange, var_range, RangeInstanceError,
+    simplified_index, simplified_indices,
     Judgment, as_expression, as_expressions,
     Proof, Assumption, Axiom, Theorem, ModusPonens,
     Deduction, Instantiation, Generalization,

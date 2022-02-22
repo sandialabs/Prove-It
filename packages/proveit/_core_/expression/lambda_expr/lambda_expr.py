@@ -733,7 +733,8 @@ class Lambda(Expression):
         ExprRange._replaced_entries) which handles the change in scope 
         properly as well as parameter relabeling.
         '''
-        from proveit import Variable, ExprTuple, ExprRange, IndexedVar
+        from proveit import (Variable, ExprTuple, ExprRange, IndexedVar,
+                             simplified_indices)
         from proveit._core_.expression.composite.expr_range import \
             extract_start_indices, extract_end_indices, var_range
 
@@ -763,6 +764,8 @@ class Lambda(Expression):
                     ExprTuple(*extract_end_indices(param)).basic_replaced(
                         repl_map, allow_relabeling=allow_relabeling, 
                         requirements=requirements)
+                subbed_start, subbed_end = simplified_indices(
+                    subbed_start, subbed_end, requirements=requirements)
                 range_param = var_range(param_var, subbed_start, subbed_end)
                 param = range_param
             else:
