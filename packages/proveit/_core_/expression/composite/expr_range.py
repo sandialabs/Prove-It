@@ -2187,6 +2187,11 @@ def simplified_indices(*indices, requirements=None):
         if requirements is not None:
             requirement = Equals(index, simplified_index)
             if requirement.lhs != requirement.rhs:
+                if requirement.proven():
+                    # Already proven, so record the requirement and move on.
+                    requirements.append(requirement.prove())
+                    yield simplified_index
+                    continue
                 if defaults.automation:
                     with Add.temporary_simplification_directives() as directives:
                         # Move literal integers to the end via the
