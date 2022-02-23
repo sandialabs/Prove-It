@@ -1046,7 +1046,20 @@ class Add(NumberOperation):
                 term_ns = term_membership.operands[0].body.domain
             else:
                 term_ns = term_membership.domain
-            term_ns = number_set_map[term_ns]
+            # check if term_ns is now a standard number set
+            if term_ns not in number_set_map.keys():
+                # try to replace term_ns with a std number set
+                old_term_ns = term_ns
+                term_ns = standard_number_set(term_ns)
+            if term_ns in number_set_map.keys():
+                term_ns = number_set_map[term_ns]
+            else:
+                raise ValueError(
+                        "In Add.deduce_number_set(), the term {0} "
+                        "is not known to be in one of our standard "
+                        "number sets (such as Real, RealPos, etc.), "
+                        "and instead is just known to be in {1}.".
+                        format(term, term_ns))
             if term_ns in {NaturalPos, RationalPos, RealPos}:
                 any_positive = True
             _major, _minor = priorities[term_ns]
