@@ -355,6 +355,8 @@ class Len(Operation):
             raise ValueError("The 'equality' should be an Equals expression")
         if equality.lhs != self:
             raise ValueError("The left side of 'equality' should be 'self'")
+        if equality.proven():
+            return equality # Already proven.
         with defaults.temporary() as temp_defaults:
             # Auto-simplify everything except the left and right sides
             # of the equality.
