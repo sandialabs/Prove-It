@@ -21,7 +21,7 @@ proveit.logic.sets.cartesian_products.cart_exp_unfold_abstract
 proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.logic.sets.inclusion.unfold_subset_eq
-proveit.numbers.division.divide_complex_closure
+proveit.numbers.division.div_complex_closure
 proveit.numbers.division.frac_one_denom
 proveit.numbers.division.mult_frac_cancel_numer_left
 proveit.numbers.multiplication.commutation
