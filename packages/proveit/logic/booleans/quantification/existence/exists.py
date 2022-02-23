@@ -191,7 +191,7 @@ class Exists(OperationOverInstances):
                 {n: _n, P: _P, Q: _Q, alpha: _alpha,
                  x_1_to__n: skolem_constants,
                  y_1_to__n: existential.instance_params},
-                preserve_expr=judgment.expr).derive_consequent()
+                preserve_all=True).derive_consequent()
 
     @prover
     def unfold(self, **defaults_config):
