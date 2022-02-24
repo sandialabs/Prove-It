@@ -273,11 +273,15 @@ class ExprRange(Expression):
             assert sub_exprs == (self.lambda_map, self.true_start_index,
                                  self.true_end_index)
             # Complete the subbed_sub_exprs
-            subbed_sub_exprs = (
-                    self.lambda_map.basic_replaced(
-                            repl_map, allow_relabeling=allow_relabeling,
-                            requirements=requirements),
-                    _subbed_start_index, _subbed_end_index)
+            # Assume the parameter condition.
+            with defaults.temporary() as tmp_defaults:
+                tmp_defaults.assumptions = (defaults.assumptions + 
+                                            (self.parameter_condition(),))
+                subbed_sub_exprs = (
+                        self.lambda_map.basic_replaced(
+                                repl_map, allow_relabeling=allow_relabeling,
+                                requirements=requirements),
+                        _subbed_start_index, _subbed_end_index)
             if all(subbed_sub._style_id == sub._style_id for
                    subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
                 # Nothing change, so don't remake anything.
@@ -286,6 +290,52 @@ class ExprRange(Expression):
                 self._core_info, subbed_sub_exprs,
                 style_preferences=self._style_data.styles)
         return replaced
+
+    def _auto_simplified_sub_exprs(self, *, requirements, stored_replacements):
+        '''
+        Properly handle the ExprRange scope while doing 
+        auto-simplification replacements.  This combines the behavior
+        of a Lambda and a Conditional.
+        '''
+        # Standard approach for the subbed indices.
+        subbed_indices = \
+            tuple(sub_expr._auto_simplified(
+                    requirements=requirements, 
+                    stored_replacements=stored_replacements)
+                  for sub_expr in (self.true_start_index, 
+                                   self.true_end_index))
+        parameter = self.parameter
+        # Special assumptions for the body.  We can't use
+        # assumptions involving the parameter except the
+        # 'parameter condition' (that it is in an interval).
+        inner_assumptions = \
+            [assumption for assumption in defaults.assumptions if
+             parameter not in free_vars(assumption)]
+        inner_assumptions.append(self.parameter_condition())
+        with defaults.temporary() as temp_defaults:
+            temp_defaults.assumptions = inner_assumptions
+            # Since the assumptions have changed, we can no longer use
+            # the stored_replacements from before.
+            subbed_body = self.body._auto_simplified(
+                    requirements=requirements, 
+                    stored_replacements=dict())
+            subbed_lambda = Lambda(parameter, subbed_body)
+        subbed_sub_exprs = (subbed_lambda, *subbed_indices)
+        sub_exprs = self._sub_expressions
+        if all(subbed_sub._style_id == sub._style_id for
+               subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
+            # Nothing change, so don't remake anything.
+            return self
+        # This is an ExprRange.  If the start and end indices
+        # are the same, force them to be different here
+        # (we can't create an ExprRange where they are the same)
+        # but it will be simplified in the containing ExprTuple
+        # via a singlular range reduction.
+        subbed_sub_exprs = ExprRange._proper_sub_expr_replacements(
+            sub_exprs, subbed_sub_exprs)
+        return self.__class__._checked_make(
+            self._core_info, subbed_sub_exprs,
+            style_preferences=self._style_data.styles)
         
     def _singular_reduced(self, repl_map, *, _subbed_index,
                        allow_relabeling=False, requirements=None):
@@ -1384,9 +1434,9 @@ class ExprRange(Expression):
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             get_param_var, extract_param_replacements
         from proveit._core_.expression.label.var import safe_dummy_var
-        from proveit.logic import Equals  # , InSet
-        from proveit.numbers import (Add, subtract, one,
-                                     quick_simplified_index)
+        from proveit.logic import Equals, InSet
+        from proveit.numbers import (Add, subtract, one, Interval,
+                                     Integer, quick_simplified_index)
 
         if len(repl_map) > 0 and (self in repl_map):
             # The full expression is to be replaced.
@@ -1827,16 +1877,13 @@ class ExprRange(Expression):
                                      true_start_index).quick_simplified()
                     param_repl = Add(new_param, shift)
 
-                # Let's keep this simple and not worry about this
-                # "range assumptions".
-                # If needed, we can use explicit axioms/theorems to
-                # make use of this property rather than in the core.
-                # If we change our minds, the range assumption should
-                # also be employed in the ExprRange._replaced method.
-                # range_assumption = InSet(new_param,
-                #                         Interval(start_index, end_index))
+                # We'll assume new_param is in the proper interval
+                # to make the replacements in the body.
+                range_assumption = InSet(new_param,
+                                         Interval(true_start_index, 
+                                                  true_end_index))
 
-                entry_assumptions = inner_assumptions  # + [range_assumption]
+                entry_assumptions = inner_assumptions + (range_assumption,)
                 full_entry_repl_map[orig_parameter] = param_repl
                 with defaults.temporary() as temp_defaults:
                     temp_defaults.assumptions = entry_assumptions
@@ -1875,7 +1922,6 @@ class ExprRange(Expression):
                     update_keys_and_values(full_entry_repl_map, 
                                            {new_param:next_index})
                     full_entry_repl_map[orig_parameter] = next_index
-
                 with defaults.temporary() as temp_defaults:
                     temp_defaults.assumptions = inner_assumptions
                     if isinstance(body, ExprRange):
@@ -1901,6 +1947,24 @@ class ExprRange(Expression):
             # The range parameter appears outside of
             # IndexedVars.  That means that we must match new
             # and original indices precisely, not just their length.
+            
+            # We also need to make sure that subbed_start_index
+            # and subbed_end_index are integers to be consistent
+            # with the parameter_condition() we are allowed to assume
+            # for the body.
+            start_requirement = InSet(subbed_start_index, Integer)
+            end_requirement = InSet(subbed_end_index, Integer)
+            try:
+                requirements.append(start_requirement.prove())
+                requirements.append(end_requirement.prove())
+            except ProofFailure as e:
+                raise ImproperReplacement(
+                    self, repl_map,
+                    "ExprRange subbed start and end indices, %s and %s, "
+                    "must be provably integers: %s"%
+                    (subbed_start_index, subbed_end_index, e))
+            
+            # Now for matching the indices precisely.
             requirement = Equals(
                     ExprTuple(*new_indices),
                     ExprTuple(ExprRange(
