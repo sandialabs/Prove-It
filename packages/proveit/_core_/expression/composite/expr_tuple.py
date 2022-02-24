@@ -629,13 +629,13 @@ class ExprTuple(Composite, Expression):
         |- (x_1, .., x_j, x_{j+1}, x_{j+2}, ..., x_k) = (x_1, ..., x_k)
         '''
         from proveit._core_.expression.lambda_expr import Lambda
-        from .expr_range import ExprRange
+        from .expr_range import ExprRange, simplified_index
         from proveit.relation import TransRelUpdater
         from proveit.core_expr_types.tuples import (
             merge, merge_front, merge_back, merge_extension,
             merge_pair, merge_series)
         from proveit import f, i, j, k, l, x
-        from proveit.numbers import Add, one
+        from proveit.numbers import one, Add, subtract
 
         # A convenience to allow successive update to the equation via
         # transitivities (starting with self=self).
@@ -698,7 +698,7 @@ class ExprTuple(Composite, Expression):
                 else:
                     # Merge an ExprRange and a singular item.
                     _i, _j = eq.expr[0].true_start_index, eq.expr[0].true_end_index
-                    _k = lambda_map.extract_argument(eq.expr[1])
+                    _k = simplified_index(Add(_j, one))
                     if _k == Add(_j, one):
                         merger = merge_extension.instantiate(
                             {f: lambda_map, i: _i, j: _j})
@@ -707,11 +707,22 @@ class ExprTuple(Composite, Expression):
                             {f: lambda_map, i: _i, j: _j, k: _k})
             else:
                 # Merge a singular item and ExprRange.
-                i_sub = lambda_map.extract_argument(eq.expr[0])
-                j_sub, k_sub = eq.expr[1].true_start_index, eq.expr[1].true_end_index
+                _i = simplified_index(
+                    subtract(eq.expr[1].true_start_index, one))
+                _j, _k = eq.expr[1].true_start_index, eq.expr[1].true_end_index
                 merger = \
-                    merge_front.instantiate({f: lambda_map, i: i_sub, 
-                                             j: j_sub, k: k_sub})
+                    merge_front.instantiate({f: lambda_map, i: _i, 
+                                             j: _j, k: _k})
+            all_decreasing = all(expr.is_decreasing() for expr in eq.expr
+                                 if isinstance(expr, ExprRange))
+            if all_decreasing:
+                # Apply the 'decreasing' order style to match what we
+                # had originally.
+                for _i in (0, 1):
+                    if isinstance(eq.expr[_i], ExprRange):
+                        merger = (merger.inner_expr().lhs[_i]
+                                  .with_decreasing_order())
+                merger = merger.inner_expr().rhs[0].with_decreasing_order()
             eq.update(merger)
             return eq.relation
 
