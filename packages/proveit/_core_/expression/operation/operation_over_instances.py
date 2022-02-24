@@ -290,9 +290,9 @@ class OperationOverInstances(Operation):
         if wrap_params:
             call_strs.append('wrap_params()')
         if condition_wrapping == 'before':
-            call_strs.append('with_wrapping_before_condition()')
+            call_strs.append('with_wrap_before_condition()')
         elif condition_wrapping == 'after':
-            call_strs.append('with_wrapping_after_condition()')            
+            call_strs.append('with_wrap_after_condition()')            
         if justification != 'center':
             call_strs.append('with_justification("' + justification + '")')
         return call_strs
