@@ -352,19 +352,27 @@ class ExprRange(Expression):
             if parameterization == 'implicit':
                 call_strs.append('with_implicit_parameterization()')
 
+        max_expansion = self._max_allowed_total_expansion(
+            self.true_start_index, self.true_end_index)
+        if max_expansion == 2:
+            expansion_defaults = (1, 1)
+        else:
+            expansion_defaults = (2, 1)
         front_expansion = self.get_front_expansion()
-        if front_expansion != '2':
+        if front_expansion != expansion_defaults[0]:
             call_strs.append('with_front_expansion(%d)'%int(front_expansion))
         back_expansion = self.get_back_expansion()
-        if back_expansion != '1':
+        if back_expansion != expansion_defaults[1]:
             call_strs.append('with_back_expansion(%d)'%int(back_expansion))
 
-        order = self.get_style('order', 'default')
-        if order != 'default':
-            if order == 'decreasing':
-                call_strs.append('with_decreasing_order()')
-            if order == 'increasing':
-                call_strs.append('with_increasing_order()')
+        order = self.get_style('order')
+        if order == 'decreasing':
+            call_strs.append('with_decreasing_order()')
+
+        wrap_positions = self.wrap_positions()
+        if len(wrap_positions) > 0:
+            call_strs.append('with_wrapping_at(' + ','.join(str(pos)
+                                                            for pos in wrap_positions) + ')')
 
         case_simplify = self.get_style('case_simplify', 'False')
         if case_simplify != 'False':
@@ -490,13 +498,17 @@ class ExprRange(Expression):
             raise ValueError("front_expansion must be an integer of at "
                              "least 1")
         # Make sure the expansion doesn't induce an obvious overlap.
-        self._check_nonobvious_overlapping_expansion(
+        self._check_obvious_expansion_overlap(
                 num, self.get_back_expansion())
-        try:
-            return self.with_styles(front_expansion=str(num))
-        except StyleError:
-            raise StyleError("'front_expansion' is not an applicable style "
-                             "for this ExprRange: %s"%self)
+        # Note: 1 is the effective expansion when
+        # 'front_expansion' is not a style option.
+        if self.get_style('front_expansion', '1') != str(num):
+            try:
+                return self.with_styles(front_expansion=str(num))
+            except StyleError:
+                raise StyleError("'front_expansion' is not an applicable "
+                                 "style option for this ExprRange: %s"%self)
+        return self
 
     def with_back_expansion(self, num):
         '''
@@ -506,28 +518,27 @@ class ExprRange(Expression):
         if not isinstance(num, int) or num < 1:
             raise ValueError("back_expansion must be an integer of at "
                              "least 1")
-        self._check_nonobvious_overlapping_expansion(
+        self._check_obvious_expansion_overlap(
                 num, self.get_back_expansion())
-        try:
-            return self.with_styles(back_expansion=str(num))
-        except StyleError:
-            raise StyleError("'back_expansion' is not an applicable style "
-                             "for this ExprRange: %s"%self)
-
-    def _check_nonobvious_overlapping_expansion(
+        # Note: 1 is the effective expansion when 
+        # 'back_expansion' is not a style option.
+        if self.get_style('back_expansion', '1') != str(num):
+            try:
+                return self.with_styles(back_expansion=str(num))
+            except StyleError:
+                raise StyleError("'back_expansion' is not an applicable "
+                                 "style option for this ExprRange: %s"%self)
+        return self
+    
+    def _check_obvious_expansion_overlap(
             self, front_expansion, back_expansion):
-        from proveit.numbers.addition.add import split_int_shift, Add
-        start_base, start_shift = split_int_shift(self.true_start_index)
-        end_base, end_shift = split_int_shift(self.true_end_index)
-        if start_base == end_base:
-            last_of_front_shift = start_shift+front_expansion-1
-            first_of_back_shift = end_shift-back_expansion+1
-            if last_of_front_shift >= first_of_back_shift:
-                raise ValueError(
-                        "The front and back expansions are not allowed "
-                        "to form an obvious overlap: %s ≥ %s"
-                        %(Add(start_base, last_of_front_shift),
-                          Add(end_base, first_of_back_shift)))
+        max_allowed = self._max_allowed_total_expansion(
+            self.true_start_index, self.true_end_index)
+        if front_expansion + back_expansion > max_allowed:
+            raise ValueError(
+                "The front and back expansions are beyond the "
+                "maximum allowed total expansion for %s: %d + %d > %d."
+                %(self, front_expansion, back_expansion, max_allowed))
 
     @staticmethod
     def _max_allowed_total_expansion(start_index, end_index,
@@ -593,6 +604,24 @@ class ExprRange(Expression):
         is exited.  These temporary settings may be useful for handling
         case simplifications of nested ExprRanges.
         '''
+        try:
+            temp_defaults = defaults.temporary()
+            temp_defaults.automation = False
+            temp_defaults.preserve_all = True
+            return self._instance_context(index_base, index_shift,
+                                          temp_defaults)
+        except Exception as e:
+            # We weren't able to return the instance context,
+            # so make sure we exit the temp_defaults context.
+            with temp_defaults:
+                pass
+            raise e
+
+    def _instance_context(self, index_base, index_shift, temp_defaults):
+        '''
+        Helper for ExprRange.instance_context
+        '''
+
         from proveit import ConditionalSet
         from proveit.relation import Relation
         from proveit.logic import Not, Equals, NotEquals, InSet
@@ -629,9 +658,6 @@ class ExprRange(Expression):
         # For purposes of displaying/exploring, we will assume
         # that the expanded indices are in a proper order and that
         # the front expansion does not overlap with the back expansion.
-        temp_defaults = defaults.temporary()
-        temp_defaults.automation = False
-        temp_defaults.preserve_all = True
         assumptions = []
         if decreasing:
             # Negate the indices when in decreasing mode.
@@ -667,8 +693,8 @@ class ExprRange(Expression):
                             Add(base, num(other_shift)))
                 if index_base == base:
                     if other_shift == index_shift:
-                        assert (quick_simplified_index(index) == 
-                                quick_simplified_index(other_index))
+                        assert index == other_index, (
+                            "%base: %s, other_shift: %s"%(base, other_shift))
                         # Trivial, but include it anyways so
                         # we won't need any automation:
                         assumptions.append(Equals(index, other_index))
