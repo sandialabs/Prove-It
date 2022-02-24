@@ -1390,6 +1390,15 @@ class Expression(metaclass=ExprType):
         # has some options via simplifying operands).
         raise EvaluationError(self)
 
+    @equality_prover('evaluated', 'evaluate')
+    def evaluation(self, **defaults_config):
+        '''
+        If possible, return a Judgment of this expression equal to an
+        irreducible value.  This default raises an EvaluationError.
+        '''       
+        from proveit.logic import EvaluationError
+        raise EvaluationError("No evaluation for %s"%self)
+
     @equality_prover('simplified', 'simplify')
     def simplification(self, **defaults_config):
         '''
