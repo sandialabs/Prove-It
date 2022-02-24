@@ -1,4 +1,5 @@
 from proveit import (as_expression, defaults, USE_DEFAULTS, ProofFailure,
+                     UnsatisfiedPrerequisites,
                      Conditional, ExprTuple, equality_prover, InnerExpr,
                      InnerExprGenerator, free_vars)
 from proveit import Literal, Operation, Lambda, ArgumentExtractionError
@@ -153,41 +154,8 @@ class Equals(TransitiveRelation):
                 # particular case, so carry on with default approach.
                 pass
 
-        '''
-        If there is no 'deduce_equality' method, we'll try
-        simplifying each side to see if they are equal
-        (or evaluating if one side is irreducible).
-        '''
-
-        if is_irreducible_value(self.rhs):
-            try:
-                evaluation = self.lhs.evaluation()
-                if evaluation.rhs != self.rhs:
-                    raise ProofFailure(
-                        self,
-                        defaults.assumptions,
-                        "Does not match with evaluation: %s" %
-                        str(evaluation))
-                return evaluation
-            except EvaluationError as e:
-                raise ProofFailure(self, defaults.assumptions,
-                                   "Evaluation error: %s" % e.message)
-        elif is_irreducible_value(self.lhs):
-            try:
-                evaluation = self.rhs.evaluation()
-                if evaluation.rhs != self.lhs:
-                    raise ProofFailure(
-                        self,
-                        defaults.assumptions,
-                        "Does not match with evaluation: %s" %
-                        str(evaluation))
-                return evaluation.derive_reversed()
-            except EvaluationError as e:
-                raise ProofFailure(self, defaults.assumptions,
-                                   "Evaluation error: %s" % e.message)
-
         # Try to prove equality via standard TransitiveRelation
-        # strategies (simplify both sends then try transitivity).
+        # strategies (simplify both sides then try transitivity).
         return TransitiveRelation.conclude(self)
 
     @prover
@@ -1242,6 +1210,39 @@ def evaluate_falsehood(expr, **defaults_config):
     '''
     from proveit.logic import FALSE
     return Equals(expr, FALSE).conclude_boolean_equality()
+
+def evaluation_or_simplification(expr, return_none_if_trivial=False):
+    '''
+    Return a nontrivial evaluation of the given expression if possible;
+    otherwise return a nontrivial simplification if possible.  If
+    we can't obtain one or the expression is already irreducible or
+    simplified, return the trivial reflection or None if
+    return_none_if_trivial is True.
+    '''
+    def trivial_form():
+        if return_none_if_trivial:
+            return None
+        return Equals(expr, expr).conclude_via_reflexivity()
+    if is_irreducible_value(expr):
+        # This is already irreducible; nothing more to do.
+        return trivial_form()
+    try:
+        # First try an evaluation -- this is best and it
+        # should fail quickly when it can't be done.
+        return expr.evaluation()
+    except (SimplificationError, ProofFailure,
+            UnsatisfiedPrerequisites, NotImplementedError):
+        pass
+    try:
+        # If we weren't able to do an evaluation, try a
+        # simplification.
+        simplification = expr.simplification()
+        if simplification.lhs != simplification.rhs:
+            return simplification
+    except (SimplificationError, ProofFailure,
+            UnsatisfiedPrerequisites, NotImplementedError):
+        pass
+    return trivial_form()
 
 
 class SimplificationError(Exception):
