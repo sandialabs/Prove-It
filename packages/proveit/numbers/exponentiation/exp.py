@@ -683,8 +683,12 @@ class Exp(NumberOperation):
         InSet(a, RealNeg), etc).
         A special case also deals with a negative base raised to the
         power of 2.
+        This method also works for special cases of the form Exp(a, x),
+        where a > 1 and the operand_relation involve the exponent x.
+
         Future development will address operand_relations
-        involving the exponent 'a' and expand the special negative
+        involving the exponent x in expressions of the form a^x when
+        the base 0 < a < 1, and expand the special negative
         base case to include all even and odd exponent cases.
         Also see NumberOperation.deduce_bound and compare to the
         bound_via_operand_bound() method found in the Div and Neg
@@ -706,138 +710,171 @@ class Exp(NumberOperation):
         lhs = operand_relation.lhs
         # should be able to generalize this later
         # no need to limit to just lhs, right?
-        if lhs != self.base:
+        if lhs != self.base and lhs != self.exponent:
             raise ValueError(
                     "In Exp.bound_via_operand_bound(), the left side of "
                     "the 'operand_relation' argument {0} is expected to "
-                    "match the Exp base operand {1}.".
-                    format(operand_relation, self.base))
+                    "match either the Exp base operand {1} or the "
+                    "Exp exponent operand {2}.".
+                    format(operand_relation, self.base, self.exponent))
 
         # assign x and y subs according to std Less or LessEq relations
         _x_sub = operand_relation.normal_lhs
         _y_sub = operand_relation.normal_rhs
-        _a_sub = self.exponent
-
-        # confirm that the base involved is non-negative real
-
-        # if not InSet(_x_sub, RealNonNeg).proven():
-        #     raise UnsatisfiedPrerequisites(
-        #             "In Exp.bound_via_operand_bound(), We must know "
-        #             "that {0} is a non-negative Real.".
-        #             format(_x_sub))
-
-        # Several cases to consider:
-        #  (1) a > 0, 0 ≤ x < y
-        #  (2) a > 0, 0 ≤ x ≤ y
-        #  (3) a ≥ 0, 0 < x < y
-        #  (4) a ≥ 0, 0 < x ≤ y
-        #  (5) a < 0, 0 < x < y
-        #  (6) a < 0, 0 < x ≤ y
-        #  (7) a ≤ 0, 0 < x < y
-        #  (8) a ≤ 0, 0 < x ≤ y
-        # =====================
-        #  (9) a = 2, y < x < 0
-        # (10) a = 2, y ≤ x < 0
-
-        # Cases (1) and (2): exponent a > 0
-        if (greater(_a_sub, zero).proven() and
-            greater_eq(_x_sub, zero).proven()):
-            if isinstance(operand_relation, Less):
-                from proveit.numbers.exponentiation import exp_pos_less
-                bound = exp_pos_less.instantiate(
-                        {x: _x_sub, y: _y_sub, a: _a_sub})
-            elif isinstance(operand_relation, LessEq):
-                from proveit.numbers.exponentiation import exp_pos_lesseq
-                bound = exp_pos_lesseq.instantiate(
-                        {x: _x_sub, y: _y_sub, a: _a_sub})
-            else:
-                raise TypeError(
-                    "In Exp.bound_via_operand_bound(), the 'operand_relation' "
-                    "argument is expected to be a 'Less', 'LessEq', 'greater', "
-                    "or 'greater_eq' relation. Instead we have {}.".
-                    format(operand_relation))
-
-        # Cases (3) and (4): exponent a ≥ 0
-        elif (greater_eq(_a_sub, zero).proven() and
-            greater(_x_sub, zero).proven()):
-            if isinstance(operand_relation, Less):
-                from proveit.numbers.exponentiation import exp_nonneg_less
-                bound = exp_nonneg_less.instantiate(
-                        {x: _x_sub, y: _y_sub, a: _a_sub})
-            elif isinstance(operand_relation, LessEq):
-                from proveit.numbers.exponentiation import exp_nonneg_lesseq
-                bound = exp_nonneg_lesseq.instantiate(
-                        {x: _x_sub, y: _y_sub, a: _a_sub})
-            else:
-                raise TypeError(
-                    "In Exp.bound_via_operand_bound(), the 'operand_relation' "
-                    "argument is expected to be a 'Less', 'LessEq', 'greater', "
-                    "or 'greater_eq' relation. Instead we have {}.".
-                    format(operand_relation))
-
-        # Cases (5) and (6): exponent a < 0
-        elif (Less(_a_sub, zero).proven() and
-            greater(_x_sub, zero).proven()):
-            if isinstance(operand_relation, Less):
-                from proveit.numbers.exponentiation import exp_neg_less
-                bound = exp_neg_less.instantiate(
-                        {x: _x_sub, y: _y_sub, a: _a_sub})
-            elif isinstance(operand_relation, LessEq):
-                from proveit.numbers.exponentiation import exp_neg_lesseq
-                bound = exp_neg_lesseq.instantiate(
-                        {x: _x_sub, y: _y_sub, a: _a_sub})
-            else:
-                raise TypeError(
-                    "In Exp.bound_via_operand_bound(), the 'operand_relation' "
-                    "argument is expected to be a 'Less', 'LessEq', 'greater', "
-                    "or 'greater_eq' relation. Instead we have {}.".
-                    format(operand_relation))
-
-        # Cases (7) and (8): exponent a ≤ 0
-        elif (LessEq(_a_sub, zero).proven() and
-            greater(_x_sub, zero).proven()):
-            if isinstance(operand_relation, Less):
-                from proveit.numbers.exponentiation import exp_nonpos_less
-                bound = exp_nonpos_less.instantiate(
-                        {x: _x_sub, y: _y_sub, a: _a_sub})
-            elif isinstance(operand_relation, LessEq):
-                from proveit.numbers.exponentiation import exp_nonpos_lesseq
-                bound = exp_nonpos_lesseq.instantiate(
-                        {x: _x_sub, y: _y_sub, a: _a_sub})
-            else:
-                raise TypeError(
-                    "In Exp.bound_via_operand_bound(), the 'operand_relation' "
-                    "argument is expected to be a 'Less', 'LessEq', 'greater', "
-                    "or 'greater_eq' relation. Instead we have {}.".
-                    format(operand_relation))
-
-        # Cases (9) and (10): exponent a = 2
-        # with x < y < 0 or x ≤ y < 0
-
-        elif (_a_sub == two and
-            Less(_y_sub, zero).proven()):
-            if isinstance(operand_relation, Less):
-                from proveit.numbers.exponentiation import (
-                        exp_even_neg_base_less)
-                bound = exp_even_neg_base_less.instantiate(
-                        {x: _x_sub, y: _y_sub, a: _a_sub})
-            elif isinstance(operand_relation, LessEq):
-                from proveit.numbers.exponentiation import (
-                        exp_even_neg_base_lesseq)
-                bound = exp_even_neg_base_lesseq.instantiate(
-                        {x: _x_sub, y: _y_sub, a: _a_sub})
-            else:
-                raise TypeError(
-                    "In Exp.bound_via_operand_bound(), the 'operand_relation' "
-                    "argument is expected to be a 'Less', 'LessEq', 'greater', "
-                    "or 'greater_eq' relation. Instead we have {}.".
-                    format(operand_relation))
-
+        if lhs == self.base:
+            _a_sub = self.exponent
         else:
-            raise ValueError(
-                    "In calling Exp.bound_via_operand_bound(), a "
-                    "specific matching case was not found for {}.".
-                    format(self))
+            _a_sub = self.base
+
+        # I. Default case: the user-supplied operand relation involves
+        #    the BASE of the Exp expression x^a
+        if lhs == self.base:
+
+            # Several cases to consider:
+            #  (1) a > 0, 0 ≤ x < y
+            #  (2) a > 0, 0 ≤ x ≤ y
+            #  (3) a ≥ 0, 0 < x < y
+            #  (4) a ≥ 0, 0 < x ≤ y
+            #  (5) a < 0, 0 < x < y
+            #  (6) a < 0, 0 < x ≤ y
+            #  (7) a ≤ 0, 0 < x < y
+            #  (8) a ≤ 0, 0 < x ≤ y
+            # =====================
+            #  (9) a = 2, y < x < 0
+            # (10) a = 2, y ≤ x < 0
+
+            # Cases (1) and (2): exponent a > 0
+            if (greater(_a_sub, zero).proven() and
+                greater_eq(_x_sub, zero).proven()):
+                if isinstance(operand_relation, Less):
+                    from proveit.numbers.exponentiation import exp_pos_less
+                    bound = exp_pos_less.instantiate(
+                            {x: _x_sub, y: _y_sub, a: _a_sub})
+                elif isinstance(operand_relation, LessEq):
+                    from proveit.numbers.exponentiation import exp_pos_lesseq
+                    bound = exp_pos_lesseq.instantiate(
+                            {x: _x_sub, y: _y_sub, a: _a_sub})
+                else:
+                    raise TypeError(
+                        "In Exp.bound_via_operand_bound(), the 'operand_relation' "
+                        "argument is expected to be a 'Less', 'LessEq', 'greater', "
+                        "or 'greater_eq' relation. Instead we have {}.".
+                        format(operand_relation))
+
+            # Cases (3) and (4): exponent a ≥ 0
+            elif (greater_eq(_a_sub, zero).proven() and
+                greater(_x_sub, zero).proven()):
+                if isinstance(operand_relation, Less):
+                    from proveit.numbers.exponentiation import exp_nonneg_less
+                    bound = exp_nonneg_less.instantiate(
+                            {x: _x_sub, y: _y_sub, a: _a_sub})
+                elif isinstance(operand_relation, LessEq):
+                    from proveit.numbers.exponentiation import exp_nonneg_lesseq
+                    bound = exp_nonneg_lesseq.instantiate(
+                            {x: _x_sub, y: _y_sub, a: _a_sub})
+                else:
+                    raise TypeError(
+                        "In Exp.bound_via_operand_bound(), the 'operand_relation' "
+                        "argument is expected to be a 'Less', 'LessEq', 'greater', "
+                        "or 'greater_eq' relation. Instead we have {}.".
+                        format(operand_relation))
+
+            # Cases (5) and (6): exponent a < 0
+            elif (Less(_a_sub, zero).proven() and
+                greater(_x_sub, zero).proven()):
+                if isinstance(operand_relation, Less):
+                    from proveit.numbers.exponentiation import exp_neg_less
+                    bound = exp_neg_less.instantiate(
+                            {x: _x_sub, y: _y_sub, a: _a_sub})
+                elif isinstance(operand_relation, LessEq):
+                    from proveit.numbers.exponentiation import exp_neg_lesseq
+                    bound = exp_neg_lesseq.instantiate(
+                            {x: _x_sub, y: _y_sub, a: _a_sub})
+                else:
+                    raise TypeError(
+                        "In Exp.bound_via_operand_bound(), the 'operand_relation' "
+                        "argument is expected to be a 'Less', 'LessEq', 'greater', "
+                        "or 'greater_eq' relation. Instead we have {}.".
+                        format(operand_relation))
+
+            # Cases (7) and (8): exponent a ≤ 0
+            elif (LessEq(_a_sub, zero).proven() and
+                greater(_x_sub, zero).proven()):
+                if isinstance(operand_relation, Less):
+                    from proveit.numbers.exponentiation import exp_nonpos_less
+                    bound = exp_nonpos_less.instantiate(
+                            {x: _x_sub, y: _y_sub, a: _a_sub})
+                elif isinstance(operand_relation, LessEq):
+                    from proveit.numbers.exponentiation import exp_nonpos_lesseq
+                    bound = exp_nonpos_lesseq.instantiate(
+                            {x: _x_sub, y: _y_sub, a: _a_sub})
+                else:
+                    raise TypeError(
+                        "In Exp.bound_via_operand_bound(), the 'operand_relation' "
+                        "argument is expected to be a 'Less', 'LessEq', 'greater', "
+                        "or 'greater_eq' relation. Instead we have {}.".
+                        format(operand_relation))
+
+            # Cases (9) and (10): exponent a = 2
+            # with x < y < 0 or x ≤ y < 0
+
+            elif (_a_sub == two and
+                Less(_y_sub, zero).proven()):
+                if isinstance(operand_relation, Less):
+                    from proveit.numbers.exponentiation import (
+                            exp_even_neg_base_less)
+                    bound = exp_even_neg_base_less.instantiate(
+                            {x: _x_sub, y: _y_sub, a: _a_sub})
+                elif isinstance(operand_relation, LessEq):
+                    from proveit.numbers.exponentiation import (
+                            exp_even_neg_base_lesseq)
+                    bound = exp_even_neg_base_lesseq.instantiate(
+                            {x: _x_sub, y: _y_sub, a: _a_sub})
+                else:
+                    raise TypeError(
+                        "In Exp.bound_via_operand_bound(), the 'operand_relation' "
+                        "argument is expected to be a 'Less', 'LessEq', 'greater', "
+                        "or 'greater_eq' relation. Instead we have {}.".
+                        format(operand_relation))
+
+            else:
+                raise ValueError(
+                        "In calling Exp.bound_via_operand_bound(), a "
+                        "specific matching case was not found for {}.".
+                        format(self))
+
+        # II. 2nd main case: the user-supplied operand relation involves
+        #    the EXPONENT of the Exp expression a^x
+        elif lhs == self.exponent:
+
+            # Several cases to consider (others to be developed)
+            # considering the Exp expression a^x with a, x in Real:
+            #  (1) a > 1, x < y
+            #  (2) a > 1, x ≤ y
+            #  (3) a > 1, y < x
+            #  (4) a > 1, y ≤ x
+            # Other cases to be developed involving base a < 1,
+            # which produces a monotonically-decreasing function.
+
+            # Cases (1)-(4): base a > 1, a^x monotonically increasing
+            if (greater(_a_sub, one).proven() and
+                InSet(_x_sub, Real).proven()):
+                if isinstance(operand_relation, Less):
+                    from proveit.numbers.exponentiation import (
+                            exp_monotonicity_large_base_less)
+                    bound = exp_monotonicity_large_base_less.instantiate(
+                            {x: _x_sub, y: _y_sub, a: _a_sub})
+                elif isinstance(operand_relation, LessEq):
+                    from proveit.numbers.exponentiation import (
+                        exp_monotonicity_large_base_less_eq)
+                    bound = exp_monotonicity_large_base_less_eq.instantiate(
+                            {x: _x_sub, y: _y_sub, a: _a_sub})
+                else:
+                    raise TypeError(
+                        "In Exp.bound_via_operand_bound(), the 'operand_relation' "
+                        "argument is expected to be a 'Less', 'LessEq', 'greater', "
+                        "or 'greater_eq' relation. Instead we have {}.".
+                        format(operand_relation))
 
         if bound.rhs == self:
             return bound.with_direction_reversed()
