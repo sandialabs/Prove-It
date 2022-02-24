@@ -399,12 +399,18 @@ class Mult(NumberOperation):
             # The simplification of the operands may not have
             # worked hard enough.  Let's work harder if we
             # must evaluate.
-            for factor in self.factors:
+            expr = self
+            eq = TransRelUpdater(expr)
+            for _k, factor in enumerate(self.factors):
                 if not is_irreducible_value(factor):
-                    factor.evaluation()
-            # Start over now that the terms are all evaluated to
-            # irreductible values.
-            return self.evaluation()
+                    eq.update(expr.inner_expr()[_k].evaluation())
+            if expr != self:
+                # Start over now that the terms are all evaluated to
+                # irreductible values.
+                eq.update(expr.evaluation())
+                return eq.relation
+            raise NotImplementedError(
+                "Cabability to evaluate %s is not implemented"%expr)
         
         if Mult._simplification_directives_.irreducibles_in_front:
             # Move irreducibles to the front.
