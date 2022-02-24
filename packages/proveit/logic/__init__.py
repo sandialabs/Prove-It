@@ -9,6 +9,7 @@ from .equality import (
     NotEquals,
     evaluate_truth,
     evaluate_falsehood,
+    evaluation_or_simplification,
     SimplificationError,
     EvaluationError)
 from .irreducible_value import IrreducibleValue, is_irreducible_value
