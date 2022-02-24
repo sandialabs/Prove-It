@@ -415,18 +415,6 @@ class Len(Operation):
         computation = self.computation()
         return computation.inner_expr().rhs.evaluate()
 
-    @equality_prover('simplified', 'simplify')
-    def simplification(self, **defaults_config):
-        '''
-        Returns a proven simplification equation for this Len
-        expression assuming.  Performs the "computation" of the
-        Len expression and then simplifies the right side.
-
-        Note: simplifying the operand, when it is an ExprTuple,
-        is not so important when evaluating its length.
-        '''
-        return self.computation(auto_simplify=True)
-
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
                                **defaults_config):
@@ -435,7 +423,10 @@ class Len(Operation):
         expression assuming.  Performs the "computation" of the
         Len expression and then simplifies the right side.
         '''
-        return self.computation(auto_simplify=True)
+        if must_evaluate:
+            return self.computation(auto_simplify=True)
+        else:
+            return Operation.shallow_simplification(self)
 
     def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
         from proveit.core_expr_types.tuples import (
