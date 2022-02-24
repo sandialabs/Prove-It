@@ -56,13 +56,18 @@ class Operation(Expression):
                 operands = composite_expression(operands)
             self.operands = operands
         else:
+            orig_operand_or_operands = operand_or_operands
             operand_or_operands = single_or_composite_expression(
                 operand_or_operands, do_singular_reduction=True)
             if isinstance(operand_or_operands, Composite):
                 # a composite of multiple operands
                 self.operands = operand_or_operands
             else:
-                self.operands = ExprTuple(operand_or_operands)
+                if isinstance(orig_operand_or_operands, Composite):
+                    self.operands = orig_operand_or_operands
+                else:
+                    self.operands = ExprTuple(operand_or_operands)
+
         def raise_bad_operator_type(operator):
             raise TypeError("An operator may not be an explicit Lambda map "
                             "like %s; this is necessary to avoid a Curry's "

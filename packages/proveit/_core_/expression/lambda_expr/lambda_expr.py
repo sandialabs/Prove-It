@@ -145,10 +145,10 @@ class Lambda(Expression):
 
         # Note: a Lambda body may be an ExprRange which is useful
         # for making nested ranges of ranges.
-        # However, this is not allowed in the "operation substitution"
-        # reduction because it does not respect arity of the function
-        # outcome.  Without such a resctriction you end up being able
-        # to prove that
+        # However, this must not be allowed in the "operation 
+        # substitution" reduction (in Operation.basic_replaced)
+        # because it does not respect arity of the function outcome.
+        # Without such a restriction you end up being able to prove
         # |f_1(i_1), ..., f_1(j_1), ......, f_n(i_n), ..., f_n(j_n)| = n
         # WHICH WOULD BE WRONG, IN GENERAL!
         body = single_or_composite_expression(body,
@@ -174,6 +174,9 @@ class Lambda(Expression):
                             %(param, param_var, body))
         sub_exprs = (self.parameters, self.body)
         Expression.__init__(self, ['Lambda'], sub_exprs, styles=styles)
+        # Increase the number of potentially-independent internal bound
+        # variables; this count will help produce a canonical form.
+        self._num_indep_internal_bound_vars += self.parameters.num_entries()
 
     @classmethod
     def _make(sub_class, core_info, sub_expressions, *, styles):
@@ -251,8 +254,10 @@ class Lambda(Expression):
                 effective_param_vars.append(param_var)
                 
         # Assign canonical labels to the parameters using the first
-        # available dummy variable, skipping over free variables that
-        # happen to match any of these dummy variables.
+        # non-contestable dummy variable (using the number of
+        # potentially-independent interanlly bound variables to
+        # determine what may be contestable), skipping over free 
+        # variables that happen to match any of these dummy variables.
         canonical_parameters = parameters.canonical_version()
         canonical_body = self.body.canonical_version()
         canonical_body_free_vars = free_vars(canonical_body)
@@ -260,9 +265,7 @@ class Lambda(Expression):
         lambda_free_vars = set(canonical_body_free_vars)
         lambda_free_vars.update(canonical_parameters_free_vars)
         lambda_free_vars.difference_update(effective_param_vars)
-        internally_bound_vars = (used_vars(canonical_body) -
-                                 canonical_body_free_vars)
-        start_index = len(internally_bound_vars)
+        start_index = self.body._num_indep_internal_bound_vars
         dummy_index = 0
         while dummy_index < start_index:
             dummy_var = safe_dummy_var(start_index=dummy_index)
