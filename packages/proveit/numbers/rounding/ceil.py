@@ -6,7 +6,7 @@ from proveit.numbers.number_sets import Integer, Natural, NaturalPos
 from proveit.numbers.rounding.rounding_methods import (
     apply_rounding_elimination, apply_rounding_extraction,
     apply_shallow_simplification, rounding_deduce_in_number_set,
-    rounding_deduce_number_set)
+    rounding_deduce_number_set, rounding_bound_via_operand_bound)
 
 
 class Ceil(NumberOperation, Function):
@@ -102,3 +102,17 @@ class Ceil(NumberOperation, Function):
         restrictive standard number set we can readily know.
         '''
         return rounding_deduce_number_set(self)
+
+    @relation_prover
+    def bound_via_operand_bound(self, operand_relation, **defaults_config):
+        '''
+        Deduce a bound on this Ceiling (Ceil) object, given a
+        bound (the operand_relation) on its operand.
+        '''
+        from proveit.numbers.rounding import (
+                ceil_increasing_less, ceil_increasing_less_eq,
+                ceil_of_real_above_int)
+
+        return rounding_bound_via_operand_bound(
+                self, operand_relation, ceil_increasing_less,
+                ceil_increasing_less_eq, ceil_of_real_above_int)
