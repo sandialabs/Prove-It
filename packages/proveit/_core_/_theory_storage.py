@@ -1534,15 +1534,19 @@ class TheoryFolderStorage:
             if isinstance(named_expr_address[0], str):
                 # Must be a special expression (axiom, theorem,
                 module_name = named_expr_address[0]  # or common expression)
-                item_names[named_expr_and_style_id] = item_name \
-                    = named_expr_address[-1]
+                item_name = named_expr_address[-1]
                 # Split off '.expr' part if it is a Theorem or Axiom
                 # Judgment
                 obj_name = item_name.split('.')[0]
                 module_name = self._moduleAbbreviatedName(module_name,
                                                           obj_name)
                 is_unique = (len(named_items[item_name]) == 1)
-                from_imports.setdefault(module_name, []).append(obj_name)
+                if not is_unique:
+                    direct_imports.add(module_name)
+                    item_name = module_name + '.' + item_name
+                else:
+                    from_imports.setdefault(module_name, []).append(obj_name)
+                item_names[named_expr_and_style_id] = item_name
             else:
                 # Expression must be an attribute of a class
                 # (e.g., '_operator_')
@@ -1904,12 +1908,7 @@ class TheoryFolderStorage:
             with_style_calls = '.' + with_style_calls
 
         if expr.__class__ == ExprTuple or expr.__class__ == NamedExprs:
-            if isinstance(expr, ExprTuple):
-                composite_str = arg_str
-            else:
-                assert isinstance(expr, NamedExprs)
-                # list of (name, value) tuples
-                composite_str = '[' + arg_str + ']'
+            composite_str = arg_str
             if is_sub_expr and expr.__class__ in (ExprTuple,
                                                   NamedExprs, ExprArray):
                 # It is a sub-Expression and a standard composite class.

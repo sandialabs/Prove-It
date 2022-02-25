@@ -140,7 +140,7 @@ class NotInClass(Relation):
         As a last resort, try 'conclude_as_folded'.
         '''
         from proveit import ProofFailure
-        from proveit.logic import SubsetEq, SimplificationError
+        from proveit.logic import SubsetEq, evaluation_or_simplification
         
         if self.negated().disproven():
             return self.conclude_as_folded()
@@ -161,36 +161,23 @@ class NotInClass(Relation):
                         # x not in S.
                         return rel.derive_subset_nonmembership(
                             self.element)
-        # No known nonmembership works.  Let's see if there is a known
-        # simplification of the element before trying anything else.
+
+        # Try the standard Relation strategies -- evaluate or
+        # simplify both sides.
         try:
-            elem_simplification = self.element.simplification(automation=True)
-            if elem_simplification.lhs == elem_simplification.rhs:
-                elem_simplification = None  # reflection doesn't count
-        except (SimplificationError, ProofFailure,
-                UnsatisfiedPrerequisites, NotImplementedError):
-            elem_simplification = None
+            return Relation.conclude(self)
+        except ProofFailure:
+            # Both sides are already irreducible or simplified
+            # or we were unable to simplify either side.
+            pass
 
-        # If the element simplification succeeded, prove the
-        # nonmembership via the simplified form of the element.
-        if elem_simplification is not None:
-            simple_elem = elem_simplification.rhs
-            simple_nonmembership = self.__class__(
-                simple_elem, self.domain).prove(preserve_all=True)
-            inner_expr = simple_nonmembership.inner_expr().element
-            return elem_simplification.sub_left_side_into(inner_expr)
+        # If it has a 'nonmembership_object', try to conclude
+        # nonmembership using that.
+        if hasattr(self, 'nonmembership_object'):
+            return self.nonmembership_object.conclude()
         else:
-            # If it has a 'nonmembership_object', try to conclude
-            # nonmembership using that.
-            if hasattr(self, 'nonmembership_object'):
-                return self.nonmembership_object.conclude()
-            else:
-                # Otherwise, attempt to conclude via Not(x in S)
-                return self.conclude_as_folded()
-
-        raise ProofFailure(self, defaults.assumptions,
-                "%s.conclude() has failed to find a proof for the "
-                "non-membership: %s"%(self.__class__, self))
+            # Otherwise, attempt to conclude via Not(x in S)
+            return self.conclude_as_folded()
 
     @prover
     def conclude_as_folded(self, **defaults_config):

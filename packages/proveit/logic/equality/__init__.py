@@ -2,6 +2,7 @@ from .equals import (
     Equals,
     evaluate_truth,
     evaluate_falsehood,
+    evaluation_or_simplification,
     SimplificationError,
     EvaluationError)
 from .not_equals import NotEquals

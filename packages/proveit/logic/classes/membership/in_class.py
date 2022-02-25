@@ -1,6 +1,6 @@
 from proveit import (Judgment, Literal, defaults, USE_DEFAULTS,
                      prover, equality_prover, relation_prover,
-                     UnsatisfiedPrerequisites)
+                     ProofFailure, UnsatisfiedPrerequisites)
 from proveit.relation import Relation
 
 class InClass(Relation):
@@ -137,9 +137,7 @@ class InClass(Relation):
         again, this time using automation to push the simplification 
         through if possible.
         '''
-        from proveit.logic import Equals, SubsetEq
-        from proveit import ProofFailure
-        from proveit.logic import SimplificationError
+        from proveit.logic import Equals, SubsetEq, evaluation_or_simplification
 
         # See if the element, or something known to be equal to
         # the element, is known to be a member of the domain or a subset
@@ -180,36 +178,25 @@ class InClass(Relation):
                 return elem_sub_in_domain.inner_expr().element.substitute(
                         self.element)
 
-        # No known membership works.  Let's try to work with a
-        # simplification of the element instead.
-        elem_simplification = None
+        # Try the standard Relation strategies -- evaluate or
+        # simplify both sides.
         try:
-            elem_simplification = self.element.simplification()
-            if elem_simplification.lhs == elem_simplification.rhs:
-                elem_simplification = None  # reflection doesn't count
-        except (SimplificationError, ProofFailure,
-                UnsatisfiedPrerequisites, NotImplementedError):
+            return Relation.conclude(self)
+        except ProofFailure:
+            # Both sides are already irreducible or simplified
+            # or we were unable to simplify either side.
             pass
 
-        # If the element simplification succeeded, prove the membership
-        # via the simplified form of the element.
-        if elem_simplification is not None:
-            simple_elem = elem_simplification.rhs
-            simple_membership = self.__class__(
-                simple_elem, self.domain).prove()
-            inner_expr = simple_membership.inner_expr().element
-            return elem_simplification.sub_left_side_into(inner_expr)
-        else:
-            # Unable to simplify the element.  Try to conclude via
-            # the 'membership_object' if there is one.
-            if hasattr(self, 'membership_object'):
-                return self.membership_object.conclude()
+        # Unable to simplify the element.  Try to conclude via
+        # the 'membership_object' if there is one.
+        if hasattr(self, 'membership_object'):
+            return self.membership_object.conclude()
 
-            raise ProofFailure(self, defaults.assumptions,
-                               "Unable to conclude automatically; "
-                               "the domain, %s, has no 'membership_object' "
-                               "method with a strategy for proving "
-                               "membership." % self.domain)
+        raise ProofFailure(self, defaults.assumptions,
+                           "Unable to conclude automatically; "
+                           "the domain, %s, has no 'membership_object' "
+                           "method with a strategy for proving "
+                           "membership." % self.domain)
     
     @staticmethod
     def yield_known_memberships(element, assumptions=USE_DEFAULTS):
@@ -323,3 +310,4 @@ class ClassMembership:
         raise NotImplementedError(
             "Membership object, %s, has no 'deduce_in_bool' method implemented" % str(
                 self.__class__))
+

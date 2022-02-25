@@ -1,6 +1,7 @@
 from proveit import (defaults, ExprTuple, Function, InnerExpr, Literal,
                      var_range, USE_DEFAULTS, prover, equality_prover,
                      relation_prover, SimplificationDirectives)
+from proveit.logic.irreducible_value import is_irreducible_value
 from proveit.abstract_algebra.generic_methods import (
     apply_commutation_thm, generic_permutation)
 from proveit import TransRelUpdater
@@ -57,8 +58,15 @@ class Set(Function):
         if Set._simplification_directives_.eliminate_duplicates:
             # Eliminate any duplicates.
             expr = eq.update(expr.reduction())
+
+        if must_evaluate:
+            # Evaluate all of the elements.
+            for _k, elem in enumerate(self.elements):
+                if not is_irreducible_value(elem):
+                    expr = eq.update(expr.inner_expr().elements[_k].evaluate())
         
-        if Set._simplification_directives_.sort_if_literal_integers:
+        if (must_evaluate or 
+                Set._simplification_directives_.sort_if_literal_integers):
             # Sort if all of the elements are literal integers.
             int_elems = []
             for elem in expr.operands:
@@ -75,8 +83,32 @@ class Set(Function):
                 for elem in int_elems:
                     new_order.append(elem_to_indices[num(elem)].pop(0))
                 eq.update(expr.permutation(new_order=new_order))
+            elif must_evaluate:
+                raise NotImplementedError(
+                    "Evaluation of an enumerate set over anything other than "
+                    "literal integers is not yet supported.")
         
         return eq.relation
+
+    def is_irreducible_value(self):
+        '''
+        As Set is irreducible if all of its entries are irreducible
+        numbers in a sorted order with no duplicates.
+        '''
+        from proveit.logic import TRUE, FALSE, is_irreducible_value
+        if all(is_irreducible_value(entry) for entry in self.operands):
+            for _a, _b in zip(self.operands[:-1], self.operands[1:]):
+                if not {_a, _b}.isdisjoint({TRUE, FALSE}):
+                    # Don't have a chosen way or need to sort TRUE/FALSE
+                    # at this time.
+                    return False
+                from proveit.numbers import Less
+                try:
+                    Less(_a, _b).prove()
+                except Exception:
+                    return False
+            return True
+        return False
 
     @prover
     def prove_by_cases(self, forall_stmt, **defaults_config):

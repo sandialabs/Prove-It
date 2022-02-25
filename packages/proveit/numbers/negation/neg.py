@@ -177,7 +177,7 @@ class Neg(NumberOperation):
             # The simplification of the operands may not have
             # worked hard enough.  Let's work harder if we
             # must evaluate.
-            self.operand.evalution()
+            self.operand.evaluation()
             return self.evaluation()
 
         if self.operand == zero:

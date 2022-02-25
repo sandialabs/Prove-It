@@ -305,6 +305,16 @@ class Expression(metaclass=ExprType):
             self._meaning_data = self._labeled_meaning_data
             self._meaning_id = self._meaning_data._unique_id
         
+        # Track the number of potentially-independent interanally
+        # bound variables to simplify generating a canonical form.
+        # This number will be increased in Lambda.__init__ according
+        # to the number of its parameters.
+        if len(self._sub_expressions) == 0:
+            self._num_indep_internal_bound_vars = 0
+        else:
+            self._num_indep_internal_bound_vars = max(
+                    subexpr._num_indep_internal_bound_vars for 
+                    subexpr in self._sub_expressions)
         """
         if defaults.use_consistent_styles:
             # Make this the default style.
@@ -1276,7 +1286,6 @@ class Expression(metaclass=ExprType):
         Helper method for _auto_simplified to handle auto-simplification
         replacements for sub-expressions.
         '''
-        from proveit import ExprRange
         # Recurse into the sub-expressions.
         sub_exprs = self._sub_expressions
         subbed_sub_exprs = \
@@ -1288,14 +1297,6 @@ class Expression(metaclass=ExprType):
                subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
             # Nothing change, so don't remake anything.
             return self
-        if isinstance(self, ExprRange):
-            # This is an ExprRange.  If the start and end indices
-            # are the same, force them to be different here
-            # (we can't create an ExprRange where they are the same)
-            # but it will be simplified in the containing ExprTuple
-            # via a singlular range reduction.
-            subbed_sub_exprs = ExprRange._proper_sub_expr_replacements(
-                sub_exprs, subbed_sub_exprs)
         return self.__class__._checked_make(
             self._core_info, subbed_sub_exprs,
             style_preferences=self._style_data.styles)
@@ -1389,6 +1390,15 @@ class Expression(metaclass=ExprType):
         # No other default options (though the Operation class
         # has some options via simplifying operands).
         raise EvaluationError(self)
+
+    @equality_prover('evaluated', 'evaluate')
+    def evaluation(self, **defaults_config):
+        '''
+        If possible, return a Judgment of this expression equal to an
+        irreducible value.  This default raises an EvaluationError.
+        '''       
+        from proveit.logic import EvaluationError
+        raise EvaluationError("No evaluation for %s"%self)
 
     @equality_prover('simplified', 'simplify')
     def simplification(self, **defaults_config):

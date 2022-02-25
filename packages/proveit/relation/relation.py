@@ -35,16 +35,10 @@ class Relation(Operation):
         Try to conclude the Relation by simplifying both
         sides.
         '''
-        from proveit.logic import Equals, SimplificationError
+        from proveit.logic import Equals, evaluation_or_simplification
         normal_lhs, normal_rhs = self.normal_lhs, self.normal_rhs
-        try:
-            normal_lhs_simplification = normal_lhs.simplification()
-        except SimplificationError:
-            normal_lhs_simplification = Equals(normal_lhs, normal_lhs).prove()
-        try:
-            normal_rhs_simplification = normal_rhs.simplification()
-        except SimplificationError:
-            normal_rhs_simplification = Equals(normal_rhs, normal_rhs).prove()
+        normal_lhs_simplification = evaluation_or_simplification(normal_lhs)
+        normal_rhs_simplification = evaluation_or_simplification(normal_rhs)
         simp_normal_lhs = normal_lhs_simplification.rhs
         simp_normal_rhs = normal_rhs_simplification.rhs
         if (simp_normal_lhs != normal_lhs) or (simp_normal_rhs != normal_rhs):
