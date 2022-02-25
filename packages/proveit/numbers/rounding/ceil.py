@@ -1,5 +1,7 @@
-from proveit import (defaults, Function, InnerExpr, Literal, USE_DEFAULTS,
+from proveit import (defaults, Function, InnerExpr, Literal,
+                     USE_DEFAULTS,
                      relation_prover, equality_prover)
+from proveit.numbers import NumberOperation
 from proveit.numbers.number_sets import Integer, Natural, NaturalPos
 from proveit.numbers.rounding.rounding_methods import (
     apply_rounding_elimination, apply_rounding_extraction,
@@ -7,7 +9,7 @@ from proveit.numbers.rounding.rounding_methods import (
     rounding_deduce_number_set)
 
 
-class Ceil(Function):
+class Ceil(NumberOperation, Function):
     # operator of the Ceil operation.
     _operator_ = Literal(string_format='ceil', theory=__file__)
 
