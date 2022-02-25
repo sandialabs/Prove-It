@@ -1201,6 +1201,7 @@ class Add(NumberOperation):
                 elif not greater_eq(operand, zero).proven():
                     # Not non-negative
                     val = None
+                    break # Forget it.
             if val is not None:
                 if number_set == NaturalPos:
                     temp_thm = add_nat_pos_from_non_neg
