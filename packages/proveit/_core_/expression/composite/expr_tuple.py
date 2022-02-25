@@ -698,7 +698,10 @@ class ExprTuple(Composite, Expression):
                 else:
                     # Merge an ExprRange and a singular item.
                     _i, _j = eq.expr[0].true_start_index, eq.expr[0].true_end_index
-                    _k = simplified_index(Add(_j, one))
+                    try:
+                        _k = lambda_map.extract_argument(eq.expr[1])
+                    except ArgumentExtractionError:
+                        _k = simplified_index(Add(_j, one))
                     if _k == Add(_j, one):
                         merger = merge_extension.instantiate(
                             {f: lambda_map, i: _i, j: _j})
