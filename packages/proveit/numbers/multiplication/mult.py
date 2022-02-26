@@ -300,6 +300,7 @@ class Mult(NumberOperation):
         Deals with disassociating any nested multiplications,
         simplifying negations, and factors of one, and factors of 0.
         '''
+        from proveit.numbers import Exp
         from . import mult_zero_left, mult_zero_right, mult_zero_any
         from . import empty_mult, unary_mult_reduction
 
@@ -375,6 +376,32 @@ class Mult(NumberOperation):
         if is_irreducible_value(expr):
             return eq.relation  # done
 
+
+        # We should generalize this to work analogously like combining
+        # and sorting terms in Add.shallow_simplification, but this
+        # at least handles the simple case of combining exponents
+        # when all factors are exponents with the same base.
+        # (ExprRanges are not yet handled, but we can do this when
+        # this is improved further).
+        if isinstance(expr, Mult):
+            common_base = None
+            for factor in self.factors:
+                factor_base = None
+                if isinstance(factor, Exp):
+                    factor_base = factor.base
+                else:
+                    common_base = None
+                    break
+                if common_base is None:
+                    common_base = factor_base
+                elif common_base != factor_base:
+                    common_base = None
+                    break
+            if common_base is not None:
+                expr = eq.update(expr.exponent_combination())
+
+
+        
         if expr != self:
             if (must_evaluate or (
                     isinstance(expr, Mult) and 
