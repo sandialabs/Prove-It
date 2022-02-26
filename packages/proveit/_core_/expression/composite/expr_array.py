@@ -260,6 +260,15 @@ class ExprArray(ExprTuple):
         # Wrap with two horizontal dots before and after.
         n = nested_range_depth
         return  (r'\cdot \cdot '*n + expr_latex + r' \cdot \cdot'*n)    
+
+    def string(self):
+        return self._simple_formatted(format_type='string')
+
+    def _simple_formatted(self, format_type):
+        
+        return (self.__class__.__name__ + 
+                ExprTuple.formatted(self, format_type=format_type, fence=True))
+        
     
     def get_latex_formatted_cells(self, orientation='horizontal',
                                   vertical_explicit_cell_latex_fn=None,
@@ -277,7 +286,8 @@ class ExprArray(ExprTuple):
         pair should map to keyword arguments to be passed to the
         to the 'latex' calls for formatting each cell.  These are
         zero-based cell indices (not the 1-based element indices).
-        For VertExprArray.get_latex_formatted_cells, this is labeled
+        For VertExprArray.get_latex_formatted_cells, this i
+        s labeled
         col_row_to_latex_kwargs but either way corresponds to 
         (outer index, inner index).
         '''
@@ -436,7 +446,13 @@ class ExprArray(ExprTuple):
         
         # Check that the columns are properly aligned by calculating
         # element positions of each column.
-        self.get_inner_format_cell_element_positions()
+        try:
+            self.get_inner_format_cell_element_positions()
+        except ValueError:
+            # If rows/columns aren't lined up properly, format at it 
+            # the simple was (as a tuple of tuples but with the class
+            # indicated).
+            return self._simple_formatted(format_type='latex')
         
         # Get latex-formatted cells.
         formatted_cells = self.get_latex_formatted_cells(
