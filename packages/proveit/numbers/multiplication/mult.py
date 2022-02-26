@@ -368,16 +368,25 @@ class Mult(NumberOperation):
         # Peform any cancelations between numerators and
         # denominators of different factors.  This will also
         # eliminate factors of one.
-        expr = eq.update(expr.cancelations())
+        # Since this is supposed to be a shallow simplification,
+        # turn off auto-simplification for these cancelations.
+        expr = eq.update(expr.cancelations(auto_simplify=False))
 
         if is_irreducible_value(expr):
             return eq.relation  # done
 
         if expr != self:
-            # Try starting over with a call to shallow_simplification
-            # (an evaluation may already be known).
-            eq.update(expr.shallow_simplification(
-                    must_evaluate=must_evaluate))
+            if (must_evaluate or (
+                    isinstance(expr, Mult) and 
+                    not set(expr.factors.entries).issubset(
+                            self.factors.entries))):
+                # Try starting over with a call to
+                # shallow_simplification, but only if must_evaluate
+                # is True or we've done nothing but make some
+                # cancelations -- that way, the simplification stays
+                # shallow.
+                eq.update(expr.shallow_simplification(
+                        must_evaluate=must_evaluate))
             return eq.relation
 
         if all(is_literal_int(factor) for factor in self.factors):
