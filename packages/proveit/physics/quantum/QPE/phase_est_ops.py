@@ -145,7 +145,7 @@ class ModAdd(Operation):
             return number_set.deduce_elem_in_set(self)
         if InSet(self, number_set).proven():
             # proven as a side-effect
-            return InSet(self, number_set)
+            return InSet(self, number_set).prove()
         raise NotImplementedError(
                 "Proving %s in %s has not been implemented"
                 %(self, number_set))

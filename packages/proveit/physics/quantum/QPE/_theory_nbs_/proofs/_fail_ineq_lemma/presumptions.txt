@@ -324,7 +324,6 @@ proveit.numbers.summation.summation_nat_closure
 proveit.numbers.summation.summation_nat_pos_closure
 proveit.numbers.summation.summation_real_closure
 proveit.numbers.summation.weak_summation_from_summands_bound
-proveit.physics.quantum.QPE._all_abs_alpha_l_sqrd_are_real
 proveit.physics.quantum.QPE._all_alpha_l_is_complex
 proveit.physics.quantum.QPE._alpha_l_sqrd_ineq
 proveit.physics.quantum.QPE._fail_sum
