@@ -3,7 +3,8 @@ from proveit import (defaults, Function, InnerExpr, Literal, USE_DEFAULTS,
 from proveit.numbers.number_sets import Integer, Natural
 from proveit.numbers.rounding.rounding_methods import (
     apply_rounding_elimination, apply_rounding_extraction,
-    apply_shallow_simplification, rounding_deduce_in_number_set)
+    apply_shallow_simplification, rounding_deduce_in_number_set,
+    rounding_deduce_number_set)
 
 
 class Floor(Function):
@@ -22,7 +23,8 @@ class Floor(Function):
             return theorems.floor_real_closure
 
     def latex(self, **kwargs):
-        return r'\lfloor ' + self.operand.latex(fence=False) + r'\rfloor'
+        return (r'\left\lfloor ' + self.operand.latex(fence=False) 
+                + r'\right\rfloor')
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
@@ -98,3 +100,12 @@ class Floor(Function):
 
         return rounding_deduce_in_number_set(
             self, number_set, floor_is_an_int, floor_real_pos_closure)
+
+    @relation_prover
+    def deduce_number_set(self, **defaults_config):
+        '''
+        Prove membership of this expression in the most 
+        restrictive standard number set we can readily know.
+        '''
+        return rounding_deduce_number_set(self)
+

@@ -1,4 +1,4 @@
-from .neg import Neg
+from .neg import Neg, negated
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

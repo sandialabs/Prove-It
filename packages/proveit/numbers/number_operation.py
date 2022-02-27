@@ -1,8 +1,16 @@
-from proveit import (Expression, Judgment, Operation, ExprTuple,
-                     generate_inner_expressions, USE_DEFAULTS,
-                     prover, relation_prover)
-from proveit.relation import TransRelUpdater
 from collections import deque
+from proveit import (Expression, Judgment, Operation, ExprTuple, ExprRange,
+                     generate_inner_expressions, USE_DEFAULTS,
+                     prover, relation_prover,
+                     ProofFailure, UnsatisfiedPrerequisites)
+from proveit.relation import TransRelUpdater
+from .number_sets import (
+    Natural, NaturalPos,
+    Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
+    Rational, RationalNonZero, RationalPos, RationalNeg, RationalNonNeg,
+    RationalNonPos,
+    Real, RealNonZero, RealNeg, RealPos, RealNonNeg, RealNonPos,
+    Complex, ComplexNonZero)
 
 class NumberOperation(Operation):
     '''
@@ -131,6 +139,10 @@ class NumberOperation(Operation):
 
 @relation_prover
 def deduce_in_number_set(expr, number_set, **defaults_config):
+    '''
+    Prove that 'expr' is an Expression that respresents a number
+    in the given 'number_set'.
+    '''
     from proveit.logic import InSet
     membership = InSet(expr, number_set)
     if membership.proven():
@@ -141,3 +153,213 @@ def deduce_in_number_set(expr, number_set, **defaults_config):
         return expr.deduce_in_number_set(number_set)
     # Try prove().
     return membership.prove()
+
+def quick_simplified_index(expr):
+    '''
+    Return a simplified version of this expression with a 
+    quick-n-dirty approach suitable for additively shifted and/or
+    negated integer indices and nested versions thereof.
+    In particular, negations are distributed nested additionas are 
+    ungrouped, literal integers are extracted, added, and placed at the
+    end, and cancelations are made on ndividual terms as well as 
+    expression ranges or portions of expression ranges.  We freely 
+    assume terms represent numbers and expression ranges are 
+    well-formed.
+    Used for ExprRange formatting and for hints along the way when
+    provably expanding ExprRanges through an instantiation (this
+    provides hints, but there will be proven requirements to ensure it
+    is right).
+    '''
+    from proveit.numbers import Add, Neg
+    if isinstance(expr, Neg):
+        return Add(expr).quick_simplified()
+    elif isinstance(expr, Add):
+        return expr.quick_simplified()
+    return expr
+
+# Sorted standard number sets from most restrictive to least
+# restrictive.
+sorted_number_sets = (
+    NaturalPos, IntegerNeg, Natural, IntegerNonPos, 
+    IntegerNonZero, Integer,
+    RationalPos, RationalNeg, RationalNonNeg, RationalNonPos,
+    RationalNonZero, Rational,
+    RealPos, RealNeg, RealNonNeg, RealNonPos,
+    RealNonZero, Real,
+    ComplexNonZero, Complex)
+
+standard_number_sets = set(sorted_number_sets)
+
+# Map number sets to the positive number set it contains.
+pos_number_set = {
+    NaturalPos: NaturalPos,
+    Natural: NaturalPos,
+    IntegerNonZero: NaturalPos,
+    Integer: NaturalPos,
+    RationalPos: RationalPos,
+    RationalNonNeg: RationalPos,
+    RationalNonZero: RationalPos,
+    Rational: RationalPos,
+    RealPos: RealPos,
+    RealNonNeg: RealPos,
+    RealNonZero: RealPos,
+    Real: RealPos,
+    Complex: RealPos,
+    ComplexNonZero: RealPos}
+
+# Map number sets to the negative number set it contains.
+neg_number_set = {
+    IntegerNeg: IntegerNeg,
+    IntegerNonPos: IntegerNeg,
+    IntegerNonZero: IntegerNeg,
+    Integer: IntegerNeg,
+    RationalNeg: RationalNeg,
+    RationalNonPos: RationalNeg,
+    RationalNonZero: RationalNeg,
+    Rational: RationalNeg,
+    RealNeg: RealNeg,
+    RealNonPos: RealNeg,
+    RealNonZero: RealNeg,
+    Real: RealNeg,
+    Complex: RealNeg,
+    ComplexNonZero: RealNeg}
+
+# Map number sets to the non-negative number set it contains.
+nonneg_number_set = {
+    Natural: Natural,
+    IntegerNonZero: Natural,
+    Integer: Natural,
+    RationalNonNeg: RationalNonNeg,
+    RationalNonZero: RationalNonNeg,
+    Rational: RationalNonNeg,
+    RealNonNeg: RealNonNeg,
+    RealNonZero: RealNonNeg,
+    Real: RealNonNeg,
+    Complex: RealNonNeg,
+    ComplexNonZero: RealNonNeg}
+
+# Map number sets to the non-positive number set it contains.
+nonpos_number_set = {
+    IntegerNonPos: IntegerNonPos,
+    IntegerNonZero: IntegerNonPos,
+    Integer: IntegerNonPos,
+    RationalNonPos: RationalNonPos,
+    RationalNonZero: RationalNonPos,
+    Rational: RationalNonPos,
+    RealNonPos: RealNonPos,
+    RealNonZero: RealNonPos,
+    Real: RealNonPos,
+    Complex: RealNonPos,
+    ComplexNonZero: RealNonPos}
+
+# Map number sets to the non-zero number set it contains.
+nonzero_number_set = {
+    IntegerNonPos: IntegerNeg,
+    Natural: NaturalPos,
+    IntegerNonZero: IntegerNonZero,
+    Integer: IntegerNonZero,
+    RationalNonPos: RationalNeg,
+    RationalNonNeg: RationalPos,
+    RationalNonZero: RationalNonZero,
+    Rational: RationalNonZero,
+    RealNonPos: RealNeg,
+    RealNonNeg: RealPos,
+    RealNonZero: RealNonZero,
+    Real: RealNonZero,
+    Complex: ComplexNonZero,
+    ComplexNonZero: ComplexNonZero}
+
+@relation_prover
+def deduce_number_set(expr, **defaults_config):
+    '''
+    Prove that 'expr' is an Expression that respresents a number
+    in a standard number set that is as restrictive as we can
+    readily know.
+    '''
+    from proveit.logic import And, InSet, Equals, NotEquals
+    from proveit.numbers import Less, LessEq, zero
+
+    # Find the first (most restrictive) number set that
+    # contains 'expr' or something equal to it.
+    for number_set in sorted_number_sets:
+        membership = None
+        for eq_expr in Equals.yield_known_equal_expressions(expr):
+            if isinstance(eq_expr, ExprRange):
+                membership = And(ExprRange(eq_expr.parameter, 
+                                           InSet(eq_expr.body, number_set),
+                                           eq_expr.true_start_index,
+                                           eq_expr.true_end_index,
+                                           styles=eq_expr.get_styles()))
+            else:
+                membership = InSet(eq_expr, number_set)
+            if membership.proven():
+                break # found a known number set membership
+            else:
+                membership = None
+        if membership is not None:
+            membership = InSet(expr, number_set).prove()
+            break
+
+    if hasattr(expr, 'deduce_number_set'):
+        # Use 'deduce_number_set' method.
+        try:
+            deduced_membership = expr.deduce_number_set()
+        except (UnsatisfiedPrerequisites, ProofFailure):
+            deduced_membership = None
+        if deduced_membership is not None:
+            assert isinstance(deduced_membership, Judgment)
+            if not isinstance(deduced_membership.expr, InSet):
+                raise TypeError("'deduce_number_set' expected to prove an "
+                                "InSet type expression")
+            if deduced_membership.expr.element != expr:
+                raise TypeError("'deduce_number_set' was expected to prove "
+                                "that %s is in some number set"%expr)
+            # See if this deduced number set is more restrictive than
+            # what we had surmised already.
+            deduced_number_set = deduced_membership.domain
+            if membership is None:
+                membership = deduced_membership
+                number_set = deduced_number_set
+            elif (deduced_number_set != number_set and number_set.includes(
+                    deduced_number_set)):
+                number_set = deduced_number_set
+                membership = deduced_membership
+
+    if membership is None:
+        raise UnsatisfiedPrerequisites(
+            "Unable to prove any number membership for %s"%expr)
+
+    # Already proven to be in some number set,
+    # Let's see if we can restrict it further.
+    if Less(zero, expr).proven(): # positive
+        number_set = pos_number_set.get(number_set, None)
+    elif Less(expr, zero).proven(): # negative
+        number_set = neg_number_set.get(number_set, None)
+    elif LessEq(zero, expr).proven(): # non-negative
+        number_set = nonneg_number_set.get(number_set, None)
+    elif LessEq(expr, zero).proven(): # non-positive
+        number_set = nonpos_number_set.get(number_set, None)
+    elif NotEquals(expr, zero).proven():
+        number_set = nonzero_number_set.get(number_set, None)
+    if number_set is None:
+        # Just use what we have already proven.
+        return membership.prove()
+    return InSet(expr, number_set).prove()
+
+def standard_number_set(given_set, **defaults_config):
+    '''
+    For the number set given_set (which might, for example, be a
+    continuous interval, an integer interval, etc.), return the most
+    restrictive number set (such as Real, RealPos, Integer, etc.)
+    that is already known to contain the given_set, or return the
+    original given_set if no such standard set inclusion is already
+    known.
+    '''
+    for std_number_set in sorted_number_sets:
+        # return the first std set that includes our given_set
+        if std_number_set.includes(given_set):
+            return std_number_set
+
+    # return the original given_set if the
+    # for loop above didn't find anything
+    return given_set

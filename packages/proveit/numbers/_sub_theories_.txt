@@ -10,7 +10,9 @@ division
 divisibility
 modular
 exponentiation
+logarithms
 summation
 product
 differentiation
 integration
+functions

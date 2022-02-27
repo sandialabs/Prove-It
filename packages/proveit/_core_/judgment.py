@@ -6,6 +6,7 @@ and its proof (as a Proof object, which may be updated if a newer proof,
 with possibly fewer assumptions, suffices).
 """
 
+from functools import wraps
 from proveit._core_.expression import Expression
 from proveit._core_._unique_data import meaning_data, style_data
 from proveit.decorators import prover
@@ -433,6 +434,7 @@ class Judgment:
         or a pre-existing one.  Update other Judgments that use the
         same 'truth' expression as needed.
         '''
+        from .proof import _ShowProof
         # update Judgment.lookup_dict and use find all of the Judgments
         # with this expr to see if the proof should be updated with the
         # new proof.
@@ -452,7 +454,7 @@ class Judgment:
         # Check to see if the new proof is applicable to any other 
         # Judgment.  It can replace an old proof if it became unusable 
         # or if the newer one uses fewer steps.
-        newproof_numsteps = newproof.num_steps()
+        #newproof_numsteps = newproof.num_steps()
         expr_judgments = Judgment.lookup_dict.setdefault(self.expr, set())
         expr_judgments.add(self)
         for expr_judgment in expr_judgments:
@@ -462,6 +464,8 @@ class Judgment:
                 # replace if there was no pre-existing usable proof or 
                 # the new proof has fewer steps
                 preexisting_proof = expr_judgment.proof()
+                if isinstance(preexisting_proof, _ShowProof):
+                    continue
                 if (preexisting_proof is None or
                         not preexisting_proof.is_usable() or
                         newproof.num_steps() < preexisting_proof.num_steps()):
@@ -635,8 +639,8 @@ class Judgment:
         attr = getattr(self.expr, name)
 
         if hasattr(attr, '__call__'):
-            if name[:5] == 'with_':
-                # 'with_...' methods change the style.  We want to
+            if name[:4] == 'with':
+                # 'with...' methods change the style.  We want to
                 # change the style and the return the judgment.
                 def call_method_for_new_style(*args, **kwargs):
                     new_style_expr = attr.__call__(*args, **kwargs)
@@ -649,6 +653,7 @@ class Judgment:
                 # The attribute is a callable function with
                 # 'defaults_config' as an argument (e.g., a prover).
                 # Automatically include the Judgment assumptions.
+                @wraps(attr)
                 def call_method_with_judgment_assumptions(
                         *args, **defaults_config):
                     if len(self.assumptions) > 0:
@@ -673,12 +678,29 @@ class Judgment:
         return sorted(set(dir(self.__class__) +
                           list(self.__dict__.keys()) + dir(self.expr)))
 
+    def with_matching_style(self, expr):
+        '''
+        Return the Judgement with the style for the right of the
+        turnstile matching the given expression.
+        '''
+        if expr != self.expr:
+            raise ValueError(
+                "Cannot match styles when expressions are do "
+                "not have the same meaning: %s ≠ %s."%(self.expr, expr))
+        if expr._style_id == self.expr._style_id:
+            return self # Nothing has changed
+        return Judgment(expr, self.assumptions)
+
     def with_matching_styles(self, expr, assumptions):
         '''
-        Return the Judgement expression with the styles matching
+        Return the Judgement with the styles matching
         those of the given expression and assumptions.
         '''
-        new_style_expr = self.expr.with_matching_style(expr)
+        if expr != self.expr:
+            raise ValueError(
+                "Cannot match styles when expressions are do "
+                "not have the same meaning: %s ≠ %s."%(self.expr, expr))
+        new_style_expr = expr
         # storing the assumptions in a trivial dictionary will be useful
         # for popping them out.
         assumptions_dict = {
@@ -687,8 +709,7 @@ class Judgment:
         for assumption in self.assumptions:
             if assumption in assumptions_dict:
                 new_style_assumptions.append(
-                        assumption.with_matching_style(
-                                assumptions_dict.pop(assumption)))
+                        assumptions_dict.pop(assumption))
             else:
                 new_style_assumptions.append(assumption)
         if ((new_style_expr._style_id == self.expr._style_id) and
@@ -862,6 +883,17 @@ class Judgment:
                                 "should be wrapped in an ExprTuple."
                                 %replacement)
             '''
+            if isinstance(key, ExprTuple) and key.is_single():
+                # The key is an ExprTuple but is single -- so
+                # just take it, and its replacement, out of
+                # ExprTuple wrappers.
+                if not (isinstance(replacement, ExprTuple)
+                        and replacement.is_single()):
+                    raise TypeError(
+                        "%s is not the expected kind of replacement "
+                        "for an ExprTuple key, %s"%(replacement, key))
+                key = key[0]
+                replacement = replacement[0]
             if isinstance(key, Variable) or isinstance(key, IndexedVar):
                 processed_repl_map[key] = replacement
             elif isinstance(key, ExprTuple) and key.num_entries() > 0:
@@ -872,7 +904,7 @@ class Judgment:
                     raise TypeError(
                         "%s is not the expected kind of Expression "
                         "as a repl_map key:\n%s" %
-                        str(e))
+                        (key, str(e)))
                 if key.num_entries() == 1:
                     # Replacement key for replacing a range of indexed
                     # variables, or range of ranges of indexed variables
@@ -1200,6 +1232,27 @@ class Judgment:
             assumptions=defaults.assumptions
         assumptions = tuple(assumptions) + self.assumptions
         return InnerExpr(self, assumptions=assumptions)
+    
+    def _used_vars(self):
+        '''
+        Return all of the used Variables of this Judgment,
+        including those in assumptions.
+        Call externally via the used_vars method in expr.py.
+        '''
+        return self.expr._used_vars().union(
+                *[assumption._used_vars() for
+                  assumption in self.assumptions])
+
+    def _contained_parameter_vars(self):
+        '''
+        Return all of the used parameter variables contained in this
+        Judgment, including those in assumptions.
+        Call externally via the contained_parameter_vars method
+        in expr.py.
+        '''
+        return self.expr._contained_parameter_vars().union(
+                *[assumption._contained_parameter_vars() for
+                  assumption in self.assumptions])
 
 
 def as_expression(truth_or_expression):

@@ -1,18 +1,20 @@
-from proveit import Literal, Operation
+from proveit import Literal, Operation, Function, prover
 from proveit import a, b
+from proveit.logic import InSet
+from proveit.numbers import Interval
 # from proveit.basiclogic.generic_ops import BinaryOperation
 # from proveit.numbers.number_sets import NumberOp, Integer
 
 pkg = __package__  # delete later?
 
 
-class QPE(Operation):
+class QPE(Function):
     '''
     Represents the quantum circuit for the quantum phase estimation
     algorithm.
     '''
     # the literal operator of the QPE operation
-    _operator_ = Literal(string_format='QPE', latex_format=r'{\rm QPE}',
+    _operator_ = Literal(string_format='QPE', latex_format=r'\textrm{QPE}',
                          theory=__file__)
 
     def __init__(self, U, t, *, styles=None):
@@ -20,6 +22,24 @@ class QPE(Operation):
         Phase estimator circuit for Unitary U and t register qubits.
         '''
         Operation.__init__(self, QPE._operator_, (U, t),
+                           styles=styles)
+
+
+class QPE1(Function):
+    '''
+    Represents the first stage of the quantum circuit for the quantum 
+    phase estimation algorithm (up to the quantum Fourier transform
+    part).
+    '''
+    # the literal operator of the QPE operation
+    _operator_ = Literal(string_format='QPE1', latex_format=r'\textrm{QPE}_1',
+                         theory=__file__)
+
+    def __init__(self, U, t, *, styles=None):
+        '''
+        Phase estimator circuit for Unitary U and t register qubits.
+        '''
+        Operation.__init__(self, QPE1._operator_, (U, t),
                            styles=styles)
 
 
@@ -110,11 +130,25 @@ class ModAdd(Operation):
         Operation.__init__(self, ModAdd._operator_, (a, b),
                            styles=styles)
 
-    def deduce_in_interval(self):
-        from . import mod_add_closure
+    @prover
+    def deduce_in_interval(self, **defaults_config):
+        from . import _mod_add_closure
         _a, _b = self.operands
-        return mod_add_closure.instantiate({a:_a, b:_b})
+        return _mod_add_closure.instantiate({a:_a, b:_b})
 
+    @prover
+    def deduce_in_number_set(self, number_set, **defaults_config):
+        interval_membership = self.deduce_in_interval()
+        if isinstance(number_set, Interval):
+            if number_set == interval_membership.domain:
+                return interval_membership
+            return number_set.deduce_elem_in_set(self)
+        if InSet(self, number_set).proven():
+            # proven as a side-effect
+            return InSet(self, number_set).prove()
+        raise NotImplementedError(
+                "Proving %s in %s has not been implemented"
+                %(self, number_set))
 
 class SubIndexed(Operation):
     '''

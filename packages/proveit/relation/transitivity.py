@@ -66,6 +66,12 @@ class TransitiveRelation(Relation):
         truths (under the given assumptions), we can conclude that
         a<d (under these assumptions).
         '''
+        try:
+            # Try to conclude via simplification of each side.
+            return Relation.conclude(self)
+        except ProofFailure:
+            pass
+        
         # Use a breadth-first search approach to find the shortest
         # path to get from one end-point to the other.
         try:
@@ -77,8 +83,12 @@ class TransitiveRelation(Relation):
     @prover
     def conclude_via_transitivity(self, **defaults_config):
         from proveit.logic import Equals
-        proven_relation = self.__class__._transitivity_search(
-            self.normal_lhs, self.normal_rhs)
+        try:
+            proven_relation = self.__class__._transitivity_search(
+                self.normal_lhs, self.normal_rhs)
+        except TransitivityException as e:
+            # indicate the expression we were trying to prove
+            raise TransitivityException(self, defaults.assumptions, e.message)
         relation = proven_relation.expr
         if relation.__class__ != self.__class__:
             if self.__class__ == self.__class__._checkedWeakRelationClass():
@@ -92,7 +102,7 @@ class TransitiveRelation(Relation):
                    " from the proven relation of %s."
                    % (str(self), str(relation)))
             raise TransitivityException(self, defaults.assumptions, msg)
-        return proven_relation.with_matching_style(self)
+        return proven_relation
 
     @classmethod
     def _RelationClasses(cls):

@@ -2,8 +2,8 @@ from proveit import (defaults, Literal, Operation, ProofFailure,
                      relation_prover)
 # from proveit.numbers.number_sets import Integer, Real
 from proveit import a, b
-from proveit.logic import InSet
-from proveit.numbers import NumberOperation
+from proveit.logic import InSet, SubsetEq
+from proveit.numbers import NumberOperation, deduce_number_set
 
 class Mod(NumberOperation):
     # operator of the Mod operation.
@@ -40,11 +40,13 @@ class Mod(NumberOperation):
                        mod_in_interval_c_o)
         from proveit.numbers import Integer, NaturalPos
         # from number_sets import deduce_in_integer, deduce_in_real
-        int_dividend = InSet(self.dividend, Integer).proven()
-        if (int_dividend and InSet(self.divisor, NaturalPos).proven()):
+        dividend_ns = deduce_number_set(self.dividend).domain
+        divisor_ns = deduce_number_set(self.divisor).domain
+        int_dividend = Integer.includes(dividend_ns)
+        if (int_dividend and NaturalPos.includes(divisor_ns)):
             return mod_natpos_in_interval.instantiate(
                 {a: self.dividend, b: self.divisor})
-        elif (int_dividend and InSet(self.divisor, Integer).proven()):
+        elif (int_dividend and Integer.includes(divisor_ns)):
             # if the operands are integers, then we can deduce that
             # a mod b is an integer in the set {0,1,...,(b-1)}
             return mod_in_interval.instantiate(
@@ -99,3 +101,12 @@ class Mod(NumberOperation):
         raise NotImplementedError(
             "'Mod.deduce_in_number_set()' not implemented for the %s set" 
             % str(number_set))
+
+    @relation_prover
+    def deduce_number_set(self, **defaults_config):
+        '''
+        Prove membership of this expression in the most 
+        restrictive standard number set we can readily know.
+        '''
+        return self.deduce_in_interval()
+

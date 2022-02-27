@@ -35,8 +35,8 @@ class Operation(Expression):
         '''
         from proveit._core_.expression.composite import (
             composite_expression, single_or_composite_expression, 
-            Composite, ExprTuple)
-        from proveit._core_.expression.label.label import Label
+            Composite, ExprTuple, NamedExprs)
+        from proveit._core_.expression.lambda_expr import Lambda
         from .indexed_var import IndexedVar
         if self.__class__ == Operation:
             raise TypeError("Do not create an object of type Operation; "
@@ -56,19 +56,23 @@ class Operation(Expression):
                 operands = composite_expression(operands)
             self.operands = operands
         else:
+            orig_operand_or_operands = operand_or_operands
             operand_or_operands = single_or_composite_expression(
                 operand_or_operands, do_singular_reduction=True)
             if isinstance(operand_or_operands, Composite):
                 # a composite of multiple operands
                 self.operands = operand_or_operands
             else:
-                self.operands = ExprTuple(operand_or_operands) 
+                if isinstance(orig_operand_or_operands, Composite):
+                    self.operands = orig_operand_or_operands
+                else:
+                    self.operands = ExprTuple(operand_or_operands)
+
         def raise_bad_operator_type(operator):
-            raise TypeError('operator must be a Label or an indexed variable '
-                            '(IndexedVar). %s is none of those.'
-                            % str(operator))
-        if (not isinstance(self.operator, Label) and 
-                not isinstance(self.operator, IndexedVar)):
+            raise TypeError("An operator may not be an explicit Lambda map "
+                            "like %s; this is necessary to avoid a Curry's "
+                            "paradox." % str(operator))
+        if isinstance(self.operator, Lambda):
             raise_bad_operator_type(self.operator)
         if (isinstance(self.operands, ExprTuple) and 
                 self.operands.is_single()):
@@ -79,6 +83,11 @@ class Operation(Expression):
             core_type = 'IndexedVar'
         else:
             core_type = 'Operation'
+        if isinstance(self.operands, NamedExprs):
+            # Make attributes to make the keys of the NamedExprs 
+            # operands.
+            for key in self.operands.keys():
+                setattr(self, key, self.operands[key])
         Expression.__init__(self, [core_type], sub_exprs, styles=styles)
 
     def style_options(self):
@@ -110,7 +119,9 @@ class Operation(Expression):
                 default = '()',
                 related_methods = (
                         'with_wrapping_at', 'with_wrap_before_operator',
-                        'with_wrap_after_operator', 'wrap_positions'))
+                        'with_wrap_after_operator', 
+                        'without_wrapping',
+                        'wrap_positions'))
             options.add_option(
                 name = 'justification',
                 description = (
@@ -126,6 +137,9 @@ class Operation(Expression):
             ' '.join(
                 str(pos) for pos in wrap_positions) +
             ')')
+
+    def without_wrapping(self, *wrap_positions):
+        return self.with_wrapping_at()
 
     def with_wrap_before_operator(self):
         if self.operands.num_entries() != 2:
@@ -159,6 +173,14 @@ class Operation(Expression):
         be overridden if you cannot simply pass the operands directly
         into the __init__ method.
         '''
+        from proveit import NamedExprs
+        if isinstance(operands, NamedExprs):
+            # If the operands are NamedExprs, presume the arguments
+            # correspond to the names of the sub-expressions.
+            if arg_name in operands:
+                return operands[arg_name]
+            else:
+                return None
         raise NotImplementedError(
             "'%s.extract_init_arg_value' must be appropriately implemented; "
             "__init__ arguments do not fall into a simple 'default' "
@@ -227,7 +249,8 @@ class Operation(Expression):
         implicit_operator = cls._implicit_operator()
         matches_implicit_operator = (operator == implicit_operator)
         if implicit_operator is not None and not matches_implicit_operator:
-            raise OperationError("An implicit operator may not be changed")
+            raise OperationError("An implicit operator may not be changed "
+                                 "(%s vs %s)"%(operator, implicit_operator))
         sig = inspect.signature(cls.__init__)
         Parameter = inspect.Parameter
         init_params = sig.parameters
@@ -244,6 +267,8 @@ class Operation(Expression):
                     # Skip the 'self' parameter.
                     first_param = False
                     continue
+                if param_name=='styles':
+                    continue # skip the styles parameter
                 param = init_params[param_name]
                 val = extract_init_arg_value_fn(param_name)
                 default = param.default
@@ -425,13 +450,18 @@ class Operation(Expression):
     def _function_formatted(self, format_type, **kwargs):
         from proveit._core_.expression.composite.expr_tuple import ExprTuple
         formatted_operator = self.operator.formatted(format_type, fence=True)
+        lparen = r'\left(' if format_type=='latex' else '('
+        rparen = r'\right)' if format_type=='latex' else ')'
         if (hasattr(self, 'operand') and 
                 not isinstance(self.operand, ExprTuple)):
-            return '%s(%s)' % (formatted_operator,
-                               self.operand.formatted(format_type, fence=False))
-        return '%s(%s)' % (formatted_operator,
-                           self.operands.formatted(
-                               format_type, fence=False, sub_fence=False))
+            formatted_operand = self.operand.formatted(
+                    format_type, fence=False)
+        else:
+            formatted_operand = self.operands.formatted(
+                    format_type, fence=False, sub_fence=False)
+
+        return (formatted_operator + lparen + formatted_operand + rparen)
+
 
     def _formatted(self, format_type, **kwargs):
         '''
@@ -440,17 +470,16 @@ class Operation(Expression):
 
         '''
         return Operation._formatted_operation(
-            format_type,
-            self.operator,
-            self.operands,
+            format_type, self.operator, self.operands,
+            implicit_first_operator=True,
             wrap_positions=self.wrap_positions(),
             justification=self.get_style('justification', 'center'),
             **kwargs)
 
     @staticmethod
     def _formatted_operation(
-            format_type, operator_or_operators, operands,
-            wrap_positions, justification, implicit_first_operator=False,
+            format_type, operator_or_operators, operands, *,
+            wrap_positions, justification, implicit_first_operator=True,
             **kwargs):
         from proveit import ExprRange, ExprTuple, composite_expression
         if (isinstance(operator_or_operators, Expression) and 
@@ -476,12 +505,12 @@ class Operation(Expression):
                 sub_fence = kwargs.get('sub_fence', True)
                 do_wrapping = len(wrap_positions) > 0
                 formatted_str = ''
-                formatted_str += operands.formatted(format_type,
-                                                    fence=fence,
-                                                    sub_fence=sub_fence,
-                                                    operator_or_operators=operator,
-                                                    wrap_positions=wrap_positions,
-                                                    justification=justification)
+                formatted_str += operands.formatted(
+                        format_type, fence=fence, sub_fence=sub_fence,
+                        operator_or_operators=operator,
+                        implicit_first_operator=implicit_first_operator,
+                        wrap_positions=wrap_positions,
+                        justification=justification)
                 return formatted_str
             else:
                 # The operands ExprTuple are being represented by a Variable
@@ -514,12 +543,11 @@ class Operation(Expression):
                 formatted_str = '(' if format_type == 'string' else r'\left('
             if do_wrapping and format_type == 'latex':
                 formatted_str += r'\begin{array}{%s} ' % justification[0]
-            formatted_str += operands.formatted(format_type,
-                                                fence=False,
-                                                sub_fence=sub_fence,
-                                                operator_or_operators=operators,
-                                                implicit_first_operator=implicit_first_operator,
-                                                wrap_positions=wrap_positions)
+            formatted_str += operands.formatted(
+                    format_type, fence=False, sub_fence=sub_fence,
+                    operator_or_operators=operators,
+                    implicit_first_operator=implicit_first_operator,
+                    wrap_positions=wrap_positions)
             if do_wrapping and format_type == 'latex':
                 formatted_str += r' \end{array}'
             if fence:
@@ -620,7 +648,8 @@ class Operation(Expression):
         from proveit.logic import EvaluationError, SimplificationError
         
         # Try to simplify the operands first.
-        reduction = self.simplification_of_operands()
+        reduction = self.simplification_of_operands(
+            simplify_with_known_evaluations=True)
         
         # After making sure the operands have been simplified,
         # try 'shallow_simplification' with must_evaluate=True.
@@ -680,7 +709,7 @@ class Operation(Expression):
         have been simplified.
         '''
         from proveit.relation import TransRelUpdater
-        from proveit import ExprRange
+        from proveit import ExprRange, NamedExprs
         from proveit.logic import is_irreducible_value
         if any(isinstance(operand, ExprRange) for operand in self.operands):
             # If there is any ExprRange in the operands, simplify the
@@ -689,10 +718,24 @@ class Operation(Expression):
         else:
             expr = self
             eq = TransRelUpdater(expr)
-            for k, operand in enumerate(self.operands):
-                if not is_irreducible_value(operand):
-                    inner_operand = expr.inner_expr().operands[k]
-                    expr = eq.update(inner_operand.simplification())
+            with defaults.temporary() as temp_defaults:
+                # No auto-simplification or replacements here;
+                # just simplify operands one at a time.
+                temp_defaults.preserve_all = True
+                operands = self.operands
+                if isinstance(operands, NamedExprs):
+                    # operands as NamedExprs
+                    for key in operands.keys():
+                        operand = operands[key]
+                        if not is_irreducible_value(operand):
+                            inner_operand = getattr(expr.inner_expr(), key)
+                            expr = eq.update(inner_operand.simplification())
+                else:
+                    # operands as ExprTuple
+                    for k, operand in enumerate(operands):
+                        if not is_irreducible_value(operand):
+                            inner_operand = expr.inner_expr().operands[k]
+                            expr = eq.update(inner_operand.simplification())
         return eq.relation
 
     @equality_prover('operator_substituted', 'operator_substitute')

@@ -1,6 +1,6 @@
 from .composite import Composite
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
-from proveit._core_.defaults import defaults
+from proveit._core_.defaults import defaults, USE_DEFAULTS
 from proveit._core_.expression.style_options import StyleOptions
 from proveit.decorators import prover, equality_prover
 
@@ -26,6 +26,11 @@ class ExprTuple(Composite, Expression):
         from proveit._core_ import Judgment
         from .composite import single_or_composite_expression
         entries = []
+        if isinstance(expressions, str):
+            # We should check for strings in particular because this
+            # will otherwise lead to an infinite recursion.
+            raise TypeError("ExprTuple accepts Expressions, not a str: %s"
+            %expressions)
         for entry in expressions:
             if isinstance(entry, Judgment):
                 # Extract the Expression from the Judgment:
@@ -35,6 +40,7 @@ class ExprTuple(Composite, Expression):
             assert isinstance(entry, Expression)
             entries.append(entry)
         self.entries = tuple(entries)
+        
         Expression.__init__(self, ['ExprTuple'], self.entries,
                             styles=styles)
 
@@ -179,7 +185,7 @@ class ExprTuple(Composite, Expression):
             # more entries.
             return [] 
         return [int(pos_str) for pos_str in self.get_style(
-            'wrap_positions').strip('()').split(' ') if pos_str != '']
+            'wrap_positions', '').strip('()').split(' ') if pos_str != '']
 
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
@@ -189,11 +195,11 @@ class ExprTuple(Composite, Expression):
 
     def formatted(
             self,
-            format_type,
+            format_type, *,
             fence=True,
             sub_fence=False,
-            operator_or_operators=None,
-            implicit_first_operator=False,
+            operator_or_operators=',',
+            implicit_first_operator=True,
             wrap_positions=None,
             justification=None,
             **kwargs):
@@ -218,103 +224,62 @@ class ExprTuple(Composite, Expression):
         if do_wrapping and format_type == 'latex':
             out_str += r'\begin{array}{%s} ' % justification[0]
 
-        formatted_sub_expressions = []
-        # Track whether or not ExprRange operands are using
-        # "explicit" parameterization, becuase the operators must
-        # follow suit.
-        using_explicit_parameterization = []
-        for sub_expr in self:
+        if isinstance(operator_or_operators, list):
+            operators = operator_or_operators
+        elif isinstance(operator_or_operators, ExprTuple):
+            operators = list(operator_or_operators.entries)
+        else:
+            operators = [operator_or_operators]*self.num_entries()
+        if self.num_entries() == len(operators) + 1:
+            # operators between operands -- put a blank 'operator' at
+            # the beginning.
+            operators = [''] + operators
+        if len(operators) != self.num_entries():
+            raise ValueError("There should be the same number of operators "
+                             "as operands, or 1 less for them to appear "
+                             "just between operands: "
+                             "%s with %d vs %s with %d"%(
+                                     operators, len(operators), 
+                                     self.entries, self.num_entries()))
+        formatted_entries = [] # in (operator, element/ellipsis) pairs
+        implicit_operator = implicit_first_operator
+        for sub_expr, operator in zip(self, operators):
             if isinstance(sub_expr, ExprRange):
-                # Handle an ExprRange entry; here the "sub-expressions"
-                # are really ExprRange "checkpoints" (first, last, as
-                # well as the ExprRange body in the middle if using
-                # an 'explicit' style for 'parameterization) as well as
-                # ellipses between the checkpoints..
-                using_explicit_parameterization.append(
-                    sub_expr._use_explicit_parameterization(format_type))
-                if isinstance(sub_expr.body, ExprTuple):
-                    _fence = True
-                else:
-                    _fence = sub_fence
-                formatted_sub_expressions += sub_expr._formatted_checkpoints(
-                    format_type, fence=_fence, with_ellipses=True,
-                    operator=operator_or_operators)
-            elif isinstance(sub_expr, ExprTuple):
-                # always fence nested expression lists
-                formatted_sub_expressions.append(
-                    sub_expr.formatted(format_type, fence=True))
+                formatted_entries += sub_expr._formatted_entries(
+                    format_type, 
+                    implicit_first_operator=implicit_operator,
+                    operator_or_operators=operator)
             else:
-                formatted_sub_expressions.append(
-                    sub_expr.formatted(format_type, fence=sub_fence))
+                if implicit_operator:
+                    operator = ''
+                elif isinstance(operator, Expression):
+                    operator = operator.formatted(format_type)
+                if len(formatted_entries) > 0:
+                    if operator not in (',', ';'):
+                        operator = ' ' + operator
+                    operator = operator + ' '
+                if isinstance(sub_expr, ExprTuple):
+                    # always fence nested expression lists
+                    formatted_entries.append(
+                        [operator, sub_expr.formatted(format_type, 
+                                                      fence=True)])
+                else:
+                    formatted_entries.append(
+                        [operator, sub_expr.formatted(format_type, 
+                                                      fence=sub_fence)])
+            implicit_operator = False
 
         # put the formatted operator between each of formatted_sub_expressions
         for wrap_position in wrap_positions:
             if wrap_position % 2 == 1:
                 # wrap after operand (before next operation)
-                formatted_sub_expressions[(wrap_position - 1) // 2] += r' \\ '
+                formatted_entries[(wrap_position - 1) // 2][1] += r' \\ '
             else:
                 # wrap after operation (before next operand)
-                formatted_sub_expressions[wrap_position // 2] = r' \\ ' + \
-                    formatted_sub_expressions[wrap_position // 2]
-        if operator_or_operators is None:
-            operator_or_operators = ','
-        elif isinstance(operator_or_operators, Expression) and not isinstance(operator_or_operators, ExprTuple):
-            operator_or_operators = operator_or_operators.formatted(
-                format_type)
-        if isinstance(operator_or_operators, str):
-            # single operator
-            formatted_operator = operator_or_operators
-            if operator_or_operators == ',':
-                # e.g.: a, b, c, d
-                out_str += (formatted_operator +
-                            ' ').join(formatted_sub_expressions)
-            else:
-                # e.g.: a + b + c + d
-                out_str += (' ' + formatted_operator +
-                            ' ').join(formatted_sub_expressions)
-        else:
-            # assume all different operators
-            formatted_operators = []
-            for operator in operator_or_operators:
-                if isinstance(operator, ExprRange):
-                    # Handle an ExprRange entry; here the "operators"
-                    # are really ExprRange "checkpoints" (first, last,
-                    # as well as the ExprRange body in the middle if
-                    # using an 'explicit' style for 'parameterization').
-                    # For the 'ellipses', we will just use a
-                    # placeholder.
-                    be_explicit = using_explicit_parameterization.pop(0)
-                    formatted_operators += operator._formatted_checkpoints(
-                        format_type, fence=sub_fence, ellipses='',
-                        use_explicit_parameterization=be_explicit)
-                elif isinstance(operator, str):
-                    formatted_operators.append(operator)
-                else:
-                    formatted_operators.append(operator.formatted(format_type))
-            if len(formatted_sub_expressions) == len(formatted_operators):
-                # operator preceeds each operand
-                if implicit_first_operator:
-                    # first operator is implicit
-                    out_str = formatted_sub_expressions[0]
-                else:
-                    # no space after first operator
-                    out_str = formatted_operators[0] + \
-                        formatted_sub_expressions[0]
-                out_str += ' '  # space before next operator
-                out_str += ' '.join(formatted_operator + ' ' + formatted_operand for formatted_operator,
-                                    formatted_operand in zip(formatted_operators[1:], formatted_sub_expressions[1:]))
-            elif len(formatted_sub_expressions) == len(formatted_operators) + 1:
-                # operator between each operand
-                out_str = ' '.join(
-                    formatted_operand +
-                    ' ' +
-                    formatted_operator for formatted_operand,
-                    formatted_operator in zip(
-                        formatted_sub_expressions,
-                        formatted_operators))
-                out_str += ' ' + formatted_sub_expressions[-1]
-            elif len(formatted_sub_expressions) != len(formatted_operators):
-                raise ValueError("May only perform ExprTuple formatting if the number of operators is equal to the number of operands (precedes each operand) or one less (between each operand); also, operator ranges must be in correpsondence with operand ranges.")
+                formatted_entries[wrap_position // 2][0] += r' \\ '
+        # The operators are
+        out_str += ''.join(''.join([operator, operand]) for
+                            operator, operand in formatted_entries)
 
         if do_wrapping and format_type == 'latex':
             out_str += r' \end{array}'
@@ -323,14 +288,89 @@ class ExprTuple(Composite, Expression):
 
         return out_str
 
-    def num_elements(self, **defaults_config):
+    def num_elements(self, proven=True, **defaults_config):
         '''
-        Return the proven number of elements of this ExprTuple as an 
+        Return the number of elements of this ExprTuple as an 
         Expression.  This includes the extent of all contained ranges.
+        If proven==True, a proof is constructed in the process.
         '''
+        from .expr_range import ExprRange
         from proveit.core_expr_types import Len
-        return Len(self).computed(**defaults_config)
+        from proveit.numbers import Add, zero, one
+        if proven:
+            return Len(self).computed(**defaults_config)
+        # Do the quick-and-dirty calculation with no proof.
+        count = zero
+        for entry in self:
+            if isinstance(entry, ExprRange):
+                count = Add(count, 
+                            entry.num_elements(proven=False)).quick_simplified()
+            else:
+                count = Add(count, one).quick_simplified()
+        return count
 
+    def yield_format_cell_info(self):
+        '''
+        Yield information pertaining to each format cell of this
+        ExprTuple in the format:
+            ((expr, role), assumptions)
+        The expr is the Expression of the entry.  Temporary assumptions
+        may be made about the comparison of ExprRange indices at 
+        distinct format cells (useful from case simplification of nested
+        ExprRanges) and yielded.  The 'role' is defined as follows.
+        The beginning cells of the ExprRange will have consecutive 
+        integers for their role  starting with 0, the last cell has -1 
+        for its role, and the 'ellipsis' cell has 'implicit', 
+        'explicit', or 'param_independent' for its role depending upon
+        whether it is parameter independent and, if not, the 
+        'parameterization' style option of the ExprRange.
+        '''
+        from .expr_range import ExprRange
+        
+        for item in self.entries:
+            # Append to cell entries.
+            if isinstance(item, ExprRange):
+                # An ExprRange covers multiple format cells.
+                for info in item.yield_format_cell_info():
+                    yield info
+            else:
+                # One format cells for a regular entry.
+                yield (item, 'normal'), defaults.assumptions
+    
+    def get_format_cell_element_positions(self):
+        '''
+        Returns a list of element positions in correspondence with
+        each format cell of this ExprTuple 
+        (see ExprTuple.yield_format_cell_info).
+        The element position starts as a 'one' (from proveit.numbers) 
+        and adds one in correspondence with each format cell except the 
+        'ellipsis' cell and the last cell of each ExprRange.  The 
+        element position of the 'ellipsis' cells is 'None' (it isn't 
+        defined).  The element position of the last cell of the 
+        ExprRange will be ('end_index' - 'start_index') of the ExprRange
+        added to the element position of the first cell.
+
+        The assumptions dictate simplifications that may apply to
+        the element positions.
+        '''
+        from .expr_range import ExprRange
+        from proveit.numbers import Add, zero, one
+
+        element_positions = []
+        element_pos = zero # We will add 1 before using this.
+        for item in self.entries:
+            # Add one to the element_pos.
+            element_pos = Add(element_pos, one).quick_simplified()
+            # Append to element_positions.
+            if isinstance(item, ExprRange):
+                # An ExprRange covers multiple format cells.
+                element_pos = item._append_format_cell_element_positions(
+                        element_pos, element_positions)
+            else:
+                # One format cells for a regular entry.
+                element_positions.append(element_pos)
+        return element_positions
+    
     def has_matching_ranges(self, other_tuple):
         '''
         Return True iff the `other_tuple` matches this ExprTuple
@@ -347,9 +387,9 @@ class ExprTuple(Composite, Expression):
                     != isinstance(other_entry, ExprRange)):
                 return False  # range vs singular mismatch
             if isinstance(entry, ExprRange):
-                if entry.start_index != other_entry.start_index:
+                if entry.true_start_index != other_entry.true_start_index:
                     return False  # start indices don't match
-                if entry.end_index != other_entry.end_index:
+                if entry.true_end_index != other_entry.true_end_index:
                     return False  # end indices don't match
         return True  # everything matches.
 
@@ -398,7 +438,26 @@ class ExprTuple(Composite, Expression):
         return self.__class__._checked_make(
             self._core_info, subbed_entries, 
             style_preferences=self._style_data.styles)
-
+    
+    def find_sub_tuple(self, sub_tuple, start=0, end=None):
+        '''
+        Return the lowest index (within start and end if provided)
+        in this ExprTuple where the given sub_tuple is found. 
+        Return -1 if it is not found.  This is analogous to
+        string.find.
+        '''
+        if end is None: end = self.num_entries()  
+        if isinstance(sub_tuple, ExprTuple):
+            sub_tuple = sub_tuple.entries
+        _N = len(sub_tuple)
+        entries = self.entries
+        
+        # Iterate from start to end until we match the pattern.
+        for i in range(start, end):
+            if entries[i] == sub_tuple[0] and entries[i:i+_N] == sub_tuple:
+                return i
+        return -1
+    
     def is_irreducible_value(self):
         '''
         An ExprTuple is irreducible if and only if all of its entries
@@ -428,7 +487,7 @@ class ExprTuple(Composite, Expression):
         _k = 0
         for entry in self.entries:
             if isinstance(entry, ExprRange):
-                entry_simp = entry._range_reduction(preserve_all=True)
+                entry_simp = entry.reduction(preserve_all=True)
                 num_entries = entry_simp.rhs.num_entries()
             else:
                 if must_evaluate:
@@ -468,7 +527,7 @@ class ExprTuple(Composite, Expression):
                     # Preserve this entry -- don't simplify it.
                     _k += ExprTuple(entry).num_entries()
                     continue
-                entry_simp = entry._range_reduction(preserve_all=True)
+                entry_simp = entry.reduction()
                 if must_evaluate and not is_irreducible_value(entry_simp.rhs):
                     raise EvaluationError(self)
                 if entry_simp.lhs != entry_simp.rhs:
@@ -527,6 +586,11 @@ class ExprTuple(Composite, Expression):
             if not isinstance(replacement_eq.rhs, ExprTuple):
                 raise TypeError("'replacement_eq.rhs' should be an ExprTuple"
                                 "if 'replacement_eq.lhs' is an ExprTuple.")
+            if (start_idx==0 and 
+                replacement_eq.lhs.num_entries()==self.num_entries()):
+                # Replacing the entire ExprTuple:
+                return replacement_eq.prove()
+
             _a = self[:start_idx]
             end_idx = start_idx + replacement_eq.lhs.num_entries()
             _b = self[start_idx:end_idx]
@@ -565,13 +629,13 @@ class ExprTuple(Composite, Expression):
         |- (x_1, .., x_j, x_{j+1}, x_{j+2}, ..., x_k) = (x_1, ..., x_k)
         '''
         from proveit._core_.expression.lambda_expr import Lambda
-        from .expr_range import ExprRange
+        from .expr_range import ExprRange, simplified_index
         from proveit.relation import TransRelUpdater
         from proveit.core_expr_types.tuples import (
             merge, merge_front, merge_back, merge_extension,
             merge_pair, merge_series)
         from proveit import f, i, j, k, l, x
-        from proveit.numbers import Add, one
+        from proveit.numbers import one, Add, subtract
 
         # A convenience to allow successive update to the equation via
         # transitivities (starting with self=self).
@@ -626,15 +690,18 @@ class ExprTuple(Composite, Expression):
                             "Cannot merge together ExprRanges "
                             "with different lambda maps: %s vs %s" %
                             (lambda_map, other_lambda_map))
-                    _i, _j = eq.expr[0].start_index, eq.expr[0].end_index
-                    _k, _l = eq.expr[1].start_index, eq.expr[1].end_index
+                    _i, _j = eq.expr[0].true_start_index, eq.expr[0].true_end_index
+                    _k, _l = eq.expr[1].true_start_index, eq.expr[1].true_end_index
                     merger = \
                         merge.instantiate(
                                 {f: lambda_map, i: _i, j: _j, k: _k, l: _l})
                 else:
                     # Merge an ExprRange and a singular item.
-                    _i, _j = eq.expr[0].start_index, eq.expr[0].end_index
-                    _k = lambda_map.extract_argument(eq.expr[1])
+                    _i, _j = eq.expr[0].true_start_index, eq.expr[0].true_end_index
+                    try:
+                        _k = lambda_map.extract_argument(eq.expr[1])
+                    except ArgumentExtractionError:
+                        _k = simplified_index(Add(_j, one))
                     if _k == Add(_j, one):
                         merger = merge_extension.instantiate(
                             {f: lambda_map, i: _i, j: _j})
@@ -643,11 +710,22 @@ class ExprTuple(Composite, Expression):
                             {f: lambda_map, i: _i, j: _j, k: _k})
             else:
                 # Merge a singular item and ExprRange.
-                i_sub = lambda_map.extract_argument(eq.expr[0])
-                j_sub, k_sub = eq.expr[1].start_index, eq.expr[1].end_index
+                _i = simplified_index(
+                    subtract(eq.expr[1].true_start_index, one))
+                _j, _k = eq.expr[1].true_start_index, eq.expr[1].true_end_index
                 merger = \
-                    merge_front.instantiate({f: lambda_map, i: i_sub, 
-                                             j: j_sub, k: k_sub})
+                    merge_front.instantiate({f: lambda_map, i: _i, 
+                                             j: _j, k: _k})
+            all_decreasing = all(expr.is_decreasing() for expr in eq.expr
+                                 if isinstance(expr, ExprRange))
+            if all_decreasing:
+                # Apply the 'decreasing' order style to match what we
+                # had originally.
+                for _i in (0, 1):
+                    if isinstance(eq.expr[_i], ExprRange):
+                        merger = (merger.inner_expr().lhs[_i]
+                                  .with_decreasing_order())
+                merger = merger.inner_expr().rhs[0].with_decreasing_order()
             eq.update(merger)
             return eq.relation
 
@@ -660,7 +738,10 @@ class ExprTuple(Composite, Expression):
     @equality_prover('equated', 'equate')
     def deduce_equality(self, equality, **defaults_config):
         from proveit import ExprRange
+        from proveit import a, b, i
         from proveit.logic import Equals
+        from proveit.core_expr_types.tuples import tuple_eq_via_elem_eq
+        from proveit.relation import TransRelUpdater
         if not isinstance(equality, Equals):
             raise ValueError("The 'equality' should be an Equals expression")
         if equality.lhs != self:
@@ -676,8 +757,8 @@ class ExprTuple(Composite, Expression):
                     and equality.rhs.num_entries() == 1
                     and isinstance(equality.rhs[0], ExprRange)):
                 expr_range = equality.rhs[0]
-                if (expr_range.start_index == one and
-                        expr_range.end_index == num(_n)):
+                if (expr_range.true_start_index == one and
+                        expr_range.true_end_index == num(_n)):
                     if len(self.entries) >= 10:
                         raise NotImplementedError("counting range equality "
                                                   "not implemented for more "
@@ -686,10 +767,42 @@ class ExprTuple(Composite, Expression):
                     equiv_thm = proveit.numbers.numerals.decimals\
                         .__getattr__('count_to_%d_range' % _n)
                     return equiv_thm
-        raise NotImplementedError("ExprTuple.deduce_equality not implemented "
-                                  "for this case: %s." % self)
+        
+        lhs, rhs = equality.lhs, equality.rhs
+        if (lhs.num_entries() == rhs.num_entries() == 1
+                and isinstance(lhs[0], ExprRange) 
+                and isinstance(rhs[0], ExprRange)):
+            # Prove the equality of two ExprRanges.
+            r_range = rhs[0]
+            expr = lhs
+            if expr[0].is_decreasing():
+                # We could handle different styles later, but
+                # let's be consistent with increasing order for now
+                # to make this easier to implement.
+                expr = expr.inner_expr()[0].with_increasing_order()
+            eq = TransRelUpdater(expr)
+            if expr[0].true_start_index != r_range.true_start_index:
+                # Shift indices so they have the same start.
+                expr = eq.update(expr[0].shift_equivalence(
+                        new_start=r_range.true_start_index))
+            if expr[0].lambda_map != r_range.lambda_map:
+                # Change the lambda map.
+                expr = eq.update(expr[0].range_fn_transformation(
+                        r_range.lambda_map))
+            if expr[0].true_end_index != r_range.true_end_index:
+                # Make the end indices be the same:
+                end_eq = Equals(expr[0].true_end_index, r_range.true_end_index).prove()
+                expr = eq.update(end_eq.substitution(
+                        expr.inner_expr()[0].true_end_index))
+            return eq.relation
+        
+        # Try tuple_eq_via_elem_eq as the last resort.
+        _i = lhs.num_elements()
+        _a = lhs
+        _b = rhs
+        return tuple_eq_via_elem_eq.instantiate({i:_i, a:_a, b:_b})
     
-    @equality_prover("expanded_range", "expand_range")
+    @equality_prover('expanded_range', 'expand_range')
     def range_expansion(self, **defaults_config):
         '''
         For self an ExprTuple with a single entry that is an ExprRange
@@ -733,15 +846,15 @@ class ExprTuple(Composite, Expression):
 
         # _n = self.num_elements()
         try:
-            _n = subtract(self[0].end_index, self[0].start_index).evaluated()
+            _n = subtract(self[0].true_end_index, self[0].true_start_index).evaluated()
         except EvaluationError as the_error:
-            _diff = subtract(self[0].end_index, self[0].start_index)
+            _diff = subtract(self[0].true_end_index, self[0].true_start_index)
             print("EvaluationError: {0}. The ExprRange {1} must represent "
                   "a known, finite number of elements, but all we know is "
                   "that it represents {2} elements.".format(
                     the_error, self[0], _diff))
             raise EvaluationError(
-                subtract(self[0].end_index, self[0].start_index))
+                subtract(self[0].true_end_index, self[0].true_start_index))
         
         _n = _n.as_int() + 1 # actual number of elems being represented
         if not (1 <= _n and _n <= 9):
@@ -764,8 +877,8 @@ class ExprTuple(Composite, Expression):
         _idx_param = _the_expr_range.parameter
         _fxn_sub = _the_expr_range.body.basic_replaced(
                 {_idx_param: _safe_var})
-        _i_sub = _the_expr_range.start_index
-        _j_sub = _the_expr_range.end_index
+        _i_sub = _the_expr_range.true_start_index
+        _j_sub = _the_expr_range.true_end_index
         return expansion_thm.instantiate(
                 {Function(_f, _safe_var): _fxn_sub, _i: _i_sub, _j: _j_sub})
 
@@ -827,7 +940,7 @@ def extract_var_tuple_indices(indexed_var_tuple):
             assert inner_indices.num_entries() == 1
             body = inner_indices[0]
             indices.append(ExprRange(entry.parameter, body,
-                                     entry.start_index, entry.end_index))
+                                     entry.true_start_index, entry.true_end_index))
         else:
             raise TypeError("'var_range' must be an ExprTuple only of "
                             "IndexedVar or (nested) ExprRange entries.")

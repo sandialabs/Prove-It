@@ -1,0 +1,1 @@
+a field is a set having addition, multiplication, and their inverses analgous to rational/real numbers

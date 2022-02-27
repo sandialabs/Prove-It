@@ -74,15 +74,16 @@ class IndexedVar(Function):
             Expression.basic_replaced(self, repl_map, 
                                       allow_relabeling=allow_relabeling,
                                       requirements=requirements)
-        if base_var_sub is None:
-            # base_var wasn't in repl_map in the first place, so
-            # attempting to remove it had no effect.
-            return replaced_sans_base_var_sub
         try:
             if replaced_sans_base_var_sub in repl_map:
                 return repl_map[replaced_sans_base_var_sub]
+            elif base_var_sub is None:
+                # base_var wasn't in repl_map in the first place, so
+                # attempting to remove it had no effect.
+                return replaced_sans_base_var_sub
         finally:
-            repl_map[base_var] = base_var_sub
+            if base_var_sub is not None:
+                repl_map[base_var] = base_var_sub
         # As the last resort, do the replacement with the
         # base_var in the repl_map.
         return Expression.basic_replaced(
@@ -99,29 +100,12 @@ class IndexedVar(Function):
                 return '(' + result + ')'
         return result
 
-    """
-    def _free_var_indices(self):
-        '''
-        Returns a dictionary that maps indexed variables to
-        a tuple with (start_base, start_shifts, end_base, end_shifts)
-        indicating the indices for which an indexed variable is free.
-        The start_shifts and end_shifts are constant integers.
-        The included indices are each start_base + start_shift,
-        each end_base + end_shift plus the range going from
-        start_base + max(start_shifts) .. end_base + min(end_shifts).
-        '''
-        from proveit.numbers import const_shift_decomposition
-        index_base, index_shift = const_shift_decomposition(self.index)
-        # The start and end are the same so we have repetition below.
-        return {self.var:(index_base, {index_shift},
-                          index_base, {index_shift})}
-    """
-
-    def _possibly_free_var_ranges(self, exclusions=None):
+    def _free_var_ranges(self, exclusions=None):
         '''
         Return the dictionary mapping Variables to forms w.r.t. ranges
-        of indices (or solo) in which the variable occurs as free or
-        not explicitly and completely masked.  Examples of "forms":
+        of indices (or solo) in which the variable occurs as free
+        (not within a lambda map that parameterizes the base variable).
+        Examples of "forms":
             x
             x_i
             x_1, ..., x_n
@@ -132,29 +116,6 @@ class IndexedVar(Function):
             return dict()  # this is excluded
         forms_dict = dict()
         forms_dict.update(
-            self.indices._possibly_free_var_ranges(exclusions=exclusions))
+            self.indices._free_var_ranges(exclusions=exclusions))
         forms_dict.update({self.var: {self}})
         return forms_dict
-
-    """
-    def _indexed_var_shifts(self, var, range_param, shifts):
-        if self.var==var:
-            shift = self._indexed_var_shift(range_param)
-            if shift is not None:
-                shifts.add(shift)
-            return
-        Expression._indexed_var_shifts(self, var, range_param, shifts)
-
-    def _indexed_var_shift(self, range_param):
-        '''
-        If the IndexedVar's index is a const-shifted form of
-        'range_param', return the shift.  Otherwise, return None.
-        For "const-shifted", use the convention that the constant
-        shift comes after (e.g., "k+1" rather than "1+k").
-        '''
-        from proveit.numbers import const_shift_decomposition
-        index_base, shift = const_shift_decomposition(self.index)
-        if index_base == range_param:
-            return shift
-        return None
-    """

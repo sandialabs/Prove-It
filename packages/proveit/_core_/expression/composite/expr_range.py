@@ -3,9 +3,10 @@ import more_itertools
 from proveit._core_.expression.expr import (Expression, MakeNotImplemented,
                                             ImproperReplacement,
                                             free_vars)
-from proveit._core_.expression.style_options import StyleOptions
+from proveit._core_.expression.style_options import StyleOptions, StyleError
 from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
-from proveit._core_.expression.composite import singular_expression, ExprTuple
+from proveit._core_.expression.composite import (
+        singular_expression, single_or_composite_expression, ExprTuple)
 from proveit._core_.expression.conditional import Conditional
 from proveit._core_.proof import ProofFailure, UnsatisfiedPrerequisites
 from proveit._core_.defaults import defaults, USE_DEFAULTS
@@ -32,8 +33,9 @@ class ExprRange(Expression):
     represents multiple elements.
     '''
 
-    def __init__(self, parameter, body, start_index, end_index, *,
-                 parameterization=None, lambda_map=None,
+    def __init__(self, parameter, body, start_index=None, end_index=None, 
+                 *, true_start_index=None, true_end_index=None,
+                 parameterization=None, lambda_map=None, order=None,
                  styles=None):
         '''
         Create an ExprRange that represents a range of expressions
@@ -56,6 +58,79 @@ class ExprRange(Expression):
         must both be None.
         '''
         from proveit import Variable
+        from proveit.numbers import Neg, negated, quick_simplified_index
+        from proveit._core_.theory import UnsetCommonExpressionPlaceholder
+
+        if order not in (None, 'decreasing', 'increasing'):
+            raise ValueError("'order' must be 'increasing', "
+                             "'decreasing', or None; not %s" % order)
+        if order is not None:
+            if styles is None: styles = dict()
+            styles['order'] = order
+
+        if body is not None:
+            if isinstance(body, UnsetCommonExpressionPlaceholder):
+                body.raise_attempted_use_error()
+            body = single_or_composite_expression(
+                    body, wrap_expr_range_in_tuple=False)
+        
+        if (start_index is None) == (true_start_index is None):
+            if start_index is None:
+                raise ValueError("Must provide either a 'start_index' or "
+                                 "'true_start_index'")
+            else:
+                raise ValueError("Must provide either a 'start_index' or "
+                                 "'true_start_index', not both")
+        if (end_index is None) == (true_end_index is None):
+            if end_index is None:
+                raise ValueError("Must provide either a 'end_index' or "
+                                 "'true_end_index'")
+            else:
+                raise ValueError("Must provide either a 'end_index' or "
+                                 "'true_end_index', not both")
+        if (start_index is None) != (end_index is None):
+            raise ValueError(
+                    "Provide either a 'start_index' and 'end_index' or "
+                    "a 'true_start_index' and 'true_end_index'.  Mixing "
+                    "is not allowed.")
+        if true_start_index is None:
+            if order == 'decreasing':
+                # If the order is decreasing, negate the indices and the
+                # parameter.
+                true_start_index = negated(start_index)
+                true_end_index = negated(end_index)
+                if body is not None:
+                    expr_map = {parameter: Neg(parameter),
+                                Neg(parameter): parameter}
+                    body = body.basic_replaced(expr_map)
+            else:
+                true_start_index = start_index
+                true_end_index = end_index
+                
+        simp_true_start_index, simp_true_end_index = simplified_indices(
+                true_start_index, true_end_index)
+        if order == 'decreasing' and start_index is not None:
+            (true_start_index, true_end_index) = (
+                    simp_true_start_index, simp_true_end_index)
+            decreasing_start_index = quick_simplified_index(
+                    negated(true_start_index))
+            decreasing_end_index = quick_simplified_index(
+                    negated(true_end_index))
+            if (start_index, end_index) != (decreasing_start_index, decreasing_end_index):
+                raise ValueError(
+                        "Decreasing start and end indices must be in the "
+                        "'quick_simplified_index' canonical form: %s ≠ %s"
+                        %((start_index, end_index),
+                          (decreasing_start_index, decreasing_end_index)))
+        else:
+            if ((true_start_index, true_end_index)
+                    != (simp_true_start_index, simp_true_end_index)):
+                raise ValueError(
+                        "Start and end indices must be in the "
+                        "'quick_simplified_index' canonical form: %s ≠ %s"
+                        %((true_start_index, true_end_index),
+                          (simp_true_start_index, simp_true_end_index)))
+
         if lambda_map is not None:
             # Use the provided 'lambda_map' instead of creating one.
             lambda_map = lambda_map
@@ -76,23 +151,56 @@ class ExprRange(Expression):
             if styles is None: styles = dict()
             styles['parameterization'] = parameterization
 
+        for index in (start_index, end_index):
+            if isinstance(index, UnsetCommonExpressionPlaceholder):
+                index.raise_attempted_use_error()
+                
+        self.true_start_index = true_start_index = singular_expression(
+                true_start_index)
+        self.true_end_index = true_end_index = singular_expression(
+                true_end_index)
+        
+        self.lambda_map = lambda_map
+        self.body = self.lambda_map.body
+        self.parameter = self.lambda_map.parameter
+        self.is_parameter_independent = (
+            self.parameter not in free_vars(self.body))
         Expression.__init__(self, ['ExprRange'],
-                            [lambda_map, start_index, end_index],
+                            [lambda_map, true_start_index, true_end_index],
                             styles=styles)
-        self.start_index = singular_expression(start_index)
-        self.end_index = singular_expression(end_index)
-        if self.start_index == self.end_index:
+        if true_start_index == true_end_index:
             raise ValueError(
                     "Do not create an ExprRange with the same start and "
                     "end index since it reduces to a single instance.  "
                     "Note that nested_range/var_range automatically "
                     "perform this reduction.")
-        self.lambda_map = lambda_map
-        self.parameter = self.lambda_map.parameter
-        self.body = self.lambda_map.body
-        self.is_parameter_independent = (
-            self.parameter not in
-            free_vars(self.body, err_inclusively=True))
+        ExprRange._max_allowed_total_expansion(
+                true_start_index, true_end_index,
+                check_if_invalid=True)
+
+    @property
+    def start_index(self):
+        '''
+        The start index of the ExprRange depends upon whether or not 
+        the order is decreasing in its style.
+        '''
+        from proveit.numbers import negated, quick_simplified_index
+        if self.is_decreasing():
+            return quick_simplified_index(negated(self.true_start_index))
+        else:
+            return self.true_start_index
+
+    @property
+    def end_index(self):
+        '''
+        The end index of the ExprRange depends upon whether or not 
+        the order is decreasing in its style.
+        '''
+        from proveit.numbers import negated, quick_simplified_index
+        if self.is_decreasing():
+            return quick_simplified_index(negated(self.true_end_index))
+        else:
+            return self.true_end_index
 
     @classmethod
     def _make(sub_class, core_info, sub_expressions, *, styles):
@@ -101,8 +209,10 @@ class ExprRange(Expression):
         if len(core_info) != 1 or core_info[0] != 'ExprRange':
             raise ValueError("Expecting ExprRange core_info to contain "
                              "exactly one item: 'ExprRange'")
-        lambda_map, start_index, end_index = sub_expressions
-        return ExprRange(None, None, start_index, end_index,
+        lambda_map, true_start_index, true_end_index = sub_expressions
+        return ExprRange(None, None, 
+                         true_start_index=true_start_index, 
+                         true_end_index=true_end_index,
                          styles=styles, lambda_map=lambda_map)
 
     @staticmethod
@@ -146,9 +256,12 @@ class ExprRange(Expression):
                         sub_expr.basic_replaced(
                             repl_map, allow_relabeling=allow_relabeling,
                             requirements=requirements)
-                    for sub_expr in (self.start_index, self.end_index))
+                    for sub_expr in (self.true_start_index, self.true_end_index))
             else:
                 assert _subbed_end_index is not None
+            _subbed_start_index, _subbed_end_index = simplified_indices(
+                     _subbed_start_index, _subbed_end_index,
+                     requirements=requirements)
             if _subbed_start_index == _subbed_end_index:
                 # Reduced to a single instance since the start and
                 # end indices are the same.
@@ -157,14 +270,18 @@ class ExprRange(Expression):
                        allow_relabeling=allow_relabeling, 
                        requirements=requirements)
             sub_exprs = self._sub_expressions
-            assert sub_exprs == (self.lambda_map, self.start_index,
-                                 self.end_index)
+            assert sub_exprs == (self.lambda_map, self.true_start_index,
+                                 self.true_end_index)
             # Complete the subbed_sub_exprs
-            subbed_sub_exprs = (
-                    self.lambda_map.basic_replaced(
-                            repl_map, allow_relabeling=allow_relabeling,
-                            requirements=requirements),
-                    _subbed_start_index, _subbed_end_index)
+            # Assume the parameter condition.
+            with defaults.temporary() as tmp_defaults:
+                tmp_defaults.assumptions = (defaults.assumptions + 
+                                            (self.parameter_condition(),))
+                subbed_sub_exprs = (
+                        self.lambda_map.basic_replaced(
+                                repl_map, allow_relabeling=allow_relabeling,
+                                requirements=requirements),
+                        _subbed_start_index, _subbed_end_index)
             if all(subbed_sub._style_id == sub._style_id for
                    subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
                 # Nothing change, so don't remake anything.
@@ -173,7 +290,53 @@ class ExprRange(Expression):
                 self._core_info, subbed_sub_exprs,
                 style_preferences=self._style_data.styles)
         return replaced
-    
+
+    def _auto_simplified_sub_exprs(self, *, requirements, stored_replacements):
+        '''
+        Properly handle the ExprRange scope while doing 
+        auto-simplification replacements.  This combines the behavior
+        of a Lambda and a Conditional.
+        '''
+        # Standard approach for the subbed indices.
+        subbed_indices = \
+            tuple(sub_expr._auto_simplified(
+                    requirements=requirements, 
+                    stored_replacements=stored_replacements)
+                  for sub_expr in (self.true_start_index, 
+                                   self.true_end_index))
+        parameter = self.parameter
+        # Special assumptions for the body.  We can't use
+        # assumptions involving the parameter except the
+        # 'parameter condition' (that it is in an interval).
+        inner_assumptions = \
+            [assumption for assumption in defaults.assumptions if
+             parameter not in free_vars(assumption)]
+        inner_assumptions.append(self.parameter_condition())
+        with defaults.temporary() as temp_defaults:
+            temp_defaults.assumptions = inner_assumptions
+            # Since the assumptions have changed, we can no longer use
+            # the stored_replacements from before.
+            subbed_body = self.body._auto_simplified(
+                    requirements=requirements, 
+                    stored_replacements=dict())
+            subbed_lambda = Lambda(parameter, subbed_body)
+        subbed_sub_exprs = (subbed_lambda, *subbed_indices)
+        sub_exprs = self._sub_expressions
+        if all(subbed_sub._style_id == sub._style_id for
+               subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
+            # Nothing change, so don't remake anything.
+            return self
+        # This is an ExprRange.  If the start and end indices
+        # are the same, force them to be different here
+        # (we can't create an ExprRange where they are the same)
+        # but it will be simplified in the containing ExprTuple
+        # via a singlular range reduction.
+        subbed_sub_exprs = ExprRange._proper_sub_expr_replacements(
+            sub_exprs, subbed_sub_exprs)
+        return self.__class__._checked_make(
+            self._core_info, subbed_sub_exprs,
+            style_preferences=self._style_data.styles)
+        
     def _singular_reduced(self, repl_map, *, _subbed_index,
                        allow_relabeling=False, requirements=None):
         '''
@@ -198,10 +361,10 @@ class ExprRange(Expression):
         has a literal_int_extent of 12.
         '''
         from proveit.numbers import is_literal_int
-        if (is_literal_int(self.start_index) and is_literal_int(self.end_index)):
+        if (is_literal_int(self.true_start_index) and is_literal_int(self.true_end_index)):
             toplevel_extent = (
-                self.end_index.as_int() -
-                self.start_index.as_int() +
+                self.true_end_index.as_int() -
+                self.true_start_index.as_int() +
                 1)
             if isinstance(self.body, ExprRange):
                 return toplevel_extent * self.body.literal_int_extent()
@@ -218,8 +381,10 @@ class ExprRange(Expression):
         '''
         yield self.lambda_map.parameter
         yield self.lambda_map.body
-        yield self.start_index
-        yield self.end_index
+        yield self.true_start_index
+        yield self.true_end_index
+        # if self.get_style('order', 'increasing') == 'decreasing':
+        #     yield ('order', r"'decreasing'")
 
     def remake_with_style_calls(self):
         '''
@@ -236,47 +401,96 @@ class ExprRange(Expression):
                 call_strs.append('with_explicit_parameterization()')
             if parameterization == 'implicit':
                 call_strs.append('with_implicit_parameterization()')
-        expansion = self.get_style('expansion', '1')
-        if expansion != '1':
-            call_strs.append('with_expansion(%d)'%int(expansion))
-        simplify = self.get_style('simplify', 'False')
-        if simplify != 'False':
-            call_strs.append('with_simplification()')
+
+        max_expansion = self._max_allowed_total_expansion(
+            self.true_start_index, self.true_end_index)
+        if max_expansion == 2:
+            expansion_defaults = (1, 1)
+        else:
+            expansion_defaults = (2, 1)
+        front_expansion = self.get_front_expansion()
+        if front_expansion != expansion_defaults[0]:
+            call_strs.append('with_front_expansion(%d)'%int(front_expansion))
+        back_expansion = self.get_back_expansion()
+        if back_expansion != expansion_defaults[1]:
+            call_strs.append('with_back_expansion(%d)'%int(back_expansion))
+
+        order = self.get_style('order')
+        if order == 'decreasing':
+            call_strs.append('with_decreasing_order()')
+
+        wrap_positions = self.wrap_positions()
+        if len(wrap_positions) > 0:
+            call_strs.append('with_wrapping_at(' + ','.join(str(pos)
+                                                            for pos in wrap_positions) + ')')
+
+        case_simplify = self.get_style('case_simplify', 'False')
+        if case_simplify != 'False':
+            if case_simplify == 'True':
+                call_strs.append('with_case_simplification()')
         return call_strs
 
     def style_options(self):
+        from proveit.numbers import Add, one, zero
         options = StyleOptions(self)
         options.add_option(
-            name = 'parameterization',
-            description = (
+            name='parameterization',
+            description=(
                     "'implicit' (default for LaTeX formatting) hides "
                     "the parameter the ExprRange so the parameterization "
                     "may be ambiguous (e.g., x_{1+1}, ..., x_{n+1}); "
                     "'explicit' (default for string formatting) reveals "
                     "the parameterization "
                     "(e.g. x_{1+1}, ..x_{k+1}.., x_{n+1})."),
-            default = None,
-            related_methods = ('with_explicit_parameterization',
-                               'with_implicit_parameterization',
-                               'with_default_parameterization_style'))
-
+            default=None,
+            related_methods=('with_explicit_parameterization',
+                             'with_implicit_parameterization',
+                             'with_default_parameterization_style'))
+        if (Add(self.true_start_index, one).quick_simplified() !=
+                Add(self.true_end_index, zero).quick_simplified()):
+            # Front_expansion and back_expansion options are available
+            # as long as this doesn't trivially/obviously have just 2 
+            # elements. e.g., x_1, ..., x_2 should only use 1 for the
+            # front and back expansion.
+            options.add_option(
+                name='front_expansion',
+                description=(
+                    "The number of instances to display at the front of the "
+                    "range (e.g., before the ellipsis). Default is 2."),
+                default=str(2),
+                related_methods=('with_front_expansion', 'get_front_expansion'))
+            options.add_option(
+                name='back_expansion',
+                description=(
+                    "The number of instances to display at the back of the "
+                    "range (e.g., after the ellipsis). Default is 1."),
+                default=str(1),
+                related_methods=('with_back_expansion', 'get_back_expansion'))
         options.add_option(
-            name='expansion',
+            name='order',
             description=(
-                "The default expansion is 1 (a single operand before the "
-                "ellipses). Enter a positive integer to increase the number "
-                "of operands before the ellipses."),
-            default = str(1),
-            related_methods=('with_expansion', 'get_range_expansion'))
+                "The default order is 'increasing' (a_1 ... a_3) "
+                "but to represent a 'decreasing' ExprRange (a_6 ... a_2) "
+                "the order must be set to 'decreasing'"),
+            default='increasing',
+            related_methods=('with_decreasing_order', 'with_increasing_order'))
         options.add_option(
-            name = 'simplify',
-            description = (
-                    "If 'True', simplify the formatted instances."),
-            default = 'False',
-            related_methods = ('with_simplification',)
+                name='wrap_positions',
+                description=("position(s) at which wrapping is to occur; "
+                             "'n' is after the nth comma."),
+                default = '()',
+                related_methods = ('with_wrapping_at',))
+        options.add_option(
+            name='case_simplify',
+            description=(
+                    "If 'True', simplify formatted instances "
+                    "that are ConditionalSets under proper index "
+                    "assumptions"),
+            default='False',
+            related_methods=('with_case_simplification',)
         )
         return options
-
+    
     def with_explicit_parameterization(self):
         '''
         The 'parameterization':'explicit' style shows the
@@ -305,79 +519,363 @@ class ExprRange(Expression):
         (see 'with_explicit_parameterization').
         '''
         return self.without_style('parameterization')
-    
-    def with_simplification(self):
+
+    def with_case_simplification(self):
         '''
         Simplify the formatted instances for the style.
         '''
-        return self.with_styles(simplify='True')
-    
-    def _body_replaced(self, expr_map):
-        '''
-        Return the body replaced according the the expression map.
-        First attempt to do this with auto-simplification.  If that
-        fails, do it without auto-simplification.
-        '''
-        from proveit.numbers import Less, num, Add
-        from proveit.logic import NotEquals
-        if self.get_style('simplify', 'False') == 'True':            
-            with defaults.temporary() as temp_defaults:
-                temp_defaults.auto_simplify = True
-                temp_defaults.replacements = []
-                expansion = int(self.get_style("expansion", str(1)))
-                expanded_value = Add(self.start_index, num(expansion - 1)).simplification().rhs
-                second_value = Add(self.start_index, num(1)).simplification().rhs
-                temp_defaults.assumptions = defaults.assumptions \
-                                            + tuple([Less(expanded_value, self.end_index),
-                                                     Less(self.start_index, self.end_index),
-                                                     Less(second_value, self.end_index),
-                                                     NotEquals(expanded_value, self.end_index),
-                                                     NotEquals(second_value, self.end_index),
-                                                     NotEquals(self.start_index, self.end_index)])
-                return self.body.complete_replaced(expr_map)
-        else:
-            return self.body.basic_replaced(expr_map)
+        return self.with_styles(case_simplify='True')
 
-    def with_expansion(self, num):
+    def with_decreasing_order(self):
         '''
-        The expansion style increases the number of operands before
-        the ellipses. The default expansion is one operand before
-        the ellipses.
+        Used to indicate an ExprRange with decreasing order (a_4 ... a_2)
         '''
-        num = str(num)
-        return self.with_styles(expansion=num)
+        return self.with_styles(order='decreasing')
+
+    def with_increasing_order(self):
+        '''
+        Revert the order of an ExprRange so that the largest
+        element is the last element
+        '''
+        return self.with_styles(order='increasing')
+    
+    def with_front_expansion(self, num):
+        '''
+        Set the number of instances to display at the front of the 
+        range (e.g., before the ellipsis).
+        '''
+        if not isinstance(num, int) or num < 1:
+            raise ValueError("front_expansion must be an integer of at "
+                             "least 1")
+        # Make sure the expansion doesn't induce an obvious overlap.
+        self._check_obvious_expansion_overlap(
+                num, self.get_back_expansion())
+        # Note: 1 is the effective expansion when
+        # 'front_expansion' is not a style option.
+        if self.get_style('front_expansion', '1') != str(num):
+            try:
+                return self.with_styles(front_expansion=str(num))
+            except StyleError:
+                raise StyleError("'front_expansion' is not an applicable "
+                                 "style option for this ExprRange: %s"%self)
+        return self
+
+    def with_back_expansion(self, num):
+        '''
+        Set the number of instances to display at the back of the 
+        range (e.g., after the ellipsis).
+        '''
+        if not isinstance(num, int) or num < 1:
+            raise ValueError("back_expansion must be an integer of at "
+                             "least 1")
+        self._check_obvious_expansion_overlap(
+                num, self.get_back_expansion())
+        # Note: 1 is the effective expansion when 
+        # 'back_expansion' is not a style option.
+        if self.get_style('back_expansion', '1') != str(num):
+            try:
+                return self.with_styles(back_expansion=str(num))
+            except StyleError:
+                raise StyleError("'back_expansion' is not an applicable "
+                                 "style option for this ExprRange: %s"%self)
+        return self
+    
+    def _check_obvious_expansion_overlap(
+            self, front_expansion, back_expansion):
+        max_allowed = self._max_allowed_total_expansion(
+            self.true_start_index, self.true_end_index)
+        if front_expansion + back_expansion > max_allowed:
+            raise ValueError(
+                "The front and back expansions are beyond the "
+                "maximum allowed total expansion for %s: %d + %d > %d."
+                %(self, front_expansion, back_expansion, max_allowed))
+
+    @staticmethod
+    def _max_allowed_total_expansion(start_index, end_index,
+                                     check_if_invalid=False):
+        from proveit.numbers.addition.add import split_int_shift
+        start_base, start_shift = split_int_shift(start_index)
+        end_base, end_shift = split_int_shift(end_index)
+        if start_base == end_base:
+            if end_shift+1 == start_shift:
+                # For the special case of an empty ExprRange, we allow
+                # a total expansion of 3.  Examples:
+                #  a_1, a_2, ..., a_0
+                #  a_n, a_{n-1}, ..., a_{n+1}
+                return 3
+            if check_if_invalid and end_shift < start_shift-1:
+                raise ValueError("Invalid ExprRange endpoints: %s to %s"
+                                 %(start_index, end_index))
+            return max(end_shift - start_shift + 1, 2)
+        # No limit since there is no obvious overlap.
+        return float('inf')
+
+    def with_wrapping_at(self, *wrap_positions):
+        return self.with_styles(
+            wrap_positions='(' +
+            ' '.join(
+                str(pos) for pos in wrap_positions) +
+            ')')
+
+    def get_front_expansion(self):
+        '''
+        Get the number of instances to display at the front of the 
+        range (e.g., before the ellipsis).
+        '''
+        return int(self.get_style('front_expansion', 1))
+
+    def get_back_expansion(self):
+        '''
+        Get the number of instances to display at the back of the 
+        range (e.g., after the ellipsis).
+        '''
+        return int(self.get_style('back_expansion', 1))
+    
+    def is_decreasing(self):
+        return self.get_style('order') == 'decreasing'
+
+    def wrap_positions(self):
+        '''
+        Return a list of wrap positions according to the current style 
+        setting.  Position 'n' is after the nth comma.
+        '''
+        return [int(pos_str) for pos_str in self.get_style(
+            'wrap_positions', '').strip('()').split(' ') if pos_str != '']
+
+    def instance_context(self, index_base, index_shift):
+        '''
+        Returns in InstanceContext context manager which contains
+        the instance of the ExprRange corresponding to the index
+        set at index_base+index_shift where index_base is an Expression
+        and index_shift is an integer.  The InstanceContext contains
+        the 'instance' (body replaced with the appropriate index and
+        with case simplification as appropriate) and maintains 
+        temporary assumptions and disabled automation until the context
+        is exited.  These temporary settings may be useful for handling
+        case simplifications of nested ExprRanges.
+        '''
+        try:
+            temp_defaults = defaults.temporary()
+            temp_defaults.automation = False
+            temp_defaults.preserve_all = True
+            return self._instance_context(index_base, index_shift,
+                                          temp_defaults)
+        except Exception as e:
+            # We weren't able to return the instance context,
+            # so make sure we exit the temp_defaults context.
+            with temp_defaults:
+                pass
+            raise e
+
+    def _instance_context(self, index_base, index_shift, temp_defaults):
+        '''
+        Helper for ExprRange.instance_context
+        '''
+
+        from proveit import ConditionalSet
+        from proveit.relation import Relation
+        from proveit.logic import Not, Equals, NotEquals, InSet
+        from proveit.numbers import (
+                Less, num, Add, Interval, Neg, negated,
+                quick_simplified_index)
+        from proveit.numbers.addition.add import split_int_shift
+        
+        if not isinstance(index_base, Expression):
+            raise TypeError("'index_base' must be an Expression")
+        if not isinstance(index_shift, int):
+            raise TypeError("'index_shift' must be an integer")
+
+        order = self.get_style("order", "increasing")
+        decreasing = (order == 'decreasing')
+        if decreasing:
+            neg_index_base = negated(index_base)
+            if index_shift == 0:
+                index = Neg(quick_simplified_index(neg_index_base))    
+            else:
+                index = Neg(quick_simplified_index(Add(neg_index_base, 
+                                                       num(-index_shift))))                    
+        else:
+            if index_shift == 0:
+                index = quick_simplified_index(index_base)
+            else:
+                index = quick_simplified_index(Add(index_base, num(index_shift)))
+        
+        if decreasing:
+            expr_map = {Neg(self.lambda_map.parameter): index.operand,
+                        self.lambda_map.parameter: index}
+        else:
+            expr_map = {self.lambda_map.parameter: index}
+        # For purposes of displaying/exploring, we will assume
+        # that the expanded indices are in a proper order and that
+        # the front expansion does not overlap with the back expansion.
+        assumptions = []
+        if decreasing:
+            # Negate the indices when in decreasing mode.
+            index = quick_simplified_index(Neg(index))
+            start_base, start_shift = split_int_shift(
+                    negated(self.true_start_index))
+            end_base, end_shift = split_int_shift(
+                    negated(self.true_end_index))         
+            sign = -1
+        else:
+            index = quick_simplified_index(index)
+            start_base, start_shift = split_int_shift(self.true_start_index)
+            end_base, end_shift = split_int_shift(self.true_end_index)
+            sign = 1
+        index_base, index_shift = split_int_shift(index)
+        if index_base not in (start_base, end_base):
+            raise ValueError(
+                    "'index' %s must be a literal integer shift "
+                    "from %s or %s"%(index, start_base, end_base))
+        for base, other_shift_range in (
+                (start_base, range(
+                        sign*start_shift, 
+                        sign*start_shift+self.get_front_expansion())),
+                (end_base, range(
+                        sign*end_shift-self.get_back_expansion()+1, 
+                        sign*end_shift+1))):
+            for other_shift in other_shift_range:
+                other_shift = sign*other_shift
+                if other_shift == 0:
+                    other_index = quick_simplified_index(base)
+                else:
+                    other_index = quick_simplified_index(
+                            Add(base, num(other_shift)))
+                if index_base == base:
+                    if other_shift == index_shift:
+                        assert index == other_index, (
+                            "%base: %s, other_shift: %s"%(base, other_shift))
+                        # Trivial, but include it anyways so
+                        # we won't need any automation:
+                        assumptions.append(Equals(index, other_index))
+                    else:
+                        assumptions.append(NotEquals(index, other_index))
+                        if other_shift < index_shift:
+                            assumptions.append(Less(other_index, index))
+                        else:
+                            assumptions.append(Less(index, other_index))                            
+                else:
+                    if base == start_base:
+                        assumptions.append(Less(other_index, index))
+                    else:
+                        assumptions.append(Less(index, other_index))
+                    assumptions.append(NotEquals(index, other_index))
+        # To avoid automation, we need to include many variants.
+        net_assumptions = list(defaults.assumptions)
+        for assumption in assumptions:
+            net_assumptions.append(assumption)
+            lhs, rhs = assumption.operands
+            if isinstance(assumption, Equals):
+                net_assumptions.append(Not(NotEquals(lhs, rhs)))
+                if lhs != rhs:
+                    net_assumptions.append(Equals(rhs, lhs))
+                    net_assumptions.append(Not(NotEquals(rhs, lhs)))
+            if isinstance(assumption, NotEquals):
+                net_assumptions.append(Not(Equals(lhs, rhs)))
+                if lhs != rhs:
+                    net_assumptions.append(NotEquals(rhs, lhs))
+                    net_assumptions.append(Not(Equals(rhs, lhs)))
+            if isinstance(assumption, Less):
+                net_assumptions.append(Not(Less(rhs, lhs)))
+        temp_defaults.assumptions = net_assumptions
+        instance = self.body.basic_replaced(expr_map)
+        if self.get_style('case_simplify') == 'True':
+            if isinstance(instance, ConditionalSet):
+                # Effect the simplification of the conditional set
+                # if possible without automation and with no proof
+                # (display/inspection purposes only).
+                new_conditionals = []
+                for conditional_entry in instance.conditionals:
+                    conditional = conditional_entry
+                    extra_assumptions = []
+                    while isinstance(conditional, ExprRange):
+                        # A range of conditionals: add the 
+                        # assumption that the range parameter is
+                        # within the Interval and dig into the body.
+                        extra_assumptions.append(
+                                InSet(conditional.parameter,
+                                      Interval(conditional.true_start_index,
+                                               conditional.true_end_index)))
+                        conditional = conditional.body
+                    if isinstance(conditional, Conditional):
+                        # Check the condition of the conditional.
+                        # If proven, use just the value.
+                        # If disproven, skip this entry.
+                        condition = conditional.condition
+                        if isinstance(condition, Relation):
+                            # If the condition is a Relation,
+                            # 'quick simplify' any side that is an
+                            # Add.
+                            lhs, rhs = condition.lhs, condition.rhs
+                            new_lhs, new_rhs = lhs, rhs
+                            new_lhs = quick_simplified_index(lhs)
+                            new_rhs = quick_simplified_index(rhs)
+                            if lhs != new_lhs or rhs != new_rhs:
+                                condition = condition.basic_replaced(
+                                        {lhs:new_lhs, rhs:new_rhs})
+                        if len(extra_assumptions) > 0:
+                            with defaults.temporary() as tmp_defaults2:
+                                tmp_defaults2.assumptions = (
+                                        defaults.assumptions +
+                                        extra_assumptions)
+                                proven_condition = condition.proven()
+                                dispoven_condition = condition.disproven()
+                        else:
+                            proven_condition = condition.proven()
+                            dispoven_condition = condition.disproven()
+                        if proven_condition:
+                            new_conditionals.append(conditional.value)
+                            continue
+                        elif dispoven_condition:
+                            # Skip over this conditional with the
+                            # false condition.
+                            continue
+                    new_conditionals.append(conditional_entry)
+                if len(new_conditionals) == 1:
+                    # All but one condition is disproven.  If the
+                    # remaining condition is proven, this will be
+                    # the value of that conditional.
+                    instance = new_conditionals[0]
+                elif tuple(new_conditionals) != instance.conditionals:
+                    # Create the simplified ConditionalSet.
+                    instance = ConditionalSet(*new_conditionals)
+        # This quick simplification hides too much.
+        #if isinstance(instance, Add) or isinstance(instance, Neg):
+        #    instance = instance.quick_simplified()
+        return InstanceContext(instance, temp_defaults)
 
     def first(self):
         '''
-        Return the first instance of the range
-        (and store for future use).
+        Return the first instance of the range.
         '''
-        if not hasattr(self, '_first'):
-            expr_map = {self.lambda_map.parameter: self.start_index}
-            self._first = self._body_replaced(expr_map)
-        return self._first
+        with self.instance_context(self.true_start_index, 0) as ic:
+            return ic.instance
 
     def last(self):
         '''
-        Return the last instance of the range
-        (and store for future use).
+        Return the last instance of the range.
         '''
-        if not hasattr(self, '_last'):
-            expr_map = {self.lambda_map.parameter: self.end_index}
-            self._last = self._body_replaced(expr_map)
-        return self._last
+        with self.instance_context(self.true_end_index, 0) as ic:
+            return ic.instance
 
-    def format_length(self, format_type='latex'):
+    def format_length(self):
         '''
         The length of the ExprRange when it is formatted according to the expansion.
         '''
-        return len(self._formatted_checkpoints(format_type=format_type))
+        return self.get_front_expansion() + 1 + self.get_back_expansion()
 
     def string(self, **kwargs):
         return self.formatted('string', **kwargs)
 
     def latex(self, **kwargs):
         return self.formatted('latex', **kwargs)
+
+    def parameter_condition(self):
+        from proveit.logic import InSet
+        from proveit.numbers import Interval
+        return InSet(self.parameter,
+                Interval(self.true_start_index, 
+                         self.true_end_index))
 
     def nested_range_depth(self):
         '''
@@ -405,186 +903,257 @@ class ExprRange(Expression):
             return True
         return False
 
-    def get_range_expansion(self):
+    def _formatted_entries(self, format_type, *,
+                           operator_or_operators=',',
+                           implicit_first_operator=False):
+        if (isinstance(operator_or_operators, ExprRange) and
+                operator_or_operators.is_parameter_independent):
+            operator_or_operators = operator_or_operators.body
+        def inf_repeat_iter(x):
+            while True:
+                yield x
+        if isinstance(operator_or_operators, ExprRange):
+            operator_or_operators = (
+                    operator_or_operators.with_mimicked_style(self))
+            formatted_operator_entries = []
+            operator_or_operators._append_format_cell_entries(
+                    formatted_operator_entries)
+            # Grab just the expression, not the "role".
+            formatted_operators = []
+            for (_expr, _), assumptions in (
+                    operator_or_operators.yield_format_cell_info()):
+                with defaults.temporary() as tmp_defaults:
+                    tmp_defaults.automation = False
+                    tmp_defaults.assumptions = assumptions
+                    formatted_operators.append(_expr.formatted(format_type))
+            formatted_operators_iter = iter(formatted_operators)
+        elif isinstance(operator_or_operators, Expression):
+            _operator = operator_or_operators.formatted(format_type)
+            formatted_operators_iter = inf_repeat_iter(_operator+' ')
+        else:
+            formatted_operators_iter = inf_repeat_iter(operator_or_operators)
+        formatted_entries = []
+        for (expr, role), assumptions in self.yield_format_cell_info():
+            formatted_operator = next(formatted_operators_iter)
+            if implicit_first_operator and len(formatted_entries)==0:
+                formatted_operator = ''
+            with defaults.temporary() as tmp_defaults:
+                tmp_defaults.assumptions = assumptions
+                if isinstance(expr, ExprRange):
+                    nested_range_depth = expr.nested_range_depth()
+                else:
+                    nested_range_depth = 1
+                if len(formatted_entries) > 0:
+                    if formatted_operator != ',':
+                        formatted_operator = ' ' + formatted_operator
+                    formatted_operator = formatted_operator + ' '                
+                if role == 'implicit':
+                    ellipsis = ('\ldots' if format_type == 'latex'
+                                else '...')
+                    ellipsis = ellipsis * nested_range_depth
+                    formatted_entries.append([formatted_operator, ellipsis])
+                else:
+                    ellipsis = '..' * nested_range_depth
+                    if role == 'param_independent':
+                        formatted_entries.append(
+                                [formatted_operator,
+                                 ellipsis + expr.formatted_repeats(format_type) 
+                                 + ellipsis])
+                    elif role == 'explicit':
+                        formatted_body = expr.body.formatted(format_type,
+                                                             fence=True)    
+                        formatted_entries.append(
+                                [formatted_operator,
+                                 ellipsis + formatted_body + ellipsis])
+                    else:
+                        formatted_expr = expr.formatted(format_type,
+                                                        fence=True)
+                        formatted_entries.append([formatted_operator,
+                                                  formatted_expr])
+        return formatted_entries
+
+    def formatted(self, format_type, **kwargs):
+        wrap_positions = self.wrap_positions()
+        justification = 'left'
+        return ExprTuple(self).formatted(format_type,
+                 fence=False, sub_fence=True,
+                 operator_or_operators=',',
+                 implicit_first_operator=True,
+                 wrap_positions=wrap_positions,
+                 justification=justification)
+
+    def num_elements(self, proven=True, **defaults_config):
         '''
-        returns a list of the expression objects before the ellipses including self.first().
-        For use when the ExprRange has the expansion style option, otherwise
-        this method just returns a list containing self.first().
+        Return the number of elements represented by this ExprRange.
+        This includes the extent of all contained ranges.
+        If proven==True, a proof is constructed in the process.
         '''
-        default_expansion = str(1)
-        expansion = int(self.get_style("expansion", default_expansion))
-        from proveit.numbers import one, Add
-        i = 1
-        prev = self.start_index
-        output = [self.first()]
-        while i < expansion:
-            expr_map = {self.lambda_map.parameter: Add(prev, one).simplification().rhs}
-            try:
-                next_value = self._body_replaced(expr_map)
-            except AttributeError:
-                next_value = self.basic_replaced(expr_map)
-            output.append(next_value)
-            prev = Add(prev, one).simplification().rhs
-            i += 1
-        if self.get_style("simplify", 'False') == 'True':
-            try:
-                from proveit.numbers import Less
-                Less(prev, self.end_index).prove()
-            except ProofFailure:
-                print("WARNING: unable to prove that %s < %s. This will be assumed for formatting purposes. "
-                      "Please double check that your expansion is valid." % (prev, self.end_index))
-        return output
-
-    def _formatted_checkpoints(self, format_type, *,
-                               use_explicit_parameterization=None,
-                               ellipses=None, operator=None, expansion=None,
-                               **kwargs):
-        if use_explicit_parameterization is None:
-            use_explicit_parameterization = (
-                self._use_explicit_parameterization(format_type))
-
-        if expansion is None:
-            default_expansion = str(1)
-            expansion = int(self.get_style("expansion", default_expansion))
-
-        # reduce for formatting purposes
-        try:
-            if self.first().auto_reduction() is not None:
-                first = self.first().auto_reduction()
+        from .expr_range import ExprRange
+        from proveit.core_expr_types import Len
+        from proveit.numbers import Add, Mult, Neg, one
+        if proven:
+            return Len(ExprTuple(self)).computed(**defaults_config)
+        multiplier = None
+        if isinstance(self.body, ExprRange):
+            # Nested ExprRanges
+            num_body_elements = self.body.num_elements(proven=False)
+            if self.is_parameter_independent:
+                # We can simply multiply counts when the nested
+                # ExprRange is independent of our parameter.
+                multiplier = num_body_elements
             else:
-                first = self.first()
-            if self.last().auto_reduction() is not None:
-                last = self.last().auto_reduction()
-            else:
-                last = self.last()
-        except:
-            first = self.first()
-            last = self.last()
-        check_points = [first, last]
-        if use_explicit_parameterization and not self.is_parameter_independent:
-            check_points.insert(1, self.body)
-        formatted_sub_expressions = \
-            [sub_expr.formatted(format_type, operator=operator,
-                                **kwargs)
-             for sub_expr in check_points]
+                # Return a sum over an appropriate ExprRange.
+                if (isinstance(num_body_elements, Add) and
+                        num_body_elements.terms.num_entries()==1 and
+                        isinstance(num_body_elements.terms[0], Add)):
+                    # Ungroup this sum over an ExprRange.
+                    num_body_elements = num_body_elements.terms[0]
+                return Add(ExprRange(self.parameter, num_body_elements,
+                                     true_start_index=self.true_start_index, 
+                                     true_end_index=self.true_end_index,
+                                     styles=self.get_styles()))
+        # count = (end_index - start_index) + 1
+        count = Add(self.true_end_index, 
+                    Neg(self.true_start_index), one).quick_simplified()
+        if multiplier is not None:
+            if isinstance(multiplier, Mult):
+                return Mult(*([count] + multiplier.factors))
+            return Mult(count, multiplier)
+        return count
+    
+    def yield_format_cell_info(self):
+        '''
+        Yield information pertaining to each format cell of this
+        ExprRange in the format:
+            ((expr, role), assumptions)
+        The expr is the Expression of the entry.  Temporary assumptions
+        are made about the comparison of ExprRange indices at distinct
+        format cells (useful from case simplification of nested
+        ExprRanges) and yielded.  The 'role' is defined as follows.
+        The beginning cells of the ExprRange will have consecutive 
+        integers for their role  starting with 0, the last cell has -1 
+        for its role, and the 'ellipsis' cell has 'implicit', 
+        'explicit', or 'param_independent' for its role depending upon
+        whether it is parameter independent and, if not, the 
+        'parameterization' style option of the ExprRange.
+        '''
+        front_expansion = self.get_front_expansion()
+        back_expansion = self.get_back_expansion()
+        start_index = self.true_start_index
+        end_index = self.true_end_index
+        for _k in range(0, front_expansion):
+            with self.instance_context(start_index, _k) as instance_context:
+                next_entry = instance_context.instance
+                if isinstance(next_entry, ExprRange):
+                    # Recurse through the entries of an inner ExprRange.
+                    for inner_entry_and_assumptions in \
+                            next_entry.yield_format_cell_info():
+                        yield inner_entry_and_assumptions
+                else:
+                    # Yield the next entry and corresponding assumptions
+                    yield (next_entry, _k), defaults.assumptions
         if self.is_parameter_independent:
-            from proveit.numbers import one, Add
-            repeats_str = (r'\textrm{ repeats}' if format_type == 'latex'
-                           else 'repeats')
-            if self.start_index == one:
-                formatted_sub_expressions.insert(
-                    1, '%s %s' % (self.end_index.formatted(format_type),
-                                  repeats_str))
-            else:
-                to_str = (r'\textrm{ to }' if format_type == 'latex' else 'to')
-                from_str = (r'\textrm{from }' if format_type == 'latex'
-                            else 'from')
-                formatted_sub_expressions.insert(
-                    1, ('%s %s %s %s'
-                        % (from_str,
-                           self.start_index.formatted(format_type), to_str,
-                           self.end_index.formatted(format_type))))
-        if ellipses is None:
-            if use_explicit_parameterization or self.is_parameter_independent:
-                # Use the format:
-                # x_1, ..x_k.., x_n
-                # Or for nested ExprRanges:
-                # x_{1,1}, ..x_{1,k}.., x_{1,n},
-                # ....x_{j,1}, ..x_{j,k}.., x_{j,n}....,
-                # x_{m,1}, ..x_{m,k}.., x_{m,n}
-                ellipsis = '..'
-            else:
-                ellipsis = ('\ldots' if format_type == 'latex'
-                            else '...')
-            # When ranges are nested, double-up (or triple-up, etc)
-            # the ellipsis to make the nested structure clear.
-            ellipses = ellipsis * self.nested_range_depth()
-        if use_explicit_parameterization or self.is_parameter_independent:
-            # e.g., ..x_k..
-            formatted_sub_expressions[1] = \
-                ellipses + formatted_sub_expressions[1] + ellipses
+            yield (self, "param_independent"), defaults.assumptions
         else:
-            # Insert the ellipses between the two "checkpoints".
-            # e.g., x_1, ..., x_n
-            formatted_sub_expressions.insert(1, ellipses)
+            parameterization = self.get_style('parameterization',
+                                              'implicit')
+            yield (self, parameterization), defaults.assumptions
+        for _k in range(-back_expansion, 0):
+            with self.instance_context(end_index, _k+1) as instance_context:
+                next_entry = instance_context.instance
+                if isinstance(next_entry, ExprRange):
+                    # Recurse through the entries of an inner ExprRange.
+                    for inner_entry_and_assumptions in\
+                            next_entry.yield_format_cell_info():
+                        yield inner_entry_and_assumptions
+                else:
+                    # Append the next entry.
+                    yield (next_entry, _k), defaults.assumptions
 
-        if expansion >= 1:
-            # print(expansion)
-            from proveit.numbers import one, Add
-            i = 1
-            prev = self.start_index
-            while i < expansion:
-                expr_map = {self.lambda_map.parameter: Add(prev, one).simplification().rhs}
-                try:
-                    next_value = self._body_replaced(expr_map)
-                except AttributeError:
-                    next_value = self.basic_replaced(expr_map)
-                formatted_sub_expressions.insert(i, next_value.formatted(format_type, operator=operator,
-                                                 **kwargs))
-                prev = Add(prev, one).simplification().rhs
-                i += 1
-
-        else:
-            from proveit._core_.expression.style_options import StyleError
-            raise StyleError("Style option 'expansion' must be >= 1")
-        return formatted_sub_expressions
-
-    def formatted(self, format_type, fence=False, sub_fence=True,
-                  operator=None, **kwargs):
-        if operator is None:
-            # comma is the default formatted operator
-            formatted_operator = ', '
-        elif isinstance(operator, str):
-            formatted_operator = operator
-        else:
-            formatted_operator = operator.formatted(format_type)
-        formatted_sub_expressions = self._formatted_checkpoints(
-            format_type, fence=sub_fence, with_ellipses=True,
-            operator=operator, reduce=True)
-        # Normally the range will be wrapped in an ExprTuple and
-        # fencing will be handled externally.  When it isn't, we don't
-        # want to fence it  anyway.
-        return formatted_operator.join(formatted_sub_expressions)
-
-    def get_instance(self, index, assumptions=USE_DEFAULTS,
-                     requirements=None, equality_repl_requirements=None):
+    def _append_format_cell_element_positions(
+            self, start_element_pos, element_positions):
         '''
-        Return the range instance with the given Lambda map
-        index as an Expression, using the given assumptions as
-        needed to interpret the index expression.  Required
-        truths, proven under the given assumptions, that
-        were used to make this interpretation will be
-        appended to the given 'requirements' (if provided).
+        Append to a list of element positions in correspondence with
+        each format cell of an ExprTuple containing this ExprRange
+        (see ExprTuple.yield_format_cell_info).
+        Start with the given start_pos as the first position of the
+        ExprRange.  The element position of an 'ellipsis' cell is
+        'None' (it isn't defined).  The element position of the last
+        cell will be ('end_index' - 'start_index') of the ExprRange
+        added to the element position of the first cell.
         '''
-        from proveit.numbers import LessEq
+        from proveit.numbers import Add, Neg, one, num
+        element_pos = start_element_pos
+        front_expansion = self.get_front_expansion()
+        back_expansion = self.get_back_expansion()
+        start_index = self.true_start_index
+        end_index = self.true_end_index
+        nested_ranges = isinstance(self.body, ExprRange)
+        # Do the front expansion.
+        for _k in range(0, front_expansion):
+            if _k > 0:
+                element_pos = Add(element_pos, one).quick_simplified()
+            if nested_ranges:
+                with self.instance_context(start_index, _k) as ic:
+                    next_entry = ic.instance
+                    # Use recursion for a nested ExprRange.
+                    element_pos= (
+                            next_entry._append_format_cell_element_positions(
+                                    element_pos, element_positions))
+            else:
+                # Append the next element position.
+                element_positions.append(element_pos)
+        # Use None for the 'ellipsis' cell:
+        element_positions.append(None) 
+        # Set 'element_pos' to just before the first of the back
+        # expansion.  Do this by going to the very end and then
+        # backtracking.
+        net_range_len = self.num_elements(proven=False)
+        element_pos = Add(start_element_pos, net_range_len, 
+                          num(-1)).quick_simplified()
+        for _k in range(-back_expansion, 0):
+            with self.instance_context(end_index, _k+1) as ic:
+                entry = ic.instance
+                range_len = ExprTuple(entry).num_elements(proven=False)
+             # back up
+            element_pos = Add(element_pos, Neg(range_len)).quick_simplified()
+        # Do the back expansion.
+        for _k in range(-back_expansion, 0):
+            element_pos = Add(element_pos, one).quick_simplified()
+            if nested_ranges:
+                with self.instance_context(end_index, _k+1) as ic:
+                    next_entry = ic.instance
+                    # Use recursion for a nested ExprRange.
+                    element_pos= (
+                            next_entry._append_format_cell_element_positions(
+                                    element_pos, element_positions))
+            else:
+                # Append the next element position.
+                element_positions.append(element_pos)
+        return element_pos
+    
+    def formatted_repeats(self, format_type):
+        from proveit.numbers import Add, Neg, num
+        if not self.is_parameter_independent:
+            raise ValueError("'formatted_repeats' intended to be used only "
+                             "when the parameter is independent.")
+        after_front_expansion = Add(self.true_start_index, 
+                                    num(self.get_front_expansion()))
+        first_of_back_expansion = Add(self.true_end_index, 
+                                      num(-self.get_back_expansion()+1))
+        between_count = Add(
+                first_of_back_expansion, 
+                Neg(after_front_expansion)).quick_simplified()
+        repeats_str = r' \times' if format_type=='latex' else ' ×'
+        return '%s%s' % (between_count.formatted(format_type, fence=True),
+                         repeats_str)
 
-        if requirements is None:
-            # requirements won't be passed back in this case
-            requirements = []
-
-        # first make sure that the indices are in the range
-        start_index, end_index = self.start_index, self.end_index
-        for first, second in ((start_index, index), (index, end_index)):
-            relation = None
-            try:
-                relation = LessEq.sort([first, second], reorder=False,
-                                       assumptions=assumptions)
-            except BaseException:
-                raise RangeInstanceError(
-                    "Indices not provably within the range "
-                    "range: %s <= %s" % (first, second))
-            requirements.append(relation)
-
-        # map to the desired instance
-        return self.lambda_map.apply(
-            index, assumptions=assumptions, requirements=requirements,
-            equality_repl_requirements=equality_repl_requirements)
-
-    def _possibly_free_var_ranges(self, exclusions=None):
+    def _free_var_ranges(self, exclusions=None):
         '''
         Return the dictionary mapping Variables to forms w.r.t. ranges
-        of indices (or solo) in which the variable occurs as free or
-        not explicitly and completely masked.  Examples of "forms":
+        of indices (or solo) in which the variable occurs as free
+        (not within a lambda map that parameterizes the base variable).
+        Examples of "forms":
             x
             x_i
             x_1, ..., x_n
@@ -607,21 +1176,21 @@ class ExprRange(Expression):
             # exclude anything contributing directly to a form that is
             # in the exclusion set.  For example, if
             # x_1, ..., x_n is in the exclusion set and
-            # self.parameter==k and self.start_index==1 and
-            # self.end_index==n then add x_k to the exclusion set of
+            # self.parameter==k and self.true_start_index==1 and
+            # self.true_end_index==n then add x_k to the exclusion set of
             # this body.
             body_exclusions = set(exclusions)
             for exclusion in exclusions:
                 if (isinstance(exclusion, ExprRange) and
-                        exclusion.start_index == self.start_index and
-                        exclusion.end_index == self.end_index):
+                        exclusion.true_start_index == self.true_start_index and
+                        exclusion.true_end_index == self.true_end_index):
                     new_exclusion = exclusion.body.basic_replaced(
                         {exclusion.parameter: self.parameter})
                     body_exclusions.add(new_exclusion)
         else:
             body_exclusions = None
         body_forms_dict = \
-            self.body._possibly_free_var_ranges(exclusions=body_exclusions)
+            self.body._free_var_ranges(exclusions=body_exclusions)
         # deep copy body_forms_dict into forms_dict
         forms_dict = {var: set(ranges) for var, ranges
                       in body_forms_dict.items()}
@@ -633,7 +1202,7 @@ class ExprRange(Expression):
                 forms_dict.pop(param)
         for expr in self._sub_expressions[1:]:
             # Skip the first sub-expression. We've already treated that.
-            for var, forms in expr._possibly_free_var_ranges(
+            for var, forms in expr._free_var_ranges(
                     exclusions=exclusions).items():
                 forms_dict.setdefault(var, set()).update(forms)
         # The var ranges of the body that depend upon self.parameter
@@ -646,13 +1215,16 @@ class ExprRange(Expression):
             var = get_param_var(parameterized_var_range)
             assert var in forms_dict
             forms_dict[var].remove(parameterized_var_range)
-            forms_dict[var].add(ExprRange(param, parameterized_var_range,
-                                          self.start_index, self.end_index))
+            forms_dict[var].add(
+                    ExprRange(param, parameterized_var_range,
+                              true_start_index=self.true_start_index, 
+                              true_end_index=self.true_end_index,
+                              styles=self.get_styles()))
         return forms_dict
 
     def _parameterized_var_ranges(self, body_forms_dict=None):
         '''
-        Yield each of body._possibly_free_var_ranges() that involves the
+        Yield each of body._free_var_ranges() that involves the
         ExprRange parameter as a free variable.
         For example, for ((x_1 < x_{1+1}) and ... and (x_n < x_{n+1})),
         the following will be yielded if k is the ExprRange parameter:
@@ -665,7 +1237,7 @@ class ExprRange(Expression):
         if i is the ExprRange parameter.
         '''
         if body_forms_dict is None:
-            body_forms_dict = self.body._possibly_free_var_ranges()
+            body_forms_dict = self.body._free_var_ranges()
         param = self.parameter
         for var, forms in body_forms_dict.items():
             for form in forms:
@@ -673,29 +1245,36 @@ class ExprRange(Expression):
                     continue
                 if form == self.parameter:
                     continue  # don't count the parameter itself.
-                var_forms_of_form = form._possibly_free_var_ranges()
+                var_forms_of_form = form._free_var_ranges()
                 if (param in var_forms_of_form
                         and param in var_forms_of_form[param]):
                     yield form
 
-    # This is NOT an @equality_prover because the returned
-    # equality does not have the ExprRange directly on the left
-    # side, rather it is wrapped in an ExprTuple.
-    @prover
-    def _range_reduction(self, must_reduce=False, **defaults_config):
+    @equality_prover("reduced", "reduce")
+    def reduction(self, must_reduce=False, **defaults_config):
         '''
         Prove this ExprRange, wrapped in an ExprTuple, equal
         to an ExprTuple form that is possibly reduced (e.g.,
-        collapsed to an empty range).
+        collapsed to an empty range) after simplifying indices.
         '''
         from proveit import f, i, j, m, n
         from proveit.logic import Equals
         from proveit.numbers import Add, one
         tuple_wrapped_self = ExprTuple(self)
         lambda_map = self.lambda_map
-        start_index = self.start_index
-        end_index = self.end_index
-        if Equals(start_index, end_index).proven():
+        start_index = self.true_start_index
+        end_index = self.true_end_index
+        start_index_simplification = start_index.simplification()
+        end_index_simplification = end_index.simplification()
+        simp_start_index = start_index_simplification.rhs
+        simp_end_index = end_index_simplification.rhs
+        index_replacements = []
+        if simp_start_index != start_index:
+            index_replacements.append(start_index_simplification)
+        if simp_end_index != end_index:
+            index_replacements.append(end_index_simplification)
+        replacements = defaults.replacements + tuple(index_replacements)
+        if Equals(simp_start_index, simp_end_index).proven():
             # If we know that the start and end index are the
             # same, we can use the singular_range_reduction.
             from proveit.core_expr_types.tuples import \
@@ -705,16 +1284,30 @@ class ExprRange(Expression):
             #      preserve_expr=tuple_wrapped_self)
             return singular_range_reduction.instantiate(
                 {f:lambda_map, i:start_index, j:end_index},
+                 replacements=replacements,
                  preserve_expr=tuple_wrapped_self)
         # If the start and end are literal integers and form an
         # empty range, then it should be straightforward to
         # prove that the range is empty.
         from proveit.numbers import is_literal_int
-        empty_req = Equals(Add(end_index, one), start_index)
-        if is_literal_int(start_index) and is_literal_int(end_index):
-            if end_index.as_int() + 1 == start_index.as_int():
+        default_order = 'increasing'
+        if self.get_style('order', default_order) == 'decreasing':
+            decreasing = True
+        else:
+            decreasing = False
+        empty_req = Equals(Add(simp_end_index, one), simp_start_index)
+        if is_literal_int(simp_start_index) and is_literal_int(simp_end_index):
+            if simp_end_index.as_int() + 1 == simp_start_index.as_int():
                 empty_req.prove()
+        first = self.first()
         if empty_req.proven():
+            # Make sure we prove it for the original indices.
+            if simp_start_index != start_index:
+                empty_req = start_index_simplification.sub_left_side_into(
+                        empty_req.inner_expr().rhs)
+            if simp_end_index != end_index:
+                empty_req = end_index_simplification.sub_left_side_into(
+                        empty_req.inner_expr().lhs.terms[0])            
             # We can do an empty range reduction
             # Temporarily disable automation to avoid infinite
             # recursion.
@@ -727,21 +1320,33 @@ class ExprRange(Expression):
                 # recursion.
                 from proveit.core_expr_types.tuples import \
                     empty_outside_range_of_range
-                nest_end_index = self.first().end_index
-                nest_start_index = self.first().start_index
+                nest_end_index = first.true_end_index
+                nest_start_index = first.true_start_index
                 lambda_map = Lambda(
                     (self.parameter, self.body.parameter), self.body.body)
-                return empty_outside_range_of_range.instantiate(
-                    {f: lambda_map, m: start_index, n: end_index,
-                     i: nest_start_index, j: nest_end_index},
-                     preserve_expr=tuple_wrapped_self)
+                if decreasing:
+                    return empty_outside_range_of_range.instantiate(
+                        {f: lambda_map, m: start_index, n: end_index,
+                         i: nest_start_index, j: nest_end_index},
+                         preserve_expr=tuple_wrapped_self).inner_expr().lhs[0].with_decreasing_order()
+                else:
+                    return empty_outside_range_of_range.instantiate(
+                        {f: lambda_map, m: start_index, n: end_index,
+                         i: nest_start_index, j: nest_end_index},
+                        preserve_expr=tuple_wrapped_self)
             else:
                 from proveit.core_expr_types.tuples import \
                     empty_range_def
                 # Preserve 'self' on the left side of the reduction.
-                return empty_range_def.instantiate(
-                    {f: lambda_map, i: start_index, j: end_index},
-                    preserve_expr=tuple_wrapped_self)
+                if decreasing:
+                    empty_range = empty_range_def.instantiate(
+                        {f: lambda_map, i: start_index, j: end_index},
+                        preserve_expr=tuple_wrapped_self)
+                    return empty_range.inner_expr().lhs[0].with_decreasing_order()
+                else:
+                    return empty_range_def.instantiate(
+                        {f: lambda_map, i: start_index, j: end_index},
+                        preserve_expr=tuple_wrapped_self)
         elif self.nested_range_depth() > 1:
             # this is a nested range so the inner range could be empty.
 
@@ -750,12 +1355,12 @@ class ExprRange(Expression):
             # straightforward to prove that the entire range is empty.
             from proveit.numbers import is_literal_int
             empty_req = Equals(
-                Add(self.first().end_index, one), self.first().start_index)
+                Add(first.true_end_index, one), first.true_start_index)
             if is_literal_int(
-                    self.first().start_index) and is_literal_int(
-                    self.first().end_index):
-                if self.first().end_index.as_int() + \
-                        1 == self.first().start_index.as_int():
+                    first.true_start_index) and is_literal_int(
+                    first.true_end_index):
+                if first.true_end_index.as_int() + \
+                        1 == first.true_start_index.as_int():
                     empty_req.prove()
             if empty_req.proven():
                 # We can do an empty range reduction on the entire expression
@@ -764,40 +1369,37 @@ class ExprRange(Expression):
                 from proveit.core_expr_types.tuples import \
                     empty_inside_range_of_range
                 # Preserve 'self' on the left side of the reduction.
-                nest_end_index = self.first().end_index
-                nest_start_index = self.first().start_index
+                nest_end_index = first.true_end_index
+                nest_start_index = first.true_start_index
                 lambda_map = Lambda(
                     (self.parameter, self.body.parameter), 
                     self.body.body)
-                return empty_inside_range_of_range.instantiate(
-                    {f: lambda_map, m: start_index, n: end_index, 
+                reduction = empty_inside_range_of_range.instantiate(
+                    {f: lambda_map, m: start_index, n: end_index,
                      i: nest_start_index, j: nest_end_index},
-                     preserve_expr=tuple_wrapped_self)
+                    preserve_expr=tuple_wrapped_self)
+                if decreasing:
+                    return (reduction.inner_expr().lhs[0]
+                            .with_decreasing_order())
+                else:
+                    return reduction
         # If nothing else is applicable, we will return the trivial 
         # reflexive equality.
         if must_reduce:
             # Nothing can be reduced, so raise an exception.
             raise UnsatisfiedPrerequisites("%s is not provably "
                                            "reducible"%self)
-        return Equals(tuple_wrapped_self, 
-                      tuple_wrapped_self).conclude_via_reflexivity()
-
-    def _possibly_reduced_range_entries(self, requirements):
-        '''
-        If the given ExprRange has a reduction (as an empty), 
-        add this reduction as a requirement and yield the
-        entries of the reduced version.  Otherwise, just yield
-        the original expr_range.
-        '''
-        try:
-            reduction = self._range_reduction(must_reduce=True)
-        except UnsatisfiedPrerequisites:
-            yield self
-        if reduction.lhs != reduction.rhs:
-            requirements.append(reduction)
-        for entry in reduction.rhs:
-            yield entry
-
+        reduction = Equals(tuple_wrapped_self, 
+                           tuple_wrapped_self).conclude_via_reflexivity()
+        if len(index_replacements) > 0:
+            if simp_start_index != start_index:
+                reduction = start_index_simplification.sub_right_side_into(
+                        reduction.inner_expr().rhs[0].true_start_index)
+            if simp_end_index != end_index:
+                reduction = end_index_simplification.sub_right_side_into(
+                        reduction.inner_expr().rhs[0].true_end_index)      
+        return reduction
+    
     def _replaced_entries(self, repl_map, allow_relabeling, requirements):
         '''
         Returns this expression with sub-expressions replaced
@@ -858,8 +1460,9 @@ class ExprRange(Expression):
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             get_param_var, extract_param_replacements
         from proveit._core_.expression.label.var import safe_dummy_var
-        from proveit.logic import Equals  # , InSet
-        from proveit.numbers import Add, one  # , Interval
+        from proveit.logic import Equals, InSet
+        from proveit.numbers import (Add, subtract, one, Interval,
+                                     Integer, quick_simplified_index)
 
         if len(repl_map) > 0 and (self in repl_map):
             # The full expression is to be replaced.
@@ -870,7 +1473,7 @@ class ExprRange(Expression):
                 sub_expr.basic_replaced(
                     repl_map, allow_relabeling=allow_relabeling,
                     requirements=requirements)
-            for sub_expr in (self.start_index, self.end_index))
+            for sub_expr in (self.true_start_index, self.true_end_index))
         # See if we should reduce to a singular instance, according to
         # whether the start and end indices are the same.
         if subbed_start_index==subbed_end_index:
@@ -879,6 +1482,27 @@ class ExprRange(Expression):
                     allow_relabeling=allow_relabeling,
                     requirements=requirements)
             return
+        
+        subbed_styles = self.get_styles()
+        # Figure out what front/back expansions are allowed for the
+        # styles.
+        max_total_expansion = ExprRange._max_allowed_total_expansion(
+                subbed_start_index, subbed_end_index)
+        #if self.is_parameter_independent or max_total_expansion == 2:
+        if max_total_expansion == 2:
+            # The front and back expansions after substituting must
+            # each be 1, so exclude them from the style options.
+            subbed_styles.pop('front_expansion', None)
+            subbed_styles.pop('back_expansion', None)
+        else:
+            front_expansion, back_expansion = (self.get_front_expansion(),
+                                               self.get_back_expansion())
+            if front_expansion+back_expansion > max_total_expansion:
+                # We must restrict the front and back expansions.
+                subbed_styles['front_expansion'] = min(
+                        front_expansion, max_total_expansion-1)
+                subbed_styles['back_expansion'] = (
+                        max_total_expansion - front_expansion)
 
         if requirements is None:
             requirements = []
@@ -969,7 +1593,7 @@ class ExprRange(Expression):
         # parameterized_var_ranges are expanded, all of the new indices
         # must match the original indices, not just the length.
         excluded_var_ranges = \
-            self.body._possibly_free_var_ranges(
+            self.body._free_var_ranges(
                 exclusions=parameterized_var_ranges)
         if self.parameter in excluded_var_ranges:
             indices_must_match = True
@@ -995,7 +1619,6 @@ class ExprRange(Expression):
             indexed_var = innermost_body(occurrence)
             var_indices = indexed_var.indices
             var = indexed_var.var
-
             param_index = None
 
             # Note: We'll make replacements of IndexedVar indices and 
@@ -1004,8 +1627,15 @@ class ExprRange(Expression):
             # corresponding variable range.
             occurrence_map = dict(repl_map)
             occurrence_map.pop(var)
+            occurrence_map.pop(orig_parameter, None)
+            subbed_occurrence = occurrence.basic_replaced(
+                occurrence_map, allow_relabeling=allow_relabeling, 
+                requirements=requirements)
+            shift_map = dict()
             for idx in var_indices:
-                if orig_parameter in free_vars(idx, err_inclusively=True):
+                if orig_parameter in free_vars(idx):
+                    # Absorb a shift into the start and end indices
+                    # for the repl_map lookup.
                     if param_index is not None:
                         raise ImproperReplacement(
                             self, repl_map,
@@ -1015,17 +1645,25 @@ class ExprRange(Expression):
                             % (self, occurrence, orig_parameter))
                     start_with_absorbed_shift = \
                         idx.basic_replaced(
-                                {orig_parameter: subbed_start_index})
+                                {orig_parameter: subbed_start_index},
+                                requirements=requirements)
                     end_with_absorbed_shift = \
-                        idx.basic_replaced({orig_parameter: subbed_end_index})
+                        idx.basic_replaced({orig_parameter: subbed_end_index},
+                                              requirements=requirements)
+                    start_with_absorbed_shift, end_with_absorbed_shift = (
+                            simplified_indices(start_with_absorbed_shift, 
+                                               end_with_absorbed_shift,
+                                               requirements=requirements))
                     param_index = idx
-                    occurrence_map[idx] = orig_parameter
+                    # Since we are absorbing the shift into the 
+                    # indices, map idx to a non-shifted parameter:
                     if idx != orig_parameter:
+                        shift_map[idx] = orig_parameter
                         # We'll map the original parameter to a safe 
                         # dummy var so we can detect if there are other 
                         # instances of the original parameter with a 
                         # different shift.
-                        occurrence_map[orig_parameter] = safe_dummy_var
+                        shift_map[orig_parameter] = safe_dummy_var
             if param_index is None:
                 raise ImproperReplacement(
                     self, repl_map,
@@ -1033,34 +1671,44 @@ class ExprRange(Expression):
                     "occurrence with the range parameter %s; not used as "
                     "an index."
                     % (self, occurrence, orig_parameter))
-            orig_occurrence = occurrence
-            occurrence = occurrence.basic_replaced(
-                occurrence_map, allow_relabeling=allow_relabeling, 
-                requirements=requirements)
-            if safe_dummy_var in free_vars(occurrence, err_inclusively=True):
+            if len(shift_map) > 0:
+                shifted_occurrence = subbed_occurrence.basic_replaced(
+                    shift_map, allow_relabeling=allow_relabeling, 
+                    requirements=requirements)
+            else:
+                shifted_occurrence = subbed_occurrence
+            if safe_dummy_var in free_vars(occurrence):
                 # There was an instance of the original parameter with a
                 # different shift than what we used.  That's not allowed.
                 raise ImproperReplacement(
                     self, repl_map,
                     "Failure to expand %s because %s does not use a "
                     "consistent shift the range parameter %s."
-                    % (self, orig_occurrence, orig_parameter))
+                    % (self, occurrence, orig_parameter))
 
-            var_range = ExprRange(orig_parameter, occurrence,
-                                  start_with_absorbed_shift,
-                                  end_with_absorbed_shift)
+            _styles = subbed_styles
+            var_range = ExprRange(orig_parameter, shifted_occurrence,
+                                  true_start_index=start_with_absorbed_shift,
+                                  true_end_index=end_with_absorbed_shift,
+                                  styles=_styles)
 
             # Now wrap this "variable range" in an ExprTuple and see
             # if it has a known expansion.
             var_tuple = ExprTuple(var_range)
             var = get_param_var(occurrence)
             if var_tuple not in inner_repl_map:
-                def key_var(key): return (get_param_var(key[0]) if
-                                          isinstance(key, ExprTuple)
-                                          else get_param_var(key))
+                def key_var(key): 
+                    try:
+                        return (get_param_var(key[0]) if
+                                isinstance(key, ExprTuple)
+                                else get_param_var(key))
+                    except (TypeError, ValueError):
+                        return None
                 var_replacements = \
                     {key: value for key, value in inner_repl_map.items() if
                      key_var(key) == var}
+                defaults.var_tuple = var_tuple
+                defaults.inner_repl_map = inner_repl_map
                 raise ImproperReplacement(
                     self, repl_map,
                     "Failure to expand %s because there is no explicit "
@@ -1075,17 +1723,18 @@ class ExprRange(Expression):
                     self, repl_map,
                     "Invalid replacement %s for %s; it must be an "
                     "ExprTuple." % (var_tuple, repl))
-            expansions_dict[occurrence] = repl.entries
+            
+            expansions_dict[subbed_occurrence] = repl.entries
 
         def raise_failed_expansion_match(first_expansion, expansion,
                                          first_indexed_var_or_range,
                                          indexed_var_or_range):
             raise ImproperReplacement(
                 self, repl_map,
-                "When expanding IndexedVar's within an ExprRange whose "
+                "When expanding IndexedVars within an ExprRange whose "
                 "parameter is the index, their expansion ExprRange "
                 "indices must all match. %s vs %s do not match as "
-                "respected expansions for %s and %s."
+                "respective expansions for %s and %s."
                 % (first_expansion, expansion,
                    first_indexed_var_or_range, indexed_var_or_range))
 
@@ -1136,7 +1785,7 @@ class ExprRange(Expression):
                     param_repl_map = {entry.parameter: new_param}
                     new_body = entry.body.basic_replaced(param_repl_map)
                     entry_repl_map[indexed_var_or_range.basic_replaced(
-                        param_repl_map)] = new_body
+                        {orig_parameter:new_param})] = new_body
                     expansion_entry_ranges.append(entry)
                     # Advance the "expansion iter".
                     next(expansion_iter)
@@ -1146,8 +1795,9 @@ class ExprRange(Expression):
                     # for a nested ExprRange (which is why we need
                     # to use the 'extract_param_replacements' method).
                     extract_param_replacements(
-                        parameters, parameter_vars, body,
-                        expansion_iter, requirements, entry_repl_map)
+                        parameters, parameter_vars,
+                        expansion_iter, None,
+                        requirements, entry_repl_map)
                     # Mark as a non-ExprRange entry by simply appending
                     # None.
                     expansion_entry_ranges.append(None)
@@ -1180,16 +1830,16 @@ class ExprRange(Expression):
                             first_indexed_var_or_range,
                             indexed_var_or_range)
                     if isinstance(expansion_entry, ExprRange):
-                        if (expansion_entry.start_index
-                                != first_expansion_entry.start_index):
+                        if (expansion_entry.true_start_index
+                                != first_expansion_entry.true_start_index):
                             # Failed to have the same ExprRange range
                             # (different start).
                             raise_failed_expansion_match(
                                 first_expansion, expansion,
                                 first_indexed_var_or_range,
                                 indexed_var_or_range)
-                        if (expansion_entry.end_index !=
-                                first_expansion_entry.end_index):
+                        if (expansion_entry.true_end_index !=
+                                first_expansion_entry.true_end_index):
                             # Failed to have the same ExprRange range
                             # (different end).
                             raise_failed_expansion_match(
@@ -1202,11 +1852,11 @@ class ExprRange(Expression):
                         entry_repl_maps, expansion_repl_maps):
                     entry_repl_map.update(expansion_repl_map)
 
-        def update_map(orig_repl_map, update):
+        def update_keys_and_values(orig_repl_map, update):
             '''
-            Given an original replacement map, use the 'update' dictionary
-            to make replacements in all of its keys and values and then
-            add the update entrie(s).
+            Given an original replacement map, use the 'update' 
+            dictionary to make replacements in all of its keys 
+            and values.
             '''
             new_repl_map = dict()
             for key, val in orig_repl_map.items():
@@ -1216,8 +1866,8 @@ class ExprRange(Expression):
                 else:
                     val = val.basic_replaced(update)
                 new_repl_map[key] = val
-            new_repl_map.update(update)
-            return new_repl_map
+            orig_repl_map.clear()
+            orig_repl_map.update(new_repl_map)
 
         # Yield a replacement for each of the aligned entry of the
         # expansions.  May be a singular entry or an ExprRange entry
@@ -1234,24 +1884,33 @@ class ExprRange(Expression):
                 assert isinstance(first_expansion_entry_range_or_none,
                                   ExprRange)
                 # For an ExprRange entry, yield a new ExprRange
-                # representing a portion of th eoriginal range.
+                # representing a portion of the original range.
                 first_expansion_entry = first_expansion_entry_range_or_none
-                start_index = first_expansion_entry.start_index
-                end_index = first_expansion_entry.end_index
+                true_start_index = first_expansion_entry.true_start_index
+                true_end_index = first_expansion_entry.true_end_index
+                styles = first_expansion_entry.get_styles()
+                
+                param_repl = new_param
+                if (indices_must_match and 
+                        quick_simplified_index(true_start_index) 
+                        != quick_simplified_index(next_index)):
+                    # To make the indices match, we will need to
+                    # translate the parameter.  We use
+                    # 'quick_simplified' to figure out how to do this
+                    # translation, but it will have to be proven to
+                    # match later on.
+                    shift = subtract(next_index, 
+                                     true_start_index).quick_simplified()
+                    param_repl = Add(new_param, shift)
 
-                # Let's keep this simple and not worry about this
-                # "range assumptions".
-                # If needed, we can use explicit axioms/theorems to
-                # make use of this property rather than in the core.
-                # If we change our minds, the range assumption should
-                # also be employed in the ExprRange._replaced method.
-                # range_assumption = InSet(new_param,
-                #                         Interval(start_index, end_index))
+                # We'll assume new_param is in the proper interval
+                # to make the replacements in the body.
+                range_assumption = InSet(new_param,
+                                         Interval(true_start_index, 
+                                                  true_end_index))
 
-                entry_assumptions = inner_assumptions  # + [range_assumption]
-                param_repl_map = {orig_parameter: new_param}
-                full_entry_repl_map = update_map(
-                    full_entry_repl_map, param_repl_map)
+                entry_assumptions = inner_assumptions + (range_assumption,)
+                full_entry_repl_map[orig_parameter] = param_repl
                 with defaults.temporary() as temp_defaults:
                     temp_defaults.assumptions = entry_assumptions
                     entry = ExprRange(
@@ -1260,32 +1919,38 @@ class ExprRange(Expression):
                                     full_entry_repl_map,
                                     allow_relabeling=allow_relabeling,
                                     requirements=requirements),
-                            start_index, end_index)
+                            true_start_index=true_start_index, 
+                            true_end_index=true_end_index, styles=styles)
                 yield entry
                 if indices_must_match:
-                    # We need to know the new_indices to match with the
+                    # We need to know the new_indices match with the
                     # original indices.
-                    new_indices.append(ExprRange(new_param, new_param,
-                                                 start_index, end_index))
-                    next_index = Add(end_index, one)
+                    new_indices.append(
+                            ExprRange(new_param, param_repl,
+                                      true_start_index=true_start_index, 
+                                      true_end_index=true_end_index,
+                                      styles=styles))
+                    # Move 'next_index' to the end of this range.
+                    if param_repl == new_param:
+                        next_index = true_end_index
+                    else:
+                        next_index = param_repl.basic_replaced(
+                                        {new_param:true_end_index})
+                    # Now add one to 'next_index'.
+                    # 'quick_simplified' is okay because we will
+                    # have to prove that the indices all match below.
+                    next_index = Add(next_index, one).quick_simplified()
             else:
                 # For a singular element entry, yield the replaced
                 # element.
                 if indices_must_match:
-                    # Attempt to simplify the 'next_index' only when
-                    # we need it.
-                    next_index = next_index.equality_replaced(
-                        requirements, auto_simplify_top_level=True)
                     # The actual range parameter index is needed:
-                    param_repl_map = {orig_parameter: next_index}
-                    full_entry_repl_map = update_map(
-                        full_entry_repl_map, param_repl_map)
-                    #full_entry_repl_map[orig_parameter] = next_index
-
+                    update_keys_and_values(full_entry_repl_map, 
+                                           {new_param:next_index})
+                    full_entry_repl_map[orig_parameter] = next_index
                 with defaults.temporary() as temp_defaults:
                     temp_defaults.assumptions = inner_assumptions
                     if isinstance(body, ExprRange):
-                        # A nested ExprRange may need to be expanded.
                         for subentry in body._replaced_entries(
                                 full_entry_repl_map, allow_relabeling,
                                 requirements):
@@ -1300,16 +1965,39 @@ class ExprRange(Expression):
                     # We need to know the new_indices to match with the
                     # original indices.
                     new_indices.append(next_index)
-                    next_index = Add(next_index, one)
+                    # 'quick_simplified' is okay because we will
+                    # have to prove that the indices all match below.
+                    next_index = Add(next_index, one).quick_simplified()
 
         if indices_must_match:
             # The range parameter appears outside of
             # IndexedVars.  That means that we must match new
             # and original indices precisely, not just their length.
-            requirement = Equals(ExprTuple(*new_indices),
-                                 ExprTuple(ExprRange(new_param, new_param,
-                                                     subbed_start_index,
-                                                     subbed_end_index)))
+            
+            # We also need to make sure that subbed_start_index
+            # and subbed_end_index are integers to be consistent
+            # with the parameter_condition() we are allowed to assume
+            # for the body.
+            start_requirement = InSet(subbed_start_index, Integer)
+            end_requirement = InSet(subbed_end_index, Integer)
+            try:
+                requirements.append(start_requirement.prove())
+                requirements.append(end_requirement.prove())
+            except ProofFailure as e:
+                raise ImproperReplacement(
+                    self, repl_map,
+                    "ExprRange subbed start and end indices, %s and %s, "
+                    "must be provably integers: %s"%
+                    (subbed_start_index, subbed_end_index, e))
+            
+            # Now for matching the indices precisely.
+            requirement = Equals(
+                    ExprTuple(*new_indices),
+                    ExprTuple(ExprRange(
+                            new_param, new_param,
+                            true_start_index=subbed_start_index, 
+                            true_end_index=subbed_end_index,
+                            styles=subbed_styles)))
             if requirement.lhs == requirement.rhs:
                 # No need for the requirement if it is a trivial
                 # reflexive identity.
@@ -1370,52 +2058,89 @@ class ExprRange(Expression):
         return nested_range(parameters, new_inner_body, start_indices,
                             end_indices)
 
-    @prover
-    def partition(self, before_split_idx, **defaults_config):
+    @equality_prover("partitioned", "split")
+    def partition(self, before_split_idx, *, 
+                  force_to_treat_as_increasing=False,
+                  **defaults_config):
         '''
         Return the equation between this range within an ExprTuple
         and a split version in the following manner:
-            (f(self.start_index), ..., f(self.end_index)) =
-            (f(self.start_index), ..., f(before_split_index),
-             f(before_split_index+1), ..., f(self.end_index))
+            (f(self.true_start_index), ..., f(self.true_end_index)) =
+            (f(self.true_start_index), ..., f(before_split_index),
+             f(before_split_index+1), ..., f(self.true_end_index))
         where f represents the self.lambda_map.
         '''
         from proveit import f, i, j, k
         from proveit.logic import Equals
-        from proveit.numbers import Add, one, subtract
+        from proveit.numbers import (Add, one, subtract, 
+                                     quick_simplified_index)
         from proveit.core_expr_types.tuples import (
             range_extension_def)
         from proveit.core_expr_types.tuples import (
             partition_front, partition_back, partition)
 
         lambda_map = self.lambda_map
-        start_index, end_index = self.start_index, self.end_index
+        default_order = 'increasing'
+        if force_to_treat_as_increasing:
+            decreasing = False
+        elif self.get_style('order', default_order) == 'decreasing':
+            from proveit.numbers import Neg
+            before_split_idx = Neg(before_split_idx)
+            decreasing = True
+        else:
+            decreasing = False
+        start_index, end_index = self.true_start_index, self.true_end_index
         if end_index == Add(before_split_idx, one):
             # special case which uses the axiom:
-            return range_extension_def.instantiate(
+            judgment = range_extension_def.instantiate(
                 {f: lambda_map, i: start_index, j: before_split_idx})
-        elif before_split_idx == self.start_index:
+        elif before_split_idx == self.true_start_index:
             # special case when peeling off the front
-            return partition_front.instantiate(
-                {f: lambda_map, i: self.start_index, j: self.end_index})
-        elif (before_split_idx == subtract(end_index, one) or
-              Equals(before_split_idx, subtract(end_index, one)).proven()):
+            judgment = partition_front.instantiate(
+                {f: lambda_map, i: self.true_start_index, j: self.true_end_index})
+        elif (quick_simplified_index(before_split_idx) == 
+                  quick_simplified_index(subtract(end_index, one))):
             # special case when peeling off the back
-            return partition_back.instantiate(
+            judgment = partition_back.instantiate(
                 {f: lambda_map, i: start_index, j: end_index})
         else:
-            return partition.instantiate(
+            judgment = partition.instantiate(
                 {f: lambda_map, i: start_index, j: before_split_idx,
                  k: end_index})
 
+        if decreasing:
+            judgment = judgment.inner_expr().lhs[0].with_decreasing_order()
+            for i, item in enumerate(judgment.rhs):
+                if isinstance(item, ExprRange):
+                    judgment = judgment.inner_expr().rhs[i].with_decreasing_order()
+        return judgment
+    
     @prover
+    def range_fn_transformation(self, new_lambda_map, **defaults_config):
+        '''
+        Return the equation between this range within an ExprTuple and
+        one with a new lambda map.
+        
+        For example:
+            (f(i), f(i+1), ..., f(j)) =  (g(i), g(i+1), ..., g(j))
+        as long as f(k)) = g(k) for all k in [i .. j].
+        '''
+        from proveit import i, j, k, f, g
+        from proveit.core_expr_types.tuples import range_fn_transformation
+        return range_fn_transformation.instantiate(
+                {i:self.true_start_index, j:self.true_end_index, f:self.lambda_map,
+                 g:new_lambda_map, k:new_lambda_map.parameter},
+                 preserve_expr=ExprTuple(self)).derive_consequent()
+
+    @equality_prover("shifted", "shift")
     def shift_equivalence(self, *, old_shift=None, new_start=None,
                           new_end=None, new_shift=None,
+                          force_to_treat_as_increasing=False,
                           **defaults_config):
         '''
         Return the equation between this range within an ExprTuple
         and a shifted version in the following manner:
-            (f(self.start_index+old_shift), ..., f(self.end_index+old_shift)) =
+            (f(self.true_start_index+old_shift), ..., f(self.true_end_index+old_shift)) =
             (f(new_start+new_shift), ..., f(new_start+new_shift))
         where f is adapted from self.lambda_map according to 'old_shift'.
         If any of the 'new' parameters are unspecified, we attempt
@@ -1425,37 +2150,57 @@ class ExprRange(Expression):
         from proveit.numbers import Add, Neg, subtract
         from proveit._core_.expression.label.var import safe_dummy_var
         from proveit.core_expr_types.tuples import (
-            shift_equivalence, shift_equivalence_both)
+            shift_equivalence, negated_shift_equivalence, negated_shift_equivalence_both, shift_equivalence_both)
+
+        default_order = 'increasing'
+        if force_to_treat_as_increasing:
+            decreasing = False
+        elif self.get_style('order', default_order) == 'decreasing':
+            from proveit.numbers import Neg
+            decreasing = True
+            print("we are decreasing")
+        else:
+            decreasing = False
 
         if old_shift is None:
             _f = self.lambda_map
         else:
+            if decreasing:
+                old_shift = Neg(old_shift)
             old_shifted_param = Add(self.parameter, old_shift)
             safe_var = safe_dummy_var(self.body)
             shifted_body = self.body.basic_replaced({old_shifted_param: safe_var})
-            if self.parameter in free_vars(shifted_body, err_inclusively=True):
+            if self.parameter in free_vars(shifted_body):
                 raise ValueError("The given 'old_shift' of %s does apply "
                                  "to %s" % (old_shift, self.lambda_map))
             _f = Lambda(self.parameter,
                         shifted_body.basic_replaced({safe_var: self.parameter}))
 
-        _i, _j = self.start_index, self.end_index
+        _i, _j = self.true_start_index, self.true_end_index
 
         if new_shift is not None:
+            if decreasing:
+                new_shift = Neg(new_shift)
             net_shift = new_shift
             if old_shift is not None:
                 net_shift = subtract(new_shift, old_shift).simplified()
             if new_start is None:
                 # new start = _i - new_shift
                 new_start = subtract(_i, net_shift).simplified()
+            elif decreasing:
+                new_start = Neg(new_start)
             if new_end is None:
                 # new_end = _j - new_shift
                 new_end = subtract(_j, net_shift).simplified()
+            elif decreasing:
+                new_end = Neg(new_end)
         elif new_start is None:
             # new_start = new_end + i - j
             new_end = Add(new_start, _i, Neg(_j)).simplified()
         elif new_end is None:
             # new_end = new_start + j - i
+            if decreasing:
+                new_start = Neg(new_start)
             new_end = Add(new_start, _j, Neg(_i)).simplified()
 
         _k, _l = new_start, new_end
@@ -1468,11 +2213,26 @@ class ExprRange(Expression):
                 new_shift = Add(_i, old_shift, Neg(_k)).simplified()
 
         if old_shift is None:
-            return shift_equivalence.instantiate(
-                {f: _f, a: new_shift, i: _i, j: _j, k: _k, l: _l})
+            if decreasing:
+                print("correct!")
+                judgment = negated_shift_equivalence.instantiate(
+                    {f: _f, a: new_shift, i: _i.operand, j: _j.operand, k: _k, l: _l})
+            else:
+                judgment = shift_equivalence.instantiate(
+                    {f: _f, a: new_shift, i: _i, j: _j, k: _k, l: _l})
         else:
-            return shift_equivalence_both.instantiate(
-                {f: _f, a: old_shift, b: new_shift, i: _i, j: _j, k: _k, l: _l})
+            if decreasing:
+                judgment = negated_shift_equivalence_both.instantiate(
+                    {f: _f, a: old_shift, b: new_shift, i: _i.operand, j: _j.operand, k: _k, l: _l})
+            else:
+                judgment = shift_equivalence_both.instantiate(
+                    {f: _f, a: old_shift, b: new_shift, i: _i, j: _j, k: _k, l: _l})
+
+        # if decreasing:
+        #     lhs_done = judgment.inner_expr().lhs[0].with_decreasing_order()
+        #     return lhs_done.inner_expr().rhs[0].with_decreasing_order()
+        # else:
+        return judgment
 
     """
     def _var_index_shifts_in_ranges(self, var, shifts):
@@ -1506,6 +2266,57 @@ class ExprRange(Expression):
                         "only to be applied to an InnerExpr object.")
     """
 
+def simplified_index(index, *, requirements=None):
+    return list(simplified_indices(index, requirements=requirements))[0]
+
+def simplified_indices(*indices, requirements=None):
+    from proveit.logic import Equals
+    from proveit.numbers import Add, quick_simplified_index, is_literal_int
+    for index in indices:
+        simplified_index = quick_simplified_index(index)
+        if requirements is not None:
+            requirement = Equals(index, simplified_index)
+            if requirement.lhs != requirement.rhs:
+                if requirement.proven():
+                    # Already proven, so record the requirement and move on.
+                    requirements.append(requirement.prove())
+                    yield simplified_index
+                    continue
+                if defaults.automation:
+                    with Add.temporary_simplification_directives() as directives:
+                        # Move literal integers to the end via the
+                        # 'order_key' simplification directive for Add.
+                        directives.order_key = lambda term : (
+                            1 if is_literal_int(term) else 0)
+                        index.simplified() 
+                try:
+                    requirements.append(requirement.prove())
+                except ProofFailure as e:
+                    raise ProofFailure(
+                            requirement, defaults.assumptions,
+                            "Failed to prove the %s as an index "
+                            "simplification in an ExprRange expansion: %s"
+                            %(requirement, e))
+        yield simplified_index
+
+class InstanceContext(object):
+    '''
+    Context manager for inspecting a particular indexed instance of
+    an ExprRange.  The context uses temporary assumptions that
+    distinguish the index from the indices of other instances for
+    formatting/inspection purposes (useful for case simplifications
+    of nested ExprRanges that have 'case_simplify'='True' style).
+    '''
+    def __init__(self, instance, default_temp_setter):
+        self.instance = instance
+        self.default_temp_setter = default_temp_setter
+    
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, type, value, traceback):
+        self.default_temp_setter.__exit__(type, value, traceback)
+
 
 def _has_expansion(var_form, repl_map):
     '''
@@ -1534,7 +2345,7 @@ def extract_start_indices(expr_range):
     expr = expr_range
     repl_map = dict()
     while isinstance(expr, ExprRange):
-        start_index = expr.start_index
+        start_index = expr.true_start_index
         subbed_index = start_index.basic_replaced(repl_map)
         indices.append(subbed_index)
         repl_map[expr.parameter] = subbed_index
@@ -1554,7 +2365,7 @@ def extract_end_indices(expr_range):
     expr = expr_range
     repl_map = dict()
     while isinstance(expr, ExprRange):
-        end_index = expr.end_index
+        end_index = expr.true_end_index
         subbed_index = end_index.basic_replaced(repl_map)
         indices.append(subbed_index)
         repl_map[expr.parameter] = subbed_index

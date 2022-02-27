@@ -28,19 +28,20 @@ class ExprType(type):
 
     # These attributes should not be overridden by classes outside
     # of the core.
-    protected = ('_apply', '_canonical_version',
-                 'replaced', 'basic_replaced', '_replaced_entries', 
+    protected = {'_apply', 'canonical_version',
+                 'replaced', 'basic_replaced', 'instance_context',
+                 '_replaced_entries', 
                  'equality_replaced', '_manual_equality_replaced',
                  '_auto_simplified', '_auto_simplified_sub_exprs',
                  '_range_reduction', 'relabeled',
                  'sub_expr_substitution',
                  '_make', '_checked_make', '_reduced', '_used_vars',
-                 '_possibly_free_var_ranges', '_parameterized_var_ranges',
+                 '_free_var_ranges', '_parameterized_var_ranges',
                  '_repr_html_', '_core_info',
                  '_sub_expressions', '_canonical_expr',
                  '_meaning_data', '_meaning_id',
                  '_style_data', '_style_id',
-                 'is_parameter_independent', 'literal_int_extent')
+                 'is_parameter_independent', 'literal_int_extent'}
 
     def __new__(meta, name, bases, attrs):
         # Tip from
@@ -288,7 +289,7 @@ class Expression(metaclass=ExprType):
         # and style -- this will contain the 'png' generated on demand.
         self._style_data = style_data(
             self._generate_unique_rep(lambda expr: hex(expr._style_id),
-                core_info, styles))
+                core_info, styles, style_options))
         # initialize the style options
         # formatting style options that don't affect the meaning of the
         # expression
@@ -304,6 +305,16 @@ class Expression(metaclass=ExprType):
             self._meaning_data = self._labeled_meaning_data
             self._meaning_id = self._meaning_data._unique_id
         
+        # Track the number of potentially-independent interanally
+        # bound variables to simplify generating a canonical form.
+        # This number will be increased in Lambda.__init__ according
+        # to the number of its parameters.
+        if len(self._sub_expressions) == 0:
+            self._num_indep_internal_bound_vars = 0
+        else:
+            self._num_indep_internal_bound_vars = max(
+                    subexpr._num_indep_internal_bound_vars for 
+                    subexpr in self._sub_expressions)
         """
         if defaults.use_consistent_styles:
             # Make this the default style.
@@ -311,7 +322,7 @@ class Expression(metaclass=ExprType):
                     self._labeled_meaning_id] = styles
         """
 
-    def _canonical_version(self):
+    def canonical_version(self):
         '''
         Retrieve (and create if necessary) the canonical version of this
         expression in which deterministic 'dummy' variables are used as
@@ -332,11 +343,11 @@ class Expression(metaclass=ExprType):
                 labeled_to_canonical_meaning_data[self._labeled_meaning_data])
             self._meaning_id = self._meaning_data._unique_id
             # Now we can set the _canonical_expr via the '_meaning_data'.
-            return self._canonical_version()
+            return self.canonical_version()
 
         # Get the canonical versions of the sub-expressions.
         canonical_sub_expressions = tuple(
-            sub_expr._canonical_version()
+            sub_expr.canonical_version()
             for sub_expr in self._sub_expressions)
         # Get the styles of the sub expressions.
         sub_expression_styles = tuple(sub_expr._style_data
@@ -371,7 +382,7 @@ class Expression(metaclass=ExprType):
         canonical_expr = self.__class__._checked_make(
             self._core_info, canonical_sub_expressions, 
             style_preferences=canonical_styles)
-        assert canonical_expr._canonical_version() == canonical_expr, (
+        assert canonical_expr.canonical_version() == canonical_expr, (
                 "The canonical version of a canonical expression should "
                 "be itself.")
         self._canonical_expr = canonical_expr
@@ -385,9 +396,9 @@ class Expression(metaclass=ExprType):
         '''
         if hasattr(self, '_meaning_id'):
             return self._meaning_id
-        canonical_expr = self._canonical_version()
+        canonical_expr = self.canonical_version()
         if hasattr(self, '_meaning_id'):
-            # It may have been set via the '_canonical_version' call.
+            # It may have been set via the 'canonical_version' call.
             return self._meaning_id
         if canonical_expr is self:
             # The "true" meaning data is the "labeled" meaning data.
@@ -407,7 +418,8 @@ class Expression(metaclass=ExprType):
         self._meaning_id = self._meaning_data._unique_id
         return self._meaning_id
 
-    def _generate_unique_rep(self, object_rep_fn, core_info=None, styles=None):
+    def _generate_unique_rep(self, object_rep_fn, core_info=None, 
+                             styles=None, style_options=None):
         '''
         Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.
         '''
@@ -415,9 +427,13 @@ class Expression(metaclass=ExprType):
             core_info = self._core_info
         if styles is None and hasattr(self, '_style_data'):
             styles = self._style_data.styles
+            style_options = self.style_options()
         if styles is not None:
+            canonical_styles = style_options.canonical_styles()
             style_str = ','.join(style_name + ':' + styles[style_name]
-                                 for style_name in sorted(styles.keys()))
+                                 for style_name in sorted(styles.keys())
+                                 if styles[style_name] != canonical_styles.get(
+                                         style_name, None))
         else:
             style_str = ''
         sub_expr_info = ','.join(object_rep_fn(expr)
@@ -614,15 +630,16 @@ class Expression(metaclass=ExprType):
         '''
         return self._style_id == expr._style_id
 
-    def with_styles(self, **kwargs):
+    def with_styles(self, ignore_inapplicable_styles=False, **kwargs):
         '''
-        Alter the styles of this expression, and anything containing this
-        particular expression object, according to kwargs.
+        Alter the styles of this expression, and anything containing 
+        this particular expression object, according to kwargs.
         '''
         styles = dict(self._style_data.styles)
         # update the _styles, _style_rep, and _style_id
         styles.update(kwargs)
-        return self._with_these_styles(styles)
+        return self._with_these_styles(
+                styles, ignore_inapplicable_styles=ignore_inapplicable_styles)
     
     def with_default_style(self, name):
         '''
@@ -639,7 +656,8 @@ class Expression(metaclass=ExprType):
         '''
         Helper for with_styles and without_style methods.
         '''
-        styles = self.style_options().standardized_styles(
+        style_options = self.style_options()
+        styles = style_options.standardized_styles(
                 styles, ignore_inapplicable_styles)
         if styles == self._style_data.styles:
             return self  # no change in styles, so just use the original
@@ -651,53 +669,39 @@ class Expression(metaclass=ExprType):
         new_style_expr = copy(self)
         new_style_expr._style_data = style_data(
             new_style_expr._generate_unique_rep(lambda expr: hex(expr._style_id),
-                styles=styles))
+                styles=styles, style_options=style_options))
         new_style_expr._style_data.styles = dict(styles)
         new_style_expr._style_id = new_style_expr._style_data._unique_id
         return new_style_expr
-    
+
     def with_matching_style(self, expr_with_different_style):
         '''
-        Alter the styles of this expression to match that of the
-        given "expr_with_different_style" which should be an
-        Expression with the same meaning as 'self'.
+        Return the expression with the diffent style after making
+        sure it as the same meaning as this original expression.
         '''
         if self != expr_with_different_style:
             raise ValueError(
-                "'with_matching_style' must an expression with "
+                "'with_matching_style' must be an expression with "
                 "the same meaning as self: %s ≠ %s."%
                 (self, expr_with_different_style))
-        return self._with_matching_style(expr_with_different_style)
+        return expr_with_different_style
 
-    def _with_matching_style(self, expr_with_different_style):
-        '''
-        Helper function for 'with_matching_style'.
-        '''
-        if self._style_id == expr_with_different_style._style_id:
-            return self # no difference in style actually; do nothing
-        for my_sub_expr, other_sub_expr in zip(
-                self.sub_expr_iter(), expr_with_different_style.sub_expr_iter()):
-            my_sub_expr._with_matching_style(other_sub_expr)
-        # Note, within lambda maps, "meanings" may diverge.
-        # We only "guarantee" the new styles exist where "meanings"
-        # are the same.
-        ignore_inapplicable_styles = (self != expr_with_different_style)
-        return self._with_these_styles(
-                expr_with_different_style.get_styles(),
-                ignore_inapplicable_styles = ignore_inapplicable_styles)
-    
-    def with_mimicked_style(self, other_expr):
+    def with_mimicked_style(self, other_expr, *,
+                            ignore_inapplicable_styles=False):
         '''
         Given an 'other_expr' with the same style options as
         'self', return self with a style that mimicks that
         of 'other_expr' just at the top level.
         '''
-        if (self.style_options().options != 
-                other_expr.style_options().options):
-            raise ValueError(
-                "'other_expr' must be an expression with "
-                "the same style options as 'self'.")
-        return self.with_styles(**other_expr.get_styles())
+        if not ignore_inapplicable_styles:
+            if (self.style_options().options != 
+                    other_expr.style_options().options):
+                raise ValueError(
+                    "'other_expr' must be an expression with "
+                    "the same style options as 'self'.")
+        return self.with_styles(
+                **other_expr.get_styles(),
+                ignore_inapplicable_styles=ignore_inapplicable_styles)
 
     def style_names(self):
         '''
@@ -1102,8 +1106,7 @@ class Expression(metaclass=ExprType):
             # variables. Also, don't replace lambda parameters.
             inner_assumptions = \
                 [assumption for assumption in defaults.assumptions if
-                 free_vars(assumption, err_inclusively=True).isdisjoint(
-                     self.parameter_vars)]
+                 free_vars(assumption).isdisjoint(self.parameter_vars)]
             with defaults.temporary() as temp_defaults:
                 temp_defaults.assumptions = inner_assumptions
                 # Since the assumptions have changed, we can no longer
@@ -1208,8 +1211,11 @@ class Expression(metaclass=ExprType):
         replacement = None
         if (auto_simplify_top_level and not is_irreducible_value(expr)
               and not isinstance(expr, ExprRange)):
-            # Look for a known evaluation.
-            replacement = Equals.get_known_evaluation(expr)
+            if defaults.simplify_with_known_evaluations:
+                # Look for a known evaluation.
+                replacement = Equals.get_known_evaluation(expr)
+            else:
+                replacement = None
             if (replacement is None and 
                     hasattr(expr, 'shallow_simplification')):
                 # Attempt a shallow simplification (after recursion).
@@ -1280,7 +1286,6 @@ class Expression(metaclass=ExprType):
         Helper method for _auto_simplified to handle auto-simplification
         replacements for sub-expressions.
         '''
-        from proveit import ExprRange
         # Recurse into the sub-expressions.
         sub_exprs = self._sub_expressions
         subbed_sub_exprs = \
@@ -1292,14 +1297,6 @@ class Expression(metaclass=ExprType):
                subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
             # Nothing change, so don't remake anything.
             return self
-        if isinstance(self, ExprRange):
-            # This is an ExprRange.  If the start and end indices
-            # are the same, force them to be different here
-            # (we can't create an ExprRange where they are the same)
-            # but it will be simplified in the containing ExprTuple
-            # via a singlular range reduction.
-            subbed_sub_exprs = ExprRange._proper_sub_expr_replacements(
-                sub_exprs, subbed_sub_exprs)
         return self.__class__._checked_make(
             self._core_info, subbed_sub_exprs,
             style_preferences=self._style_data.styles)
@@ -1321,23 +1318,34 @@ class Expression(metaclass=ExprType):
         return set().union(*[expr._used_vars() for
                              expr in self._sub_expressions])
 
-    def _possibly_free_var_ranges(self, exclusions=None):
+    def _contained_parameter_vars(self):
+        '''
+        Return all of the Variables of this Expression that may
+        are parameter variables of a contained Lambda.
+        '''
+        return set().union(*[expr._contained_parameter_vars() for
+                             expr in self._sub_expressions])
+
+    def _free_var_ranges(self, exclusions=None):
         '''
         Return the dictionary mapping Variables to forms w.r.t. ranges
-        of indices (or solo) in which the variable occurs as free or
-        not explicitly and completely masked.  Examples of "forms":
+        of indices (or solo) in which the variable occurs as free
+        (not within a lambda map that parameterizes the base variable).
+        Examples of "forms":
             x
             x_i
             x_1, ..., x_n
             x_{i, 1}, ..., x_{i, n_i}
             x_{1, 1}, ..., x_{1, n_1}, ......, x_{m, 1}, ..., x_{m, n_m}
-        For example,
+        
+        Note: Lambda maps are not supposed to partially masked ranges
+        of parameters.  For example,
         (x_1, ..., x_n) -> x_1 + ... + x_n + x_{n+1}
-        would report {x_{n+1}} for the x entry but not x_1, ..., x_n.
-        In another example,
-        (x_1, ..., x_n) -> x_1 + ... + x_k + x_{k+1} + ... + x_{n}
-        would report {x_1, ..., x_k, x_{k+1}, ..., x_{n}} for the x
-        entry because the masking is not "explicit" (obvious).
+        is not proper.  However, it won't be caught until it
+        really matters (an instantiation or relabeling is attempted
+        that reveals the issue).  Meanwhile, we simply assume
+        the masking is complete and report no ranges for x in
+        this case (x is masked by the lambda map).
 
         If this Expression is in the exclusion set, or contributes
         directly to a form that is in the exclusions set, skip over it.
@@ -1353,7 +1361,7 @@ class Expression(metaclass=ExprType):
             return forms_dict  # this is excluded
         for expr in self._sub_expressions:
             for var, forms in \
-                    expr._possibly_free_var_ranges(
+                    expr._free_var_ranges(
                         exclusions=exclusions).items():
                 forms_dict.setdefault(var, set()).update(forms)
         return forms_dict
@@ -1382,6 +1390,15 @@ class Expression(metaclass=ExprType):
         # No other default options (though the Operation class
         # has some options via simplifying operands).
         raise EvaluationError(self)
+
+    @equality_prover('evaluated', 'evaluate')
+    def evaluation(self, **defaults_config):
+        '''
+        If possible, return a Judgment of this expression equal to an
+        irreducible value.  This default raises an EvaluationError.
+        '''       
+        from proveit.logic import EvaluationError
+        raise EvaluationError("No evaluation for %s"%self)
 
     @equality_prover('simplified', 'simplify')
     def simplification(self, **defaults_config):
@@ -1426,6 +1443,13 @@ class Expression(metaclass=ExprType):
         return Equals(self, self).conclude_via_reflexivity()
 
     @classmethod
+    def simplification_directive_keys(cls, **kwargs):
+        if not hasattr(cls, '_simplification_directives_'):
+            raise AttributeError("%s has no _simplification_directives_ attribute" % cls)
+        return [key for key in cls._simplification_directives_.__dict__.keys()
+                if key[0] != '_']
+
+    @classmethod
     def temporary_simplification_directives(cls):
         '''
         Returns a context manager for temporarily setting simplification
@@ -1443,6 +1467,8 @@ class Expression(metaclass=ExprType):
         will set the 'ungroup' attribute of 
         Add._simplification_directives_ to False but will restore it
         to its previous value upon exiting the 'with' block.
+        
+        See also change_simplification_directives.
         '''
         if not hasattr(cls, '_simplification_directives_'):
             raise AttributeError("%s has no _simplification_directives_ attribute" % cls)
@@ -1452,6 +1478,26 @@ class Expression(metaclass=ExprType):
                     "The '_simplification_directives_' of an Expression "
                     "class should be of type SimplificationDirectives")
         return simplification_directives.temporary()
+    
+    @classmethod
+    def change_simplification_directives(cls, **kwargs):
+        '''
+        Change the simplification directives for a class.  This change
+        is permanent, until it is changed back.
+        
+        See also tempary_simplification_directives.
+        '''
+        if not hasattr(cls, '_simplification_directives_'):
+            raise AttributeError("%s has no _simplification_directives_ attribute" % cls)
+        for key, val in kwargs.items():
+            if key not in cls._simplification_directives_.__dict__:
+                raise KeyError("'%s' is not a simplification directive "
+                               "for %s"%(key, cls))
+            if key[0] == '_':
+                raise ValueError("Changing private data of the "
+                                 "SimplificationDirective is not "
+                                 "allowed")
+            cls._simplification_directives_.__dict__[key] = val
 
     def order_of_appearance(self, sub_expressions):
         '''
@@ -1463,6 +1509,13 @@ class Expression(metaclass=ExprType):
         for sub_expr in self._sub_expressions:
             for expr in sub_expr.order_of_appearance(sub_expressions):
                 yield expr
+
+    def literals_as_variables(self, *literals):
+        '''
+        Return this expression with instances of the given literals
+        converted to corresponding variables.  
+        '''
+        return self.basic_replaced({lit:lit.as_variable() for lit in literals})
 
     def _repr_html_(self, unofficial_name_kind_theory=None):
         '''
@@ -1525,12 +1578,20 @@ def used_vars(expr):
     '''
     return expr._used_vars()
 
+def contained_parameter_vars(expr):
+    '''
+    Return all of the Variables of this Expression that may
+    are parameter variables of a contained Lambda.
+    '''
+    return expr._contained_parameter_vars()
 
-def possibly_free_var_ranges(expr, exclusions=None):
+
+def free_var_ranges(expr, exclusions=None):
     '''
     Return the dictionary mapping Variables to forms w.r.t. ranges
-    of indices (or solo) in which the variable occurs as free or
-    not explicitly and completely masked.  Examples of "forms":
+    of indices (or solo) in which the variable occurs as free
+    (not within a lambda map that parameterizes the base variable).    
+    Examples of "forms":
         x
         x_i
         x_1, ..., x_n
@@ -1552,55 +1613,36 @@ def possibly_free_var_ranges(expr, exclusions=None):
     if x_{i, 1}, ..., x_{i, n_i} is in the exclusion set,
     then 'a' will be the only free variable reported.
     '''
-    return expr._guaranteed_free_var_ranges(exclusions=exclusions)
+    return expr._free_var_ranges(exclusions=exclusions)
 
 
-def free_vars(expr, *, err_inclusively):
+def free_vars(expr):
     '''
-    Returns the set of variables that are free, the variable itself
-    or some indices of the variable.
-    For example,
-        (x_1, ..., x_n) -> x_1 + ... + x_n + x_{n+1}
-    x and n are both free.  And in
-        (x_1, ..., x_n) -> x_1 + ... + x_k + x_{k+1} + ... + x_{n}
-    n, and k are free assuming 1 <= k <= n.
-    What actually gets reported depends upon the "err_inclusively"
-    flag.  If "err_inclusively" is True, the latter example
-    will report x, n, and k because it is not clear that
-    x is completely bound without assumptions on k.  If
-    "err_inclusively" is False, the first example will just report
-    n because it requires some extra work to determine that x
-    is not comletely bound.
-    '''
-    if err_inclusively:
-        return {var for var in expr._possibly_free_var_ranges().keys()}
-    else:
-        return _entirely_unbound_vars(expr)
-
-
-def _entirely_unbound_vars(expr):
-    '''
-    Returns the set of variables for that are entirely unbound in
+    Returns the set of variables for that are free (unbound) in
     the given expression.
     For example, given
-        (x_1, ..., x_n) -> x_1 + ... + x_n + x_{n+1}
-    n is entirely unbound.  Even though there is an index for which
-    x is unbound, it is partially bound and therefore not returned.
+        (x_1, ..., x_n) -> x_1 + ... + x_{m}
+    n is free.  Even though there is ambiguity about the range
+    of indices of x on the right versus the left without knowing
+    m relative to n, lambda maps in Prove-It are not allowed to
+    partially mask a range of parameters (in this example, m>n
+    is not allowed).  However, this restriction isn't enforced
+    until it really matters.  When the ranges of x are relabeled
+    or instantiated, then Prove-It will check that this
+    restriction is satisfied.
     Axioms and theorems must not have any variables that are
-    entirely unbound.  They should not have any partially unbound
-    variables either, but Prove-It does not check for this since
-    the check would be more involved and it isn't so critical.
+    entirely free.
     '''
     from proveit._core_.expression.label.var import Variable
     from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
     if isinstance(expr, Variable):
         return {expr}
-    ubound_vars = set()
+    fvars = set()
     for sub_expr in expr._sub_expressions:
-        ubound_vars.update(_entirely_unbound_vars(sub_expr))
+        fvars.update(free_vars(sub_expr))
     if isinstance(expr, Lambda):
-        return ubound_vars.difference(expr.parameter_vars)
-    return ubound_vars
+        return fvars.difference(expr.parameter_vars)
+    return fvars
 
 
 def expression_depth(expr):
@@ -1647,12 +1689,3 @@ class ImproperReplacement(Exception):
     def __str__(self):
         return ("Improper replacement of %s via %s:\n%s"
                 % (self.orig_expr, self.repl_map, self.message))
-
-
-class _NoExpandedIteration(Exception):
-    '''
-    Used internally for _expandingIterRanges.
-    '''
-
-    def __init__(self):
-        pass

@@ -1,6 +1,8 @@
 from proveit import (Literal, USE_DEFAULTS, Operation, ExprRange, defaults,
+                     UnsatisfiedPrerequisites,
                      prover, relation_prover, equality_prover)
 from proveit import a, b, c, d, k, m, n, x
+from proveit.logic import is_irreducible_value
 from proveit.numbers.number_sets.number_set import NumberSet, NumberMembership
 from proveit.numbers.numerals.numeral import NumeralSequence, Numeral
 from proveit.numbers.numerals import zero, one, two, three, four, five, six, seven, eight, nine
@@ -8,16 +10,21 @@ DIGITS = [zero, one, two, three, four, five, six, seven, eight, nine]
 
 
 class DecimalSequence(NumeralSequence):
-    # operator of the WholeDecimal operation.
+    # operator of the DecimalSequence operation.
     _operator_ = Literal(string_format='Decimal', theory=__file__)
 
     def __init__(self, *digits, styles=None):
         NumeralSequence.__init__(self, DecimalSequence._operator_, *digits,
                                  styles=styles)
         for digit in self.digits:
-            if isinstance(digit, Literal) and digit not in DIGITS:
+            if is_irreducible_value(digit) and digit not in DIGITS:
                 raise Exception(
                     'A DecimalSequence may only be composed of 0-9 digits')
+
+    def _prefix(self, format_type):
+        # No prefix for a DecimalSequence (unlike binary or hex
+        # which needs a prefix to indicate type of number it is).
+        return ""
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
@@ -36,7 +43,10 @@ class DecimalSequence(NumeralSequence):
                 return self.digit_repetition_reduction()
 
     def as_int(self):
-        return int(self.formatted('string'))
+        if all(digit in DIGITS for digit in self.digits):
+            return eval(self.formatted('string'))
+        raise ValueError("Cannot convert %s to an integer; its digits "
+                         "are not all irreducible")
 
     @relation_prover
     def deduce_in_number_set(self, number_set, **defaults_config):
@@ -80,8 +90,10 @@ class DecimalSequence(NumeralSequence):
     @relation_prover
     def deduce_in_natural_pos(self, **defaults_config):
         from . import deci_sequence_is_nat_pos
+        _a = self.digits[0]
+        _b = self.digits[1:]
         return deci_sequence_is_nat_pos.instantiate(
-            {n: self.operands.num_elements(), a: self.digits})
+            {n: _b.num_elements(), a:_a, b:_b})
         # from proveit import ProofFailure
         # if Numeral._inNaturalPosStmts is None:
         #     from proveit.numbers.numerals.decimals import posnat1, posnat2, posnat3, posnat4, posnat5
@@ -92,6 +104,20 @@ class DecimalSequence(NumeralSequence):
         #     raise ProofFailure(self, [],
         #                        "Cannot prove %d in NaturalPos" % self.n)
         # return Numeral._inNaturalPosStmts[self.n]
+
+    @relation_prover
+    def deduce_number_set(self, **defaults_config):
+        from proveit.numbers import deduce_number_set, greater
+        _a = self.digits[0]
+        _b = self.digits[1:]
+        try:
+            deduce_number_set(_a)
+        except UnsatisfiedPrerequisites:
+            pass
+        if greater(_a, zero).proven():
+            return self.deduce_in_natural_pos()
+        else:
+            return self.deduce_in_natural()
 
     @equality_prover('single_digit_reduced', 'single_digit_reduce')
     def single_digit_reduction(self, **defaults_config):
@@ -126,20 +152,20 @@ class DecimalSequence(NumeralSequence):
                 import proveit.numbers.numerals.decimals
 
                 # _m = expr.digits[:i].num_elements(assumptions)
-                # _n = digit.end_index
+                # _n = digit.true_end_index
                 # _k = expr.digits[i + 1:].num_elements(assumptions)
                 # _a = expr.digits[:i]
                 # _b = digit.body
                 # _d = expr.digits[i + 1:]
 
                 _m = eq.relation.rhs.digits[:idx].num_elements()
-                _n = digit.end_index
+                _n = digit.true_end_index
                 _k = expr.digits[i + 1:].num_elements()
                 _a = eq.relation.rhs.digits[:idx]
                 _b = digit.body
                 _d = expr.digits[i + 1:]
 
-                # if digit.end_index.as_int() >= 10:
+                # if digit.true_end_index.as_int() >= 10:
                 # Automatically reduce an Expression range of
                 # a single numeral to an Expression tuple
                 # (3 .. 4 repeats.. 3) = 3333
@@ -157,7 +183,7 @@ class DecimalSequence(NumeralSequence):
                     _n = num(_n.as_int() - 1)
                     idx += 1
 
-                #_n = digit.end_index
+                #_n = digit.true_end_index
                 len_thm = proveit.numbers.numerals.decimals \
                     .__getattr__('reduce_%s_repeats' % _n)
                 _x = digit.body
@@ -206,7 +232,7 @@ class DecimalSequence(NumeralSequence):
                     num2.digits[idx],
                     ExprRange) and num2.digits[idx].body == nine):
                 if isinstance(num2.digits[idx], ExprRange):
-                    count += num2.digits[idx].end_index
+                    count += num2.digits[idx].true_end_index
                 else:
                     count += 1
                 idx -= 1
@@ -264,35 +290,6 @@ class DecimalSequence(NumeralSequence):
         return eq.relation
     '''
 
-    def _formatted(self, format_type, operator=None, **kwargs):
-        from proveit import ExprRange
-        outstr = ''
-        fence = False
-        if operator is None:
-            operator = ' ~ '
-        if (self.digits.is_single() or 
-                not all(isinstance(digit, Numeral) for 
-                        digit in self.digits)):
-            outstr += r'\# ('
-            fence = True
-        for i, digit in enumerate(self.digits):
-            if i != 0 and fence:
-                add = operator
-            else:
-                add = ''
-            if isinstance(digit, Operation):
-                outstr += add + digit.formatted(format_type, fence=True)
-            elif isinstance(digit, ExprRange):
-                outstr += add + digit.formatted(format_type, operator=operator)
-            else:
-                outstr += add + digit.formatted(format_type)
-        if fence:
-            outstr += r')'
-        return outstr
-
-    def _function_formatted(self, format_type, **kwargs):
-        return self._formatted(format_type, **kwargs)
-
 
 class DigitSet(NumberSet):
     def __init__(self, *, styles=None):
@@ -300,15 +297,15 @@ class DigitSet(NumberSet):
             self, 'Digits', r'\mathbb{N}^{\leq 9}',
             theory=__file__, styles=styles)
 
-    def deduce_member_lower_bound(self, member, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_member_lower_bound(self, member, **defaults_config):
         from . import digits_lower_bound
-        return digits_lower_bound.instantiate(
-            {n: member}, assumptions=assumptions)
+        return digits_lower_bound.instantiate({n: member})
 
-    def deduce_member_upper_bound(self, member, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_member_upper_bound(self, member, **defaults_config):
         from . import digits_upper_bound
-        return digits_upper_bound.instantiate(
-            {n: member}, assumptions=assumptions)
+        return digits_upper_bound.instantiate({n: member})
 
     def membership_object(self, element):
         return DeciMembership(element, self)

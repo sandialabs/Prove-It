@@ -36,10 +36,6 @@ def _make_decorated_prover(func):
         preserve_expr = kwargs.pop('preserve_expr', None)
         if len(args) > 0:
             _self = args[0]
-            if is_conclude_method:
-                # If the method starts with conclude 'conclude', we must
-                # preserve _self.
-                preserve_expr = _self
             if isinstance(_self, Judgment) or isinstance(_self, InnerExpr):
                 # Include the assumptions of the Judgment or InnerExpr
                 assumptions = kwargs.get('assumptions', None)
@@ -48,6 +44,14 @@ def _make_decorated_prover(func):
                 if not _self.assumptions_set.issubset(assumptions):
                     assumptions = tuple(assumptions) + _self.assumptions
                     kwargs['assumptions'] = assumptions
+            if is_conclude_method:
+                # If the method starts with conclude 'conclude', we must
+                # preserve _self.
+                if (not isinstance(_self, Expression) 
+                        and hasattr(_self, 'expr')):
+                    preserve_expr = _self.expr
+                else:
+                    preserve_expr = _self
         defaults_to_change = set(kwargs.keys()).intersection(
                 defaults.__dict__.keys())
         # Check to see if there are any unexpected keyword
@@ -105,6 +109,8 @@ def _make_decorated_prover(func):
         def checked_truth(proven_truth):
             # Check that the proven_truth is a Judgment and has
             # appropriate assumptions.
+            if proven_truth is None and is_conclude_method:
+                return proven_truth # we'll raise an exception later.
             if not isinstance(proven_truth, Judgment):
                 raise TypeError("@prover method %s is expected to return "
                                 "a proven Judgment, not %s of type %s."
@@ -147,6 +153,10 @@ def _make_decorated_prover(func):
                         "The @prover method %s beginning with 'conclude' "
                         "expected to be a method for an Expression type "
                         "or the object must have an 'expr' attribute."%func)                
+            if proven_truth is None:
+                raise ValueError("@prover method %s is not implemented "
+                                 "for %s."
+                                %(func, expr))
             if func.__name__.startswith('conclude_negation'):
                 from proveit.logic import Not
                 not_expr = Not(expr)
@@ -180,6 +190,7 @@ def _make_decorated_relation_prover(func):
     
     def decorated_relation_prover(*args, **kwargs):
         from proveit._core_.expression.expr import Expression
+        from proveit._core_.expression.composite import ExprRange, ExprTuple
         from proveit.relation import Relation  
         
         # 'preserve' the 'self' or 'self.expr' expression so it will 
@@ -213,24 +224,27 @@ def _make_decorated_relation_prover(func):
                     "@relation_prover, %s, expected to prove a "
                     "Relation expression, not %s of type %s."
                     %(func, proven_expr, proven_expr.__class__))
-        if proven_expr.lhs != expr:
+        expected_lhs = expr
+        if isinstance(expr, ExprRange):
+            expected_lhs = ExprTuple(expr)
+        if proven_expr.lhs != expected_lhs:
             raise TypeError(
                     "@relation_prover, %s, expected to prove a "
                     "relation with %s on its left side "
                     "('lhs').  %s does not satisfy this "
-                    "requirement."%(func, expr, proven_expr))
+                    "requirement."%(func, expected_lhs, proven_expr))
 
         # Make the style consistent with the original expression.
-        if not proven_expr.lhs.has_same_style(expr):
+        if not proven_expr.lhs.has_same_style(expected_lhs):
             # Make the left side of the proven truth have a style
             # that matches the original expression.
             inner_lhs = proven_truth.inner_expr().lhs
-            proven_truth = inner_lhs.with_matching_style(expr)
+            proven_truth = inner_lhs.with_matching_style(expected_lhs)
         return proven_truth
     return decorated_relation_prover
 
 
-def _wraps(func, wrapper):
+def _wraps(func, wrapper, extra_doc=None):
     '''
     Perform functools.wraps as well as add an extra message to the doc
     string.
@@ -239,10 +253,11 @@ def _wraps(func, wrapper):
     if wrapped.__doc__ is None:
         wrapped.__doc__ = ""
     wrapped.__doc__ += """
-    
-    Keyword arguments are accepted for temporarily changing any
-    of the attributes of proveit.defaults.
+        Keyword arguments are accepted for temporarily changing any
+        of the attributes of proveit.defaults.
     """
+    if extra_doc is not None:
+        wrapped.__doc__ += extra_doc
     return wrapped
 
 def prover(func):
@@ -306,8 +321,7 @@ def equality_prover(past_tense, present_tense):
                     past_tense, present_tense)
         is_evaluation_method = (name == 'evaluation')
         is_shallow_simplification_method = (name == 'shallow_simplification')
-        is_simplification_method = (is_shallow_simplification_method or
-                                    name == 'simplification')
+        is_simplification_method = (name == 'simplification')
         decorated_relation_prover = _make_decorated_relation_prover(func)
 
         def wrapper(*args, **kwargs):   
@@ -328,22 +342,27 @@ def equality_prover(past_tense, present_tense):
                                 "method for an Expression type or it must "
                                 "have an 'expr' attribute."%func)            
             proven_truth = None
+            if is_simplification_method or is_evaluation_method:
+                from proveit.logic import is_irreducible_value
+                if is_irreducible_value(expr):
+                    # Already irreducible.  Done.
+                    proven_truth = (
+                            Equals(expr, expr).conclude_via_reflexivity())
+
             # If _no_eval_check is set to True, don't bother
             # checking for an existing evaluation.  Used internally
             # in Operation.simplification, Operation.evaluation,
             # Conditional.simplification, and Judgment.simplify.
             _no_eval_check = kwargs.pop('_no_eval_check', False)
-            if not _no_eval_check and (is_simplification_method or 
-                                       is_evaluation_method):
-                from proveit.logic import (is_irreducible_value,
-                                           evaluate_truth)
-                if is_irreducible_value(expr):
-                    # Already irreducible.  Done.
-                    proven_truth = (
-                            Equals(expr, expr).conclude_via_reflexivity())
-                elif expr.proven():
+            if (not _no_eval_check and (
+                    is_evaluation_method or
+                    (defaults.simplify_with_known_evaluations 
+                     and is_simplification_method))):
+                from proveit.logic import evaluate_truth
+                if expr.proven():
                     # The expression is proven so it equals true.
-                    proven_truth = Equals(expr, TRUE).conclude_boolean_equality()
+                    proven_truth = Equals(
+                        expr, TRUE).conclude_boolean_equality()
                 else:
                     # See if there is a known evaluation (or if one may
                     # be derived via known equalities if 
@@ -362,6 +381,11 @@ def equality_prover(past_tense, present_tense):
                                         expr)
                     else:
                         proven_truth = Equals.get_known_evaluation(expr)
+                # For an 'evaluation' or 'simplification', we should
+                # force auto_simplify on and preserve_all off to
+                # simplify as much as possible.
+                kwargs['auto_simplify'] = True
+                kwargs['preserve_all'] = False
             if proven_truth is None:
                 proven_truth = decorated_relation_prover(*args, **kwargs)
             proven_expr = proven_truth.expr
@@ -380,7 +404,13 @@ def equality_prover(past_tense, present_tense):
             return proven_truth
 
         _equality_prover_fn_to_tenses[wrapper] = (past_tense, present_tense)
-        return _wraps(func, wrapper)
+        extra_doc = """
+        '%s' returns the right-hand side of '%s'.
+        '%s', called on an InnerExpr of a Judgment,
+        substitutes the right-hand side of '%s' for
+        the inner expression.            
+        """%(past_tense, name, present_tense, name)
+        return _wraps(func, wrapper, extra_doc=extra_doc)
 
     return wrapper_maker
 

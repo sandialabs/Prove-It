@@ -1,9 +1,10 @@
 from proveit import (defaults, ExprTuple, Function, InnerExpr, Literal,
                      var_range, USE_DEFAULTS, prover, equality_prover,
-                     relation_prover)
+                     relation_prover, SimplificationDirectives)
+from proveit.logic.irreducible_value import is_irreducible_value
 from proveit.abstract_algebra.generic_methods import (
     apply_commutation_thm, generic_permutation)
-
+from proveit import TransRelUpdater
 
 class Set(Function):
     '''
@@ -22,6 +23,10 @@ class Set(Function):
     _operator_ = Literal(string_format='Set',
                          latex_format=r'\textrm{Set}', theory=__file__)
 
+    _simplification_directives_ = SimplificationDirectives(
+            eliminate_duplicates = True,
+            sort_if_literal_integers = True)
+
     def __init__(self, *elems, styles=None):
         Function.__init__(self, Set._operator_, elems, styles=styles)
         self.elements = self.operands
@@ -39,6 +44,71 @@ class Set(Function):
 
     def latex(self, **kwargs):
         return r'\left\{' + self.elements.latex(fence=False) + r'\right\}'
+    
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self,  *, must_evaluate=False,
+                               **defaults_config):
+        from proveit.numbers import is_literal_int, num
+
+        # A convenience to allow successive update to the equation via 
+        # transitivities. (starting with self=self).
+        expr = self
+        eq = TransRelUpdater(self)
+        
+        if Set._simplification_directives_.eliminate_duplicates:
+            # Eliminate any duplicates.
+            expr = eq.update(expr.reduction())
+
+        if must_evaluate:
+            # Evaluate all of the elements.
+            for _k, elem in enumerate(self.elements):
+                if not is_irreducible_value(elem):
+                    expr = eq.update(expr.inner_expr().elements[_k].evaluate())
+        
+        if (must_evaluate or 
+                Set._simplification_directives_.sort_if_literal_integers):
+            # Sort if all of the elements are literal integers.
+            int_elems = []
+            for elem in expr.operands:
+                if not is_literal_int(elem):
+                    break
+                int_elems.append(elem.as_int())
+            if len(int_elems) == expr.operands.num_entries():
+                # All elements are literal intergers, so sort them.
+                int_elems = sorted(int_elems)
+                elem_to_indices = dict()
+                for idx, elem in enumerate(expr.operands):
+                    elem_to_indices.setdefault(elem, []).append(idx)
+                new_order = []
+                for elem in int_elems:
+                    new_order.append(elem_to_indices[num(elem)].pop(0))
+                eq.update(expr.permutation(new_order=new_order))
+            elif must_evaluate:
+                raise NotImplementedError(
+                    "Evaluation of an enumerate set over anything other than "
+                    "literal integers is not yet supported.")
+        
+        return eq.relation
+
+    def is_irreducible_value(self):
+        '''
+        As Set is irreducible if all of its entries are irreducible
+        numbers in a sorted order with no duplicates.
+        '''
+        from proveit.logic import TRUE, FALSE, is_irreducible_value
+        if all(is_irreducible_value(entry) for entry in self.operands):
+            for _a, _b in zip(self.operands[:-1], self.operands[1:]):
+                if not {_a, _b}.isdisjoint({TRUE, FALSE}):
+                    # Don't have a chosen way or need to sort TRUE/FALSE
+                    # at this time.
+                    return False
+                from proveit.numbers import Less
+                try:
+                    Less(_a, _b).prove()
+                except Exception:
+                    return False
+            return True
+        return False
 
     @prover
     def prove_by_cases(self, forall_stmt, **defaults_config):

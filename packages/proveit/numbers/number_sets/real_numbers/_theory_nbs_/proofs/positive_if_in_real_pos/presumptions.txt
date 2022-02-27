@@ -1,3 +1,6 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
-proveit
+proveit.core_expr_types
+proveit.logic
 # THEOREMS AND THEORIES TO EXCLUDE:
+proveit.logic.booleans
+proveit.logic.sets

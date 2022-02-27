@@ -1,6 +1,6 @@
 from proveit import defaults, prover, ProofFailure
 from proveit import a, b, n, x
-from proveit.logic import InSet, Membership, Nonmembership
+from proveit.logic import InSet, SetNonmembership
 from proveit.numbers import Less, LessEq, greater, greater_eq 
 from proveit.numbers import (zero, Integer, IntegerNeg, IntegerNonPos,
                              Natural, NaturalPos)
@@ -29,7 +29,7 @@ class IntervalMembership(NumberMembership):
         if hasattr(element, 'deduce_in_number_set'):
             try:
                 return element.deduce_in_number_set(self.domain)
-            except (NotImplementedError, ProofFailure):
+            except Exception:
                 # If that didn't work, try 'deduce_elem_in_set'.
                 pass
         return self.domain.deduce_elem_in_set(element)
@@ -192,7 +192,7 @@ class IntervalMembership(NumberMembership):
                 return InSet(_n, IntegerNonPos).prove()
     
 
-class IntervalNonmembership(Nonmembership):
+class IntervalNonmembership(SetNonmembership):
     '''
     Defines methods that apply to non-membership in an Interval(m, n)
     where Interval(m, n) represents a set of contiguous integers.
@@ -201,7 +201,7 @@ class IntervalNonmembership(Nonmembership):
     '''
 
     def __init__(self, element, domain):
-        Nonmembership.__init__(self, element, domain)
+        SetNonmembership.__init__(self, element, domain)
         self.domain = domain
 
     def side_effects(self, judgment):

@@ -1,0 +1,1 @@
+a group is a set with an associative operation, identity, and inverse

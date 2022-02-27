@@ -3,7 +3,7 @@ from proveit import (Expression, Literal, Operation, Conditional,
                      prover, relation_prover, equality_prover,
                      SimplificationDirectives, TransRelUpdater)
 from proveit.logic.equality import SimplificationError
-from proveit import j, k, l, m, n, A, B, C, D, E, F, G
+from proveit import i, j, k, l, m, n, A, B, C, D, E, F, G, P
 from proveit.logic.booleans.booleans import in_bool
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, group_commutation, group_commute
 
@@ -120,10 +120,16 @@ class And(Operation):
         from . import true_and_true
         if self == true_and_true.expr:
             return true_and_true  # simple special case
+        # if (self.operands.num_entries() == 1 and
+        #         isinstance(self.operands[0], ExprRange) and
+        #         self.operands[0].is_parameter_independent):
+        #     return self.conclude_as_redundant()
         if (self.operands.num_entries() == 1 and
-                isinstance(self.operands[0], ExprRange) and
-                self.operands[0].is_parameter_independent):
-            return self.conclude_as_redundant()
+                isinstance(self.operands[0], ExprRange)):
+            if self.operands[0].is_parameter_independent:
+                return self.conclude_as_redundant()
+            else:
+                return self.conclude_over_expr_range()
         return self.conclude_via_composition()
 
     @prover
@@ -210,9 +216,12 @@ class And(Operation):
                 # (A or not(A)) is an unfolded Boolean
                 return  # stop to avoid infinite recursion.
         yield self.derive_in_bool
-        for i, operand in enumerate(self.operands):
-            if not isinstance(operand, ExprRange):
-                yield lambda : self.derive_any(i)
+        for _i, operand in enumerate(self.operands):
+            if (isinstance(operand, ExprRange) and 
+                    self.operands.num_entries()==1):
+                yield lambda : self.derive_quantification()
+            else:
+                yield lambda : self.derive_any(_i)
 
         # yield self.derive_commutation
 
@@ -245,6 +254,8 @@ class And(Operation):
         r'''
         From (A and ... and X and ... and Z) derive X.
         index_or_expr specifies X, either by index or the expression.
+        If X is an ExprRange, derive the universally quantified
+        form of And(X).
         '''
         from proveit import ExprRange
         from . import (any_from_and, left_from_and, right_from_and,
@@ -255,12 +266,11 @@ class And(Operation):
             idx = list(self.operands).index(index_or_expr)
         if idx < 0 or idx >= self.operands.num_entries():
             raise IndexError("Operand out of range: " + str(idx))
-        has_range_operands = any(isinstance(operand, ExprRange)
-                                 for operand in self.operands)
-        if self.operands.num_entries() == 1 and not has_range_operands:
+        contains_range = self.operands.contains_range()
+        if self.operands.num_entries() == 1 and not contains_range:
             # Derive A from And(A).
             return from_unary_and.instantiate({A: self.operands[0]})
-        if self.operands.is_double() and not has_range_operands:
+        if self.operands.is_double() and not contains_range:
             # Two operand special case:
             if idx == 0:
                 return left_from_and.instantiate(
@@ -274,7 +284,7 @@ class And(Operation):
             operand_to_extract = self.operands[idx]
             if isinstance(operand_to_extract, ExprRange):
                 # Derive the conjunction of a range of operands.
-                return self.derive_some_from_and(idx)
+                return self.derive_some(idx)
             else:
                 A_sub = self.operands[:idx]
                 B_sub = self.operands[idx]
@@ -305,6 +315,52 @@ class And(Operation):
         n_val = Len(C_sub).computed()
         return some_from_and.instantiate({l: l_val, m: m_val, n: n_val,
                                           A: A_sub, B: B_sub, C: C_sub})
+
+    @prover
+    def derive_quantification(self, instance_param=None, **defaults_config):
+        '''
+        From P(i) and ... and P(j), represented as a single ExprRange
+        in a conjunction, prove 
+        forall_{k in {i .. j}} P(k).
+        If 'instance_param' is provided, use it as the 'k' parameter.
+        Otherwise, use the parameter of the ExprRange.
+        '''
+        from proveit import ExprRange
+        from proveit.logic import InSet
+        from proveit.numbers import Interval
+        from . import quantification_from_conjunction
+        if (self.operands.num_entries() != 1 or 
+                not isinstance(self.operands[0], ExprRange)):
+            raise ValueError("'derive_quantification' may only be used "
+                             "on a conjunction with a single ExprRange "
+                             "operand entry.")
+        expr_range = self.operands[0]
+        _i = expr_range.true_start_index
+        _j = expr_range.true_end_index
+        _k = expr_range.parameter if instance_param is None else instance_param
+        _P = expr_range.lambda_map
+        proven_quantification = quantification_from_conjunction.instantiate(
+                {i:_i, j:_j, k:_k, P:_P},
+                preserve_expr=self).derive_consequent()
+            
+        if defaults.automation:
+            # While we are at it, as an "unofficial" side-effect,
+            # let's instantatiate forall_{k in {i .. j}} P(k) to derive
+            # {k in {i .. j}} |- P(k)
+            # and induce side-effects for P(k).
+            assumptions = defaults.assumptions + (
+                    InSet(_k, Interval(_i, _j)), )
+            proven_quantification.instantiate(assumptions=assumptions)
+            # We'll do it with the canonical variable as well for good
+            # measure, if it is any different.
+            canonical_version = proven_quantification.canonical_version()
+            if canonical_version._style_id != proven_quantification._style_id:
+                _k = canonical_version.instance_var
+                assumptions = defaults.assumptions + (
+                        InSet(_k, Interval(_i, _j)), )
+                canonical_version.instantiate(assumptions=assumptions)
+            
+        return proven_quantification
 
     @prover
     def derive_left(self, **defaults_config):
@@ -444,22 +500,49 @@ class And(Operation):
         '''
         from proveit import ExprRange
         from proveit.numbers import one
-        from . import redundant_conjunction
+        from . import redundant_conjunction, redundant_conjunction_general
         if (self.operands.num_entries() != 1 or
                 not isinstance(self.operands[0], ExprRange) or
                 not self.operands[0].is_parameter_independent):
             raise ValueError("`And.conclude_as_redundant` only allowed for a "
                              "conjunction of the form "
                              "A and ..n repeats.. and A, not %s" % self)
-        if self.operands[0].start_index != one:
-            raise NotImplementedError(
-                "'conclude_as_redundant' only implemented "
-                "when the start index is 1.  Just need to "
-                "do an ExprRange shift to implement it more "
-                "completely")
-        _A = self.operands[0].body
-        return redundant_conjunction.instantiate(
-            {n: self.operands[0].end_index, A: _A})
+        expr_range = self.operands[0]
+        _A = expr_range.body
+        if expr_range.true_start_index == one:
+            return redundant_conjunction.instantiate(
+                {n: expr_range.true_end_index, A: _A})
+        else:
+            _i, _j = expr_range.true_start_index, expr_range.true_end_index
+            return redundant_conjunction_general.instantiate(
+                {i:_i, j:_j, A:_A})
+
+    @prover
+    def conclude_over_expr_range(self, **defaults_config):
+        '''
+        Conclude a conjunction over an ExprRange via each element 
+        of the ExprRange being True. This could be conceptualized as
+        a generalization of the conclude_as_redundant() method above.
+        '''
+        from proveit import ExprRange, Lambda
+        from . import conjunction_from_quantification
+        if (self.operands.num_entries() != 1 or
+                not isinstance(self.operands[0], ExprRange)):
+            raise ValueError(
+                    "'And.conclude_over_expr_range()' only allowed "
+                    "for a conjunction of the form "
+                    "P(i) and P(i+1) and .. and P(j) (i.e. a conjunction "
+                    "over a single ExprRange), but instead you have: {}".
+                    format(self))
+
+        the_expr_range = self.operands[0]
+        _i_sub = the_expr_range.true_start_index
+        _j_sub = the_expr_range.true_end_index
+        _k_sub = the_expr_range.parameter
+        _P_sub = Lambda(the_expr_range.parameter, the_expr_range.body)
+        impl =  conjunction_from_quantification.instantiate(
+            {i: _i_sub, j: _j_sub, k: _k_sub, P: _P_sub})
+        return impl.derive_consequent()
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
@@ -678,7 +761,8 @@ def compose(*expressions, **defaults_config):
     Returns [A and B and ...], the And operator applied to the
     collection of given arguments, derived from each separately.
     '''
-    from proveit._core_.expression.composite import composite_expression
+    from proveit._core_.expression.composite import (
+            ExprRange, composite_expression)
     expressions = composite_expression(expressions)
     if expressions.num_entries() == 0:
         from proveit.logic.booleans.conjunction import \
@@ -688,6 +772,25 @@ def compose(*expressions, **defaults_config):
         from . import and_if_both
         return and_if_both.instantiate(
             {A: expressions[0], B: expressions[1]}, auto_simplify=False)
+    elif expressions.contains_range():
+        # If there are ranges, prove these portions separately
+        # (grouped together) and then disassociate.
+        new_expressions = []
+        to_expand = []
+        # Group the ExprRanges and record their entry indices.
+        for _k, entry in enumerate(expressions):
+            if isinstance(entry, ExprRange):
+                new_expressions.append(And(entry))
+                to_expand.append(_k)
+            else:
+                new_expressions.append(entry)
+        # Prove the composition with ExprRanges grouped:
+        composed = compose(*new_expressions)
+        # Disassociate each ExprRange in reverse order so we don't
+        # have to update indices.
+        for _idx in reversed(to_expand):
+            composed = composed.disassociate(_idx)
+        return composed
     else:
         from . import and_if_all
         _m = expressions.num_elements()

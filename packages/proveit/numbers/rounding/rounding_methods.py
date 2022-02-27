@@ -1,4 +1,6 @@
-from proveit import defaults, TransRelUpdater, USE_DEFAULTS
+from proveit import (defaults, TransRelUpdater, USE_DEFAULTS,
+                     UnsatisfiedPrerequisites)
+from proveit.numbers import deduce_number_set
 
 
 def apply_rounding_elimination(expr, rounding_elimination_thm):
@@ -113,6 +115,10 @@ def apply_shallow_simplification(expr, *, must_evaluate=False):
     # TODO: Speed this up when must_evaluate=True as well as
     # try harder to evaluate the operand as appropriate.
 
+    try:
+        deduce_number_set(expr.operand)
+    except UnsatisfiedPrerequisites:
+        pass
 
     #-- -------------------------------------------------------- --#
     #-- Case (1): F(x) where entire operand x is known or        --#
@@ -128,6 +134,8 @@ def apply_shallow_simplification(expr, *, must_evaluate=False):
     #--           to be an Integer but can EASILY be proven      --#
     #--           to be an Integer.                              --#
     #-- -------------------------------------------------------- --#
+    # Now moot because of deduce_number_set.
+    '''
     if expr.operand in InSet.known_memberships.keys():
         from proveit.logic.sets import ProperSubset, SubsetEq
         for kt in InSet.known_memberships[expr.operand]:
@@ -137,6 +145,7 @@ def apply_shallow_simplification(expr, *, must_evaluate=False):
                         ProperSubset(kt.expr.operands[1], Integer).proven()):
                     InSet(expr.operand, Integer).prove()
                     return expr.rounding_elimination(auto_simplify=False)
+    '''
 
     # for updating our equivalence claim(s) for the
     # remaining possibilities
@@ -162,6 +171,10 @@ def apply_shallow_simplification(expr, *, must_evaluate=False):
         indices_of_non_ints = []
         for i in range(subops.num_entries()):
             the_subop = subops[i]
+            try:
+                deduce_number_set(the_subop)
+            except UnsatisfiedPrerequisites:
+                pass
 
             # (a) first perform easiest check: is the subop already known
             #     to be an Integer?
@@ -169,6 +182,8 @@ def apply_shallow_simplification(expr, *, must_evaluate=False):
                 indices_of_known_ints.append(i)
 
             # (b) then try something just a little harder
+            # Now moot because of deduce_number_set
+            '''
             elif the_subop in InSet.known_memberships.keys():
                 from proveit.logic.sets import ProperSubset, SubsetEq
                 for kt in InSet.known_memberships[the_subop]:
@@ -180,6 +195,7 @@ def apply_shallow_simplification(expr, *, must_evaluate=False):
                             InSet(the_subop, Integer).prove()
                             indices_of_known_ints.append(i)
                             break
+            '''
 
             # (c) then if the_subop is not an integer, note that instead
             if (i not in indices_of_known_ints):
@@ -269,3 +285,14 @@ def rounding_deduce_in_number_set(expr, number_set, rounding_real_closure_thm,
     raise NotImplementedError(
         "The rounding_methods.py function 'rounding_deduce_in_number_set()'"
         "is not implemented for the %s set" % str(number_set))
+
+def rounding_deduce_number_set(expr):
+    '''
+    Prove membership of this expression in the most 
+    restrictive standard number set we can readily know.
+    '''
+    from proveit.numbers import RealPos, Natural, Integer
+    operand_ns = deduce_number_set(expr.operand).domain
+    if RealPos.includes(operand_ns):
+        return expr.deduce_in_number_set(Natural)
+    return expr.deduce_in_number_set(Integer)

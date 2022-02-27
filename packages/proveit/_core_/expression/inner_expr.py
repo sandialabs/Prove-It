@@ -5,6 +5,7 @@ from .conditional import Conditional
 from .composite import ExprTuple, Composite, NamedExprs, composite_expression
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 from proveit.decorators import prover, equality_prover
+# from proveit.logic import InSet
 from collections import deque
 
 
@@ -51,10 +52,9 @@ class InnerExpr:
        (note that the second "a - 1" is singled out, distinct from
        the first "a - 1" because the subexpr object tracks the
        sub-expression by "location").
-    2. inner_expr.with_subtraction_at([]) will return an
+    2. inner_expr.with... will return an
        expression that is the same but with an altered style for the
-       inner exrpession part:
-           [((a - 1) + b + (a + (-1))/d) < e]
+       inner expression part.
        The InnerExpr class looks specifically for attributes of the
        inner expression class that start with 'with' and assumes
        they function to alter the style.
@@ -129,11 +129,15 @@ class InnerExpr:
                     # while descending into a Conditional value, we
                     # pick up the condition as an assumption.
                     self.conditions.append(expr.condition)
-                expr = expr.sub_expr(idx)
-                if isinstance(expr, tuple):
+                next_expr = expr.sub_expr(idx)
+                if isinstance(next_expr, tuple):
                     # A slice `idx` will yield a tuple sub expression.
-                    # Convert it to an ExprTuple
-                    expr = ExprTuple(*expr)
+                    # Convert it to an ExprTuple unless it covers
+                    # all sub-expressions.
+                    if next_expr != expr._sub_expressions:
+                        expr = ExprTuple(*next_expr)
+                else:
+                    expr = next_expr
             self.expr_hierarchy.append(expr)
 
     def __eq__(self, other):
@@ -149,6 +153,7 @@ class InnerExpr:
         of this Composite will return the SubExprRepl with the extended
         path to this item.
         '''
+        from proveit import ExprRange
         cur_inner_expr = self.expr_hierarchy[-1]
         if isinstance(cur_inner_expr, ExprTuple):
             # For an ExprTuple, the item key is either the index of the
@@ -198,6 +203,7 @@ class InnerExpr:
                                               self.inner_expr_path + (i,),
                                               assumptions=self.assumptions)
                 if (isinstance(cur_inner_expr, Operation) 
+                        and isinstance(cur_inner_expr.operands, ExprTuple)
                         and cur_inner_expr.operands == attr_expr):
                     # The 'operands' attribute of an Operation is a
                     # special case.  Take the full slice and we don't
@@ -211,8 +217,7 @@ class InnerExpr:
                     else:
                         sub_expr = sub_expr.sub_expr(j)
                 fvars = free_vars(
-                    composite_expression(getattr(sub_expr,attr)),
-                    err_inclusively=False)
+                    composite_expression(getattr(sub_expr,attr)))
                 if repl_lambda.parameter_var_set.issubset(fvars):
                     return deeper_inner_expr
         # No match found at this depth -- let's continue to the next
@@ -254,14 +259,28 @@ class InnerExpr:
                 kwargs['assumptions'] = (assumptions +
                                          tuple(self.conditions))
                 equality = equiv_method(*args, **kwargs)
+                for key in list(kwargs.keys()):
+                    # Pass through keyword arguments for
+                    # temporarily reconfiguring the defaults.
+                    # (with some exceptions below).
+                    if not hasattr(defaults, key):
+                        kwargs.pop(key)
+                kwargs.pop('assumptions')
+                if equiv_method.__name__ in ('simplification',
+                                             'shallow_simplification'):
+                    # When simplifying an inner expression, just
+                    # simplify that part and nothing else.
+                    kwargs['auto_simplify'] = False
                 if equiv_method_type == 'equiv':
-                    return self.substitution(equality, 
+                    return self.substitution(equality, **kwargs,
                                              assumptions=assumptions)
                 elif equiv_method_type == 'rhs':
-                    return self.substitution(equality,
+
+                    return self.substitution(equality, **kwargs,
                                              assumptions=assumptions).rhs
                 elif equiv_method_type == 'action':
-                    return self.substitute(equality, assumptions=assumptions)
+                    return self.substitute(equality, assumptions=assumptions,
+                                           **kwargs)
             if equiv_method_type == 'equiv':
                 inner_equiv.__doc__ = "Generate an equivalence of the top-level expression with a new form by replacing the inner expression via '%s'." % equiv_method_name
             elif equiv_method_type == 'rhs':
@@ -374,7 +393,8 @@ class InnerExpr:
         Returns the lambda function/map that would replace this
         particular inner expression within the top-level expression.
         '''
-        from proveit import Judgment, var_range
+        from proveit import (Judgment, var_range, ExprRange,
+                             simplified_index)
         
         if params_of_param is None:
             params_of_param = self.parameters
@@ -390,6 +410,10 @@ class InnerExpr:
         cur_sub_expr = self.expr_hierarchy[-1]
         cur_idx = self.inner_expr_path[-1] if len(
             self.inner_expr_path) > 0 else None
+        skip_innermost = False
+        if isinstance(cur_sub_expr, ExprRange) and cur_idx is not None:
+            cur_idx = slice(cur_idx, cur_idx+1)
+            cur_sub_expr = ExprTuple(cur_sub_expr)
 
         if isinstance(cur_idx, slice):
             # When there is a slice of an ExprTuple at the bottom level,
@@ -405,11 +429,13 @@ class InnerExpr:
             if stop is None:
                 stop = parent_tuple.num_entries()
             sub_tuple_len = cur_sub_expr.num_elements(
-                    assumptions=self.assumptions)
+                    assumptions=self.assumptions, auto_simplify=True)
+            sub_tuple_len = simplified_index(sub_tuple_len)
             dummy_var = top_level_expr.safe_dummy_var()
             lambda_params = var_range(dummy_var, one, sub_tuple_len)
             lambda_body = ExprTuple(*(parent_tuple[:start].entries + (lambda_params,)
                                       + parent_tuple[stop:].entries))
+            skip_innermost = True
             """
         elif isinstance(cur_sub_expr, Composite):
             dummy_vars = top_level_expr.safe_dummy_vars(len(cur_sub_expr))
@@ -444,10 +470,12 @@ class InnerExpr:
             # Don't auto-simplify anything when creating the replacement
             # map.
             temp_defaults.auto_simplify = False
-            lambda_body = self._rebuild(lambda_body)
+            lambda_body = self._rebuild(lambda_body,
+                                        skip_innermost=skip_innermost)
         return Lambda(lambda_params, lambda_body)
+                      
 
-    def _rebuild(self, inner_expr_replacement):
+    def _rebuild(self, inner_expr_replacement, skip_innermost=False):
         '''
         Rebuild the expression replacing the inner expression with the
         given 'inner_expr_replacement'.
@@ -455,10 +483,12 @@ class InnerExpr:
         from proveit import Judgment
         inner_expr = inner_expr_replacement
         # Work from the inside out.
-        for expr, idx in reversed(list(zip(self.expr_hierarchy,
+        for expr, idx in reversed(list(zip(self.expr_hierarchy[:-1],
                                            self.inner_expr_path))):
-            if isinstance(idx, slice):
+            if isinstance(idx, slice) or skip_innermost:
+                skip_innermost = False
                 continue
+            skip_innermost = False # no longer the innermost
             if isinstance(expr, Judgment):
                 if idx < 0:
                     raise ValueError("Cannot call an InnerExpr.repl_lambda "
@@ -488,18 +518,21 @@ class InnerExpr:
         'equality_or_replacement' is appropriate and return the
         corresponding equality expression.
         '''
-        from proveit import Judgment
+        from proveit import Judgment, ExprRange
         from proveit.logic import Equals
 
         cur_inner_expr = self.expr_hierarchy[-1]
         if isinstance(equality_or_replacement, Judgment):
             if not isinstance(equality_or_replacement.expr, Equals):
                 raise TypeError("When given a Judgment, "
-                                "'equality_or_replacement' must prove"
+                                "'equality_or_replacement' must prove "
                                 "an Equals expression")
-            if equality_or_replacement.lhs != cur_inner_expr:
+            expected_lhs = cur_inner_expr
+            if isinstance(cur_inner_expr, ExprRange):
+                expected_lhs = ExprTuple(expected_lhs)
+            if equality_or_replacement.lhs != expected_lhs:
                 raise ValueError("Expecting lhs of %s to be %s"%
-                                 (equality_or_replacement, cur_inner_expr))
+                                 (equality_or_replacement, expected_lhs))
             if prove_equality:
                 return equality_or_replacement
             else:
@@ -524,15 +557,18 @@ class InnerExpr:
         current inner expression on the left side or it may be the
         replacement.
         '''
-        cur_inner_expr = self.expr_hierarchy[-1]
-        
+        assumptions = defaults.assumptions
         equality = self._eq_from_equality_or_replacement(
                 equality_or_replacement, prove_equality=True)
+        # Make sure to preserve the left and right sides of the
+        # original expression.
+        preserved_exprs = set(defaults.preserved_exprs)
+        preserved_exprs.update({equality.lhs, equality.rhs})
 
         if len(self.parameters) > 0:
             # Determine which parameters, if any, are involved
             # in the equivalence.
-            fvars = free_vars(equality, err_inclusively=True)
+            fvars = free_vars(equality)
             involved_params = [param for param in self.parameters
                                if param in fvars]
         else:
@@ -567,19 +603,32 @@ class InnerExpr:
                               lhs_lambda_body).substitution(
                                       gen_equality, preserve_all=True)
 
+            # (re-)construct assumptions without assumptions that
+            # should be eliminated with the substitution (such as
+            # summation domain when substituting for summand)
+            assumptions = [_assumption for _assumption in assumptions
+                           if set(free_vars(_assumption)).
+                           isdisjoint(involved_params)]
+
         if return_proven_rhs:
             if len(replacements) > 0:
                 # We need to perform replacements before we
                 # are ready to prove the left side.
                 substitution = equality.substitution(
-                    repl_lambda, replacements=replacements)
+                    repl_lambda, replacements=replacements,
+                    preserved_exprs=preserved_exprs,
+                    assumptions=assumptions)
                 return substitution.derive_right_via_equality(
                         preserve_all=True)
             return equality.sub_right_side_into(
-                repl_lambda, replacements=replacements)        
+                repl_lambda, replacements=replacements,
+                preserved_exprs=preserved_exprs,
+                assumptions=assumptions)        
         else:
             return equality.substitution(
-                repl_lambda, replacements=replacements)
+                repl_lambda, replacements=replacements,
+                preserved_exprs=preserved_exprs,
+                assumptions=assumptions)
 
     @equality_prover('substituted', 'substitute')
     def substitution(self, equality_or_replacement, **defaults_config):
@@ -614,8 +663,7 @@ class InnerExpr:
             # If no parameters are involved, we can use
             # substitute_truth or substitute_false as a simple proof.
             if len(self.parameters) > 0:
-                fvars = free_vars(equality_or_replacement,
-                                  err_inclusively=True)
+                fvars = free_vars(equality_or_replacement)
                 involved_params = [param for param in self.parameters
                                    if param in fvars]
             else:
@@ -629,12 +677,10 @@ class InnerExpr:
                 replacement = equality.rhs
                 if cur_inner_expr == TRUE:            
                     return substitute_truth.instantiate(
-                        {P: self.repl_lambda(), x: replacement}, 
-                        preserve_all=True)
+                        {P: self.repl_lambda(), x: replacement})
                 elif cur_inner_expr == FALSE:
                     return substitute_falsehood.instantiate(
-                        {P: self.repl_lambda(), x: replacement}, 
-                        preserve_all=True)
+                        {P: self.repl_lambda(), x: replacement})
         return self._substitution(equality_or_replacement, 
                                   return_proven_rhs=True)            
 
@@ -656,7 +702,7 @@ class InnerExpr:
         else:
             named_expr_dict += [('$%s$' % lambda_params[0].latex(), 
                                  cur_sub_expr)]
-        return NamedExprs(named_expr_dict)
+        return NamedExprs(*named_expr_dict)
 
     def cur_sub_expr(self):
         return self.expr_hierarchy[-1]

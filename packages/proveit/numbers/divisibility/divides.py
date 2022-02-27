@@ -1,9 +1,12 @@
 from proveit import (as_expression, defaults, Literal,
+                     UnsatisfiedPrerequisites,
                      ProofFailure, TransitiveRelation, 
                      TransitivityException, USE_DEFAULTS,
                      prover, relation_prover)
+from proveit import a, b, k
 from proveit.logic import Equals, InSet, NotEquals
-from proveit.numbers import zero, Complex, Integer, NaturalPos
+from proveit.numbers import (zero, Complex, Integer, NaturalPos,
+                             deduce_number_set)
 
 
 class DividesRelation(TransitiveRelation):
@@ -32,27 +35,37 @@ class DividesRelation(TransitiveRelation):
 
         # for 2|(b^n), derive 2|b.
         # (can be generalized to any prime number).
-        if (isinstance(self.rhs, Exp) and
-                self.lhs == two and
-                InSet(self.rhs.base, Integer).proven() and
-                InSet(self.rhs.exponent, Integer).proven()):
-            yield self.eliminate_dividend_exponent
+        if self.lhs==two and isinstance(self.rhs, Exp):
+            try:
+                deduce_number_set(self.rhs.base)
+                deduce_number_set(self.rhs.exponent)
+            except UnsatisfiedPrerequisites:
+                pass
+            if (InSet(self.rhs.base, Integer).proven() and
+                   InSet(self.rhs.exponent, Integer).proven()):
+                yield self.eliminate_dividend_exponent
 
         # for (a^n)|(b^n)
-        if (isinstance(self.lhs, Exp) and isinstance(self.rhs, Exp) and
-                InSet(self.lhs.base, Integer).proven() and
-                InSet(self.rhs.base, Integer).proven() and
-                self.lhs.exponent == self.rhs.exponent and
-                InSet(self.lhs.exponent, NaturalPos).proven()):
-            yield self.eliminate_common_exponent
+        if (isinstance(self.rhs, Exp) and 
+                isinstance(self.lhs, Exp) and 
+                self.lhs.exponent==self.rhs.exponent):
+            try:
+                deduce_number_set(self.lhs.base)
+                deduce_number_set(self.rhs.base)
+                deduce_number_set(self.lhs.exponent)
+            except UnsatisfiedPrerequisites:
+                pass
+            if (InSet(self.lhs.base, Integer).proven() and
+                    InSet(self.rhs.base, Integer).proven() and
+                    InSet(self.lhs.exponent, NaturalPos).proven()):
+                yield self.eliminate_common_exponent
 
         # for (ka)|(kb)
-        if (isinstance(self.lhs, Mult) and self.lhs.operands.is_double() and
-                isinstance(self.rhs, Mult) and self.rhs.operands.is_double()):
+        if (isinstance(self.lhs, Mult) and isinstance(self.rhs, Mult)):
             operands_intersection = (set(self.lhs.operands).
                                      intersection(set(self.lhs.operands)))
             if(len(operands_intersection) > 0):
-                yield self.eliminate_common_factor
+                yield self.eliminate_common_factors
 
     @staticmethod
     def WeakRelationClass():
@@ -114,6 +127,10 @@ class Divides(DividesRelation):
         from proveit.logic import InSet, NotEquals
         from proveit.numbers import zero, Complex
         err_str = "In Divides.conclude() we tried:\n"
+        try:
+            deduce_number_set(self.lhs)
+        except UnsatisfiedPrerequisites:
+            pass
         if self.lhs == self.rhs:
             if (NotEquals(self.lhs, zero).proven() and
                     InSet(self.lhs, Complex).proven()):
@@ -159,13 +176,19 @@ class Divides(DividesRelation):
         #-- -------------------------------------------------------- --#
         #-- Case (4): x^n|y^n if x|y                                 --#
         #-- -------------------------------------------------------- --#
-        if (isinstance(self.lhs, Exp) and isinstance(self.rhs, Exp)):
-            if (InSet(self.lhs.base, Integer).proven() and
-                InSet(self.rhs.base, Integer).proven() and
+        if (isinstance(self.lhs, Exp) and isinstance(self.rhs, Exp) and
                 Equals(self.lhs.exponent, self.rhs.exponent) and
-                InSet(self.lhs.exponent, NaturalPos).proven() and
-                    Divides(self.lhs.base, self.rhs.base).proven()):
+                Divides(self.lhs.base, self.rhs.base).proven()):
+            try:
+                deduce_number_set(self.lhs.base)
+                deduce_number_set(self.rhs.base)
+                deduce_number_set(self.lhs.exponent)
+            except UnsatisfiedPrerequisites:
+                pass
 
+            if (InSet(self.lhs.base, Integer).proven() and
+                    InSet(self.rhs.base, Integer).proven() and
+                    InSet(self.lhs.exponent, NaturalPos).proven()):
                 return (Divides(self.lhs.base, self.rhs.base).
                         introduce_common_exponent(self.lhs.exponent))
 
@@ -315,7 +338,11 @@ class Divides(DividesRelation):
             k = self.lhs.base
             a = self.rhs.base
             n = self.lhs.exponent
-
+            try:
+                for _expr in (k, a, n):
+                    deduce_number_set(_expr)
+            except UnsatisfiedPrerequisites:
+                pass
             if (InSet(k, Integer).proven() and
                 InSet(a, Integer).proven() and
                     InSet(n, NaturalPos).proven()):
@@ -349,46 +376,79 @@ class Divides(DividesRelation):
             {_k: self.lhs, _a: self.rhs, _n: exponent})
 
     @prover
-    def eliminate_common_factor(self, **defaults_config):
+    def eliminate_common_factors(self, **defaults_config):
         '''
-        From self of the form (k a)|(k b), derive and return a|b.
-        k must be a non-zero complex number. This method
-        is called from the DividesRelation side_effects() method.
-        Need to generalize this later for more than two operands on
-        each side! Could use sets for detecting common factors.
+        Eliminate all factors in common between the divisor and the
+        dividend.  For example, from (k a)|(k b), derive and return a|b.
+        k must be a non-zero complex number.
         '''
-        from proveit.numbers import Mult
-        if (isinstance(self.lhs, Mult) and
+        from . import common_factor_elimination
+        from proveit.numbers import Mult, one
+        if self.lhs == self.rhs:
+            # From x | x return 1 | 1.  It's vacuous, but whatever.
+            return Divides(one, one).prove()
+        elif (isinstance(self.lhs, Mult) and
                 isinstance(self.rhs, Mult)):
-
+            
+            # Handle the basic case in which the divisor and
+            # the dividend are each the product of two factors and
+            # the first of these is in common between them.
             if (self.lhs.operands.is_double() and
                     self.rhs.operands.is_double()):
-
                 lhs1 = self.lhs.operands[0]
                 lhs2 = self.lhs.operands[1]
                 rhs1 = self.rhs.operands[0]
                 rhs2 = self.rhs.operands[1]
+                deduce_number_set(lhs1)
 
                 if (lhs1 == rhs1 and InSet(lhs1, Complex).proven() and
                         NotEquals(lhs1, zero).proven()):
-
-                    from . import common_factor_elimination
-                    from proveit import a, b, k
                     return common_factor_elimination.instantiate(
                         {a: lhs2, b: rhs2, k: lhs1})
+            
+            # Try to convert it to the basic case via factorization
+            # and try again.
+            rhs_factors = set(self.rhs.operands.entries)
+            common_factors = [factor for factor in self.lhs.factors
+                              if factor in rhs_factors]
+            # Pull the common factors out to the front.
+            if len(common_factors) == 0:
+                return self.prove() # No common factors to eliminate.
+            lhs_factorization = self.lhs.factorization(
+                    common_factors, pull='left',
+                    group_factors=True, group_remainder=True,
+                    preserve_all=True)
+            rhs_factorization = self.rhs.factorization(
+                    common_factors, pull='left',
+                    group_factors=True, group_remainder=True,
+                    preserve_all=True)
+            # Prove this "divides" but the substitute factorized forms.
+            divides_proof = self.prove()
+            if lhs_factorization.lhs != lhs_factorization.rhs:
+                divides_proof = lhs_factorization.sub_right_side_into(
+                        divides_proof)
+            if rhs_factorization.lhs != rhs_factorization.rhs:
+                divides_proof = rhs_factorization.sub_right_side_into(
+                        divides_proof)
+            lhs1, lhs2 = lhs_factorization.rhs.operands
+            rhs1, rhs2 = rhs_factorization.rhs.operands
+            return common_factor_elimination.instantiate(
+                    {a: lhs2, b: rhs2, k: lhs1})
+        elif isinstance(self.lhs, Mult) and self.rhs in self.lhs.factors:
+            # From (k z) | k return z | 1.  Why not?
+            dividend = Mult(self.rhs, one)
+            divides = Divides(self.lhs, dividend)
+            divides_proof = divides.eliminate_common_factors()
+            return divides_proof.inner_expr().lhs.dividend.one_elimination(1)
+        elif isinstance(self.rhs, Mult) and self.lhs in self.rhs.factors:
+            # From (k z) | k return z | 1.  Why not?
+            divisor = Mult(self.lhs, one)
+            divides = Divides(divisor, self.rhs)
+            divides_proof = divides.eliminate_common_factors()
+            return divides_proof.inner_expr().lhs.divisor.one_elimination(1)
 
-                else:
-                    err_msg = ("Error!")
-
-            else:
-                err_msg = ("In using Divides.eliminate_common_factor(), "
-                           "each product can have only two multiplicands.")
-        else:
-            err_msg = ("In using Divides.eliminate_common_factor(), "
-                       "the lhs {0} and rhs {1} must both be products.".
-                       format(self.lhs, self.rhs))
-
-        raise ValueError(err_msg)
+        # There are no common factors.
+        return self.prove()
 
     @prover
     def apply_transitivity(self, other, **defaults_config):

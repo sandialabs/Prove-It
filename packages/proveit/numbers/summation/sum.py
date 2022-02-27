@@ -1,14 +1,15 @@
-from proveit import (Literal, Lambda, Function, Operation,
+from proveit import (Expression, Literal, Lambda, Function, Operation,
                      OperationOverInstances, InnerExpr,
                      Judgment, free_vars, maybe_fenced, USE_DEFAULTS,
                      ProofFailure, defaults,
                      prover, relation_prover, equality_prover,
                      UnsatisfiedPrerequisites)
-from proveit import a, b, c, f, i, j, k, l, m, x, P, Q, S
+from proveit import a, b, c, f, i, j, k, l, m, x, Q, S
 from proveit.logic import Forall, InSet
 from proveit.numbers import one, Add, Neg, subtract
 from proveit.numbers import (Complex, Integer, Interval, Natural,
-                             NaturalPos, Real, RealInterval)
+                             NaturalPos, Real, RealInterval,
+                             deduce_number_set)
 from proveit.numbers.ordering import Less, LessEq
 from proveit import TransRelUpdater
 
@@ -65,8 +66,8 @@ class Sum(OperationOverInstances):
                        summation_int_closure, summation_real_closure,
                        summation_complex_closure)
         _x = self.instance_param
-        P_op, _P_op = Function(P, _x), self.instance_expr
-        Q_op, _Q_op = Function(Q, _x), self.condition
+        _f = Lambda(_x, self.instance_expr)
+        _Q = Lambda(_x, self.condition)
 
         if number_set == Natural:
             thm = summation_nat_closure
@@ -82,13 +83,22 @@ class Sum(OperationOverInstances):
             raise NotImplementedError(
                 "'Sum.deduce_in_number_set' not implemented for the %s set"
                 % str(number_set))
-        impl = thm.instantiate(
-            { x: _x, P_op: _P_op, Q_op: _Q_op}, preserve_all=True)
+        impl = thm.instantiate({ x: _x, f: _f, Q: _Q})
         antecedent = impl.antecedent
         if not antecedent.proven():
             # Conclude the antecedent via generalization.
             antecedent.conclude_via_generalization()
         return impl.derive_consequent()
+
+    @relation_prover
+    def deduce_number_set(self, **defaults_config):
+        '''
+        Prove membership of this expression in the most 
+        restrictive standard number set we can readily know.
+        '''
+        summand_ns = deduce_number_set(self.summand, 
+                                       assumptions=self.conditions).domain
+        return self.deduce_in_number_set(summand_ns)
 
     def _formatted(self, format_type, **kwargs):
         # MUST BE UPDATED TO DEAL WITH 'joining' NESTED LEVELS
@@ -110,7 +120,8 @@ class Sum(OperationOverInstances):
             formatted_inner += self.summand.formatted(format_type, fence=True)
             return maybe_fenced(format_type, formatted_inner, fence=fence)
         else:
-            return OperationOverInstances._formatted(self, format_type, fence)
+            return OperationOverInstances._formatted(self, format_type,
+                                                     fence=fence)
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
@@ -150,13 +161,12 @@ class Sum(OperationOverInstances):
         ∑_{n=0}^{∞} x^n = 1 / (1 - x)
         ∑_{n=j}^{k} x^n = (x^{k + 1} - x^j) / (x - 1)
         '''
-        from theorems import inf_geom_sum, fin_geom_sum
+        from . import inf_geom_sum, gen_finite_geom_sum
         from proveit.numbers import zero, infinity
-        _m = self.indices[0]
 
         try:
             #            self.r = extract_exp_base(self.summand)
-            _x = self.summand.base
+            _x_sub = self.summand.base
         except BaseException:
             raise ValueError("Summand not an exponential!")
         if not isinstance(self.domain, Interval):
@@ -165,13 +175,19 @@ class Sum(OperationOverInstances):
             if (self.domain.lower_bound == zero and
                     self.domain.upper_bound == infinity):
                 # We're in the infinite geom sum domain!
-                return inf_geom_sum.instantiate({x: _x, m: _m})
+                _m = self.indices[0]
+                return inf_geom_sum.instantiate({x: _x_sub, m: _m})
             else:
                 # We're in the finite geom sum domain!
-                _k = self.domain.lower_bound
-                _l = self.domain.upper_bound
-                return fin_geom_sum.instantiate(
-                    {x: _x, m: _m, k: _k, l: _l})
+                _x, _j, _k = gen_finite_geom_sum.all_instance_params()
+                # _i = gen_finite_geom_sum.instance_expr.instance_expr.lhs.indices
+                _i = gen_finite_geom_sum.instance_expr.instance_expr.lhs.index
+                # _i_sub = self.indices[0]
+                _i_sub = self.index
+                _j_sub = self.domain.lower_bound
+                _k_sub = self.domain.upper_bound
+                return gen_finite_geom_sum.instantiate(
+                    {x: _x_sub, _i: _i_sub, j: _j_sub, _k: _k_sub})
 #        else:
 #            print "Not a geometric sum!"
 
@@ -547,20 +563,24 @@ class Sum(OperationOverInstances):
                 .format(self, self.indices, self.domain))
 
     @equality_prover('factorized', 'factor')
-    def factorization(self, the_factor, pull="left", group_factor=True,
+    def factorization(self, the_factors, pull="left", group_factors=True,
                       group_remainder=None, **defaults_config):
         '''
-        If group_factor is True and the_factor is a product, it will be grouped together as a
-        sub-product.  group_remainder is not relevant kept for compatibility with other factor
-        methods.  Returns the equality that equates self to this new version.
-        Give any assumptions necessary to prove that the operands are in Complex so that
-        the associative and commutation theorems are applicable.
+        Return the proven factorization (equality with the factored
+        form) from pulling the factor(s) from this summation to the 
+        "left" or "right".
+        If group_factors is True, the factors will be grouped together 
+        as a sub-product.  group_remainder is not relevant kept for 
+        compatibility with other factor methods.
         '''
         from proveit import ExprTuple, var_range, IndexedVar
         from proveit.numbers.multiplication import distribute_through_summation
         from proveit.numbers import Mult, one
-        if not free_vars(the_factor, err_inclusively=True).isdisjoint(
-                self.instance_params):
+        if not isinstance(the_factors, Expression):
+            # If 'the_factors' is not an Expression, assume it is
+            # an iterable and make it a Mult.
+            the_factors = Mult(*the_factors)            
+        if not free_vars(the_factors).isdisjoint(self.instance_params):
             raise ValueError(
                 'Cannot factor anything involving summation indices '
                 'out of a summation')
@@ -571,19 +591,20 @@ class Sum(OperationOverInstances):
         # We may need to factor the summand within the summation
         summand_assumptions = defaults.assumptions + self.conditions.entries
         summand_factorization = self.summand.factorization(
-            the_factor,
+            the_factors,
             pull,
-            group_factor=False,
+            group_factors=group_factors,
             group_remainder=True,
             assumptions=summand_assumptions)
         if summand_factorization.lhs != summand_factorization.rhs:
             gen_summand_factorization = summand_factorization.generalize(
                     self.instance_params, conditions=self.conditions)
-            expr = eq.update(expr.instance_substitution(gen_summand_factorization))
-        if isinstance(the_factor, Mult):
-            factors = the_factor.factors
+            expr = eq.update(expr.instance_substitution(gen_summand_factorization,
+                                                        preserve_all=True))
+        if not group_factors and isinstance(the_factors, Mult):
+            factors = the_factors.factors
         else:
-            factors = ExprTuple(the_factor)
+            factors = ExprTuple(the_factors)
         if pull == 'left':
             _a = factors
             _c = ExprTuple()
@@ -599,20 +620,14 @@ class Sum(OperationOverInstances):
         _i = _a.num_elements()
         _j = _b.num_elements()
         _k = _c.num_elements()
-        _P = Lambda(expr.instance_params, summand_remainder)
+        _f = Lambda(expr.instance_params, summand_remainder)
         _Q = Lambda(expr.instance_params, expr.condition)
-        b_1_to_j = ExprTuple(var_range(b, one, _j))
         _impl = distribute_through_summation.instantiate(
-                {i: _i, j: _j, k: _k, P:_P, Q:_Q, b_1_to_j:_b},
+                {i: _i, j: _j, k: _k, f:_f, Q:_Q, b:_b},
                 preserve_all=True)
-        quantified_eq = _impl.derive_consequent()
-        if hasattr(self, 'index'):
-            b_ = IndexedVar(b, one)
-            _b = self.index
-        else:
-            b_ = b
+        quantified_eq = _impl.derive_consequent(preserve_all=True)
         eq.update(quantified_eq.instantiate(
-                {a: _a, b_:_b, c: _c}))
+                {a: _a, c: _c}, preserve_all=True))
 
         return eq.relation
 
@@ -654,8 +669,8 @@ class Sum(OperationOverInstances):
         if summand_lambda not in (lesser_lambda, greater_lambda):
             raise ValueError("Expecting summand_relation to be a universally "
                              "quantified number relation (< or <=) "
-                             "involving the summand, %d, not %s"%
-                             (self.summand, summand_relation))
+                             "involving the summand {0} not {1}.".
+                             format(self.summand, summand_relation))
         _a = lesser_lambda
         _b = greater_lambda
         _S = self.domain

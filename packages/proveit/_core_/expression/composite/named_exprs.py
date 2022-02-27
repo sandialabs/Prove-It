@@ -8,7 +8,7 @@ class NamedExprs(Composite, Expression):
     An NamedExprs is a composite expr that maps strings to Expressions.
     """
 
-    def __init__(self, items, *, styles=None):
+    def __init__(self, *items, styles=None):
         '''
         Create a NamedExprs Expression object from a list (iterable) of
         (keyword, Expression) pairs, where each keyword is a string.
@@ -82,7 +82,7 @@ class NamedExprs(Composite, Expression):
         if len(sub_expressions) != len(keys):
             raise ValueError("The number of sub-expressions, " + str(len(sub_expressions)),
                              ", expected to match the number of the NamedExprs' keys, ", str(len(keys)))
-        return NamedExprs([(key, sub_expression) for key, sub_expression in zip(
+        return NamedExprs(*[(key, sub_expression) for key, sub_expression in zip(
             keys, sub_expressions)], styles=styles)
 
     def string(self, **kwargs):

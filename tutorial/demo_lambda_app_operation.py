@@ -11,11 +11,9 @@ class LambdaApplication(Operation):
 
     def __init__(self, lambda_fn, operand, *, styles=None):
         Operation.__init__(self, LambdaApplication._operator_, 
-                           NamedExprs([('lambda_fn', lambda_fn), 
-                                       ('operand', operand)]),
+                           NamedExprs(('lambda_fn', lambda_fn), 
+                                      ('operand', operand)),
                            styles=styles)
-        # The Lambda function operand
-        self.lambda_fn = self.operands['lambda_fn']
         # The operand of the Lambda function
         self.lambda_operand = self.operands['operand']
 

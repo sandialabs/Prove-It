@@ -1,11 +1,43 @@
-from proveit import Literal, ProofFailure, defaults, prover
-from proveit.logic import Equals, InSet, Membership
+from proveit import (x, defaults, Literal, ProofFailure, prover,
+                     UnsatisfiedPrerequisites)
+from proveit.logic import Equals, InSet, SetMembership, SubsetEq
 
 
 class NumberSet(Literal):
     def __init__(self, string, latex, *, theory, styles, fence_when_forced=False):
         Literal.__init__(self, string, latex, theory=theory, styles=styles,
                          fence_when_forced=fence_when_forced)
+
+    def includes(self, other_set):
+        '''
+        Return True if this NumberSet includes the 'other_set' set.
+        '''
+        from proveit.numbers.number_operation import (
+            sorted_number_sets, standard_number_sets, deduce_number_set)
+        if other_set == self: return True
+        if SubsetEq(other_set, self).proven():
+            return True
+
+        if other_set not in standard_number_sets:    
+            # For example, 'other_set' could be an integer Interval
+            # or real IntervalCC, IntervalOC, ...), so let's see if
+            # we can prove that an arbitrary variable in the other_set
+            # is also in self.
+            assumptions = [InSet(x, other_set)]
+            deduce_number_set(x, assumptions=assumptions)
+            if InSet(x, self).proven(assumptions=assumptions):
+                SubsetEq(other_set, self).conclude_as_folded()
+                return True
+
+        # Try one level of indirection via SubsetEq.
+        for number_set in sorted_number_sets:
+            if number_set in (other_set, self):
+                continue
+            if (SubsetEq(other_set, number_set).proven() and
+                    SubsetEq(number_set, self).proven()):
+                return True
+
+        return False # Not known to include the 'other'
 
     def membership_object(self, element):
         return NumberMembership(element, self)
@@ -19,10 +51,28 @@ class NumberSet(Literal):
         return
         yield
 
+    @property
+    def plus_operator(self):
+        '''
+        Add._operator_ is the default plus operation for number sets
+        (e.g., as groups or fields).
+        '''
+        from proveit.numbers import Add
+        return Add._operator_
 
-class NumberMembership(Membership):
+    @property
+    def times_operator(self):
+        '''
+        Mult._operator_ is the default times operation for number sets
+        (e.g., as fields or rings).
+        '''
+        from proveit.numbers import Mult
+        return Mult._operator_
+
+
+class NumberMembership(SetMembership):
     def __init__(self, element, number_set):
-        Membership.__init__(self, element, number_set)
+        SetMembership.__init__(self, element, number_set)
         self.number_set = number_set
 
     def side_effects(self, judgment):
@@ -52,6 +102,8 @@ class NumberMembership(Membership):
         Try to deduce that the given element is in the number set under
         the given assumptions.
         '''
+        from proveit.numbers import deduce_number_set
+
         element = self.element
 
         '''
@@ -66,6 +118,13 @@ class NumberMembership(Membership):
                 # Substitute into the original.
                 return simplification.sub_left_side_into(elem_in_set, assumptions)
         '''
+        try:
+            deduce_number_set(element)
+        except (ProofFailure, UnsatisfiedPrerequisites):
+            pass
+        membership = InSet(element, self.number_set)
+        if membership.proven():
+            return membership.prove()
 
         # Try the 'deduce_in_number_set' method.
         if hasattr(element, 'deduce_in_number_set'):

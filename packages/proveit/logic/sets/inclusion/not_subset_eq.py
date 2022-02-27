@@ -14,7 +14,7 @@ class NotSubsetEq(Relation):
         '''
         Create the expression for (A not_subset_eq B)
         '''
-        Operation.__init__(self, NotSubsetEq._operator_, (A, B),
+        Relation.__init__(self, NotSubsetEq._operator_, A, B,
                            styles=styles)
 
     @staticmethod

@@ -1,4 +1,5 @@
 import inspect
+from proveit._core_.defaults import defaults
 from proveit._core_.expression.expr import (
     Expression, MakeNotImplemented, free_vars)
 from proveit._core_.expression.label.var import Variable
@@ -19,31 +20,30 @@ def _extract_domain_from_condition(ivar, condition):
     return the domain (e.g., "S").  Return None if the condition is not
     a "domain" condition for the given instance variable(s).
     '''
-    from proveit.logic import InSet
+    from proveit.logic import InClass
     if isinstance(ivar, ExprRange):
         # See if the condition is a range of domain conditions
         # matching the instance variable range.
         # For example, x_1, ..., x_n as the instance variable
         # range matching x_1 in S_1, ..., x_n in S_n.
         if (isinstance(condition, ExprRange)
-                and isinstance(condition.body, InSet)
-                and condition.start_index == ivar.start_index
-                and condition.end_index == ivar.end_index):
+                and isinstance(condition.body, InClass)
+                and condition.true_start_index == ivar.true_start_index
+                and condition.true_end_index == ivar.true_end_index):
             # Replace the condition parameter with the ivar parameter
             # and see if the InSet element matches ivar.body.
             cond_body_elem_with_repl_param = (
                     condition.body.element.basic_replaced(
                             {condition.parameter: ivar.parameter}))
             if cond_body_elem_with_repl_param == ivar.body:
-                if condition.parameter in free_vars(condition.body.domain,
-                                                    err_inclusively=True):
+                if condition.parameter in free_vars(condition.body.domain):
                     # There is a range of domains matching a range of
                     # parameters.
                     return ExprRange(
                         condition.parameter, condition.body.domain,
-                        condition.start_index, condition.end_index)
+                        condition.true_start_index, condition.true_end_index)
             return condition.body.domain
-    elif isinstance(condition, InSet) and condition.element == ivar:
+    elif isinstance(condition, InClass) and condition.element == ivar:
         return condition.domain
     return None
 
@@ -98,7 +98,7 @@ class OperationOverInstances(Operation):
         _lambda_map is used internally for efficiently rebuilding an
         OperationOverInstances expression.
         '''
-        from proveit.logic import InSet
+        from proveit.logic import InSet, InClass
         from proveit._core_.expression.lambda_expr.lambda_expr import get_param_var
 
         if condition is not None:
@@ -169,18 +169,26 @@ class OperationOverInstances(Operation):
                             "of them can be the None value")
                 domain_conditions = []
                 for iparam, domain in zip(instance_params, domains):
+                    # If the domain is a proper class, indicated via
+                    # an 'is_proper_class' attribute, use InClass
+                    # instead of InSet.
+                    if (hasattr(domain, 'is_proper_class')
+                            and domain.is_proper_class):
+                        in_class = InClass
+                    else:
+                        in_class = InSet
                     if isinstance(iparam, ExprRange):
                         if isinstance(domain, ExprRange):
-                            if ((iparam.start_index != domain.start_index) or
-                                    (iparam.end_index != domain.end_index)):
+                            if ((iparam.true_start_index != domain.true_start_index) or
+                                    (iparam.true_end_index != domain.true_end_index)):
                                 raise ValueError(
                                     "A range of parameters must match "
                                     "in start and end indices with the "
                                     "corresponding range of domains: "
                                     "%s vs %s and %s vs %s" %
-                                    (iparam.start_index,
-                                     domain.start_index,
-                                     iparam.end_index, domain.end_index))
+                                    (iparam.true_start_index,
+                                     domain.true_start_index,
+                                     iparam.true_end_index, domain.true_end_index))
                             # Use the same parameter for the domain
                             # as the instance parameter.
                             domain_body_with_new_param = \
@@ -188,14 +196,15 @@ class OperationOverInstances(Operation):
                                         {domain.parameter: iparam.parameter})
                             condition = ExprRange(
                                 iparam.parameter,
-                                InSet(iparam.body, domain_body_with_new_param),
-                                iparam.start_index, iparam.end_index)
+                                in_class(iparam.body, domain_body_with_new_param),
+                                iparam.true_start_index, iparam.true_end_index)
                         else:
                             condition = ExprRange(
-                                iparam.parameter, InSet(iparam.body, domain),
-                                iparam.start_index, iparam.end_index)
+                                iparam.parameter, 
+                                in_class(iparam.body, domain),
+                                iparam.true_start_index, iparam.true_end_index)
                     else:
-                        condition = InSet(iparam, domain)
+                        condition = in_class(iparam, domain)
                     domain_conditions.append(condition)
                 conditions = domain_conditions + list(conditions)
             conditions = composite_expression(conditions)
@@ -273,12 +282,17 @@ class OperationOverInstances(Operation):
         '''
         with_wrapping = (self.get_style('with_wrapping', 'False') == 'True')
         wrap_params = (self.get_style('wrap_params', 'False') == 'True')
+        condition_wrapping = self.get_style('condition_wrapping', 'No')
         justification = self.get_style('justification')
         call_strs = []
         if with_wrapping:
             call_strs.append('with_wrapping()')
         if wrap_params:
             call_strs.append('wrap_params()')
+        if condition_wrapping == 'before':
+            call_strs.append('with_wrap_before_condition()')
+        elif condition_wrapping == 'after':
+            call_strs.append('with_wrap_after_condition()')            
         if justification != 'center':
             call_strs.append('with_justification("' + justification + '")')
         return call_strs
@@ -653,6 +667,12 @@ class OperationOverInstances(Operation):
             default = None, 
             related_methods = ('with_wrapping',))
         options.add_option(
+            name = 'condition_wrapping',
+            description = ("Wrap 'before' or 'after' the condition (or None)."),
+            default = None,
+            related_methods = ('with_wrap_after_condition',
+                               'with_wrap_before_condition')),
+        options.add_option(
             name = 'wrap_params',
             description = ("If 'True', wraps every two parameters "
                            "AND wraps the Expression after the parameters"),
@@ -679,6 +699,15 @@ class OperationOverInstances(Operation):
         \forall_{a, b, c, d, e, f, g} P(a, b, c, d, e, f, g)
         '''
         return self.with_styles(with_wrapping=str(wrap))
+    
+    def with_wrap_before_condition(self):
+        return self.with_styles(condition_wrapping='before')
+
+    def with_wrap_after_condition(self):
+        return self.with_styles(condition_wrapping='after')
+
+    def with_no_condition_wrapping(self):
+        return self.with_styles(condition_wrapping=None)
 
     def wrap_params(self, wrap=True):
         '''
@@ -709,13 +738,19 @@ class OperationOverInstances(Operation):
         Format the OperationOverInstances according to the style
         which may join nested operations of the same type.
         '''
+        from proveit.logic import InSet, InClass
 
         if with_wrapping is None:
             # style call to wrap the expression after the parameters
-            with_wrapping = self.get_style('with_wrapping', 'False')
+            with_wrapping = (
+                    self.get_style('with_wrapping', 'False') == 'True')
         if wrap_params is None:
             # style call to wrap the expression after the parameters
-            wrap_params = self.get_style('wrap_params', 'False')
+            wrap_params = (
+                    self.get_style('wrap_params', 'False') == 'True')
+        condition_wrapping = self.get_style(
+                'condition_wrapping', 'No')
+        if condition_wrapping == 'No': condition_wrapping=None
         if justification is None:
             justification = self.get_style('justification', 'center')
         # override this default as desired
@@ -725,11 +760,37 @@ class OperationOverInstances(Operation):
         instance_expr = self.instance_expr
         has_explicit_iparams = (len(explicit_iparams) > 0)
         has_explicit_conditions = (explicit_conditions.num_entries() > 0)
+        if not has_explicit_conditions:
+            # No explicit conditions to wrap
+            condition_wrapping = None
         has_multi_domain = not self.has_one_domain()
         domain_conditions = ExprTuple(*self.domain_conditions())
+        # domain_membership_op will be the InSet operator if all
+        # of the domain conditions are the InSet type, or the InClass
+        # operator otherwise.
+        domain_membership_op = InSet._operator_
+        for domain_condition in domain_conditions:
+            if ((isinstance(domain_condition, ExprRange) and
+                 not isinstance(domain_condition.body, InSet)) or (
+                         not isinstance(domain_condition, ExprRange)
+                         and not isinstance(domain_condition, InSet))):
+                domain_membership_op = InClass._operator_
         out_str = ''
         formatted_params = ', '.join([param.formatted(format_type, abbrev=True)
                                       for param in explicit_iparams])
+        if hasattr(self, 'condition'):
+            with defaults.temporary() as temp_defaults:
+                # Add the condition as an assumption when formatting 
+                # the instance expression.
+                temp_defaults.automation = False
+                temp_defaults.assumptions = defaults.assumptions + (
+                        self.condition,)
+                formatted_instance_expr =  instance_expr.formatted(
+                    format_type, fence=True)
+        else:
+            formatted_instance_expr = instance_expr.formatted(
+                    format_type, fence=True)
+            
         if format_type == 'string':
             if fence:
                 out_str += '['
@@ -741,7 +802,7 @@ class OperationOverInstances(Operation):
                 else:
                     out_str += formatted_params
             if not has_multi_domain and self.domain is not None:
-                out_str += ' in '
+                out_str += ' %s '%domain_membership_op.string()
                 if has_multi_domain:
                     out_str += explicit_domains.formatted(
                         format_type, operator_or_operators='*', fence=False)
@@ -754,13 +815,15 @@ class OperationOverInstances(Operation):
                     format_type, fence=False)
                 # out_str += ', '.join(condition.formatted(format_type) for condition in self.conditions
                 # if condition not in implicit_conditions)
-            out_str += '} ' + instance_expr.formatted(format_type, fence=True)
+            out_str += '} ' + formatted_instance_expr
             if fence:
                 out_str += ']'
         if format_type == 'latex':
             if fence:
                 out_str += r'\left['
-            if wrap_params == 'True':
+            if with_wrapping:
+                out_str += r'\begin{array}{l}'                
+            if wrap_params:
                 out_str += self.operator.formatted(
                     format_type) + r'_{ \scriptsize \begin{array}{' + justification[0] + '}' + '\n'
                 if has_explicit_iparams:
@@ -774,17 +837,21 @@ class OperationOverInstances(Operation):
                         out_str += self._wrap_params_formatted(
                             format_type=format_type, params=explicit_iparams, fence=False)
                 if not has_multi_domain and self.domain is not None:
-                    out_str += r' \in '
+                    out_str += ' %s '%domain_membership_op.latex()
                     out_str += self.domain.formatted(format_type, fence=False)
                 if has_explicit_conditions:
                     if has_explicit_iparams:
                         out_str += "~|~"
                     out_str += self._wrap_params_formatted(
                         format_type=format_type, params=explicit_conditions, fence=False)
-                out_str += r'\end{array}' + '\n' + r'}~  \\' + '\n' + \
-                    instance_expr.formatted(format_type, fence=True)
+                out_str += r'\end{array}' + '\n' + r'}~ '
+                if with_wrapping:
+                    out_str += r'\\' + '\n'
+                out_str += formatted_instance_expr
             else:
                 out_str += self.operator.formatted(format_type) + r'_{'
+                if condition_wrapping is not None:
+                    out_str += r'\scriptsize \begin{array}{l}'
                 if has_explicit_iparams:
                     if has_multi_domain:
                         out_str += domain_conditions.formatted(
@@ -792,25 +859,25 @@ class OperationOverInstances(Operation):
                     else:
                         out_str += formatted_params
                 if not has_multi_domain and self.domain is not None:
-                    out_str += r' \in '
+                    out_str += ' %s '%domain_membership_op.latex()
                     out_str += self.domain.formatted(format_type, fence=False)
                 if has_explicit_conditions:
+                    if condition_wrapping == 'before':
+                        out_str += r' \\'
                     if has_explicit_iparams:
                         out_str += "~|~"
+                    if condition_wrapping == 'after':
+                        out_str += r'\\ '
                     out_str += explicit_conditions.formatted(
                         format_type, fence=False)
-                # out_str += ', '.join(condition.formatted(format_type) for condition in self.conditions
-                # if condition not in implicit_conditions)
-                if with_wrapping == 'True':
-                    raise NotImplementedError(
-                            "'with_wrapping' not implemented in "
-                            "OperationOverInstances")
-                    print(instance_expr.formatted(format_type, fence=True))
-                    out_str += r'}~ ' + \
-                        instance_expr.formatted(format_type, fence=True)
-                else:
-                    out_str += '}~' + \
-                        instance_expr.formatted(format_type, fence=True)
+                if condition_wrapping is not None:
+                    out_str += r'\end{array}'
+                out_str += '}~'
+                if with_wrapping:
+                    out_str += r'\\' + '\n'
+                out_str += formatted_instance_expr
+            if with_wrapping:
+                out_str += r'\end{array}'                
             if fence:
                 out_str += r'\right]'
         # print(out_str)
@@ -1049,7 +1116,7 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,),
         if isinstance(condition, And):
             _nQ = 0
             for cond in condition.operands:
-                cond_vars = free_vars(cond, err_inclusively=True)
+                cond_vars = free_vars(cond)
                 if first_param_vars.isdisjoint(cond_vars):
                     break
                 _nQ += 1
@@ -1066,8 +1133,7 @@ def unbundle(expr, unbundle_thm, num_param_entries=(1,),
                 _R = condition.operands[-1]
             else:
                 _R = And(*condition.operands[_nQ:].entries)
-        elif first_param_vars.isdisjoint(free_vars(condition,
-                                                   err_inclusively=True)):
+        elif first_param_vars.isdisjoint(free_vars(condition)):
             _Q = condition
             _R = And()
         else:

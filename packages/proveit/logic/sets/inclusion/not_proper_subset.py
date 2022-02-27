@@ -14,8 +14,8 @@ class NotProperSubset(Relation):
         '''
         Create the expression for (A not_proper_subset B)
         '''
-        Operation.__init__(
-            self, NotProperSubset._operator_, (A, B), styles=styles)
+        Relation.__init__(
+            self, NotProperSubset._operator_, A, B, styles=styles)
         # Need 'direction' style
 
     @staticmethod
@@ -60,7 +60,7 @@ class NotProperSubset(Relation):
         from . import fold_not_proper_subset
         concluded = fold_not_proper_subset.instantiate(
             {A: self.operands[0], B: self.operands[1]})
-        return concluded.with_matching_style(self)
+        return concluded
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):

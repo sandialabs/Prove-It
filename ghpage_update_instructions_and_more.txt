@@ -4,7 +4,6 @@
 cd doc
 make html
 cd ..
-find . -name "*.html" -o -name "_common_.py" -o -name "_axioms_.py" -o -name "_theorems_.py" -o -name "__pv_it"  -o -name "notebook.css" | tar -czf pv_it.tar.gz -T - --exclude="paths.txt"
 find . -name "*.html" -o -name "*.ipynb" -o -name "presumptions.txt" -o -name "__pv_it" -o -name "*.png"  -o -name "notebook.css" -o -name ".nojekyll" | tar -czf pv_it_web.tar.gz -T -
 
 
@@ -12,8 +11,8 @@ find . -name "*.html" -o -name "*.ipynb" -o -name "presumptions.txt" -o -name "_
 git checkout --orphan gh-pages-update
 git rm -rf .
 
-<<move over pv_it_web.tar.gz and pv_it.tar.gz>>
-tar -xzf pv_it_web.tar.gz; rm pv_it_web.tar.gz
+<<move over pv_it_web.tar.gz into the directory one level up>>
+tar -xzf ../pv_it_web.tar.gz
 
 git add .
 git commit -a -m "Git-Hub Pages update"
@@ -22,14 +21,15 @@ git push -f origin gh-pages-update:gh-pages
 git checkout master
 git branch -D gh-pages-update
 
+rm ../pv_it_web.tar.gz
 
 << DONE! >>
 
-<< IN ONE LINE >>
+<< IN ONE LINE AFTER CREATING/MOVING pv_it_web.tar.gz >>
 
 in ProveItWeb folder (where Prove-It is cloned for this purpose)
 
-git checkout master ; git branch -D gh-pages-update ; git checkout --orphan gh-pages-update ; git rm -rf . ; cp ../pv_it_web.tar.gz . ; tar -xzf pv_it_web.tar.gz; rm pv_it_web.tar.gz ; git add . ; git commit -a -m "Git-Hub Pages update" ; git push -f origin gh-pages-update:gh-pages
+git checkout master ; git branch -D gh-pages-update ; git checkout --orphan gh-pages-update ; git rm -rf . ; tar -xzf ../pv_it_web.tar.gz ; git add . ; git commit -a -m "Git-Hub Pages update" ; git push -f origin gh-pages-update:gh-pages ; rm ../pv_it_web.tar.gz
 
 << A useful command for adding all notebook updates to the repository >>
 find . \( -name __pv_it -o -name .ipynb_checkpoints \) -prune -o -name "*.ipynb" -not -name "*stashed*.ipynb" -print | xargs git add

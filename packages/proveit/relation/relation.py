@@ -1,4 +1,5 @@
 from collections import deque
+from functools import wraps
 from proveit import Expression, Operation, StyleOptions
 from proveit import (defaults, USE_DEFAULTS, Judgment, ProofFailure,
                      prover)
@@ -27,6 +28,33 @@ class Relation(Operation):
         # operands, but this is effected in __getattr__ because
         # they will be switched when the 'direction' style is
         # 'reversed'.
+
+    @prover
+    def conclude(self, **defaults_config):
+        '''
+        Try to conclude the Relation by simplifying both
+        sides.
+        '''
+        from proveit.logic import Equals, evaluation_or_simplification
+        normal_lhs, normal_rhs = self.normal_lhs, self.normal_rhs
+        normal_lhs_simplification = evaluation_or_simplification(normal_lhs)
+        normal_rhs_simplification = evaluation_or_simplification(normal_rhs)
+        simp_normal_lhs = normal_lhs_simplification.rhs
+        simp_normal_rhs = normal_rhs_simplification.rhs
+        if (simp_normal_lhs != normal_lhs) or (simp_normal_rhs != normal_rhs):
+            # Prove the simplified version first.
+            proven_simp_relation = self.__class__(
+                    simp_normal_lhs, simp_normal_rhs,
+                    styles=self.get_styles()).prove()
+            # Substitute the originals back in.
+            proven_relation = normal_lhs_simplification.sub_left_side_into(
+                    proven_simp_relation.inner_expr().normal_lhs,
+                    preserve_all=True)
+            return normal_rhs_simplification.sub_left_side_into(
+                    proven_relation.inner_expr().normal_rhs,
+                    preserve_all=True)
+        raise ProofFailure(self, defaults.assumptions,
+                           "Unable to conclude %s"%self)
 
     def style_options(self):
         '''
@@ -88,8 +116,8 @@ class Relation(Operation):
             operator_str = self.__class__.reversed_operator_str(format_type)
             operands = ExprTuple(*reversed(operands.entries))
         return Operation._formatted_operation(
-                format_type, fence=fence, subFence=subFence, 
-                operator_or_operators=operator_str, operands=operands,
+                format_type, operator_str, operands,
+                fence=fence, subFence=subFence, 
                 wrap_positions=wrap_positions, 
                 justification=justification)
 
@@ -106,6 +134,28 @@ class Relation(Operation):
         assumption).
         '''
         raise Exception(self.do_something_on_both_sides.__doc__)
+    
+    @property
+    def lhs(self):
+        '''
+        The left-hand side depends upon whether or not the relation
+        is reversed in its style.
+        '''
+        if self.is_reversed():
+            return self.normal_rhs
+        else:
+            return self.normal_lhs
+
+    @property
+    def rhs(self):
+        '''
+        The right-hand side depends upon whether or not the relation
+        is reversed in its style.
+        '''
+        if self.is_reversed():
+            return self.normal_lhs
+        else:
+            return self.normal_rhs
 
     def __getattr__(self, name):
         '''
@@ -122,22 +172,7 @@ class Relation(Operation):
         this attribute name up to "..._both_sides" as in these
         examples.  The corresponding @prover method is built on-the-fly
         for the TransitiveRelation class.
-        
-        Also, 'lhs' and 'rhs' attributes are implemented here
-        because they will be reversed if the 'direction' style
-        is 'reversed'.
         '''
-        if name in ('lhs', 'rhs'):
-            # For some reason, self.getStyleData('direction', None)
-            # leads to errors, but 
-            # self._styleData.styles.get('direction', None) is fine.
-            if self._style_data.styles.get('direction', 'normal') == 'reversed':
-                if name=='lhs': return self.operands[1]
-                else: return self.operands[0]
-            else:
-                if name=='lhs': return self.operands[0]
-                else: return self.operands[1]
-        
         both_sides_str = '_both_sides'
         if name[-len(both_sides_str):] == both_sides_str:
             from proveit.logic import InSet
@@ -146,50 +181,67 @@ class Relation(Operation):
                 known_memberships.update(InSet.known_memberships[self.lhs])
             elif self.rhs in InSet.known_memberships:
                 known_memberships.update(InSet.known_memberships[self.rhs])
-            domain_methods = []
-            # Append the class name for the domain method name.
-            domain_method_name = name + '_of_' + self.__class__.__name__.lower()
+            # These classes may contain '_both_sides' methods that could
+            # be applied via the Relation (also attach corresponding
+            # domains as applicable):
+            if self.lhs.__class__ == self.rhs.__class__:
+                classes_and_domains = [(self.lhs.__class__, None)]
+            else:
+                classes_and_domains = [(self.lhs.__class__, None),
+                                       (self.rhs.__class__, None)]
+            _last_try_classes_and_domains = []
             for known_membership in known_memberships:
-                domain = known_membership.domain
-                if hasattr(domain, domain_method_name):
-                    domain_attr = getattr(known_membership.domain,
-                                          domain_method_name)
-                    # We don't require that the known_membership
-                    # is proven under the default assumptions, but
-                    # we will try those ones first (the ones at the
-                    # end will be popped off first).
-                    if known_membership.is_applicable(defaults.assumptions):
-                        domain_methods.append((domain, domain_attr))
-                    else:
-                        domain_methods.insert(0, (domain, domain_attr))
-
+                # We don't require that the known_membership
+                # is proven under the default assumptions, but
+                # we will try those ones first.
+                _domain = known_membership.domain
+                _class = _domain.__class__
+                if known_membership.is_applicable(defaults.assumptions):
+                    classes_and_domains.append((_class, _domain))
+                else:
+                    _last_try_classes_and_domains.append((_class, _domain))
+            classes_and_domains += _last_try_classes_and_domains
+            methods_and_domains_to_try = []
+            # Append the class name for the domain method name.
+            method_name = name + '_of_' + self.__class__.__name__.lower()
+            for (_class, _domain) in classes_and_domains:
+                if hasattr(_class, method_name):
+                    _class_attr = getattr(_class, method_name)
+                    methods_and_domains_to_try.append((_class_attr, _domain))
+            if len(methods_and_domains_to_try) == 0:
+                raise AttributeError("'%s' object has no attribute '%s'"
+                                     %(self.__class__, name))
             @prover
+            @wraps(methods_and_domains_to_try[0][0])
             def transform_both_sides(*args, **defaults_config):
-                while len(domain_methods) > 0:
-                    domain, method = domain_methods.pop()
+                _domain = None
+                _err = None
+                for _method, _domain in methods_and_domains_to_try:
                     try:
-                        relation = method(self, *args)
-                    except TypeError as e:
-                        if len(domain_methods) == 0:
-                            raise e
-                        # otherwise, there are other methods to try.
+                        relation = _method(self, *args)
+                        _err = None
+                        break
+                    except ProofFailure as _e:
+                        if _err is None:
+                            # We'll report the first error.
+                            _err = _e
+                        # Keep trying if there are more to try.
+                if _err is not None:
+                    raise _err
                 # After doing the transformation, prove that one of
                 # the sides (the left side, arbitrarily) is still in
                 # the domain so it will have a known membership for
                 # next time.
-                InSet(relation.lhs, domain).prove()
+                if _domain is not None:
+                    InSet(relation.lhs, _domain).prove()
                 return relation
-            if len(domain_methods) == 0:
-                raise AttributeError  # Default behaviour
-            # Use the doc string from the wrapped method (any of them),
-            # but append it with a message about 'simplify'.
+            # Use the doc string from the wrapped method 
+            # (the first one).
             transform_both_sides.__doc__ = (
-                domain_methods[0][1].__doc__ +
-                "The new relation will be simplified by default, unless\n"
-                "\t'simplify=False' is given as a keyword argument.")
+                methods_and_domains_to_try[0][0].__doc__)
             return transform_both_sides
-        raise AttributeError  # Default behaviour
-
+        return self.__getattribute__(name)
+    
     def __dir__(self):
         '''
         Include 'lhs', 'rhs', and the '_both_sides' methods dependent 
@@ -207,8 +259,16 @@ class Relation(Operation):
             known_memberships.update(InSet.known_memberships[self.lhs])
         elif self.rhs in InSet.known_memberships:
             known_memberships.update(InSet.known_memberships[self.rhs])
-        for known_membership in known_memberships:
-            for name in dir(known_membership.domain):
+        # These classes may contain '_both_sides' methods that could
+        # be applied via the Relation:
+        if self.lhs.__class__ == self.rhs.__class__:
+            classes = [self.lhs.__class__]
+        else:
+            classes = [self.lhs.__class__, self.rhs.__class__]
+        classes += [known_membership.domain.__class__ for known_membership
+                    in known_memberships]
+        for _class in classes:
+            for name in dir(_class):
                 if name[-len(method_end_str):] == method_end_str:
                     both_sides_methods.append(name[:-len(relation_name_str)])
         return sorted(set(dir(self.__class__) + list(self.__dict__.keys())

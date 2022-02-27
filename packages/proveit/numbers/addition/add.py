@@ -1,26 +1,45 @@
+import bisect
+from collections import deque
+
 from proveit import (Expression, Judgment, Literal, Operation, ExprTuple,
                      ExprRange, defaults, USE_DEFAULTS, StyleOptions, 
                      prover, relation_prover, equality_prover,
                      maybe_fenced_latex, ProofFailure, InnerExpr,
                      UnsatisfiedPrerequisites,
-                     SimplificationDirectives)
-from proveit import a, b, c, d, i, j, k, l, n, x, y
-from proveit.logic import Equals, EvaluationError
+                     SimplificationDirectives, TransRelUpdater)
+from proveit import a, b, c, d, i, j, k, l, n, x, y, free_vars
+from proveit.logic import (And, Equals, NotEquals,
+                           EvaluationError, InSet)
 from proveit.logic.irreducible_value import is_irreducible_value
+from proveit.numbers import NumberOperation
 from proveit.numbers.numerals.decimals import DIGITS
 import proveit.numbers.numerals.decimals
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, group_commutation, pairwise_evaluation
 from proveit import TransRelUpdater
 import bisect
-from proveit.numbers import NumberOperation
+from proveit.numbers import (NumberOperation, sorted_number_sets,
+                             deduce_number_set)
+from proveit.numbers import (Integer, IntegerNeg, IntegerNonPos,
+                             Natural, NaturalPos, IntegerNonZero,
+                             Rational, RationalPos, RationalNonZero,
+                             RationalNeg, RationalNonNeg,
+                             RationalNonPos,
+                             Real, RealPos, RealNeg, RealNonNeg,
+                             RealNonPos, RealNonZero, Complex, 
+                             ComplexNonZero)
 
 
 class Add(NumberOperation):
     # operator of the Add operation
     _operator_ = Literal(string_format='+', theory=__file__)
     
+    # The 'order_key' simplification directive can be used
+    # to sort terms in a particular order.  By default, there
+    # is no sorting -- it keeps the original order as much as
+    # possible but still combines like terms.
     _simplification_directives_ = SimplificationDirectives(
-            ungroup = True)
+            ungroup = True,
+            order_key = lambda term : 0)
 
     # Map terms to sets of Judgment equalities that involve
     # the term on the left hand side.
@@ -49,50 +68,25 @@ class Add(NumberOperation):
                 operand.lambda_map.body,
                 Neg))
 
-    def style_options(self):
-        '''
-        Return the StyleOptions object for this Add expression.
-        '''
-        options = Operation.style_options(self)
-        # The default style will be to use subtraction notation 
-        # (relevant where operands are negated).
-        # Call 'with_subtraction_at' to alter the style relative
-        # to this default..
-        subtraction_positions = [_k for _k, operand in enumerate(
-            self.operands) if Add._isNegatedOperand(operand)]
-        default_sub_pos_style = \
-            '(' + ' '.join(str(pos) for pos in subtraction_positions) + ')'
-        options.add_option(
-            name='subtraction_positions',
-            description=("Position(s) to use subtraction notation instead "
-                         "of adding the negation at the specified indices"),
-            default=default_sub_pos_style,
-            related_methods=('with_subtraction_at', 
-                             'subtraction_positions'))
-        return options
-
-    def with_subtraction_at(self, *subtraction_positions):
-        return self.with_styles(
-            subtraction_positions='(' +
-            ' '.join(
-                str(pos) for pos in subtraction_positions) +
-            ')')
-
-    def subtraction_positions(self):
-        '''
-        Return a list of subtraction notation positions according to the current style setting.
-        '''
-        return [int(pos_str) for pos_str in self.get_style(
-            'subtraction_positions').strip('()').split(' ') if pos_str != '']
-
     def _formatted(self, format_type, **kwargs):
         '''
         Override Operation._formatted so to enable subtraction notation where desired.
         '''
         from proveit import ExprRange
         from proveit.numbers import Neg
-        subtraction_positions = self.subtraction_positions()
-        if len(subtraction_positions) > 0 and self.operands.num_entries() > 1:
+        
+        # Where should we use subtraction notation 
+        subtraction_positions = []        
+        for _k, operand in enumerate(self.operands.entries):
+            if isinstance(operand, Neg):
+                if operand.use_subtraction_notation():
+                    subtraction_positions.append(_k)
+            elif isinstance(operand, ExprRange):
+                if isinstance(operand.body, Neg):
+                    if operand.body.use_subtraction_notation():
+                        subtraction_positions.append(_k)
+        
+        if len(subtraction_positions) > 0:
             operators = []
             operands = list(self.operands.entries)
             for operand in operands:
@@ -103,8 +97,8 @@ class Add(NumberOperation):
                         ExprRange(
                             operand.lambda_map.parameter_or_parameters,
                             self.operator,
-                            operand.start_index,
-                            operand.end_index))
+                            operand.true_start_index,
+                            operand.true_end_index))
                 else:
                     operators.append(self.operator)
             implicit_first_operator = True  # the first operator is implicit if it is a '+'
@@ -125,13 +119,13 @@ class Add(NumberOperation):
                         operators[pos] = ExprRange(
                             operand.lambda_map.parameter,
                             Neg._operator_,
-                            operand.start_index,
-                            operand.end_index)
+                            operand.true_start_index,
+                            operand.true_end_index)
                         operands[pos] = ExprRange(
                             operand.lambda_map.parameter,
                             operand.lambda_map.body.operand,
-                            operand.start_index,
-                            operand.end_index) .with_styles(
+                            operand.true_start_index,
+                            operand.true_end_index) .with_styles(
                             **operand.get_styles())
                 elif pos == 0:
                     # not negated after all -- revert to the "implicit first
@@ -141,24 +135,24 @@ class Add(NumberOperation):
                 format_type,
                 operators,
                 operands,
-                self.wrap_positions(),
-                self.get_style('justification', 'left'),
                 implicit_first_operator=implicit_first_operator,
+                wrap_positions=self.wrap_positions(),
+                justification=self.get_style('justification', 'left'),
                 **kwargs)
         else:
             return Operation._formatted_operation(
                 format_type,
                 self.operator,
                 self.operands,
-                self.wrap_positions(),
-                self.get_style('justification', 'left'),
+                wrap_positions=self.wrap_positions(),
+                justification=self.get_style('justification', 'left'),
                 **kwargs)
 
     def remake_constructor(self):
-        # Added by JML on 9/10/19
+        from proveit.numbers import Neg
         if (self.operands.is_double() 
-                and self.subtraction_positions() == (1,) 
-                and Add._isNegatedOperand(self.operands[1])):
+                and isinstance(self.operands[1], Neg)
+                and self.operands[1].use_subtraction_notation()):
             return 'subtract'  # use a different constructor if using the subtraction style
         return Operation.remake_constructor(self)
 
@@ -169,8 +163,8 @@ class Add(NumberOperation):
         '''
         from proveit.numbers import Neg
         if (self.operands.is_double() 
-                and self.subtraction_positions() == (1,) 
-                and Add._isNegatedOperand(self.operands[1])):
+                and isinstance(self.operands[1], Neg)
+                and self.operands[1].use_subtraction_notation()):
             yield self.operands[0]
             assert isinstance(
                 self.operands[1], Neg), "The second operand must be negated"
@@ -178,36 +172,6 @@ class Add(NumberOperation):
         else:
             for operand in self.operands:
                 yield operand
-
-    def remake_with_style_calls(self):
-        '''
-        In order to reconstruct this Expression to have the same styles,
-        what "with..." method calls are most appropriate?  Return a
-        tuple of strings with the calls to make.  The default for the
-        Operation class is to include appropriate 'with_wrapping_at'
-        and 'with_justification' calls.
-        '''
-        call_strs = Operation.remake_with_style_calls(self)
-        subtraction_positions = self.subtraction_positions()
-        default_subtraction_positions = [
-            _k for _k, operand in enumerate(
-                self.operands.entries) if Add._isNegatedOperand(operand)]
-        if subtraction_positions != default_subtraction_positions:
-            call_strs.append('with_subtraction_at(' + ','.join(str(pos)
-                                                               for pos in subtraction_positions) + ')')
-        return call_strs
-
-    def _closureTheorem(self, number_set):
-        from . import add_nat_closure, add_real_closure, add_complex_closure, add_int_closure
-        from proveit.numbers import Real, Complex, Integer, Natural
-        if number_set == Real:
-            return add_real_closure
-        elif number_set == Complex:
-            return add_complex_closure
-        elif number_set == Integer:
-            return add_int_closure
-        elif number_set == Natural:
-            return add_nat_closure
 
     def equality_side_effects(self, judgment):
         '''
@@ -307,10 +271,10 @@ class Add(NumberOperation):
         if (self.operands.num_entries() == 1 
                 and isinstance(self.operands[0], ExprRange)
                 and self.operands[0].is_parameter_independent
-                and self.operands[0].start_index == one):
+                and self.operands[0].true_start_index == one):
             expr_range = self.operands[0]
             return repeated_addition_to_mult.instantiate(
-                {x: expr_range.body, n: expr_range.end_index})
+                {x: expr_range.body, n: expr_range.true_end_index})
         _n = self.operands.num_elements()
         _a = self.operands
         _x = self.operands[1]
@@ -401,7 +365,8 @@ class Add(NumberOperation):
 
         if self.operands.is_double():
             return basic_thm.instantiate({a: canceled_op})
-        elif self.operands.num_entries() == 3:
+        elif (not self.operands.contains_range() 
+                and self.operands.num_entries() == 3):
             # _k is the 3rd index, completing i and j in the set {0,1,2}.
             _k = {0, 1, 2}.difference([idx1, idx2]).pop()
             thm = triple_thms[2 - _k]
@@ -414,18 +379,8 @@ class Add(NumberOperation):
             _i = _a.num_elements()
             _j = _c.num_elements()
             _k = _d.num_elements()
-            spec = general_thm.instantiate(
+            return general_thm.instantiate(
                 {i: _i, j: _j, k: _k, a: _a, b: _b, c: _c, d: _d})
-            # set the proper subtraction styles to match the original
-            sub_positions = self.subtraction_positions()
-            if isinstance(spec.lhs, Add):
-                spec.inner_expr().lhs.with_subtraction_at(*sub_positions)
-            def update_pos(p): return p if p < idx1 else (
-                p - 1 if p < idx2 else p - 2)
-            if isinstance(spec.rhs, Add):
-                spec.inner_expr().rhs.with_subtraction_at(
-                    *[update_pos(p) for p in sub_positions])
-            return spec
 
     @equality_prover('eliminated_zeros', 'eliminate_zeros')   
     def zero_eliminations(self, **defaults_config):
@@ -699,6 +654,7 @@ class Add(NumberOperation):
 
         # separate the types of operands in a dictionary
         hold, order = expr._create_dict()
+        order_key = Add._simplification_directives_.order_key
 
         # Have the basic numbers come at the end.
         #if order[-1] != one and one in hold:
@@ -711,7 +667,7 @@ class Add(NumberOperation):
             # The indices keep moving as we reorder, so keep on top of this.
             old2new = {_k: _k for _k in range(expr.operands.num_entries())}
             new2old = {_k: _k for _k in range(expr.operands.num_entries())}
-            for key in order:
+            for key in sorted(order, key=order_key):
                 for orig_idx in hold[key]:
                     start_idx = old2new[orig_idx]
                     if start_idx == pos:
@@ -750,7 +706,6 @@ class Add(NumberOperation):
         elif len(order) == 1:
             # All operands are like terms.  Simplify by combining them.
             key = order[0]
-            
             # If all the operands are the same, combine via multiplication.
             if (all(operand == expr.operands[0] for operand in expr.operands)
                     and not (expr.operands.num_entries() == 1 and
@@ -759,7 +714,7 @@ class Add(NumberOperation):
                 expr = eq.update(
                     expr.conversion_to_multiplication(auto_simplify=True))
                 return eq.relation
-            elif key != one:
+            elif key != one and expr.operands.num_entries() > 1:
                 # for all the keys that are not basic numbers, 
                 # derive the multiplication from the addition
                 # make sure all the operands in the key are products 
@@ -792,6 +747,233 @@ class Add(NumberOperation):
             # irreductible values.
             return self.evaluation()
         return eq.relation
+    
+    def quick_simplified(self):
+        '''
+        Return a simplified version of this Add expression
+        without any proof.  In particular, negations are distributed
+        nested additionas are ungrouped, integers are extracted,
+        added, and placed at the end, and cancelations are made on
+        individual terms as well as expression ranges or portions of
+        expression ranges.  We freely assume terms represent numbers
+        and expression ranges are well-formed.
+        This quick-n-dirty approach can be good
+        enough for the purposes of displaying expressions involving
+        expression ranges.  See also the quick_simplified_index 
+        function defined in number_operation.py.
+        '''
+        from proveit.numbers import is_literal_int, num, Neg
+        
+        # Extract any literal integers and expand nested sums.  
+        # While we are at it, determing the extremal shifts at the 
+        # heads and tails of expression ranges.
+        terms = [] # split into sign, abs_term pairs
+        int_sum = 0
+        remaining_terms = deque(self.terms)
+        sign=1
+        # Map non-shifted head to latest shift of ExprRange terms:
+        latest_head_shift = dict() # (Lambda, index expr) -> int
+        # Map non-shiftted tail to earliest shift of ExprRange terms:
+        earliest_tail_shift = dict() # (Lambda, index expr) -> int
+        all_abs_terms = set()
+        while len(remaining_terms):
+            term = remaining_terms.popleft()
+            if term == Neg:
+                # Just an indication to switch the sign back.
+                sign = -sign
+                continue
+            if is_literal_int(term):
+                int_sum += sign*term.as_int()
+                continue
+            if isinstance(term, Neg):
+                # Switch the sign and indicate to switch the sign
+                # back later.
+                sign = -sign
+                remaining_terms.appendleft(Neg)
+                remaining_terms.appendleft(term.operand)
+                continue
+            if isinstance(term, Add):
+                remaining_terms.extendleft(reversed(term.terms.entries))
+                continue
+            if isinstance(term, ExprRange):
+                start_base, start_shift = split_int_shift(term.true_start_index)
+                end_base, end_shift = split_int_shift(term.true_end_index)
+                lambda_map = term.lambda_map
+                latest_head_shift[(lambda_map, start_base)] = max(
+                        start_shift, latest_head_shift.get(
+                                (lambda_map, start_base), start_shift))
+                earliest_tail_shift[(lambda_map, end_base)] = min(
+                        end_shift, earliest_tail_shift.get(
+                                (lambda_map, end_base), end_shift))
+            all_abs_terms.add(term)
+            terms.append((sign, term))
+        term = None
+                
+        # Extend the "latest heads" and "earliest tails" if there
+        # are individual terms that match them so we can maximize
+        # cancelations.
+        for extremal_shifts, step in ((latest_head_shift, 1),
+                                      (earliest_tail_shift, -1)):
+            for (lambda_map, base), shift in extremal_shifts.items():
+                while True:
+                    index = Add(base, num(shift)).quick_simplified()
+                    _expr = lambda_map.apply(index)
+                    if _expr in all_abs_terms:
+                        shift += step
+                        if (lambda_map.parameter not in
+                                free_vars(lambda_map.body)):
+                            # avoid an infinite loop
+                            break
+                    else:
+                        break
+                extremal_shifts[(lambda_map, base)] = shift
+        
+        # Expand ExprRange heads and tails to their extremal shifts
+        if len(latest_head_shift) > 0:
+            old_terms = terms
+            terms = []
+            for sign, abs_term in old_terms:
+                if isinstance(abs_term, ExprRange):
+                    start_base, start_shift = split_int_shift(abs_term.true_start_index)
+                    end_base, end_shift = split_int_shift(abs_term.true_end_index)
+                    lambda_map = abs_term.lambda_map
+                    latest_start = latest_head_shift[(lambda_map, start_base)]
+                    earliest_end = earliest_tail_shift[(lambda_map, end_base)]
+                    if start_base == end_base:
+                        # For finite ranges, expand all elements.
+                        latest_start = end_shift+1
+                    # Peel off elements before the latest start.
+                    shift = start_shift
+                    while shift < latest_start:
+                        index = Add(start_base, num(shift)).quick_simplified()
+                        terms.append((sign, lambda_map.apply(index)))
+                        shift += 1
+                    if start_base == end_base and shift > end_shift:
+                        continue # already expanded all elements.
+                    start_index = Add(start_base,
+                                      num(latest_start)).quick_simplified()
+                    end_index = Add(end_base, 
+                                    num(earliest_end)).quick_simplified()
+                    terms.append((sign, ExprRange(abs_term.parameter, 
+                                                  abs_term.body,
+                                                  start_index, end_index)))
+                    shift = earliest_end + 1
+                    # Peel off elements after the earliest end.
+                    while shift <= end_shift:
+                        index = Add(end_base, num(shift)).quick_simplified()
+                        terms.append((sign, lambda_map.apply(index)))
+                        shift += 1
+                else:
+                    terms.append((sign, abs_term))
+        
+        # Do cancelations of opposite terms.
+        # Also check for clearly empty ExprRanges.
+        abs_term_to_neg_idx = dict()
+        abs_term_to_pos_idx = dict()
+        cancelation_indices = set()
+        for idx, (sign, abs_term) in enumerate(terms):
+            if sign == -1:
+                if abs_term in abs_term_to_pos_idx:
+                    # Neg term cancels with previous positive term.
+                    other_idx = abs_term_to_pos_idx.pop(abs_term)
+                    cancelation_indices.add(idx)
+                    cancelation_indices.add(other_idx)
+                else:
+                    # Store for possible cancelation ahead.
+                    abs_term_to_neg_idx[abs_term] = idx
+            else:
+                if abs_term in abs_term_to_neg_idx:
+                    # Positive term cancels with previous Neg term.
+                    other_idx = abs_term_to_neg_idx.pop(abs_term)
+                    cancelation_indices.add(idx)
+                    cancelation_indices.add(other_idx)
+                else:
+                    # Store for possible cancelation ahead.
+                    abs_term_to_pos_idx[abs_term] = idx
+        terms = [term for idx, term in enumerate(terms) if 
+                 idx not in cancelation_indices]
+        
+        # Re-extend heads and tails of ExprRanges that may have been
+        # split apart, now that we've had a chance to find cancelations.
+        if len(latest_head_shift) > 0 and len(terms) > 0:
+            # Try to prepend heads going in reverse
+            old_terms = terms
+            reversed_terms = []
+            following_term = None
+            for sign, abs_term in reversed(old_terms):
+                if following_term is not None:
+                    if (sign==following_term[0] 
+                            and isinstance(following_term[1], ExprRange)):
+                        # See if the current term prepends the head of
+                        # the following range.
+                        start_base, start_shift = split_int_shift(
+                                following_term[1].true_start_index)
+                        lambda_map = following_term[1].lambda_map
+                        index = Add(start_base, 
+                                    num(start_shift-1)).quick_simplified()
+                        if abs_term == lambda_map.apply(index):
+                            # Prepend the head.
+                            following_term[1] = ExprRange(
+                                    following_term[1].parameter, 
+                                    following_term[1].body,
+                                    index, following_term[1].true_end_index)
+                            continue
+                    reversed_terms.append(following_term)
+                following_term = [sign, abs_term]
+            reversed_terms.append(following_term) # get the last one
+            
+            # Try to extend tails, reversing again.
+            terms = []
+            prev_term = None
+            for sign, abs_term in reversed(reversed_terms):
+                if prev_term is not None:
+                    if (sign==prev_term[0] and 
+                            isinstance(prev_term[1], ExprRange)):
+                        # See if the current term extends the tail of
+                        # the previous range.
+                        end_base, end_shift = split_int_shift(
+                                prev_term[1].true_end_index)
+                        lambda_map = prev_term[1].lambda_map
+                        index = Add(end_base, 
+                                    num(end_shift+1)).quick_simplified()
+                        if abs_term == lambda_map.apply(index):
+                            # Extend the tail.
+                            prev_term[1] = ExprRange(
+                                    prev_term[1].parameter, prev_term[1].body,
+                                    prev_term[1].true_start_index, index)
+                            continue
+                    terms.append(prev_term)
+                prev_term = [sign, abs_term]
+            terms.append(prev_term) # get the last one
+        
+        # Merge the sign and abs_term into each term.
+        for idx, (sign, abs_term) in enumerate(terms):
+            if sign==1:
+                terms[idx] = abs_term
+            else:
+                assert sign==-1
+                if isinstance(abs_term, ExprRange):
+                    terms[idx] = Neg(Add(abs_term))
+                else:
+                    terms[idx] = Neg(abs_term)
+        
+        if int_sum == 0:
+            if len(terms) == 0:
+                return num(0)
+            if len(terms) == 1 and not isinstance(terms[0], ExprRange):
+                return terms[0]
+            return Add(*terms)
+        else:
+            if len(terms) == 0:
+                return num(int_sum)
+            return Add(*(terms + [num(int_sum)]))
+
+    def quick_simplification(self):
+        '''
+        Return a simplification of this Add expression without any 
+        proof.  See Add.quick_simplified for more details.
+        '''
+        return Equals(self, self.quick_simplified())        
 
     def _integerBinaryEval(self, assumptions=USE_DEFAULTS):
         '''
@@ -905,7 +1087,16 @@ class Add(NumberOperation):
             add_int_closure,
             add_nat_closure_bin,
             add_nat_closure,
+            add_nat_pos_closure_bin,
+            add_nat_pos_closure,
             add_nat_pos_from_non_neg,
+            add_rational_closure_bin,
+            add_rational_closure,
+            add_rational_non_neg_closure,
+            add_rational_non_neg_closure_bin,
+            add_rational_pos_closure,
+            add_rational_pos_closure_bin,
+            add_rational_pos_from_non_neg,
             add_real_closure_bin,
             add_real_closure,
             add_real_non_neg_closure,
@@ -918,8 +1109,7 @@ class Add(NumberOperation):
         from proveit.numbers.addition.subtraction import (
             subtract_nat_closure_bin, sub_one_is_nat)
         from proveit.numbers import (zero, one, Neg, greater,
-                                     Integer, Natural, Real, RealPos,
-                                     RealNonNeg, Complex, NaturalPos)
+                                     Less, LessEq, greater_eq)
         from proveit.logic import InSet
         if number_set == Integer:
             if self.operands.is_double():
@@ -928,64 +1118,13 @@ class Add(NumberOperation):
             _a = self.operands
             _i = _a.num_elements()
             return add_int_closure.instantiate({i:_i, a: _a})
-        if number_set == Natural:
+        if number_set == Rational:
             if self.operands.is_double():
-                if isinstance(self.operands[1], Neg):
-                    # A subtraction case:
-                    if self.operands[1].operand == one:
-                        # Special a-1 in Natural case.  If a is
-                        # in NaturalPos, we are good.
-                        return sub_one_is_nat.instantiate(
-                            {a: self.operands[0]})
-                    # (a-b) in Natural requires that b <= a.
-                    return subtract_nat_closure_bin.instantiate(
-                        {a: self.operands[0], b: self.operands[1].operand})
-                return add_nat_closure_bin.instantiate(
-                    {a: self.operands[0], b: self.operands[1]})            
-            _a = self.operands
-            _i = _a.num_elements()
-            return add_nat_closure.instantiate({i: _i, a: _a})
-        if (number_set == NaturalPos or number_set == RealPos and not
-                all(InSet(operand, number_set).proven() for
-                    operand in self.operands)):
-            # Unless we know that all of the operands are in the
-            # positive number set, our last resort will be if we know
-            # one of the operands is greater than zero.
-            val = -1
-            for _i, operand in enumerate(self.operands.entries):
-                if greater(operand, zero).proven():
-                    val = _i
-                    # print(b)
-                    break
-            if val == -1:
-                raise ProofFailure(InSet(self, number_set), defaults.assumptions,
-                                   "Expecting at least one value to be "
-                                   "known to be greater than zero")
-            # print(self.operands.num_entries())
-            if number_set == NaturalPos:
-                temp_thm = add_nat_pos_from_non_neg
-            else:
-                temp_thm = add_real_pos_from_non_neg
-            #print(temp_thm, {i: num(val), j:num(self.operands.num_entries() - val - 1), a:self.operands[:val], b: self.operands[val], c: self.operands[val + 1:]})
-            _a, _b, _c = (self.operands[:val], self.operands[val],
-                          self.operands[val + 1:])
-            _i = _a.num_elements()
-            _j = _c.num_elements()
-            return temp_thm.instantiate({i: _i, j: _j, a: _a, b: _b, c: _c})
-        if number_set == RealPos:
-            if self.operands.is_double():
-                return add_real_pos_closure_bin.instantiate(
-                    {a: self.operands[0], b: self.operands[1]})
-            _a = self.operands
-            _i = _a.num_elements()                
-            return add_real_pos_closure.instantiate({i: _i, a: _a})
-        if number_set == RealNonNeg:
-            if self.operands.is_double():
-                return add_real_non_neg_closure_bin.instantiate(
+                return add_rational_closure_bin.instantiate(
                     {a: self.operands[0], b: self.operands[1]})
             _a = self.operands
             _i = _a.num_elements()
-            return add_real_non_neg_closure.instantiate({i:_i, a: _a})
+            return add_rational_closure.instantiate({i: _i, a: _a})
         if number_set == Real:
             if self.operands.is_double():
                 return add_real_closure_bin.instantiate(
@@ -1000,9 +1139,330 @@ class Add(NumberOperation):
             _a = self.operands
             _i = _a.num_elements()
             return add_complex_closure.instantiate({i: _i, a: _a})
+        
+        # Prove what we can in preparation.
+        for operand in self.operands:
+            deduce_number_set(operand)
+
+        # Handle special cases when all operands are in
+        # the desired number set.
+        if all(InSet(operand, number_set).proven() for
+               operand in self.operands):
+            if number_set == Natural:
+                if self.operands.is_double():
+                    return add_nat_closure_bin.instantiate(
+                        {a: self.operands[0], b: self.operands[1]})
+                _a = self.operands
+                _i = _a.num_elements()                
+                add_nat_closure.instantiate({i: _i, a: _a})
+            if number_set == NaturalPos:
+                if self.operands.is_double():
+                    return add_nat_pos_closure_bin.instantiate(
+                        {a: self.operands[0], b: self.operands[1]})
+                _a = self.operands
+                _i = _a.num_elements()                
+                add_nat_pos_closure.instantiate({i: _i, a: _a})
+            if number_set == RationalPos:
+                if self.operands.is_double():
+                    return add_rational_pos_closure_bin.instantiate(
+                        {a: self.operands[0], b: self.operands[1]})
+                _a = self.operands
+                _i = _a.num_elements()                
+                add_rational_pos_closure.instantiate({i: _i, a: _a})
+            if number_set == RationalNonNeg:
+                if self.operands.is_double():
+                    return add_rational_non_neg_closure_bin.instantiate(
+                        {a: self.operands[0], b: self.operands[1]})
+                _a = self.operands
+                _i = _a.num_elements()
+                return add_rational_non_neg_closure.instantiate({i:_i, a: _a})
+            if number_set == RealPos:
+                if self.operands.is_double():
+                    return add_real_pos_closure_bin.instantiate(
+                        {a: self.operands[0], b: self.operands[1]})
+                _a = self.operands
+                _i = _a.num_elements()                
+                return add_real_pos_closure.instantiate({i: _i, a: _a})
+            if number_set == RealNonNeg:
+                if self.operands.is_double():
+                    return add_real_non_neg_closure_bin.instantiate(
+                        {a: self.operands[0], b: self.operands[1]})
+                _a = self.operands
+                _i = _a.num_elements()
+                return add_real_non_neg_closure.instantiate({i:_i, a: _a})
+
+        # Try special case where one term is positive and the
+        # rest are non-negative.
+        if number_set in {NaturalPos, RationalPos, RealPos}:
+            val = None
+            for _i, operand in enumerate(self.operands.entries):
+                if greater(operand, zero).proven():
+                    val = _i
+                elif not greater_eq(operand, zero).proven():
+                    # Not non-negative
+                    val = None
+                    break # Forget it.
+            if val is not None:
+                if number_set == NaturalPos:
+                    temp_thm = add_nat_pos_from_non_neg
+                elif number_set == RationalPos:
+                    temp_thm = add_rational_pos_from_non_neg
+                else:
+                    temp_thm = add_real_pos_from_non_neg
+                _a, _b, _c = (self.operands[:val], self.operands[val],
+                              self.operands[val + 1:])
+                _i = _a.num_elements()
+                _j = _c.num_elements()
+                return temp_thm.instantiate(
+                    {i: _i, j: _j, a: _a, b: _b, c: _c})
+
+        # Handle positive, negative, nonpos, nonneg, or nonzero
+        major_number_set = None
+        if number_set in {IntegerNonZero, RationalNonZero, RealNonZero,
+                          ComplexNonZero}:
+            # Prove it is not zero and prove it is in the corresponding
+            # major number set (Integer, Rational, Real, or Complex)
+            self.not_equal(zero, try_deduce_number_set=False)
+            to_major_number_set = {IntegerNonZero:Integer,
+                                   RationalNonZero:Rational,
+                                   RealNonZero:Real,
+                                   ComplexNonZero:Complex}
+            major_number_set = to_major_number_set[number_set]
+        if number_set in {NaturalPos, RationalPos, RealPos}:
+            # Prove it is positive and prove it is in the corresponding
+            # major number set (Integer, Rational, Real)
+            self.deduce_positive(try_deduce_number_set=False)
+            to_major_number_set = {NaturalPos:Integer,
+                                   RationalPos:Rational,
+                                   RealPos:Real}
+            major_number_set = to_major_number_set[number_set]
+        if number_set in {IntegerNeg, RationalNeg, RealNeg}:
+            # Prove it is negative and prove it is in the corresponding
+            # major number set (Integer, Rational, Real)
+            self.deduce_negative(try_deduce_number_set=False)
+            to_major_number_set = {IntegerNeg:Integer,
+                                   RationalNeg:Rational,
+                                   RealNeg:Real}
+            major_number_set = to_major_number_set[number_set]
+        if number_set in {IntegerNonPos, RationalNonPos, RealNonPos}:
+            # Prove it is non-positive and prove it is in the 
+            # corresponding major number set (Integer, Rational, Real)
+            self.deduce_non_positive(try_deduce_number_set=False)
+            to_major_number_set = {IntegerNonPos:Integer,
+                                   RationalNonPos:Rational,
+                                   RealNonPos:Real}
+            major_number_set = to_major_number_set[number_set]
+        if number_set in {Natural, RationalNonNeg, RealNonNeg}:
+            # Prove it is non-positive and prove it is in the 
+            # corresponding major number set (Integer, Rational, Real)
+            self.deduce_non_negative(try_deduce_number_set=False)
+            to_major_number_set = {Natural:Integer,
+                                   RationalNonNeg:Rational,
+                                   RealNonNeg:Real}
+            major_number_set = to_major_number_set[number_set]
+
+        if major_number_set is not None:
+            self.deduce_in_number_set(major_number_set)
+            # Now it should just go through.
+            return InSet(self, number_set).conclude_as_last_resort()
+
         raise NotImplementedError(
-            "'deduce_in_number_set' not implemented for the %s set"
-            % str(number_set))
+            "'deduce_in_number_set' on %s not implemented for the %s set"
+            % (self, number_set))
+
+    def deduce_positive(self, *, try_deduce_number_set=True,
+                        **defaults_config):
+        '''
+        Prove the sum is positive.
+        '''
+        from proveit.numbers import greater, zero, Neg
+        from .subtraction import pos_difference
+
+        if greater(self, zero).proven():
+            # Already known
+            return greater(self, zero).prove()
+        
+        if self.terms.is_double() and isinstance(self.terms[1], Neg):
+            # (a - b) with a > b => (a - b) is positive
+            _a, _b = self.terms[0], self.terms[1].operand
+            if greater(_a, _b).proven():
+                return pos_difference.instantiate({a:_a, b:_b})
+
+        if try_deduce_number_set:
+            # Try 'deduce_number_set'.
+            deduce_number_set(self)
+
+        return greater(self, zero).prove()
+
+    @relation_prover
+    def deduce_negative(self, *, try_deduce_number_set=True,
+                        **defaults_config):
+        '''
+        Prove the sum is negative.
+        '''
+        from proveit.numbers import Less, zero, Neg
+        from .subtraction import neg_difference
+
+        if Less(self, zero).proven():
+            # Already known
+            return Less(self, zero).prove()
+        
+        if self.terms.is_double() and isinstance(self.terms[1], Neg):
+            # (a - b) with a < b => (a - b) is negative
+            _a, _b = self.terms[0], self.terms[1].operand
+            if Less(_a, _b).proven():
+                return neg_difference.instantiate({a:_a, b:_b})
+
+        if try_deduce_number_set:
+            # Try 'deduce_number_set'.
+            deduce_number_set(self)
+
+        return Less(self, zero).prove()
+
+    def deduce_non_positive(self, *, try_deduce_number_set=True,
+                            **defaults_config):
+        '''
+        Prove the sum is non-positive.
+        '''
+        from proveit.numbers import LessEq, zero, Neg
+        from .subtraction import nonpos_difference
+
+        if LessEq(self, zero).proven():
+            # Already known
+            return LessEq(self, zero).prove()
+        
+        if self.terms.is_double() and isinstance(self.terms[1], Neg):
+            # (a - b) with a <= b => (a - b) is non-positive
+            _a, _b = self.terms[0], self.terms[1].operand
+            if LessEq(_a, _b).proven():
+                return nonpos_difference.instantiate({a:_a, b:_b})
+
+        if try_deduce_number_set:
+            # Try 'deduce_number_set'.
+            deduce_number_set(self)
+
+        return LessEq(self, zero).prove()
+
+    def deduce_non_negative(self, *, try_deduce_number_set=True,
+                            **defaults_config):
+        '''
+        Prove the sum is non-negative.
+        '''
+        from proveit.numbers import greater_eq, zero, Neg
+        from .subtraction import nonneg_difference
+
+        if greater_eq(self, zero).proven():
+            # Already known
+            return greater_eq(self, zero).prove()
+        
+        if self.terms.is_double() and isinstance(self.terms[1], Neg):
+            # (a - b) with a >= b => (a - b) is non-negative
+            _a, _b = self.terms[0], self.terms[1].operand
+            if greater_eq(_a, _b).proven():
+                return nonneg_difference.instantiate({a:_a, b:_b})
+
+        if try_deduce_number_set:
+            # Try 'deduce_number_set'.
+            deduce_number_set(self)
+
+        return greater_eq(self, zero).prove()
+
+
+    @relation_prover
+    def deduce_number_set(self, **defaults_config):
+        '''
+        Prove membership of this expression in the most 
+        restrictive standard number set we can readily know.
+        '''
+        from proveit.numbers import (Neg, one, greater, greater_eq,
+                                     Less, LessEq)
+        number_set_map = {
+            NaturalPos: NaturalPos,
+            IntegerNeg: Integer,
+            Natural: Natural,
+            IntegerNonPos: Integer,
+            IntegerNonZero: Integer,
+            Integer: Integer,
+            RationalPos: RationalPos,
+            RationalNeg: Rational,
+            RationalNonNeg: RationalNonNeg,
+            RationalNonPos: Rational,
+            RationalNonZero: Rational,
+            Rational: Rational,
+            RealPos: RealPos,
+            RealNeg: Real,
+            RealNonNeg: RealNonNeg,
+            RealNonPos: Real,
+            RealNonZero: Real,
+            Real: Real,
+            ComplexNonZero: Complex,
+            Complex: Complex
+        }
+        
+        priorities = {NaturalPos:(0,0), Natural:(0,1), Integer:(0,2),
+                      RationalPos:(1,0), RationalNonNeg:(1,1), Rational:(1,2),
+                      RealPos:(2,0), RealNonNeg:(2,1), Real:(2,2), 
+                      Complex:(3,2)}
+        major_minor_to_set = {
+            (major, minor):ns for ns, (major, minor) in priorities.items()}
+        major_to_nonzero = [IntegerNonZero, RationalNonZero,
+                            RealNonZero, ComplexNonZero]
+        major_to_nonpos = [IntegerNonPos, RationalNonPos, RealNonPos]
+        major_to_neg = [IntegerNeg, RationalNeg, RealNeg]
+        
+        if self.terms.is_double():
+            # Look for a special case of n-1 in Nat or (-1+n) in Nat.
+            term_ns = None
+            if self.terms[1] == Neg(one):
+                term_ns = deduce_number_set(self.terms[0]).domain
+            elif self.terms[0] == Neg(one):
+                term_ns = deduce_number_set(self.terms[1]).domain         
+            if term_ns is not None and NaturalPos.includes(term_ns):
+                return self.deduce_in_number_set(Natural)
+
+        major = minor = -1
+        any_positive = False
+        for term in self.terms:
+            term_membership = deduce_number_set(term)
+            if isinstance(term, ExprRange):
+                # e.g. a_1 in S and ... and a_n in S
+                term_ns = term_membership.operands[0].body.domain
+            else:
+                term_ns = term_membership.domain
+            term_ns = number_set_map[term_ns]
+            if term_ns in {NaturalPos, RationalPos, RealPos}:
+                any_positive = True
+            _major, _minor = priorities[term_ns]
+            major = max(_major, major)
+            minor = max(_minor, minor)
+        if major == minor == -1:
+            major, minor = 3, 2 # Complex
+        elif minor==1 and any_positive:
+            # Everything is non-negative and at least one term
+            # is positive, so the sum is positive.
+            minor = 0
+
+        number_set = None
+        # Check for the special case of a - b where we know
+        # a > b, a < b, a ≥ b, a ≤ b, or a ≠ b
+        if self.terms.is_double() and isinstance(self.terms[1], Neg):
+            _a, _b = self.terms[0], self.terms[1].operand
+            if greater(_a, _b).proven():
+                minor = min(0, minor) # positive
+            elif greater_eq(_a, _b).proven():
+                minor = min(1, minor) # non-negative
+            elif Less(_a, _b).proven():
+                major = min(major, 2) # must be real
+                number_set = major_to_neg[major] # negative
+            elif LessEq(_a, _b).proven() and minor==2:
+                major = min(major, 2) # must be real
+                number_set = major_to_nonpos[major] # non-positive
+            elif NotEquals(_a, _b).proven() and minor==2:
+                number_set = major_to_nonzero[major] # non-zero
+
+        if number_set is None:
+            number_set = major_minor_to_set[(major, minor)]
+        return self.deduce_in_number_set(number_set)
 
     # IS THIS NECESSARY?
     def deduce_difference_in_natural(self, assumptions=USE_DEFAULTS):
@@ -1068,14 +1528,15 @@ class Add(NumberOperation):
         return (idx, num) if also_return_num else idx
 
     @equality_prover('factorized', 'factor')
-    def factorization(self, the_factor, pull="left", group_factor=True,
+    def factorization(self, the_factors, pull="left", 
+                      group_factors=True, group_remainder=True,
                       **defaults_config):
         '''
-        Factor out "the_factor" from this sum, pulling it either to the "left" or "right".
-        If group_factor is True and the_factor is a product, these operands are grouped
-        together as a sub-product.  Returns the equality that equates self to this new version.
-        Give any assumptions necessary to prove that the operands are in the Complex numbers so that
-        the associative and commutation theorems are applicable.
+        Factor out the factor(s) from this sum, pulling it either to 
+        the "left" or "right".
+        If group_factors is True, the factors are grouped
+        together as a sub-product.
+        Returns the equality that equates self to this new version.
         '''
         from proveit.numbers.multiplication import distribute_through_sum
         from proveit.numbers import one, Mult
@@ -1086,16 +1547,23 @@ class Add(NumberOperation):
         eq = TransRelUpdater(expr)
         replacements = list(defaults.replacements)
         _b = []
+        if not isinstance(the_factors, Expression):
+            # If 'the_factors' is not an Expression, assume it is
+            # an iterable and make it a Mult.
+            the_factors = Mult(*the_factors)
         # factor the_factor from each term
         for _i in range(expr.terms.num_entries()):
             term = expr.terms[_i]
             if hasattr(term, 'factorization'):
                 term_factorization = term.factorization(
-                    the_factor, pull, group_factor=group_factor,
+                    the_factors, pull, group_factors=group_factors,
                     group_remainder=True, preserve_all=True)
                 if not isinstance(term_factorization.rhs, Mult):
                     raise ValueError(
-                        'Expecting right hand size of factorization to be a product')
+                        "Expecting right hand side of each factorization "
+                        "to be a product. Instead obtained: {0} for term "
+                        "number {1} (0-based index).".
+                        format(term_factorization.rhs, _i))
                 if pull == 'left':
                     # the grouped remainder on the right
                     _b.append(term_factorization.rhs.operands[-1])
@@ -1104,21 +1572,22 @@ class Add(NumberOperation):
                     _b.append(term_factorization.rhs.operands[0])
                 # substitute in the factorized term
                 expr = eq.update(term_factorization.substitution(
-                    expr.inner_expr().terms[_i]))
+                    expr.inner_expr().terms[_i], preserve_all=True))
             else:
-                if term != the_factor:
+                if term != the_factors:
                     raise ValueError(
-                        "Factor, %s, is not present in the term at index %d of %s!" %
-                        (the_factor, _i, self))
+                        "Factor, %s, is not present in the term at "
+                        "index %d of %s!" %
+                        (the_factors, _i, self))
                 if pull == 'left':
                     replacements.append(Mult(term, one).one_elimination(1))
                 else:
                     replacements.append(Mult(one, term).one_elimination(0))
                 _b.append(one)
-        if not group_factor and isinstance(the_factor, Mult):
-            factor_sub = the_factor.operands
+        if not group_factors and isinstance(the_factors, Mult):
+            factor_sub = the_factors.operands
         else:
-            factor_sub = ExprTuple(the_factor)
+            factor_sub = ExprTuple(the_factors)
         if pull == 'left':
             _a = factor_sub
             _c = ExprTuple()
@@ -1135,8 +1604,7 @@ class Add(NumberOperation):
         _k = _c.num_elements()
         distribution = distribute_through_sum.instantiate(
             {i: _i, j: _j, k: _k, a: _a, b: _b, c: _c}, 
-            preserve_expr=expr, replacements=replacements,
-            auto_simplify=False)
+            preserve_expr=expr, replacements=replacements)
         eq.update(distribution.derive_reversed())
         return eq.relation
 
@@ -1320,7 +1788,8 @@ class Add(NumberOperation):
         return relation    
 
     @relation_prover
-    def bound_by_term(self, term_or_idx, **defaults_config):
+    def bound_by_term(self, term_or_idx, use_weak_bound=False,
+                      **defaults_config):
         '''
         Deduce that this sum is bound by the given term (or term at
         the given index).
@@ -1337,7 +1806,6 @@ class Add(NumberOperation):
         deduce_strong_lower_bound_by_term
         accordingly.
         '''
-        from proveit.logic import InSet
         from proveit.numbers import RealPos, RealNeg, RealNonNeg, RealNonPos
         relevant_number_sets = {RealPos, RealNeg, RealNonNeg, RealNonPos}
         for _k, term_entry in enumerate(self.terms.entries):
@@ -1345,11 +1813,13 @@ class Add(NumberOperation):
                 # skip the term doing the bounding.
                 continue
             for number_set in list(relevant_number_sets):
+                deduce_number_set(term_entry)
                 if isinstance(term_entry, ExprRange):
-                    in_number_set = ExprRange(
+                    in_number_set = And(ExprRange(
                             term_entry.parameter,
                             InSet(term_entry.body, number_set),
-                            term_entry.start_index, term_entry.end_index)
+                            term_entry.true_start_index, 
+                            term_entry.true_end_index))
                 else:
                     in_number_set = InSet(term_entry, number_set)
                 if not in_number_set.proven():
@@ -1359,11 +1829,12 @@ class Add(NumberOperation):
                     "In order to use Add.bound_by_term, the "
                     "'other' terms must all be known to be contained "
                     "in RealPos, RealNeg, RealNonNeg, RealNonPos")
-        # If a strong bound is applicable, use that.
-        if RealPos in relevant_number_sets:
-            return self.deduce_strong_lower_bound_by_term(term_or_idx)
-        if RealNeg in relevant_number_sets:
-            return self.deduce_strong_upper_bound_by_term(term_or_idx)
+        if not use_weak_bound:
+            # If a strong bound is applicable, use that.
+            if RealPos in relevant_number_sets:
+                return self.deduce_strong_lower_bound_by_term(term_or_idx)
+            if RealNeg in relevant_number_sets:
+                return self.deduce_strong_upper_bound_by_term(term_or_idx)
         if RealNonNeg in relevant_number_sets:
             return self.deduce_weak_lower_bound_by_term(term_or_idx)
         if RealNonPos in relevant_number_sets:
@@ -1441,12 +1912,15 @@ class Add(NumberOperation):
         return thm.instantiate({i: _i, j: _j, a: _a, b: _b, c: _c})        
 
     @relation_prover
-    def not_equal(self, other, **defaults_config):
+    def not_equal(self, other, *, try_deduce_number_set=True,
+                  **defaults_config):
         '''
         Attempt to prove that self is not equal to other.
         '''
-        from proveit.logic import NotEquals
         from proveit.numbers import zero, Neg
+        if NotEquals(self, other).proven():
+            # Already known.
+            return NotEquals(self, other).prove()
         if other == zero:
             if self.terms.is_double():
                 if isinstance(self.terms[1], Neg):
@@ -1460,6 +1934,11 @@ class Add(NumberOperation):
                         # prove _a - _b ≠ 0.
                         return nonzero_difference_if_different.instantiate(
                                 {a:_a, b:_b})
+            if try_deduce_number_set:
+                # Try deducing the number set.
+                deduce_number_set(self)
+                if NotEquals(self, zero).proven():
+                    return NotEquals(self, zero).prove()
         # If it isn't a special case treated here, just use
         # conclude-as-folded.
         return NotEquals(self, other).conclude_as_folded()
@@ -1471,8 +1950,8 @@ def subtract(a, b):
     from proveit.numbers import Neg
     if isinstance(b, ExprRange):
         b = ExprRange(b.lambda_map.parameter_or_parameters,
-                      Neg(b.lambda_map.body), b.start_index,
-                      b.end_index, b.get_styles())
+                      Neg(b.lambda_map.body), b.true_start_index,
+                      b.true_end_index, b.get_styles())
         # The default style will use subtractions where appropriate.
         return Add(a, b)
     return Add(a, Neg(b))
@@ -1491,8 +1970,8 @@ def dist_subtract(a, b):
                   for term in b.terms]
     elif isinstance(b, ExprRange):
         bterms = [ExprRange(b.lambda_map.parameter_or_parameters,
-                            Neg(b.lambda_map.body), b.start_index,
-                            b.end_index, b.get_styles())]
+                            Neg(b.lambda_map.body), b.true_start_index,
+                            b.true_end_index, b.get_styles())]
     else:
         bterms = [Neg(b)]
     if isinstance(a, Add):
@@ -1517,37 +1996,26 @@ def dist_add(*terms):
             expanded_terms.append(term)
     return Add(*expanded_terms)
 
-
-def const_shift_decomposition(idx):
+def split_int_shift(expr):
     '''
-    Return a tuple whose sum is the given 'idx' where the
-    first element is an Expression and the second element is an
-    integer.  There are three cases:
-        1) given an integer i as an Expression, return (zero, i).
-        2) given x+i where i is an integer as an Expression,
-            return (x, i).
-        3) given x, return (x, 0).
+    If the expression contains an additive integer shift term,
+    return the remaining terms and the shift independently as a pair.
+    Otherwise, return the expression paired with a zero shift.
     '''
-    from proveit.numbers import zero, is_literal_int
-    if is_literal_int(idx):
-        return (zero, idx.as_int())
-    elif (isinstance(idx, Add) and idx.operands.num_entries() == 2
-          and is_literal_int(idx.operands[1])):
-        return (idx.operands[0], idx.operands[1].as_int())
-    return (idx, 0)
-
-
-def const_shift_composition(idx, shift):
-    '''
-    Return an expression representing the 'idx' shifted by amount
-    'shift' where 'shift' is a Python integer.  This will be
-    Add(idx, num(shift)) except for the special cases when
-    shift==0 or idx==zero and it reduces.
-    '''
-    from proveit.numbers import num, zero
-    assert isinstance(shift, int)
-    if shift == 0:
-        return idx
-    if idx == zero:
-        return num(shift)
-    return Add(idx, num(shift))
+    from proveit.numbers import is_literal_int, zero, Neg
+    if isinstance(expr, Neg):
+        expr = Add(expr) # wrap in an Add so we can do quick_simplified
+    if isinstance(expr, Add):
+        expr = expr.quick_simplified()
+        if (isinstance(expr, Add) and is_literal_int(expr.terms[-1])):
+            shift = expr.terms[-1].as_int()
+            if expr.terms.num_entries() == 1:
+                return shift
+            elif (expr.terms.num_entries() == 2 and 
+                    not isinstance(expr.terms[0], ExprRange)):
+                return expr.terms[0], shift
+            else:
+                return Add(expr.terms[:-1]), shift
+    if is_literal_int(expr):
+        return zero, expr.as_int()
+    return expr, 0

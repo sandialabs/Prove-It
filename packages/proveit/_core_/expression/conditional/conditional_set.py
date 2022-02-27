@@ -18,12 +18,15 @@ class ConditionalSet(Operation):
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, must_evaluate=False, **defaults_config):
         '''
-        Reduce a conditional set with one and only one TRUE condition
-        where the other conditions are FALSE if applicable.
+        If one and only one TRUE condition is satisfied, reduce
+        the ConditionalSet to that one case.
         '''
-        return self.single_case_via_elimination()
+        try:
+            return self.single_case_via_elimination()
+        except UnsatisfiedPrerequisites as _e:
+            raise NotImplementedError('shallow_simplification is only implemented '
+                                      'if all conditions are known to be TRUE or FALSE', _e)
 
-    # single_case_via_elimination
     @equality_prover('reduced_to_true_case', 'reduce_to_true_case')
     def single_case_via_elimination(self, **defaults_config):
         '''
@@ -42,17 +45,20 @@ class ConditionalSet(Operation):
                 if item.condition == TRUE:
                     if _b is not None:
                         raise UnsatisfiedPrerequisites(
-                            "All conditions must be FALSE except one, both %s and %s are not FALSE" % (
-                            _b, item.string()))
+                            "All conditions must be FALSE except one, both %s and %s are not FALSE: %s" % (
+                            _b, item.string(), self))
                     _b = item.value
                     index = i
                 elif item.condition != FALSE:
                     raise UnsatisfiedPrerequisites(
-                            "All conditions must be FALSE except one, %s is not FALSE" % item.condition.string())
+                            "All conditions must be FALSE except one, %s is not FALSE: %s" % (item.condition.string(),
+                                                                                              self))
             else:
                 if _b is not None:
                     raise UnsatisfiedPrerequisites(
-                        "All conditions must be FALSE except one, both %s and %s are not FALSE" % (_b, item.string()))
+                        "All conditions must be FALSE except one, both %s and %s are not FALSE: %s" % (_b,
+                                                                                                       item.string(),
+                                                                                                       self))
                 else:
                     _b = item
                     index = i
@@ -69,21 +75,51 @@ class ConditionalSet(Operation):
         return self.formatted('latex', **kwargs)
 
     def formatted(self, format_type, fence=None, **kwargs):
+        from proveit import ExprRange
         #print(solo)
         if format_type == 'string':
-            inner_str = '; '.join(conditional.formatted('string', fence=False, **kwargs)
-                                  for conditional in self.conditionals)
+            inner_str = self.conditionals.formatted(
+                    'string', fence=False, operator_or_operators=';')
             return '{' + inner_str + '.'
         else:
-            from proveit import ExprRange
             formatted_conditionals = []
             for conditional in self.conditionals:
                 if isinstance(conditional, ExprRange):
-                    formatted_conditionals.append(conditional.first().formatted(format_type, fence=False, **kwargs))
-                    formatted_conditionals.append(r' \vdots')
-                    formatted_conditionals.append(conditional.last().formatted(format_type, fence=False, **kwargs))
+                    for cell_info in conditional.yield_format_cell_info():
+                        (expr, role), assumptions = cell_info
+                        with defaults.temporary() as tmp_defaults:
+                            tmp_defaults.automation = False
+                            tmp_defaults.assumptions = assumptions
+                            if isinstance(expr, ExprRange):
+                                nested_range_depth = expr.nested_range_depth()
+                            else:
+                                nested_range_depth = 1
+                            if role == 'implicit':
+                                if nested_range_depth == 1:
+                                    formatted_conditionals.append(r' \vdots')
+                                else:
+                                    formatted_conditionals.append(
+                                            r'\begin{array}{c}' +
+                                            r' \vdots \\ '*nested_range_depth
+                                            + r'\end{array}')
+                            elif role in ('explicit', 'param_independent'):
+                                if role == 'explicit':
+                                    formatted_body = expr.body.latex()
+                                else:
+                                    assert role == 'param_independent'
+                                    formatted_body = expr.formatted_repeats(
+                                            format_type='latex')                                
+                                formatted_conditionals.append(
+                                        r'\begin{array}{c}' 
+                                        + r' :\\ '*nested_range_depth +
+                                        formatted_body 
+                                        + r' \\: '*nested_range_depth +
+                                        r'\end{array}')
+                            else:
+                                formatted_conditionals.append(
+                                        expr.latex(fence=False))
                 else:
-                    formatted_conditionals.append(conditional.formatted('latex', fence=False, **kwargs))
+                    formatted_conditionals.append(conditional.latex(fence=False))
             inner_str = r' \\ '.join(formatted_conditionals)
             inner_str = r'\begin{array}{ccc}' + inner_str + r'\end{array}'
             inner_str = r'\left\{' + inner_str + r'\right..'

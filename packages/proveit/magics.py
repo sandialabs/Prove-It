@@ -227,12 +227,11 @@ class TheoryInterface:
         try:
             os.makedirs(theory_nb_folder)
         except (OSError, FileExistsError):
-            pass
+            pass        
         notebook_name = os.path.join(theory_nb_folder, 'theory.ipynb')
-        if not os.path.isdir(sub_theory_folder):
+        init_name = os.path.join(sub_theory_folder, '__init__.py')
+        if not os.path.isfile(init_name):
             import shutil
-            os.mkdir(sub_theory_folder)
-            init_name = os.path.join(sub_theory_folder, '__init__.py')
             proveit_path = os.path.split(proveit.__file__)[0]
             # Create an '__init__.py' file from the template.
             template_filename = os.path.join(proveit_path, '..', 
@@ -1045,13 +1044,12 @@ class Assignments:
                 # entirely unbound because it would be challenging
                 # to consider partially bound instances and it isn't
                 # so critical -- it's just a good convention.
-                if len(free_vars(right_side, err_inclusively=False)) > 0:
+                if len(free_vars(right_side)) > 0:
                     raise ValueError(
                         '%s should not have free variables; variables '
                         'must all be bound (e.g. universally quantified). '
                         ' Free variables: %s'
-                        % (prove_it_magic.kind,
-                           free_vars(right_side, err_inclusively=False)))
+                        % (prove_it_magic.kind, free_vars(right_side)))
                 if name in prove_it_magic.definitions:
                     if prove_it_magic.definitions[name] != right_side:
                         print('WARNING: Redefining', name)

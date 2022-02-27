@@ -69,3 +69,26 @@ class Interval(Operation):
                     "method, the proposed subset {} needs to be an Interval.".
                     format(sub_interval))
 
+    @prover
+    def deduce_cardinality(self, **defaults_config):
+        '''
+        Deduce and return the equality between Card(self) and algebraic
+        expression representing the cardinality (size) of the finite
+        contiguous integers Interval set {a..b} in the form
+        |- |{a..b}| = b - a + 1.
+        For example, given the Interval I = {3..8}, calling
+        I.deduce_cardinality returns
+        |- |{3..8}| = 6
+        (assuming some appropriate auto_simplification of the numeric
+        expression 8 - 3 + 1).
+        Might have to pre-prove or include as assumptions enough
+        information to establish that a and b in Interval(a, b) are
+        both integers with a <= b.
+        '''
+        from . import interval_cardinality
+        from proveit.logic.sets import Card
+        _a, _b = interval_cardinality.all_instance_params()
+        _a_sub = self.lower_bound
+        _b_sub = self.upper_bound
+        return interval_cardinality.instantiate(
+            {_a: _a_sub, _b: _b_sub}, preserve_expr = Card(self))

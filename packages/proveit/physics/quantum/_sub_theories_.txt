@@ -1,2 +1,4 @@
+algebra
+circuits
 QFT
 QPE

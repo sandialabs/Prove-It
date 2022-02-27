@@ -118,15 +118,21 @@ class Conditional(Expression):
         return self.formatted('latex', **kwargs)
 
     def formatted(self, format_type, fence=True, **kwargs):
+        with defaults.temporary() as temp_defaults:
+            # Add the condition as an assumption when formatting the
+            # value.
+            temp_defaults.automation = False
+            temp_defaults.assumptions = defaults.assumptions + (self.condition,)
+            formatted_value = self.value.formatted(format_type, **kwargs)
         if format_type == "string":
             formatted_condition = self._formatted_condition('string', **kwargs)
-            inner_str = self.value.formatted('string', **kwargs) + ' if ' + formatted_condition
+            inner_str = formatted_value + ' if ' + formatted_condition
             if fence:
                 return '{' + inner_str + '.'
             return inner_str
         else:
             formatted_condition = self._formatted_condition('latex', **kwargs)
-            inner_str = (self.value.formatted('latex', **kwargs) + r' \textrm{ if } '
+            inner_str = (formatted_value + r' \textrm{ if } '
                          + formatted_condition)
             if fence:
                 inner_str = r'\left\{' + inner_str + r'\right..'
@@ -259,6 +265,10 @@ class Conditional(Expression):
             from proveit.core_expr_types.conditionals import \
                 true_condition_reduction
             return true_condition_reduction.instantiate({a: self.value})
+        elif self.condition.proven():
+            return self.satisfied_condition_reduction()
+        elif self.condition.disproven():
+            return self.dissatisfied_condition_reduction()
         elif (isinstance(self.value, Conditional) and
               self.condition == self.value.condition):
             from proveit.core_expr_types.conditionals import \
@@ -327,7 +337,16 @@ class Conditional(Expression):
             satisfied_condition_reduction
         return satisfied_condition_reduction.instantiate(
                 {a: self.value, Q: self.condition})
-    
+
+    @equality_prover('dissatisfied_condition_reduced', 
+                     'dissatisfied_condition_reduce')
+    def dissatisfied_condition_reduction(self, **defaults_config):
+        from proveit import a, Q
+        from proveit.core_expr_types.conditionals import \
+            dissatisfied_condition_reduction
+        return dissatisfied_condition_reduction.instantiate(
+                {a: self.value, Q: self.condition})
+
     @equality_prover('value_substituted', 
                      'value_substitute')
     def value_substitution(self, equality, **defaults_config):

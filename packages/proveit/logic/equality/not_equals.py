@@ -1,4 +1,4 @@
-from proveit import (Literal, Operation, USE_DEFAULTS, 
+from proveit import (Literal, Operation, USE_DEFAULTS, ProofFailure,
                      UnsatisfiedPrerequisites, prover, equality_prover)
 from .equals import Equals
 from proveit.logic.irreducible_value import is_irreducible_value
@@ -14,10 +14,8 @@ class NotEquals(Relation):
         theory=__file__)
 
     def __init__(self, a, b, *, styles=None):
-        Operation.__init__(self, NotEquals._operator_, (a, b),
+        Relation.__init__(self, NotEquals._operator_, a, b,
                            styles=styles)
-        self.lhs = self.operands[0]
-        self.rhs = self.operands[1]
 
     def side_effects(self, judgment):
         '''
@@ -33,7 +31,7 @@ class NotEquals(Relation):
 
     @prover
     def conclude(self, **defaults_config):
-        from proveit.logic import FALSE, Not
+        from proveit.logic import FALSE, Not, evaluation_or_simplification
         if is_irreducible_value(self.lhs) and is_irreducible_value(self.rhs):
             # prove that two irreducible values are not equal
             return self.lhs.not_equal(self.rhs)
@@ -46,6 +44,15 @@ class NotEquals(Relation):
         if Not(Equals(self.lhs, self.rhs)).proven():
             # Conclude (x ≠ y) by knowing that Not(x = y) is true. 
             return self.conclude_as_folded()
+
+        # Try the standard Relation strategies -- evaluate or
+        # simplify both sides.
+        try:
+            return Relation.conclude(self)
+        except ProofFailure:
+            # Both sides are already irreducible or simplified.
+            pass
+
         if hasattr(self.lhs, 'not_equal'):
             # If there is a 'not_equal' method, use that.
             # The responsibility then shifts to that method for
@@ -56,6 +63,7 @@ class NotEquals(Relation):
             # strategy if it doesn't fall into any specially-handled
             # case.
             return self.lhs.not_equal(self.rhs)
+
         return self.conclude_as_folded()
 
     @prover
