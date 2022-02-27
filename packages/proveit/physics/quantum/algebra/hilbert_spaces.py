@@ -61,7 +61,7 @@ class HilbertSpacesLiteral(Literal):
         specified field (or the default field).
         '''
         try:
-            return next(VecSpaces.yield_known_hilbert_spaces(vec))
+            return next(HilbertSpacesLiteral.yield_known_hilbert_spaces(vec))
         except StopIteration:
             # We may not know that 'vec' is in a vector space,
             # but we may be able to deduce it in a straightforward
@@ -83,7 +83,7 @@ class HilbertSpacesLiteral(Literal):
         specified field (or the default field).
         '''
         # TODO: appropriately handle an ExprRange opernd.
-        return [VecSpaces.known_hilbert_space(operand)
+        return [HilbertSpacesLiteral.known_hilbert_space(operand)
                 for operand in vecs]    
 
 class HilbertSpacesMembership(ClassMembership):

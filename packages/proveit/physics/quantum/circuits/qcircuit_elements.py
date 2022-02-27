@@ -227,7 +227,7 @@ class Measure(QcircuitElement):
         from proveit.physics.quantum import Z
         if show_explicitly and hasattr(self, 'part'):            
             return r'& \measure{%s~\mbox{part}~%s}'%(
-                    self.basis.latex, self.part.latex())
+                    self.basis.latex(), self.part.latex())
         if self.basis==Z and self.get_style('Z', 'implicit')=='implicit':
             return r'& \meter'
         return r'& \measure{' + self.basis.latex() + r'}'
@@ -433,17 +433,45 @@ class MultiQubitElem(QcircuitElement):
         from proveit.logic.equality import Equals
         if self.targets == EmptySet:
             return self.unary_reduction()
+        elif (isinstance(self.targets, Interval) and 
+                  self.targets.lower_bound == self.targets.upper_bound
+                  and hasattr(self.element, 'part')):
+            return self.unary_reduction()            
         return Equals(self, self).conclude_via_reflexivity()
 
     @equality_prover('unary_reduced', 'unary_reduce')
     def unary_reduction(self, **defaults_config):
         from proveit.logic import EmptySet
+        from proveit.physics.quantum import var_ket_psi
         from proveit.physics.quantum.circuits import (
-                unary_multi_qubit_gate_reduction)
+                unary_multi_qubit_elem_reduction,
+                unary_multi_gate_reduction,
+                unary_multi_input_reduction,
+                unary_multi_output_reduction,
+                unary_multi_meas_reduction)
+        if (isinstance(self.targets, Interval) and 
+                  self.targets.lower_bound == self.targets.upper_bound
+                  and hasattr(self.element, 'part')):
+            if isinstance(self.element, Gate):
+                return unary_multi_gate_reduction.instantiate(
+                        {A: self.element.operation,
+                         k: self.targets.lower_bound})
+            if isinstance(self.element, Input):
+                return unary_multi_input_reduction.instantiate(
+                        {var_ket_psi: self.element.state,
+                         k: self.targets.lower_bound})
+            if isinstance(self.element, Output):
+                return unary_multi_output_reduction.instantiate(
+                        {var_ket_psi: self.element.state,
+                         k: self.targets.lower_bound})
+            if isinstance(self.element, Measure):
+                return unary_multi_meas_reduction.instantiate(
+                        {B: self.element.basis,
+                         k: self.targets.lower_bound})
         if self.targets != EmptySet:
             raise ValueError("'targes' must be the empty set "
                             "order to invoke unary_reduction")
-        return unary_multi_qubit_gate_reduction.instantiate(
+        return unary_multi_qubit_elem_reduction.instantiate(
             {U: self.gate_operation})
 
 
