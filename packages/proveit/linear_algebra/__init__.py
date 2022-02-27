@@ -6,7 +6,8 @@ from .scalar_multiplication import ScalarMult
 from .inner_products import (InnerProdSpaces, InnerProd,
                              deduce_as_inner_prod_space)
 from .linear_maps import LinMap, LinMapAdd
-from .matrices import MatrixSpace, MatrixMult, MatrixExp, SU
+from .matrices import (MatrixSpace, MatrixMult, MatrixExp,
+                       Unitary, SpecialUnitary)
 from .tensors import TensorExp, TensorProd
 
 
