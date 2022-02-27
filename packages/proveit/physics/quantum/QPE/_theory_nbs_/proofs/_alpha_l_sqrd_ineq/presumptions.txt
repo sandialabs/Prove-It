@@ -46,6 +46,7 @@ proveit.logic.sets.subtraction.all_but_one_membership_unfolding
 proveit.logic.sets.subtraction.membership_unfolding
 proveit.numbers.absolute_value.abs_complex_closure
 proveit.numbers.absolute_value.abs_diff_reversal
+proveit.numbers.absolute_value.abs_eq
 proveit.numbers.absolute_value.abs_even
 proveit.numbers.absolute_value.abs_frac
 proveit.numbers.absolute_value.abs_integer_closure
@@ -53,6 +54,7 @@ proveit.numbers.absolute_value.abs_integer_nonzero_closure
 proveit.numbers.absolute_value.abs_neg_elim
 proveit.numbers.absolute_value.abs_non_neg_elim
 proveit.numbers.absolute_value.abs_nonzero_closure
+proveit.numbers.absolute_value.abs_not_eq_zero
 proveit.numbers.absolute_value.abs_prod
 proveit.numbers.absolute_value.abs_rational_closure
 proveit.numbers.absolute_value.abs_rational_nonzero_closure
@@ -256,6 +258,7 @@ proveit.numbers.number_sets.complex_numbers.int_nonzero_within_complex_nonzero
 proveit.numbers.number_sets.complex_numbers.int_within_complex
 proveit.numbers.number_sets.complex_numbers.nat_pos_within_complex_nonzero
 proveit.numbers.number_sets.complex_numbers.nat_within_complex
+proveit.numbers.number_sets.complex_numbers.nonzero_complex_is_complex_nonzero
 proveit.numbers.number_sets.complex_numbers.nonzero_if_in_complex_nonzero
 proveit.numbers.number_sets.complex_numbers.rational_nonneg_within_complex
 proveit.numbers.number_sets.complex_numbers.rational_nonpos_within_complex
@@ -283,6 +286,7 @@ proveit.numbers.number_sets.integers.nonpos_int_within_int
 proveit.numbers.number_sets.integers.nonzero_if_in_nonzero_int
 proveit.numbers.number_sets.integers.nonzero_int_is_int_nonzero
 proveit.numbers.number_sets.integers.nonzero_int_within_int
+proveit.numbers.number_sets.integers.pos_int_is_natural_pos
 proveit.numbers.number_sets.natural_numbers.nat_pos_within_nat
 proveit.numbers.number_sets.natural_numbers.natural_lower_bound
 proveit.numbers.number_sets.natural_numbers.natural_pos_lower_bound
@@ -385,9 +389,9 @@ proveit.numbers.ordering.symmetric_less_eq
 proveit.numbers.ordering.transitivity_less_eq_less
 proveit.numbers.ordering.transitivity_less_eq_less_eq
 proveit.numbers.ordering.transitivity_less_less_eq
-proveit.physics.quantum.QPE._all_abs_alpha_l_are_nonneg
-proveit.physics.quantum.QPE._all_abs_alpha_l_sqrd_are_real
-proveit.physics.quantum.QPE._alpha_l_summed_abs
+proveit.physics.quantum.QPE._all_alpha_l_is_complex
+proveit.physics.quantum.QPE._alpha_l_summed
+proveit.physics.quantum.QPE._delta_diff_exp_not_one
 proveit.physics.quantum.QPE._delta_is_real
 proveit.physics.quantum.QPE._delta_not_eq_scaledNonzeroInt
 proveit.physics.quantum.QPE._l_non_zero
