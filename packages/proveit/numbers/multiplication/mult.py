@@ -28,7 +28,8 @@ class Mult(NumberOperation):
                          theory=__file__)
 
     _simplification_directives_ = SimplificationDirectives(
-            ungroup = True, irreducibles_in_front = True)
+            ungroup=True, combine_exponents=True,
+            irreducibles_in_front=True)
 
     def __init__(self, *operands, styles=None):
         r'''
@@ -376,29 +377,30 @@ class Mult(NumberOperation):
         if is_irreducible_value(expr):
             return eq.relation  # done
 
-
-        # We should generalize this to work analogously like combining
-        # and sorting terms in Add.shallow_simplification, but this
-        # at least handles the simple case of combining exponents
-        # when all factors are exponents with the same base.
-        # (ExprRanges are not yet handled, but we can do this when
-        # this is improved further).
-        if isinstance(expr, Mult):
-            common_base = None
-            for factor in self.factors:
-                factor_base = None
-                if isinstance(factor, Exp):
-                    factor_base = factor.base
-                else:
-                    common_base = None
-                    break
-                if common_base is None:
-                    common_base = factor_base
-                elif common_base != factor_base:
-                    common_base = None
-                    break
-            if common_base is not None:
-                expr = eq.update(expr.exponent_combination())
+        if Mult._simplification_directives_.combine_exponents:
+            # We should generalize this to work analogously like 
+            # combining and sorting terms in Add.shallow_simplification,
+            # but this at least handles the simple case of combining
+            # exponents when all factors are exponents with the same 
+            # base.
+            # (ExprRanges are not yet handled, but we can do this when
+            # this is improved further).
+            if isinstance(expr, Mult):
+                common_base = None
+                for factor in self.factors:
+                    factor_base = None
+                    if isinstance(factor, Exp):
+                        factor_base = factor.base
+                    else:
+                        common_base = None
+                        break
+                    if common_base is None:
+                        common_base = factor_base
+                    elif common_base != factor_base:
+                        common_base = None
+                        break
+                if common_base is not None:
+                    expr = eq.update(expr.exponent_combination())
 
 
         

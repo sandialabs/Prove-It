@@ -110,7 +110,7 @@ class Div(NumberOperation):
 
         if expr.denominator == one:
             # eliminate division by one
-            expr = eq.update(expr.divide_by_one_elimination(auto_simplify=False))
+            expr = eq.update(expr.divide_by_one_elimination(preserve_all=True))
 
         if (isinstance(expr, Div) and
               Div._simplification_directives_.factor_negation and
@@ -314,7 +314,8 @@ class Div(NumberOperation):
             if the_factor_numer not in (one, expr.numerator):
                 expr = eq.update(expr.inner_expr().numerator.factorization(
                         the_factors.numerator, pull=pull,
-                        group_factors=True, group_remainder=True))
+                        group_factors=True, group_remainder=True,
+                        preserve_all=True))
             if pull == 'left':
                 # factor (x*y)/z into (x/z)*y
                 thm = mult_frac_left
@@ -322,7 +323,8 @@ class Div(NumberOperation):
                     # factor y/z into (1/z)*y
                     _x = one
                     _y = expr.numerator
-                    replacements.append(Mult(_x, _y).one_elimination(0))
+                    replacements.append(Mult(_x, _y).one_elimination(
+                            0, preserve_all=True))
             else:
                 # factor (x*y)/z into x*(y/z)
                 thm = mult_frac_right
@@ -330,7 +332,8 @@ class Div(NumberOperation):
                     # factor x/z into x*(1/z)
                     _x = expr.numerator
                     _y = one
-                    replacements.append(Mult(_x, _y).one_elimination(1))
+                    replacements.append(Mult(_x, _y).one_elimination(
+                            1, preserve_all=True))
             if the_factor_numer != one:
                 assert expr.numerator.operands.num_entries() == 2
                 _x = expr.numerator.operands.entries[0]
@@ -344,7 +347,7 @@ class Div(NumberOperation):
             if the_factor_denom not in (one, expr.denominator):
                 expr = eq.update(expr.inner_expr().denominator.factorization(
                         the_factor_denom, pull=pull,
-                        group_factors=True))
+                        group_factors=True, preserve_all=True))
                 assert expr.denominator.operands.num_entries() == 2
                 _z = expr.denominator.operands.entries[0]
                 _w = expr.denominator.operands.entries[1]
@@ -352,17 +355,20 @@ class Div(NumberOperation):
                 # Factor (x*y)/w into x*(y/w).
                 _z = one
                 _w = expr.denominator
-                replacements.append(Mult(_z, _w).one_elimination(0))
+                replacements.append(Mult(_z, _w).one_elimination(
+                        0, preserve_all=True))
             else:
                 # Factor (x*y)/z into (x/z)*y.
                 _z = expr.denominator
                 _w = one
-                replacements.append(Mult(_z, _w).one_elimination(1))
+                replacements.append(Mult(_z, _w).one_elimination(
+                        1, preserve_all=True))
             # Factor the numerator parts unless there is a 1 numerator.
             if the_factor_numer not in (one, expr.numerator):
                 expr = eq.update(expr.inner_expr().numerator.factorization(
                         the_factor_numer, pull=pull,
-                        group_factors=True, group_remainder=True))
+                        group_factors=True, group_remainder=True,
+                        preserve_all=True))
                 assert expr.numerator.operands.num_entries() == 2
                 # Factor (x*y)/(z*w) into (x/z)*(y/w)
                 _x = expr.numerator.operands.entries[0]
@@ -371,21 +377,25 @@ class Div(NumberOperation):
                 # Factor y/(z*w) into (1/z)*(y/w)
                 _x = one
                 _y = expr.numerator
-                replacements.append(Mult(_x, _y).one_elimination(0))
+                replacements.append(Mult(_x, _y).one_elimination(
+                        0, preserve_all=True))
             else:
                 # Factor x/(y*z) into (x/y)*(1/z)
                 _x = expr.numerator
                 _y = one
-                replacements.append(Mult(_x, _y).one_elimination(1))
+                replacements.append(Mult(_x, _y).one_elimination(
+                        1, preserve_all=True))
             # create POSSIBLE replacements for inadvertently generated
             # fractions of the form _x/1 (i.e. _z = 1)
             # or _y/1 (i.e. _w = 1):
             if _z == one:
-                replacements.append(frac(_x, _z).divide_by_one_elimination())
+                replacements.append(frac(_x, _z).divide_by_one_elimination(
+                        preserve_all=True))
             if _w == one:
-                replacements.append(frac(_y, _w).divide_by_one_elimination())
+                replacements.append(frac(_y, _w).divide_by_one_elimination(
+                        preserve_all=True))
 
-            temp_expr = eq.update(thm.instantiate({x:_x, y:_y, z:_z, w:_w},
+            eq.update(thm.instantiate({x:_x, y:_y, z:_z, w:_w},
                     replacements=replacements,
                     preserve_expr=expr))
 
