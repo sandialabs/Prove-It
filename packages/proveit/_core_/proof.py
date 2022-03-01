@@ -1129,7 +1129,7 @@ class Instantiation(Proof):
                                  %(repl, key, key_var, orig_judgment))
             relabel_params.append(_param)
 
-        prev_default_assumptions = set(defaults.assumptions)
+        prev_default_assumptions = defaults.assumptions
         try:
             # These assumptions will be used for deriving any
             # side-effects:
