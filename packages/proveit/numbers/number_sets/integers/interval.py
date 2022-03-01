@@ -92,3 +92,25 @@ class Interval(Operation):
         _b_sub = self.upper_bound
         return interval_cardinality.instantiate(
             {_a: _a_sub, _b: _b_sub}, preserve_expr = Card(self))
+
+    @prover
+    def deduce_disjointness(self, disjoint_expr, **defaults_config):
+        '''
+        Prove that two intervals are disjoint sets.
+        '''
+        from proveit.logic import Disjoint
+        from . import disjoint_intervals
+        if (not isinstance(disjoint_expr, Disjoint) 
+                or not disjoint_expr.sets.is_double()
+                or not isinstance(disjoint_expr.sets[0], Interval)
+                or not isinstance(disjoint_expr.sets[1], Interval)):
+            raise NotImplementedError(
+                    "'Interval.deduce_disjointness' only implemented to "
+                    "prove that two Intervals are correct, not %s"
+                    %disjoint_expr)
+        interval1 = disjoint_expr.sets[0]
+        interval2 = disjoint_expr.sets[1]
+        _a, _b = interval1.operands
+        _c, _d = interval2.operands
+        return disjoint_intervals.instantiate(
+                {a:_a, b:_b, c:_c, d:_d})
