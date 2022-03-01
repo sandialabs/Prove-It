@@ -392,8 +392,7 @@ class Mult(NumberOperation):
                     if isinstance(factor, Exp):
                         factor_base = factor.base
                     else:
-                        common_base = None
-                        break
+                        factor_base = factor
                     if common_base is None:
                         common_base = factor_base
                     elif common_base != factor_base:
