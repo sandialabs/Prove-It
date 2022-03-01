@@ -31,6 +31,12 @@ class Less(NumberOrderingRelation):
                 self, judgment):
             yield side_effect
         yield self.derive_not_equal
+
+    def negation_side_effects(self, judgment):
+        '''
+        From Not(a < b) derive a >= b as a side-effect.
+        '''
+        yield self.deduce_complement
         
     @staticmethod
     def reversed_operator_str(formatType):
@@ -137,7 +143,7 @@ class Less(NumberOrderingRelation):
         concluded = relax_equal_to_less_eq.instantiate(
             {x: self.operands[0], y: self.operands[1]})
         return concluded
-
+    
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import less_than_is_bool
@@ -205,15 +211,33 @@ class Less(NumberOrderingRelation):
                 (self, other))
         return new_rel.with_mimicked_style(self)
 
-    """
-    def derive_negated(self, assumptions=frozenset()):
+    @prover
+    def derive_negated(self, **defaults_config):
         '''
-        From :math:`a < b`, derive and return :math:`-a > -b`.
-        Assumptions may be required to prove that a, and b are in Real.
+        From a < b, derive and return -b < -a.
         '''
-        from . import negated_less_than
-        return negated_less_than.instantiate({a:self.lower, b:self.upper})
-    """
+        from proveit.numbers.negation import negated_strong_bound
+        new_rel = negated_strong_bound.instantiate(
+                {x: self.lower, y: self.upper})
+        return new_rel.with_mimicked_style(self)
+
+    @prover
+    def deduce_complement(self, **defaults_config):
+        '''
+        From Not(a < b), derive and return b <= a.
+        '''
+        from . import less_complement_is_greater_eq
+        return less_complement_is_greater_eq.instantiate(
+                {x:self.lower, y:self.upper}).derive_consequent()
+
+    @prover
+    def shallow_simplification_of_negation(self, **defaults_config):
+        '''
+        Prove and return Not(a < b) = (b <= a) as a simplification.
+        '''
+        from . import less_complement_is_greater_eq
+        return less_complement_is_greater_eq.instantiate(
+                {x:self.lower, y:self.upper})  
 
     @prover
     def derive_shifted(self, addend, addend_side='right',
