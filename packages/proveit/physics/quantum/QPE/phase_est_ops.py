@@ -1,4 +1,4 @@
-from proveit import Literal, Operation, Function, prover
+from proveit import Literal, Operation, Function, prover, equality_prover
 from proveit import a, b
 from proveit.logic import InSet
 from proveit.numbers import Interval
@@ -129,6 +129,12 @@ class ModAdd(Operation):
     def __init__(self, a, b, *, styles=None):
         Operation.__init__(self, ModAdd._operator_, (a, b),
                            styles=styles)
+        
+    @equality_prover("defined", "define")
+    def definition(self, **defaults_config):
+        from . import _mod_add_def
+        _a, _b = self.operands
+        return _mod_add_def.instantiate({a:_a, b:_b})
 
     @prover
     def deduce_in_interval(self, **defaults_config):
