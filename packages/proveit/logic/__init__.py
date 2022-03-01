@@ -24,6 +24,8 @@ from .sets import (
 from .sets import (Union, UnionAll, Intersect, IntersectAll, Difference,
                    SetOfAll, CartProd, CartExp,
                    PowerSet, Disjoint, Distinct, Card)
+from .sets import (Functions, Injections, Surjections, Bijections,
+                   Image, InvImage, image_of_set)
 from .classes import InClass, NotInClass, ClassMembership, ClassNonmembership
 
 #from mapping.mapping_ops import Domain, CoDomain

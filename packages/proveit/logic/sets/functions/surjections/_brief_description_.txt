@@ -1,0 +1,1 @@
+A surjection is an onto function.  Its image covers the codomain.

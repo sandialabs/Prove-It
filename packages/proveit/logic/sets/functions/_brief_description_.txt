@@ -1,0 +1,1 @@
+A function is a mapping from a domain to a codomain (both sets) and has various properties.

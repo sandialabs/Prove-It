@@ -15,7 +15,8 @@ from .power_set import PowerSet
 from .cartesian_products import CartProd, CartExp
 from .disjointness import Disjoint, Distinct
 from .cardinality import Card
-
+from .functions import (Functions, Injections, Surjections, Bijections, 
+                        Image, image_of_set, InvImage)
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.
