@@ -1,5 +1,7 @@
-from proveit import Function, Literal, equality_prover, prover
-from proveit import b, n, k, x
+from proveit import (Function, Literal, 
+                     relation_prover, equality_prover, prover)
+from proveit import b, n, j, k, x
+from proveit.logic import Equals, deduce_equal_or_not
 from proveit.numbers import one, Complex
 from proveit.relation import TransRelUpdater
 
@@ -210,3 +212,24 @@ class NumKet(Function):
                     "membership in %s, not %s"%(membership.domain,
                                                 vec_space))
         return membership
+
+    @relation_prover
+    def deduce_equal_or_not(self, other_ket, **defaults_config):
+        from . import num_ket_eq, num_ket_neq
+        if not isinstance(other_ket, NumKet):
+            raise NotImplementedError(
+                    "NumKet.deduce_equal_or_not only implemented for a "
+                    "comparison with another NumKet.")
+        if self.size != other_ket.size:
+            raise NotImplementedError(
+                    "NumKet.deduce_equal_or_not only implemented for a "
+                    "comparison with another NumKet of the same size "
+                    "explicitly (same Expression).")
+        relation = deduce_equal_or_not(self.num, other_ket.num)
+        if isinstance(relation.expr, Equals):
+            return num_ket_eq.instantiate(
+                    {n:self.size, j:self.num, k:other_ket.num})
+        else:
+            return num_ket_neq.instantiate(
+                    {n:self.size, j:self.num, k:other_ket.num})
+            
