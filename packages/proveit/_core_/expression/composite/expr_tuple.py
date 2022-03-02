@@ -2,7 +2,7 @@ from .composite import Composite
 from proveit._core_.expression.expr import Expression, MakeNotImplemented
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 from proveit._core_.expression.style_options import StyleOptions
-from proveit.decorators import prover, equality_prover
+from proveit.decorators import prover, relation_prover, equality_prover
 
 
 class ExprTuple(Composite, Expression):
@@ -617,7 +617,173 @@ class ExprTuple(Composite, Expression):
             return tuple_elem_substitution.instantiate(
                     {a:_a, b:_b, c:_c, d:_d, i:_i, k:_k},
                     preserve_all=True)
+
+    @relation_prover
+    def deduce_equal_or_not(self, other_tuple, **defaults_config):
+        '''
+        Prove and return that this ExprTuple is either equal or
+        not equal to other_tuple or raises an UnsatisfiedPrerequisites
+        or NotImplementedError if we cannot readily prove either of
+        these.
+        '''
+        from proveit import (ExprRange, safe_dummy_var,
+                             UnsatisfiedPrerequisites)
+        from proveit.logic import (
+                And, Or, Equals, NotEquals, deduce_equal_or_not)
+        if self == other_tuple:
+            return Equals(self, other_tuple).conclude_via_reflexivity
+        if not isinstance(other_tuple, ExprTuple):
+            raise TypeError("Expecting 'other_tuple' to be an ExprTuple "
+                            "not a %s"%other_tuple.__class__)
+        _i = self.num_elements()
+        _j = other_tuple.num_elements()
+        size_relation = deduce_equal_or_not(_i, _j)
+        if isinstance(size_relation.expr, NotEquals):
+            # Not equal because the lengths are different.
+            return self.not_equal(other_tuple)
+        
+        def raise_non_corresponding():
+            raise NotImplementedError(
+                    "ExprTuple.deduce_equal_or_not is only "
+                    "implemented for the case when ExprRanges "
+                    "match up: %s vs %s"%self, other_tuple)
             
+        if self.num_entries() == other_tuple.num_entries():
+            if self.num_entries()==1 and self.contains_range():
+                if not other_tuple.contains_range():
+                    # One ExprTuple has a range but the other doesn't.
+                    # That case isn't handled.
+                    raise_non_corresponding()
+                lhs_range = self.entries[0]
+                rhs_range = other_tuple.entries[0]
+                start_index = lhs_range.start_index
+                end_index = lhs_range.end_index
+                if ((start_index != rhs_range.start_index) or
+                        (end_index != rhs_range.end_index)):
+                    # Indices must match for a proper correspondence.
+                    raise_non_corresponding()
+                if lhs_range.parameter != rhs_range.parameter:
+                    # Use a safe common parameter.
+                    param = safe_dummy_var(lhs_range.body, rhs_range.body)
+                    lhs_range_body = lhs_range.body.basic_replaced(
+                            {lhs_range.parameter: param})
+                    rhs_range_body = rhs_range.body.basic_replaced(
+                            {rhs_range.parameter: param})
+                else:
+                    param = lhs_range.parameter
+                    lhs_range_body = lhs_range.body
+                    rhs_range_body = rhs_range.body
+                inner_assumptions = defaults.assumptions + (
+                        lhs_range.parameter_condition(),)
+                try:
+                    body_relation = deduce_equal_or_not(
+                            lhs_range_body, rhs_range_body,
+                            assumptions=inner_assumptions)
+                    if isinstance(body_relation, Equals):
+                        # Every element is equal, so the ExprTuples 
+                        # are equal.
+                        return self.deduce_equality(
+                                Equals(self, other_tuple))
+                    else:
+                        # Every element is not equal, so the ExprTuples 
+                        # are not equal.
+                        # This will enable "any" from "all".
+                        And(ExprRange(
+                                param, NotEquals(lhs_range_body,
+                                                 rhs_range_body),
+                                start_index, end_index)).prove()
+                        return self.not_equal(other_tuple)
+                except (NotImplementedError, UnsatisfiedPrerequisites):
+                    pass
+                if And(ExprRange(param, Equals(lhs_range_body, 
+                                               rhs_range_body),
+                                 start_index, end_index)).proven():
+                    # Every element is equal, so the ExprTuples 
+                    # are equal.
+                    return self.deduce_equality(
+                            Equals(self, other_tuple))
+                elif Or(ExprRange(param, NotEquals(lhs_range_body,
+                                                   rhs_range_body),
+                        start_index, end_index)).proven():
+                    # Some element pair is not equal, so the ExprTuples 
+                    # are not equal.
+                    return self.not_equal(other_tuple)
+                raise UnsatisfiedPrerequisites(
+                        "Could not determine whether %s = %s"
+                        %(self, other_tuple))
+            
+            # Loop through each entry pair in correspondence and
+            # see if we can readily prove whether or not they are
+            # all equal.
+            for idx, (_x, _y) in enumerate(
+                    zip(self.entries, other_tuple.entries)):
+                if isinstance(_x, ExprRange) != isinstance(_y, ExprRange):
+                    raise_non_corresponding()
+                if _x == _y:
+                    # The expressions are the same, so we know they
+                    # are equal.
+                    continue
+                if isinstance(_x, ExprRange):
+                    # Wrap ExprRanges in ExprTuples and compare as
+                    # single entry tuples.
+                    _x = ExprTuple(_x)
+                    _y = ExprTuple(_y)
+                    _k = _x.num_elements()
+                    _l = _y.num_elements()
+                    size_relation = deduce_equal_or_not(_k, _l)
+                    if isinstance(size_relation.expr, NotEquals):
+                        # Not implemented when the ExprRanges don't
+                        # correspond in size.
+                        raise_non_corresponding()
+                    relation = deduce_equal_or_not(_x, _y)
+                else:
+                    # Compare singular entries.
+                    relation = deduce_equal_or_not(_x, _y)
+                if isinstance(relation.expr, NotEquals):
+                    # Aha! They are not equal.
+                    return self.not_equal(other_tuple)
+            # They are equal!
+            return self.deduce_equality(Equals(self, other_tuple))
+
+        raise NotImplementedError(
+                    "ExprTuple.deduce_equal_or_not is not implemented "
+                    "for ExprTuples that have a different number of "
+                    "elements.")
+
+    @relation_prover
+    def not_equal(self, other_tuple, *,
+                  neq_with_diff_len_thm=None,
+                  neq_via_any_elem_neq_thm=None,
+                  **defaults_config):
+        '''
+        Prove and return this ExprTuple not equal to the other
+        ExprTuple.
+        '''
+        from proveit import a, b, i, j
+        from proveit.logic import NotEquals, deduce_equal_or_not
+        from proveit.core_expr_types.tuples import (
+                tuple_neq_with_diff_len, tuple_neq_via_any_elem_neq)
+        if not isinstance(other_tuple, ExprTuple):
+            raise TypeError("Expecting 'other_tuple' to be an ExprTuple "
+                            "not a %s"%other_tuple.__class__)  
+        _a = self
+        _b = other_tuple
+        _i = _a.num_elements()
+        _j = _b.num_elements()
+        size_relation = deduce_equal_or_not(_i, _j)
+        if isinstance(size_relation.expr, NotEquals):
+            # Not equal because the lengths are different.
+            if neq_with_diff_len_thm is None:
+                neq_with_diff_len_thm = tuple_neq_with_diff_len
+            return neq_with_diff_len_thm.instantiate(
+                    {i:_i, j:_j, a:self, b:other_tuple})
+        else:
+            # Use the general theorem for proving tuples are not equal
+            # if any corresponding elements are not equal.
+            if neq_via_any_elem_neq_thm is None:
+                neq_via_any_elem_neq_thm = tuple_neq_via_any_elem_neq
+            return neq_via_any_elem_neq_thm.instantiate(
+                    {i:_i, a:_a, b:_b})
 
     @equality_prover('merged', 'merge')
     def merger(self, **defaults_config):
@@ -628,7 +794,8 @@ class ExprTuple(Composite, Expression):
         {j \in Natural, k-(j+1) \in Natural}
         |- (x_1, .., x_j, x_{j+1}, x_{j+2}, ..., x_k) = (x_1, ..., x_k)
         '''
-        from proveit._core_.expression.lambda_expr import Lambda
+        from proveit._core_.expression.lambda_expr import (
+                Lambda, ArgumentExtractionError)
         from .expr_range import ExprRange, simplified_index
         from proveit.relation import TransRelUpdater
         from proveit.core_expr_types.tuples import (
@@ -736,7 +903,8 @@ class ExprTuple(Composite, Expression):
         return eq.relation
 
     @equality_prover('equated', 'equate')
-    def deduce_equality(self, equality, **defaults_config):
+    def deduce_equality(self, equality, *,
+                        eq_via_elem_eq_thm=None, **defaults_config):
         from proveit import ExprRange
         from proveit import a, b, i
         from proveit.logic import Equals
@@ -800,7 +968,9 @@ class ExprTuple(Composite, Expression):
         _i = lhs.num_elements()
         _a = lhs
         _b = rhs
-        return tuple_eq_via_elem_eq.instantiate({i:_i, a:_a, b:_b})
+        if eq_via_elem_eq_thm is None:
+            eq_via_elem_eq_thm = tuple_eq_via_elem_eq
+        return eq_via_elem_eq_thm.instantiate({i:_i, a:_a, b:_b})
     
     @equality_prover('expanded_range', 'expand_range')
     def range_expansion(self, **defaults_config):

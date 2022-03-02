@@ -3,6 +3,7 @@ from .expr_range import ExprRange
 from proveit._core_.expression.expr import MakeNotImplemented
 from proveit._core_.expression.style_options import StyleOptions
 from proveit._core_.defaults import defaults, USE_DEFAULTS
+from proveit.decorators import relation_prover, equality_prover
 
 
 class ExprArray(ExprTuple):
@@ -261,7 +262,7 @@ class ExprArray(ExprTuple):
         n = nested_range_depth
         return  (r'\cdot \cdot '*n + expr_latex + r' \cdot \cdot'*n)    
 
-    def string(self):
+    def string(self, **kwargs):
         return self._simple_formatted(format_type='string')
 
     def _simple_formatted(self, format_type):
@@ -441,6 +442,14 @@ class ExprArray(ExprTuple):
                     formatted_cells.append(expr.latex(**cell_latex_kwargs))
         return formatted_cells
 
+    def formatted(self, format_type, **kwargs):
+        if format_type == 'latex':
+            return self.latex(**kwargs)
+        elif format_type == 'string':
+            return self.string(**kwargs)
+        raise ValueError("'format_type' should be 'string' or 'latex' not %s"
+                         %format_type)
+
     def latex(self, orientation='horizontal', fence=False, **kwargs):
         justification = self.get_style('justification', 'center')
         
@@ -474,7 +483,7 @@ class ExprArray(ExprTuple):
         out_str = ''
         if fence:
             out_str = r'\left('        
-        out_str = r'\begin{array}{%s} ' % (
+        out_str += r'\begin{array}{%s} ' % (
             justification[0] * width) + '\n '
         
         if orientation == 'horizontal':
@@ -519,7 +528,7 @@ class ExprArray(ExprTuple):
         
         out_str += r'\end{array}' + '\n'
         if fence:
-            out_str = r'\right)'
+            out_str += r'\right)'
         return out_str
 
     def num_elements(self, **defaults_config):
@@ -529,6 +538,27 @@ class ExprArray(ExprTuple):
         '''
         from proveit.core_expr_types import Len
         return Len(self[:]).computed(**defaults_config)
+
+    @equality_prover('equated', 'equate')
+    def deduce_equality(self, equality, **defaults_config):
+        from proveit.core_expr_types.expr_arrays import (
+                array_eq_via_elem_eq_thm)
+        return ExprTuple.deduce_equality(
+                self, equality, eq_via_elem_eq_thm=array_eq_via_elem_eq_thm)
+
+    @relation_prover
+    def not_equal(self, other_tuple, **defaults_config):
+        '''
+        Prove and return this ExprArray not equal to the other
+        ExprArray.
+        '''
+        from proveit.core_expr_types.expr_arrays import (
+                array_neq_with_diff_len, array_neq_via_any_elem_neq)
+        return ExprTuple.not_equal(
+                self, other_tuple, 
+                neq_with_diff_len_thm=array_neq_with_diff_len,
+                neq_via_any_elem_neq_thm=array_neq_via_any_elem_neq)
+
 
 class _RowColToEmpty_kwargs:
     '''
