@@ -1,7 +1,7 @@
 from proveit import (defaults, Literal, Operation, relation_prover)
-from proveit.numbers import deduce_in_number_set
+from proveit.numbers import deduce_in_number_set, NumberOperation
 
-class ModAbs(Operation):
+class ModAbs(NumberOperation):
     # operator of the ModAbs operation.
     _operator_ = Literal(string_format='ModAbs', theory=__file__)
 
