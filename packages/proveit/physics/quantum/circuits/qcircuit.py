@@ -4,9 +4,9 @@ from proveit import (Judgment, Expression, Operation,
                      ExprTuple, ExprArray, VertExprArray, ProofFailure,
                      StyleOptions, free_vars, prover, relation_prover,
                      defaults, safe_dummy_var, TransRelUpdater)
-from proveit import i, j, k, l, m, n, A, U, V, N
+from proveit import i, j, k, l, m, n, A, B, U, V, N
 from proveit.core_expr_types import n_k
-from proveit.logic import Equals, Set, InSet
+from proveit.logic import Equals, deduce_equal_or_not, Set, InSet
 from proveit.relation import Relation
 from proveit.numbers import (Interval, zero, one, two, num, Add, Neg, Mult,
                              subtract, is_literal_int, quick_simplified_index)
@@ -1312,6 +1312,36 @@ class Qcircuit(Function):
                              %prob_relation.lhs.operand)
         return prob_relation.lhs.operand
 
+    @relation_prover
+    def deduce_equal_or_not(self, other_qcircuit, **defaults_config):
+        from . import qcircuit_eq, qcircuit_neq
+        if not isinstance(other_qcircuit, Qcircuit):
+            raise NotImplementedError(
+                    "Qcircuit.deduce_equal_or_not only implemented for a "
+                    "comparison with another Qcircuit.")
+        _k = self.vert_expr_array.num_elements()
+        _l = self.vert_expr_array[0].num_elements()
+        other_k = other_qcircuit.vert_expr_array.num_elements() 
+        other_l = other_qcircuit.vert_expr_array[0].num_elements()
+        if (other_k!= _k or other_l != _l):
+            raise NotImplementedError(
+                    "Qcircuit.deduce_equal_or_not only implemented for a "
+                    "comparison between Qcircuits of the same dimension: "
+                    "%s vs %s and %s vs %s"%(_k, other_k, _l, other_l))
+        varray_relation = deduce_equal_or_not(self.vert_expr_array,
+                                              other_qcircuit.vert_expr_array)
+        # Expand all of the other entries consecutively.
+        _A = ExprTuple(*[entry for column in self.vert_expr_array
+                         for entry in column])
+        _B = ExprTuple(*[entry for column in other_qcircuit.vert_expr_array
+                         for entry in column])
+        if isinstance(varray_relation, Equals):
+            return qcircuit_eq.instantiate(
+                {k:_k, l:_l, A:_A, B:_B}).derive_consequent()
+        else:
+            return qcircuit_neq.instantiate(
+                {k:_k, l:_l, A:_A, B:_B}).derive_consequent()
+        
     
     """
     def replace_equiv_circ(self, current, new, assumptions=USE_DEFAULTS):
