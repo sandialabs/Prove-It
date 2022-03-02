@@ -1,4 +1,4 @@
-from .image import Image, image_of_set
+from .image import Image
 from .inverse_image import InvImage
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

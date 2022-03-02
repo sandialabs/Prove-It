@@ -1,5 +1,5 @@
 from .functions import Functions
-from .images import Image, image_of_set, InvImage
+from .images import Image, InvImage
 from .injections import Injections
 from .surjections import Surjections
 from .bijections import Bijections
