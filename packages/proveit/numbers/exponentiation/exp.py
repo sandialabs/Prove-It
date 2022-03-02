@@ -146,6 +146,7 @@ class Exp(NumberOperation):
             a^0 = 1 for any complex a
             0^x = 0 for any positive x
             1^x = 1 for any complex x
+            a^(Log(a, x)) = x for RealPos a and x, a != 1.
             x^n = x*x*...*x = ? for a natural n and irreducible x.
 
         Handles a zero or one exponent or zero or one base as
@@ -155,7 +156,7 @@ class Exp(NumberOperation):
         from proveit.logic import EvaluationError, is_irreducible_value
         from proveit.logic import InSet
         from proveit.numbers import (zero, one, two, is_literal_int,
-                                     Rational, Abs)
+                                     Log, Rational, Abs)
         from . import (exp_zero_eq_one, exponentiated_zero,
                        exponentiated_one, exp_nat_pos_expansion)
 
@@ -200,6 +201,14 @@ class Exp(NumberOperation):
 
         if self.exponent == one:
             return self.power_of_one_reduction()
+        if (isinstance(self.exponent, Log)
+            and self.base == self.exponent.base):
+            # base_ns  = self.base.deduce_number_set()
+            # antilog_ns = self.exponent.antilog.deduce_number_set()
+            if (InSet(self.base, RealPos).proven()
+                and InSet(self.exponent.antilog, RealPos).proven()
+                and NotEquals(self.base, one).proven()):
+                return self.power_of_log_reduction()
         if (isinstance(self.base, Exp) and
             isinstance(self.base.exponent, Div) and
             self.base.exponent.numerator == one and
@@ -252,6 +261,20 @@ class Exp(NumberOperation):
             raise ValueError("'power_of_one_reduction' only applicable when "
                              "the exponent is 1, not %s"%self.exponent)
         return complex_x_to_first_power_is_x.instantiate({x: self.base})
+
+    @equality_prover('power_of_log_reduced', 'power_of_log_reduce')
+    def power_of_log_reduction(self, **defaults_config):
+        from proveit.numbers import Log
+        from . import exponent_log_with_same_base
+        if (not isinstance(self.exponent, Log)
+            or self.base != self.exponent.base):
+            raise ValueError(
+                    "Exp.power_of_log() method only applicable when "
+                    "the exponent is a Log with base matching the Exp "
+                    "base. Instead we have Exp base {0} and Exp "
+                    "exponent {1}.".format(self.base, self.exponent))
+        return exponent_log_with_same_base.instantiate(
+                {a: self.base, x: self.exponent.antilog})
 
     @relation_prover
     def not_equal(self, other, **defaults_config):
@@ -875,6 +898,15 @@ class Exp(NumberOperation):
                         "argument is expected to be a 'Less', 'LessEq', 'greater', "
                         "or 'greater_eq' relation. Instead we have {}.".
                         format(operand_relation))
+            else:
+                raise ValueError(
+                        "In Exp.bound_via_operand_bound(), either the "
+                        "base {0} is not known to be greater than 1 and/or "
+                        "the operand {1} is not known to be Real.".
+                        format(_a_sub, _x_sub))
+
+        else:
+            raise ValueError("OOOPS!")
 
         if bound.rhs == self:
             return bound.with_direction_reversed()
