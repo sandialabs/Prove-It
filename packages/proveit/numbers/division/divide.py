@@ -125,6 +125,16 @@ class Div(NumberOperation):
                 and NotEquals(expr.denominator, zero).proven()):
                 # we have something like 0/x so reduce to 0
                 expr = eq.update(expr.zero_numerator_reduction())
+        
+        # finally, check if we have something like (x/(y/z))
+        # but! remember to check here if we still even have a Div expr
+        # b/c some of the work above might have changed it to
+        # something else!
+        if (isinstance(expr, Div)
+            and isinstance(expr.denominator, Div)
+            and NotEquals(expr.denominator.numerator, zero).proven()
+            and NotEquals(expr.denominator.denominator, zero).prove() ):
+            expr = eq.update(expr.div_in_denominator_reduction())
 
         return eq.relation
 
@@ -138,6 +148,26 @@ class Div(NumberOperation):
         from proveit.numbers.division import frac_zero_numer
         _x_sub = self.denominator
         return frac_zero_numer.instantiate({x: _x_sub})
+
+    @equality_prover('div_in_denominator_reduced', 'div_in_denominator_reduce')
+    def div_in_denominator_reduction(self, **defaults_config):
+        '''
+        Deduce and return an equality between self of the form
+        (x/(y/z)) (i.e. a fraction with a fraction as it denominator)
+        and the form x (z/y). Will need to know or assume that x, y, z
+        are Complex with y != 0 and z != 0.
+        '''
+        if (not isinstance(self.denominator, Div)):
+            raise ValueError(
+                    "Div.div_in_denominator_reduction() method only "
+                    "applicable when the denominator is itself a Div."
+                    "Instead we have the expr {0} with denominator {1}.".
+                    format(self, self.denominator))
+        from proveit.numbers.division import div_by_frac_is_mult_by_reciprocal
+        return div_by_frac_is_mult_by_reciprocal.instantiate(
+                {x: self.numerator, y: self.denominator.numerator,
+                 z: self.denominator.denominator})
+
 
     @equality_prover('all_canceled', 'all_cancel')
     def cancelations(self, **defaults_config):
