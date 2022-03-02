@@ -10,6 +10,7 @@ from .equality import (
     evaluate_truth,
     evaluate_falsehood,
     evaluation_or_simplification,
+    deduce_equal_or_not,
     SimplificationError,
     EvaluationError)
 from .irreducible_value import IrreducibleValue, is_irreducible_value
@@ -25,7 +26,7 @@ from .sets import (Union, UnionAll, Intersect, IntersectAll, Difference,
                    SetOfAll, CartProd, CartExp,
                    PowerSet, Disjoint, Distinct, Card)
 from .sets import (Functions, Injections, Surjections, Bijections,
-                   Image, InvImage, image_of_set)
+                   Image, InvImage)
 from .classes import InClass, NotInClass, ClassMembership, ClassNonmembership
 
 #from mapping.mapping_ops import Domain, CoDomain
