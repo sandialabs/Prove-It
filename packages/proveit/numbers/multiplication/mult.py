@@ -388,9 +388,11 @@ class Mult(NumberOperation):
             # this is improved further).
             if isinstance(expr, Mult) and expr.factors.num_entries()>1:
                 common_base = None
+                has_exp_factor = False
                 for factor in self.factors:
                     factor_base = None
                     if isinstance(factor, Exp):
+                        has_exp_factor = True
                         factor_base = factor.base
                     else:
                         factor_base = factor
@@ -399,7 +401,7 @@ class Mult(NumberOperation):
                     elif common_base != factor_base:
                         common_base = None
                         break
-                if common_base is not None:
+                if has_exp_factor and (common_base is not None):
                     expr = eq.update(expr.exponent_combination())
         
         if expr != self:
