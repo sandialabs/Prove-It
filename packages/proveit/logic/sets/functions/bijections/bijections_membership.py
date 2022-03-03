@@ -1,4 +1,4 @@
-from proveit import Judgment, Lambda, prover, equality_prover
+from proveit import Judgment, Lambda, Conditional, prover, equality_prover
 from proveit import f, g, x, A, B, C
 from proveit.logic import InSet, SetMembership
 from .bijections import Bijections
@@ -17,6 +17,13 @@ class BijectionsMembership(SetMembership):
         Unfold the injections set membership.
         '''
         yield self.unfold
+        if (isinstance(self.element, Lambda) and 
+                isinstance(self.element.body, Conditional) and
+                self.element.body.condition == InSet(self.element.parameter,
+                                                     self.domain.domain)):
+            # From [(x -> f(x) if x ∈ A) ∈ Bijections(A, B)], 
+            # derive and return [f ∈ Bijections(A, B)].
+            yield self.elim_domain_condition
 
     @prover
     def conclude(self, **defaults_config):
@@ -67,6 +74,33 @@ class BijectionsMembership(SetMembership):
                 {A:_A, B:_B, f:_f}, auto_simplify=False)
     
     @prover
+    def elim_domain_condition(self, **defaults_config):
+        '''
+        From [(x -> f(x) if x ∈ A) ∈ Bijections(A, B)], 
+        derive and return
+        [f ∈ Bijections(A, B)].
+        '''
+        from . import elim_domain_condition
+        bijections = self.domain
+        _A = bijections.domain
+        _B = bijections.codomain
+        _f_with_cond = self.element
+        if (not isinstance(_f_with_cond, Lambda) or 
+                not isinstance(_f_with_cond.body, Conditional)):
+            raise TypeError(
+                    "'elim_domain_condition' only works with conditioned "
+                    "Lambda function element, not %s"%_f_with_cond)
+        condition = _f_with_cond.body.condition
+        domain_cond = InSet(_f_with_cond.parameter, _A)
+        if condition != domain_cond:
+            raise TypeError(
+                    "'elim_domain_condition' only works with a Lambda "
+                    "function element conditioned on the parameter being "
+                    "in the domain: %s ≠ %s"%(condition, domain_cond))
+        _f = Lambda(_f_with_cond.parameter, _f_with_cond.body.value)
+        return elim_domain_condition.instantiate({A:_A, B:_B, f:_f})
+    
+    @prover
     def apply_transitivity(self, subsequent_bijection,
                            **defaults_config):
         '''
@@ -101,6 +135,7 @@ class BijectionsMembership(SetMembership):
             _x = _g.parameter
         else:
             _x = x
-        return bijection_transitivity.instantiate(
-                {f:_f, g:_g, A:_A, B:_B, C:_C, x:_x}).derive_consequent()
+        return (bijection_transitivity.instantiate(
+                {f:_f, g:_g, A:_A, B:_B, C:_C, x:_x})
+                .derive_consequent().elim_domain_condition())
 
