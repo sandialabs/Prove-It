@@ -1,5 +1,8 @@
-from proveit import (defaults, Literal, Operation, relation_prover)
-from proveit.numbers import deduce_in_number_set, NumberOperation
+from proveit import (
+        a, b, N, defaults, equality_prover, Literal, Operation,
+        relation_prover)
+from proveit.numbers import (
+        deduce_number_set, deduce_in_number_set, Integer, NumberOperation)
 
 class ModAbs(NumberOperation):
     # operator of the ModAbs operation.
@@ -19,6 +22,26 @@ class ModAbs(NumberOperation):
         return (r'\left|' + self.value.latex(fence=False)
                 + r'\right|_{\textup{mod}\thinspace '
                   + self.divisor.latex(fence=False) + r'}')
+
+    @equality_prover('reversed_difference', 'reverse_difference')
+    def difference_reversal(self, **defaults_config):
+        '''
+        Derive |a - b|_{N} = |b - a|_{N}.
+        '''
+        from proveit.numbers import Add, Neg
+        from . import mod_abs_diff_reversal
+        if not (isinstance(self.value, Add) and
+                self.value.operands.is_double() and
+                isinstance(self.value.operands[1], Neg)):
+            raise ValueError(
+                    "ModAbs.difference_reversal is only applicable for "
+                    "an expression of the form |a - b|_{N}, not {0}".
+                    format(self))
+        _a_sub = self.value.operands[0]
+        _b_sub = self.value.operands[1].operand
+        _N_sub = self.divisor
+        return mod_abs_diff_reversal.instantiate(
+                {a:_a_sub, b:_b_sub, N: _N_sub})
 
     @relation_prover
     def deduce_in_number_set(self, number_set, **defaults_config):
@@ -48,7 +71,7 @@ class ModAbs(NumberOperation):
         Prove membership of this expression in the most 
         restrictive standard number set we can readily know.
         '''
-        operand_ns = deduce_number_set(self.operand).domain
+        operand_ns = deduce_number_set(self.value).domain
         if operand_ns.includes(Integer):
             return self.deduce_in_number_set(Integer)
         else:
