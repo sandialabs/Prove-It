@@ -12,7 +12,6 @@ proveit.logic.booleans.conjunction.left_from_and
 proveit.logic.booleans.conjunction.right_from_and
 proveit.logic.booleans.conjunction.some_from_and
 proveit.logic.booleans.conjunction.true_and_true
-proveit.logic.booleans.conjunction.unary_and_reduction
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.negation_intro
 proveit.logic.equality.equals_reversal

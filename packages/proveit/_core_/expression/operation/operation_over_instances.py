@@ -613,11 +613,13 @@ class OperationOverInstances(Operation):
         will be a conjunction if there are more than one non-domain
         conditions.
         '''
-        from proveit.logic import And
+        from proveit.logic import And, TRUE
         domains = self.explicit_domains()
         if len(domains) == 0:
             return self.condition
         non_domain_conditions = self.conditions[len(domains):].entries
+        if len(non_domain_conditions) == 0:
+            return TRUE
         if len(non_domain_conditions) == 1:
             return non_domain_conditions[0]
         return And(non_domain_conditions)

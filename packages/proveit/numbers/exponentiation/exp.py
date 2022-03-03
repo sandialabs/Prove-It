@@ -184,7 +184,7 @@ class Exp(NumberOperation):
                 .__getattr__('reduce_%s_repeats' % _n)
             rep_reduction = repetition_thm.instantiate({x: self.base})
             expr = eq.update(expr.inner_expr().operands.substitution(
-                    rep_reduction.rhs))
+                    rep_reduction.rhs, preserve_all=True))
             expr = eq.update(expr.evaluation())
             return eq.relation
         elif must_evaluate:
