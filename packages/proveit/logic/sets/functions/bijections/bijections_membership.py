@@ -1,5 +1,5 @@
-from proveit import Judgment, prover, equality_prover
-from proveit import f, g, A, B, C
+from proveit import Judgment, Lambda, prover, equality_prover
+from proveit import f, g, x, A, B, C
 from proveit.logic import InSet, SetMembership
 from .bijections import Bijections
 
@@ -95,6 +95,12 @@ class BijectionsMembership(SetMembership):
         _A = self.domain.domain
         _B = f_codomain
         _C = subsequent_bijection.domain.codomain
+        if isinstance(_f, Lambda):
+            _x = _f.parameter
+        elif isinstance(_g, Lambda):
+            _x = _g.parameter
+        else:
+            _x = x
         return bijection_transitivity.instantiate(
-                {f:_f, g:_g, A:_A, B:_B, C:_C}).derive_consequent()
+                {f:_f, g:_g, A:_A, B:_B, C:_C, x:_x}).derive_consequent()
 
