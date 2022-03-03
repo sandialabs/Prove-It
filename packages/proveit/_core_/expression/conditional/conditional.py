@@ -202,13 +202,38 @@ class Conditional(Expression):
         Expression._manual_equality_replaced.  The 'recursion_fn'
         allows this to satisfy both roles.
         '''
-        subbed_cond = recursion_fn(self.condition, requirements=requirements, 
-                                   stored_replacements=stored_replacements)
+        from proveit.logic import And
         # Add the 'condition' as an assumption for the 'value' scope.
-        assumptions_with_condition = defaults.assumptions + (subbed_cond,)
+        # If there are multiple conditions in a conjunction, add them
+        # as assumptions one by one and allow them to be used for
+        # subsequent conditions.
+        if isinstance(self.condition, And):
+            conditions = self.condition.operands.entries
+        else:
+            conditions = [self.condition]
+        prev_num_assumptions = len(defaults.assumptions)
+        
+        # For each condition, we'll assume the previous substituted
+        # conditions.
+        subbed_conds = []
+        for _k, cond in enumerate(conditions):
+            inner_assumptions = (defaults.assumptions 
+                                 + tuple(subbed_conds))
+            with defaults.temporary() as temp_defaults:
+                temp_defaults.assumptions = inner_assumptions
+                if len(defaults.assumptions) > prev_num_assumptions:
+                    # Since the assumptions have changed, we can no 
+                    # longer use the stored_replacements from before.
+                    stored_replacements = dict()
+                subbed_conds.append(
+                        recursion_fn(cond, requirements=requirements, 
+                                     stored_replacements=stored_replacements))
+    
+        # For the value, we'll assume all of the substituted conditions.
+        inner_assumptions = (defaults.assumptions  + tuple(subbed_conds))
         with defaults.temporary() as temp_defaults:
             prev_num_assumptions = len(defaults.assumptions)
-            temp_defaults.assumptions = assumptions_with_condition
+            temp_defaults.assumptions = inner_assumptions
             if len(defaults.assumptions) > prev_num_assumptions:
                 # Since the assumptions have changed, we can no longer
                 # use the stored_replacements from before.
@@ -216,7 +241,10 @@ class Conditional(Expression):
             subbed_val = recursion_fn(self.value,
                     requirements=requirements,
                     stored_replacements=stored_replacements)
-        return (subbed_val, subbed_cond)
+        if len(subbed_conds) == 1:
+            return (subbed_val, subbed_conds[0])
+        else:
+            return (subbed_val, And(*subbed_conds))
 
     @equality_prover('simplified', 'simplify')
     def simplification(self, **defaults_config):

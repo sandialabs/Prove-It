@@ -557,10 +557,14 @@ class Exp(NumberOperation):
 
         replacements = list(defaults.replacements)
         if defaults.auto_simplify:
-            replacements.append(mult_equiv.shallow_simplification())
+            with Mult.temporary_simplification_directives() as tmp_directives:
+                # Don't recombine the exponents after separating them.
+                tmp_directives.combine_exponents = False
+                replacements.append(mult_equiv.shallow_simplification())
 
         # reverse the equality relationship and return
-        return exp_separated.derive_reversed(replacements=replacements)
+        return exp_separated.derive_reversed(replacements=replacements,
+                                             auto_simplify=False)
 
 
     """

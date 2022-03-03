@@ -3,7 +3,7 @@ from proveit import (Judgment, defaults, ExprRange, relation_prover,
                      UnsatisfiedPrerequisites,
                      prover, TransRelUpdater, SimplificationDirectives)
 from proveit import a, b, c, d, e, f, i, j, k, A, K, Q, U, V, W, alpha
-from proveit.logic import Equals, InClass, SetMembership
+from proveit.logic import Equals, InClass, SetMembership, SubsetEq
 from proveit.abstract_algebra.generic_methods import (
         apply_association_thm, apply_disassociation_thm)
 from proveit.linear_algebra import (VecSpaces, ScalarMult, VecAdd, VecSum,
@@ -110,8 +110,12 @@ class TensorProd(Operation):
         _i = _a.num_elements()
         _K = VecSpaces.get_field(field)
         vec_spaces = VecSpaces.known_vec_spaces(self.operands, field=_K)
-        return tensor_prod_is_in_tensor_prod_space.instantiate(
+        membership = tensor_prod_is_in_tensor_prod_space.instantiate(
                 {K: _K, i: _i, V: vec_spaces, a: _a})      
+        if vec_space is not None and membership.domain != vec_space:
+            sub_rel = SubsetEq(membership.domain, vec_space)
+            return sub_rel.derive_superset_membership(self)
+        return membership
         
     @relation_prover
     def deduce_as_vec_space(self, **defaults_config):

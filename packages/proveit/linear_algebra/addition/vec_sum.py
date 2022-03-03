@@ -3,7 +3,7 @@ from proveit import (defaults, free_vars, Literal, Function, Lambda,
                      TransRelUpdater, UnsatisfiedPrerequisites)
 from proveit import a, b, c, f, i, j, k, v, K, Q, V
 from proveit.logic import InSet
-from proveit.numbers import Interval
+from proveit.numbers import Interval, Mult
 from proveit.abstract_algebra import GroupSum 
 from proveit.linear_algebra import VecSpaces
 
@@ -412,12 +412,7 @@ class VecSum(GroupSum):
                 # If the scalar itself is a Mult of things, go through
                 # and pull to the front of the Mult all individual
                 # factors that are not dependent on the summation index.
-                from proveit.numbers import Mult
                 if isinstance(expr.summand.scalar, Mult):
-                    # start by flattening the Mult if possible: Not needed?
-                    expr = eq.update(expr.inner_expr().
-                            summand.scalar.shallow_simplification())
-
                     # Repeatedly pull index-independent factors #
                     # to the front of the Mult factors          #
 
@@ -434,7 +429,8 @@ class VecSum(GroupSum):
                             expr = eq.update(
                                 expr.inner_expr().summand.scalar.factorization(
                                     the_factor,
-                                    assumptions=assumptions_with_conditions))
+                                    assumptions=assumptions_with_conditions,
+                                    preserve_all=True))
                             _num_factored += 1
                             _num_unfactored -= 1
 
@@ -443,13 +439,15 @@ class VecSum(GroupSum):
                         expr = eq.update(
                             expr.inner_expr().summand.scalar.association(
                                 0, _num_factored,
-                                assumptions=assumptions_with_conditions))
+                                assumptions=assumptions_with_conditions,
+                                preserve_all=True))
                     # group the unfactorable factors
                     if _num_unfactored > 1:
                         expr = eq.update(
                             expr.inner_expr().summand.scalar.association(
                                 1, _num_unfactored,
-                                assumptions=assumptions_with_conditions))
+                                assumptions=assumptions_with_conditions,
+                                preserve_all=True))
 
                     # finally, extract any factorable scalar factors
                     if _num_factored > 0:

@@ -1,5 +1,4 @@
-from proveit import Function, Literal
-
+from proveit import Function, Literal, prover
 
 class Disjoint(Function):
     '''
@@ -14,3 +13,17 @@ class Disjoint(Function):
     def __init__(self, *sets, styles=None):
         Function.__init__(self, Disjoint._operator_, sets,
                           styles=styles)
+        self.sets = self.operands
+
+    @prover
+    def conclude(self, **defaults_config):
+        '''
+        Conclude that sets are Disjoint.  One of the sets must have
+        a 'deduce_disjointness' method for this to work.
+        '''
+        for operand in self.sets:
+            if hasattr(operand, 'deduce_disjointness'):
+                return operand.deduce_disjointness(self)
+        raise NotImplementedError(
+                "Cannot conclude %s; non of the sets have a "
+                "'deduce_disjointness' method."%self)

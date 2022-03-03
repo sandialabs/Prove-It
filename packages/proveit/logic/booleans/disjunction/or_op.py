@@ -1,11 +1,14 @@
-from proveit import (Expression, Literal, Operation, defaults, USE_DEFAULTS,
+from proveit import (Expression, Literal, Operation, ExprRange, 
+                     defaults, USE_DEFAULTS,
                      ProofFailure, InnerExpr, UnusableProof,
                      prover, relation_prover, equality_prover,
                      SimplificationDirectives, TransRelUpdater)
 from proveit import A, B, C, D, m, n
 from proveit.logic.booleans.booleans import in_bool
-from proveit.abstract_algebra.generic_methods import (apply_commutation_thm, apply_association_thm,
-    apply_disassociation_thm, group_commutation, group_commute)
+from proveit.abstract_algebra.generic_methods import (
+        apply_commutation_thm, apply_association_thm,
+        apply_disassociation_thm, group_commutation, group_commute,
+        prove_via_grouping_ranges)
 
 
 class Or(Operation):
@@ -55,6 +58,7 @@ class Or(Operation):
         or_if_any theorem.  Otherwise, a reduction proof will be
         attempted (evaluating the operands).
         '''
+        from proveit.logic import And
         from . import true_or_true, true_or_false, false_or_true
         if self in {true_or_true.expr, true_or_false.expr, false_or_true.expr}:
             # should be proven via one of the imported theorems as a
@@ -66,6 +70,26 @@ class Or(Operation):
         # trying to prove operands when we already know one to be true.
         use_automation_possibilities = (
                 [False, True] if defaults.automation else [False])
+
+        if self.operands.contains_range():
+            # There are ExprRange operands.
+            if self.operands.num_entries()==1:
+                # Just a single ExprRange.
+                if And(self.operands.entries[0]).proven():
+                    # Trivally, if all of the operands are
+                    # True then any of them are, as long as
+                    # there is at list one (note,
+                    # Or() = FALSE, so we shouldn't try to
+                    # conclude Or() anyway).
+                    return self.conclude_any_via_all()                            
+                # Use DeMorgan's law.
+                return self.conclude_via_demorgans()
+            # Group each ExprRange operand, call conclude_negation,
+            # then disassociate the ExprRange operands.
+            return prove_via_grouping_ranges(
+                    self,
+                    lambda expr, **kwargs: expr.conclude(**kwargs))
+
         for use_automation_for_operand in use_automation_possibilities:
             proven_operand_indices = []
             for _k, operand in enumerate(self.operands):
@@ -207,6 +231,17 @@ class Or(Operation):
             _A = self.operands
             _m = _A.num_elements()
             return demorgans_law_and_to_or.instantiate({m: _m, A: _A})
+
+    @prover
+    def conclude_any_via_all(self, **defaults_config):
+        '''
+        From A and B and ... and Z conclude A or B or ... or Z as
+        long as there is at least one operand.
+        '''
+        from . import any_if_all
+        _A = self.operands
+        _m = _A.num_elements()
+        return any_if_all.instantiate({m:_m, A:_A})
 
     @prover
     def derive_right_if_not_left(self, **defaults_config):

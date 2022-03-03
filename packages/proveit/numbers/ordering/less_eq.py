@@ -51,6 +51,12 @@ class LessEq(NumberOrderingRelation):
         # if is_literal_int(self.lhs) or is_literal_int(self.rhs):
         #     yield self.derive_one_side_in_real_subset
 
+    def negation_side_effects(self, judgment):
+        '''
+        From Not(a <= b) derive a > b as a side-effect.
+        '''
+        yield self.deduce_complement
+
     @prover
     def conclude(self, **defaults_config):
         '''
@@ -180,16 +186,29 @@ class LessEq(NumberOrderingRelation):
     def derive_negated(self, **defaults_config):
         '''
         From a <= b, derive and return -b <= -a.
-        Assumptions may be required to prove that a, and b are in Real.
         '''
-        # from . import negated_less_eq
-        # new_rel = negated_less_eq.instantiate(
-        #         {a: self.lower, b: self.upper})
-        # return new_rel.with_mimicked_style(self)
         from proveit.numbers.negation import negated_weak_bound
         new_rel = negated_weak_bound.instantiate(
                 {x: self.lower, y: self.upper})
         return new_rel.with_mimicked_style(self)
+
+    @prover
+    def deduce_complement(self, **defaults_config):
+        '''
+        From Not(a <= b), derive and return (b < a).
+        '''
+        from . import less_eq_complement_is_greater
+        return less_eq_complement_is_greater.instantiate(
+                {x:self.lower, y:self.upper}).derive_consequent()
+
+    @prover
+    def shallow_simplification_of_negation(self, **defaults_config):
+        '''
+        Prove and return Not(a <= b) = (b < a) as a simplification.
+        '''
+        from . import less_eq_complement_is_greater
+        return less_eq_complement_is_greater.instantiate(
+                {x:self.lower, y:self.upper})
 
     @prover
     def derive_shifted(self, addend, addend_side='right',

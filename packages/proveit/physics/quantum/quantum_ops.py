@@ -1,7 +1,7 @@
 from proveit import (equality_prover, Operation, Function, Literal, 
                      TransRelUpdater)
 from proveit import x
-from proveit.linear_algebra import SU, TensorExp
+from proveit.linear_algebra import SpecialUnitary, Unitary, TensorExp
 from proveit.logic import CartExp
 from proveit.numbers import one, two, Complex, Exp
 
@@ -34,8 +34,7 @@ def QubitRegisterSpace(num_Qbits):
 
 
 def RegisterSU(n):
-    '''
-    Transplanted here beginning 2/13/2020 by wdc, from the old
-    physics/quantum/common.py
-    '''
-    return SU(Exp(two, n))
+    return SpecialUnitary(Exp(two, n))
+
+def RegisterU(n):
+    return Unitary(Exp(two, n))

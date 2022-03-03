@@ -1,5 +1,8 @@
 from proveit._core_.expression.expr import MakeNotImplemented
+from .expr_tuple import ExprTuple
 from .expr_array import ExprArray, var_array
+from proveit.decorators import relation_prover, equality_prover
+
 
 class VertExprArray(ExprArray):
     '''
@@ -50,6 +53,27 @@ class VertExprArray(ExprArray):
         ExprArray._config_latex_tool(self, lt)
         if 'multirow' not in lt.packages:
             lt.packages.append('multirow')
+
+    @equality_prover('equated', 'equate')
+    def deduce_equality(self, equality, **defaults_config):
+        from proveit.core_expr_types.expr_arrays import (
+                varray_eq_via_elem_eq_thm)
+        return ExprTuple.deduce_equality(
+                self, equality, eq_via_elem_eq_thm=varray_eq_via_elem_eq_thm)
+
+    @relation_prover
+    def not_equal(self, other_tuple, **defaults_config):
+        '''
+        Prove and return this ExprArray not equal to the other
+        ExprArray.
+        '''
+        from proveit.core_expr_types.expr_arrays import (
+                varray_neq_with_diff_len, varray_neq_via_any_elem_neq)
+        return ExprTuple.not_equal(
+                self, other_tuple, 
+                neq_with_diff_len_thm=varray_neq_with_diff_len,
+                neq_via_any_elem_neq_thm=varray_neq_via_any_elem_neq)
+
 
 vert_var_array = (
         lambda var, start_index_or_indices, end_index_or_indices :

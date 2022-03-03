@@ -276,7 +276,7 @@ def deduce_number_set(expr, **defaults_config):
     in a standard number set that is as restrictive as we can
     readily know.
     '''
-    from proveit.logic import InSet, Equals, NotEquals
+    from proveit.logic import And, InSet, Equals, NotEquals
     from proveit.numbers import Less, LessEq, zero
 
     # Find the first (most restrictive) number set that
@@ -289,7 +289,7 @@ def deduce_number_set(expr, **defaults_config):
                                            InSet(eq_expr.body, number_set),
                                            eq_expr.true_start_index,
                                            eq_expr.true_end_index,
-                                           styles=eq_expr.styles))
+                                           styles=eq_expr.get_styles()))
             else:
                 membership = InSet(eq_expr, number_set)
             if membership.proven():

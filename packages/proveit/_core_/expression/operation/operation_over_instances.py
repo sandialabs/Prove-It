@@ -585,7 +585,7 @@ class OperationOverInstances(Operation):
     def domain_conditions(self):
         '''
         Return the domain conditions of all instance variables that
-        areg joined together at this level according to the style.
+        are joined together at this level according to the style.
         '''
         if hasattr(self, 'domains'):
             assert (self.conditions.num_entries() >= 
@@ -606,6 +606,21 @@ class OperationOverInstances(Operation):
                                                    self.conditions[0]))
             domain_conditions.append(self.conditions[0])
             return domain_conditions
+    
+    def non_domain_condition(self):
+        '''
+        Return the condition that excludes domain condition(s); this
+        will be a conjunction if there are more than one non-domain
+        conditions.
+        '''
+        from proveit.logic import And
+        domains = self.explicit_domains()
+        if len(domains) == 0:
+            return self.condition
+        non_domain_conditions = self.conditions[len(domains):].entries
+        if len(non_domain_conditions) == 1:
+            return non_domain_conditions[0]
+        return And(non_domain_conditions)
 
     def explicit_conditions(self):
         '''

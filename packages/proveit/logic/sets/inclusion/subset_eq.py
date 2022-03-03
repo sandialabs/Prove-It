@@ -69,6 +69,11 @@ class SubsetEq(InclusionRelation):
                 return concluded
 
         _A, _B = self.operands.entries
+        if hasattr(_A, 'deduce_superset_eq_relation'):
+            try:
+                return _A.deduce_superset_eq_relation(_B)
+            except NotImplementedError:
+                pass
         if hasattr(_B, 'deduce_subset_eq_relation'):
             try:
                 return _B.deduce_subset_eq_relation(_A)

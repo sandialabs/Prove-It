@@ -810,7 +810,9 @@ class Equals(TransitiveRelation):
             # between each other, where appropriate.
             return self.lhs.eval_equality(self.rhs)
         if must_evaluate:
-            raise EvaluationError(self)
+            # If we need an evaluation, this should do the trick:
+            deduce_equal_or_not(self.lhs, self.rhs)
+            return self.evaluation()
         return Operation.shallow_simplification(self)
 
     @staticmethod
@@ -1210,6 +1212,26 @@ def evaluate_falsehood(expr, **defaults_config):
     '''
     from proveit.logic import FALSE
     return Equals(expr, FALSE).conclude_boolean_equality()
+
+@prover
+def deduce_equal_or_not(lhs, rhs, **defaults_config):
+    '''
+    Prove and return that lhs=rhs or lhs≠rhs or raise an 
+    UnsatisfiedPrerequisites or NotImplementedError
+    if neither of these is readily known.
+    '''
+    from proveit.logic import NotEquals
+    if Equals(lhs, rhs).proven():
+        return Equals(lhs, rhs).prove()
+    if lhs == rhs:
+        return Equals(lhs, rhs).conclude_via_reflexivity()
+    if NotEquals(lhs, rhs).proven():
+        return NotEquals(lhs, rhs).prove()
+    if hasattr(lhs, 'deduce_equal_or_not'):
+        return lhs.deduce_equal_or_not(rhs)
+    raise UnsatisfiedPrerequisites(
+            "We cannot readily prove whether or not %s=%s"
+            %(lhs, rhs))
 
 def evaluation_or_simplification(expr, return_none_if_trivial=False):
     '''

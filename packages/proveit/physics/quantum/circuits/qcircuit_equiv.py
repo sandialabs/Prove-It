@@ -1,5 +1,5 @@
-from proveit import (Literal, Lambda, VertExprArray, TransitiveRelation, 
-                     InnerExpr, TransitivityException,
+from proveit import (Expression, Literal, Lambda, VertExprArray,
+                     InnerExpr, TransitiveRelation, TransitivityException,
                      as_expression, Judgment, prover, 
                      defaults, USE_DEFAULTS)
 from proveit import j, k, l, m, A, B, C, D, Q
@@ -246,7 +246,17 @@ class QcircuitEquiv(TransitiveRelation):
             equiv = impl.derive_consequent()
             return equiv.without_wrapping()
         raise NotImplementedError()
-        
+
+
+    @prover 
+    def equate_probs(self, **defaults_config):
+        '''
+        Derive that Prob(A) = Prob(B) given A ≅ B represented by
+        this Qcircuit equivalence.
+        '''
+        from . import prob_eq_via_equiv
+        return prob_eq_via_equiv.instantiate({A:self.lhs, B:self.rhs})
+    
     @prover
     def _sub_one_side_into(self, prob_relation_or_inner_expr, *,
                            which_side, **defaults_config):
@@ -263,6 +273,8 @@ class QcircuitEquiv(TransitiveRelation):
             orig_circuit = equiv.lhs
         else:
             raise ValueError("'which_side' must either be 'left' or 'right'")
+        if isinstance(prob_relation_or_inner_expr, Judgment):
+            prob_relation_or_inner_expr = prob_relation_or_inner_expr.expr
         if isinstance(prob_relation_or_inner_expr, InnerExpr):
             # This should be an inner expresion of a probability 
             # over a quantum circuit.
@@ -295,16 +307,20 @@ class QcircuitEquiv(TransitiveRelation):
                     thm = rhs_prob_via_equiv
                 equiv = equiv.substitution(circuit_or_lambda_map)
         else:
-            # Find Prob(A) for 'right' or Prob(B) for 'left'
-            # and make a global replacement.
-            if not isinstance(prob_relation_or_inner_expr, Expression):
-                raise TypeError(
-                    "'prob_relation_or_inner_expr' must be an expression "
-                    "involving the Prob of a a quantum circuit or "
-                    "an InnerExpr within one")
-            orig_prob = Prob(orig_circuit)
+            # prob_relation_or_inner_expr should be a probability
+            # relation (it isn't an InnerExpr).
+            prob_relation = prob_relation_or_inner_expr
+            qcircuit = Qcircuit._extract_circuit_from_prob_relation(
+                    prob_relation)
+            if qcircuit != orig_circuit:
+                # Let's see if orig_circuit is a portion of qcircuit:
+                if which_side == 'left':
+                    equiv = self.derive_reversed().substitution(qcircuit)
+                    thm = rhs_prob_via_equiv
+                else:
+                    equiv = self.substitution(qcircuit)
             prob_relation_lambda = Lambda.global_repl(
-                prob_relation_or_inner_expr, orig_prob)
+                prob_relation, Prob(qcircuit))
 
         # Prove the probability relation.
         return thm.instantiate(
@@ -334,5 +350,5 @@ class QcircuitEquiv(TransitiveRelation):
         columns.  Specifying a lambda map, a specific portion may
         be indicated over any subset of rows.
         '''
-        return self._sub_one_side_into(circuit_or_lambda_map,
+        return self._sub_one_side_into(prob_relation_or_lambda_map,
                                        which_side = 'right')        

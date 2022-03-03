@@ -43,6 +43,12 @@ proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.logic.sets.inclusion.unfold_subset_eq
 proveit.logic.sets.subtraction.all_but_one_membership_unfolding
 proveit.logic.sets.subtraction.membership_unfolding
+proveit.numbers.absolute_value.abs_complex_closure
+proveit.numbers.absolute_value.abs_integer_closure
+proveit.numbers.absolute_value.abs_integer_nonzero_closure
+proveit.numbers.absolute_value.abs_nonzero_closure
+proveit.numbers.absolute_value.abs_rational_closure
+proveit.numbers.absolute_value.abs_rational_nonzero_closure
 proveit.numbers.addition.add_complex_closure
 proveit.numbers.addition.add_complex_closure_bin
 proveit.numbers.addition.add_int_closure
@@ -318,7 +324,7 @@ proveit.numbers.summation.summation_nat_closure
 proveit.numbers.summation.summation_nat_pos_closure
 proveit.numbers.summation.summation_real_closure
 proveit.numbers.summation.weak_summation_from_summands_bound
-proveit.physics.quantum.QPE._all_abs_alpha_l_sqrd_are_real
+proveit.physics.quantum.QPE._all_alpha_l_is_complex
 proveit.physics.quantum.QPE._alpha_l_sqrd_ineq
 proveit.physics.quantum.QPE._fail_sum
 proveit.physics.quantum.QPE._neg_domain_in_full_domain_sans_zero

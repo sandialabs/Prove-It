@@ -28,7 +28,8 @@ class Mult(NumberOperation):
                          theory=__file__)
 
     _simplification_directives_ = SimplificationDirectives(
-            ungroup = True, irreducibles_in_front = True)
+            ungroup=True, combine_exponents=True,
+            irreducibles_in_front=True)
 
     def __init__(self, *operands, styles=None):
         r'''
@@ -300,6 +301,7 @@ class Mult(NumberOperation):
         Deals with disassociating any nested multiplications,
         simplifying negations, and factors of one, and factors of 0.
         '''
+        from proveit.numbers import Exp
         from . import mult_zero_left, mult_zero_right, mult_zero_any
         from . import empty_mult, unary_mult_reduction
 
@@ -368,16 +370,51 @@ class Mult(NumberOperation):
         # Peform any cancelations between numerators and
         # denominators of different factors.  This will also
         # eliminate factors of one.
-        expr = eq.update(expr.cancelations())
+        # Since this is supposed to be a shallow simplification,
+        # turn off auto-simplification for these cancelations.
+        expr = eq.update(expr.cancelations(auto_simplify=False))
 
         if is_irreducible_value(expr):
             return eq.relation  # done
 
+        if Mult._simplification_directives_.combine_exponents:
+            # We should generalize this to work analogously like 
+            # combining and sorting terms in Add.shallow_simplification,
+            # but this at least handles the simple case of combining
+            # exponents when all factors are exponents with the same 
+            # base.
+            # (ExprRanges are not yet handled, but we can do this when
+            # this is improved further).
+            if isinstance(expr, Mult):
+                common_base = None
+                for factor in self.factors:
+                    factor_base = None
+                    if isinstance(factor, Exp):
+                        factor_base = factor.base
+                    else:
+                        factor_base = factor
+                    if common_base is None:
+                        common_base = factor_base
+                    elif common_base != factor_base:
+                        common_base = None
+                        break
+                if common_base is not None:
+                    expr = eq.update(expr.exponent_combination())
+
+
+        
         if expr != self:
-            # Try starting over with a call to shallow_simplification
-            # (an evaluation may already be known).
-            eq.update(expr.shallow_simplification(
-                    must_evaluate=must_evaluate))
+            if (must_evaluate or (
+                    isinstance(expr, Mult) and 
+                    not set(expr.factors.entries).issubset(
+                            self.factors.entries))):
+                # Try starting over with a call to
+                # shallow_simplification, but only if must_evaluate
+                # is True or we've done nothing but make some
+                # cancelations -- that way, the simplification stays
+                # shallow.
+                eq.update(expr.shallow_simplification(
+                        must_evaluate=must_evaluate))
             return eq.relation
 
         if all(is_literal_int(factor) for factor in self.factors):

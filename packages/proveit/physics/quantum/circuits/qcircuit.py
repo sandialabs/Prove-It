@@ -1,13 +1,17 @@
-from proveit import (Expression, Function, Literal, IndexedVar,
+from proveit import (Judgment, Expression, Operation,
+                     Function, Literal, IndexedVar,
                      ConditionalSet, Conditional, ExprRange,
                      ExprTuple, ExprArray, VertExprArray, ProofFailure,
                      StyleOptions, free_vars, prover, relation_prover,
                      defaults, safe_dummy_var, TransRelUpdater)
-from proveit import i, j, k, l, m, n, A, U, V, N
+from proveit import i, j, k, l, m, n, A, B, U, V, N
 from proveit.core_expr_types import n_k
-from proveit.logic import Equals, Set, InSet
+from proveit.logic import Equals, deduce_equal_or_not, Set, InSet
+from proveit.relation import Relation
 from proveit.numbers import (Interval, zero, one, two, num, Add, Neg, Mult,
                              subtract, is_literal_int, quick_simplified_index)
+from proveit.statistics import Prob
+from proveit.physics.quantum import var_ket_psi, var_ket_u, var_ket_v
 from proveit.physics.quantum.circuits.qcircuit_elements import (
         QcircuitElement, Gate, MultiQubitElem, Input, Output, Measure, 
         config_latex_tool)
@@ -181,7 +185,7 @@ class Qcircuit(Function):
                                     "A MultiQubitElem element should be "
                                     "a QcircuitElement with a 'part' "
                                     "designation")
-                        elem_part = elem.part
+                        elem_part = quick_simplified_index(elem.part)
                         # element operation/state/basis:
                         elem_op = next(elem.operands.items())[1]
 
@@ -193,13 +197,13 @@ class Qcircuit(Function):
                                 # starting qubit position of the 
                                 # multigate; so, let's use explicit 
                                 # formatting.
-                                has_generic_multigateelem = True
+                                has_generic_multigateelem = (elem_type=='gate')
                                 continue
                             if end_index not in qubit_pos_to_row:
                                 # The end index is not known as the
                                 # qubit position on any row; so, let's 
                                 # use explicit formatting.
-                                has_generic_multigateelem = True
+                                has_generic_multigateelem = (elem_type=='gate')
                                 continue
                             next_part = one
                             active_multiqubit_op = elem_op
@@ -214,19 +218,19 @@ class Qcircuit(Function):
                         if inner_role in ('implicit', 'explicit', 
                                           'param_independent'):
                             if elem_part != elem_param:
-                                raise ValueError(
-                                        "An ExprRange of multi%ss should be "
-                                        "parameterized by the parts: "
-                                        "%s ≠ %s"%(elem_type, elem_part, 
-                                                   elem_param))
+                                # An ExprRange of MultiQubitElems
+                                # should be paramterized by the parts
+                                # for a clean display.
+                                has_generic_multigateelem = (elem_type=='gate')
+                                continue
                         elif outer_role not in ('implicit', 'explicit', 
                                                 'param_independent'):
                             if (next_part is not None 
                                     and elem_part != next_part):
-                                raise ValueError(
-                                        "Part indices must be consecutive "
-                                        "starting from 1: %s ≠ %s"%(
-                                                elem_part, next_part))
+                                # Part indices must be consecutive
+                                # starting from 1 for a clean display.
+                                has_generic_multigateelem = (elem_type=='gate')
+                                continue
                         if qubit_pos == end_index:
                             active_multiqubit_op = None
                             next_part = None
@@ -426,9 +430,14 @@ class Qcircuit(Function):
         # Get the element positions corresponding to each row of the
         # array, raising a ValueError if there are inconsistencies.
         vert_expr_array = self.vert_expr_array
-        format_row_element_positions = (
-                vert_expr_array.get_format_row_element_positions())
-        
+        try:
+            format_row_element_positions = (
+                    vert_expr_array.get_format_row_element_positions())
+        except ValueError:
+            # If columns aren't lined up properly, format it like a
+            # function.
+            return Operation._function_formatted(self, format_type='latex')
+                
         # When we have an explicit parameterization of a
         # horizontal or vertical ExprArray, we put two dots before&after
         # or above&below.  Wrap this with the appropriate kind of
@@ -493,7 +502,8 @@ class Qcircuit(Function):
         
         # Map VertExprArray rows to number of rows the may be collapsed
         # into one in the Qcircuit where applicable (with matching
-        # multi-wire/gate/input/output/measure).
+        # multi-wire/gate/input/output/measure), split into a front
+        # expansion and a back expansion.
         row_to_collapse_count = dict()
         for row in range(height):
             is_multirow_center = True
@@ -752,49 +762,285 @@ class Qcircuit(Function):
             out_str += r'\right)'
         return out_str
     
+    @staticmethod
     @prover
-    def concatenate(self, extension, **defaults_config):
+    def concatenation(front_prob_relation, back_prob_relation, 
+                      **defaults_config):
         '''
-        If this is a valid quantum circuit (in Q.C.), and
-        the given extension is also valid quantum circuit,
-        and the outputs of this circuit and the inputs of the
-        following circuit match, we can join them together
-        into a longer valid circuit (in Q. C.).
+        Return the probability of a concatenated quantum circuit
+        given a probability relation for the front and the back
+        portions.  This is only implemented for the case in which
+        one of these probabilities is equal to 1.
         '''
-        from . import concatenation
-        _U = self.vert_expr_array[:-1]
-        _V = extension.vert_expr_array[1:]
+        if isinstance(front_prob_relation, Judgment):
+            front_prob_relation = front_prob_relation.expr
+        if isinstance(back_prob_relation, Judgment):
+            back_prob_relation = back_prob_relation.expr
+        front_qcircuit = Qcircuit._extract_circuit_from_prob_relation(
+                front_prob_relation)
+        back_qcircuit = Qcircuit._extract_circuit_from_prob_relation(
+                back_prob_relation)
+        if front_prob_relation == Equals(Prob(front_qcircuit), one):
+            # The front relation is the trival one.
+            prob_relation = back_prob_relation
+        elif back_prob_relation == Equals(Prob(back_qcircuit), one):
+            # The back relation is the trival one.
+            prob_relation = front_prob_relation
+        else:
+            raise NotImplementedError(
+                    "Qcircuit concatenation is only implemented when the "
+                    "probability for one of the circuits is known to be 1 "
+                    "(an ideal experiment case)")            
+        return Qcircuit.equate_probs_via_concatenation(
+                front_qcircuit, back_qcircuit).sub_left_side_into(
+                        prob_relation)
+
+    @staticmethod
+    @prover
+    def equate_probs_via_concatenation(
+            front_circuit, back_circuit, **defaults_config):
+        '''
+        Equate the probability of this circuit with the probability
+        of a circuit that is extended or prepended with a probability
+        one circuit.
+        '''
+        from . import concat_ideal_expt, concat_onto_ideal_expt
+        if Equals(Prob(front_circuit), one).proven():
+            thm = concat_onto_ideal_expt
+        elif Equals(Prob(back_circuit), one).proven():
+            thm = concat_ideal_expt
+        else:
+            raise NotImplementedError(
+                    "Qcircuit concatenation is only implemented when the "
+                    "probability for one of the circuits is known to be 1 "
+                    "(an ideal experiment case)")
+
+        # We may have to consolidate the inputs and/or outputs first.
+        front_equiv = back_equiv = None
+        if not front_circuit.has_consolidated_output():
+            front_equiv = front_circuit.output_consolidation()
+            front_circuit = front_equiv.rhs
+        if not back_circuit.has_consolidated_input():
+            back_equiv = back_circuit.input_consolidation()    
+            back_circuit = back_equiv.rhs
+
+        replacements = list(defaults.replacements)
+
+        front_output_col = front_circuit.vert_expr_array[-1]
+        if front_output_col.num_entries() > 1:
+            # We'll need to replaced the merged front output with the
+            # desired split version.
+            replacements.append(front_output_col.merger().derive_reversed())
+        back_input_col = back_circuit.vert_expr_array[0]
+        if back_input_col.num_entries() > 1:
+            # We'll need to replaced the merged back output with the
+            # desired split version.
+            replacements.append(back_input_col.merger().derive_reversed())
+
+        front_output = front_circuit.get_consolidated_output_state()
+        back_input = back_circuit.get_consolidated_input_state()
+        
+        if front_output != back_input:
+            state_equality = Equals(back_input, front_output).prove()
+            # Make the rhs of back_equiv corrsond with front_output
+            # which we will use for instantiated thm below.
+            back_inner_expr = back_circuit.inner_expr().rhs.vert_expr_array[0]
+            if back_equiv is None:
+                back_equiv = back_inner_expr.substitution(state_equality)
+            else:
+                back_equiv = back_inner_expr.substitute(state_equality)
+
+        if front_equiv is not None:
+            replacements.append(
+                    front_equiv.equate_probs().derive_reversed())
+        if back_equiv is not None:
+            replacements.append(
+                    back_equiv.equate_probs().derive_reversed())
+        
+        _U = front_circuit.vert_expr_array[:-1]
+        _V = back_circuit.vert_expr_array[1:]
         _i = _U.num_elements()
         _j = _V.num_elements()
-        self_out = self.vert_expr_array[-1]
-        ext_in = extension.vert_expr_array[0]
-        out_repl_map = self._repl_map_for_input_or_output(Output, 
-                                                          self_out)
-        in_repl_map = self._repl_map_for_input_or_output(Input, 
-                                                         ext_in)
-        if out_repl_map != in_repl_map:
-            raise ValueError("This output must match the extension's "
-                             "input in order to concatenate")
-        repl_map = out_repl_map.update({i:_i, j:_j, U:_U, V:_V})
-        impl = concatenation.instantiate(repl_map)
+        _m = front_circuit.vert_expr_array[-1].num_elements()
+        _psi = front_output
+        impl = thm.instantiate(
+                {i:_i, j:_j, m:_m, U:_U, V:_V, var_ket_psi:_psi}, 
+                replacements=replacements)
         return impl.derive_consequent()
+        
+
+    @staticmethod
+    @prover
+    def trivial_expansion_below(prob_relation, state_below, wires_below, **defaults_config):
+        '''
+        Given a relation involving the probability of a quantum
+        circuit on the left, update it with the probability of a
+        trivially expanded quantum circuit with an identity channel
+        below.
+        '''
+        qcircuit = Qcircuit._extract_circuit_from_prob_relation(prob_relation)
+        return qcircuit.equate_probs_via_trivial_expansion_below(
+                state_below, wires_below).sub_right_side_into(prob_relation)
+
+    @staticmethod
+    @prover
+    def trivial_expansion_above(prob_relation, state_below, wires_below, **defaults_config):
+        '''
+        Given a relation involving the probability of a quantum
+        circuit on the left, update it with the probability of a
+        trivially expanded quantum circuit with an identity channel
+        above.
+        '''
+        qcircuit = Qcircuit._extract_circuit_from_prob_relation(prob_relation)
+        return qcircuit.equate_probs_via_trivial_expansion_above(
+                state_below, wires_below).sub_right_side_into(prob_relation)
 
     @prover
-    def trivially_expand(self, wires_above, wires_below, **defaults_config):
+    def equate_probs_via_trivial_expansion_below(
+            self, state_below, wires_below, **defaults_config):
+        '''
+        Equate the probability of this circuit with the probability
+        of a trivially expanded form of the circuit with an identity
+        channel below.
+        '''
+        from . import trivial_expansion_below
+        return self._equate_probs_via_trivial_expansion(
+                state_below, wires_below, trivial_expansion_below)
+
+    @prover
+    def equate_probs_via_trivial_expansion_above(
+            self, state_above, wires_above, **defaults_config):
+        '''
+        Equate the probability of this circuit with the probability
+        of a trivially expanded form of the circuit with an identity
+        channel above.
+        '''
+        from . import trivial_expansion_above
+        return self._equate_probs_via_trivial_expansion(
+                state_above, wires_above, trivial_expansion_above)
+
+    def _equate_probs_via_trivial_expansion(self, state, nwires, thm):
         '''
         If this is a valid quantum circuit (in Q.C.), prove an expanded
         form with plain wires added above and/or below is also valid.
         '''
-        from . import trivial_expansion
-        _A = self.vert_expr_array
-        _m = wires_above
-        _n = wires_below
-        _k = _A.num_elements()
-        _l = _A[0].num_elements()
-        impl = trivial_expansion.instantiate(
-                {k:_k, l:_l, m:_m, n:_n, A:_A})
-        return impl.derive_consequent()
+        # We may have to consolidate the inputs and/or outputs first.
+        qcircuit = self
+        equiv_updater = TransRelUpdater(qcircuit)
+        if not qcircuit.has_consolidated_input():
+            qcircuit = equiv_updater.update(qcircuit.input_consolidation())
+        if not qcircuit.has_consolidated_output():
+            qcircuit = equiv_updater.update(qcircuit.output_consolidation())
+        equiv = equiv_updater.relation
+        replacements = list(defaults.replacements)
+        if equiv.lhs != equiv.rhs:
+            # Replace Prob of the qcircuit with consolidated inputs
+            # and outputs with the original qciruit.
+            replacements.append(
+                    equiv.equate_probs().derive_reversed())
 
+        input_col = qcircuit.vert_expr_array[0]
+        if input_col.num_entries() > 1:
+            # We'll need to replaced the merged input with the
+            # desired split version.
+            replacements.append(input_col.merger().derive_reversed())
+        output_col = qcircuit.vert_expr_array[-1]
+        if output_col.num_entries() > 1:
+            # We'll need to replaced the merged output with the
+            # desired split version.
+            replacements.append(output_col.merger().derive_reversed())
+
+        # Extract the consolidated input and output
+        _u_ket = qcircuit.get_consolidated_input_state()
+        _v_ket = qcircuit.get_consolidated_output_state()
+        # Expand all of the other entries consecutively.
+        _A = ExprTuple(*[entry for column in self.vert_expr_array.entries[1:-1]
+                         for entry in column.entries])
+        _var_ket_psi = state
+        _m = nwires
+        _k = qcircuit.vert_expr_array[1:-1].num_elements()
+        _l = qcircuit.vert_expr_array[0].num_elements()
+        # Get the expansion for the qcircuit with consolidated
+        # inputs and outputs.
+        expansion = thm.instantiate(
+                {k:_k, l:_l, m:_m, A:_A, var_ket_psi:_var_ket_psi,
+                 var_ket_u: _u_ket, var_ket_v: _v_ket},
+                 replacements=replacements)        
+
+        # TODO: we should also probably re-expand on the right side
+        # from the consolidated form.
+        return expansion
+    
+    def has_consolidated_input(self):
+        '''
+        Return True if and only if this quantum circuit as a single
+        consolidated input.
+        '''
+        return (Qcircuit._get_consolidated_input_or_output_state(
+                Input,  self.vert_expr_array[0]) is not None)
+        
+    def has_consolidated_output(self):
+        '''
+        Return True if and only if this quantum circuit as a single
+        consolidated output.
+        '''
+        return (Qcircuit._get_consolidated_input_or_output_state(
+                Output,  self.vert_expr_array[-1]) is not None)
+        
+    def get_consolidated_input_state(self):
+        '''
+        Assuming (asserting) the input is consolidated,
+        return its state.
+        '''
+        state = Qcircuit._get_consolidated_input_or_output_state(
+                Input,  self.vert_expr_array[0])
+        if state is None:
+            raise ValueError("%s does not have a consolidated input"
+                             %self)
+        return state
+
+    def get_consolidated_output_state(self):        
+        '''
+        Assuming (asserting) the output is consolidated,
+        return its state.
+        '''
+        state = Qcircuit._get_consolidated_input_or_output_state(
+                Output,  self.vert_expr_array[-1])
+        if state is None:
+            raise ValueError("%s does not have a consolidated output"
+                             %self)
+        return state
+
+    @staticmethod
+    def _get_consolidated_input_or_output_state(elem_type, col):
+        if col.num_entries()==1 and isinstance(col.entries[0], elem_type):
+            # Just a single qubit input/output
+            return col.entries[0].state
+        state = None      
+        targets = None
+        for entry in col.entries:
+            if not isinstance(entry, ExprRange):
+                return None # Not a mult-input/output
+            entry_body = entry.body
+            if not isinstance(entry_body, MultiQubitElem):
+                return None # Not a mult-input/output
+            entry_targets = entry_body.targets
+            if targets is None:
+                targets = entry_targets                
+            elif entry_targets != targets:
+                # Not a continuous mult-input/output with same targets
+                return None
+            entry_body_element = entry_body.element
+            if not isinstance(entry_body_element, elem_type):
+                return None # Not a mult-input/output
+            entry_state = entry_body_element.state
+            if state is None:
+                state = entry_state
+            elif entry_state != state:
+                # Not a continuous mult-input/output with same state
+                return None
+        return state
+    
     @relation_prover
     def input_consolidation(self, **defaults_config):
         '''
@@ -820,33 +1066,37 @@ class Qcircuit(Function):
                 Output, self.vert_expr_array[-1], output_consolidation)
 
     def _in_or_out_consolidation(self, elem_type, col, thm):
-        repl_map = self._repl_map_for_input_or_output(elem_type, col)
+        repl_map, replacements, split_locations = (
+                Qcircuit._repl_map_for_input_or_output(elem_type, col))
         defaults.test_repl_map = repl_map
-        consolidation = thm.instantiate(repl_map)
-        # Now consolidate ExprRanges that may have been split
-        # in the process of lining up N_{k-1} entries with N_k entries.
+        # If we need to do mergers afterwards, don't auto-simplify.
+        consolidation = thm.instantiate(repl_map, 
+                                        replacements=replacements)
         
-        '''
-        _A, _m, _n, _N = Qcircuit._extract_input_or_output(elem_type, col)
-        _k = safe_dummy_var(_m)
-        N_0_to_m = ExprRange(_k, IndexedVar(N, _k), zero, _m)
+        defaults.test_out = consolidation
+        defaults.split_locations = split_locations
         
-        # There is a bit of gymnastics here to match ExprRange
-        # indices which we shoulb be able to simplify in the future.
+        # Remerge where splits were necessary:
+        if len(split_locations) > 0:
+            consolidation = (
+                    consolidation.inner_expr().lhs.vert_expr_array[0]
+                    .substitute(Qcircuit._remerge(
+                            consolidation.lhs.vert_expr_array[0],
+                            split_locations)))
+            defaults.test_out2 = consolidation
+            consolidation = (
+                    consolidation.inner_expr().rhs.vert_expr_array[0]
+                    .substitute(Qcircuit._remerge(
+                            consolidation.rhs.vert_expr_array[0],
+                            split_locations)))
         
-        N_alt1 = N_0_to_m.partition(zero).rhs
-        N_alt2 = N_0_to_m.partition(subtract(_m, one)).rhs
+        # Finally, shift the consolidated side to have consecutive
+        # ExprRange parameter instanstance starting from 1.
+        consolidation = (
+                    consolidation.inner_expr().rhs.vert_expr_array[0]
+                    .substitute(Qcircuit._shift_ranges_consecutively(
+                            consolidation.rhs.vert_expr_array[0])))         
 
-        # Need these proofs::
-        _0_to_m = ExprRange(_k, _k, zero, _m)
-        _0_to_m.partition(zero)
-        _0_to_m.partition(subtract(_m, one))
-        
-        defaults.test_repl_map = {A:_A, m:_m, n:_n, N:_N, N_alt1:_N, N_alt2:_N}
-        consolidation = thm.instantiate(
-                {A:_A, m:_m, n:_n, N:_N, N_alt1:_N, N_alt2:_N})
-        '''
-        
         defaults.test_out = consolidation
         
         if not self.vert_expr_array.is_single():
@@ -855,6 +1105,18 @@ class Qcircuit(Function):
     
     @staticmethod
     def _repl_map_for_input_or_output(elem_type, col):
+        '''
+        Return the replacement map for instantiating a quantum circuit
+        theorem where we need to matching the Qcircuit inputs
+        or outputs (depending on 'elem_type') at the given column.
+        
+        Sometimes ExprRanges need to be split in order to allow the
+        instantiation of the condition for the partial summation of 
+        ExprRange sizes.  For that reason, we also return 
+        'replacements' for merging the consolidated input/output and
+        'split_locations' to be able to merge them back afterwards
+        via '_remerge'.
+        '''
         from proveit.numbers import zero, one, Add
         repl_map = dict()
         
@@ -950,6 +1212,7 @@ class Qcircuit(Function):
         eq_for_Nk = TransRelUpdater(_N)
         eq_for_Nkm1 = TransRelUpdater(_N)
         _idx = 0
+        split_locations = []
         for entry in _N:
             if isinstance(entry, ExprRange):
                 # We must split off the first of the entry
@@ -957,19 +1220,19 @@ class Qcircuit(Function):
                 # the N_0, ..., N_{m-1} segment so the entries line up.
                 expr_for_Nk = eq_for_Nk.update(
                         expr_for_Nk.inner_expr()[_idx].partition(
-                                entry.true_start_index,
-                                force_to_treat_as_increasing=True))
+                                entry.start_index))
                 # We have to do the same for n_1, ..., n_k and 
                 # A_1, ..., A_k to match N_1, ..., N_k:
                 # (uses _idx-1 since there is no n_0).
+                # We'll need to merge these back later, so don't
+                # auto-simplify now (that makes the merger harder).
                 expr_for_nk = eq_for_nk.update(
                         expr_for_nk.inner_expr()[_idx-1].partition(
-                                entry.true_start_index,
-                                force_to_treat_as_increasing=True))                
+                                expr_for_nk[_idx-1].start_index))                
                 expr_for_Ak = eq_for_Ak.update(
                         expr_for_Ak.inner_expr()[_idx-1].partition(
-                                entry.true_start_index,
-                                force_to_treat_as_increasing=True))                
+                                expr_for_Ak[_idx-1].start_index))
+                split_locations.append(_idx-1)
                 # Shift the start index in N_0, ..., N_{m-1} to line
                 # it up with N_1, ..., N_{m}:
                 expr_for_Nkm1 = eq_for_Nkm1.update(
@@ -987,7 +1250,97 @@ class Qcircuit(Function):
         repl_map[n] = expr_for_nk
         repl_map[N_0_1_to_m] = expr_for_Nk
         repl_map[N_0_to_mm1_m] = expr_for_Nkm1
-        return repl_map
+        replacements = defaults.replacements + (
+                Qcircuit._remerge(expr_for_Ak, split_locations),)
+        return repl_map, replacements, split_locations
+
+    @staticmethod
+    def _remerge(expr, split_locations):
+        '''
+        Remerge after splits were necessary from 
+        _repl_map_for_input_or_output.
+        '''
+        # Do this in reverse order so the indices are correct.
+        eq = TransRelUpdater(expr)
+        for split_loc in reversed(split_locations):
+            expr = eq.update(
+                    expr.inner_expr()[split_loc:split_loc+2].merger())
+        defaults.test_remerge = eq.relation
+        return eq.relation
+
+    @staticmethod
+    def _shift_ranges_consecutively(column):     
+        '''
+        Shift ExprRanges of the column to have consecutive indices
+        starting from one, to be used for a consolidated input/output.
+        '''
+        from proveit import simplified_index
+        eq = TransRelUpdater(column)
+        index = one
+        for _k, entry in enumerate(column.entries):
+            if isinstance(entry, ExprRange):
+                if entry.is_decreasing():
+                    column = column.inner_expr()[k].with_increasing_order()
+                if entry.start_index != index:
+                    column = eq.update(
+                            column.inner_expr()[_k].shift_equivalence(
+                                    new_start=index))
+                index = simplified_index(Add(index, column[_k].end_index))
+            else:
+                index = simplified_index(Add(index, one))
+        return eq.relation
+
+    @staticmethod
+    def _extract_circuit_from_prob_relation(prob_relation):
+        '''
+        Assuming prob_relation as a relation with the Prob of
+        a quantum circuit on the left side, return the quantum circuit.
+        '''
+        if isinstance(prob_relation, Judgment):
+            prob_relation = prob_relation.expr
+        if not isinstance(prob_relation, Relation):
+            raise ValueError("'prob_relation' expected to be a Relation, "
+                             "not %s"%prob_relation)
+        if not isinstance(prob_relation.lhs, Prob):
+            raise ValueError("'prob_relation' expected to be a relation "
+                             "with a Prob operation on the left, not %s"
+                             %prob_relation.lhs)
+        if not isinstance(prob_relation.lhs.operand, Qcircuit):
+            raise ValueError("'prob_relation' expected to be a relation "
+                             "with a Prob operation on the left acting on "
+                             "a Qcircuit, not %s"
+                             %prob_relation.lhs.operand)
+        return prob_relation.lhs.operand
+
+    @relation_prover
+    def deduce_equal_or_not(self, other_qcircuit, **defaults_config):
+        from . import qcircuit_eq, qcircuit_neq
+        if not isinstance(other_qcircuit, Qcircuit):
+            raise NotImplementedError(
+                    "Qcircuit.deduce_equal_or_not only implemented for a "
+                    "comparison with another Qcircuit.")
+        _k = self.vert_expr_array.num_elements()
+        _l = self.vert_expr_array[0].num_elements()
+        other_k = other_qcircuit.vert_expr_array.num_elements() 
+        other_l = other_qcircuit.vert_expr_array[0].num_elements()
+        if (other_k!= _k or other_l != _l):
+            raise NotImplementedError(
+                    "Qcircuit.deduce_equal_or_not only implemented for a "
+                    "comparison between Qcircuits of the same dimension: "
+                    "%s vs %s and %s vs %s"%(_k, other_k, _l, other_l))
+        varray_relation = deduce_equal_or_not(self.vert_expr_array,
+                                              other_qcircuit.vert_expr_array)
+        # Expand all of the other entries consecutively.
+        _A = ExprTuple(*[entry for column in self.vert_expr_array
+                         for entry in column])
+        _B = ExprTuple(*[entry for column in other_qcircuit.vert_expr_array
+                         for entry in column])
+        if isinstance(varray_relation, Equals):
+            return qcircuit_eq.instantiate(
+                {k:_k, l:_l, A:_A, B:_B}).derive_consequent()
+        else:
+            return qcircuit_neq.instantiate(
+                {k:_k, l:_l, A:_A, B:_B}).derive_consequent()
         
     
     """

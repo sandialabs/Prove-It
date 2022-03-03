@@ -1,8 +1,9 @@
-from proveit import USE_DEFAULTS, equality_prover, Lambda, prover
+from proveit import (USE_DEFAULTS, equality_prover, Lambda, 
+                     ExprTuple, ExprRange, prover)
 from proveit.linear_algebra import ScalarMult, TensorProd, VecSum
-from proveit.logic import SetMembership, SetNonmembership
+from proveit.logic import SetMembership, SetNonmembership, CartExp
 from proveit.numbers import num
-from proveit import a, b, f, i, j, m, x, A, K, Q, V
+from proveit import a, b, f, i, j, m, n, x, A, K, Q, V
 
 
 class TensorProdMembership(SetMembership):
@@ -16,10 +17,19 @@ class TensorProdMembership(SetMembership):
 
     def side_effects(self, judgment):
         '''
-        Unfold the enumerated set membership as a side-effect.
+        Side-effects for TensorProd membership.
         '''
-        # Actually just need an empty generator for now?
-        yield from []
+        try:
+            # If the domain is of the form
+            # K^{n_1} ⊗ K^{n_2} ⊗ ... ⊗ K^{n_m}
+            # derive that the element is also contained in
+            # K^{n_1 + n_2 + ... + K^{n_m}}
+            self._get_cart_exps_field_and_exponents()
+            # Auto-simplification is turned off when executing
+            # side-effects -- turn it back on for this one.
+            yield lambda : self.derive_cart_exp_membership(auto_simplify=True)
+        except ValueError:
+            pass
     #   yield self.unfold
 
     # @equality_prover('defined', 'define')
@@ -108,3 +118,60 @@ class TensorProdMembership(SetMembership):
 
         raise ValueError("Element {0} is neither a TensorProd "
                          "nor a ScalarMult.".format(self.element))
+    
+    @prover
+    def derive_cart_exp_membership(self, **defaults_config):
+        '''
+        If the domain is a tensor product Cartesian exponentials on the
+        same field, prove that the element is also a membero of
+        the Cartesion exponential of the sum of the exponents.
+        Thst is, if the domain is of the form
+            K^{n_1} ⊗ K^{n_2} ⊗ ... ⊗ K^{n_m}
+        derive that the element is also contained in
+            K^{n_1 + n_2 + ... + n_m}
+        '''
+        from . import tensor_prod_of_cart_exps_within_cart_exp
+        _K, _ns = self._get_cart_exps_field_and_exponents()
+        _ns = ExprTuple(*_ns)
+        _m = _ns.num_elements()
+        inclusion = tensor_prod_of_cart_exps_within_cart_exp.instantiate(
+                {K:_K, m:_m, n:_ns})
+        return inclusion.derive_superset_membership(self.element)
+    
+    def _get_cart_exps_field_and_exponents(self):
+        '''
+        Helper for derive_cart_exp_membership.
+        '''
+        domain = self.domain
+        def raise_invalid():
+            raise ValueError(
+                    "'derive_cart_exp_membership' only applicable on "
+                    "a TensorProdMembership where the domain is a "
+                    "tensor product of Cartesian exponentials on the "
+                    "same field, not %s"%domain)            
+        assert isinstance(domain, TensorProd)
+        _ns = []
+        _K = None
+        for domain_factor in domain.factors.entries:
+            if isinstance(domain_factor, ExprRange):
+                if not isinstance(domain_factor.body, CartExp):
+                    raise_invalid()
+                factor_K = domain_factor.body.base
+                _ns.append(ExprRange(domain_factor.parameter,
+                                     domain_factor.body.exponent,
+                                     domain_factor.start_index,
+                                     domain_factor.end_index,
+                                     styles=domain_factor.get_styles()))
+            elif isinstance(domain_factor, CartExp):
+                factor_K = domain_factor.base
+                _ns.append(domain_factor.exponent)
+            else:
+                raise_invalid()
+            if _K is None:
+                _K = factor_K
+            elif _K != factor_K:
+                raise_invalid()
+        return _K, _ns
+        
+                
+                

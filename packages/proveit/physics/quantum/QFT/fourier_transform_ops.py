@@ -31,12 +31,12 @@ class InverseFourierTransform(Operation):
 
     def deduce_in_vec_space(self, vec_space=None, *, field,
                             **defaults_config):
-        from . import invFT_in_SU
+        from . import invFT_is_unitary
         if field != Complex:
             raise NotImplementedError(
                     "NumKet.deduce_in_vec_space only implemented for a "
                     "complex field, not %s."%field)
-        _SUdomain = invFT_in_SU.instantiate({n:self.nqubits}).domain
+        _SUdomain = invFT_is_unitary.instantiate({n:self.nqubits}).domain
         vspace = _SUdomain.including_vec_space(field=Complex)
         if vec_space is not None and vec_space != vspace:
             raise NotImplementedError(

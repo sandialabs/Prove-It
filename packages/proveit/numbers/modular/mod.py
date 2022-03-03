@@ -1,9 +1,10 @@
 from proveit import (defaults, Literal, Operation, ProofFailure, 
-                     relation_prover)
+                     relation_prover, equality_prover)
 # from proveit.numbers.number_sets import Integer, Real
-from proveit import a, b
-from proveit.logic import InSet, SubsetEq
-from proveit.numbers import NumberOperation, deduce_number_set
+from proveit import a, b, c, i, j, L
+from proveit.logic import Equals, InSet, SubsetEq
+from proveit.relation import TransRelUpdater
+from proveit.numbers import NumberOperation, deduce_number_set, Add
 
 class Mod(NumberOperation):
     # operator of the Mod operation.
@@ -15,6 +16,57 @@ class Mod(NumberOperation):
                                  styles=styles)
         self.dividend = self.operands[0]
         self.divisor = self.operands[1]
+
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
+        '''
+        Returns a proven simplification equation for this Mod
+        expression assuming the operands have been simplified.
+        
+        Specifically, performs reductions of the form
+        [(a mod L + b) mod L] = [(a + b) mod L].
+        '''
+        from . import redundant_mod_elimination, redundant_mod_elimination_in_sum
+        return Mod._redundant_mod_elimination(
+                self, redundant_mod_elimination, 
+                redundant_mod_elimination_in_sum)
+
+    @staticmethod
+    def _redundant_mod_elimination(
+            expr, mod_elimination_thm, mod_elimination_in_sum_thm):
+        '''
+        For use by Mod and ModAbs for shallow_simplification.
+        '''
+        dividend = expr.dividend
+        divisor = expr.divisor
+        if isinstance(dividend, Mod) and dividend.divisor==divisor:
+            # [(a mod b) mod b] = [a mod b]
+            return mod_elimination_thm.instantiate(
+                    {a:dividend.dividend, b:divisor})
+        elif isinstance(dividend, Add):
+            # Eliminate 'mod L' from each term.
+            eq = TransRelUpdater(expr)
+            _L = divisor
+            mod_terms = []
+            for _k, term in enumerate(dividend.terms):
+                if isinstance(term, Mod) and term.divisor==_L:
+                    mod_terms.append(_k)
+            for _k in mod_terms:
+                # Use preserve_all=True for all but the last term.
+                preserve_all = (_k != mod_terms[-1])
+                _a = expr.dividend.terms[:_k]
+                _b = expr.dividend.terms[_k].dividend
+                _c = expr.dividend.terms[_k+1:]
+                _i = _a.num_elements()
+                _j = _c.num_elements()
+                expr = eq.update(
+                        mod_elimination_in_sum_thm
+                        .instantiate(
+                                {i:_i, j:_j, a:_a, b:_b, c:_c, L:_L},
+                                preserve_all=preserve_all))
+            return eq.relation
+        return Equals(expr, expr).conclude_via_reflexivity()
 
     # def deduce_in_interval(self, assumptions=frozenset()):
     #     from . import mod_in_interval, mod_in_interval_c_o
