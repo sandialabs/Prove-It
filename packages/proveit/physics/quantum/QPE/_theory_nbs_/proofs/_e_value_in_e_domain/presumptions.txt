@@ -81,6 +81,7 @@ proveit.numbers.addition.subtraction.add_cancel_triple_31
 proveit.numbers.addition.subtraction.add_cancel_triple_32
 proveit.numbers.addition.subtraction.negated_add
 proveit.numbers.addition.subtraction.nonneg_difference
+proveit.numbers.addition.subtraction.pos_difference
 proveit.numbers.addition.subtraction.sub_one_is_nat
 proveit.numbers.addition.subtraction.subtract_from_add
 proveit.numbers.addition.subtraction.subtract_from_add_reversed
@@ -344,6 +345,10 @@ proveit.numbers.numerals.decimals.tuple_len_2
 proveit.numbers.numerals.decimals.tuple_len_2_typical_eq
 proveit.numbers.ordering.less_eq_add_right
 proveit.numbers.ordering.less_is_not_eq
+proveit.numbers.ordering.less_than_an_increase
+proveit.numbers.ordering.less_than_an_left_increase
+proveit.numbers.ordering.less_than_left_successor
+proveit.numbers.ordering.less_than_successor
 proveit.numbers.ordering.relax_less
 proveit.numbers.ordering.symmetric_less_eq
 proveit.numbers.ordering.transitivity_less_eq_less
