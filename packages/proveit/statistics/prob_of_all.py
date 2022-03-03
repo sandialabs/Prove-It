@@ -80,6 +80,21 @@ class ProbOfAll(OperationOverInstances):
         
         return prob_of_disjoint_events_is_prob_sum.instantiate(
                 {Omega:_Omega, A:_A, B:_B, C:_C, X:_X, Q:_Q, f:_f})
+
+    @equality_prover("computed", "compute")
+    def computation(self, sample_space, **defaults_config):
+        '''
+        The computation of a ProbOfAll equates it with the 
+        corresponding summation over sample probabilities as long
+        as the function is an injection onto a sample space.
+        '''
+        from . import prob_of_all_as_sum
+        _Omega = sample_space
+        _X = self.domain
+        _f = Lambda(self.instance_param, self.instance_expr)
+        _Q = Lambda(self.instance_param, self.non_domain_condition())
+        return prob_of_all_as_sum.instantiate(
+                {Omega:_Omega, X:_X, f:_f, Q:_Q, x:self.instance_param})
         
     @equality_prover("computed_via_complement", "compute_via_complement")
     def computation_via_complement(self, complement_prob_of_all, sample_space,
