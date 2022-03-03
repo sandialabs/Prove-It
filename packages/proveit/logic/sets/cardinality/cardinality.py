@@ -59,4 +59,4 @@ class Card(Function):
         irreducible cardinal number.  For the Card of a finite set, 
         it simply evaluates to the size.
         '''
-        return self.computation.inner_expr().rhs.evaluate()
+        return self.computation().inner_expr().rhs.evaluate()

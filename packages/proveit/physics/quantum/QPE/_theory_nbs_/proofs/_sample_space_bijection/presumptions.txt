@@ -21,7 +21,6 @@ proveit.linear_algebra.inner_products.inner_prod_space_is_vec_space
 proveit.linear_algebra.inner_products.rational_set_is_inner_prod_space
 proveit.linear_algebra.inner_products.real_set_is_inner_prod_space
 proveit.logic.booleans.conjunction.any_from_and
-proveit.logic.booleans.conjunction.conjunction_eq_quantification
 proveit.logic.booleans.conjunction.conjunction_from_quantification
 proveit.logic.booleans.conjunction.each_is_bool
 proveit.logic.booleans.conjunction.false_and_false_negated

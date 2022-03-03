@@ -48,7 +48,6 @@ proveit.numbers.multiplication.distribute_through_subtract
 proveit.numbers.multiplication.distribute_through_sum
 proveit.numbers.multiplication.elim_one_left
 proveit.numbers.multiplication.elim_one_right
-proveit.numbers.multiplication.mult_complex_closure_bin
 proveit.numbers.negation.complex_closure
 proveit.numbers.negation.int_neg_closure
 proveit.numbers.negation.negated_zero

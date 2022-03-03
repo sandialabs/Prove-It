@@ -377,7 +377,8 @@ class Mult(NumberOperation):
         if is_irreducible_value(expr):
             return eq.relation  # done
 
-        if Mult._simplification_directives_.combine_exponents:
+        if (Mult._simplification_directives_.combine_exponents
+                and not must_evaluate):
             # We should generalize this to work analogously like 
             # combining and sorting terms in Add.shallow_simplification,
             # but this at least handles the simple case of combining
@@ -385,7 +386,7 @@ class Mult(NumberOperation):
             # base.
             # (ExprRanges are not yet handled, but we can do this when
             # this is improved further).
-            if isinstance(expr, Mult):
+            if isinstance(expr, Mult) and expr.factors.num_entries()>1:
                 common_base = None
                 for factor in self.factors:
                     factor_base = None
@@ -400,8 +401,6 @@ class Mult(NumberOperation):
                         break
                 if common_base is not None:
                     expr = eq.update(expr.exponent_combination())
-
-
         
         if expr != self:
             if (must_evaluate or (
