@@ -1,6 +1,7 @@
-from proveit import prover, equality_prover
-from proveit import f, A, B
-from proveit.logic import SetMembership
+from proveit import Judgment, prover, equality_prover
+from proveit import f, g, A, B, C
+from proveit.logic import InSet, SetMembership
+from .bijections import Bijections
 
 class BijectionsMembership(SetMembership):
     '''
@@ -64,4 +65,36 @@ class BijectionsMembership(SetMembership):
         _f = self.element
         return membership_unfolding.instantiate(
                 {A:_A, B:_B, f:_f}, auto_simplify=False)
+    
+    @prover
+    def apply_transitivity(self, subsequent_bijection,
+                           **defaults_config):
+        '''
+        From [f ∈ Bijections(A, B)] and given [g ∈ Bijections(B, C)]
+        [(x -> g(f(x))) ∈ Bijections(A, C)].
+        '''
+        from . import bijection_transitivity
+        if isinstance(subsequent_bijection, Judgment):
+            subsequent_bijection = subsequent_bijection.expr
+        if not isinstance(subsequent_bijection, InSet):
+            raise TypeError(
+                    "Expecting 'subsequent_bijection' to be an InSet "
+                    "object, got %s"%subsequent_bijection)
+        if not isinstance(subsequent_bijection.domain, Bijections):
+            raise TypeError(
+                    "Expecting 'subsequent_bijection' to represent "
+                    "a Bijections membership, got %s"%subsequent_bijection)
+        f_codomain = self.domain.codomain
+        g_domain = subsequent_bijection.domain.domain
+        if f_codomain != g_domain:
+            raise TypeError(
+                    "Expecting the codomain of %s to match the domain of "
+                    "%s"%(self.expr.domain, subsequent_bijection.domain))            
+        _f = self.element
+        _g = subsequent_bijection.element
+        _A = self.domain.domain
+        _B = f_codomain
+        _C = subsequent_bijection.domain.codomain
+        return bijection_transitivity.instantiate(
+                {f:_f, g:_g, A:_A, B:_B, C:_C}).derive_consequent()
 
