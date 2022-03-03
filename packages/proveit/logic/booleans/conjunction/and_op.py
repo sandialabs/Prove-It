@@ -186,7 +186,7 @@ class And(Operation):
                     disproven_operand_indices.append(_k)
                     # possible way to prove it
                     self.conclude_negation_via_example(operand)
-                except ProofFailure:
+                except Exception:
                     pass
             if self.operands.is_double() and len(disproven_operand_indices) > 0:
                 # One or both of the two operands were known to be true
