@@ -1,4 +1,4 @@
-from proveit import Literal, Operation, Function, prover
+from proveit import Literal, Operation, Function, prover, equality_prover
 from proveit import a, b
 from proveit.logic import InSet
 from proveit.numbers import Interval
@@ -129,6 +129,12 @@ class ModAdd(Operation):
     def __init__(self, a, b, *, styles=None):
         Operation.__init__(self, ModAdd._operator_, (a, b),
                            styles=styles)
+        
+    @equality_prover("defined", "define")
+    def definition(self, **defaults_config):
+        from . import _mod_add_def
+        _a, _b = self.operands
+        return _mod_add_def.instantiate({a:_a, b:_b})
 
     @prover
     def deduce_in_interval(self, **defaults_config):
@@ -170,3 +176,13 @@ class SubIndexed(Operation):
         formatted_label = self.label.formatted(format_type, fence=True)
         formatted_index = self.index.formatted(format_type, fence=False)
         return formatted_label + '_{' + formatted_index + '}'
+
+from proveit.numbers import i, two, pi, Neg, exp, frac, Mult
+
+def exp2pi_i_on_two_pow_t(*exp_factors):
+    from proveit.physics.quantum.QPE import _two_pow_t
+    return exp(frac(Mult(*((two, pi, i) + exp_factors)), _two_pow_t))
+
+def exp_neg_2pi_i_on_two_pow_t(*exp_factors):
+    from proveit.physics.quantum.QPE import _two_pow_t
+    return exp(Neg(frac(Mult(*((two, pi, i) + exp_factors)), _two_pow_t)))

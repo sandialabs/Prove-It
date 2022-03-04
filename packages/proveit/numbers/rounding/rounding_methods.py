@@ -296,3 +296,88 @@ def rounding_deduce_number_set(expr):
     if RealPos.includes(operand_ns):
         return expr.deduce_in_number_set(Natural)
     return expr.deduce_in_number_set(Integer)
+
+def rounding_bound_via_operand_bound(
+            expr, operand_relation, bounding_theorem_less,
+            bounding_theorem_less_eq, bounding_theorem_by_integer=None):
+    '''
+    Deduce a bound on the Round, Ceil, or FLoor object expr, given a
+    bound (the operand_relation) on its operand.
+    '''
+    from proveit import x, y, Judgment
+    from proveit.logic import InSet
+    from proveit.numbers import (
+                zero, one, two, Integer,
+                greater, greater_eq, Ceil, Floor, Less, LessEq,
+                NumberOrderingRelation, RealNonNeg)
+    if isinstance(operand_relation, Judgment):
+            operand_relation = operand_relation.expr
+    if not isinstance(operand_relation, NumberOrderingRelation):
+        raise TypeError(
+                "In rounding_bound_via_operand_bound(), the "
+                "'operand_relation' argument is expected to be a number "
+                "relation (<, >, ≤, or ≥), but instead was {}.".
+                format(operand_relation))
+
+    lhs = operand_relation.lhs
+    # should be able to generalize this later
+    # no need to limit to just lhs, right?
+    if lhs != expr.operand:
+        raise ValueError(
+                "In rounding_bound_via_operand_bound(), the left side "
+                "of the 'operand_relation' argument {0} is expected to "
+                "match the rounding operation operand {1}.".
+                format(operand_relation, expr.operand))
+
+    # assign x and y subs according to std Less or LessEq relations
+    _x_sub = operand_relation.normal_lhs
+    _y_sub = operand_relation.normal_rhs
+
+    # 2 special cases first
+    # (1) Ceil expr, _x_sub in Integer,
+    #     bounding_theorem_by_integer is not None
+    # (2) Floor expr, _y_sub in Integer,
+    #     bounding_theorem_by_integer is not None
+
+    # Case (1)
+    if (isinstance(expr, Ceil)
+        and bounding_theorem_by_integer is not None
+        and InSet(_x_sub, Integer).proven()):
+        bound = bounding_theorem_by_integer.instantiate(
+                {x: _x_sub, y: _y_sub})
+    # Case (2)
+    elif (isinstance(expr, Floor)
+        and bounding_theorem_by_integer is not None
+        and InSet(_y_sub, Integer).proven()):
+        bound = bounding_theorem_by_integer.instantiate(
+                {x: _x_sub, y: _y_sub})
+
+    # Then we consider four more general related cases for the
+    # possible classes of Round, Ceil, or Floor with Real operand x:
+    #  (3) x <  y 
+    #  (4) x <= y
+    #  (5) y < x
+    #  (6) y <= x
+
+    # Cases (3)-(6):
+    elif isinstance(operand_relation, Less):
+        # from proveit.numbers.rounding import (
+        #         bounding_theorem_less)
+        bound = bounding_theorem_less.instantiate(
+                {x: _x_sub, y: _y_sub})
+    elif isinstance(operand_relation, LessEq):
+        # from proveit.numbers.rounding import (
+        #         bounding_theorem_less_eq)
+        bound = bounding_theorem_less_eq.instantiate(
+                {x: _x_sub, y: _y_sub})
+    else:
+        raise TypeError(
+            "In rounding_bound_via_operand_bound(), the 'operand_relation' "
+            "argument is expected to be a 'Less', 'LessEq', 'greater', "
+            "or 'greater_eq' relation. Instead we have {}.".
+            format(operand_relation))
+
+    if bound.rhs == expr:
+        return bound.with_direction_reversed()
+    return bound
+

@@ -114,6 +114,11 @@ class Not(Operation):
                 # All the pieces should be there now.
                 return self.evaluation(automation=True)
             raise EvaluationError(self)
+        
+        if hasattr(self.operand, 'shallow_simplification_of_negation'):
+            # If the operand has a 'shallow_simplification_of_negation',
+            # use that.
+            return self.operand.shallow_simplification_of_negation()
             
         # May now be able to evaluate via loaded truth tables.
         return Operation.shallow_simplification(self)

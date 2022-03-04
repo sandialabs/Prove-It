@@ -371,3 +371,35 @@ def generic_permutation(expr, new_order=None, cycles=None, **defaults_config):
         current_order.insert(final_idx, temp_order_diff_info[2])
 
     return eq.relation
+
+def prove_via_grouping_ranges(expr, prover_fn):
+    '''
+    Groups the ExprRange operands of the expression, calls a prover
+    type function on this grouped expression, then
+    return the resulting judgment after disassociating.
+    '''
+    from proveit import Judgment, ExprRange
+    from proveit.relation import Relation
+    range_indices = [
+            _k for _k, operand in enumerate(expr.operands)
+            if isinstance(operand, ExprRange)]
+    grouped_range_version = expr.__class__(
+            *[expr.__class__(operand) if isinstance(operand, ExprRange) 
+            else operand for operand in expr.operands])
+    judgment = prover_fn(grouped_range_version, preserve_all=True)
+    defaults.test_judgment = judgment
+    assert isinstance(judgment, Judgment)
+    if isinstance(judgment.expr, Relation):
+        assert judgment.expr.lhs == grouped_range_version, (
+                "Expecting %s to be on the left side of %s"%(
+                        grouped_range_version, judgment.expr))
+        for range_idx in range_indices:
+            judgment = judgment.inner_expr().lhs.disassociate(
+                    range_idx, preserve_all=True)
+    else:
+        assert judgment.expr == grouped_range_version, (
+                "Expecting %s to %s"%(judgment.expr, grouped_range_version))
+        for range_idx in range_indices:
+            judgment = judgment.inner_expr().disassociate(
+                    range_idx, preserve_all=True)
+    return judgment

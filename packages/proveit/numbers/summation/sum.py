@@ -138,14 +138,23 @@ class Sum(OperationOverInstances):
         for the simplification.
         NEEDS UPDATING
         '''
-        from proveit.logic import SimplificationError
-        from . import sum_single
+        from proveit.logic import TRUE, SimplificationError
+        from . import sum_single, trivial_sum
         if (isinstance(self.domain,Interval) and
             self.domain.lower_bound == self.domain.upper_bound):
             if hasattr(self, 'index'):
                 return sum_single.instantiate(
                     {Function(f, self.index): self.summand,
                      a: self.domain.lower_bound})
+        if (isinstance(self.domain,Interval) and
+                self.instance_param not in free_vars(self.summand)
+                and self.non_domain_condition()==TRUE):
+            # Trivial sum: summand independent of parameter.
+            _a = self.domain.lower_bound
+            _b = self.domain.upper_bound
+            _x = self.summand
+            return trivial_sum.instantiate(
+                    {a:_a, b:_b, x:_x})
         raise SimplificationError(
             "Sum simplification only implemented for a summation over an "
             "integer Interval of one instance variable where the upper "

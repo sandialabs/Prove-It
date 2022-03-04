@@ -10,3 +10,4 @@ power_set
 cartesian_products
 disjointness
 cardinality
+functions

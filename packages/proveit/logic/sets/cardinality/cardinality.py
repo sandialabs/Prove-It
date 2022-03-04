@@ -1,4 +1,4 @@
-from proveit import Function, Literal, USE_DEFAULTS, prover
+from proveit import Function, Literal, USE_DEFAULTS, prover, equality_prover
 from proveit import S, a, b, x, N
 
 
@@ -36,3 +36,27 @@ class Card(Function):
             _N = _x.num_elements()
             return distinct_subset_existence.instantiate(
                 {S: self.domain, N: _N, x: _x})
+
+    @equality_prover("computed", "compute")
+    def computation(self, **defaults_config):
+        '''
+        Prove the equality of this Card expression with an element of
+        the cardinal numbers.  For the Card of a finite set, 
+        it simply equates to the size.
+        '''
+        if hasattr(self.domain, 'deduce_cardinality'):
+            return self.domain.deduce_cardinality()
+        raise NotImplementedError(
+                "Evaluation of the cardinality of %s is not implemented. "
+                "%s.deduce_cardinality method is required."
+                %(self.domain, self.domain.__class__))
+
+    
+    @equality_prover("evaluated", "evaluate")
+    def evaluation(self, **defaults_config):
+        '''
+        Prove the equality of this Card expression with an
+        irreducible cardinal number.  For the Card of a finite set, 
+        it simply evaluates to the size.
+        '''
+        return self.computation().inner_expr().rhs.evaluate()

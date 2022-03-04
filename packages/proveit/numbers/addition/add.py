@@ -11,7 +11,7 @@ from proveit import a, b, c, d, i, j, k, l, n, x, y, free_vars
 from proveit.logic import (And, Equals, NotEquals,
                            EvaluationError, InSet)
 from proveit.logic.irreducible_value import is_irreducible_value
-from proveit.numbers import NumberOperation
+from proveit.numbers import NumberOperation, standard_number_set
 from proveit.numbers.numerals.decimals import DIGITS
 import proveit.numbers.numerals.decimals
 from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, group_commutation, pairwise_evaluation
@@ -1429,6 +1429,10 @@ class Add(NumberOperation):
                 term_ns = term_membership.operands[0].body.domain
             else:
                 term_ns = term_membership.domain
+            # check if term_ns is now a standard number set
+            if term_ns not in number_set_map.keys():
+                # try to replace term_ns with a std number set
+                term_ns = standard_number_set(term_ns)
             term_ns = number_set_map[term_ns]
             if term_ns in {NaturalPos, RationalPos, RealPos}:
                 any_positive = True

@@ -5,7 +5,9 @@ from proveit import (Expression, Literal, Operation, Conditional,
 from proveit.logic.equality import SimplificationError
 from proveit import i, j, k, l, m, n, A, B, C, D, E, F, G, P
 from proveit.logic.booleans.booleans import in_bool
-from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, group_commutation, group_commute
+from proveit.abstract_algebra.generic_methods import (
+        apply_commutation_thm, apply_association_thm, apply_disassociation_thm, 
+        group_commutation, group_commute, prove_via_grouping_ranges)
 
 
 class And(Operation):
@@ -142,7 +144,7 @@ class And(Operation):
             nand_if_neither,
             nand_if_left_but_not_right,
             nand_if_right_but_not_left)
-        from proveit.logic import Not
+        from proveit.logic import Not, FALSE
         not_self = Not(self)
         if not_self in {
                 true_and_false_negated.expr,
@@ -159,6 +161,23 @@ class And(Operation):
         # know one to be false
         use_automation_possibilities = (
                 [False, True] if defaults.automation else [False])
+        if self.operands.contains_range():
+            if self.operands.num_entries()==1:
+                # Just a single ExprRange.  Conclude the negation
+                # through an evaluation which will equate it to
+                # a universal quantification.
+                evaluation = self.evaluation()
+                if evaluation.rhs == FALSE:
+                    return self.disprove()
+                raise ProofFailure(Not(self), defaults.assumptions,
+                                   "Expected evaluation to be FALSE, got %s"
+                                   %evaluation)
+            # Group each ExprRange operand, call conclude_negation,
+            # then disassociate the ExprRange operands.
+            return prove_via_grouping_ranges(
+                    self,
+                    lambda expr, **kwargs: expr.conclude_negation(**kwargs))
+        
         for use_automation_for_operand in use_automation_possibilities:
             disproven_operand_indices = []
             for _k, operand in enumerate(self.operands):
@@ -167,7 +186,7 @@ class And(Operation):
                     disproven_operand_indices.append(_k)
                     # possible way to prove it
                     self.conclude_negation_via_example(operand)
-                except ProofFailure:
+                except Exception:
                     pass
             if self.operands.is_double() and len(disproven_operand_indices) > 0:
                 # One or both of the two operands were known to be true
@@ -559,10 +578,12 @@ class And(Operation):
         simplification direction.  Also, if applicable, perform
         a unary reduction: And(A) = A.
         '''
+        from proveit import ExprRange
         from proveit.logic import (Equals, FALSE, TRUE, EvaluationError,
                                    is_irreducible_value)
         # load in truth-table evaluations
-        from . import and_t_t, and_t_f, and_f_t, and_f_f
+        from . import (and_t_t, and_t_f, and_f_t, and_f_f,
+                       conjunction_eq_quantification)
 
         if self.operands.num_entries() == 0:
             from proveit.logic.booleans.conjunction import \
@@ -590,6 +611,21 @@ class And(Operation):
             return Equals(self, TRUE).prove()
 
         if must_evaluate:
+            if self.operands.contains_range():
+                if self.operands.num_entries() == 1:
+                    # Conjunction of a single ExprRange.  Convert
+                    # to a universal quantification and evaluate that.
+                    expr_range = self.operands[0]
+                    _i = expr_range.true_start_index
+                    _j = expr_range.true_end_index
+                    _P = expr_range.lambda_map
+                    conj_eq_quant = (conjunction_eq_quantification
+                                     .instantiate({i:_i, j:_j, P:_P},
+                                                  preserve_all=True))
+                    return conj_eq_quant.apply_transitivity(
+                            conj_eq_quant.rhs.evaluation())
+                return prove_via_grouping_ranges(
+                        self, lambda expr, **kwargs: expr.evaluation(**kwargs))
             if not all(is_irreducible_value(operand) for
                        operand in self.operands):
                 # The simplification of the operands may not have

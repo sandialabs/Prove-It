@@ -1071,10 +1071,9 @@ class Lambda(Expression):
         
         The Q conditional need not be present.
         '''
-        from proveit import Conditional, Judgment, ExprTuple, var_range
+        from proveit import Conditional, Judgment
         from proveit import a, b, c, i, f, g, Q
         from proveit.logic import Forall, Equals
-        from proveit.numbers import one
         from proveit.core_expr_types.lambda_maps import (
                 lambda_substitution, general_lambda_substitution)
         if isinstance(universal_eq, Judgment):
@@ -1091,7 +1090,13 @@ class Lambda(Expression):
         _a = universal_eq.instance_params
         _b = _c = self.parameters
         _i = _b.num_elements()
-        if isinstance(self.body, Conditional):
+        
+        thm = lambda_substitution
+        if isinstance(self.body, Conditional) and not (
+                isinstance(equality.lhs, Conditional) 
+                and isinstance(equality.rhs, Conditional)):
+            # use general lambda substitution.
+            thm = general_lambda_substitution
             _f = Lambda(self.parameters, self.body.value)
         else:
             _f = Lambda(self.parameters, self.body)
@@ -1106,22 +1111,18 @@ class Lambda(Expression):
                     "%s not valid as the 'universal_eq' argument for "
                     "the call to 'substitution' on %s: %s not equal "
                     "to %s or %s"%(universal_eq, self, _f, lhs_map, rhs_map))     
-        a_1_to_i = ExprTuple(var_range(a, one, _i))
-        b_1_to_i = ExprTuple(var_range(b, one, _i))
-        c_1_to_i = ExprTuple(var_range(c, one, _i))        
-        if isinstance(self.body, Conditional):
+        if thm == general_lambda_substitution:
             _Q = Lambda(self.parameters, self.body.condition)
-            return general_lambda_substitution.instantiate(
+            return thm.instantiate(
                     {i: _i, f: _f, g: _g, Q: _Q, 
                     a: _a, b: _b, c: _c},
                     preserve_expr=universal_eq).derive_consequent()
         else:
-            return lambda_substitution.instantiate(
+            return thm.instantiate(
                     {i: _i, f: _f, g: _g, 
                      a: _a, b: _b, c: _c},
                      preserve_expr=universal_eq).derive_consequent()
 
-    @staticmethod
     def global_repl(master_expr, sub_expr, assumptions=USE_DEFAULTS):
         '''
         Returns the Lambda map for replacing the given sub-Expression

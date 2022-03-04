@@ -16,7 +16,6 @@ proveit.logic.booleans.conjunction.from_unary_and
 proveit.logic.booleans.conjunction.left_from_and
 proveit.logic.booleans.conjunction.right_from_and
 proveit.logic.booleans.conjunction.true_and_true
-proveit.logic.booleans.conjunction.unary_and_reduction
 proveit.logic.booleans.false_eq_false
 proveit.logic.booleans.fold_is_bool
 proveit.logic.booleans.from_not_false
@@ -334,7 +333,6 @@ proveit.numbers.number_sets.real_numbers.all_in_interval_co__is__real
 proveit.numbers.number_sets.real_numbers.e_is_real_pos
 proveit.numbers.number_sets.real_numbers.int_within_real
 proveit.numbers.number_sets.real_numbers.interval_cc_lower_bound
-proveit.numbers.number_sets.real_numbers.interval_cc_membership_is_bool
 proveit.numbers.number_sets.real_numbers.interval_cc_upper_bound
 proveit.numbers.number_sets.real_numbers.interval_co_lower_bound
 proveit.numbers.number_sets.real_numbers.interval_co_upper_bound

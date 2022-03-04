@@ -2,10 +2,10 @@ import sys
 from collections import deque
 from proveit import (Literal, Function, NamedExprs, safe_dummy_var,
                      ProofFailure, StyleOptions, USE_DEFAULTS, defaults,
-                     equality_prover)
+                     relation_prover, equality_prover)
 from proveit import A, B, C, D, E, F, G, h, i, j, k, m, n, p, Q, R, S, U
 from proveit._core_.expression.composite import ExprArray, ExprTuple, ExprRange
-from proveit.logic import Equals, Set
+from proveit.logic import Equals, Set, deduce_equal_or_not
 from proveit.numbers import one, num, Interval, Add, Neg, subtract
 
 
@@ -125,7 +125,27 @@ class QcircuitElement(Function):
     
     def _config_latex_tool(self, lt):
         config_latex_tool(lt)
-
+    
+    def _deduce_equal_or_not(self, rhs, operand_name, eq_thm, neq_thm):
+        my_cls = self.__class__
+        if not isinstance(rhs, my_cls):
+            raise NotImplementedError(
+                    "%s.deduce_equal_or_not only implemented when "
+                    "'other' is also an %s."%(my_cls, my_cls))
+        if hasattr(self, 'part') or hasattr(rhs, 'part'):
+            raise NotImplementedError(
+                    "%s.deduce_equal_or_not only implemented when "
+                    "both %ss have no 'part'; when an Input has a part "
+                    "it should be contained in a MultiQubitElem which "
+                    "has its own 'deduce_equal_or_not' method."
+                    %(my_cls, my_cls))
+        _A = self.operands[operand_name]
+        _B = rhs.operands[operand_name]
+        relation = deduce_equal_or_not(_A, _B)
+        if isinstance(relation, Equals):
+            return eq_thm.instantiate({A:_A, B:_B})
+        else:
+            return neq_thm.instantiate({A:_A, B:_B})
 
 class Input(QcircuitElement):
     '''
@@ -154,6 +174,12 @@ class Input(QcircuitElement):
         if show_explicitly and hasattr(self, 'part'):
             return r'\qin{%s~\mbox{part}~%s}'%(self.state.latex(), self.part.latex())
         return r'\qin{' + self.state.latex() + r'}'
+    
+    @relation_prover
+    def deduce_equal_or_not(self, rhs, **defaults_config):   
+        from . import qcircuit_input_eq, qcircuit_input_neq
+        return self._deduce_equal_or_not(
+                rhs, 'state', qcircuit_input_eq, qcircuit_input_neq)
 
 
 class Output(QcircuitElement):
@@ -182,6 +208,13 @@ class Output(QcircuitElement):
         if show_explicitly and hasattr(self, 'part'):
             return r'& \qout{%s~\mbox{part}~%s}'%(self.state.latex(), self.part.latex())
         return r'& \qout{' + self.state.latex() + r'}'
+
+    @relation_prover
+    def deduce_equal_or_not(self, rhs, **defaults_config):   
+        from . import qcircuit_output_eq, qcircuit_output_neq
+        return self._deduce_equal_or_not(
+                rhs, 'state', qcircuit_output_eq, qcircuit_output_neq)
+
 
 class Measure(QcircuitElement):
     '''
@@ -473,6 +506,56 @@ class MultiQubitElem(QcircuitElement):
                             "order to invoke unary_reduction")
         return unary_multi_qubit_elem_reduction.instantiate(
             {U: self.gate_operation})
+
+    @relation_prover
+    def deduce_equal_or_not(self, rhs, **defaults_config):   
+        from . import (
+                qcircuit_input_part_eq, qcircuit_input_part_neq,
+                qcircuit_output_part_eq, qcircuit_output_part_neq)
+        if isinstance(self.element, Input):
+            return self._deduce_equal_or_not(
+                    rhs, 'state', qcircuit_input_part_eq, 
+                    qcircuit_input_part_neq)
+        if isinstance(self.element, Output):
+            return self._deduce_equal_or_not(
+                    rhs, 'state', qcircuit_output_part_eq, 
+                    qcircuit_output_part_neq)
+        raise NotImplementedError(
+                "MultiQubitElem.deduce_equal_or_not only implemented for "
+                "mult-input or mult-output element parts currently")
+
+    def _deduce_equal_or_not(self, rhs, operand_name, eq_thm, neq_thm):
+        my_cls = self.__class__
+        if not isinstance(rhs, my_cls):
+            raise NotImplementedError(
+                    "%s.deduce_equal_or_not only implemented when "
+                    "'other' is also an %s."%(my_cls, my_cls))
+        if self.targets != rhs.targets:
+            raise NotImplementedError(
+                    "%s.deduce_equal_or_not only implemented when "
+                    "both elements have the same targets"
+                    %my_cls)
+        if hasattr(self.element, 'part') != hasattr(rhs.element, 'part'):
+            raise NotImplementedError(
+                    "%s.deduce_equal_or_not only implemented when "
+                    "both elements have a part or both have no part"%my_cls)
+        _A = self.element.operands[operand_name]
+        _B = rhs.element.operands[operand_name]
+        _S = self.targets
+        repl_map = {A:_A, B:_B, S:_S}
+        relation = deduce_equal_or_not(_A, _B)
+        if hasattr(self.element, 'part'):
+            if self.element.part != rhs.element.part:
+                raise NotImplementedError(
+                        "%s.deduce_equal_or_not only implemented when "
+                        "both elements have the same part number"
+                        %my_cls)
+            _k = self.element.part
+            repl_map[k] = _k
+        if isinstance(relation, Equals):
+            return eq_thm.instantiate(repl_map)
+        else:
+            return neq_thm.instantiate(repl_map)
 
 
 def control_elem(*target_qubit_indices):
