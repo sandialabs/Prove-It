@@ -211,40 +211,49 @@ class Conditional(Expression):
             conditions = self.condition.operands.entries
         else:
             conditions = [self.condition]
-        prev_num_assumptions = len(defaults.assumptions)
         
         # For each condition, we'll assume the previous substituted
         # conditions.
         subbed_conds = []
+        prev_assumptions = defaults.assumptions
+        inner_stored_repls = stored_replacements
         for _k, cond in enumerate(conditions):
             inner_assumptions = (defaults.assumptions 
                                  + tuple(subbed_conds))
             with defaults.temporary() as temp_defaults:
                 temp_defaults.assumptions = inner_assumptions
-                if len(defaults.assumptions) > prev_num_assumptions:
+                if defaults.assumptions != prev_assumptions:
                     # Since the assumptions have changed, we can no 
                     # longer use the stored_replacements from before.
-                    stored_replacements = dict()
+                    inner_stored_repls = dict()
+                prev_assumptions = defaults.assumptions
                 subbed_conds.append(
                         recursion_fn(cond, requirements=requirements, 
-                                     stored_replacements=stored_replacements))
+                                     stored_replacements=inner_stored_repls))
     
         # For the value, we'll assume all of the substituted conditions.
         inner_assumptions = (defaults.assumptions  + tuple(subbed_conds))
         with defaults.temporary() as temp_defaults:
-            prev_num_assumptions = len(defaults.assumptions)
             temp_defaults.assumptions = inner_assumptions
-            if len(defaults.assumptions) > prev_num_assumptions:
+            if defaults.assumptions != prev_assumptions:
                 # Since the assumptions have changed, we can no longer
                 # use the stored_replacements from before.
-                stored_replacements = dict()
+                inner_stored_repls = dict()
             subbed_val = recursion_fn(self.value,
                     requirements=requirements,
-                    stored_replacements=stored_replacements)
+                    stored_replacements=inner_stored_repls)
         if len(subbed_conds) == 1:
             return (subbed_val, subbed_conds[0])
         else:
-            return (subbed_val, And(*subbed_conds))
+            subbed_condition = And(*subbed_conds)
+            if subbed_condition != self.condition:
+                # We can replace the altered subbed condition
+                # conjunction; use the original assumptions and
+                # stored replacements.
+                subbed_condition = recursion_fn(
+                        subbed_condition, requirements=requirements,
+                        stored_replacements=stored_replacements)
+            return (subbed_val, subbed_condition)
 
     @equality_prover('simplified', 'simplify')
     def simplification(self, **defaults_config):
@@ -308,6 +317,7 @@ class Conditional(Expression):
                 (singular_conjunction_condition_reduction,
                  condition_merger_reduction,
                  condition_append_reduction, condition_prepend_reduction,
+                 true_condition_elimination,
                  condition_with_true_on_left_reduction,
                  condition_with_true_on_right_reduction)
             conditions = self.condition.operands
@@ -348,6 +358,14 @@ class Conditional(Expression):
                 _n = _R.num_elements()
                 return condition_prepend_reduction.instantiate(
                     {a: self.value, n: _n, Q: conditions[0], R: _R})
+            elif any(cond==TRUE for cond in conditions):
+                idx = conditions.index(TRUE)
+                _Q = conditions[:idx]
+                _R = conditions[idx+1:]
+                _m = _Q.num_elements()
+                _n = _R.num_elements()
+                return true_condition_elimination.instantiate(
+                        {a:self.value, Q:_Q, R:_R, m:_m, n:_n})
         elif must_evaluate:
             # The only way we can equate a Conditional to an
             # irreducible is if we prove the condition to be true.
@@ -434,27 +452,29 @@ class Conditional(Expression):
 
     @equality_prover('condition_substituted', 
                      'condition_substitute')
-    def condition_substitution(self, equality, **defaults_config):
+    def condition_substitution(self, logical_equivalence, **defaults_config):
         '''
         Equate this Conditional to one that has the condition
         substituted.  For example,
         {a if Q. = {a if R.
-        given "Q = R".
+        given "Q ⟺ R".
         '''
         from proveit import a, Q, R
         from proveit.core_expr_types.conditionals import (
                 condition_substitution)
-        if equality.lhs == self.condition:
+        if logical_equivalence.lhs == self.condition:
             return condition_substitution.instantiate(
-                    {a:self.value, Q:equality.lhs, R:equality.rhs})
-        elif equality.rhs == self.condition:
+                    {a:self.value, Q:logical_equivalence.lhs, 
+                     R:logical_equivalence.rhs})
+        elif logical_equivalence.rhs == self.condition:
             return condition_substitution.instantiate(
-                    {a:self.value, Q:equality.rhs, R:equality.lhs})
+                    {a:self.value, Q:logical_equivalence.rhs, 
+                     R:logical_equivalence.lhs})
         else:
-            raise ValueError("%s is not an appropriate 'equality' for "
-                             "condition_substitution on %s (the 'condition' "
-                             "is not matched on either side)"
-                             %(equality, self))
+            raise ValueError("%s is not an appropriate 'logical_equivalence' "
+                             "for condition_substitution on %s (the "
+                             "'condition' is not matched on either side)"
+                             %(logical_equivalence, self))
 
     @equality_prover('sub_expr_substituted', 'sub_expr_substitute')
     def sub_expr_substitution(self, new_sub_exprs, **defaults_config):

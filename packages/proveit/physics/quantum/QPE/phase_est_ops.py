@@ -176,3 +176,13 @@ class SubIndexed(Operation):
         formatted_label = self.label.formatted(format_type, fence=True)
         formatted_index = self.index.formatted(format_type, fence=False)
         return formatted_label + '_{' + formatted_index + '}'
+
+from proveit.numbers import i, two, pi, Neg, exp, frac, Mult
+
+def exp2pi_i_on_two_pow_t(*exp_factors):
+    from proveit.physics.quantum.QPE import _two_pow_t
+    return exp(frac(Mult(*((two, pi, i) + exp_factors)), _two_pow_t))
+
+def exp_neg_2pi_i_on_two_pow_t(*exp_factors):
+    from proveit.physics.quantum.QPE import _two_pow_t
+    return exp(Neg(frac(Mult(*((two, pi, i) + exp_factors)), _two_pow_t)))
