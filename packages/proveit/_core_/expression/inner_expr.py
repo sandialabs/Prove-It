@@ -560,6 +560,7 @@ class InnerExpr:
         assumptions = defaults.assumptions
         equality = self._eq_from_equality_or_replacement(
                 equality_or_replacement, prove_equality=True)
+        
         # Make sure to preserve the left and right sides of the
         # original expression.
         preserved_exprs = set(defaults.preserved_exprs)
@@ -573,6 +574,10 @@ class InnerExpr:
                                if param in fvars]
         else:
             involved_params = tuple()
+        gen_conditions = [assumption for assumption 
+                          in equality.assumptions
+                          if not free_vars(assumption).isdisjoint(
+                                  involved_params)]
         repl_lambda = self.repl_lambda(params_of_param
                                        =involved_params)
         replacements = []
@@ -580,10 +585,9 @@ class InnerExpr:
             # Change the equivalence to an appropriate
             # equivalence of lambda expressions.
             gen_equality = equality.generalize(
-                    involved_params, 
-                    conditions=equality.assumptions)
+                    involved_params, conditions=gen_conditions)
             gen_conditions = gen_equality.conditions
-            if len(equality.assumptions) == 0:
+            if gen_conditions.num_entries() == 0:
                 lhs_lambda_body = equality.lhs
             else:
                 lhs_lambda_body = Conditional(
