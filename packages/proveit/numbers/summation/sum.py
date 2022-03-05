@@ -103,24 +103,16 @@ class Sum(OperationOverInstances):
     def _formatted(self, format_type, **kwargs):
         # MUST BE UPDATED TO DEAL WITH 'joining' NESTED LEVELS
         fence = kwargs['fence'] if 'fence' in kwargs else False
-        if isinstance(self.domain, Interval):
-            explicit_conds = list(self.explicit_conditions())            
-            has_explicit_conds = (len(explicit_conds) > 0)
-            formatted_explicit_conds = ''
-            if has_explicit_conds:
-                formatted_explicit_conds = " | "
-                formatted_explicit_conds += ', '.join(
-                        condition.formatted(format_type)
-                        for condition in explicit_conds)
+        explicit_conds = self.explicit_conditions()          
+        if isinstance(self.domain, Interval) and len(explicit_conds)==0:
             formatted_operator = self.operator.formatted(format_type)
             formatted_index = self.index.formatted(format_type)
             formatted_lower = self.domain.lower_bound.formatted(format_type)
             formatted_upper = self.domain.upper_bound.formatted(format_type)
             formatted_summand = self.summand.formatted(format_type, fence=True)
-            formatted_inner = "%s_{%s = %s%s}^{%s} %s"%(
+            formatted_inner = "%s_{%s = %s}^{%s} %s"%(
                     formatted_operator, formatted_index,
-                    formatted_lower, formatted_explicit_conds, 
-                    formatted_upper, formatted_summand)
+                    formatted_lower, formatted_upper, formatted_summand)
             return maybe_fenced(format_type, formatted_inner, fence=fence)
         else:
             return OperationOverInstances._formatted(self, format_type,
