@@ -1429,7 +1429,7 @@ class Add(NumberOperation):
                 term_ns = term_membership.operands[0].body.domain
             else:
                 term_ns = term_membership.domain
-            # check if term_ns is now a standard number set
+            # check if term_ns is not a standard number set
             if term_ns not in number_set_map.keys():
                 # try to replace term_ns with a std number set
                 term_ns = standard_number_set(term_ns)
