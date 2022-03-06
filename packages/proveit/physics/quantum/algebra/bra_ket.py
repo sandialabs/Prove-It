@@ -232,4 +232,13 @@ class NumKet(Function):
         else:
             return num_ket_neq.instantiate(
                     {n:self.size, j:self.num, k:other_ket.num})
-            
+
+    @prover
+    def compute_norm(self, **defaults_config):
+        '''
+        NumKets are all normalized to 1.  Prove that for this
+        particular NumKet.
+        '''
+        from . import num_ket_norm
+        return num_ket_norm.instantiate(
+                {n:self.size, k:self.num})
