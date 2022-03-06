@@ -1,6 +1,6 @@
-from proveit import (Operation, Literal, relation_prover,
+from proveit import (Operation, Literal, prover, relation_prover,
                      equality_prover, TransRelUpdater, UnsatisfiedPrerequisites)
-from proveit import a, b, x, K, V, alpha, beta
+from proveit import a, b, x, H, K, V, alpha, beta
 from proveit.logic import InSet
 from proveit.abstract_algebra import plus, times
 from proveit.linear_algebra import VecSpaces
@@ -170,3 +170,15 @@ class ScalarMult(Operation):
             field = VecSpaces.known_field(vec_space)
         return scalar_mult_closure.instantiate(
                 {K:field, V:vec_space, a:self.scalar, x:self.scaled})
+    
+    @prover
+    def compute_norm(self, **defaults_config):
+        '''
+        Proves ‖a v‖ = |a| ‖v‖.
+        '''
+        from proveit.linear_algebra.inner_products import scaled_norm
+        vec_space = VecSpaces.known_vec_space(self.scaled)
+        field = VecSpaces.known_field(vec_space)
+        return scaled_norm.instantiate(
+                {K:field, H:vec_space, alpha:self.scalar, x:self.scaled})
+

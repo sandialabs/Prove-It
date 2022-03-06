@@ -1,8 +1,9 @@
 from proveit import (defaults, Literal, ExprRange, ExprTuple, ProofFailure,
-                     UnsatisfiedPrerequisites, relation_prover,
+                     UnsatisfiedPrerequisites, prover, relation_prover,
                      equality_prover, TransRelUpdater)
 from proveit import a, b, i, n, x, y, K, V
-from proveit.logic import InSet
+from proveit.logic import Equals, InSet
+from proveit.numbers import zero
 from proveit.abstract_algebra import GroupAdd
 from proveit.linear_algebra import VecSpaces
 
@@ -56,32 +57,7 @@ class VecAdd(GroupAdd):
         
         terms = self.terms
         if vec_space is None:
-            # We need to find a vector space that is common to
-            # all of the terms.
-            candidate_vec_spaces = None
-            for term in terms:
-                term_vec_spaces = set(VecSpaces.yield_known_vec_spaces(
-                        term, field=field))
-                if hasattr(term, 'deduce_in_vec_space'):
-                    try:
-                        vec_space_membership = term.deduce_in_vec_space(
-                                field=field)
-                        term_vec_spaces.add(vec_space_membership.domain)
-                    except (UnsatisfiedPrerequisites, NotImplementedError,
-                            ProofFailure):
-                        pass
-                if candidate_vec_spaces is None:
-                    candidate_vec_spaces = term_vec_spaces
-                else:
-                    candidate_vec_spaces.intersection_update(term_vec_spaces)
-            try:
-                vec_space = next(iter(candidate_vec_spaces))
-            except StopIteration:
-                # No known common vector space membership over the 
-                # specified field.
-                raise UnsatisfiedPrerequisites(
-                        "%s is not known to be a vector in a vector "
-                        "space over %s"%(self, field))
+            vec_space = VecSpaces.common_known_vec_space(terms, field=field)
         field = VecSpaces.known_field(vec_space)
         all_scaled = all((isinstance(term, ScalarMult)
                           or (isinstance(term, ExprRange) and
@@ -428,3 +404,23 @@ class VecAdd(GroupAdd):
 
         return eq.relation
 
+    @prover
+    def compute_norm(self, **defaults_config):
+        '''
+        Proves ‖x + y‖ = sqrt(‖x‖^2 + ‖y‖^2) if the inner product 
+        of x and y is zero.
+        '''
+        from proveit.linear_algebra import InnerProd, ScalarMult
+        from . import norm_of_sum_of_orthogonal_pair
+        if self.operands.is_double():
+            _a, _b = self.operands
+            _x = _a.scaled if isinstance(_a, ScalarMult) else _a
+            _y = _b.scaled if isinstance(_b, ScalarMult) else _b
+            if Equals(InnerProd(_x, _y), zero).proven():
+                vec_space = VecSpaces.known_vec_space(_a)
+                field = VecSpaces.known_field(vec_space)
+                return norm_of_sum_of_orthogonal_pair.instantiate(
+                        {K:field, V:vec_space, a:_a, b:_b})                    
+        raise NotImplementedError(
+                "VecAdd.compute_norm is only implemented for an "
+                "orthogonal pair of vectors")
