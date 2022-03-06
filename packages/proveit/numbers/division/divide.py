@@ -5,7 +5,7 @@ from proveit import (Judgment, Expression, Literal, Operation,
                      equality_prover, SimplificationDirectives)
 from proveit import TransRelUpdater
 from proveit import a, b, c, m, n, w, x, y, z
-from proveit.logic import Equals, NotEquals
+from proveit.logic import Equals, NotEquals, InSet
 from proveit.numbers import zero, NumberOperation
 from proveit.numbers import NumberOperation, deduce_number_set
 from proveit.numbers.number_sets import (
@@ -98,6 +98,10 @@ class Div(NumberOperation):
             # complete cancelation.
             return eq.relation
 
+        if self.is_irreducible_value():
+            # already irreducible
+            return Equals(self, self).conclude_via_reflexivity()
+
         if must_evaluate and not all(
                 is_irreducible_value(operand) for operand in self.operands):
             for operand in self.operands:
@@ -138,6 +142,16 @@ class Div(NumberOperation):
 
         return eq.relation
 
+    def is_irreducible_value(self):
+        '''
+        This needs work, but we know that 1/n for n in NaturalPos
+        is irreducible as a special case.
+        '''
+        from proveit.numbers import one
+        if self.numerator==one and InSet(self.denominator, NaturalPos):
+            return True
+        return False # TODO: handle any proper fraction
+            
     @equality_prover('zero_numerator_reduced', 'zero_numerator_reduce')
     def zero_numerator_reduction(self, **defaults_config):
         '''

@@ -160,6 +160,10 @@ class Exp(NumberOperation):
         from . import (exp_zero_eq_one, exponentiated_zero,
                        exponentiated_one, exp_nat_pos_expansion)
 
+        if self.is_irreducible_value():
+            # already irreducible
+            return Equals(self, self).conclude_via_reflexivity()
+
         if self.exponent == zero:
             return exp_zero_eq_one.instantiate({a: self.base})  # =1
         elif self.base == zero:
@@ -253,6 +257,17 @@ class Exp(NumberOperation):
                 expr = eq.update(expr.simplification())
 
         return eq.relation
+    
+    def is_irreducible_value(self):
+        '''
+        This needs work, but we know that sqrt(2) is irreducible as
+        a special case.
+        '''
+        if isinstance(self.exponent, Div):
+            if self.exponent == frac(one, two):
+                if self.base == two:
+                    return True
+        return False # TODO: handle more cases.
 
     @equality_prover('power_of_one_reduced', 'power_of_one_reduce')
     def power_of_one_reduction(self, **defaults_config):
