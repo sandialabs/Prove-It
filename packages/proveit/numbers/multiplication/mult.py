@@ -222,7 +222,7 @@ class Mult(NumberOperation):
                 factor_ns = factor_membership.operands[0].body.domain
             else:
                 factor_ns = factor_membership.domain
-            # check if factor_ns is now a standard number set
+            # check if factor_ns is not a standard number set
             if factor_ns not in number_set_map.keys():
                 # try to replace factor_ns with a std number set
                 factor_ns = standard_number_set(factor_ns)
@@ -331,6 +331,17 @@ class Mult(NumberOperation):
         if must_evaluate and not self.operands_are_irreducible():
             # Without a zero factor, shallow evaluation of Mult is only
             # viable if the operands are all irreducible.
+            expr = self
+            eq = TransRelUpdater(expr)
+            for _k, factor in enumerate(expr.factors):
+                if not is_irreducible_value(factor):
+                    expr = eq.update(expr.inner_expr().operands[_k].evaluation(
+                            preserve_all=True))
+            if expr != self:
+                # Start over now that the terms are all evaluated to
+                # irreducible values.
+                eq.update(expr.evaluation())
+                return eq.relation
             raise EvaluationError(self)
 
         if self.operands.is_single():
@@ -384,9 +395,24 @@ class Mult(NumberOperation):
             # but this at least handles the simple case of combining
             # exponents when all factors are exponents with the same 
             # base.
-            # (ExprRanges are not yet handled, but we can do this when
-            # this is improved further).
-            if isinstance(expr, Mult) and expr.factors.num_entries()>1:
+            # Only simple case of an ExprRange is currently handled.
+            # We can improve this later as well.
+            if (isinstance(expr, Mult) and expr.factors.num_entries()==1
+                    and isinstance(expr.factors[0], ExprRange) and
+                    expr.factors[0].is_parameter_independent):
+                # x * x * ... * x = x^n
+                factor_range = expr.factors[0]
+                assert isinstance(factor_range, ExprRange)
+                from proveit.numbers.exponentiation import exp_nat_pos_rev
+                _x = factor_range.body                    
+                _n = expr.operands.num_elements()
+                if factor_range.start_index != one:
+                    # Make the ExprRange start at 1.
+                    eq.update(expr.inner_expr().operands[0].reduction())
+                eq.update(exp_nat_pos_rev.instantiate(
+                        {n:_n, x:_x}, preserve_expr=expr))
+                return eq.relation
+            if isinstance(expr, Mult) and expr.factors.num_entries()!=1:                 
                 common_base = None
                 has_exp_factor = False
                 for factor in self.factors:
@@ -434,19 +460,6 @@ class Mult(NumberOperation):
                 assert self.factors.num_entries() > 2
                 return pairwise_evaluation(self)
         elif must_evaluate:
-            # The simplification of the operands may not have
-            # worked hard enough.  Let's work harder if we
-            # must evaluate.
-            expr = self
-            eq = TransRelUpdater(expr)
-            for _k, factor in enumerate(self.factors):
-                if not is_irreducible_value(factor):
-                    eq.update(expr.inner_expr()[_k].evaluation())
-            if expr != self:
-                # Start over now that the terms are all evaluated to
-                # irreductible values.
-                eq.update(expr.evaluation())
-                return eq.relation
             raise NotImplementedError(
                 "Cabability to evaluate %s is not implemented"%expr)
         
