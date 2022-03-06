@@ -1254,8 +1254,10 @@ class ExprRange(Expression):
     def reduction(self, must_reduce=False, **defaults_config):
         '''
         Prove this ExprRange, wrapped in an ExprTuple, equal
-        to an ExprTuple form that is possibly reduced (e.g.,
-        collapsed to an empty range) after simplifying indices.
+        to an ExprTuple form that is possibly reduced after simplifying
+        indices.  An apparently empty ExprRange will be collapsed to an
+        empty ExprRange.  A parameter-independent ExprRange will be
+        shifted so to start from an index of 1.
         '''
         from proveit import f, i, j, m, n
         from proveit.logic import Equals
@@ -1383,6 +1385,16 @@ class ExprRange(Expression):
                             .with_decreasing_order())
                 else:
                     return reduction
+
+        # If the ExprRange is parameter independent, shift it
+        # so the index starts at 1, increasing.
+        if self.is_parameter_independent and (self.is_decreasing() or
+                                              self.start_index != one):
+            expr = self
+            if expr.is_decreasing():
+                expr = expr.with_increasing_order()
+            return expr.shift_equivalence(new_start=one)
+        
         # If nothing else is applicable, we will return the trivial 
         # reflexive equality.
         if must_reduce:
