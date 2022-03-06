@@ -4,9 +4,19 @@ proveit.linear_algebra.inner_products.complex_set_is_inner_prod_space
 proveit.linear_algebra.inner_products.inner_prod_space_is_vec_space
 proveit.linear_algebra.inner_products.rational_set_is_inner_prod_space
 proveit.linear_algebra.inner_products.real_set_is_inner_prod_space
+proveit.linear_algebra.matrices.complex_matrix_space_is_vec_space
+proveit.linear_algebra.matrices.rational_matrix_space_is_vec_space
+proveit.linear_algebra.matrices.real_matrix_space_is_vec_space
 proveit.linear_algebra.matrices.unitaries_are_matrices
 proveit.linear_algebra.rational_vec_set_is_vec_space
 proveit.linear_algebra.real_vec_set_is_vec_space
+proveit.logic.booleans.conjunction.and_if_both
+proveit.logic.booleans.conjunction.any_from_and
+proveit.logic.booleans.conjunction.each_is_bool
+proveit.logic.booleans.conjunction.from_unary_and
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.booleans.conjunction.true_and_true
 proveit.logic.booleans.false_eq_false
 proveit.logic.booleans.fold_is_bool
 proveit.logic.booleans.from_not_false
@@ -154,10 +164,11 @@ proveit.numbers.numerals.decimals.posnat6
 proveit.numbers.numerals.decimals.posnat7
 proveit.numbers.numerals.decimals.posnat8
 proveit.numbers.numerals.decimals.posnat9
+proveit.numbers.numerals.decimals.tuple_len_2
 proveit.numbers.ordering.less_is_not_eq
 proveit.numbers.ordering.relax_less
 proveit.physics.quantum.QFT.invFT_is_unitary
-proveit.physics.quantum.QPE._psi_t_ket_register
+proveit.physics.quantum.QPE._psi_t_ket_is_normalized_vec
 proveit.physics.quantum.algebra.bra_in_QmultCodomain
 proveit.physics.quantum.algebra.bra_is_linmap
 proveit.physics.quantum.algebra.complex_in_QmultCodomain
@@ -168,6 +179,7 @@ proveit.physics.quantum.algebra.hilbert_space_is_vec_space
 proveit.physics.quantum.algebra.ket_in_QmultCodomain
 proveit.physics.quantum.algebra.ket_one_in_qubit_space
 proveit.physics.quantum.algebra.ket_zero_in_qubit_space
+proveit.physics.quantum.algebra.normalization_preservation
 proveit.physics.quantum.algebra.op_in_QmultCodomain
 proveit.physics.quantum.algebra.qmult_bra_in_QmultCodomain
 proveit.physics.quantum.algebra.qmult_bra_is_linmap
@@ -191,4 +203,8 @@ proveit.physics.quantum.algebra.qmult_op_ket_in_QmultCodomain
 proveit.physics.quantum.algebra.qmult_op_ket_is_ket
 proveit.physics.quantum.algebra.qmult_op_op_in_QmultCodomain
 proveit.physics.quantum.algebra.qmult_op_op_is_op
+proveit.physics.quantum.algebra.qmult_pulling_scalar_out_front
+proveit.physics.quantum.algebra.qmult_pulling_scalars_out_front
+proveit.physics.quantum.algebra.qmult_scalar_association
+proveit.physics.quantum.algebra.state_space_preservation
 # THEOREMS AND THEORIES TO EXCLUDE:
