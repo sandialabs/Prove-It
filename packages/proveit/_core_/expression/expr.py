@@ -1309,6 +1309,15 @@ class Expression(metaclass=ExprType):
         expr_copy = self.basic_replaced({})
         return expr_copy
 
+    def _used_literals(self):
+        '''
+        Return all of the used Literals of this Expression,
+        included those in sub-expressions.
+        Call externally via the used_literals method in expr.py.
+        '''
+        return set().union(*[expr._used_literals() for
+                             expr in self._sub_expressions])
+
     def _used_vars(self):
         '''
         Return all of the used Variables of this Expression,
@@ -1517,6 +1526,13 @@ class Expression(metaclass=ExprType):
         '''
         return self.basic_replaced({lit:lit.as_variable() for lit in literals})
 
+    def variables_as_literals(self, *literals):
+        '''
+        Return this expression with instances of the variables
+        corresponding to the given literals converted to the literals.  
+        '''
+        return self.basic_replaced({lit.as_variable():lit for lit in literals})
+
     def _repr_html_(self, unofficial_name_kind_theory=None):
         '''
         Generate html to show a png compiled from the latex (that may be recalled
@@ -1570,6 +1586,13 @@ class Expression(metaclass=ExprType):
         from proveit import A
         from proveit.logic.booleans import in_bool_if_true
         return in_bool_if_true.instantiate({A: self})
+
+def used_literals(expr):
+    '''
+    Return all of the used Literals of this Expression,
+    included those in sub-expressions.
+    '''
+    return expr._used_literals()
 
 def used_vars(expr):
     '''

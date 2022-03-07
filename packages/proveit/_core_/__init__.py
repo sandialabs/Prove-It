@@ -1,7 +1,7 @@
 # Core Prove-It constructs required used to construct/verify proofs.
 
 from .expression import (
-    Expression, traverse_inner_expressions, used_vars,
+    Expression, traverse_inner_expressions, used_vars, used_literals,
     free_var_ranges, free_vars,
     expression_depth, MakeNotImplemented,
     ImproperReplacement,

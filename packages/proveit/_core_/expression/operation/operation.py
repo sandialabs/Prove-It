@@ -369,6 +369,7 @@ class Operation(Expression):
         consistent.  Override this method if a different behavior is 
         desired.
         '''
+        from proveit._core_.expression.label.var import Variable
         from .function import Function
         if len(core_info) != 1 or core_info[0] != 'Operation':
             raise ValueError(
@@ -377,6 +378,10 @@ class Operation(Expression):
             raise ValueError(
                 'Expecting at least one sub_expression for an Operation, for the operator')
         operator, operands = sub_expressions[0], sub_expressions[1]
+        implicit_operator = operation_class._implicit_operator()
+        if implicit_operator is not None and isinstance(operator, Variable):
+            # Convert an implicit operator to a variable.
+            return Function(operator, operands)        
         args = []
         kw_args = dict()
         for arg in operation_class._extract_init_args(

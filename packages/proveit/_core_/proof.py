@@ -7,7 +7,7 @@ are directly required, each with its Proof.  In this way, the
 Proof objects form a DAG.
 """
 
-from collections import OrderedDict
+from collections import OrderedDict, deque
 import re
 from proveit._core_.judgment import Judgment
 from proveit._core_._unique_data import meaning_data, style_data
@@ -408,19 +408,41 @@ class Proof:
                 proof._meaning_data.num_steps = None
                 to_process.extend(proof._dependents)
 
-    def used_axioms(self):
+    def used_axioms(self, *, include_eliminated=False):
         '''
-        Returns the set of names of axioms that are used directly (not via other theorems) in this proof.
+        Returns the set of names of axioms that are used directly
+        (not via other theorems) in this proof.
         '''
-        return set().union(*[required_proof.used_axioms()
-                             for required_proof in self.required_proofs])
+        return set().union(
+                *[required_proof.used_axioms(
+                        include_eliminated=include_eliminated)
+                for required_proof in self.required_proofs])
 
-    def used_theorems(self):
+    def used_theorems(self, *, include_eliminated=False):
         '''
-        Returns the set of names of axioms that are used directly (not via other theorems) in this proof.
+        Returns the set of names of axioms that are used directly 
+        (not via other theorems) in this proof.
         '''
-        return set().union(*[required_proof.used_theorems()
-                             for required_proof in self.required_proofs])
+        return set().union(
+                *[required_proof.used_theorems(
+                        include_eliminated=include_eliminated)
+            for required_proof in self.required_proofs])
+
+    def eliminated_axioms(self):
+        '''
+        Returns the set of names of axioms that are eliminated in this 
+        proof via literal generalization.
+        '''
+        return (self.used_axioms(include_eliminated=True) 
+                - self.used_axioms())
+
+    def eliminated_theorems(self):
+        '''
+        Returns the set of names of theorems that are eliminated in 
+        this proof via literal generalization.
+        '''
+        return (self.used_theorems(include_eliminated=True) 
+                - self.used_theorems())
 
     def assumptions(self):
         return self.proven_truth.assumptions
@@ -462,11 +484,11 @@ class Proof:
         return ordered_dependency_nodes(
             self, lambda proof: proof.required_proofs)
 
-    def all_required_proofs(self, all_requirements_chain = None):
+    def all_required_proofs(self):
         '''
         Returns the set of directly or indirectly required proofs.
         '''
-        sub_proof_sets = [required_proof.all_required_proofs(all_requirements_chain)
+        sub_proof_sets = [required_proof.all_required_proofs()
                           for required_proof in self.required_proofs]
         return set([self]).union(*sub_proof_sets)
 
@@ -674,7 +696,7 @@ class Axiom(Proof):
         '''
         return self._storedAxiom().get_def_link()
 
-    def used_axioms(self):
+    def used_axioms(self, *, include_eliminated=False):
         return {self}
 
     def direct_dependents(self):
@@ -718,7 +740,7 @@ class Theorem(Proof):
             return 'conjecture'
         return 'theorem'
 
-    def used_theorems(self):
+    def used_theorems(self, *, include_eliminated=False):
         return {self}
 
     def __str__(self):
@@ -1602,15 +1624,38 @@ class Generalization(Proof):
             new_forall_param_lists,
             new_conditions=tuple()):
         '''
-        A Generalization step wraps a Judgment (instance_truth) in one or more Forall operations.
-        The number of Forall operations introduced is the number of lists in new_forall_var_lists.
-        The conditions are introduced in the order they are given at the outermost level that is
-        applicable.  For example, if new_forall_param_lists is [[x, y], z]  and the new
-        conditions are f(x, y) and g(y, z) and h(z), this will prove a statement of the form:
-            forall_{x, y in Integer | f(x, y)} forall_{z | g(y, z), h(z)} ...
+        A Generalization step wraps a Judgment (instance_truth) in one 
+        or more Forall operations.  The number of Forall operations
+        introduced is the number of lists in new_forall_var_lists.
+        The conditions are introduced in the order they are given at 
+        the outermost level that is applicable.  For example, if 
+        new_forall_param_lists is [[x, y], z]  and the new conditions 
+        are f(x, y) and g(y, z) and h(z), this will prove a statement 
+        of the form:
+            forall_{x, y ∈ ℤ | f(x, y)} forall_{z | g(y, z), h(z)} ...
+        
+        In addition to ordinary Variable generalization, this also
+        deals with Literal generalization.  If, for any of the new
+        parameter variables, the Variable is not in contained in
+        the instance_truth but a corresponding Literal (with the same
+        formatting, see Literal.var_to_lits) is contained, then a
+        Literal generalization will be attempted in which axioms or
+        theorems corresponding to new_conditions may be eliminated.
+        As a very simple example for illustration, if we prove
+            ⊢ _a + _b = 10
+        Using the following axioms:
+            ⊢ _a = 2
+            ⊢ _b = 8
+        Then, through Literal generalization assuming _a and _b
+        have the same formatting as a and b, we can prove:
+            ⊢ ∀_{a, b | a=2, b=8} a + b = 10
+        and eliminate the axioms involing _a and _b.
         '''
         from proveit import Judgment
-        from proveit._core_.expression.expr import free_vars
+        from proveit._core_.expression.expr import (
+                used_literals, free_vars)
+        from proveit._core_.expression.label.literal import (
+                Variable, Literal)
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             (get_param_var)
         from proveit._core_.expression.composite.expr_tuple import ExprTuple
@@ -1618,6 +1663,28 @@ class Generalization(Proof):
         if not isinstance(instance_truth, Judgment):
             raise GeneralizationFailure(
                 None, [], 'May only generalize a Judgment instance')
+        
+        # Let's check if this is a job for Literal generalization.
+        instance_expr = instance_truth.expr
+        free_instance_vars = free_vars(instance_expr)
+        used_literals = used_literals(instance_expr)
+        generalized_literals = set()
+        for param_list in new_forall_param_lists:
+            for param in param_list:
+                # Literal generalization for a range of literals or
+                # indexed Literals is not currently supported.
+                if isinstance(param, Variable):
+                    if param not in free_instance_vars:
+                        for lit in Literal.var_to_lits.get(param, tuple()):
+                            if lit in used_literals:
+                                generalized_literals.add(lit)
+        
+        instance_expr = instance_truth.expr
+        if len(generalized_literals) > 0:
+            # Literal generalization converts literals to variables.
+            instance_expr = instance_expr.literals_as_variables(
+                    *generalized_literals)
+        
         # the assumptions required for the generalization are the assumptions of
         # the original Judgment minus the all of the new conditions (including those
         # implied by the new domain).
@@ -1677,12 +1744,137 @@ class Generalization(Proof):
             self.instance_truth = instance_truth
             self.new_forall_vars = new_forall_vars
             self.new_conditions = new_conditions
+
+            self.generalized_literals = tuple(generalized_literals)
+            if len(generalized_literals) > 0:
+                # We are generalizing Literals.  We will eliminate
+                # requirements masked by conditions after Literals
+                # convert to Variables and make sure there are no
+                # other requirements that use these Literals.
+                eliminated_requirements = []
+                eliminated_axioms = []
+                eliminated_theorems = []
+                self._append_eliminated_requirements_and_check_violation(
+                        instance_truth, new_conditions,
+                        generalized_expr, eliminated_requirements,
+                        eliminated_axioms, eliminated_theorems)
+                self.eliminated_requirements = tuple(eliminated_requirements)
+                self.eliminated_axioms = tuple(eliminated_axioms)
+                self.eliminated_theorems = tuple(eliminated_theorems)                
+
             Proof.__init__(self, generalized_truth, [self.instance_truth])
         finally:
             # restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
 
+    def all_required_proofs(self):
+        '''
+        Returns the set of directly or indirectly required proofs.
+        '''
+        if len(self.generalized_literals) > 0:
+            # Some requirements may be eliminated through 
+            # Literal generalization
+            sub_proof_sets = [required_proof.all_required_proofs()
+                              for required_proof in self.required_proofs]
+            return (set([self]).union(*sub_proof_sets)
+                    - self.eliminated_requirements)
+        return Proof.all_required_proofs(self)
+    
+    def used_axioms(self, *, include_eliminated=False):
+        if not include_eliminated and len(self.generalized_literals) > 0:
+            # Some requirements and axioms may be eliminated through 
+            # Literal generalization
+            return (set().union(
+                    *[required_proof.used_axioms(include_eliminated=False) 
+                    for required_proof in self.all_required_proofs()])
+                    - self.eliminated_axioms)
+        return Proof.used_axioms(self)
+
+
+    def used_theorems(self, *, include_eliminated=False):
+        if not include_eliminated and len(self.generalized_literals) > 0:
+            # Some requirements and theorems may be eliminated through 
+            # Literal generalization
+            return (set().union(
+                    *[required_proof.used_theorems(include_eliminated=False)
+                    for required_proof in self.all_required_proofs()])
+                    - self.eliminated_theorems)
+        return Proof.used_theorems(self)
+
+    def _append_eliminated_requirements_and_check_violation(
+            self, instance_truth, new_conditions,
+            generalized_expr, eliminated_requirements,
+            eliminated_axioms, eliminated_theorems):
+        '''
+        There is literal generalization going on.  Convert the
+        new conditions to forms using the literals in place
+        of corresponding variables, search through the
+        instance_truth requirements and the axioms/theorems they
+        depend upon up until, but not including, any of these
+        transformed new conditions and make sure none of the
+        rest involves any of the literals being generalized.
+        Find the axioms/theorems corresponding to the new 
+        conditions and record them as axioms/theorems that are
+        explicitly not needed for this particular proof.
+        '''
+        from proveit import used_literals
+        generalized_literals = self.generalized_literals
+        converted_conditions = {
+                condition.variables_as_literals(*generalized_literals)
+                for condition in new_conditions}
+        # Use a breadth-first search
+        to_process = deque([instance_truth.proof()])
+        while len(to_process) > 0:
+            proof = to_process.popleft()
+            proof_expr = proof.proven_truth.expr
+            proof_is_axiom = isinstance(proof, Axiom)
+            proof_is_theorem = isinstance(proof, Theorem)
+            if (len(proof.proven_truth.assumptions) == 0 and
+                   proof_expr in converted_conditions):
+                if proof_is_axiom:
+                    # Axiom corresonding to a condition -- it is
+                    # eliminated.
+                    eliminated_axioms.append(proof)
+                elif proof_is_theorem:
+                    # Theorem corresonding to a condition -- it is
+                    # eliminated.
+                    eliminated_theorems.append(proof)
+                else:
+                    # Eliminate this proof requirement which
+                    # corresponds to one of the new conditions.
+                    eliminated_requirements.append(proof)
+                # No need to go any further along this path.
+                continue
+            if proof_is_axiom or (proof_is_theorem and  
+                                  not proof.has_proof()):
+                # An Axiom or unproven Threorem.
+                if not used_literals(proof_expr).isdisjoint(
+                        generalized_literals):
+                    # A non-eliminated Axiom or unproven Theorem that
+                    # uses one of the literals we are trying the
+                    # generalize: NO BUENO!
+                    raise LiteralGeneralizationFailure(
+                            generalized_expr, defaults.assumptions,
+                            "%s is an an Axiom or unproven Theorem, not "
+                            "eliminated via a condition, yet "
+                            "contains one or more of the literals we "
+                            "are attempting to generalize: %s"
+                            %(proof.proven_truth, generalized_literals))
+            if proof_is_theorem:
+                # Continue search with the axioms/theorems that the 
+                # current Theorem depends upon.
+                required_axioms, required_unproven_theorems = (
+                        proof._stored_theorem().all_requirements())
+                to_process.extend(required_axioms)
+                to_process.extend(required_unproven_theorems)
+            else:
+                # Continue search with the required proofs of this
+                # one.
+                to_process.extend(proof.required_proofs)
+    
     def step_type(self):
+        if len(self.generalized_literals) > 0:
+            return 'literal generalization'
         return 'generalization'
 
     @staticmethod
@@ -1833,10 +2025,13 @@ class InstantiationFailure(ProofFailure):
             original_judgment, repl_map, message)
         ProofFailure.__init__(self, None, assumptions, message)
 
-
 class GeneralizationFailure(ProofFailure):
     def __init__(self, expr, assumptions, message):
         ProofFailure.__init__(self, expr, assumptions, message)
+
+class LiteralGeneralizationFailure(GeneralizationFailure):
+    def __init__(self, expr, assumptions, message):
+        GeneralizationFailure.__init__(self, expr, assumptions, message)
 
 
 class UnusableProof(ProofFailure):

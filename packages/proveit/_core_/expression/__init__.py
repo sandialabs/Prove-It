@@ -1,4 +1,5 @@
-from .expr import (Expression, traverse_inner_expressions, used_vars,
+from .expr import (Expression, traverse_inner_expressions, 
+                   used_vars, used_literals,
                    free_var_ranges, free_vars,
                    expression_depth, MakeNotImplemented,
                    ImproperReplacement)
