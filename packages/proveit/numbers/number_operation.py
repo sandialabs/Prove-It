@@ -272,7 +272,7 @@ nonzero_number_set = {
 @relation_prover
 def deduce_number_set(expr, **defaults_config):
     '''
-    Prove that 'expr' is an Expression that respresents a number
+    Prove that 'expr' is an Expression that represents a number
     in a standard number set that is as restrictive as we can
     readily know.
     '''
@@ -363,3 +363,237 @@ def standard_number_set(given_set, **defaults_config):
     # return the original given_set if the
     # for loop above didn't find anything
     return given_set
+
+# Map pairs of standard number sets to the minimal standard
+# number set that contains them both. This dictionary is then
+# used for the merge_two_sets() and merge_list_of_sets() fxns below.
+merging_dict = {
+    (NaturalPos, IntegerNeg): IntegerNonZero,
+    (NaturalPos, Natural): Natural,
+    (NaturalPos, IntegerNonPos): Integer,
+    (NaturalPos, IntegerNonZero): IntegerNonZero,
+    (NaturalPos, Integer): Integer,
+    (NaturalPos, RationalPos): RationalPos,
+    (NaturalPos, RationalNeg): RationalNonZero,
+    (NaturalPos, RationalNonNeg): RationalNonNeg,
+    (NaturalPos, RationalNonPos): Rational,
+    (NaturalPos, RationalNonZero): RationalNonZero,
+    (NaturalPos, Rational): Rational,
+    (NaturalPos, RealPos): RealPos,
+    (NaturalPos, RealNeg): RealNonZero,
+    (NaturalPos, RealNonNeg): RealNonNeg,
+    (NaturalPos, RealNonPos): Real,
+    (NaturalPos, RealNonZero): RealNonZero,
+    (NaturalPos, Real): Real,
+    (NaturalPos, ComplexNonZero): ComplexNonZero,
+    (NaturalPos, Complex): Complex,
+    (IntegerNeg, Natural): Integer,
+    (IntegerNeg, IntegerNonPos): IntegerNonPos,
+    (IntegerNeg, IntegerNonZero): IntegerNonZero,
+    (IntegerNeg, Integer): Integer,
+    (IntegerNeg, RationalPos): RationalNonZero,
+    (IntegerNeg, RationalNeg): RationalNeg,
+    (IntegerNeg, RationalNonNeg): Rational,
+    (IntegerNeg, RationalNonPos): RationalNonPos,
+    (IntegerNeg, RationalNonZero): RationalNonZero,
+    (IntegerNeg, Rational): Rational,
+    (IntegerNeg, RealPos): Real,
+    (IntegerNeg, RealNeg): RealNeg,
+    (IntegerNeg, RealNonNeg): Real,
+    (IntegerNeg, RealNonPos): Real,
+    (IntegerNeg, RealNonZero): Real,
+    (IntegerNeg, Real): Real,
+    (IntegerNeg, ComplexNonZero): ComplexNonZero,
+    (IntegerNeg, Complex): Complex,
+    (Natural, IntegerNonPos): Integer,
+    (Natural, IntegerNonZero): Integer,
+    (Natural, Integer): Integer,
+    (Natural, RationalPos): RationalNonNeg,
+    (Natural, RationalNeg): Rational,
+    (Natural, RationalNonNeg): RationalNonNeg,
+    (Natural, RationalNonPos): Rational,
+    (Natural, RationalNonZero): Rational,
+    (Natural, Rational): Rational,
+    (Natural, RealPos): RealNonNeg,
+    (Natural, RealNeg): Real,
+    (Natural, RealNonNeg): RealNonNeg,
+    (Natural, RealNonPos): Real,
+    (Natural, RealNonZero): Real,
+    (Natural, Real): Real,
+    (Natural, ComplexNonZero): Complex,
+    (Natural, Complex): Complex,
+    (IntegerNonPos, IntegerNonZero): Integer,
+    (IntegerNonPos, Integer): Integer,
+    (IntegerNonPos, RationalPos): Rational,
+    (IntegerNonPos, RationalNeg): RationalNonPos,
+    (IntegerNonPos, RationalNonNeg): Rational,
+    (IntegerNonPos, RationalNonPos): RationalNonPos,
+    (IntegerNonPos, RationalNonZero): Rational,
+    (IntegerNonPos, Rational): Rational,
+    (IntegerNonPos, RealPos): Real,
+    (IntegerNonPos, RealNeg): RealNonPos,
+    (IntegerNonPos, RealNonNeg): Real,
+    (IntegerNonPos, RealNonPos): RealNonPos,
+    (IntegerNonPos, RealNonZero): Real,
+    (IntegerNonPos, Real): Real,
+    (IntegerNonPos, ComplexNonZero): ComplexNonZero,
+    (IntegerNonPos, Complex): Complex,
+    (IntegerNonZero, Integer): Integer,
+    (IntegerNonZero, RationalPos): RationalNonZero,
+    (IntegerNonZero, RationalNeg): RationalNonZero,
+    (IntegerNonZero, RationalNonNeg): Rational,
+    (IntegerNonZero, RationalNonPos): Rational,
+    (IntegerNonZero, RationalNonZero): RationalNonZero,
+    (IntegerNonZero, Rational): Rational,
+    (IntegerNonZero, RealPos): RealNonZero,
+    (IntegerNonZero, RealNeg): RealNonZero,
+    (IntegerNonZero, RealNonNeg): Real,
+    (IntegerNonZero, RealNonPos): Real,
+    (IntegerNonZero, RealNonZero): RealNonZero,
+    (IntegerNonZero, Real): Real,
+    (IntegerNonZero, ComplexNonZero): ComplexNonZero,
+    (IntegerNonZero, Complex): Complex,
+    (Integer, RationalPos): Rational,
+    (Integer, RationalNeg): Rational,
+    (Integer, RationalNonNeg): Rational,
+    (Integer, RationalNonPos): Rational,
+    (Integer, RationalNonZero): Rational,
+    (Integer, Rational): Rational,
+    (Integer, RealPos): Real,
+    (Integer, RealNeg): Real,
+    (Integer, RealNonNeg): Real,
+    (Integer, RealNonPos): Real,
+    (Integer, RealNonZero): Real,
+    (Integer, Real): Real,
+    (Integer, ComplexNonZero): Complex,
+    (Integer, Complex): Complex,
+    (RationalPos, RationalNeg): RationalNonZero,
+    (RationalPos, RationalNonNeg): RationalNonNeg,
+    (RationalPos, RationalNonPos): Rational,
+    (RationalPos, RationalNonZero): RationalNonZero,
+    (RationalPos, Rational): Rational,
+    (RationalPos, RealPos): RealPos,
+    (RationalPos, RealNeg): RealNonZero,
+    (RationalPos, RealNonNeg): RealNonNeg,
+    (RationalPos, RealNonPos): Real,
+    (RationalPos, RealNonZero): RealNonZero,
+    (RationalPos, Real): Real,
+    (RationalPos, ComplexNonZero): ComplexNonZero,
+    (RationalPos, Complex): Complex,
+    (RationalNeg, RationalNonNeg): Rational,
+    (RationalNeg, RationalNonPos): RationalNonPos,
+    (RationalNeg, RationalNonZero): RationalNonZero,
+    (RationalNeg, Rational): Rational,
+    (RationalNeg, RealPos): RealNonZero,
+    (RationalNeg, RealNeg): RealNeg,
+    (RationalNeg, RealNonNeg): Real,
+    (RationalNeg, RealNonPos): RealNonPos,
+    (RationalNeg, RealNonZero): RealNonZero,
+    (RationalNeg, Real): Real,
+    (RationalNeg, ComplexNonZero): ComplexNonZero,
+    (RationalNeg, Complex): Complex,
+    (RationalNonNeg, RationalNonPos): Rational,
+    (RationalNonNeg, RationalNonZero): Rational,
+    (RationalNonNeg, Rational): Rational,
+    (RationalNonNeg, RealPos): RealNonNeg,
+    (RationalNonNeg, RealNeg): Real,
+    (RationalNonNeg, RealNonNeg): RealNonNeg,
+    (RationalNonNeg, RealNonPos): Real,
+    (RationalNonNeg, RealNonZero): Real,
+    (RationalNonNeg, Real): Real,
+    (RationalNonNeg, ComplexNonZero): Complex,
+    (RationalNonNeg, Complex): Complex,
+    (RationalNonPos, RationalNonZero): Rational,
+    (RationalNonPos, Rational): Rational,
+    (RationalNonPos, RealPos): Real,
+    (RationalNonPos, RealNeg): RealNonPos,
+    (RationalNonPos, RealNonNeg): Real,
+    (RationalNonPos, RealNonPos): RealNonPos,
+    (RationalNonPos, RealNonZero): Real,
+    (RationalNonPos, Real): Real,
+    (RationalNonPos, ComplexNonZero): ComplexNonZero,
+    (RationalNonPos, Complex): Complex,
+    (RationalNonZero, Rational): Rational,
+    (RationalNonZero, RealPos): RealNonZero,
+    (RationalNonZero, RealNeg): RealNonZero,
+    (RationalNonZero, RealNonNeg): Real,
+    (RationalNonZero, RealNonPos): Real,
+    (RationalNonZero, RealNonZero): RealNonZero,
+    (RationalNonZero, Real): Real,
+    (RationalNonZero, ComplexNonZero): ComplexNonZero,
+    (RationalNonZero, Complex): Complex,
+    (Rational, RealPos): Real,
+    (Rational, RealNeg): Real,
+    (Rational, RealNonNeg): Real,
+    (Rational, RealNonPos): Real,
+    (Rational, RealNonZero): Real,
+    (Rational, Real): Real,
+    (Rational, ComplexNonZero): Complex,
+    (Rational, Complex): Complex,
+    (RealPos, RealNeg): RealNonZero,
+    (RealPos, RealNonNeg): RealNonNeg,
+    (RealPos, RealNonPos): Real,
+    (RealPos, RealNonZero): RealNonZero,
+    (RealPos, Real): Real,
+    (RealPos, ComplexNonZero): ComplexNonZero,
+    (RealPos, Complex): Complex,
+    (RealNeg, RealNonNeg): Real,
+    (RealNeg, RealNonPos): RealNonPos,
+    (RealNeg, RealNonZero): RealNonZero,
+    (RealNeg, Real): Real,
+    (RealNeg, ComplexNonZero): ComplexNonZero,
+    (RealNeg, Complex): Complex,
+    (RealNonNeg, RealNonPos): Real,
+    (RealNonNeg, RealNonZero): Real,
+    (RealNonNeg, Real): Real,
+    (RealNonNeg, ComplexNonZero): Complex,
+    (RealNonNeg, Complex): Complex,
+    (RealNonPos, RealNonZero): Real,
+    (RealNonPos, Real): Real,
+    (RealNonPos, ComplexNonZero): ComplexNonZero,
+    (RealNonPos, Complex): Complex,
+    (RealNonZero, Real): Real,
+    (RealNonZero, ComplexNonZero): ComplexNonZero,
+    (RealNonZero, Complex): Complex,
+    (Real, ComplexNonZero): Complex,
+    (Real, Complex): Complex,
+    (ComplexNonZero, Complex): Complex}
+
+def merge_two_sets(set_01, set_02):
+    '''
+    A utility function to return the minimal standard number set
+    that contains both set_01 and set_02. Notice that this does
+    not prove the inclusion; it just provides a set that should
+    be proveable under the right conditions. This utility function
+    is utilized in the merge_list_of_sets() functions further below.
+    '''
+    if (set_01, set_02) in merging_dict:
+        return merging_dict[(set_01, set_02)]
+    elif (set_02, set_01) in merging_dict:
+        return merging_dict[(set_02, set_01)]
+    # default is to return Real if Real actually works
+    elif (Real.includes(set_01) and Real.includes(set_02)):
+        return Real
+    else:
+        raise ValueError(
+                "In calling merge_two_sets on sets {0} and {1}, "
+                "no standard number set was found that contained "
+                "both sets.".format(set_01, set_02))
+
+def merge_list_of_sets(list_of_sets):
+    '''
+    Utility function to produce a minimal standard number set that
+    contains all the number sets in list_of_sets, if possible.
+    Notice that the function does not prove the result, instead just
+    providing a superset that should be proveable under the right
+    conditions.
+    '''
+    while len(list_of_sets) > 1:
+        if list_of_sets[0] == list_of_sets[1]:
+            list_of_sets = ([list_of_sets[0]]+list_of_sets[2:])
+        else:
+            list_of_sets = (
+                    [merge_two_sets(list_of_sets[0],
+                                    list_of_sets[1])]+list_of_sets[2:])
+    return list_of_sets[0]
+
