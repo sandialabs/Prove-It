@@ -15,7 +15,8 @@ from .number_sets import e, pi, i, infinity
 from .number_operation import (NumberOperation, deduce_in_number_set,
                                quick_simplified_index,
                                sorted_number_sets, deduce_number_set,
-                               standard_number_set, standard_number_sets)
+                               standard_number_set, standard_number_sets,
+                               merge_two_sets, merge_list_of_sets)
 from .rounding import Floor, Ceil, Round
 from .absolute_value import Abs
 from .numerals import (num, Numeral, DecimalSequence, Digits, DIGITS,

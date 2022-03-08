@@ -48,6 +48,7 @@ class LessEq(NumberOrderingRelation):
         for side_effect in NumberOrderingRelation.side_effects(
                 self, judgment):
             yield side_effect
+        yield self.deduce_complement
         # if is_literal_int(self.lhs) or is_literal_int(self.rhs):
         #     yield self.derive_one_side_in_real_subset
 
@@ -55,7 +56,7 @@ class LessEq(NumberOrderingRelation):
         '''
         From Not(a <= b) derive a > b as a side-effect.
         '''
-        yield self.deduce_complement
+        yield self.deduce_complement_of_complement
 
     @prover
     def conclude(self, **defaults_config):
@@ -192,14 +193,34 @@ class LessEq(NumberOrderingRelation):
                 {x: self.lower, y: self.upper})
         return new_rel.with_mimicked_style(self)
 
+    # Temporarily leaving the original here while testing continues.
+    # @prover
+    # def deduce_complement(self, **defaults_config):
+    #     '''
+    #     From Not(a <= b), derive and return (b < a).
+    #     '''
+    #     from . import less_eq_complement_is_greater
+    #     return less_eq_complement_is_greater.instantiate(
+    #             {x:self.lower, y:self.upper}).derive_consequent()
+
     @prover
     def deduce_complement(self, **defaults_config):
         '''
-        From Not(a <= b), derive and return (b < a).
+        From (a <= b), derive and return Not(b < a).
         '''
-        from . import less_eq_complement_is_greater
-        return less_eq_complement_is_greater.instantiate(
-                {x:self.lower, y:self.upper}).derive_consequent()
+        from . import not_less_from_less_eq
+        return not_less_from_less_eq.instantiate(
+                {x: self.lower, y: self.upper})
+
+    @prover
+    def deduce_complement_of_complement(self, **defaults_config):
+        '''
+        From Not(a <= b), derive and return (b < a);
+        and from (a <= b), derive and return Not(b < a).
+        '''
+        from . import less_from_not_less_eq
+        return less_from_not_less_eq.instantiate(
+                {x: self.lower, y: self.upper})
 
     @prover
     def shallow_simplification_of_negation(self, **defaults_config):
