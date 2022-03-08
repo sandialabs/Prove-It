@@ -13,6 +13,10 @@ class Literal(Label):
 
     instances = dict()  # map style information to Literal instances.
 
+    # Variabe:<set of Literals> mapping, where they have the same 
+    # format.
+    var_to_lits = dict()
+
     @staticmethod
     def _clear_():
         '''
@@ -58,6 +62,7 @@ class Literal(Label):
             tuple(extra_core_info) + (theory.name,), styles=styles,
             fence_when_forced=fence_when_forced)
         self.theory = theory
+        Literal.var_to_lits.setdefault(self.as_variable(), set()).add(self)
         # if self._core_info in Literal.instances:
         #    raise DuplicateLiteralError("Only allowed to create one Literal with the same theory and string/latex formats")
         Literal.instances.setdefault(self._style_id, self)
@@ -67,6 +72,9 @@ class Literal(Label):
         raise NotImplementedError(
             "'instance' method has not been implemented for a Literal of type %s" %
             str(literal_class))
+
+    def _used_literals(self):
+        return {self}
 
     def as_variable(self):
         '''
