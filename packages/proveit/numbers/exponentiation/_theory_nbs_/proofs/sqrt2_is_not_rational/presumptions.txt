@@ -1,4 +1,11 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.core_expr_types.conditionals.condition_append_reduction
+proveit.core_expr_types.conditionals.condition_merger_reduction
+proveit.core_expr_types.conditionals.condition_prepend_reduction
+proveit.core_expr_types.conditionals.condition_with_true_on_left_reduction
+proveit.core_expr_types.conditionals.condition_with_true_on_right_reduction
+proveit.core_expr_types.conditionals.singular_conjunction_condition_reduction
+proveit.core_expr_types.conditionals.true_condition_elimination
 proveit.logic.booleans.conjunction.and_if_both
 proveit.logic.booleans.conjunction.left_from_and
 proveit.logic.booleans.conjunction.right_from_and
@@ -247,7 +254,6 @@ proveit.numbers.numerals.decimals.posnat6
 proveit.numbers.numerals.decimals.posnat7
 proveit.numbers.numerals.decimals.posnat8
 proveit.numbers.numerals.decimals.posnat9
-proveit.numbers.numerals.decimals.reduce_2_repeats
 proveit.numbers.numerals.decimals.tuple_len_2
 proveit.numbers.numerals.decimals.tuple_len_2_typical_eq
 proveit.numbers.ordering.less_is_not_eq
