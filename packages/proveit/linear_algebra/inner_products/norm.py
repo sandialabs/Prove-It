@@ -30,7 +30,7 @@ class Norm(Operation):
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False, 
                                **defaults_config):
-        if must_evaluate:
+        if must_evaluate and hasattr(self.operand, 'compute_norm'):
             return self.evaluation()
         return Operation.shallow_simplification(self)
 
@@ -50,4 +50,4 @@ class Norm(Operation):
             # If the operand has a 'deduce_norm' method, use
             # it in an attempt to evaluate the norm.
             return self.computation().inner_expr().rhs.evaluate()
-        return Operation.evaluation()
+        return Operation.evaluation(self)
