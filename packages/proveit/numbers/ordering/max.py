@@ -1,4 +1,4 @@
-from proveit import Literal, Function, relation_prover
+from proveit import equality_prover, Literal, Function, relation_prover
 from proveit.numbers import (
         deduce_number_set, merge_list_of_sets, NumberOperation, Real)
 from proveit import a, n, K
@@ -13,6 +13,36 @@ class Max(NumberOperation, Function):
 
     def __init__(self, *operands, styles=None):
         NumberOperation.__init__(self, Max._operator_, operands, styles=styles)
+
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False, **defaults_config):
+        '''
+        For the simple binary case Max(a, b), returns a proven
+        simplification equation for this Max expression assuming the
+        operands 'a' and 'b' have been simplified and that we know or
+        have assumed that either a >= b or b > a. If such relational
+        knowledge is not to be had, we simply return the equation of
+        the Max expression with itself.
+        Cases with more than 2 operands are not yet handled.
+        '''
+        from proveit.logic import Equals
+        from proveit.numbers import greater_eq
+
+        # We're only set up to deal with binary operator version
+        if not self.operands.is_double():
+            # Default is no simplification if not a binary operation.
+            return Equals(self, self).prove()
+
+        # If binary and we know how operands 'a' and 'b' are related ...
+        op_01, op_02 = self.operands[0], self.operands[1]
+        if (greater_eq(op_01, op_02).proven()
+            or greater_eq(op_02, op_01).proven()):
+            from proveit import x, y
+            from proveit.numbers.ordering import max_def_bin
+            return max_def_bin.instantiate({x: op_01, y: op_02})
+
+        # Otherwise still no simplification.
+        return Equals(self, self).prove()
 
     @relation_prover
     def deduce_in_number_set(self, number_set, **defaults_config):
