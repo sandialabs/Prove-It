@@ -297,7 +297,7 @@ proveit.numbers.ordering.transitivity_less_eq_less
 proveit.numbers.ordering.transitivity_less_eq_less_eq
 proveit.numbers.ordering.transitivity_less_less_eq
 proveit.physics.quantum.QFT.invFT_is_unitary
-proveit.physics.quantum.QPE._psi_t_ket_register
+proveit.physics.quantum.QPE._psi_t_ket_is_normalized_vec
 proveit.physics.quantum.QPE._psi_t_output
 proveit.physics.quantum.algebra.bra_in_QmultCodomain
 proveit.physics.quantum.algebra.bra_is_linmap

@@ -411,7 +411,7 @@ proveit.numbers.ordering.symmetric_less_eq
 proveit.numbers.ordering.transitivity_less_eq_less
 proveit.numbers.ordering.transitivity_less_eq_less_eq
 proveit.numbers.ordering.transitivity_less_less_eq
-proveit.physics.quantum.QPE._psi_t_ket_register
+proveit.physics.quantum.QPE._psi_t_ket_is_normalized_vec
 proveit.physics.quantum.algebra.complex_set_is_hilbert_space
 proveit.physics.quantum.algebra.hilbert_space_is_inner_prod_space
 proveit.physics.quantum.algebra.hilbert_space_is_vec_space
