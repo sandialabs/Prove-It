@@ -1398,7 +1398,7 @@ class Expression(metaclass=ExprType):
         irreducible value.  This default raises an EvaluationError.
         '''       
         from proveit.logic import EvaluationError
-        raise EvaluationError("No evaluation for %s"%self)
+        raise EvaluationError(self)
 
     @equality_prover('simplified', 'simplify')
     def simplification(self, **defaults_config):
