@@ -1,4 +1,5 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.core_expr_types.conditionals.condition_substitution
 proveit.logic.equality.rhs_via_equality
 proveit.logic.equality.sub_right_side_into
 # THEOREMS AND THEORIES TO EXCLUDE:
