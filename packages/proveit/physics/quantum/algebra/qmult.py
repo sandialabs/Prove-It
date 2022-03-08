@@ -416,7 +416,7 @@ class Qmult(Operation):
         from . import state_space_preservation, normalization_preservation
         if not self.operands.is_double():
             raise NotImplementedError(
-                    "Qmult.deduce_normalization is only implemented "
+                    "Qmult.compute_norm is only implemented "
                     "for binary Qmults, specifically a unitary applied "
                     "to a normalized vector")
         vec = self.operands[1]
@@ -425,13 +425,12 @@ class Qmult(Operation):
                 _n = _H.exponent
                 _alpha = Norm(vec).computed()
                 state_space_preservation.instantiate(
-                        {n:_n, U:self.operands[0], var_ket_psi:vec,
-                         alpha:_alpha})
+                        {n:_n, U:self.operands[0], var_ket_psi:vec})
                 return normalization_preservation.instantiate(
                         {n:_n, U:self.operands[0], var_ket_psi:vec,
                          alpha:_alpha})
         raise NotImplementedError(
-                "Qmult.deduce_normalization is only implemented "
+                "Qmult.compute_norm is only implemented "
                 "for binary Qmults, specifically a unitary applied "
                 "to a normalized vector in a known Hilbert space that "
                 "is the Cartesian exponent of two to a NaturalPos power.")
