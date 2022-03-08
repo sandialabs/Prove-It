@@ -1685,9 +1685,9 @@ class Generalization(Proof):
             instance_expr = instance_expr.literals_as_variables(
                     *generalized_literals)
         
-        # the assumptions required for the generalization are the assumptions of
-        # the original Judgment minus the all of the new conditions (including those
-        # implied by the new domain).
+        # The assumptions required for the generalization are the
+        # assumptions of the original Judgment minus the all of the
+        # new conditions (including those implied by the new domain).
         assumptions = set(instance_truth.assumptions)
         prev_default_assumptions = defaults.assumptions
         # these assumptions will be used for deriving any side-effects
@@ -1697,7 +1697,7 @@ class Generalization(Proof):
                 remaining_conditions = list(new_conditions.entries)
             else:
                 remaining_conditions = list(new_conditions)
-            expr = instance_truth.expr
+            expr = instance_expr
             introduced_forall_vars = set()
             for k, new_forall_params in enumerate(
                     reversed(new_forall_param_lists)):
@@ -1739,7 +1739,10 @@ class Generalization(Proof):
                     raise GeneralizationFailure(
                         generalized_expr,
                         assumptions,
-                        'Cannot generalize using assumptions that involve any of the new forall variables (except as assumptions are eliminated via conditions or domains)')
+                        'Cannot generalize using assumptions that involve '
+                        'any of the new forall variables (except as '
+                        'assumptions are eliminated via conditions or '
+                        'domains)')
             generalized_truth = Judgment(generalized_expr, assumptions)
             self.instance_truth = instance_truth
             self.new_forall_vars = new_forall_vars
@@ -1758,9 +1761,10 @@ class Generalization(Proof):
                         instance_truth, new_conditions,
                         generalized_expr, eliminated_requirements,
                         eliminated_axioms, eliminated_theorems)
-                self.eliminated_requirements = tuple(eliminated_requirements)
-                self.eliminated_axioms = tuple(eliminated_axioms)
-                self.eliminated_theorems = tuple(eliminated_theorems)                
+                self._eliminated_requirements = frozenset(
+                    eliminated_requirements)
+                self._eliminated_axioms = frozenset(eliminated_axioms)
+                self._eliminated_theorems = frozenset(eliminated_theorems)
 
             Proof.__init__(self, generalized_truth, [self.instance_truth])
         finally:
@@ -1777,7 +1781,7 @@ class Generalization(Proof):
             sub_proof_sets = [required_proof.all_required_proofs()
                               for required_proof in self.required_proofs]
             return (set([self]).union(*sub_proof_sets)
-                    - self.eliminated_requirements)
+                    - self._eliminated_requirements)
         return Proof.all_required_proofs(self)
     
     def used_axioms(self, *, include_eliminated=False):
@@ -1787,7 +1791,7 @@ class Generalization(Proof):
             return (set().union(
                     *[required_proof.used_axioms(include_eliminated=False) 
                     for required_proof in self.all_required_proofs()])
-                    - self.eliminated_axioms)
+                    - self._eliminated_axioms)
         return Proof.used_axioms(self)
 
 
@@ -1818,12 +1822,40 @@ class Generalization(Proof):
         explicitly not needed for this particular proof.
         '''
         from proveit import used_literals
+        from ._theory_storage import StoredTheorem
         generalized_literals = self.generalized_literals
         converted_conditions = {
                 condition.variables_as_literals(*generalized_literals)
                 for condition in new_conditions}
-        # Use a breadth-first search
+
+        def check_axiom_or_unproven_theorem(proof):
+            '''
+            When encountering an axiom or unproven theorem that
+            is not being eliminated, it must not contain any of
+            the literals being generalized.
+            '''
+            proof_expr = proof.proven_truth.expr
+            if not used_literals(proof_expr).isdisjoint(
+                    generalized_literals):
+                # A non-eliminated Axiom or unproven Theorem that
+                # uses one of the literals we are trying the
+                # generalize: NO BUENO!
+                raise LiteralGeneralizationFailure(
+                    generalized_expr, defaults.assumptions,
+                    "%s: %s is an an Axiom or unproven Theorem, "
+                    "not eliminated via a condition, yet "
+                    "contains one or more of the literals we "
+                    "are attempting to generalize: %s"
+                    %(str(proof), proof.proven_truth, 
+                      generalized_literals))
+
+        
+        # First, use a breadth-first search through proof requirements
+        # to determine all of the eliminated requirements and direct
+        # axioms/theorems (matching converted conditions) obtain all 
+        # of the required theorems (that aren't directly eliminated).
         to_process = deque([instance_truth.proof()])
+        required_theorems = set()
         while len(to_process) > 0:
             proof = to_process.popleft()
             proof_expr = proof.proven_truth.expr
@@ -1848,29 +1880,36 @@ class Generalization(Proof):
             if proof_is_axiom or (proof_is_theorem and  
                                   not proof.has_proof()):
                 # An Axiom or unproven Threorem.
-                if not used_literals(proof_expr).isdisjoint(
-                        generalized_literals):
-                    # A non-eliminated Axiom or unproven Theorem that
-                    # uses one of the literals we are trying the
-                    # generalize: NO BUENO!
-                    raise LiteralGeneralizationFailure(
-                            generalized_expr, defaults.assumptions,
-                            "%s is an an Axiom or unproven Theorem, not "
-                            "eliminated via a condition, yet "
-                            "contains one or more of the literals we "
-                            "are attempting to generalize: %s"
-                            %(proof.proven_truth, generalized_literals))
+                check_axiom_or_unproven_theorem(proof)
+                continue
             if proof_is_theorem:
-                # Continue search with the axioms/theorems that the 
-                # current Theorem depends upon.
-                required_axioms, required_unproven_theorems = (
-                        proof._stored_theorem().all_requirements())
-                to_process.extend(required_axioms)
-                to_process.extend(required_unproven_theorems)
+                required_theorems.add(proof)
             else:
                 # Continue search with the required proofs of this
                 # one.
                 to_process.extend(proof.required_proofs)
+
+        # Search through the requirements of the required theorems
+        # for indirectly eliminated axioms/theorems.
+        required_axioms, required_deadend_theorems = (
+            StoredTheorem.requirements_of_theorems(
+                required_theorems, 
+                dead_end_theorem_exprs=converted_conditions))
+        for required_axiom in required_axioms:
+            if required_axiom.proven_truth.expr in converted_conditions:
+                eliminated_axioms.append(required_axiom)
+            else:
+                check_axiom_or_unproven_theorem(required_axiom)
+        for required_theorem in required_deadend_theorems:
+            if required_theorem.proven_truth.expr in converted_conditions:
+                eliminated_theorems.append(required_theorem)
+            else:
+                assert not required_theorem.has_proof(), (
+                    "If it had a proof and doesn't correspond with "
+                    "a converted condition, it shouldn't have been "
+                    "returned by StoredTheorem.all_requirements")
+                check_axiom_or_unproven_theorem(required_theorem)
+
     
     def step_type(self):
         if len(self.generalized_literals) > 0:
