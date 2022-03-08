@@ -220,9 +220,11 @@ class Div(NumberOperation):
                 {x: term_to_cancel})
 
         if term_to_cancel != self.numerator:
+            # try to catch Exp objects here as well?
+            # after all, Exp(term_to_cancel, n) has factors!
             if (not isinstance(self.numerator, Mult) or
                     term_to_cancel not in self.numerator.operands):
-                raise ValueError("%s not in the denominator of %s"
+                raise ValueError("%s not in the numerator of %s"
                                  % (term_to_cancel, self))
             # Factor the term_to_cancel from the numerator to the left.
             expr = eq.update(expr.inner_expr().numerator.factorization(
