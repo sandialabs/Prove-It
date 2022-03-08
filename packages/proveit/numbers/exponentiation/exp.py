@@ -156,6 +156,7 @@ class Exp(NumberOperation):
         from proveit.logic import EvaluationError, is_irreducible_value
         from proveit.logic import InSet
         from proveit.numbers import (zero, one, two, is_literal_int,
+                                     is_literal_rational,
                                      Log, Rational, Abs)
         from . import (exp_zero_eq_one, exponentiated_zero,
                        exponentiated_one, exp_nat_pos_expansion)
@@ -164,15 +165,46 @@ class Exp(NumberOperation):
             # already irreducible
             return Equals(self, self).conclude_via_reflexivity()
 
+        if must_evaluate:
+            if not all(is_irreducible_value(operand) for
+                       operand in self.operands):
+                for operand in self.operands:
+                    if not is_irreducible_value(operand):
+                        # The simplification of the operands may not have
+                        # worked hard enough.  Let's work harder if we
+                        # must evaluate.
+                        operand.evaluation()
+                return self.evaluation()
+
         if self.exponent == zero:
             return exp_zero_eq_one.instantiate({a: self.base})  # =1
         elif self.base == zero:
             # Will fail if the exponent is not positive, but this
             # is the only sensible thing to try.
             return exponentiated_zero.instantiate({x: self.exponent})  # =0
+        elif self.exponent == one:
+            return self.power_of_one_reduction()
         elif self.base == one:
             return exponentiated_one.instantiate({x: self.exponent})  # =1
-        elif (is_irreducible_value(self.base) and
+        elif (isinstance(self.base, Exp) and
+            isinstance(self.base.exponent, Div) and
+            self.base.exponent.numerator == one and
+                self.base.exponent.denominator == self.exponent):
+            from . import nth_power_of_nth_root
+            _n, _x = nth_power_of_nth_root.instance_params
+            return nth_power_of_nth_root.instantiate(
+                {_n: self.exponent, _x: self.base.base})
+        elif (isinstance(self.base, Exp) and
+            isinstance(self.exponent, Div) and
+            self.exponent.numerator == one and
+                self.exponent.denominator == self.base.exponent):
+            from . import nth_root_of_nth_power, sqrt_of_square
+            _n = self.base.exponent
+            _x =  self.base.base
+            if _n == two:
+                return sqrt_of_square.instantiate({x: _x})
+            return nth_root_of_nth_power.instantiate({n: _n, x: _x})
+        elif (is_literal_rational(self.base) and
                   is_literal_int(self.exponent) and
                   self.exponent.as_int() > 1):
             expr = self
@@ -191,21 +223,7 @@ class Exp(NumberOperation):
                     rep_reduction.rhs, preserve_all=True))
             expr = eq.update(expr.evaluation())
             return eq.relation
-        elif must_evaluate:
-            if not all(is_irreducible_value(operand) for
-                       operand in self.operands):
-                for operand in self.operands:
-                    if not is_irreducible_value(operand):
-                        # The simplification of the operands may not have
-                        # worked hard enough.  Let's work harder if we
-                        # must evaluate.
-                        operand.evaluation()
-                return self.evaluation()
-            raise EvaluationError(self)
-
-        if self.exponent == one:
-            return self.power_of_one_reduction()
-        if (isinstance(self.exponent, Log)
+        elif (isinstance(self.exponent, Log)
             and self.base == self.exponent.base):
             # base_ns  = self.base.deduce_number_set()
             # antilog_ns = self.exponent.antilog.deduce_number_set()
@@ -213,24 +231,6 @@ class Exp(NumberOperation):
                 and InSet(self.exponent.antilog, RealPos).proven()
                 and NotEquals(self.base, one).proven()):
                 return self.power_of_log_reduction()
-        if (isinstance(self.base, Exp) and
-            isinstance(self.base.exponent, Div) and
-            self.base.exponent.numerator == one and
-                self.base.exponent.denominator == self.exponent):
-            from . import nth_power_of_nth_root
-            _n, _x = nth_power_of_nth_root.instance_params
-            return nth_power_of_nth_root.instantiate(
-                {_n: self.exponent, _x: self.base.base})
-        elif (isinstance(self.base, Exp) and
-            isinstance(self.exponent, Div) and
-            self.exponent.numerator == one and
-                self.exponent.denominator == self.base.exponent):
-            from . import nth_root_of_nth_power, sqrt_of_square
-            _n = self.base.exponent
-            _x =  self.base.base
-            if _n == two:
-                return sqrt_of_square.instantiate({x: _x})
-            return nth_root_of_nth_power.instantiate({n: _n, x: _x})
         expr = self
         # for convenience updating our equation:
         eq = TransRelUpdater(expr)

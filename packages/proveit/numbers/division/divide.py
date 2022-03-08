@@ -6,7 +6,7 @@ from proveit import (Judgment, Expression, Literal, Operation,
 from proveit import TransRelUpdater
 from proveit import a, b, c, m, n, w, x, y, z
 from proveit.logic import Equals, NotEquals, InSet
-from proveit.numbers import zero, NumberOperation
+from proveit.numbers import zero, NumberOperation, is_literal_int
 from proveit.numbers import NumberOperation, deduce_number_set
 from proveit.numbers.number_sets import (
     Natural, NaturalPos,
@@ -144,13 +144,16 @@ class Div(NumberOperation):
 
     def is_irreducible_value(self):
         '''
-        This needs work, but we know that 1/n for n in NaturalPos
-        is irreducible as a special case.
+        This needs work, but we know that 1/x is irreducible if
+        x is irreducible, not a negation, not 0 and not 1.
         '''
-        from proveit.numbers import one
-        if self.numerator==one and InSet(self.denominator, NaturalPos):
+        from proveit.logic import is_irreducible_value
+        from proveit.numbers import zero, one, Neg
+        if (self.numerator == one and self.denominator not in (zero, one) 
+                and not isinstance(self.denominator, Neg)
+                and is_irreducible_value(self.denominator)):
             return True
-        return False # TODO: handle any proper fraction
+        return False # TODO: handle any proper fraction, etc.
             
     @equality_prover('zero_numerator_reduced', 'zero_numerator_reduce')
     def zero_numerator_reduction(self, **defaults_config):
@@ -859,6 +862,8 @@ class Div(NumberOperation):
                        weak_div_from_numer_bound__pos_denom,
                        strong_div_from_numer_bound__neg_denom,
                        weak_div_from_numer_bound__neg_denom)
+        if isinstance(relation, Judgment):
+            relation = relation.expr
         if not (isinstance(relation, Less) or
                 isinstance(relation, LessEq)):
             raise TypeError("relation is expected to be Less "
@@ -917,6 +922,8 @@ class Div(NumberOperation):
                        weak_div_from_denom_bound__neg_over_pos,
                        strong_div_from_denom_bound__pos_over_neg,
                        weak_div_from_denom_bound__pos_over_neg)
+        if isinstance(relation, Judgment):
+            relation = relation.expr
         if not (isinstance(relation, Less) or
                 isinstance(relation, LessEq)):
             raise TypeError("relation is expected to be Less "

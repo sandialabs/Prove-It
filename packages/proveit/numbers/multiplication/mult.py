@@ -328,22 +328,6 @@ class Mult(NumberOperation):
             # No such "luck" regarding a simple multiplication by zero.
             pass
 
-        if must_evaluate and not self.operands_are_irreducible():
-            # Without a zero factor, shallow evaluation of Mult is only
-            # viable if the operands are all irreducible.
-            expr = self
-            eq = TransRelUpdater(expr)
-            for _k, factor in enumerate(expr.factors):
-                if not is_irreducible_value(factor):
-                    expr = eq.update(expr.inner_expr().operands[_k].evaluation(
-                            preserve_all=True))
-            if expr != self:
-                # Start over now that the terms are all evaluated to
-                # irreducible values.
-                eq.update(expr.evaluation())
-                return eq.relation
-            raise EvaluationError(self)
-
         if self.operands.is_single():
              # Multiplication with 1 operand is just that operand
             return unary_mult_reduction.instantiate(
@@ -387,6 +371,18 @@ class Mult(NumberOperation):
 
         if is_irreducible_value(expr):
             return eq.relation  # done
+
+        if must_evaluate and not expr.operands_are_irreducible():
+            # Without a zero factor, shallow evaluation of Mult is only
+            # viable if the operands are all irreducible.
+            for _k, factor in enumerate(expr.factors):
+                if not is_irreducible_value(factor):
+                    expr = eq.update(expr.inner_expr().operands[_k].evaluation(
+                            preserve_all=True))
+            # Start over now that the terms are all evaluated to
+            # irreducible values.
+            eq.update(expr.evaluation())
+            return eq.relation
 
         if (Mult._simplification_directives_.combine_exponents
                 and not must_evaluate):
