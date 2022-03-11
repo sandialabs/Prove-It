@@ -1,7 +1,8 @@
-from proveit import equality_prover, Literal, Function, relation_prover
+from proveit import (equality_prover, Literal, Function, relation_prover,
+                      UnsatisfiedPrerequisites)
 from proveit.numbers import (
         deduce_number_set, merge_list_of_sets, NumberOperation, Real)
-from proveit import a, n, K
+from proveit import a, n, S
 
 
 class Max(NumberOperation, Function):
@@ -56,18 +57,18 @@ class Max(NumberOperation, Function):
         that includes the number sets deduced for each argument.
         '''
         from . import max_set_closure
-        if number_set in max_set_closure.condition.domain.elements:
-            _K_sub = number_set
-            _a_sub = self.operands
-            _n_sub = _a_sub.num_elements()
+        _S_sub = number_set
+        _a_sub = self.operands
+        _n_sub = _a_sub.num_elements()
+
+        try:
             return max_set_closure.instantiate(
-                    {K: _K_sub, n: _n_sub, a: _a_sub})
-        else:
-            raise NotImplementedError(
-                    "Max.deduce_in_number_set() method was called with "
-                    "number_set = {0}, but the method has not yet been "
-                    "implemented for that number_set.".
-                    format(number_set))
+                    {S: _S_sub, n: _n_sub, a: _a_sub})
+        except Exception as the_exception:
+            raise ValueError(
+                    "Something went wrong in Max.deduce_in_number_set(), "
+                    "with the error: {}".
+                    format(the_exception))
 
     @relation_prover
     def deduce_number_set(self, **defaults_config):
