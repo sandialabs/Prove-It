@@ -4,10 +4,7 @@ import copy
 import collections
 
 
-class Defaults:
-    # used to avoid infinite recursion and extra work
-    considered_assumption_sets = set()
-    
+class Defaults:    
     def __init__(self):
         self.reset()
 
@@ -103,8 +100,6 @@ class Defaults:
         # imports of other common expressions.
         self.import_failure_filename = None
 
-        Defaults.considered_assumption_sets.clear()
-
     def preserve_expr(self, expr):
         '''
         Preserve the given expression so it is not automatically
@@ -191,29 +186,9 @@ class Defaults:
         checking that the new assumptions are valid and
         performing appropriate automation (deriving side-effects).
         '''
-        from .proof import Assumption
         if assumptions is None:
             return tuple(self.assumptions)
-
-        assumptions = tuple(self._checkAssumptions(assumptions))
-        sorted_assumptions = tuple(
-            sorted(assumptions, key=lambda expr: hash(expr)))
-
-        # avoid infinite recursion and extra work
-        if sorted_assumptions not in Defaults.considered_assumption_sets:
-            Defaults.considered_assumption_sets.add(sorted_assumptions)
-            #print("consider assumptions", assumptions)
-            for assumption in assumptions:
-                # Prove each assumption, by assumption, to deduce any side-effects.
-                # Note that while we only need THE assumption to prove itself,
-                # having the other assumptions around can be useful for
-                # deriving side-effects.
-                Assumption.make_assumption(assumption, assumptions)
-            if not self.automation:
-                # consideration doesn't fully count if automation is off
-                Defaults.considered_assumption_sets.remove(sorted_assumptions)
-            #print("considered assumptions")
-        return assumptions
+        return tuple(self._checkAssumptions(assumptions))
 
     def _checkAssumptions(self, assumptions):
         '''

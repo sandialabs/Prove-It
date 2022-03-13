@@ -24,6 +24,7 @@ class Proof:
         the Proof jurisdiction.
         '''
         Assumption.all_assumptions.clear()
+        Assumption.considered_assumption_sets.clear()
         Theorem.all_theorems.clear()
         Theorem.all_used_theorems.clear()
         _ShowProof.show_proof_by_id.clear()
@@ -618,6 +619,7 @@ class _ProofReference:
 class Assumption(Proof):
     # Map expressions to corresponding assumption objects.
     all_assumptions = dict()
+    considered_assumption_sets = set()    
 
     def __init__(self, expr, assumptions=None):
         from proveit import ExprRange
@@ -665,6 +667,29 @@ class Assumption(Proof):
                 preexisting.proven_truth.derive_side_effects()
             return preexisting
         return Assumption(expr, assumptions)
+
+    @staticmethod
+    def make_assumptions(assumptions):
+        '''
+        Prove each assumption, by assumption, to deduce any 
+        side-effects (unless we have already processed this set of
+        assumptions together before).
+        '''
+        sorted_assumptions = tuple(
+            sorted(assumptions, key=lambda expr: hash(expr)))
+
+        # avoid infinite recursion and extra work
+        if sorted_assumptions not in Assumption.considered_assumption_sets:
+            Assumption.considered_assumption_sets.add(sorted_assumptions)
+            for assumption in assumptions:
+                # Note that while we only need THE assumption to prove
+                # itself, having the other assumptions around can be
+                # useful for deriving side-effects.
+                Assumption.make_assumption(assumption, assumptions)
+            if not defaults.automation:
+                # consideration doesn't fully count if automation is off
+                Assumption.considered_assumption_sets.remove(
+                        sorted_assumptions)
 
     def step_type(self):
         return 'assumption'

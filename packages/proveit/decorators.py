@@ -27,6 +27,7 @@ def _make_decorated_prover(func):
 
     def decorated_prover(*args, **kwargs):
         from proveit import Expression, Judgment, InnerExpr
+        from proveit._core_.proof import Assumption
         from proveit.logic import Equals
         if (kwargs.get('preserve_all', False) and 
                 len(kwargs.get('replacements', tuple())) > 0):
@@ -130,16 +131,22 @@ def _make_decorated_prover(func):
                     # 'automation', for example, so that the 
                     # side-effects will be processed).
                     key = 'assumptions'
-                    setattr(temp_defaults, key, kwargs[key])                    
+                    setattr(temp_defaults, key, kwargs[key])
                 for key in defaults_to_change:
                     if key != 'assumptions':
                         # Temporarily alter a default:
                         setattr(temp_defaults, key, kwargs[key])
                 kwargs.update(public_attributes_dict(defaults))
+                # Make sure we derive assumption side-effects first.
+                Assumption.make_assumptions(defaults.assumptions)
+                # Now call the prover function.
                 proven_truth = checked_truth(func(*args, **kwargs))
         else:
             # No defaults reconfiguration.
             kwargs.update(public_attributes_dict(defaults))
+            # Make sure we derive assumption side-effects first.
+            Assumption.make_assumptions(defaults.assumptions)
+            # Now call the prover function.
             proven_truth = checked_truth(func(*args, **kwargs))
                 
         if is_conclude_method:
