@@ -776,7 +776,9 @@ class TheoryStorage:
                                '_theorem_proof_template_.ipynb'),
                   'r') as template:
             nb = template.read()
-            nb = nb.replace('#THEOREM_NAME#', theorem_name)
+            nb = nb.replace('#THEOREM_LINK#', theorem_name)
+            nb = nb.replace('#THEOREM_NAME#', 
+                            theorem_name.replace('_', r'\\_'))
             theory_links = self.theory.links(
                 os.path.join(self.directory, '_theory_nbs_', 
                              'proofs', theorem_name))
