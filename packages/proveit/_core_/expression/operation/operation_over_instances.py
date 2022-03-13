@@ -402,8 +402,10 @@ class OperationOverInstances(Operation):
             
         lambda_map = operands[0]
         if not isinstance(lambda_map, Lambda):
-             raise ValueError("Expecting operands to have a single "
-                              "lambda_map entry.")
+            # If the operand isn't a Lambda, use Operation._make
+            # and create a gerneric function-style operation.
+            return Operation._make(core_info, sub_expressions,
+                                   styles=styles)
         
         sig = inspect.signature(cls.__init__)
         Parameter = inspect.Parameter
