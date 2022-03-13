@@ -355,7 +355,7 @@ class TheoryStorage:
                     old_name_to_hash[name] = hash_id
 
         # determine hash ids
-        obsolete_hash_ids = set()  # for modified statements
+        modified_hash_ids = set()  # for modified statements
         for name, obj in definitions.items():
             obj = definitions[name]
             if kind == 'common':
@@ -393,7 +393,7 @@ class TheoryStorage:
                     # modified special statement. remove the old one first.
                     print('Modifying %s %s in %s theory' %
                           (kind, name, theory_name))
-                    obsolete_hash_ids.add(old_name_to_hash[name])
+                    modified_hash_ids.add(old_name_to_hash[name])
                 # Let's also make sure there is a "used_by"
                 # sub-folder.
                 used_by_folder = os.path.join(self.pv_it_dir, folder,
@@ -403,29 +403,16 @@ class TheoryStorage:
                         os.mkdir(used_by_folder)
                     except OSError:
                         pass  # no worries
-        # Remove proof dependencies of modified statements.
-        for hash_id in obsolete_hash_ids:
-            if folder == 'theorems':
-                # Remove the proof of the modified theorem:
-                try:
-                    stored_thm = StoredTheorem(self.theory, name)
-                except KeyError:
-                    # If it isn't there, don't worry about it.
-                    stored_thm = None
-                if stored_thm is not None:
-                    stored_thm.remove_proof()
-            if folder != 'common':
-                # Remove proofs that depended upon the modified theorem.
-                StoredSpecialStmt.remove_dependency_proofs(
-                    self.theory, kind, hash_id)
         # Indicate special expression removals.
         for hash_id, name in hash_to_old_name.items():
             if folder == 'common':
-                print("Removing %s from %s theory" %
-                      (name, theory_name))
+                if hash_id not in modified_hash_ids:
+                    print("Removing %s from %s theory" %
+                          (name, theory_name))
             else:
-                print("Removing %s %s from %s theory" %
-                      (kind, name, theory_name))
+                if hash_id not in modified_hash_ids:
+                    print("Removing %s %s from %s theory" %
+                          (kind, name, theory_name))
                 if folder == 'theorems':
                     # Remove the proof of the removed theorem:
                     StoredTheorem(self.theory, name).remove_proof()
@@ -789,7 +776,9 @@ class TheoryStorage:
                                '_theorem_proof_template_.ipynb'),
                   'r') as template:
             nb = template.read()
-            nb = nb.replace('#THEOREM_NAME#', theorem_name)
+            nb = nb.replace('#THEOREM_LINK#', theorem_name)
+            nb = nb.replace('#THEOREM_NAME#', 
+                            theorem_name.replace('_', r'\\_'))
             theory_links = self.theory.links(
                 os.path.join(self.directory, '_theory_nbs_', 
                              'proofs', theorem_name))
