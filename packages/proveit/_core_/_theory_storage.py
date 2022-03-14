@@ -776,9 +776,7 @@ class TheoryStorage:
                                '_theorem_proof_template_.ipynb'),
                   'r') as template:
             nb = template.read()
-            nb = nb.replace('#THEOREM_LINK#', theorem_name)
-            nb = nb.replace('#THEOREM_NAME#', 
-                            theorem_name.replace('_', r'\\_'))
+            nb = nb.replace('#THEOREM_NAME#', theorem_name)
             theory_links = self.theory.links(
                 os.path.join(self.directory, '_theory_nbs_', 
                              'proofs', theorem_name))
@@ -866,6 +864,8 @@ class TheoryFolderStorage:
     # The active theory folder storage (e.g., corresponding to the
     # notebook being executed).
     active_theory_folder_storage = None
+    dummy_theory_folder_storage = None # For dummy variables
+
     # We may only write expression notebooks to the active storage
     # when it is "owned" and we may not retrieve special expressions
     # from a folder that is "owned" (that would be a self-reference).
@@ -912,7 +912,18 @@ class TheoryFolderStorage:
         Obtain the TheoryFolderStorage that 'owns' the given
         expression, or the default TheoryFolderStorage.
         '''
+        from .theory import Theory
+        from proveit._core_.expression.label.var import is_dummy_var
         proveit_obj_to_storage = TheoryFolderStorage.proveit_object_to_storage
+        '''
+        if is_dummy_var(obj):
+            # Dummy variables have a special storage place.
+            if TheoryFolderStorage.dummy_theory_folder_storage is None:
+                theory_storage = Theory.storages[Theory._rootTheoryPaths['proveit']]
+                TheoryFolderStorage.dummy_theory_folder_storage = (
+                    TheoryFolderStorage(theory_storage, 'dummy'))
+            return TheoryFolderStorage.dummy_theory_folder_storage
+        '''
         if obj._style_id in proveit_obj_to_storage:
             (theory_folder_storage, _) =\
                 proveit_obj_to_storage[obj._style_id]
