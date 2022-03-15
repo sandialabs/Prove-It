@@ -381,7 +381,9 @@ class Operation(Expression):
         implicit_operator = operation_class._implicit_operator()
         if implicit_operator is not None and isinstance(operator, Variable):
             # Convert an implicit operator to a variable.
-            return Function(operator, operands)        
+            return Function(operator, operands, styles=styles)
+        if operation_class == Operation:
+            return Function(operator, operands, styles=styles)
         args = []
         kw_args = dict()
         for arg in operation_class._extract_init_args(
