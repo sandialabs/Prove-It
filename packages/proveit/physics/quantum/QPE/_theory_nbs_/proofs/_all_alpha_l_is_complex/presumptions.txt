@@ -8,6 +8,11 @@ proveit.linear_algebra.inner_products.real_set_is_inner_prod_space
 proveit.linear_algebra.linear_maps.lin_map_is_vec_space
 proveit.linear_algebra.rational_vec_set_is_vec_space
 proveit.linear_algebra.real_vec_set_is_vec_space
+proveit.logic.booleans.conjunction.any_from_and
+proveit.logic.booleans.conjunction.each_is_bool
+proveit.logic.booleans.conjunction.from_unary_and
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and
 proveit.logic.booleans.false_eq_false
 proveit.logic.booleans.fold_is_bool
 proveit.logic.booleans.from_not_false
@@ -216,6 +221,7 @@ proveit.numbers.ordering.symmetric_less_eq
 proveit.numbers.ordering.transitivity_less_eq_less
 proveit.numbers.ordering.transitivity_less_eq_less_eq
 proveit.numbers.ordering.transitivity_less_less_eq
+proveit.physics.quantum.QPE._Psi_ket_is_normalized_vec
 proveit.physics.quantum.QPE._best_is_int
 proveit.physics.quantum.QPE._mod_add_closure
 proveit.physics.quantum.QPE._two_pow_t_is_nat_pos

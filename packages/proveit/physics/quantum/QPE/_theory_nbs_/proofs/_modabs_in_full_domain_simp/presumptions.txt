@@ -90,11 +90,8 @@ proveit.numbers.addition.subtraction.add_cancel_triple_21
 proveit.numbers.addition.subtraction.add_cancel_triple_23
 proveit.numbers.addition.subtraction.add_cancel_triple_31
 proveit.numbers.addition.subtraction.add_cancel_triple_32
-proveit.numbers.addition.subtraction.negated_add
 proveit.numbers.addition.subtraction.nonneg_difference
 proveit.numbers.addition.subtraction.sub_one_is_nat
-proveit.numbers.addition.subtraction.subtract_from_add
-proveit.numbers.addition.subtraction.subtract_from_add_reversed
 proveit.numbers.addition.subtraction.subtract_nat_closure_bin
 proveit.numbers.addition.subtraction.subtraction_disassociation
 proveit.numbers.addition.term_as_strong_upper_bound
@@ -268,7 +265,6 @@ proveit.numbers.number_sets.real_numbers.real_nonzero_within_real
 proveit.numbers.number_sets.real_numbers.real_pos_within_real
 proveit.numbers.number_sets.real_numbers.real_pos_within_real_nonneg
 proveit.numbers.number_sets.real_numbers.real_pos_within_real_nonzero
-proveit.numbers.numerals.decimals.add_0_1
 proveit.numbers.numerals.decimals.less_0_1
 proveit.numbers.numerals.decimals.less_1_2
 proveit.numbers.numerals.decimals.less_2_3

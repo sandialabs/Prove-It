@@ -70,8 +70,21 @@ proveit.numbers.addition.add_real_pos_closure
 proveit.numbers.addition.add_real_pos_closure_bin
 proveit.numbers.addition.add_real_pos_from_non_neg
 proveit.numbers.addition.commutation
+proveit.numbers.addition.elim_zero_any
+proveit.numbers.addition.elim_zero_left
+proveit.numbers.addition.elim_zero_right
 proveit.numbers.addition.leftward_commutation
 proveit.numbers.addition.rightward_commutation
+proveit.numbers.addition.subtraction.add_cancel_basic
+proveit.numbers.addition.subtraction.add_cancel_general
+proveit.numbers.addition.subtraction.add_cancel_general_rev
+proveit.numbers.addition.subtraction.add_cancel_reverse
+proveit.numbers.addition.subtraction.add_cancel_triple_12
+proveit.numbers.addition.subtraction.add_cancel_triple_13
+proveit.numbers.addition.subtraction.add_cancel_triple_21
+proveit.numbers.addition.subtraction.add_cancel_triple_23
+proveit.numbers.addition.subtraction.add_cancel_triple_31
+proveit.numbers.addition.subtraction.add_cancel_triple_32
 proveit.numbers.addition.subtraction.negated_add
 proveit.numbers.addition.subtraction.nonzero_difference_if_different
 proveit.numbers.addition.subtraction.sub_one_is_nat
@@ -252,7 +265,6 @@ proveit.numbers.number_sets.real_numbers.relax_IntervalOC
 proveit.numbers.number_sets.real_numbers.relax_IntervalOO_left
 proveit.numbers.number_sets.real_numbers.relax_IntervalOO_left_right
 proveit.numbers.number_sets.real_numbers.relax_IntervalOO_right
-proveit.numbers.numerals.decimals.add_0_1
 proveit.numbers.numerals.decimals.less_0_1
 proveit.numbers.numerals.decimals.less_1_2
 proveit.numbers.numerals.decimals.less_2_3
@@ -271,9 +283,13 @@ proveit.numbers.numerals.decimals.posnat6
 proveit.numbers.numerals.decimals.posnat7
 proveit.numbers.numerals.decimals.posnat8
 proveit.numbers.numerals.decimals.posnat9
+proveit.numbers.ordering.less_eq_from_not_less
+proveit.numbers.ordering.less_from_not_less_eq
 proveit.numbers.ordering.less_is_not_eq
 proveit.numbers.ordering.less_than_is_bool
 proveit.numbers.ordering.not_equals_is_less_than_or_greater_than
+proveit.numbers.ordering.not_less_eq_from_less
+proveit.numbers.ordering.not_less_from_less_eq
 proveit.numbers.ordering.relax_less
 proveit.numbers.ordering.symmetric_less_eq
 proveit.numbers.ordering.transitivity_less_eq_less
@@ -286,5 +302,8 @@ proveit.physics.quantum.algebra.complex_set_is_hilbert_space
 proveit.physics.quantum.algebra.hilbert_space_is_inner_prod_space
 proveit.physics.quantum.algebra.hilbert_space_is_vec_space
 proveit.physics.quantum.algebra.ket_one_in_qubit_space
+proveit.physics.quantum.algebra.ket_one_norm
+proveit.physics.quantum.algebra.ket_zero_and_one_are_orthogonal
 proveit.physics.quantum.algebra.ket_zero_in_qubit_space
+proveit.physics.quantum.algebra.ket_zero_norm
 # THEOREMS AND THEORIES TO EXCLUDE:
