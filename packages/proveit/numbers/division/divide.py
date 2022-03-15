@@ -727,9 +727,9 @@ class Div(NumberOperation):
         elif number_set == RationalNonPos:
             deduce_number_set(self.denominator)
             if Less(self.denominator, zero).proven():
-                thm = div_rational_nonpos_neg_denom
+                thm = div_rational_nonpos_from_neg_denom
             else:
-                thm = div_rational_nonpos_neg_numer
+                thm = div_rational_nonpos_from_neg_numer
         elif number_set == Real:
             thm = div_real_closure
         elif number_set == RealNonZero:
@@ -755,9 +755,9 @@ class Div(NumberOperation):
         elif number_set == RealNonPos:
             deduce_number_set(self.denominator)
             if Less(self.denominator, zero).proven():
-                thm = div_real_nonpos_neg_denom
+                thm = div_real_nonpos_from_neg_denom
             else:
-                thm = div_real_nonpos_neg_numer
+                thm = div_real_nonpos_from_nonpos_numer
         elif number_set == ComplexNonZero:
             thm = div_complex_nonzero_closure
         elif number_set == Complex:

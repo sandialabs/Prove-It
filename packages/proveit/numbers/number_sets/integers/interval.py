@@ -37,6 +37,13 @@ class Interval(Operation):
         from .interval_membership import IntervalNonmembership
         return IntervalNonmembership(element, self)
 
+    def includes(self, other_set):
+        '''
+        Return True if this NumberSet includes the 'other_set' set.
+        '''
+        from proveit.numbers.number_sets.number_set import NumberSet
+        return NumberSet.includes(self, other_set)
+
     @prover
     def deduce_elem_in_set(self, member, **defaults_config):
         from . import in_interval

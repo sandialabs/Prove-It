@@ -1,5 +1,5 @@
 from proveit import (x, defaults, Literal, ProofFailure, prover,
-                     UnsatisfiedPrerequisites)
+                     UnsatisfiedPrerequisites, safe_dummy_var)
 from proveit.logic import Equals, InSet, SetMembership, SubsetEq
 
 
@@ -23,9 +23,10 @@ class NumberSet(Literal):
             # or real IntervalCC, IntervalOC, ...), so let's see if
             # we can prove that an arbitrary variable in the other_set
             # is also in self.
-            assumptions = [InSet(x, other_set)]
-            deduce_number_set(x, assumptions=assumptions)
-            if InSet(x, self).proven(assumptions=assumptions):
+            _x = safe_dummy_var(self, other_set)
+            assumptions = defaults.assumptions + (InSet(_x, other_set),)
+            deduce_number_set(_x, assumptions=assumptions)
+            if InSet(_x, self).proven(assumptions=assumptions):
                 SubsetEq(other_set, self).conclude_as_folded()
                 return True
 
@@ -130,7 +131,7 @@ class NumberMembership(SetMembership):
         if hasattr(element, 'deduce_in_number_set'):
             try:
                 return element.deduce_in_number_set(self.number_set)
-            except NotImplementedError as e:
+            except (NotImplementedError, UnsatisfiedPrerequisites) as e:
                 if hasattr(self, 'conclude_as_last_resort'):
                     return self.conclude_as_last_resort()
                 raise ProofFailure(InSet(self.element, self.number_set),

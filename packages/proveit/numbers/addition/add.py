@@ -578,20 +578,6 @@ class Add(NumberOperation):
             return unary_add_reduction.instantiate({a:self.operands[0]},
                                                     preserve_all=True)
 
-        # If all operands are irreducible, perform the evaluation.
-        if all(is_irreducible_value(term) for term in self.terms):
-            if self.operands.is_double():                
-                abs_terms = [
-                    term.operand if isinstance(term, Neg) 
-                    else term for term in self.terms]
-                if all(is_literal_int(abs_term) for abs_term in abs_terms):
-                    # Evaluate the addition of two literal integers.
-                    evaluation = self._integerBinaryEval()
-                    return evaluation
-            else:
-                # Do a pairwise addition of irreducible terms.         
-                return pairwise_evaluation(self)
-
         # If all operands are negated, factor out the negation.
         if all(isinstance(operand, Neg) for operand in self.operands):
             negated = Neg(
@@ -651,6 +637,20 @@ class Add(NumberOperation):
                 expr = eq.update(
                     inner_expr.double_neg_simplification(
                             preserve_all=True))
+
+        # If all operands are irreducible, perform the evaluation.
+        if all(is_irreducible_value(term) for term in self.terms):
+            if self.operands.is_double():                
+                abs_terms = [
+                    term.operand if isinstance(term, Neg) 
+                    else term for term in self.terms]
+                if all(is_literal_int(abs_term) for abs_term in abs_terms):
+                    # Evaluate the addition of two literal integers.
+                    evaluation = self._integerBinaryEval()
+                    return evaluation
+            else:
+                # Do a pairwise addition of irreducible terms.         
+                return pairwise_evaluation(self)
 
         # separate the types of operands in a dictionary
         hold, order = expr._create_dict()
@@ -2019,7 +2019,7 @@ def split_int_shift(expr):
                     not isinstance(expr.terms[0], ExprRange)):
                 return expr.terms[0], shift
             else:
-                return Add(expr.terms[:-1]), shift
+                return Add(*expr.terms[:-1].entries), shift
     if is_literal_int(expr):
         return zero, expr.as_int()
     return expr, 0
