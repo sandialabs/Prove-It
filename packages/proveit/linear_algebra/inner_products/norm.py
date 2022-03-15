@@ -22,7 +22,7 @@ class Norm(Operation):
                            styles=styles)
     
     def string(self, **kwargs):
-        return '||' + self.operand.string() + '}|'
+        return '||' + self.operand.string() + '||'
 
     def latex(self, **kwargs):
         return r'\left \|' + self.operand.latex() + r'\right \|'
