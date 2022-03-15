@@ -219,7 +219,7 @@ class Qcircuit(Function):
                                           'param_independent'):
                             if elem_part != elem_param:
                                 # An ExprRange of MultiQubitElems
-                                # should be paramterized by the parts
+                                # should be parameterized by the parts
                                 # for a clean display.
                                 has_generic_multigateelem = (elem_type=='gate')
                                 continue
@@ -1068,13 +1068,9 @@ class Qcircuit(Function):
     def _in_or_out_consolidation(self, elem_type, col, thm):
         repl_map, replacements, split_locations = (
                 Qcircuit._repl_map_for_input_or_output(elem_type, col))
-        defaults.test_repl_map = repl_map
         # If we need to do mergers afterwards, don't auto-simplify.
         consolidation = thm.instantiate(repl_map, 
                                         replacements=replacements)
-        
-        defaults.test_out = consolidation
-        defaults.split_locations = split_locations
         
         # Remerge where splits were necessary:
         if len(split_locations) > 0:
@@ -1083,7 +1079,6 @@ class Qcircuit(Function):
                     .substitute(Qcircuit._remerge(
                             consolidation.lhs.vert_expr_array[0],
                             split_locations)))
-            defaults.test_out2 = consolidation
             consolidation = (
                     consolidation.inner_expr().rhs.vert_expr_array[0]
                     .substitute(Qcircuit._remerge(
@@ -1097,8 +1092,6 @@ class Qcircuit(Function):
                     .substitute(Qcircuit._shift_ranges_consecutively(
                             consolidation.rhs.vert_expr_array[0])))         
 
-        defaults.test_out = consolidation
-        
         if not self.vert_expr_array.is_single():
             return consolidation.substitution(self)
         return consolidation.without_wrapping()
@@ -1226,12 +1219,17 @@ class Qcircuit(Function):
                 # (uses _idx-1 since there is no n_0).
                 # We'll need to merge these back later, so don't
                 # auto-simplify now (that makes the merger harder).
+                # Also, we don't want to make an ExprRange index shift
+                # simplification if either of these is parameter 
+                # independent.
                 expr_for_nk = eq_for_nk.update(
                         expr_for_nk.inner_expr()[_idx-1].partition(
-                                expr_for_nk[_idx-1].start_index))                
+                                expr_for_nk[_idx-1].start_index,
+                                auto_simplify=False))
                 expr_for_Ak = eq_for_Ak.update(
                         expr_for_Ak.inner_expr()[_idx-1].partition(
-                                expr_for_Ak[_idx-1].start_index))
+                                expr_for_Ak[_idx-1].start_index,
+                                auto_simplify=False))
                 split_locations.append(_idx-1)
                 # Shift the start index in N_0, ..., N_{m-1} to line
                 # it up with N_1, ..., N_{m}:
@@ -1265,7 +1263,6 @@ class Qcircuit(Function):
         for split_loc in reversed(split_locations):
             expr = eq.update(
                     expr.inner_expr()[split_loc:split_loc+2].merger())
-        defaults.test_remerge = eq.relation
         return eq.relation
 
     @staticmethod

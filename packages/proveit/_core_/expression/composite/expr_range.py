@@ -3,6 +3,7 @@ import more_itertools
 from proveit._core_.expression.expr import (Expression, MakeNotImplemented,
                                             ImproperReplacement,
                                             free_vars)
+from proveit._core_.expression.label.var import safe_dummy_var
 from proveit._core_.expression.style_options import StyleOptions, StyleError
 from proveit._core_.expression.lambda_expr.lambda_expr import Lambda
 from proveit._core_.expression.composite import (
@@ -35,8 +36,8 @@ class ExprRange(Expression):
 
     def __init__(self, parameter, body, start_index=None, end_index=None, 
                  *, true_start_index=None, true_end_index=None,
-                 parameterization=None, lambda_map=None, order=None,
-                 styles=None):
+                 use_canonical_parameter=True, parameterization=None,
+                 lambda_map=None, order=None, styles=None):
         '''
         Create an ExprRange that represents a range of expressions
         to be embedded within an ExprTuple.  Each element of the
@@ -46,6 +47,13 @@ class ExprRange(Expression):
         A Lambda expression will be created as its first sub-expression.
         The start and end indices with be the second and third
         sub-expressions.
+
+        Since the parameter used by the ExprRange is typically hidden
+        (unless 'explicit' parameterization is used), we switch to a 
+        canonical parameterization by default to for consistency-sake 
+        and to avoid confusion.  If 'use_canonical_parameter' is set to
+        False, the provided parameter will be used (desired on rare 
+        occasions).
 
         The 'parameterization' sets the style for formatting the
         ExprRange.  The default is "implicit" for LaTeX formatting
@@ -159,10 +167,21 @@ class ExprRange(Expression):
                 true_start_index)
         self.true_end_index = true_end_index = singular_expression(
                 true_end_index)
-        
+
+        if use_canonical_parameter:
+            # We'll use the parameter from the canonical version.
+            # We won't use the canonical version itself, however,
+            # or we would loose any style information.
+            body = lambda_map.body
+            orig_param = lambda_map.parameter
+            param = lambda_map.canonical_version().parameter
+            if orig_param != param:
+                lambda_map = Lambda(
+                    param, body.basic_replaced({orig_param:param}))
+
         self.lambda_map = lambda_map
-        self.body = self.lambda_map.body
-        self.parameter = self.lambda_map.parameter
+        self.body = lambda_map.body
+        self.parameter = lambda_map.parameter
         self.is_parameter_independent = (
             self.parameter not in free_vars(self.body))
         Expression.__init__(self, ['ExprRange'],
@@ -693,13 +712,12 @@ class ExprRange(Expression):
                 index = Neg(quick_simplified_index(neg_index_base))    
             else:
                 index = Neg(quick_simplified_index(Add(neg_index_base, 
-                                                       num(-index_shift))))                    
+                                                       num(-index_shift))))
         else:
             if index_shift == 0:
                 index = quick_simplified_index(index_base)
             else:
                 index = quick_simplified_index(Add(index_base, num(index_shift)))
-        
         if decreasing:
             expr_map = {Neg(self.lambda_map.parameter): index.operand,
                         self.lambda_map.parameter: index}
@@ -744,7 +762,7 @@ class ExprRange(Expression):
                 if index_base == base:
                     if other_shift == index_shift:
                         assert index == other_index, (
-                            "%base: %s, other_shift: %s"%(base, other_shift))
+                            "base: %s, other_shift: %s"%(base, other_shift))
                         # Trivial, but include it anyways so
                         # we won't need any automation:
                         assumptions.append(Equals(index, other_index))
@@ -753,7 +771,7 @@ class ExprRange(Expression):
                         if other_shift < index_shift:
                             assumptions.append(Less(other_index, index))
                         else:
-                            assumptions.append(Less(index, other_index))                            
+                            assumptions.append(Less(index, other_index))
                 else:
                     if base == start_base:
                         assumptions.append(Less(other_index, index))
@@ -819,14 +837,14 @@ class ExprRange(Expression):
                                         defaults.assumptions +
                                         extra_assumptions)
                                 proven_condition = condition.proven()
-                                dispoven_condition = condition.disproven()
+                                disproven_condition = condition.disproven()
                         else:
                             proven_condition = condition.proven()
-                            dispoven_condition = condition.disproven()
+                            disproven_condition = condition.disproven()
                         if proven_condition:
                             new_conditionals.append(conditional.value)
                             continue
-                        elif dispoven_condition:
+                        elif disproven_condition:
                             # Skip over this conditional with the
                             # false condition.
                             continue
@@ -946,7 +964,7 @@ class ExprRange(Expression):
                 if len(formatted_entries) > 0:
                     if formatted_operator != ',':
                         formatted_operator = ' ' + formatted_operator
-                    formatted_operator = formatted_operator + ' '                
+                    formatted_operator = formatted_operator + ' '
                 if role == 'implicit':
                     ellipsis = ('\ldots' if format_type == 'latex'
                                 else '...')
@@ -1254,8 +1272,10 @@ class ExprRange(Expression):
     def reduction(self, must_reduce=False, **defaults_config):
         '''
         Prove this ExprRange, wrapped in an ExprTuple, equal
-        to an ExprTuple form that is possibly reduced (e.g.,
-        collapsed to an empty range) after simplifying indices.
+        to an ExprTuple form that is possibly reduced after simplifying
+        indices.  An apparently empty ExprRange will be collapsed to an
+        empty ExprRange.  A parameter-independent ExprRange will be
+        shifted so to start from an index of 1.
         '''
         from proveit import f, i, j, m, n
         from proveit.logic import Equals
@@ -1383,6 +1403,16 @@ class ExprRange(Expression):
                             .with_decreasing_order())
                 else:
                     return reduction
+
+        # If the ExprRange is parameter independent, shift it
+        # so the index starts at 1, increasing.
+        if self.is_parameter_independent and (self.is_decreasing() or
+                                              self.start_index != one):
+            expr = self
+            if expr.is_decreasing():
+                expr = expr.with_increasing_order()
+            return expr.shift_equivalence(new_start=one)
+        
         # If nothing else is applicable, we will return the trivial 
         # reflexive equality.
         if must_reduce:
@@ -1994,10 +2024,10 @@ class ExprRange(Expression):
             requirement = Equals(
                     ExprTuple(*new_indices),
                     ExprTuple(ExprRange(
-                            new_param, new_param,
-                            true_start_index=subbed_start_index, 
-                            true_end_index=subbed_end_index,
-                            styles=subbed_styles)))
+                        new_param, new_param,
+                        true_start_index=subbed_start_index, 
+                        true_end_index=subbed_end_index,
+                        styles=subbed_styles)))
             if requirement.lhs == requirement.rhs:
                 # No need for the requirement if it is a trivial
                 # reflexive identity.

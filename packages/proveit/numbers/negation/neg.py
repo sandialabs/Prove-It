@@ -11,7 +11,8 @@ from proveit.numbers.number_sets import (
         Real, RealNonZero, RealPos, RealNeg, RealNonNeg, RealNonPos,
         Complex, ComplexNonZero)
 from proveit import a, b, c, i, j, m, n, x, y, B
-from proveit.numbers import NumberOperation, deduce_number_set
+from proveit.numbers import (NumberOperation, deduce_number_set,
+                             standard_number_set)
 
 class Neg(NumberOperation):
     # operator of the Neg operation.
@@ -158,6 +159,10 @@ class Neg(NumberOperation):
             Complex: Complex
             }
         operand_ns = deduce_number_set(self.operand).domain
+        # check if operand_ns is not a standard number set
+        if operand_ns not in number_set_map.keys():
+            # try to replace term_ns with a std number set
+            operand_ns = standard_number_set(operand_ns)
         return self.deduce_in_number_set(number_set_map[operand_ns])
 
     @equality_prover('shallow_simplified', 'shallow_simplify')

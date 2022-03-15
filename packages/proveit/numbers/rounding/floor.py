@@ -1,13 +1,14 @@
 from proveit import (defaults, Function, InnerExpr, Literal, USE_DEFAULTS,
                      relation_prover, equality_prover)
+from proveit.numbers import NumberOperation
 from proveit.numbers.number_sets import Integer, Natural
 from proveit.numbers.rounding.rounding_methods import (
     apply_rounding_elimination, apply_rounding_extraction,
     apply_shallow_simplification, rounding_deduce_in_number_set,
-    rounding_deduce_number_set)
+    rounding_deduce_number_set, rounding_bound_via_operand_bound)
 
 
-class Floor(Function):
+class Floor(NumberOperation, Function):
     # operator of the Floor operation.
     _operator_ = Literal(string_format='floor', theory=__file__)
 
@@ -109,3 +110,16 @@ class Floor(Function):
         '''
         return rounding_deduce_number_set(self)
 
+    @relation_prover
+    def bound_via_operand_bound(self, operand_relation, **defaults_config):
+        '''
+        Deduce a bound on this Ceiling (Ceil) object, given a
+        bound (the operand_relation) on its operand.
+        '''
+        from proveit.numbers.rounding import (
+                floor_increasing_less, floor_increasing_less_eq,
+                floor_of_real_below_int)
+
+        return rounding_bound_via_operand_bound(
+                self, operand_relation, floor_increasing_less,
+                floor_increasing_less_eq, floor_of_real_below_int)

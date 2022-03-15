@@ -1,15 +1,15 @@
 from proveit import (Operation, Literal, Lambda, ExprTuple, ExprRange,
                      UnsatisfiedPrerequisites, SimplificationDirectives,
                      prover, equality_prover, relation_prover)
-from proveit import (a, b, c, f, i, j, l, m, n, A, B, C, M, Q, X, Y,
+from proveit import (a, b, c, f, i, j, l, m, n, A, B, C, M, Q, U, X, Y,
                      alpha)
 from proveit.relation import TransRelUpdater
-from proveit.logic import Equals, InSet, ClassMembership, InClass
-from proveit.numbers import Complex, subtract, one
+from proveit.logic import Equals, InSet, ClassMembership, InClass, CartExp
+from proveit.numbers import Complex, subtract, one, two, Exp
 from proveit.abstract_algebra.generic_methods import (
         apply_association_thm, apply_disassociation_thm)
 from proveit.linear_algebra import (VecSpaces, VecAdd, VecSum, LinMap,
-                                    MatrixSpace)
+                                    MatrixSpace, Norm)
 
 class Qmult(Operation):
     '''
@@ -403,6 +403,37 @@ class Qmult(Operation):
             raise ValueError(
                 "Don't know how to distribute tensor product over " +
                 str(sum_factor.__class__) + " factor")
+    
+    @prover
+    def compute_norm(self, **defaults_config):
+        '''
+        Compute the normalization of this Qmult.
+        
+        In the current implementation, we simply prove that
+        normalization is preserved when applying a unitary.
+        '''
+        from proveit.physics.quantum import HilbertSpaces, var_ket_psi
+        from . import state_space_preservation, normalization_preservation
+        if not self.operands.is_double():
+            raise NotImplementedError(
+                    "Qmult.compute_norm is only implemented "
+                    "for binary Qmults, specifically a unitary applied "
+                    "to a normalized vector")
+        vec = self.operands[1]
+        for _H in HilbertSpaces.yield_known_hilbert_spaces(vec):
+            if (isinstance(_H, CartExp) and _H.base == Complex):
+                _n = _H.exponent
+                _alpha = Norm(vec).computed()
+                state_space_preservation.instantiate(
+                        {n:_n, U:self.operands[0], var_ket_psi:vec})
+                return normalization_preservation.instantiate(
+                        {n:_n, U:self.operands[0], var_ket_psi:vec,
+                         alpha:_alpha})
+        raise NotImplementedError(
+                "Qmult.compute_norm is only implemented "
+                "for binary Qmults, specifically a unitary applied "
+                "to a normalized vector in a known Hilbert space that "
+                "is the Cartesian exponent of two to a NaturalPos power.")
 
 class QmultCodomainLiteral(Literal):
     '''

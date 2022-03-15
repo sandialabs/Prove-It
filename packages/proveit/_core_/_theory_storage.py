@@ -355,7 +355,7 @@ class TheoryStorage:
                     old_name_to_hash[name] = hash_id
 
         # determine hash ids
-        obsolete_hash_ids = set()  # for modified statements
+        modified_hash_ids = set()  # for modified statements
         for name, obj in definitions.items():
             obj = definitions[name]
             if kind == 'common':
@@ -393,7 +393,7 @@ class TheoryStorage:
                     # modified special statement. remove the old one first.
                     print('Modifying %s %s in %s theory' %
                           (kind, name, theory_name))
-                    obsolete_hash_ids.add(old_name_to_hash[name])
+                    modified_hash_ids.add(old_name_to_hash[name])
                 # Let's also make sure there is a "used_by"
                 # sub-folder.
                 used_by_folder = os.path.join(self.pv_it_dir, folder,
@@ -403,29 +403,16 @@ class TheoryStorage:
                         os.mkdir(used_by_folder)
                     except OSError:
                         pass  # no worries
-        # Remove proof dependencies of modified statements.
-        for hash_id in obsolete_hash_ids:
-            if folder == 'theorems':
-                # Remove the proof of the modified theorem:
-                try:
-                    stored_thm = StoredTheorem(self.theory, name)
-                except KeyError:
-                    # If it isn't there, don't worry about it.
-                    stored_thm = None
-                if stored_thm is not None:
-                    stored_thm.remove_proof()
-            if folder != 'common':
-                # Remove proofs that depended upon the modified theorem.
-                StoredSpecialStmt.remove_dependency_proofs(
-                    self.theory, kind, hash_id)
         # Indicate special expression removals.
         for hash_id, name in hash_to_old_name.items():
             if folder == 'common':
-                print("Removing %s from %s theory" %
-                      (name, theory_name))
+                if hash_id not in modified_hash_ids:
+                    print("Removing %s from %s theory" %
+                          (name, theory_name))
             else:
-                print("Removing %s %s from %s theory" %
-                      (kind, name, theory_name))
+                if hash_id not in modified_hash_ids:
+                    print("Removing %s %s from %s theory" %
+                          (kind, name, theory_name))
                 if folder == 'theorems':
                     # Remove the proof of the removed theorem:
                     StoredTheorem(self.theory, name).remove_proof()
@@ -877,6 +864,8 @@ class TheoryFolderStorage:
     # The active theory folder storage (e.g., corresponding to the
     # notebook being executed).
     active_theory_folder_storage = None
+    dummy_theory_folder_storage = None # For dummy variables
+
     # We may only write expression notebooks to the active storage
     # when it is "owned" and we may not retrieve special expressions
     # from a folder that is "owned" (that would be a self-reference).
@@ -923,7 +912,18 @@ class TheoryFolderStorage:
         Obtain the TheoryFolderStorage that 'owns' the given
         expression, or the default TheoryFolderStorage.
         '''
+        from .theory import Theory
+        from proveit._core_.expression.label.var import is_dummy_var
         proveit_obj_to_storage = TheoryFolderStorage.proveit_object_to_storage
+        '''
+        if is_dummy_var(obj):
+            # Dummy variables have a special storage place.
+            if TheoryFolderStorage.dummy_theory_folder_storage is None:
+                theory_storage = Theory.storages[Theory._rootTheoryPaths['proveit']]
+                TheoryFolderStorage.dummy_theory_folder_storage = (
+                    TheoryFolderStorage(theory_storage, 'dummy'))
+            return TheoryFolderStorage.dummy_theory_folder_storage
+        '''
         if obj._style_id in proveit_obj_to_storage:
             (theory_folder_storage, _) =\
                 proveit_obj_to_storage[obj._style_id]
@@ -2125,7 +2125,9 @@ class TheoryFolderStorage:
             truth_expr_id = self.make_expression(subids[0])
             assumptions = [self.make_expression(
                 exprid) for exprid in subids[1:]]
-            obj = Judgment(truth_expr_id, assumptions)
+            num_lit_gen_str = unique_rep[unique_rep.rfind(']')+1:]
+            num_lit_gen = 0 if num_lit_gen_str == '' else int(num_lit_gen_str)
+            obj = Judgment(truth_expr_id, assumptions, num_lit_gen=num_lit_gen)
         theory_folder_storage._record_storage(obj._style_id,
                                               hash_folder)
         return obj
@@ -2327,6 +2329,8 @@ class StoredSpecialStmt:
         remove_if_exists(os.path.join(path, 'proof.pv_it'))
         remove_if_exists(os.path.join(path, 'used_axioms.txt'))
         remove_if_exists(os.path.join(path, 'used_theorems.txt'))
+        remove_if_exists(os.path.join(path, 'eliminated_axioms.txt'))
+        remove_if_exists(os.path.join(path, 'eliminated_theorems.txt'))
 
     def read_dependent_theorems(self):
         '''
@@ -2483,24 +2487,38 @@ class StoredTheorem(StoredSpecialStmt):
 
     def read_used_axioms(self):
         '''
-        Return the recorded list of axioms.
+        Return the recorded list of used axioms.
         '''
-        return list(self._readUsedStmts('axioms'))
+        return list(self._read_stmts('used_axioms.txt'))
 
     def read_used_theorems(self):
         '''
-        Return the recorded list of theorems.
+        Return the recorded list of used theorems.
         '''
-        return list(self._readUsedStmts('theorems'))
+        return list(self._read_stmts('used_theorems.txt'))
 
-    def _readUsedStmts(self, kind):
+    def read_eliminated_axioms(self):
         '''
-        Returns the used set of axioms and theorems (as a tuple of sets
-        of strings) that are used by the given theorem as recorded in
-        the database.
+        Return the recorded set of eliminated axioms
+        (via literal generalization).
+        '''
+        return set(self._read_stmts('eliminated_axioms.txt'))
+
+    def read_eliminated_theorems(self):
+        '''
+        Return the recorded set of eliminated theorems
+        (via literal generalization).
+        '''
+        return set(self._read_stmts('eliminated_theorems.text'))
+
+
+    def _read_stmts(self, filename):
+        '''
+        Returns the set of axioms and theorems (as a tuple of sets
+        of strings) from the given file.
         '''
         try:
-            with open(os.path.join(self.path, 'used_%s.txt' % kind),
+            with open(os.path.join(self.path, filename),
                       'r') as used_stmts_file:
                 for line in used_stmts_file:
                     line = line.strip()
@@ -2706,15 +2724,15 @@ class StoredTheorem(StoredSpecialStmt):
                 except (KeyError, TheoryException):
                     pass  # don't worry if it has alread been removed
 
-        stored_used_axiom_names = [Theory.get_stored_axiom(used_axiom_name) for
-                                   used_axiom_name in used_axiom_names]
-        stored_used_theorem_names = [Theory.get_stored_theorem(
-            used_theorem_name) for used_theorem_name in used_theorem_names]
+        stored_used_axioms = [Theory.get_stored_axiom(used_axiom_name) for
+                              used_axiom_name in used_axiom_names]
+        stored_used_theorems = [Theory.get_stored_theorem(used_theorem_name) 
+                                for used_theorem_name in used_theorem_names]
 
         # record axioms/theorems that this theorem directly uses
         for stored_used_stmts, used_stmts_filename in (
-                (stored_used_axiom_names, 'used_axioms.txt'),
-                (stored_used_theorem_names, 'used_theorems.txt')):
+                (stored_used_axioms, 'used_axioms.txt'),
+                (stored_used_theorems, 'used_theorems.txt')):
             with open(os.path.join(self.path, used_stmts_filename),
                       'w') as used_stmts_file:
                 for stored_used_stmt in sorted(stored_used_stmts,
@@ -2726,13 +2744,29 @@ class StoredTheorem(StoredSpecialStmt):
         # for each used axiom/theorem, record that it is used by the
         # newly proven theorem
         for stored_used_stmts, prev_used_stmts in (
-                (stored_used_axiom_names, prev_used_axiom_names),
-                (stored_used_theorem_names, prev_used_theorem_names)):
+                (stored_used_axioms, prev_used_axiom_names),
+                (stored_used_theorems, prev_used_theorem_names)):
             for stored_used_stmt in stored_used_stmts:
                 if str(stored_used_stmt) not in prev_used_stmts:
                     # (otherwise the link should already exist)
                     open(os.path.join(stored_used_stmt.path, 'used_by',
                                       str(self)), 'w')
+
+        # See if there are any axioms/theorems eliminated through the
+        # use of a Literal generalization.
+        eliminated_axiom_names = [str(used_axiom) for used_axiom in 
+                                  proof.eliminated_axioms()]
+        eliminated_theorem_names = [str(used_theorem) for used_theorem 
+                                    in proof.eliminated_theorems()]
+        if len(eliminated_axiom_names)>0 or len(eliminated_theorem_names)>0:
+            # record eliminated axioms/theorems
+            for used_stmt_names, used_stmts_filename in (
+                    (eliminated_axiom_names, 'eliminated_axioms.txt'),
+                    (eliminated_theorem_names, 'eliminated_theorems.txt')):
+                with open(os.path.join(self.path, used_stmts_filename),
+                          'w') as used_stmts_file:
+                    for used_stmt_name in sorted(used_stmt_names):
+                        used_stmts_file.write(str(used_stmt_name) + '\n')
 
         # If this proof is complete (all of the theorems that it uses
         # are complete) then  propagate this information to the theorems
@@ -2844,41 +2878,103 @@ class StoredTheorem(StoredSpecialStmt):
         remove_if_exists(os.path.join(self.path, 'proof.pv_it'))
         remove_if_exists(os.path.join(self.path, 'used_axioms.txt'))
         remove_if_exists(os.path.join(self.path, 'used_theorems.txt'))
+        remove_if_exists(os.path.join(self.path, 'eliminated_axioms.txt'))
+        remove_if_exists(os.path.join(self.path, 'eliminated_theorems.txt'))
 
-    def all_requirements(self):
+    def all_requirements(self, *, dead_end_theorem_exprs=None,
+                         excluded_names=None):
         '''
         Returns the set of axioms that are required (directly or
-        indirectly) by the theorem.  Also, if the given theorem is not
-        completely proven, return the set of unproven theorems that are
-        required (directly or indirectly).  Returns this axiom set and
-        theorem set as a tuple.
+        indirectly) by the theorem.  Also, return the set of "dead-end"
+        theorems that are required (directly or indirectly).  A 
+        "dead-end" theorem is either unproven or has an expression that
+        matches one in the optionally provided `dead_end_theorem_exprs`.
+
+        Returns this axiom set and theorem set as a tuple.
+        '''
+        return StoredTheorem.requirements_of_theorems(
+            [self], dead_end_theorem_exprs=dead_end_theorem_exprs,
+            excluded_names=excluded_names)
+
+    @staticmethod
+    def requirements_of_theorems(theorems, *, dead_end_theorem_exprs=None,
+                                 excluded_names=None):
+        '''
+        Returns the set of axioms that are required (directly or
+        indirectly) by the theorems.  Also, return the set of "dead-end"
+        theorems that are required (directly or indirectly).  A 
+        "dead-end" theorem is either unproven or has an expression that
+        matches one in the optionally provided `dead_end_theorem_exprs`
+
+        Returns this axiom set and theorem set as a tuple.
         '''
         from .theory import Theory
-        if not self.has_proof():
-            raise Exception('The theorem must be proven in order to '
-                            'obtain its requirements')
-        used_axiom_names, used_theorem_names = (
-            self.read_used_axioms(), self.read_used_theorems())
-        required_axioms = set(used_axiom_names)  # just a start
-        required_theorems = set()
+        if excluded_names is None: excluded_names = frozenset()
+        if len(theorems) == 1:
+            # When there are axioms/theorems to be eliminated
+            # (via literal generalization), this will be processed
+            # separately.
+            stored_theorem = next(iter(theorems))
+            if not isinstance(stored_theorem, StoredTheorem):
+                stored_theorem = stored_theorem._stored_theorem()
+            eliminated_axiom_names, eliminated_theorem_names = (
+                stored_theorem.read_eliminated_axioms(), 
+                stored_theorem.read_eliminated_theorems())
+            excluded_names = set(excluded_names)
+            excluded_names.update(eliminated_axiom_names)
+            excluded_names.update(eliminated_theorem_names)
+        else:
+            # When there are multiple theorems, if any have
+            # axioms/theorems to eliminate, they will be processed
+            # separately.
+            eliminated_axiom_names = frozenset()
+            eliminated_theorem_names = frozenset()
+        if dead_end_theorem_exprs is None:
+            dead_end_theorem_exprs = frozenset()
+        required_axioms = set()
+        required_deadend_theorems = set()
         processed = set()
-        to_process = set(used_theorem_names)
+        to_process = set([str(theorem) for theorem in theorems])
         while len(to_process) > 0:
-            next_theorem = to_process.pop()
-            stored_theorem = Theory.get_stored_theorem(next_theorem)
-            if not stored_theorem.has_proof():
-                required_theorems.add(next_theorem)
-                processed.add(next_theorem)
+            next_theorem_name = to_process.pop()
+            if next_theorem_name in excluded_names:
+                continue # excluded
+            processed.add(next_theorem_name)
+            next_theorem = Theory.find_theorem(next_theorem_name)
+            stored_theorem = Theory.get_stored_theorem(next_theorem_name)
+            if (next_theorem.proven_truth.expr in dead_end_theorem_exprs or
+                    not stored_theorem.has_proof()):
+                # This is a dead-end or unproven theorem.  Mark it
+                # as such and go no further on this path.
+                required_deadend_theorems.add(next_theorem)
                 continue
+            if len(eliminated_axiom_names)==len(eliminated_theorem_names)==0:
+                _eliminated_axiom_names, _eliminated_theorem_names = (
+                    stored_theorem.read_eliminated_axioms(), 
+                    stored_theorem.read_eliminated_theorems())
+                if (len(_eliminated_axiom_names) > 0 or 
+                        len(_eliminated_theorem_names) > 0):
+                    # When there are eliminated axioms or theorems, we
+                    # must call all_requirements recursively to make
+                    # sure we do the elimination properly.
+                    _req_axioms, _req_theorems = (
+                        stored_theorem.all_requirements(
+                            dead_end_theorem_exprs=dead_end_theorem_exprs,
+                            excluded_names=excluded_names))
+                    required_axioms.update(_req_axioms)
+                    required_deadend_theorems.update(_req_theorems)
+                    continue
             used_axiom_names, used_theorem_names = (
-                stored_theorem.read_used_axioms(),
+                stored_theorem.read_used_axioms(), 
                 stored_theorem.read_used_theorems())
-            required_axioms.update(used_axiom_names)
-            for used_theorem in used_theorem_names:
-                if used_theorem not in processed:
-                    to_process.add(used_theorem)
-            processed.add(next_theorem)
-        return (required_axioms, required_theorems)
+            required_axioms.update({Theory.find_axiom(name) for name
+                                    in used_axiom_names
+                                    if name not in excluded_names})
+            for used_theorem_name in used_theorem_names:
+                if used_theorem_name not in processed:
+                    if used_theorem_name not in excluded_names:
+                        to_process.add(used_theorem_name)
+        return (required_axioms, required_deadend_theorems)
 
     def all_used_or_presumed_theorem_names(self, names=None):
         '''

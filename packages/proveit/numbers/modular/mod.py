@@ -1,7 +1,7 @@
 from proveit import (defaults, Literal, Operation, ProofFailure, 
                      relation_prover, equality_prover)
 # from proveit.numbers.number_sets import Integer, Real
-from proveit import a, b, c, i, j, L
+from proveit import a, b, c, i, j, x, L
 from proveit.logic import Equals, InSet, SubsetEq
 from proveit.relation import TransRelUpdater
 from proveit.numbers import NumberOperation, deduce_number_set, Add
@@ -25,9 +25,29 @@ class Mod(NumberOperation):
         expression assuming the operands have been simplified.
         
         Specifically, performs reductions of the form
+        (x mod L) = x where applicable and
         [(a mod L + b) mod L] = [(a + b) mod L].
         '''
-        from . import redundant_mod_elimination, redundant_mod_elimination_in_sum
+        from . import (int_mod_elimination, real_mod_elimination,
+                       redundant_mod_elimination, 
+                       redundant_mod_elimination_in_sum)
+        from proveit.numbers import (
+            NaturalPos, RealPos, Interval, IntervalCO, subtract, zero, one)
+        deduce_number_set(self.dividend)
+        divisor_ns = deduce_number_set(self.divisor).domain
+        if (NaturalPos.includes(divisor_ns) and 
+                InSet(self.dividend, 
+                      Interval(zero, 
+                               subtract(self.divisor, one))).proven()):
+            # (x mod L) = x if L in N+ and x in {0 .. L-1}
+            return int_mod_elimination.instantiate(
+                {x:self.dividend, L:self.divisor})
+        if (RealPos.includes(divisor_ns) and 
+                InSet(self.dividend, 
+                      IntervalCO(zero, self.divisor)).proven()):
+            # (x mod L) = x if L in R+ and x in [0, L)
+            return real_mod_elimination.instantiate(
+                {x:self.dividend, L:self.divisor})
         return Mod._redundant_mod_elimination(
                 self, redundant_mod_elimination, 
                 redundant_mod_elimination_in_sum)

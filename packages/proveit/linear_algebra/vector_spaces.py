@@ -1,5 +1,5 @@
 from proveit import (defaults, ExprRange, Function, Literal, Judgment,
-                     UnsatisfiedPrerequisites, prover)
+                     ProofFailure, UnsatisfiedPrerequisites, prover)
 from proveit import n
 from proveit.logic import InClass, ClassMembership, InSet
 from proveit.numbers import Interval
@@ -167,6 +167,40 @@ class VecSpaces(Function):
                 vec_spaces.append(VecSpaces.known_vec_space(vec, field=field))
 
         return vec_spaces
+
+    @staticmethod
+    def common_known_vec_space(vecs, *, field=None):
+        '''
+        Return a known vector space that is in common among the given
+        vectors.
+        '''
+        # We need to find a vector space that is common to
+        # all of the terms.
+        candidate_vec_spaces = None
+        for vec in vecs:
+            cur_vec_spaces = set(VecSpaces.yield_known_vec_spaces(
+                    vec, field=field))
+            if hasattr(vec, 'deduce_in_vec_space'):
+                try:
+                    vec_space_membership = vec.deduce_in_vec_space(
+                            field=field)
+                    cur_vec_spaces.add(vec_space_membership.domain)
+                except (UnsatisfiedPrerequisites, NotImplementedError,
+                        ProofFailure):
+                    pass
+            if candidate_vec_spaces is None:
+                candidate_vec_spaces = cur_vec_spaces
+            else:
+                candidate_vec_spaces.intersection_update(cur_vec_spaces)
+        try:
+            return next(iter(candidate_vec_spaces))
+        except StopIteration:
+            # No known common vector space membership over the 
+            # specified field.
+            field_str = '' if field is None else ' over %s'%field
+            raise UnsatisfiedPrerequisites(
+                    "No common known vector space%s was found among %s."
+                    %(field_str, vecs))
     
     @staticmethod
     def known_field(vec_space):

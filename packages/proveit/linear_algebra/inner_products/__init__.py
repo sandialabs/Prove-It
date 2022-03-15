@@ -1,5 +1,6 @@
 from .inner_prod_spaces import InnerProdSpaces, deduce_as_inner_prod_space
 from .inner_prod import InnerProd
+from .norm import Norm
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

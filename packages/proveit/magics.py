@@ -755,7 +755,7 @@ class ProveItMagicCommands:
                 for required_unproven_theorem in sorted(
                         required_unproven_theorems, key=stmt_sort):
                     self.display_special_stmt(
-                        Theory.find_theorem(required_unproven_theorem))
+                        required_unproven_theorem)
                 display(HTML('</dl>'))
             if len(required_axioms) > 0:
                 display(
@@ -765,7 +765,7 @@ class ProveItMagicCommands:
                 display(HTML('<dl>'))
                 for required_axiom in sorted(required_axioms, key=stmt_sort):
                     self.display_special_stmt(
-                        Theory.find_axiom(required_axiom))
+                        required_axiom)
                 display(HTML('</dl>'))
 
         dependents = proof.direct_dependents()

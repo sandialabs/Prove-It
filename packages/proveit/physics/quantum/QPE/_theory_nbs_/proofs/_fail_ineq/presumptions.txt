@@ -367,7 +367,6 @@ proveit.numbers.number_sets.real_numbers.real_pos_within_real_nonneg
 proveit.numbers.number_sets.real_numbers.real_pos_within_real_nonzero
 proveit.numbers.number_sets.real_numbers.relax_IntervalCO
 proveit.numbers.numerals.decimals.add_1_1
-proveit.numbers.numerals.decimals.add_2_0
 proveit.numbers.numerals.decimals.less_0_1
 proveit.numbers.numerals.decimals.less_1_2
 proveit.numbers.numerals.decimals.less_2_3
@@ -417,6 +416,7 @@ proveit.numbers.summation.summation_int_closure
 proveit.numbers.summation.summation_nat_closure
 proveit.numbers.summation.summation_nat_pos_closure
 proveit.numbers.summation.summation_real_closure
+proveit.numbers.summation.trivial_sum
 proveit.numbers.summation.weak_summation_from_summands_bound
 proveit.physics.quantum.QPE._all_alpha_l_is_complex
 proveit.physics.quantum.QPE._alpha_l_sqrd_ineq
@@ -434,5 +434,8 @@ proveit.physics.quantum.algebra.complex_set_is_hilbert_space
 proveit.physics.quantum.algebra.hilbert_space_is_inner_prod_space
 proveit.physics.quantum.algebra.hilbert_space_is_vec_space
 proveit.physics.quantum.algebra.ket_one_in_qubit_space
+proveit.physics.quantum.algebra.ket_one_norm
+proveit.physics.quantum.algebra.ket_zero_and_one_are_orthogonal
 proveit.physics.quantum.algebra.ket_zero_in_qubit_space
+proveit.physics.quantum.algebra.ket_zero_norm
 # THEOREMS AND THEORIES TO EXCLUDE:

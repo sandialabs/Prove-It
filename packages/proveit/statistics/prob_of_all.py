@@ -64,7 +64,7 @@ class ProbOfAll(OperationOverInstances):
                 {Omega:_Omega, A:_A, B:_B, Q:_Q, f:_f, g:_g, x:_x, y:_y})
 
     @equality_prover("partitioned", "split")
-    def partition(self, A, B, sample_space, **defaults_config):
+    def partition(self, A, B, super_set, sample_space, **defaults_config):
         '''
         Equate this ProbOfAll expression with the some of two
         ProbOfAll expressions over two disjoint domains whose union is
@@ -77,9 +77,24 @@ class ProbOfAll(OperationOverInstances):
         _C = self.domain
         _f = Lambda(self.instance_param, self.instance_expr)
         _Q = Lambda(self.instance_param, self.non_domain_condition())
+        _X = super_set
         
         return prob_of_disjoint_events_is_prob_sum.instantiate(
                 {Omega:_Omega, A:_A, B:_B, C:_C, X:_X, Q:_Q, f:_f})
+
+    @equality_prover("defined", "define")
+    def defintion(self, sample_space, **defaults_config):
+        '''
+        The defintion of a ProbOfAll equates it with the 
+        probability of an event (set of samples in a sample space).
+        '''
+        from . import prob_of_all_def
+        _Omega = sample_space
+        _X = self.domain
+        _f = Lambda(self.instance_param, self.instance_expr)
+        _Q = Lambda(self.instance_param, self.non_domain_condition())
+        return prob_of_all_def.instantiate(
+                {Omega:_Omega, X:_X, f:_f, Q:_Q, x:self.instance_param})
 
     @equality_prover("computed", "compute")
     def computation(self, sample_space, **defaults_config):

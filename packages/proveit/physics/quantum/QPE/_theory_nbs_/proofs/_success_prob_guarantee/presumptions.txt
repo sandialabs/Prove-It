@@ -5,6 +5,7 @@ proveit.core_expr_types.conditionals.condition_prepend_reduction
 proveit.core_expr_types.conditionals.condition_with_true_on_left_reduction
 proveit.core_expr_types.conditionals.condition_with_true_on_right_reduction
 proveit.core_expr_types.conditionals.singular_conjunction_condition_reduction
+proveit.core_expr_types.conditionals.true_condition_elimination
 proveit.core_expr_types.operations.operands_substitution_via_tuple
 proveit.core_expr_types.tuples.range_from1_len
 proveit.core_expr_types.tuples.range_from1_len_typical_eq
@@ -91,6 +92,7 @@ proveit.numbers.addition.subtraction.add_cancel_triple_31
 proveit.numbers.addition.subtraction.add_cancel_triple_32
 proveit.numbers.addition.subtraction.negated_add
 proveit.numbers.addition.subtraction.nonneg_difference
+proveit.numbers.addition.subtraction.nonpos_difference
 proveit.numbers.addition.subtraction.pos_difference
 proveit.numbers.addition.subtraction.sub_one_is_nat
 proveit.numbers.addition.subtraction.subtract_from_add
@@ -332,6 +334,7 @@ proveit.numbers.number_sets.real_numbers.negative_if_in_real_neg
 proveit.numbers.number_sets.real_numbers.nonneg_if_in_real_nonneg
 proveit.numbers.number_sets.real_numbers.nonneg_real_is_real_nonneg
 proveit.numbers.number_sets.real_numbers.nonpos_if_in_real_nonpos
+proveit.numbers.number_sets.real_numbers.nonpos_real_is_real_nonpos
 proveit.numbers.number_sets.real_numbers.nonzero_if_in_real_nonzero
 proveit.numbers.number_sets.real_numbers.pi_is_real_pos
 proveit.numbers.number_sets.real_numbers.pos_real_is_real_pos
@@ -379,11 +382,15 @@ proveit.numbers.numerals.decimals.reduce_2_repeats
 proveit.numbers.numerals.decimals.tuple_len_1
 proveit.numbers.numerals.decimals.tuple_len_2
 proveit.numbers.numerals.decimals.tuple_len_2_typical_eq
+proveit.numbers.ordering.less_eq_from_not_less
+proveit.numbers.ordering.less_from_not_less_eq
 proveit.numbers.ordering.less_is_not_eq
 proveit.numbers.ordering.less_than_an_increase
 proveit.numbers.ordering.less_than_an_left_increase
 proveit.numbers.ordering.less_than_left_successor
 proveit.numbers.ordering.less_than_successor
+proveit.numbers.ordering.not_less_eq_from_less
+proveit.numbers.ordering.not_less_from_less_eq
 proveit.numbers.ordering.relax_less
 proveit.numbers.ordering.symmetric_less_eq
 proveit.numbers.ordering.transitivity_less_eq_less
@@ -401,6 +408,7 @@ proveit.physics.quantum.QPE._Omega_is_sample_space
 proveit.physics.quantum.QPE._e_value_ge_two
 proveit.physics.quantum.QPE._e_value_in_e_domain
 proveit.physics.quantum.QPE._fail_ineq
+proveit.physics.quantum.QPE._n_less_eq_t
 proveit.physics.quantum.QPE._pfail_in_real
 proveit.physics.quantum.QPE._phase_is_real
 proveit.physics.quantum.QPE._sample_space_bijection
@@ -409,6 +417,9 @@ proveit.physics.quantum.algebra.complex_set_is_hilbert_space
 proveit.physics.quantum.algebra.hilbert_space_is_inner_prod_space
 proveit.physics.quantum.algebra.hilbert_space_is_vec_space
 proveit.physics.quantum.algebra.ket_one_in_qubit_space
+proveit.physics.quantum.algebra.ket_one_norm
+proveit.physics.quantum.algebra.ket_zero_and_one_are_orthogonal
 proveit.physics.quantum.algebra.ket_zero_in_qubit_space
+proveit.physics.quantum.algebra.ket_zero_norm
 proveit.statistics.constrained_event_prob_bound
 # THEOREMS AND THEORIES TO EXCLUDE:
