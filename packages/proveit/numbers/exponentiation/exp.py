@@ -332,6 +332,97 @@ class Exp(NumberOperation):
                          "powers n=2 or n=3, but received an exponential "
                          "power of {0}.".format(exponent))
 
+    @equality_prover('factorized', 'factor')
+    def factorization(self, the_factors, pull="left",
+                      group_factors=True, group_remainder=False,
+                      **defaults_config):
+        '''
+        Return the proven equality between the self Exp() and a
+        factored form of self, pulling the factor(s) from the Exp to
+        the "left" or "right". the_factors may be an iterable, a Mult, 
+        or another Exp; in any case, the individual factors will be
+        pulled together in the pull direction.
+        Initially this factorization() method is quite simplistic,
+        accepting as factors only factors expressed in terms of the
+        original base used in the self Exp. For example, if
+        self = 2^5, then only factors expressed as 2 or 2^r (with r
+        a Real) are accepted as candidates, and except for the
+        case where self=the_factors, the factorization is allowed
+        to proceed literally --- for example, we can factor 2^8 out
+        from 2^5 to obtain 2^5 = 2^8 2^{-3}. Because, why not?
+        If group_factors is True, the factors are grouped together as
+        a sub-product. If group_remainder is True and there are
+        multiple remaining operands, then these remaining factors
+        are grouped (actually right now there should always only be
+        a single remaining factor, in the form a^b).
+        '''
+        from proveit import Expression, TransRelUpdater
+
+        expr = self
+        # A convenience for iteratively updating our equation,
+        # beginning with self = self
+        eq = TransRelUpdater(expr)
+
+        # trivial or base case
+        if the_factors == self:
+            return eq.relation  # self = self
+
+        from proveit.numbers.exponentiation import (
+                exp_factored_int, exp_factored_real)
+
+        if isinstance(the_factors, Expression): 
+            # i.e. we have a single factor supplied rather than a
+            # list of factors
+            # Case (1) the_factors = self.base
+            if (the_factors == self.base):
+                # In both cases below, we turn off auto_simplify to
+                # keep the Exp factors produce from being immediately
+                # recombined on the rhs
+                if InSet(self.base, RealPos).proven():
+                    expr = eq.update(exp_factored_real.instantiate(
+                            {a: self.base, b: self.exponent, c: one},
+                            auto_simplify=False))
+                elif (InSet(self.base, Real).proven()
+                      and NotEquals(self.base, zero).proven()
+                      and InSet(self.exponent, Integer).proven()):
+                    expr = eq.update(exp_factored_int.instantiate(
+                            {a: self.base, b: self.exponent, c: one},
+                            auto_simplify=False))
+                # then specifically simplify the a^1 to a
+                expr = (eq.update(expr.inner_expr().operands[0].
+                        simplification()))
+                # then specifically simplify the a^{b-1} just in case
+                # the (b-1) can be reduced
+                expr = (eq.update(expr.inner_expr().operands[1].
+                        simplification()))
+                return eq.relation
+            elif (isinstance(the_factors, Exp)
+                  and (the_factors.base == self.base)):
+                # we have a factor of a^c while self is a^b
+                if InSet(self.base, RealPos).proven():
+                    expr = eq.update(exp_factored_real.instantiate(
+                            {a: self.base, b: self.exponent,
+                             c: the_factors.exponent},
+                            auto_simplify=False))
+                elif (InSet(self.base, Real).proven()
+                      and NotEquals(self.base, zero).proven()
+                      and InSet(self.exponent, Integer).proven()
+                      and InSet(the_factors.exponent, Integer).proven()):
+                    expr = eq.update(exp_factored_int.instantiate(
+                            {a: self.base, b: self.exponent,
+                             c: the_factors.exponent},
+                            auto_simplify=False))
+                # then specifically simplify the a^{b-c} just in case
+                # the (b-c) can be reduced
+                expr = (eq.update(expr.inner_expr().operands[1].
+                        simplification()))
+                return eq.relation
+
+            return eq.relation  # still self = self
+
+        else:
+            return eq.relation  # still self = self
+
     @equality_prover('distributed', 'distribute')
     def distribution(self, **defaults_config):
         '''
