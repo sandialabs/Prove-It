@@ -336,6 +336,7 @@ def equality_prover(past_tense, present_tense):
             The wrapper for the equality_prover decorator.
             '''
             from proveit._core_.expression.expr import Expression
+            from proveit._core_.proof import Assumption
             from proveit.logic import Equals, TRUE, EvaluationError
             # Obtain the original Expression to be on the left side
             # of the resulting equality Judgment.
@@ -379,6 +380,9 @@ def equality_prover(past_tense, present_tense):
                         with defaults.temporary() as tmp_defaults:
                             tmp_defaults.assumptions = kwargs.get(
                                     'assumptions')
+                            # Make sure we derive assumption 
+                            # side-effects.
+                            Assumption.make_assumptions(defaults.assumptions)
                             if expr.proven():
                                 # expr is proven, so it evaluates
                                 # to TRUE.
