@@ -1023,11 +1023,10 @@ class Judgment:
             defaults.preserved_exprs.update(temporarily_preserved_exprs)
 
             return self._checkedTruth(
-                Instantiation(self,
-                              num_forall_eliminations=num_forall_eliminations,
-                              repl_map=processed_repl_map,
-                              equiv_alt_expansions=equiv_alt_expansions,
-                              assumptions=defaults.assumptions))
+                Instantiation.get_instantiation(
+                        self, num_forall_eliminations=num_forall_eliminations,
+                        repl_map=processed_repl_map,
+                        equiv_alt_expansions=equiv_alt_expansions))
         finally:
             # Revert the preserved_exprs set back to what it was.
             defaults.preserved_exprs.difference_update(

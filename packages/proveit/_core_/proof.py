@@ -217,6 +217,14 @@ class Proof:
             raise UnusableProof(
                 Judgment.theorem_being_proven,
                 self._meaning_data._unusable_proof)
+        self._derive_side_effects()
+    
+    def _derive_side_effects(self):
+        '''
+        Derive side-effects under the active assumptions if
+        this proof is relevent.
+        '''
+        proven_truth = self.proven_truth
         if proven_truth.proof() == self and self.is_usable(): 
             # Don't bother with side effects if this proof was born 
             # obsolete or unusable.  May derive any side-effects that 
@@ -1241,8 +1249,155 @@ class Deduction(Proof):
 
 
 class Instantiation(Proof):
+    '''
+    An Instantiation proof step eliminates some number of nested Forall
+    operations and simultaneously replaces Variables with Expressions 
+    according to the replacement map (repl_map).  A Variable that is a
+    parameter variable of an internal Lambda expression may only be
+    relabeled; it will not be replaced with a non-Variable expression
+    within the scope of the Lambda expression.
+
+    See Expression.substituted for details regarding the replacement 
+    rules.
+    '''
+
+    # Map (orig_judgment, mapping) pairs to a set of Instantiations
+    # (there may be multiple Instantiations which use different
+    # assumptions)
+    instantiations = dict()
+    
+    @staticmethod
+    def get_instantiation(orig_judgment, num_forall_eliminations,
+                          repl_map, equiv_alt_expansions):
+        '''
+        Create or retrieve an Instantiation.  If we have performed
+        the Instantiation previously, return it; otherwise, create
+        it then return it.
+        '''
+        mapping, mapping_key_order = Instantiation._generate_mapping(
+                orig_judgment, repl_map, equiv_alt_expansions)
+        mapping_pairs = tuple(
+                [(key, mapping[key]) for key in mapping_key_order])
+        instantiations = Instantiation.instantiations
+        if (orig_judgment, mapping_pairs) in instantiations:
+            for inst in instantiations[(orig_judgment, mapping_pairs)]:
+                if inst.proven_truth.is_applicable():
+                    # Found a known instantiation.  Retrieve it.
+                    # We may be using different assumptions than
+                    # previously, though, so we might need to derive
+                    # side-effects again.
+                    inst._derive_side_effects()
+                    return inst
+        inst = Instantiation(orig_judgment, num_forall_eliminations,
+                             repl_map, equiv_alt_expansions,
+                             mapping, mapping_key_order)
+        assert inst.mapping == mapping
+        Instantiation.instantiations.setdefault(
+                (orig_judgment, mapping_pairs), set()).add(inst)
+        return inst
+
+    @staticmethod
+    def _generate_mapping(orig_judgment, repl_map, 
+                          equiv_alt_expansions):
+        '''
+        Generate an appropriate mapping for an instantiation
+        as it is to be displayed in a proof.  Lambda map replacements
+        are shown in a function form; for example,
+            f : x -> g(x)
+        converts to
+            f(x) : g(x).
+        Also, equiv_alt_expansions are absorbed into the mapping
+        in an appropriate manner.
+        '''
+        from proveit import (Function, Lambda, ExprTuple, IndexedVar)
+        from proveit._core_.expression.lambda_expr.lambda_expr import (
+                get_param_var)
+        from proveit._core_.expression.label.var import safe_dummy_var
+
+        # Map variables to sets of tuples that represent the
+        # same range of indexing for equivalent alternative
+        # expansions.  For example,
+        #   {x_1, ..., x_{n+1}, x_1, ..., x_n, x_{n+1}}.
+        var_range_forms = dict()
+        for var_range_form, expansion in equiv_alt_expansions.items():
+            var = get_param_var(var_range_form[0])
+            var_range_forms.setdefault(var, set()).add(var_range_form)
+        
+        # Sort the replaced variables in order of their appearance
+        # in the original Judgment.
+        def get_key_var(key):
+            if isinstance(key, ExprTuple):
+                assert key.num_entries() >= 1
+                var = get_param_var(key[0])
+                var_range_forms.setdefault(var, set()).add(key)
+                return var
+            elif isinstance(key, IndexedVar):
+                var = get_param_var(key)
+                var_range_forms.setdefault(var, set()).add(key)
+                # For convenience to be used below:
+                equiv_alt_expansions[key] = repl_map[key]
+                return var
+            return get_param_var(key)
+        repl_var_keys = {get_key_var(key): key for key in repl_map.keys()}
+        repl_vars = repl_var_keys.keys()
+        repl_vars = list(orig_judgment.order_of_appearance(repl_vars))
+        # And remove duplicates.
+        repl_vars = list(OrderedDict.fromkeys(repl_vars))
+
+        # Exclude anything in the repl_map that does not appear in
+        # the original Judgment:
+        mapping = dict()
+        mapping_key_order = []
+
+        def var_range_form_sort(var_form):
+            # For sorting equivalent ExprTuples of indexed
+            # variables (e.g., {(x_1, ..., x_{n+1}),
+            #                   (x_1, ..., x_n, x_{n+1})})
+            # put ones with the fewest number of entries first
+            # but break ties arbitrarily via the "meaning id".
+            if isinstance(var_form, ExprTuple):
+                return (var_form.num_entries(), var_form._meaning_id)
+            else:
+                return (0, var_form._meaning_id)
+        for var in repl_vars:
+            if var in repl_map:
+                # The variable itself is in the replacement map.
+                replacement = repl_map[var]
+                if isinstance(replacement, Lambda):
+                    # If the replacement is a Lambda, convert it
+                    # to a Function mapping form.
+                    if var in replacement.parameters:
+                        # We don't want any of the parameters of 
+                        # the Lambda replacement to be the same as
+                        # the function variable (e.g. i(i) = ...
+                        # doesn't make sense in its appearance).
+                        safe_var = safe_dummy_var(
+                            var, replacement, replacement.parameters)
+                        replacement = replacement.relabeled(
+                            {var:safe_var})
+                    key = Function(
+                        var, replacement.parameter_or_parameters)
+                    replacement = replacement.body
+                else:
+                    key = var
+                mapping[key] = replacement
+                mapping_key_order.append(key)
+            if var in var_range_forms:
+                # There are replacements for various forms of the
+                # variable indexed over the same range.
+                # We'll sort these in an order going
+                # from the fewest # of entries to the most.
+                for var_range_form in sorted(var_range_forms[var],
+                                             key=var_range_form_sort):
+                    mapping[var_range_form] = \
+                        equiv_alt_expansions[var_range_form]
+                    mapping_key_order.append(var_range_form)
+        return mapping, mapping_key_order
+
+    
     def __init__(self, orig_judgment, num_forall_eliminations,
-                 repl_map, equiv_alt_expansions, assumptions):
+                 repl_map, equiv_alt_expansions,
+                 mapping, mapping_key_order):
         '''
         Create the instantiation proof step that eliminates some number
         of nested Forall operations and simultaneously replaces 
@@ -1255,12 +1410,11 @@ class Instantiation(Proof):
         See Expression.substituted for details regarding the replacement 
         rules.
         '''
-        from proveit import (Variable, Function, Lambda, ExprTuple, 
+        from proveit import (Variable, Lambda, ExprTuple, 
                              ExprRange, IndexedVar)
         from proveit._core_.expression.expr import contained_parameter_vars
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             (get_param_var, valid_params, LambdaApplicationError)
-        from proveit._core_.expression.label.var import safe_dummy_var
         
         # Determine the set of variables that will be instantiated
         # via eliminated foralls.
@@ -1273,6 +1427,12 @@ class Instantiation(Proof):
         # disambiguate parameter ownership of emtpy ranges of
         # operands.
         param_to_num_operand_entries = dict()
+        
+        # REVISIT RELABELING ON THE ASSUMPTION SIDE.
+        # DO WE WANT TO KEEP THIS FEATURE?
+        # IF SO, WE MAY NEED A CHANGE TO MAKE SURE SIDE-EFFECTS
+        # ARE PERFORMED UNDER UPDATED ASSUMPTIONS -- THIS IS BROKEN
+        # WITH THE "Remember and recall instantiations" COMMIT.
         
         # Prepare the 'relabel_params' for basic relabeling that 
         # can apply to both sides of the turnstile.
@@ -1312,72 +1472,73 @@ class Instantiation(Proof):
                                  %(repl, key, key_var, orig_judgment))
             relabel_params.append(_param)
 
-        prev_default_assumptions = defaults.assumptions
-        try:
-            # These assumptions will be used for deriving any
-            # side-effects:
-            defaults.assumptions = set(assumptions)
-            if not isinstance(orig_judgment, Judgment):
-                raise TypeError("May only 'instantiate' a Judgment")
-            if orig_judgment.proof() is None:
-                raise UnusableProof(Judgment.theorem_being_proven,
-                                    orig_judgment)
+        if not isinstance(orig_judgment, Judgment):
+            raise TypeError("May only 'instantiate' a Judgment")
+        if orig_judgment.proof() is None:
+            raise UnusableProof(Judgment.theorem_being_proven,
+                                orig_judgment)
 
-            # Perform relabeling of Judgment assumptions,
-            # recording requirements.
-            orig_subbed_assumptions = []
-            requirements = []
-            equality_repl_requirements = set()
-            for assumption in orig_judgment.assumptions:
-                assumption_was_expr_range = False
-                if isinstance(assumption, ExprRange):
-                    assumption = ExprTuple(assumption)
-                    assumption_was_expr_range = True
+        # Perform relabeling of Judgment assumptions,
+        # recording requirements.
+        orig_subbed_assumptions = []
+        requirements = []
+        equality_repl_requirements = set()
+        for assumption in orig_judgment.assumptions:
+            assumption_was_expr_range = False
+            if isinstance(assumption, ExprRange):
+                assumption = ExprTuple(assumption)
+                assumption_was_expr_range = True
+            try:
                 subbed_assumption = Lambda._apply(
                     relabel_params, assumption, *relabel_param_replacements,
                     param_to_num_operand_entries=param_to_num_operand_entries,
                     allow_relabeling=True, equiv_alt_expansions=None,
                     requirements=requirements)
-                with defaults.temporary() as temp_defaults:
-                    temp_defaults.auto_simplify = False
-                    subbed_assumption = subbed_assumption.equality_replaced(
-                            requirements=requirements)
-                equality_repl_requirements.update(requirements)
-                if assumption_was_expr_range:
-                    # Expand a tuple of assumptions.
-                    orig_subbed_assumptions.extend(
-                            subbed_assumption.entries)
-                else:
-                    orig_subbed_assumptions.append(subbed_assumption)
+            except LambdaApplicationError as e:
+                raise InstantiationFailure(orig_judgment, repl_map,
+                                           defaults.assumptions, str(e))
+            with defaults.temporary() as temp_defaults:
+                temp_defaults.auto_simplify = False
+                subbed_assumption = subbed_assumption.equality_replaced(
+                        requirements=requirements)
+            equality_repl_requirements.update(requirements)
+            if assumption_was_expr_range:
+                # Expand a tuple of assumptions.
+                orig_subbed_assumptions.extend(
+                        subbed_assumption.entries)
+            else:
+                orig_subbed_assumptions.append(subbed_assumption)
 
-
+        # Make these the new default assumptions (for side-effects).
+        with defaults.temporary() as tmp_defaults:
             # Automatically use the assumptions of the
             # original_judgment plus the assumptions that were
             # provided.
-            assumptions = tuple(orig_subbed_assumptions) + assumptions
-            # Eliminate duplicates.
-            assumptions = tuple(OrderedDict.fromkeys(assumptions))
-            # Make these the new default assumptions (for side-effects).
-            defaults.assumptions = assumptions
-            
+            tmp_defaults.assumptions = (tuple(orig_subbed_assumptions)
+                + defaults.assumptions)
+        
             # Perform the instantiations, recording requirements.
-            instantiated_expr = \
-                Instantiation._instantiated_expr(orig_judgment, 
-                    relabel_params, relabel_param_replacements,
-                    param_to_num_operand_entries,
-                    num_forall_eliminations, repl_map,
-                    equiv_alt_expansions, assumptions, requirements,
-                    equality_repl_requirements)
+            try:
+                instantiated_expr = \
+                    Instantiation._instantiated_expr(orig_judgment, 
+                        relabel_params, relabel_param_replacements,
+                        param_to_num_operand_entries,
+                        num_forall_eliminations, repl_map,
+                        equiv_alt_expansions, requirements,
+                        equality_repl_requirements)
+            except LambdaApplicationError as e:
+                raise InstantiationFailure(orig_judgment, repl_map,
+                                           defaults.assumptions, str(e))
 
             # Remove duplicates in the requirements.
             requirements = list(OrderedDict.fromkeys(requirements))
-
+    
             # Remove any unnecessary assumptions (but keep the order
             # that was provided).  Note that some assumptions of
             # requirements may not be in the 'applied_assumptions_set'
             # if they made use of internal assumptions from a
             # Conditional and can be eliminated.
-            applied_assumptions_set = set(assumptions)
+            applied_assumptions_set = set(defaults.assumptions)
             assumptions = list(orig_subbed_assumptions)
             for requirement in requirements:
                 for assumption in requirement.assumptions:
@@ -1385,107 +1546,21 @@ class Instantiation(Proof):
                         assumptions.append(assumption)
             assumptions = list(OrderedDict.fromkeys(assumptions))
 
-            # Map variables to sets of tuples that represent the
-            # same range of indexing for equivalent alternative
-            # expansions.  For example,
-            #   {x_1, ..., x_{n+1}, x_1, ..., x_n, x_{n+1}}.
-            var_range_forms = dict()
-            for var_range_form, expansion in equiv_alt_expansions.items():
-                var = get_param_var(var_range_form[0])
-                var_range_forms.setdefault(var, set()).add(var_range_form)
-            
-            # Sort the replaced variables in order of their appearance
-            # in the original Judgment.
-            def get_key_var(key):
-                if isinstance(key, ExprTuple):
-                    assert key.num_entries() >= 1
-                    var = get_param_var(key[0])
-                    var_range_forms.setdefault(var, set()).add(key)
-                    return var
-                elif isinstance(key, IndexedVar):
-                    var = get_param_var(key)
-                    var_range_forms.setdefault(var, set()).add(key)
-                    # For convenience to be used below:
-                    equiv_alt_expansions[key] = repl_map[key]
-                    return var
-                return get_param_var(key)
-            repl_var_keys = {get_key_var(key): key for key in repl_map.keys()}
-            repl_vars = repl_var_keys.keys()
-            repl_vars = list(orig_judgment.order_of_appearance(repl_vars))
-            # And remove duplicates.
-            repl_vars = list(OrderedDict.fromkeys(repl_vars))
-
-            # We have what we need; set up the Instantiation Proof
-            self.orig_judgment = orig_judgment
-            # Exclude anything in the repl_map that does not appear in
-            # the original Judgment:
-            mapping = dict()
-            mapping_key_order = []
-
-            def var_range_form_sort(var_form):
-                # For sorting equivalent ExprTuples of indexed
-                # variables (e.g., {(x_1, ..., x_{n+1}),
-                #                   (x_1, ..., x_n, x_{n+1})})
-                # put ones with the fewest number of entries first
-                # but break ties arbitrarily via the "meaning id".
-                if isinstance(var_form, ExprTuple):
-                    return (var_form.num_entries(), var_form._meaning_id)
-                else:
-                    return (0, var_form._meaning_id)
-            for var in repl_vars:
-                if var in repl_map:
-                    # The variable itself is in the replacement map.
-                    replacement = repl_map[var]
-                    if isinstance(replacement, Lambda):
-                        # If the replacement is a Lambda, convert it
-                        # to a Function mapping form.
-                        if var in replacement.parameters:
-                            # We don't want any of the parameters of 
-                            # the Lambda replacement to be the same as
-                            # the function variable (e.g. i(i) = ...
-                            # doesn't make sense in its appearance).
-                            safe_var = safe_dummy_var(
-                                var, replacement, replacement.parameters)
-                            replacement = replacement.relabeled(
-                                {var:safe_var})
-                        key = Function(
-                            var, replacement.parameter_or_parameters)
-                        replacement = replacement.body
-                    else:
-                        key = var
-                    mapping[key] = replacement
-                    mapping_key_order.append(key)
-                if var in var_range_forms:
-                    # There are replacements for various forms of the
-                    # variable indexed over the same range.
-                    # We'll sort these in an order going
-                    # from the fewest # of entries to the most.
-                    for var_range_form in sorted(var_range_forms[var],
-                                                 key=var_range_form_sort):
-                        mapping[var_range_form] = \
-                            equiv_alt_expansions[var_range_form]
-                        mapping_key_order.append(var_range_form)
-            self.mapping_key_order = mapping_key_order
-            self.mapping = mapping
-            # Make the 'original judgment' be the 1st requirement.
-            requirements.insert(0, orig_judgment)
-            num_lit_gen = sum(requirement.num_lit_gen for requirement
-                              in requirements)
-            instantiated_truth = Judgment(instantiated_expr, assumptions,
-                                          num_lit_gen=num_lit_gen)
-            # Mark the requirements that are "equality replacements".
-            marked_req_indices = set()
-            for k, req in enumerate(requirements):
-                if req in equality_repl_requirements:
-                    marked_req_indices.add(k)
-            Proof.__init__(self, instantiated_truth, requirements,
-                           marked_req_indices)
-        except LambdaApplicationError as e:
-            raise InstantiationFailure(orig_judgment, repl_map,
-                                       assumptions, str(e))
-        finally:
-            # restore the original default assumptions
-            defaults.assumptions = prev_default_assumptions
+        self.mapping_key_order = mapping_key_order
+        self.mapping = mapping
+        # Make the 'original judgment' be the 1st requirement.
+        requirements.insert(0, orig_judgment)
+        num_lit_gen = sum(requirement.num_lit_gen for requirement
+                          in requirements)
+        instantiated_truth = Judgment(instantiated_expr, assumptions,
+                                      num_lit_gen=num_lit_gen)
+        # Mark the requirements that are "equality replacements".
+        marked_req_indices = set()
+        for k, req in enumerate(requirements):
+            if req in equality_repl_requirements:
+                marked_req_indices.add(k)
+        Proof.__init__(self, instantiated_truth, requirements,
+                       marked_req_indices)
 
     def _generate_step_info(self, object_rep_fn):
         '''
@@ -1553,8 +1628,7 @@ class Instantiation(Proof):
                            param_to_num_operand_entries,
                            num_forall_eliminations,
                            repl_map, equiv_alt_expansions,
-                           assumptions, requirements,
-                           equality_repl_requirements):
+                           requirements, equality_repl_requirements):
         '''
         Return the instantiated version of the right side of the
         original_judgment.
@@ -1585,7 +1659,7 @@ class Instantiation(Proof):
 
         def raise_failure(msg):
             raise InstantiationFailure(original_judgment, repl_map,
-                                       assumptions, msg)
+                                       defaults.assumptions, msg)
         
         def instantiate(expr):
             '''
@@ -1750,12 +1824,11 @@ class Instantiation(Proof):
                         # problem.  That is, we have to split up a
                         # conjunction into  multiple requirements at
                         # some point, so we do it there.
-                        if subbed_cond.proven(assumptions):
+                        if subbed_cond.proven():
                             # If the full condition conjunction is known
                             # to be true, we'll just use that as the
                             # requirement and be done with it.
-                            requirements.append(subbed_cond.prove(
-                                    assumptions=assumptions))
+                            requirements.append(subbed_cond.prove())
                             subbed_conds = []
                         else:
                             subbed_conds = subbed_cond.operands
@@ -1769,8 +1842,7 @@ class Instantiation(Proof):
                             # conjunction.
                             subbed_cond = And(subbed_cond)
                         try:
-                            requirements.append(subbed_cond.prove(
-                                    assumptions=assumptions))
+                            requirements.append(subbed_cond.prove())
                         except ProofFailure:
                             raise_failure('Unsatisfied condition: %s'
                                           % str(subbed_cond))
