@@ -2,7 +2,8 @@ from .expr import Expression, free_vars
 from .operation import Operation, Function
 from .lambda_expr import Lambda
 from .conditional import Conditional
-from .composite import ExprTuple, Composite, NamedExprs, composite_expression
+from .composite import (ExprTuple, Composite, NamedExprs, 
+                        single_or_composite_expression, composite_expression)
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 from proveit.decorators import prover, equality_prover
 # from proveit.logic import InSet
@@ -99,6 +100,7 @@ class InnerExpr:
         repl_lambda().
         '''
         from proveit import Judgment
+        from proveit.logic import And
         self.inner_expr_path = tuple(inner_expr_path)
         self.expr_hierarchy = [top_level]
         if assumptions is None: assumptions = defaults.assumptions
@@ -128,7 +130,11 @@ class InnerExpr:
                 if isinstance(expr, Conditional) and idx == 0:
                     # while descending into a Conditional value, we
                     # pick up the condition as an assumption.
-                    self.conditions.append(expr.condition)
+                    if isinstance(expr.condition, And):
+                        self.conditions.extend(
+                            expr.condition.operands.entries)
+                    else:
+                        self.conditions.append(expr.condition)
                 next_expr = expr.sub_expr(idx)
                 if isinstance(next_expr, tuple):
                     # A slice `idx` will yield a tuple sub expression.
@@ -505,7 +511,8 @@ class InnerExpr:
         if (isinstance(self.expr_hierarchy[0], Judgment) and
                 self.expr_hierarchy[0].expr == revised_expr):
             # Make a Judgment with only the style modified.
-            kt = Judgment(revised_expr, self.expr_hierarchy[0].assumptions)
+            kt = Judgment(revised_expr, self.expr_hierarchy[0].assumptions,
+                          num_lit_gen=self.expr_hierarchy[0].num_lit_gen)
             kt._add_proof(self.expr_hierarchy[0].proof())
             return kt
         return revised_expr
@@ -578,6 +585,7 @@ class InnerExpr:
                           in equality.assumptions
                           if not free_vars(assumption).isdisjoint(
                                   involved_params)]
+
         repl_lambda = self.repl_lambda(params_of_param
                                        =involved_params)
         replacements = []

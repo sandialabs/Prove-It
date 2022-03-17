@@ -24,12 +24,6 @@ proveit.logic.booleans.unfold_is_bool_explicit
 proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
 proveit.logic.equality.not_equals_symmetry
-proveit.logic.equality.sub_left_side_into
-proveit.logic.equality.sub_right_side_into
-proveit.logic.equality.substitute_falsehood
-proveit.logic.equality.substitute_in_false
-proveit.logic.equality.substitute_in_true
-proveit.logic.equality.substitute_truth
 proveit.logic.equality.unfold_not_equals
 proveit.logic.sets.cartesian_products.cart_exp_unfold_abstract
 proveit.logic.sets.cartesian_products.cart_exp_unfold_explicit
@@ -65,13 +59,7 @@ proveit.numbers.addition.add_real_non_neg_closure_bin
 proveit.numbers.addition.add_real_pos_closure
 proveit.numbers.addition.add_real_pos_closure_bin
 proveit.numbers.addition.add_real_pos_from_non_neg
-proveit.numbers.addition.commutation
-proveit.numbers.addition.leftward_commutation
-proveit.numbers.addition.rightward_commutation
-proveit.numbers.addition.subtraction.negated_add
 proveit.numbers.addition.subtraction.sub_one_is_nat
-proveit.numbers.addition.subtraction.subtract_from_add
-proveit.numbers.addition.subtraction.subtract_from_add_reversed
 proveit.numbers.addition.subtraction.subtract_nat_closure_bin
 proveit.numbers.addition.unary_add_reduction
 proveit.numbers.exponentiation.exp_nat_pos_expansion
@@ -194,7 +182,6 @@ proveit.numbers.number_sets.real_numbers.real_nonzero_within_real
 proveit.numbers.number_sets.real_numbers.real_pos_within_real
 proveit.numbers.number_sets.real_numbers.real_pos_within_real_nonneg
 proveit.numbers.number_sets.real_numbers.real_pos_within_real_nonzero
-proveit.numbers.numerals.decimals.add_0_1
 proveit.numbers.numerals.decimals.less_0_1
 proveit.numbers.numerals.decimals.less_1_2
 proveit.numbers.numerals.decimals.less_2_3

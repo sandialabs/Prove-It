@@ -16,6 +16,13 @@ class RealInterval(Operation):
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
 
+    def includes(self, other_set):
+        '''
+        Return True if this NumberSet includes the 'other_set' set.
+        '''
+        from proveit.numbers.number_sets.number_set import NumberSet
+        return NumberSet.includes(self, other_set)
+
 
 class IntervalOO(RealInterval):
     # operator of the IntervalOO operation.

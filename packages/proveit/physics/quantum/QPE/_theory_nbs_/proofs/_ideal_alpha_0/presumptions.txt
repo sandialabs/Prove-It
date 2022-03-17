@@ -14,10 +14,7 @@ proveit.logic.booleans.conjunction.right_from_and
 proveit.logic.booleans.false_eq_false
 proveit.logic.booleans.fold_is_bool
 proveit.logic.booleans.from_not_false
-proveit.logic.booleans.implication.false_antecedent_implication
-proveit.logic.booleans.implication.falsified_antecedent_implication
 proveit.logic.booleans.implication.not_true_via_contradiction
-proveit.logic.booleans.implication.untrue_antecedent_implication
 proveit.logic.booleans.in_bool_if_false
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.double_negation_elim

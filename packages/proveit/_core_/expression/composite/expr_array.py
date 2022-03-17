@@ -122,7 +122,7 @@ class ExprArray(ExprTuple):
             if isinstance(outer_expr, ExprRange):
                 outer_expr = outer_expr.innermost_body()
                 # But then wrap the inner_expr's below with the
-                # ExprRange's -- something like that??? TODO
+                # ExprRange's if the inner_expr is not an ExprRange.
             if isinstance(outer_expr, ExprTuple):
                 # An explicit inner list.
                 with defaults.temporary() as tmp_defaults:
@@ -149,7 +149,8 @@ class ExprArray(ExprTuple):
                                 inner_expr = ExprRange(
                                         _er.parameter, inner_expr,
                                         _er.true_start_index, 
-                                        _er.true_end_index)
+                                        _er.true_end_index,
+                                        use_canonical_parameter=False)
                                 inner_expr = inner_expr.with_mimicked_style(
                                         _er, ignore_inapplicable_styles=True)
                         # Compose outer and inner roles.

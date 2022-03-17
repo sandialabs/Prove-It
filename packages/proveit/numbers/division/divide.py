@@ -237,9 +237,11 @@ class Div(NumberOperation):
                 {x: term_to_cancel})
 
         if term_to_cancel != self.numerator:
+            # try to catch Exp objects here as well?
+            # after all, Exp(term_to_cancel, n) has factors!
             if (not isinstance(self.numerator, Mult) or
                     term_to_cancel not in self.numerator.operands):
-                raise ValueError("%s not in the denominator of %s"
+                raise ValueError("%s not in the numerator of %s"
                                  % (term_to_cancel, self))
             # Factor the term_to_cancel from the numerator to the left.
             expr = eq.update(expr.inner_expr().numerator.factorization(
@@ -725,9 +727,9 @@ class Div(NumberOperation):
         elif number_set == RationalNonPos:
             deduce_number_set(self.denominator)
             if Less(self.denominator, zero).proven():
-                thm = div_rational_nonpos_neg_denom
+                thm = div_rational_nonpos_from_neg_denom
             else:
-                thm = div_rational_nonpos_neg_numer
+                thm = div_rational_nonpos_from_neg_numer
         elif number_set == Real:
             thm = div_real_closure
         elif number_set == RealNonZero:
@@ -753,9 +755,9 @@ class Div(NumberOperation):
         elif number_set == RealNonPos:
             deduce_number_set(self.denominator)
             if Less(self.denominator, zero).proven():
-                thm = div_real_nonpos_neg_denom
+                thm = div_real_nonpos_from_neg_denom
             else:
-                thm = div_real_nonpos_neg_numer
+                thm = div_real_nonpos_from_nonpos_numer
         elif number_set == ComplexNonZero:
             thm = div_complex_nonzero_closure
         elif number_set == Complex:

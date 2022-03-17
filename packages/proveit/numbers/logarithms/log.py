@@ -1,4 +1,5 @@
-from proveit import Function, Literal, relation_prover
+from proveit import Function, Literal, relation_prover, equality_prover
+from proveit import a
 from proveit.numbers import deduce_number_set, NumberOperation
 
 class Log(NumberOperation, Function):
@@ -19,6 +20,15 @@ class Log(NumberOperation, Function):
     def latex(self, **kwargs):
         return Log._operator_.latex() + r"_%s\left(%s\right)"%(
                 self.base.latex(), self.antilog.latex())
+
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
+        if self.base == self.antilog:
+            from . import log_eq_1
+            return log_eq_1.instantiate({a:self.base})
+        return NumberOperation.shallow_simplification(
+            self, must_evaluate=must_evaluate)
 
     @relation_prover
     def deduce_in_number_set(self, number_set, **defaults_config):
@@ -148,7 +158,7 @@ class Log(NumberOperation, Function):
         to augment this to allow more precise placement in
         RealPos vs. RealNeg for suitable base/antilog combinations.
         '''
-        from proveit.numbers import Real, RealPos
+        from proveit.numbers import Real, RealPos, Complex
         base_ns = deduce_number_set(self.base).domain
         antilog_ns = deduce_number_set(self.antilog).domain
         if RealPos.includes(base_ns) and RealPos.includes(antilog_ns):

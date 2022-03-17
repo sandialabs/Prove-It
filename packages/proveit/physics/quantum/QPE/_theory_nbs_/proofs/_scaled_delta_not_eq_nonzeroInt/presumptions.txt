@@ -42,6 +42,9 @@ proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.logic.sets.inclusion.unfold_subset_eq
 proveit.logic.sets.membership.unfold_not_in_set
 proveit.numbers.addition.commutation
+proveit.numbers.addition.elim_zero_any
+proveit.numbers.addition.elim_zero_left
+proveit.numbers.addition.elim_zero_right
 proveit.numbers.addition.leftward_commutation
 proveit.numbers.addition.rightward_commutation
 proveit.numbers.addition.subtraction.negated_add
@@ -96,6 +99,9 @@ proveit.numbers.number_sets.complex_numbers.real_nonpos_within_complex
 proveit.numbers.number_sets.complex_numbers.real_nonzero_within_complex_nonzero
 proveit.numbers.number_sets.complex_numbers.real_pos_within_complex_nonzero
 proveit.numbers.number_sets.complex_numbers.real_within_complex
+proveit.numbers.number_sets.integers.int_interval_within_int
+proveit.numbers.number_sets.integers.interval_lower_bound
+proveit.numbers.number_sets.integers.interval_upper_bound
 proveit.numbers.number_sets.integers.nat_pos_within_int
 proveit.numbers.number_sets.integers.nat_pos_within_nonzero_int
 proveit.numbers.number_sets.integers.nat_within_int
@@ -181,7 +187,6 @@ proveit.numbers.number_sets.real_numbers.relax_IntervalOC
 proveit.numbers.number_sets.real_numbers.relax_IntervalOO_left
 proveit.numbers.number_sets.real_numbers.relax_IntervalOO_left_right
 proveit.numbers.number_sets.real_numbers.relax_IntervalOO_right
-proveit.numbers.numerals.decimals.add_0_1
 proveit.numbers.numerals.decimals.less_0_1
 proveit.numbers.numerals.decimals.less_1_2
 proveit.numbers.numerals.decimals.less_2_3
@@ -200,7 +205,11 @@ proveit.numbers.numerals.decimals.posnat6
 proveit.numbers.numerals.decimals.posnat7
 proveit.numbers.numerals.decimals.posnat8
 proveit.numbers.numerals.decimals.posnat9
+proveit.numbers.ordering.less_eq_from_not_less
+proveit.numbers.ordering.less_from_not_less_eq
 proveit.numbers.ordering.less_is_not_eq
+proveit.numbers.ordering.not_less_eq_from_less
+proveit.numbers.ordering.not_less_from_less_eq
 proveit.numbers.ordering.relax_less
 proveit.numbers.ordering.symmetric_less_eq
 proveit.numbers.ordering.transitivity_less_eq_less
@@ -211,5 +220,8 @@ proveit.physics.quantum.algebra.complex_set_is_hilbert_space
 proveit.physics.quantum.algebra.hilbert_space_is_inner_prod_space
 proveit.physics.quantum.algebra.hilbert_space_is_vec_space
 proveit.physics.quantum.algebra.ket_one_in_qubit_space
+proveit.physics.quantum.algebra.ket_one_norm
+proveit.physics.quantum.algebra.ket_zero_and_one_are_orthogonal
 proveit.physics.quantum.algebra.ket_zero_in_qubit_space
+proveit.physics.quantum.algebra.ket_zero_norm
 # THEOREMS AND THEORIES TO EXCLUDE:
