@@ -27,6 +27,7 @@ class Proof:
         Assumption.considered_assumption_sets.clear()
         Theorem.all_theorems.clear()
         Theorem.all_used_theorems.clear()
+        Instantiation.instantiations.clear()
         _ShowProof.show_proof_by_id.clear()
 
     def __init__(self, proven_truth, required_truths,
