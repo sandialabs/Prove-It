@@ -157,7 +157,7 @@ class Forall(OperationOverInstances):
         allow a generalization under different parameter labels).
         '''
         with defaults.temporary() as tmp_defaults:
-            tmp_defaults.sideeffect_automation = False
+            tmp_defaults.automation = False
             canonical_version = self.canonical_version()
             if self._style_id != canonical_version._style_id:
                 # Instantiate the generic form for good measure.
