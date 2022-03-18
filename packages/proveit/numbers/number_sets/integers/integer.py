@@ -47,7 +47,7 @@ class IntegerNonPosSet(NumberSet):
         return IntegerNonPosMembership(element)
 
 
-if proveit.defaults.automation:
+if proveit.defaults.sideeffect_automation:
     from . import (nat_within_int,
                    nat_pos_within_int,
                    nat_pos_within_nonzero_int,

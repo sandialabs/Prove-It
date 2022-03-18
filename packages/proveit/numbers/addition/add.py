@@ -1019,7 +1019,7 @@ class Add(NumberOperation):
                 " addition and related subtractions: %d, %d" % (_a, _b))
         with defaults.temporary() as temp_defaults:
             # We rely upon side-effect automation here.
-            temp_defaults.automation = True
+            temp_defaults.sideeffect_automation = True
             # for single digit addition, import the theorem that provides
             # the evaluation
             proveit.numbers.numerals.decimals.__getattr__(

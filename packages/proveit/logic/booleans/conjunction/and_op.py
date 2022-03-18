@@ -160,7 +160,7 @@ class And(Operation):
         # we don't waste time trying to prove operands when we already
         # know one to be false
         use_automation_possibilities = (
-                [False, True] if defaults.automation else [False])
+                [False, True] if defaults.conclude_automation else [False])
         if self.operands.contains_range():
             if self.operands.num_entries()==1:
                 # Just a single ExprRange.  Conclude the negation
@@ -362,7 +362,7 @@ class And(Operation):
                 {i:_i, j:_j, k:_k, P:_P},
                 preserve_expr=self).derive_consequent()
             
-        if defaults.automation:
+        if defaults.sideeffect_automation:
             # While we are at it, as an "unofficial" side-effect,
             # let's instantatiate forall_{k in {i .. j}} P(k) to derive
             # {k in {i .. j}} |- P(k)

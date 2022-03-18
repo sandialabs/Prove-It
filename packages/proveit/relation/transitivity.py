@@ -546,7 +546,7 @@ class TransitiveRelation(Relation):
                 except (ProofFailure, NotImplementedError):
                     pass
 
-        if not defaults.automation:
+        if not defaults.conclude_automation:
             relation = cls(left_item, right_item)
             msg = ('No proof found via applying transitivity amongst'
                    ' known proven relations.')

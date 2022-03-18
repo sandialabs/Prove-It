@@ -42,7 +42,7 @@ from .functions import MonDecFuncs
 import proveit
 
 
-if proveit.defaults.automation:
+if proveit.defaults.sideeffect_automation:
     # Import some fundamental theorems without quantifiers
     from .number_sets.natural_numbers import zero_in_nats
     from .numerals.decimals import less_0_1, less_1_2, less_2_3, less_3_4, less_4_5, less_5_6, less_6_7, less_7_8, less_8_9

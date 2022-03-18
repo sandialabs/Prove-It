@@ -12,11 +12,13 @@ class Defaults:
         # Default assumptions to use for proofs.
         self.assumptions = tuple()
         
-        # Enable/disable `automation` by performing automatic
-        # side-effects (via `side_effects` methods) when proving
-        # statements as well as automatically concluding
-        # statements (via `conclude` methods) when possible.
-        self.automation = True
+        # Enable/disable two types of `automation`.
+        # Side-effect automation derives additional, related facts from
+        # proven facts.  Conclude automation uses strategies to try
+        # to prove a particular fact that is needed.  Setting
+        # 'automation' to True/False turns these both on/off.
+        self.sideeffect_automation = True
+        self.conclude_automation = True
 
         # Display LaTeX versions of expressions.
         self.display_latex = True
@@ -252,6 +254,9 @@ class Defaults:
         elif attr == 'auto_simplify' and value==True:
             # Turning auto-simplify on, so don't preserve all (anymore?)
             self.preserve_all = False
+        elif attr == 'automation':
+            # Turn "side-effect" and "conclude" automation on/off.
+            self.sideeffect_automation = self.conclude_automation = value
         self.__dict__[attr] = value
 
 class TemporarySetter(object):
@@ -272,6 +277,11 @@ class TemporarySetter(object):
         '''
         if attr[0] == '_':
             object.__setattr__(self, attr, val)
+            return
+        if attr == 'automation':
+            # Setting 'automation' changes both kinds.
+            setattr(self, 'sideeffect_automation', val)
+            setattr(self, 'conclude_automation', val)
             return
         if attr not in self._obj.__dict__:
             raise AttributeError("Cannot set unknown attr, %s, of %s"
@@ -300,24 +310,8 @@ class TemporarySetter(object):
         '''
         Restore the original values of the object.
         '''
-        # Restore to the state of when we "entered".
-        # Turn off automation while we do this, however, to
-        # avoid unnecessarily deriving side-effects of assumptions if 
-        # those assumptions happen to change to revert.
-        if 'automation' in self._original_values:
-            automation = self._original_values['automation']
-        elif 'automation' in self._obj.__dict__:
-            automation = self._obj.__dict__['automation']
-        else:
-            automation = None
-        if automation is not None:
-            self._obj.__dict__['automation'] = False
-
         for attr, val in self._original_values.items():
             self._obj.__dict__[attr] = val
-
-        if automation is not None:
-            self._obj.__dict__['automation'] = automation
         
 
 """

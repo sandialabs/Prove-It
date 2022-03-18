@@ -842,7 +842,7 @@ class Equals(TransitiveRelation):
                 def min_key(judgment): return judgment.proof().num_steps()
                 return min(candidates, key=min_key)
         if automation is USE_DEFAULTS:
-            automation = defaults.automation
+            automation = defaults.conclude_automation
         if automation:
             # An evaluation isn't directly known, but we may know
             # something equal to this that has an evaluation and

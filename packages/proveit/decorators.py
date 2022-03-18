@@ -55,6 +55,10 @@ def _make_decorated_prover(func):
                     preserve_expr = _self
         defaults_to_change = set(kwargs.keys()).intersection(
                 defaults.__dict__.keys())
+        if 'automation' in kwargs.keys():
+            # While 'automation' isn't a defaults key, it can be set
+            # to set 'sideeffect_automation' and 'conclude_automation'.
+            defaults_to_change.add('automation')
         # Check to see if there are any unexpected keyword
         # arguments.
         for key in kwargs.keys():

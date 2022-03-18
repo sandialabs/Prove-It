@@ -291,7 +291,7 @@ class ComplexNonZeroSet(NumberSet):
 #     # imported when automation is used.
 #     from . import real_within_complex, real_pos_within_complex, real_neg_within_complex, int_within_complex, nat_within_complex
 
-if proveit.defaults.automation:
+if proveit.defaults.sideeffect_automation:
     # Import some fundamental theorems without quantifiers that are
     # imported when automation is used.
     # Fails before running the _axioms_ and _theorems_ notebooks for the first

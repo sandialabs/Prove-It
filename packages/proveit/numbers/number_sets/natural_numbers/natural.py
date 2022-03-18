@@ -40,16 +40,7 @@ class NaturalPosSet(NumberSet):
 
 
 
-if proveit.defaults.automation:
+if proveit.defaults.sideeffect_automation:
     # Import some fundamental theorems without quantifiers that are
     # imported when automation is used.
     from . import nat_pos_within_nat
-
-# if proveit.defaults.automation:
-#     try:
-#         # Import some fundamental theorems without quantifiers that are
-#         # imported when automation is used.
-#         # Fails before running the _axioms_ and _theorems_ notebooks for the first time, but fine after that.
-#         from . import nat_pos_within_nat, nat_within_int, nat_pos_within_int
-#     except:
-#         pass

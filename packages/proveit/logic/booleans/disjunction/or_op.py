@@ -69,7 +69,7 @@ class Or(Operation):
         # to prove any of the operands so that  we don't waste time
         # trying to prove operands when we already know one to be true.
         use_automation_possibilities = (
-                [False, True] if defaults.automation else [False])
+                [False, True] if defaults.conclude_automation else [False])
 
         if self.operands.contains_range():
             # There are ExprRange operands.

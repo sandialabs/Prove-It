@@ -71,7 +71,7 @@ class RealNonPosSet(NumberSet):
         return RealNonPosMembership(element)
 
 
-if proveit.defaults.automation:
+if proveit.defaults.sideeffect_automation:
     # Import some fundamental theorems without quantifiers that are
     # imported when automation is used.
     from . import (

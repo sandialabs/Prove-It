@@ -2312,7 +2312,7 @@ def simplified_indices(*indices, requirements=None):
                     requirements.append(requirement.prove())
                     yield simplified_index
                     continue
-                if defaults.automation:
+                if defaults.auto_simplify:
                     with Add.temporary_simplification_directives() as directives:
                         # Move literal integers to the end via the
                         # 'order_key' simplification directive for Add.

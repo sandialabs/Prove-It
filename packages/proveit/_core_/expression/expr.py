@@ -767,7 +767,7 @@ class Expression(metaclass=ExprType):
         from proveit import Judgment, ProofFailure
         from proveit.logic import Not
         assumptions = defaults.assumptions
-        automation = defaults.automation
+        automation = defaults.conclude_automation
         assumptions_set = set(assumptions)
 
         found_truth = Judgment.find_judgment(self, assumptions_set)

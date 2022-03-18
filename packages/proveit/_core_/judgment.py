@@ -231,7 +231,7 @@ class Judgment:
         complete.
         '''
         from .proof import ProofFailure, UnsatisfiedPrerequisites
-        if not defaults.automation:
+        if not defaults.sideeffect_automation:
             return  # automation disabled
         # Sort the assumptions according to hash key so that sets of
         # assumptions are unique for determining which side-effects have
@@ -867,8 +867,8 @@ class Judgment:
         eliminated Forall operations, after replacements are made, must
         be proven.  Furthermore, there may be additional requirements 
         when iterated parameters are instantiated (see Lambda.apply for
-        details).  Automation mayb be used in attempting to prove these 
-        requirements provided proveit.defaults.automation=True.
+        details).  Automation may be used in attempting to prove these 
+        requirements provided proveit.defaults.conclude_automation=True.
         '''
         from proveit import (Variable, Operation, Conditional, Lambda,
                              single_or_composite_expression,

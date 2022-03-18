@@ -33,7 +33,7 @@ from .classes import InClass, NotInClass, ClassMembership, ClassNonmembership
 
 import proveit
 
-if proveit.defaults.automation:
+if proveit.defaults.sideeffect_automation:
     # Import some fundamental theorems without quantifiers that are
     # imported when automation is used.
     # Fails before running the _axioms_ and _theorems_ notebooks for the first

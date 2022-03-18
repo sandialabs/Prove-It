@@ -637,13 +637,11 @@ class ProveItMagicCommands:
             active_folder=active_folder,
             owns_active_folder=True)
         sys.path.append('..')
-        try:
+        with proveit.defaults.temporary() as tmp_defaults:
             # Disable automation when we are getting this theorem
             # to be proven.
-            proveit.defaults.automation = False
+            tmp_defaults.automation = False
             proving_theorem = self.theory.get_theorem(theorem_name)
-        finally:
-            proveit.defaults.automation = True
         proving_theorem_truth = proving_theorem.proven_truth
         return proving_theorem_truth.begin_proof(proving_theorem)
 
@@ -906,7 +904,7 @@ class ProveItMagic(Magics, ProveItMagicCommands):
             # to force it to regenerate expression notebooks,
             # etc.
             self.theory._theory_folder_storage(kind).unload()
-            if defaults.automation:
+            if defaults.sideeffect_automation or defaults.conclude_automation:
                 raise Exception("The proveit.defaults.automation flag should "
                                 "be disabled at the beginning of a "
                                 "'common expressions', 'axioms' or 'theorems'"

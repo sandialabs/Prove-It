@@ -225,6 +225,8 @@ class Proof:
         Derive side-effects under the active assumptions if
         this proof is relevent.
         '''
+        if not defaults.sideeffect_automation:
+            return # Side-effect automation is off, so don't do it.
         proven_truth = self.proven_truth
         if proven_truth.proof() == self and self.is_usable(): 
             # Don't bother with side effects if this proof was born 
@@ -824,7 +826,7 @@ class Assumption(Proof):
                 # itself, having the other assumptions around can be
                 # useful for deriving side-effects.
                 Assumption.make_assumption(assumption, assumptions)
-            if not defaults.automation:
+            if not defaults.sideeffect_automation:
                 # consideration doesn't fully count if automation is off
                 Assumption.considered_assumption_sets.remove(
                         sorted_assumptions)
@@ -2296,7 +2298,7 @@ class ProofFailure(Exception):
         self.expr = expr
         self.message = message
         self.assumptions = assumptions
-        self.automation = defaults.automation
+        self.automation = defaults.conclude_automation
 
     def __str__(self):
         if self.automation:
