@@ -3,7 +3,7 @@ from .vector_spaces import (VecSpaces, deduce_as_vec_space,
 from .addition import VecAdd, VecSum, VecZero
 from .negation import VecNeg
 from .scalar_multiplication import ScalarMult
-from .inner_products import (InnerProdSpaces, InnerProd,
+from .inner_products import (InnerProdSpaces, InnerProd, Norm,
                              deduce_as_inner_prod_space)
 from .linear_maps import LinMap, LinMapAdd
 from .matrices import (MatrixSpace, MatrixMult, MatrixExp,

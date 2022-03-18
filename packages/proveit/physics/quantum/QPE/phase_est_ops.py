@@ -158,24 +158,26 @@ class ModAdd(Operation):
 
 class SubIndexed(Operation):
     '''
-    Provide subscript indexing of a label/literal (in contrast to
-    IndexedVar, which provides subscript indexing of a variable).
+    Formats a function-type Operation via a subscript.
+    For the 'psi' label, also wraps it in a ket.
     '''
-    # the literal operator of the Subscript operation
-    _operator_ = Literal(string_format=r"SUB_INDEXED",
-                         latex_format=r'SUB\_INDEXED',
-                         theory=__file__)
-
     def __init__(self, label, index, *, styles=None):
-        Operation.__init__(self, SubIndexed._operator_, (label, index),
-                           styles=styles)
-        self.label = self.operands[0]
-        self.index = self.operands[1]
+        Operation.__init__(self, label, index, styles=styles)
+        self.label = self.operator
+        self.index = self.operand
 
-    def _formatted(self, format_type, fence=False):
+    def _formatted(self, format_type, fence=False, **kwargs):
         formatted_label = self.label.formatted(format_type, fence=True)
         formatted_index = self.index.formatted(format_type, fence=False)
-        return formatted_label + '_{' + formatted_index + '}'
+        indexed_str = formatted_label + '_{' + formatted_index + '}'
+        if str(self.label) == 'psi':
+            # If it is indexing 'psi', wrap it in a ket.
+            if format_type=='latex':
+                return r'\lvert %s \rangle'%indexed_str
+            else:
+                return r'|%s>'%indexed_str
+        return indexed_str
+        
 
 from proveit.numbers import i, two, pi, Neg, exp, frac, Mult
 

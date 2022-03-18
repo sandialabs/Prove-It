@@ -452,29 +452,50 @@ class Conditional(Expression):
 
     @equality_prover('condition_substituted', 
                      'condition_substitute')
-    def condition_substitution(self, logical_equivalence, **defaults_config):
+    def condition_substitution(self, condition_equivalence_or_equality, 
+                               **defaults_config):
         '''
         Equate this Conditional to one that has the condition
         substituted.  For example,
         {a if Q. = {a if R.
         given "Q ⟺ R".
         '''
+        from proveit import Judgment
         from proveit import a, Q, R
         from proveit.core_expr_types.conditionals import (
-                condition_substitution)
-        if logical_equivalence.lhs == self.condition:
-            return condition_substitution.instantiate(
-                    {a:self.value, Q:logical_equivalence.lhs, 
-                     R:logical_equivalence.rhs})
-        elif logical_equivalence.rhs == self.condition:
-            return condition_substitution.instantiate(
-                    {a:self.value, Q:logical_equivalence.rhs, 
-                     R:logical_equivalence.lhs})
+                condition_replacement, condition_substitution)
+        from proveit.logic import Iff, Equals
+        if isinstance(condition_equivalence_or_equality, Judgment):
+            condition_equivalence_or_equality = (
+                condition_equivalence_or_equality.expr)
+        if isinstance(condition_equivalence_or_equality, Iff):
+            equivalence = condition_equivalence_or_equality
+            if equivalence.lhs == self.condition:
+                return condition_replacement.instantiate(
+                    {a:self.value, Q:equivalence.lhs, 
+                     R:equivalence.rhs})
+            elif equivalence.rhs == self.condition:
+                return condition_replacement.instantiate(
+                    {a:self.value, Q:equivalence.rhs, 
+                     R:equivalence.lhs})
+        elif isinstance(condition_equivalence_or_equality, Equals):
+            equality = condition_equivalence_or_equality
+            if equality.lhs == self.condition:
+                return condition_substitution.instantiate(
+                    {a:self.value, Q:equality.lhs, 
+                     R:equality.rhs})
+            elif equality.rhs == self.condition:
+                return condition_substitution.instantiate(
+                    {a:self.value, Q:equality.rhs, 
+                     R:equality.lhs})
         else:
-            raise ValueError("%s is not an appropriate 'logical_equivalence' "
-                             "for condition_substitution on %s (the "
-                             "'condition' is not matched on either side)"
-                             %(logical_equivalence, self))
+            raise TypeError("'condition_equivalence_or_equality' must "
+                            "represent a logical equivalence (Iff) or "
+                            "equality (equals), got %s."
+                             %condition_equivalence_or_equality)
+        raise Value("%s expected to have %s on one of its sides"
+                    %(condition_equivalence_or_equality,
+                      self.condition))
 
     @equality_prover('sub_expr_substituted', 'sub_expr_substitute')
     def sub_expr_substitution(self, new_sub_exprs, **defaults_config):

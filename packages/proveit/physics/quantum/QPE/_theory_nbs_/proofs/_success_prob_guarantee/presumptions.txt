@@ -399,6 +399,7 @@ proveit.physics.quantum.QPE._Omega_is_sample_space
 proveit.physics.quantum.QPE._e_value_ge_two
 proveit.physics.quantum.QPE._e_value_in_e_domain
 proveit.physics.quantum.QPE._fail_ineq
+proveit.physics.quantum.QPE._n_less_eq_t
 proveit.physics.quantum.QPE._pfail_in_real
 proveit.physics.quantum.QPE._phase_is_real
 proveit.physics.quantum.QPE._sample_space_bijection
@@ -407,6 +408,9 @@ proveit.physics.quantum.algebra.complex_set_is_hilbert_space
 proveit.physics.quantum.algebra.hilbert_space_is_inner_prod_space
 proveit.physics.quantum.algebra.hilbert_space_is_vec_space
 proveit.physics.quantum.algebra.ket_one_in_qubit_space
+proveit.physics.quantum.algebra.ket_one_norm
+proveit.physics.quantum.algebra.ket_zero_and_one_are_orthogonal
 proveit.physics.quantum.algebra.ket_zero_in_qubit_space
+proveit.physics.quantum.algebra.ket_zero_norm
 proveit.statistics.constrained_event_prob_bound
 # THEOREMS AND THEORIES TO EXCLUDE:

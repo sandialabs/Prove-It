@@ -4,6 +4,7 @@ from proveit import (Judgment, defaults, ExprRange, relation_prover,
                      prover, TransRelUpdater, SimplificationDirectives)
 from proveit import a, b, c, d, e, f, i, j, k, A, K, Q, U, V, W, alpha
 from proveit.logic import Equals, InClass, SetMembership, SubsetEq
+from proveit.numbers import one
 from proveit.abstract_algebra.generic_methods import (
         apply_association_thm, apply_disassociation_thm)
 from proveit.linear_algebra import (VecSpaces, ScalarMult, VecAdd, VecSum,
@@ -481,3 +482,40 @@ class TensorProd(Operation):
             return all([TensorProd.all_ops_are_cart_exp(op)
                         for op in obj.operands])
 
+    @prover
+    def compute_norm(self, field=None, **defaults_config):
+        '''
+        Proves ‖a ⊗ b ⊗ ... ⊗ y ⊗ z‖ = ‖a‖·‖b‖·...·‖y‖·‖z‖.
+        '''
+        from proveit.logic import EvaluationError
+        from . import norm_of_tensor_prod, norm_preserving_tensor_prod
+        _a = self.operands
+        _i = _a.num_elements()
+        _K = VecSpaces.get_field(field)
+        vec_spaces = VecSpaces.known_vec_spaces(self.operands, field=_K)
+        
+        # See if all of the operand normalizations evaluate to one.
+        all_norm_one = True
+        try:
+            for operand in self.operands:
+                if isinstance(operand, ExprRange):
+                    with defaults.temporary() as tmp_defaults:
+                        tmp_defaults.assumptions = defaults.assumptions + (
+                                operand.parameter_condition(),)
+                        body_norm = operand.body.compute_norm()
+                        if body_norm.rhs.evaluated() != one:
+                            all_norm_one = False
+                            break
+                else:
+                    if operand.compute_norm().rhs.evaluated() != one:
+                        all_norm_one = False
+                        break
+        except (EvaluationError, NotImplementedError):
+            all_norm_one = False
+            pass
+        if all_norm_one:
+            thm = norm_preserving_tensor_prod
+        else:
+            thm = norm_of_tensor_prod
+        return thm.instantiate({K: _K, i: _i, V: vec_spaces, a: _a})            
+        

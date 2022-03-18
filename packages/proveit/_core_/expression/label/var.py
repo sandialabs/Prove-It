@@ -1,6 +1,7 @@
 from .label import Label
 from proveit._core_.expression.expr import ImproperReplacement
-from proveit._core_.defaults import USE_DEFAULTS
+from proveit._core_.defaults import defaults, USE_DEFAULTS
+import itertools
 
 
 class Variable(Label):
@@ -103,20 +104,54 @@ def dummy_var(n):
         m -= k * pow_of_26
     return Variable('_' + letters, latex_format=r'{_{-}' + letters + r'}')
 
+def is_dummy_var(expr):
+    if not isinstance(expr, Variable):
+        return False
+    var = expr
+    if var.string_format[0] != '_':
+        return False
+    if var.latex_format[:5] != '{_{-}':
+        return False
+    if var.latex_format[-1] != '}':
+        return False
+    letters = var.string_format[1:]
+    if letters != var.latex_format[5:-1]:
+        return False
+    for letter in letters:
+        ord_letter = ord(letter)
+        if ord_letter < ord('a') or ord_letter > ord('z'):
+            return False
+    return True
 
-def safe_dummy_var(*expressions, start_index=0):
-    used_vs = frozenset().union(*[expr._used_vars() for expr in expressions])
+def safe_dummy_var(*expressions, start_index=0,
+                   avoid_default_assumption_conflicts=True):
+    '''
+    Return a dummy variable that isn't contained in any of the
+    given expression and not contained in any of the default
+    assumptions.
+    '''
+    if avoid_default_assumption_conflicts:
+        used_vs = frozenset().union(*[expr._used_vars() for expr 
+                                      in itertools.chain(
+                                          expressions, 
+                                          defaults.assumptions)])
+    else:
+        used_vs = frozenset().union(*[expr._used_vars() for expr 
+                                      in expressions])
     i = start_index
     while dummy_var(i) in used_vs:
         i += 1
     return dummy_var(i)
 
 
-def safe_dummy_vars(n, *expressions, start_index=0):
+def safe_dummy_vars(n, *expressions, start_index=0,
+                    avoid_default_assumption_conflicts=True):
     dummy_vars = []
     for _ in range(n):
         dummy_vars.append(safe_dummy_var(
-            *(list(expressions) + list(dummy_vars)), start_index=start_index))
+            *(list(expressions) + list(dummy_vars)), start_index=start_index,
+            avoid_default_assumption_conflicts
+            =avoid_default_assumption_conflicts))
     return dummy_vars
 
 

@@ -1,4 +1,5 @@
-from .numeral import Numeral, NumeralSequence, is_literal_int
+from .numeral import (Numeral, NumeralSequence, 
+                      is_literal_int, is_literal_rational)
 #from .binaries import BinarySequence, binnum
 #from .hexidecimals import HexSequence, hexnum
 

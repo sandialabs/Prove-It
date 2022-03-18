@@ -295,3 +295,10 @@ def is_literal_int(expr):
     elif isinstance(expr, Neg) and is_literal_int(expr.operand):
         return True
     return False
+
+def is_literal_rational(expr):
+    from proveit.numbers import Div
+    if isinstance(expr, Div):
+        return (is_literal_int(expr.numerator) and
+                is_literal_int(expr.denominator))
+    return is_literal_int(expr)

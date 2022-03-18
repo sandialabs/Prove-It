@@ -20,7 +20,8 @@ from .number_operation import (NumberOperation, deduce_in_number_set,
 from .rounding import Floor, Ceil, Round
 from .absolute_value import Abs
 from .numerals import (num, Numeral, DecimalSequence, Digits, DIGITS,
-                       BinarySequence, Bit, BITS, is_literal_int)
+                       BinarySequence, Bit, BITS, is_literal_int,
+                       is_literal_rational)
 from .numerals import zero, one, two, three, four, five, six, seven, eight, nine, hexa, hexb, hexc, hexd, hexe, hexf
 from .addition import (Add, subtract, dist_subtract, dist_add)
 from .negation import Neg, negated

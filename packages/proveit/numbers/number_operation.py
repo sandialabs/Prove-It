@@ -10,7 +10,8 @@ from .number_sets import (
     Rational, RationalNonZero, RationalPos, RationalNeg, RationalNonNeg,
     RationalNonPos,
     Real, RealNonZero, RealNeg, RealPos, RealNonNeg, RealNonPos,
-    Complex, ComplexNonZero)
+    Complex, ComplexNonZero,
+    Interval, RealInterval)
 
 class NumberOperation(Operation):
     '''
@@ -51,6 +52,7 @@ class NumberOperation(Operation):
             raise ValueError("Expecting one or more 'inner_expr_bounds'")
         while len(inner_expr_bounds) > 0:
             inner_expr_bound = inner_expr_bounds.popleft()
+            print('inner_expr_bound', inner_expr_bound)
             if isinstance(inner_expr_bound, TransRelUpdater):
                 # May be one of the internally generated
                 # TransRelUpdater for percolating bounds up through
@@ -281,6 +283,7 @@ def deduce_number_set(expr, **defaults_config):
 
     # Find the first (most restrictive) number set that
     # contains 'expr' or something equal to it.
+    
     for number_set in sorted_number_sets:
         membership = None
         for eq_expr in Equals.yield_known_equal_expressions(expr):
@@ -326,6 +329,7 @@ def deduce_number_set(expr, **defaults_config):
                 membership = deduced_membership
 
     if membership is None:
+        from proveit import defaults
         raise UnsatisfiedPrerequisites(
             "Unable to prove any number membership for %s"%expr)
 

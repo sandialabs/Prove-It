@@ -1,5 +1,5 @@
-from proveit import (USE_DEFAULTS, equality_prover, Lambda, 
-                     ExprTuple, ExprRange, prover)
+from proveit import (defaults, USE_DEFAULTS, equality_prover, Lambda, 
+                     ExprTuple, ExprRange, ProofFailure, prover)
 from proveit.linear_algebra import ScalarMult, TensorProd, VecSum
 from proveit.logic import SetMembership, SetNonmembership, CartExp
 from proveit.numbers import num
@@ -23,7 +23,7 @@ class TensorProdMembership(SetMembership):
             # If the domain is of the form
             # K^{n_1} ⊗ K^{n_2} ⊗ ... ⊗ K^{n_m}
             # derive that the element is also contained in
-            # K^{n_1 + n_2 + ... + K^{n_m}}
+            # K^{n_1 · n_2 · ... · n_m}
             self._get_cart_exps_field_and_exponents()
             # Auto-simplification is turned off when executing
             # side-effects -- turn it back on for this one.
@@ -116,8 +116,9 @@ class TensorProdMembership(SetMembership):
                          f: _f_sub, Q: _Q_sub})
             return imp.derive_consequent()
 
-        raise ValueError("Element {0} is neither a TensorProd "
-                         "nor a ScalarMult.".format(self.element))
+        raise ProofFailure(self, defaults.assumptions,
+                           "Element {0} is neither a TensorProd "
+                           "nor a ScalarMult.".format(self.element))
     
     @prover
     def derive_cart_exp_membership(self, **defaults_config):
@@ -128,7 +129,7 @@ class TensorProdMembership(SetMembership):
         Thst is, if the domain is of the form
             K^{n_1} ⊗ K^{n_2} ⊗ ... ⊗ K^{n_m}
         derive that the element is also contained in
-            K^{n_1 + n_2 + ... + n_m}
+            K^{n_1 · n_2 · ... · n_m}
         '''
         from . import tensor_prod_of_cart_exps_within_cart_exp
         _K, _ns = self._get_cart_exps_field_and_exponents()

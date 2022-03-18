@@ -383,7 +383,11 @@ proveit.numbers.numerals.decimals.tuple_len_3
 proveit.numbers.numerals.decimals.tuple_len_3_typical_eq
 proveit.numbers.numerals.decimals.tuple_len_4
 proveit.numbers.numerals.decimals.tuple_len_4_typical_eq
+proveit.numbers.ordering.less_eq_from_not_less
+proveit.numbers.ordering.less_from_not_less_eq
 proveit.numbers.ordering.less_is_not_eq
+proveit.numbers.ordering.not_less_eq_from_less
+proveit.numbers.ordering.not_less_from_less_eq
 proveit.numbers.ordering.relax_less
 proveit.numbers.ordering.symmetric_less_eq
 proveit.numbers.ordering.transitivity_less_eq_less
@@ -394,7 +398,6 @@ proveit.physics.quantum.QPE._alpha_l_summed
 proveit.physics.quantum.QPE._delta_diff_exp_not_one
 proveit.physics.quantum.QPE._delta_is_real
 proveit.physics.quantum.QPE._delta_not_eq_scaledNonzeroInt
-proveit.physics.quantum.QPE._l_non_zero
 proveit.physics.quantum.QPE._scaled_abs_delta_diff_interval
 proveit.physics.quantum.QPE._scaled_delta_minus_l__in__real
 proveit.physics.quantum.QPE._scaled_delta_not_eq_nonzeroInt
@@ -404,7 +407,10 @@ proveit.physics.quantum.algebra.complex_set_is_hilbert_space
 proveit.physics.quantum.algebra.hilbert_space_is_inner_prod_space
 proveit.physics.quantum.algebra.hilbert_space_is_vec_space
 proveit.physics.quantum.algebra.ket_one_in_qubit_space
+proveit.physics.quantum.algebra.ket_one_norm
+proveit.physics.quantum.algebra.ket_zero_and_one_are_orthogonal
 proveit.physics.quantum.algebra.ket_zero_in_qubit_space
+proveit.physics.quantum.algebra.ket_zero_norm
 proveit.trigonometry.complex_circle_chord_length
 proveit.trigonometry.complex_unit_circle_chord_length
 proveit.trigonometry.sine_interval

@@ -1,7 +1,7 @@
 from proveit import (
         ExprTuple, Function, Literal, OperationOverInstances,
-        relation_prover, defaults)
-from proveit import x, y, Q, S
+        Lambda, composite_expression, relation_prover, defaults)
+from proveit import f, n, x, y, Q, R, S
 
 
 class SetOfAll(OperationOverInstances):
@@ -87,6 +87,46 @@ class SetOfAll(OperationOverInstances):
         out_str += '}'
         return out_str
 
+    @relation_prover
+    def deduce_superset_eq_relation(self, superset, **defaults_config):
+        '''
+        Try to prove {f(x) | Q(x)_{x in S) subset_eq `superset`.
+        '''
+        from . import subset_via_condition_constraint
+        if isinstance(superset, SetOfAll):
+            _x = composite_expression(self.instance_param_or_params)
+            _y = superset.instance_param_or_params
+            _f = Lambda(_y, superset.instance_element)
+            _g = Lambda(_x, self.instance_element)
+            if (_f == _g and 
+                    self.explicit_domains() == superset.explicit_domains()):
+                _Q = Lambda(superset.instance_param_or_params, 
+                            superset.non_domain_condition())
+                _R = Lambda(self.instance_param_or_params, 
+                            self.non_domain_condition())
+                _S = self.explicit_domains()
+                _n = _x.num_elements()
+                impl = subset_via_condition_constraint.instantiate(
+                    {n:_n, f:_f, S:_S, Q:_Q, R:_R, x:_x, y:_y})
+                return impl.derive_consequent()
+        raise NotImplementedError(
+                "SetOfAll.deduce_superset_eq_relation only implemented "
+                "to prove a superset relation with another SetOfAll that "
+                "has the same domain and instance mapping: %s vs %s"
+                %(self, superset))
+
+    @relation_prover
+    def deduce_subset_eq_relation(self, subset, **defaults_config):
+        '''
+        Try to prove {f(x) | Q(x)_{x in S) subset_eq `superset`.
+        '''
+        if not isinstance(subset, SetOfAll):
+            raise NotImplementedError(
+                    "SetOfAll.deduce_subset_eq_relation only implemented "
+                    "to prove a subset relation with another SetOfAll that "
+                    "has the same domain and instance mapping: %s vs %s"
+                    %(self, subset))
+        return subset.deduce_superset_eq_relation(self)
 
     # The below must be updated
     # Being updated gradually by wdc starting 12/21/2021
@@ -135,6 +175,8 @@ class SetOfAll(OperationOverInstances):
         # else:
         #     f_op, f_sub = Function(f, self.instance_vars), self.instance_element
         #     return unfold_comprehension.instantiate({S:self.domain,  Q_op:Q_op_sub, f_op:f_sub, x:element}, {y_multi:self.instance_vars}).derive_conclusion(assumptions)
+
+
 
     """
 

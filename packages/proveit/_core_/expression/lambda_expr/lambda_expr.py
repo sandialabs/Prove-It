@@ -268,13 +268,17 @@ class Lambda(Expression):
         start_index = self.body._num_indep_internal_bound_vars
         dummy_index = 0
         while dummy_index < start_index:
-            dummy_var = safe_dummy_var(start_index=dummy_index)
+            dummy_var = safe_dummy_var(
+                start_index=dummy_index,
+                avoid_default_assumption_conflicts=False)
             if dummy_var in lambda_free_vars:
                 start_index += 1
             dummy_index += 1
         canonical_param_vars = list(reversed(
-            safe_dummy_vars(len(effective_param_vars), *lambda_free_vars,
-                            start_index=start_index)))
+            safe_dummy_vars(
+                len(effective_param_vars), *lambda_free_vars,
+                start_index=start_index,
+                avoid_default_assumption_conflicts=False)))
 
         with defaults.temporary() as temp_defaults:
             # Don't auto-reduce or use automation when making the
@@ -916,7 +920,9 @@ class Lambda(Expression):
             else:
                 param_var_repl = relabel_map.get(param_var, param_var)
             if param_var_repl in restricted_vars:
-                dummy_var = safe_dummy_var(*restricted_vars)
+                dummy_var = safe_dummy_var(
+                    *restricted_vars,
+                    avoid_default_assumption_conflicts=False)
                 if isinstance(param, IndexedVar):
                     relabel_map[param] = dummy_var
                 else:
@@ -1092,10 +1098,12 @@ class Lambda(Expression):
         _i = _b.num_elements()
         
         thm = lambda_substitution
-        if isinstance(self.body, Conditional) and not (
-                isinstance(equality.lhs, Conditional) 
-                and isinstance(equality.rhs, Conditional)):
+        if hasattr(universal_eq, 'condition'):
             # use general lambda substitution.
+            if not isinstance(self.body, Conditional):
+                raise ValueError(
+                    "'universal_eq' has conditions but this Lambda "
+                    "does not have a conditional body")
             thm = general_lambda_substitution
             _f = Lambda(self.parameters, self.body.value)
         else:
@@ -1110,7 +1118,7 @@ class Lambda(Expression):
             raise ValueError(
                     "%s not valid as the 'universal_eq' argument for "
                     "the call to 'substitution' on %s: %s not equal "
-                    "to %s or %s"%(universal_eq, self, _f, lhs_map, rhs_map))     
+                    "to %s or %s"%(universal_eq, self, _f, lhs_map, rhs_map))
         if thm == general_lambda_substitution:
             _Q = Lambda(self.parameters, self.body.condition)
             return thm.instantiate(

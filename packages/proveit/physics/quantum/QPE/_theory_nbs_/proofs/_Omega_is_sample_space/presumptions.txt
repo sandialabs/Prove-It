@@ -231,8 +231,7 @@ proveit.numbers.ordering.symmetric_less_eq
 proveit.numbers.ordering.transitivity_less_eq_less
 proveit.numbers.ordering.transitivity_less_eq_less_eq
 proveit.numbers.ordering.transitivity_less_less_eq
-proveit.physics.quantum.QPE._Psi_ket_normalized
-proveit.physics.quantum.QPE._Psi_ket_register
+proveit.physics.quantum.QPE._Psi_ket_is_normalized_vec
 proveit.physics.quantum.QPE._outcome_prob
 proveit.physics.quantum.QPE._sample_space_bijection
 proveit.physics.quantum.algebra.bra_in_QmultCodomain

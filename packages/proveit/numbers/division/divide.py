@@ -5,8 +5,8 @@ from proveit import (Judgment, Expression, Literal, Operation,
                      equality_prover, SimplificationDirectives)
 from proveit import TransRelUpdater
 from proveit import a, b, c, m, n, w, x, y, z
-from proveit.logic import Equals, NotEquals
-from proveit.numbers import zero, NumberOperation
+from proveit.logic import Equals, NotEquals, InSet
+from proveit.numbers import zero, NumberOperation, is_literal_int
 from proveit.numbers import NumberOperation, deduce_number_set
 from proveit.numbers.number_sets import (
     Natural, NaturalPos,
@@ -98,6 +98,10 @@ class Div(NumberOperation):
             # complete cancelation.
             return eq.relation
 
+        if self.is_irreducible_value():
+            # already irreducible
+            return Equals(self, self).conclude_via_reflexivity()
+
         if must_evaluate and not all(
                 is_irreducible_value(operand) for operand in self.operands):
             for operand in self.operands:
@@ -138,6 +142,19 @@ class Div(NumberOperation):
 
         return eq.relation
 
+    def is_irreducible_value(self):
+        '''
+        This needs work, but we know that 1/x is irreducible if
+        x is irreducible, not a negation, not 0 and not 1.
+        '''
+        from proveit.logic import is_irreducible_value
+        from proveit.numbers import zero, one, Neg
+        if (self.numerator == one and self.denominator not in (zero, one) 
+                and not isinstance(self.denominator, Neg)
+                and is_irreducible_value(self.denominator)):
+            return True
+        return False # TODO: handle any proper fraction, etc.
+            
     @equality_prover('zero_numerator_reduced', 'zero_numerator_reduce')
     def zero_numerator_reduction(self, **defaults_config):
         '''
@@ -720,9 +737,9 @@ class Div(NumberOperation):
         elif number_set == RationalNonPos:
             deduce_number_set(self.denominator)
             if Less(self.denominator, zero).proven():
-                thm = div_rational_nonpos_neg_denom
+                thm = div_rational_nonpos_from_neg_denom
             else:
-                thm = div_rational_nonpos_neg_numer
+                thm = div_rational_nonpos_from_neg_numer
         elif number_set == Real:
             thm = div_real_closure
         elif number_set == RealNonZero:
@@ -748,9 +765,9 @@ class Div(NumberOperation):
         elif number_set == RealNonPos:
             deduce_number_set(self.denominator)
             if Less(self.denominator, zero).proven():
-                thm = div_real_nonpos_neg_denom
+                thm = div_real_nonpos_from_neg_denom
             else:
-                thm = div_real_nonpos_neg_numer
+                thm = div_real_nonpos_from_nonpos_numer
         elif number_set == ComplexNonZero:
             thm = div_complex_nonzero_closure
         elif number_set == Complex:
@@ -857,6 +874,8 @@ class Div(NumberOperation):
                        weak_div_from_numer_bound__pos_denom,
                        strong_div_from_numer_bound__neg_denom,
                        weak_div_from_numer_bound__neg_denom)
+        if isinstance(relation, Judgment):
+            relation = relation.expr
         if not (isinstance(relation, Less) or
                 isinstance(relation, LessEq)):
             raise TypeError("relation is expected to be Less "
@@ -915,6 +934,8 @@ class Div(NumberOperation):
                        weak_div_from_denom_bound__neg_over_pos,
                        strong_div_from_denom_bound__pos_over_neg,
                        weak_div_from_denom_bound__pos_over_neg)
+        if isinstance(relation, Judgment):
+            relation = relation.expr
         if not (isinstance(relation, Less) or
                 isinstance(relation, LessEq)):
             raise TypeError("relation is expected to be Less "

@@ -25,10 +25,10 @@ class _ExprProofs:
     '''
     all_expr_proofs = dict()  # map expressions to expression proofs
 
-    def __init__(self, expr):
+    def __init__(self, expr, num_lit_gen):
         self._expr = expr
         self._proofs = set()
-        _ExprProofs.all_expr_proofs[expr] = self
+        _ExprProofs.all_expr_proofs[(expr, num_lit_gen)] = self
 
     def insert(self, newproof):
         '''
@@ -55,15 +55,15 @@ class _ExprProofs:
         '''
         assert isinstance(judgment, Judgment)
         best_unusable_proof = None
-        fewest_steps = float('inf')
+        goodness = None
         for proof in self._proofs:
             if proof.proven_truth.assumptions_set.issubset(
                     judgment.assumptions_set):
                 assert proof.is_usable(), (
                         'unusable proofs should have been removed')
-
-                if proof.num_steps() < fewest_steps:
-                    fewest_steps = proof.num_steps()
+                cur_goodness = proof._goodness()
+                if goodness is None or cur_goodness > goodness:
+                    goodness = cur_goodness
                     best_unusable_proof = proof
         # the proof with the fewest steps that is applicable
         return best_unusable_proof  
@@ -125,10 +125,12 @@ class Judgment:
                 "Unexpected remnant 'in_progress_to_derive_sideeffects' "
                 "items (should have been temporary)")
 
-    def __init__(self, expression, assumptions):
+    def __init__(self, expression, assumptions, *, num_lit_gen=0):
         '''
-        Create a Judgment with the given Expression, set of assumptions.
-        These should not be created manually but rather through the 
+        Create a Judgment with the given Expression, set of assumptions,
+        and number of literal generalizations involved in the proof.
+
+        These should NOT be created manually but rather through the 
         creation of Proofs which should be done indirectly via 
         Expression/Judgment derivation-step methods.
         '''
@@ -139,6 +141,8 @@ class Judgment:
         for assumption in assumptions:
             if not isinstance(assumption, Expression):
                 raise ValueError('Each assumption should be an Expression')
+        if not isinstance(num_lit_gen, int):
+            raise TypeError("'num_lit_gen' should be an Integer")
 
         # Note: these contained expressions are subject to style changes
         # on a Judgment instance basis.
@@ -148,6 +152,12 @@ class Judgment:
         # checking whether one set subsumes another).
         self.assumptions = tuple(assumptions)
         self.assumptions_set = frozenset(assumptions)
+
+        # We use the number of literal generalizations to distinguish
+        # truths with different axiom/theorem eliminations; we assume
+        # we won't have distinct literal generalization trees in the
+        # same proof such that this is a distinguishing feature.
+        self.num_lit_gen = num_lit_gen
 
         # The meaning data is shared among Judgments with the same
         # structure disregarding style
@@ -159,10 +169,11 @@ class Judgment:
             # create or assign the _ExprProofs object for storing all 
             # proofs for this Judgment's expr (under any set of 
             # assumptions).
-            if self.expr in _ExprProofs.all_expr_proofs:
-                expr_proofs = _ExprProofs.all_expr_proofs[self.expr]
+            if (self.expr, num_lit_gen) in _ExprProofs.all_expr_proofs:
+                expr_proofs = _ExprProofs.all_expr_proofs[(self.expr, 
+                                                           num_lit_gen)]
             else:
-                expr_proofs = _ExprProofs(self.expr)
+                expr_proofs = _ExprProofs(self.expr, num_lit_gen)
             self._meaning_data._expr_proofs = expr_proofs
             # Initially, _proof is None but will be assigned and updated
             # via _add_proof()
@@ -189,8 +200,16 @@ class Judgment:
         Generate a unique representation string using the given function
         to obtain representations of other referenced Prove-It objects.
         '''
-        return object_rep_fn(self.expr) + ';[' + ','.join(
-            object_rep_fn(assumption) for assumption in self.assumptions) + ']'
+        # Note, the number of literal generalizations is a unique
+        # aspect we include; more literal generalization typically means
+        # fewere axiom/theorem requirements.
+        rep = (
+            object_rep_fn(self.expr) + ';[' + ','.join(
+                object_rep_fn(assumption) for assumption in self.assumptions)
+            + ']')
+        if self.num_lit_gen > 0:
+            rep += str(self.num_lit_gen)
+        return rep
 
     @staticmethod
     def _extractReferencedObjIds(unique_rep):
@@ -200,7 +219,9 @@ class Judgment:
         '''
         # Everything between the punctuation, ';', '[', ']', ',', is a
         # represented object.
-        obj_ids = re.split(r";|\[|,|\]", unique_rep)
+        # Skip the 'num_lit_gen' part.
+        last_rbracket_pos = unique_rep.rfind(']')
+        obj_ids = re.split(r";|\[|,|\]", unique_rep[:last_rbracket_pos])
         return [obj_id for obj_id in obj_ids if len(obj_id) > 0]
 
     def derive_side_effects(self):
@@ -458,19 +479,25 @@ class Judgment:
         expr_judgments = Judgment.lookup_dict.setdefault(self.expr, set())
         expr_judgments.add(self)
         for expr_judgment in expr_judgments:
+            if expr_judgment.num_lit_gen != self.num_lit_gen:
+                # Must match the number of literal generalization steps.
+                continue
             # Is 'newproof' applicable to 'expr_judgment'?
             if newproof.proven_truth.assumptions_set.issubset(
                     expr_judgment.assumptions_set):
                 # replace if there was no pre-existing usable proof or 
-                # the new proof has fewer steps
+                # the new proof has more literal generalization steps
+                # (which can lead to fewer axiom/theorem requirements)
+                # or the new proof is "better".
                 preexisting_proof = expr_judgment.proof()
                 if isinstance(preexisting_proof, _ShowProof):
                     continue
                 if (preexisting_proof is None or
                         not preexisting_proof.is_usable() or
-                        newproof.num_steps() < preexisting_proof.num_steps()):
-                    expr_judgment._update_proof(
-                        newproof)  # replace an old proof
+                        (newproof._goodness() > 
+                         preexisting_proof._goodness())):
+                    # replace an old proof
+                    expr_judgment._update_proof(newproof)
 
     def _revise_proof(self):
         '''
@@ -689,11 +716,12 @@ class Judgment:
                 "not have the same meaning: %s ≠ %s."%(self.expr, expr))
         if expr._style_id == self.expr._style_id:
             return self # Nothing has changed
-        return Judgment(expr, self.assumptions)
+        return Judgment(expr, self.assumptions, 
+                        num_lit_gen=self.num_lit_gen)
 
     def with_matching_styles(self, expr, assumptions):
         '''
-        Return the Judgement with the styles matching
+        Return the Judgment with the styles matching
         those of the given expression and assumptions.
         '''
         if expr != self.expr:
@@ -720,10 +748,13 @@ class Judgment:
             return self
         
         new_style_judgment = \
-            Judgment(new_style_expr, new_style_assumptions)
+            Judgment(new_style_expr, new_style_assumptions,
+                     num_lit_gen=self.num_lit_gen)
         proof = new_style_judgment.proof()
-        if proof is not None:
-            # Update the style for the proof if there is one.
+        if proof is not None and proof.proven_truth==self:
+            # Update the style for the proof if there is one
+            # corresponding to this Judgment (as opposed to one
+            # that has more assumptions than necessary).
             new_style_proof = copy(proof)
             new_style_proof.proven_truth = self
             self._meaning_data._expr_proofs.insert(
@@ -752,9 +783,8 @@ class Judgment:
             return None  # no suitable truth
         # return one wih the shortest proof, and among those the fewest
         # assumptions
-        best_judgment = min(suitable_truths,
-                            key=lambda truth: (truth.proof().num_steps(),
-                                               len(truth.assumptions)))
+        best_judgment = max(suitable_truths,
+                            key=lambda truth: truth.proof()._goodness())
         # Make sure we get the desired style (and labels) for the
         # assumptions and 'truth'.
         # Although this looks vacuous, it will map an assumption of
@@ -1003,8 +1033,9 @@ class Judgment:
             defaults.preserved_exprs.difference_update(
                     temporarily_preserved_exprs)
 
-    def generalize(self, forall_var_or_vars_or_var_lists,
-                   domain_lists=None, domain=None, conditions=tuple()):
+    def generalize(self, forall_var_or_vars_or_var_lists, *,
+                   domain_lists=None, domain=None, conditions=tuple(),
+                   antecedent=None):
         '''
         Performs a generalization derivation step.  Returns the
         proven generalized Judgment.  Can introduce any number of
@@ -1012,10 +1043,32 @@ class Judgment:
         corresponding to the number of given forall_var_lists and 
         domains.  A single variable list or single variable and a single
         domain may be provided to introduce a single Forall wrapper.
+
+        This will also handle "literal" generalization in which literals
+        are converted to variables (with the same formatting), 
+        corresponding axioms and/or theorems are converted to 
+        assumptions, and these variables are then generalized in one 
+        step.  To do this, simply supply Literal expressions in place of
+        Variables in the forall_var_or_vars_or_var_lists.  There may
+        even be a mixture of Literals and Variables.  There are 
+        important limitations regarding literal generalization.  There 
+        must not be any axiom or theorem requirement using that Literal
+        that isn't masked by a condition, or a 
+        LiteralGeneralizationFailure will be raised.  That is, *all* 
+        needed axioms/theorems which use that Literal must be converted 
+        to an assumption (with the Literal converted to a Variable) and 
+        then included in the conditions (or antecedent).
+
+        If an antecedent is provided, it plays the role of an extra
+        condition but is placed in an implication instead of a
+        Conditional.
         '''
         from proveit._core_.proof import Generalization
+        from proveit._core_.expression.label import Literal
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             valid_params
+        from proveit._core_.expression.composite.expr_tuple import \
+            ExprTuple
         from proveit._core_.expression.composite.composite import \
             composite_expression
         from proveit.logic import InSet
@@ -1026,16 +1079,24 @@ class Judgment:
         forall_var_lists = forall_var_or_vars_or_var_lists
         try:
             forall_vars = composite_expression(forall_var_or_vars_or_var_lists)
-            if valid_params(forall_vars):
+            # Convert Literals to variables just to check to see
+            # if this corresponds to a 1-level list of variable
+            # parameters.
+            _forall_vars = ExprTuple(
+                *[_.as_variable() if isinstance(_, Literal)
+                  else _ for _ in forall_vars.entries])
+            if valid_params(_forall_vars):
                 forall_var_lists = [forall_vars]
-        except BaseException:
+        except (ValueError, TypeError) as e:
+            print(e)
             pass  # don't change the default
 
         if not hasattr(forall_var_lists, '__len__'):
-            raise ValueError("Must supply 'generalize' with a Variable, "
-                             "list of Variables (or variable ranges), or "
-                             "list of lists of Variables (or variable "
-                             "ranges).")
+            raise ValueError("Must supply 'generalize' with a "
+                             "Variable/Literal, "
+                             "list of Variables/Literals (or variable "
+                             "ranges), or list of lists of Variables/"
+                             "Literals (or variable ranges).")
         if len(forall_var_lists) == 0:
             raise ValueError(
                 "Must provide at least one Variable to generalize over")
@@ -1068,8 +1129,8 @@ class Judgment:
                                       zip(forall_vars, domains)]
             conditions = domain_conditions + list(conditions)
 
-        return self._checkedTruth(Generalization(self, forall_var_lists,
-                                                 conditions))
+        return self._checkedTruth(Generalization(
+            self, forall_var_lists, conditions, antecedent))
 
     def as_implication(self, hypothesis):
         '''
@@ -1083,6 +1144,95 @@ class Judgment:
         if isinstance(hypothesis, Judgment):
             hypothesis = hypothesis.expr  # we want the expression for this purpose
         return self._checkedTruth(Deduction(self, hypothesis))
+
+    @prover
+    def eliminate_definition(self, definition, *,
+                             as_implication_internally=False, 
+                             with_internal_wrapping=False,
+                             **defaults_config):
+        '''
+        Using literal generalization and then instantiation, eliminate
+        a required axiom or theorem that provides a conservative 
+        (non-reflexive/recursive) definition of a literal in terms of 
+        an equality or universal quantification over an equality (for 
+        literals playing a function role) with the literal on the left
+        of the equality.
+
+        Setting as_implication to True will put the definition
+        as the antecedant of an implication in the internal
+        literal generalization step.  If the definition is quantified,
+        an implication will always be used.
+
+        Setting 'with_internal_wrapping' to True will wrap the
+        the implication (if using an implication) or wrap the
+        Forall for the internal literal generalization step.
+        '''
+        from proveit import Literal, Operation, Lambda, Conditional
+        from proveit.logic import Equals, Forall
+
+        def raise_type_error():
+            raise TypeError("'definition' should be an equality or "
+                            "universally quantified equality but got %s."
+                            %definition)
+        
+        if isinstance(definition, Judgment):
+            definition = definition.expr
+
+        if isinstance(definition, Equals):
+            if not isinstance(definition.lhs, Literal):
+                raise TypeError("Expecting a Literal on the left side "
+                                "of the 'definition' equality but got "
+                                "%s."%definition.lhs)
+            lit = definition.lhs
+            var = lit.as_variable()
+            condition = definition.literals_as_variables(lit)
+            if as_implication_internally:
+                gen = self.generalize(lit, antecedent=condition)
+                if with_internal_wrapping:
+                    gen = (gen.inner_expr().instance_expr
+                           .with_wrap_before_operator())
+                return (gen.instantiate({var:condition.rhs},
+                                        preserve_all=True)
+                        .derive_consequent())
+            else:
+                gen = self.generalize(lit, conditions=[condition])
+                if with_internal_wrapping:
+                    gen = gen.with_wrapping()
+                return gen.instantiate({var:condition.rhs},
+                                       preserve_all=True)
+
+        if not isinstance(definition, Forall):
+            raise_type_error()
+        equality = definition.instance_expr
+        if not isinstance(equality, Equals):
+            raise_type_error()
+        if (not isinstance(equality.lhs, Operation) 
+                or not isinstance(equality.lhs.operator, Literal)):
+            raise TypeError(
+                "If universally quantified, the 'definition' "
+                "should have an Operation with a Literal operator "
+                "on the left side of the quantified equality.")
+        if equality.lhs.operands != definition.instance_params:
+            raise TypeError(
+                "If universally quantified, the 'definition' "
+                "should have an Operation on the left side of "
+                "the quantified equality with operands matching "
+                "the quantified parameters: %s ≠ %s"
+                %(equality.lhs.operands, definition.instance_params))
+
+        lit = equality.lhs.operator
+        var = lit.as_variable()
+        # Always use the antecedant form for a quantified
+        # definition.
+        antecedent = definition.literals_as_variables(lit)
+        repl = Lambda(antecedent.instance_params,
+                      antecedent.instance_expr.rhs)
+        gen = self.generalize(lit, antecedent=antecedent)
+        if with_internal_wrapping:
+            gen = (gen.inner_expr().instance_expr
+                   .with_wrap_before_operator())
+        impl = gen.instantiate({var:repl}, auto_simplify=False)
+        return impl.derive_consequent()
 
     @prover
     def eliminate(self, *skolem_constants, **defaults_config):

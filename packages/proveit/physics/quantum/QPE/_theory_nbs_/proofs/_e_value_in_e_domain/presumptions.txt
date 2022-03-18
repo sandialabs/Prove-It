@@ -25,6 +25,7 @@ proveit.logic.booleans.unfold_is_bool_explicit
 proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
 proveit.logic.equality.not_equals_symmetry
+proveit.logic.equality.sub_left_side_into
 proveit.logic.equality.sub_right_side_into
 proveit.logic.equality.substitute_falsehood
 proveit.logic.equality.substitute_in_false
@@ -200,6 +201,10 @@ proveit.numbers.multiplication.unary_mult_reduction
 proveit.numbers.multiplication.weak_bound_via_right_factor_bound
 proveit.numbers.negation.complex_closure
 proveit.numbers.negation.complex_nonzero_closure
+proveit.numbers.negation.distribute_neg_through_binary_sum
+proveit.numbers.negation.distribute_neg_through_div_numerator
+proveit.numbers.negation.distribute_neg_through_subtract
+proveit.numbers.negation.distribute_neg_through_sum
 proveit.numbers.negation.int_closure
 proveit.numbers.negation.int_neg_closure
 proveit.numbers.negation.int_nonpos_closure
@@ -344,11 +349,15 @@ proveit.numbers.numerals.decimals.tuple_len_1
 proveit.numbers.numerals.decimals.tuple_len_2
 proveit.numbers.numerals.decimals.tuple_len_2_typical_eq
 proveit.numbers.ordering.less_eq_add_right
+proveit.numbers.ordering.less_eq_from_not_less
+proveit.numbers.ordering.less_from_not_less_eq
 proveit.numbers.ordering.less_is_not_eq
 proveit.numbers.ordering.less_than_an_increase
 proveit.numbers.ordering.less_than_an_left_increase
 proveit.numbers.ordering.less_than_left_successor
 proveit.numbers.ordering.less_than_successor
+proveit.numbers.ordering.not_less_eq_from_less
+proveit.numbers.ordering.not_less_from_less_eq
 proveit.numbers.ordering.relax_less
 proveit.numbers.ordering.symmetric_less_eq
 proveit.numbers.ordering.transitivity_less_eq_less
@@ -363,5 +372,8 @@ proveit.physics.quantum.algebra.complex_set_is_hilbert_space
 proveit.physics.quantum.algebra.hilbert_space_is_inner_prod_space
 proveit.physics.quantum.algebra.hilbert_space_is_vec_space
 proveit.physics.quantum.algebra.ket_one_in_qubit_space
+proveit.physics.quantum.algebra.ket_one_norm
+proveit.physics.quantum.algebra.ket_zero_and_one_are_orthogonal
 proveit.physics.quantum.algebra.ket_zero_in_qubit_space
+proveit.physics.quantum.algebra.ket_zero_norm
 # THEOREMS AND THEORIES TO EXCLUDE:

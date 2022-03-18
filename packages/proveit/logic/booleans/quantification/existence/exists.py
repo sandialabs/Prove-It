@@ -1,5 +1,5 @@
 from proveit import (Lambda, Conditional, OperationOverInstances, Judgment,
-                     prover, relation_prover)
+                     composite_expression, prover, relation_prover)
 from proveit import defaults, Literal, Function, ExprTuple, USE_DEFAULTS
 from proveit import n, x, y, z, A, B, P, Q, R, S, Px
 
@@ -244,41 +244,22 @@ class Exists(OperationOverInstances):
     def conclude_via_example(self, example_instance, **defaults_config):
         '''
         Conclude and return this
-        [exists_{..y.. in S | ..Q(..x..)..} P(..y..)] 
-        from P(..x..) and Q(..x..) and ..x.. in S,
-        where ..x.. is the given example_instance.
+        [exists_{x_1, .., x_n | Q(x_1, ..., x_n)} P(x_1, ..., x_n)] 
+        from P(y_1, ..., y_n) and Q(y_1, ..., y_n)
+        where y_1, ..., y_n is the given example_instance.
         '''
-        raise NotImplementedError("Need to update")
         from . import existence_by_example
-        from proveit.logic import InSet
-        if self.instance_vars.num_entries() > 1 and (
-            not isinstance(example_instance, ExprTuple) or (
-                    example_instance.num_entries() != 
-                    self.instance_vars.num_entries())):
-            raise Exception(
-                'Number in example_instance list must match number of '
-                'instance variables in the Exists expression')
-        _y = self.instance_params
-        _P = Lambda(_y, self.instance_expr)
-        _Q = Lambda(_y, self.condition)
-        # P(..x..) where ..x.. is the given example_instance
-        example_mapping = {
-            instance_var: example_instance_elem for instance_var,
-            example_instance_elem in zip(
-                self.instance_vars,
-                example_instance if isinstance(
-                    example_instance,
-                    ExpressionList) else [example_instance])}
-        example_expr = self.instance_expr.substituted(example_mapping)
-        # ..Q(..x..).. where ..x.. is the given example_instance
-        example_conditions = self.conditions.substituted(example_mapping)
-        if self.has_domain():
-            for i_var in self.instance_vars:
-                example_conditions.append(InSet(i_var, self.domain))
-        # exists_{..y.. | ..Q(..x..)..} P(..y..)]
+        from . import existence_by_example_with_conditions
+        _x = self.instance_params
+        _n = _x.num_elements()
+        _P = Lambda(_x, self.instance_expr)
+        _y = composite_expression(example_instance)
+        if hasattr(self, 'condition'):
+            _Q = Lambda(_x, self.condition)
+            return existence_by_example_with_conditions.instantiate(
+                {n:_n, x:_x, y:_y, P:_P, Q:_Q})
         return existence_by_example.instantiate(
-            {P: _P, Q: _Q, S: self.domain,
-             x: example_instance, y: _y}).derive_consequent()
+                {n:_n, x:_x, y:_y, P:_P})
 
     @prover
     def conclude_via_domain_inclusion(self, subset_domain,

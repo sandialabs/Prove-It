@@ -171,13 +171,13 @@ def deduce_as_inner_prod_space(expr, *, field=None,
                 real_vec_set_is_inner_prod_space, 
                 complex_vec_set_is_inner_prod_space)
         if expr.base == Rational:
-            membership = rational_vec_set_is_inner_prod_space.instantiate(
+            return rational_vec_set_is_inner_prod_space.instantiate(
                     {n:expr.exponent})
         elif expr.base == Real:
-            membership = real_vec_set_is_inner_prod_space.instantiate(
+            return real_vec_set_is_inner_prod_space.instantiate(
                     {n:expr.exponent})
         elif expr.base == Complex:
-            membership = complex_vec_set_is_inner_prod_space.instantiate(
+            return complex_vec_set_is_inner_prod_space.instantiate(
                     {n:expr.exponent})
         raise NotImplementedError("'deduce_as_inner_prod_space' is not implemented "
                                   "to handle %s"%expr)

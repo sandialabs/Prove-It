@@ -15,4 +15,6 @@ if proveit.defaults.automation:
     # Import some fundamental theorems without quantifiers
     from . import (complex_set_is_hilbert_space,
                    ket_zero_in_qubit_space,
-                   ket_one_in_qubit_space)
+                   ket_one_in_qubit_space,
+                   ket_zero_norm, ket_one_norm,
+                   ket_zero_and_one_are_orthogonal)

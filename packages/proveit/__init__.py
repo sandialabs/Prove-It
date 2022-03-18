@@ -5,7 +5,7 @@ if sys.version_info[0] < 3:
 from ._core_ import (
     defaults, USE_DEFAULTS, InvalidAssumptions, SimplificationDirectives,
     Theory, TheoryException,
-    Expression, traverse_inner_expressions, used_vars,
+    Expression, traverse_inner_expressions, used_vars, used_literals,
     free_var_ranges, free_vars, expression_depth,
     InnerExpr, InnerExprGenerator, generate_inner_expressions,
     Operation, IndexedVar, Function,

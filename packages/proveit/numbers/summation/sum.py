@@ -103,21 +103,16 @@ class Sum(OperationOverInstances):
     def _formatted(self, format_type, **kwargs):
         # MUST BE UPDATED TO DEAL WITH 'joining' NESTED LEVELS
         fence = kwargs['fence'] if 'fence' in kwargs else False
-        if isinstance(self.domain, Interval):
-            lower = self.domain.lower_bound.formatted(format_type)
-            upper = self.domain.upper_bound.formatted(format_type)
-            formatted_inner = self.operator.formatted(
-                format_type) + r'_{' + self.index.formatted(format_type) + '=' + lower + r'}' + r'^{' + upper + r'} '
-            explicit_ivars = list(self.explicit_instance_vars())
-            has_explicit_ivars = (len(explicit_ivars) > 0)
-            explicit_conds = list(self.explicit_conditions())
-            has_explicit_conds = (len(explicit_conds) > 0)
-            if has_explicit_conds:
-                if has_explicit_ivars:
-                    formatted_inner += " | "
-                formatted_inner += ', '.join(condition.formatted(format_type)
-                                             for condition in explicit_conds)
-            formatted_inner += self.summand.formatted(format_type, fence=True)
+        explicit_conds = self.explicit_conditions()          
+        if isinstance(self.domain, Interval) and len(explicit_conds)==0:
+            formatted_operator = self.operator.formatted(format_type)
+            formatted_index = self.index.formatted(format_type)
+            formatted_lower = self.domain.lower_bound.formatted(format_type)
+            formatted_upper = self.domain.upper_bound.formatted(format_type)
+            formatted_summand = self.summand.formatted(format_type, fence=True)
+            formatted_inner = "%s_{%s = %s}^{%s} %s"%(
+                    formatted_operator, formatted_index,
+                    formatted_lower, formatted_upper, formatted_summand)
             return maybe_fenced(format_type, formatted_inner, fence=fence)
         else:
             return OperationOverInstances._formatted(self, format_type,

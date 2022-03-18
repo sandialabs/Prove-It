@@ -272,15 +272,19 @@ def rounding_deduce_in_number_set(expr, number_set, rounding_real_closure_thm,
     the appropriate closure theorem.
     '''
     from proveit import x
-    from proveit.numbers import Integer, Natural
-
-    if number_set == Integer:
-        return rounding_real_closure_thm.instantiate(
-            {x: expr.operand})
+    from proveit.numbers import Integer, Natural, Real
 
     if number_set == Natural:
         return rounding_real_pos_closure_thm.instantiate(
             {x: expr.operand})
+
+    operand_ns = deduce_number_set(expr.operand).domain
+    if number_set.includes(Integer) and Real.includes(operand_ns):
+        int_membership = rounding_real_closure_thm.instantiate(
+            {x: expr.operand})
+        if number_set == Integer:
+            return int_membership
+        return SubsetEq(Integer, number_set).derive_superset_membership(expr)
 
     raise NotImplementedError(
         "The rounding_methods.py function 'rounding_deduce_in_number_set()'"

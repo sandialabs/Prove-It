@@ -266,10 +266,7 @@ proveit.numbers.number_sets.real_numbers.real_nonzero_within_real
 proveit.numbers.number_sets.real_numbers.real_pos_within_real
 proveit.numbers.number_sets.real_numbers.real_pos_within_real_nonneg
 proveit.numbers.number_sets.real_numbers.real_pos_within_real_nonzero
-proveit.numbers.numerals.decimals.add_0_1
-proveit.numbers.numerals.decimals.add_1_0
 proveit.numbers.numerals.decimals.add_1_1
-proveit.numbers.numerals.decimals.add_2_0
 proveit.numbers.numerals.decimals.add_2_1
 proveit.numbers.numerals.decimals.less_0_1
 proveit.numbers.numerals.decimals.less_1_2
@@ -303,12 +300,11 @@ proveit.numbers.ordering.symmetric_less_eq
 proveit.numbers.ordering.transitivity_less_eq_less
 proveit.numbers.ordering.transitivity_less_eq_less_eq
 proveit.numbers.ordering.transitivity_less_less_eq
-proveit.physics.quantum.QPE._Psi_ket_normalized
-proveit.physics.quantum.QPE._Psi_ket_register
+proveit.physics.quantum.QPE._Psi_ket_is_normalized_vec
 proveit.physics.quantum.QPE._Psi_output
 proveit.physics.quantum.QPE._best_is_int
 proveit.physics.quantum.QPE._mod_add_closure
-proveit.physics.quantum.QPE._psi_t_ket_register
+proveit.physics.quantum.QPE._psi_t_ket_is_normalized_vec
 proveit.physics.quantum.algebra.bra_in_QmultCodomain
 proveit.physics.quantum.algebra.bra_is_linmap
 proveit.physics.quantum.algebra.complex_in_QmultCodomain

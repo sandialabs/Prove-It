@@ -7,7 +7,7 @@ are directly required, each with its Proof.  In this way, the
 Proof objects form a DAG.
 """
 
-from collections import OrderedDict
+from collections import OrderedDict, deque
 import re
 from proveit._core_.judgment import Judgment
 from proveit._core_._unique_data import meaning_data, style_data
@@ -86,6 +86,7 @@ class Proof:
 
         # Reference this unchanging data of the unique 'meaning' data.
         self._meaning_id = self._meaning_data._unique_id
+        self._style_id = self._style_data._unique_id
 
         # Reference this data of the unique 'meaning' data, but note 
         # that these are subject to change (as proofs are disabled and 
@@ -93,12 +94,90 @@ class Proof:
         self.required_proofs = self._meaning_data.required_proofs
         self._dependents = self._meaning_data._dependents
 
-        all_required_proofs = self.all_required_proofs()
-        all_required_truths = {
-            required_proof.proven_truth for required_proof in all_required_proofs if required_proof is not self}
-        original_proof = self.proven_truth not in all_required_truths
+        # If there is literal generalization, we need to
+        # indicate appropriate eliminations.
+        if (proven_truth.num_lit_gen > 0 and 
+                not hasattr(self, '_eliminated_axioms')):
+            from ._theory_storage import StoredTheorem
+            # First collect all of the eliminations from the 
+            # required proofs.
+            eliminated_proof_steps = set()
+            eliminated_axioms = set()
+            eliminated_theorems = set()
+            for required_proof in self.required_proofs:
+                eliminated_proof_steps.update(
+                    required_proof.eliminated_proof_steps())
+                eliminated_axioms.update(
+                    required_proof.eliminated_axioms())
+                eliminated_theorems.update(
+                    required_proof.eliminated_theorems())
+            # Now see if any of these are reintroduced through
+            # side-channels.
+            proofs_to_check__to__nonelims = dict()
+            for eliminated_set in (eliminated_proof_steps,
+                                   eliminated_axioms, eliminated_theorems):
+                # Collect subsets of the required proofs that aren't 
+                # eliminating a particular Proof, and map such subsets 
+                # to the set of mutually non-eliminated Proofs.
+                for _elim in eliminated_set:
+                    proofs_to_check = set()
+                    for _proof in self.required_proofs:
+                        if not _proof.is_eliminated(_elim):
+                            proofs_to_check.add(_proof)
+                    proofs_to_check__to__nonelims.setdefault(
+                        frozenset(proofs_to_check), set()).add(_elim)
+            # For each subset of required proofs that doesn't
+            # eliminate something, search it to see if any of these
+            # non-eliminated items are reintroduced.
+            for proofs_to_check, nonelims in (
+                    proofs_to_check__to__nonelims.items()):
+                # Get all local Proof requirements.
+                if len(eliminated_proof_steps) > 0 and (
+                        not all(isinstance(nonelim, Axiom) 
+                                or isinstance(nonelim, Theorem) 
+                                for nonelim in nonelims)):
+                    # We need to make sure proofs steps are eliminated
+                    # for each requirement separately.
+                    _proofs = set().union(*[proof.all_required_proofs() for
+                                            proof in proofs_to_check])
+                    # Might backtrack on eliminating proofs steps.
+                    eliminated_proof_steps -= _proofs.intersection(nonelims)
+                else:
+                    # No proof steps to eliminate.
+                    _proofs = Proof.requirements_of_proofs(proofs_to_check)
+                # Get all direct/indirect Axiom/Theorem requirements.
+                axioms_to_check, thms_to_check = (
+                    StoredTheorem.requirements_of_theorems(
+                        [_proof for _proof in _proofs 
+                         if isinstance(_proof, Theorem)]))
+                # Might backtrack on eliminated axioms/theorems.
+                axiom_violations = axioms_to_check.intersection(nonelims)
+                eliminated_axioms -= axiom_violations
+                thm_violations = thms_to_check.intersection(nonelims)
+                eliminated_theorems -= thm_violations
+            # These should be good to go now:
+            self._eliminated_proof_steps = frozenset(
+                eliminated_proof_steps)
+            self._eliminated_axioms = frozenset(eliminated_axioms)
+            self._eliminated_theorems = frozenset(eliminated_theorems)
 
-        if original_proof:
+        all_required_proofs = self.all_required_proofs()
+        if not hasattr(self._meaning_data, 'num_steps'):
+            # determine the number of unique steps required for this proof
+            self._meaning_data.num_steps = len(all_required_proofs)
+        
+        # See if this is a useless self-dependent proof
+        all_required_truths = {required_proof.proven_truth for
+                               required_proof in all_required_proofs
+                               if required_proof is not self}
+        useless_proof = proven_truth in all_required_truths
+        if useless_proof:
+            # not usable because it is not useful
+            self._meaning_data._unusable_proof = self  
+            assert proven_truth.proof() is not None, (
+                "There should have been an 'original' proof")
+            return
+        else:
             # As long as this is not a useless self-dependent proof (a 
             # proof that depends upon a different proof of the same
             # truth which should never actually get used), track the 
@@ -106,17 +185,6 @@ class Proof:
             # appropriately if there are changes due to proof disabling.
             for required_proof in self.required_proofs:
                 required_proof._dependents.add(self)
-
-        if not hasattr(self._meaning_data, 'num_steps'):
-            # determine the number of unique steps required for this proof
-            self._meaning_data.num_steps = len(all_required_proofs)
-
-        self._style_id = self._style_data._unique_id
-
-        if not original_proof:
-            self._meaning_data._unusable_proof = self  # not usable because it is not useful
-            assert proven_truth.proof() is not None, "There should have been an 'original' proof"
-            return
 
         requiring_unusable_proof = False
         for required_proof in self.required_proofs:
@@ -339,9 +407,11 @@ class Proof:
             is_defunct = (dependent.proven_truth.proof() == dependent)
             dependent._meaning_data._unusable_proof = source
             dependent.proven_truth._discard_proof(dependent)
-            # Make the number of steps as unknown as we go up through
+            # Make the number of steps (and number of literal 
+            # generalizations) as unknown as we go up through
             # the dependents.
             dependent._meaning_data.num_steps = None
+            dependent._meaning_data._num_lit_gen = None
             if not is_defunct:
                 # A different proof was active, so we don't have
                 # worry about its dependents.
@@ -395,6 +465,18 @@ class Proof:
             self._meaning_data.num_steps = len(self.all_required_proofs())
         return self._meaning_data.num_steps
 
+    def _goodness(self):
+        '''
+        We determine the 'best' proof according to:
+        1) the most literal generalization steps (which may eliminate
+           axioms and/or theorems)
+        2) the fewest number of proofs steps,
+        3) the fewest number of assumptions,
+        in that order.
+        '''
+        return (self.proven_truth.num_lit_gen, -self.num_steps(),
+                -len(self.proven_truth.assumptions))
+
     def _mark_num_steps_as_unknown(self):
         '''
         Mark the number of steps of this proof, and all
@@ -410,17 +492,67 @@ class Proof:
 
     def used_axioms(self):
         '''
-        Returns the set of names of axioms that are used directly (not via other theorems) in this proof.
+        Returns the set of names of axioms that are used directly
+        (not via other theorems) in this proof.
         '''
-        return set().union(*[required_proof.used_axioms()
-                             for required_proof in self.required_proofs])
+        axioms = set().union(
+            *[required_proof.used_axioms()
+              for required_proof in self.required_proofs])
+        if self.proven_truth.num_lit_gen > 0:
+            return axioms - self._eliminated_axioms
+        return axioms
 
     def used_theorems(self):
         '''
-        Returns the set of names of axioms that are used directly (not via other theorems) in this proof.
+        Returns the set of names of axioms that are used directly 
+        (not via other theorems) in this proof.
         '''
-        return set().union(*[required_proof.used_theorems()
-                             for required_proof in self.required_proofs])
+        thms = set().union(
+            *[required_proof.used_theorems()
+              for required_proof in self.required_proofs])
+        if self.proven_truth.num_lit_gen > 0:
+            return thms - self._eliminated_theorems
+        return thms
+
+    def eliminated_proof_steps(self):
+        '''
+        Returns the set of proof steps (non Axiom or Theorem) that 
+        are eliminated in this proof via literal generalization.
+        '''
+        if self.proven_truth.num_lit_gen > 0:
+            return self._eliminated_proof_steps
+        return frozenset()
+
+    def eliminated_axioms(self):
+        '''
+        Returns the set of Axioms that are eliminated in this 
+        proof via literal generalization.
+        '''
+        if self.proven_truth.num_lit_gen > 0:
+            return self._eliminated_axioms
+        return frozenset()
+
+    def eliminated_theorems(self):
+        '''
+        Returns the set of Theorems that are eliminated in 
+        this proof via literal generalization.
+        '''
+        if self.proven_truth.num_lit_gen > 0:
+            return self._eliminated_theorems
+        return frozenset()
+
+    def is_eliminated(self, proof):
+        '''
+        Return True if the given Proof object is eliminated
+        via literal generalization.
+        '''
+        if self.proven_truth.num_lit_gen > 0:
+            if isinstance(proof, Axiom):
+                return proof in self._eliminated_axioms
+            if isinstance(proof, Theorem):
+                return proof in self._eliminated_theorems
+            return proof in self._eliminated_proof_steps
+        return False
 
     def assumptions(self):
         return self.proven_truth.assumptions
@@ -443,7 +575,7 @@ class Proof:
         whenever it is generated).
         '''
         if hasattr(self, attr):
-            # It is okay to change to proven_truth to another one
+            # It is okay to change the proven_truth to another one
             # with the same meaning but possibly different style.
             # But otherwise, we want to treat attributes as read only.
             if attr != 'proven_truth' or value != self.__dict__[attr]:
@@ -462,13 +594,32 @@ class Proof:
         return ordered_dependency_nodes(
             self, lambda proof: proof.required_proofs)
 
-    def all_required_proofs(self, all_requirements_chain = None):
+    def all_required_proofs(self):
         '''
-        Returns the set of directly or indirectly required proofs.
+        Returns the set of directly or indirectly required Proofs,
+        stopping at Assumptions, Axioms, or Theorems.
         '''
-        sub_proof_sets = [required_proof.all_required_proofs(all_requirements_chain)
-                          for required_proof in self.required_proofs]
-        return set([self]).union(*sub_proof_sets)
+        return Proof.requirements_of_proofs(
+            [self], exclusions=self.eliminated_proof_steps())
+
+    @staticmethod
+    def requirements_of_proofs(proofs, *, exclusions=None):
+        '''
+        Returns the set of Proof objects that are required (directly
+        or indirectly) by the given Proofs, stopping at Assumptions,
+        Axioms, or Theorems.
+        '''
+        requirements = set()
+        to_process = set(proofs)
+        while len(to_process) > 0:
+            proof = to_process.pop()
+            if exclusions is not None and proof in exclusions:
+                continue # excluded
+            if proof in requirements:
+                continue # already processed this one
+            requirements.add(proof)
+            to_process.update(proof.required_proofs)
+        return requirements
 
     def _repr_html_(self):
         if not defaults.display_latex:
@@ -1009,8 +1160,11 @@ class ModusPonens(Proof):
             assumptions = [
                 assumption for assumption in assumptions if assumption in assumptions_set]
             # we have what we need; set up the ModusPonens Proof
+            num_lit_gen = (implication_truth.num_lit_gen + 
+                           antecedent_truth.num_lit_gen)
             consequent_truth = Judgment(
-                implication_expr.operands[1], assumptions)
+                implication_expr.operands[1], assumptions,
+                num_lit_gen=num_lit_gen)
             _checkImplication(
                 implication_truth.expr,
                 antecedent_truth.expr,
@@ -1046,7 +1200,11 @@ class Deduction(Proof):
         defaults.assumptions = assumptions
         try:
             implication_expr = Implies(antecedent_expr, consequent_truth.expr)
-            implication_truth = Judgment(implication_expr, assumptions)
+            num_lit_gen = consequent_truth.num_lit_gen
+            if num_lit_gen > 0:
+                print("Instantiation with lit gen")
+            implication_truth = Judgment(implication_expr, assumptions,
+                                         num_lit_gen=num_lit_gen)
             self.consequent_truth = consequent_truth
             Proof.__init__(self, implication_truth, [self.consequent_truth])
         finally:
@@ -1284,9 +1442,12 @@ class Instantiation(Proof):
                         mapping_key_order.append(var_range_form)
             self.mapping_key_order = mapping_key_order
             self.mapping = mapping
-            instantiated_truth = Judgment(instantiated_expr, assumptions)
             # Make the 'original judgment' be the 1st requirement.
             requirements.insert(0, orig_judgment)
+            num_lit_gen = sum(requirement.num_lit_gen for requirement
+                              in requirements)
+            instantiated_truth = Judgment(instantiated_expr, assumptions,
+                                          num_lit_gen=num_lit_gen)
             # Mark the requirements that are "equality replacements".
             marked_req_indices = set()
             for k, req in enumerate(requirements):
@@ -1600,17 +1761,46 @@ class Generalization(Proof):
             self,
             instance_truth,
             new_forall_param_lists,
-            new_conditions=tuple()):
+            new_conditions=tuple(),
+            new_antecedent=None):
         '''
-        A Generalization step wraps a Judgment (instance_truth) in one or more Forall operations.
-        The number of Forall operations introduced is the number of lists in new_forall_var_lists.
-        The conditions are introduced in the order they are given at the outermost level that is
-        applicable.  For example, if new_forall_param_lists is [[x, y], z]  and the new
-        conditions are f(x, y) and g(y, z) and h(z), this will prove a statement of the form:
-            forall_{x, y in Integer | f(x, y)} forall_{z | g(y, z), h(z)} ...
+        A Generalization step wraps a Judgment (instance_truth) in one 
+        or more Forall operations.  The number of Forall operations
+        introduced is the number of lists in new_forall_var_lists.
+        The conditions are introduced in the order they are given at 
+        the outermost level that is applicable.  For example, if 
+        new_forall_param_lists is [[x, y], z]  and the new conditions 
+        are f(x, y) and g(y, z) and h(z), this will prove a statement 
+        of the form:
+            forall_{x, y ∈ ℤ | f(x, y)} forall_{z | g(y, z), h(z)} ...
+        
+        In addition to ordinary Variable generalization, this also
+        deals with Literal generalization.  If, for any of the new
+        parameter variables, the Variable is not in contained in
+        the instance_truth but a corresponding Literal (with the same
+        formatting, see Literal.var_to_lits) is contained, then a
+        Literal generalization will be attempted in which axioms or
+        theorems corresponding to new_conditions may be eliminated.
+        As a very simple example for illustration, if we prove
+            ⊢ _a + _b = 10
+        Using the following axioms:
+            ⊢ _a = 2
+            ⊢ _b = 8
+        Then, through Literal generalization assuming _a and _b
+        have the same formatting as a and b, we can prove:
+            ⊢ ∀_{a, b | a=2, b=8} a + b = 10
+        and eliminate the axioms involing _a and _b.
+        
+        Alternative to a condition, a new_antecedent may be provided
+        which may be useful for formatting purposes.  For example,
+            ⊢ ∀_{a, b | a=2} (b = 8) => a + b = 1 
         '''
         from proveit import Judgment
-        from proveit._core_.expression.expr import free_vars
+        from proveit.logic import Implies
+        from proveit._core_.expression.expr import (
+                used_literals, free_vars)
+        from proveit._core_.expression.label.literal import (
+                Variable, Literal)
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             (get_param_var)
         from proveit._core_.expression.composite.expr_tuple import ExprTuple
@@ -1618,37 +1808,85 @@ class Generalization(Proof):
         if not isinstance(instance_truth, Judgment):
             raise GeneralizationFailure(
                 None, [], 'May only generalize a Judgment instance')
-        # the assumptions required for the generalization are the assumptions of
-        # the original Judgment minus the all of the new conditions (including those
-        # implied by the new domain).
+        
+        # Let's check if this is a job for Literal generalization
+        # where we convert Literals to Variables.
+        instance_expr = instance_truth.expr
+        instance_literals = used_literals(instance_expr)
+        var_to_instance_literal = {lit.as_variable():lit for lit
+                                   in instance_literals}
+        generalized_literals = set()
+        converted_param_lists = []
+        for param_list in new_forall_param_lists:
+            converted_param_list = []
+            for param in param_list:
+                if isinstance(param, Literal):
+                    # Generalized this Literal
+                    generalized_literals.add(param)
+                    converted_param_list.append(param.as_variable())
+                elif param in var_to_instance_literal:
+                    # Assume the Literal that is contained
+                    # in the instance and corresponds with
+                    # the parameter Variable should be
+                    # generalized as a Literal.
+                    generalized_literals.add(
+                        var_to_instance_literal[param])
+                    converted_param_list.append(param)
+                else:
+                    converted_param_list.append(param)
+            converted_param_lists.append(converted_param_list)
+        # With literals converted to variables.
+        new_forall_param_lists = converted_param_lists
+
+        if isinstance(new_conditions, ExprTuple):
+            new_conditions = list(new_conditions.entries)
+
+        instance_expr = instance_truth.expr
+        if len(generalized_literals) > 0:
+            # Literal generalization convert literals to variables.
+            instance_expr = instance_expr.literals_as_variables(
+                    *generalized_literals)
+            if new_antecedent is not None:
+                new_antecedent = new_antecedent.literals_as_variables(
+                    *generalized_literals)
+            new_conditions = [new_condition
+                              .literals_as_variables(*generalized_literals)
+                              for new_condition in new_conditions]
+        
+        # The assumptions required for the generalization are the
+        # assumptions of the original Judgment minus the all of the
+        # new conditions (including those implied by the new domain).
         assumptions = set(instance_truth.assumptions)
         prev_default_assumptions = defaults.assumptions
         # these assumptions will be used for deriving any side-effects
         defaults.assumptions = assumptions
+        if new_antecedent is not None:
+            # An antecedent serves the role of a condition
+            # but is placed in an implication instead of a
+            # in a Conditional.
+            instance_expr = Implies(new_antecedent, 
+                                    instance_expr)
         try:
-            if isinstance(new_conditions, ExprTuple):
-                remaining_conditions = list(new_conditions.entries)
-            else:
-                remaining_conditions = list(new_conditions)
-            expr = instance_truth.expr
+            remaining_conditions = list(new_conditions)
+            expr = instance_expr
             introduced_forall_vars = set()
             for k, new_forall_params in enumerate(
                     reversed(new_forall_param_lists)):
                 new_forall_vars = [get_param_var(parameter)
                                    for parameter in new_forall_params]
                 introduced_forall_vars |= set(new_forall_vars)
-                new_conditions = []
+                _conditions = []
                 if k == len(new_forall_param_lists) - 1:
                     # the final introduced Forall operation must use all of the
                     # remaining conditions
-                    new_conditions = remaining_conditions
+                    _conditions = remaining_conditions
                 else:
                     # use all applicable conditions in the supplied order
                     condition_applicability = \
                         [not free_vars(remaining_cond).isdisjoint(
                             new_forall_vars)
                          for remaining_cond in remaining_conditions]
-                    new_conditions = \
+                    _conditions = \
                         [remaining_cond for applicable, remaining_cond
                          in zip(condition_applicability, remaining_conditions)
                          if applicable]
@@ -1657,11 +1895,11 @@ class Generalization(Proof):
                          in zip(condition_applicability, remaining_conditions)
                          if not applicable]
                 # new conditions can eliminate corresponding assumptions
-                assumptions -= set(new_conditions)
+                assumptions -= set(_conditions)
                 # create the new generalized expression
                 generalized_expr = Forall(
                     instance_param_or_params=new_forall_params,
-                    instance_expr=expr, conditions=new_conditions)
+                    instance_expr=expr, conditions=_conditions)
                 # make sure this is a proper generalization that doesn't break
                 # the logic:
                 Generalization._checkGeneralization(generalized_expr, expr)
@@ -1672,17 +1910,174 @@ class Generalization(Proof):
                     raise GeneralizationFailure(
                         generalized_expr,
                         assumptions,
-                        'Cannot generalize using assumptions that involve any of the new forall variables (except as assumptions are eliminated via conditions or domains)')
-            generalized_truth = Judgment(generalized_expr, assumptions)
+                        'Cannot generalize using assumptions that involve '
+                        'any of the new forall variables (except as '
+                        'assumptions are eliminated via conditions or '
+                        'domains)')
+            num_lit_gen = instance_truth.num_lit_gen
+            if len(generalized_literals) > 0:
+                num_lit_gen += 1
+            generalized_truth = Judgment(generalized_expr, assumptions,
+                                         num_lit_gen=num_lit_gen)
             self.instance_truth = instance_truth
             self.new_forall_vars = new_forall_vars
-            self.new_conditions = new_conditions
+            if new_antecedent is not None:
+                new_conditions.append(new_antecedent)
+            self.new_conditions = tuple(new_conditions)
+
+            self.generalized_literals = frozenset(generalized_literals)
+            if len(generalized_literals) > 0:
+                # We are generalizing Literals.  We will eliminate
+                # requirements masked by conditions after Literals
+                # convert to Variables and make sure there are no
+                # other requirements that use these Literals.
+                eliminated_proof_steps = []
+                eliminated_axioms = []
+                eliminated_theorems = []
+                self._append_eliminated_requirements_and_check_violation(
+                        instance_truth, new_conditions,
+                        generalized_expr, eliminated_proof_steps,
+                        eliminated_axioms, eliminated_theorems)
+                instance_proof = instance_truth.proof()
+                self._eliminated_proof_steps = frozenset(
+                    eliminated_proof_steps).union(
+                        instance_proof.eliminated_proof_steps())
+                self._eliminated_axioms = frozenset(eliminated_axioms).union(
+                    instance_proof.eliminated_axioms())
+                self._eliminated_theorems = (
+                    frozenset(eliminated_theorems).union(
+                        instance_proof.eliminated_theorems()))
+
             Proof.__init__(self, generalized_truth, [self.instance_truth])
         finally:
             # restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
 
+    def _append_eliminated_requirements_and_check_violation(
+            self, instance_truth, new_conditions,
+            generalized_expr, eliminated_proof_steps,
+            eliminated_axioms, eliminated_theorems):
+        '''
+        There is literal generalization going on.  Convert the
+        new conditions to forms using the literals in place
+        of corresponding variables, search through the
+        instance_truth requirements and the axioms/theorems they
+        depend upon up until, but not including, any of these
+        transformed new conditions and make sure none of the
+        rest involves any of the literals being generalized.
+        Find the axioms/theorems corresponding to the new 
+        conditions and record them as axioms/theorems that are
+        explicitly not needed for this particular proof.
+        '''
+        from proveit import used_literals
+        from ._theory_storage import StoredTheorem
+        generalized_literals = self.generalized_literals
+        converted_conditions = {
+                condition.variables_as_literals(*generalized_literals)
+                for condition in new_conditions}
+
+        def check_axiom_or_unproven_theorem(proof):
+            '''
+            When encountering an axiom or unproven theorem that
+            is not being eliminated, it must not contain any of
+            the literals being generalized.
+            '''
+            proof_expr = proof.proven_truth.expr
+            if not used_literals(proof_expr).isdisjoint(
+                    generalized_literals):
+                # A non-eliminated Axiom or unproven Theorem that
+                # uses one of the literals we are trying the
+                # generalize: NO BUENO!
+                raise LiteralGeneralizationFailure(
+                    generalized_expr, defaults.assumptions,
+                    "%s: %s is an an Axiom or unproven Theorem, "
+                    "not eliminated via a condition, yet "
+                    "contains one or more of the literals we "
+                    "are attempting to generalize: %s"
+                    %(str(proof), proof.proven_truth, 
+                      generalized_literals))
+
+        # First, use a breadth-first search through proof requirements
+        # to determine all of the eliminated requirements and direct
+        # axioms/theorems (matching converted conditions) obtain all 
+        # of the required theorems (that aren't directly eliminated).
+        instance_proof = instance_truth.proof()
+        to_process = deque([instance_proof])
+        instance_eliminated_proof_steps = (
+            instance_proof.eliminated_proof_steps())
+        # Exclude these Axiom/Theorem names because they are 
+        # eliminated in the proof of the instance expression.
+        excluded_names = {str(ax) for ax in 
+                          instance_proof.eliminated_axioms()}
+        excluded_names.update({str(thm) for thm in 
+                               instance_proof.eliminated_theorems()})
+        required_theorems = set()
+        while len(to_process) > 0:
+            proof = to_process.popleft()
+            if proof in instance_eliminated_proof_steps:
+                # This proof step is eliminated in the instance proof.
+                continue
+            proof_expr = proof.proven_truth.expr
+            proof_is_axiom = isinstance(proof, Axiom)
+            proof_is_theorem = isinstance(proof, Theorem)
+            if proof_is_axiom or proof_is_theorem:
+                if str(proof) in excluded_names:
+                    # Eliminated in the instance proof.
+                    continue
+            if (len(proof.proven_truth.assumptions) == 0 and
+                   proof_expr in converted_conditions):
+                if proof_is_axiom:
+                    # Axiom corresponding to a condition -- it is
+                    # eliminated.
+                    eliminated_axioms.append(proof)
+                elif proof_is_theorem:
+                    # Theorem corresonding to a condition -- it is
+                    # eliminated.
+                    eliminated_theorems.append(proof)
+                else:
+                    # Eliminate this proof requirement which
+                    # corresponds to one of the new conditions.
+                    eliminated_proof_steps.append(proof)
+                # No need to go any further along this path.
+                continue
+            if proof_is_axiom or (proof_is_theorem and  
+                                  not proof.has_proof()):
+                # An Axiom or unproven Threorem.
+                check_axiom_or_unproven_theorem(proof)
+                continue
+            if proof_is_theorem:
+                required_theorems.add(proof)
+            else:
+                # Continue search with the required proofs of this
+                # one.
+                to_process.extend(proof.required_proofs)
+
+        # Search through the requirements of the required theorems
+        # for indirectly eliminated axioms/theorems.
+        required_axioms, required_deadend_theorems = (
+            StoredTheorem.requirements_of_theorems(
+                required_theorems, 
+                dead_end_theorem_exprs=converted_conditions,
+                excluded_names=excluded_names))
+        for required_axiom in required_axioms:
+            if required_axiom.proven_truth.expr in converted_conditions:
+                eliminated_axioms.append(required_axiom)
+            else:
+                check_axiom_or_unproven_theorem(required_axiom)
+        for required_theorem in required_deadend_theorems:
+            if required_theorem.proven_truth.expr in converted_conditions:
+                eliminated_theorems.append(required_theorem)
+            else:
+                assert not required_theorem.has_proof(), (
+                    "If it had a proof and doesn't correspond with "
+                    "a converted condition, it shouldn't have been "
+                    "returned by StoredTheorem.all_requirements")
+                check_axiom_or_unproven_theorem(required_theorem)
+
+    
     def step_type(self):
+        if len(self.generalized_literals) > 0:
+            return 'literal generalization'
         return 'generalization'
 
     @staticmethod
@@ -1692,7 +2087,7 @@ class Generalization(Proof):
         instance_expr.
         '''
         from proveit import Lambda, Conditional
-        from proveit.logic import Forall
+        from proveit.logic import Forall, Implies
         assert isinstance(
             generalized_expr, Forall), 'The result of a generalization must be a Forall operation'
         lambda_expr = generalized_expr.operand
@@ -1705,6 +2100,13 @@ class Generalization(Proof):
                 # weakens the statement, so it doesn't matter what
                 # the conditions are.
                 expr = expr.value
+                if expr == instance_expr:
+                    break
+            if isinstance(expr, Implies):
+                # Dig into the implication consequent.
+                # The antecedent only weakens the statement so
+                # it doesn't matter what it is.
+                expr = expr.consquent
                 if expr == instance_expr:
                     break
             if not isinstance(expr, Forall):
@@ -1833,10 +2235,13 @@ class InstantiationFailure(ProofFailure):
             original_judgment, repl_map, message)
         ProofFailure.__init__(self, None, assumptions, message)
 
-
 class GeneralizationFailure(ProofFailure):
     def __init__(self, expr, assumptions, message):
         ProofFailure.__init__(self, expr, assumptions, message)
+
+class LiteralGeneralizationFailure(GeneralizationFailure):
+    def __init__(self, expr, assumptions, message):
+        GeneralizationFailure.__init__(self, expr, assumptions, message)
 
 
 class UnusableProof(ProofFailure):
