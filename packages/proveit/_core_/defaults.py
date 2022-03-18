@@ -289,6 +289,26 @@ class TemporarySetter(object):
         if self._obj.__dict__[attr] == val:
             return # No change.  Nothing need be done.
         self._original_values[attr] = self._obj.__dict__[attr]
+
+        if attr == 'preserve_all' and val==True:
+            # We also need to remember 'replacements' and 
+            # 'auto_simplify' when setting preserve_all=True
+            attributes_to_remember = ('replacements', 'auto_simplify')
+        elif attr == 'auto_simplify' and val==True:
+            # We also need to remember 'preserve_all' when
+            # setting auto_simplify=True
+            attributes_to_remember = ('preserve_all',)
+        elif attr == 'replacements':
+            # We also need to remember 'preserve_all' and 
+            # 'preserved_exprs' when setting replacements.
+            attributes_to_remember = ('preserve_all', 'preserved_exprs')
+        else:
+            # No extra attributes we need to remember.
+            setattr(self._obj, attr, val)
+            return
+
+        for _attr in attributes_to_remember:
+            self._original_values[_attr] = self._obj.__dict__[_attr]
         setattr(self._obj, attr, val)
     
     def __getattr__(self, attr):
