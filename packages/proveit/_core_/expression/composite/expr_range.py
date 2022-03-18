@@ -2312,13 +2312,12 @@ def simplified_indices(*indices, requirements=None):
                     requirements.append(requirement.prove())
                     yield simplified_index
                     continue
-                if defaults.auto_simplify:
-                    with Add.temporary_simplification_directives() as directives:
-                        # Move literal integers to the end via the
-                        # 'order_key' simplification directive for Add.
-                        directives.order_key = lambda term : (
-                            1 if is_literal_int(term) else 0)
-                        index.simplified() 
+                with Add.temporary_simplification_directives() as directives:
+                    # Move literal integers to the end via the
+                    # 'order_key' simplification directive for Add.
+                    directives.order_key = lambda term : (
+                        1 if is_literal_int(term) else 0)
+                    index.simplified() 
                 try:
                     requirements.append(requirement.prove())
                 except ProofFailure as e:
