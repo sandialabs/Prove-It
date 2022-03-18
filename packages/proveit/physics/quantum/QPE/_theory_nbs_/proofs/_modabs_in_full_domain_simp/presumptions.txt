@@ -295,6 +295,7 @@ proveit.numbers.ordering.less_than_an_increase
 proveit.numbers.ordering.less_than_an_left_increase
 proveit.numbers.ordering.less_than_left_successor
 proveit.numbers.ordering.less_than_successor
+proveit.numbers.ordering.max_bin_args_commute
 proveit.numbers.ordering.not_less_eq_from_less
 proveit.numbers.ordering.not_less_from_less_eq
 proveit.numbers.ordering.relax_less
@@ -307,5 +308,8 @@ proveit.physics.quantum.algebra.complex_set_is_hilbert_space
 proveit.physics.quantum.algebra.hilbert_space_is_inner_prod_space
 proveit.physics.quantum.algebra.hilbert_space_is_vec_space
 proveit.physics.quantum.algebra.ket_one_in_qubit_space
+proveit.physics.quantum.algebra.ket_one_norm
+proveit.physics.quantum.algebra.ket_zero_and_one_are_orthogonal
 proveit.physics.quantum.algebra.ket_zero_in_qubit_space
+proveit.physics.quantum.algebra.ket_zero_norm
 # THEOREMS AND THEORIES TO EXCLUDE:
