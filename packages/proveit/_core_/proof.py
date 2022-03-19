@@ -1264,9 +1264,9 @@ class Instantiation(Proof):
     rules.
     '''
 
-    # Map (orig_judgment, mapping) pairs to a set of Instantiations
-    # (there may be multiple Instantiations which use different
-    # assumptions)
+    # Map (orig_judgment, mapping, defaults_config) triples to a set 
+    # of Instantiations (there may be multiple Instantiations which 
+    # use different assumptions)
     instantiations = dict()
     
     @staticmethod
@@ -1281,9 +1281,25 @@ class Instantiation(Proof):
                 orig_judgment, repl_map, equiv_alt_expansions)
         mapping_pairs = tuple(
                 [(key, mapping[key]) for key in mapping_key_order])
+        # Extract default configurationst that are relevant to
+        # the instantiation outcome other than the assumptions.
+        # (If simplify_with_known_evaluations is True, don't
+        # recall or store the instantiation because it will
+        # depend upon what is known).
+        important_default_attrs = ('auto_simplify', 'preserve_all',
+                                   'replacements', 'preserved_exprs')
+        important_configs = [getattr(defaults, attr) for attr
+                             in important_default_attrs]
+        # Make the replacements and preserved_exprs sets hashable.
+        for _k in (2, 3):
+            important_configs[_k] = tuple(
+                sorted(important_configs[_k], key=lambda expr:hash(expr)))
+        important_configs = tuple(important_configs)
         instantiations = Instantiation.instantiations
-        if (orig_judgment, mapping_pairs) in instantiations:
-            for inst in instantiations[(orig_judgment, mapping_pairs)]:
+        key = (orig_judgment, mapping_pairs, important_configs)
+        if (key in instantiations and
+                not defaults.simplify_with_known_evaluations):
+            for inst in instantiations[key]:
                 if inst.proven_truth.is_applicable():
                     # Found a known instantiation.  Retrieve it.
                     # We may be using different assumptions than
@@ -1295,8 +1311,8 @@ class Instantiation(Proof):
                              repl_map, equiv_alt_expansions,
                              mapping, mapping_key_order)
         assert inst.mapping == mapping
-        Instantiation.instantiations.setdefault(
-                (orig_judgment, mapping_pairs), set()).add(inst)
+        if not defaults.simplify_with_known_evaluations:
+            Instantiation.instantiations.setdefault(key, set()).add(inst)
         return inst
 
     @staticmethod
@@ -1337,8 +1353,6 @@ class Instantiation(Proof):
             elif isinstance(key, IndexedVar):
                 var = get_param_var(key)
                 var_range_forms.setdefault(var, set()).add(key)
-                # For convenience to be used below:
-                equiv_alt_expansions[key] = repl_map[key]
                 return var
             return get_param_var(key)
         repl_var_keys = {get_key_var(key): key for key in repl_map.keys()}
@@ -1392,8 +1406,11 @@ class Instantiation(Proof):
                 # from the fewest # of entries to the most.
                 for var_range_form in sorted(var_range_forms[var],
                                              key=var_range_form_sort):
-                    mapping[var_range_form] = \
-                        equiv_alt_expansions[var_range_form]
+                    if isinstance(var_range_form, IndexedVar):
+                        mapping[var_range_form] = repl_map[var_range_form]
+                    else:
+                        mapping[var_range_form] = (
+                            equiv_alt_expansions[var_range_form])
                     mapping_key_order.append(var_range_form)
         return mapping, mapping_key_order
 
