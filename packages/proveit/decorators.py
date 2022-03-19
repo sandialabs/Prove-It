@@ -371,29 +371,17 @@ def equality_prover(past_tense, present_tense):
                     (defaults.simplify_with_known_evaluations 
                      and is_simplification_method))):
                 from proveit.logic import evaluate_truth
-                if expr.proven():
-                    # The expression is proven so it equals true.
-                    proven_truth = Equals(
-                        expr, TRUE).conclude_boolean_equality()
-                else:
-                    # See if there is a known evaluation (or if one may
-                    # be derived via known equalities if 
-                    # defaults.automation is enabled).
+                # See if there is a known evaluation (or if one may
+                # be derived via known equalities if 
+                # defaults.automation is enabled).
+                # First, make sure we derive assumption side-effects.
+                with defaults.temporary() as tmp_defaults:
                     if 'assumptions' in kwargs:
-                        # Use new assumptions temporarily.
-                        with defaults.temporary() as tmp_defaults:
-                            tmp_defaults.assumptions = kwargs.get(
-                                    'assumptions')
-                            # Make sure we derive assumption 
-                            # side-effects.
-                            Assumption.make_assumptions(defaults.assumptions)
-                            if expr.proven():
-                                # expr is proven, so it evaluates
-                                # to TRUE.
-                                proven_truth = evaluate_truth(expr)                                
-                            else:
-                                proven_truth = Equals.get_known_evaluation(
-                                        expr)
+                        tmp_defaults.assumptions = kwargs['assumptions']
+                    Assumption.make_assumptions(defaults.assumptions)
+                    if expr.proven():
+                        # The expression is proven so it equals true.
+                        proven_truth = evaluate_truth(expr)
                     else:
                         proven_truth = Equals.get_known_evaluation(expr)
                 # For an 'evaluation' or 'simplification', we should
