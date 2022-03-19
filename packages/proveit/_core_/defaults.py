@@ -308,7 +308,9 @@ class TemporarySetter(object):
             return
 
         for _attr in attributes_to_remember:
-            self._original_values[_attr] = self._obj.__dict__[_attr]
+            if _attr not in self._original_values:
+                # extra attribute we need to remember
+                self._original_values[_attr] = self._obj.__dict__[_attr]
         setattr(self._obj, attr, val)
     
     def __getattr__(self, attr):
