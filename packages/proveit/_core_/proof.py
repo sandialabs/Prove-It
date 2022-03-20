@@ -1498,73 +1498,35 @@ class Instantiation(Proof):
             raise UnusableProof(Judgment.theorem_being_proven,
                                 orig_judgment)
 
-        # Perform relabeling of Judgment assumptions,
-        # recording requirements.
-        orig_subbed_assumptions = []
+        # Perform the instantiations, recording requirements.
         requirements = []
         equality_repl_requirements = set()
-        for assumption in orig_judgment.assumptions:
-            assumption_was_expr_range = False
-            if isinstance(assumption, ExprRange):
-                assumption = ExprTuple(assumption)
-                assumption_was_expr_range = True
-            try:
-                subbed_assumption = Lambda._apply(
-                    relabel_params, assumption, *relabel_param_replacements,
-                    param_to_num_operand_entries=param_to_num_operand_entries,
-                    allow_relabeling=True, equiv_alt_expansions=None,
-                    requirements=requirements)
-            except LambdaApplicationError as e:
-                raise InstantiationFailure(orig_judgment, repl_map,
-                                           defaults.assumptions, str(e))
-            with defaults.temporary() as temp_defaults:
-                temp_defaults.auto_simplify = False
-                subbed_assumption = subbed_assumption.equality_replaced(
-                        requirements=requirements)
-            equality_repl_requirements.update(requirements)
-            if assumption_was_expr_range:
-                # Expand a tuple of assumptions.
-                orig_subbed_assumptions.extend(
-                        subbed_assumption.entries)
-            else:
-                orig_subbed_assumptions.append(subbed_assumption)
+        try:
+            instantiated_expr = Instantiation._instantiated_expr(
+                orig_judgment, relabel_params, relabel_param_replacements,
+                param_to_num_operand_entries,
+                num_forall_eliminations, repl_map,
+                equiv_alt_expansions, requirements,
+                equality_repl_requirements)
+        except LambdaApplicationError as e:
+            raise InstantiationFailure(orig_judgment, repl_map,
+                                       defaults.assumptions, str(e))
 
-        # Make these the new default assumptions (for side-effects).
-        with defaults.temporary() as tmp_defaults:
-            # Automatically use the assumptions of the
-            # original_judgment plus the assumptions that were
-            # provided.
-            tmp_defaults.assumptions = (tuple(orig_subbed_assumptions)
-                + defaults.assumptions)
-        
-            # Perform the instantiations, recording requirements.
-            try:
-                instantiated_expr = \
-                    Instantiation._instantiated_expr(orig_judgment, 
-                        relabel_params, relabel_param_replacements,
-                        param_to_num_operand_entries,
-                        num_forall_eliminations, repl_map,
-                        equiv_alt_expansions, requirements,
-                        equality_repl_requirements)
-            except LambdaApplicationError as e:
-                raise InstantiationFailure(orig_judgment, repl_map,
-                                           defaults.assumptions, str(e))
-
-            # Remove duplicates in the requirements.
-            requirements = list(OrderedDict.fromkeys(requirements))
+        # Remove duplicates in the requirements.
+        requirements = list(OrderedDict.fromkeys(requirements))
     
-            # Remove any unnecessary assumptions (but keep the order
-            # that was provided).  Note that some assumptions of
-            # requirements may not be in the 'applied_assumptions_set'
-            # if they made use of internal assumptions from a
-            # Conditional and can be eliminated.
-            applied_assumptions_set = set(defaults.assumptions)
-            assumptions = list(orig_subbed_assumptions)
-            for requirement in requirements:
-                for assumption in requirement.assumptions:
-                    if assumption in applied_assumptions_set:
-                        assumptions.append(assumption)
-            assumptions = list(OrderedDict.fromkeys(assumptions))
+        # Remove any unnecessary assumptions (but keep the order
+        # that was provided).  Note that some assumptions of
+        # requirements may not be in the 'applied_assumptions_set'
+        # if they made use of internal assumptions from a
+        # Conditional and can be eliminated.
+        applied_assumptions_set = set(defaults.assumptions)
+        assumptions = list(orig_judgment.assumptions)
+        for requirement in requirements:
+            for assumption in requirement.assumptions:
+                if assumption in applied_assumptions_set:
+                    assumptions.append(assumption)
+        assumptions = list(OrderedDict.fromkeys(assumptions))
 
         self.mapping_key_order = mapping_key_order
         self.mapping = mapping

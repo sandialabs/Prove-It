@@ -1220,7 +1220,7 @@ class Lambda(Expression):
 
     def _contained_parameter_vars(self):
         '''
-        Return all of the Variables of this Expression that may
+        Return all of the Variables of this Expression that
         are parameter variables of a contained Lambda.
         '''
         return self.parameter_var_set.union(

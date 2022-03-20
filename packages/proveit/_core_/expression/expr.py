@@ -1329,7 +1329,7 @@ class Expression(metaclass=ExprType):
 
     def _contained_parameter_vars(self):
         '''
-        Return all of the Variables of this Expression that may
+        Return all of the Variables of this Expression that
         are parameter variables of a contained Lambda.
         '''
         return set().union(*[expr._contained_parameter_vars() for
