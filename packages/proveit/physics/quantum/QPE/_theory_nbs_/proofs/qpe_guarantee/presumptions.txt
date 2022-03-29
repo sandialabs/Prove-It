@@ -91,8 +91,6 @@ proveit.logic.booleans.negation.double_negation_elim
 proveit.logic.booleans.negation.negation_contradiction
 proveit.logic.booleans.negation.negation_intro
 proveit.logic.booleans.negation.untrue_from_negation
-proveit.logic.booleans.quantification.existence.existence_by_example
-proveit.logic.booleans.quantification.existence.existence_by_example_with_conditions
 proveit.logic.booleans.unfold_is_bool
 proveit.logic.booleans.unfold_is_bool_explicit
 proveit.logic.equality.equals_reversal
@@ -284,13 +282,11 @@ proveit.numbers.logarithms.log_increasing_less_eq
 proveit.numbers.logarithms.log_real_pos_real_closure
 proveit.numbers.modular.interval_left_shift_bijection
 proveit.numbers.modular.mod_abs_diff_reversal
-proveit.numbers.modular.mod_abs_int_closure
 proveit.numbers.modular.mod_abs_of_difference_bound
 proveit.numbers.modular.mod_abs_real_closure
 proveit.numbers.modular.mod_abs_scaled
 proveit.numbers.modular.mod_abs_x_reduce_to_abs_x
 proveit.numbers.modular.mod_natpos_in_interval
-proveit.numbers.modular.redundant_mod_elimination_in_modabs
 proveit.numbers.modular.redundant_mod_elimination_in_sum_in_modabs
 proveit.numbers.multiplication.association
 proveit.numbers.multiplication.commutation
@@ -491,8 +487,6 @@ proveit.numbers.number_sets.real_numbers.real_pos_within_real_nonneg
 proveit.numbers.number_sets.real_numbers.real_pos_within_real_nonzero
 proveit.numbers.number_sets.real_numbers.relax_IntervalCO
 proveit.numbers.number_sets.real_numbers.relax_IntervalOC
-proveit.numbers.numerals.decimals.add_1_1
-proveit.numbers.numerals.decimals.add_1_2
 proveit.numbers.numerals.decimals.add_2_1
 proveit.numbers.numerals.decimals.add_2_2
 proveit.numbers.numerals.decimals.add_3_1
@@ -506,7 +500,6 @@ proveit.numbers.numerals.decimals.less_6_7
 proveit.numbers.numerals.decimals.less_7_8
 proveit.numbers.numerals.decimals.less_8_9
 proveit.numbers.numerals.decimals.mult_2_2
-proveit.numbers.numerals.decimals.nat1
 proveit.numbers.numerals.decimals.nat2
 proveit.numbers.numerals.decimals.posnat1
 proveit.numbers.numerals.decimals.posnat2
@@ -518,7 +511,6 @@ proveit.numbers.numerals.decimals.posnat7
 proveit.numbers.numerals.decimals.posnat8
 proveit.numbers.numerals.decimals.posnat9
 proveit.numbers.numerals.decimals.reduce_2_repeats
-proveit.numbers.numerals.decimals.tuple_len_1
 proveit.numbers.numerals.decimals.tuple_len_2
 proveit.numbers.numerals.decimals.tuple_len_2_typical_eq
 proveit.numbers.numerals.decimals.tuple_len_3
@@ -547,7 +539,6 @@ proveit.numbers.ordering.symmetric_less_eq
 proveit.numbers.ordering.transitivity_less_eq_less
 proveit.numbers.ordering.transitivity_less_eq_less_eq
 proveit.numbers.ordering.transitivity_less_less_eq
-proveit.numbers.rounding.ceil_increasing_less
 proveit.numbers.rounding.ceil_increasing_less_eq
 proveit.numbers.rounding.ceil_of_real_above_int
 proveit.numbers.rounding.ceil_real_pos_closure
