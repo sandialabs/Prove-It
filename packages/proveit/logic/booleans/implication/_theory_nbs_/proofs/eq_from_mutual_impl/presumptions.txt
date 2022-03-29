@@ -1,6 +1,5 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
 proveit.core_expr_types.conditionals.condition_prepend_reduction
-proveit.core_expr_types.tuples.tuple_len_0_typical_eq
 proveit.logic.booleans.conditioned_forall_over_bool_by_cases
 proveit.logic.booleans.conjunction.and_if_all
 proveit.logic.booleans.conjunction.any_from_and
@@ -118,7 +117,6 @@ proveit.numbers.numerals.decimals.less_5_6
 proveit.numbers.numerals.decimals.less_6_7
 proveit.numbers.numerals.decimals.less_7_8
 proveit.numbers.numerals.decimals.less_8_9
-proveit.numbers.numerals.decimals.nat1
 proveit.numbers.numerals.decimals.nat2
 proveit.numbers.numerals.decimals.nat3
 proveit.numbers.numerals.decimals.posnat1

@@ -1,6 +1,4 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
-proveit.logic.booleans.conjunction.left_from_and
-proveit.logic.booleans.conjunction.right_from_and
 proveit.logic.booleans.false_eq_false
 proveit.logic.booleans.false_is_bool
 proveit.logic.booleans.forall_over_bool_by_cases

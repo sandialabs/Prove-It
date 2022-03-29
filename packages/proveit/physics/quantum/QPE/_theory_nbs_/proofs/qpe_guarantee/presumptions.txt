@@ -606,7 +606,6 @@ proveit.physics.quantum.QPE._scaled_delta_minus_l__in__real
 proveit.physics.quantum.QPE._scaled_delta_not_eq_nonzeroInt
 proveit.physics.quantum.QPE._success_complements_failure
 proveit.physics.quantum.QPE._success_prob_guarantee
-proveit.physics.quantum.QPE._two_pow_t_is_nat_pos
 proveit.physics.quantum.QPE._two_pow_t_less_one_is_nat_pos
 proveit.physics.quantum.algebra.complex_set_is_hilbert_space
 proveit.physics.quantum.algebra.complex_vec_set_is_hilbert_space

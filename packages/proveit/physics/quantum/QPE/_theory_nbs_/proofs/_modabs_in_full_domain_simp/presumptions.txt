@@ -22,13 +22,11 @@ proveit.logic.booleans.implication.not_true_via_contradiction
 proveit.logic.booleans.in_bool_if_false
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.double_negation_elim
-proveit.logic.booleans.negation.negation_contradiction
 proveit.logic.booleans.negation.negation_intro
 proveit.logic.booleans.negation.not_false
 proveit.logic.booleans.negation.untrue_from_negation
 proveit.logic.booleans.unfold_is_bool
 proveit.logic.booleans.unfold_is_bool_explicit
-proveit.logic.equality.contradiction_via_falsification
 proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
 proveit.logic.equality.not_equals_symmetry
@@ -210,7 +208,6 @@ proveit.numbers.number_sets.integers.nonpos_int_is_int_nonpos
 proveit.numbers.number_sets.integers.nonpos_int_within_int
 proveit.numbers.number_sets.integers.nonzero_if_in_nonzero_int
 proveit.numbers.number_sets.integers.nonzero_int_within_int
-proveit.numbers.number_sets.integers.pos_int_is_natural_pos
 proveit.numbers.number_sets.natural_numbers.nat_pos_within_nat
 proveit.numbers.number_sets.natural_numbers.natural_lower_bound
 proveit.numbers.number_sets.natural_numbers.natural_pos_lower_bound

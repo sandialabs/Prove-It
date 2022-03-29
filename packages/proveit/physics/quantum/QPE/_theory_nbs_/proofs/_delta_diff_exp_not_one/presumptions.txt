@@ -196,7 +196,6 @@ proveit.numbers.number_sets.integers.neg_int_within_nonzero_int
 proveit.numbers.number_sets.integers.nonpos_int_within_int
 proveit.numbers.number_sets.integers.nonzero_if_in_nonzero_int
 proveit.numbers.number_sets.integers.nonzero_int_within_int
-proveit.numbers.number_sets.integers.pos_int_is_natural_pos
 proveit.numbers.number_sets.natural_numbers.nat_pos_within_nat
 proveit.numbers.number_sets.natural_numbers.natural_lower_bound
 proveit.numbers.number_sets.natural_numbers.natural_pos_lower_bound
@@ -286,10 +285,6 @@ proveit.numbers.numerals.decimals.tuple_len_3
 proveit.numbers.numerals.decimals.tuple_len_3_typical_eq
 proveit.numbers.ordering.less_is_not_eq
 proveit.numbers.ordering.relax_less
-proveit.numbers.ordering.symmetric_less_eq
-proveit.numbers.ordering.transitivity_less_eq_less
-proveit.numbers.ordering.transitivity_less_eq_less_eq
-proveit.numbers.ordering.transitivity_less_less_eq
 proveit.physics.quantum.QPE._delta_diff_in_interval
 proveit.physics.quantum.QPE._non_int_delta_diff
 proveit.physics.quantum.algebra.complex_set_is_hilbert_space

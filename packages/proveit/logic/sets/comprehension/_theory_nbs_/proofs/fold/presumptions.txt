@@ -1,11 +1,4 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
-proveit.core_expr_types.tuples.range_from1_len
-proveit.core_expr_types.tuples.range_from1_len_typical_eq
-proveit.core_expr_types.tuples.tuple_len_0_typical_eq
-proveit.logic.booleans.conjunction.any_from_and
-proveit.logic.booleans.conjunction.each_is_bool
-proveit.logic.booleans.conjunction.left_from_and
-proveit.logic.booleans.conjunction.right_from_and
 proveit.logic.booleans.false_eq_false
 proveit.logic.booleans.from_not_false
 proveit.logic.booleans.implication.self_implication
