@@ -359,15 +359,7 @@ class Exp(NumberOperation):
             (a^b)^c = a^(b*c)
         '''
         from proveit.numbers import Mult, Div, NaturalPos, RealPos, Real
-        from . import (
-            posnat_power_of_product, posnat_power_of_products,
-            posnat_power_of_quotient, posnat_power_of_posnat_power,
-            pos_power_of_product, pos_power_of_products,
-            pos_power_of_quotient, pos_power_of_pos_power,
-            real_power_of_product, real_power_of_products,
-            real_power_of_quotient, real_power_of_real_power,
-            complex_power_of_product, complex_power_of_products,
-            complex_power_of_quotient, complex_power_of_complex_power)
+        import proveit.numbers.exponentiation as exp_pkg
         base = self.base
         exponent = self.exponent
         deduce_number_set(exponent)
@@ -379,45 +371,45 @@ class Exp(NumberOperation):
                 _a = self.base.operands
             if InSet(exponent, NaturalPos).proven():
                 if self.base.operands.is_double():
-                    return posnat_power_of_product.instantiate(
+                    return exp_pkg.posnat_power_of_product.instantiate(
                         {a: _a, b: _b, n: exponent})
                 else:
-                    return posnat_power_of_products.instantiate(
+                    return exp_pkg.posnat_power_of_products.instantiate(
                         {m: _m, a: _a, n: exponent})
             elif InSet(exponent, RealPos).proven():
                 if self.base.operands.is_double():
-                    return pos_power_of_product.instantiate(
+                    return exp_pkg.pos_power_of_product.instantiate(
                         {a: _a, b: _b, c: exponent})
                 else:
-                    return pos_power_of_products.instantiate(
+                    return exp_pkg.pos_power_of_products.instantiate(
                         {m: _m, a: _a, b: exponent})
             elif InSet(exponent, Real).proven():
                 if self.base.operands.is_double():
-                    return real_power_of_product.instantiate(
+                    return exp_pkg.real_power_of_product.instantiate(
                         {a: _a, b: _b, c: exponent})
                 else:
-                    return real_power_of_products.instantiate(
+                    return exp_pkg.real_power_of_products.instantiate(
                         {m: _m, a: _a, b: exponent})
             else:  # Complex is the default
                 if self.base.operands.is_double():
-                    return complex_power_of_product.instantiate(
+                    return exp_pkg.complex_power_of_product.instantiate(
                         {a: _a, b: _b, c: exponent})
                 else:
-                    return complex_power_of_products.instantiate(
+                    return exp_pkg.complex_power_of_products.instantiate(
                         {m: _m, a: _a, b: exponent})
         elif isinstance(base, Div):
             assert self.base.operands.is_double()
             _a, _b = self.base.operands
             if InSet(exponent, NaturalPos).proven():
-                return posnat_power_of_quotient.instantiate(
+                return exp_pkg.posnat_power_of_quotient.instantiate(
                     {a: _a, b: _b, n: exponent})
             else:
                 if InSet(exponent, RealPos).proven():
-                    thm = pos_power_of_quotient
+                    thm = exp_pkg.pos_power_of_quotient
                 elif InSet(exponent, Real).proven():
-                    thm = real_power_of_quotient
+                    thm = exp_pkg.real_power_of_quotient
                 else:  # Complex is the default
-                    thm = complex_power_of_quotient
+                    thm = exp_pkg.complex_power_of_quotient
                 return thm.instantiate(
                     {a: _a, b: _b, c: exponent})
         elif isinstance(base, Exp):
@@ -430,26 +422,26 @@ class Exp(NumberOperation):
             if InSet(exponent, NaturalPos).proven():
                 if InSet(base.exponent, NaturalPos).proven():
                     _m, _n = base.exponent, exponent
-                    return posnat_power_of_posnat_power.instantiate(
+                    return exp_pkg.posnat_power_of_posnat_power.instantiate(
                         {a: _a, m: _m, n: _n})
                 else:
                     _b, _c = base.exponent, exponent
                     if InSet(base.exponent, RealPos).proven():
-                        thm = pos_power_of_pos_power
+                        thm = exp_pkg.pos_power_of_pos_power
                     elif InSet(base.exponent, Real).proven():
-                        thm = real_power_of_real_power
+                        thm = exp_pkg.real_power_of_real_power
                     else:  # Complex is the default
-                        thm = complex_power_of_complex_power
+                        thm = exp_pkg.complex_power_of_complex_power
                     return thm.instantiate(
                         {a: _a, b: _b, c: _c})
             else:
                 _b, _c = base.exponent, exponent
                 if InSet(exponent, RealPos).proven():
-                    thm = pos_power_of_pos_power
+                    thm = exp_pkg.pos_power_of_pos_power
                 elif InSet(exponent, Real).proven():
-                    thm = real_power_of_real_power
+                    thm = exp_pkg.real_power_of_real_power
                 else:  # Complex is the default
-                    thm = complex_power_of_complex_power
+                    thm = exp_pkg.complex_power_of_complex_power
                 return thm.instantiate(
                     {a: _a, b: _b, c: _c})
         else:
@@ -623,22 +615,12 @@ class Exp(NumberOperation):
         Attempt to prove that this exponentiation expression is in the
         given number set.
         '''
-        from proveit.logic import InSet, NotEquals
-        from proveit.numbers.exponentiation import (
-            exp_complex_closure, exp_natpos_closure, exp_int_closure,
-            exp_rational_closure_nat_power, exp_rational_nonzero_closure,
-            exp_rational_pos_closure, exp_real_closure_nat_power,
-            exp_real_pos_closure, exp_real_non_neg_closure,
-            exp_complex_closure, exp_complex_nonzero_closure,
-            sqrt_complex_closure, sqrt_real_closure,
-            sqrt_real_pos_closure, sqrt_real_non_neg_closure,
-            sqrd_pos_closure, sqrd_non_neg_closure)
-
-        from proveit.numbers import zero
+        from proveit.logic import InSet
+        import proveit.numbers.exponentiation as exp_pkg
 
         deduce_number_set(self.exponent)
         if number_set == NaturalPos:
-            return exp_natpos_closure.instantiate(
+            return exp_pkg.exp_natpos_closure.instantiate(
                 {a: self.base, b: self.exponent})
         elif number_set == Natural:
             # Use the NaturalPos closure which applies for
@@ -646,7 +628,7 @@ class Exp(NumberOperation):
             self.deduce_in_number_set(NaturalPos)
             return InSet(self, Natural).prove()
         elif number_set == Integer:
-            return exp_int_closure.instantiate(
+            return exp_pkg.exp_int_closure.instantiate(
                 {a: self.base, b: self.exponent})
         elif number_set == Rational:
             power_is_nat = InSet(self.exponent, Natural)
@@ -655,17 +637,17 @@ class Exp(NumberOperation):
                 # for negative exponents as well.
                 self.deduce_in_number_set(RationalNonZero)
                 return InSet(self, Rational).prove()
-            return exp_rational_closure_nat_power.instantiate(
+            return exp_pkg.exp_rational_closure_nat_power.instantiate(
                     {a: self.base, b: self.exponent})
         elif number_set == RationalNonZero:
-            return exp_rational_nonzero_closure.instantiate(
+            return exp_pkg.exp_rational_nonzero_closure.instantiate(
                     {a: self.base, b: self.exponent})
         elif number_set == RationalPos:
-            return exp_rational_pos_closure.instantiate(
+            return exp_pkg.exp_rational_pos_closure.instantiate(
                     {a: self.base, b: self.exponent})
         elif number_set == Real:
             if self.exponent == frac(one, two):
-                return sqrt_real_closure.instantiate(
+                return exp_pkg.sqrt_real_closure.instantiate(
                     {a: self.base, b: self.exponent})
             else:
                 power_is_nat = InSet(self.exponent, Natural)
@@ -675,33 +657,34 @@ class Exp(NumberOperation):
                     # non-negative base.
                     self.deduce_in_number_set(RealPos)
                     return InSet(self, Real).prove()
-                return exp_real_closure_nat_power.instantiate(
+                return exp_pkg.exp_real_closure_nat_power.instantiate(
                         {a: self.base, b: self.exponent})
         elif number_set == RealPos:
             if self.exponent == frac(one, two):
-                return sqrt_real_pos_closure.instantiate({a: self.base})
+                return exp_pkg.sqrt_real_pos_closure.instantiate(
+                        {a: self.base})
             elif self.exponent == two:
-                return sqrd_pos_closure.instantiate({a: self.base})
+                return exp_pkg.sqrd_pos_closure.instantiate({a: self.base})
             else:
-                return exp_real_pos_closure.instantiate(
+                return exp_pkg.exp_real_pos_closure.instantiate(
                     {a: self.base, b: self.exponent})
         elif number_set == RealNonNeg:
             if self.exponent == frac(one, two):
-                return sqrt_real_non_neg_closure.instantiate({a: self.base})
+                return exp_pkg.sqrt_real_non_neg_closure.instantiate({a: self.base})
             elif self.exponent == two:
-                return sqrd_non_neg_closure.instantiate({a: self.base})
+                return exp_pkg.sqrd_non_neg_closure.instantiate({a: self.base})
             else:
-                return exp_real_non_neg_closure.instantiate(
+                return exp_pkg.exp_real_non_neg_closure.instantiate(
                     {a: self.base, b: self.exponent})
         elif number_set == Complex:
             if self.exponent == frac(one, two):
-                return sqrt_complex_closure.instantiate(
+                return exp_pkg.sqrt_complex_closure.instantiate(
                     {a: self.base})
             else:
-                return exp_complex_closure.instantiate(
+                return exp_pkg.exp_complex_closure.instantiate(
                     {a: self.base, b: self.exponent})
         elif number_set == ComplexNonZero:
-            return exp_complex_nonzero_closure.instantiate(
+            return exp_pkg.exp_complex_nonzero_closure.instantiate(
                     {a: self.base, b: self.exponent})
 
         raise NotImplementedError(

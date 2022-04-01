@@ -44,122 +44,94 @@ class Mult(NumberOperation):
         '''
         Attempt to prove that this product is in the given number_set.
         '''
-        from . import (
-            mult_int_closure,
-            mult_int_closure_bin,
-            mult_nat_closure,
-            mult_nat_closure_bin,
-            mult_nat_pos_closure,
-            mult_nat_pos_closure_bin,
-            mult_int_nonzero_closure,
-            mult_int_nonzero_closure_bin,
-            mult_rational_closure,
-            mult_rational_closure_bin,
-            mult_rational_pos_closure,
-            mult_rational_pos_closure_bin,
-            mult_rational_nonneg_closure,
-            mult_rational_nonneg_closure_bin,
-            mult_rational_nonzero_closure,
-            mult_rational_nonzero_closure_bin,
-            mult_real_closure,
-            mult_real_closure_bin,
-            mult_real_pos_closure,
-            mult_real_pos_closure_bin,
-            mult_real_nonneg_closure,
-            mult_real_nonneg_closure_bin,
-            mult_real_nonzero_closure,
-            mult_real_nonzero_closure_bin,
-            mult_complex_closure,
-            mult_complex_closure_bin,
-            mult_complex_nonzero_closure,
-            mult_complex_nonzero_closure_bin)
+        import proveit.numbers.multiplication as mult_pkg
         if hasattr(self, 'number_set'):
             number_set = number_set.number_set
         bin = False
         if number_set == Integer:
             if self.operands.is_double():
-                thm = mult_int_closure_bin
+                thm = mult_pkg.mult_int_closure_bin
                 bin = True
             else:
-                thm = mult_int_closure
+                thm = mult_pkg.mult_int_closure
         elif number_set == Natural:
             if self.operands.is_double():
-                thm = mult_nat_closure_bin
+                thm = mult_pkg.mult_nat_closure_bin
                 bin = True
             else:
-                thm = mult_nat_closure
+                thm = mult_pkg.mult_nat_closure
         elif number_set == NaturalPos:
             if self.operands.is_double():
-                thm = mult_nat_pos_closure_bin
+                thm = mult_pkg.mult_nat_pos_closure_bin
                 bin = True
             else:
-                thm = mult_nat_pos_closure
+                thm = mult_pkg.mult_nat_pos_closure
         elif number_set == IntegerNonZero:
             if self.operands.is_double():
-                thm = mult_int_nonzero_closure_bin
+                thm = mult_pkg.mult_int_nonzero_closure_bin
                 bin = True
             else:
-                thm = mult_int_nonzero_closure
+                thm = mult_pkg.mult_int_nonzero_closure
         elif number_set == Rational:
             if self.operands.is_double():
-                thm = mult_rational_closure_bin
+                thm = mult_pkg.mult_rational_closure_bin
                 bin = True
             else:
-                thm = mult_rational_closure
+                thm = mult_pkg.mult_rational_closure
         elif number_set == RationalPos:
             if self.operands.is_double():
-                thm = mult_rational_pos_closure_bin
+                thm = mult_pkg.mult_rational_pos_closure_bin
                 bin = True
             else:
-                thm = mult_rational_pos_closure
+                thm = mult_pkg.mult_rational_pos_closure
         elif number_set == RationalNonNeg:
             if self.operands.is_double():
-                thm = mult_rational_nonneg_closure_bin
+                thm = mult_pkg.mult_rational_nonneg_closure_bin
                 bin = True
             else:
-                thm = mult_rational_nonneg_closure
+                thm = mult_pkg.mult_rational_nonneg_closure
         elif number_set == RationalNonZero:
             if self.operands.is_double():
-                thm = mult_rational_nonzero_closure_bin
+                thm = mult_pkg.mult_rational_nonzero_closure_bin
                 bin = True
             else:
-                thm = mult_rational_nonzero_closure
+                thm = mult_pkg.mult_rational_nonzero_closure
         elif number_set == Real:
             if self.operands.is_double():
-                thm = mult_real_closure_bin
+                thm = mult_pkg.mult_real_closure_bin
                 bin = True
             else:
-                thm = mult_real_closure
+                thm = mult_pkg.mult_real_closure
         elif number_set == RealPos:
             if self.operands.is_double():
-                thm = mult_real_pos_closure_bin
+                thm = mult_pkg.mult_real_pos_closure_bin
                 bin = True
             else:
-                thm = mult_real_pos_closure
+                thm = mult_pkg.mult_real_pos_closure
         elif number_set == RealNonNeg:
             if self.operands.is_double():
-                thm = mult_real_nonneg_closure_bin
+                thm = mult_pkg.mult_real_nonneg_closure_bin
                 bin = True
             else:
-                thm = mult_real_nonneg_closure
+                thm = mult_pkg.mult_real_nonneg_closure
         elif number_set == RealNonZero:
             if self.operands.is_double():
-                thm = mult_real_nonzero_closure_bin
+                thm = mult_pkg.mult_real_nonzero_closure_bin
                 bin = True
             else:
-                thm = mult_real_nonzero_closure
+                thm = mult_pkg.mult_real_nonzero_closure
         elif number_set == Complex:
             if self.operands.is_double():
-                thm = mult_complex_closure_bin
+                thm = mult_pkg.mult_complex_closure_bin
                 bin = True
             else:
-                thm = mult_complex_closure
+                thm = mult_pkg.mult_complex_closure
         elif number_set == ComplexNonZero:
             if self.operands.is_double():
-                thm = mult_complex_nonzero_closure_bin
+                thm = mult_pkg.mult_complex_nonzero_closure_bin
                 bin = True
             else:
-                thm = mult_complex_nonzero_closure
+                thm = mult_pkg.mult_complex_nonzero_closure
         else:
             raise NotImplementedError(
                 "'Mult.deduce_in_number_set()' not implemented for the "
@@ -980,7 +952,7 @@ class Mult(NumberOperation):
         from . import (distribute_through_sum, distribute_through_subtract,
                        distribute_through_abs_sum)
         from proveit.numbers.division import prod_of_fracs
-        from proveit.numbers import Add, Neg, Abs, Div, Sum
+        from proveit.numbers import Neg, Abs, Div, Sum
         if (idx is None and self.factors.is_double() and
                 all(isinstance(factor, Div) for factor in self.factors)):
             return prod_of_fracs.instantiate(
@@ -1209,14 +1181,7 @@ class Mult(NumberOperation):
         allow user to specify indices 0, 1, 3 to produce something like
         |- a^{b+c+d} b^a
         '''
-        from proveit.numbers.exponentiation import (
-            product_of_posnat_powers, products_of_posnat_powers,
-            product_of_pos_powers, products_of_pos_powers,
-            product_of_real_powers, products_of_real_powers,
-            product_of_complex_powers, products_of_complex_powers)
-        from proveit.numbers.exponentiation import (
-            add_one_right_in_exp, add_one_left_in_exp,
-            add_one_left_in_exp_poss_zero_base)
+        import proveit.numbers.exponentiation as exp_pkg
         from proveit.numbers import Exp
 
         error_msg = ""
@@ -1325,7 +1290,7 @@ class Mult(NumberOperation):
                     and isinstance(self.operands[0], Exp)
                     and self.operands[0].base == self.operands[1]):
                 # self is of the form: (a^b) a
-                return add_one_right_in_exp.instantiate(
+                return exp_pkg.add_one_right_in_exp.instantiate(
                     {a: self.operands[1], b: self.operands[0].exponent})
 
             elif (self.operands.is_double() and
@@ -1334,12 +1299,13 @@ class Mult(NumberOperation):
                 # self is of the form: a (a^b)
 
                 try: # case where base a != 0
-                    return add_one_left_in_exp.instantiate(
+                    return exp_pkg.add_one_left_in_exp.instantiate(
                         {a: self.operands[0], b: self.operands[1].exponent})
                 except Exception as the_exception:
                     # case where base might be 0 but exponent != 0
-                    return add_one_left_in_exp_poss_zero_base.instantiate(
-                        {a: self.operands[0], b: self.operands[1].exponent})
+                    return (exp_pkg.add_one_left_in_exp_poss_zero_base
+                            .instantiate({a: self.operands[0], 
+                                          b: self.operands[1].exponent}))
 
         # More complex efforts if code above does not catch the
         # specific instance. The code below remains from earlier.
@@ -1423,32 +1389,32 @@ class Mult(NumberOperation):
             if known_exponent_type == NaturalPos:
                 if self.operands.is_double():
                     _m, _n = operand_exponents
-                    return product_of_posnat_powers.instantiate(
+                    return exp_pkg.product_of_posnat_powers.instantiate(
                         {a: same_base, m: _m, n: _n})
                 else:
                     _k = ExprTuple(*operand_exponents)
                     _m = _k.num_elements()
-                    return products_of_posnat_powers.instantiate(
+                    return exp_pkg.products_of_posnat_powers.instantiate(
                         {a: same_base, m: _m, k: _k})
             else:
                 if self.operands.is_double():
                     _b, _c = operand_exponents
                     if known_exponent_type == RealPos:
-                        thm = product_of_pos_powers
+                        thm = exp_pkg.product_of_pos_powers
                     elif known_exponent_type == Real:
-                        thm = product_of_real_powers
+                        thm = exp_pkg.product_of_real_powers
                     else:  # Complex is default
-                        thm = product_of_complex_powers
+                        thm = exp_pkg.product_of_complex_powers
                     return thm.instantiate({a: same_base, b: _b, c: _c})
                 else:
                     _b = ExprTuple(*operand_exponents)
                     _m = _b.num_elements()
                     if known_exponent_type == RealPos:
-                        thm = products_of_pos_powers  # plural products
+                        thm = exp_pkg.products_of_pos_powers # plural
                     elif known_exponent_type == Real:
-                        thm = products_of_real_powers  # plural products
+                        thm = exp_pkg.products_of_real_powers # plural
                     else:  # Complex is default
-                        thm = products_of_complex_powers
+                        thm = exp_pkg.products_of_complex_powers
                     return thm.instantiate({m: _m, a: same_base, b: _b})
 
         elif same_exponent not in (None, False):
@@ -1487,14 +1453,6 @@ class Mult(NumberOperation):
         allow user to specify indices 0, 2 to produce something like
         |- a^k b^c d^k e^d = (a d)^k b^c e^d
         '''
-        from proveit.numbers.exponentiation import (
-            product_of_posnat_powers, products_of_posnat_powers,
-            product_of_pos_powers, products_of_pos_powers,
-            product_of_real_powers, products_of_real_powers,
-            product_of_complex_powers, products_of_complex_powers)
-        from proveit.numbers.exponentiation import (
-            add_one_right_in_exp, add_one_left_in_exp,
-            add_one_left_in_exp_poss_zero_base)
         from proveit.numbers import Exp
 
         error_msg = ""

@@ -335,29 +335,27 @@ class Add(NumberOperation):
         and return an equality between self and a form in which these
         operands are canceled.
         '''
-        from .subtraction import add_cancel_basic, add_cancel_reverse, add_cancel_general, add_cancel_general_rev
-        from .subtraction import add_cancel_triple_12, add_cancel_triple_13, add_cancel_triple_23
-        from .subtraction import add_cancel_triple_21, add_cancel_triple_31, add_cancel_triple_32
+        import proveit.numbers.addition.subtraction as sub_pkg
         from proveit.numbers import Neg
         if idx1 > idx2:
             # choose i to be less than j
             return self.cancelation(idx2, idx1)
 
         if Neg(self.operands[idx1]) == self.operands[idx2]:
-            basic_thm = add_cancel_basic
+            basic_thm = sub_pkg.add_cancel_basic
             triple_thms = (
-                add_cancel_triple_12,
-                add_cancel_triple_13,
-                add_cancel_triple_23)
-            general_thm = add_cancel_general
+                sub_pkg.add_cancel_triple_12,
+                sub_pkg.add_cancel_triple_13,
+                sub_pkg.add_cancel_triple_23)
+            general_thm = sub_pkg.add_cancel_general
             canceled_op = self.operands[idx1]
         elif self.operands[idx1] == Neg(self.operands[idx2]):
-            basic_thm = add_cancel_reverse
+            basic_thm = sub_pkg.add_cancel_reverse
             triple_thms = (
-                add_cancel_triple_21,
-                add_cancel_triple_31,
-                add_cancel_triple_32)
-            general_thm = add_cancel_general_rev
+                sub_pkg.add_cancel_triple_21,
+                sub_pkg.add_cancel_triple_31,
+                sub_pkg.add_cancel_triple_32)
+            general_thm = sub_pkg.add_cancel_general_rev
             canceled_op = self.operands[idx2]
         else:
             raise ValueError("Unable to cancel operands idx1 and idx2; "
@@ -1082,30 +1080,7 @@ class Add(NumberOperation):
         given a number set, attempt to prove that the given expression is in that
         number set using the appropriate closure theorem
         '''
-        from proveit.numbers.addition import (
-            add_int_closure_bin,
-            add_int_closure,
-            add_nat_closure_bin,
-            add_nat_closure,
-            add_nat_pos_closure_bin,
-            add_nat_pos_closure,
-            add_nat_pos_from_non_neg,
-            add_rational_closure_bin,
-            add_rational_closure,
-            add_rational_non_neg_closure,
-            add_rational_non_neg_closure_bin,
-            add_rational_pos_closure,
-            add_rational_pos_closure_bin,
-            add_rational_pos_from_non_neg,
-            add_real_closure_bin,
-            add_real_closure,
-            add_real_non_neg_closure,
-            add_real_non_neg_closure_bin,
-            add_real_pos_closure,
-            add_real_pos_closure_bin,
-            add_real_pos_from_non_neg,
-            add_complex_closure,
-            add_complex_closure_bin)
+        import proveit.numbers.addition as add_pkg
         from proveit.numbers.addition.subtraction import (
             subtract_nat_closure_bin, sub_one_is_nat)
         from proveit.numbers import (zero, one, Neg, greater,
@@ -1113,32 +1088,32 @@ class Add(NumberOperation):
         from proveit.logic import InSet
         if number_set == Integer:
             if self.operands.is_double():
-                return add_int_closure_bin.instantiate(
+                return add_pkg.add_int_closure_bin.instantiate(
                     {a: self.operands[0], b: self.operands[1]})
             _a = self.operands
             _i = _a.num_elements()
-            return add_int_closure.instantiate({i:_i, a: _a})
+            return add_pkg.add_int_closure.instantiate({i:_i, a: _a})
         if number_set == Rational:
             if self.operands.is_double():
-                return add_rational_closure_bin.instantiate(
+                return add_pkg.add_rational_closure_bin.instantiate(
                     {a: self.operands[0], b: self.operands[1]})
             _a = self.operands
             _i = _a.num_elements()
-            return add_rational_closure.instantiate({i: _i, a: _a})
+            return add_pkg.add_rational_closure.instantiate({i: _i, a: _a})
         if number_set == Real:
             if self.operands.is_double():
-                return add_real_closure_bin.instantiate(
+                return add_pkg.add_real_closure_bin.instantiate(
                     {a: self.operands[0], b: self.operands[1]})
             _a = self.operands
             _i = _a.num_elements()
-            return add_real_closure.instantiate({i: _i, a: _a})
+            return add_pkg.add_real_closure.instantiate({i: _i, a: _a})
         if number_set == Complex:
             if self.operands.is_double():
-                return add_complex_closure_bin.instantiate(
+                return add_pkg.add_complex_closure_bin.instantiate(
                     {a: self.operands[0], b: self.operands[1]})
             _a = self.operands
             _i = _a.num_elements()
-            return add_complex_closure.instantiate({i: _i, a: _a})
+            return add_pkg.add_complex_closure.instantiate({i: _i, a: _a})
         
         # Prove what we can in preparation.
         for operand in self.operands:
@@ -1150,46 +1125,46 @@ class Add(NumberOperation):
                operand in self.operands):
             if number_set == Natural:
                 if self.operands.is_double():
-                    return add_nat_closure_bin.instantiate(
+                    return add_pkg.add_nat_closure_bin.instantiate(
                         {a: self.operands[0], b: self.operands[1]})
                 _a = self.operands
                 _i = _a.num_elements()                
-                add_nat_closure.instantiate({i: _i, a: _a})
+                add_pkg.add_nat_closure.instantiate({i: _i, a: _a})
             if number_set == NaturalPos:
                 if self.operands.is_double():
-                    return add_nat_pos_closure_bin.instantiate(
+                    return add_pkg.add_nat_pos_closure_bin.instantiate(
                         {a: self.operands[0], b: self.operands[1]})
                 _a = self.operands
                 _i = _a.num_elements()                
-                add_nat_pos_closure.instantiate({i: _i, a: _a})
+                add_pkg.add_nat_pos_closure.instantiate({i: _i, a: _a})
             if number_set == RationalPos:
                 if self.operands.is_double():
-                    return add_rational_pos_closure_bin.instantiate(
+                    return add_pkg.add_rational_pos_closure_bin.instantiate(
                         {a: self.operands[0], b: self.operands[1]})
                 _a = self.operands
                 _i = _a.num_elements()                
-                add_rational_pos_closure.instantiate({i: _i, a: _a})
+                add_pkg.add_rational_pos_closure.instantiate({i: _i, a: _a})
             if number_set == RationalNonNeg:
                 if self.operands.is_double():
-                    return add_rational_non_neg_closure_bin.instantiate(
+                    return add_pkg.add_rational_non_neg_closure_bin.instantiate(
                         {a: self.operands[0], b: self.operands[1]})
                 _a = self.operands
                 _i = _a.num_elements()
-                return add_rational_non_neg_closure.instantiate({i:_i, a: _a})
+                return add_pkg.add_rational_non_neg_closure.instantiate({i:_i, a: _a})
             if number_set == RealPos:
                 if self.operands.is_double():
-                    return add_real_pos_closure_bin.instantiate(
+                    return add_pkg.add_real_pos_closure_bin.instantiate(
                         {a: self.operands[0], b: self.operands[1]})
                 _a = self.operands
                 _i = _a.num_elements()                
-                return add_real_pos_closure.instantiate({i: _i, a: _a})
+                return add_pkg.add_real_pos_closure.instantiate({i: _i, a: _a})
             if number_set == RealNonNeg:
                 if self.operands.is_double():
-                    return add_real_non_neg_closure_bin.instantiate(
+                    return add_pkg.add_real_non_neg_closure_bin.instantiate(
                         {a: self.operands[0], b: self.operands[1]})
                 _a = self.operands
                 _i = _a.num_elements()
-                return add_real_non_neg_closure.instantiate({i:_i, a: _a})
+                return add_pkg.add_real_non_neg_closure.instantiate({i:_i, a: _a})
 
         # Try special case where one term is positive and the
         # rest are non-negative.
@@ -1204,11 +1179,11 @@ class Add(NumberOperation):
                     break # Forget it.
             if val is not None:
                 if number_set == NaturalPos:
-                    temp_thm = add_nat_pos_from_non_neg
+                    temp_thm = add_pkg.add_nat_pos_from_non_neg
                 elif number_set == RationalPos:
-                    temp_thm = add_rational_pos_from_non_neg
+                    temp_thm = add_pkg.add_rational_pos_from_non_neg
                 else:
-                    temp_thm = add_real_pos_from_non_neg
+                    temp_thm = add_pkg.add_real_pos_from_non_neg
                 _a, _b, _c = (self.operands[:val], self.operands[val],
                               self.operands[val + 1:])
                 _i = _a.num_elements()
