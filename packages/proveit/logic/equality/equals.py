@@ -80,9 +80,12 @@ class Equals(TransitiveRelation):
             Equals.known_evaluation_sets.setdefault(
                 self.lhs, set()).add(judgment)
 
-        if (self.lhs != self.rhs):
-            # automatically derive the reversed form which is equivalent
-            yield self.derive_reversed
+        if self.lhs == self.rhs:
+            # Don't bother with side-effects for reflexive equalities.
+            return
+
+        # automatically derive the reversed form which is equivalent
+        yield self.derive_reversed
         if self.rhs == FALSE:
             try:
                 self.lhs.prove(automation=False)
