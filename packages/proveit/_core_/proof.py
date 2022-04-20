@@ -28,6 +28,8 @@ class Proof:
         Theorem.all_theorems.clear()
         Theorem.all_used_theorems.clear()
         Instantiation.instantiations.clear()
+        Instantiation.unsatisfied_condition = None
+        Instantiation.condition_assumptions = None
         _ShowProof.show_proof_by_id.clear()
 
     def __init__(self, proven_truth, required_truths,
@@ -1269,6 +1271,11 @@ class Instantiation(Proof):
     # use different assumptions)
     instantiations = dict()
     
+    # For convenience in figuring out what went wrong, store the last 
+    # unsatisfied condition and associate assumptions.
+    unsatisfied_condition = None
+    condition_assumptions = None
+    
     @staticmethod
     def get_instantiation(orig_judgment, num_forall_eliminations,
                           repl_map, equiv_alt_expansions):
@@ -1826,8 +1833,16 @@ class Instantiation(Proof):
                         try:
                             requirements.append(subbed_cond.prove())
                         except ProofFailure:
-                            raise_failure('Unsatisfied condition: %s'
-                                          % str(subbed_cond))
+                            Instantiation.unsatisfied_condition = subbed_cond
+                            Instantiation.condition_assumptions = tuple(
+                                    defaults.assumptions)
+                            raise_failure(
+                                    'Unsatisfied condition: %s. '
+                                    'Accessible via '
+                                    'Instantiation.unsatisfied_condition '
+                                    'with applicable assumptions in '
+                                    'Instantiation.assumptions.'
+                                    % str(subbed_cond))
 
         # Make final instantiations in the inner instance expression.
         # Add to the lambda-application parameters anything that has
