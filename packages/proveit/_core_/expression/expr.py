@@ -388,6 +388,44 @@ class Expression(metaclass=ExprType):
         self._canonical_expr = canonical_expr
         return canonical_expr
 
+    def canonical_eq_form(self):
+        '''
+        Returns a form of this expression that should be provably
+        equal to the original, assuming sub-expression types are
+        known and appropriate.  This is distinct from the
+        "canonical_version" method which operates at a deeper level.
+        Prove-It regards the meaning of expressions with the same
+        "canonical version" to be the same (e.g., having different
+        labeling of Lambda parameters but otherwise the same).  In
+        contrast, Prove-It does not regard meanings, at a deep level,
+        to be necessarily the same for "canonical equal forms".  Rather,
+        we should be able prove they are equal (e.g., via 
+        "deduce_equality") under conditions in which the expression is 
+        at all meaningful.  For example,
+            "a + b + c + d" and "d + c + a + b" should have the
+        same canonical equal forms (which has an arbitrary but
+        deterministic order for the terms) and we can prove that these 
+        are equal as long as we know that a, b, c, and d are numbers
+        (members of the set of complex numbers).
+        '''
+        if hasattr(self, '_canonical_eq_form'):
+            return self._canonical_eq_form
+        canonical_eq_sub_exprs = []
+        has_distinct_canonical_form = False
+        for sub_expr in self.sub_expr_iter():
+            canonical_eq_sub_expr = sub_expr.canonical_eq_form()
+            if sub_expr != canonical_eq_sub_expr:
+                has_distinct_canonical_form = True
+            canonical_eq_sub_exprs.append(canonical_eq_sub_expr)
+        if has_distinct_canonical_form:
+            # Use the canonical forms of the sub-expressions.
+            self._canonical_eq_form = self._checked_make(
+                    self.core_info, canonical_eq_sub_exprs)
+        else:
+            # No canonical eq form that is different from self.
+            self._canonical_eq_form = self
+        return self._canonical_eq_form 
+
     def _establish_and_get_meaning_id(self):
         '''
         The "meaning" of an expression is determined by it's
