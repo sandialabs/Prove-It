@@ -152,7 +152,7 @@ class Equals(TransitiveRelation):
                                      "that it is given if it can: "
                                      "'%s' != '%s'" % (eq.expr, self))
                 return eq
-            except NotImplementedError:
+            except (NotImplementedError, UnsatisfiedPrerequisites):
                 # 'deduce_equality' not implemented for this 
                 # particular case, so carry on with default approach.
                 pass
