@@ -20,7 +20,8 @@ import proveit.numbers.numerals.decimals
 from proveit.numbers.numerals.decimals import DIGITS
 from proveit.abstract_algebra.generic_methods import (
         apply_commutation_thm, apply_association_thm, apply_disassociation_thm,
-        group_commutation, pairwise_evaluation)
+        group_commutation, pairwise_evaluation,
+        deduce_equality_via_commutation, generic_permutation)
 
 class Mult(NumberOperation):
     # operator of the Mult operation.
@@ -38,6 +39,20 @@ class Mult(NumberOperation):
         NumberOperation.__init__(self, Mult._operator_, operands,
                                  styles=styles)
         self.factors = self.operands
+
+    def canonical_eq_form(self):
+        '''
+        Returns a form of this operation in which the operands are 
+        in a deterministically sorted order used to determine equal 
+        expressions given commutativity of this operation under
+        appropriate conditions.
+        '''
+        return Mult(*sorted([operand.canonical_eq_form() for operand 
+                            in self.operands.entries], key=hash))
+
+    @equality_prover('equated', 'equate')
+    def deduce_equality(self, equality, **defaults_config):
+        return deduce_equality_via_commutation(equality, one_side=self)
 
     @relation_prover
     def deduce_in_number_set(self, number_set, **defaults_config):
@@ -1569,7 +1584,7 @@ class Mult(NumberOperation):
         Given numerical operands, deduce that this expression is equal
         to a form in which the operand at index init_idx has been moved
         to final_idx.
-        For example, (a + b + ... + y + z) = (a + ... + y + b + z)
+        For example, (a · b · ... · y · z) = (a · ... · y · b · z)
         via init_idx = 1 and final_idx = -2.
         '''
         from . import commutation, leftward_commutation, rightward_commutation
@@ -1591,6 +1606,32 @@ class Mult(NumberOperation):
         return group_commutation(
             self, init_idx, final_idx, length, disassociate=disassociate)
 
+    @equality_prover('moved', 'move')
+    def permutation_move(self, init_idx=None, final_idx=None,
+                         **defaults_config):
+        '''
+        Given numerical operands, deduce that this expression is equal 
+        to a form in which the operand
+        at index init_idx has been moved to final_idx.
+        For example, (a · b · ... · y · z) = (a · ... · y · b · z)
+        via init_idx = 1 and final_idx = -2.
+        '''
+        return self.commutation(init_idx=init_idx, final_idx=final_idx)
+
+    @equality_prover('permuted', 'permute')
+    def permutation(self, new_order=None, cycles=None, **defaults_config):
+        '''
+        Deduce that this Add expression is equal to an Add in which
+        the terms at indices 0, 1, …, n-1 have been reordered as
+        specified EITHER by the new_order list OR by the cycles list
+        parameter. For example,
+            (a·b·c·d).permutation_general(new_order=[0, 2, 3, 1])
+        and
+            (a·b·c·d).permutation_general(cycles=[(1, 2, 3)])
+        would both return ⊢ (a·b·c·d) = (a·c·d·b).
+        '''
+        return generic_permutation(self, new_order, cycles)
+    
     @equality_prover('associated', 'associate')
     def association(self, start_idx, length, **defaults_config):
         '''

@@ -14,7 +14,10 @@ from proveit.logic.irreducible_value import is_irreducible_value
 from proveit.numbers import NumberOperation, standard_number_set
 from proveit.numbers.numerals.decimals import DIGITS
 import proveit.numbers.numerals.decimals
-from proveit.abstract_algebra.generic_methods import apply_commutation_thm, apply_association_thm, apply_disassociation_thm, group_commutation, pairwise_evaluation
+from proveit.abstract_algebra.generic_methods import (
+        apply_commutation_thm, apply_association_thm, 
+        apply_disassociation_thm, group_commutation, pairwise_evaluation,
+        deduce_equality_via_commutation, generic_permutation)
 from proveit import TransRelUpdater
 import bisect
 from proveit.numbers import (NumberOperation, sorted_number_sets,
@@ -206,6 +209,20 @@ class Add(NumberOperation):
                     yield (lambda : self.equation_subtraction(judgment.rhs))
                     yield (lambda : self.equation_reversed_subtraction(
                             judgment.rhs))
+
+    def canonical_eq_form(self):
+        '''
+        Returns a form of this operation in which the operands are 
+        in a deterministically sorted order used to determine equal 
+        expressions given commutativity of this operation under
+        appropriate conditions.
+        '''
+        return Add(*sorted([operand.canonical_eq_form() for operand 
+                           in self.operands.entries], key=hash))
+
+    @equality_prover('equated', 'equate')
+    def deduce_equality(self, equality, **defaults_config):
+        return deduce_equality_via_commutation(equality, one_side=self)
 
     @prover
     def equation_negation(self, rhs, **defaults_config):
@@ -1586,7 +1603,7 @@ class Add(NumberOperation):
             preserve_expr=expr, replacements=replacements)
         eq.update(distribution.derive_reversed())
         return eq.relation
-
+    
     @equality_prover('commuted', 'commute')
     def commutation(self, init_idx=None, final_idx=None, 
                     **defaults_config):
@@ -1598,20 +1615,10 @@ class Add(NumberOperation):
         via init_idx = 1 and final_idx = -2.
         '''
         from . import commutation, leftward_commutation, rightward_commutation
-        eq = apply_commutation_thm(
+        return apply_commutation_thm(
             self, init_idx, final_idx, commutation,
             leftward_commutation, rightward_commutation)
-        '''
-        # DON'T WORRY ABOUT RESETTING THE STYLE FOR THE MOMENT.
-
-        # set the subraction style as appropriate:
-        subtraction_positions = self.subtraction_positions()
-        eq.inner_expr().lhs.with_subtraction_at(*subtraction_positions)
-
-        eq.inner_expr().rhs.with_subtraction_at(*)
-        '''
-        return eq
-
+    
     @equality_prover('group_commuted', 'group_commute')
     def group_commutation(self, init_idx, final_idx, length,
                           disassociate=True, **defaults_config):
@@ -1625,6 +1632,32 @@ class Add(NumberOperation):
         '''
         return group_commutation(
             self, init_idx, final_idx, length, disassociate=disassociate)
+
+    @equality_prover('moved', 'move')
+    def permutation_move(self, init_idx=None, final_idx=None,
+                         **defaults_config):
+        '''
+        Given numerical operands, deduce that this expression is equal 
+        to a form in which the operand
+        at index init_idx has been moved to final_idx.
+        For example, (a + b + ... + y + z) = (a + ... + y + b + z)
+        via init_idx = 1 and final_idx = -2.
+        '''
+        return self.commutation(init_idx, final_idx)
+
+    @equality_prover('permuted', 'permute')
+    def permutation(self, new_order=None, cycles=None, **defaults_config):
+        '''
+        Deduce that this Add expression is equal to an Add in which
+        the terms at indices 0, 1, …, n-1 have been reordered as
+        specified EITHER by the new_order list OR by the cycles list
+        parameter. For example,
+            (a+b+c+d).permutation_general(new_order=[0, 2, 3, 1])
+        and
+            (a+b+c+d).permutation_general(cycles=[(1, 2, 3)])
+        would both return ⊢ (a+b+c+d) = (a+c+d+b).
+        '''
+        return generic_permutation(self, new_order, cycles)
 
     @equality_prover('associated', 'associate')
     def association(self, start_idx, length, **defaults_config):

@@ -1,13 +1,18 @@
-from proveit import (defaults, USE_DEFAULTS, single_or_composite_expression,
+from proveit import (Judgment, UnsatisfiedPrerequisites,
+                     defaults, USE_DEFAULTS, 
+                     single_or_composite_expression,
                      prover, equality_prover)
 
 @prover
 def apply_commutation_thm(expr, init_idx, final_idx, binary_thm, leftward_thm,
-                          rightward_thm, **defaults_config):
+                          rightward_thm,  *, repl_map_extras=None,
+                          **defaults_config):
 
     from proveit.logic import Equals, Set, SetEquiv
     from proveit.numbers import num
-
+    if repl_map_extras is None:
+        repl_map_extras = dict()
+    
     # check validity of default usage of indices
     if init_idx is None or final_idx is None:
         if expr.operands.num_entries() != 2:
@@ -46,14 +51,14 @@ def apply_commutation_thm(expr, init_idx, final_idx, binary_thm, leftward_thm,
 
     # number of operands or elements = 2
     if expr.operands.num_entries() == 2 and set([init_idx, final_idx]) == {0, 1}:
-        A, B = binary_thm.all_instance_vars()
+        A, B = [_v for _v in binary_thm.all_instance_vars() if 
+                _v not in repl_map_extras]
         return binary_thm.instantiate(
             {A: expr.operands[0], B: expr.operands[1]})
 
     # number of operands is ≥ 3
     if init_idx < final_idx:
         thm = rightward_thm
-        l, m, n, A, B, C, D = thm.all_instance_vars()
         _A, _B, _C, _D = (
             expr.operands[:init_idx], expr.operands[init_idx],
             expr.operands[init_idx + 1:final_idx + 1], expr.operands[final_idx + 1:])
@@ -62,15 +67,17 @@ def apply_commutation_thm(expr, init_idx, final_idx, binary_thm, leftward_thm,
         _n = _D.num_elements()
     else:
         thm = leftward_thm
-        l, m, n, A, B, C, D = thm.all_instance_vars()
         _A, _B, _C, _D = (
             expr.operands[:final_idx], expr.operands[final_idx:init_idx],
             expr.operands[init_idx], expr.operands[init_idx + 1:])
         _l = _A.num_elements()
         _m = _B.num_elements()
         _n = _D.num_elements()
-    return thm.instantiate(
-        {l: _l, m: _m, n: _n, A: _A, B: _B, C: _C, D: _D})
+    l, m, n, A, B, C, D = [_v for _v in thm.all_instance_vars() if 
+                           _v not in repl_map_extras]
+    repl_map = {l: _l, m: _m, n: _n, A: _A, B: _B, C: _C, D: _D}
+    repl_map.update(repl_map_extras)
+    return thm.instantiate(repl_map)
 
 def start_and_end_indices(expr, *, start_index, length):
     beg = start_index
@@ -403,3 +410,62 @@ def prove_via_grouping_ranges(expr, prover_fn):
             judgment = judgment.inner_expr().disassociate(
                     range_idx, preserve_all=True)
     return judgment
+
+@prover
+def deduce_equality_via_commutation(equality, *, one_side=None,
+                                    **defaults_config):
+    '''
+    Prove the given equality by permuting the operands assuming
+    commutivity and/or substitution of sub-expressions.
+    
+    If 'one_side' is provided, raise a ValueError of it is not
+    an Expression on one side of the equality.
+    '''
+    from proveit.logic import Equals
+    if isinstance(equality, Judgment):
+        equality = equality.expr
+    if not isinstance(equality, Equals):
+        raise TypeError("'equality' must be an Equals expression")
+    lhs, rhs = equality.lhs, equality.rhs
+    if one_side is not None and one_side not in (lhs, rhs):
+        raise ValueError("'equality' expected to have %s on one side: "
+                         "%s not in {%s, %s}"%(one_side, lhs, rhs))
+    if lhs.canonical_eq_form() != rhs.canonical_eq_form():
+        raise UnsatisfiedPrerequisites(
+                "'deduce_equality_via_commutation' is not applicable "
+                "because %s and %s have different canonical forms"
+                %(lhs, rhs))
+    if lhs.operands.num_entries() != rhs.operands.num_entries():
+        raise ValueError("The number of operands do not match on either "
+                         "side of %s; 'deduce_equality_via_commutation', "
+                         "therefore, is not applicable."
+                         %equality)
+    lhs_canonical_to_idx = {operand.canonical_eq_form():_k for _k, operand 
+                            in enumerate(lhs.operands.entries)}
+    
+    # Figure out the new order and prove operand equalities 
+    # (left vs right) as needed.
+    needs_substitutions = False
+    new_order = []
+    for rhs_operand in rhs.operands.entries:
+        lhs_idx = lhs_canonical_to_idx.pop(rhs_operand.canonical_eq_form())
+        new_order.append(lhs_idx)
+        lhs_operand = lhs.operands[lhs_idx]
+        if rhs_operand != lhs_operand:
+            Equals(lhs_operand, rhs_operand).prove()
+            needs_substitutions = True
+    
+    if new_order != list(range(lhs.operands.num_entries())):
+        # The order is changed; prove the permutation.
+        permutation = generic_permutation(lhs, new_order)
+    else:
+        # No order change -- maybe just needs operand substitutions.
+        permutation = Equals(lhs, lhs).conclude_via_reflexivity()
+    if needs_substitutions:
+        # Prove the equality via direct substitutions.
+        eq_via_sub = Equals(permutation.rhs, rhs)
+        eq_via_sub.conclude_via_direct_substitution()
+        return permutation.apply_transitivity(eq_via_sub)
+    # No substitution is needed, so we should be all set.
+    assert permutation.expr == equality
+    return permutation
