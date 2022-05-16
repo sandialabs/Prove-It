@@ -17,7 +17,8 @@ import proveit.numbers.numerals.decimals
 from proveit.abstract_algebra.generic_methods import (
         apply_commutation_thm, apply_association_thm, 
         apply_disassociation_thm, group_commutation, pairwise_evaluation,
-        deduce_equality_via_commutation, generic_permutation)
+        deduce_equality_via_commutation, generic_permutation,
+        sorting_operands, sorting_and_combining_like_operands)
 from proveit import TransRelUpdater
 import bisect
 from proveit.numbers import (NumberOperation, sorted_number_sets,
@@ -42,6 +43,7 @@ class Add(NumberOperation):
     # possible but still combines like terms.
     _simplification_directives_ = SimplificationDirectives(
             ungroup = True,
+            combine_like_terms = True,
             order_key = lambda term : 0)
 
     # Map terms to sets of Judgment equalities that involve
@@ -210,19 +212,92 @@ class Add(NumberOperation):
                     yield (lambda : self.equation_reversed_subtraction(
                             judgment.rhs))
 
-    def canonical_eq_form(self):
+    def _build_canonical_form(self):
         '''
-        Returns a form of this operation in which the operands are 
-        in a deterministically sorted order used to determine equal 
-        expressions given commutativity of this operation under
-        appropriate conditions.
+        Returns a form of this Add with operands in their canonical 
+        forms, nested addition is ungrouped, and "common" terms that 
+        are the same except coefficient factors are combined, and 
+        these terms are all ordered deterministically according to
+        hash values of the non-coefficient parts of the terms.
+        
+        Example: (2/3)*a*b + c + 1 - (-1/4)*a*b + c + (1/3) ->
+                 (4/3) + (11/12) a*b + 2 c
+        The order of the terms is arbitrary but deterministic
+        (sorted by hash value).
         '''
-        return Add(*sorted([operand.canonical_eq_form() for operand 
+        from proveit.numbers import one, Neg, Mult
+        from .mult import canonical_coefficient_and_remainder
+        if self.terms.num_entries() == 0:
+            return self # Add operation with no operands
+        remainder_to_rational_coef = dict()
+        contains_only_literal_rationals = True
+        for term in self.terms:
+            canonical_term = term.canonical_form()
+            sign = 1
+            if isinstance(canonical_term, Neg):
+                sign = -1
+                canonical_term = canonical_term.operand
+            coef, remainder = canonical_coefficient_and_remainder(
+                    canonical_term)
+            if remainder != one:
+                contains_only_literal_rationals = False
+            if sign == -1:
+                if isinstance(coef, Neg):
+                    coef = coef.operand
+                else:
+                    coef = Neg(coef)
+            if remainder in remainder_to_rational_coef:
+                prev_coef = remainder_to_rational_coef[remainder]
+                if isinstance(prev_coef, Add):
+                    remainder_to_rational_coef[remainder] = Add(
+                            *prev_coef.terms, coef)
+                else:
+                    remainder_to_rational_coef[remainder] = Add(
+                            prev_coef, coef)
+            else:
+                remainder_to_rational_coef[remainder] = coef
+        if contains_only_literal_rationals:
+            # This is a sum of only literal rationals.  Just
+            # evaluate it to an irreducible form.
+            assert len(remainder_to_rational_coef)==1
+            assert one in remainder_to_rational_coef
+            return remainder_to_rational_coef[one].evaluated()
+        terms = []
+        for remainder in sorted(remainder_to_rational_coef.keys(), key=hash):
+            coef = remainder_to_rational_coef[remainder]
+            if coef == one:
+                term = remainder
+            elif isinstance(remainder, Mult):
+                term = Mult(coef, *remainder.factors)
+            else:
+                term = Mult(coef, remainder)
+            terms.append(term.canonical_form())
+        if len(terms) == 1:
+            return terms[0]
+        else:
+            return Add(*terms)
+        
+        return Add(*sorted([operand.canonical_form() for operand 
                            in self.operands.entries], key=hash))
 
-    @equality_prover('equated', 'equate')
-    def deduce_equality(self, equality, **defaults_config):
-        return deduce_equality_via_commutation(equality, one_side=self)
+    """
+    def _deduce_equality(self, equality):
+        '''
+        Prove that this Add is equal to an expression that has the
+        same canonical form.
+        '''
+        from proveit.numbers import is_literal_rational
+        canonical_form = self.canonical_form()
+        if isinstance(canonical_form, Add):
+            remainder_to_rational_coef = dict()
+            for term in canonical_form.terms:
+                if isinstance(term, Mult) and (
+                        is_literal_rational(term.factors[0])):
+                    coef = term.factors[0]
+                    remainder = 
+    
+            return deduce_equality_via_commutation(equality, one_side=self)
+    """
 
     @prover
     def equation_negation(self, rhs, **defaults_config):
@@ -448,127 +523,6 @@ class Add(NumberOperation):
         _j = _b.num_elements()
         return elim_zero_any.instantiate({i: _i, j: _j, a: _a, b: _b})
 
-    """
-    def derive_expanded_neg_self(self, idx=0, assumptions=USE_DEFAULTS):
-        '''
-        created by JML on 7/26/19
-        given an expression with a term that is a negation of itself cancel them out
-        a + b + (-b) + c = a + c
-        '''
-        from . import expanded_add_neg_self
-        from proveit.numbers import Neg, num
-        expr = self
-        # print("self, idx in add_neg_self", expr, idx)
-        if len(expr.operands) ==2:
-            # the simple binary case
-            return expr.derive_zero_from_neg_self(assumptions)
-
-        if idx < 0 or idx > len(expr.operands) - 1:
-            raise IndexError("Index must be between 0 and %s"%str(len(expr.operands)-1))
-        if not isinstance(expr.operands[idx], Neg):
-            raise ValueError("Expecting value at %s to be negated"%str(idx))
-
-        if idx != len(expr.operands) - 1 and expr.operands[idx + 1] == expr.operands[idx].operand:
-            one = expr.operands[idx].operand
-            two = expr.operands[idx + 1]
-            one_idx = idx
-            two_idx = idx + 1
-        elif idx != 0 and expr.operands[idx - 1] == expr.operands[idx].operand:
-            one = expr.operands[idx - 1]
-            two = expr.operands[idx].operand
-            one_idx = idx - 1
-            two_idx = idx
-        else:
-            raise ValueError("Expecting a value next to %s to be equal to %s"%(str(expr.operands[idx]), str(expr.operands[idx].operand)))
-
-        return expanded_add_neg_self.instantiate({m:num(one_idx),n:num(len(expr.operands)-1-two_idx), AA:expr.operands[:one_idx], y:one, x:two, BB:expr.operands[two_idx + 1:]}, assumptions=assumptions)
-    """
-
-    def _create_dict(self):
-        '''
-        created by JML 7/24/19
-        Creates a dictionary from an addition expression where the keys are common terms and values
-        are the indices where they occur.  Also returns the order of initial occurrence for each
-        type of term.
-        JML had, at my (WMW) suggestion, had positive terms come before negative terms.  This was
-        working fine but I removed this feature because it isn't clear that it is always desirable
-        and may be better to mess with the order minimally.
-        '''
-        from proveit.numbers import one, Neg, Mult, Numeral
-
-        hold = {}
-        order = []
-
-        for _i, val in enumerate(self.operands.entries):
-            # loop through each operand
-
-            # used to differentiate positive and negative for ordering
-            if isinstance(val, Neg):
-                # place it in the correct place regardless of negation
-                val = val.operand
-            elif isinstance(val, Mult):
-                # use the last factor to determine what is a "like" term
-                val = val.operands[-1]
-            if isinstance(
-                val,
-                Numeral) or (
-                is_irreducible_value(val) and not isinstance(
-                    val,
-                    Literal)):
-                # Group together all basic numbers (numerals, numeral sequences, and decimals),
-                # using 1 as a representative.
-                # But exclude special number constants like e, i, or pi which are Irreducible Literals.
-                # Those should be grouped together.
-                val = one
-
-            # either create a new key or put in an existing key
-            if val in hold:
-                # if the key exists, just add the value to the list
-                hold[val].append(_i)
-            else:
-                # if not, create the key and add the value
-                hold[val] = [_i]
-                order.append(val)
-
-        # See if we can expand the "terms" to be combined to
-        # include more factors.
-        for _k, val in enumerate(order):
-            if val == one:
-                continue
-            if isinstance(val, Neg) and val in hold:
-                continue  # positive and negatives are handled together when possible
-            # start with the most expanded and widdle down as needed
-            newval = self.operands[hold[val][0]]
-            if isinstance(newval, Neg):
-                newval = newval.operand  # overlook the negation at the moment
-            for _i in hold[val][1:]:
-                operand = self.operands[_i]
-                if isinstance(operand, Neg):
-                    operand = operand.operand  # overlook the negation
-                while newval != operand:
-                    try:
-                        if isinstance(operand, Mult):
-                            operand.index(newval)
-                            # newval is contained as a factor in the operand,
-                            # so keep it as is for now.
-                            break
-                    except ValueError:
-                        pass
-                    assert isinstance(newval, Mult), "This is unexpected"
-                    if newval.operands.num_entries() > 2:
-                        newval = Mult(newval.operands[1:])
-                    else:
-                        newval = newval.operands[-1]
-            if isinstance(val, Neg):
-                newval = Neg(newval)  # put the negation back
-            if newval != val:
-                # replace the "term" with an expanded term
-                hold[newval] = hold[val]
-                del hold[val]
-                order[_k] = newval
-
-        return hold, order
-
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
                                **defaults_config):
@@ -582,7 +536,10 @@ class Add(NumberOperation):
         cancel common terms that are subtracted, combine like terms,
         convert repeated addition to multiplication, etc.
         '''
-        from proveit.numbers import one, Neg, is_literal_int
+        from proveit.numbers import (one, Add, Neg, Mult, 
+                                     is_literal_int,
+                                     is_literal_rational)
+        from .mult import canonical_coefficient_and_remainder
         from . import empty_addition, unary_add_reduction
         
         if self.operands.num_entries() == 0:
@@ -654,90 +611,36 @@ class Add(NumberOperation):
                             preserve_all=True))
 
         # If all operands are irreducible, perform the evaluation.
-        if all(is_irreducible_value(term) for term in self.terms):
+        terms = self.terms
+        if all(is_irreducible_value(term) for term in terms):
             if self.operands.is_double():                
-                abs_terms = [
-                    term.operand if isinstance(term, Neg) 
-                    else term for term in self.terms]
-                if all(is_literal_int(abs_term) for abs_term in abs_terms):
+                if all(is_literal_int(term) for term in terms):
                     # Evaluate the addition of two literal integers.
-                    evaluation = self._integerBinaryEval()
+                    evaluation = self._integer_binary_eval()
                     return evaluation
+                elif all(is_literal_rational(term) for term in terms):
+                    # Evaluate the addition of two literal rationals.
+                    evaluation = self._rational_binary_eval()
+                    return evaluation                    
             else:
                 # Do a pairwise addition of irreducible terms.         
                 return pairwise_evaluation(self)
 
-        # separate the types of operands in a dictionary
-        hold, order = expr._create_dict()
         order_key = Add._simplification_directives_.order_key
-
-        # Have the basic numbers come at the end.
-        #if order[-1] != one and one in hold:
-        #    order.pop(order.index(one))
-        #    order.append(one)
-        
-        if len(order) > 1:
-            # Reorder the terms so like terms are adjacent.
-            pos = 0
-            # The indices keep moving as we reorder, so keep on top of this.
-            old2new = {_k: _k for _k in range(expr.operands.num_entries())}
-            new2old = {_k: _k for _k in range(expr.operands.num_entries())}
-            for key in sorted(order, key=order_key):
-                for orig_idx in hold[key]:
-                    start_idx = old2new[orig_idx]
-                    if start_idx == pos:
-                        pos += 1
-                        continue  # no change. move on.
-                    expr = eq.update(
-                        expr.commutation(start_idx, pos, 
-                                         preserve_all=True))
-                    old2new[new2old[start_idx]] = pos
-                    orig_old_idx = new2old[start_idx]
-                    if start_idx < pos:
-                        # decrement indices
-                        for new_idx in range(start_idx, pos):
-                            new2old[new_idx] = new2old[new_idx + 1]
-                            old2new[new2old[new_idx]] -= 1
-                    else:
-                        # increment indices
-                        for new_idx in range(start_idx, pos, -1):
-                            new2old[new_idx] = new2old[new_idx - 1]
-                            old2new[new2old[new_idx]] += 1
-                    new2old[pos] = orig_old_idx
-                    pos += 1
-
-            # Now group the terms so we can combine them.
-            for _m, key in enumerate(order):
-                if len(hold[key]) > 1:
-                    grouped_term = Add(
-                            *expr.operands.entries[_m:_m+len(hold[key])])
-                    inner_simplification = (
-                            grouped_term.shallow_simplification())
-                    expr = eq.update(expr.association(
-                        _m, length=len(hold[key]),
-                        replacements=[inner_simplification],
-                        auto_simplify=False))
-
-        elif len(order) == 1:
-            # All operands are like terms.  Simplify by combining them.
-            key = order[0]
-            # If all the operands are the same, combine via multiplication.
-            if (all(operand == expr.operands[0] for operand in expr.operands)
-                    and not (expr.operands.num_entries() == 1 and
-                             isinstance(expr.operands[0], ExprRange) and
-                             not expr.operands[0].is_parameter_independent)):
-                expr = eq.update(
-                    expr.conversion_to_multiplication(auto_simplify=True))
-                return eq.relation
-            elif key != one and expr.operands.num_entries() > 1:
-                # for all the keys that are not basic numbers, 
-                # derive the multiplication from the addition
-                # make sure all the operands in the key are products 
-                # (multiplication) if it's grouped, send it to become a 
-                # multiplication
-                expr = eq.update(
-                    expr.factorization(key, pull="right", auto_simplify=True))
-                return eq.relation
+        if Add._simplification_directives_.combine_like_terms and (
+                not must_evaluate):
+            # Like terms are ones whose canonical forms are the same
+            # apart from literal, rational coefficients.
+            likeness_key = lambda term : (
+                    canonical_coefficient_and_remainder(term)[1])
+            # Sort and combine like operands.
+            expr = eq.update(sorting_and_combining_like_operands(
+                    expr, order_key=order_key, likeness_key=likeness_key,
+                    auto_simplify=False))
+        else:
+            # See if we should reorder the terms.
+            expr = eq.update(sorting_operands(expr, order_key=order_key,
+                                              auto_simplify=False))
         
         if expr != self:
             # Try starting over with a call to shallow_simplification
@@ -990,7 +893,7 @@ class Add(NumberOperation):
         '''
         return Equals(self, self.quick_simplified())        
 
-    def _integerBinaryEval(self, assumptions=USE_DEFAULTS):
+    def _integer_binary_eval(self, assumptions=USE_DEFAULTS):
         '''
         Evaluate the sum of possibly negated single digit numbers.
         '''
@@ -1002,7 +905,7 @@ class Add(NumberOperation):
         if len(abs_terms) != 2 or not all(is_literal_int(abs_term)
                                           for abs_term in abs_terms):
             raise ValueError(
-                "_integerBinaryEval only applicable for binary addition of integers")
+                "_integer_binary_eval only applicable for binary addition of integers")
         _a, _b = self.terms
         _a, _b = _a.as_int(), _b.as_int()
         if _a < 0 and _b < 0:
@@ -1030,7 +933,7 @@ class Add(NumberOperation):
             elif isinstance(num(_b), NumeralSequence):
                 return num(_a).num_add_eval(_b, assumptions=assumptions)
             raise NotImplementedError(
-                "Currently, _integerBinaryEval only works for integer "
+                "Currently, _integer_binary_eval only works for integer "
                 " addition and related subtractions: %d, %d" % (_a, _b))
         with defaults.temporary() as temp_defaults:
             # We rely upon side-effect automation here.
@@ -1040,6 +943,17 @@ class Add(NumberOperation):
             proveit.numbers.numerals.decimals.__getattr__(
                     'add_%d_%d' % (_a, _b))
         return self.evaluation()
+
+    def _rational_binary_eval(self, assumptions=USE_DEFAULTS):
+        '''
+        Evaluate the sum of possibly literal rational numbers.
+        The evaluation must be irreducible which means that the result
+        (right hand side of the proven equation) must be an integer
+        or a (possibly negated) fraction with no common divisors between
+        the numerator and denominator other than 1.
+        '''
+        raise NotImplementedError("Not yet implemented")
+
 
     def subtraction_folding(self, term_idx=None, assumptions=frozenset()):
         '''
@@ -1603,6 +1517,42 @@ class Add(NumberOperation):
             preserve_expr=expr, replacements=replacements)
         eq.update(distribution.derive_reversed())
         return eq.relation
+
+    @equality_prover('combined_operands', 'combine_operands')
+    def combining_operands(self, **defaults_config):
+        '''
+        Combine terms, adding their literal, rational coeffiicents.
+        Alias for `combining_terms`.
+        '''
+        return self.combining_terms()
+    
+    @equality_prover('combined_terms', 'combine_terms')
+    def combining_terms(self, **defaults_config):
+        '''
+        Combine terms, adding their literal, rational coeffiicents.
+        Alias for `combining_operands`.
+        '''
+        # All operands are like terms. 
+        keys = {canonical_coefficient_and_remainder(term)[1] for
+                term in self.terms}
+        if len(keys) != 1:
+            raise ValueError("'combining_terms' is not applicible: %s "
+                             "has multiple types of terms")
+        key = next(iter(keys))
+        if all(operand == self.operands[0] for 
+               operand in self.operands) and not (
+                       self.operands.num_entries() == 1 and
+                       isinstance(self.operands[0], selfRange) and
+                       not self.operands[0].is_parameter_independent):
+            # Combine via multiplication.
+            return self.conversion_to_multiplication()
+        elif key != one and self.operands.num_entries() > 1:
+            # for all the keys that are not basic numbers, 
+            # derive the multiplication from the addition
+            # make sure all the operands in the key are products 
+            # (multiplication) if it's grouped, send it to become a 
+            # multiplication
+            return self.factorization(key, pull="right"))
     
     @equality_prover('commuted', 'commute')
     def commutation(self, init_idx=None, final_idx=None, 

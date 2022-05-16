@@ -135,6 +135,51 @@ class Exp(NumberOperation):
     def without_radical(self):
         return self.with_styles(exponent='raised')
 
+    def _build_canonical_form(self):
+        '''
+        The canonical form of an Exp will address:
+            x^0 = 1
+            x^1 = x
+            (x*y*z)^a = x^a * y^a * z^a
+            (x^a)^b = x^(a*b) if a and b are literal rationals.
+        Also, raising a literal rational to an integer power equates
+        to a irreducible rational.
+        Some of these equalities require the base of the exponent
+        to be nonzero, but these should work as long as the expression
+        is not a garbage expression.
+        '''
+        from proveit.number import (one, zero, Neg, Mult, 
+                                    is_literal_rational, is_literal_int,
+                                    literal_rational_ints,
+                                    simplified_rational_expr)
+        base = self.base.canonical_form()
+        exponent = self.exponent.canonical_form()
+        if exponent == zero:
+            return one # x^0 = 1
+        elif exponent == one:
+            return base # x^1 = x
+        elif isinstance(base, Mult):
+            # (x*y*z)^a = x^a * y^a * z^a
+            return Mult(*[Exp(factor, exponent) for factor 
+                          in base.factors])
+        elif isinstance(base, Exp):
+            # (x^a)^b = x^(a*b)
+            exponent = Mult(base.exponent, exponent).canonical_form()
+            return Exp(base.base, exponent)
+        elif is_literal_rational(base) and is_literal_int(exponent):
+            # Raising a literal rational to an integer power.
+            numer, denom = literal_rational_ints(base)
+            if isinstance(exponent, Neg):
+                # A negative power will flip the numerator
+                # and denominator.
+                numer, denom = denom, numer
+                exponent = exponent.operand
+            numer = numer**(exponent.as_int())
+            denom = denom**(exponent.as_int())
+            return simplified_rational_expr(numer, denom)
+                
+        return self
+
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
                                **defaults_config):

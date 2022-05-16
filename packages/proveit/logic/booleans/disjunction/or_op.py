@@ -244,18 +244,17 @@ class Or(Operation):
         _m = _A.num_elements()
         return any_if_all.instantiate({m:_m, A:_A})
 
-    def canonical_eq_form(self):
+    def _build_canonical_form(self):
         '''
         Returns a form of this operation in which the operands are 
         in a deterministically sorted order used to determine equal 
         expressions given commutativity of this operation under
         appropriate conditions.
         '''
-        return Or(*sorted([operand.canonical_eq_form() for operand 
+        return Or(*sorted([operand.canonical_form() for operand 
                           in self.operands.entries], key=hash))
 
-    @equality_prover('equated', 'equate')
-    def deduce_equality(self, equality, **defaults_config):
+    def _deduce_equality(self, equality):
         return deduce_equality_via_commutation(equality, one_side=self)
 
     @prover

@@ -469,3 +469,81 @@ def deduce_equality_via_commutation(equality, *, one_side=None,
     # No substitution is needed, so we should be all set.
     assert permutation.expr == equality
     return permutation
+
+@equality_prover('sorted_operands', 
+                 'sort_operands')
+def sorting_operands(
+        expr, *, order_key, **defaults_config):
+    '''
+    For commutative and associative operations, this method
+    equates an original expression to one that may be partially
+    sorted according to the given `order_key`.  Ties retain the
+    original order.
+    '''
+    from proveit.logic import Equals
+    # See if we should reorder the terms.
+    indices = list(range(expr.operands.num_entries()))
+    new_order = sorted(indices,
+                       key = lambda idx : order_key(expr.operands[idx]))
+    if new_order != indices:
+        return generic_permutation(expr, new_order)
+    return Equals(expr, expr).conclude_via_reflexivity()
+
+
+@equality_prover('sorted_and_combined_like_operands', 
+                 'sort_and_combine_like_operands')
+def sorting_and_combining_like_operands(
+        expr, *, order_key, likeness_key, **defaults_config):
+    '''
+    For commutative and associative operations, this method
+    equates an original expression to one that may be partially
+    sorted and "like" operands are combined.  The `likeness_key`
+    maps each operand to a key that is the same for "like" operands.
+    The "order_key" is used to sort these likeness keys -- ties
+    retain the original order w.r.t. which likeness key came first.
+    
+    Combining the operands is implemented by grouping them together
+    (calling the `association` method) and calling 
+    `combining_operands` on each one.
+    '''
+    from proveit import TransRelUpdater
+    from proveit.logic import Equals
+    if expr.operands.num_entries() <= 1:
+        # Nothing to combine or sort.
+        return Equals(expr, expr).conclude_via_reflexivity()
+    # Separate the types of operands in a dictionary so we can
+    # combine like operand.
+    key_to_indices = dict()
+    key_order = []
+    for _k, operand in enumerate(expr.operands):
+        key = likeness_key(operand)
+        if key in key_to_indices:
+            key_to_indices[key].append(_k)
+        else:
+            key_to_indices[key] = [_k]
+            # first come first serve:
+            key_order.append(key)
+    if len(key_to_indices) > 1:
+        eq = TransRelUpdater(expr)
+        # Reorder the terms so like terms are adjacent.
+        new_order = []
+        sorted_keys = sorted(key_order, key=order_key)
+        for key in sorted_keys:
+            new_order.extend(key_to_indices[key])
+        # Perform the permutation.
+        expr = eq.update(generic_permutation(expr, new_order))
+        # Now group the terms so we can combine them.
+        for _m, key in enumerate(sorted_keys):
+            num_like_operands = len(key_to_indices[key])
+            if num_like_operands > 1:
+                grouped_operation = expr.__class__(
+                        *expr.operands.entries[_m:_m+num_like_operands])
+                combination = (
+                        grouped_operation.combining_operands())
+                expr = eq.update(expr.association(
+                    _m, length=len(key_to_indices[key]),
+                    replacements=[combination],
+                    auto_simplify=False))
+        return eq.relation
+    # Only one type of operand -- combine them.
+    return expr.combining_operands()

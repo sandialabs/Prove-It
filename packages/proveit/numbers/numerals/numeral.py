@@ -2,6 +2,7 @@ from proveit import (defaults, Literal, Operation, ProofFailure,
                      USE_DEFAULTS, prover)
 from proveit.logic import IrreducibleValue, Equals
 from proveit import a, b
+import math
 
 
 class Numeral(Literal, IrreducibleValue):
@@ -287,6 +288,9 @@ class NumeralSequence(Operation, IrreducibleValue):
         return self._formatted(format_type, **kwargs)
 
 def is_literal_int(expr):
+    '''
+    Return True iff the 'expr' represents a literal, numeric integer.
+    '''
     from proveit.numbers import Neg
     if isinstance(expr, Numeral):
         return True
@@ -297,8 +301,108 @@ def is_literal_int(expr):
     return False
 
 def is_literal_rational(expr):
-    from proveit.numbers import Div
+    '''
+    Return True iff 'expr' represents a literal integer or a fraction 
+    of literal integers with the denominator not equal to zero.
+    '''
+    from proveit.numbers import Div, zero
     if isinstance(expr, Div):
         return (is_literal_int(expr.numerator) and
-                is_literal_int(expr.denominator))
+                is_literal_int(expr.denominator) and
+                expr.denominator != zero)
     return is_literal_int(expr)
+
+def literal_rational_ints(expr):
+    '''
+    Return the integer numerator and denominator of a literal rational.
+    Never returns a negative denominator (multiplies top and bottom
+    by -1 to avoid that).
+    '''
+    from proveit.numbers import Div
+    if isinstance(expr, Div):
+        numer, denom = expr.numerator.as_int(), expr.denominator.as_int()
+        if denom < 0:
+            # The denominator is negative; multiply top and bottom
+            # by negative 1.
+            return -numer, -denom
+        return numer, denom
+    return expr.numerator.as_int(), 1
+
+def simplified_rational_expr(numer_int, denom_int):
+    '''
+    Given a numerator and a denominator as integers, return
+    an Expression of the equivalent irreducible rational.
+    '''
+    from proveit.numbers import num, Div, Neg
+    # Extract the sign.
+    sign = 1
+    if numer_int < 0:
+        sign *= -1
+        numer_int *= -1
+    if denom_int < 0:
+        sign *= -1
+        denom_int *= -1
+    # Find the greatest common divisor and divide it out.
+    gcd = math.gcd(numer_int, denom_int)
+    numer_int /= gcd
+    denom_int /= gcd
+    # Build and return the expression.
+    if denom_int == 1:
+        rational = num(numer_int)
+    else:
+        rational = Div(num(numer_int), num(denom_int))    
+    if sign == -1:
+        return Neg(rational)
+    return rational
+
+'''
+Comparators for literal integers/rationals.
+'''
+
+def less_literal_ints(a, b):
+    '''
+    Return True iff a < b.
+    a and b must be literal integer expressions.
+    '''
+    if not (is_literal_int(a) and is_literal_int(b)):
+        raise ValueError("Both arguments to 'less_literal_ints' should "
+                         "be literal ints, got %s and %s"%(a, b))
+    return a.as_int() < b.as_int()
+
+def less_eq_literal_ints(a, b):
+    '''
+    Return True iff a ≤ b.
+    a and b must be literal integer expressions.
+    '''
+    if not (is_literal_int(a) and is_literal_int(b)):
+        raise ValueError("Both arguments to 'less_literal_ints' should "
+                         "be literal ints, got %s and %s"%(a, b))
+    return a.as_int() <= b.as_int()
+
+def _compare_literal_rationals(a, b, comparator):
+    '''
+    Helper for less_literal_rationals and less_eq_literal_rationals.
+    '''
+    if not (is_literal_rational(a) and is_literal_rational(b)):
+        raise ValueError("Both arguments to 'less_literal_ints' should "
+                         "be literal ints, got %s and %s"%(a, b))
+    a_numer, a_denom = literal_rational_ints(a)
+    b_numer, b_denom = literal_rational_ints(b)
+    assert a_denom > 0
+    assert b_denom > 0
+    # Multiply both sides by both denominators:
+    return comparator(a_numer*b_denom, b_numer*a_denom)
+
+def less_literal_rationals(a, b):
+    '''
+    Return True iff a < b.
+    a and b must be literal rational expressions.
+    '''
+    return _compare_literal_rationals(a, b, lambda x, y: x < y)
+
+def less_eq_literal_rationals(a, b):
+    '''
+    Return True iff a ≤ b.
+    a and b must be literal rational expressions.
+    '''
+    return _compare_literal_rationals(a, b, lambda x, y: x <= y)

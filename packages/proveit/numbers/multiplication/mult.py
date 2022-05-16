@@ -8,7 +8,7 @@ from proveit.logic import (
     InSet)
 from proveit.numbers import (
     zero, one, num, Add, NumberOperation, deduce_number_set,
-    standard_number_set, is_literal_int)
+    standard_number_set, is_literal_int, is_literal_rational)
 from proveit.numbers.number_sets import (
     Natural, NaturalPos,
     Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
@@ -21,7 +21,8 @@ from proveit.numbers.numerals.decimals import DIGITS
 from proveit.abstract_algebra.generic_methods import (
         apply_commutation_thm, apply_association_thm, apply_disassociation_thm,
         group_commutation, pairwise_evaluation,
-        deduce_equality_via_commutation, generic_permutation)
+        deduce_equality_via_commutation, generic_permutation,
+        sorting_and_combining_like_operands, sorting_operands)
 
 class Mult(NumberOperation):
     # operator of the Mult operation.
@@ -30,7 +31,11 @@ class Mult(NumberOperation):
 
     _simplification_directives_ = SimplificationDirectives(
             ungroup=True, combine_exponents=True,
-            irreducibles_in_front=True)
+            # By default, sort such that literal, rationals come first 
+            # and other irreducibles come next.
+            order_key = lambda factor : (
+                    0 if is_literal_rational(factor) else (
+                            1 if is_irreducible_value(factor) else 2)))
 
     def __init__(self, *operands, styles=None):
         r'''
@@ -40,15 +45,96 @@ class Mult(NumberOperation):
                                  styles=styles)
         self.factors = self.operands
 
-    def canonical_eq_form(self):
+    def _build_canonical_form(self):
         '''
-        Returns a form of this operation in which the operands are 
-        in a deterministically sorted order used to determine equal 
-        expressions given commutativity of this operation under
-        appropriate conditions.
+        Returns a form of this Mult with operands in their canonical
+        forms, nested multiplication is ungrouped, literal rational 
+        factors are pulled to the front and turned into an irreducible 
+        coefficient, "common" factors that are the same up to literal,
+        rational exponents are combined, and these factors are
+        deterministically sorted according to hash values of the
+        exponential factor bases.  If, after pulling out the 
+        'constants' and combining exponents, there is only one 
+        non-constant factor that remains, and this factor is an Add 
+        expression, distribute the constant through; that is,
+            (2/3) * (a + b + c)  ->  (2/3)*a + (2/3)*b + (2/3)*c.
+            
+            [x * ((1/2)*y + ((2*z1)*(3*z2)*z3))] * 2
+            
+        Example:  (a/b)^{2/3) * c * (-2) * (a/b)^{-1/4} * c * (1/3) * d 
+            ->    (-2/3) * a^{5/12} * b^{-5/12} * c^2  * d
+        The order of the factors is arbitrary but deterministic
+        (sorted by hash value) except the literal rational coefficient
+        will be the first factor (or omitted if it is 1).
         '''
-        return Mult(*sorted([operand.canonical_eq_form() for operand 
-                            in self.operands.entries], key=hash))
+        from proveit.numbers import (Neg, Exp, one, 
+                                     is_literal_rational,
+                                     simplified_rational_expr)
+        # Extract the literal rational factors from the rest.
+        # Generate canonical forms of factors and ungroup nested
+        # multiplications.
+        def gen_factors():
+            for factor in self.factors:
+                canonical_factor = factor.canonical_form()
+                if isinstance(canonical_factor, Mult):
+                    for sub_factor in canonical_factor.factors:
+                        yield sub_factor
+                else:
+                    yield canonical_factor
+        # Populate base_to_exponent and extracted coefficient
+        # numerator/denominator from the generated factors.
+        numer, denom = 1, 1
+        base_to_exponent = dict()
+        for factor in gen_factors():
+            if isinstance(factor, Neg):
+                numer *= -1
+                factor = factor.operand
+            if is_literal_int(factor):
+                numer *= factor.as_int()
+            elif is_literal_rational(factor):
+                numer *= factor.numerator.as_int()
+                denom *= factor.denominator.as_int()
+            else:
+                if isinstance(factor, Exp) and (
+                        is_literal_rational(factor.exponent)):
+                    exponent = factor.exponent
+                    base = factor.base
+                else:
+                    exponent = one
+                    base = factor
+                base = base.canonical_form() # canonize the base
+                if base in base_to_exponent:
+                    prev_exponent = base_to_exponent[base]
+                    if isinstance(prev_exponent, Add):
+                        exponent = Add(*prev_exponent.terms, exponent)
+                    else:
+                        exponent = Add(prev_exponent, exponent)
+                    base_to_exponent[base] = exponent
+        if denom == 0:
+            # Division by zero; the expression is garbage
+            raise self # we can't do anything with it.
+        coef = simplified_rational_expr(numer, denom)
+        # Obtain the sorted, combined, canonical factors.
+        factors = []
+        for base in sorted(base_to_exponent.keys(), key=hash):
+            # Canonize the exponentiated factor.
+            factor = Exp(base, exponent).canonical_form()
+            factors.append(factor)
+        # Return the appropriate canonical form.
+        if len(factors) == 0:
+            return coef
+        if coef == one:
+            if len(factors) > 1:
+                return Mult(*factors)
+            else:
+                return factors[0]
+        if len(factors) == 1:
+            # A single factor; if it is an Add, distribute the coef.
+            factor = factors[0]
+            if isinstance(factor, Add):
+                return Add(*[Mult(coef, term).canonical_form() for term
+                             in factor.terms])
+        return Mult(coef, *factors)
 
     @equality_prover('equated', 'equate')
     def deduce_equality(self, equality, **defaults_config):
@@ -288,7 +374,7 @@ class Mult(NumberOperation):
         Deals with disassociating any nested multiplications,
         simplifying negations, and factors of one, and factors of 0.
         '''
-        from proveit.numbers import Exp
+        from proveit.numbers import Exp, is_literal_rational
         from . import mult_zero_left, mult_zero_right, mult_zero_any
         from . import empty_mult, unary_mult_reduction
 
@@ -371,8 +457,31 @@ class Mult(NumberOperation):
             eq.update(expr.evaluation())
             return eq.relation
 
-        if (Mult._simplification_directives_.combine_exponents
-                and not must_evaluate):
+        order_key = Mult._simplification_directives_.order_key
+        if Mult._simplification_directives_.combine_exponents and (
+                not must_evaluate):
+            # Like factors are ones whose canonical forms are
+            # implicit/explicit exponentials with the same base
+            # raised to a literal, rational power (everyting is
+            # implicitly raised to the power of 1).
+            def likeness_key(factor):
+                canonical_factor = factor.canonical_form()
+                if isinstance(canonical_factor, Exp) and (
+                        is_literal_rational(canonical_factor.exponenent)):
+                    return canonical_factor.base
+                else:
+                    return canonical_factor
+            # Sort and combine like operands.
+            expr = eq.update(sorting_and_combining_like_operands(
+                    expr, order_key=order_key, 
+                    likeness_key=likeness_key))
+        else:
+            # See if we should reorder the factors.
+            expr = eq.update(sorting_operands(expr, order_key=order_key))    
+                    
+            
+            
+            
             # We should generalize this to work analogously like 
             # combining and sorting terms in Add.shallow_simplification,
             # but this at least handles the simple case of combining
@@ -1442,6 +1551,14 @@ class Mult(NumberOperation):
         raise ValueError('Product is not in a correct form to '
                          'combine exponents: ' + str(self))
 
+    @equality_prover('combined_operands', 'combine_operands')
+    def combining_operands(self, **defaults_config):
+        '''
+        Combine factors, adding their literal, rational exponents.
+        Alias for `exponent_combination`.
+        '''
+        return self.exponent_combination()    
+
     @equality_prover('common_power_extracted', 'common_power_extract')
     def common_power_extraction(self, start_idx=None, end_idx=None,
                                 exp_factor=None,
@@ -1759,3 +1876,29 @@ class Mult(NumberOperation):
         from proveit.numbers import RealPos, zero, greater
         InSet(self, RealPos).prove()
         return greater(self, zero).prove()
+
+
+def canonical_coefficient_and_remainder(expr):
+    '''
+    Returns the coefficient and remainder of the canonical form
+    of the given expression.
+    '''
+    from proveit.numbers import is_literal_rational
+    canonical_form = expr.canonical_form()
+    if isinstance(canonical_form, Mult) and (
+            is_literal_rational(canonical_form.factors[0])):
+        coef = canonical_form.factors[0]
+        num_factors = canonical_form.factors.num_entries()
+        if num_factors > 2:
+            remainder = Mult(*canonical_form.factors[1:])
+        else:
+            # A canonical Mult should have at least two factors:
+            assert num_factors == 2
+            remainder = canonical_form.factors[1]
+    elif is_literal_rational(canonical_form):
+        coef = canonical_form
+        remainder = one
+    else:
+        coef = one
+        remainder = canonical_form
+    return coef, remainder

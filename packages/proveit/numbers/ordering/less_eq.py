@@ -18,6 +18,10 @@ class LessEq(NumberOrderingRelation):
     #   (populated in TransitivityRelation.derive_side_effects)
     known_right_sides = dict()
 
+    # map canonical left hand sides to '<' Judgments paired with
+    # canonical left hand sides.
+    known_canonical_bounds = dict()
+
     def __init__(self, a, b, *, styles=None):
         r'''
         Create an expression representing a <= b.
@@ -45,6 +49,11 @@ class LessEq(NumberOrderingRelation):
         derive a ≠ b from a < b as a side-effect.
         '''
         from proveit.numbers import is_literal_int
+        # Remember the canonical bound.
+        canonical_form = self.canonical_form()
+        known_canonical_bounds = LessEq.known_canonical_bounds
+        known_canonical_bounds.setdefault(canonical_form.lhs, set()).add(
+                (judgment, canonical_form.rhs))
         for side_effect in NumberOrderingRelation.side_effects(
                 self, judgment):
             yield side_effect
@@ -70,6 +79,12 @@ class LessEq(NumberOrderingRelation):
         if Equals(self.lower, self.upper).proven():
             # We know that a = b, therefore a ≤ b.
             return self.conclude_via_equality()
+        try:
+            # If there is a known bound that is similar and at least
+            # as strong, we can derive this bound from the known one.
+            return self.conclude_from_known_bound()
+        except UnsatisfiedPrerequisites:
+            pass
         if self.upper == zero:
             # Special case with upper bound of zero.
             from . import non_pos_if_real_non_pos

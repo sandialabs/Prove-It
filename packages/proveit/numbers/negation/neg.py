@@ -71,6 +71,60 @@ class Neg(NumberOperation):
             return False # double negation is reducible
         return is_irreducible_value(self.operand) and self.operand != zero
 
+    def _build_canonical_form(self):
+        '''
+        If negating a Mult with a nontrivial coefficient, pull the 
+        negation into its coefficient.
+        If negating an Add, distribute over the sum.
+        '''
+        from proveit.numbers import is_literal_rational, Add, Mult
+        canonical_operand = self.operand.canonical_form()
+        if (isinstance(canonical_operand, Mult) and 
+                is_literal_rational(canonical_operand.factors[0])):
+            # Apply the negation to the rational coefficient.
+            coef = canonical_operand.factors[0]
+            return Mult(Neg(coef).canonical_form(),
+                        *canonical_operand.factors[1:])
+        elif isinstance(canonical_operand, Add):
+            # Distribute the negation over the sum.
+            _sum = Add(*[Neg(term) for term in canonical_operand.terms])
+            return _sum.canonical_form() 
+        return self
+
+    def _deduce_equality(self, equality):
+        '''
+        Prove that this Neg is equal to an expression that has the
+        same canonical form.
+        '''
+        from proveit.logic import Equals
+        from proveit.numbers import zero, Add
+        from proveit.numbers.negation import negated_zero
+        if isinstance(equality.rhs, Neg):
+            # Both sides are negated.  Just equate the operands and
+            # substitute.
+            return equality.conclude_via_direct_substitution()
+
+        lhs_operand_canonical_form = equality.lhs.operand.canonical_form()
+        rhs_canonical_form = equality.rhs.canonical_form()
+        if lhs_operand_canonical_form == rhs_canonical_form == zero:
+            # -0 = 0 is a special case.
+            Equals(equality.lhs.operand, zero).prove()
+            Equals(equality.rhs, zero).prove()
+            # substitute on the left then on the right.
+            left_subbed = negated_zero.inner_expr().lhs.operand.substitute(
+                    equality.lhs.operand)
+            return left_subbed.inner_expr().rhs.substitute(equality.rhs)
+        
+        if isinstance(equality.lhs.operand, Add):
+            # Distribute through an addition.
+            distribution = equality.lhs.distribution()
+            distrubution_eq = Equals(distribution.rhs, equality.rhs).prove()
+            return distribution.apply_transitivity(distrubution_eq)
+        
+        #if isinstance(equality.lhs.operand, Mult):
+            
+        
+
     @relation_prover
     def deduce_in_number_set(self, number_set, **defaults_config):
         '''

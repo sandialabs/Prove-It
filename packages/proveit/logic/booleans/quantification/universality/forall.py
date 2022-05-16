@@ -75,7 +75,7 @@ class Forall(OperationOverInstances):
             # Try to prove the generic version without automation;
             # this can help with variable changes.
             try:
-                return self.canonical_version().conclude_via_generalization(
+                return self.canonically_labeled().conclude_via_generalization(
                         automation=False)
             except ProofFailure:
                 pass
@@ -158,7 +158,7 @@ class Forall(OperationOverInstances):
         '''
         with defaults.temporary() as tmp_defaults:
             tmp_defaults.automation = False
-            canonical_version = self.canonical_version()
+            canonical_version = self.canonically_labeled()
             if self._style_id != canonical_version._style_id:
                 # Instantiate the generic form for good measure.
                 canonical_version.prove(**defaults_config).instantiate(

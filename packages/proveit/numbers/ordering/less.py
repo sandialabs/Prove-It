@@ -15,6 +15,11 @@ class Less(NumberOrderingRelation):
     #   (populated in TransitivityRelation.side_effects)
     known_right_sides = dict()
 
+    # map canonical left hand sides to '<' Judgments paired with
+    # canonical left hand sides.
+    known_canonical_bounds = dict()
+
+
     def __init__(self, lhs, rhs, *, styles=None):
         r'''
         Create an expression of the form lhs < rhs.
@@ -27,6 +32,11 @@ class Less(NumberOrderingRelation):
         In addition to the NumberOrderingRelation side-effects, also
         derive a ≠ b from a < b as a side-effect.
         '''
+        # Remember the canonical bound.
+        canonical_form = self.canonical_form()
+        known_canonical_bounds = Less.known_canonical_bounds
+        known_canonical_bounds.setdefault(canonical_form.lhs, set()).add(
+                (judgment, canonical_form.rhs))
         for side_effect in NumberOrderingRelation.side_effects(
                 self, judgment):
             yield side_effect
@@ -62,6 +72,12 @@ class Less(NumberOrderingRelation):
         from proveit.logic import InSet
         from proveit.numbers import Add, zero, RealPos, deduce_number_set
         from . import positive_if_real_pos
+        try:
+            # If there is a known bound that is similar and at least
+            # as strong, we can derive this bound from the known one.
+            return self.conclude_from_known_bound()
+        except UnsatisfiedPrerequisites:
+            pass
         if self.upper == zero:
             # Special case with upper bound of zero.
             from . import negative_if_real_neg

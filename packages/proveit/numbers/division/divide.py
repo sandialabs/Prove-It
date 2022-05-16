@@ -77,6 +77,53 @@ class Div(NumberOperation):
             return 'frac'  # use a different constructor if using the fraction style
         return Operation.remake_constructor(self)
 
+    def _build_canonical_form(self):
+        '''
+        If this is a literal rational, returns the irreducible form.
+        Otherwise, returns the canonical form of the numerator
+        multiplied by the denominator raised to the power of -1:
+            x/y = x*y^{-1}
+        '''
+        from proveit.numbers import (one, Neg, Mult, Exp, 
+                                     is_literal_rational,
+                                     simplified_rational_expr)
+        if is_literal_rational(self):
+            # Return the irreducible rational.
+            return simplified_rational_expr(self.numerator.as_int(),
+                                            self.denominator.as_int())
+        as_mult = Mult(self.numerator, Exp(self.denominator, Neg(one)))
+        return as_mult.canonical_form()
+
+    def _deduce_equality(self, equality):
+        '''
+        Prove that this Divide is equal to an expression that has the
+        same canonical form.
+        '''
+        from proveit.numbers import one, Mult
+        with defaults.temporary() as tmp_defaults:
+            tmp_defaults.auto_simplify = False # We want manual...
+            tmp_defaults.replacements = set()  # control.
+            # Need to prove (a / b) = (c / d)
+            _a, _b = self.numerator, self.denominator
+            other = equality.rhs
+            # Start with (a*d) = (c*b)
+            if isinstance(other, Div):
+                _c, _d = other.numerator, other.denominator
+                known_eq = Equals(Mult(_a, _d), Mult(_c, _b))
+                _bd = Mult(_b, _d)
+            else:
+                _c, _d = other, one # d=1
+                known_eq = Equals(_a, Mult(_c, _b))
+                _bd = _b
+            known_eq = known_eq.prove()
+            # (a*d)/(b*d) = (c*b)/(b*d)
+            known_eq = known_eq.divide_both_sides(_bd)
+            # (a/b) = (c/d)
+            if _d != one:
+                known_eq.inner_expr().lhs.cancelation(_d)
+            known_eq.inner_expr().rhs.cancelation(_b)
+            return known_eq
+
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
                                **defaults_config):
@@ -102,15 +149,22 @@ class Div(NumberOperation):
             # already irreducible
             return Equals(self, self).conclude_via_reflexivity()
 
-        if must_evaluate and not all(
-                is_irreducible_value(operand) for operand in self.operands):
-            for operand in self.operands:
-                if not is_irreducible_value(operand):
-                    # The simplification of the operands may not have
-                    # worked hard enough.  Let's work harder if we
-                    # must evaluate.
-                    operand.evaluation()
-            return self.evaluation()
+        if must_evaluate:
+            if not all(is_irreducible_value(operand) for operand 
+                       in self.operands):
+                for operand in self.operands:
+                    if not is_irreducible_value(operand):
+                        # The simplification of the operands may not have
+                        # worked hard enough.  Let's work harder if we
+                        # must evaluate.
+                        operand.evaluation()
+                return self.evaluation()
+            canonical_form = self.canonical_form()
+            if is_irreducible_value(canonical_form):
+                # Equate to the irreducible canonical form.
+                return Equals(self, canonical_form).prove()
+            raise NotImplementedError(
+                    "Evaluation of %s is not implemented"%self)
 
         if expr.denominator == one:
             # eliminate division by one

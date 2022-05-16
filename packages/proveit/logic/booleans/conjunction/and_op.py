@@ -269,18 +269,17 @@ class And(Operation):
             if not isinstance(self.operands[_i], ExprRange):
                 yield lambda : self.deduce_part_in_bool(_i)
 
-    def canonical_eq_form(self):
+    def _build_canonical_form(self):
         '''
         Returns a form of this operation in which the operands are 
         in a deterministically sorted order used to determine equal 
         expressions given commutativity of this operation under
         appropriate conditions.
         '''
-        return And(*sorted([operand.canonical_eq_form() for operand 
+        return And(*sorted([operand.canonical_form() for operand 
                             in self.operands.entries], key=hash))
 
-    @equality_prover('equated', 'equate')
-    def deduce_equality(self, equality, **defaults_config):
+    def _deduce_equality(self, equality):
         return deduce_equality_via_commutation(equality, one_side=self)
 
     @prover
@@ -387,7 +386,7 @@ class And(Operation):
             proven_quantification.instantiate(assumptions=assumptions)
             # We'll do it with the canonical variable as well for good
             # measure, if it is any different.
-            canonical_version = proven_quantification.canonical_version()
+            canonical_version = proven_quantification.canonically_labeled()
             if canonical_version._style_id != proven_quantification._style_id:
                 _k = canonical_version.instance_var
                 assumptions = defaults.assumptions + (
