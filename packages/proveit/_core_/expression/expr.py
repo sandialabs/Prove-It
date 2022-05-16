@@ -28,17 +28,17 @@ class ExprType(type):
 
     # These attributes should not be overridden by classes outside
     # of the core.
-    protected = {'_apply', 'canonical_version',
-                 'replaced', 'basic_replaced', 'instance_context',
+    protected = {'_apply', 'replaced', 'basic_replaced', 'instance_context',
                  '_replaced_entries', 
                  'equality_replaced', '_manual_equality_replaced',
                  '_auto_simplified', '_auto_simplified_sub_exprs',
                  '_range_reduction', 'relabeled',
                  'sub_expr_substitution',
+                 'canonically_labeled', 'canonical_form',
                  '_make', '_checked_make', '_reduced', '_used_vars',
                  '_free_var_ranges', '_parameterized_var_ranges',
                  '_repr_html_', '_core_info',
-                 '_sub_expressions', '_canonical_expr',
+                 '_sub_expressions', '_canonically_labeled',
                  '_meaning_data', '_meaning_id',
                  '_style_data', '_style_id',
                  'is_parameter_independent', 'literal_int_extent'}
@@ -301,7 +301,7 @@ class Expression(metaclass=ExprType):
             # When there are no sub-expressions, we can immediately
             # declare that the canonical expression is simply "self"
             # and the "true" meaning data is the "labeled" meaning data.
-            self._canonical_expr = self
+            self._canonically_labeled = self
             self._meaning_data = self._labeled_meaning_data
             self._meaning_id = self._meaning_data._unique_id
         
@@ -322,18 +322,18 @@ class Expression(metaclass=ExprType):
                     self._labeled_meaning_id] = styles
         """
 
-    def canonical_version(self):
+    def canonically_labeled(self):
         '''
         Retrieve (and create if necessary) the canonical version of this
         expression in which deterministic 'dummy' variables are used as
         Lambda parameters, determining the 'meaning' of the expression.
         '''
-        if hasattr(self, '_canonical_expr'):
-            return self._canonical_expr
+        if hasattr(self, '_canonically_labeled'):
+            return self._canonically_labeled
         if hasattr(self, '_meaning_data'):
             # Set via '_meaning_data':
-            self._canonical_expr = self._meaning_data.canonical_expr
-            return self._canonical_expr
+            self._canonically_labeled = self._meaning_data.canonically_labeled
+            return self._canonically_labeled
         labeled_to_canonical_meaning_data = (
             Expression.labeled_to_canonical_meaning_data)
         if self._labeled_meaning_data in labeled_to_canonical_meaning_data:
@@ -342,12 +342,13 @@ class Expression(metaclass=ExprType):
             self._meaning_data = (
                 labeled_to_canonical_meaning_data[self._labeled_meaning_data])
             self._meaning_id = self._meaning_data._unique_id
-            # Now we can set the _canonical_expr via the '_meaning_data'.
-            return self.canonical_version()
+            # Now we can set the _canonically_labeled via the
+            # '_meaning_data'.
+            return self.canonically_labeled()
 
-        # Get the canonical versions of the sub-expressions.
+        # Get the canonical labeling of the sub-expressions.
         canonical_sub_expressions = tuple(
-            sub_expr.canonical_version()
+            sub_expr.canonically_labeled()
             for sub_expr in self._sub_expressions)
         # Get the styles of the sub expressions.
         sub_expression_styles = tuple(sub_expr._style_data
@@ -365,7 +366,7 @@ class Expression(metaclass=ExprType):
         if (self._style_data.styles == canonical_styles and
                 sub_expression_styles == canonical_sub_expression_styles):
             # This is the canonical version.
-            self._canonical_expr = self
+            self._canonically_labeled = self
             return self
 
         # The 'canonical' sub-expressions are different than the
@@ -375,57 +376,116 @@ class Expression(metaclass=ExprType):
         with defaults.temporary() as temp_defaults:
             # Force the canonical styles.
             temp_defaults.use_consistent_styles = False
-            canonical_expr = self.__class__._checked_make(
+            canonically_labeled = self.__class__._checked_make(
                 self._core_info, canonical_sub_expressions, 
                 style_preferences=canonical_styles)
         """
-        canonical_expr = self.__class__._checked_make(
+        canonically_labeled = self.__class__._checked_make(
             self._core_info, canonical_sub_expressions, 
             style_preferences=canonical_styles)
-        assert canonical_expr.canonical_version() == canonical_expr, (
-                "The canonical version of a canonical expression should "
-                "be itself.")
-        self._canonical_expr = canonical_expr
-        return canonical_expr
+        assert (canonically_labeled.canonically_labeled() ==
+                canonically_labeled), (
+                        "The canonical version of a canonical expression "
+                        "should be itself.")
+        self._canonically_labeled = canonically_labeled
+        return canonically_labeled
 
-    def canonical_eq_form(self):
+    def canonical_form(self):
         '''
         Returns a form of this expression that should be provably
-        equal to the original, assuming sub-expression types are
-        known and appropriate.  This is distinct from the
-        "canonical_version" method which operates at a deeper level.
-        Prove-It regards the meaning of expressions with the same
-        "canonical version" to be the same (e.g., having different
-        labeling of Lambda parameters but otherwise the same).  In
-        contrast, Prove-It does not regard meanings, at a deep level,
-        to be necessarily the same for "canonical equal forms".  Rather,
-        we should be able prove they are equal (e.g., via 
-        "deduce_equality") under conditions in which the expression is 
-        at all meaningful.  For example,
+        equal to the original, assuming the original expression is
+        known not to be "garbage" (e.g., proper types, no division
+        by zero, etc.).
+        
+        For example,
             "a + b + c + d" and "d + c + a + b" should have the
-        same canonical equal forms (which has an arbitrary but
+        same canonical forms (which has an arbitrary but
         deterministic order for the terms) and we can prove that these 
         are equal as long as we know that a, b, c, and d are numbers
         (members of the set of complex numbers).
+        
+        See _build_canonical_form: this method should be overriden by
+        each Expression type for build type-specific canonical forms.
         '''
-        if hasattr(self, '_canonical_eq_form'):
-            return self._canonical_eq_form
-        canonical_eq_sub_exprs = []
+        if hasattr(self, '_canonical_form'):
+            return self._canonical_form
+        canonical_form = self._build_canonical_form()
+        self._canonical_form = canonical_form
+        if hasattr(canonical_form, '_canonical_form'):
+            if canonical_form != canonical_form._canonical_form:
+                raise ValueError("Inconsistent canonical forms: %s vs %s"
+                                 %(canonical_form, 
+                                   canonical_form._canonical_form))
+        else:
+            canonical_form._canonical_form = canonical_form
+        return self._canonical_form 
+
+    def _build_canonical_form(self):
+        '''
+        Build the canonical form of the Expression (see the
+        Expression.canonical_form method).  Override to build
+        type-specific canonical forms.  By default, this recursed to
+        use canonical forms of sub-expressions.        
+        '''
+        canonical_sub_exprs = []
         has_distinct_canonical_form = False
         for sub_expr in self.sub_expr_iter():
-            canonical_eq_sub_expr = sub_expr.canonical_eq_form()
-            if sub_expr != canonical_eq_sub_expr:
+            canonical_sub_expr = sub_expr.canonical_form()
+            if sub_expr != canonical_sub_expr:
                 has_distinct_canonical_form = True
-            canonical_eq_sub_exprs.append(canonical_eq_sub_expr)
+            canonical_sub_exprs.append(canonical_sub_expr)
         if has_distinct_canonical_form:
             # Use the canonical forms of the sub-expressions.
-            self._canonical_eq_form = self._checked_make(
-                    self.core_info, canonical_eq_sub_exprs)
+            return self._checked_make(
+                    self.core_info, canonical_sub_exprs)
         else:
-            # No canonical eq form that is different from self.
-            self._canonical_eq_form = self
-        return self._canonical_eq_form 
-
+            # No canonical form that is different from self.
+            return self
+    
+    @equality_prover('equated', 'equate')
+    def deduce_equality(self, equality, **defaults_config):
+        '''
+        Prove that this expression is equal another one that has the
+        same canonical form.  Calls '_deduce_equality' which may have
+        type-specific implementations.
+        '''
+        from proveit import Judgment
+        if equality.lhs != self:
+            raise ValueError(
+                    "'deduce_equality' expects an 'equality' with "
+                    "'self' on the left side")
+        if equality.lhs.canonical_form() != equality.rhs.canonical_form():
+            raise ValueError(
+                    "'deduce_equality' can only be used to prove equality "
+                    "between expressions with the same canonical form. "
+                    "%s and %s have distinct canonical forms %s and %s "
+                    "respectively"%(equality.lhs, equality.rhs,
+                                    equality.lhs.canonical_form(),
+                                    equality.rhs.canonical_form()))
+        proven_eq = self._deduce_equality(equality)
+        if not isinstance(proven_eq, Judgment):
+            raise TypeError("Expecting a proven Judgment to be returned "
+                            "by '_deduce_equality")
+        if proven_eq.expr != equality:
+            raise ValueError("Expecting '_deduce_equality' to return the "
+                             "proven 'equality': %s vs %s"%(
+                                     proven_eq.expr, equality))
+        return proven_eq
+                                               
+    def _deduce_equality(self, equality):
+        '''
+        Helper method for 'deduce_equality' which should have a
+        type-specific implementation if '_build_canonical_form' is
+        type-specific.
+        '''
+        if self._build_canonical_form != Expression._build_canonical_form:
+            raise NotImplementedError(
+                    "'_deduce_equality' not implemented for %s"
+                    %type(self))
+        # The generic version will work via direct substitutions 
+        # equating sub-expressions that differ.
+        return equality.conclude_via_direct_substitution() 
+                                               
     def _establish_and_get_meaning_id(self):
         '''
         The "meaning" of an expression is determined by it's
@@ -434,19 +494,19 @@ class Expression(metaclass=ExprType):
         '''
         if hasattr(self, '_meaning_id'):
             return self._meaning_id
-        canonical_expr = self.canonical_version()
+        canonically_labeled = self.canonically_labeled()
         if hasattr(self, '_meaning_id'):
-            # It may have been set via the 'canonical_version' call.
+            # It may have been set via the 'canonically_labeled' call.
             return self._meaning_id
-        if canonical_expr is self:
+        if canonically_labeled is self:
             # The "true" meaning data is the "labeled" meaning data.
             self._meaning_data = self._labeled_meaning_data
         else:
-            canonical_expr._establish_and_get_meaning_id()
-            self._meaning_data = canonical_expr._meaning_data
-        if not hasattr(self._meaning_data, 'canonical_expr'):
+            canonically_labeled._establish_and_get_meaning_id()
+            self._meaning_data = canonically_labeled._meaning_data
+        if not hasattr(self._meaning_data, 'canonically_labeled'):
             # store the canonical expression for future reference
-            self._meaning_data.canonical_expr = canonical_expr
+            self._meaning_data.canonically_labeled = canonically_labeled
         # Anything with the same "labeled meaning data" must have the
         # same "canonical meaning data".
         labeled_to_canonical_meaning_data = \
@@ -588,7 +648,7 @@ class Expression(metaclass=ExprType):
 
     @classmethod
     def _make(cls, core_info, sub_expressions, *, styles, 
-              canonical_version=None):
+              canonically_labeled=None):
         '''
         Should make the Expression object for the specific Expression sub-class
         based upon the core_info and sub_expressions.  Must be implemented for
@@ -598,7 +658,7 @@ class Expression(metaclass=ExprType):
 
     @classmethod
     def _checked_make(cls, core_info, sub_expressions, *, style_preferences,
-                      canonical_version=None):
+                      canonically_labeled=None):
         '''
         Check that '_make' is done appropriately since it is not
         entirely within the control of the core.
@@ -609,12 +669,12 @@ class Expression(metaclass=ExprType):
         # rather than raising an expection.
         style_preferences = dict(style_preferences)
         style_preferences['__IGNORE_INAPPLICABLE_STYLES__'] = True
-        if canonical_version is None:
+        if canonically_labeled is None:
             made = cls._make(core_info, sub_expressions,
                              styles=style_preferences)
         else:
             made = cls._make(core_info, sub_expressions,
-                             canonical_version=canonical_version, 
+                             canonically_labeled=canonically_labeled, 
                              styles=style_preferences)
         assert made._core_info == core_info, (
             "%s vs %s" % (made._core_info, core_info))
@@ -893,6 +953,15 @@ class Expression(metaclass=ExprType):
             return True
         except ProofFailure:
             return False
+
+    def readily_provable(self, assumptions=USE_DEFAULTS):
+        '''
+        May return True only if we readily know that this expression 
+        can be proven automatically and easily through its 'conclude' 
+        method and must return True if it is already proven.  Must be 
+        implemented for each Expression type.
+        '''
+        return self.proven()
 
     @prover
     def disprove(self, **defaults_config):

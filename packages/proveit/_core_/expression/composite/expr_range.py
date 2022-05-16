@@ -174,7 +174,7 @@ class ExprRange(Expression):
             # or we would loose any style information.
             body = lambda_map.body
             orig_param = lambda_map.parameter
-            param = lambda_map.canonical_version().parameter
+            param = lambda_map.canonically_labeled().parameter
             if orig_param != param:
                 lambda_map = Lambda(
                     param, body.basic_replaced({orig_param:param}))
