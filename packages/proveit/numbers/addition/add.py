@@ -1,5 +1,5 @@
 import bisect
-from collections import deque
+from collections import deque, Counter
 
 from proveit import (Expression, Judgment, Literal, Operation, ExprTuple,
                      ExprRange, defaults, USE_DEFAULTS, StyleOptions, 
@@ -18,7 +18,8 @@ from proveit.abstract_algebra.generic_methods import (
         apply_commutation_thm, apply_association_thm, 
         apply_disassociation_thm, group_commutation, pairwise_evaluation,
         deduce_equality_via_commutation, generic_permutation,
-        sorting_operands, sorting_and_combining_like_operands)
+        sorting_operands, sorting_and_combining_like_operands,
+        common_likeness_key)
 from proveit import TransRelUpdater
 import bisect
 from proveit.numbers import (NumberOperation, sorted_number_sets,
@@ -44,7 +45,7 @@ class Add(NumberOperation):
     _simplification_directives_ = SimplificationDirectives(
             ungroup = True,
             combine_like_terms = True,
-            order_key = lambda term : 0)
+            order_key_fn = lambda term : 0)
 
     # Map terms to sets of Judgment equalities that involve
     # the term on the left hand side.
@@ -225,8 +226,12 @@ class Add(NumberOperation):
         The order of the terms is arbitrary but deterministic
         (sorted by hash value).
         '''
-        from proveit.numbers import one, Neg, Mult
-        from .mult import canonical_coefficient_and_remainder
+        from proveit.numbers import (zero, one, Neg, Mult,
+                                     is_literal_rational,
+                                     literal_rational_ints,
+                                     simplified_rational_expr)
+        from proveit.numbers.multiplication.mult import (
+                canonical_coefficient_and_remainder)
         if self.terms.num_entries() == 0:
             return self # Add operation with no operands
         remainder_to_rational_coef = dict()
@@ -250,7 +255,7 @@ class Add(NumberOperation):
                 prev_coef = remainder_to_rational_coef[remainder]
                 if isinstance(prev_coef, Add):
                     remainder_to_rational_coef[remainder] = Add(
-                            *prev_coef.terms, coef)
+                            *prev_coef.terms.entries, coef)
                 else:
                     remainder_to_rational_coef[remainder] = Add(
                             prev_coef, coef)
@@ -258,10 +263,21 @@ class Add(NumberOperation):
                 remainder_to_rational_coef[remainder] = coef
         if contains_only_literal_rationals:
             # This is a sum of only literal rationals.  Just
-            # evaluate it to an irreducible form.
+            # compute it.
             assert len(remainder_to_rational_coef)==1
             assert one in remainder_to_rational_coef
-            return remainder_to_rational_coef[one].evaluated()
+            expr = remainder_to_rational_coef[one]
+            if not isinstance(expr, Add):
+                assert is_literal_rational(expr)
+                return expr
+            sum_as_expr = zero
+            for term in expr.terms:
+                # Add to the cumulative sum.
+                # (a/b) + (c/d) = (a*d + c*b)/(b*d)
+                _a, _b = literal_rational_ints(sum_as_expr)
+                _c, _d = literal_rational_ints(term)
+                sum_as_expr = simplified_rational_expr(_a*_d+_c*_b, _b*_d)
+            return sum_as_expr
         terms = []
         for remainder in sorted(remainder_to_rational_coef.keys(), key=hash):
             coef = remainder_to_rational_coef[remainder]
@@ -280,24 +296,35 @@ class Add(NumberOperation):
         return Add(*sorted([operand.canonical_form() for operand 
                            in self.operands.entries], key=hash))
 
-    """
     def _deduce_equality(self, equality):
         '''
         Prove that this Add is equal to an expression that has the
         same canonical form.
         '''
-        from proveit.numbers import is_literal_rational
-        canonical_form = self.canonical_form()
-        if isinstance(canonical_form, Add):
-            remainder_to_rational_coef = dict()
-            for term in canonical_form.terms:
-                if isinstance(term, Mult) and (
-                        is_literal_rational(term.factors[0])):
-                    coef = term.factors[0]
-                    remainder = 
-    
+        lhs, rhs = equality.lhs, equality.rhs
+        assert lhs == self
+        assert lhs.canonical_form() == rhs.canonical_form()
+        
+        if isinstance(rhs, Add) and (
+                Counter(lhs.terms.entries) == Counter(rhs.terms.entries)):
+            # We just need to permute the entries.
             return deduce_equality_via_commutation(equality, one_side=self)
-    """
+        
+        # Since the canonical forms are the same, we should be
+        # able to equate their simplifications via permutation.
+        with Add.temporary_simplification_directives() as simp_directives:
+            # Make sure we use the default simplification directives.
+            simp_directives.ungroup = True
+            simp_directives.combine_like_terms = True
+            # don't bother reordering:
+            simp_directives.order_key_fn = lambda term : 0
+            lhs_simplification = lhs.simplification()
+            rhs_simplification = rhs.simplification()
+        eq_simps = Equals(lhs_simplification.rhs, 
+                          rhs_simplification.rhs).prove()
+        return Equals.apply_transitivities([lhs_simplification,
+                                            eq_simps,
+                                            rhs_simplification])
 
     @prover
     def equation_negation(self, rhs, **defaults_config):
@@ -355,21 +382,35 @@ class Add(NumberOperation):
         from proveit.numbers import one
         from proveit.numbers.multiplication import (
             mult_def_rev, repeated_addition_to_mult)
-        if not all(operand == self.operands[0] for operand in self.operands):
-            raise ValueError(
-                "'as_mult' is only applicable on an 'Add' expression "
-                "if all operands are the same: %s" %
-                str(self))
-        if (self.operands.num_entries() == 1 
-                and isinstance(self.operands[0], ExprRange)
-                and self.operands[0].is_parameter_independent
-                and self.operands[0].true_start_index == one):
-            expr_range = self.operands[0]
+        operands = self.operands
+        if (operands.num_entries() == 1 
+                and isinstance(operands[0], ExprRange)
+                and operands[0].is_parameter_independent):
+            expr_range = operands[0]
+            replacements = []
+            start_index = operands[0].true_start_index
+            if start_index != one:
+                # change the indexing to start from 1.
+                replacement = operands[0].shift_equivalence(
+                        new_start=one).derive_reversed()
+                _n = replacement.rhs.entries[0].true_end_index
+                replacements.append(replacement)
+            else:
+                _n = expr_range.true_end_index
+            # x + x + ..(n-3)x.. + x = x*n
             return repeated_addition_to_mult.instantiate(
-                {x: expr_range.body, n: expr_range.true_end_index})
-        _n = self.operands.num_elements()
-        _a = self.operands
-        _x = self.operands[1]
+                {x: expr_range.body, n: _n},
+                replacements=replacements)
+        # Obtain the first element; all other elements should equal
+        # this.
+        for operand in operands:
+            if isinstance(operand, ExprRange):
+                _x = operand.first()
+            else:
+                _x = operand
+        _n = operands.num_elements()
+        _a = operands
+         # a1 + a2 + ..(n-3)x.. + an = x*n if each a1,a2,..,an equals x.
         return mult_def_rev.instantiate({n: _n, a: _a, x: _x})
 
     @equality_prover('all_canceled', 'all_cancel')
@@ -539,7 +580,8 @@ class Add(NumberOperation):
         from proveit.numbers import (one, Add, Neg, Mult, 
                                      is_literal_int,
                                      is_literal_rational)
-        from .mult import canonical_coefficient_and_remainder
+        from proveit.numbers.multiplication.mult import (
+                canonical_coefficient_and_remainder)
         from . import empty_addition, unary_add_reduction
         
         if self.operands.num_entries() == 0:
@@ -586,6 +628,15 @@ class Add(NumberOperation):
                             _n, preserve_all=True))
                 length = expr.operands.num_entries()
                 _n += 1
+        
+        # See if there are any parameter-independent expression
+        # ranges to be converted to multiplication:
+        #  x + x + ..(n-3)x.. + x = x*n
+        for _k, operand in enumerate(expr.operands):
+            if isinstance(operand, ExprRange) and (
+                    operand.is_parameter_independent):
+                expr = eq.update(expr.inner_expr().operands[_k].
+                                 conversion_to_multiplication())
 
         # eliminate zeros where possible
         expr = eq.update(expr.zero_eliminations(preserve_all=True))
@@ -621,25 +672,31 @@ class Add(NumberOperation):
                 elif all(is_literal_rational(term) for term in terms):
                     # Evaluate the addition of two literal rationals.
                     evaluation = self._rational_binary_eval()
-                    return evaluation                    
+                    return evaluation
+                else:
+                    # In the future, handle adding irreducible
+                    # complex numbers and/or irrationals as
+                    # appropriate.
+                    pass
             else:
                 # Do a pairwise addition of irreducible terms.         
                 return pairwise_evaluation(self)
 
-        order_key = Add._simplification_directives_.order_key
+        order_key_fn = Add._simplification_directives_.order_key_fn
         if Add._simplification_directives_.combine_like_terms and (
                 not must_evaluate):
             # Like terms are ones whose canonical forms are the same
             # apart from literal, rational coefficients.
-            likeness_key = lambda term : (
+            likeness_key_fn = lambda term : (
                     canonical_coefficient_and_remainder(term)[1])
             # Sort and combine like operands.
             expr = eq.update(sorting_and_combining_like_operands(
-                    expr, order_key=order_key, likeness_key=likeness_key,
-                    auto_simplify=False))
+                    expr, order_key_fn=order_key_fn, 
+                    likeness_key_fn=likeness_key_fn,
+                    preserve_likeness_keys=True, auto_simplify=True))
         else:
             # See if we should reorder the terms.
-            expr = eq.update(sorting_operands(expr, order_key=order_key,
+            expr = eq.update(sorting_operands(expr, order_key_fn=order_key_fn,
                                               auto_simplify=False))
         
         if expr != self:
@@ -651,7 +708,7 @@ class Add(NumberOperation):
 
         if all(is_irreducible_value(term) for term in self.terms):
             raise NotImplementedError(
-                "Addition evaluation only implemented for integers: %s"
+                "Addition evaluation only implemented for rationals: %s"
                 %self)
         
         if must_evaluate:
@@ -1517,14 +1574,6 @@ class Add(NumberOperation):
             preserve_expr=expr, replacements=replacements)
         eq.update(distribution.derive_reversed())
         return eq.relation
-
-    @equality_prover('combined_operands', 'combine_operands')
-    def combining_operands(self, **defaults_config):
-        '''
-        Combine terms, adding their literal, rational coeffiicents.
-        Alias for `combining_terms`.
-        '''
-        return self.combining_terms()
     
     @equality_prover('combined_terms', 'combine_terms')
     def combining_terms(self, **defaults_config):
@@ -1532,28 +1581,33 @@ class Add(NumberOperation):
         Combine terms, adding their literal, rational coeffiicents.
         Alias for `combining_operands`.
         '''
-        # All operands are like terms. 
-        keys = {canonical_coefficient_and_remainder(term)[1] for
-                term in self.terms}
-        if len(keys) != 1:
-            raise ValueError("'combining_terms' is not applicible: %s "
-                             "has multiple types of terms")
-        key = next(iter(keys))
-        if all(operand == self.operands[0] for 
-               operand in self.operands) and not (
-                       self.operands.num_entries() == 1 and
-                       isinstance(self.operands[0], selfRange) and
-                       not self.operands[0].is_parameter_independent):
-            # Combine via multiplication.
-            return self.conversion_to_multiplication()
-        elif key != one and self.operands.num_entries() > 1:
-            # for all the keys that are not basic numbers, 
-            # derive the multiplication from the addition
-            # make sure all the operands in the key are products 
-            # (multiplication) if it's grouped, send it to become a 
-            # multiplication
-            return self.factorization(key, pull="right"))
-    
+        from proveit.numbers import one
+        from proveit.numbers.multiplication.mult import (
+                canonical_coefficient_and_remainder)
+        # Obtain the common term "remainder" (sans coefficient),
+        # raising a ValueError if the terms are not all like terms.
+        likeness_key_fn = lambda term : (
+                canonical_coefficient_and_remainder(term)[1])
+        key = common_likeness_key(self, likeness_key_fn=likeness_key_fn)
+        if key != one:
+            # Factor out the common part from the coefficients.
+            return self.factorization(key, pull="right")
+
+        # All of the operands are rational, literals.
+        if defaults.auto_simplify:
+            # Simplify if auto-simplification is on.
+            return self.simplification()
+        else:
+            return Equals(self, self).conclude_via_reflexivity()
+
+    @equality_prover('combined_operands', 'combine_operands')
+    def combining_operands(self, **defaults_config):
+        '''
+        Combine terms, adding their literal, rational coeffiicents.
+        Alias for `combining_terms`.
+        '''
+        return self.combining_terms() 
+
     @equality_prover('commuted', 'commute')
     def commutation(self, init_idx=None, final_idx=None, 
                     **defaults_config):

@@ -142,7 +142,7 @@ class NumberOrderingRelation(TransitiveRelation):
             # Multiply both sides (distribution will be dealt with
             # automatically when we equate expression with the 
             # same canonical forms below).
-            known_bound = known_bound.mult_left_both_sides(scale_factor)
+            known_bound = known_bound.left_mult_both_sides(scale_factor)
 
             # Weaken as appropriate.
             if rhs_diff == zero:
@@ -185,7 +185,7 @@ class NumberOrderingRelation(TransitiveRelation):
                             replacement.rhs.canonical_form())
                     replacements[_k] = replacement.prove()
                 # Add to both sides.
-                known_bound = known_bound.add_right_both_sides(
+                known_bound = known_bound.right_add_both_sides(
                         lhs_diff, replacements=replacements)
             else:
                 # Both sides should already be equal (with the same

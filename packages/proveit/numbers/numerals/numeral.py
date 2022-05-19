@@ -326,7 +326,7 @@ def literal_rational_ints(expr):
             # by negative 1.
             return -numer, -denom
         return numer, denom
-    return expr.numerator.as_int(), 1
+    return expr.as_int(), 1
 
 def simplified_rational_expr(numer_int, denom_int):
     '''
@@ -343,9 +343,9 @@ def simplified_rational_expr(numer_int, denom_int):
         sign *= -1
         denom_int *= -1
     # Find the greatest common divisor and divide it out.
-    gcd = math.gcd(numer_int, denom_int)
-    numer_int /= gcd
-    denom_int /= gcd
+    gcd = int(math.gcd(numer_int, denom_int))
+    numer_int = numer_int // gcd
+    denom_int = denom_int // gcd
     # Build and return the expression.
     if denom_int == 1:
         rational = num(numer_int)

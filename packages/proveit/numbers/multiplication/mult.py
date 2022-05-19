@@ -1,3 +1,4 @@
+from collections import Counter
 from proveit import (
         defaults, Expression, Literal, ExprTuple, ExprRange, 
         Judgment, ProofFailure, prover, relation_prover, equality_prover,
@@ -33,7 +34,7 @@ class Mult(NumberOperation):
             ungroup=True, combine_exponents=True,
             # By default, sort such that literal, rationals come first 
             # and other irreducibles come next.
-            order_key = lambda factor : (
+            order_key_fn = lambda factor : (
                     0 if is_literal_rational(factor) else (
                             1 if is_irreducible_value(factor) else 2)))
 
@@ -109,7 +110,7 @@ class Mult(NumberOperation):
                         exponent = Add(*prev_exponent.terms, exponent)
                     else:
                         exponent = Add(prev_exponent, exponent)
-                    base_to_exponent[base] = exponent
+                base_to_exponent[base] = exponent
         if denom == 0:
             # Division by zero; the expression is garbage
             raise self # we can't do anything with it.
@@ -136,9 +137,35 @@ class Mult(NumberOperation):
                              in factor.terms])
         return Mult(coef, *factors)
 
-    @equality_prover('equated', 'equate')
-    def deduce_equality(self, equality, **defaults_config):
-        return deduce_equality_via_commutation(equality, one_side=self)
+    def _deduce_equality(self, equality):
+        '''
+        Prove that this Add is equal to an expression that has the
+        same canonical form.
+        '''
+        lhs, rhs = equality.lhs, equality.rhs
+        assert lhs == self
+        assert lhs.canonical_form() == rhs.canonical_form()
+        
+        if isinstance(rhs, Add) and (
+                Counter(lhs.terms.entries) == Counter(rhs.terms.entries)):
+            # We just need to permute the entries.
+            return deduce_equality_via_commutation(equality, one_side=self)
+        
+        # Since the canonical forms are the same, we should be
+        # able to equate their simplifications via permutation.
+        with Mult.temporary_simplification_directives() as simp_directives:
+            # Make sure we use proper simplification directives.
+            simp_directives.ungroup=True
+            simp_directives.combine_exponents=True
+            # don't bother reordering:
+            simp_directives.order_key_fn=lambda term : 0
+            lhs_simplification = lhs.simplification()
+            rhs_simplification = rhs.simplification()
+        eq_simps = Equals(lhs_simplification.rhs, 
+                          rhs_simplification.rhs).prove()
+        return Equals.apply_transitivities([lhs_simplification,
+                                            eq_simps,
+                                            rhs_simplification])
 
     @relation_prover
     def deduce_in_number_set(self, number_set, **defaults_config):
@@ -456,30 +483,8 @@ class Mult(NumberOperation):
             # irreducible values.
             eq.update(expr.evaluation())
             return eq.relation
-
-        order_key = Mult._simplification_directives_.order_key
-        if Mult._simplification_directives_.combine_exponents and (
-                not must_evaluate):
-            # Like factors are ones whose canonical forms are
-            # implicit/explicit exponentials with the same base
-            # raised to a literal, rational power (everyting is
-            # implicitly raised to the power of 1).
-            def likeness_key(factor):
-                canonical_factor = factor.canonical_form()
-                if isinstance(canonical_factor, Exp) and (
-                        is_literal_rational(canonical_factor.exponenent)):
-                    return canonical_factor.base
-                else:
-                    return canonical_factor
-            # Sort and combine like operands.
-            expr = eq.update(sorting_and_combining_like_operands(
-                    expr, order_key=order_key, 
-                    likeness_key=likeness_key))
-        else:
-            # See if we should reorder the factors.
-            expr = eq.update(sorting_operands(expr, order_key=order_key))    
                     
-            
+            """
             
             
             # We should generalize this to work analogously like 
@@ -521,6 +526,7 @@ class Mult(NumberOperation):
                         break
                 if has_exp_factor and (common_base is not None):
                     expr = eq.update(expr.exponent_combination())
+            """
         
         if expr != self:
             if (must_evaluate or (
@@ -554,7 +560,30 @@ class Mult(NumberOperation):
         elif must_evaluate:
             raise NotImplementedError(
                 "Cabability to evaluate %s is not implemented"%expr)
-        
+
+        order_key_fn = Mult._simplification_directives_.order_key_fn
+        if Mult._simplification_directives_.combine_exponents and (
+                not must_evaluate):
+            # Like factors are ones whose canonical forms are
+            # implicit/explicit exponentials with the same base
+            # raised to a literal, rational power (everyting is
+            # implicitly raised to the power of 1).
+            def likeness_key_fn(factor):
+                canonical_factor = factor.canonical_form()
+                if isinstance(canonical_factor, Exp) and (
+                        is_literal_rational(canonical_factor.exponenent)):
+                    return canonical_factor.base
+                else:
+                    return canonical_factor
+            # Sort and combine like operands.
+            expr = eq.update(sorting_and_combining_like_operands(
+                    expr, order_key_fn=order_key_fn, 
+                    likeness_key_fn=likeness_key_fn,
+                    preserve_likeness_keys=True, auto_simplify=True))
+        else:
+            # See if we should reorder the factors.
+            expr = eq.update(sorting_operands(expr, order_key_fn=order_key_fn))        
+        """
         if Mult._simplification_directives_.irreducibles_in_front:
             # Move irreducibles to the front.
             irreducible_factor_index_ranges = []
@@ -584,6 +613,7 @@ class Mult(NumberOperation):
                             start+offset, 0, end-start+1, 
                             auto_simplify=False))
                     offset += end - start + 1
+        """
         
         return eq.relation # Should be self=self.
 
@@ -1278,7 +1308,7 @@ class Mult(NumberOperation):
         return eq.relation
 
     @equality_prover('combined_exponents', 'combine_exponents')
-    def exponent_combination(self, start_idx=None, end_idx=None,
+    def combining_exponents(self, start_idx=None, end_idx=None,
                              **defaults_config):
         '''
         Derive and return this Mult expression equated to the
@@ -1557,7 +1587,7 @@ class Mult(NumberOperation):
         Combine factors, adding their literal, rational exponents.
         Alias for `exponent_combination`.
         '''
-        return self.exponent_combination()    
+        return self.combining_exponents()    
 
     @equality_prover('common_power_extracted', 'common_power_extract')
     def common_power_extraction(self, start_idx=None, end_idx=None,

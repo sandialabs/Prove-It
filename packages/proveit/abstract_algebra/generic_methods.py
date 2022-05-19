@@ -430,7 +430,7 @@ def deduce_equality_via_commutation(equality, *, one_side=None,
     if one_side is not None and one_side not in (lhs, rhs):
         raise ValueError("'equality' expected to have %s on one side: "
                          "%s not in {%s, %s}"%(one_side, lhs, rhs))
-    if lhs.canonical_eq_form() != rhs.canonical_eq_form():
+    if lhs.canonical_form() != rhs.canonical_form():
         raise UnsatisfiedPrerequisites(
                 "'deduce_equality_via_commutation' is not applicable "
                 "because %s and %s have different canonical forms"
@@ -440,7 +440,7 @@ def deduce_equality_via_commutation(equality, *, one_side=None,
                          "side of %s; 'deduce_equality_via_commutation', "
                          "therefore, is not applicable."
                          %equality)
-    lhs_canonical_to_idx = {operand.canonical_eq_form():_k for _k, operand 
+    lhs_canonical_to_idx = {operand.canonical_form():_k for _k, operand 
                             in enumerate(lhs.operands.entries)}
     
     # Figure out the new order and prove operand equalities 
@@ -448,7 +448,7 @@ def deduce_equality_via_commutation(equality, *, one_side=None,
     needs_substitutions = False
     new_order = []
     for rhs_operand in rhs.operands.entries:
-        lhs_idx = lhs_canonical_to_idx.pop(rhs_operand.canonical_eq_form())
+        lhs_idx = lhs_canonical_to_idx.pop(rhs_operand.canonical_form())
         new_order.append(lhs_idx)
         lhs_operand = lhs.operands[lhs_idx]
         if rhs_operand != lhs_operand:
@@ -470,10 +470,9 @@ def deduce_equality_via_commutation(equality, *, one_side=None,
     assert permutation.expr == equality
     return permutation
 
-@equality_prover('sorted_operands', 
-                 'sort_operands')
+@equality_prover('sorted_operands', 'sort_operands')
 def sorting_operands(
-        expr, *, order_key, **defaults_config):
+        expr, *, order_key_fn, **defaults_config):
     '''
     For commutative and associative operations, this method
     equates an original expression to one that may be partially
@@ -484,7 +483,7 @@ def sorting_operands(
     # See if we should reorder the terms.
     indices = list(range(expr.operands.num_entries()))
     new_order = sorted(indices,
-                       key = lambda idx : order_key(expr.operands[idx]))
+                       key = lambda idx : order_key_fn(expr.operands[idx]))
     if new_order != indices:
         return generic_permutation(expr, new_order)
     return Equals(expr, expr).conclude_via_reflexivity()
@@ -493,19 +492,31 @@ def sorting_operands(
 @equality_prover('sorted_and_combined_like_operands', 
                  'sort_and_combine_like_operands')
 def sorting_and_combining_like_operands(
-        expr, *, order_key, likeness_key, **defaults_config):
+        expr, *, order_key_fn, likeness_key_fn,
+        preserve_likeness_keys=True,
+        **defaults_config):
     '''
     For commutative and associative operations, this method
     equates an original expression to one that may be partially
-    sorted and "like" operands are combined.  The `likeness_key`
-    maps each operand to a key that is the same for "like" operands.
+    sorted and "like" operands are combined.
+    
+    The `likeness_key` function should transform each operand to an
+    expression 'key' that is the same for "like" operands.  The likeness
+    key of an ExprRange is the likeness key of its body if this key is 
+    independent of the ExprRange parameter; otherwise the likeness key 
+    is the ExprRange itself.
+    
     The "order_key" is used to sort these likeness keys -- ties
     retain the original order w.r.t. which likeness key came first.
     
     Combining the operands is implemented by grouping them together
     (calling the `association` method) and calling 
     `combining_operands` on each one.
+    
+    If 'preserve_likeness_keys' is True, the likeness keys will 
+    be preserved and not simplified even if auto-simplification is on.
     '''
+    from proveit import ExprRange
     from proveit import TransRelUpdater
     from proveit.logic import Equals
     if expr.operands.num_entries() <= 1:
@@ -516,7 +527,16 @@ def sorting_and_combining_like_operands(
     key_to_indices = dict()
     key_order = []
     for _k, operand in enumerate(expr.operands):
-        key = likeness_key(operand)
+        if isinstance(operand, ExprRange):
+            # For an ExprRange operand, use the body's likeness key
+            # iff it is parameter independent.
+            key = likeness_key_fn(operand.body)
+            if operand.parameter in key.free_vars():
+                # It's not parameter independent -- each instance has
+                # a different likeness key, so use the ExprRange itself.
+                key = operand
+        else:
+            key = likeness_key_fn(operand)
         if key in key_to_indices:
             key_to_indices[key].append(_k)
         else:
@@ -527,23 +547,71 @@ def sorting_and_combining_like_operands(
         eq = TransRelUpdater(expr)
         # Reorder the terms so like terms are adjacent.
         new_order = []
-        sorted_keys = sorted(key_order, key=order_key)
+        sorted_keys = sorted(key_order, key=order_key_fn)
         for key in sorted_keys:
             new_order.extend(key_to_indices[key])
         # Perform the permutation.
-        expr = eq.update(generic_permutation(expr, new_order))
+        expr = eq.update(generic_permutation(expr, new_order,
+                                             preserve_all=True))
         # Now group the terms so we can combine them.
         for _m, key in enumerate(sorted_keys):
+            preserve_expr = key if preserve_likeness_keys else None
             num_like_operands = len(key_to_indices[key])
-            if num_like_operands > 1:
+            if num_like_operands > 1:                    
+                # More than one operand to group and combine.
                 grouped_operation = expr.__class__(
                         *expr.operands.entries[_m:_m+num_like_operands])
-                combination = (
-                        grouped_operation.combining_operands())
+                combination = (grouped_operation.combining_operands(
+                        preserve_expr=preserve_expr))
                 expr = eq.update(expr.association(
                     _m, length=len(key_to_indices[key]),
                     replacements=[combination],
                     auto_simplify=False))
+            elif num_like_operands==1:
+                operand = expr.operands[_m]
+                if isinstance(operand, ExprRange) and (
+                        key != operand):
+                    # A single ExprRange to combine.
+                    expr = eq.update(expr.inner_expr().operands[_m].
+                                     combining_operands(
+                                             preserve_expr=preserve_expr))
         return eq.relation
     # Only one type of operand -- combine them.
-    return expr.combining_operands()
+    preserve_expr = (iter(key_to_indices.keys()) if preserve_likeness_keys 
+                     else None)
+    return expr.combining_operands(preserve_expr=preserve_expr)
+
+def common_likeness_key(expr, *, likeness_key_fn):
+    '''
+    Returns 'likeness_key' which must be in common among the operands
+    of the 'expr'.  If the operands don't all of the same likeness
+    key, a ValueError exception will be raised.
+
+    The `likeness_key` function should transform each operand to a key
+    that is the same for "like" operands.  The likeness key of an
+    ExprRange is the likeness key of its body if this key is independent
+    of the ExprRange parameter; otherwise the likeness key is the
+    ExprRange itself.
+    
+    Useful when implementating 'combining_operands'.
+    
+    See sorting_and_combining_like_operands.
+    '''
+    from proveit import ExprRange
+    keys = set()
+    for _k, operand in enumerate(expr.operands):
+        if isinstance(operand, ExprRange):
+            # For an ExprRange operand, use the body's likeness key
+            # iff it is parameter independent.
+            key = likeness_key_fn(operand.body)
+            if operand.parameter in key.free_vars():
+                # It's not parameter independent -- each instance has
+                # a different likeness key, so use the ExprRange itself.
+                key = operand
+        else:
+            key = likeness_key_fn(operand)
+        keys.add(key)
+    if len(keys) != 1:
+        raise ValueError("The likeness keys of the operands of %s are "
+                         "not all the same: %s"%(expr, keys))
+    return next(iter(keys))

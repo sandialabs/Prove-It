@@ -148,10 +148,10 @@ class Exp(NumberOperation):
         to be nonzero, but these should work as long as the expression
         is not a garbage expression.
         '''
-        from proveit.number import (one, zero, Neg, Mult, 
-                                    is_literal_rational, is_literal_int,
-                                    literal_rational_ints,
-                                    simplified_rational_expr)
+        from proveit.numbers import (one, zero, Neg, Mult, 
+                                     is_literal_rational, is_literal_int,
+                                     literal_rational_ints,
+                                     simplified_rational_expr)
         base = self.base.canonical_form()
         exponent = self.exponent.canonical_form()
         if exponent == zero:
