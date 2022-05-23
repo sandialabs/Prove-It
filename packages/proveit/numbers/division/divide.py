@@ -201,13 +201,15 @@ class Div(NumberOperation):
         This needs work, but we know that 1/x is irreducible if
         x is irreducible, not a negation, not 0 and not 1.
         '''
-        from proveit.logic import is_irreducible_value
-        from proveit.numbers import zero, one, Neg
-        if (self.numerator == one and self.denominator not in (zero, one) 
-                and not isinstance(self.denominator, Neg)
-                and is_irreducible_value(self.denominator)):
-            return True
-        return False # TODO: handle any proper fraction, etc.
+        from proveit.numbers import simplified_rational_expr
+        if is_literal_int(self.numerator) and is_literal_int(self.denominator):
+            # This is an irreducible rational if and only if it is the
+            # same as the corresponding 'simiplified_rational_expr'.
+            # (which divides out the gcd and extracts any negation).
+            numer_int = self.numerator.as_int()
+            denom_int = self.denominator.as_int()
+            return self == simplified_rational_expr(numer_int, denom_int)
+        return False
             
     @equality_prover('zero_numerator_reduced', 'zero_numerator_reduce')
     def zero_numerator_reduction(self, **defaults_config):
