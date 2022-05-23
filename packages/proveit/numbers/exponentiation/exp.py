@@ -177,6 +177,9 @@ class Exp(NumberOperation):
             numer = numer**(exponent.as_int())
             denom = denom**(exponent.as_int())
             return simplified_rational_expr(numer, denom)
+        elif base != self.base or exponent != self.exponent:
+            # Use the canonical forms of the base and exponent.
+            return Exp(base, exponent)
                 
         return self
 

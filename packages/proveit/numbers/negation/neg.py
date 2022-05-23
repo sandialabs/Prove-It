@@ -76,6 +76,7 @@ class Neg(NumberOperation):
         If negating a Mult with a nontrivial coefficient, pull the 
         negation into its coefficient.
         If negating an Add, distribute over the sum.
+        If negating a Neg, undo the double negation.
         '''
         from proveit.numbers import is_literal_rational, Add, Mult
         canonical_operand = self.operand.canonical_form()
@@ -84,11 +85,13 @@ class Neg(NumberOperation):
             # Apply the negation to the rational coefficient.
             coef = canonical_operand.factors[0]
             return Mult(Neg(coef).canonical_form(),
-                        *canonical_operand.factors[1:])
+                        *canonical_operand.factors.entries[1:])
         elif isinstance(canonical_operand, Add):
             # Distribute the negation over the sum.
             _sum = Add(*[Neg(term) for term in canonical_operand.terms])
             return _sum.canonical_form() 
+        elif isinstance(canonical_operand, Neg):
+            return canonical_operand.operand # double negation
         return self
 
     def _deduce_equality(self, equality):
