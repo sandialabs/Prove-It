@@ -305,7 +305,9 @@ def is_literal_rational(expr):
     Return True iff 'expr' represents a literal integer or a fraction 
     of literal integers with the denominator not equal to zero.
     '''
-    from proveit.numbers import Div, zero
+    from proveit.numbers import Neg, Div, zero
+    if isinstance(expr, Neg) and is_literal_rational(expr.operand):
+        return True
     if isinstance(expr, Div):
         return (is_literal_int(expr.numerator) and
                 is_literal_int(expr.denominator) and
@@ -318,15 +320,19 @@ def literal_rational_ints(expr):
     Never returns a negative denominator (multiplies top and bottom
     by -1 to avoid that).
     '''
-    from proveit.numbers import Div
+    from proveit.numbers import Neg, Div
+    sign = 1
+    while isinstance(expr, Neg):
+        sign *= -1
+        expr = expr.operand
     if isinstance(expr, Div):
         numer, denom = expr.numerator.as_int(), expr.denominator.as_int()
         if denom < 0:
             # The denominator is negative; multiply top and bottom
             # by negative 1.
             return -numer, -denom
-        return numer, denom
-    return expr.as_int(), 1
+        return numer*sign, denom
+    return expr.as_int()*sign, 1
 
 def simplified_rational_expr(numer_int, denom_int):
     '''
