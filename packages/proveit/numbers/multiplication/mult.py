@@ -119,6 +119,7 @@ class Mult(NumberOperation):
         factors = []
         for base in sorted(base_to_exponent.keys(), key=hash):
             # Canonize the exponentiated factor.
+            exponent = base_to_exponent[base]
             factor = Exp(base, exponent).canonical_form()
             factors.append(factor)
         # Return the appropriate canonical form.
@@ -146,8 +147,9 @@ class Mult(NumberOperation):
         assert lhs == self
         assert lhs.canonical_form() == rhs.canonical_form()
         
-        if isinstance(rhs, Add) and (
-                Counter(lhs.terms.entries) == Counter(rhs.terms.entries)):
+        if isinstance(rhs, Mult) and (
+                Counter([factor.canonical_form() for factor in lhs.factors]) == 
+                Counter([factor.canonical_form() for factor in rhs.factors])):
             # We just need to permute the entries.
             return deduce_equality_via_commutation(equality, one_side=self)
         
@@ -571,7 +573,7 @@ class Mult(NumberOperation):
             def likeness_key_fn(factor):
                 canonical_factor = factor.canonical_form()
                 if isinstance(canonical_factor, Exp) and (
-                        is_literal_rational(canonical_factor.exponenent)):
+                        is_literal_rational(canonical_factor.exponent)):
                     return canonical_factor.base
                 else:
                     return canonical_factor
@@ -1320,25 +1322,21 @@ class Mult(NumberOperation):
         |- a^b a^{-c} = a^{b-c},
         |- a^b a      = a^{b+1},
         |- a a^b      = a^{1+b},
-        |- a^c b^c    = (a b)^c. Maybe handle this case with something else?
         This also should work more generally with more than 2 factors,
         for example taking a^b a^c a^d to
         |- (a^b a^c a^d) = a^{b+c+d}.
         The start_idx and end_idx can be used to apply the process to
         a contiguous subset of factors within a larger set of factors.
-        Automatically attempts to reduce a resulting new exponent sum,
-        but not a new base product, unless call includes
-        auto_simplify=False.
         Planned but not implemented: allow user to specify non-
         contiguous factors to combine. For example, given self as
         a^b a^c b^a a^d
         allow user to specify indices 0, 1, 3 to produce something like
         |- a^{b+c+d} b^a
         '''
+        from proveit.numbers.number_operation import merge_list_of_sets
         import proveit.numbers.exponentiation as exp_pkg
         from proveit.numbers import Exp
-
-        error_msg = ""
+        from . import empty_mult
 
         # If the start_idx and/or end_idx has been specified
         if start_idx is not None or end_idx is not None:
@@ -1365,7 +1363,7 @@ class Mult(NumberOperation):
             # substitute the combined factors back into the
             # grouped expression and return the deduced equality
             return inner_combination.sub_right_side_into(grouped)
-
+        
         # Else neither the start_idx nor the end_idx has been specified,
         # indicating we intend to combine all possible factors, either:
         # (1) all like-bases combined with a single exponent, such as
@@ -1373,213 +1371,97 @@ class Mult(NumberOperation):
         # OR
         # (2) all like-exponents
         #     a^z b^z c^z = (abc)^z
+        
+        if self.factors.num_entries()==0:
+            # [*]() = 1
+            return empty_mult
+        
+        if self.factors.num_entries()==1 and (
+                isinstance(self.factors[0], ExprRange) and 
+                self.factors[0].is_parameter_independent()):
+            # x * x * ..(n-3)x.. * x = x^n
+            factor_range = self.factors[0]
+            _x = factor_range.body                    
+            _n = self.num_elements()
+            replacements = []
+            if factor_range.start_index != one:
+                # Transform from as ExprRange that start at 1.
+                replacements.append(factor_range.reduction().derive_reversed())
+            return exp_pkg.exp_nat_pos_rev.instantiate(
+                    {n:_n, x:_x}, replacements=replacements)
+        
         replacements = list(defaults.replacements)
-        factors = []
+        factor_bases = set()
+        factor_exponents = []
+        exponent_number_sets = set()
         for factor in self.factors:
-            if not isinstance(factor, Exp):
+            if isinstance(factor, ExprRange):
+                if isinstance(factor.body, Exp):
+                    # x^{n_1} * ... * x^{n_k}
+                    if factor.parameter in free_vars(factor.body.base):
+                        base = None # signal a problem
+                    # n_1, ..., n_k:
+                    exponent = ExprRange(
+                            factor.parameter, factor.body.exponent,
+                            factor.start_index, factor.end_index)
+                    exponent_number_set = deduce_number_set(
+                            factor.body.exponent, 
+                            assumptions=factor.parameter_condition()).domain
+                else:
+                    # x^n = x * x * ..(n-3)x.. * x
+                    replacements.append(Mult(factor).combining_exponents(
+                            preserve_all=True).derive_reversed())
+                    exponent = factor.num_elements()
+                    exponent_number_set = NaturalPos
+            elif isinstance(factor, Exp):
+                base = factor.base
+                exponent = factor.exponent
+                exponent_number_set = deduce_number_set(exponent).domain
+            else:
                 # Exploit a^1 = a.
-                factor = Exp(factor, one)
-                replacements.append(factor.power_of_one_reduction())
-            factors.append(factor)
-        factor_bases = [factor.base for factor in factors]
-        factor_exponents = [factor.exponent for factor in factors]
-        from proveit.numbers.exponentiation import (
-            products_of_complex_powers)
+                base = factor
+                exponent = one
+                exponent_number_set = NaturalPos
+                replacements.append(Exp(base, one).power_of_one_reduction())
+            factor_bases.add(base)
+            factor_exponents.append(exponent)
+            exponent_number_sets.add(exponent_number_set)
+            if len(factor_bases) > 1:
+                raise ValueError("Unable to combine exponents because "
+                                 "exponential bases differ: %s"%self)
+        minimal_exponent_ns = merge_list_of_sets(list(exponent_number_sets))
 
-        # (1) all same bases to combine with a single exponent,
-        # such as a^b a^c a^d = a^{b+c+d}
-        if len(set(factor_bases)) == 1:
-
-            _m_sub = num(len(factor_exponents))
-            _a_sub = factor_bases[0]
-            _b_sub = factor_exponents
-            try:
-                return products_of_complex_powers.instantiate(
-                    {m: _m_sub, a: _a_sub, b: _b_sub},
-                    replacements=replacements)
-            except Exception as the_exception:
-                # something went wrong
-                error_msg = (
-                    error_msg +
-                    "All factors appeared to have same base, but "
-                    "attempt failed with error message: \n" +
-                    str(the_exception))
-                pass
-
-        # (2) all same exponent to combine with a single base,
-        # such as a^d b^d c^d = (a b c)^d.
-        # Less common but sometimes useful.
-        if len(set(factor_exponents)) == 1:
-
-            # Same exponent: equate $a^c b^c = (a b)^c$
-            # Combining the exponents in this case is the reverse
-            # of disibuting an exponent.
-            _new_prod = Mult(*factor_bases)
-            _new_exp = Exp(_new_prod, factor_exponents[0])
-            try:
-                return _new_exp.distribution(
-                    replacements=replacements).derive_reversed()
-            except Exception as the_exception:
-                # something went wrong; append to error message
-                error_msg = (
-                    error_msg +
-                    "All factors appeared to have the same exponent, "
-                    "but attempt failed with error message: \n" +
-                    str(the_exception)) + "\n"
-                pass
-
-        exp_operand_msg = (
-            'Combine exponents only implemented for a product '
-            'of two exponentiated operands (or a simple variant)')
-
-        # I wonder if we might simply take any non-exp factor a and
-        # convert it to Exp(a, one) (i.e. a^1). This might simplify
-        # the process, making things a bit more mechanical ....
-
-        if (not self.operands.is_double()
-                or not isinstance(self.operands[0], Exp)
-                or not isinstance(self.operands[1], Exp)):
-
-            if (self.operands.is_double()
-                    and isinstance(self.operands[0], Exp)
-                    and self.operands[0].base == self.operands[1]):
-                # self is of the form: (a^b) a
-                return exp_pkg.add_one_right_in_exp.instantiate(
-                    {a: self.operands[1], b: self.operands[0].exponent})
-
-            elif (self.operands.is_double() and
-                  isinstance(self.operands[1], Exp) and
-                  self.operands[1].base == self.operands[0]):
-                # self is of the form: a (a^b)
-
-                try: # case where base a != 0
-                    return exp_pkg.add_one_left_in_exp.instantiate(
-                        {a: self.operands[0], b: self.operands[1].exponent})
-                except Exception as the_exception:
-                    # case where base might be 0 but exponent != 0
-                    return (exp_pkg.add_one_left_in_exp_poss_zero_base
-                            .instantiate({a: self.operands[0], 
-                                          b: self.operands[1].exponent}))
-
-        # More complex efforts if code above does not catch the
-        # specific instance. The code below remains from earlier.
-        # ============================================================
-        # Create a list of bases and ranges of bases,
-        # and a list of exponents and ranges of exponents,
-        # and determine if all of the represented bases are the same
-        # or if all of the represented exponents are the same.
-        # For example,
-        #   (a_1^c * ... * a_n^c * b^c)
-        # would result in:
-        #   same_base=False, same_exponent=c,
-        #   operand_bases = [a_1, ..., a_n, b]
-        #   operand_exonents = [c, ..n repeats.. c, c]
-        operand_bases = []
-        operand_exponents = []
-        same_base = None
-        same_exponent = None
-        for operand in self.operands:
-            if isinstance(operand, ExprRange):
-                if not isinstance(operand.body, Exp):
-                    raise ValueError(exp_operand_msg)
-                operand_bases.append(operand.mapped_range(
-                    lambda exponential: exponential.base))
-                operand_exponents.append(operand.mapped_range(
-                    lambda exponential: exponential.exponent))
-                base = operand_bases.innermost_body()
-                exponent = operand_exponents.innermost_body()
-                operand_parameters = operand.parameters()
-                if not free_vars(base).isdisjoint(operand_parameters):
-                    # Can't have the same base unless the base
-                    # is independent of range parameters.
-                    same_base = False
-                if not free_vars(exponent).isdisjoint(operand_parameters):
-                    # Can't have the same exponent unless the exponent
-                    # is independent of range parameters.
-                    same_exponent = False
+        assert len(factor_bases)==1
+        _a = next(iter(factor_bases))
+        if self.factors.is_double():
+            _b, _c = factor_exponents
+            if NaturalPos.includes(minimal_exponent_ns):
+                return exp_pkg.product_of_posnat_powers.instantiate(
+                        {a:_a, m:_b, n:_c})
+            elif RealPos.includes(minimal_exponent_ns):
+                return exp_pkg.product_of_pos_powers.instantiate(
+                        {a:_a, b:_b, c:_c})
+            elif Real.includes(minimal_exponent_ns):
+                return exp_pkg.product_of_real_powers.instantiate(
+                        {a:_a, b:_b, c:_c})
             else:
-                if not isinstance(operand, Exp):
-                    raise ValueError(exp_operand_msg)
-                base = operand.base
-                exponent = operand.exponent
-                operand_bases.append(base)
-                operand_exponents.append(exponent)
-            if same_base is None:
-                same_base = base
-            elif same_base != base:
-                # Not all bases are the same
-                same_base = False
-            if same_exponent is None:
-                same_exponent = base
-            elif same_exponent != base:
-                # Not all exponents are the same
-                same_exponent = False
-
-        if same_base not in (None, False):
-            # Same base: a^b a^c = a^{b+c}$, or something similar
-
-            # Find out the known type of the exponents.
-            possible_exponent_types = [NaturalPos, RealPos, Real,
-                                       Complex]
-            for exponent in operand_exponents:
-                deduce_number_set(exponent)
-                while len(possible_exponent_types) > 1:
-                    exponent_type = possible_exponent_types[0]
-                    if isinstance(exponent, ExprRange):
-                        in_sets = exponent.mapped_range(
-                            lambda exp_range_body:
-                            InSet(exp_range_body, exponent_type))
-                        if And(in_sets).proven():
-                            # This type is known for these exponents.
-                            break
-                    else:
-                        if InSet(exponent, exponent_type).proven():
-                            # This type is known for this exponent.
-                            break
-                    # We've eliminated a type from being known.
-                    possible_exponent_types.pop(0)
-            known_exponent_type = possible_exponent_types[0]
-
-            if known_exponent_type == NaturalPos:
-                if self.operands.is_double():
-                    _m, _n = operand_exponents
-                    return exp_pkg.product_of_posnat_powers.instantiate(
-                        {a: same_base, m: _m, n: _n})
-                else:
-                    _k = ExprTuple(*operand_exponents)
-                    _m = _k.num_elements()
-                    return exp_pkg.products_of_posnat_powers.instantiate(
-                        {a: same_base, m: _m, k: _k})
+                return exp_pkg.product_of_complex_powers.instantiate(
+                        {a:_a, b:_b, c:_c})
+        else:
+            _b = factor_exponents
+            _m = _b.num_elements()
+            if NaturalPos.includes(minimal_exponent_ns):
+                return exp_pkg.products_of_posnat_powers.instantiate(
+                        {m:_m, a:_a, k:_b})
+            elif RealPos.includes(minimal_exponent_ns):
+                return exp_pkg.products_of_pos_powers.instantiate(
+                        {m:_m, a:_a, b:_b})
+            elif Real.includes(minimal_exponent_ns):
+                return exp_pkg.products_of_real_powers.instantiate(
+                        {m:_m, a:_a, b:_b})
             else:
-                if self.operands.is_double():
-                    _b, _c = operand_exponents
-                    if known_exponent_type == RealPos:
-                        thm = exp_pkg.product_of_pos_powers
-                    elif known_exponent_type == Real:
-                        thm = exp_pkg.product_of_real_powers
-                    else:  # Complex is default
-                        thm = exp_pkg.product_of_complex_powers
-                    return thm.instantiate({a: same_base, b: _b, c: _c})
-                else:
-                    _b = ExprTuple(*operand_exponents)
-                    _m = _b.num_elements()
-                    if known_exponent_type == RealPos:
-                        thm = exp_pkg.products_of_pos_powers # plural
-                    elif known_exponent_type == Real:
-                        thm = exp_pkg.products_of_real_powers # plural
-                    else:  # Complex is default
-                        thm = exp_pkg.products_of_complex_powers
-                    return thm.instantiate({m: _m, a: same_base, b: _b})
-
-        elif same_exponent not in (None, False):
-            # Same exponent: equate $a^c b^c = (a b)^c$
-            # Combining the exponents in this case is the reverse
-            # of disibuting an exponent.
-            prod = Mult(*operand_bases)
-            exp = Exp(prod, same_exponent)
-            return exp.distribution().derive_reversed()
-        raise ValueError('Product is not in a correct form to '
-                         'combine exponents: ' + str(self))
+                return exp_pkg.products_of_complex_powers.instantiate(
+                        {m:_m, a:_a, b:_b})
 
     @equality_prover('combined_operands', 'combine_operands')
     def combining_operands(self, **defaults_config):
