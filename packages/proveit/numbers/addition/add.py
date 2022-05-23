@@ -1,3 +1,4 @@
+import math
 import bisect
 from collections import deque, Counter
 
@@ -21,7 +22,6 @@ from proveit.abstract_algebra.generic_methods import (
         sorting_operands, sorting_and_combining_like_operands,
         common_likeness_key)
 from proveit import TransRelUpdater
-import bisect
 from proveit.numbers import (NumberOperation, sorted_number_sets,
                              deduce_number_set)
 from proveit.numbers import (Integer, IntegerNeg, IntegerNonPos,
@@ -233,7 +233,7 @@ class Add(NumberOperation):
         from proveit.numbers.multiplication.mult import (
                 canonical_coefficient_and_remainder)
         if self.terms.num_entries() == 0:
-            return self # Add operation with no operands
+            return zero # Add operation with no operands
         remainder_to_rational_coef = dict()
         contains_only_literal_rationals = True
         for term in self.terms:
@@ -306,7 +306,8 @@ class Add(NumberOperation):
         assert lhs.canonical_form() == rhs.canonical_form()
         
         if isinstance(rhs, Add) and (
-                Counter(lhs.terms.entries) == Counter(rhs.terms.entries)):
+                Counter([term.canonical_form() for term in lhs.terms]) == 
+                Counter([term.canonical_form() for term in rhs.terms])):
             # We just need to permute the entries.
             return deduce_equality_via_commutation(equality, one_side=self)
         
@@ -1009,8 +1010,47 @@ class Add(NumberOperation):
         or a (possibly negated) fraction with no common divisors between
         the numerator and denominator other than 1.
         '''
-        raise NotImplementedError("Not yet implemented")
+        from proveit.numbers import (Mult, Div, num, is_literal_rational, 
+                                     literal_rational_ints)
+        from . import rational_pair_addition
+        expr = self
+        eq = TransRelUpdater(expr)
+        terms = self.terms
+        if not terms.is_double() or (
+                not all(is_literal_rational(term) for term in terms)):
+            raise ValueError(
+                "_rational_binary_eval only applicable for binary addition "
+                "of rationals")
+        _a, _b = literal_rational_ints(terms[0])
+        _c, _d = literal_rational_ints(terms[1])
+        _a, _b, _c, _d = num(_a), num(_b), num(_c), num(_d)
 
+        # Combine the sum using
+        #   (a/b) + (c/d) = (a*d + b*c)/(b*d)
+        # Replace the numerator and denominator with evaluations.
+        numer_repl = Add(Mult(_a, _d), Mult(_b, _c)).evaluation()
+        denom_repl = Mult(_b, _d).evaluation()
+        # But then factor the gcd.
+        numer_int, denom_int = numer_repl.rhs.as_int(), denom_repl.rhs.as_int()
+        gcd = math.gcd(abs(numer_int), denom_int)
+        if gcd != 1 and abs(numer_int) != denom_int:
+            # Factor out the gcd from the numerator and denominator.
+            numer_factorization = Mult(
+                    num(numer_int), num(gcd)).evaluation().derive_reversed()
+            denom_factorization = Mult(
+                    num(denom_int), num(gcd)).evaluation().derive_reversed()
+            numer_repl = numer_repl.apply_transitivity(numer_factorization)
+            denom_repl = denom_repl.apply_transitivity(denom_factorization)
+        # (a/b) + (c/d) = ((a*d+b*c)*gcd)/((b*d)*gcd)
+        # and make sure to factor out any negation and perform
+        # the gcd cancelation in the simplification process.
+        with Div.temporary_simplification_directives() as tmp_directives:
+            tmp_directives.factor_negation = True
+            expr = eq.update(rational_pair_addition.instantiate(
+                    {a:_a, b:_b, c:_c, d:_d}, 
+                    replacements=[numer_repl, denom_repl],
+                    auto_simplify=True, preserve_expr=self))
+        return eq.relation
 
     def subtraction_folding(self, term_idx=None, assumptions=frozenset()):
         '''
