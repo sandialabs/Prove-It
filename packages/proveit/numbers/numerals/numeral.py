@@ -287,18 +287,24 @@ class NumeralSequence(Operation, IrreducibleValue):
     def _function_formatted(self, format_type, **kwargs):
         return self._formatted(format_type, **kwargs)
 
+def is_literal_natural(expr):
+    '''
+    Return True iff the 'expr' represents a literal, numeric natural
+    number.
+    '''
+    if isinstance(expr, Numeral):
+        return True
+    elif isinstance(expr, NumeralSequence):
+        return expr.is_irreducible_value()
+    return False    
+
 def is_literal_int(expr):
     '''
     Return True iff the 'expr' represents a literal, numeric integer.
     '''
     from proveit.numbers import Neg
-    if isinstance(expr, Numeral):
-        return True
-    elif isinstance(expr, NumeralSequence):
-        return expr.is_irreducible_value()
-    elif isinstance(expr, Neg) and is_literal_int(expr.operand):
-        return True
-    return False
+    return is_literal_natural(expr) or (
+            isinstance(expr, Neg) and is_literal_natural(expr.operand))
 
 def is_literal_rational(expr):
     '''
