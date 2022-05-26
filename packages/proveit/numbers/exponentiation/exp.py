@@ -1,15 +1,13 @@
 from proveit import (defaults, equality_prover, ExprTuple, Function,
                      InnerExpr, Literal, maybe_fenced_string,
+                     SimplificationDirectives,
                      ProofFailure, prover, relation_prover, StyleOptions,
                      UnsatisfiedPrerequisites, USE_DEFAULTS)
 import proveit
 from proveit import a, b, c, k, m, n, x, y, S
-from proveit import (defaults, Literal, Function, ExprTuple, InnerExpr,
-                     ProofFailure, maybe_fenced_string, USE_DEFAULTS,
-                     StyleOptions)
 from proveit.logic import Equals, InSet, SetMembership, NotEquals
 from proveit.numbers import zero, one, two, Div, frac, num, Real
-from proveit.numbers import Integer, NumberOperation, deduce_number_set
+from proveit.numbers import NumberOperation, deduce_number_set
 from proveit.numbers.number_sets import (
     Natural, NaturalPos,
     Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
@@ -25,6 +23,9 @@ class Exp(NumberOperation):
     '''
     # operator of the Exp operation.
     _operator_ = Literal(string_format='Exp', theory=__file__)
+
+    _simplification_directives_ = SimplificationDirectives(
+            distribute_exponent = False)
 
     def __init__(self, base, exponent, *, styles=None):
         r'''
@@ -180,9 +181,8 @@ class Exp(NumberOperation):
         elif base != self.base or exponent != self.exponent:
             # Use the canonical forms of the base and exponent.
             return Exp(base, exponent)
-                
         return self
-
+        
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
                                **defaults_config):
@@ -201,10 +201,11 @@ class Exp(NumberOperation):
         simplifications.
         '''
         from proveit.relation import TransRelUpdater
-        from proveit.logic import EvaluationError, is_irreducible_value
+        from proveit.logic import is_irreducible_value
         from proveit.logic import InSet
         from proveit.numbers import (zero, one, two, is_literal_int,
                                      is_literal_rational,
+                                     literal_rational_ints,
                                      Log, Rational, Abs)
         from . import (exp_zero_eq_one, exponentiated_zero,
                        exponentiated_one, exp_nat_pos_expansion)
@@ -223,6 +224,9 @@ class Exp(NumberOperation):
                         # must evaluate.
                         operand.evaluation()
                 return self.evaluation()
+        
+        if is_literal_rational(self.base):
+            _a, _b = literal_rational_ints(self.base)
 
         if self.exponent == zero:
             return exp_zero_eq_one.instantiate({a: self.base})  # =1
@@ -255,6 +259,7 @@ class Exp(NumberOperation):
         elif (is_literal_rational(self.base) and
                   is_literal_int(self.exponent) and
                   self.exponent.as_int() > 1):
+            # exponentiate a rational to a positive integer
             expr = self
             eq = TransRelUpdater(expr)
             expr = eq.update(exp_nat_pos_expansion.instantiate(
@@ -271,6 +276,19 @@ class Exp(NumberOperation):
                     rep_reduction.rhs, preserve_all=True))
             expr = eq.update(expr.evaluation())
             return eq.relation
+        elif (is_literal_rational(self.base) and _b != 0 and
+                  is_literal_int(self.exponent) and
+                  self.exponent.as_int() < 0):
+            # exponentiate a rational to a negative integer
+            # _a and _b are the numerator and denominator as ints.
+            from proveit.numbers.exponentiation import (
+                    neg_power_as_div, neg_power_of_quotient)
+            _n = num(-self.exponent.as_int())
+            if _b == 1:
+                return neg_power_as_div.instantiate({a:num(_a), n:_n})
+            else:
+                return neg_power_of_quotient.instantiate(
+                        {a:num(_a), b:num(_b), n:_n})
         elif (isinstance(self.exponent, Log)
             and self.base == self.exponent.base):
             # base_ns  = self.base.deduce_number_set()
@@ -279,13 +297,13 @@ class Exp(NumberOperation):
                 and InSet(self.exponent.antilog, RealPos).proven()
                 and NotEquals(self.base, one).proven()):
                 return self.power_of_log_reduction()
-        expr = self
-        # for convenience updating our equation:
-        eq = TransRelUpdater(expr)
-        if self.exponent == two and isinstance(self.base, Abs):
+        elif self.exponent == two and isinstance(self.base, Abs):
             from . import (square_abs_rational_simp,
                                      square_abs_real_simp)
             # |a|^2 = a if a is real
+            expr = self
+            # for convenience updating our equation:
+            eq = TransRelUpdater(expr)
             try:
                 deduce_number_set(self.base)
             except UnsatisfiedPrerequisites:
@@ -303,8 +321,12 @@ class Exp(NumberOperation):
                 # A further simplification may be possible after
                 # eliminating the absolute value.
                 expr = eq.update(expr.simplification())
-
-        return eq.relation
+            return eq.relation
+        elif Exp._simplification_directives_.distribute_exponent:
+            # Distribute the exponent as directed.
+            return self.distribution()
+        else:
+            return Equals(self, self).conclude_via_reflexivity()
     
     def is_irreducible_value(self):
         '''
@@ -493,8 +515,8 @@ class Exp(NumberOperation):
                 return thm.instantiate(
                     {a: _a, b: _b, c: _c})
         else:
-            raise ValueError("May only distribute an exponent over a "
-                             "product or fraction.")
+            # Nothing to distribute over.
+            return Equals(self, self).conclude_via_reflexivity()
 
     """
     def distribute_exponent(self, assumptions=frozenset()):

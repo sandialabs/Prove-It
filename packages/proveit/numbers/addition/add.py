@@ -47,10 +47,6 @@ class Add(NumberOperation):
             combine_like_terms = True,
             order_key_fn = lambda term : 0)
 
-    # Map terms to sets of Judgment equalities that involve
-    # the term on the left hand side.
-    known_equalities = dict()
-
     def __init__(self, *operands, styles=None):
         r'''
         Add together any number of operands.
@@ -181,8 +177,13 @@ class Add(NumberOperation):
 
     def equality_side_effects(self, judgment):
         '''
-        Record the judgment in Add.known_equalities, associated for
-        each term.
+        If the right side is irreducible and the left side is
+        binary, a + b = c, derive the commutation
+            b + a = c
+        and if neither a nor b is a Neg, also derive the following:
+            -a - b = -c
+            c - b = a
+            b - c = -a
         '''
         from proveit.numbers import Neg
         if not isinstance(judgment, Judgment):
@@ -195,9 +196,6 @@ class Add(NumberOperation):
                 "Expecting lhs of judgment to be of an Add expression.")
 
         if is_irreducible_value(judgment.rhs):
-            for term in addition.terms:
-                Add.known_equalities.setdefault(term, set()).add(judgment)
-
             if addition.terms.is_double():
                 # deduce the commutation form: b+a=c from a+b=c
                 if addition.terms[0] != addition.terms[1]:
@@ -284,7 +282,7 @@ class Add(NumberOperation):
             if coef == one:
                 term = remainder
             elif isinstance(remainder, Mult):
-                term = Mult(coef, *remainder.factors)
+                term = Mult(coef, *remainder.factors.entries)
             else:
                 term = Mult(coef, remainder)
             terms.append(term.canonical_form())
@@ -295,37 +293,6 @@ class Add(NumberOperation):
         
         return Add(*sorted([operand.canonical_form() for operand 
                            in self.operands.entries], key=hash))
-
-    def _deduce_equality(self, equality):
-        '''
-        Prove that this Add is equal to an expression that has the
-        same canonical form.
-        '''
-        lhs, rhs = equality.lhs, equality.rhs
-        assert lhs == self
-        assert lhs.canonical_form() == rhs.canonical_form()
-        
-        if isinstance(rhs, Add) and (
-                Counter([term.canonical_form() for term in lhs.terms]) == 
-                Counter([term.canonical_form() for term in rhs.terms])):
-            # We just need to permute the entries.
-            return deduce_equality_via_commutation(equality, one_side=self)
-        
-        # Since the canonical forms are the same, we should be
-        # able to equate their simplifications via permutation.
-        with Add.temporary_simplification_directives() as simp_directives:
-            # Make sure we use the default simplification directives.
-            simp_directives.ungroup = True
-            simp_directives.combine_like_terms = True
-            # don't bother reordering:
-            simp_directives.order_key_fn = lambda term : 0
-            lhs_simplification = lhs.simplification()
-            rhs_simplification = rhs.simplification()
-        eq_simps = Equals(lhs_simplification.rhs, 
-                          rhs_simplification.rhs).prove()
-        return Equals.apply_transitivities([lhs_simplification,
-                                            eq_simps,
-                                            rhs_simplification])
 
     @prover
     def equation_negation(self, rhs, **defaults_config):
@@ -597,8 +564,9 @@ class Add(NumberOperation):
         if all(isinstance(operand, Neg) for operand in self.operands):
             negated = Neg(
                 Add(*[operand.operand for operand in self.operands]))
-            neg_distribution = negated.distribution(auto_simplify=True)
-            return neg_distribution.derive_reversed()
+            neg_distribution = negated.distribution(auto_simplify=False)
+            neg_factored = neg_distribution.derive_reversed()
+            return neg_factored.inner_expr().rhs.simplify()
         
         expr = self
         # for convenience updating our equation
@@ -951,20 +919,16 @@ class Add(NumberOperation):
         '''
         return Equals(self, self.quick_simplified())        
 
-    def _integer_binary_eval(self, assumptions=USE_DEFAULTS):
+    def _integer_binary_eval(self):
         '''
         Evaluate the sum of possibly negated single digit numbers.
         '''
-        from proveit.numbers import Neg, is_literal_int, num
-        from proveit.numbers.numerals import NumeralSequence
-        abs_terms = [
-            term.operand if isinstance(
-                term, Neg) else term for term in self.terms]
-        if len(abs_terms) != 2 or not all(is_literal_int(abs_term)
-                                          for abs_term in abs_terms):
-            raise ValueError(
-                "_integer_binary_eval only applicable for binary addition of integers")
-        _a, _b = self.terms
+        from proveit.numbers import is_literal_int, num
+        from proveit.numbers.numerals import DecimalSequence
+        terms = self.terms
+        assert terms.is_double()
+        assert all(is_literal_int(term) for term in terms)
+        _a, _b = terms
         _a, _b = _a.as_int(), _b.as_int()
         if _a < 0 and _b < 0:
             # evaluate -a-b via a+b
@@ -984,15 +948,9 @@ class Add(NumberOperation):
             else:
                 _a, _b = _b - _a, _a
         assert _a >= 0 and _b >= 0
-        #print(_a, _b)
         if not all(term in DIGITS for term in (num(_a), num(_b))):
-            if isinstance(num(_a), NumeralSequence):
-                return num(_a).num_add_eval(_b, assumptions=assumptions)
-            elif isinstance(num(_b), NumeralSequence):
-                return num(_a).num_add_eval(_b, assumptions=assumptions)
-            raise NotImplementedError(
-                "Currently, _integer_binary_eval only works for integer "
-                " addition and related subtractions: %d, %d" % (_a, _b))
+            # multi-digit addition
+            return DecimalSequence.add_eval(_a, _b)
         with defaults.temporary() as temp_defaults:
             # We rely upon side-effect automation here.
             temp_defaults.sideeffect_automation = True
@@ -1002,7 +960,7 @@ class Add(NumberOperation):
                     'add_%d_%d' % (_a, _b))
         return self.evaluation()
 
-    def _rational_binary_eval(self, assumptions=USE_DEFAULTS):
+    def _rational_binary_eval(self):
         '''
         Evaluate the sum of possibly literal rational numbers.
         The evaluation must be irreducible which means that the result
@@ -1010,11 +968,9 @@ class Add(NumberOperation):
         or a (possibly negated) fraction with no common divisors between
         the numerator and denominator other than 1.
         '''
-        from proveit.numbers import (Mult, Div, num, is_literal_rational, 
+        from proveit.numbers import (Div, num, is_literal_rational, 
                                      literal_rational_ints)
         from . import rational_pair_addition
-        expr = self
-        eq = TransRelUpdater(expr)
         terms = self.terms
         if not terms.is_double() or (
                 not all(is_literal_rational(term) for term in terms)):
@@ -1024,33 +980,19 @@ class Add(NumberOperation):
         _a, _b = literal_rational_ints(terms[0])
         _c, _d = literal_rational_ints(terms[1])
         _a, _b, _c, _d = num(_a), num(_b), num(_c), num(_d)
+        # Replace the irreducible forms with the original forms.
+        replacements = [Equals(Div(_a, _b), terms[0]).prove(),
+                        Equals(Div(_c, _d), terms[1]).prove()]
 
         # Combine the sum using
         #   (a/b) + (c/d) = (a*d + b*c)/(b*d)
-        # Replace the numerator and denominator with evaluations.
-        numer_repl = Add(Mult(_a, _d), Mult(_b, _c)).evaluation()
-        denom_repl = Mult(_b, _d).evaluation()
-        # But then factor the gcd.
-        numer_int, denom_int = numer_repl.rhs.as_int(), denom_repl.rhs.as_int()
-        gcd = math.gcd(abs(numer_int), denom_int)
-        if gcd != 1 and abs(numer_int) != denom_int:
-            # Factor out the gcd from the numerator and denominator.
-            numer_factorization = Mult(
-                    num(numer_int), num(gcd)).evaluation().derive_reversed()
-            denom_factorization = Mult(
-                    num(denom_int), num(gcd)).evaluation().derive_reversed()
-            numer_repl = numer_repl.apply_transitivity(numer_factorization)
-            denom_repl = denom_repl.apply_transitivity(denom_factorization)
-        # (a/b) + (c/d) = ((a*d+b*c)*gcd)/((b*d)*gcd)
-        # and make sure to factor out any negation and perform
-        # the gcd cancelation in the simplification process.
-        with Div.temporary_simplification_directives() as tmp_directives:
-            tmp_directives.factor_negation = True
-            expr = eq.update(rational_pair_addition.instantiate(
-                    {a:_a, b:_b, c:_c, d:_d}, 
-                    replacements=[numer_repl, denom_repl],
-                    auto_simplify=True, preserve_expr=self))
-        return eq.relation
+        # Applying automatic simplifications should evaluate the
+        # numerator and denominator and then reduce it to an
+        # irreducible form.
+        return rational_pair_addition.instantiate(
+                {a:_a, b:_b, c:_c, d:_d}, 
+                auto_simplify=True, replacements=replacements,
+                preserve_expr=self)
 
     def subtraction_folding(self, term_idx=None, assumptions=frozenset()):
         '''

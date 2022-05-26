@@ -86,8 +86,6 @@ class ComplexSet(NumberSet):
         from proveit.numbers.division import div_eq
         if not isinstance(relation, Equals):
             TypeError("'relation' expected to be Equals")
-
-        from proveit import defaults
         return div_eq.instantiate(
             {a: divisor, x: relation.lhs, y: relation.rhs})
 

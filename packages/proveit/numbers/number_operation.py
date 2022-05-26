@@ -1,9 +1,12 @@
-from collections import deque
+from collections import deque, Counter
 from proveit import (Expression, Judgment, Operation, ExprTuple, ExprRange,
                      generate_inner_expressions, USE_DEFAULTS,
                      prover, relation_prover,
                      ProofFailure, UnsatisfiedPrerequisites)
+from proveit.logic import Equals
 from proveit.relation import TransRelUpdater
+from proveit.abstract_algebra.generic_methods import (
+        deduce_equality_via_commutation)
 from .number_sets import (
     Natural, NaturalPos,
     Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
@@ -20,6 +23,57 @@ class NumberOperation(Operation):
     
     def __init__(self, operator, operand_or_operands, *, styles=None):
         Operation.__init__(self, operator, operand_or_operands, styles=styles)
+
+    def _deduce_equality(self, equality):
+        '''
+        Prove that this number operation is equal to an expression that 
+        has the same canonical form.
+        '''
+        from proveit.numbers import Add, Mult, Div, Exp, Neg
+        lhs, rhs = equality.lhs, equality.rhs
+        assert lhs == self
+        assert lhs.canonical_form() == rhs.canonical_form()
+
+        # If the rhs is the same type as the lhs and the
+        # canonical forms of the operands are the same, we can
+        # use direct substitution and/or a permutation for operations
+        # that commute (Add and Mult).
+        if isinstance(rhs, type(lhs)):
+            canonical_lhs_operands = [operand.canonical_form() for operand 
+                                      in lhs.operands]
+            canonical_rhs_operands = [operand.canonical_form() for operand 
+                                      in rhs.operands]
+            if canonical_lhs_operands == canonical_rhs_operands:
+                # Just use direct substitution.
+                return equality.conclude_via_direct_substitution()
+            elif (isinstance(self, Add) or isinstance(self, Mult)) and (
+                    Counter(canonical_lhs_operands) == 
+                    Counter(canonical_rhs_operands)):
+                # We just need direct substitution and permutation.
+                return deduce_equality_via_commutation(equality, one_side=self)
+        
+        # Since the canonical forms are the same, we should be
+        # able to equate their simplifications.
+        # But make sure we use the proper simplification directives
+        # (mostly the default ones).
+        with Div.temporary_simplification_directives(use_defaults=True) as div_simps, \
+             Exp.temporary_simplification_directives(use_defaults=True) as exp_simps:
+            with Add.temporary_simplification_directives(use_defaults=True), \
+                 Neg.temporary_simplification_directives(use_defaults=True), \
+                 Mult.temporary_simplification_directives(use_defaults=True):
+                # Reduce division to multiplication, consistent
+                # with the canonical form.
+                div_simps.reduce_to_multiplication = True
+                # Distribute exponents consistent with the 
+                # canonical form.
+                exp_simps.distribute_exponent = True
+                lhs_simplification = lhs.simplification()
+                rhs_simplification = rhs.simplification()
+        eq_simps = Equals(lhs_simplification.rhs, 
+                          rhs_simplification.rhs).prove()
+        return Equals.apply_transitivities([lhs_simplification,
+                                            eq_simps,
+                                            rhs_simplification])
 
     @relation_prover
     def deduce_bound(self, inner_expr_bound_or_bounds, 
@@ -52,7 +106,7 @@ class NumberOperation(Operation):
             raise ValueError("Expecting one or more 'inner_expr_bounds'")
         while len(inner_expr_bounds) > 0:
             inner_expr_bound = inner_expr_bounds.popleft()
-            print('inner_expr_bound', inner_expr_bound)
+            #print('inner_expr_bound', inner_expr_bound)
             if isinstance(inner_expr_bound, TransRelUpdater):
                 # May be one of the internally generated
                 # TransRelUpdater for percolating bounds up through
