@@ -193,8 +193,11 @@ def _make_decorated_relation_prover(func):
     Use for decorating 'relation_prover' methods 
     (@relation_prover or @equality_prover).  In addition
     to the @prover capabilities, temporarily altering 'defaults' and
-    checking that a Judgment is returned, also check that the
-    Judgment is for a Relation the 'self' as the left side.
+    checking that a Judgment is returned check that the
+    Judgment is for a Relation.  Furthermore, unless alter_lhs=True 
+    is set in the keyword arguments when the method is called,
+    automatically 'preserve' the 'self' expression and make sure it
+    is on the left side of the returned Relation Judgment.
     '''
 
     decorated_prover = _make_decorated_prover(func)
@@ -215,15 +218,18 @@ def _make_decorated_relation_prover(func):
             raise TypeError("@relation_prover, %s, expected to be a "
                             "method for an Expression type or it must "
                             "have an 'expr' attribute."%func)
-        if 'preserve_expr' in kwargs:
-            if 'preserved_exprs' in kwargs:
-                kwargs['preserved_exprs'] = (
-                        kwargs['preserved_exprs'].union([expr]))
+        alter_lhs = kwargs.pop('alter_lhs', False)
+        if not alter_lhs:
+            # preserve the left side.
+            if 'preserve_expr' in kwargs:
+                if 'preserved_exprs' in kwargs:
+                    kwargs['preserved_exprs'] = (
+                            kwargs['preserved_exprs'].union([expr]))
+                else:
+                    kwargs['preserved_exprs'] = (
+                           defaults.preserved_exprs.union([expr]))
             else:
-                kwargs['preserved_exprs'] = (
-                       defaults.preserved_exprs.union([expr]))
-        else:
-            kwargs['preserve_expr'] = expr
+                kwargs['preserve_expr'] = expr
         
         # Use the regular @prover wrapper.
         proven_truth = decorated_prover(*args, **kwargs)
@@ -235,22 +241,22 @@ def _make_decorated_relation_prover(func):
                     "@relation_prover, %s, expected to prove a "
                     "Relation expression, not %s of type %s."
                     %(func, proven_expr, proven_expr.__class__))
-        expected_lhs = expr
-        if isinstance(expr, ExprRange):
-            expected_lhs = ExprTuple(expr)
-        if proven_expr.lhs != expected_lhs:
-            raise TypeError(
-                    "@relation_prover, %s, expected to prove a "
-                    "relation with %s on its left side "
-                    "('lhs').  %s does not satisfy this "
-                    "requirement."%(func, expected_lhs, proven_expr))
-
-        # Make the style consistent with the original expression.
-        if not proven_expr.lhs.has_same_style(expected_lhs):
-            # Make the left side of the proven truth have a style
-            # that matches the original expression.
-            inner_lhs = proven_truth.inner_expr().lhs
-            proven_truth = inner_lhs.with_matching_style(expected_lhs)
+        if not alter_lhs:
+            expected_lhs = expr
+            if isinstance(expr, ExprRange):
+                expected_lhs = ExprTuple(expr)
+            if proven_expr.lhs != expected_lhs:
+                raise TypeError(
+                        "@relation_prover, %s, expected to prove a "
+                        "relation with %s on its left side "
+                        "('lhs').  %s does not satisfy this "
+                        "requirement."%(func, expected_lhs, proven_expr))
+            # Make the style consistent with the original expression.
+            if not proven_expr.lhs.has_same_style(expected_lhs):
+                # Make the left side of the proven truth have a style
+                # that matches the original expression.
+                inner_lhs = proven_truth.inner_expr().lhs
+                proven_truth = inner_lhs.with_matching_style(expected_lhs)
         return proven_truth
     return decorated_relation_prover
 
