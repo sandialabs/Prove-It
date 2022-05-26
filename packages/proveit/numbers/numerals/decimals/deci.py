@@ -200,15 +200,17 @@ class DecimalSequence(NumeralSequence):
 
         return eq.relation
 
+    @staticmethod
     @prover
-    def num_add_eval(self, num2, **defaults_config):
+    def add_eval(num1, num2, **defaults_config):
         '''
         evaluates the addition of two integers
         '''
         from . import md_only_nine_add_one, md_nine_add_one
-        num1 = self
-        if isinstance(num2, int):
-            num2 = num(num2)
+        if not isinstance(num1, int) or not isinstance(num2, int):
+            raise ValueError("'num1' and 'num2' should be integers")
+        num1 = num(num1)
+        num2 = num(num2)
         if num2 == one:
             # if the second number (num2) is one, we set it equal to the first number and then assume the
             # first number to be one and the second number to not be one.  SHOULD BE DELETED once addition works
@@ -216,7 +218,7 @@ class DecimalSequence(NumeralSequence):
             num2 = num1
         elif num2 != one:
             raise NotImplementedError(
-                "Currently, num_add_eval only works for the addition of Decimal "
+                "Currently, add_eval only works for the addition of Decimal "
                 "Sequences and one, not %s, %s" %
                 (str(num1), str(num2)))
         if all(digit == nine for digit in num2.digits):
@@ -253,6 +255,17 @@ class DecimalSequence(NumeralSequence):
             {m: _m, k: _k, a: _a, b: _b})
         return eq.inner_expr(
         ).rhs.operands[-1].evaluate()
+
+    @staticmethod
+    @prover
+    def mult_eval(num1, num2, **defaults_config):
+        '''
+        evaluates the multiplication of two integers
+        '''
+        if not isinstance(num1, int) or not isinstance(num2, int):
+            raise ValueError("'num1' and 'num2' should be integers")
+        raise NotImplementedError("multi-digit multiplication has not "
+                                  "been implemented yet")
 
     '''
     # Shouldn't be needed given new auto-simplification approach.
