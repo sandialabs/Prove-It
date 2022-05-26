@@ -1566,7 +1566,7 @@ class Expression(metaclass=ExprType):
                 if key[0] != '_']
 
     @classmethod
-    def temporary_simplification_directives(cls):
+    def temporary_simplification_directives(cls, *, use_defaults=False):
         '''
         Returns a context manager for temporarily setting simplification
         directives for this expression class.  Specifically, the
@@ -1584,6 +1584,10 @@ class Expression(metaclass=ExprType):
         Add._simplification_directives_ to False but will restore it
         to its previous value upon exiting the 'with' block.
         
+        If 'use_defaults' is True, the simplification directives will
+        temporarily be set to the original values from when the
+        SimplificationDirectives object was constructed
+        
         See also change_simplification_directives.
         '''
         if not hasattr(cls, '_simplification_directives_'):
@@ -1593,7 +1597,7 @@ class Expression(metaclass=ExprType):
             raise TypeError(
                     "The '_simplification_directives_' of an Expression "
                     "class should be of type SimplificationDirectives")
-        return simplification_directives.temporary()
+        return simplification_directives.temporary(use_defaults=use_defaults)
     
     @classmethod
     def change_simplification_directives(cls, **kwargs):

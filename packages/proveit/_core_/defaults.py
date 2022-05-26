@@ -395,21 +395,32 @@ class SimplificationDirectives:
     
     def __init__(self, **kwargs):
         self.__dict__.update(**kwargs)
+        self._defaults = kwargs
 
     def __setattr__(self, key, value):
         if not hasattr(self, key):
-            if key != '_expr_class':
+            if key[0] != '_':
                 raise AttributeError(
                         "%s is not a simplification directive for %s"
                         %(key, self._expr_class))
         self.__dict__[key] = value
     
-    def temporary(self):
+    def temporary(self, use_defaults=False):
         '''
         Return a context manager for making temporary changes to
-        simplification directives.
+        simplification directives.  If 'use_defaults' is True,
+        the temporary simplification directives will initially be set 
+        to the original values that were used when the
+        SimplificationDirectives object was created.
         '''
-        return TemporarySetter(self)
+        tmp_setter = TemporarySetter(self)
+        if use_defaults:
+            # use the default (original) values.
+            for key, val in self._defaults.items():
+                setattr(tmp_setter, key, val)
+            return tmp_setter
+        else:
+            return tmp_setter
 
 
 # USE_DEFAULTS is used to indicate that default assumptions
