@@ -229,26 +229,30 @@ class Add(NumberOperation):
                                      literal_rational_ints,
                                      simplified_rational_expr)
         from proveit.numbers.multiplication.mult import (
-                canonical_coefficient_and_remainder)
+                coefficient_and_remainder)
         if self.terms.num_entries() == 0:
             return zero # Add operation with no operands
         remainder_to_rational_coef = dict()
         contains_only_literal_rationals = True
-        for term in self.terms:
-            canonical_term = term.canonical_form()
-            sign = 1
-            if isinstance(canonical_term, Neg):
-                sign = -1
-                canonical_term = canonical_term.operand
-            coef, remainder = canonical_coefficient_and_remainder(
-                    canonical_term)
+        # Generate canonical forms of terms and ungroup nested
+        # addition:
+        def gen_coef_and_remainders():
+            for term in self.terms:
+                canonical_term = term.canonical_form()
+                if isinstance(canonical_term, Neg):
+                    # Negation should distribute through Add
+                    # in its canonical form.
+                    assert not isinstance(canonical_term.operand, Add)
+                if isinstance(canonical_term, Add):
+                    for sub_term in canonical_term.terms:
+                        yield coefficient_and_remainder(sub_term)
+                else:
+                    yield coefficient_and_remainder(canonical_term)
+        for coef, remainder in gen_coef_and_remainders():
+            if coef == zero:
+                continue
             if remainder != one:
                 contains_only_literal_rationals = False
-            if sign == -1:
-                if isinstance(coef, Neg):
-                    coef = coef.operand
-                else:
-                    coef = Neg(coef)
             if remainder in remainder_to_rational_coef:
                 prev_coef = remainder_to_rational_coef[remainder]
                 if isinstance(prev_coef, Add):
@@ -259,6 +263,8 @@ class Add(NumberOperation):
                             prev_coef, coef)
             else:
                 remainder_to_rational_coef[remainder] = coef
+        if len(remainder_to_rational_coef) == 0:
+            return zero # Add() = 0
         if contains_only_literal_rationals:
             # This is a sum of only literal rationals.  Just
             # compute it.
@@ -549,7 +555,7 @@ class Add(NumberOperation):
                                      is_literal_int,
                                      is_literal_rational)
         from proveit.numbers.multiplication.mult import (
-                canonical_coefficient_and_remainder)
+                coefficient_and_remainder)
         from . import empty_addition, unary_add_reduction
         
         if self.operands.num_entries() == 0:
@@ -654,10 +660,10 @@ class Add(NumberOperation):
         order_key_fn = Add._simplification_directives_.order_key_fn
         if Add._simplification_directives_.combine_like_terms and (
                 not must_evaluate):
-            # Like terms are ones whose canonical forms are the same
+            # Like terms are ones whose that are the same
             # apart from literal, rational coefficients.
             likeness_key_fn = lambda term : (
-                    canonical_coefficient_and_remainder(term)[1])
+                    coefficient_and_remainder(term)[1])
             # Sort and combine like operands.
             expr = eq.update(sorting_and_combining_like_operands(
                     expr, order_key_fn=order_key_fn, 
@@ -1565,11 +1571,11 @@ class Add(NumberOperation):
         '''
         from proveit.numbers import one
         from proveit.numbers.multiplication.mult import (
-                canonical_coefficient_and_remainder)
+                coefficient_and_remainder)
         # Obtain the common term "remainder" (sans coefficient),
         # raising a ValueError if the terms are not all like terms.
         likeness_key_fn = lambda term : (
-                canonical_coefficient_and_remainder(term)[1])
+                coefficient_and_remainder(term)[1])
         key = common_likeness_key(self, likeness_key_fn=likeness_key_fn)
         if key != one:
             # Factor out the common part from the coefficients.

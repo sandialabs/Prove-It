@@ -92,6 +92,8 @@ class Neg(NumberOperation):
             return _sum.canonical_form() 
         elif isinstance(canonical_operand, Neg):
             return canonical_operand.operand # double negation
+        elif canonical_operand != self.operand:
+            return Neg(canonical_operand)
         return self
 
     @relation_prover

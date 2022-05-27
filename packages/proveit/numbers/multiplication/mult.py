@@ -491,19 +491,18 @@ class Mult(NumberOperation):
         order_key_fn = Mult._simplification_directives_.order_key_fn
         if Mult._simplification_directives_.combine_exponents and (
                 not must_evaluate):
-            # Like factors are ones whose canonical forms are
-            # implicit/explicit exponentials with the same base
-            # raised to a literal, rational power (everyting is
-            # implicitly raised to the power of 1).
+            # Like factors are ones that are  implicit/explicit
+            # exponentials with the same base raised to a literal, 
+            # rational power (everyting is implicitly raised to the 
+            # power of 1).
             def likeness_key_fn(factor):
-                canonical_factor = factor.canonical_form()
-                if isinstance(canonical_factor, Exp) and (
-                        is_literal_rational(canonical_factor.exponent)):
-                    return canonical_factor.base
-                elif is_literal_rational(canonical_factor):
+                if isinstance(factor, Exp) and (
+                        is_literal_rational(factor.exponent)):
+                    return factor.base
+                elif is_literal_rational(factor):
                     return one # combine all numerical rationals.
                 else:
-                    return canonical_factor
+                    return factor
             # Sort and combine like operands.
             expr = eq.update(sorting_and_combining_like_operands(
                     expr, order_key_fn=order_key_fn, 
@@ -1773,27 +1772,31 @@ class Mult(NumberOperation):
         return greater(self, zero).prove()
 
 
-def canonical_coefficient_and_remainder(expr):
+def coefficient_and_remainder(expr):
     '''
-    Returns the coefficient and remainder of the canonical form
-    of the given expression.
+    Returns the coefficient and remainder of the given expression.
     '''
-    from proveit.numbers import is_literal_rational
-    canonical_form = expr.canonical_form()
-    if isinstance(canonical_form, Mult) and (
-            is_literal_rational(canonical_form.factors[0])):
-        coef = canonical_form.factors[0]
-        num_factors = canonical_form.factors.num_entries()
+    from proveit.numbers import Neg, is_literal_rational
+    if isinstance(expr, Neg):
+        # Put the negation in the coefficient.
+        coef, remainder = coefficient_and_remainder(expr.operand)
+        coef = coef.operand if isinstance(coef, Neg) else Neg(coef)
+        return coef, remainder
+    if isinstance(expr, Mult) and (
+            expr.factors.num_entries() >= 1 and
+            is_literal_rational(expr.factors[0])):
+        coef = expr.factors[0]
+        num_factors = expr.factors.num_entries()
         if num_factors > 2:
-            remainder = Mult(*canonical_form.factors[1:])
+            remainder = Mult(*expr.factors[1:])
+        elif num_factors == 2:
+            remainder = expr.factors[1]
         else:
-            # A canonical Mult should have at least two factors:
-            assert num_factors == 2
-            remainder = canonical_form.factors[1]
-    elif is_literal_rational(canonical_form):
-        coef = canonical_form
+            remainder = one
+    elif is_literal_rational(expr):
+        coef = expr
         remainder = one
     else:
         coef = one
-        remainder = canonical_form
+        remainder = expr
     return coef, remainder
