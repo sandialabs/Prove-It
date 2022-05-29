@@ -2,12 +2,12 @@ from proveit import (as_expression, defaults, USE_DEFAULTS, ProofFailure,
                      UnsatisfiedPrerequisites,
                      Conditional, ExprTuple, equality_prover, InnerExpr,
                      InnerExprGenerator, free_vars)
+from proveit.util import OrderedSet
 from proveit import Literal, Operation, Lambda, ArgumentExtractionError
 from proveit import TransitiveRelation, TransitivityException
 from proveit import relation_prover, prover
 from proveit.logic.irreducible_value import is_irreducible_value
 from proveit import A, B, P, Q, f, n, x, y, z
-
 
 class Equals(TransitiveRelation):
     # operator of the Equals operation
@@ -70,8 +70,10 @@ class Equals(TransitiveRelation):
         attempted depending upon the form of this equality.
         '''
         from proveit.logic.booleans import TRUE, FALSE
-        Equals.known_equalities.setdefault(self.lhs, set()).add(judgment)
-        Equals.known_equalities.setdefault(self.rhs, set()).add(judgment)
+        Equals.known_equalities.setdefault(
+                self.lhs, OrderedSet()).add(judgment)
+        Equals.known_equalities.setdefault(
+                self.rhs, OrderedSet()).add(judgment)
 
         if is_irreducible_value(self.rhs):
             # With an irreducible right hand side, remember this as
@@ -165,7 +167,8 @@ class Equals(TransitiveRelation):
     def conclude_via_direct_substitution(self, **defaults_config):
         '''
         Prove that this Equals expression is true by directly and
-        greedily equating sub-expressions that differ.
+        greedily substituting sub-expressions that differ but are
+        known to be equal.
         
         For example, we can prove
         f(g(a, b), h(c, d)) = f(g(a, b'), h(c, d'))
@@ -860,60 +863,6 @@ class Equals(TransitiveRelation):
                     _eq = Equals(expr, eq_expr).conclude_via_transitivity()
                     return _eq.apply_transitivity(eq_evaluation)
         return None
-
-    """
-    @staticmethod
-    def get_known_simplification(expr):
-        '''
-        Return an applicable simplification (under current defaults) 
-        for the given expression if one is known; otherwise return None.
-        If 'expr' is a "preserved expression" (in 
-        defaults.preserved_exprs), we disregard known simplifications.        
-        If defaults.automation is True, we are allow to derive
-        an simplification via transitivity with through any number of 
-        known equalities, excluding equalities with any "preserved" 
-        expressions (in defaults.preserved_exprs) whose simplifications
-        are to be disregarded.
-        '''
-        if expr in defaults.preserved_exprs:
-            return None
-        key = (expr, defaults.get_simplification_directives_id())
-        if key in Equals.known_simplifications:
-            simplifications = Equals.known_simplifications[key]
-            for simplification in simplifications:
-                if simplification.is_applicable():
-                    return simplification
-        if defaults.automation:
-            # An simplification isn't directly known, but we may know
-            # something equal to this that has a simplification and
-            # therefore we have a simplification by transitivity as long
-            # as 'automation' is allowed.
-            for eq_expr in Equals.yield_known_equal_expressions(
-                    expr, exceptions=defaults.preserved_exprs):
-                if eq_expr == expr: continue
-                eq_simplification = Equals.get_known_simplification(eq_expr)
-                if eq_simplification is not None:
-                    return Equals(expr, eq_expr).prove().apply_transitivity(
-                            eq_simplification)
-        return None
-
-    @staticmethod
-    def remember_simplification(simplification):
-        '''
-        Given a proven equality, remember this as a simplification
-        of the left-hand side.
-        '''
-        from proveit import Judgment
-        if not isinstance(simplification, Judgment):
-            raise TypeError("Expecting 'simplification' to be a Judgment")
-        if not isinstance(simplification.expr, Equals):
-            raise TypeError("Expecting 'simplification' to be an "
-                            "equality Judgment")
-        expr = simplification.expr.lhs
-        key = (expr, defaults.get_simplification_directives_id())
-        Equals.known_simplifications.setdefault(key, set()).add(
-                simplification)
-    """
 
     @staticmethod
     def invert(lambda_map, rhs, assumptions=USE_DEFAULTS):

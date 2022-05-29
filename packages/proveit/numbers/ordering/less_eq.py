@@ -1,6 +1,7 @@
 from proveit import (Literal, Operation, USE_DEFAULTS, as_expression,
                      UnsatisfiedPrerequisites, prover, relation_prover)
 from proveit.logic import Equals
+from proveit.util import OrderedSet
 from proveit import a, b, c, d, x, y, z
 from .number_ordering_relation import NumberOrderingRelation
 
@@ -52,7 +53,8 @@ class LessEq(NumberOrderingRelation):
         # Remember the canonical bound.
         canonical_form = self.canonical_form()
         known_canonical_bounds = LessEq.known_canonical_bounds
-        known_canonical_bounds.setdefault(canonical_form.lhs, set()).add(
+        known_canonical_bounds.setdefault(
+                canonical_form.lhs, OrderedSet()).add(
                 (judgment, canonical_form.rhs))
         for side_effect in NumberOrderingRelation.side_effects(
                 self, judgment):

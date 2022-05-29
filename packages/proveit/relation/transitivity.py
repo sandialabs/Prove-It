@@ -21,6 +21,7 @@ is an equality (in which case, substitution may simply be performed).
 
 from proveit import defaults, USE_DEFAULTS, Judgment, ProofFailure
 from proveit.decorators import prover
+from proveit.util import OrderedSet
 from .sorter import TransitivitySorter
 from .relation import Relation
 
@@ -51,9 +52,9 @@ class TransitiveRelation(Relation):
                 "'known_left_sides' and 'known_right_sides' as class "
                 "variables")
         self.__class__.known_left_sides.setdefault(
-            self.normal_lhs, set()).add(judgment)
+            self.normal_lhs, OrderedSet()).add(judgment)
         self.__class__.known_right_sides.setdefault(
-            self.normal_rhs, set()).add(judgment)
+            self.normal_rhs, OrderedSet()).add(judgment)
         return
         yield  # makes this a generator as it should be
 
