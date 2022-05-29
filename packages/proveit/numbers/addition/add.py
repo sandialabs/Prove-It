@@ -284,15 +284,19 @@ class Add(NumberOperation):
             return sum_as_expr
         terms = []
         for remainder in sorted(remainder_to_rational_coef.keys(), key=hash):
-            coef = remainder_to_rational_coef[remainder]
+            coef = remainder_to_rational_coef[remainder].canonical_form()
+            if coef == zero: continue
             if coef == one:
                 term = remainder
             elif isinstance(remainder, Mult):
                 term = Mult(coef, *remainder.factors.entries)
             else:
                 term = Mult(coef, remainder)
-            terms.append(term.canonical_form())
-        if len(terms) == 1:
+            canonical_term = term.canonical_form()
+            terms.append(canonical_term)
+        if len(terms) == 0:
+            return zero
+        elif len(terms) == 1:
             return terms[0]
         else:
             return Add(*terms)

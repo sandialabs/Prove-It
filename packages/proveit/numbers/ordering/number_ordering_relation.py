@@ -30,20 +30,28 @@ class NumberOrderingRelation(TransitiveRelation):
         Automatically conclude an OrderingRelation if a canonical
         version is known that is at least as strong.
         '''
-        return self.conclude_from_known_bound()
+        try:
+            return self.conclude_from_known_bound()
+        except UnsatisfiedPrerequisites:
+            return TransitiveRelation.conclude(self)
 
     @prover
     def conclude_from_known_bound(self, **defaults_config):
-        from proveit.numbers import (less_eq_literal_rationals,
+        from proveit.numbers import (zero, less_eq_literal_rationals,
                                      less_literal_rationals)
         from .less import Less
         from .less_eq import LessEq
         canonical_form = self.canonical_form()
+        if canonical_form.normal_lhs == zero:
+            raise UnsatisfiedPrerequisites(
+                    "'conclude_from_known_bound should not be applied "
+                    "when the relation only involves literal, rationals: "
+                    "%s"%self) 
         desired_bound = canonical_form.rhs
         known_strong_bounds = Less.known_canonical_bounds.get(
-                canonical_form.lhs, tuple())
+                canonical_form.normal_lhs, tuple())
         known_weak_bounds = LessEq.known_canonical_bounds.get(
-                canonical_form.lhs, tuple())
+                canonical_form.normal_lhs, tuple())
         # For the case where the known bound is strong, use:
         # x < a, a ≤ b => x < b as well as x ≤ b
         comparator = less_eq_literal_rationals
@@ -77,7 +85,7 @@ class NumberOrderingRelation(TransitiveRelation):
         forms (scaling and rearronging terms).
         '''
         from proveit.logic import Equals
-        from proveit.numbers import (zero, Add, Neg, subtract,
+        from proveit.numbers import (zero, one, Add, Neg, subtract,
                                      Less, LessEq, is_literal_rational,
                                      simplified_rational_expr,
                                      literal_rational_ints)
@@ -93,7 +101,7 @@ class NumberOrderingRelation(TransitiveRelation):
                 self._canonical_form_and_inv_scale_factor())
         other_canonical_form, other_inv_scale = (
                 similar_bound._canonical_form_and_inv_scale_factor())
-        if canonical_form.lhs != other_canonical_form.lhs:
+        if canonical_form.normal_lhs != other_canonical_form.normal_lhs:
             raise ValueError(
                     "Attempting to conclude %s from %s, but these do not "
                     "have the same canonical form lhs: %s vs %s"
@@ -142,7 +150,8 @@ class NumberOrderingRelation(TransitiveRelation):
             # Multiply both sides (distribution will be dealt with
             # automatically when we equate expression with the 
             # same canonical forms below).
-            known_bound = known_bound.left_mult_both_sides(scale_factor)
+            if scale_factor != one:
+                known_bound = known_bound.left_mult_both_sides(scale_factor)
 
             # Weaken as appropriate.
             if rhs_diff == zero:
@@ -174,15 +183,15 @@ class NumberOrderingRelation(TransitiveRelation):
                 # in the desired form.
                 replacements = []
                 replacements.append(
-                        Equals(self.normal_lhs,
-                               Add(known_bound.normal_lhs, lhs_diff)))
+                        Equals(Add(known_bound.normal_lhs, lhs_diff),
+                               self.normal_lhs))
                 replacements.append(
-                        Equals(self.normal_rhs,
-                               Add(known_bound.normal_rhs, lhs_diff)))
+                        Equals(Add(known_bound.normal_rhs, lhs_diff),
+                               self.normal_rhs))
                 # Check and prove the replacments.
                 for _k, replacement in enumerate(replacements):
-                    assert (replacement.lhs.canonical_form() == 
-                            replacement.rhs.canonical_form())
+                    assert (replacement.normal_lhs.canonical_form() == 
+                            replacement.normal_rhs.canonical_form())
                     replacements[_k] = replacement.prove()
                 # Add to both sides.
                 known_bound = known_bound.right_add_both_sides(
@@ -194,9 +203,9 @@ class NumberOrderingRelation(TransitiveRelation):
                         known_bound.normal_lhs.canonical_form())
                 assert (self.normal_rhs.canonical_form() == 
                         known_bound.normal_rhs.canonical_form())
-                known_bound = known_bound.inner_expr.normal_lhs.substitue(
+                known_bound = known_bound.inner_expr().normal_lhs.substitute(
                         self.normal_lhs)
-                known_bound = known_bound.inner_expr.normal_rhs.substitue(
+                known_bound = known_bound.inner_expr().normal_rhs.substitute(
                         self.normal_rhs)        
         return known_bound # Should be done!
     
@@ -226,12 +235,12 @@ class NumberOrderingRelation(TransitiveRelation):
         # both sides to move the constant to the right side.
         constant_terms = []
         for side, sign in zip((canonical_lhs, canonical_rhs), (-1, 1)):
-            if isinstance(side, Add):
-                for term in side.terms:
-                    if is_literal_rational(term):
-                        if sign < 1:
-                            term = Neg(term).canonical_form()
-                        constant_terms.append(term)
+            terms = side.terms if isinstance(side, Add) else [side]
+            for term in terms:
+                if is_literal_rational(term):
+                    if sign < 1 and term != zero:
+                        term = Neg(term).canonical_form()
+                    constant_terms.append(term)
         # lhs: original_lhs - original_rhs + constants
         # rhs: constants
         lhs = Add(self.normal_lhs, Neg(self.normal_rhs), *constant_terms)

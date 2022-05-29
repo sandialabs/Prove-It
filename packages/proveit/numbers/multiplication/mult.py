@@ -443,18 +443,6 @@ class Mult(NumberOperation):
 
         if is_irreducible_value(expr):
             return eq.relation  # done
-
-        if must_evaluate and not expr.operands_are_irreducible():
-            # Without a zero factor, shallow evaluation of Mult is only
-            # viable if the operands are all irreducible.
-            for _k, factor in enumerate(expr.factors):
-                if not is_irreducible_value(factor):
-                    expr = eq.update(expr.inner_expr().operands[_k].evaluation(
-                            preserve_all=True))
-            # Start over now that the terms are all evaluated to
-            # irreducible values.
-            eq.update(expr.evaluation())
-            return eq.relation
         
         if expr != self:
             if (must_evaluate or (
@@ -468,6 +456,17 @@ class Mult(NumberOperation):
                 # shallow.
                 eq.update(expr.shallow_simplification(
                         must_evaluate=must_evaluate))
+            return eq.relation
+        elif must_evaluate and not expr.operands_are_irreducible():
+            # Without a zero factor, shallow evaluation of Mult is only
+            # viable if the operands are all irreducible.
+            for _k, factor in enumerate(expr.factors):
+                if not is_irreducible_value(factor):
+                    expr = eq.update(expr.inner_expr().operands[_k].evaluation(
+                            preserve_all=True))
+            # Start over now that the terms are all evaluated to
+            # irreducible values.
+            eq.update(expr.evaluation())
             return eq.relation
 
         if all(is_literal_rational(factor) for factor in self.factors):
@@ -1776,7 +1775,7 @@ def coefficient_and_remainder(expr):
     '''
     Returns the coefficient and remainder of the given expression.
     '''
-    from proveit.numbers import Neg, is_literal_rational
+    from proveit.numbers import Neg, Div, is_literal_rational
     if isinstance(expr, Neg):
         # Put the negation in the coefficient.
         coef, remainder = coefficient_and_remainder(expr.operand)
@@ -1785,7 +1784,9 @@ def coefficient_and_remainder(expr):
     if isinstance(expr, Mult) and (
             expr.factors.num_entries() >= 1 and
             is_literal_rational(expr.factors[0])):
-        coef = expr.factors[0]
+        # Extract a numerical coefficient if it appears at the
+        # beginning of the Mult.
+        coef = expr.factors[0].canonical_form() # irreducible coef
         num_factors = expr.factors.num_entries()
         if num_factors > 2:
             remainder = Mult(*expr.factors[1:])
@@ -1793,10 +1794,22 @@ def coefficient_and_remainder(expr):
             remainder = expr.factors[1]
         else:
             remainder = one
+    elif isinstance(expr, Div):
+        # Split the coefficients from the remainders of the
+        # fraction.
+        numer_coef, numer_remainder = coefficient_and_remainder(
+                expr.numerator)
+        denom_coef, denom_remainder = coefficient_and_remainder(
+                expr.numerator)
+        return coefficient_and_remainder(
+                Mult(Div(numer_coef, denom_coef), 
+                     Div(numer_remainder, denom_remainder)))
     elif is_literal_rational(expr):
-        coef = expr
+        # Already a numerical rational number.
+        coef = expr.canonical_form() # irreducible coef
         remainder = one
     else:
+        # Just the trivial coefficient of 1.
         coef = one
         remainder = expr
     return coef, remainder

@@ -44,7 +44,12 @@ class NumberOperation(Operation):
             canonical_rhs_operands = [operand.canonical_form() for operand 
                                       in rhs.operands]
             if canonical_lhs_operands == canonical_rhs_operands:
-                # Just use direct substitution.
+                # Just use direct substitution and proving that
+                # corresponding operands are equal.
+                for lhs_operand, rhs_operand in zip(lhs.operands,
+                                                    rhs.operands):
+                    if lhs_operand != rhs_operand:
+                        Equals(lhs_operand, rhs_operand).prove()
                 return equality.conclude_via_direct_substitution()
             elif (isinstance(self, Add) or isinstance(self, Mult)) and (
                     Counter(canonical_lhs_operands) == 

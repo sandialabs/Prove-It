@@ -226,11 +226,12 @@ class Div(NumberOperation):
                         num(abs(numer_int)), replacements=replacements,
                         preserve_expr=self, alter_lhs=True)
             gcd = math.gcd(numer_int, denom_int)
+            expr = self
+            eq = TransRelUpdater(expr)
             if gcd == 1:
                 # No common divisor to factor out.
-                reduction = self.inner_expr().numerator.evaluation()
-                reduction.apply_transitivity(
-                        reduction.rhs.inner_expr().denominator.evaluation())
+                expr = eq.update(expr.inner_expr().numerator.evaluation())
+                expr = eq.update(expr.inner_expr().denominator.evaluation())
             else:
                 # Factor out the gcd and cancel it.
                 # Replace the factored numerator and denominator with 
@@ -245,19 +246,19 @@ class Div(NumberOperation):
                         factored_denom.evaluation().apply_transitivity(
                                 denom_eval),
                         ]
-                reduction = frac_cancel_left.instantiate(
+                expr = eq.update(frac_cancel_left.instantiate(
                         {x: num(gcd), y: factored_numer.factors[1], 
                          z: factored_denom.factors[1]},
-                        replacements=replacements, preserve_expr=self)
+                        replacements=replacements, preserve_expr=self))
             if numer_int < 0 and denom_int < 0:
                 # cancel negations in the numerator and denominator
-                return reduction.apply_transitivity(
-                        reduction.neg_cancelation())
+                expr = eq.update(expr.neg_cancelation())
             elif numer_int < 0 or denom_int < 0:
                 # extract the negation for the irreducible form.
-                return reduction.apply_transitivity(
-                        reduction.rhs.inner_expr().neg_extraction())
-            return reduction
+                expr = eq.update(expr.neg_extraction())
+            if abs(denom_int) == 1:
+                expr = eq.update(expr.divide_by_one_elimination())
+            return eq.relation
         # Reduce to a multiplication and then sort it out to handle
         # the more general case.
         return self.reduction_to_mult().evaluation()
