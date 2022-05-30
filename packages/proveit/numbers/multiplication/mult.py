@@ -1794,16 +1794,6 @@ def coefficient_and_remainder(expr):
             remainder = expr.factors[1]
         else:
             remainder = one
-    elif isinstance(expr, Div):
-        # Split the coefficients from the remainders of the
-        # fraction.
-        numer_coef, numer_remainder = coefficient_and_remainder(
-                expr.numerator)
-        denom_coef, denom_remainder = coefficient_and_remainder(
-                expr.numerator)
-        return coefficient_and_remainder(
-                Mult(Div(numer_coef, denom_coef), 
-                     Div(numer_remainder, denom_remainder)))
     elif is_literal_rational(expr):
         # Already a numerical rational number.
         coef = expr.canonical_form() # irreducible coef
