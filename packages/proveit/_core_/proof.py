@@ -1838,10 +1838,11 @@ class Instantiation(Proof):
                                     defaults.assumptions)
                             raise_failure(
                                     'Unsatisfied condition: %s. '
-                                    'Accessible via '
+                                    'For debugging purposes, this is '
+                                    'accessible via '
                                     'Instantiation.unsatisfied_condition '
                                     'with applicable assumptions in '
-                                    'Instantiation.assumptions.'
+                                    'Instantiation.condition_assumptions.'
                                     % str(subbed_cond))
 
         # Make final instantiations in the inner instance expression.
