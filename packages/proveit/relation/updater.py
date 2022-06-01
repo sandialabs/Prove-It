@@ -21,7 +21,7 @@ class TransRelUpdater:
         self.relations = []
         self.assumptions = assumptions
 
-    def update(self, relation, assumptions=None):
+    def update(self, relation):
         '''
         Update the internal relation by applying transitivity
         with the given relation.  Return the new expression
@@ -32,8 +32,6 @@ class TransRelUpdater:
         return 'c' as the new internal expression.
         '''
         from proveit.logic import Equals
-        if assumptions is None:
-            assumptions = self.assumptions
         if isinstance(relation, Judgment):
             relation = relation.expr
         if isinstance(relation, Equals) and (
@@ -58,4 +56,5 @@ class TransRelUpdater:
         if len(relations) == 0:
             # Trivial, reflexive x=x.
             return Equals(self.expr, self.expr).conclude_via_reflexivity()
-        return TransitiveRelation.apply_transitivities(relations)
+        return TransitiveRelation.apply_transitivities(
+                relations, assumptions=self.assumptions)
