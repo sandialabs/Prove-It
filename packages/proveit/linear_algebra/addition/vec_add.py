@@ -7,7 +7,7 @@ from proveit.numbers import zero
 from proveit.abstract_algebra import GroupAdd
 from proveit.linear_algebra import VecSpaces
 from proveit.abstract_algebra.generic_methods import (
-        apply_commutation_thm, apply_assogciation_thm,
+        apply_commutation_thm, apply_association_thm,
         apply_disassociation_thm, group_commutation, group_commute,
         generic_permutation, deduce_equality_via_commutation)
 
