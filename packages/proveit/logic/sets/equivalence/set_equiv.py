@@ -74,8 +74,8 @@ class SetEquiv(TransitiveRelation):
         from proveit.logic.booleans import TRUE, FALSE
         SetEquiv.known_equivalences.setdefault(
                 self.lhs, OrderedSet()).add(judgment)
-        SetEquiv.known_equivalences.setdefault
-        (self.rhs, OrderedSet()).add(judgment)
+        SetEquiv.known_equivalences.setdefault(
+                self.rhs, OrderedSet()).add(judgment)
         # not yet clear if the irreducible value check is relevant for sets
         # if is_irreducible_value(self.rhs):
         #     SetEquiv.simplifications.setdefault(self.lhs, set()).add(judgment)
