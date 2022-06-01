@@ -2314,8 +2314,8 @@ def simplified_indices(*indices, requirements=None):
                     continue
                 with Add.temporary_simplification_directives() as directives:
                     # Move literal integers to the end via the
-                    # 'order_key' simplification directive for Add.
-                    directives.order_key = lambda term : (
+                    # 'order_key_fn' simplification directive for Add.
+                    directives.order_key_fn = lambda term : (
                         1 if is_literal_int(term) else 0)
                     index.simplified() 
                 try:
