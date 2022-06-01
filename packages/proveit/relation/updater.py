@@ -38,14 +38,16 @@ class TransRelUpdater:
                 relation.lhs == relation.rhs == self.expr):
             # We can disregard this trivial reflexive relation: x=x.
             return self.expr
-        self.relations.append(relation)
-        if relation.lhs == self.expr:
-            self.expr = relation.rhs
-        elif relation.rhs == self.expr:
-            self.expr = relation.lhs
-        else:
+        if relation.rhs == self.expr:
+            if hasattr(relation, 'derive_reversed'):
+                relation = relation.derive_reversed()
+            else:
+                relation = relation.with_relation_reversed()
+        elif relation.lhs != self.expr:
             raise ValueError("Relation %s should match expression %s "
                              "on one of its sides." % (relation, self.expr))
+        self.expr = relation.rhs
+        self.relations.append(relation)
         return self.expr
     
     @property
