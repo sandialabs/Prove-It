@@ -1,5 +1,5 @@
 from proveit import (Expression, Literal, Operation, ExprRange, 
-                     defaults, USE_DEFAULTS,
+                     defaults, USE_DEFAULTS, UnsatisfiedPrerequisites,
                      ProofFailure, InnerExpr, UnusableProof,
                      prover, relation_prover, equality_prover,
                      SimplificationDirectives, TransRelUpdater)
@@ -99,7 +99,7 @@ class Or(Operation):
                     proven_operand_indices.append(_k)
                     # possible way to prove it:
                     self.conclude_via_example(operand)
-                except ProofFailure:
+                except (ProofFailure, UnsatisfiedPrerequisites):
                     pass
             if self.operands.is_double() and len(proven_operand_indices) > 0:
                 # One or both of the two operands were known to be true

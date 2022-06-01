@@ -449,13 +449,13 @@ class Expression(metaclass=ExprType):
         same canonical form.  Calls '_deduce_equality' which may have
         type-specific implementations.
         '''
-        from proveit import Judgment
+        from proveit import Judgment, UnsatisfiedPrerequisites
         if equality.lhs != self:
             raise ValueError(
                     "'deduce_equality' expects an 'equality' with "
                     "'self' on the left side")
         if equality.lhs.canonical_form() != equality.rhs.canonical_form():
-            raise ValueError(
+            raise UnsatisfiedPrerequisites(
                     "'deduce_equality' can only be used to prove equality "
                     "between expressions with the same canonical form. "
                     "%s and %s have distinct canonical forms %s and %s "
