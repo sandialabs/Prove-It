@@ -203,6 +203,98 @@ class TransitiveRelation(Relation):
     @prover
     def apply_transitivities(chain, **defaults_config):
         '''
+        Apply transitvity rules on a list of relations in the given 
+        chain to proof the relation over the chain end points.
+        Each element of the chain must represent a TransitiveRelation.
+        The chain must "connect" in the sense that any two neighbors 
+        in the chain can be joined via apply_transitivity.
+        
+        If the relation types are all the same, and that relation
+        class has a 'relate_across_chain_transitively' method,
+        apply that method for a potentially streamlined proof.
+        Otherwise, use 'apply_transitivity' on the relations in a
+        pairwise fashion from the left.
+        '''
+        if len(chain) == 0:
+            raise TransitivityException(
+                None, defaults.assumptions, 
+                'Empty transitivity relation train')
+        transitive_relation_types = set()
+        #print('chain', chain)
+        for relation in chain:
+            if isinstance(relation, Judgment):
+                relation = relation.expr
+            if not isinstance(relation, TransitiveRelation):
+                raise TypeError("The 'chain' must be composed of "
+                                "TransitiveRelation expressions/judgments, "
+                                "not %s of type %s"%(relation, 
+                                                     type(relation)))
+            transitive_relation_types.add(type(relation))
+        if len(chain) == 1:
+            # Trivial case of a single relation.
+            return chain[0].prove()
+        if len(transitive_relation_types) != 1 or (
+                not hasattr(next(iter(transitive_relation_types)),
+                            'relate_across_chain_transitively')):
+            # When there is more than one relation type, we will
+            # simply use 'apply_transitivity' in a pairwise fasion.
+            return (TransitiveRelation.
+                    _apply_transitivities_via_apply_transitivity(chain))
+        # Extract the successive elements being related along the
+        # chain and then call 'relate_across_chain_transitively'.
+        chain_iter = iter(chain)
+        _x = [] # Expressions being related in the transitivity chain
+        first = next(chain_iter)
+        second = next(chain_iter)
+        is_reversed = first.is_reversed()
+        # Add the first two items of _x by looking at the first two
+        # relations.
+        if first.rhs in (second.lhs, second.rhs):
+            _x.extend((first.lhs, first.rhs))
+        elif first.lhs in (second.lhs, second.rhs):
+            _x.extend((first.rhs, first.lhs))
+        else:
+            raise TransitivityException(
+                None, defaults.assumptions, 
+                'Transitivity cannot be applied unless there is something '
+                'in common in the equalities: %s vs %s' %
+                (str(first), str(second)))
+        # Add subsequently to _x by looking at each relation.
+        for relation in chain_iter:
+            first = second
+            second = relation
+            if _x[-1] == first.lhs:
+                _x.append(first.rhs)
+            else:
+                _x.append(first.lhs)
+            if _x[-1] not in (second.lhs, second.rhs):
+                raise TransitivityException(
+                    None, defaults.assumptions, 
+                    'Transitivity cannot be applied unless there is '
+                    'something in common in the equalities: %s vs %s' %
+                    (str(first), str(second)))
+        # Add the last item to _x.
+        if _x[-1] == second.lhs:
+            _x.append(second.rhs)
+        else:
+            _x.append(second.lhs)
+        relation_class = next(iter(transitive_relation_types))
+        try:
+            relation = relation_class.relate_across_chain_transitively(*_x)
+        except NotImplementedError:
+            # Fall back to the serial approach.
+            return (TransitiveRelation.
+                    _apply_transitivities_via_apply_transitivity(chain))
+        if is_reversed:
+            # Reverse the direction in the style, consistent with
+            # the first relation of the chain.
+            return relation.with_direction_reversed()
+        return relation
+
+    @staticmethod
+    @prover
+    def _apply_transitivities_via_apply_transitivity(chain, **defaults_config):
+        '''
         Apply transitvity rules on a list of relations in the given chain
         to proof the relation over the chain end points.
         Each element of the chain must be a Judgment object that represents
@@ -215,8 +307,15 @@ class TransitiveRelation(Relation):
         if len(chain) == 0:
             raise TransitivityException(
                 None, defaults.assumptions, 'Empty transitivity relation train')
-        if not all(isinstance(element, Judgment) for element in chain):
-            raise TypeError('Expecting chain elements to be Judgment objects')
+        for relation in chain:
+            if isinstance(relation, Judgment):
+                relation = relation.expr
+            if not isinstance(relation, TransitiveRelation):
+                raise TypeError("The 'chain' must be composed of "
+                                "TransitiveRelation expressions/judgments, "
+                                "not %s of type %s"%(relation, 
+                                                     type(relation)))
+        chain = list(chain)
         while len(chain) >= 2:
             first = chain.pop(0)
             second = chain.pop(0)

@@ -1,4 +1,5 @@
-from proveit import (as_expression, defaults, USE_DEFAULTS, ProofFailure,
+from proveit import (Judgment, as_expression, 
+                     defaults, USE_DEFAULTS, ProofFailure,
                      UnsatisfiedPrerequisites,
                      Conditional, ExprTuple, equality_prover, InnerExpr,
                      InnerExprGenerator, free_vars)
@@ -7,7 +8,7 @@ from proveit import Literal, Operation, Lambda, ArgumentExtractionError
 from proveit import TransitiveRelation, TransitivityException
 from proveit import relation_prover, prover
 from proveit.logic.irreducible_value import is_irreducible_value
-from proveit import A, B, P, Q, f, n, x, y, z
+from proveit import a, b, c, d, k, A, B, P, Q, f, n, x, y, z
 
 class Equals(TransitiveRelation):
     # operator of the Equals operation
@@ -490,6 +491,74 @@ class Equals(TransitiveRelation):
                 'Transitivity cannot be applied unless there is something in common in the equalities: %s vs %s' %
                 (str(self), str(other)))
 
+    @staticmethod
+    @prover
+    def relate_across_chain_transitively(*elements, **defaults_config):
+        '''
+        Use transitivity to relate the first element to the last
+        element through a chain of relations through all of the 
+        elements in order.
+        '''
+        from proveit import ExprRange
+        num_elements = len(elements)
+        if num_elements == 0:
+            raise TransitivityException(
+                None, defaults.assumptions, 
+                'Empty chain of elements to relate')         
+        if num_elements == 1:
+            # Trivial case of a single element equal to itself.
+            elem = elements[0]
+            return Equals(elem, elem).conclude_via_reflexivity()
+        elif num_elements == 2:
+            # Simple case of a single relation.
+            return Equals(*elements).prove()
+        elif num_elements == 3:
+            # x=y and y=z => x=z
+            return Equals(*elements[:2]).apply_transitivity(
+                    Equals(*elements[1:]))
+        elif num_elements == 4:
+            # a=b, b=c, c=d => a=d
+            from . import four_chain_transitivity
+            _a, _b, _c, _d = elements
+            return four_chain_transitivity.instantiate(
+                    {a:_a, b:_b, c:_c, d:_d})
+        else:
+            raise NotImplementedError(
+                    "There are issues instantiating transitivity_chain "
+                    "that need to be resolved; may require ExprRange "
+                    "fixes") 
+            """
+            # A chain with more than 4 elements
+            from proveit import IndexedVar
+            from proveit.numbers import subtract, one, quick_simplified_index
+            from proveit.numbers import Add
+            from proveit.core_expr_types import x_1_to_np1
+            from . import transitivity_chain
+            _x = ExprTuple(*elements)
+            if isinstance(_x[0], ExprRange) or isinstance(_x[1], ExprRange):
+                raise NotImplementedError(
+                        "'relate_across_chain_transitively' not implemented "
+                        "when there is an ExprRange at as the first or last "
+                        "of the entries, though it should be possible.")
+            _np1 = quick_simplified_index(_x.num_elements())
+            _n = quick_simplified_index(subtract(_x.num_elements(), one))
+            x_full = ExprTuple(x_1_to_np1).basic_replaced({n:_n})
+            # We really need to simplify instantiating this sort of 
+            # thing. (see Issue #264)
+            
+            print(ExprRange(k, k, one, _np1).partition(_n))
+            #print(ExprRange(k, k, one, _np1).partition(
+            #        one).inner_expr().rhs[1].shifted(
+            #                new_start=one))
+            print(ExprRange(k, k, one, _np1).partition(one))
+            x_split1 = x_full[0].partitioned(_n)
+            #x_split2 = x_full[0].partition(one).inner_expr().rhs[1].shift(
+            #        new_start=one).rhs # (x_1, x_{1+1}, ..., x_{n+1}) 
+            x_split2 = x_full[0].partitioned(one)
+            return transitivity_chain.instantiate(
+                    {n:_n, x:_x, x_split1:_x, x_split2:_x})
+            """
+    
     @prover
     def derive_via_boolean_equality(self, **defaults_config):
         '''
