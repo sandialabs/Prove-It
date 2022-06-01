@@ -45,16 +45,16 @@ class Set(Function):
 
     def latex(self, **kwargs):
         return r'\left\{' + self.elements.latex(fence=False) + r'\right\}'
-    
 
-    def canonical_eq_form(self):
+    def _build_canonical_form(self):
         '''
         Returns a form of this operation in which the operands are 
         in a deterministically sorted order used to determine equal 
         expressions given commutativity of this operation under
         appropriate conditions.
         '''
-        return Set(sorted(self.operands.entries, key=hash))
+        return Set(*sorted([operand.canonical_form() for operand 
+                              in self.operands.entries], key=hash))
 
     @equality_prover('equated', 'equate')
     def deduce_equality(self, equality, **defaults_config):

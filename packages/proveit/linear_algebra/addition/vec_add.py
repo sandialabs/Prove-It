@@ -7,7 +7,7 @@ from proveit.numbers import zero
 from proveit.abstract_algebra import GroupAdd
 from proveit.linear_algebra import VecSpaces
 from proveit.abstract_algebra.generic_methods import (
-        apply_commutation_thm, apply_association_thm,
+        apply_commutation_thm, apply_assogciation_thm,
         apply_disassociation_thm, group_commutation, group_commute,
         generic_permutation, deduce_equality_via_commutation)
 
@@ -42,18 +42,15 @@ class VecAdd(GroupAdd):
         return GroupAdd.shallow_simplification(
                 self, must_evaluate=must_evaluate)
 
-    def canonical_eq_form(self):
+    def _build_canonical_form(self):
         '''
         Returns a form of this operation in which the operands are 
         in a deterministically sorted order used to determine equal 
         expressions given commutativity of this operation under
         appropriate conditions.
         '''
-        return VecAdd(*sorted([operand.canonical_eq_form() for operand 
+        return VecAdd(*sorted([operand.canonical_form() for operand 
                               in self.operands.entries], key=hash))
-        
-        return VecAdd(*sorted(self.operands.entries, key=hash))
-
 
     @equality_prover('number_add_reduced', 'number_add_reduce')
     def number_add_reduction(self, **defaults_config):
