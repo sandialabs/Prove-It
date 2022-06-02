@@ -22,7 +22,7 @@ from proveit.abstract_algebra.generic_methods import (
         sorting_operands, sorting_and_combining_like_operands,
         common_likeness_key)
 from proveit import TransRelUpdater
-from proveit.numbers import (NumberOperation, sorted_number_sets,
+from proveit.numbers import (NumberOperation, merge_list_of_sets,
                              deduce_number_set)
 from proveit.numbers import (Integer, IntegerNeg, IntegerNonPos,
                              Natural, NaturalPos, IntegerNonZero,
@@ -1117,6 +1117,20 @@ class Add(NumberOperation):
                 _a = self.operands
                 _i = _a.num_elements()                
                 add_pkg.add_nat_pos_closure.instantiate({i: _i, a: _a})
+            if number_set == IntegerNeg:
+                if self.operands.is_double():
+                    return add_pkg.add_int_neg_closure_bin.instantiate(
+                        {a: self.operands[0], b: self.operands[1]})
+                _a = self.operands
+                _i = _a.num_elements()                
+                add_pkg.add_int_neg_closure.instantiate({i: _i, a: _a})
+            if number_set == IntegerNonPos:
+                if self.operands.is_double():
+                    return add_pkg.add_int_nonpos_closure_bin.instantiate(
+                        {a: self.operands[0], b: self.operands[1]})
+                _a = self.operands
+                _i = _a.num_elements()                
+                add_pkg.add_int_nonpos_closure.instantiate({i: _i, a: _a})
             if number_set == RationalPos:
                 if self.operands.is_double():
                     return add_pkg.add_rational_pos_closure_bin.instantiate(
@@ -1124,13 +1138,27 @@ class Add(NumberOperation):
                 _a = self.operands
                 _i = _a.num_elements()                
                 add_pkg.add_rational_pos_closure.instantiate({i: _i, a: _a})
+            if number_set == RationalNeg:
+                if self.operands.is_double():
+                    return add_pkg.add_rational_neg_closure_bin.instantiate(
+                        {a: self.operands[0], b: self.operands[1]})
+                _a = self.operands
+                _i = _a.num_elements()                
+                add_pkg.add_rational_neg_closure.instantiate({i: _i, a: _a})
             if number_set == RationalNonNeg:
                 if self.operands.is_double():
-                    return add_pkg.add_rational_non_neg_closure_bin.instantiate(
+                    return add_pkg.add_rational_nonneg_closure_bin.instantiate(
                         {a: self.operands[0], b: self.operands[1]})
                 _a = self.operands
                 _i = _a.num_elements()
-                return add_pkg.add_rational_non_neg_closure.instantiate({i:_i, a: _a})
+                return add_pkg.add_rational_nonneg_closure.instantiate({i:_i, a: _a})
+            if number_set == RationalNonPos:
+                if self.operands.is_double():
+                    return add_pkg.add_rational_nonpos_closure_bin.instantiate(
+                        {a: self.operands[0], b: self.operands[1]})
+                _a = self.operands
+                _i = _a.num_elements()
+                return add_pkg.add_rational_nonpos_closure.instantiate({i:_i, a: _a})
             if number_set == RealPos:
                 if self.operands.is_double():
                     return add_pkg.add_real_pos_closure_bin.instantiate(
@@ -1138,13 +1166,27 @@ class Add(NumberOperation):
                 _a = self.operands
                 _i = _a.num_elements()                
                 return add_pkg.add_real_pos_closure.instantiate({i: _i, a: _a})
+            if number_set == RealNeg:
+                if self.operands.is_double():
+                    return add_pkg.add_real_neg_closure_bin.instantiate(
+                        {a: self.operands[0], b: self.operands[1]})
+                _a = self.operands
+                _i = _a.num_elements()                
+                return add_pkg.add_real_neg_closure.instantiate({i: _i, a: _a})
             if number_set == RealNonNeg:
                 if self.operands.is_double():
-                    return add_pkg.add_real_non_neg_closure_bin.instantiate(
+                    return add_pkg.add_real_nonneg_closure_bin.instantiate(
                         {a: self.operands[0], b: self.operands[1]})
                 _a = self.operands
                 _i = _a.num_elements()
-                return add_pkg.add_real_non_neg_closure.instantiate({i:_i, a: _a})
+                return add_pkg.add_real_nonneg_closure.instantiate({i:_i, a: _a})
+            if number_set == RealNonPos:
+                if self.operands.is_double():
+                    return add_pkg.add_real_nonpos_closure_bin.instantiate(
+                        {a: self.operands[0], b: self.operands[1]})
+                _a = self.operands
+                _i = _a.num_elements()
+                return add_pkg.add_real_nonpos_closure.instantiate({i:_i, a: _a})
 
         # Try special case where one term is positive and the
         # rest are non-negative.
@@ -1159,11 +1201,35 @@ class Add(NumberOperation):
                     break # Forget it.
             if val is not None:
                 if number_set == NaturalPos:
-                    temp_thm = add_pkg.add_nat_pos_from_non_neg
+                    temp_thm = add_pkg.add_nat_pos_from_nonneg
                 elif number_set == RationalPos:
-                    temp_thm = add_pkg.add_rational_pos_from_non_neg
+                    temp_thm = add_pkg.add_rational_pos_from_nonneg
                 else:
-                    temp_thm = add_pkg.add_real_pos_from_non_neg
+                    temp_thm = add_pkg.add_real_pos_from_nonneg
+                _a, _b, _c = (self.operands[:val], self.operands[val],
+                              self.operands[val + 1:])
+                _i = _a.num_elements()
+                _j = _c.num_elements()
+                return temp_thm.instantiate(
+                    {i: _i, j: _j, a: _a, b: _b, c: _c})
+        # Try special case where one term is negative and the
+        # rest are non-positive.
+        if number_set in {IntegerNeg, RationalNeg, RealNeg}:
+            val = None
+            for _i, operand in enumerate(self.operands.entries):
+                if greater(operand, zero).proven():
+                    val = _i
+                elif not greater_eq(operand, zero).proven():
+                    # Not non-negative
+                    val = None
+                    break # Forget it.
+            if val is not None:
+                if number_set == NaturalPos:
+                    temp_thm = add_pkg.add_int_neg_from_nonpos
+                elif number_set == RationalPos:
+                    temp_thm = add_pkg.add_rational_neg_from_nonpos
+                else:
+                    temp_thm = add_pkg.add_real_neg_from_nonpos
                 _a, _b, _c = (self.operands[:val], self.operands[val],
                               self.operands[val + 1:])
                 _i = _a.num_elements()
@@ -1329,98 +1395,88 @@ class Add(NumberOperation):
         Prove membership of this expression in the most 
         restrictive standard number set we can readily know.
         '''
-        from proveit.numbers import (Neg, one, greater, greater_eq,
+        from proveit.numbers import (zero, Neg, greater, greater_eq,
                                      Less, LessEq)
-        number_set_map = {
-            NaturalPos: NaturalPos,
-            IntegerNeg: Integer,
-            Natural: Natural,
-            IntegerNonPos: Integer,
-            IntegerNonZero: Integer,
-            Integer: Integer,
-            RationalPos: RationalPos,
-            RationalNeg: Rational,
-            RationalNonNeg: RationalNonNeg,
-            RationalNonPos: Rational,
-            RationalNonZero: Rational,
-            Rational: Rational,
-            RealPos: RealPos,
-            RealNeg: Real,
-            RealNonNeg: RealNonNeg,
-            RealNonPos: Real,
-            RealNonZero: Real,
-            Real: Real,
-            ComplexNonZero: Complex,
-            Complex: Complex
-        }
-        
-        priorities = {NaturalPos:(0,0), Natural:(0,1), Integer:(0,2),
-                      RationalPos:(1,0), RationalNonNeg:(1,1), Rational:(1,2),
-                      RealPos:(2,0), RealNonNeg:(2,1), Real:(2,2), 
-                      Complex:(3,2)}
-        major_minor_to_set = {
-            (major, minor):ns for ns, (major, minor) in priorities.items()}
-        major_to_nonzero = [IntegerNonZero, RationalNonZero,
-                            RealNonZero, ComplexNonZero]
-        major_to_nonpos = [IntegerNonPos, RationalNonPos, RealNonPos]
-        major_to_neg = [IntegerNeg, RationalNeg, RealNeg]
-        
-        if self.terms.is_double():
-            # Look for a special case of n-1 in Nat or (-1+n) in Nat.
-            term_ns = None
-            if self.terms[1] == Neg(one):
-                term_ns = deduce_number_set(self.terms[0]).domain
-            elif self.terms[0] == Neg(one):
-                term_ns = deduce_number_set(self.terms[1]).domain         
-            if term_ns is not None and NaturalPos.includes(term_ns):
-                return self.deduce_in_number_set(Natural)
-
-        major = minor = -1
+        list_of_operand_sets = []
+        # find a minimal std number set for operand
         any_positive = False
-        for term in self.terms:
-            term_membership = deduce_number_set(term)
-            if isinstance(term, ExprRange):
-                # e.g. a_1 in S and ... and a_n in S
-                term_ns = term_membership.operands[0].body.domain
-            else:
-                term_ns = term_membership.domain
-            # check if term_ns is not a standard number set
-            if term_ns not in number_set_map.keys():
-                # try to replace term_ns with a std number set
-                term_ns = standard_number_set(term_ns)
-            term_ns = number_set_map[term_ns]
-            if term_ns in {NaturalPos, RationalPos, RealPos}:
+        any_negative = False
+        for operand in self.operands:
+            operand_ns = deduce_number_set(operand).domain
+            if greater(operand, zero).proven():
                 any_positive = True
-            _major, _minor = priorities[term_ns]
-            major = max(_major, major)
-            minor = max(_minor, minor)
-        if major == minor == -1:
-            major, minor = 3, 2 # Complex
-        elif minor==1 and any_positive:
-            # Everything is non-negative and at least one term
-            # is positive, so the sum is positive.
-            minor = 0
+            if Less(operand, zero).proven():
+                any_negative = True
+            list_of_operand_sets.append(operand_ns)
+        # merge the resulting list of std number sets into a
+        # single superset, if possible
+        number_set = merge_list_of_sets(list_of_operand_sets)
+        
 
-        number_set = None
-        # Check for the special case of a - b where we know
-        # a > b, a < b, a ≥ b, a ≤ b, or a ≠ b
-        if self.terms.is_double() and isinstance(self.terms[1], Neg):
-            _a, _b = self.terms[0], self.terms[1].operand
-            if greater(_a, _b).proven():
-                minor = min(0, minor) # positive
-            elif greater_eq(_a, _b).proven():
-                minor = min(1, minor) # non-negative
-            elif Less(_a, _b).proven():
-                major = min(major, 2) # must be real
-                number_set = major_to_neg[major] # negative
-            elif LessEq(_a, _b).proven() and minor==2:
-                major = min(major, 2) # must be real
-                number_set = major_to_nonpos[major] # non-positive
-            elif NotEquals(_a, _b).proven() and minor==2:
-                number_set = major_to_nonzero[major] # non-zero
+        major_to_nonzero = {Integer:IntegerNonZero, 
+                            Rational:RationalNonZero,
+                            Real:RealNonZero, 
+                            Complex:ComplexNonZero}
+        major_to_nonneg = {Integer:Natural, 
+                           Rational:RationalNonNeg, 
+                           Real:RealNonNeg}
+        major_to_nonpos = {Integer:IntegerNonPos, 
+                           Rational:RationalNonPos, 
+                           Real:RealNonPos}
+        major_to_neg = {Integer:IntegerNeg, 
+                        Rational:RationalNeg, 
+                        Real:RealNeg}
+        major_to_pos = {Integer:NaturalPos, 
+                        Rational:RationalPos, 
+                        Real:RealPos}
 
-        if number_set is None:
-            number_set = major_minor_to_set[(major, minor)]
+        restriction = None
+        if RealPos.includes(number_set):
+            restriction = major_to_pos # must be positive
+        elif RealNeg.includes(number_set):
+            restriction = major_to_neg # must be negative
+        elif RealNonNeg.includes(number_set):
+            if any_positive:
+                restriction = major_to_pos # must be positive
+            else:
+                restriction = major_to_nonneg # must be non-negative
+        elif RealNonPos.includes(number_set):
+            if any_negative:
+                restriction = major_to_neg # must be negative
+            else:
+                restriction = major_to_nonpos # must be non-positive
+
+        if restriction not in (major_to_pos, major_to_neg):
+            # Check for the special case of a - b where we know
+            # a > b, a < b, a ≥ b, a ≤ b, or a ≠ b
+            if self.terms.is_double() and isinstance(self.terms[1], Neg):
+                _a, _b = self.terms[0], self.terms[1].operand
+                if greater(_a, _b).proven():
+                    restriction = major_to_pos # positive
+                elif greater_eq(_a, _b).proven():
+                    restriction = major_to_nonneg # non-negative
+                elif Less(_a, _b).proven():
+                    restriction = major_to_neg # negative
+                elif LessEq(_a, _b).proven():
+                    restriction = major_to_nonpos # non-positive
+                elif NotEquals(_a, _b).proven():
+                    restriction = major_to_nonzero # non-zero
+        
+        # Use the positive, negative, non-negative, non-positive, or
+        # non-zero restriction.
+        if restriction is not None:
+            if Integer.includes(number_set):
+                number_set = restriction[Integer]
+            elif Rational.includes(number_set):
+                number_set = restriction[Rational]
+            elif (Real.includes(number_set) or 
+                  restriction != major_to_nonzero):
+                # Note: If we know whether it is positive, negative, 
+                # non-positive, or non-negative, it must be Real.
+                number_set = restriction[Real]
+            else:
+                number_set = restriction[Complex]
+
         return self.deduce_in_number_set(number_set)
 
     # IS THIS NECESSARY?
