@@ -1,5 +1,6 @@
-from proveit import (Expression, Literal, Operation, maybe_fenced_string, 
-                     maybe_fenced_latex, InnerExpr, defaults, USE_DEFAULTS, 
+from proveit import (Expression, Literal, Operation, ExprRange,
+                     maybe_fenced_string, maybe_fenced_latex, 
+                     InnerExpr, defaults, USE_DEFAULTS, 
                      ProofFailure, relation_prover, equality_prover,
                      SimplificationDirectives)
 from proveit.logic import is_irreducible_value
@@ -88,8 +89,16 @@ class Neg(NumberOperation):
                         *canonical_operand.factors.entries[1:])
         elif isinstance(canonical_operand, Add):
             # Distribute the negation over the sum.
-            _sum = Add(*[Neg(term) for term in canonical_operand.terms])
-            return _sum.canonical_form() 
+            negated_terms = []
+            for term in canonical_operand.terms:
+                if isinstance(term, ExprRange):
+                    neg_term = ExprRange(term.parameter, Neg(term.body),
+                                         term.true_start_index,
+                                         term.true_end_index)
+                else:
+                    neg_term = Neg(term)
+                negated_terms.append(neg_term)
+            return Add(*negated_terms).canonical_form() 
         elif isinstance(canonical_operand, Neg):
             return canonical_operand.operand # double negation
         elif canonical_operand != self.operand:
