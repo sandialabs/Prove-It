@@ -1,4 +1,4 @@
-from proveit import (Judgment, UnsatisfiedPrerequisites,
+from proveit import (free_vars, Judgment, UnsatisfiedPrerequisites,
                      defaults, USE_DEFAULTS, 
                      single_or_composite_expression,
                      prover, equality_prover)
@@ -531,7 +531,7 @@ def sorting_and_combining_like_operands(
             # For an ExprRange operand, use the body's likeness key
             # iff it is parameter independent.
             key = likeness_key_fn(operand.body)
-            if operand.parameter in key.free_vars():
+            if operand.parameter in free_vars(key):
                 # It's not parameter independent -- each instance has
                 # a different likeness key, so use the ExprRange itself.
                 key = operand
