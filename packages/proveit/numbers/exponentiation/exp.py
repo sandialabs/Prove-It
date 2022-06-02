@@ -629,8 +629,8 @@ class Exp(NumberOperation):
         # create the new equivalent product (Mult)
         mult_equiv = Mult(*the_new_factors)
 
-        # use the Mult.exponent_combination() to deduce equality to self
-        exp_separated = mult_equiv.exponent_combination()
+        # use the Mult.combining_exponents() to deduce equality to self
+        exp_separated = mult_equiv.combining_exponents()
 
         replacements = list(defaults.replacements)
         if defaults.auto_simplify:
