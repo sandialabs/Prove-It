@@ -1789,7 +1789,7 @@ def coefficient_and_remainder(expr):
         coef = expr.factors[0].canonical_form() # irreducible coef
         num_factors = expr.factors.num_entries()
         if num_factors > 2:
-            remainder = Mult(*expr.factors[1:])
+            remainder = Mult(*expr.factors.entries[1:])
         elif num_factors == 2:
             remainder = expr.factors[1]
         else:
