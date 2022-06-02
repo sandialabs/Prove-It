@@ -129,7 +129,7 @@ class NumberOrderingRelation(TransitiveRelation):
             raise TypeError(
                     "'similar_bound' should be a stronger "
                     "bound than what we are trying to conclude. "
-                    "%s is weaker than %s"%(similar_bound, self))                
+                    "%s is weaker than %s"%(similar_bound, self))
         
         # Start a sequence of transformation of the similar bound
         # to obtain the desired bound.
@@ -269,7 +269,11 @@ class NumberOrderingRelation(TransitiveRelation):
                 inv_scale_factor = one # No need to rescale
         elif isinstance(lhs, Mult) and is_literal_rational(lhs.factors[0]):
             # Scale inversely by the one and only coefficient.
-            inv_scale_factor = lhs.factors[0]        
+            inv_scale_factor = lhs.factors[0]  
+        inv_scale_factor = inv_scale_factor.canonical_form()
+        if isinstance(inv_scale_factor, Neg):
+            # Only resclae positively
+            inv_scale_factor = inv_scale_factor.operand
         if inv_scale_factor != one:
             # Rescale
             lhs = Div(lhs, inv_scale_factor).canonical_form()
