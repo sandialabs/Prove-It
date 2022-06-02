@@ -437,7 +437,8 @@ class Expression(metaclass=ExprType):
         if has_distinct_canonical_form:
             # Use the canonical forms of the sub-expressions.
             return self._checked_make(
-                    self.core_info, canonical_sub_exprs)
+                self._core_info, canonical_sub_exprs,
+                style_preferences=self._style_data.styles)
         else:
             # No canonical form that is different from self.
             return self
