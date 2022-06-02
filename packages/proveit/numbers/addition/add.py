@@ -614,8 +614,14 @@ class Add(NumberOperation):
         for _k, operand in enumerate(expr.operands):
             if isinstance(operand, ExprRange) and (
                     operand.is_parameter_independent):
-                expr = eq.update(expr.inner_expr().operands[_k].
-                                 conversion_to_multiplication())
+                if expr.operands.num_entries():
+                    return expr.conversion_to_multiplication(
+                            preserve_expr=operand.body, auto_simplify=True)
+                expr_range_term = Add(expr.operands[_k])
+                replacement = expr_range_term.conversion_to_multiplication(
+                        preserve_expr=operand.body, auto_simplify=True)
+                expr = eq.update(expr.inner_expr().associated(
+                        _k, 1, replacements=[replacement]))
 
         # eliminate zeros where possible
         expr = eq.update(expr.zero_eliminations(preserve_all=True))
