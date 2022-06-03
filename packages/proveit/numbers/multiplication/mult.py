@@ -495,8 +495,7 @@ class Mult(NumberOperation):
             # rational power (everyting is implicitly raised to the 
             # power of 1).
             def likeness_key_fn(factor):
-                if isinstance(factor, Exp) and (
-                        is_literal_rational(factor.exponent)):
+                if isinstance(factor, Exp):
                     return factor.base
                 elif is_literal_rational(factor):
                     return one # combine all numerical rationals.
