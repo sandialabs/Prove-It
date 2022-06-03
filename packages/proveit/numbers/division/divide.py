@@ -8,7 +8,7 @@ from proveit import TransRelUpdater
 from proveit import a, b, c, m, n, w, x, y, z
 from proveit.logic import Equals, NotEquals, InSet
 from proveit.numbers import (zero, NumberOperation, 
-                             is_literal_int, is_literal_rational)
+                             is_numeric_int, is_numeric_rational)
 from proveit.numbers import NumberOperation, deduce_number_set
 from proveit.numbers.number_sets import (
     Natural, NaturalPos,
@@ -89,10 +89,10 @@ class Div(NumberOperation):
             x/y = x*y^{-1}
         '''
         from proveit.numbers import (one, Neg, Mult, Exp, 
-                                     simplified_rational_expr)
-        if is_literal_rational(self):
+                                     simplified_numeric_rational)
+        if is_numeric_rational(self):
             # Return the irreducible rational.
-            return simplified_rational_expr(self.numerator.as_int(),
+            return simplified_numeric_rational(self.numerator.as_int(),
                                             self.denominator.as_int())
         as_mult = Mult(self.numerator, Exp(self.denominator, Neg(one)))
         return as_mult.canonical_form()
@@ -114,7 +114,7 @@ class Div(NumberOperation):
             return Equals(self, self).conclude_via_reflexivity()
         
         numer, denom = self.numerator, self.denominator
-        if is_literal_rational(numer) and is_literal_rational(denom) and (
+        if is_numeric_rational(numer) and is_numeric_rational(denom) and (
                 denom != zero):
             # If the numerator and denominator are rational numerals, 
             # so go ahead and evaluate it to an irreducible form.
@@ -145,7 +145,7 @@ class Div(NumberOperation):
                         operand.evaluation()
                 return self.evaluation()
             canonical_form = self.canonical_form()
-            if is_literal_rational(canonical_form):
+            if is_numeric_rational(canonical_form):
                 return self.reduction_to_irreducible_rational()
             elif is_irreducible_value(canonical_form):
                 # Equate to the irreducible canonical form.
@@ -188,14 +188,14 @@ class Div(NumberOperation):
         This needs work, but we know that 1/x is irreducible if
         x is irreducible, not a negation, not 0 and not 1.
         '''
-        from proveit.numbers import simplified_rational_expr
-        if is_literal_int(self.numerator) and is_literal_int(self.denominator):
+        from proveit.numbers import simplified_numeric_rational
+        if is_numeric_int(self.numerator) and is_numeric_int(self.denominator):
             # This is an irreducible rational if and only if it is the
             # same as the corresponding 'simiplified_rational_expr'.
             # (which divides out the gcd and extracts any negation).
             numer_int = self.numerator.as_int()
             denom_int = self.denominator.as_int()
-            return self == simplified_rational_expr(numer_int, denom_int)
+            return self == simplified_numeric_rational(numer_int, denom_int)
         return False
 
     @equality_prover('reduced_to_irreducible_rational', 
@@ -207,7 +207,7 @@ class Div(NumberOperation):
         from proveit.numbers import Mult, num
         from proveit.numbers.division import frac_cancel_left
         canonical_form = self.canonical_form()
-        if not is_literal_rational(canonical_form):
+        if not is_numeric_rational(canonical_form):
             raise ValueError("'reduction_to_irreducible_rational' only "
                              "applicable when the canonical form is "
                              "a numerical rational.")
@@ -215,7 +215,7 @@ class Div(NumberOperation):
         denom = self.denominator.canonical_form()
         # Treat the case where the numerator and denominator evaluate
         # to integers.
-        if is_literal_int(numer) and is_literal_int(denom):
+        if is_numeric_int(numer) and is_numeric_int(denom):
             # Find out the greatest common divisor.
             numer_int, denom_int = numer.as_int(), denom.as_int()
             if abs(numer_int) == abs(denom_int):

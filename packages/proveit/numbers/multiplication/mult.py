@@ -9,8 +9,8 @@ from proveit.logic import (
     InSet)
 from proveit.numbers import (
     zero, one, num, Add, NumberOperation, deduce_number_set,
-    standard_number_set, is_literal_natural, is_literal_int, 
-    is_literal_rational)
+    standard_number_set, is_numeric_natural, is_numeric_int, 
+    is_numeric_rational)
 from proveit.numbers.number_sets import (
     Natural, NaturalPos,
     Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
@@ -37,7 +37,7 @@ class Mult(NumberOperation):
             # By default, sort such that literal, rationals come first 
             # and other irreducibles come next.
             order_key_fn = lambda factor : (
-                    0 if is_literal_rational(factor) else (
+                    0 if is_numeric_rational(factor) else (
                             1 if is_irreducible_value(factor) else 2)))
 
     def __init__(self, *operands, styles=None):
@@ -71,7 +71,7 @@ class Mult(NumberOperation):
         will be the first factor (or omitted if it is 1).
         '''
         from proveit.numbers import (Neg, Exp, one, 
-                                     simplified_rational_expr)
+                                     simplified_numeric_rational)
         # Extract the literal rational factors from the rest.
         # Generate canonical forms of factors and ungroup nested
         # multiplications.
@@ -91,14 +91,14 @@ class Mult(NumberOperation):
             if isinstance(factor, Neg):
                 numer *= -1
                 factor = factor.operand
-            if is_literal_int(factor):
+            if is_numeric_int(factor):
                 numer *= factor.as_int()
-            elif is_literal_rational(factor):
+            elif is_numeric_rational(factor):
                 numer *= factor.numerator.as_int()
                 denom *= factor.denominator.as_int()
             else:
                 if isinstance(factor, Exp) and (
-                        is_literal_rational(factor.exponent)):
+                        is_numeric_rational(factor.exponent)):
                     exponent = factor.exponent
                     base = factor.base
                 else:
@@ -115,7 +115,7 @@ class Mult(NumberOperation):
         if denom == 0:
             # Division by zero; the expression is garbage
             raise self # we can't do anything with it.
-        coef = simplified_rational_expr(numer, denom)
+        coef = simplified_numeric_rational(numer, denom)
         # Obtain the sorted, combined, canonical factors.
         factors = []
         for base in sorted(base_to_exponent.keys(), key=hash):
@@ -373,7 +373,7 @@ class Mult(NumberOperation):
         Deals with disassociating any nested multiplications,
         simplifying negations, and factors of one, and factors of 0.
         '''
-        from proveit.numbers import Neg, Div, Exp, is_literal_rational
+        from proveit.numbers import Neg, Div, Exp, is_numeric_rational
         from . import mult_zero_left, mult_zero_right, mult_zero_any
         from . import empty_mult, unary_mult_reduction
 
@@ -469,9 +469,9 @@ class Mult(NumberOperation):
             eq.update(expr.evaluation())
             return eq.relation
 
-        if all(is_literal_rational(factor) for factor in self.factors):
+        if all(is_numeric_rational(factor) for factor in self.factors):
             if self.operands.is_double():
-                if all(is_literal_int(factor) for factor in self.factors):
+                if all(is_numeric_int(factor) for factor in self.factors):
                     # Because we do neg_simplifications(), we can
                     # assume these integers are indeed natural numbers.
                     return self._natural_binary_eval()
@@ -497,7 +497,7 @@ class Mult(NumberOperation):
             def likeness_key_fn(factor):
                 if isinstance(factor, Exp):
                     return factor.base
-                elif is_literal_rational(factor):
+                elif is_numeric_rational(factor):
                     return one # combine all numerical rationals.
                 else:
                     return factor
@@ -550,7 +550,7 @@ class Mult(NumberOperation):
         from proveit.numbers.numerals import DecimalSequence
         factors = self.factors
         assert factors.is_double()
-        assert all(is_literal_natural(factor) for factor in factors)
+        assert all(is_numeric_natural(factor) for factor in factors)
         _a, _b = factors
         if not all(factor in DIGITS for factor in factors):
             # multi-digit multiplication
@@ -569,14 +569,14 @@ class Mult(NumberOperation):
         from proveit.numbers.division import prod_of_fracs
         factors = self.factors
         assert factors.is_double()
-        assert all(is_literal_rational(factor) for factor in factors)
+        assert all(is_numeric_rational(factor) for factor in factors)
         replacements = []
         rational_factors = []
         for factor in self.factors:
             # The factors should not be negated (that should be dealt
             # with first via the neg_simplifications method).
             assert not isinstance(factor, Neg)
-            if is_literal_int(factor):
+            if is_numeric_int(factor):
                 factor = Div(factor, one)
                 # n/1 = n:
                 replacements.append(
@@ -1365,7 +1365,7 @@ class Mult(NumberOperation):
                     {n:_n, x:_x}, replacements=replacements)
         
         factors = self.factors
-        if all(is_literal_rational(factor) for factor in factors):
+        if all(is_numeric_rational(factor) for factor in factors):
             # The factors are all numerical rational numbers, so
             # just evaluate the product.
             return self.evaluation()
@@ -1774,7 +1774,7 @@ def coefficient_and_remainder(expr):
     '''
     Returns the coefficient and remainder of the given expression.
     '''
-    from proveit.numbers import Neg, Div, is_literal_rational
+    from proveit.numbers import Neg, Div, is_numeric_rational
     if isinstance(expr, Neg):
         # Put the negation in the coefficient.
         coef, remainder = coefficient_and_remainder(expr.operand)
@@ -1782,7 +1782,7 @@ def coefficient_and_remainder(expr):
         return coef, remainder
     if isinstance(expr, Mult) and (
             expr.factors.num_entries() >= 1 and
-            is_literal_rational(expr.factors[0])):
+            is_numeric_rational(expr.factors[0])):
         # Extract a numerical coefficient if it appears at the
         # beginning of the Mult.
         coef = expr.factors[0].canonical_form() # irreducible coef
@@ -1793,7 +1793,7 @@ def coefficient_and_remainder(expr):
             remainder = expr.factors[1]
         else:
             remainder = one
-    elif is_literal_rational(expr):
+    elif is_numeric_rational(expr):
         # Already a numerical rational number.
         coef = expr.canonical_form() # irreducible coef
         remainder = one

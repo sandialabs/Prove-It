@@ -190,13 +190,13 @@ class Len(Operation):
                 # If the start and end are literal ints and form an
                 # empty range, then it should be straightforward to
                 # prove that the range is empty.
-                from proveit.numbers import is_literal_int, Add
+                from proveit.numbers import is_numeric_int, Add
                 from proveit.logic import Equals
                 from proveit import m
                 _m = entries[0].true_start_index
                 _n = entries[0].true_end_index
                 empty_req = Equals(Add(_n, one), _m)
-                if is_literal_int(_m) and is_literal_int(_n):
+                if is_numeric_int(_m) and is_numeric_int(_n):
                     if _n.as_int() + 1 == _m.as_int():
                         empty_req.prove()
                 if empty_req.proven():
@@ -214,10 +214,10 @@ class Len(Operation):
             _j = [entry_end(entry) for entry in entries]
             _n = Len(_i).computed()
 
-            from proveit.numbers import is_literal_int
+            from proveit.numbers import is_numeric_int
             if len(entries) == 1 and isinstance(entries[0], ExprRange):
-                if (is_literal_int(entries[0].true_start_index) and 
-                        is_literal_int(entries[0].true_end_index)):
+                if (is_numeric_int(entries[0].true_start_index) and 
+                        is_numeric_int(entries[0].true_end_index)):
                     if (entries[0].true_end_index.as_int() + 1 
                             == entries[0].true_start_index.as_int()):
                         return empty_range(_i[0], _j[0], _f)

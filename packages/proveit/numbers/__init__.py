@@ -21,13 +21,13 @@ from .rounding import Floor, Ceil, Round
 from .absolute_value import Abs
 from .numerals import (num, Numeral, DecimalSequence, Digits, DIGITS,
                        BinarySequence, Bit, BITS, 
-                       is_literal_natural, is_literal_int, 
-                       is_literal_rational, literal_rational_ints,
-                       simplified_rational_expr,
-                       less_literal_ints,
-                       less_eq_literal_ints,
-                       less_literal_rationals,
-                       less_eq_literal_rationals)
+                       is_numeric_natural, is_numeric_int, 
+                       is_numeric_rational, numeric_rational_ints,
+                       simplified_numeric_rational,
+                       less_numeric_ints,
+                       less_eq_numeric_ints,
+                       less_numeric_rationals,
+                       less_eq_numeric_rationals)
 from .numerals import zero, one, two, three, four, five, six, seven, eight, nine, hexa, hexb, hexc, hexd, hexe, hexf
 from .addition import (Add, subtract, dist_subtract, dist_add)
 from .negation import Neg, negated

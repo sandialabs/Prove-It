@@ -225,9 +225,9 @@ class Add(NumberOperation):
         (sorted by hash value).
         '''
         from proveit.numbers import (zero, one, Neg, Mult,
-                                     is_literal_rational,
-                                     literal_rational_ints,
-                                     simplified_rational_expr)
+                                     is_numeric_rational,
+                                     numeric_rational_ints,
+                                     simplified_numeric_rational)
         from proveit.numbers.multiplication.mult import (
                 coefficient_and_remainder)
         if self.terms.num_entries() == 0:
@@ -272,15 +272,15 @@ class Add(NumberOperation):
             assert one in remainder_to_rational_coef
             expr = remainder_to_rational_coef[one]
             if not isinstance(expr, Add):
-                assert is_literal_rational(expr)
+                assert is_numeric_rational(expr)
                 return expr
             sum_as_expr = zero
             for term in expr.terms:
                 # Add to the cumulative sum.
                 # (a/b) + (c/d) = (a*d + c*b)/(b*d)
-                _a, _b = literal_rational_ints(sum_as_expr)
-                _c, _d = literal_rational_ints(term)
-                sum_as_expr = simplified_rational_expr(_a*_d+_c*_b, _b*_d)
+                _a, _b = numeric_rational_ints(sum_as_expr)
+                _c, _d = numeric_rational_ints(term)
+                sum_as_expr = simplified_numeric_rational(_a*_d+_c*_b, _b*_d)
             return sum_as_expr
         terms = []
         for remainder in sorted(remainder_to_rational_coef.keys(), key=hash):
@@ -565,8 +565,8 @@ class Add(NumberOperation):
         convert repeated addition to multiplication, etc.
         '''
         from proveit.numbers import (one, Add, Neg, Mult, 
-                                     is_literal_int,
-                                     is_literal_rational)
+                                     is_numeric_int,
+                                     is_numeric_rational)
         from proveit.numbers.multiplication.mult import (
                 coefficient_and_remainder)
         from . import empty_addition, unary_add_reduction
@@ -659,11 +659,11 @@ class Add(NumberOperation):
         terms = self.terms
         if all(is_irreducible_value(term) for term in terms):
             if self.operands.is_double():                
-                if all(is_literal_int(term) for term in terms):
+                if all(is_numeric_int(term) for term in terms):
                     # Evaluate the addition of two literal integers.
                     evaluation = self._integer_binary_eval()
                     return evaluation
-                elif all(is_literal_rational(term) for term in terms):
+                elif all(is_numeric_rational(term) for term in terms):
                     # Evaluate the addition of two literal rationals.
                     evaluation = self._rational_binary_eval()
                     return evaluation
@@ -731,7 +731,7 @@ class Add(NumberOperation):
         expression ranges.  See also the quick_simplified_index 
         function defined in number_operation.py.
         '''
-        from proveit.numbers import is_literal_int, num, Neg
+        from proveit.numbers import is_numeric_int, num, Neg
         
         # Extract any literal integers and expand nested sums.  
         # While we are at it, determing the extremal shifts at the 
@@ -751,7 +751,7 @@ class Add(NumberOperation):
                 # Just an indication to switch the sign back.
                 sign = -sign
                 continue
-            if is_literal_int(term):
+            if is_numeric_int(term):
                 int_sum += sign*term.as_int()
                 continue
             if isinstance(term, Neg):
@@ -948,11 +948,11 @@ class Add(NumberOperation):
         '''
         Evaluate the sum of possibly negated single digit numbers.
         '''
-        from proveit.numbers import is_literal_int, num
+        from proveit.numbers import is_numeric_int, num
         from proveit.numbers.numerals import DecimalSequence
         terms = self.terms
         assert terms.is_double()
-        assert all(is_literal_int(term) for term in terms)
+        assert all(is_numeric_int(term) for term in terms)
         _a, _b = terms
         _a, _b = _a.as_int(), _b.as_int()
         if _a < 0 and _b < 0:
@@ -993,17 +993,17 @@ class Add(NumberOperation):
         or a (possibly negated) fraction with no common divisors between
         the numerator and denominator other than 1.
         '''
-        from proveit.numbers import (Div, num, is_literal_rational, 
-                                     literal_rational_ints)
+        from proveit.numbers import (Div, num, is_numeric_rational, 
+                                     numeric_rational_ints)
         from . import rational_pair_addition
         terms = self.terms
         if not terms.is_double() or (
-                not all(is_literal_rational(term) for term in terms)):
+                not all(is_numeric_rational(term) for term in terms)):
             raise ValueError(
                 "_rational_binary_eval only applicable for binary addition "
                 "of rationals")
-        _a, _b = literal_rational_ints(terms[0])
-        _c, _d = literal_rational_ints(terms[1])
+        _a, _b = numeric_rational_ints(terms[0])
+        _c, _d = numeric_rational_ints(terms[1])
         _a, _b, _c, _d = num(_a), num(_b), num(_c), num(_d)
         # Replace the irreducible forms with the original forms.
         replacements = [Equals(Div(_a, _b), terms[0]).prove(),
@@ -2081,12 +2081,12 @@ def split_int_shift(expr):
     return the remaining terms and the shift independently as a pair.
     Otherwise, return the expression paired with a zero shift.
     '''
-    from proveit.numbers import is_literal_int, zero, Neg
+    from proveit.numbers import is_numeric_int, zero, Neg
     if isinstance(expr, Neg):
         expr = Add(expr) # wrap in an Add so we can do quick_simplified
     if isinstance(expr, Add):
         expr = expr.quick_simplified()
-        if (isinstance(expr, Add) and is_literal_int(expr.terms[-1])):
+        if (isinstance(expr, Add) and is_numeric_int(expr.terms[-1])):
             shift = expr.terms[-1].as_int()
             if expr.terms.num_entries() == 1:
                 return shift
@@ -2095,6 +2095,6 @@ def split_int_shift(expr):
                 return expr.terms[0], shift
             else:
                 return Add(*expr.terms[:-1].entries), shift
-    if is_literal_int(expr):
+    if is_numeric_int(expr):
         return zero, expr.as_int()
     return expr, 0

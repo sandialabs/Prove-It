@@ -381,8 +381,8 @@ class TransitiveRelation(Relation):
         this method on a weak relation class (otherwise, only
         equality and strong relations are used in the sorting).
         '''
-        from proveit.numbers import is_literal_int
-        if all(is_literal_int(item) for item in items):
+        from proveit.numbers import is_numeric_int
+        if all(is_numeric_int(item) for item in items):
             # All the items are integers.  Use efficient n log(n) sorting to
             # get them in the proper order and then use fixed_transitivity_sort
             # to efficiently prove this order.

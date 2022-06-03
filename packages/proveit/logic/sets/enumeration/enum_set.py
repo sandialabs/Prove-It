@@ -63,7 +63,7 @@ class Set(Function):
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self,  *, must_evaluate=False,
                                **defaults_config):
-        from proveit.numbers import is_literal_int, num
+        from proveit.numbers import is_numeric_int, num
 
         # A convenience to allow successive update to the equation via 
         # transitivities. (starting with self=self).
@@ -85,7 +85,7 @@ class Set(Function):
             # Sort if all of the elements are literal integers.
             int_elems = []
             for elem in expr.operands:
-                if not is_literal_int(elem):
+                if not is_numeric_int(elem):
                     break
                 int_elems.append(elem.as_int())
             if len(int_elems) == expr.operands.num_entries():

@@ -150,9 +150,9 @@ class Exp(NumberOperation):
         is not a garbage expression.
         '''
         from proveit.numbers import (one, zero, Neg, Mult, 
-                                     is_literal_rational, is_literal_int,
-                                     literal_rational_ints,
-                                     simplified_rational_expr)
+                                     is_numeric_rational, is_numeric_int,
+                                     numeric_rational_ints,
+                                     simplified_numeric_rational)
         base = self.base.canonical_form()
         exponent = self.exponent.canonical_form()
         if exponent == zero:
@@ -167,9 +167,9 @@ class Exp(NumberOperation):
             # (x^a)^b = x^(a*b)
             exponent = Mult(base.exponent, exponent).canonical_form()
             return Exp(base.base, exponent)
-        elif is_literal_rational(base) and is_literal_int(exponent):
+        elif is_numeric_rational(base) and is_numeric_int(exponent):
             # Raising a literal rational to an integer power.
-            numer, denom = literal_rational_ints(base)
+            numer, denom = numeric_rational_ints(base)
             if isinstance(exponent, Neg):
                 # A negative power will flip the numerator
                 # and denominator.
@@ -177,7 +177,7 @@ class Exp(NumberOperation):
                 exponent = exponent.operand
             numer = numer**(exponent.as_int())
             denom = denom**(exponent.as_int())
-            return simplified_rational_expr(numer, denom)
+            return simplified_numeric_rational(numer, denom)
         elif base != self.base or exponent != self.exponent:
             # Use the canonical forms of the base and exponent.
             return Exp(base, exponent)
@@ -203,9 +203,9 @@ class Exp(NumberOperation):
         from proveit.relation import TransRelUpdater
         from proveit.logic import is_irreducible_value
         from proveit.logic import InSet
-        from proveit.numbers import (zero, one, two, is_literal_int,
-                                     is_literal_rational,
-                                     literal_rational_ints,
+        from proveit.numbers import (zero, one, two, is_numeric_int,
+                                     is_numeric_rational,
+                                     numeric_rational_ints,
                                      Log, Rational, Abs)
         from . import (exp_zero_eq_one, exponentiated_zero,
                        exponentiated_one, exp_nat_pos_expansion)
@@ -225,8 +225,8 @@ class Exp(NumberOperation):
                         operand.evaluation()
                 return self.evaluation()
         
-        if is_literal_rational(self.base):
-            _a, _b = literal_rational_ints(self.base)
+        if is_numeric_rational(self.base):
+            _a, _b = numeric_rational_ints(self.base)
 
         if self.exponent == zero:
             return exp_zero_eq_one.instantiate({a: self.base})  # =1
@@ -256,8 +256,8 @@ class Exp(NumberOperation):
             if _n == two:
                 return sqrt_of_square.instantiate({x: _x})
             return nth_root_of_nth_power.instantiate({n: _n, x: _x})
-        elif (is_literal_rational(self.base) and
-                  is_literal_int(self.exponent) and
+        elif (is_numeric_rational(self.base) and
+                  is_numeric_int(self.exponent) and
                   self.exponent.as_int() > 1):
             # exponentiate a rational to a positive integer
             expr = self
@@ -276,8 +276,8 @@ class Exp(NumberOperation):
                     rep_reduction.rhs, preserve_all=True))
             expr = eq.update(expr.evaluation())
             return eq.relation
-        elif (is_literal_rational(self.base) and _b != 0 and
-                  is_literal_int(self.exponent) and
+        elif (is_numeric_rational(self.base) and _b != 0 and
+                  is_numeric_int(self.exponent) and
                   self.exponent.as_int() < 0):
             # exponentiate a rational to a negative integer
             # _a and _b are the numerator and denominator as ints.
@@ -1032,7 +1032,7 @@ class ExpSetMembership(SetMembership):
         from proveit.logic.sets.membership import (
             exp_set_0, exp_set_1, exp_set_2, exp_set_3, exp_set_4, exp_set_5,
             exp_set_6, exp_set_7, exp_set_8, exp_set_9)
-        from proveit.numbers import zero, is_literal_int, DIGITS
+        from proveit.numbers import zero, is_numeric_int, DIGITS
         element = self.element
         domain = self.domain
         elem_in_set = InSet(element, domain)
@@ -1044,7 +1044,7 @@ class ExpSetMembership(SetMembership):
         exponent_eval = domain.exponent.evaluation()
         exponent = exponent_eval.rhs
         base = domain.base
-        if is_literal_int(exponent):
+        if is_numeric_int(exponent):
             if exponent == zero:
                 return exp_set_0.instantiate({S: base})
             if element.num_entries() != exponent.as_int():

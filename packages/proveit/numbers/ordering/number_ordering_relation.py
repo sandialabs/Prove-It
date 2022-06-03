@@ -37,8 +37,8 @@ class NumberOrderingRelation(TransitiveRelation):
 
     @prover
     def conclude_from_known_bound(self, **defaults_config):
-        from proveit.numbers import (zero, less_eq_literal_rationals,
-                                     less_literal_rationals)
+        from proveit.numbers import (zero, less_eq_numeric_rationals,
+                                     less_numeric_rationals)
         from .less import Less
         from .less_eq import LessEq
         canonical_form = self.canonical_form()
@@ -54,7 +54,7 @@ class NumberOrderingRelation(TransitiveRelation):
                 canonical_form.normal_lhs, tuple())
         # For the case where the known bound is strong, use:
         # x < a, a ≤ b => x < b as well as x ≤ b
-        comparator = less_eq_literal_rationals
+        comparator = less_eq_numeric_rationals
         for judgment, strong_bound in known_strong_bounds:
             if judgment.is_applicable():
                 if (strong_bound == desired_bound or 
@@ -63,10 +63,10 @@ class NumberOrderingRelation(TransitiveRelation):
         is_weak = isinstance(self, LessEq)
         if is_weak:
             # x ≤ a, a ≤ b => x ≤ b
-            comparator = less_eq_literal_rationals
+            comparator = less_eq_numeric_rationals
         else:
             # x ≤ a, a < b => x < b
-            comparator = less_literal_rationals
+            comparator = less_numeric_rationals
         for judgment, weak_bound in known_weak_bounds:
             if judgment.is_applicable():
                 if ((is_weak and weak_bound == desired_bound) or 
@@ -86,9 +86,9 @@ class NumberOrderingRelation(TransitiveRelation):
         '''
         from proveit.logic import Equals
         from proveit.numbers import (zero, one, Add, Neg, subtract,
-                                     Less, LessEq, is_literal_rational,
-                                     simplified_rational_expr,
-                                     literal_rational_ints)
+                                     Less, LessEq, is_numeric_rational,
+                                     simplified_numeric_rational,
+                                     numeric_rational_ints)
         if isinstance(similar_bound, Judgment):
             similar_bound = similar_bound.expr
         if not isinstance(similar_bound, NumberOrderingRelation):
@@ -122,7 +122,7 @@ class NumberOrderingRelation(TransitiveRelation):
             rhs_diff = subtract(canonical_form.rhs,
                                 other_canonical_form.rhs)
             rhs_diff = rhs_diff.canonical_form()
-            assert is_literal_rational(rhs_diff)
+            assert is_numeric_rational(rhs_diff)
             if isinstance(rhs_diff, Neg):
                 fails_strength_check = True
         if fails_strength_check:
@@ -141,12 +141,12 @@ class NumberOrderingRelation(TransitiveRelation):
 
             # Rescale appropriately
             #   from 'similar_bound':
-            denom, numer = literal_rational_ints(other_inv_scale)
+            denom, numer = numeric_rational_ints(other_inv_scale)
             #   to 'self':
-            numer_factor, denom_factor = literal_rational_ints(inv_scale)
+            numer_factor, denom_factor = numeric_rational_ints(inv_scale)
             numer *= numer_factor
             denom *= denom_factor
-            scale_factor = simplified_rational_expr(numer, denom)
+            scale_factor = simplified_numeric_rational(numer, denom)
             # Multiply both sides (distribution will be dealt with
             # automatically when we equate expression with the 
             # same canonical forms below).
@@ -159,11 +159,11 @@ class NumberOrderingRelation(TransitiveRelation):
                         isinstance(similar_bound, Less)):
                     known_bound = known_bound.derive_relaxed()
             else:
-                rhs_diff_numer, rhs_diff_denom = literal_rational_ints(
+                rhs_diff_numer, rhs_diff_denom = numeric_rational_ints(
                         rhs_diff)
                 # scale the rhs diff from the canonical scaling to
                 # the desired scaling.
-                scaled_rhs_diff = simplified_rational_expr(
+                scaled_rhs_diff = simplified_numeric_rational(
                         rhs_diff_numer*numer_factor,
                         rhs_diff_denom*denom_factor)
                 assert not isinstance(scaled_rhs_diff, Neg)
@@ -233,7 +233,7 @@ class NumberOrderingRelation(TransitiveRelation):
         canonical_form.
         '''
         from proveit.numbers import (zero, one, Add, Neg, Mult, Div, 
-                                     is_literal_rational)
+                                     is_numeric_rational)
         # Obtain the canonical forms of both sides.
         canonical_lhs = self.normal_lhs.canonical_form()
         canonical_rhs = self.normal_rhs.canonical_form()
@@ -243,7 +243,7 @@ class NumberOrderingRelation(TransitiveRelation):
         for side, sign in zip((canonical_lhs, canonical_rhs), (-1, 1)):
             terms = side.terms if isinstance(side, Add) else [side]
             for term in terms:
-                if is_literal_rational(term):
+                if is_numeric_rational(term):
                     if sign < 1 and term != zero:
                         term = Neg(term).canonical_form()
                     constant_terms.append(term)
@@ -267,13 +267,13 @@ class NumberOrderingRelation(TransitiveRelation):
             # Choose the first term to normalize according.
             term = next(iter(lhs.terms))
             if isinstance(term, Mult) and (
-                    is_literal_rational(term.factors[0])):
+                    is_numeric_rational(term.factors[0])):
                 # Term with rational coefficient.
                 inv_scale_factor = term.factors[0]
             else:
                 # Term with no rational coefficient.
                 inv_scale_factor = one # No need to rescale
-        elif isinstance(lhs, Mult) and is_literal_rational(lhs.factors[0]):
+        elif isinstance(lhs, Mult) and is_numeric_rational(lhs.factors[0]):
             # Scale inversely by the one and only coefficient.
             inv_scale_factor = lhs.factors[0]  
         inv_scale_factor = inv_scale_factor.canonical_form()

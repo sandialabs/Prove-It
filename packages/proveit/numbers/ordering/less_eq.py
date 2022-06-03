@@ -49,7 +49,7 @@ class LessEq(NumberOrderingRelation):
         In addition to the NumberOrderingRelation side-effects, also
         derive a ≠ b from a < b as a side-effect.
         '''
-        from proveit.numbers import is_literal_int
+        from proveit.numbers import is_numeric_int
         # Remember the canonical bound.
         canonical_form = self.canonical_form()
         known_canonical_bounds = LessEq.known_canonical_bounds
@@ -60,7 +60,7 @@ class LessEq(NumberOrderingRelation):
                 self, judgment):
             yield side_effect
         yield self.deduce_complement
-        # if is_literal_int(self.lhs) or is_literal_int(self.rhs):
+        # if is_numeric_int(self.lhs) or is_numeric_int(self.rhs):
         #     yield self.derive_one_side_in_real_subset
 
     def negation_side_effects(self, judgment):

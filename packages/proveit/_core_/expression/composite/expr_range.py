@@ -379,8 +379,8 @@ class ExprRange(Expression):
             a_{1,1}, ..., a_{1,3}, ......, a_{4,1}, ..., a_{4,3}
         has a literal_int_extent of 12.
         '''
-        from proveit.numbers import is_literal_int
-        if (is_literal_int(self.true_start_index) and is_literal_int(self.true_end_index)):
+        from proveit.numbers import is_numeric_int
+        if (is_numeric_int(self.true_start_index) and is_numeric_int(self.true_end_index)):
             toplevel_extent = (
                 self.true_end_index.as_int() -
                 self.true_start_index.as_int() +
@@ -1309,14 +1309,14 @@ class ExprRange(Expression):
         # If the start and end are literal integers and form an
         # empty range, then it should be straightforward to
         # prove that the range is empty.
-        from proveit.numbers import is_literal_int
+        from proveit.numbers import is_numeric_int
         default_order = 'increasing'
         if self.get_style('order', default_order) == 'decreasing':
             decreasing = True
         else:
             decreasing = False
         empty_req = Equals(Add(simp_end_index, one), simp_start_index)
-        if is_literal_int(simp_start_index) and is_literal_int(simp_end_index):
+        if is_numeric_int(simp_start_index) and is_numeric_int(simp_end_index):
             if simp_end_index.as_int() + 1 == simp_start_index.as_int():
                 empty_req.prove()
         first = self.first()
@@ -1373,11 +1373,11 @@ class ExprRange(Expression):
             # If the start and end of the inner range are literal
             # integers and form an empty range, then it should be
             # straightforward to prove that the entire range is empty.
-            from proveit.numbers import is_literal_int
+            from proveit.numbers import is_numeric_int
             empty_req = Equals(
                 Add(first.true_end_index, one), first.true_start_index)
-            if is_literal_int(
-                    first.true_start_index) and is_literal_int(
+            if is_numeric_int(
+                    first.true_start_index) and is_numeric_int(
                     first.true_end_index):
                 if first.true_end_index.as_int() + \
                         1 == first.true_start_index.as_int():
@@ -2301,7 +2301,7 @@ def simplified_index(index, *, requirements=None):
 
 def simplified_indices(*indices, requirements=None):
     from proveit.logic import Equals
-    from proveit.numbers import Add, quick_simplified_index, is_literal_int
+    from proveit.numbers import Add, quick_simplified_index, is_numeric_int
     for index in indices:
         simplified_index = quick_simplified_index(index)
         if requirements is not None:
@@ -2316,7 +2316,7 @@ def simplified_indices(*indices, requirements=None):
                     # Move literal integers to the end via the
                     # 'order_key_fn' simplification directive for Add.
                     directives.order_key_fn = lambda term : (
-                        1 if is_literal_int(term) else 0)
+                        1 if is_numeric_int(term) else 0)
                     index.simplified() 
                 try:
                     requirements.append(requirement.prove())

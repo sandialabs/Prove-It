@@ -79,10 +79,10 @@ class Neg(NumberOperation):
         If negating an Add, distribute over the sum.
         If negating a Neg, undo the double negation.
         '''
-        from proveit.numbers import is_literal_rational, Add, Mult
+        from proveit.numbers import is_numeric_rational, Add, Mult
         canonical_operand = self.operand.canonical_form()
         if (isinstance(canonical_operand, Mult) and 
-                is_literal_rational(canonical_operand.factors[0])):
+                is_numeric_rational(canonical_operand.factors[0])):
             # Apply the negation to the rational coefficient.
             coef = canonical_operand.factors[0]
             return Mult(Neg(coef).canonical_form(),

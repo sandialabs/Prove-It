@@ -287,9 +287,9 @@ class NumeralSequence(Operation, IrreducibleValue):
     def _function_formatted(self, format_type, **kwargs):
         return self._formatted(format_type, **kwargs)
 
-def is_literal_natural(expr):
+def is_numeric_natural(expr):
     '''
-    Return True iff the 'expr' represents a literal, numeric natural
+    Return True iff the 'expr' represents an explicit, numeric natural
     number.
     '''
     if isinstance(expr, Numeral):
@@ -298,31 +298,32 @@ def is_literal_natural(expr):
         return expr.is_irreducible_value()
     return False    
 
-def is_literal_int(expr):
+def is_numeric_int(expr):
     '''
-    Return True iff the 'expr' represents a literal, numeric integer.
+    Return True iff the 'expr' represents an explicit, numeric integer.
     '''
     from proveit.numbers import Neg
-    return is_literal_natural(expr) or (
-            isinstance(expr, Neg) and is_literal_natural(expr.operand))
+    return is_numeric_natural(expr) or (
+            isinstance(expr, Neg) and is_numeric_natural(expr.operand))
 
-def is_literal_rational(expr):
+def is_numeric_rational(expr):
     '''
-    Return True iff 'expr' represents a literal integer or a fraction 
-    of literal integers with the denominator not equal to zero.
+    Return True iff 'expr' represents an explicit, numeric rational
+    number (as a numeric integer or fraction of numeric integers
+    with a nonzero denominator).
     '''
     from proveit.numbers import Neg, Div, zero
-    if isinstance(expr, Neg) and is_literal_rational(expr.operand):
+    if isinstance(expr, Neg) and is_numeric_rational(expr.operand):
         return True
     if isinstance(expr, Div):
-        return (is_literal_int(expr.numerator) and
-                is_literal_int(expr.denominator) and
+        return (is_numeric_int(expr.numerator) and
+                is_numeric_int(expr.denominator) and
                 expr.denominator != zero)
-    return is_literal_int(expr)
+    return is_numeric_int(expr)
 
-def literal_rational_ints(expr):
+def numeric_rational_ints(expr):
     '''
-    Return the integer numerator and denominator of a literal rational.
+    Return the integer numerator and denominator of a numeric rational.
     Never returns a negative denominator (multiplies top and bottom
     by -1 to avoid that).
     '''
@@ -340,7 +341,7 @@ def literal_rational_ints(expr):
         return numer*sign, denom
     return expr.as_int()*sign, 1
 
-def simplified_rational_expr(numer_int, denom_int):
+def simplified_numeric_rational(numer_int, denom_int):
     '''
     Given a numerator and a denominator as integers, return
     an Expression of the equivalent irreducible rational.
@@ -368,53 +369,53 @@ def simplified_rational_expr(numer_int, denom_int):
     return rational
 
 '''
-Comparators for literal integers/rationals.
+Comparators for numeric integers/rationals.
 '''
 
-def less_literal_ints(a, b):
+def less_numeric_ints(a, b):
     '''
     Return True iff a < b.
-    a and b must be literal integer expressions.
+    a and b must be numeric integer expressions.
     '''
-    if not (is_literal_int(a) and is_literal_int(b)):
-        raise ValueError("Both arguments to 'less_literal_ints' should "
+    if not (is_numeric_int(a) and is_numeric_int(b)):
+        raise ValueError("Both arguments to 'less_numeric_ints' should "
                          "be literal ints, got %s and %s"%(a, b))
     return a.as_int() < b.as_int()
 
-def less_eq_literal_ints(a, b):
+def less_eq_numeric_ints(a, b):
     '''
     Return True iff a ≤ b.
-    a and b must be literal integer expressions.
+    a and b must be numeric integer expressions.
     '''
-    if not (is_literal_int(a) and is_literal_int(b)):
-        raise ValueError("Both arguments to 'less_literal_ints' should "
+    if not (is_numeric_int(a) and is_numeric_int(b)):
+        raise ValueError("Both arguments to 'less_numeric_ints' should "
                          "be literal ints, got %s and %s"%(a, b))
     return a.as_int() <= b.as_int()
 
-def _compare_literal_rationals(a, b, comparator):
+def _compare_numeric_rationals(a, b, comparator):
     '''
-    Helper for less_literal_rationals and less_eq_literal_rationals.
+    Helper for less_numeric_rationals and less_eq_numeric_rationals.
     '''
-    if not (is_literal_rational(a) and is_literal_rational(b)):
-        raise ValueError("Both arguments to 'less_literal_ints' should "
+    if not (is_numeric_rational(a) and is_numeric_rational(b)):
+        raise ValueError("Both arguments to 'less_numeric_ints' should "
                          "be literal ints, got %s and %s"%(a, b))
-    a_numer, a_denom = literal_rational_ints(a)
-    b_numer, b_denom = literal_rational_ints(b)
+    a_numer, a_denom = numeric_rational_ints(a)
+    b_numer, b_denom = numeric_rational_ints(b)
     assert a_denom > 0
     assert b_denom > 0
     # Multiply both sides by both denominators:
     return comparator(a_numer*b_denom, b_numer*a_denom)
 
-def less_literal_rationals(a, b):
+def less_numeric_rationals(a, b):
     '''
     Return True iff a < b.
-    a and b must be literal rational expressions.
+    a and b must be numeric rational expressions.
     '''
-    return _compare_literal_rationals(a, b, lambda x, y: x < y)
+    return _compare_numeric_rationals(a, b, lambda x, y: x < y)
 
-def less_eq_literal_rationals(a, b):
+def less_eq_numeric_rationals(a, b):
     '''
     Return True iff a ≤ b.
-    a and b must be literal rational expressions.
+    a and b must be numeric rational expressions.
     '''
-    return _compare_literal_rationals(a, b, lambda x, y: x <= y)
+    return _compare_numeric_rationals(a, b, lambda x, y: x <= y)
