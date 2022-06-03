@@ -52,7 +52,7 @@ class NumberOperation(Operation):
             raise ValueError("Expecting one or more 'inner_expr_bounds'")
         while len(inner_expr_bounds) > 0:
             inner_expr_bound = inner_expr_bounds.popleft()
-            print('inner_expr_bound', inner_expr_bound)
+            # print('inner_expr_bound', inner_expr_bound)
             if isinstance(inner_expr_bound, TransRelUpdater):
                 # May be one of the internally generated
                 # TransRelUpdater for percolating bounds up through
