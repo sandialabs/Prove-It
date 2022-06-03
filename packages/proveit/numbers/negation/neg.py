@@ -1,5 +1,6 @@
-from proveit import (Expression, Literal, Operation, maybe_fenced_string, 
-                     maybe_fenced_latex, InnerExpr, defaults, USE_DEFAULTS, 
+from proveit import (Expression, Literal, Operation, ExprRange,
+                     maybe_fenced_string, maybe_fenced_latex, 
+                     InnerExpr, defaults, USE_DEFAULTS, 
                      ProofFailure, relation_prover, equality_prover,
                      SimplificationDirectives)
 from proveit.logic import is_irreducible_value
@@ -70,6 +71,39 @@ class Neg(NumberOperation):
         if isinstance(self.operand, Neg):
             return False # double negation is reducible
         return is_irreducible_value(self.operand) and self.operand != zero
+
+    def _build_canonical_form(self):
+        '''
+        If negating a Mult with a nontrivial coefficient, pull the 
+        negation into its coefficient.
+        If negating an Add, distribute over the sum.
+        If negating a Neg, undo the double negation.
+        '''
+        from proveit.numbers import is_numeric_rational, Add, Mult
+        canonical_operand = self.operand.canonical_form()
+        if (isinstance(canonical_operand, Mult) and 
+                is_numeric_rational(canonical_operand.factors[0])):
+            # Apply the negation to the rational coefficient.
+            coef = canonical_operand.factors[0]
+            return Mult(Neg(coef).canonical_form(),
+                        *canonical_operand.factors.entries[1:])
+        elif isinstance(canonical_operand, Add):
+            # Distribute the negation over the sum.
+            negated_terms = []
+            for term in canonical_operand.terms:
+                if isinstance(term, ExprRange):
+                    neg_term = ExprRange(term.parameter, Neg(term.body),
+                                         term.true_start_index,
+                                         term.true_end_index)
+                else:
+                    neg_term = Neg(term)
+                negated_terms.append(neg_term)
+            return Add(*negated_terms).canonical_form() 
+        elif isinstance(canonical_operand, Neg):
+            return canonical_operand.operand # double negation
+        elif canonical_operand != self.operand:
+            return Neg(canonical_operand)
+        return self
 
     @relation_prover
     def deduce_in_number_set(self, number_set, **defaults_config):

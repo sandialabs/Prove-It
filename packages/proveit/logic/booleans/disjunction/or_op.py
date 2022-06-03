@@ -1,5 +1,5 @@
 from proveit import (Expression, Literal, Operation, ExprRange, 
-                     defaults, USE_DEFAULTS,
+                     defaults, USE_DEFAULTS, UnsatisfiedPrerequisites,
                      ProofFailure, InnerExpr, UnusableProof,
                      prover, relation_prover, equality_prover,
                      SimplificationDirectives, TransRelUpdater)
@@ -8,6 +8,7 @@ from proveit.logic.booleans.booleans import in_bool
 from proveit.abstract_algebra.generic_methods import (
         apply_commutation_thm, apply_association_thm,
         apply_disassociation_thm, group_commutation, group_commute,
+        generic_permutation, deduce_equality_via_commutation, 
         prove_via_grouping_ranges)
 
 
@@ -69,7 +70,7 @@ class Or(Operation):
         # to prove any of the operands so that  we don't waste time
         # trying to prove operands when we already know one to be true.
         use_automation_possibilities = (
-                [False, True] if defaults.automation else [False])
+                [False, True] if defaults.conclude_automation else [False])
 
         if self.operands.contains_range():
             # There are ExprRange operands.
@@ -98,7 +99,7 @@ class Or(Operation):
                     proven_operand_indices.append(_k)
                     # possible way to prove it:
                     self.conclude_via_example(operand)
-                except ProofFailure:
+                except (ProofFailure, UnsatisfiedPrerequisites):
                     pass
             if self.operands.is_double() and len(proven_operand_indices) > 0:
                 # One or both of the two operands were known to be true
@@ -242,6 +243,19 @@ class Or(Operation):
         _A = self.operands
         _m = _A.num_elements()
         return any_if_all.instantiate({m:_m, A:_A})
+
+    def _build_canonical_form(self):
+        '''
+        Returns a form of this operation in which the operands are 
+        in a deterministically sorted order used to determine equal 
+        expressions given commutativity of this operation under
+        appropriate conditions.
+        '''
+        return Or(*sorted([operand.canonical_form() for operand 
+                          in self.operands.entries], key=hash))
+
+    def _deduce_equality(self, equality):
+        return deduce_equality_via_commutation(equality, one_side=self)
 
     @prover
     def derive_right_if_not_left(self, **defaults_config):
@@ -759,6 +773,32 @@ class Or(Operation):
         '''
         return group_commute(
             self, init_idx,  final_idx, length, disassociate)
+
+    @equality_prover('moved', 'move')
+    def permutation_move(self, init_idx=None, final_idx=None,
+                         **defaults_config):
+        '''
+        Given numerical operands, deduce that this expression is equal 
+        to a form in which the operand
+        at index init_idx has been moved to final_idx.
+        For example, (a ∧ b · ... ∧ y ∧ z) = (a ∧ ... ∧ y ∧ b ∧ z)
+        via init_idx = 1 and final_idx = -2.
+        '''
+        return self.commutation(init_idx=init_idx, final_idx=final_idx)
+
+    @equality_prover('permuted', 'permute')
+    def permutation(self, new_order=None, cycles=None, **defaults_config):
+        '''
+        Deduce that this Add expression is equal to an Add in which
+        the terms at indices 0, 1, …, n-1 have been reordered as
+        specified EITHER by the new_order list OR by the cycles list
+        parameter. For example,
+            (a∨b∨c∨d).permutation_general(new_order=[0, 2, 3, 1])
+        and
+            (a∨b∨c∨d).permutation_general(cycles=[(1, 2, 3)])
+        would both return ⊢ (a∨b∨c∨d) = (a∨c∨d∨b).
+        '''
+        return generic_permutation(self, new_order, cycles)
 
     @equality_prover('associated', 'associate')
     def association(self, start_idx, length, **defaults_config):

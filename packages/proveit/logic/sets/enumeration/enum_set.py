@@ -3,7 +3,8 @@ from proveit import (defaults, ExprTuple, Function, InnerExpr, Literal,
                      relation_prover, SimplificationDirectives)
 from proveit.logic.irreducible_value import is_irreducible_value
 from proveit.abstract_algebra.generic_methods import (
-    apply_commutation_thm, generic_permutation)
+    apply_commutation_thm, deduce_equality_via_commutation,
+    generic_permutation)
 from proveit import TransRelUpdater
 
 class Set(Function):
@@ -44,11 +45,25 @@ class Set(Function):
 
     def latex(self, **kwargs):
         return r'\left\{' + self.elements.latex(fence=False) + r'\right\}'
-    
+
+    def _build_canonical_form(self):
+        '''
+        Returns a form of this operation in which the operands are 
+        in a deterministically sorted order used to determine equal 
+        expressions given commutativity of this operation under
+        appropriate conditions.
+        '''
+        return Set(*sorted([operand.canonical_form() for operand 
+                              in self.operands.entries], key=hash))
+
+    @equality_prover('equated', 'equate')
+    def deduce_equality(self, equality, **defaults_config):
+        return deduce_equality_via_commutation(equality, one_side=self)
+
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self,  *, must_evaluate=False,
                                **defaults_config):
-        from proveit.numbers import is_literal_int, num
+        from proveit.numbers import is_numeric_int, num
 
         # A convenience to allow successive update to the equation via 
         # transitivities. (starting with self=self).
@@ -70,7 +85,7 @@ class Set(Function):
             # Sort if all of the elements are literal integers.
             int_elems = []
             for elem in expr.operands:
-                if not is_literal_int(elem):
+                if not is_numeric_int(elem):
                     break
                 int_elems.append(elem.as_int())
             if len(int_elems) == expr.operands.num_entries():

@@ -9,7 +9,7 @@ from proveit.core_expr_types import n_k
 from proveit.logic import Equals, deduce_equal_or_not, Set, InSet
 from proveit.relation import Relation
 from proveit.numbers import (Interval, zero, one, two, num, Add, Neg, Mult,
-                             subtract, is_literal_int, quick_simplified_index)
+                             subtract, is_numeric_int, quick_simplified_index)
 from proveit.statistics import Prob
 from proveit.physics.quantum import var_ket_psi, var_ket_u, var_ket_v
 from proveit.physics.quantum.circuits.qcircuit_elements import (

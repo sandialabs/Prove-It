@@ -6,6 +6,10 @@ from proveit.logic import Equals, InSet
 from proveit.numbers import zero
 from proveit.abstract_algebra import GroupAdd
 from proveit.linear_algebra import VecSpaces
+from proveit.abstract_algebra.generic_methods import (
+        apply_commutation_thm, apply_association_thm,
+        apply_disassociation_thm, group_commutation, group_commute,
+        generic_permutation, deduce_equality_via_commutation)
 
 
 class VecAdd(GroupAdd):
@@ -37,6 +41,16 @@ class VecAdd(GroupAdd):
             return self.number_add_reduction()
         return GroupAdd.shallow_simplification(
                 self, must_evaluate=must_evaluate)
+
+    def _build_canonical_form(self):
+        '''
+        Returns a form of this operation in which the operands are 
+        in a deterministically sorted order used to determine equal 
+        expressions given commutativity of this operation under
+        appropriate conditions.
+        '''
+        return VecAdd(*sorted([operand.canonical_form() for operand 
+                              in self.operands.entries], key=hash))
 
     @equality_prover('number_add_reduced', 'number_add_reduce')
     def number_add_reduction(self, **defaults_config):
@@ -102,6 +116,72 @@ class VecAdd(GroupAdd):
                 _n = terms.num_elements()
                 return closure.instantiate(
                         {n:_n, K:field, V:vec_space, x:terms})
+
+    @equality_prover('moved', 'move')
+    def permutation_move(self, init_idx=None, final_idx=None,
+                         **defaults_config):
+        '''
+        Deduce that this VecAdd expression is equal to a Set
+        in which the element at index init_idx has been moved to
+        final_idx. For example, a+b+c+d = a+c+b+d via
+        init_idx = 1 (i.e. 'b') and final_idx = -2. In traditional
+        cycle notation, this corresponds to an index-based cycle
+        (init_idx, init_idx+1, ..., final_idx) where
+        0 ≤ init_idx ≤ final_idx ≤ n - 1 for a set of size n.
+        '''
+        from . import (binary_permutation, leftward_permutation,
+                                 rightward_permutation)
+        terms = self.terms
+        vec_space = VecSpaces.common_known_vec_space(terms)
+        field = VecSpaces.known_field(vec_space)
+        return apply_commutation_thm(
+            self, init_idx, final_idx, binary_permutation,
+            leftward_permutation, rightward_permutation,
+            repl_map_extras={K:field, V:vec_space})
+
+    @equality_prover('swapped', 'swap')
+    def permutation_swap(self, idx01=None, idx02=None, **defaults_config):
+        '''
+        Deduce that this VecAdd expression is equal to a VecAdd in which
+        the elements at indices idx01 and idx02 have swapped locations.
+        For example,
+        (a+b+c+d+e).permutation_swap(2, 4) would return
+        |– (a+b+c+d+e) = (a+b+e+d+c)
+        '''
+        # Before processing, quickly check that:
+        # (1) user has specified both idx values;
+        # (2) and the idx values are plausible.
+        if idx01 is None or idx02 is None:
+            raise ValueError("Set.permutation_swap() method expecting the "
+                             "individual index locations of the two elements "
+                             "to swap, idx01 = {0} and idx02 = {1}".
+                             format(idx01, idx02))
+        if idx01 is not None and idx02 is not None:
+            valid_indices_list = list(range(0, self.operands.num_entries()))
+            self._check_subset_indices_weak(valid_indices_list, [idx01, idx02])
+
+        new_order = list(range(0, self.operands.num_entries()))
+        new_order[idx01], new_order[idx02] = new_order[idx02], new_order[idx01]
+
+        return self.permutation(new_order=new_order)
+
+    @equality_prover('permuted', 'permute')
+    def permutation(self, new_order=None, cycles=None, **defaults_config):
+        '''
+        Deduce that this VecAdd expression is equal to a Set in which
+        the elements at indices 0, 1, …, n-1 have been reordered as
+        specified EITHER by the new_order list OR by the cycles list
+        parameter. For example,
+            (a+b+c+d).permutation_general(new_order=[0, 2, 3, 1])
+        and
+            (a+b+c+d).permutation_general(cycles=[(1, 2, 3)])
+        would both return |- (a+b+c+d) = (a+c+d+b).
+        '''
+        return generic_permutation(self, new_order, cycles)
+
+    @equality_prover('equated', 'equate')
+    def deduce_equality(self, equality, **defaults_config):
+        return deduce_equality_via_commutation(equality, one_side=self)
 
     @equality_prover('factorized', 'factor')
     def factorization(self, the_factor, pull="left",

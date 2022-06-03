@@ -11,7 +11,7 @@ import sys
 from proveit._core_.theory import TheoryPackage
 sys.modules[__name__] = TheoryPackage(__name__, __file__, locals())
 
-if proveit.defaults.automation:
+if proveit.defaults.sideeffect_automation:
     # Import some fundamental theorems without quantifiers
     from . import (complex_set_is_hilbert_space,
                    ket_zero_in_qubit_space,

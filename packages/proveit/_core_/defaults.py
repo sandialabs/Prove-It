@@ -4,10 +4,7 @@ import copy
 import collections
 
 
-class Defaults:
-    # used to avoid infinite recursion and extra work
-    considered_assumption_sets = set()
-    
+class Defaults:    
     def __init__(self):
         self.reset()
 
@@ -15,11 +12,13 @@ class Defaults:
         # Default assumptions to use for proofs.
         self.assumptions = tuple()
         
-        # Enable/disable `automation` by performing automatic
-        # side-effects (via `side_effects` methods) when proving
-        # statements as well as automatically concluding
-        # statements (via `conclude` methods) when possible.
-        self.automation = True
+        # Enable/disable two types of `automation`.
+        # Side-effect automation derives additional, related facts from
+        # proven facts.  Conclude automation uses strategies to try
+        # to prove a particular fact that is needed.  Setting
+        # 'automation' to True/False turns these both on/off.
+        self.sideeffect_automation = True
+        self.conclude_automation = True
 
         # Display LaTeX versions of expressions.
         self.display_latex = True
@@ -102,8 +101,6 @@ class Defaults:
         # set to the appropriate file to send information about failed
         # imports of other common expressions.
         self.import_failure_filename = None
-
-        Defaults.considered_assumption_sets.clear()
 
     def preserve_expr(self, expr):
         '''
@@ -191,29 +188,9 @@ class Defaults:
         checking that the new assumptions are valid and
         performing appropriate automation (deriving side-effects).
         '''
-        from .proof import Assumption
         if assumptions is None:
             return tuple(self.assumptions)
-
-        assumptions = tuple(self._checkAssumptions(assumptions))
-        sorted_assumptions = tuple(
-            sorted(assumptions, key=lambda expr: hash(expr)))
-
-        # avoid infinite recursion and extra work
-        if sorted_assumptions not in Defaults.considered_assumption_sets:
-            Defaults.considered_assumption_sets.add(sorted_assumptions)
-            #print("consider assumptions", assumptions)
-            for assumption in assumptions:
-                # Prove each assumption, by assumption, to deduce any side-effects.
-                # Note that while we only need THE assumption to prove itself,
-                # having the other assumptions around can be useful for
-                # deriving side-effects.
-                Assumption.make_assumption(assumption, assumptions)
-            if not self.automation:
-                # consideration doesn't fully count if automation is off
-                Defaults.considered_assumption_sets.remove(sorted_assumptions)
-            #print("considered assumptions")
-        return assumptions
+        return tuple(self._checkAssumptions(assumptions))
 
     def _checkAssumptions(self, assumptions):
         '''
@@ -277,6 +254,9 @@ class Defaults:
         elif attr == 'auto_simplify' and value==True:
             # Turning auto-simplify on, so don't preserve all (anymore?)
             self.preserve_all = False
+        elif attr == 'automation':
+            # Turn "side-effect" and "conclude" automation on/off.
+            self.sideeffect_automation = self.conclude_automation = value
         self.__dict__[attr] = value
 
 class TemporarySetter(object):
@@ -298,12 +278,39 @@ class TemporarySetter(object):
         if attr[0] == '_':
             object.__setattr__(self, attr, val)
             return
+        if attr == 'automation':
+            # Setting 'automation' changes both kinds.
+            setattr(self, 'sideeffect_automation', val)
+            setattr(self, 'conclude_automation', val)
+            return
         if attr not in self._obj.__dict__:
             raise AttributeError("Cannot set unknown attr, %s, of %s"
                                  %(attr, self._obj))
         if self._obj.__dict__[attr] == val:
             return # No change.  Nothing need be done.
         self._original_values[attr] = self._obj.__dict__[attr]
+
+        if attr == 'preserve_all' and val==True:
+            # We also need to remember 'replacements' and 
+            # 'auto_simplify' when setting preserve_all=True
+            attributes_to_remember = ('replacements', 'auto_simplify')
+        elif attr == 'auto_simplify' and val==True:
+            # We also need to remember 'preserve_all' when
+            # setting auto_simplify=True
+            attributes_to_remember = ('preserve_all',)
+        elif attr == 'replacements':
+            # We also need to remember 'preserve_all' and 
+            # 'preserved_exprs' when setting replacements.
+            attributes_to_remember = ('preserve_all', 'preserved_exprs')
+        else:
+            # No extra attributes we need to remember.
+            setattr(self._obj, attr, val)
+            return
+
+        for _attr in attributes_to_remember:
+            if _attr not in self._original_values:
+                # extra attribute we need to remember
+                self._original_values[_attr] = self._obj.__dict__[_attr]
         setattr(self._obj, attr, val)
     
     def __getattr__(self, attr):
@@ -325,24 +332,8 @@ class TemporarySetter(object):
         '''
         Restore the original values of the object.
         '''
-        # Restore to the state of when we "entered".
-        # Turn off automation while we do this, however, to
-        # avoid unnecessarily deriving side-effects of assumptions if 
-        # those assumptions happen to change to revert.
-        if 'automation' in self._original_values:
-            automation = self._original_values['automation']
-        elif 'automation' in self._obj.__dict__:
-            automation = self._obj.__dict__['automation']
-        else:
-            automation = None
-        if automation is not None:
-            self._obj.__dict__['automation'] = False
-
         for attr, val in self._original_values.items():
             self._obj.__dict__[attr] = val
-
-        if automation is not None:
-            self._obj.__dict__['automation'] = automation
         
 
 """
@@ -404,21 +395,32 @@ class SimplificationDirectives:
     
     def __init__(self, **kwargs):
         self.__dict__.update(**kwargs)
+        self._defaults = kwargs
 
     def __setattr__(self, key, value):
         if not hasattr(self, key):
-            if key != '_expr_class':
+            if key[0] != '_':
                 raise AttributeError(
                         "%s is not a simplification directive for %s"
                         %(key, self._expr_class))
         self.__dict__[key] = value
     
-    def temporary(self):
+    def temporary(self, use_defaults=False):
         '''
         Return a context manager for making temporary changes to
-        simplification directives.
+        simplification directives.  If 'use_defaults' is True,
+        the temporary simplification directives will initially be set 
+        to the original values that were used when the
+        SimplificationDirectives object was created.
         '''
-        return TemporarySetter(self)
+        tmp_setter = TemporarySetter(self)
+        if use_defaults:
+            # use the default (original) values.
+            for key, val in self._defaults.items():
+                setattr(tmp_setter, key, val)
+            return tmp_setter
+        else:
+            return tmp_setter
 
 
 # USE_DEFAULTS is used to indicate that default assumptions

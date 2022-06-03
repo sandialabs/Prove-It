@@ -1,6 +1,5 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
 proveit.logic.booleans.disjunction.binary_closure
-proveit.logic.booleans.false_eq_false
 proveit.logic.booleans.from_not_false
 proveit.logic.booleans.in_bool_def
 proveit.logic.booleans.in_bool_if_true

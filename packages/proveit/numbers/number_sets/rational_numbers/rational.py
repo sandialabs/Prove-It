@@ -75,7 +75,7 @@ class RationalNonPosSet(NumberSet):
         return RationalNonPosMembership(element)
 
 
-if proveit.defaults.automation:
+if proveit.defaults.sideeffect_automation:
     # Import some fundamental axioms and theorems without quantifiers.
     # Fails before running the _axioms_ and _theorems_ notebooks for
     # the first time, but fine after that.

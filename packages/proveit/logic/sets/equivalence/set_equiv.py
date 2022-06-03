@@ -2,6 +2,7 @@ from proveit import (as_expression, defaults, USE_DEFAULTS,
                      ProofFailure, prover, relation_prover)
 from proveit import Literal
 from proveit import TransitiveRelation, TransitivityException
+from proveit.util import OrderedSet
 from proveit.logic.irreducible_value import (
         IrreducibleValue, is_irreducible_value)
 from proveit import A, B, C, P, f, x, y, z
@@ -71,8 +72,10 @@ class SetEquiv(TransitiveRelation):
         depending upon the form of this equivalence.
         '''
         from proveit.logic.booleans import TRUE, FALSE
-        SetEquiv.known_equivalences.setdefault(self.lhs, set()).add(judgment)
-        SetEquiv.known_equivalences.setdefault(self.rhs, set()).add(judgment)
+        SetEquiv.known_equivalences.setdefault(
+                self.lhs, OrderedSet()).add(judgment)
+        SetEquiv.known_equivalences.setdefault(
+                self.rhs, OrderedSet()).add(judgment)
         # not yet clear if the irreducible value check is relevant for sets
         # if is_irreducible_value(self.rhs):
         #     SetEquiv.simplifications.setdefault(self.lhs, set()).add(judgment)

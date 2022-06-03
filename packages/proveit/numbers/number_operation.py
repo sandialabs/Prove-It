@@ -1,9 +1,12 @@
-from collections import deque
+from collections import deque, Counter
 from proveit import (Expression, Judgment, Operation, ExprTuple, ExprRange,
                      generate_inner_expressions, USE_DEFAULTS,
                      prover, relation_prover,
                      ProofFailure, UnsatisfiedPrerequisites)
+from proveit.logic import Equals
 from proveit.relation import TransRelUpdater
+from proveit.abstract_algebra.generic_methods import (
+        deduce_equality_via_commutation)
 from .number_sets import (
     Natural, NaturalPos,
     Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
@@ -17,23 +20,79 @@ class NumberOperation(Operation):
     '''
     Base class for number operation (i.e. arithmetic operations).
     '''
-    
+
     def __init__(self, operator, operand_or_operands, *, styles=None):
         Operation.__init__(self, operator, operand_or_operands, styles=styles)
 
+    def _deduce_equality(self, equality):
+        '''
+        Prove that this number operation is equal to an expression that
+        has the same canonical form.
+        '''
+        from proveit.numbers import Add, Mult, Div, Exp, Neg
+        lhs, rhs = equality.lhs, equality.rhs
+        assert lhs == self
+        assert lhs.canonical_form() == rhs.canonical_form()
+
+        # If the rhs is the same type as the lhs and the
+        # canonical forms of the operands are the same, we can
+        # use direct substitution and/or a permutation for operations
+        # that commute (Add and Mult).
+        if isinstance(rhs, type(lhs)):
+            canonical_lhs_operands = [operand.canonical_form() for operand
+                                      in lhs.operands]
+            canonical_rhs_operands = [operand.canonical_form() for operand
+                                      in rhs.operands]
+            if canonical_lhs_operands == canonical_rhs_operands:
+                # Just use direct substitution and proving that
+                # corresponding operands are equal.
+                for lhs_operand, rhs_operand in zip(lhs.operands,
+                                                    rhs.operands):
+                    if lhs_operand != rhs_operand:
+                        Equals(lhs_operand, rhs_operand).prove()
+                return equality.conclude_via_direct_substitution()
+            elif (isinstance(self, Add) or isinstance(self, Mult)) and (
+                    Counter(canonical_lhs_operands) ==
+                    Counter(canonical_rhs_operands)):
+                # We just need direct substitution and permutation.
+                return deduce_equality_via_commutation(equality, one_side=self)
+
+        # Since the canonical forms are the same, we should be
+        # able to equate their simplifications.
+        # But make sure we use the proper simplification directives
+        # (mostly the default ones).
+        with Div.temporary_simplification_directives(use_defaults=True) as div_simps, \
+             Exp.temporary_simplification_directives(use_defaults=True) as exp_simps:
+            with Add.temporary_simplification_directives(use_defaults=True), \
+                 Neg.temporary_simplification_directives(use_defaults=True), \
+                 Mult.temporary_simplification_directives(use_defaults=True):
+                # Reduce division to multiplication, consistent
+                # with the canonical form.
+                div_simps.reduce_to_multiplication = True
+                # Distribute exponents consistent with the
+                # canonical form.
+                exp_simps.distribute_exponent = True
+                lhs_simplification = lhs.simplification()
+                rhs_simplification = rhs.simplification()
+        eq_simps = Equals(lhs_simplification.rhs,
+                          rhs_simplification.rhs).prove()
+        return Equals.apply_transitivities([lhs_simplification,
+                                            eq_simps,
+                                            rhs_simplification])
+
     @relation_prover
-    def deduce_bound(self, inner_expr_bound_or_bounds, 
+    def deduce_bound(self, inner_expr_bound_or_bounds,
                      inner_exprs_to_bound = None,
                      **defaults_config):
         '''
         Return a bound of this arithmetic expression based upon
-        the bounds of any number of inner expressions.  The inner 
+        the bounds of any number of inner expressions.  The inner
         expression should appear on the left side of the corresponding
         bound which should be a number ordering relation (< or <=).
-        The returned, proven bound will have this expression on the 
+        The returned, proven bound will have this expression on the
         left-hand side.  The bounds of the inner expressions will be
         processed in the order they are provided.
-        
+
         If inner_exprs_to_bound is provided, restrict the bounding
         to these particular InnerExpr objects.  Otherwise, all inner
         expressions are fair game.
@@ -52,7 +111,7 @@ class NumberOperation(Operation):
             raise ValueError("Expecting one or more 'inner_expr_bounds'")
         while len(inner_expr_bounds) > 0:
             inner_expr_bound = inner_expr_bounds.popleft()
-            # print('inner_expr_bound', inner_expr_bound)
+            #print('inner_expr_bound', inner_expr_bound)
             if isinstance(inner_expr_bound, TransRelUpdater):
                 # May be one of the internally generated
                 # TransRelUpdater for percolating bounds up through
@@ -71,7 +130,7 @@ class NumberOperation(Operation):
             if inner_exprs_to_bound is None:
                 inner_exprs = generate_inner_expressions(self, inner)
             else:
-                inner_exprs = inner_exprs_to_bound 
+                inner_exprs = inner_exprs_to_bound
             for inner_expr in inner_exprs:
                 no_such_inner_expr = False
                 inner_expr_depth = len(inner_expr.expr_hierarchy)
@@ -80,7 +139,7 @@ class NumberOperation(Operation):
                         "equal to the full expression. What's the deal?")
                 # Create/update the relation for the container of this
                 # inner expression.
-                if inner_expr_depth >= 3:            
+                if inner_expr_depth >= 3:
                     container = inner_expr.expr_hierarchy[-2]
                     if isinstance(container, ExprTuple):
                         # Skip an ExprTuple layer.
@@ -107,7 +166,7 @@ class NumberOperation(Operation):
                 if container is self:
                     # No further processing needed when the container
                     continue # is self.
-                if (len(inner_expr_bounds) == 0 or 
+                if (len(inner_expr_bounds) == 0 or
                         inner_expr_bounds[-1] != container_relation):
                     inner_expr_bounds.append(container_relation)
             if no_such_inner_expr:
@@ -132,7 +191,7 @@ class NumberOperation(Operation):
         on the left side of the operand_bound which should be a
         number ordering relation (< or <=).  The returned, proven
         bound will have this expression on the left-hand side.
-        
+
         Also see NumberOperation.deduce_bound.
         '''
         raise NotImplementedError(
@@ -158,14 +217,14 @@ def deduce_in_number_set(expr, number_set, **defaults_config):
 
 def quick_simplified_index(expr):
     '''
-    Return a simplified version of this expression with a 
+    Return a simplified version of this expression with a
     quick-n-dirty approach suitable for additively shifted and/or
     negated integer indices and nested versions thereof.
-    In particular, negations are distributed nested additionas are 
+    In particular, negations are distributed nested additionas are
     ungrouped, literal integers are extracted, added, and placed at the
-    end, and cancelations are made on ndividual terms as well as 
-    expression ranges or portions of expression ranges.  We freely 
-    assume terms represent numbers and expression ranges are 
+    end, and cancelations are made on ndividual terms as well as
+    expression ranges or portions of expression ranges.  We freely
+    assume terms represent numbers and expression ranges are
     well-formed.
     Used for ExprRange formatting and for hints along the way when
     provably expanding ExprRanges through an instantiation (this
@@ -182,7 +241,7 @@ def quick_simplified_index(expr):
 # Sorted standard number sets from most restrictive to least
 # restrictive.
 sorted_number_sets = (
-    NaturalPos, IntegerNeg, Natural, IntegerNonPos, 
+    NaturalPos, IntegerNeg, Natural, IntegerNonPos,
     IntegerNonZero, Integer,
     RationalPos, RationalNeg, RationalNonNeg, RationalNonPos,
     RationalNonZero, Rational,
@@ -283,12 +342,12 @@ def deduce_number_set(expr, **defaults_config):
 
     # Find the first (most restrictive) number set that
     # contains 'expr' or something equal to it.
-    
+
     for number_set in sorted_number_sets:
         membership = None
         for eq_expr in Equals.yield_known_equal_expressions(expr):
             if isinstance(eq_expr, ExprRange):
-                membership = And(ExprRange(eq_expr.parameter, 
+                membership = And(ExprRange(eq_expr.parameter,
                                            InSet(eq_expr.body, number_set),
                                            eq_expr.true_start_index,
                                            eq_expr.true_end_index,
@@ -600,4 +659,3 @@ def merge_list_of_sets(list_of_sets):
                     [merge_two_sets(list_of_sets[0],
                                     list_of_sets[1])]+list_of_sets[2:])
     return list_of_sets[0]
-

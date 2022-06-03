@@ -211,23 +211,20 @@ class Lambda(Expression):
                     free_vars(parameter.index))
         return free_vars_of_indices
     
-    def canonical_version(self):
-        return self._canonical_version()
+    def canonically_labeled(self):
+        return self._canonically_labeled_lambda()
 
-    def _canonical_version(self, stored_canonical_version=None):
+    def _canonically_labeled_lambda(self):
         '''
         Retrieve (and create if necessary) the canonical version of this
         Lambda expression in which its parameters are replaced with
         deterministic 'dummy' variables.
-        If 'stored_canonical_version' is provided, we'll use
-        that, instead of building it from scratch, after we
-        check that it is valid.
         '''
         from proveit._core_.expression.operation.indexed_var import (
             IndexedVar)
 
-        if hasattr(self, '_canonical_expr'):
-            return self._canonical_expr
+        if hasattr(self, '_canonically_labeled'):
+            return self._canonically_labeled
 
         # Relabel parameter variables to something deterministic
         # independent of the original labels.
@@ -258,8 +255,8 @@ class Lambda(Expression):
         # potentially-independent interanlly bound variables to
         # determine what may be contestable), skipping over free 
         # variables that happen to match any of these dummy variables.
-        canonical_parameters = parameters.canonical_version()
-        canonical_body = self.body.canonical_version()
+        canonical_parameters = parameters.canonically_labeled()
+        canonical_body = self.body.canonically_labeled()
         canonical_body_free_vars = free_vars(canonical_body)
         canonical_parameters_free_vars = free_vars(canonical_parameters)
         lambda_free_vars = set(canonical_body_free_vars)
@@ -297,19 +294,21 @@ class Lambda(Expression):
                      for param_var, canonical_param_var
                      in zip(effective_param_vars, canonical_param_vars)}
                 canonical_parameters = parameters.basic_replaced(
-                    relabel_map).canonical_version()
+                    relabel_map).canonically_labeled()
                 canonical_body = canonical_body.basic_replaced(
-                    relabel_map).canonical_version()
-                canonical_expr = Lambda(canonical_parameters, canonical_body)
+                    relabel_map).canonically_labeled()
+                canonically_labeled = Lambda(canonical_parameters, 
+                                            canonical_body)
             elif (self._style_data.styles == canonical_styles and
                   canonical_body._style_id == self.body._style_id and
                   canonical_parameters._style_id == self.parameters._style_id):
-                canonical_expr = self
+                canonically_labeled = self
             else:
-                canonical_expr = Lambda(canonical_parameters, canonical_body)
-        self._canonical_expr = canonical_expr
-        canonical_expr._canonical_expr = canonical_expr
-        return canonical_expr
+                canonically_labeled = Lambda(canonical_parameters, 
+                                            canonical_body)
+        self._canonically_labeled = canonically_labeled
+        canonically_labeled._canonically_labeled = canonically_labeled
+        return canonically_labeled
 
     def extract_argument(self, mapped_expr):
         '''
@@ -1220,7 +1219,7 @@ class Lambda(Expression):
 
     def _contained_parameter_vars(self):
         '''
-        Return all of the Variables of this Expression that may
+        Return all of the Variables of this Expression that
         are parameter variables of a contained Lambda.
         '''
         return self.parameter_var_set.union(

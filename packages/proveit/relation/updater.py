@@ -1,4 +1,4 @@
-from proveit import USE_DEFAULTS
+from proveit import Judgment, USE_DEFAULTS
 
 
 class TransRelUpdater:
@@ -17,12 +17,11 @@ class TransRelUpdater:
         can be used as default assumptions when applying
         updates.
         '''
-        from proveit.logic import Equals
         self.expr = expr
-        self.relation = Equals(expr, expr).conclude_via_reflexivity()
+        self.relations = []
         self.assumptions = assumptions
 
-    def update(self, relation, assumptions=None):
+    def update(self, relation):
         '''
         Update the internal relation by applying transitivity
         with the given relation.  Return the new expression
@@ -32,19 +31,32 @@ class TransRelUpdater:
         'a < c' as the new internal relation and
         return 'c' as the new internal expression.
         '''
-        if assumptions is None:
-            assumptions = self.assumptions
-        relation_reversed = relation.is_reversed()
-        self.relation = self.relation.apply_transitivity(
-                relation, assumptions=assumptions, preserve_all=True)
-        if relation.lhs == self.expr:
-            self.expr = relation.rhs
-        elif relation.rhs == self.expr:
-            self.expr = relation.lhs
-        else:
+        from proveit.logic import Equals
+        if isinstance(relation, Judgment):
+            relation = relation.expr
+        if isinstance(relation, Equals) and (
+                relation.lhs == relation.rhs == self.expr):
+            # We can disregard this trivial reflexive relation: x=x.
+            return self.expr
+        if relation.rhs == self.expr:
+            if hasattr(relation, 'derive_reversed'):
+                relation = relation.derive_reversed()
+            else:
+                relation = relation.with_relation_reversed()
+        elif relation.lhs != self.expr:
             raise ValueError("Relation %s should match expression %s "
                              "on one of its sides." % (relation, self.expr))
-        if relation_reversed != self.relation.is_reversed():
-            # Reverse to match the "direction" of the provided relation.
-            self.relation = self.relation.with_direction_reversed()
+        self.expr = relation.rhs
+        self.relations.append(relation)
         return self.expr
+    
+    @property
+    def relation(self):
+        from proveit.logic import Equals
+        from .transitivity import TransitiveRelation
+        relations = self.relations
+        if len(relations) == 0:
+            # Trivial, reflexive x=x.
+            return Equals(self.expr, self.expr).conclude_via_reflexivity()
+        return TransitiveRelation.apply_transitivities(
+                relations, assumptions=self.assumptions)

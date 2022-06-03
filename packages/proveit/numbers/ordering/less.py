@@ -1,6 +1,7 @@
 from proveit import (Literal, Operation, USE_DEFAULTS, as_expression,
                      UnsatisfiedPrerequisites, prover, relation_prover)
 from proveit.logic import Equals
+from proveit.util import OrderedSet
 from proveit import a, b, c, d, x, y, z
 from .number_ordering_relation import NumberOrderingRelation
 
@@ -15,6 +16,11 @@ class Less(NumberOrderingRelation):
     #   (populated in TransitivityRelation.side_effects)
     known_right_sides = dict()
 
+    # map canonical left hand sides to '<' Judgments paired with
+    # canonical left hand sides.
+    known_canonical_bounds = dict()
+
+
     def __init__(self, lhs, rhs, *, styles=None):
         r'''
         Create an expression of the form lhs < rhs.
@@ -27,6 +33,12 @@ class Less(NumberOrderingRelation):
         In addition to the NumberOrderingRelation side-effects, also
         derive a ≠ b from a < b as a side-effect.
         '''
+        # Remember the canonical bound.
+        canonical_form = self.canonical_form()
+        known_canonical_bounds = Less.known_canonical_bounds
+        known_canonical_bounds.setdefault(
+                canonical_form.lhs, OrderedSet()).add(
+                        (judgment, canonical_form.rhs))
         for side_effect in NumberOrderingRelation.side_effects(
                 self, judgment):
             yield side_effect
@@ -62,6 +74,12 @@ class Less(NumberOrderingRelation):
         from proveit.logic import InSet
         from proveit.numbers import Add, zero, RealPos, deduce_number_set
         from . import positive_if_real_pos
+        try:
+            # If there is a known bound that is similar and at least
+            # as strong, we can derive this bound from the known one.
+            return self.conclude_from_known_bound()
+        except UnsatisfiedPrerequisites:
+            pass
         if self.upper == zero:
             # Special case with upper bound of zero.
             from . import negative_if_real_neg
@@ -282,35 +300,51 @@ class Less(NumberOrderingRelation):
         return new_rel.with_mimicked_style(self)
 
     @prover
-    def add_left(self, addend, **defaults_config):
+    def add_left(self, addend, *, strong=True, **defaults_config):
         '''
         From a < b, derive and return a + c < b given c <= 0 
         Or from a > b, derive and return a + c > b given 0 <= c 
         (and a, b, c are all Real) where c is the given 'addend'.
+
+        If 'strong' is False, we derive the weak ≤ (≥) form
+        (same as if we use the derive_relaxed method on the result).
         '''
         if self.get_style('direction', 'normal') == 'reversed':
             # Left and right are reversed.
-            new_rel = self.add_right(addend)
+            temp_rel = self.with_styles(direction='normal')
+            new_rel = temp_rel.add_right(addend)
         else:
-            from . import less_add_left
-            new_rel = less_add_left.instantiate(
+            from . import less_add_left, less_add_left_weak
+            if strong:
+                new_rel = less_add_left.instantiate(
+                    {a: self.lower, b: self.upper, c: addend})
+            else:
+                new_rel = less_add_left_weak.instantiate(
                     {a: self.lower, b: self.upper, c: addend})
         return new_rel.with_mimicked_style(self)
 
     @prover
-    def add_right(self, addend, **defaults_config):
+    def add_right(self, addend, *, strong=True, **defaults_config):
         '''
         From a < b, derive and return a < b + c given 0 <= c 
         Or from a > b, derive and return a > b + c given c <= 0 
         (and a, b, c are all Real) where c is the given 'addend'.
+
+        If 'strong' is False, we derive the weak ≤ (≥) form
+        (same as if we use the derive_relaxed method on the result).
         '''
         if self.get_style('direction', 'normal') == 'reversed':
             # Left and right are reversed.
-            new_rel = self.add_left(addend)
+            temp_rel = self.with_styles(direction='normal')
+            new_rel = temp_rel.add_left(addend)
         else:
-            from . import less_add_right
-            new_rel = less_add_right.instantiate(
-                {a: self.lower, b: self.upper, c: addend})
+            from . import less_add_right, less_add_right_weak
+            if strong:
+                new_rel = less_add_right.instantiate(
+                    {a: self.lower, b: self.upper, c: addend})
+            else:
+                new_rel = less_add_right_weak.instantiate(
+                    {a: self.lower, b: self.upper, c: addend})
         return new_rel.with_mimicked_style(self)
     
     @prover

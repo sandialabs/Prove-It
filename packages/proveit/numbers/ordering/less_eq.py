@@ -1,6 +1,7 @@
 from proveit import (Literal, Operation, USE_DEFAULTS, as_expression,
                      UnsatisfiedPrerequisites, prover, relation_prover)
 from proveit.logic import Equals
+from proveit.util import OrderedSet
 from proveit import a, b, c, d, x, y, z
 from .number_ordering_relation import NumberOrderingRelation
 
@@ -17,6 +18,10 @@ class LessEq(NumberOrderingRelation):
     # map right-hand-sides to "<=" Judgments
     #   (populated in TransitivityRelation.derive_side_effects)
     known_right_sides = dict()
+
+    # map canonical left hand sides to '<' Judgments paired with
+    # canonical left hand sides.
+    known_canonical_bounds = dict()
 
     def __init__(self, a, b, *, styles=None):
         r'''
@@ -44,12 +49,18 @@ class LessEq(NumberOrderingRelation):
         In addition to the NumberOrderingRelation side-effects, also
         derive a ≠ b from a < b as a side-effect.
         '''
-        from proveit.numbers import is_literal_int
+        from proveit.numbers import is_numeric_int
+        # Remember the canonical bound.
+        canonical_form = self.canonical_form()
+        known_canonical_bounds = LessEq.known_canonical_bounds
+        known_canonical_bounds.setdefault(
+                canonical_form.lhs, OrderedSet()).add(
+                (judgment, canonical_form.rhs))
         for side_effect in NumberOrderingRelation.side_effects(
                 self, judgment):
             yield side_effect
         yield self.deduce_complement
-        # if is_literal_int(self.lhs) or is_literal_int(self.rhs):
+        # if is_numeric_int(self.lhs) or is_numeric_int(self.rhs):
         #     yield self.derive_one_side_in_real_subset
 
     def negation_side_effects(self, judgment):
@@ -70,6 +81,12 @@ class LessEq(NumberOrderingRelation):
         if Equals(self.lower, self.upper).proven():
             # We know that a = b, therefore a ≤ b.
             return self.conclude_via_equality()
+        try:
+            # If there is a known bound that is similar and at least
+            # as strong, we can derive this bound from the known one.
+            return self.conclude_from_known_bound()
+        except UnsatisfiedPrerequisites:
+            pass
         if self.upper == zero:
             # Special case with upper bound of zero.
             from . import non_pos_if_real_non_pos
@@ -254,37 +271,52 @@ class LessEq(NumberOrderingRelation):
         return new_rel.with_mimicked_style(self)
     
     @prover
-    def add_left(self, addend, **defaults_config):
+    def add_left(self, addend, *, strong=False,
+                 **defaults_config):
         '''
         From a <= b, derive and return a + c <= b given c <= 0 
         Or from a >= b, derive and return a + c >= b given 0 <= c 
         (and a, b, c are all Real) where c is the given 'addend'.
+
+        If 'strong' is True, we derive the strong < (>) form and
+        c must be provably non-zero.
         '''
         if self.get_style('direction', 'normal') == 'reversed':
             # Left and right are reversed.
             temp_rel = self.with_styles(direction='normal')
             new_rel = temp_rel.add_right(addend)
         else:
-            from . import less_eq_add_left
-            new_rel = less_eq_add_left.instantiate(
-                {a: self.lower, b: self.upper, c: addend})
+            from . import less_eq_add_left, less_eq_add_left_strong
+            if strong:
+                new_rel = less_eq_add_left_strong.instantiate(
+                    {a: self.lower, b: self.upper, c: addend})
+            else:
+                new_rel = less_eq_add_left.instantiate(
+                    {a: self.lower, b: self.upper, c: addend})
         return new_rel.with_mimicked_style(self)
 
     @prover
-    def add_right(self, addend, **defaults_config):
+    def add_right(self, addend, *, strong=False, **defaults_config):
         '''
         From a <= b, derive and return a <= b + c given 0 <= c 
         Or from a >= b, derive and return a >= b + c given c <= 0 
         (and a, b, c are all Real) where c is the given 'addend'.
+
+        If 'strong' is True, we derive the strong < (>) form and
+        c must be provably non-zero.
         '''
         if self.get_style('direction', 'normal') == 'reversed':
             # Left and right are reversed.
             temp_rel = self.with_styles(direction='normal')
             new_rel = temp_rel.add_left(addend)
         else:
-            from . import less_eq_add_right
-            new_rel = less_eq_add_right.instantiate(
-                {a: self.lower, b: self.upper, c: addend})
+            from . import less_eq_add_right, less_eq_add_right_strong
+            if strong:
+                new_rel = less_eq_add_right_strong.instantiate(
+                    {a: self.lower, b: self.upper, c: addend})
+            else:
+                new_rel = less_eq_add_right.instantiate(
+                    {a: self.lower, b: self.upper, c: addend})
         return new_rel.with_mimicked_style(self)
 
     @prover

@@ -1,7 +1,6 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit
 proveit.core_expr_types.lambda_maps.general_lambda_substitution
-proveit.core_expr_types.tuples.range_from1_len
-proveit.core_expr_types.tuples.range_from1_len_typical_eq
 proveit.core_expr_types.tuples.tuple_len_0_typical_eq
 proveit.linear_algebra.inner_products.complex_set_is_inner_prod_space
 proveit.linear_algebra.inner_products.inner_prod_space_is_vec_space
@@ -11,9 +10,7 @@ proveit.logic.booleans.conjunction.any_from_and
 proveit.logic.booleans.conjunction.each_is_bool
 proveit.logic.booleans.conjunction.from_unary_and
 proveit.logic.booleans.conjunction.left_from_and
-proveit.logic.booleans.conjunction.quantification_from_conjunction
 proveit.logic.booleans.conjunction.right_from_and
-proveit.logic.booleans.conjunction.some_from_and
 proveit.logic.booleans.false_eq_false
 proveit.logic.booleans.fold_is_bool
 proveit.logic.booleans.from_not_false
@@ -224,7 +221,6 @@ proveit.numbers.number_sets.integers.nonpos_if_in_nonpos_int
 proveit.numbers.number_sets.integers.nonpos_int_within_int
 proveit.numbers.number_sets.integers.nonzero_if_in_nonzero_int
 proveit.numbers.number_sets.integers.nonzero_int_within_int
-proveit.numbers.number_sets.integers.pos_int_is_natural_pos
 proveit.numbers.number_sets.natural_numbers.nat_pos_within_nat
 proveit.numbers.number_sets.natural_numbers.natural_lower_bound
 proveit.numbers.number_sets.natural_numbers.natural_pos_lower_bound

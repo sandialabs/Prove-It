@@ -12,10 +12,7 @@ def complex_polar_coordinates(expr, *, radius_must_be_nonneg=True,
     Real (and r is preferably RealNonNeg) under the given assumptions, 
     return
         (r, theta)
-    as a tuple pair. If defaults.automation=False, the r and theta must
-    already be known to be RealNonNeg and Real respectively. If
-    defaults.automation=True, we may attempt to prove these through 
-    automation.
+    as a tuple pair.
     
     If radius_must_be_nonneg and nonneg_radius_preferred are False, 
     we won't worry about ensuring that r is non-negative (so the result
@@ -55,7 +52,6 @@ def complex_polar_coordinates(expr, *, radius_must_be_nonneg=True,
     from proveit.numbers import Real, RealNonPos, RealNonNeg, Complex
     from proveit.numbers import Add, LessEq, Neg, Mult, Exp
     orig_expr = expr
-    automation = defaults.automation
     simplify = defaults.auto_simplify
     if reductions is None: reductions = set()
 
@@ -269,9 +265,6 @@ def unit_length_complex_polar_angle(expr, *, reductions=None):
         exp(i * theta),
     or something obviously equivalent to this, where r is RealNonNeg 
     and theta is Real under the given assumptions, return theta.
-    If defaults.automation=False, theta must already be known to be 
-    Real. If defaults.automation=True, we may attempt to prove these 
-    through automation.
     
     If expr is not exactly in this complex number polar form and
     'reductions' is provided as a set, add to the 'reductions' set
@@ -302,7 +295,6 @@ def unit_length_complex_polar_angle(expr, *, reductions=None):
         raise ValueError("%s not in a form that is obviously "
                          "reducible from an exp(i*theta) form. %s"
                          %(orig_expr, extra_msg))
-    automation = defaults.automation
     simplify = defaults.auto_simplify
     def add_reduction(reduction, _theta):
         '''

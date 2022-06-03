@@ -1,4 +1,5 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit
 proveit.core_expr_types.tuples.general_len
 proveit.core_expr_types.tuples.len_of_empty_range_of_ranges
 proveit.core_expr_types.tuples.len_of_ranges_with_repeated_indices

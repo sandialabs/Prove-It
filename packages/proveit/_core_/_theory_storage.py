@@ -787,7 +787,7 @@ class TheoryStorage:
         '''
         Return the theorem name extracted from the proof notebook.
         '''
-        with open(filename, 'r') as proof_notebook:
+        with open(filename, 'r', encoding='utf8') as proof_notebook:
             nb = proof_notebook.read()
             # the theorem name should come after "theorems.ipynb#"
             # in the notebook

@@ -231,7 +231,7 @@ class Judgment:
         complete.
         '''
         from .proof import ProofFailure, UnsatisfiedPrerequisites
-        if not defaults.automation:
+        if not defaults.sideeffect_automation:
             return  # automation disabled
         # Sort the assumptions according to hash key so that sets of
         # assumptions are unique for determining which side-effects have
@@ -867,8 +867,8 @@ class Judgment:
         eliminated Forall operations, after replacements are made, must
         be proven.  Furthermore, there may be additional requirements 
         when iterated parameters are instantiated (see Lambda.apply for
-        details).  Automation mayb be used in attempting to prove these 
-        requirements provided proveit.defaults.automation=True.
+        details).  Automation may be used in attempting to prove these 
+        requirements provided proveit.defaults.conclude_automation=True.
         '''
         from proveit import (Variable, Operation, Conditional, Lambda,
                              single_or_composite_expression,
@@ -1023,11 +1023,10 @@ class Judgment:
             defaults.preserved_exprs.update(temporarily_preserved_exprs)
 
             return self._checkedTruth(
-                Instantiation(self,
-                              num_forall_eliminations=num_forall_eliminations,
-                              repl_map=processed_repl_map,
-                              equiv_alt_expansions=equiv_alt_expansions,
-                              assumptions=defaults.assumptions))
+                Instantiation.get_instantiation(
+                        self, num_forall_eliminations=num_forall_eliminations,
+                        repl_map=processed_repl_map,
+                        equiv_alt_expansions=equiv_alt_expansions))
         finally:
             # Revert the preserved_exprs set back to what it was.
             defaults.preserved_exprs.difference_update(

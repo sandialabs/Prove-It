@@ -5,7 +5,6 @@ proveit.logic.booleans.disjunction.or_if_only_left
 proveit.logic.booleans.disjunction.singular_constructive_dilemma
 proveit.logic.booleans.disjunction.true_or_false
 proveit.logic.booleans.disjunction.true_or_true
-proveit.logic.booleans.false_eq_false
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.negation_intro
 proveit.logic.booleans.unfold_is_bool_explicit

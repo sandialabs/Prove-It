@@ -2,6 +2,7 @@ from proveit import (Judgment, Literal, defaults, USE_DEFAULTS,
                      prover, equality_prover, relation_prover,
                      ProofFailure, UnsatisfiedPrerequisites)
 from proveit.relation import Relation
+from proveit.util import OrderedSet
 
 class InClass(Relation):
     '''
@@ -98,7 +99,8 @@ class InClass(Relation):
         will also be generated from the 'side_effects' object that it
         generates.
         '''
-        InClass.known_memberships.setdefault(self.element, set()).add(judgment)
+        InClass.known_memberships.setdefault(
+                self.element, OrderedSet()).add(judgment)
         if hasattr(self, 'membership_object'):
             for side_effect in self.membership_object.side_effects(judgment):
                 yield side_effect

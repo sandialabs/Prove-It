@@ -431,7 +431,7 @@ class Theory:
                 # new capitalization (e.g., in Windows where
                 # capitalization can be flexible)
                 os.remove(filename)
-                with open(filename, 'w') as _f:
+                with open(filename, 'w', encoding='utf8') as _f:
                     _f.write(nb_str)
         return nb_str
 

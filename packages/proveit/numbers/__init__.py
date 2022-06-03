@@ -20,8 +20,14 @@ from .number_operation import (NumberOperation, deduce_in_number_set,
 from .rounding import Floor, Ceil, Round
 from .absolute_value import Abs
 from .numerals import (num, Numeral, DecimalSequence, Digits, DIGITS,
-                       BinarySequence, Bit, BITS, is_literal_int,
-                       is_literal_rational)
+                       BinarySequence, Bit, BITS, 
+                       is_numeric_natural, is_numeric_int, 
+                       is_numeric_rational, numeric_rational_ints,
+                       simplified_numeric_rational,
+                       less_numeric_ints,
+                       less_eq_numeric_ints,
+                       less_numeric_rationals,
+                       less_eq_numeric_rationals)
 from .numerals import zero, one, two, three, four, five, six, seven, eight, nine, hexa, hexb, hexc, hexd, hexe, hexf
 from .addition import (Add, subtract, dist_subtract, dist_add)
 from .negation import Neg, negated
@@ -42,7 +48,7 @@ from .functions import MonDecFuncs
 import proveit
 
 
-if proveit.defaults.automation:
+if proveit.defaults.sideeffect_automation:
     # Import some fundamental theorems without quantifiers
     from .number_sets.natural_numbers import zero_in_nats
     from .numerals.decimals import less_0_1, less_1_2, less_2_3, less_3_4, less_4_5, less_5_6, less_6_7, less_7_8, less_8_9

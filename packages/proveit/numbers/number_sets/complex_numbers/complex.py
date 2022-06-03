@@ -86,8 +86,6 @@ class ComplexSet(NumberSet):
         from proveit.numbers.division import div_eq
         if not isinstance(relation, Equals):
             TypeError("'relation' expected to be Equals")
-
-        from proveit import defaults
         return div_eq.instantiate(
             {a: divisor, x: relation.lhs, y: relation.rhs})
 
@@ -291,7 +289,7 @@ class ComplexNonZeroSet(NumberSet):
 #     # imported when automation is used.
 #     from . import real_within_complex, real_pos_within_complex, real_neg_within_complex, int_within_complex, nat_within_complex
 
-if proveit.defaults.automation:
+if proveit.defaults.sideeffect_automation:
     # Import some fundamental theorems without quantifiers that are
     # imported when automation is used.
     # Fails before running the _axioms_ and _theorems_ notebooks for the first

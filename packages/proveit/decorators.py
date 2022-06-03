@@ -27,6 +27,7 @@ def _make_decorated_prover(func):
 
     def decorated_prover(*args, **kwargs):
         from proveit import Expression, Judgment, InnerExpr
+        from proveit._core_.proof import Assumption
         from proveit.logic import Equals
         if (kwargs.get('preserve_all', False) and 
                 len(kwargs.get('replacements', tuple())) > 0):
@@ -54,6 +55,10 @@ def _make_decorated_prover(func):
                     preserve_expr = _self
         defaults_to_change = set(kwargs.keys()).intersection(
                 defaults.__dict__.keys())
+        if 'automation' in kwargs.keys():
+            # While 'automation' isn't a defaults key, it can be set
+            # to set 'sideeffect_automation' and 'conclude_automation'.
+            defaults_to_change.add('automation')
         # Check to see if there are any unexpected keyword
         # arguments.
         for key in kwargs.keys():
@@ -130,16 +135,22 @@ def _make_decorated_prover(func):
                     # 'automation', for example, so that the 
                     # side-effects will be processed).
                     key = 'assumptions'
-                    setattr(temp_defaults, key, kwargs[key])                    
+                    setattr(temp_defaults, key, kwargs[key])
                 for key in defaults_to_change:
                     if key != 'assumptions':
                         # Temporarily alter a default:
                         setattr(temp_defaults, key, kwargs[key])
                 kwargs.update(public_attributes_dict(defaults))
+                # Make sure we derive assumption side-effects first.
+                Assumption.make_assumptions(defaults.assumptions)
+                # Now call the prover function.
                 proven_truth = checked_truth(func(*args, **kwargs))
         else:
             # No defaults reconfiguration.
             kwargs.update(public_attributes_dict(defaults))
+            # Make sure we derive assumption side-effects first.
+            Assumption.make_assumptions(defaults.assumptions)
+            # Now call the prover function.
             proven_truth = checked_truth(func(*args, **kwargs))
                 
         if is_conclude_method:
@@ -182,8 +193,11 @@ def _make_decorated_relation_prover(func):
     Use for decorating 'relation_prover' methods 
     (@relation_prover or @equality_prover).  In addition
     to the @prover capabilities, temporarily altering 'defaults' and
-    checking that a Judgment is returned, also check that the
-    Judgment is for a Relation the 'self' as the left side.
+    checking that a Judgment is returned check that the
+    Judgment is for a Relation.  Furthermore, unless alter_lhs=True 
+    is set in the keyword arguments when the method is called,
+    automatically 'preserve' the 'self' expression and make sure it
+    is on the left side of the returned Relation Judgment.
     '''
 
     decorated_prover = _make_decorated_prover(func)
@@ -204,15 +218,18 @@ def _make_decorated_relation_prover(func):
             raise TypeError("@relation_prover, %s, expected to be a "
                             "method for an Expression type or it must "
                             "have an 'expr' attribute."%func)
-        if 'preserve_expr' in kwargs:
-            if 'preserved_exprs' in kwargs:
-                kwargs['preserved_exprs'] = (
-                        kwargs['preserved_exprs'].union([expr]))
+        alter_lhs = kwargs.pop('alter_lhs', False)
+        if not alter_lhs:
+            # preserve the left side.
+            if 'preserve_expr' in kwargs:
+                if 'preserved_exprs' in kwargs:
+                    kwargs['preserved_exprs'] = (
+                            kwargs['preserved_exprs'].union([expr]))
+                else:
+                    kwargs['preserved_exprs'] = (
+                           defaults.preserved_exprs.union([expr]))
             else:
-                kwargs['preserved_exprs'] = (
-                       defaults.preserved_exprs.union([expr]))
-        else:
-            kwargs['preserve_expr'] = expr
+                kwargs['preserve_expr'] = expr
         
         # Use the regular @prover wrapper.
         proven_truth = decorated_prover(*args, **kwargs)
@@ -224,22 +241,22 @@ def _make_decorated_relation_prover(func):
                     "@relation_prover, %s, expected to prove a "
                     "Relation expression, not %s of type %s."
                     %(func, proven_expr, proven_expr.__class__))
-        expected_lhs = expr
-        if isinstance(expr, ExprRange):
-            expected_lhs = ExprTuple(expr)
-        if proven_expr.lhs != expected_lhs:
-            raise TypeError(
-                    "@relation_prover, %s, expected to prove a "
-                    "relation with %s on its left side "
-                    "('lhs').  %s does not satisfy this "
-                    "requirement."%(func, expected_lhs, proven_expr))
-
-        # Make the style consistent with the original expression.
-        if not proven_expr.lhs.has_same_style(expected_lhs):
-            # Make the left side of the proven truth have a style
-            # that matches the original expression.
-            inner_lhs = proven_truth.inner_expr().lhs
-            proven_truth = inner_lhs.with_matching_style(expected_lhs)
+        if not alter_lhs:
+            expected_lhs = expr
+            if isinstance(expr, ExprRange):
+                expected_lhs = ExprTuple(expr)
+            if proven_expr.lhs != expected_lhs:
+                raise TypeError(
+                        "@relation_prover, %s, expected to prove a "
+                        "relation with %s on its left side "
+                        "('lhs').  %s does not satisfy this "
+                        "requirement."%(func, expected_lhs, proven_expr))
+            # Make the style consistent with the original expression.
+            if not proven_expr.lhs.has_same_style(expected_lhs):
+                # Make the left side of the proven truth have a style
+                # that matches the original expression.
+                inner_lhs = proven_truth.inner_expr().lhs
+                proven_truth = inner_lhs.with_matching_style(expected_lhs)
         return proven_truth
     return decorated_relation_prover
 
@@ -329,6 +346,7 @@ def equality_prover(past_tense, present_tense):
             The wrapper for the equality_prover decorator.
             '''
             from proveit._core_.expression.expr import Expression
+            from proveit._core_.proof import Assumption
             from proveit.logic import Equals, TRUE, EvaluationError
             # Obtain the original Expression to be on the left side
             # of the resulting equality Judgment.
@@ -359,26 +377,17 @@ def equality_prover(past_tense, present_tense):
                     (defaults.simplify_with_known_evaluations 
                      and is_simplification_method))):
                 from proveit.logic import evaluate_truth
-                if expr.proven():
-                    # The expression is proven so it equals true.
-                    proven_truth = Equals(
-                        expr, TRUE).conclude_boolean_equality()
-                else:
-                    # See if there is a known evaluation (or if one may
-                    # be derived via known equalities if 
-                    # defaults.automation is enabled).
+                # See if there is a known evaluation (or if one may
+                # be derived via known equalities if 
+                # defaults.automation is enabled).
+                # First, make sure we derive assumption side-effects.
+                with defaults.temporary() as tmp_defaults:
                     if 'assumptions' in kwargs:
-                        # Use new assumptions temporarily.
-                        with defaults.temporary() as tmp_defaults:
-                            tmp_defaults.assumptions = kwargs.get(
-                                    'assumptions')
-                            if expr.proven():
-                                # expr is proven, so it evaluates
-                                # to TRUE.
-                                proven_truth = evaluate_truth(expr)                                
-                            else:
-                                proven_truth = Equals.get_known_evaluation(
-                                        expr)
+                        tmp_defaults.assumptions = kwargs['assumptions']
+                    Assumption.make_assumptions(defaults.assumptions)
+                    if expr.proven():
+                        # The expression is proven so it equals true.
+                        proven_truth = evaluate_truth(expr)
                     else:
                         proven_truth = Equals.get_known_evaluation(expr)
                 # For an 'evaluation' or 'simplification', we should

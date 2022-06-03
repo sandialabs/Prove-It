@@ -1,3 +1,4 @@
+import math
 from proveit import (Judgment, Expression, Literal, Operation,
                      maybe_fenced_latex, defaults,
                      Function, ExprTuple, InnerExpr, USE_DEFAULTS,
@@ -6,7 +7,8 @@ from proveit import (Judgment, Expression, Literal, Operation,
 from proveit import TransRelUpdater
 from proveit import a, b, c, m, n, w, x, y, z
 from proveit.logic import Equals, NotEquals, InSet
-from proveit.numbers import zero, NumberOperation, is_literal_int
+from proveit.numbers import (zero, NumberOperation, 
+                             is_numeric_int, is_numeric_rational)
 from proveit.numbers import NumberOperation, deduce_number_set
 from proveit.numbers.number_sets import (
     Natural, NaturalPos,
@@ -24,7 +26,9 @@ class Div(NumberOperation):
         theory=__file__)
 
     _simplification_directives_ = SimplificationDirectives(
-            factor_negation = True, reduce_zero_numerator = True)
+            factor_negation = True, 
+            reduce_zero_numerator = True,
+            reduce_to_multiplication = False)
 
     def __init__(self, numerator, denominator, *, styles=None):
         r'''
@@ -77,6 +81,22 @@ class Div(NumberOperation):
             return 'frac'  # use a different constructor if using the fraction style
         return Operation.remake_constructor(self)
 
+    def _build_canonical_form(self):
+        '''
+        If this is a literal rational, returns the irreducible form.
+        Otherwise, returns the canonical form of the numerator
+        multiplied by the denominator raised to the power of -1:
+            x/y = x*y^{-1}
+        '''
+        from proveit.numbers import (one, Neg, Mult, Exp, 
+                                     simplified_numeric_rational)
+        if is_numeric_rational(self):
+            # Return the irreducible rational.
+            return simplified_numeric_rational(self.numerator.as_int(),
+                                            self.denominator.as_int())
+        as_mult = Mult(self.numerator, Exp(self.denominator, Neg(one)))
+        return as_mult.canonical_form()
+
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
                                **defaults_config):
@@ -88,8 +108,24 @@ class Div(NumberOperation):
         '''
         from proveit.logic import is_irreducible_value
         from proveit.numbers import one, Neg
-        expr = self
+
+        if self.is_irreducible_value():
+            # already irreducible
+            return Equals(self, self).conclude_via_reflexivity()
+        
+        numer, denom = self.numerator, self.denominator
+        if is_numeric_rational(numer) and is_numeric_rational(denom) and (
+                denom != zero):
+            # If the numerator and denominator are rational numerals, 
+            # so go ahead and evaluate it to an irreducible form.
+            return self.reduction_to_irreducible_rational()
+        
+        if Div._simplification_directives_.reduce_to_multiplication:
+            # (x/y) = x*y^{-1}_deduce
+            return self.reduction_to_mult(auto_simplify=True)
+        
         # for convenience updating our equation
+        expr = self
         eq = TransRelUpdater(expr)
 
         # perform cancelations where possible
@@ -98,19 +134,24 @@ class Div(NumberOperation):
             # complete cancelation.
             return eq.relation
 
-        if self.is_irreducible_value():
-            # already irreducible
-            return Equals(self, self).conclude_via_reflexivity()
-
-        if must_evaluate and not all(
-                is_irreducible_value(operand) for operand in self.operands):
-            for operand in self.operands:
-                if not is_irreducible_value(operand):
-                    # The simplification of the operands may not have
-                    # worked hard enough.  Let's work harder if we
-                    # must evaluate.
-                    operand.evaluation()
-            return self.evaluation()
+        if must_evaluate:
+            if not all(is_irreducible_value(operand) for operand 
+                       in self.operands):
+                for operand in self.operands:
+                    if not is_irreducible_value(operand):
+                        # The simplification of the operands may not have
+                        # worked hard enough.  Let's work harder if we
+                        # must evaluate.
+                        operand.evaluation()
+                return self.evaluation()
+            canonical_form = self.canonical_form()
+            if is_numeric_rational(canonical_form):
+                return self.reduction_to_irreducible_rational()
+            elif is_irreducible_value(canonical_form):
+                # Equate to the irreducible canonical form.
+                return Equals(self, canonical_form).prove()
+            raise NotImplementedError(
+                    "Evaluation of %s is not implemented"%self)
 
         if expr.denominator == one:
             # eliminate division by one
@@ -147,14 +188,90 @@ class Div(NumberOperation):
         This needs work, but we know that 1/x is irreducible if
         x is irreducible, not a negation, not 0 and not 1.
         '''
-        from proveit.logic import is_irreducible_value
-        from proveit.numbers import zero, one, Neg
-        if (self.numerator == one and self.denominator not in (zero, one) 
-                and not isinstance(self.denominator, Neg)
-                and is_irreducible_value(self.denominator)):
-            return True
-        return False # TODO: handle any proper fraction, etc.
-            
+        from proveit.numbers import simplified_numeric_rational
+        if is_numeric_int(self.numerator) and is_numeric_int(self.denominator):
+            # This is an irreducible rational if and only if it is the
+            # same as the corresponding 'simiplified_rational_expr'.
+            # (which divides out the gcd and extracts any negation).
+            numer_int = self.numerator.as_int()
+            denom_int = self.denominator.as_int()
+            return self == simplified_numeric_rational(numer_int, denom_int)
+        return False
+
+    @equality_prover('reduced_to_irreducible_rational', 
+                     'reduce_to_irreducible_rational')
+    def reduction_to_irreducible_rational(self, **defaults_config):
+        '''
+        Equate this fraction to an irreducible, numeric rational.        
+        '''
+        from proveit.numbers import Mult, num
+        from proveit.numbers.division import frac_cancel_left
+        canonical_form = self.canonical_form()
+        if not is_numeric_rational(canonical_form):
+            raise ValueError("'reduction_to_irreducible_rational' only "
+                             "applicable when the canonical form is "
+                             "a numerical rational.")
+        numer = self.numerator.canonical_form()
+        denom = self.denominator.canonical_form()
+        # Treat the case where the numerator and denominator evaluate
+        # to integers.
+        if is_numeric_int(numer) and is_numeric_int(denom):
+            # Find out the greatest common divisor.
+            numer_int, denom_int = numer.as_int(), denom.as_int()
+            if abs(numer_int) == abs(denom_int):
+                # n/n = 1 or -n/n = -1 or n/(-n) = -1
+                replacements = [Equals(numer, self.numerator).prove(),
+                                Equals(denom, self.denominator).prove()]
+                return Div(numer, denom).cancelation(
+                        num(abs(numer_int)), replacements=replacements,
+                        preserve_expr=self, alter_lhs=True)
+            gcd = math.gcd(numer_int, denom_int)
+            expr = self
+            eq = TransRelUpdater(expr)
+            if gcd == 1:
+                # No common divisor to factor out.
+                expr = eq.update(expr.inner_expr().numerator.evaluation())
+                expr = eq.update(expr.inner_expr().denominator.evaluation())
+            else:
+                # Factor out the gcd and cancel it.
+                # Replace the factored numerator and denominator with 
+                # the original form.
+                factored_numer = Mult(num(gcd), num(numer_int//gcd))
+                factored_denom = Mult(num(gcd), num(denom_int//gcd))
+                numer_eval = self.numerator.evaluation()
+                denom_eval = self.denominator.evaluation()
+                replacements = [
+                        factored_numer.evaluation().apply_transitivity(
+                                numer_eval),
+                        factored_denom.evaluation().apply_transitivity(
+                                denom_eval),
+                        ]
+                expr = eq.update(frac_cancel_left.instantiate(
+                        {x: num(gcd), y: factored_numer.factors[1], 
+                         z: factored_denom.factors[1]},
+                        replacements=replacements, preserve_expr=self))
+            if numer_int < 0 and denom_int < 0:
+                # cancel negations in the numerator and denominator
+                expr = eq.update(expr.neg_cancelation())
+            elif numer_int < 0 or denom_int < 0:
+                # extract the negation for the irreducible form.
+                expr = eq.update(expr.neg_extraction())
+            if abs(denom_int) == 1:
+                expr = eq.update(expr.divide_by_one_elimination())
+            return eq.relation
+        # Reduce to a multiplication and then sort it out to handle
+        # the more general case.
+        return self.reduction_to_mult().evaluation()
+    
+    @equality_prover('reduced_to_mult', 'reduce_to_mult')
+    def reduction_to_mult(self, **defaults_config):
+        '''
+        Equate (x/y) to x*y^{-1}.
+        '''
+        from proveit.numbers.division import div_as_mult
+        return div_as_mult.instantiate({x:self.numerator, 
+                                        y:self.denominator})
+        
     @equality_prover('zero_numerator_reduced', 'zero_numerator_reduce')
     def zero_numerator_reduction(self, **defaults_config):
         '''
@@ -192,19 +309,24 @@ class Div(NumberOperation):
         Deduce and return an equality between self and a form in which
         all simple division cancellations are performed.
         '''
-        from proveit.numbers import Mult
+        from proveit.numbers import Neg, Mult
         expr = self
 
         # A convenience to allow successive update to the equation via transitivities.
         # (starting with self=self).
         eq = TransRelUpdater(self)
+        
+        if isinstance(expr.numerator, Neg) and (
+                isinstance(expr.denominator, Neg)):
+            # cancel negation in the numerator and denominator.
+            expr = eq.update(expr.neg_cancelation(preserve_all=True))
 
-        numer_factors = (self.numerator.operands if
-                         isinstance(self.numerator, Mult) else
-                         [self.numerator])
-        denom_factors = (self.denominator.operands if
-                         isinstance(self.denominator, Mult) else
-                         [self.denominator])
+        numer_factors = (expr.numerator.operands if
+                         isinstance(expr.numerator, Mult) else
+                         [expr.numerator])
+        denom_factors = (expr.denominator.operands if
+                         isinstance(expr.denominator, Mult) else
+                         [expr.denominator])
         denom_factors_set = set(denom_factors)
 
         for numer_factor in numer_factors:
@@ -513,6 +635,19 @@ class Div(NumberOperation):
             raise Exception(
                 "Unsupported operand type to distribute over: " +
                 str(self.numerator.__class__))
+
+
+    @equality_prover('neg_canceled', 'neg_cancel')
+    def neg_cancelation(self, **defaults_config):
+        '''
+        Derive ((-x)/(-y)) = (x/y).
+        '''
+        from proveit.numbers.division import cancel_negations
+        if not isinstance(self.numerator, Neg) or not(
+                isinstance(self.denominator, Neg)):
+            return cancel_negations.instantiate(
+                    {x:self.numerator.operator,
+                     y:self.denominator.operator})
 
     @equality_prover('neg_extracted', 'neg_extract')
     def neg_extraction(self, neg_loc=None, **defaults_config):

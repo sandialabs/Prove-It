@@ -73,9 +73,6 @@ proveit.numbers.number_sets.complex_numbers.real_nonpos_within_complex
 proveit.numbers.number_sets.complex_numbers.real_nonzero_within_complex_nonzero
 proveit.numbers.number_sets.complex_numbers.real_pos_within_complex_nonzero
 proveit.numbers.number_sets.complex_numbers.real_within_complex
-proveit.numbers.number_sets.integers.int_interval_within_int
-proveit.numbers.number_sets.integers.interval_lower_bound
-proveit.numbers.number_sets.integers.interval_upper_bound
 proveit.numbers.number_sets.integers.nat_pos_within_int
 proveit.numbers.number_sets.integers.nat_pos_within_nonzero_int
 proveit.numbers.number_sets.integers.nat_within_int

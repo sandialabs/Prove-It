@@ -1,4 +1,5 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit
 proveit.core_expr_types.operations.operands_substitution_via_tuple
 proveit.core_expr_types.tuples.range_from1_len
 proveit.core_expr_types.tuples.range_from1_len_typical_eq
@@ -142,19 +143,12 @@ proveit.numbers.exponentiation.complex_power_of_products
 proveit.numbers.exponentiation.complex_power_of_quotient
 proveit.numbers.exponentiation.exp_complex_closure
 proveit.numbers.exponentiation.exp_complex_nonzero_closure
-proveit.numbers.exponentiation.exp_int_closure
 proveit.numbers.exponentiation.exp_nat_pos_expansion
-proveit.numbers.exponentiation.exp_natpos_closure
 proveit.numbers.exponentiation.exp_neg_less
 proveit.numbers.exponentiation.exp_nonneg_less
 proveit.numbers.exponentiation.exp_nonpos_less
 proveit.numbers.exponentiation.exp_pos_less
-proveit.numbers.exponentiation.exp_rational_closure_nat_power
-proveit.numbers.exponentiation.exp_rational_nonzero_closure
-proveit.numbers.exponentiation.exp_rational_pos_closure
 proveit.numbers.exponentiation.exp_real_closure_nat_power
-proveit.numbers.exponentiation.exp_real_non_neg_closure
-proveit.numbers.exponentiation.exp_real_pos_closure
 proveit.numbers.exponentiation.exp_zero_eq_one
 proveit.numbers.exponentiation.exponentiated_one
 proveit.numbers.exponentiation.exponentiated_zero
@@ -172,10 +166,6 @@ proveit.numbers.exponentiation.real_power_of_quotient
 proveit.numbers.exponentiation.real_power_of_real_power
 proveit.numbers.exponentiation.sqrd_non_neg_closure
 proveit.numbers.exponentiation.sqrd_pos_closure
-proveit.numbers.exponentiation.sqrt_complex_closure
-proveit.numbers.exponentiation.sqrt_real_closure
-proveit.numbers.exponentiation.sqrt_real_non_neg_closure
-proveit.numbers.exponentiation.sqrt_real_pos_closure
 proveit.numbers.exponentiation.square_abs_rational_simp
 proveit.numbers.exponentiation.square_abs_real_simp
 proveit.numbers.multiplication.association
@@ -286,7 +276,6 @@ proveit.numbers.number_sets.integers.nonpos_int_within_int
 proveit.numbers.number_sets.integers.nonzero_if_in_nonzero_int
 proveit.numbers.number_sets.integers.nonzero_int_is_int_nonzero
 proveit.numbers.number_sets.integers.nonzero_int_within_int
-proveit.numbers.number_sets.integers.pos_int_is_natural_pos
 proveit.numbers.number_sets.natural_numbers.nat_pos_within_nat
 proveit.numbers.number_sets.natural_numbers.natural_lower_bound
 proveit.numbers.number_sets.natural_numbers.natural_pos_lower_bound
