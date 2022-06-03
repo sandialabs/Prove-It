@@ -1,4 +1,5 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit
 proveit.core_expr_types.conditionals.satisfied_condition_reduction
 proveit.core_expr_types.lambda_maps.general_lambda_substitution
 proveit.core_expr_types.operations.operands_substitution_via_tuple

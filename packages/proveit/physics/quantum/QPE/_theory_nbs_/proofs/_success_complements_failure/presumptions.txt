@@ -5,6 +5,7 @@ proveit.core_expr_types.conditionals.condition_prepend_reduction
 proveit.core_expr_types.conditionals.condition_with_true_on_left_reduction
 proveit.core_expr_types.conditionals.condition_with_true_on_right_reduction
 proveit.core_expr_types.conditionals.singular_conjunction_condition_reduction
+proveit.core_expr_types.conditionals.true_condition_elimination
 proveit.linear_algebra.inner_products.complex_set_is_inner_prod_space
 proveit.linear_algebra.inner_products.inner_prod_space_is_vec_space
 proveit.linear_algebra.inner_products.rational_set_is_inner_prod_space
@@ -14,7 +15,6 @@ proveit.logic.booleans.conjunction.each_is_bool
 proveit.logic.booleans.conjunction.from_unary_and
 proveit.logic.booleans.conjunction.left_from_and
 proveit.logic.booleans.conjunction.right_from_and
-proveit.logic.booleans.false_eq_false
 proveit.logic.booleans.fold_is_bool
 proveit.logic.booleans.from_not_false
 proveit.logic.booleans.implication.not_true_via_contradiction
@@ -24,6 +24,7 @@ proveit.logic.booleans.negation.double_negation_elim
 proveit.logic.booleans.negation.falsified_negation_intro
 proveit.logic.booleans.negation.negation_intro
 proveit.logic.booleans.negation.untrue_from_negation
+proveit.logic.booleans.true_is_bool
 proveit.logic.booleans.unfold_is_bool
 proveit.logic.booleans.unfold_is_bool_explicit
 proveit.logic.equality.equals_reversal
@@ -43,30 +44,9 @@ proveit.logic.sets.functions.membership_unfolding
 proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.logic.sets.inclusion.unfold_subset_eq
-proveit.numbers.addition.add_complex_closure
-proveit.numbers.addition.add_complex_closure_bin
-proveit.numbers.addition.add_int_closure
 proveit.numbers.addition.add_int_closure_bin
-proveit.numbers.addition.add_nat_closure
-proveit.numbers.addition.add_nat_closure_bin
-proveit.numbers.addition.add_nat_pos_closure
-proveit.numbers.addition.add_nat_pos_closure_bin
-proveit.numbers.addition.add_nat_pos_from_non_neg
-proveit.numbers.addition.add_rational_closure
-proveit.numbers.addition.add_rational_closure_bin
-proveit.numbers.addition.add_rational_non_neg_closure
-proveit.numbers.addition.add_rational_non_neg_closure_bin
-proveit.numbers.addition.add_rational_pos_closure
-proveit.numbers.addition.add_rational_pos_closure_bin
-proveit.numbers.addition.add_rational_pos_from_non_neg
-proveit.numbers.addition.add_real_closure
-proveit.numbers.addition.add_real_closure_bin
-proveit.numbers.addition.add_real_non_neg_closure
-proveit.numbers.addition.add_real_non_neg_closure_bin
-proveit.numbers.addition.add_real_pos_closure
-proveit.numbers.addition.add_real_pos_closure_bin
-proveit.numbers.addition.add_real_pos_from_non_neg
 proveit.numbers.addition.subtraction.nonneg_difference
+proveit.numbers.addition.subtraction.nonzero_difference_if_different
 proveit.numbers.addition.subtraction.sub_one_is_nat
 proveit.numbers.addition.subtraction.subtract_nat_closure_bin
 proveit.numbers.addition.unary_add_reduction
@@ -76,6 +56,8 @@ proveit.numbers.exponentiation.exponentiated_one
 proveit.numbers.exponentiation.exponentiated_zero
 proveit.numbers.modular.mod_abs_int_closure
 proveit.numbers.modular.mod_abs_real_closure
+proveit.numbers.modular.redundant_mod_elimination_in_modabs
+proveit.numbers.modular.redundant_mod_elimination_in_sum_in_modabs
 proveit.numbers.negation.complex_closure
 proveit.numbers.negation.complex_nonzero_closure
 proveit.numbers.negation.int_closure
@@ -205,7 +187,11 @@ proveit.numbers.numerals.decimals.posnat7
 proveit.numbers.numerals.decimals.posnat8
 proveit.numbers.numerals.decimals.posnat9
 proveit.numbers.ordering.less_complement_is_greater_eq
+proveit.numbers.ordering.less_eq_from_not_less
+proveit.numbers.ordering.less_from_not_less_eq
 proveit.numbers.ordering.less_is_not_eq
+proveit.numbers.ordering.not_less_eq_from_less
+proveit.numbers.ordering.not_less_from_less_eq
 proveit.numbers.ordering.relax_less
 proveit.numbers.ordering.symmetric_less_eq
 proveit.numbers.ordering.transitivity_less_eq_less
@@ -213,6 +199,7 @@ proveit.numbers.ordering.transitivity_less_eq_less_eq
 proveit.numbers.ordering.transitivity_less_less_eq
 proveit.physics.quantum.QPE._Omega_is_sample_space
 proveit.physics.quantum.QPE._best_is_int
+proveit.physics.quantum.QPE._outcome_prob
 proveit.physics.quantum.QPE._sample_space_bijection
 proveit.physics.quantum.QPE._two_pow_t_is_nat_pos
 proveit.physics.quantum.QPE._two_pow_t_minus_one_is_nat_pos
@@ -220,6 +207,9 @@ proveit.physics.quantum.algebra.complex_set_is_hilbert_space
 proveit.physics.quantum.algebra.hilbert_space_is_inner_prod_space
 proveit.physics.quantum.algebra.hilbert_space_is_vec_space
 proveit.physics.quantum.algebra.ket_one_in_qubit_space
+proveit.physics.quantum.algebra.ket_one_norm
+proveit.physics.quantum.algebra.ket_zero_and_one_are_orthogonal
 proveit.physics.quantum.algebra.ket_zero_in_qubit_space
+proveit.physics.quantum.algebra.ket_zero_norm
 proveit.statistics.complementary_event_prob_of_all
 # THEOREMS AND THEORIES TO EXCLUDE:

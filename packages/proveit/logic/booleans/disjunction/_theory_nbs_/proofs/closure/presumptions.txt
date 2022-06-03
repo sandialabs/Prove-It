@@ -16,7 +16,6 @@ proveit.logic.booleans.conjunction.true_and_true
 proveit.logic.booleans.disjunction.binary_closure
 proveit.logic.booleans.disjunction.each_is_bool
 proveit.logic.booleans.disjunction.unary_or_reduction
-proveit.logic.booleans.false_eq_false
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.double_negation_elim
 proveit.logic.booleans.negation.negation_intro

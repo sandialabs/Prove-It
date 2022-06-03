@@ -1,5 +1,4 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
-proveit.logic.booleans.false_eq_false
 proveit.logic.booleans.from_not_false
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.negation_intro
