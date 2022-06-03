@@ -284,6 +284,11 @@ class Add(NumberOperation):
             return sum_as_expr
         terms = []
         for remainder in sorted(remainder_to_rational_coef.keys(), key=hash):
+            if remainder==one: 
+                # We'll save the constant (numeric rational) for the
+                # last term (consistent with the 'quick simplified' 
+                # form).
+                continue
             coef = remainder_to_rational_coef[remainder].canonical_form()
             if coef == zero: continue
             if coef == one:
@@ -294,6 +299,10 @@ class Add(NumberOperation):
                 term = Mult(coef, remainder)
             canonical_term = term.canonical_form()
             terms.append(canonical_term)
+        if one in remainder_to_rational_coef:
+            # Add the numeric rational as the last term.
+            coef = remainder_to_rational_coef[one].canonical_form()
+            if coef != zero: terms.append(coef)
         if len(terms) == 0:
             return zero
         elif len(terms) == 1:
