@@ -271,37 +271,52 @@ class LessEq(NumberOrderingRelation):
         return new_rel.with_mimicked_style(self)
     
     @prover
-    def add_left(self, addend, **defaults_config):
+    def add_left(self, addend, *, strong=False,
+                 **defaults_config):
         '''
         From a <= b, derive and return a + c <= b given c <= 0 
         Or from a >= b, derive and return a + c >= b given 0 <= c 
         (and a, b, c are all Real) where c is the given 'addend'.
+
+        If 'strong' is True, we derive the strong < (>) form and
+        c must be provably non-zero.
         '''
         if self.get_style('direction', 'normal') == 'reversed':
             # Left and right are reversed.
             temp_rel = self.with_styles(direction='normal')
             new_rel = temp_rel.add_right(addend)
         else:
-            from . import less_eq_add_left
-            new_rel = less_eq_add_left.instantiate(
-                {a: self.lower, b: self.upper, c: addend})
+            from . import less_eq_add_left, less_eq_add_left_strong
+            if strong:
+                new_rel = less_eq_add_left_strong.instantiate(
+                    {a: self.lower, b: self.upper, c: addend})
+            else:
+                new_rel = less_eq_add_left.instantiate(
+                    {a: self.lower, b: self.upper, c: addend})
         return new_rel.with_mimicked_style(self)
 
     @prover
-    def add_right(self, addend, **defaults_config):
+    def add_right(self, addend, *, strong=False, **defaults_config):
         '''
         From a <= b, derive and return a <= b + c given 0 <= c 
         Or from a >= b, derive and return a >= b + c given c <= 0 
         (and a, b, c are all Real) where c is the given 'addend'.
+
+        If 'strong' is True, we derive the strong < (>) form and
+        c must be provably non-zero.
         '''
         if self.get_style('direction', 'normal') == 'reversed':
             # Left and right are reversed.
             temp_rel = self.with_styles(direction='normal')
             new_rel = temp_rel.add_left(addend)
         else:
-            from . import less_eq_add_right
-            new_rel = less_eq_add_right.instantiate(
-                {a: self.lower, b: self.upper, c: addend})
+            from . import less_eq_add_right, less_eq_add_right_strong
+            if strong:
+                new_rel = less_eq_add_right_strong.instantiate(
+                    {a: self.lower, b: self.upper, c: addend})
+            else:
+                new_rel = less_eq_add_right.instantiate(
+                    {a: self.lower, b: self.upper, c: addend})
         return new_rel.with_mimicked_style(self)
 
     @prover

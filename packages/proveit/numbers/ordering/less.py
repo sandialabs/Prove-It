@@ -300,35 +300,51 @@ class Less(NumberOrderingRelation):
         return new_rel.with_mimicked_style(self)
 
     @prover
-    def add_left(self, addend, **defaults_config):
+    def add_left(self, addend, *, strong=True, **defaults_config):
         '''
         From a < b, derive and return a + c < b given c <= 0 
         Or from a > b, derive and return a + c > b given 0 <= c 
         (and a, b, c are all Real) where c is the given 'addend'.
+
+        If 'strong' is False, we derive the weak ≤ (≥) form
+        (same as if we use the derive_relaxed method on the result).
         '''
         if self.get_style('direction', 'normal') == 'reversed':
             # Left and right are reversed.
-            new_rel = self.add_right(addend)
+            temp_rel = self.with_styles(direction='normal')
+            new_rel = temp_rel.add_right(addend)
         else:
-            from . import less_add_left
-            new_rel = less_add_left.instantiate(
+            from . import less_add_left, less_add_left_weak
+            if strong:
+                new_rel = less_add_left.instantiate(
+                    {a: self.lower, b: self.upper, c: addend})
+            else:
+                new_rel = less_add_left_weak.instantiate(
                     {a: self.lower, b: self.upper, c: addend})
         return new_rel.with_mimicked_style(self)
 
     @prover
-    def add_right(self, addend, **defaults_config):
+    def add_right(self, addend, *, strong=True, **defaults_config):
         '''
         From a < b, derive and return a < b + c given 0 <= c 
         Or from a > b, derive and return a > b + c given c <= 0 
         (and a, b, c are all Real) where c is the given 'addend'.
+
+        If 'strong' is False, we derive the weak ≤ (≥) form
+        (same as if we use the derive_relaxed method on the result).
         '''
         if self.get_style('direction', 'normal') == 'reversed':
             # Left and right are reversed.
-            new_rel = self.add_left(addend)
+            temp_rel = self.with_styles(direction='normal')
+            new_rel = temp_rel.add_left(addend)
         else:
-            from . import less_add_right
-            new_rel = less_add_right.instantiate(
-                {a: self.lower, b: self.upper, c: addend})
+            from . import less_add_right, less_add_right_weak
+            if strong:
+                new_rel = less_add_right.instantiate(
+                    {a: self.lower, b: self.upper, c: addend})
+            else:
+                new_rel = less_add_right_weak.instantiate(
+                    {a: self.lower, b: self.upper, c: addend})
         return new_rel.with_mimicked_style(self)
     
     @prover

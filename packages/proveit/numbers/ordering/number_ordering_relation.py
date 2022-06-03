@@ -167,12 +167,18 @@ class NumberOrderingRelation(TransitiveRelation):
                         rhs_diff_numer*numer_factor,
                         rhs_diff_denom*denom_factor)
                 assert not isinstance(scaled_rhs_diff, Neg)
+                strong = isinstance(self, Less)
                 if known_bound.is_reversed():
                     # a > x => a + c > x   with c > 0
-                    known_bound = known_bound.add_left(scaled_rhs_diff)
+                    known_bound = known_bound.add_left(
+                        scaled_rhs_diff, strong=strong)
                 else:
                     # x < a => x < a + c   with c > 0
-                    known_bound = known_bound.add_right(scaled_rhs_diff)
+                    known_bound = known_bound.add_right(
+                        scaled_rhs_diff, strong=strong)
+            if isinstance(self, LessEq) and isinstance(known_bound.expr, Less):
+                # weaken from < to ≤.
+                known_bound = known_bound.derive_relaxed()
             
             # See if we need to add something terms to both sides,
             # making replacements to the desired form.
