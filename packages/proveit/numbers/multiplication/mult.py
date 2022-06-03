@@ -34,11 +34,10 @@ class Mult(NumberOperation):
     _simplification_directives_ = SimplificationDirectives(
             ungroup=True, 
             combine_exponents=True,
-            # By default, sort such that literal, rationals come first 
-            # and other irreducibles come next.
+            # By default, sort such that numeric, rationals come first 
+            # but otherwise maintain the original order.
             order_key_fn = lambda factor : (
-                    0 if is_numeric_rational(factor) else (
-                            1 if is_irreducible_value(factor) else 2)))
+                    0 if is_numeric_rational(factor) else 1))
 
     def __init__(self, *operands, styles=None):
         r'''
