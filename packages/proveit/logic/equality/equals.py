@@ -1243,11 +1243,13 @@ def deduce_equal_or_not(lhs, rhs, **defaults_config):
     '''
     from proveit.logic import NotEquals
     if Equals(lhs, rhs).proven():
-        return Equals(lhs, rhs).prove()
+        return Equals(lhs, rhs).prove()    
     if lhs == rhs:
         return Equals(lhs, rhs).conclude_via_reflexivity()
     if NotEquals(lhs, rhs).proven():
         return NotEquals(lhs, rhs).prove()
+    if lhs.canonical_form() == rhs.canonical_form():
+        return lhs.deduce_equality(Equals(lhs, rhs))
     if hasattr(lhs, 'deduce_equal_or_not'):
         return lhs.deduce_equal_or_not(rhs)
     raise UnsatisfiedPrerequisites(

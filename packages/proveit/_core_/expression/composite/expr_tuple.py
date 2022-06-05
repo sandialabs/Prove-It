@@ -308,7 +308,35 @@ class ExprTuple(Composite, Expression):
             else:
                 count = Add(count, one).quick_simplified()
         return count
-
+    
+    def _build_canonical_form(self):
+        '''
+        Returns a form of this ExprTuple with operands in their
+        canonical forms.  ExprRanges are shifted to start with an
+        index of 1.     
+        '''
+        from proveit.numbers import one, Add, Neg
+        from .expr_range import ExprRange
+        entries = []
+        for entry in self.entries:
+            if isinstance(entry, ExprRange):
+                parameter = entry.parameter
+                orig_start_index = entry.true_start_index
+                _n = entry.num_elements(proven=False)
+                if orig_start_index == one:
+                    shifted_body = entry.body
+                else:
+                    shifted_body = entry.body.basic_replaced(
+                            {parameter:Add(parameter, 
+                                           orig_start_index,
+                                           Neg(one)).quick_simplified()})
+                entry = ExprRange(parameter, shifted_body.canonical_form(), 
+                                  one, _n)
+            else:
+                entry = entry.canonical_form()
+            entries.append(entry)
+        return ExprTuple(*entries)
+    
     def yield_format_cell_info(self):
         '''
         Yield information pertaining to each format cell of this
@@ -627,7 +655,7 @@ class ExprTuple(Composite, Expression):
         these.
         '''
         from proveit import (ExprRange, safe_dummy_var,
-                             UnsatisfiedPrerequisites)
+                             ProofFailure, UnsatisfiedPrerequisites)
         from proveit.logic import (
                 And, Or, Equals, NotEquals, deduce_equal_or_not)
         if self == other_tuple:
@@ -658,10 +686,19 @@ class ExprTuple(Composite, Expression):
                 rhs_range = other_tuple.entries[0]
                 start_index = lhs_range.start_index
                 end_index = lhs_range.end_index
-                if ((start_index != rhs_range.start_index) or
-                        (end_index != rhs_range.end_index)):
-                    # Indices must match for a proper correspondence.
-                    raise_non_corresponding()
+                if (start_index != rhs_range.start_index):
+                    shift_equiv = rhs_range.shift_equivalence(
+                            new_start = start_index)
+                    return self.deduce_equal_or_not(
+                            shift_equiv.rhs).apply_transitivity(
+                                    shift_equiv)
+                if end_index != rhs_range.end_index:
+                    try:
+                        Equals(end_index, rhs_range.end_index).prove()
+                    except (ProofFailure, UnsatisfiedPrerequisites,
+                            NotImplementedError):
+                        # Indices must match for a proper correspondence.
+                        raise_non_corresponding()
                 if lhs_range.parameter != rhs_range.parameter:
                     # Use a safe common parameter.
                     param = safe_dummy_var(lhs_range.body, rhs_range.body)
