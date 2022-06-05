@@ -74,11 +74,11 @@ class Mult(NumberOperation):
         # Extract the literal rational factors from the rest.
         # Generate canonical forms of factors and ungroup nested
         # multiplications.
-        def gen_factors():
-            for factor in self.factors:
+        def gen_factors(expr):
+            for factor in expr.factors:
                 canonical_factor = factor.canonical_form()
                 if isinstance(canonical_factor, Mult):
-                    for sub_factor in canonical_factor.factors:
+                    for sub_factor in gen_factors(canonical_factor):
                         yield sub_factor
                 else:
                     yield canonical_factor
@@ -86,7 +86,7 @@ class Mult(NumberOperation):
         # numerator/denominator from the generated factors.
         numer, denom = 1, 1
         base_to_exponent = dict()
-        for factor in gen_factors():
+        for factor in gen_factors(self):
             if isinstance(factor, Neg):
                 numer *= -1
                 factor = factor.operand
@@ -103,7 +103,10 @@ class Mult(NumberOperation):
                 else:
                     exponent = one
                     base = factor
-                base = base.canonical_form() # canonize the base
+                if isinstance(base, ExprRange):
+                    base = Mult(base)
+                else:
+                    base = base.canonical_form() # canonicalize the base
                 if base in base_to_exponent:
                     prev_exponent = base_to_exponent[base]
                     if isinstance(prev_exponent, Add):
@@ -119,8 +122,11 @@ class Mult(NumberOperation):
         factors = []
         for base in sorted(base_to_exponent.keys(), key=hash):
             # Canonize the exponentiated factor.
-            exponent = base_to_exponent[base]
-            factor = Exp(base, exponent).canonical_form()
+            exponent = base_to_exponent[base].canonical_form()
+            if exponent == one:
+                factor = base
+            else:
+                factor = Exp(base, exponent).canonical_form()
             factors.append(factor)
         # Return the appropriate canonical form.
         if len(factors) == 0:

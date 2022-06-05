@@ -233,26 +233,31 @@ class Add(NumberOperation):
         if self.terms.num_entries() == 0:
             return zero # Add operation with no operands
         remainder_to_rational_coef = dict()
-        contains_only_literal_rationals = True
+        contains_only_numeric_rationals = True
         # Generate canonical forms of terms and ungroup nested
         # addition:
-        def gen_coef_and_remainders():
-            for term in self.terms:
+        def gen_coef_and_remainders(expr):
+            for term in expr.terms:
                 canonical_term = term.canonical_form()
                 if isinstance(canonical_term, Neg):
                     # Negation should distribute through Add
                     # in its canonical form.
                     assert not isinstance(canonical_term.operand, Add)
                 if isinstance(canonical_term, Add):
-                    for sub_term in canonical_term.terms:
-                        yield coefficient_and_remainder(sub_term)
+                    for _coeff_and_remainder in gen_coef_and_remainders(
+                            canonical_term):
+                        yield _coeff_and_remainder
+                    # for sub_term in canonical_term.terms:
+                    #     yield coefficient_and_remainder(sub_term)
+                elif isinstance(canonical_term, ExprRange):
+                    yield (one, Add(canonical_term))
                 else:
                     yield coefficient_and_remainder(canonical_term)
-        for coef, remainder in gen_coef_and_remainders():
+        for coef, remainder in gen_coef_and_remainders(self):
             if coef == zero:
                 continue
             if remainder != one:
-                contains_only_literal_rationals = False
+                contains_only_numeric_rationals = False
             if remainder in remainder_to_rational_coef:
                 prev_coef = remainder_to_rational_coef[remainder]
                 if isinstance(prev_coef, Add):
@@ -265,8 +270,15 @@ class Add(NumberOperation):
                 remainder_to_rational_coef[remainder] = coef
         if len(remainder_to_rational_coef) == 0:
             return zero # Add() = 0
-        if contains_only_literal_rationals:
-            # This is a sum of only literal rationals.  Just
+        if len(remainder_to_rational_coef) == 1:
+            # special case to avoid infinite recursion
+            # print("Caught the special case!")
+            remainder, coeff = next(iter(remainder_to_rational_coef.items()))
+            # print("coeff, remainder = {0}, {1}".format(coeff, remainder))
+            if coeff == one:
+                return remainder
+        if contains_only_numeric_rationals:
+            # This is a sum of only numeric rationals.  Just
             # compute it.
             assert len(remainder_to_rational_coef)==1
             assert one in remainder_to_rational_coef

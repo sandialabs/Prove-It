@@ -388,7 +388,8 @@ class Len(Operation):
                     # Trivial reflection
                     eq = eq.conclude_via_reflexivity()
                 else:
-                    eq = eq.conclude_via_transitivity()
+                    # eq = eq.conclude_via_transitivity()
+                    eq = eq.prove() # will use canonical forms
                 return Equals.apply_transitivities(
                     [lhs_computation, eq, rhs_computation])
             else:

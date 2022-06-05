@@ -24,6 +24,9 @@ class Neg(NumberOperation):
 
     def __init__(self, A, *, styles=None):
         NumberOperation.__init__(self, Neg._operator_, A, styles=styles)
+        if not hasattr(self, 'operand'):
+            raise ValueError("Neg must be unary! But we were given: {}".
+                    format(A))
 
     def style_options(self):
         '''

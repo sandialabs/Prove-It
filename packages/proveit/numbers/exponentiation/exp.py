@@ -1,4 +1,5 @@
-from proveit import (defaults, equality_prover, ExprTuple, Function,
+from proveit import (defaults, equality_prover, ExprRange, ExprTuple,
+                     Function,
                      InnerExpr, Literal, maybe_fenced_string,
                      SimplificationDirectives,
                      ProofFailure, prover, relation_prover, StyleOptions,
@@ -161,8 +162,19 @@ class Exp(NumberOperation):
             return base # x^1 = x
         elif isinstance(base, Mult):
             # (x*y*z)^a = x^a * y^a * z^a
-            return Mult(*[Exp(factor, exponent) for factor 
-                          in base.factors])
+            factors = []
+            for factor in base.factors:
+                if isinstance(factor, ExprRange):
+                    factor = ExprRange(factor.parameter,
+                                       Exp(factor.body, exponent),
+                                       factor.true_start_index,
+                                       factor.true_end_index)
+                else:
+                    factor = Exp(factor, exponent)
+                factors.append(factor)
+            return Mult(*factors)
+            # return Mult(*[Exp(factor, exponent) for factor 
+            #               in base.factors])
         elif isinstance(base, Exp):
             # (x^a)^b = x^(a*b)
             exponent = Mult(base.exponent, exponent).canonical_form()
