@@ -1596,7 +1596,18 @@ class Add(NumberOperation):
         # factor the_factor from each term
         for _i in range(expr.terms.num_entries()):
             term = expr.terms[_i]
-            if hasattr(term, 'factorization'):
+            if term == the_factors:
+                if pull == 'left':
+                    replacements.append(Mult(term, one).one_elimination(1))
+                else:
+                    replacements.append(Mult(one, term).one_elimination(0))
+                _b.append(one)
+            else:
+                if not hasattr(term, 'factorization'):
+                    raise ValueError(
+                        "Factor, %s, is not present in the term at "
+                        "index %d of %s!" %
+                        (the_factors, _i, self))
                 term_factorization = term.factorization(
                     the_factors, pull, group_factors=group_factors,
                     group_remainder=True, preserve_all=True)
@@ -1615,17 +1626,6 @@ class Add(NumberOperation):
                 # substitute in the factorized term
                 expr = eq.update(term_factorization.substitution(
                     expr.inner_expr().terms[_i], preserve_all=True))
-            else:
-                if term != the_factors:
-                    raise ValueError(
-                        "Factor, %s, is not present in the term at "
-                        "index %d of %s!" %
-                        (the_factors, _i, self))
-                if pull == 'left':
-                    replacements.append(Mult(term, one).one_elimination(1))
-                else:
-                    replacements.append(Mult(one, term).one_elimination(0))
-                _b.append(one)
         if not group_factors and isinstance(the_factors, Mult):
             factor_sub = the_factors.operands
         else:
