@@ -42,7 +42,7 @@ class TransRelUpdater:
             if hasattr(relation, 'derive_reversed'):
                 relation = relation.derive_reversed()
             else:
-                relation = relation.with_relation_reversed()
+                relation = relation.with_direction_reversed()
         elif relation.lhs != self.expr:
             raise ValueError("Relation %s should match expression %s "
                              "on one of its sides." % (relation, self.expr))
