@@ -662,6 +662,9 @@ class Equals(TransitiveRelation):
         proveit.lambda_map, proveit.lambda_map.SubExprRepl in
         particular), or, if neither of those, an expression upon
         which to perform a global replacement of self.lhs.
+        
+        Note: auto-simplification may only affect sub-expressions
+        touched by the substitution.
         '''
         from proveit import Conditional
         from . import substitution
@@ -675,7 +678,10 @@ class Equals(TransitiveRelation):
                 return conditional.value_substitution(self)
 
         lambda_map = Equals._lambda_expr(lambda_map, self.lhs)
-        
+        extra_kwargs = {'simplify_only_where_marked': True,
+                        'markers_and_marked_expr': (
+                                lambda_map.parameters,
+                                Equals(lambda_map.body, lambda_map.body))}
         if not lambda_map.parameters.is_single():
             # We must use operands_substitution for ExprTuple
             # substitution.
@@ -686,14 +692,16 @@ class Equals(TransitiveRelation):
                 # If we know the tuples are equal, use the theorem
                 # with this equality as a prerequisite.
                 return operands_substitution_via_tuple.instantiate(
-                    {n: _n, f: lambda_map, x: self.lhs, y: self.rhs})
+                    {n: _n, f: lambda_map, x: self.lhs, y: self.rhs},
+                    **extra_kwargs)
             # Otherwise, we'll use the axiom in which the prerequisite
             # is that the individual elements are equal.
             return operands_substitution.instantiate(
-                {n: _n, f: lambda_map, x: self.lhs, y: self.rhs})
+                {n: _n, f: lambda_map, x: self.lhs, y: self.rhs},
+                **extra_kwargs)
         # Regular single-operand substitution:
         return substitution.instantiate(
-            {f: lambda_map, x: self.lhs, y: self.rhs})
+            {f: lambda_map, x: self.lhs, y: self.rhs}, **extra_kwargs)
 
     @prover
     def sub_left_side_into(self, lambda_map, **defaults_config):
@@ -705,6 +713,9 @@ class Equals(TransitiveRelation):
         (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in
         particular), or, if neither of those, an expression to upon
         which to perform a global replacement of self.rhs.
+
+        Note: auto-simplification may only affect sub-expressions
+        touched by the substitution.
         '''
         from . import sub_left_side_into
         from . import (substitute_truth, substitute_in_true, 
@@ -721,6 +732,9 @@ class Equals(TransitiveRelation):
                 # Reverse it for a shorter proof.
                 return reversed_eq.sub_right_side_into(lambda_map)
         
+        extra_kwargs = {'simplify_only_where_marked': True,
+                        'markers_and_marked_expr': (lambda_map.parameters,
+                                                    lambda_map.body)}
         if not lambda_map.parameters.is_single():
             # We must use sub_in_left_operands for ExprTuple
             # substitution.
@@ -731,9 +745,11 @@ class Equals(TransitiveRelation):
                 # If we know the tuples are equal, use the theorem
                 # with this equality as a prerequisite.
                 return sub_in_left_operands_via_tuple.instantiate(
-                    {n: _n, P: lambda_map, x: self.lhs, y: self.rhs})                    
+                    {n: _n, P: lambda_map, x: self.lhs, y: self.rhs},
+                    **extra_kwargs)                    
             return sub_in_left_operands.instantiate(
-                {n: _n, P: lambda_map, x: self.lhs, y: self.rhs})
+                {n: _n, P: lambda_map, x: self.lhs, y: self.rhs},
+                **extra_kwargs)
     
         try:
             # try some alternative proofs that may be shorter, if
@@ -742,26 +758,26 @@ class Equals(TransitiveRelation):
                 # substitute_truth may provide a shorter proof
                 # option
                 substitute_truth.instantiate(
-                    {x: self.lhs, P: lambda_map})
+                    {x: self.lhs, P: lambda_map}, **extra_kwargs)
             elif self.lhs == TRUE:
                 # substitute_in_true may provide a shorter proof
                 # option
                 substitute_in_true.instantiate(
-                    {x: self.rhs, P: lambda_map})
+                    {x: self.rhs, P: lambda_map}, **extra_kwargs)
             elif self.rhs == FALSE:
                 # substitute_falsehood may provide a shorter proof
                 # option
                 substitute_falsehood.instantiate(
-                    {x: self.lhs, P: lambda_map})
+                    {x: self.lhs, P: lambda_map}, **extra_kwargs)
             elif self.lhs == FALSE:
                 # substitute_in_false may provide a shorter proof
                 # option
                 substitute_in_false.instantiate(
-                    {x: self.rhs, P: lambda_map})
+                    {x: self.rhs, P: lambda_map}, **extra_kwargs)
         except BaseException:
             pass
         return sub_left_side_into.instantiate(
-            {x: self.lhs, y: self.rhs, P: lambda_map})
+            {x: self.lhs, y: self.rhs, P: lambda_map}, **extra_kwargs)
 
     @prover
     def sub_right_side_into(self, lambda_map, **defaults_config):
@@ -773,6 +789,9 @@ class Equals(TransitiveRelation):
         (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in
         particular), or, if neither of those, an expression to upon
         which to perform a global replacement of self.lhs.
+
+        Note: auto-simplification may only affect sub-expressions
+        touched by the substitution.
         '''
         from . import sub_right_side_into
         from . import (substitute_truth, substitute_in_true, 
@@ -789,7 +808,9 @@ class Equals(TransitiveRelation):
                 return reversed_eq.sub_left_side_into(lambda_map)
         
         lambda_map = Equals._lambda_expr(lambda_map, self.lhs)
-
+        extra_kwargs = {'simplify_only_where_marked': True,
+                        'markers_and_marked_expr': (lambda_map.parameters,
+                                                    lambda_map.body)}
         if not lambda_map.parameters.is_single():
             # We must use sub_in_right_operands for ExprTuple
             # substitution.
@@ -800,9 +821,11 @@ class Equals(TransitiveRelation):
                 # If we know the tuples are equal, use the theorem
                 # with this equality as a prerequisite.
                 return sub_in_right_operands_via_tuple.instantiate(
-                    {n: _n, P: lambda_map, x: self.lhs, y: self.rhs})
+                    {n: _n, P: lambda_map, x: self.lhs, y: self.rhs},
+                    **extra_kwargs)
             return sub_in_right_operands.instantiate(
-                {n: _n, P: lambda_map, x: self.lhs, y: self.rhs})
+                {n: _n, P: lambda_map, x: self.lhs, y: self.rhs},
+                **extra_kwargs)
     
         try:
             # try some alternative proofs that may be shorter, if 
@@ -811,26 +834,26 @@ class Equals(TransitiveRelation):
                 # substitute_truth may provide a shorter proof
                 # options
                 substitute_truth.instantiate(
-                    {x: self.rhs, P: lambda_map})
+                    {x: self.rhs, P: lambda_map}, **extra_kwargs)
             elif self.rhs == TRUE:
                 # substitute_in_true may provide a shorter proof
                 # options
                 substitute_in_true.instantiate(
-                    {x: self.lhs, P: lambda_map})
+                    {x: self.lhs, P: lambda_map}, **extra_kwargs)
             elif self.lhs == FALSE:
                 # substitute_falsehood may provide a shorter proof
                 # options
                 substitute_falsehood.instantiate(
-                    {x: self.rhs, P: lambda_map})
+                    {x: self.rhs, P: lambda_map}, **extra_kwargs)
             elif self.rhs == FALSE:
                 # substitute_in_false may provide a shorter proof
                 # options
                 substitute_in_false.instantiate(
-                    {x: self.lhs, P: lambda_map})
+                    {x: self.lhs, P: lambda_map}, **extra_kwargs)
         except BaseException:
             pass
         return sub_right_side_into.instantiate(
-            {x: self.lhs, y: self.rhs, P: lambda_map})
+            {x: self.lhs, y: self.rhs, P: lambda_map}, **extra_kwargs)
 
     @prover
     def derive_right_via_equality(self, **defaults_config):
