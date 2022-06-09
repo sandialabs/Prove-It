@@ -1193,11 +1193,21 @@ class Expression(metaclass=ExprType):
                                         %(marked_expr, type(marked_expr)))
                 else:
                     markers_and_marked_expr = None
-                expr = expr._auto_simplified(
+                try:
+                    expr = expr._auto_simplified(
                         requirements=requirements,
                         stored_replacements=dict(),
                         auto_simplify_top_level=auto_simplify_top_level,
                         markers_and_marked_expr=markers_and_marked_expr)
+                except MarkedExprError as e:
+                    raise ValueError(
+                        "%s doesn't match %s while delving into %s "
+                        "which should match %s except where "
+                        "marked by %s."
+                        %(e.actual_subexpr, e.marked_expr_subexpr,
+                          self, markers_and_marked_expr[1],
+                          markers_and_marked_expr[0]))
+
         return expr
 
     def _manual_equality_replaced(self, equality_repl_map, *,
@@ -1322,13 +1332,7 @@ class Expression(metaclass=ExprType):
             if free_vars(marked_expr).isdisjoint(markers):
                 # This is unmarked territory; preserve it.
                 if self != marked_expr:
-                    raise ValueError(
-                            "The 'marked_expr' is unexpected: "
-                            "%s ≠ %s while delving into "
-                            "%s marked by %s."
-                            %(marked_expr, self, 
-                              defaults.markers_and_marked_expr[1],
-                              defaults.markers_and_marked_expr[0]))
+                    raise MarkedExprError(marked_expr, self)
                 return self
         elif self in stored_replacements:
             # We've handled this one before, so reuse it.
@@ -1454,9 +1458,7 @@ class Expression(metaclass=ExprType):
             assert isinstance(marked_expr, Expression)
             return (markers, marked_expr)
         except:
-            raise ValueError(
-                    "The 'marked_expr' is invalid: "
-                    "%s doesn't match with %s"%(marked_expr, self))
+            raise MarkedExprError(marked_expr, self)
     
     def copy(self):
         '''
@@ -1873,3 +1875,8 @@ class ImproperReplacement(Exception):
     def __str__(self):
         return ("Improper replacement of %s via %s:\n%s"
                 % (self.orig_expr, self.repl_map, self.message))
+
+class MarkedExprError(Exception):
+    def __init__(self, marked_expr_subexpr, actual_subexpr):
+        self.marked_expr_subexpr = marked_expr_subexpr
+        self.actual_subexpr = actual_subexpr
