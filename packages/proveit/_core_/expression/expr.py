@@ -1136,7 +1136,9 @@ class Expression(metaclass=ExprType):
                 style_preferences=self._style_data.styles)
 
     def equality_replaced(self, requirements,
-                          auto_simplify_top_level=USE_DEFAULTS):
+                          auto_simplify_top_level=USE_DEFAULTS,
+                          simplify_only_where_marked=False,
+                          markers_and_marked_expr=None):
         '''
         Return something equal to this expression with replacements
         made via proven equalities, either simplifications or
@@ -1178,9 +1180,7 @@ class Expression(metaclass=ExprType):
                 # Let's turn on automation while auto-simplifying at
                 # least.
                 temp_defaults.automation = True
-                markers_and_marked_expr = None
-                if defaults.simplify_only_where_marked:
-                    markers_and_marked_expr = defaults.markers_and_marked_expr
+                if simplify_only_where_marked:
                     markers, marked_expr = markers_and_marked_expr
                     for marker in markers:
                         if not isinstance(marker, Variable):
@@ -1191,6 +1191,8 @@ class Expression(metaclass=ExprType):
                         raise TypeError("'marked_expr', should be an "
                                         "Expression. Got %s of type %s"
                                         %(marked_expr, type(marked_expr)))
+                else:
+                    markers_and_marked_expr = None
                 expr = expr._auto_simplified(
                         requirements=requirements,
                         stored_replacements=dict(),

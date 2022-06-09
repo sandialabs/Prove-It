@@ -332,12 +332,19 @@ class Forall(OperationOverInstances):
             self, bundling, num_param_entries=num_param_entries)
 
     @prover
-    def instantiate(self, repl_map=None, **defaults_config):
+    def instantiate(self, repl_map=None, *,
+                    num_forall_eliminations=None,
+                    simplify_only_where_marked=False,
+                    markers_and_marked_expr=None,
+                    **defaults_config):
         '''
         First attempt to prove that this Forall statement is true under
         the assumptions, and then call instantiate on the Judgment.
         '''
-        return self.prove().instantiate(repl_map)
+        return self.prove().instantiate(
+            repl_map, num_forall_eliminations=num_forall_eliminations,
+            simplify_only_where_marked=simplify_only_where_marked,
+            markers_and_marked_expr=markers_and_marked_expr)
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,

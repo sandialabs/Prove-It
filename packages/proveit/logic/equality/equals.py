@@ -680,7 +680,7 @@ class Equals(TransitiveRelation):
         lambda_map = Equals._lambda_expr(lambda_map, self.lhs)
         extra_kwargs = {'simplify_only_where_marked': True,
                         'markers_and_marked_expr': (
-                                lambda_map.parameters,
+                                lambda_map.parameter_vars,
                                 Equals(lambda_map.body, lambda_map.body))}
         if not lambda_map.parameters.is_single():
             # We must use operands_substitution for ExprTuple
@@ -733,7 +733,7 @@ class Equals(TransitiveRelation):
                 return reversed_eq.sub_right_side_into(lambda_map)
         
         extra_kwargs = {'simplify_only_where_marked': True,
-                        'markers_and_marked_expr': (lambda_map.parameters,
+                        'markers_and_marked_expr': (lambda_map.parameter_vars,
                                                     lambda_map.body)}
         if not lambda_map.parameters.is_single():
             # We must use sub_in_left_operands for ExprTuple
@@ -809,7 +809,7 @@ class Equals(TransitiveRelation):
         
         lambda_map = Equals._lambda_expr(lambda_map, self.lhs)
         extra_kwargs = {'simplify_only_where_marked': True,
-                        'markers_and_marked_expr': (lambda_map.parameters,
+                        'markers_and_marked_expr': (lambda_map.parameter_vars,
                                                     lambda_map.body)}
         if not lambda_map.parameters.is_single():
             # We must use sub_in_right_operands for ExprTuple
