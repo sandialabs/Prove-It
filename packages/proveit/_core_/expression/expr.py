@@ -1188,8 +1188,8 @@ class Expression(metaclass=ExprType):
                                             "Got %s of type %s"
                                             %(marker, type(marker)))
                     if not isinstance(marked_expr, Expression):
-                        raise TypeError("'marked_expr', should be a Variable. "
-                                        "Got %s of type %s"
+                        raise TypeError("'marked_expr', should be an "
+                                        "Expression. Got %s of type %s"
                                         %(marked_expr, type(marked_expr)))
                 expr = expr._auto_simplified(
                         requirements=requirements,
@@ -1321,8 +1321,12 @@ class Expression(metaclass=ExprType):
                 # This is unmarked territory; preserve it.
                 if self != marked_expr:
                     raise ValueError(
-                            "The 'marked_expr' is invalid: "
-                            "%s ≠ %s"%(self, marked_expr))
+                            "The 'marked_expr' is unexpected: "
+                            "%s ≠ %s while delving into "
+                            "%s marked by %s."
+                            %(marked_expr, self, 
+                              defaults.markers_and_marked_expr[1],
+                              defaults.markers_and_marked_expr[0]))
                 return self
         elif self in stored_replacements:
             # We've handled this one before, so reuse it.
