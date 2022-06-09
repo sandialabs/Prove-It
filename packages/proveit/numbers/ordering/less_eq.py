@@ -284,7 +284,7 @@ class LessEq(NumberOrderingRelation):
         if self.get_style('direction', 'normal') == 'reversed':
             # Left and right are reversed.
             temp_rel = self.with_styles(direction='normal')
-            new_rel = temp_rel.add_right(addend)
+            new_rel = temp_rel.add_right(addend, strong=strong)
         else:
             from . import less_eq_add_left, less_eq_add_left_strong
             if strong:
@@ -308,7 +308,7 @@ class LessEq(NumberOrderingRelation):
         if self.get_style('direction', 'normal') == 'reversed':
             # Left and right are reversed.
             temp_rel = self.with_styles(direction='normal')
-            new_rel = temp_rel.add_left(addend)
+            new_rel = temp_rel.add_left(addend, strong=strong)
         else:
             from . import less_eq_add_right, less_eq_add_right_strong
             if strong:

@@ -176,15 +176,18 @@ class Conditional(Expression):
         return Conditional(subbed_val, subbed_cond,
                            styles=self._style_data.styles)
 
-    def _auto_simplified_sub_exprs(self, *, requirements, stored_replacements):
+    def _auto_simplified_sub_exprs(self, *, requirements, stored_replacements,
+                                   markers_and_marked_expr):
         '''
         Properly handle the Conditional scope while doing 
         auto-simplification replacements.
         '''
-        recursion_fn = lambda expr, requirements, stored_replacements : (
+        recursion_fn = lambda expr, requirements, stored_repls, sub_expr_fn : (
                      expr._auto_simplified(
                         requirements=requirements, 
-                        stored_replacements=stored_replacements))
+                        stored_replacements=stored_repls,
+                        markers_and_marked_expr=self._update_marked_expr(
+                                markers_and_marked_expr, sub_expr_fn)))
         subbed_val, subbed_cond = self._equality_replaced_sub_exprs(
                 recursion_fn, requirements=requirements,
                 stored_replacements=stored_replacements)
@@ -209,8 +212,11 @@ class Conditional(Expression):
         # subsequent conditions.
         if isinstance(self.condition, And):
             conditions = self.condition.operands.entries
+            build_get_cond_fn = lambda _k : (
+                    lambda _expr : _expr.condition.operands[_k]) 
         else:
             conditions = [self.condition]
+            build_get_cond_fn = lambda _k : (lambda _expr : _expr.condition) 
         
         # For each condition, we'll assume the previous substituted
         # conditions.
@@ -228,8 +234,8 @@ class Conditional(Expression):
                     inner_stored_repls = dict()
                 prev_assumptions = defaults.assumptions
                 subbed_conds.append(
-                        recursion_fn(cond, requirements=requirements, 
-                                     stored_replacements=inner_stored_repls))
+                        recursion_fn(cond, requirements, inner_stored_repls,
+                                     build_get_cond_fn(_k)))
     
         # For the value, we'll assume all of the substituted conditions.
         inner_assumptions = (defaults.assumptions  + tuple(subbed_conds))
@@ -240,8 +246,8 @@ class Conditional(Expression):
                 # use the stored_replacements from before.
                 inner_stored_repls = dict()
             subbed_val = recursion_fn(self.value,
-                    requirements=requirements,
-                    stored_replacements=inner_stored_repls)
+                    requirements, inner_stored_repls, 
+                    lambda _expr : _expr.value)
         if len(subbed_conds) == 1:
             return (subbed_val, subbed_conds[0])
         else:
@@ -251,8 +257,8 @@ class Conditional(Expression):
                 # conjunction; use the original assumptions and
                 # stored replacements.
                 subbed_condition = recursion_fn(
-                        subbed_condition, requirements=requirements,
-                        stored_replacements=stored_replacements)
+                        subbed_condition, requirements, stored_replacements, 
+                        lambda _expr : _expr.condition)
             return (subbed_val, subbed_condition)
 
     @equality_prover('simplified', 'simplify')

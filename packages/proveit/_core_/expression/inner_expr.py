@@ -76,6 +76,9 @@ class InnerExpr:
     7. inner_expr.substitute(a + 1 - 2) would return
            |- [((a - 1) + b + (a + 1 - 2)/d) < e]
 
+    Note: When substitituting, auto-simplification may only affect 
+    sub-expressions touched by a substitution.
+    
     In addition, the InnerExpr class has 'simplify_operands' and
     'evaluate_operands' methods for effecting 'simplify' or 'evaluate'
     (respectively) on all of the operands of the inner expression.
@@ -651,6 +654,9 @@ class InnerExpr:
         equality_or_replacement may be a proven equality with the 
         current inner expression on the left side or it may be the
         replacement.
+
+        Note: auto-simplification may only affect sub-expressions
+        touched by the substitution.
         '''
         return self._substitution(equality_or_replacement)
 
@@ -664,6 +670,9 @@ class InnerExpr:
         equality_or_replacement may be a proven equality with the 
         current inner expression on the left side or it may be the
         replacement.
+
+        Note: auto-simplification may only affect sub-expressions
+        touched by the substitution.
         '''        
         from proveit import x, P
         from proveit.logic import TRUE, FALSE
