@@ -326,7 +326,7 @@ class ExprRange(Expression):
                             markers_and_marked_expr, sub_expr_fn))
                   for sub_expr_fn in (
                           lambda _expr : _expr.true_start_index,
-                          lambda _expr : _expr.ture_end_index))
+                          lambda _expr : _expr.true_end_index))
         parameter = self.parameter
         # Special assumptions for the body.  We can't use
         # assumptions involving the parameter except the
@@ -342,9 +342,9 @@ class ExprRange(Expression):
             subbed_body = self.body._auto_simplified(
                     requirements=requirements, 
                     stored_replacements=dict(),
-                    *self._update_marked_expr(
-                            markers_and_marked_expr,
-                            lambda _expr : _expr.body))
+                    markers_and_marked_expr=self._update_marked_expr(
+                           markers_and_marked_expr,
+                           lambda _expr : _expr.body))
             subbed_lambda = Lambda(parameter, subbed_body)
         subbed_sub_exprs = (subbed_lambda, *subbed_indices)
         sub_exprs = self._sub_expressions
