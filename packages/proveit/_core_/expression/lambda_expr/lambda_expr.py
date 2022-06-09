@@ -708,7 +708,8 @@ class Lambda(Expression):
 
         return replaced
 
-    def _auto_simplified_sub_exprs(self, *, requirements, stored_replacements):
+    def _auto_simplified_sub_exprs(self, *, requirements, stored_replacements,
+                                   markers_and_marked_expr):
         '''
         Properly handle the Lambda scope while doing auto-simplification
         replacements.  Also, don't replace parameter variables.
@@ -723,7 +724,10 @@ class Lambda(Expression):
             # the stored_replacements from before.
             subbed_body = self.body._auto_simplified(
                     requirements=requirements, 
-                    stored_replacements=dict())
+                    stored_replacements=dict(),
+                    markers_and_marked_expr=self._update_marked_expr(
+                            markers_and_marked_expr, 
+                            lambda _expr : _expr.body))
             if subbed_body == self.body:
                 # Nothing change, so don't remake anything.
                 return self                

@@ -59,6 +59,15 @@ class Defaults:
         # directive that is followed.
         self.preserved_exprs = set()
         
+        # When True, Prove-It will only simplify "marked" parts of an 
+        # expression.  'markers_and_marked_expr' must then be
+        # a tuple: Variable markers, and an expression that matches 
+        # instantiated expression except where marked with the markers.
+        # Only sub-expressions containing a marker may be simplified
+        # (if auto_simplify=True).
+        self.simplify_only_where_marked = False
+        self.markers_and_marked_expr = None
+        
         # If an expression has a known evaluation, use it in the 
         # auto-simplification where auto-simplification is 
         # enabled/allowed (e.g., the original expression is not

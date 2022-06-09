@@ -1149,7 +1149,7 @@ class Expression(metaclass=ExprType):
         generally don't want to get back TRUE as the judgment.
         Deeper sub-expressions are fair game, however.
         '''
-        from proveit import Judgment  
+        from proveit import Judgment, Variable
         from proveit.logic import Equals
         
         if defaults.preserve_all:
@@ -1178,10 +1178,24 @@ class Expression(metaclass=ExprType):
                 # Let's turn on automation while auto-simplifying at
                 # least.
                 temp_defaults.automation = True
+                markers_and_marked_expr = None
+                if defaults.simplify_only_where_marked:
+                    markers_and_marked_expr = defaults.markers_and_marked_expr
+                    markers, marked_expr = markers_and_marked_expr
+                    for marker in markers:
+                        if not isinstance(marker, Variable):
+                            raise TypeError("'marker', should be a Variable. "
+                                            "Got %s of type %s"
+                                            %(marker, type(marker)))
+                    if not isinstance(marked_expr, Expression):
+                        raise TypeError("'marked_expr', should be a Variable. "
+                                        "Got %s of type %s"
+                                        %(marked_expr, type(marked_expr)))
                 expr = expr._auto_simplified(
                         requirements=requirements,
                         stored_replacements=dict(),
-                        auto_simplify_top_level=auto_simplify_top_level)
+                        auto_simplify_top_level=auto_simplify_top_level,
+                        markers_and_marked_expr=markers_and_marked_expr)
         return expr
 
     def _manual_equality_replaced(self, equality_repl_map, *,
@@ -1226,11 +1240,11 @@ class Expression(metaclass=ExprType):
         elif isinstance(self, Conditional):
             # Add the condition as an assumption for the equality
             # replacement of the value.
-            recursion_fn = lambda expr, requirements, stored_replacements : (
+            recursion_fn = lambda expr, requirements, stored_repls, _ : (
                          expr._manual_equality_replaced(
                                  equality_repl_map,
                                  requirements=requirements, 
-                                 stored_replacements=stored_replacements))
+                                 stored_replacements=stored_repls))
             subbed_sub_exprs = self._equality_replaced_sub_exprs(
                     recursion_fn, requirements=requirements,
                     stored_replacements=stored_replacements)
@@ -1285,7 +1299,8 @@ class Expression(metaclass=ExprType):
     
     def _auto_simplified(
             self, *, requirements, stored_replacements,
-            auto_simplify_top_level=USE_DEFAULTS):
+            auto_simplify_top_level=USE_DEFAULTS,
+            markers_and_marked_expr = None):
         '''
         Helper method for equality_replaced which handles the automatic
         simplification replacements.
@@ -1300,6 +1315,15 @@ class Expression(metaclass=ExprType):
             # This expression should be preserved, so don't 
             # auto-simplify.
             return self
+        elif markers_and_marked_expr is not None:
+            markers, marked_expr = markers_and_marked_expr
+            if free_vars(marked_expr).isdisjoint(markers):
+                # This is unmarked territory; preserve it.
+                if self != marked_expr:
+                    raise ValueError(
+                            "The 'marked_expr' is invalid: "
+                            "%s ≠ %s"%(self, marked_expr))
+                return self
         elif self in stored_replacements:
             # We've handled this one before, so reuse it.
             return stored_replacements[self]
@@ -1308,7 +1332,8 @@ class Expression(metaclass=ExprType):
         new_requirements = []
         expr = self._auto_simplified_sub_exprs(
                 requirements=new_requirements, 
-                stored_replacements=stored_replacements)
+                stored_replacements=stored_replacements,
+                markers_and_marked_expr=markers_and_marked_expr)
         if (expr != self) and (expr in defaults.preserved_exprs):
             # The new expression should be preserved, so don't make
             # any further auto-simplification.
@@ -1389,7 +1414,8 @@ class Expression(metaclass=ExprType):
             return self
 
     def _auto_simplified_sub_exprs(
-            self, *, requirements, stored_replacements):
+            self, *, requirements, stored_replacements,
+            markers_and_marked_expr):
         '''
         Helper method for _auto_simplified to handle auto-simplification
         replacements for sub-expressions.
@@ -1399,8 +1425,11 @@ class Expression(metaclass=ExprType):
         subbed_sub_exprs = \
             tuple(sub_expr._auto_simplified(
                     requirements=requirements, 
-                    stored_replacements=stored_replacements)
-                  for sub_expr in sub_exprs)
+                    stored_replacements=stored_replacements,
+                    markers_and_marked_expr=self._update_marked_expr(
+                            markers_and_marked_expr, 
+                            lambda _expr : _expr._sub_expressions[_k]))
+                  for _k, sub_expr in enumerate(sub_exprs))
         if all(subbed_sub._style_id == sub._style_id for
                subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
             # Nothing change, so don't remake anything.
@@ -1408,7 +1437,21 @@ class Expression(metaclass=ExprType):
         return self.__class__._checked_make(
             self._core_info, subbed_sub_exprs,
             style_preferences=self._style_data.styles)
-            
+
+    def _update_marked_expr(self, markers_and_marked_expr,
+                            sub_expr_fn):
+        if markers_and_marked_expr is None:
+            return None
+        try:
+            markers, marked_expr = markers_and_marked_expr
+            marked_expr = sub_expr_fn(marked_expr)
+            assert isinstance(marked_expr, Expression)
+            return (markers, marked_expr)
+        except:
+            raise ValueError(
+                    "The 'marked_expr' is invalid: "
+                    "%s doesn't match with %s"%(marked_expr, self))
+    
     def copy(self):
         '''
         Make a copy of the Expression with the same styles.
