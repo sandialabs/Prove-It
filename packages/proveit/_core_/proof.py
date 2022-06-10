@@ -1278,7 +1278,9 @@ class Instantiation(Proof):
     
     @staticmethod
     def get_instantiation(orig_judgment, num_forall_eliminations,
-                          repl_map, equiv_alt_expansions):
+                          repl_map, equiv_alt_expansions,
+                          simplify_only_where_marked,
+                          markers_and_marked_expr):
         '''
         Create or retrieve an Instantiation.  If we have performed
         the Instantiation previously, return it; otherwise, create
@@ -1297,6 +1299,8 @@ class Instantiation(Proof):
                                    'replacements', 'preserved_exprs')
         important_configs = [getattr(defaults, attr) for attr
                              in important_default_attrs]
+        if simplify_only_where_marked:
+            important_configs.append(markers_and_marked_expr)
         # Make the replacements and preserved_exprs sets hashable.
         for _k in (2, 3):
             important_configs[_k] = tuple(
@@ -1316,7 +1320,9 @@ class Instantiation(Proof):
                     return inst
         inst = Instantiation(orig_judgment, num_forall_eliminations,
                              repl_map, equiv_alt_expansions,
-                             mapping, mapping_key_order)
+                             mapping, mapping_key_order,
+                             simplify_only_where_marked,
+                             markers_and_marked_expr)
         assert inst.mapping == mapping
         if not defaults.simplify_with_known_evaluations:
             Instantiation.instantiations.setdefault(key, set()).add(inst)
@@ -1424,7 +1430,8 @@ class Instantiation(Proof):
     
     def __init__(self, orig_judgment, num_forall_eliminations,
                  repl_map, equiv_alt_expansions,
-                 mapping, mapping_key_order):
+                 mapping, mapping_key_order,
+                 simplify_only_where_marked, markers_and_marked_expr):
         '''
         Create the instantiation proof step that eliminates some number
         of nested Forall operations and simultaneously replaces 
@@ -1513,8 +1520,9 @@ class Instantiation(Proof):
                 orig_judgment, relabel_params, relabel_param_replacements,
                 param_to_num_operand_entries,
                 num_forall_eliminations, repl_map,
-                equiv_alt_expansions, requirements,
-                equality_repl_requirements)
+                equiv_alt_expansions, 
+                simplify_only_where_marked, markers_and_marked_expr,
+                requirements, equality_repl_requirements)
         except LambdaApplicationError as e:
             raise InstantiationFailure(orig_judgment, repl_map,
                                        defaults.assumptions, str(e))
@@ -1617,6 +1625,8 @@ class Instantiation(Proof):
                            param_to_num_operand_entries,
                            num_forall_eliminations,
                            repl_map, equiv_alt_expansions,
+                           simplify_only_where_marked, 
+                           markers_and_marked_expr,
                            requirements, equality_repl_requirements):
         '''
         Return the instantiated version of the right side of the
@@ -1650,7 +1660,8 @@ class Instantiation(Proof):
             raise InstantiationFailure(original_judgment, repl_map,
                                        defaults.assumptions, msg)
         
-        def instantiate(expr):
+        def instantiate(expr, _simplify_only_where_marked=False,
+                        _markers_and_marked_expr=None):
             '''
             Instantiate the given expression by applying an
             ad-hoc Lambda mapping of the active params
@@ -1667,7 +1678,9 @@ class Instantiation(Proof):
             new_equality_repl_requirements = []
             eq_replaced = instantiated.equality_replaced(
                     requirements=new_equality_repl_requirements,
-                    auto_simplify_top_level=False)
+                    auto_simplify_top_level=False,
+                    simplify_only_where_marked=_simplify_only_where_marked,
+                    markers_and_marked_expr=_markers_and_marked_expr)
             requirements.extend(new_equality_repl_requirements)
             equality_repl_requirements.update(new_equality_repl_requirements)
             return eq_replaced
@@ -1848,7 +1861,8 @@ class Instantiation(Proof):
         # Make final instantiations in the inner instance expression.
         # Add to the lambda-application parameters anything that has
         # not yet been used
-        return instantiate(expr)
+        return instantiate(expr, simplify_only_where_marked,
+                           markers_and_marked_expr)
 
 
 class Generalization(Proof):

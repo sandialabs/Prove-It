@@ -310,7 +310,8 @@ class ExprRange(Expression):
                 style_preferences=self._style_data.styles)
         return replaced
 
-    def _auto_simplified_sub_exprs(self, *, requirements, stored_replacements):
+    def _auto_simplified_sub_exprs(self, *, requirements, stored_replacements,
+                                   markers_and_marked_expr):
         '''
         Properly handle the ExprRange scope while doing 
         auto-simplification replacements.  This combines the behavior
@@ -318,11 +319,14 @@ class ExprRange(Expression):
         '''
         # Standard approach for the subbed indices.
         subbed_indices = \
-            tuple(sub_expr._auto_simplified(
+            tuple(sub_expr_fn(self)._auto_simplified(
                     requirements=requirements, 
-                    stored_replacements=stored_replacements)
-                  for sub_expr in (self.true_start_index, 
-                                   self.true_end_index))
+                    stored_replacements=stored_replacements,
+                    markers_and_marked_expr=self._update_marked_expr(
+                            markers_and_marked_expr, sub_expr_fn))
+                  for sub_expr_fn in (
+                          lambda _expr : _expr.true_start_index,
+                          lambda _expr : _expr.true_end_index))
         parameter = self.parameter
         # Special assumptions for the body.  We can't use
         # assumptions involving the parameter except the
@@ -337,7 +341,10 @@ class ExprRange(Expression):
             # the stored_replacements from before.
             subbed_body = self.body._auto_simplified(
                     requirements=requirements, 
-                    stored_replacements=dict())
+                    stored_replacements=dict(),
+                    markers_and_marked_expr=self._update_marked_expr(
+                           markers_and_marked_expr,
+                           lambda _expr : _expr.body))
             subbed_lambda = Lambda(parameter, subbed_body)
         subbed_sub_exprs = (subbed_lambda, *subbed_indices)
         sub_exprs = self._sub_expressions

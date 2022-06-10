@@ -831,6 +831,8 @@ class Judgment:
 
     @prover
     def instantiate(self, repl_map=None, *, num_forall_eliminations=None,
+                    simplify_only_where_marked=False,
+                    markers_and_marked_expr=None,
                     **defaults_config):
         '''
         Performs an instantiation derivation step to be proven under the 
@@ -861,6 +863,14 @@ class Judgment:
         in the process via equality judgements where the left-hand-side
         is the expression being replaced and the right-hand-side is the
         replacement.
+
+        If simplify_only_where_marked= is True, Prove-It will only 
+        simplify "marked" parts of an expression.  
+        'markers_and_marked_expr' must then be a tuple: Variable 
+        markers, and an expression that matches pre-simplified 
+        instantiated expression except where marked with the markers.
+        Only sub-expressions containing a marker may be simplified
+        (if auto_simplify=True).
         
         Returns the proven instantiated Judgment, or throws an exception
         if the proof fails.  For the proof to succeed, all conditions of
@@ -1026,7 +1036,9 @@ class Judgment:
                 Instantiation.get_instantiation(
                         self, num_forall_eliminations=num_forall_eliminations,
                         repl_map=processed_repl_map,
-                        equiv_alt_expansions=equiv_alt_expansions))
+                        equiv_alt_expansions=equiv_alt_expansions,
+                        simplify_only_where_marked=simplify_only_where_marked,
+                        markers_and_marked_expr=markers_and_marked_expr))
         finally:
             # Revert the preserved_exprs set back to what it was.
             defaults.preserved_exprs.difference_update(
