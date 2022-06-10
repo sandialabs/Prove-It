@@ -1743,9 +1743,10 @@ class ExprRange(Expression):
                     self, repl_map,
                     "Failure to expand %s because there is no explicit "
                     "expansion for %s.  The known expansions for "
-                    "this variable are %s.  "
+                    "this variable are %s.\n"
                     "(Note that multiple, equivalent expansion forms "
-                    "may be provided to fulfill this requirement)."
+                    "may be provided to fulfill this requirement "
+                    "and ExprTuple.align_ranges may be useful)."
                     % (self, var_tuple, var_replacements))
             repl = inner_repl_map.pop(var_tuple)
             if not isinstance(repl, ExprTuple):
@@ -1764,7 +1765,10 @@ class ExprRange(Expression):
                 "When expanding IndexedVars within an ExprRange whose "
                 "parameter is the index, their expansion ExprRange "
                 "indices must all match. %s vs %s do not match as "
-                "respective expansions for %s and %s."
+                "respective expansions for %s and %s.\n"
+                "ExprTuple.align_ranges may be useful.\n"
+                "Using multiple, equivalent expansion forms could also "
+                "help."
                 % (first_expansion, expansion,
                    first_indexed_var_or_range, indexed_var_or_range))
 

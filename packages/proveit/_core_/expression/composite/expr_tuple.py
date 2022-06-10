@@ -658,6 +658,7 @@ class ExprTuple(Composite, Expression):
                              ProofFailure, UnsatisfiedPrerequisites)
         from proveit.logic import (
                 And, Or, Equals, NotEquals, deduce_equal_or_not)
+        from proveit.numbers import Less
         if self == other_tuple:
             return Equals(self, other_tuple).conclude_via_reflexivity
         if not isinstance(other_tuple, ExprTuple):
@@ -665,10 +666,17 @@ class ExprTuple(Composite, Expression):
                             "not a %s"%other_tuple.__class__)
         _i = self.num_elements()
         _j = other_tuple.num_elements()
-        size_relation = deduce_equal_or_not(_i, _j)
-        if isinstance(size_relation.expr, NotEquals):
+        try:
+            deduce_equal_or_not(_i, _j)
+        except UnsatisfiedPrerequisites:
+             Less.sort([_i, _j]) # try sorting
+        if NotEquals(_i, _j).proven():
             # Not equal because the lengths are different.
             return self.not_equal(other_tuple)
+        elif not Equals(_i, _j).proven():
+            raise UnsatisfiedPrerequisites(
+                    "Unable to prove wether or not the lengths of "
+                    "%s and %s are equal"%(self, other_tuple))
         
         def raise_non_corresponding():
             raise NotImplementedError(
@@ -785,7 +793,7 @@ class ExprTuple(Composite, Expression):
         raise NotImplementedError(
                     "ExprTuple.deduce_equal_or_not is not implemented "
                     "for ExprTuples that have a different number of "
-                    "elements.")
+                    "entries.")
 
     @relation_prover
     def not_equal(self, other_tuple, *,
@@ -796,8 +804,9 @@ class ExprTuple(Composite, Expression):
         Prove and return this ExprTuple not equal to the other
         ExprTuple.
         '''
-        from proveit import a, b, i, j
+        from proveit import a, b, i, j, UnsatisfiedPrerequisites
         from proveit.logic import NotEquals, deduce_equal_or_not
+        from proveit.numbers import Less
         from proveit.core_expr_types.tuples import (
                 tuple_neq_with_diff_len, tuple_neq_via_any_elem_neq)
         if not isinstance(other_tuple, ExprTuple):
@@ -807,8 +816,11 @@ class ExprTuple(Composite, Expression):
         _b = other_tuple
         _i = _a.num_elements()
         _j = _b.num_elements()
-        size_relation = deduce_equal_or_not(_i, _j)
-        if isinstance(size_relation.expr, NotEquals):
+        try:
+            deduce_equal_or_not(_i, _j)
+        except UnsatisfiedPrerequisites:
+             Less.sort([_i, _j]) # try sorting
+        if NotEquals(_i, _j).proven():
             # Not equal because the lengths are different.
             if neq_with_diff_len_thm is None:
                 neq_with_diff_len_thm = tuple_neq_with_diff_len
@@ -1005,9 +1017,209 @@ class ExprTuple(Composite, Expression):
         _i = lhs.num_elements()
         _a = lhs
         _b = rhs
+        
+        replacements = list(defaults.replacements)
+        _a, _b = ExprTuple.align_ranges(
+                _a, _b, reversed_equations=replacements)        
         if eq_via_elem_eq_thm is None:
             eq_via_elem_eq_thm = tuple_eq_via_elem_eq
-        return eq_via_elem_eq_thm.instantiate({i:_i, a:_a, b:_b})
+        return eq_via_elem_eq_thm.instantiate({i:_i, a:_a, b:_b},
+                                              replacements=replacements)
+
+    @staticmethod
+    def align_ranges(*expr_tuples, equations=None, 
+                     reversed_equations=None):
+        '''
+        Given a collection of ExprTuples that all represent the same 
+        number of elements, align any expression ranges so they all
+        of the same start and end indices.  Partition and/or shift 
+        ranges as necessary to make sure they all line up.
+        
+        Returns a collection of ExprTuples that equate to the originals,
+        respectively, but are aligned to each other.
+        If equations is provided as a list, the equations from
+        each original to its 'aligned' (returned) version is appended.
+        If reversed_equations is provided as a list, the equations from
+        each 'aligned' (returned) version to its original is appended.
+        
+        For example (as might be appended to 'equations'):
+            (a, b_1, ..., b_n, c) = (a, b_1, ..., b_{n-1}, b_n, c)
+            (x_1, ..., x_n, y, z) = (x_1, x_{1+1}, ..., x_{n-1+1}, y, z)
+        
+        As a convention, we will use the start indices from ExprRanges
+        within the first of the given ExprTuples to set all of the start
+        indices.
+        
+        Such transformations may be useful before calling instantiate
+        on something which has ExprRanges involving multiple indexed 
+        parameters.
+        For example:
+            forall_{n in N+} forall_{x1, ..., x_{n+1}
+               [(x_1 = x_{1+1}) and ... and x_n = x_{n+1}] =>
+               x_1 = x_{n+1}
+            Here, the alternative equivalent expansions should be 
+            provided for (x_1, ..., x_n, x_{n+1}) 
+            and (x_1, x_{1+1}, ... x_{n+1}) such that the x_1, ... x_n
+            portion of the former lines up with the 
+            x_{1+1}, ..., x_{n+1} portion of the latter.
+        '''
+        from proveit import (ExprRange, ProofFailure, 
+                             UnsatisfiedPrerequisites)
+        from proveit.relation import TransRelUpdater
+        from proveit.logic import Equals
+        from proveit.numbers import zero, one, Less, LessEq, Add, Neg
+        if len(expr_tuples) == 0:
+            return tuple() # nothing given, nothing returned.
+
+        if equations is not None:
+            if not isinstance(equations, list):
+                raise TypeError("Expecting 'equations' to be a list so "
+                                "we can append to it")
+        if reversed_equations is not None:
+            if not isinstance(reversed_equations, list):
+                raise TypeError("Expecting 'reversed_equations' to be "
+                                "a list so we can append to it.")
+        
+        def raiseFailureToAlign(msg):
+            raise UnsatisfiedPrerequisites(
+                    "Unable to align these ExprTuples: %s.  %s."%
+                    (expr_tuples, msg))
+
+        remaining_entries_reversed = []
+        trans_rel_updaters = []
+        for expr_tuple in expr_tuples:
+            remaining_entries_reversed.append(list(reversed(
+                    expr_tuple.entries)))
+            trans_rel_updaters.append(TransRelUpdater(expr_tuple))
+        idx = 0
+        while True > 0:
+            # Find the minimum number of elements contained in any
+            # of the first entries of what remains (the last in the
+            # reversed direction).  Where there are empty-range entries
+            # reduce them and move on.
+            min_entry_length = None
+            for _k, (reversed_entries, updater) in enumerate(
+                    zip(remaining_entries_reversed, trans_rel_updaters)):
+                print(_k, updater.expr)
+                while True:
+                    if len(reversed_entries) == 0:
+                        entry = None
+                        break
+                    entry = reversed_entries[-1]
+                    if isinstance(entry, ExprRange):
+                        num_elements = entry.num_elements(proven=False)
+                        # First see if there are 0 elements in this entry
+                        try:
+                            relation_with_zero = Less.sort(
+                                    [zero, num_elements])
+                        except (ProofFailure, UnsatisfiedPrerequisites):
+                            raiseFailureToAlign(
+                                    "Unable to determine sorted order "
+                                    "%s and %s"
+                                    %(num_elements, zero))
+                        if isinstance(relation_with_zero.expr, Equals):
+                            # There are 0 elements in this entry.
+                            # reduce it.
+                            updater.update(updater.inner_expr().entries[idx].
+                                           reduction())
+                            reversed_entries.pop(-1)
+                            continue # grab the next entry
+                    break
+                if entry is None:
+                    # Indicate that we got the end on one of them.
+                    # If we got to the end on one, we must make it to
+                    # the end on all of them.
+                    if min_entry_length is None:
+                        min_entry_length = 0
+                    else:
+                        # Got to the end this one but not previously.
+                        raiseFailureToAlign("Lengths don't appear to be "
+                                            "equal")
+                    break
+                if min_entry_length == 0:
+                    # Got to the end on a previous one but not this one.
+                    raiseFailureToAlign("Lengths don't appear to be "
+                                        "equal")
+                print(_k, updater.expr)
+                if isinstance(entry, ExprRange):
+                    if min_entry_length not in (None, one):
+                        # See if this is below the previous minimum.
+                        try:
+                            relation_with_min = Less.sort(
+                                    [min_entry_length, num_elements]).expr
+                        except (ProofFailure, UnsatisfiedPrerequisites):
+                            raiseFailureToAlign(
+                                    "Unable to determine sorted order "
+                                    "%s and %s"
+                                    %(num_elements, min_entry_length))
+                        if not isinstance(relation_with_min, Equals) and (
+                                relation_with_min.normal_lhs == num_elements):
+                            # num_elements < min_entry_length:
+                            min_entry_length = num_elements
+                else:
+                    min_entry_length = one
+            if min_entry_length == 0:
+                # Got to the end of all of the ExprTuples.
+                break
+
+            # We've eliminated zero-length ranges and determined the
+            # minimum entry length.  Now let's establish the next entry.
+            start_index = end_index = None
+            for _k, (reversed_entries, updater) in enumerate(
+                    zip(remaining_entries_reversed, trans_rel_updaters)):
+                print(_k, updater.expr)
+                entry = reversed_entries.pop(-1)
+                if isinstance(entry, ExprRange):
+                    try:
+                        relation_with_min = LessEq.sort(
+                                [min_entry_length, 
+                                 entry.num_elements(proven=False)],
+                                 reorder=False).expr
+                    except (ProofFailure, UnsatisfiedPrerequisites):
+                        raiseFailureToAlign(
+                                "Unable to determine sorted order "
+                                "%s and %s"
+                                %(num_elements, min_entry_length))
+                    if not isinstance(relation_with_min, Equals):
+                        # We must partition this ExprRange.
+                        if min_entry_length == one:
+                            partition_idx = entry.true_start_index
+                        else:
+                            partition_idx = Add(
+                                    entry.true_start_index, min_entry_length,
+                                    Neg(one)).simplified_index()
+                        updater.update(
+                                updater.inner_expr().entries[idx].partition(
+                                        partition_idx, 
+                                        force_to_treat_as_increasing=True))
+                        # Append the remainder of the ExprRange.
+                        reversed_entries.append(updater.expr.entries[idx+1])
+                    # See if we need to shift the ExprRange to
+                    # align start indices.
+                    if _k == 0:
+                        # Use the first start/end indices by convention.
+                        start_index = entry.true_start_index
+                        end_index = entry.true_end_index
+                    else:
+                        # Align indices to the first ExprTuple.
+                        updater.update(updater.inner_expr().entries[idx].
+                                       shift_equivalence(
+                                               new_start=start_index,
+                                               new_end=end_index))
+                else:
+                    assert min_entry_length == one
+            idx += 1
+        
+        # Append to equations, reversed_equations (where requested)
+        # and return the aligned ExprTuples.
+        if equations is not None:
+            for updater in trans_rel_updaters:
+                equations.append(updater.relation)
+        if reversed_equations is not None:
+            for updater in trans_rel_updaters:
+                equations.append(updater.relation.derive_reversed())
+        return [updater.expr for updater in trans_rel_updaters]
+                                          
     
     @equality_prover('expanded_range', 'expand_range')
     def range_expansion(self, **defaults_config):
