@@ -1275,6 +1275,8 @@ def deduce_equal_or_not(lhs, rhs, **defaults_config):
         return lhs.deduce_equality(Equals(lhs, rhs))
     if hasattr(lhs, 'deduce_equal_or_not'):
         return lhs.deduce_equal_or_not(rhs)
+    if hasattr(rhs, 'deduce_equal_or_not'):
+        return rhs.deduce_equal_or_not(lhs).derive_reversed()
     raise UnsatisfiedPrerequisites(
             "We cannot readily prove whether or not %s=%s"
             %(lhs, rhs))

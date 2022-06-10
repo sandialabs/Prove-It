@@ -1,6 +1,6 @@
 from proveit import (defaults, Literal, Operation, ProofFailure, 
-                     USE_DEFAULTS, prover)
-from proveit.logic import IrreducibleValue, Equals
+                     UnsatisfiedPrerequisites, USE_DEFAULTS, prover)
+from proveit.logic import IrreducibleValue, Equals, NotEquals
 from proveit import a, b
 import math
 
@@ -39,7 +39,19 @@ class Numeral(Literal, IrreducibleValue):
         if not_eq_stmt.lhs != self:
             # We need to reverse the statement.
             return not_eq_stmt.derive_reversed()
-        return not_eq_stmt       
+        return not_eq_stmt
+    
+    @prover
+    def deduce_equal_or_not(self, other, **defaults_config):
+        from proveit.numbers import Less
+        relation = Less.sort([self, other]).expr
+        if isinstance(relation, Equals):
+            return relation
+        if NotEquals(self, other).proven():
+            return self.not_equal(other)
+        raise UnsatisfiedPrerequisites(
+                "Unable to determine whether or not %s = %s"
+                %(self, other))
     
     def remake_arguments(self):
         '''

@@ -50,6 +50,12 @@ class TransRelUpdater:
         self.relations.append(relation)
         return self.expr
     
+    def inner_expr(self):
+        '''
+        Return the InnerExpr of the current expression.
+        '''
+        return self.expr.inner_expr()
+    
     @property
     def relation(self):
         from proveit.logic import Equals
