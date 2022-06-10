@@ -1329,11 +1329,23 @@ class Expression(metaclass=ExprType):
             return self
         elif markers_and_marked_expr is not None:
             markers, marked_expr = markers_and_marked_expr
+            if isinstance(marked_expr, ExprRange) and not (
+                    isinstance(self, ExprRange)):
+                # Singular reduction detected.
+                # Convert the marked entry to its body with
+                # its parameter replaced by one of the markers.
+                # (Note: we don't need to worry about zero-range
+                # reductions because that happens at this simplification
+                # stage, but singular reduction can happen before).
+                marked_expr = marked_expr.body.basic_replaced(
+                    {marked_expr.parameter:next(iter(markers))})
+                markers_and_marked_expr = (markers, marked_expr)
             if free_vars(marked_expr).isdisjoint(markers):
                 # This is unmarked territory; preserve it.
                 if self != marked_expr:
                     raise MarkedExprError(marked_expr, self)
                 return self
+
         elif self in stored_replacements:
             # We've handled this one before, so reuse it.
             return stored_replacements[self]
