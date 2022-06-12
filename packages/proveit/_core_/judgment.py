@@ -1022,15 +1022,22 @@ class Judgment:
                         processed_repl_map[iparam_var] = iparam_var
         temporarily_preserved_exprs = set()
         try:
-            # Do not simplify any of the replacement expressions since
-            # there is a directive to specifically use them.  However,
-            # defaults.replacements for double replacements.
-            temporarily_preserved_exprs = (
-                    set(processed_repl_map.values()) - 
-                    defaults.preserved_exprs)
-            for replacement in defaults.replacements:
-                temporarily_preserved_exprs.discard(replacement.lhs)
-            defaults.preserved_exprs.update(temporarily_preserved_exprs)
+            # Do not simplify any of the instantiation expressions since
+            # there is a directive to specifically use them.  For
+            # ExprTuple instantiations, do not simplify any of the
+            # individual entries (this is important, for example, if
+            # this is replacing just a portion of an ExprTuple).
+            def gen_repl_vals_and_entries():
+                for _repl_val in processed_repl_map.values():
+                    yield _repl_val
+                    if isinstance(_repl_val, ExprTuple):
+                        for _entry in _repl_val:
+                            yield _entry
+            # Explicit replacements, however, are allowed, unless there
+            # is an explicit expression preservation to override it.
+            defaults.preserved_exprs.update(
+                    set(gen_repl_vals_and_entries()) - set(
+                            repl.lhs for repl in defaults.replacements))
 
             return self._checkedTruth(
                 Instantiation.get_instantiation(
