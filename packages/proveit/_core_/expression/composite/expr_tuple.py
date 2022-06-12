@@ -1015,16 +1015,20 @@ class ExprTuple(Composite, Expression):
         
         # Try tuple_eq_via_elem_eq as the last resort.
         _i = lhs.num_elements()
-        _a = lhs
-        _b = rhs
+        _a_orig = lhs
+        _b_orig = rhs
         
-        replacements = list(defaults.replacements)
-        _a, _b = ExprTuple.align_ranges(
-                _a, _b, reversed_equations=replacements)        
+        _a, _b = ExprTuple.align_ranges(_a_orig, _b_orig)        
         if eq_via_elem_eq_thm is None:
             eq_via_elem_eq_thm = tuple_eq_via_elem_eq
-        return eq_via_elem_eq_thm.instantiate({i:_i, a:_a, b:_b},
-                                              replacements=replacements)
+        equality = eq_via_elem_eq_thm.instantiate({i:_i, a:_a, b:_b})
+        # Substitute back in the originals if changed for alignment
+        # purposes.
+        if _a != _a_orig:
+            equality = equality.inner_expr().lhs.substitute(_a_orig)
+        if _b != _b_orig:
+            equality = equality.inner_expr().rhs.substitute(_b_orig)
+        return equality
 
     @staticmethod
     def align_ranges(*expr_tuples, equations=None, 
@@ -1113,14 +1117,12 @@ class ExprTuple(Composite, Expression):
                             relation_with_zero = Less.sort(
                                     [zero, num_elements])
                         except (ProofFailure, UnsatisfiedPrerequisites):
-                            raiseFailureToAlign(
-                                    "Unable to determine sorted order "
-                                    "%s and %s"
-                                    %(num_elements, zero))
+                            # It may be ambiguous; that's ok.
+                            pass
                         if isinstance(relation_with_zero.expr, Equals):
                             # There are 0 elements in this entry.
                             # reduce it.
-                            updater.update(updater.inner_expr().entries[idx].
+                            updater.update(updater.inner_expr()[idx].
                                            reduction())
                             reversed_entries.pop(-1)
                             continue # grab the next entry
@@ -1156,11 +1158,14 @@ class ExprTuple(Composite, Expression):
                                 relation_with_min.normal_lhs == num_elements):
                             # num_elements < min_entry_length:
                             min_entry_length = num_elements
+                    elif min_entry_length is None:
+                        min_entry_length = num_elements
                 else:
                     min_entry_length = one
             if min_entry_length == 0:
                 # Got to the end of all of the ExprTuples.
                 break
+            assert min_entry_length is not None
 
             # We've eliminated zero-length ranges and determined the
             # minimum entry length.  Now let's establish the next entry.
@@ -1189,7 +1194,7 @@ class ExprTuple(Composite, Expression):
                                     entry.true_start_index, min_entry_length,
                                     Neg(one)).simplified_index()
                         updater.update(
-                                updater.inner_expr().entries[idx].partition(
+                                updater.inner_expr()[idx].partition(
                                         partition_idx, 
                                         force_to_treat_as_increasing=True))
                         # Append the remainder of the ExprRange.
@@ -1202,7 +1207,7 @@ class ExprTuple(Composite, Expression):
                         end_index = entry.true_end_index
                     else:
                         # Align indices to the first ExprTuple.
-                        updater.update(updater.inner_expr().entries[idx].
+                        updater.update(updater.inner_expr()[idx].
                                        shift_equivalence(
                                                new_start=start_index,
                                                new_end=end_index))
@@ -1217,7 +1222,7 @@ class ExprTuple(Composite, Expression):
                 equations.append(updater.relation)
         if reversed_equations is not None:
             for updater in trans_rel_updaters:
-                equations.append(updater.relation.derive_reversed())
+                reversed_equations.append(updater.relation.derive_reversed())
         return [updater.expr for updater in trans_rel_updaters]
                                           
     
