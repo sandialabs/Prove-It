@@ -288,6 +288,149 @@ class ExprTuple(Composite, Expression):
 
         return out_str
 
+    def _auto_simplified_sub_exprs(
+            self, *, requirements, stored_replacements,
+            markers_and_marked_expr):
+        '''
+        Helper method for _auto_simplified to handle auto-simplification
+        replacements for sub-expressions.
+        '''
+        from proveit import ExprRange, safe_dummy_vars
+        from proveit._core_.expression.expr import MarkedExprError
+        from proveit._core_.expression.lambda_expr.lambda_expr import (
+                get_param_var)
+        # When we have a marked expression to dictate which
+        # sub-expressions to auto-simplify, it requires extra care
+        # because ExprRanges may expand.
+        if markers_and_marked_expr is None:
+            return Expression._auto_simplified_sub_exprs(
+                    self, requirements=requirements, 
+                    stored_replacements=stored_replacements, 
+                    markers_and_marked_expr=None)
+        # Recurse into the sub-expressions.
+        # Use a trial-and-error strategy for dealing with
+        # the alignment ambiguity from expression range expansions.
+        subbed_entries = []
+        possibly_expanded_range = False
+        prev_possibly_expanded_ranges_start = None
+        _j = _k = 0
+        num_entries = self.num_entries()
+        entries = self.entries
+        orig_markers, orig_marked_expr = markers_and_marked_expr
+        markers = orig_markers
+        if not isinstance(orig_marked_expr, ExprTuple):
+            if orig_marked_expr in markers:
+                # The entire ExprTuple is marked, so this entire
+                # sub-expression is fair game for auto-simplification.
+                return Expression._auto_simplified_sub_exprs(
+                        requirements=requirements, 
+                        stored_replacements=stored_replacements, 
+                        markers_and_marked_expr=None)                
+            raise MarkedExprError(orig_marked_expr, self)
+        orig_marked_expr_entries = orig_marked_expr.entries
+        num_orig_marked_expr_entries = len(orig_marked_expr_entries)
+        while _j < num_entries:
+            entry = entries[_j]
+            if _k >= num_orig_marked_expr_entries:
+                # self goes beyond what marked expression accounts for.
+                raise MarkedExprError(orig_marked_expr, self)
+            marked_expr = orig_marked_expr.entries[_k]
+            if not possibly_expanded_range:
+                possibly_expanded_range = False
+                if isinstance(marked_expr, ExprRange):
+                    for _var_range in marked_expr._parameterized_var_ranges():
+                        if get_param_var(_var_range) in markers:
+                            # This is an ExprRange that may have been
+                            # expanded.
+                            possibly_expanded_range = True
+            if possibly_expanded_range and (
+                    prev_possibly_expanded_ranges_start is None):
+                prev_possibly_expanded_ranges_start = _j
+            try:
+                while True:
+                    try:
+                        subbed_entry = entry._auto_simplified(
+                            requirements=requirements, 
+                            stored_replacements=stored_replacements,
+                            markers_and_marked_expr=(markers, marked_expr))
+                        break
+                    except MarkedExprError as e:
+                        if possibly_expanded_range and isinstance(
+                                marked_expr, ExprRange):
+                            # This trial failed, but we need to try
+                            # different possibly forms from an ExprRange
+                            # expansion.
+                            marker = next(iter(markers))
+                            if marked_expr.true_start_index not in markers or (
+                                    marked_expr.true_end_index not in markers):
+                                # First, try replacing the start and end
+                                # with markers -- we don't have to match
+                                # them precisely if the range was 
+                                # expanded.
+                                new_marker1, new_marker2 = safe_dummy_vars(
+                                        2, marked_expr)
+                                marked_expr = ExprRange(
+                                        marked_expr.parameter, 
+                                        marked_expr.body, 
+                                        new_marker1, new_marker2)
+                                markers = tuple(orig_markers) + (
+                                        new_marker1, new_marker2)
+                                continue
+                            # Next try using the marked expressions
+                            # body with its parameter replaced by a
+                            # marker to capture the possibility to
+                            # individual elements extracted during the
+                            # expansion.
+                            marked_expr = marked_expr.body.basic_replaced(
+                                    {marked_expr.parameter:marker})
+                            continue
+                        raise e
+            except MarkedExprError as e:
+                if possibly_expanded_range:
+                    # Assume the expansion ended, so go to the next
+                    # marked expression entry.
+                    possibly_expanded_range = False
+                    # Increase _k without increasing _j.
+                    _k += 1
+                    continue
+                elif prev_possibly_expanded_ranges_start is not None:
+                    # It's conceivable that we thought the previous
+                    # expansion went further than it actually did.
+                    if _j > prev_possibly_expanded_ranges_start:
+                        # We can back up until we are taking the
+                        # previous expression range to be empty.
+                        _j -= 1 # backup
+                        subbed_entries.pop(-1)
+                        continue
+                raise e # It failed.
+            if not possibly_expanded_range:
+                # Got beyond any previous possibly-expanded range.
+                prev_possibly_expanded_ranges_start = None
+            # Lock in this next substituted... for now.
+            subbed_entries.append(subbed_entry)
+            # Only go to the next entry of the marked expression
+            # if we know we are beyond a possibly expanded range.
+            if not possibly_expanded_range:
+                _k += 1
+            _j += 1
+        if possibly_expanded_range:
+            # There cannot be anything more to the range expansion
+            # since 'self' has no more entries.
+            _k += 1
+        if _k < num_orig_marked_expr_entries:
+            # self falls short of what the marked expression
+            # accounts for.
+            raise MarkedExprError(orig_marked_expr, self)            
+        
+        sub_exprs, subbed_sub_exprs = entries, subbed_entries
+        if all(subbed_sub._style_id == sub._style_id for
+               subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
+            # Nothing change, so don't remake anything.
+            return self
+        return self.__class__._checked_make(
+            self._core_info, subbed_sub_exprs,
+            style_preferences=self._style_data.styles)
+
     def num_elements(self, proven=True, **defaults_config):
         '''
         Return the number of elements of this ExprTuple as an 
