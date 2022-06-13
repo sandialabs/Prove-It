@@ -359,6 +359,7 @@ class Judgment:
             proof = self.expr.prove(assumptions=[]).proof()
             if not proof.is_usable():
                 proof.proven_truth.raise_unusable_proof()
+            print("{} has been proven.".format(Judgment.theorem_being_proven))
             Judgment.theorem_being_proven._recordProof(proof)
         finally:
             Judgment.qed_in_progress = False
