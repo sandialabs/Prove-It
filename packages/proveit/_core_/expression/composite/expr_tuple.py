@@ -1104,7 +1104,6 @@ class ExprTuple(Composite, Expression):
             min_entry_length = None
             for _k, (reversed_entries, updater) in enumerate(
                     zip(remaining_entries_reversed, trans_rel_updaters)):
-                print(_k, updater.expr)
                 while True:
                     if len(reversed_entries) == 0:
                         entry = None
@@ -1118,8 +1117,9 @@ class ExprTuple(Composite, Expression):
                                     [zero, num_elements])
                         except (ProofFailure, UnsatisfiedPrerequisites):
                             # It may be ambiguous; that's ok.
-                            pass
-                        if isinstance(relation_with_zero.expr, Equals):
+                            relation_with_zero = None
+                        if relation_with_zero is not None and (
+                                isinstance(relation_with_zero.expr, Equals)):
                             # There are 0 elements in this entry.
                             # reduce it.
                             updater.update(updater.inner_expr()[idx].
@@ -1142,7 +1142,6 @@ class ExprTuple(Composite, Expression):
                     # Got to the end on a previous one but not this one.
                     raiseFailureToAlign("Lengths don't appear to be "
                                         "equal")
-                print(_k, updater.expr)
                 if isinstance(entry, ExprRange):
                     if min_entry_length not in (None, one):
                         # See if this is below the previous minimum.
@@ -1172,7 +1171,6 @@ class ExprTuple(Composite, Expression):
             start_index = end_index = None
             for _k, (reversed_entries, updater) in enumerate(
                     zip(remaining_entries_reversed, trans_rel_updaters)):
-                print(_k, updater.expr)
                 entry = reversed_entries.pop(-1)
                 if isinstance(entry, ExprRange):
                     try:
