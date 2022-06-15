@@ -329,10 +329,10 @@ class ExprTuple(Composite, Expression):
             raise MarkedExprError(orig_marked_expr, self)
         orig_marked_expr_entries = orig_marked_expr.entries
         num_orig_marked_expr_entries = len(orig_marked_expr_entries)
-        while _j < num_entries:
-            entry = entries[_j]
+        while _j < num_entries or _k < num_orig_marked_expr_entries:
             if _k >= num_orig_marked_expr_entries:
-                # self goes beyond what marked expression accounts for.
+                # self goes beyond what the marked expression accounts
+                # for.
                 raise MarkedExprError(orig_marked_expr, self)
             marked_expr = orig_marked_expr.entries[_k]
             if not possibly_expanded_range:
@@ -343,10 +343,17 @@ class ExprTuple(Composite, Expression):
                             # This is an ExprRange that may have been
                             # expanded.
                             possibly_expanded_range = True
+                            defaults.debug_orig_marked_expr = orig_marked_expr
+                            defaults.debug_self = self
             if possibly_expanded_range and (
                     prev_possibly_expanded_ranges_start is None):
                 prev_possibly_expanded_ranges_start = _j
             try:
+                if _j == num_entries:
+                    # Went to far. This will be caught below and we
+                    # may be able to back up.
+                    raise MarkedExprError(orig_marked_expr, self)
+                entry = entries[_j]
                 while True:
                     try:
                         subbed_entry = entry._auto_simplified(
@@ -360,7 +367,6 @@ class ExprTuple(Composite, Expression):
                             # This trial failed, but we need to try
                             # different possibly forms from an ExprRange
                             # expansion.
-                            marker = next(iter(markers))
                             if marked_expr.true_start_index not in markers or (
                                     marked_expr.true_end_index not in markers):
                                 # First, try replacing the start and end
@@ -381,6 +387,8 @@ class ExprTuple(Composite, Expression):
                             # marker to capture the possibility to
                             # individual elements extracted during the
                             # expansion.
+                            markers = orig_markers
+                            marker = next(iter(markers))
                             marked_expr = marked_expr.body.basic_replaced(
                                     {marked_expr.parameter:marker})
                             continue
@@ -413,14 +421,6 @@ class ExprTuple(Composite, Expression):
             if not possibly_expanded_range:
                 _k += 1
             _j += 1
-        if possibly_expanded_range:
-            # There cannot be anything more to the range expansion
-            # since 'self' has no more entries.
-            _k += 1
-        if _k < num_orig_marked_expr_entries:
-            # self falls short of what the marked expression
-            # accounts for.
-            raise MarkedExprError(orig_marked_expr, self)
 
         sub_exprs, subbed_sub_exprs = entries, subbed_entries
         if all(subbed_sub._style_id == sub._style_id for
