@@ -1034,11 +1034,14 @@ class Judgment:
                     if isinstance(_repl_val, ExprTuple):
                         for _entry in _repl_val:
                             yield _entry
+            temporarily_preserved_exprs = (
+                    set(gen_repl_vals_and_entries()) - 
+                    defaults.preserved_exprs)
             # Explicit replacements, however, are allowed, unless there
             # is an explicit expression preservation to override it.
-            defaults.preserved_exprs.update(
-                    set(gen_repl_vals_and_entries()) - set(
-                            repl.lhs for repl in defaults.replacements))
+            for replacement in defaults.replacements:
+                temporarily_preserved_exprs.discard(replacement.lhs)
+            defaults.preserved_exprs.update(temporarily_preserved_exprs)
 
             return self._checkedTruth(
                 Instantiation.get_instantiation(
