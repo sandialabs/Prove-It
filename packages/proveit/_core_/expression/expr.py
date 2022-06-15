@@ -1334,17 +1334,17 @@ class Expression(metaclass=ExprType):
                 if self != marked_expr:
                     raise MarkedExprError(marked_expr, self)
                 return self
-            if len(self._sub_expressions) == 0 and (
-                    len(marked_expr._sub_expressions) > 0):
-                # The marked expression has sub-expressions, but self
-                # does not.  That is a mismatch.
-                raise MarkedExprError(marked_expr, self)
-            if isinstance(marked_expr, Operation) and (
+            elif isinstance(marked_expr, Operation) and (
                     marked_expr.operator in markers):
                 # If the operator is a marker then all of this
                 # sub-expression is fair game for simplification
                 # (the operation itself may have been substituted).
                 markers_and_marked_expr = None
+            elif len(self._sub_expressions) == 0 and (
+                    len(marked_expr._sub_expressions) > 0):
+                # The marked expression has sub-expressions, but self
+                # does not.  That is a mismatch.
+                raise MarkedExprError(marked_expr, self)
 
         elif self in stored_replacements:
             # We've handled this one before, so reuse it.
