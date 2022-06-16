@@ -295,7 +295,7 @@ class ExprTuple(Composite, Expression):
         Helper method for _auto_simplified to handle auto-simplification
         replacements for sub-expressions.
         '''
-        from proveit import ExprRange, safe_dummy_vars
+        from proveit import ExprRange, safe_dummy_vars, free_vars
         from proveit._core_.expression.expr import MarkedExprError
         from proveit._core_.expression.lambda_expr.lambda_expr import (
                 get_param_var)
@@ -335,6 +335,7 @@ class ExprTuple(Composite, Expression):
                 # for.
                 raise MarkedExprError(orig_marked_expr, self)
             marked_expr = orig_marked_expr.entries[_k]
+            possibly_reduced_range = False
             if not possibly_expanded_range:
                 possibly_expanded_range = False
                 if isinstance(marked_expr, ExprRange):
@@ -345,6 +346,14 @@ class ExprTuple(Composite, Expression):
                             possibly_expanded_range = True
                             defaults.debug_orig_marked_expr = orig_marked_expr
                             defaults.debug_self = self
+                    if not possibly_expanded_range:
+                        index_free_vars = (
+                            free_vars(marked_expr.true_start_index).union(
+                                free_vars(marked_expr.true_end_index)))
+                        # The is an ExprRange that may be reduced
+                        # because the start or end index is marked.
+                        if not index_free_vars.isdisjoint(markers):
+                            possibly_reduced_range = True
             if possibly_expanded_range and (
                     prev_possibly_expanded_ranges_start is None):
                 prev_possibly_expanded_ranges_start = _j
@@ -362,13 +371,15 @@ class ExprTuple(Composite, Expression):
                             markers_and_marked_expr=(markers, marked_expr))
                         break
                     except MarkedExprError as e:
-                        if possibly_expanded_range and isinstance(
-                                marked_expr, ExprRange):
-                            # This trial failed, but we need to try
+                        if isinstance(marked_expr, ExprRange):
+                            # This trial failed, but we may need to try
                             # different possibly forms from an ExprRange
                             # expansion.
-                            if marked_expr.true_start_index not in markers or (
-                                    marked_expr.true_end_index not in markers):
+                            if possibly_expanded_range and (
+                                    marked_expr.true_start_index 
+                                    not in markers or (
+                                        marked_expr.true_end_index 
+                                        not in markers)):
                                 # First, try replacing the start and end
                                 # with markers -- we don't have to match
                                 # them precisely if the range was
@@ -387,11 +398,13 @@ class ExprTuple(Composite, Expression):
                             # marker to capture the possibility to
                             # individual elements extracted during the
                             # expansion.
-                            markers = orig_markers
-                            marker = next(iter(markers))
-                            marked_expr = marked_expr.body.basic_replaced(
+                            if possibly_expanded_range or (
+                                    possibly_reduced_range):
+                                markers = orig_markers
+                                marker = next(iter(markers))
+                                marked_expr = marked_expr.body.basic_replaced(
                                     {marked_expr.parameter:marker})
-                            continue
+                                continue
                         raise e
             except MarkedExprError as e:
                 if possibly_expanded_range:
