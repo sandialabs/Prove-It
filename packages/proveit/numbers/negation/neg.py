@@ -82,7 +82,7 @@ class Neg(NumberOperation):
         If negating an Add, distribute over the sum.
         If negating a Neg, undo the double negation.
         '''
-        from proveit.numbers import is_numeric_rational, Add, Mult
+        from proveit.numbers import is_numeric_rational, one, Add, Mult
         canonical_operand = self.operand.canonical_form()
         if (isinstance(canonical_operand, Mult) and 
                 is_numeric_rational(canonical_operand.factors[0])):
@@ -104,9 +104,14 @@ class Neg(NumberOperation):
             return Add(*negated_terms).canonical_form() 
         elif isinstance(canonical_operand, Neg):
             return canonical_operand.operand # double negation
-        elif canonical_operand != self.operand:
-            return Neg(canonical_operand)
-        return self
+        elif is_numeric_rational(canonical_operand):
+            if canonical_operand != self.operand:
+                return Neg(canonical_operand)
+            return self
+        else:
+            # in the following, probably don't need the
+            # final canonical_form() method call at the end
+            return Mult(Neg(one), canonical_operand) #.canonical_form()
 
     @relation_prover
     def deduce_in_number_set(self, number_set, **defaults_config):
