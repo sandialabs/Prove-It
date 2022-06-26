@@ -14,10 +14,24 @@ import types  # Added for python 3
 import re
 import os
 import sys
+import ast
 from collections import OrderedDict
 # from ._theory_storage import relurl#Comment out for Python 3
 from proveit._core_._theory_storage import relurl  # Comment in for Python 3
 
+def ast_unparse(ast_node):
+    '''
+    In version 3.9 we can just use ast.unparse.
+    In version 3.8 we can use ast.get_source_segment.
+    In version 3.7 we do this nonsense for now.
+    '''
+    if isinstance(ast_node, ast.Name):
+        return ast_node.id
+    if isinstance(ast_node, ast.Attribute):
+        return "%s.%s"%(ast_unparse(ast_node.value), ast_node.attr)
+    if isinstance(ast_node, ast.Tuple):
+        return '(' + ','.join(ast_unparse(elt) for elt in ast_node.elts) + ')'
+    raise NotImplementedError("'ast_unparse' is limited")
 
 class AssignmentBehaviorModifier:
     def __init__(self):
@@ -32,30 +46,33 @@ class AssignmentBehaviorModifier:
 
         def new_run_cell(self, raw_cell, *args, **kwargs):
             lines = raw_cell.split('\n')
-            # find the last non-indented python statement in the cell
-            non_indented_line_indices = [k for k, line in enumerate(
-                lines) if len(line) > 0 and re.match(r"\s", line[0]) is None]
-            if len(non_indented_line_indices) == 0:
-                # no non-indented lines.  just run the cell normally.
-                new_raw_cell = '\n'.join(lines)
-                return ipython.orig_run_cell(new_raw_cell, *args, **kwargs)
-            # get the last non-indented line and all indented lines that follow
-            last_python_stmt = '\n'.join(lines[non_indented_line_indices[-1]:])
-            # look for one or more variables on the left side of an assignment
-            if re.match(
-                r"[a-zA-Z_][a-zA-Z0-9_\.]*\s*(,\s*[a-zA-Z_][a-zA-Z0-9_\.]*)*\s*=",
-                    last_python_stmt) is not None:
-                lhs, rhs = last_python_stmt.split('=', 1)
-                if len(rhs) > 0 and rhs[0] != '=':  # "==" doesn't count
-                    lhs = lhs.strip()
-                    rhs = rhs.strip()
-                    if lhs != 'theory' and rhs.find(
-                            "proveit.Theory('.')") != 0:
-                        lines.append(assignment_fn(
-                            [varname.strip() for varname in lhs.split(',')]))
-            elif re.match(r"[a-zA-Z_][a-zA-Z0-9_\.]*$", last_python_stmt) is not None:
+            try:
+                last_ast_node = ast.parse(raw_cell).body[-1]
+            except SyntaxError:
+                last_ast_node = None
+            while isinstance(last_ast_node, ast.With):
+                # Dig into with blocks.
+                last_ast_node = last_ast_node.body[-1]
+            if isinstance(last_ast_node, ast.Assign):
+                try:
+                    target_strs = [ast_unparse(target) for target 
+                                   in last_ast_node.targets]
+                except NotImplementedError:
+                    target_strs = None # forget it
+                # Skip assignment of 'theory' which happens in the
+                # theory proof templates.
+                if target_strs is not None and 'theory' not in target_strs:
+                    lines.append(assignment_fn(target_strs))
+            elif isinstance(last_ast_node, ast.Expr):
                 # We may alter the last line for dispaly purposes.
-                lines.append(last_line_fn(last_python_stmt))
+                # This will work in Python 2.9:
+                #lines.append(last_line_fn(last_ast_node))
+                if isinstance(last_ast_node, ast.Expr):
+                    try:
+                        lines.append(last_line_fn(ast_unparse(
+                                last_ast_node.value)))
+                    except NotImplementedError:
+                        pass # forget it
             new_raw_cell = '\n'.join(lines)
             return ipython.orig_run_cell(new_raw_cell, *args, **kwargs)
 # ipython.run_cell = new.instancemethod(new_run_cell, ipython)#Comment out
@@ -734,36 +751,40 @@ class ProveItMagicCommands:
 
         from proveit._core_._theory_storage import TheoryFolderStorage
 
-        def stmt_sort(stmt):
-            return str(stmt)
-
         if isinstance(proof, Theorem):
-            try:
-                required_axioms, required_unproven_theorems = proof.all_requirements()
-            except BaseException:
-                display(HTML('<h3>This theorem has not been proven yet.</h3>'))
-                required_axioms, required_unproven_theorems = tuple(), tuple()
+            #try:
+            req_axioms, req_unproven_theorems, conservative_defs = (
+                    proof.all_requirements(sort_key=str))
+            #except BaseException:
+            #    display(HTML('<h3>This theorem has not been proven yet.</h3>'))
+            #    required_axioms, required_unproven_theorems = tuple(), tuple()
 
-            if len(required_unproven_theorems) > 0:
+            if len(req_unproven_theorems) > 0:
                 display(
                     HTML(
                         '<h3>Unproven conjectures required (directly or indirectly) to prove %s</h3>' %
                         name))
                 display(HTML('<dl>'))
-                for required_unproven_theorem in sorted(
-                        required_unproven_theorems, key=stmt_sort):
-                    self.display_special_stmt(
-                        required_unproven_theorem)
+                for req_stmt in req_unproven_theorems:
+                    self.display_special_stmt(req_stmt)
                 display(HTML('</dl>'))
-            if len(required_axioms) > 0:
+            if len(req_axioms) > 0:
                 display(
                     HTML(
                         '<h3>Axioms required (directly or indirectly) to prove %s</h3>' %
                         name))
                 display(HTML('<dl>'))
-                for required_axiom in sorted(required_axioms, key=stmt_sort):
-                    self.display_special_stmt(
-                        required_axiom)
+                for req_stmt in req_axioms:
+                    self.display_special_stmt(req_stmt)
+                display(HTML('</dl>'))
+            if len(conservative_defs) > 0:
+                display(
+                    HTML(
+                        '<h3>Conservative definitions used (but not '
+                        'logically required) to prove %s</h3>' %name))
+                display(HTML('<dl>'))
+                for req_stmt in conservative_defs:
+                    self.display_special_stmt(req_stmt)
                 display(HTML('</dl>'))
 
         dependents = proof.direct_dependents()
@@ -788,34 +809,41 @@ class ProveItMagicCommands:
         '''
         proof = thm_expr.proof()  # Axiom or Theorem
 
-        def stmt_sort(stmt):
-            return str(stmt)
-
         if isinstance(proof, Theorem):
             try:
-                required_axioms, required_unproven_theorems = proof.all_requirements()
+                req_axioms, req_unproven_theorems, conservative_defs = (
+                        proof.all_requirements(sort_key=str))
             except BaseException:
                 print('This theorem has not been proven yet.')
-                required_axioms, required_unproven_theorems = tuple(), tuple()
+                req_axioms, req_unproven_theorems, conservative_defs = (
+                        tuple(), tuple(), tuple())
 
-            if len(required_unproven_theorems) > 0:
+            if len(req_unproven_theorems) > 0:
                 print(
                     'Unproven conjectures required (directly or indirectly) to prove %s' %
                     name)
                 print(r'\begin{itemize}')
-                for required_unproven_theorem in sorted(
-                        required_unproven_theorems, key=stmt_sort):
+                for req_stmt in req_unproven_theorems:
                     self.display_special_stmt(
-                        Theory.find_theorem(required_unproven_theorem), 'latex')
+                        Theory.find_theorem(req_stmt), 'latex')
                 print(r'\end{itemize}')
-            if len(required_axioms) > 0:
+            if len(req_axioms) > 0:
                 print(
                     'Axioms required (directly or indirectly) to prove %s' %
                     name)
                 print(r'\begin{itemize}')
-                for required_axiom in sorted(required_axioms, key=stmt_sort):
+                for req_stmt in req_axioms:
                     self.display_special_stmt(
-                        Theory.find_axiom(required_axiom), 'latex')
+                        Theory.find_axiom(req_stmt), 'latex')
+                print(r'\end{itemize}')
+            if len(conservative_defs) > 0:
+                print(
+                    'Conservative definitions used (but not logically '
+                    'required) to prove %s' % name)
+                print(r'\begin{itemize}')
+                for req_stmt in conservative_defs:
+                    self.display_special_stmt(
+                        Theory.find_axiom(req_stmt), 'latex')
                 print(r'\end{itemize}')
 
         dependents = proof.direct_dependents()
