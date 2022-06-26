@@ -12,6 +12,8 @@ import urllib.request
 import urllib.parse
 import urllib.error
 import imp
+import bisect
+from collections import deque
 
 
 def relurl(path, start='.'):
@@ -2882,23 +2884,37 @@ class StoredTheorem(StoredSpecialStmt):
         remove_if_exists(os.path.join(self.path, 'eliminated_theorems.txt'))
 
     def all_requirements(self, *, dead_end_theorem_exprs=None,
-                         excluded_names=None):
+                         excluded_names=None, sort_key=None):
         '''
-        Returns the set of axioms that are required (directly or
-        indirectly) by the theorem.  Also, return the set of "dead-end"
-        theorems that are required (directly or indirectly).  A 
-        "dead-end" theorem is either unproven or has an expression that
-        matches one in the optionally provided `dead_end_theorem_exprs`.
+        Returns the axioms that are required (directly or indirectly) 
+        by the theorem.  Also, return the set of "dead-end" theorems 
+        that are required (directly or indirectly).  A "dead-end" 
+        theorem is either unproven or has an expression that matches 
+        one in the optionally provided `dead_end_theorem_exprs`.
+        Conservative definitions that are not logically necessary
+        for the proof are extracted from these sets and returned on
+        their own.
 
-        Returns this axiom set and theorem set as a tuple.
+        Returns the list of axioms, "dead-end" theorems, and
+        conservative definitions as a tuple.  These will be sorted
+        according to sort_key with the exception that a conservatively
+        defined literal will not appear before its definition in the
+        list of conservative definitions.
         '''
-        return StoredTheorem.requirements_of_theorems(
-            [self], dead_end_theorem_exprs=dead_end_theorem_exprs,
-            excluded_names=excluded_names)
+        from .theory import Theory
+        required_axioms, required_deadend_theorems = (
+                StoredTheorem.requirements_of_theorems(
+                        [self], dead_end_theorem_exprs=dead_end_theorem_exprs,
+                        excluded_names=excluded_names, sort_key=sort_key))
+        thm = Theory.find_theorem(str(self))
+        return StoredTheorem._extract_conservative_definitions(
+                thm.proven_truth.expr,
+                required_axioms, required_deadend_theorems,
+                sort_key=sort_key)
 
     @staticmethod
     def requirements_of_theorems(theorems, *, dead_end_theorem_exprs=None,
-                                 excluded_names=None):
+                                 excluded_names=None, sort_key=None):
         '''
         Returns the set of axioms that are required (directly or
         indirectly) by the theorems.  Also, return the set of "dead-end"
@@ -2975,6 +2991,106 @@ class StoredTheorem(StoredSpecialStmt):
                     if used_theorem_name not in excluded_names:
                         to_process.add(used_theorem_name)
         return (required_axioms, required_deadend_theorems)
+    
+    @staticmethod
+    def _extract_conservative_definitions(
+            expr, required_axioms, required_deadend_theorems, sort_key=None):
+        '''
+        Given a collection of required axioms and required "deadend"
+        theorems, extract those that are conservative extension
+        definitions.
+        Returns 
+        (conservative_defs, required_axioms, required_deadend_theorems)
+        where the conservative_defs have been removed from the required 
+        axioms and deadend theorems.  The conservative_defs will
+        be in an order in which a literal is not used in another
+        definiition before it is defined.  If 'sort_key' is provided,
+        it will be sorted according to the key apart from this
+        constraint.  The required_axioms and required_deadend_theorems 
+        that are returned will also be sorted according to this key.
+        '''
+        from proveit import used_literals
+        active_lits = set()#used_literals(expr)) # TESTING
+        # First see which literals are possibly defined conservatively,
+        # disqualifying any with multiple definitions.
+        lit_to_def = dict()
+        for req_stmt in itertools.chain(required_axioms, 
+                                        required_deadend_theorems):
+            lit = req_stmt.proven_truth.conservative_definition_lit()
+            if lit in active_lits:
+                # This literal is used in the proven statement, so
+                # it's important.
+                continue
+            if lit is not None:
+                lit_to_def[lit] = req_stmt
+        # Count the number of occurrences of a defined literal
+        # in required statements.
+        lit_to_num_occurrences = {lit:0 for lit in lit_to_def.keys()}
+        for req_stmt in itertools.chain(required_axioms, 
+                                        required_deadend_theorems):            
+            for lit in used_literals(req_stmt.proven_truth.expr):
+                if lit in lit_to_num_occurrences:
+                    lit_to_num_occurrences[lit] += 1
+        if sort_key is not None:
+            key_to_lit = {sort_key(lit_to_def[_lit]):_lit for _lit 
+                          in lit_to_num_occurrences.keys()}
+            if len(key_to_lit) != len(lit_to_num_occurrences):
+                raise ValueError("sort keys must be unique")
+        # Collect the literals with only 1 occurrence and sort them
+        # by the sort key.
+        available_def_lits = []
+        for lit, num in lit_to_num_occurrences.items():
+            assert num > 0, "Must be at least 1 occurrence from the def"
+            if num == 1:
+                available_def_lits.append(lit)
+        # Sort in reverse order so we can pop off the end.
+        if sort_key is None:
+            available_def_lit_keys = deque(available_def_lits)     
+        else:
+            available_def_lit_keys = deque(
+                    sorted([sort_key(lit_to_def[_lit]) for _lit 
+                            in available_def_lits]))
+
+        # Successively add to the definitions as they are available
+        # and in sorted order.
+        conservative_defs = []
+        while len(available_def_lit_keys) > 0:
+            # Pop off the last and then we will reverse the order
+            # later to be sure a literal comes before any occurrence.
+            lit_key = available_def_lit_keys.pop()
+            lit = key_to_lit[lit_key] if sort_key is not None else lit_key
+            _n = lit_to_num_occurrences.pop(lit)
+            assert _n==1, "Should have had 1 occurrence to be available"
+            cons_def = lit_to_def[lit]
+            conservative_defs.append(cons_def)
+            for _lit in used_literals(cons_def.proven_truth.expr):
+                if _lit in lit_to_num_occurrences:
+                    lit_to_num_occurrences[_lit] -= 1
+                    if lit_to_num_occurrences[_lit] == 1:
+                        # This now has 1 occurrence, so add it to
+                        # the available defined literals.
+                        if sort_key is None:
+                            available_def_lit_keys.append(_lit)
+                        else:
+                            bisect.insort(available_def_lit_keys, 
+                                          sort_key(lit_to_def[_lit]))
+        # Reverse the order.
+        conservative_defs = list(reversed(conservative_defs))
+        conservative_defs_set = set(conservative_defs)
+        # Return the conservative definitions as well as the required
+        # axioms and deadend-theorems in proper order and with the
+        # conservative definitions removed.
+        required_axioms = [req_axiom for req_axiom in required_axioms
+                           if req_axiom not in conservative_defs_set]
+        required_deadend_theorems = [
+                req_stmt for req_stmt in required_deadend_theorems
+                if req_stmt not in conservative_defs_set]
+        if sort_key is not None:
+            required_axioms = sorted(required_axioms, key=sort_key)
+            required_deadend_theorems = sorted(required_deadend_theorems, 
+                                               key=sort_key)
+        return (required_axioms, required_deadend_theorems,
+                conservative_defs)
 
     def all_used_or_presumed_theorem_names(self, names=None):
         '''
