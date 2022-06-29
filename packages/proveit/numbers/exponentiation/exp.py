@@ -26,6 +26,7 @@ class Exp(NumberOperation):
     _operator_ = Literal(string_format='Exp', theory=__file__)
 
     _simplification_directives_ = SimplificationDirectives(
+            reduce_double_exponent = True,
             distribute_exponent = False)
 
     def __init__(self, base, exponent, *, styles=None):
@@ -334,6 +335,14 @@ class Exp(NumberOperation):
                 # eliminating the absolute value.
                 expr = eq.update(expr.simplification())
             return eq.relation
+        elif isinstance(self.base, Exp) and (
+                Exp._simplification_directives_.reduce_double_exponent):
+            if ((InSet(self.exponent, Real).proven() and 
+                 InSet(self.base.exponent, Real).proven() and
+                 NotEquals(self.base.base, zero).proven()) or (
+                         InSet(self.base.base, RealPos))):
+                # (a^b)^c = a^{b*c}
+                return self.double_exponent_reduction()
         elif Exp._simplification_directives_.distribute_exponent:
             # Distribute the exponent as directed.
             return self.distribution()
@@ -529,7 +538,6 @@ class Exp(NumberOperation):
         Examples:
             (a*b*c)^f = a^f * b^f * c^f
             (a/b)^f = (a^f / b^f)
-            (a^b)^c = a^(b*c)
         '''
         from proveit.numbers import Mult, Div, NaturalPos, RealPos, Real
         import proveit.numbers.exponentiation as exp_pkg
@@ -585,41 +593,53 @@ class Exp(NumberOperation):
                     thm = exp_pkg.complex_power_of_quotient
                 return thm.instantiate(
                     {a: _a, b: _b, c: exponent})
-        elif isinstance(base, Exp):
-            _a = base.base
-            # if InSet(exponent, NaturalPos).proven():
-            #     _m, _n = base.exponent, exponent
-            #     return posnat_power_of_posnat_power.instantiate(
-            #         {a: _a, m: _m, n: _n})
-            # TRYING TO ANTICIPATE MORE POSSIBILITIES
-            if InSet(exponent, NaturalPos).proven():
-                if InSet(base.exponent, NaturalPos).proven():
-                    _m, _n = base.exponent, exponent
-                    return exp_pkg.posnat_power_of_posnat_power.instantiate(
-                        {a: _a, m: _m, n: _n})
-                else:
-                    _b, _c = base.exponent, exponent
-                    if InSet(base.exponent, RealPos).proven():
-                        thm = exp_pkg.pos_power_of_pos_power
-                    elif InSet(base.exponent, Real).proven():
-                        thm = exp_pkg.real_power_of_real_power
-                    else:  # Complex is the default
-                        thm = exp_pkg.complex_power_of_complex_power
-                    return thm.instantiate(
-                        {a: _a, b: _b, c: _c})
+        else:
+            # Nothing to distribute over.
+            return Equals(self, self).conclude_via_reflexivity()
+
+    @equality_prover('double_exponent_reduced', 'double_exponent_reduce')
+    def double_exponent_reduction(self, **defaults_config):
+        from proveit.numbers import NaturalPos, RealPos, Real
+        import proveit.numbers.exponentiation as exp_pkg
+        base = self.base
+        exponent = self.exponent
+        deduce_number_set(exponent)
+        if not isinstance(base, Exp):
+            raise ValueError("'double_exponent_reduction' only applicable "
+                             "when the 'base' is an exponential, not for %s"
+                             %self)
+        
+        _a = base.base
+        # if InSet(exponent, NaturalPos).proven():
+        #     _m, _n = base.exponent, exponent
+        #     return posnat_power_of_posnat_power.instantiate(
+        #         {a: _a, m: _m, n: _n})
+        # TRYING TO ANTICIPATE MORE POSSIBILITIES
+        if InSet(exponent, NaturalPos).proven():
+            if InSet(base.exponent, NaturalPos).proven():
+                _m, _n = base.exponent, exponent
+                return exp_pkg.posnat_power_of_posnat_power.instantiate(
+                    {a: _a, m: _m, n: _n})
             else:
                 _b, _c = base.exponent, exponent
-                if InSet(exponent, RealPos).proven():
+                if InSet(base.exponent, RealPos).proven():
                     thm = exp_pkg.pos_power_of_pos_power
-                elif InSet(exponent, Real).proven():
+                elif InSet(base.exponent, Real).proven():
                     thm = exp_pkg.real_power_of_real_power
                 else:  # Complex is the default
                     thm = exp_pkg.complex_power_of_complex_power
                 return thm.instantiate(
                     {a: _a, b: _b, c: _c})
         else:
-            # Nothing to distribute over.
-            return Equals(self, self).conclude_via_reflexivity()
+            _b, _c = base.exponent, exponent
+            if InSet(exponent, RealPos).proven():
+                thm = exp_pkg.pos_power_of_pos_power
+            elif InSet(exponent, Real).proven():
+                thm = exp_pkg.real_power_of_real_power
+            else:  # Complex is the default
+                thm = exp_pkg.complex_power_of_complex_power
+            return thm.instantiate(
+                {a: _a, b: _b, c: _c})
 
     """
     def distribute_exponent(self, assumptions=frozenset()):
