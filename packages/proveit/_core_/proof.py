@@ -1025,14 +1025,24 @@ class Theorem(Proof):
         '''
         return not self.is_fully_proven()
 
-    def all_requirements(self):
+    def all_requirements(self, *, sort_key=None):
         '''
-        Returns the set of axioms that are required (directly or indirectly)
-        by the theorem.  Also, if the given theorem is not completely proven,
-        return the set of unproven theorems that are required (directly or
-        indirectly).  Returns this axiom set and theorem set as a tuple.
+        Returns the axioms that are required (directly or indirectly) 
+        by the theorem.  Also, return the set of "dead-end" theorems 
+        that are required (directly or indirectly).  A "dead-end" 
+        theorem is either unproven or has an expression that matches 
+        one in the optionally provided `dead_end_theorem_exprs`.
+        Conservative definitions that are not logically necessary
+        for the proof are extracted from these sets and returned on
+        their own.
+
+        Returns the list of axioms, "dead-end" theorems, and
+        conservative definitions as a tuple.  These will be sorted
+        according to sort_key with the exception that a conservatively
+        defined literal will not appear before its definition in the
+        list of conservative definitions.
         '''
-        return self._stored_theorem().all_requirements()
+        return self._stored_theorem().all_requirements(sort_key=sort_key)
 
     def all_used_or_presumed_theorem_names(self, names=None):
         '''
@@ -1324,8 +1334,8 @@ class Instantiation(Proof):
                              simplify_only_where_marked,
                              markers_and_marked_expr)
         assert inst.mapping == mapping
-        if not defaults.simplify_with_known_evaluations:
-            Instantiation.instantiations.setdefault(key, set()).add(inst)
+        #if not defaults.simplify_with_known_evaluations:
+        #    Instantiation.instantiations.setdefault(key, set()).add(inst)
         return inst
 
     @staticmethod
@@ -2168,6 +2178,11 @@ class Generalization(Proof):
                 required_theorems, 
                 dead_end_theorem_exprs=converted_conditions,
                 excluded_names=excluded_names))
+        # Disregard conservative definitions.
+        required_axioms, required_deadend_theorems, _ = (
+                StoredTheorem._extract_conservative_definitions(
+                        instance_truth.expr, required_axioms, 
+                        required_deadend_theorems))
         for required_axiom in required_axioms:
             if required_axiom.proven_truth.expr in converted_conditions:
                 eliminated_axioms.append(required_axiom)
