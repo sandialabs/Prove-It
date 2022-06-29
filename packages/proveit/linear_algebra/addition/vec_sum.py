@@ -435,7 +435,8 @@ class VecSum(GroupSum):
                             _num_unfactored -= 1
 
                     # group the factorable factors
-                    if _num_factored > 0:
+                    # if _num_factored > 0:
+                    if _num_factored > 1:
                         expr = eq.update(
                             expr.inner_expr().summand.scalar.association(
                                 0, _num_factored,
