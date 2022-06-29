@@ -33,6 +33,7 @@ class Mult(NumberOperation):
 
     _simplification_directives_ = SimplificationDirectives(
             ungroup=True, 
+            combine_numeric_rationals=True,
             combine_exponents=True,
             # By default, sort such that numeric, rationals come first 
             # but otherwise maintain the original order.
@@ -450,15 +451,13 @@ class Mult(NumberOperation):
             return eq.relation  # done
         
         if expr != self:
-            if (must_evaluate or (
-                    isinstance(expr, Mult) and 
-                    not set(expr.factors.entries).issubset(
-                            self.factors.entries))):
+            if must_evaluate or (isinstance(expr, Mult) and
+                                 expr not in self.factors.entries):
                 # Try starting over with a call to
                 # shallow_simplification, but only if must_evaluate
-                # is True or we've done nothing but make some
-                # cancelations -- that way, the simplification stays
-                # shallow.
+                # is True or the new expression is a Mult not
+                # contained in the original (try to keep the 
+                # simplification shallow).
                 eq.update(expr.shallow_simplification(
                         must_evaluate=must_evaluate))
             return eq.relation
@@ -493,17 +492,14 @@ class Mult(NumberOperation):
                 "Cabability to evaluate %s is not implemented"%expr)
 
         order_key_fn = Mult._simplification_directives_.order_key_fn
-        if Mult._simplification_directives_.combine_exponents and (
-                not must_evaluate):
-            # Like factors are ones that are  implicit/explicit
+        if Mult._simplification_directives_.combine_exponents:
+            # Like factors are ones that are implicit/explicit
             # exponentials with the same base raised to a literal, 
             # rational power (everyting is implicitly raised to the 
             # power of 1).
             def likeness_key_fn(factor):
                 if isinstance(factor, Exp):
                     return factor.base
-                elif is_numeric_rational(factor):
-                    return one # combine all numerical rationals.
                 else:
                     return factor
             # Sort and combine like operands.
@@ -511,9 +507,28 @@ class Mult(NumberOperation):
                     expr, order_key_fn=order_key_fn, 
                     likeness_key_fn=likeness_key_fn,
                     preserve_likeness_keys=True, auto_simplify=True))
-        else:
-            # See if we should reorder the factors.
-            expr = eq.update(sorting_operands(expr, order_key_fn=order_key_fn))        
+        if not isinstance(expr, Mult):
+            # Simplified to a non-Mult. We're done.
+            return eq.relation
+        if Mult._simplification_directives_.combine_numeric_rationals:
+            # Combines numeric rationals as well as exactly like
+            # factors.
+            def likeness_key_fn(factor):
+                if is_numeric_rational(factor):
+                    return one
+                else:
+                    return factor
+            # Sort and combine like operands.
+            expr = eq.update(sorting_and_combining_like_operands(
+                    expr, order_key_fn=order_key_fn, 
+                    likeness_key_fn=likeness_key_fn,
+                    preserve_likeness_keys=True, auto_simplify=True))
+        if not isinstance(expr, Mult):
+            # Simplified to a non-Mult. We're done.
+            return eq.relation
+        # See if we should reorder the factors.
+        expr = eq.update(sorting_operands(expr, order_key_fn=order_key_fn))
+        
         """
         if Mult._simplification_directives_.irreducibles_in_front:
             # Move irreducibles to the front.
