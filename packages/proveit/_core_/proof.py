@@ -1861,6 +1861,7 @@ class Instantiation(Proof):
         # Make final instantiations in the inner instance expression.
         # Add to the lambda-application parameters anything that has
         # not yet been used
+        # simplify_only_where_marked = False # TEMPORARILY DISABLING THIS FEATURE
         return instantiate(expr, simplify_only_where_marked,
                            markers_and_marked_expr)
 
