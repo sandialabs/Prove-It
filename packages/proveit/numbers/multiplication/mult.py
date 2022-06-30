@@ -1161,9 +1161,14 @@ class Mult(NumberOperation):
             distribution = Mult(*left_factors, factors[idx], 
                                 *right_factors).distribution(
                                         num_left_factors)
+            if len(before_indices)==len(after_indices)==0:
+                # No factors are left out of the distribution.
+                # For example: a b (c + d) e f = a f c b e + a f d b e
+                eq.update(distribution)
+                return eq.relation
             # Now associate to include from left factors to right
             # factors and simultaneously replace with the distribution.
-            start = idx-num_left_factors
+            start = len(before_indices)
             length = num_left_factors + len(right_factors) + 1
             eq.update(expr.association(
                     start, length, replacements=[distribution],
