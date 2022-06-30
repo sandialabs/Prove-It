@@ -1167,6 +1167,42 @@ class Judgment:
             hypothesis = hypothesis.expr  # we want the expression for this purpose
         return self._checkedTruth(Deduction(self, hypothesis))
 
+    def conservative_definition_lit(self):
+        '''
+        If this Judgment is in the form of a conservative definition
+        for a Literal, then return that Literal; otherwise return None.
+        To be of the propere form, it must not have any assumptions,
+        and it must either be an equation with a Literal on the left
+        side or a universally quantified equation with the left side
+        being a function of a Literal applied to all of the quantified
+        variables.
+        '''
+        from proveit import Literal, Operation
+        from proveit.logic import Forall, Equals
+        if len(self.assumptions) > 0: return None
+        expr = self.expr
+        if isinstance(expr, Equals):
+            if isinstance(expr.lhs, Literal):
+                # Simple equation with Literal on the left side.
+                return expr.lhs
+        # Otherwise, to have the form of a conservative definition,
+        # it must be a universally quantified defining a function
+        # of a Liiteral applied to all of the quantified variables.
+        if not isinstance(expr, Forall):
+            return None
+        equality = expr.instance_expr
+        if not isinstance(equality, Equals):
+            return None # must universally quantify an equality
+        if (not isinstance(equality.lhs, Operation) 
+                or not isinstance(equality.lhs.operator, Literal)):
+            # Must define an Operation with a Literal operator.
+            return None
+        if equality.lhs.operands != expr.instance_params:
+            # The operands must match the instance parameters.
+            return None
+        return equality.lhs.operator
+
+    """
     @prover
     def eliminate_definition(self, definition, *,
                              as_implication_internally=False, 
@@ -1255,6 +1291,7 @@ class Judgment:
                    .with_wrap_before_operator())
         impl = gen.instantiate({var:repl}, auto_simplify=False)
         return impl.derive_consequent()
+    """
 
     @prover
     def eliminate(self, *skolem_constants, **defaults_config):

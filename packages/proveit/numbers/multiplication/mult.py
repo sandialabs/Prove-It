@@ -34,6 +34,7 @@ class Mult(NumberOperation):
 
     _simplification_directives_ = SimplificationDirectives(
             ungroup=True, 
+            combine_numeric_rationals=True,
             combine_exponents=True,
             # By default, sort such that numeric, rationals come first 
             # but otherwise maintain the original order.
@@ -451,15 +452,13 @@ class Mult(NumberOperation):
             return eq.relation  # done
         
         if expr != self:
-            if (must_evaluate or (
-                    isinstance(expr, Mult) and 
-                    not set(expr.factors.entries).issubset(
-                            self.factors.entries))):
+            if must_evaluate or (isinstance(expr, Mult) and
+                                 expr not in self.factors.entries):
                 # Try starting over with a call to
                 # shallow_simplification, but only if must_evaluate
-                # is True or we've done nothing but make some
-                # cancelations -- that way, the simplification stays
-                # shallow.
+                # is True or the new expression is a Mult not
+                # contained in the original (try to keep the 
+                # simplification shallow).
                 eq.update(expr.shallow_simplification(
                         must_evaluate=must_evaluate))
             return eq.relation
@@ -494,17 +493,14 @@ class Mult(NumberOperation):
                 "Cabability to evaluate %s is not implemented"%expr)
 
         order_key_fn = Mult._simplification_directives_.order_key_fn
-        if Mult._simplification_directives_.combine_exponents and (
-                not must_evaluate):
-            # Like factors are ones that are  implicit/explicit
+        if Mult._simplification_directives_.combine_exponents:
+            # Like factors are ones that are implicit/explicit
             # exponentials with the same base raised to a literal, 
             # rational power (everyting is implicitly raised to the 
             # power of 1).
             def likeness_key_fn(factor):
                 if isinstance(factor, Exp):
                     return factor.base
-                elif is_numeric_rational(factor):
-                    return one # combine all numerical rationals.
                 else:
                     return factor
             # Sort and combine like operands.
@@ -512,9 +508,28 @@ class Mult(NumberOperation):
                     expr, order_key_fn=order_key_fn, 
                     likeness_key_fn=likeness_key_fn,
                     preserve_likeness_keys=True, auto_simplify=True))
-        else:
-            # See if we should reorder the factors.
-            expr = eq.update(sorting_operands(expr, order_key_fn=order_key_fn))        
+        if not isinstance(expr, Mult):
+            # Simplified to a non-Mult. We're done.
+            return eq.relation
+        if Mult._simplification_directives_.combine_numeric_rationals:
+            # Combines numeric rationals as well as exactly like
+            # factors.
+            def likeness_key_fn(factor):
+                if is_numeric_rational(factor):
+                    return one
+                else:
+                    return factor
+            # Sort and combine like operands.
+            expr = eq.update(sorting_and_combining_like_operands(
+                    expr, order_key_fn=order_key_fn, 
+                    likeness_key_fn=likeness_key_fn,
+                    preserve_likeness_keys=True, auto_simplify=True))
+        if not isinstance(expr, Mult):
+            # Simplified to a non-Mult. We're done.
+            return eq.relation
+        # See if we should reorder the factors.
+        expr = eq.update(sorting_operands(expr, order_key_fn=order_key_fn))
+        
         """
         if Mult._simplification_directives_.irreducibles_in_front:
             # Move irreducibles to the front.
@@ -1072,7 +1087,9 @@ class Mult(NumberOperation):
         return (idx, num) if also_return_num else idx
 
     @equality_prover('distributed', 'distribute')
-    def distribution(self, idx=None, **defaults_config):
+    def distribution(self, idx=None, *, 
+                     left_factors=None, right_factors=None, 
+                     **defaults_config):
         r'''
         Distribute through the operand at the given index.
         Returns the equality that equates self to this new version.
@@ -1081,14 +1098,79 @@ class Mult(NumberOperation):
             a (b - c) d = a b d - a c d
             a (\sum_x f(x)) c = \sum_x a f(x) c
             (a/b)*(c/d) = (a*b)/(c*d)
-        Give any assumptions necessary to prove that the operands are in
-        the Complex numbers so that the associative and commutation
-        theorems are applicable.
+        
+        For more flexibility, 'left_factors' and 'right_factors'
+        may be specified to indicate subsets of the factors to
+        distribute on the left vs right. The 'left_factors' and 
+        'right_factors' may be provided as indices instead.
+        Examples:
+            a b (c + d) e f = a (b c f + b d f) e
+        with left_factors: [b], right_factors: [f]
+        or left_factors: [1], right_factors: [4]
+            a b (c + d) e f = a (f c b e + f d b e)
+        with left_factors: [f], right_factors: [b, e]
+        or left_factors: [4], right_factors: [1, 3]
+        If one of these is specified but not the other, the emtpy set
+        is used for the one that isn't specified.
         '''
         from . import (distribute_through_sum, distribute_through_subtract,
                        distribute_through_abs_sum)
         from proveit.numbers.division import prod_of_fracs
         from proveit.numbers import Neg, Abs, Div, Sum
+        if left_factors is not None or right_factors is not None:
+            # Specific factors to be applied to the left and/or right
+            # were provided.  So we'll reorder the factors and then
+            # associate appropriately before distributing.
+            if left_factors is None: left_factors = []
+            if right_factors is None: right_factors = []
+            # Convert from expressions to indices for the left and
+            # right factors (exclude the 'idx').
+            factor_to_index = {factor:_k for _k, factor 
+                               in enumerate(self.factors) if _k != idx}
+            left_factor_indices = list(left_factors)
+            right_factor_indices = list(right_factors)
+            for factor_indices in (left_factor_indices, right_factor_indices):
+                for _k, factor in enumerate(factor_indices):
+                    try:
+                        if isinstance(factor, Expression):
+                            factor_indices[_k] = factor_to_index.pop(factor)
+                    except KeyError:
+                        raise ValueError(
+                                "The 'left_factors', %s, and 'right_factors'"
+                                ", %s, do not all appear in %s"
+                                %(self, left_factors, right_factors))
+            # Permute the factors so the left factors come just before
+            # the factor to distribute through and the right factors 
+            # come just after.
+            factors = self.factors.entries
+            num_factors = len(factors)
+            special_indices = set(left_factor_indices).union(
+                    right_factor_indices)
+            before_indices = [_idx for _idx in range(idx) if
+                              _idx not in special_indices]
+            after_indices = [_idx for _idx in range(idx+1, num_factors) if
+                              _idx not in special_indices]
+            new_order = (before_indices + left_factor_indices + [idx] +
+                         right_factor_indices + after_indices)
+            eq = TransRelUpdater(self)
+            expr = eq.update(self.permutation(new_order, auto_simplify=False))
+            # Convert from indices to expressions.
+            left_factors = [factors[_i] for _i in left_factor_indices]
+            right_factors = [factors[_i] for _i in right_factor_indices]
+            # Make the distribution.
+            num_left_factors = len(left_factors)
+            distribution = Mult(*left_factors, factors[idx], 
+                                *right_factors).distribution(
+                                        num_left_factors)
+            # Now associate to include from left factors to right
+            # factors and simultaneously replace with the distribution.
+            start = idx-num_left_factors
+            length = num_left_factors + len(right_factors) + 1
+            eq.update(expr.association(
+                    start, length, replacements=[distribution],
+                    auto_simplify=False))
+            return eq.relation
+
         if (idx is None and self.factors.is_double() and
                 all(isinstance(factor, Div) for factor in self.factors)):
             return prod_of_fracs.instantiate(

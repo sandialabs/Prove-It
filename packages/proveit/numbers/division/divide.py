@@ -28,7 +28,8 @@ class Div(NumberOperation):
     _simplification_directives_ = SimplificationDirectives(
             factor_negation = True, 
             reduce_zero_numerator = True,
-            reduce_to_multiplication = False)
+            reduce_to_multiplication = False,
+            distribute = False)
 
     def __init__(self, numerator, denominator, *, styles=None):
         r'''
@@ -107,7 +108,7 @@ class Div(NumberOperation):
         Specifically, cancels common factors and eliminates ones.
         '''
         from proveit.logic import is_irreducible_value
-        from proveit.numbers import one, Neg
+        from proveit.numbers import one, Neg, Add, Sum
 
         if self.is_irreducible_value():
             # already irreducible
@@ -180,6 +181,11 @@ class Div(NumberOperation):
             and NotEquals(expr.denominator.numerator, zero).proven()
             and NotEquals(expr.denominator.denominator, zero).prove() ):
             expr = eq.update(expr.div_in_denominator_reduction())
+
+        if Div._simplification_directives_.distribute and (
+                isinstance(self.numerator, Add) or 
+                isinstance(self.numerator, Sum)):
+            expr = eq.update(expr.distribution())            
 
         return eq.relation
 
