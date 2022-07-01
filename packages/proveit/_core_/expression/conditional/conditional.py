@@ -499,7 +499,7 @@ class Conditional(Expression):
                             "represent a logical equivalence (Iff) or "
                             "equality (equals), got %s."
                              %condition_equivalence_or_equality)
-        raise Value("%s expected to have %s on one of its sides"
+        raise ValueError("%s expected to have %s on one of its sides"
                     %(condition_equivalence_or_equality,
                       self.condition))
 
