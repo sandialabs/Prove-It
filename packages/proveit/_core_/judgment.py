@@ -70,9 +70,9 @@ class _ExprProofs:
 
 
 class Judgment:
-    # lookup_dict maps each Expression to a set of Judgments for
+    # expr_to_judgments maps each Expression to a set of Judgments for
     # proving the Expression under various assumptions.
-    lookup_dict = dict()
+    expr_to_judgments = dict()
 
     # (Judgment, default assumptions) pairs for which 
     # derive_side_effects has been called.  We track this to make sure 
@@ -111,7 +111,7 @@ class Judgment:
         Clear all references to Prove-It information in
         the Judgment jurisdiction.
         '''
-        Judgment.lookup_dict.clear()
+        Judgment.expr_to_judgments.clear()
         Judgment.sideeffect_processed.clear()
         Judgment.theorem_being_proven = None
         Judgment.theorem_being_proven_str = None
@@ -457,7 +457,7 @@ class Judgment:
         same 'truth' expression as needed.
         '''
         from .proof import _ShowProof
-        # update Judgment.lookup_dict and use find all of the Judgments
+        # Update Judgment.expr_to_judgments; find all of the Judgments
         # with this expr to see if the proof should be updated with the
         # new proof.
 
@@ -477,7 +477,8 @@ class Judgment:
         # Judgment.  It can replace an old proof if it became unusable 
         # or if the newer one uses fewer steps.
         #newproof_numsteps = newproof.num_steps()
-        expr_judgments = Judgment.lookup_dict.setdefault(self.expr, set())
+        expr_judgments = Judgment.expr_to_judgments.setdefault(self.expr, 
+                                                               set())
         expr_judgments.add(self)
         for expr_judgment in expr_judgments:
             if expr_judgment.num_lit_gen != self.num_lit_gen:
@@ -526,10 +527,10 @@ class Judgment:
 
 
         from proof import Theorem
-        if not self.expr in Judgment.lookup_dict:
+        if not self.expr in Judgment.expr_to_judgments:
             # the first Judgment for this Expression
             self._proof = new_proof
-            Judgment.lookup_dict[self.expr] = [self]
+            Judgment.expr_to_judgments[self.expr] = [self]
             return
         if not new_proof.is_usable():
             # if it is not usable, we're done.
@@ -540,7 +541,7 @@ class Judgment:
             return
         kept_truths = []
         born_obsolete = False
-        for other in Judgment.lookup_dict[self.expr]:
+        for other in Judgment.expr_to_judgments[self.expr]:
             if self.assumptions_set == other.assumptions_set:
                 if not other._proof.is_usable():
                     # use the new proof since the old one is unusable.
@@ -580,8 +581,8 @@ class Judgment:
                         print '%s has been proven. '%self.as_theorem_or_axiom().name, r'Now simply execute "%qed".'
             self._proof = new_proof
             kept_truths.append(self)
-        # Remove the obsolete Judgments from the lookup_dict -- SHOULD ACTUALLY KEEP OLD PROOFS IN CASE ONE IS DISABLED -- TODO
-        Judgment.lookup_dict[self.expr] = kept_truths
+        # Remove the obsolete Judgments from the expr_to_judgments -- SHOULD ACTUALLY KEEP OLD PROOFS IN CASE ONE IS DISABLED -- TODO
+        Judgment.expr_to_judgments[self.expr] = kept_truths
     """
 
     def _update_proof(self, new_proof):
@@ -771,9 +772,9 @@ class Judgment:
         the given set of assumptions (its assumptions are a subset
         of the given assumptions).  Return None if there is no match.
         '''
-        if expression not in Judgment.lookup_dict:
+        if expression not in Judgment.expr_to_judgments:
             return None
-        truths = Judgment.lookup_dict[expression]
+        truths = Judgment.expr_to_judgments[expression]
         suitable_truths = []
         for truth in truths:
             proof = truth.proof()
@@ -809,7 +810,7 @@ class Judgment:
         generally be needed.
         '''
         from proof import Assumption
-        Judgment.lookup_dict.clear()
+        Judgment.expr_to_judgments.clear()
         Assumption.all_assumptions.clear()
 
     def _checkedTruth(self, proof):
