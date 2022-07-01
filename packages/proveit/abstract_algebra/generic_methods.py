@@ -147,6 +147,14 @@ def apply_disassociation_thm(expr, idx, thm=None, *,
     repl_map.update(repl_map_extras)
     return thm.instantiate(repl_map)
 
+@prover
+def multi_disassociation(expr, *idxs, **defaults_config):
+    # allow multiple disassociations
+    from proveit import TransRelUpdater
+    eq = TransRelUpdater(expr)
+    for _idx in sorted(idxs, reverse=True):
+        expr = eq.update(expr.disassociation(_idx))
+    return eq.relation
 
 @prover
 def group_commutation(expr, init_idx, final_idx, length, disassociate=True,

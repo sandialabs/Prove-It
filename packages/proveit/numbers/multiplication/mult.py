@@ -24,7 +24,8 @@ from proveit.abstract_algebra.generic_methods import (
         apply_commutation_thm, apply_association_thm, apply_disassociation_thm,
         group_commutation, pairwise_evaluation,
         deduce_equality_via_commutation, generic_permutation,
-        sorting_and_combining_like_operands, sorting_operands)
+        sorting_and_combining_like_operands, sorting_operands,
+        multi_disassociation)
 
 class Mult(NumberOperation):
     # operator of the Mult operation.
@@ -1444,19 +1445,21 @@ class Mult(NumberOperation):
         
         if self.factors.num_entries()==1 and (
                 isinstance(self.factors[0], ExprRange) and 
-                self.factors[0].is_parameter_independent()):
+                self.factors[0].is_parameter_independent):
             # x * x * ..(n-3)x.. * x = x^n
             factor_range = self.factors[0]
             _x = factor_range.body                    
-            _n = self.num_elements()
-            replacements = []
+            _n = self.factors.num_elements()
+            replacements = list(defaults.replacements)
             if factor_range.start_index != one:
                 # Transform from as ExprRange that start at 1.
-                replacements.append(factor_range.reduction().derive_reversed())
-            return exp_pkg.exp_nat_pos_rev.instantiate(
+                replacements.append(factor_range.reduction().derive_reversed(
+                        preserve_all=True))
+            inst = exp_pkg.exp_nat_pos_rev.instantiate(
                     {n:_n, x:_x}, replacements=replacements)
+            return inst
         
-        factors = self.factors
+        factors = list(self.factors.entries)
         if all(is_numeric_rational(factor) for factor in factors):
             # The factors are all numerical rational numbers, so
             # just evaluate the product.
@@ -1466,7 +1469,9 @@ class Mult(NumberOperation):
         factor_bases = set()
         factor_exponents = []
         exponent_number_sets = set()
-        for factor in factors:
+        temp_factors = []
+        disassoc_indices = []
+        for idx, factor in enumerate(factors):
             if isinstance(factor, ExprRange):
                 if isinstance(factor.body, Exp):
                     # x^{n_1} * ... * x^{n_k}
@@ -1479,30 +1484,40 @@ class Mult(NumberOperation):
                     exponent_number_set = deduce_number_set(
                             factor.body.exponent, 
                             assumptions=factor.parameter_condition()).domain
+                    temp_factors.append(factor)
                 else:
                     # x^n = x * x * ..(n-3)x.. * x
                     replacements.append(Mult(factor).combining_exponents(
-                            preserve_all=True).derive_reversed())
-                    exponent = factor.num_elements()
+                            preserve_all=True).derive_reversed(
+                                    preserve_all=True))
+                    temp_factors.append(replacements[-1].rhs)
+                    disassoc_indices.append(idx)
+                    # exponent = factor.num_elements()
+                    exponent = replacements[-1].lhs.exponent
                     exponent_number_set = NaturalPos
             elif isinstance(factor, Exp):
                 base = factor.base
                 exponent = factor.exponent
                 exponent_number_set = deduce_number_set(exponent).domain
+                temp_factors.append(factor)
             else:
                 # Exploit a^1 = a.
                 base = factor
                 exponent = one
                 exponent_number_set = NaturalPos
                 replacements.append(Exp(base, one).power_of_one_reduction())
+                temp_factors.append(factor)
             factor_bases.add(base)
             factor_exponents.append(exponent)
             exponent_number_sets.add(exponent_number_set)
             if len(factor_bases) > 1:
                 raise ValueError("Unable to combine exponents because "
                                  "exponential bases differ: %s"%self)
+        if temp_factors != factors:
+            replacements.append(
+                    multi_disassociation(Mult(*temp_factors),
+                            *disassoc_indices, preserve_all=True))
         minimal_exponent_ns = merge_list_of_sets(list(exponent_number_sets))
-
         assert len(factor_bases)==1
         _a = next(iter(factor_bases))
         if self.factors.is_double():
@@ -1754,6 +1769,8 @@ class Mult(NumberOperation):
         at index idx is no longer grouped together.
         For example, (a * b ... * (l * ... * m) * ... * y* z)
             = (a * b * ... * y * z)
+        Multiple indices can be provided for multiple disassociations
+        simultaneously, e.g. expr.disassociation(2, 3, 4)
         '''
         from . import disassociation
         return apply_disassociation_thm(self, idx, disassociation)

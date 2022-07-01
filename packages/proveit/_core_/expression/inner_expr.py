@@ -541,8 +541,17 @@ class InnerExpr:
             if isinstance(cur_inner_expr, ExprRange):
                 expected_lhs = ExprTuple(expected_lhs)
             if equality_or_replacement.lhs != expected_lhs:
-                raise ValueError("Expecting lhs of %s to be %s"%
-                                 (equality_or_replacement, expected_lhs))
+                # make some error-related information available at run
+                # time for debugging purposes, then raise error
+                Judgment.error_info_obtained = equality_or_replacement
+                Judgment.error_info_expected_lhs = expected_lhs
+                raise ValueError(
+                        "Expecting lhs of {0} to be {1}. "
+                        "For debugging purposes, the obtained equality "
+                        "is stored as Judgment.error_info_obtained, and "
+                        "the expected lhs is stored as "
+                        "Judgment.error_info_expected_lhs. ".
+                        format(equality_or_replacement, expected_lhs))
             if prove_equality:
                 return equality_or_replacement
             else:

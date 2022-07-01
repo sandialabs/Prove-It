@@ -42,11 +42,13 @@ class NumberOrderingRelation(TransitiveRelation):
         from .less import Less
         from .less_eq import LessEq
         canonical_form = self.canonical_form()
-        if canonical_form.normal_lhs == zero:
-            raise UnsatisfiedPrerequisites(
-                    "'conclude_from_known_bound should not be applied "
-                    "when the relation only involves literal, rationals: "
-                    "%s"%self) 
+        # This check seems unnecessary and creates problems;
+        # commenting out for now until further investigation.
+        # if canonical_form.normal_lhs == zero:
+        #     raise UnsatisfiedPrerequisites(
+        #             "'conclude_from_known_bound should not be applied "
+        #             "when the relation only involves literal, rationals: "
+        #             "%s"%self) 
         desired_bound = canonical_form.rhs
         known_strong_bounds = Less.known_canonical_bounds.get(
                 canonical_form.normal_lhs, tuple())
