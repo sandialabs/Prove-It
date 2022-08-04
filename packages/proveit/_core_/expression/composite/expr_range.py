@@ -10,7 +10,7 @@ from proveit._core_.expression.composite import (
         singular_expression, single_or_composite_expression, ExprTuple)
 from proveit._core_.expression.conditional import Conditional
 from proveit._core_.proof import ProofFailure, UnsatisfiedPrerequisites
-from proveit._core_.defaults import defaults, USE_DEFAULTS
+from proveit._core_.defaults import defaults
 from proveit.decorators import prover, equality_prover
 
 class ExprRange(Expression):
@@ -2287,25 +2287,6 @@ class ExprRange(Expression):
         Expression._var_index_shifts_in_ranges(self, var, shifts)
     """
 
-    """
-    TODO: change register_equivalence_method to allow and fascilitate these
-    method stubs for purposes of generating useful documentation.
-
-    def partitioned(self, before_split_idx, assumptions=USE_DEFAULTS):
-        '''
-        Return the right-hand-side of a 'partition'.
-        '''
-        raise Exception("Should be implemented via InnerExpr.register_equivalence_method")
-
-    def split(self, before_split_idx, assumptions=USE_DEFAULTS):
-        '''
-        As an InnerExpr method when the inner expression is an ExprRange,
-        return the expression with the inner expression replaced by its
-        'partitioned' version.
-        '''
-        raise Exception("Implemented via InnerExpr.register_equivalence_method "
-                        "only to be applied to an InnerExpr object.")
-    """
 
 def simplified_index(index, *, requirements=None):
     return list(simplified_indices(index, requirements=requirements))[0]

@@ -115,9 +115,7 @@ class ExprTuple(Composite, Expression):
         return iter(self.entries)
 
     def __len__(self):
-        raise NotImplementedError(
-                "__len__ is deliberately not implement in order to avoid "
-                "ambiguity.  Use num_entries or num_elements.")
+        return self.num_entries()
 
     def num_entries(self):
         '''
@@ -471,14 +469,15 @@ class ExprTuple(Composite, Expression):
         canonical forms.  ExprRanges are shifted to start with an
         index of 1.
         '''
-        from proveit.numbers import one, Add, Neg
         from .expr_range import ExprRange
         entries = []
         for entry in self.entries:
             if isinstance(entry, ExprRange):
+                from proveit.numbers import (one, Add, Neg, 
+                                             quick_simplified_index)
                 parameter = entry.parameter
                 orig_start_index = entry.true_start_index
-                _n = entry.num_elements(proven=False)
+                _n = quick_simplified_index(entry.num_elements(proven=False))
                 if orig_start_index == one:
                     shifted_body = entry.body
                 else:
@@ -1460,25 +1459,23 @@ class ExprTuple(Composite, Expression):
         return expansion_thm.instantiate(
                 {Function(_f, _safe_var): _fxn_sub, _i: _i_sub, _j: _j_sub})
 
-    """
-    TODO: change register_equivalence_method to allow and fascilitate these
-    method stubs for purposes of generating useful documentation.
-
-    def merged(self, assumptions=USE_DEFAULTS):
+    def map_elements(self, expr_func):
         '''
-        Return the right-hand-side of a 'merger'.
+        Returns an ExprTuple obtained by mapping each element according
+        to 'expr_func' which should be an Expression:Expression 
+        function.
         '''
-        raise Exception("Should be implemented via InnerExpr.register_equivalence_method")
-
-    def merge(self, assumptions=USE_DEFAULTS):
-        '''
-        As an InnerExpr method when the inner expression is an ExprTuple,
-        return the expression with the inner expression replaced by its
-        'merged' version.
-        '''
-        raise Exception("Implemented via InnerExpr.register_equivalence_method "
-                        "only to be applied to an InnerExpr object.")
-    """
+        from proveit import ExprRange
+        mapped_entries = []
+        for entry in self.entries:
+            if isinstance(entry, ExprRange):
+                mapped_entry = ExprRange(
+                        entry.parameter, expr_func(entry.body),
+                        entry.true_start_index, entry.true_end_index)
+            else:
+                mapped_entry = expr_func(entry)
+            mapped_entries.append(mapped_entry)
+        return ExprTuple(*mapped_entries)
 
 
 def is_single(expr_tuple):
