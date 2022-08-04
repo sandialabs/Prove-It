@@ -8,7 +8,6 @@ from proveit._core_.expression.composite import (
     ExprTuple, is_single, single_or_composite_expression, 
     composite_expression, ExprRange)
 from proveit._core_.expression.conditional import Conditional
-from proveit._core_.defaults import USE_DEFAULTS
 from proveit.decorators import prover, equality_prover
 from .operation import Operation, OperationError
 from .function import Function
@@ -427,6 +426,49 @@ class OperationOverInstances(Operation):
             *[None] * npositional,
             styles=styles, _lambda_map=lambda_map)
         return made_operation
+
+    def _build_canonical_form(self):
+        '''
+        Build the canonical form of this OperationOverInstances.
+        This override Expression._build_canonical_form to make
+        sure that the domain conditions are kept in their proper place.
+        '''
+        from proveit.logic import And
+        canonical_operator = self.operator.canonical_form()
+        assert self.operands.num_entries()==1
+        lambda_map = self.operands[0]
+        instance_expr = self.instance_expr
+        if not hasattr(self, 'condition'):
+            # If there are not conditions, there is nothing special
+            # to worry about.
+            return Operation._build_canonical_form(self)
+        condition = self.condition
+        num_explicit_domains = len(self.explicit_domains())
+        # parameters should be unchanged:
+        parameters = lambda_map.parameters
+        if isinstance(condition, And) and (
+                hasattr(condition, 'operands') and
+                num_explicit_domains > 0):
+            # Keep the domain conditions in their proper place.
+            conds = condition.operands.entries
+            canonical_conditions = [cond.canonical_form() for cond in 
+                                    conds[:num_explicit_domains]]
+            canonical_conditions += sorted(
+                    [cond.canonical_form() for cond 
+                     in conds[num_explicit_domains:]], key=hash)
+            canonical_conditions = ExprTuple(*canonical_conditions)
+            canonical_instance_expr = instance_expr.canonical_form()
+            canonical_lambda = OperationOverInstances._createOperand(
+                    parameters, canonical_instance_expr,
+                    canonical_conditions)
+        else:
+            canonical_lambda = lambda_map.canonical_form()
+        if canonical_operator==self.operands and canonical_lambda==lambda_map:
+            return self # No change.
+        return self._checked_make(
+                self._core_info, (canonical_operator, 
+                                  ExprTuple(canonical_lambda)),
+                style_preferences=self._style_data.styles)
 
     def _all_instance_params(self):
         '''
@@ -960,7 +1002,8 @@ class OperationOverInstances(Operation):
         return lambda_eq.substitution(self.inner_expr().operand)
         
     """
-    def substitute_instances(self, universality, assumptions=USE_DEFAULTS):
+    @prover
+    def substitute_instances(self, universality, **defaults_config):
         '''
         Assuming this OperationOverInstances, Upsilon_{..x.. in S | ..Q(..x..)..} f(..x..)
         to be a true statement, derive and return Upsilon_{..x.. in S | ..Q(..x..)..} g(..x..)

@@ -310,6 +310,29 @@ class Lambda(Expression):
         canonically_labeled._canonically_labeled = canonically_labeled
         return canonically_labeled
 
+    def _build_canonical_form(self):
+        '''
+        Build the canonical form of this Lambda.
+        This override Expression._build_canonical_form to leave
+        parameters unchanged.
+        '''
+        # Leave the parameters unchanged:
+        canonical_sub_exprs = [self.parameters]
+        has_distinct_canonical_form = False
+        for sub_expr in self._sub_expressions[1:]:
+            canonical_sub_expr = sub_expr.canonical_form()
+            if sub_expr != canonical_sub_expr:
+                has_distinct_canonical_form = True
+            canonical_sub_exprs.append(canonical_sub_expr)
+        if has_distinct_canonical_form:
+            # Use the canonical forms of the sub-expressions.
+            return self._checked_make(
+                self._core_info, canonical_sub_exprs,
+                style_preferences=self._style_data.styles)
+        else:
+            # No canonical form that is different from self.
+            return self        
+
     def extract_argument(self, mapped_expr):
         '''
         Given a mapped expression, return the argument that will transform
