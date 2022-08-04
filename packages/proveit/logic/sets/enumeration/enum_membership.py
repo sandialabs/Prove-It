@@ -67,6 +67,16 @@ class EnumMembership(SetMembership):
             return enum_set_def.instantiate(
                     {n: _n, x: self.element, y: _y}, auto_simplify=False)
 
+    def as_defined(self):
+        '''
+        From the EnumMembership object [element in {a, ..., n}],
+        return [(element=a) or ... or (element=n)]
+        '''
+        from proveit.logic import Or, Equals
+        element = self.element
+        return Or(*self.domain.operands.map_elements(
+                lambda domain_elem : Equals(element, domain_elem)))
+
     @prover
     def derive_in_singleton(self, expression, **defaults_config):
         # implemented by JML 6/28/19
@@ -150,7 +160,7 @@ class EnumNonmembership(SetNonmembership):
         '''
         Deduce and return
         |– [element not in {a, ..., n}] =
-           [(element != a) and ... and (element != n)]
+           [(element ≠ a) and ... and (element ≠ n)]
         where self is the EnumNonmembership object.
         '''
         from . import not_in_singleton_equiv, nonmembership_equiv
@@ -163,6 +173,16 @@ class EnumNonmembership(SetNonmembership):
             _n = _y.num_elements()
             return nonmembership_equiv.instantiate(
                     {n: _n, x: self.element, y: _y})
+
+    def as_defined(self):
+        '''
+        From the EnumMembership object [element not in {a, ..., n}],
+        return [(element≠a) and ... and (element≠n)]
+        '''
+        from proveit.logic import And, NotEquals
+        element = self.element
+        return And(*self.domain.operands.map_elements(
+                lambda domain_elem : NotEquals(element, domain_elem)))
 
     @prover
     def conclude(self, **defaults_config):

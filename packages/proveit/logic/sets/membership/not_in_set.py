@@ -1,5 +1,5 @@
 from proveit import (Literal, defaults, USE_DEFAULTS, equality_prover, 
-                     prover, relation_prover)
+                     ProofFailure, prover, relation_prover)
 from proveit import x, S
 from proveit.relation import Relation
 from proveit.logic.classes import NotInClass, ClassNonmembership
@@ -57,6 +57,57 @@ class NotInSet(NotInClass):
             {x: self.element, S: self.domain}, auto_simplify=False)
 
     @prover
+    def conclude(self, **defaults_config):
+        '''
+        Attempt to conclude that the element is not in the domain. 
+        First see if the corresponding membership has been disproven. 
+        Then see if there is a stronger known nonmembership to use.  
+        If not, use the NotInClass conclude strategies (which uses the
+        Relation conclude strategies that simplify both sides and then 
+        uses the domain-specific conclude method of the membership
+        object as a last resort).
+        '''
+        from proveit.logic import Equals, SubsetEq
+
+        # Has the membership been disproven?
+        if self.negated().disproven(): # don't use readily_disprovable
+            return self.conclude_as_folded()
+        
+        # See if the element, or something known to be equal to
+        # the element, is known to be a nonmember of the domain or a 
+        # superset of the domain.
+        stronger_nonmembership = self.stronger_known_nonmembership()
+        if stronger_nonmembership is not None:
+            elem_sub = stronger_nonmembership.element
+            if stronger_nonmembership.domain == self.domain:
+                elem_sub_notin_domain = stronger_nonmembership
+            else:
+                eq_rel = Equals(stronger_nonmembership.domain, self.domain)
+                if eq_rel.readily_provable():
+                    # domains are equal -- just substitute the domain.
+                    elem_sub_notin_domain = eq_rel.sub_right_side_into(
+                            stronger_nonmembership.inner_expr().domain)
+                else:
+                    # S is a subset of R, so now we can prove 
+                    # x not in S.
+                    sub_rel = SubsetEq(self.domain, stronger_nonmembership.domain)
+                    try:
+                        sub_rel.prove()
+                    except ProofFailure:
+                        # May have been blocked to avoid infinite
+                        # recursion.
+                        return NotInClass.conclude(self)
+                    elem_sub_notin_domain = sub_rel.derive_subset_nonmembership(
+                            elem_sub)
+            if elem_sub == self.element:
+                return elem_sub_notin_domain # done
+            # Just need to sub in the element for _elem_sub.
+            Equals(elem_sub, self.element).conclude_via_transitivity()
+            return elem_sub_notin_domain.inner_expr().element.substitute(
+                    self.element)
+        return NotInClass.conclude(self)
+
+    @prover
     def conclude_as_folded(self, **defaults_config):
         '''
         Attempt to conclude x not in S via Not(x in S).
@@ -65,6 +116,43 @@ class NotInSet(NotInClass):
         return fold_not_in_set.instantiate(
             {x: self.element, S: self.domain})
 
+    @prover
+    def conclude_negation(self, **defaults_config):
+        '''
+        Attempt to conclude the negation of nonmembership via
+        proving membership.
+        '''
+        from . import double_negated_membership
+        return double_negated_membership.instantiate(
+                {x:self.element, S:self.domain})
+
+    def stronger_known_nonmembership(self):
+        '''
+        If there is a known nonmembership that is stronger than this 
+        one, where the element is equal to this one's element and the 
+        domain is a subset of this one's domain, return this
+        stronger known membership.  Otherwise, return None.
+        '''
+        from proveit.logic import Equals, SubsetEq
+        for elem_sub in Equals.yield_known_equal_expressions(self.element):
+            eq_nonmembership = None # nonmembership in an equal domain
+            superset_nonmembership = None # nonmembership in a superset
+            for known_nonmembership in (
+                    NotInClass.yield_known_nonmemberships(elem_sub)):
+                eq_rel = Equals(known_nonmembership.domain, self.domain)
+                sub_rel = SubsetEq(self.domain, known_nonmembership.domain)
+                if known_nonmembership.domain == self.domain:
+                    # this is the best to use; we are done
+                    return known_nonmembership
+                elif eq_rel.readily_provable():
+                    eq_nonmembership = known_nonmembership
+                elif sub_rel.readily_provable():
+                    superset_nonmembership = known_nonmembership
+            if eq_nonmembership is not None:
+                return eq_nonmembership
+            elif superset_nonmembership is not None:
+                return superset_nonmembership
+        return None # No match found.
 
 class SetNonmembership(ClassNonmembership):
     def __init__(self, element, domain):

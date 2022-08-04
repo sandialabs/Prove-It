@@ -1,4 +1,4 @@
-from proveit import (Judgment, Literal, defaults, USE_DEFAULTS,
+from proveit import (Expression, Judgment, Literal, defaults, USE_DEFAULTS,
                      prover, equality_prover, relation_prover,
                      ProofFailure, UnsatisfiedPrerequisites)
 from proveit.relation import Relation
@@ -126,60 +126,41 @@ class InClass(Relation):
         '''
         return self.negated().prove()
 
+    def _build_canonical_form(self):
+        '''
+        The canonical form of this membership is based upon
+        'as_defined' which defines what the membership means.
+        '''
+        if hasattr(self, 'membership_object'):
+            return self.membership_object._build_canonical_form()
+        else:
+            return Relation._build_canonical_form(self)
+
+    def _readily_provable(self):
+        '''
+        This membership is readily provable if the membership
+        object indicates that it is readily provable.
+        '''
+        if hasattr(self, 'membership_object'):
+            if self.membership_object._readily_provable():
+                return True
+        return False
+
+    def _readily_disprovable(self):
+        '''
+        This membership is readily disprovable if the corresponding
+        nonmembership is readily provable.
+        '''
+        return self.negated().readily_provable()
+
     @prover
     def conclude(self, **defaults_config):
         '''
-        Attempt to conclude that the element is in the domain.  First, 
-        see if it is known to be contained in a known subset of the
-        domain.  Next, check if the element has a known simplification; 
-        if so, try to derive membership via this simplification.
-        If there isn't a known simplification, next try to call
-        the 'self.domain.membership_object.conclude(..)' method to prove
-        the membership.  If that fails, try simplifying the element
-        again, this time using automation to push the simplification 
-        through if possible.
+        Attempt to conclude that the element is in the domain.  Try
+        standard relation strategies (evaluate or somplify both sides).
+        If that doesn't work, try using the domain-specific 'conclude' 
+        method of the membership object.
         '''
-        from proveit.logic import Equals, SubsetEq, evaluation_or_simplification
-
-        # See if the element, or something known to be equal to
-        # the element, is known to be a member of the domain or a subset
-        # of the domain.
-        for elem_sub in Equals.yield_known_equal_expressions(self.element):
-            same_membership = None # membership in self.domain
-            eq_membership = None # membership in an equal domain
-            subset_membership = None # membership in a subset
-            for known_membership in InClass.yield_known_memberships(elem_sub):
-                eq_rel = Equals(known_membership.domain, self.domain)
-                sub_rel = SubsetEq(known_membership.domain, self.domain)
-                if known_membership.domain == self.domain:
-                    same_membership = known_membership
-                    break # this is the best to use; we are done
-                elif eq_rel.proven():
-                    eq_membership = known_membership
-                elif sub_rel.proven():
-                    subset_membership = known_membership
-            elem_sub_in_domain = None
-            if same_membership is not None:
-                elem_sub_in_domain = same_membership
-            elif eq_membership is not None:
-                # domains are equal -- just substitute to domain.
-                eq_rel = Equals(eq_membership.domain, self.domain)
-                elem_sub_in_domain = eq_rel.sub_right_side_into(
-                    eq_membership.inner_expr().domain)
-            elif subset_membership is not None:
-                # S is a superset of R, so now we can prove x in S.
-                sub_rel = SubsetEq(subset_membership.domain, self.domain)
-                elem_sub_in_domain = sub_rel.derive_superset_membership(
-                        elem_sub)
-            if elem_sub_in_domain is not None:
-                # We found what we are looking for.
-                if elem_sub == self.element:
-                    return elem_sub_in_domain # done
-                # Just need to sub in the element for _elem_sub.
-                Equals(elem_sub, self.element).conclude_via_transitivity()
-                return elem_sub_in_domain.inner_expr().element.substitute(
-                        self.element)
-
         # Try the standard Relation strategies -- evaluate or
         # simplify both sides.
         try:
@@ -199,17 +180,32 @@ class InClass(Relation):
                            "the domain, %s, has no 'membership_object' "
                            "method with a strategy for proving "
                            "membership." % self.domain)
-    
+
+    @prover
+    def conclude_negation(self, **defaults_config):
+        '''
+        Attempt to conclude that the element is not in the domain
+        via proving nonmembership.
+        '''
+        nonmembership = self.negated()
+        return nonmembership.prove().unfold_not_in()
+
     @staticmethod
     def yield_known_memberships(element, assumptions=USE_DEFAULTS):
         '''
         Yield the known memberships of the given element applicable
         under the given assumptions.
         '''
-        assumptions = defaults.checked_assumptions(assumptions)       
+        from proveit._core_.proof import Assumption
+        # Make sure we derive assumption side-effects first.
+        assumptions = defaults.checked_assumptions(assumptions)
+        Assumption.make_assumptions(defaults.assumptions)
+        assumptions_set = set(assumptions)
+
         if element in InClass.known_memberships:
-            for known_membership in InClass.known_memberships[element]:
-                if known_membership.is_applicable(assumptions):
+            known_memberships = list(InClass.known_memberships[element])
+            for known_membership in known_memberships:
+                if known_membership.is_applicable(assumptions_set):
                     yield known_membership
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
@@ -295,6 +291,44 @@ class ClassMembership:
             "Membership object, %s, has no 'side_effects' method implemented" % str(
                 self.__class__))
 
+    def _build_canonical_form(self):
+        '''
+        The canonical form of this membership is based upon
+        'as_defined' which defines what the membership means.
+        '''
+        try:
+            return self.as_defined().canonical_form()
+        except NotImplementedError:
+            # If 'as_defined' is not implemented, use the default
+            # method of building the canonical form.
+            return Relation._build_canonical_form(self.expr)
+
+    def _readily_provable(self):
+        '''
+        By default, we will determine if this membership is
+        readily provable if its "as_defined()" expression is
+        readily provable.
+        '''
+        try:
+            return self.as_defined().readily_provable()
+        except NotImplementedError:
+            # If 'as_defined' is not implemented, this default
+            # method for determining provability can never be true.
+            return False
+
+    def _readily_disprovable(self):
+        '''
+        By default, we will determine if this membership is
+        readily disprovable if its "as_defined()" expression is
+        readily disprovable.
+        '''
+        try:
+            return self.as_defined().readily_disprovable()
+        except NotImplementedError:
+            # If 'as_defined' is not implemented, this default
+            # method for determining provability can never be true.
+            return False
+
     @prover
     def conclude(self, **defaults_config):
         raise NotImplementedError(
@@ -303,9 +337,28 @@ class ClassMembership:
 
     @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
+        '''
+        Prove the membership equal to an expression that defines the
+        membership.
+        '''
         raise NotImplementedError(
             "Membership object, %s, has no 'definition' method implemented" % str(
                 self.__class__))
+    
+    def as_defined(self):
+        '''
+        Returns the expression that defines the membership.
+        '''
+        raise NotImplementedError(
+            "Membership object, %s, has no 'as_defined' method implemented" % str(
+                self.__class__))
+
+    def readily_in_bool(self, **defaults_config):
+        '''
+        Unless this is overridden, we won't presume that the membership
+        is readily provable to be boolean.
+        '''
+        return False
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):

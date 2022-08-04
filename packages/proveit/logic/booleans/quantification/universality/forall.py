@@ -2,7 +2,7 @@ from proveit import (Literal, Function, Lambda, OperationOverInstances,
                      ExprTuple, ExprRange, IndexedVar,
                      defaults, USE_DEFAULTS, ProofFailure,
                      prover, relation_prover, equality_prover)
-from proveit import k, n, x, A, B, P, S
+from proveit import k, n, x, A, B, P, Q, S
 from proveit._core_.proof import Generalization
 
 
@@ -56,6 +56,34 @@ class Forall(OperationOverInstances):
         Forall.known_instance_maps.setdefault(
                 instance_map, set()).add(judgment)
         
+    def _readily_provable(self):
+        '''
+        The universal quantification is readily probable if the
+        instance expression is readily probably under appropriate
+        assumptions of if another universal quantification has
+        been proven with a more inclusive domain.
+        '''
+        if self._readily_provable_via_generalization():
+            return True
+        return False
+        #TODO, OTHER CASES
+    
+    def _readily_provable_via_generalization(self):
+        # Check if the instance expression is readily provable under
+        # appropriate assumptions.
+        from proveit import free_vars
+        instance_vars = (self.instance_vars if
+                         hasattr(self, 'instance_vars')
+                         else [self.instance_var])
+        conditions = self.conditions
+        expr = self.instance_expr
+        # Can't use assumptions involving instance variables
+        inner_assumptions = \
+            [assumption for assumption in defaults.assumptions if
+             free_vars(assumption).isdisjoint(instance_vars)]
+        # Add the conditions as assumptions.
+        inner_assumptions += list(conditions.entries)
+        return expr.readily_provable(assumptions=inner_assumptions)
 
     @prover
     def conclude(self, **defaults_config):
@@ -68,17 +96,11 @@ class Forall(OperationOverInstances):
         '''
         from proveit.logic import SubsetEq
         
-        # first try to prove via generalization without automation
-        try:
-            return self.conclude_via_generalization(automation=False)
-        except ProofFailure:
-            # Try to prove the generic version without automation;
-            # this can help with variable changes.
-            try:
-                return self.canonically_labeled().conclude_via_generalization(
-                        automation=False)
-            except ProofFailure:
-                pass
+        # First see if we can prove via generalization.
+        if self._readily_provable_via_generalization():
+            return self.conclude_via_generalization()
+        elif self.canonically_labeled()._readily_provable_via_generalization():
+            return self.canonically_labeled().conclude_via_generalization()
         
         if (self.has_domain() and self.instance_params.is_single 
                 and self.conditions.is_single()):
@@ -117,17 +139,6 @@ class Forall(OperationOverInstances):
                                    "Unable to conclude automatically; the "
                                    "prove_by_cases method on the domain "
                                    "has failed. :o( ")
-        else:
-            # If there is no 'prove_by_cases' strategy to try, we can
-            # attempt a different non-trivial strategy of proving
-            # via generalization with automation.
-            try:
-                return self.conclude_via_generalization(automation=True)
-            except ProofFailure:
-                raise ProofFailure(self, defaults.assumptions,
-                                   "Unable to conclude automatically; "
-                                   "the domain has no 'prove_by_cases' method "
-                                   "and automated generalization failed.")
 
         raise ProofFailure(self, defaults.assumptions,
                            "Unable to conclude automatically; a "
@@ -375,6 +386,12 @@ class Forall(OperationOverInstances):
         
         return OperationOverInstances.shallow_simplification(self)
 
+    def readily_in_bool(self):
+        '''
+        Universal quantification is always boolean.
+        '''
+        return True
+
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
@@ -382,10 +399,14 @@ class Forall(OperationOverInstances):
         is in the set of BOOLEANS, as all forall expressions are
         (they are taken to be false when not true).
         '''
-        from proveit.numbers import one
-        from . import forall_in_bool
+        from . import forall_in_bool, forall_with_conditions__is_bool
         _x = self.instance_params
         _P = Lambda(_x, self.instance_expr)
         _n = _x.num_elements()
-        return forall_in_bool.instantiate(
-            {n: _n, P: _P, x: _x})
+        if self.conditions.num_entries() == 0:
+            return forall_in_bool.instantiate(
+                {n: _n, P: _P, x: _x})
+        _Q = Lambda(_x, self.condition)
+        return forall_with_conditions__is_bool.instantiate(
+                {n: _n, P: _P, Q: _Q, x: _x}, preserve_expr=self,
+                auto_simplify=True)

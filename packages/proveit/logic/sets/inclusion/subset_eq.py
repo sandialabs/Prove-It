@@ -1,4 +1,6 @@
-from proveit import (as_expression, Literal, Operation, safe_dummy_var,
+from proveit import (as_expression, Literal, Operation, 
+                     free_vars, safe_dummy_var,
+                     Judgment, UnsatisfiedPrerequisites,
                      defaults, USE_DEFAULTS, prover, relation_prover)
 from proveit import A, B, C, Q, x
 from proveit import S
@@ -37,18 +39,43 @@ class SubsetEq(InclusionRelation):
             return 'superset_eq'
         # Use the default.
         return Operation.remake_constructor(self)
-    
+
+    def _readily_provable(self):
+        '''
+        This SubsetEq relation is readily provable if the sets
+        are provably equal or set equivalent, the corresponding
+        Subset relation is provable, or
+        '''
+        from proveit.logic import Forall, Equals, InSet, SetEquiv
+        if hasattr(self.superset, 'includes'):
+            # If the superset has an 'includes' method, we may use
+            # as a faster way to check if this is readily provable.
+            try:
+                return self.superset.includes(self.subset)
+            except (NotImplementedError, UnsatisfiedPrerequisites):
+                pass
+        if Equals(self.subset, self.superset).readily_provable():
+            return True
+        if SetEquiv(self.subset, self.superset).readily_provable():
+            return True
+        # No worry about conflicts with assumptions because the 
+        # variable will be bound by a quantifier:
+        _x = safe_dummy_var(self, avoid_default_assumption_conflicts=False)
+        # forall_{x in A} x in B => A subseteq B:
+        univ_quant = Forall(_x, InSet(_x, self.superset), domain=self.subset)
+        return univ_quant.readily_provable()
+
     @prover
     def conclude(self, **defaults_config):
         from proveit import ProofFailure
         from proveit.logic import Equals, SetOfAll, SetEquiv
 
         # Equal sets include each other.
-        if Equals(*self.operands.entries).proven():
+        if Equals(*self.operands.entries).readily_provable():
             return self.conclude_via_equality()
 
         # Equivalent sets include each other.
-        if SetEquiv(*self.operands.entries).proven():
+        if SetEquiv(*self.operands.entries).readily_provable():
             return self.conclude_via_equivalence()
 
         # Check for special case of set comprehension
@@ -70,21 +97,17 @@ class SubsetEq(InclusionRelation):
 
         _A, _B = self.operands.entries
         if hasattr(_A, 'deduce_superset_eq_relation'):
-            try:
-                return _A.deduce_superset_eq_relation(_B)
-            except NotImplementedError:
-                pass
+            return _A.deduce_superset_eq_relation(_B)
         if hasattr(_B, 'deduce_subset_eq_relation'):
             try:
                 return _B.deduce_subset_eq_relation(_A)
-            except NotImplementedError:
+            except (NotImplementedError, UnsatisfiedPrerequisites):
                 pass
 
         try:
             # Attempt to conclude A subseteq B via
             # forall_{x in A} x in B.
-            return self.conclude_as_folded(
-                elem_instance_var=safe_dummy_var(self))
+            return self.conclude_as_folded()
         except ProofFailure as e:
             raise ProofFailure(self, defaults.assumptions,
                            "Failed to conclude as folded: %s.\n"
@@ -105,14 +128,17 @@ class SubsetEq(InclusionRelation):
             {A: self.subset, B: self.superset})
 
     @prover
-    def conclude_as_folded(self, elem_instance_var=x, **defaults_config):
+    def conclude_as_folded(self, **defaults_config):
         '''
         Derive this folded version, A subseteq B, from the unfolded
         version, (forall_{x in A} x in B).
         '''
         from . import fold_subset_eq
+        # No worry about conflicts with assumptions because the 
+        # variable will be bound by a quantifier:
+        _x = safe_dummy_var(self, avoid_default_assumption_conflicts=False)
         return fold_subset_eq.instantiate(
-            {A: self.subset, B: self.superset, x: elem_instance_var})
+            {A: self.subset, B: self.superset, x: _x})
     
     @prover
     def unfold(self, elem_instance_var=None, **defaults_config):
@@ -161,6 +187,7 @@ class SubsetEq(InclusionRelation):
         other = as_expression(other)
         if isinstance(other, Equals) or isinstance(other, SetEquiv):
             return InclusionRelation.apply_transitivity(self, other)
+        new_rel = None
         if other.subset == self.superset:
             if isinstance(other, ProperSubset):
                 new_rel = transitivity_subset_eq_subset.instantiate(
@@ -179,7 +206,7 @@ class SubsetEq(InclusionRelation):
                 new_rel = transitivity_subset_eq_subset_eq.instantiate(
                     {A: other.subset, B: other.superset, C: self.superset},
                     preserve_all=True)
-        else:
+        if new_rel is None:
             raise ValueError(
                 "Cannot perform transitivity with {0} and {1}!".
                 format(self, other))

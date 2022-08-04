@@ -59,11 +59,14 @@ class Defaults:
         # directive that is followed.
         self.preserved_exprs = set()
         
-        # If an expression has a known evaluation, use it in the 
-        # auto-simplification where auto-simplification is 
+        # If an expression has an explicitly known evaluation, use it 
+        # in the auto-simplification where auto-simplification is 
         # enabled/allowed (e.g., the original expression is not
-        # preserved.
+        # preserved).
         self.simplify_with_known_evaluations = False
+        # Simplify to above, but the evaluation doesn't have to be
+        # explicitly known but readily provable.
+        self.simplify_with_provable_evaluations = False
 
         """
         # Map expression classes to directives that should be

@@ -50,6 +50,26 @@ class InjectionsMembership(SetMembership):
         _f = self.element
         return injective_def.instantiate(
                 {A:_A, B:_B, f:_f}, auto_simplify=False)
+
+    def as_defined(self):
+        '''
+        From self=[f ∈ Injections(A, B)] , return
+        ([f ∈ Functions(A, B)] and
+         forall_{a, b ∈ A | a ≠ b} f(a) ≠ f(b))
+        '''
+        from .functions import Functions
+        from proveit import Function, safe_dummy_vars
+        from proveit.logic import And, Forall, NotEquals, InSet
+        _f = self.element
+        domain = self.domain
+        _A, _B = domain.domain, domain.codomain
+        _a, _b = safe_dummy_vars(2, self.element, self.domain)
+        _fa = Function(_f, _a)
+        _fb = Function(_f, _b)
+        return And(InSet(_f, Functions(_A, _B)),
+                   Forall((_a, _b), NotEquals(_fa, _fb), domain=_A,
+                          condition=NotEquals(_a, _b)))
+
     @prover
     def unfold(self, **defaults_config):
         '''

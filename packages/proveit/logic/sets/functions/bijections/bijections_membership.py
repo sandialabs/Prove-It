@@ -58,6 +58,21 @@ class BijectionsMembership(SetMembership):
         _f = self.element
         return bijective_def.instantiate(
                 {A:_A, B:_B, f:_f}, auto_simplify=False)
+
+    def as_defined(self):
+        '''
+        From self=[f ∈ Bijections(A, B)] , return
+        ([f ∈ Injections(A, B)] and [f ∈ Surjections(A, B)])
+        '''
+        from proveit.logic import And, InSet
+        from .injections import Injections
+        from .surjections import Surjections
+        _f = self.element
+        domain = self.domain
+        _A, _B = domain.domain, domain.codomain
+        return And(InSet(_f, Injections(_A, _B)),
+                   InSet(_f, Surjections(_A, _B)))
+
     @prover
     def unfold(self, **defaults_config):
         '''

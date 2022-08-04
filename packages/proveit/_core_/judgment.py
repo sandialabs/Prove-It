@@ -74,6 +74,10 @@ class Judgment:
     # proving the Expression under various assumptions.
     expr_to_judgments = dict()
 
+    # Map canonical form Expressions to sets of proven Expressions
+    # with that canonical form.
+    canonical_form_to_proven_exprs = dict()
+
     # (Judgment, default assumptions) pairs for which 
     # derive_side_effects has been called.  We track this to make sure 
     # we didn't miss anything while automation was disabled and then 
@@ -112,6 +116,7 @@ class Judgment:
         the Judgment jurisdiction.
         '''
         Judgment.expr_to_judgments.clear()
+        Judgment.canonical_form_to_proven_exprs.clear()
         Judgment.sideeffect_processed.clear()
         Judgment.theorem_being_proven = None
         Judgment.theorem_being_proven_str = None
@@ -152,6 +157,11 @@ class Judgment:
         # checking whether one set subsumes another).
         self.assumptions = tuple(assumptions)
         self.assumptions_set = frozenset(assumptions)
+        
+        # Associate the canonical form of the expression
+        # with this Judgment.
+        Judgment.canonical_form_to_proven_exprs.setdefault(
+                expression.canonical_form(), set()).add(expression)
 
         # We use the number of literal generalizations to distinguish
         # truths with different axiom/theorem eliminations; we assume
@@ -336,7 +346,7 @@ class Judgment:
         # we have a proof for Judgment.theorem_being_proven
         Judgment.has_been_proven = False
 
-        if self._checkIfReadyForQED(self.proof()):
+        if Judgment._check_if_ready_for_qed():
             return self.expr  # already proven
         # can't use itself to prove itself
         theorem._meaning_data._unusable_proof = theorem
@@ -604,8 +614,6 @@ class Judgment:
         assert new_proof.is_usable(), (
                 "Should not update with an unusable proof")
 
-        self._checkIfReadyForQED(new_proof)
-
         if meaning_data._proof is None:
             # no previous dependents to update
             meaning_data._proof = new_proof
@@ -619,6 +627,27 @@ class Judgment:
 
         return True
 
+    @staticmethod
+    def _check_if_ready_for_qed():
+        if Judgment.has_been_proven is None:
+            return # A theorem proof hasn't been started.
+        theorem_being_proven = Judgment.theorem_being_proven
+        theorem_expr = Judgment.theorem_being_proven.proven_truth.expr
+        if theorem_expr.readily_provable():
+            if not Judgment.has_been_proven:
+                if theorem_expr.proven():
+                    Judgment.has_been_proven = True
+                    print(
+                        '%s has been proven. ' %
+                        theorem_being_proven.as_theorem_or_axiom().name,
+                        r'Now simply execute "%qed".')
+                else:
+                    print(
+                        '%s is readily provable. ' %
+                        theorem_being_proven.as_theorem_or_axiom().name,
+                        r'Now simply execute "%qed".')
+                
+    '''
     def _checkIfReadyForQED(self, proof):
         if proof.is_usable() and proof.proven_truth == self:
             if Judgment.has_been_proven is not None:
@@ -636,6 +665,7 @@ class Judgment:
                             r'Now simply execute "%qed".')
                         return True
         return False
+    '''
 
     def __setattr__(self, attr, value):
         '''

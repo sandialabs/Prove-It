@@ -49,6 +49,20 @@ class Not(Operation):
         '''
         yield self.deduce_operand_in_bool
 
+    def _readily_provable(self):
+        '''
+        Not(A) is readily provable if A is readily disprovable.
+        '''
+        # Note: here we need to call the '_' version; otherwise,
+        # we will have an infinite recursion.
+        return self.operand._readily_disprovable()
+
+    def _readily_disprovable(self):
+        '''
+        Not(A) is readily provable if A is readily provable.
+        '''
+        return self.operand.readily_provable()
+
     @prover
     def conclude(self, **defaults_config):
         '''
@@ -154,6 +168,13 @@ class Not(Operation):
         '''
         from proveit.logic.booleans import in_bool_if_true
         return in_bool_if_true.instantiate({A: self})
+
+    def readily_in_bool(self):
+        '''
+        Returns True if we can readily prove that the operand is
+        provably boolean and therefore this negation is boolean.
+        '''
+        return in_bool(self.operand).readily_provable()
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):

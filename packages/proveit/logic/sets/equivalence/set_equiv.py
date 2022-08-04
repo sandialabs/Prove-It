@@ -1,4 +1,4 @@
-from proveit import (as_expression, defaults, USE_DEFAULTS, 
+from proveit import (as_expression, defaults, 
                      ProofFailure, prover, relation_prover)
 from proveit import Literal
 from proveit import TransitiveRelation, TransitivityException
@@ -166,27 +166,38 @@ class SetEquiv(TransitiveRelation):
         # path to get from one end-point to the other.
         return TransitiveRelation.conclude(self)
 
-    # @staticmethod
-    # def known_relations_from_left(expr, assumptions_set):
-    #     '''
-    #     For each Judgment that is an Equals involving the given expression on
-    #     the left hand side, yield the Judgment and the right hand side.
-    #     '''
-    #     for judgment in Equals.known_equalities.get(expr, frozenset()):
-    #         if judgment.lhs == expr:
-    #             if judgment.is_applicable(assumptions_set):
-    #                 yield (judgment, judgment.rhs)
 
-    # @staticmethod
-    # def known_relations_from_right(expr, assumptions_set):
-    #     '''
-    #     For each Judgment that is an Equals involving the given expression on
-    #     the right hand side, yield the Judgment and the left hand side.
-    #     '''
-    #     for judgment in Equals.known_equalities.get(expr, frozenset()):
-    #         if judgment.rhs == expr:
-    #             if judgment.is_applicable(assumptions_set):
-    #                 yield (judgment, judgment.lhs)
+    @staticmethod
+    def WeakRelationClass():
+        return SetEquiv  # SetEquiv is the strong and weak form
+
+    @staticmethod
+    def StrongRelationClass():
+        return SetEquiv  # SetEquiv is the strong and weak form
+    
+    @staticmethod
+    def known_relations_from_left(expr, assumptions_set):
+        '''
+        For each Judgment that is an SetEquiv involving the given 
+        expression on the left hand side, yield the Judgment and the 
+        right hand side.
+        '''
+        for judgment in SetEquiv.known_equivalences.get(expr, frozenset()):
+            if judgment.lhs == expr:
+                if judgment.is_applicable(assumptions_set):
+                    yield (judgment, judgment.rhs)
+
+    @staticmethod
+    def known_relations_from_right(expr, assumptions_set):
+        '''
+        For each Judgment that is an SetEquiv involving the given 
+        expression on the right hand side, yield the Judgment and the
+        left hand side.
+        '''
+        for judgment in SetEquiv.known_equivalences.get(expr, frozenset()):
+            if judgment.rhs == expr:
+                if judgment.is_applicable(assumptions_set):
+                    yield (judgment, judgment.lhs)
 
     @prover
     def conclude_via_reflexivity(self, **defaults_config):
@@ -284,7 +295,8 @@ class SetEquiv(TransitiveRelation):
                 'something in common in the set equivalences: '
                 '%s vs %s' % (str(self), str(other)))
 
-    def sub_left_side_into(self, lambda_map, assumptions=USE_DEFAULTS):
+    @prover
+    def sub_left_side_into(self, lambda_map, **defaults_config):
         '''
         From A equiv B, and given P(B), derive P(A) assuming P(B).
         UNDER CONSTRUCTION, adapted from Equals class.
@@ -300,9 +312,10 @@ class SetEquiv(TransitiveRelation):
         Plambda = Equals._lambda_expr(lambda_map, self.rhs)
 
         return sub_left_side_into.instantiate(
-            {A: self.lhs, B: self.rhs, P: Plambda}, assumptions=assumptions)
+            {A: self.lhs, B: self.rhs, P: Plambda})
 
-    def sub_right_side_into(self, lambda_map, assumptions=USE_DEFAULTS):
+    @prover
+    def sub_right_side_into(self, lambda_map, **defaults_config):
         '''
         From A equiv B, and given P(A), derive P(B) assuming P(A).
         UNDER CONSTRUCTION, adapted from Equals class.
@@ -317,7 +330,7 @@ class SetEquiv(TransitiveRelation):
         from proveit.logic import Equals
         Plambda = Equals._lambda_expr(lambda_map, self.lhs)
         return sub_right_side_into.instantiate(
-            {A: self.lhs, B: self.rhs, P: Plambda}, assumptions=assumptions)
+            {A: self.lhs, B: self.rhs, P: Plambda})
 
     @relation_prover
     def deduce_in_bool(self,  **defaults_config):

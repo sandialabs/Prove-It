@@ -346,8 +346,9 @@ def equality_prover(past_tense, present_tense):
             The wrapper for the equality_prover decorator.
             '''
             from proveit._core_.expression.expr import Expression
-            from proveit._core_.proof import Assumption
-            from proveit.logic import Equals, TRUE, EvaluationError
+            from proveit._core_.proof import (Assumption, 
+                                              UnsatisfiedPrerequisites)
+            from proveit.logic import Equals, EvaluationError
             # Obtain the original Expression to be on the left side
             # of the resulting equality Judgment.
             _self = args[0]
@@ -377,9 +378,9 @@ def equality_prover(past_tense, present_tense):
                     (defaults.simplify_with_known_evaluations 
                      and is_simplification_method))):
                 from proveit.logic import evaluate_truth
-                # See if there is a known evaluation (or if one may
-                # be derived via known equalities if 
-                # defaults.automation is enabled).
+                # See if there is a known evaluation (directly or
+                # indirectly, but not via canonical forms to avoid
+                # infinite recursion).
                 # First, make sure we derive assumption side-effects.
                 with defaults.temporary() as tmp_defaults:
                     if 'assumptions' in kwargs:
@@ -389,7 +390,12 @@ def equality_prover(past_tense, present_tense):
                         # The expression is proven so it equals true.
                         proven_truth = evaluate_truth(expr)
                     else:
-                        proven_truth = Equals.get_known_evaluation(expr)
+                        try:
+                            proven_truth = (
+                                    Equals.get_readily_provable_evaluation(
+                                            expr, use_canonical_forms=False))
+                        except UnsatisfiedPrerequisites:
+                            proven_truth = None
                 # For an 'evaluation' or 'simplification', we should
                 # force auto_simplify on and preserve_all off to
                 # simplify as much as possible.

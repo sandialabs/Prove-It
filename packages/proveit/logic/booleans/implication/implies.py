@@ -68,6 +68,22 @@ class Implies(TransitiveRelation):
         yield self.deduce_negated_right_impl  # Not(A <=> B) given Not(A => B)
         yield self.deduce_negated_reflex  # B => A given Not(A => B)
 
+    def _readily_provable(self):
+        '''
+        A => B is readily provable if B is readily provable or A
+        is readily disprovable.
+        '''
+        return self.consequent.readily_provable() or (
+                self.antecedent.readily_disprovable())
+
+    def _readily_disprovable(self):
+        '''
+        A => B is readily disprovable if A is readily provable
+        and B is readily disprovable.
+        '''
+        return self.consequent.readily_disprovable() and (
+                self.antecedent.readily_provable())
+
     @prover
     def conclude(self, **defaults_config):
         '''
@@ -80,7 +96,7 @@ class Implies(TransitiveRelation):
             true_implies_true, false_implies_true, false_implies_false,
             false_antecedent_implication, falsified_antecedent_implication,
             untrue_antecedent_implication)
-        from proveit.logic import TRUE, FALSE, NotEquals, EvaluationError
+        from proveit.logic import TRUE, FALSE, NotEquals
         if self.antecedent == self.consequent:
             return self.conclude_self_implication()
 
@@ -105,34 +121,18 @@ class Implies(TransitiveRelation):
             # prove the implication via untrue_antecedent_implication.
             return untrue_antecedent_implication.instantiate(
                 {A: self.antecedent, B: self.consequent})
-        elif (self.antecedent.disproven() or
-              self.consequent.disproven()):
-            # Either the consequent or the antecedent has been disproven
+        elif (self.antecedent.readily_disprovable() or
+              self.consequent.readily_disprovable()):
+            # Either the consequent or the antecedent is disprovable
             # so we should try to prove the implication via
             # falsified_antecedent_implication.
             return falsified_antecedent_implication.instantiate(
                 {A: self.antecedent, B: self.consequent})
-        elif self.consequent.proven():
-            # The consequent is proven, so we can prove the implication
-            # via Deduction.
+        elif self.consequent.readily_provable():
+            # The consequent is provable, so we can prove the 
+            # implication via Deduction.
             return self.consequent.prove().as_implication(
                 self.antecedent)
-
-        try:
-            antecedent_eval = self.antecedent.evaluated()
-            if antecedent_eval == FALSE:
-                # try again with the antecedent disproven
-                return self.conclude()
-        except (EvaluationError, ProofFailure):
-            pass
-
-        try:
-            consequent_eval = self.consequent.evaluated()
-            if consequent_eval in (FALSE, TRUE):
-                # try again with the consequent proven or disproven.
-                return self.conclude()
-        except (EvaluationError, ProofFailure):
-            pass
 
         try:
             # try to prove the implication via deduction.
@@ -151,16 +151,16 @@ class Implies(TransitiveRelation):
     @prover
     def conclude_negation(self, **defaults_config):
         '''
-        Try to conclude True when Not(TRUE => FALSE) is called.
-        implemented by JML on 6/18/19
+        Try to conclude Not(A => B) because A is true and B is false.
         '''
         from proveit.logic.booleans import FALSE, TRUE
-        try:
-            if self.antecedent == TRUE and self.consequent == FALSE:
-                from . import true_implies_false_negated
-                return true_implies_false_negated
-        except BaseException:
-            pass
+        if self.antecedent == TRUE and self.consequent == FALSE:
+            from . import true_implies_false_negated
+            return true_implies_false_negated
+        else:
+            from . import invalid_implication
+            return invalid_implication.instantiate(
+                    {A:self.antecedent, B:self.consequent})
 
     @prover
     def conclude_via_double_negation(self, **defaults_config):
@@ -381,6 +381,15 @@ class Implies(TransitiveRelation):
         # May now be able to evaluate via loaded truth tables.
         return Operation.shallow_simplification(
                 self, must_evaluate=must_evaluate)
+
+    def readily_in_bool(self):
+        '''
+        Returns True if we can readily prove that the operands are
+        provably boolean and therefore this implication is boolean.
+        '''
+        from proveit.logic import in_bool
+        return (in_bool(self.antecedent).readily_provable() and
+                in_bool(self.consequent).readily_provable())
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):

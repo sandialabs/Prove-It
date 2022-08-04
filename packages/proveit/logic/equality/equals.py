@@ -1,4 +1,4 @@
-from proveit import (Judgment, as_expression, 
+from proveit import (Expression, Judgment, as_expression, 
                      defaults, USE_DEFAULTS, ProofFailure,
                      UnsatisfiedPrerequisites,
                      Conditional, ExprTuple, equality_prover, InnerExpr,
@@ -114,6 +114,46 @@ class Equals(TransitiveRelation):
         '''
         yield self.deduce_not_equals  # A != B from not(A=B)
 
+    def _readily_provable(self):
+        '''
+        Return True iff this equality is readily provable:
+            * The lhs and rhs have the same canonical form;
+            * One side is TRUE/FALSE and the other side is
+              provable/disprovable.,
+            * The sides mutually imply each other and each side is
+              provably boolean.
+            * There is a known (indirect) equality through the known
+              equalities and/or canonical forms.
+        '''
+        from proveit.logic import TRUE, FALSE, Iff, in_bool
+        if self.lhs == self.rhs:
+            return True
+        if self.lhs.canonical_form() == self.rhs.canonical_form():
+            return True
+        if (self.lhs == TRUE and self.rhs.readily_provable()) or (
+                self.rhs == TRUE and self.lhs.readily_provable()):
+            return True
+        if (self.lhs == FALSE and self.rhs.readily_disprovable()) or (
+                self.rhs == FALSE and self.lhs.readily_disprovable()):
+            return True
+        if not isinstance(self.lhs, ExprTuple) and (
+                not isinstance(self.rhs, ExprTuple) and
+                Iff(self.lhs, self.rhs).readily_provable() and 
+                in_bool(self.lhs).readily_provable() and
+                in_bool(self.rhs).readily_provable()):
+            return True
+        for eq_expr in Equals.yield_known_equal_expressions(self.lhs):
+            if eq_expr == self.rhs:
+                return True
+        return False
+
+    def _readily_disprovable(self):
+        '''
+        Equals is disprovable if NotEquals is provable.
+        '''
+        from .not_equals import NotEquals
+        return NotEquals(self.lhs, self.rhs).readily_provable()
+
     @prover
     def conclude(self, **defaults_config):
         '''
@@ -121,7 +161,7 @@ class Equals(TransitiveRelation):
         simple reflexivity (x=x), via an evaluation (if one side is an
         irreducible). Use conclude_via_transitivity for transitivity cases.
         '''
-        from proveit.logic import TRUE, FALSE, Implies, Iff, in_bool
+        from proveit.logic import TRUE, FALSE, Iff, in_bool
         if self.lhs == self.rhs:
             # Trivial x=x
             return self.conclude_via_reflexivity()
@@ -132,10 +172,11 @@ class Equals(TransitiveRelation):
             except ProofFailure:
                 pass
 
-        if (Implies(self.lhs, self.rhs).proven() and
-                Implies(self.rhs, self.lhs).proven() and
-                in_bool(self.lhs).proven() and
-                in_bool(self.rhs).proven()):
+        if not isinstance(self.lhs, ExprTuple) and (
+                not isinstance(self.rhs, ExprTuple) and
+                Iff(self.lhs, self.rhs).readily_provable() and 
+                in_bool(self.lhs).readily_provable() and
+                in_bool(self.rhs).readily_provable()):
             # There is mutual implication both sides are known to be
             # boolean.  Conclude equality via mutual implication.
             return Iff(self.lhs, self.rhs).derive_equality()
@@ -163,6 +204,14 @@ class Equals(TransitiveRelation):
         # Try to prove equality via standard TransitiveRelation
         # strategies (simplify both sides then try transitivity).
         return TransitiveRelation.conclude(self)
+
+    @prover
+    def conclude_negation(self, **defaults_config):
+        '''
+        Attempt to conclude the negation of this equality.
+        '''
+        from proveit.logic import NotEquals
+        return NotEquals(self.lhs, self.rhs).unfold()
 
     @prover
     def conclude_via_direct_substitution(self, **defaults_config):
@@ -350,28 +399,44 @@ class Equals(TransitiveRelation):
         return Equals  # = is the strong and weak form of equality,
 
     @staticmethod
-    def known_relations_from_left(expr, assumptions_set):
+    def known_relations_from_left(expr, assumptions_set,
+                                  include_canonical_forms=True):
         '''
         For each Judgment that is an Equals involving the given 
         expression on the left hand side, yield the Judgment and the 
         right hand side.
+        By default, canonical forms will also be included (as an
+        Expression rather than a Judgment) if the equality has not
+        yet actually been proven.
         '''
         for judgment in Equals.known_equalities.get(expr, frozenset()):
             if judgment.lhs == expr:
                 if judgment.is_applicable(assumptions_set):
                     yield (judgment, judgment.rhs)
+        if include_canonical_forms and expr.canonical_form() != expr:
+            canonical_form_eq = Equals(expr, expr.canonical_form())
+            if not canonical_form_eq.proven(assumptions=assumptions_set):
+                return (canonical_form_eq, canonical_form_eq.rhs)
 
     @staticmethod
-    def known_relations_from_right(expr, assumptions_set):
+    def known_relations_from_right(expr, assumptions_set,
+                                   include_canonical_forms=True):
         '''
         For each Judgment that is an Equals involving the given 
         expression on the right hand side, yield the Judgment and the 
         left hand side.
+        By default, canonical forms will also be included (as an
+        Expression rather than a Judgment) if the equality has not yet 
+        actually been proven.
         '''
         for judgment in Equals.known_equalities.get(expr, frozenset()):
             if judgment.rhs == expr:
                 if judgment.is_applicable(assumptions_set):
                     yield (judgment, judgment.lhs)
+        if include_canonical_forms and expr.canonical_form() != expr:
+            canonical_form_eq = Equals(expr.canonical_form(), expr)
+            if not canonical_form_eq.proven(assumptions=assumptions_set):
+                return (canonical_form_eq, canonical_form_eq.lhs)
 
     @prover
     def conclude_via_reflexivity(self, **defaults_config):
@@ -400,19 +465,35 @@ class Equals(TransitiveRelation):
         return Equals(self.rhs, self.lhs)
 
     @staticmethod
-    def yield_known_equal_expressions(expr, *, exceptions=None):
+    def yield_known_equal_expressions(expr, *, exceptions=None,
+                                      include_canonical_forms=True,
+                                      assumptions=USE_DEFAULTS):
         '''
         Yield everything known to be equal to the given expression
         under the given assumptions directly or indirectly through 
         the transitive property of equality.
         If 'exceptions' are provided, disregard known equalities
         with expressions in the 'exceptions' set.
+        If 'include_canonical_forms' is True, include canonical forms
+        in the search.
         '''
-        assumptions = defaults.assumptions
-        to_process = {expr}
+        # Make sure we derive assumption side-effects first.
+        from proveit import Assumption
+        assumptions = defaults.checked_assumptions(assumptions)
+        Assumption.make_assumptions(defaults.assumptions)
+        assumptions_set = set(assumptions)
+
+        to_process = OrderedSet()
+        to_process.add(expr)
+        if include_canonical_forms:
+            canonical_expr = expr.canonical_form()
+            to_process.update(
+                    Expression.canonical_form_to_exprs[canonical_expr])
         processed = set()
         while len(to_process) > 0:
             expr = to_process.pop()
+            if expr in processed:
+                continue
             if (exceptions is not None and expr in exceptions):
                 # Skip this 'exception'.
                 continue
@@ -421,11 +502,16 @@ class Equals(TransitiveRelation):
             if expr not in Equals.known_equalities:
                 continue
             for known_equality in Equals.known_equalities[expr]:
-                if known_equality.is_applicable(assumptions):
+                if known_equality.is_applicable(assumptions_set):
                     # A valid equality.  See if something is new.
                     for operand in known_equality.operands:
                         if operand not in processed:
                             to_process.add(operand)
+                            if include_canonical_forms:
+                                canonical_expr = operand.canonical_form()
+                                to_process.update(
+                                        Expression.canonical_form_to_exprs
+                                        [canonical_expr])
 
     @prover
     def deduce_not_equals(self, **defaults_config):
@@ -914,47 +1000,73 @@ class Equals(TransitiveRelation):
         return Operation.shallow_simplification(self)
 
     @staticmethod
-    def get_known_evaluation(expr, *, automation=USE_DEFAULTS):
+    @prover
+    def get_known_evaluation(expr, **defaults_config):
         '''
-        Return an applicable evaluation (under current defaults) for 
-        the given expression if one is known; otherwise return None.
-        If automation is True, we are allow to derive
-        an evaluation via transitivity with through any number of known 
-        equalities, excluding equalities with any "preserved" 
-        expressions (in defaults.preserved_exprs) whose evaluations
-        are to be disregarded.
+        Return an applicable evaluation for the given expression if one
+        is explicitly known; otherwise raise UnsatisfiedPrerequisites.
+        Also see Equals.get_readily_provable_evaluation.
         '''
+        return Equals.get_readily_provable_evaluation(expr, automation=False)
+
+    @staticmethod
+    @prover
+    def get_readily_provable_evaluation(
+            expr, *, use_canonical_forms=True, **defaults_config):
+        '''
+        Return an applicable evaluation for the given expression if one
+        is readily provable; otherwise raise UnsatisfiedPrerequisites.
+        If conclude_automation is True, we are allowed to derive
+        an evaluation via transitivity through any number of known 
+        equalities and/or expressions with the same canonical form
+        (if use_canonical_forms is also True),  excluding equalities 
+        with any "preserved" expressions (in defaults.preserved_exprs)
+        whose evaluations are to be disregarded.
+        '''
+        assumptions_set = set(defaults.assumptions)
+        
+        if is_irreducible_value(expr):
+            return Equals(expr, expr).conclude_via_reflexivity()
         if expr in Equals.known_evaluation_sets:
             evaluations = Equals.known_evaluation_sets[expr]
             candidates = []
-            assumptions = defaults.assumptions
-            assumptions_set = set(assumptions)
             for judgment in evaluations:
                 if judgment.is_applicable(assumptions_set):
                     # Found existing evaluation suitable for the
                     # assumptions
                     candidates.append(judgment)
             if len(candidates) >= 1:
-                # Return the "best" candidate with respect to fewest number
-                # of steps.
+                # Return the "best" candidate with respect to fewest 
+                # number of steps.
                 def min_key(judgment): return judgment.proof().num_steps()
                 return min(candidates, key=min_key)
-        if automation is USE_DEFAULTS:
-            automation = defaults.conclude_automation
-        if automation:
+        if defaults.conclude_automation:
             # An evaluation isn't directly known, but we may know
             # something equal to this that has an evaluation and
-            # therefore we have an evaluation by transitivity as long
-            # as 'automation' is allowed.
+            # therefore we have an evaluation by transitivity and/or
+            # same canonical forms as long as 'automation' is allowed.
             for eq_expr in Equals.yield_known_equal_expressions(
-                    expr, exceptions=defaults.preserved_exprs):
-                if eq_expr == expr: continue
-                eq_evaluation = Equals.get_known_evaluation(
-                        eq_expr, automation=False)
+                    expr, exceptions=defaults.preserved_exprs,
+                    include_canonical_forms=use_canonical_forms):
+                eq_evaluation = None
+                if eq_expr.readily_provable():
+                    eq_evaluation = evaluate_truth(expr)
+                elif eq_expr.readily_disprovable():
+                    eq_evaluation = evaluate_falsehood(expr)
+                elif eq_expr != expr: 
+                    eq_evaluation = Equals.get_known_evaluation(eq_expr)
                 if eq_evaluation is not None:
-                    _eq = Equals(expr, eq_expr).conclude_via_transitivity()
+                    if expr == eq_expr:
+                        return eq_evaluation
+                    _eq = Equals(expr, eq_expr)
+                    if expr.canonical_form()==eq_expr.canonical_form():
+                        # deduce equality via same canonical form
+                        _eq = expr.deduce_equality(_eq)
+                    else:
+                        _eq = _eq.conclude_via_transitivity()
                     return _eq.apply_transitivity(eq_evaluation)
-        return None
+        raise UnsatisfiedPrerequisites(
+                "No readily provable evaluation")
 
     @staticmethod
     def invert(lambda_map, rhs, assumptions=USE_DEFAULTS):
@@ -964,7 +1076,12 @@ class Equals(TransitiveRelation):
         given assumptions.  Return this x if one is found; return
         None otherwise.
         '''
-        assumptions_set = set(defaults.checked_assumptions(assumptions))
+        from proveit._core_.proof import Assumption
+        # Make sure we derive assumption side-effects first.
+        assumptions = defaults.checked_assumptions(assumptions)
+        Assumption.make_assumptions(defaults.assumptions)
+        assumptions_set = set(assumptions)
+
         if (lambda_map, rhs) in Equals.inversions:
             # Previous solution(s) exist.  Use one if the assumptions are
             # sufficient.

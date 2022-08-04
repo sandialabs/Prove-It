@@ -19,18 +19,25 @@ from collections import OrderedDict
 # from ._theory_storage import relurl#Comment out for Python 3
 from proveit._core_._theory_storage import relurl  # Comment in for Python 3
 
-def ast_unparse(ast_node):
+def ast_yield_expr_strs(ast_node):
     '''
-    In version 3.9 we can just use ast.unparse.
-    In version 3.8 we can use ast.get_source_segment.
-    In version 3.7 we do this nonsense for now.
+    Yield expression strings from an abstract syntax tree
+    for simple types of expressions (names, attribute of a name,
+    or tuples).
     '''
     if isinstance(ast_node, ast.Name):
-        return ast_node.id
+        yield ast_node.id
+        return
     if isinstance(ast_node, ast.Attribute):
-        return "%s.%s"%(ast_unparse(ast_node.value), ast_node.attr)
-    if isinstance(ast_node, ast.Tuple):
-        return '(' + ','.join(ast_unparse(elt) for elt in ast_node.elts) + ')'
+        if isinstance(ast_node.value, ast.Name):
+            yield "%s.%s"%(ast_node.value.id, ast_node.attr)
+            return
+    if isinstance(ast_node, ast.Tuple) or isinstance(ast_node, list):
+        elts = ast_node if isinstance(ast_node, list) else ast_node.elts
+        for elt in elts:
+            for expr_str in ast_yield_expr_strs(elt):
+                yield expr_str
+        return
     raise NotImplementedError("'ast_unparse' is limited")
 
 class AssignmentBehaviorModifier:
@@ -48,15 +55,15 @@ class AssignmentBehaviorModifier:
             lines = raw_cell.split('\n')
             try:
                 last_ast_node = ast.parse(raw_cell).body[-1]
-            except SyntaxError:
+            except (SyntaxError, IndexError):
                 last_ast_node = None
             while isinstance(last_ast_node, ast.With):
                 # Dig into with blocks.
                 last_ast_node = last_ast_node.body[-1]
             if isinstance(last_ast_node, ast.Assign):
                 try:
-                    target_strs = [ast_unparse(target) for target 
-                                   in last_ast_node.targets]
+                    target_strs = list(
+                            ast_yield_expr_strs(last_ast_node.targets))
                 except NotImplementedError:
                     target_strs = None # forget it
                 # Skip assignment of 'theory' which happens in the
@@ -69,8 +76,9 @@ class AssignmentBehaviorModifier:
                 #lines.append(last_line_fn(last_ast_node))
                 if isinstance(last_ast_node, ast.Expr):
                     try:
-                        lines.append(last_line_fn(ast_unparse(
-                                last_ast_node.value)))
+                        lines.append(last_line_fn(
+                                ', '.join(ast_yield_expr_strs(
+                                        last_ast_node.value))))
                     except NotImplementedError:
                         pass # forget it
             new_raw_cell = '\n'.join(lines)
@@ -1026,8 +1034,14 @@ class ProveItMagic(Magics, ProveItMagicCommands):
 
 class Assignments:
     def __init__(self, names, right_sides, beginning_proof=False):
+        from proveit import single_or_composite_expression, Judgment
         self.beginning_proof = beginning_proof
-        from proveit import single_or_composite_expression
+        
+        # While we are displaying assignments check if a theorem that 
+        # is being proven is readily provable; if so, indicate that 
+        # '%qed' is all that is needed.
+        Judgment._check_if_ready_for_qed()
+
         processed_right_sides = []
         for right_side in right_sides:
             if not isinstance(right_side, Judgment):
@@ -1162,25 +1176,21 @@ class Assignments:
                          for name, right_side in zip(self.names, self.right_sides))
 
 
-def possibly_wrap_html_display_objects(orig):
-    from proveit import ExprTuple
-    try:
-        if hasattr(orig, '_repr_html_'):
-            # No need to wrap.  Already has _repr_html.
-            return orig
-        all_expr_objs = True
-        for obj in orig:
-            if not isinstance(obj, Expression):
-                all_expr_objs = False
-            if not hasattr(obj, '_repr_html_'):
-                return orig
-        if all_expr_objs:
-            # If they are all expression objects, wrap it in
-            # an ExprTuple.
-            return ExprTuple(*orig)
-        return HTML_DisplayObjects(orig)
-    except BaseException:
-        return orig
+def possibly_wrap_html_display_objects(*orig_objects):
+    from proveit import ExprTuple, Judgment
+    # While we are displaying object(s), check if a theorem that is 
+    # being proven is readily provable; if so, indicate that '%qed' is 
+    # all that is needed.
+    Judgment._check_if_ready_for_qed()
+    for obj in orig_objects:
+        if isinstance(obj, tuple) or isinstance(obj, list):
+            '''
+            Wrap tuples/lists of Expressions in an ExprTuple for
+            formatting purposes.
+            '''
+            if all(isinstance(_, Expression) for _ in obj):
+                obj = ExprTuple(*obj)
+        display(obj)
 
 
 class HTML_DisplayObjects:

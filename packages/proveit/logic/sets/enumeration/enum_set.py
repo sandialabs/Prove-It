@@ -56,6 +56,24 @@ class Set(Function):
         return Set(*sorted([operand.canonical_form() for operand 
                               in self.operands.entries], key=hash))
 
+    def includes(self, other_set):
+        '''
+        Returns true/false if this set includes/excludes 'other_set' 
+        using fast checks.  Raise NotImplementedError otherwise.
+        '''
+        from proveit.logic.sets import is_infinite_set
+        if is_infinite_set(other_set):
+            # A finite set cannot include an infinite one.
+            return False
+        if isinstance(other_set, Set):
+            if set(self.elements).issuperset(set(other_set.elements)):
+                # We know self includes other_set
+                return True
+            # We cannot say for sure if 'self' includes other_set
+            # without more work.
+        raise NotImplementedError(
+                "Set.includes only has simple checks by design.")      
+    
     @equality_prover('equated', 'equate')
     def deduce_equality(self, equality, **defaults_config):
         return deduce_equality_via_commutation(equality, one_side=self)
@@ -277,6 +295,56 @@ class Set(Function):
         would both return |- {a, b, c, d} = {a, c, d, b}.
         '''
         return generic_permutation(self, new_order, cycles)
+
+    @prover
+    def deduce_subset_eq_relation(self, subset, **defaults_config):
+        '''
+        Deduce a simple subset_eq relation between this Set
+        expression and another one whose entries are all included by
+        this one.  For example,
+            {a, b, c, d}.deduce_subset_eq_relation({a, c})
+        would return |- {a, c} subset_eq {a, b, c, d}.
+        '''
+        if not isinstance(subset, Set):
+            raise NotImplementedError(
+                    "'deduce_superset_eq_relation' only implemented for "
+                    "a 'superset' that is a enumerated Set expression")
+        if not set(subset.elements).issubset(self.elements):
+            raise NotImplementedError(
+                    "'deduce_superset_eq_relation' only implemented for "
+                    "a 'subset' whose entries are all included in "
+                    "'self': %s does not include all of %s"
+                    %(self, subset))
+        return self.deduce_as_superset_eq_of(subset=subset)
+
+    @relation_prover
+    def deduce_proper_subset_relation(self, subset, **defaults_config):
+        '''
+        Deduce a proper subset relation between this Set
+        expression and another one whose entries are all included by
+        this one.  For example,
+            {a, b, c, d}.deduce_proper_superset_relation({a, c})
+        would return |- {a, c} superset {a, b, c, d}.
+        '''
+        # TODO: Needs work to ensur there is an element not in the
+        # superset by using NotEquals.readily_provable, here and
+        # in deduce_as_proper_superset_of for choosing the proper
+        # element.
+        if not isinstance(subset, Set):
+            raise NotImplementedError(
+                    "'deduce_superset_eq_relation' only implemented for "
+                    "a 'superset' that is a enumerated Set expression")
+        if not set(subset.elements).issubset(self.elements):
+            raise NotImplementedError(
+                    "'deduce_superset_eq_relation' only implemented for "
+                    "a 'subset' whose entries are all included in "
+                    "'self': %s does not include all of %s"
+                    %(self, subset))
+        try:
+            return self.deduce_as_proper_superset_of(subset=subset)
+        except ValueError:
+            raise NotImplementedError(
+                    "This case not implemented: See above TODO")
 
     @prover
     def deduce_enum_subset_eq(self, subset_indices=None, subset=None,

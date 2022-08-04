@@ -1,5 +1,5 @@
-from proveit import (Literal, Operation, USE_DEFAULTS, 
-                     prover, relation_prover, equality_prover)
+from proveit import (Literal, Operation, defaults, USE_DEFAULTS, 
+                     ProofFailure, prover, relation_prover, equality_prover)
 from proveit.logic.booleans.conjunction import compose
 from .implies import Implies
 from proveit import A, B, C
@@ -42,51 +42,87 @@ class Iff(TransitiveRelation):
         # A=B given A<=>B (assuming A and B are in booleans)
         yield self.derive_equality
 
+    def _readily_provable(self):
+        '''
+        A <=> B is readily provable if A => B and B => A are rediable
+        provable or if A and B are both readily provable or both 
+        readily disprovable.
+        '''
+        return ((Implies(self.A, self.B).readily_provable() and
+                Implies(self.B, self.A).readily_provable()) or
+            (self.A.readily_provable() and self.B.readily_provable()) or (
+            self.A.readily_disprovable() and (self.B.readily_disprovable())))
+
+    def _readily_disprovable(self):
+        '''
+        A <=> B is readily provable if A => B is readily disprovable or
+        B => A is readily disprovable or if A is readily provable and 
+        B is readily disprovable or vice-versa.
+        '''
+        return (Implies(self.A, self.B).readily_disprovable() or
+                Implies(self.B, self.A).readily_disprovable() or 
+                (self.antecedent.readily_disprovable() and 
+                 self.consequent.readily_provable()) or
+                 (self.antecedent.readily_provable() and (
+                    self.consequent.readily_disprovable())))
+
     @prover
     def conclude(self, **defaults_config):
         '''
-        Try to automatically conclude this bi-directional implication by
-        reducing its operands to true/false.
+        Try to automatically conclude this Iff given both operands
+        are true, both operands are false, or by proving implications
+        in both direction (the definition).
         '''
         from . import iff_t_t, iff_t_f, iff_f_t, iff_f_f, true_iff_true, false_iff_false
         if self in {true_iff_true, false_iff_false}:
-            # should be proven via one of the imported theorems as a simple
-            # special case
+            # should be proven via one of the imported theorems as a 
+            # simple special case
             try:
                 self.shallow_simplification()
                 # self.evaluation()
             except BaseException:
                 return self.prove()
-        try:
-            # try to prove the bi-directional implication via evaluation reduction.
-            # if that is possible, it is a relatively straightforward thing to
-            # do.
-            return Operation.conclude()
-        except BaseException:
-            pass
-        try:
-            # Use a breadth-first search approach to find the shortest
-            # path to get from one end-point to the other.
-            return TransitiveRelation.conclude(self)
-        except BaseException:
-            pass
-
-        # the last attempt is to introduce the Iff via implications each way, an
-        # essentially direct consequence of the definition.
+        if self.A.readily_provable() and self.B.readily_provable():
+            # A <=> B because A and B are both true.
+            from . import iff_via_both_true
+            return iff_via_both_true.instantiate({A:self.A, B:self.B})
+        if  self.A.readily_disprovable() and self.B.readily_disprovable():
+            # A <=> B because A and B are both false.
+            from . import iff_via_both_false
+            return iff_via_both_false.instantiate({A:self.A, B:self.B})
+        # Introduce the Iff via implications each way as a direct 
+        # consequence of the definition.
         return self.conclude_by_definition()
 
     @prover
     def conclude_negation(self, **defaults_config):
-        # implemented by Joaquin on 6/17/19
+        '''
+        Try to automatically conclude the negation of Iff given one
+        operand is true and the other is false or by proving 
+        the implication in one of the directions is False.
+        '''
         from proveit.logic.booleans import FALSE, TRUE
-        try:
-            if self.A == TRUE and self.B == FALSE:
-                from . import true_iff_false_negated, false_iff_true_negated
-            elif self.B == TRUE and self.A == FALSE:
-                from . import true_iff_false_negated, false_iff_true_negated
-        except BaseException:
-            pass
-
+        if self.A == TRUE and self.B == FALSE:
+            from . import true_iff_false_negated
+            return true_iff_false_negated
+        elif self.B == TRUE and self.A == FALSE:
+            from . import false_iff_true_negated
+            return false_iff_true_negated
+        elif self.A.readily_provable() and self.B.readily_disprovable():
+            from . import not_iff_via_not_right
+            return not_iff_via_not_right.instantiate({A:self.A, B:self.B})
+        elif self.A.readily_disprovable() and self.B.readily_provable():
+            from . import not_iff_via_not_left
+            return not_iff_via_not_left.instantiate({A:self.A, B:self.B})
+        elif Implies(self.A, self.B).readily_disprovable():
+            from . import not_iff_via_not_right_impl
+            return not_iff_via_not_right_impl.instantiate({A:self.A, B:self.B})
+        elif Implies(self.B, self.A).readily_disprovable():
+            from . import not_iff_via_not_left_impl
+            return not_iff_via_not_left_impl.instantiate({A:self.A, B:self.B})
+        raise ProofFailure(self, defaults.assumptions,
+                           "Unable to automatically conclude by "
+                           "standard means.")
     @prover
     def derive_left_implication(self, **defaults_config):
         '''
@@ -200,6 +236,15 @@ class Iff(TransitiveRelation):
         # May now be able to evaluate via loaded truth tables.
         return Operation.shallow_simplification(
                 self, must_evaluate=must_evaluate)
+
+    def readily_in_bool(self):
+        '''
+        Returns True if we can readily prove that the operands are
+        provably boolean and therefore this Iff is boolean.
+        '''
+        from proveit.logic import in_bool
+        return (in_bool(self.antecedent).readily_provable() and
+                in_bool(self.consequent).readily_provable())
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):

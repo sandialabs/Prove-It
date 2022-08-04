@@ -124,43 +124,53 @@ class NotInClass(Relation):
         return unfold_not_in_class.instantiate(
             {x: self.element, S: self.domain}, auto_simplify=False)
 
+    def _build_canonical_form(self):
+        '''
+        The canonical form of this membership is based upon
+        'as_defined' which defines what the membership means.
+        '''
+        if hasattr(self, 'nonmembership_object'):
+            return self.nonmembership_object._build_canonical_form()
+        else:
+            return Relation._build_canonical_form(self)
+
+    def _readily_provable(self):
+        '''
+        This nonmembership is readily provable if the membership
+        has been disproven, the nonmembership object indicates that it 
+        is readily provable or if there is a known stronger 
+        nonmembership.
+        '''
+        if self.negated().disproven():
+            # Use disproven instead of readily disproven to avoid 
+            # infinite recursion.
+            return True
+        if hasattr(self, 'nonmembership_object'):
+            if self.nonmembership_object._readily_provable():
+                return True
+        if self.stronger_known_nonmembership() is not None:
+            return True
+        return False
+
+    def _readily_disprovable(self):
+        '''
+        This nonmembership is readily disprovable if the corresponding
+        membership is readily provable.
+        '''
+        return self.negated().readily_provable()
+
     @prover
     def conclude(self, **defaults_config):
         '''
         Attempt to conclude that the the NotInSet object is true ---
         i.e. that the element is not in the domain.
-        First, see if it is not contained in a superset of the domain.
-        Next, check if the element has a known simplification; if so,
-        try to derive non-membership via this simplification.
-        If there isn't a known simplification, next try to call
-        the 'self.domain.nonmembership_object.conclude(..)' method to
-        prove the non-membership.  If that fails, try simplifying the
-        element again, this time using automation to push the
-        simplification through if possible.
-        As a last resort, try 'conclude_as_folded'.
-        '''
-        from proveit import ProofFailure
-        from proveit.logic import SubsetEq, evaluation_or_simplification
-        
-        if self.negated().disproven():
+        First see if the corresponding membership has been disproven. 
+        Then try the ses the Relation conclude strategies that simplify 
+        both sides.  Finally use the domain-specific conclude method of 
+        the nonmembership object as a last resort.
+        '''        
+        if self.negated().disproven(): # don't use readily_disprovable
             return self.conclude_as_folded()
-
-        # See if the element, or something known to be equal to
-        # the element, is known to be a nonmember of the domain or a 
-        # superset of the domain.
-        if self.element in NotInClass.known_nonmemberships:
-            for known_nonmembership in \
-                    NotInClass.known_nonmemberships[self.element]:
-                if known_nonmembership.is_applicable():
-                    # x not in R is known to be true; if we know that
-                    # S subset_eq R, we are done.
-                    rel = SubsetEq(self.domain,
-                                   known_nonmembership.domain)
-                    if rel.proven():
-                        # S is a subset of R, so now we can prove 
-                        # x not in S.
-                        return rel.derive_subset_nonmembership(
-                            self.element)
 
         # Try the standard Relation strategies -- evaluate or
         # simplify both sides.
@@ -180,6 +190,16 @@ class NotInClass(Relation):
             return self.conclude_as_folded()
 
     @prover
+    def conclude_negation(self, **defaults_config):
+        '''
+        Attempt to conclude the negation of nonmembership via
+        proving membership.
+        '''
+        from . import double_negated_membership
+        return double_negated_membership.instantiate(
+                {x:self.element, S:self.domain})
+
+    @prover
     def conclude_as_folded(self, **defaults_config):
         '''
         Attempt to conclude x not in C via Not(x in C).
@@ -187,6 +207,24 @@ class NotInClass(Relation):
         from . import fold_not_in_class
         return fold_not_in_class.instantiate(
             {x: self.element, S: self.domain})
+
+    @staticmethod
+    def yield_known_nonmemberships(element, assumptions=USE_DEFAULTS):
+        '''
+        Yield the known nonmemberships of the given element applicable
+        under the given assumptions.
+        '''
+        from proveit._core_.proof import Assumption
+        # Make sure we derive assumption side-effects first.
+        assumptions = defaults.checked_assumptions(assumptions)
+        Assumption.make_assumptions(defaults.assumptions)
+        assumptions_set = set(assumptions)
+
+        if element in NotInClass.known_nonmemberships:
+            for known_nonmembership in (
+                    NotInClass.known_nonmemberships[element]):
+                if known_nonmembership.is_applicable(assumptions_set):
+                    yield known_nonmembership
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
@@ -255,7 +293,46 @@ class ClassNonmembership:
         raise NotImplementedError(
             "Nonmembership object has no 'side_effects' method implemented")
 
-    def conclude(self, assumptions):
+    def _build_canonical_form(self):
+        '''
+        The canonical form of this nonmembership is based upon
+        'as_defined' which defines what the membership means.
+        '''
+        try:
+            return self.as_defined().canonical_form()
+        except NotImplementedError:
+            # If 'as_defined' is not implemented, use the default
+            # method of building the canonical form.
+            return Relation._build_canonical_form(self.expr)
+
+    def _readily_provable(self):
+        '''
+        By default, we will determine if this nonmembership is
+        readily provable if its "as_defined()" expression is
+        readily provable.
+        '''
+        try:
+            return self.as_defined().readily_provable()
+        except NotImplementedError:
+            # If 'as_defined' is not implemented, this default
+            # method for determining provability can never be true.
+            return False
+
+    def _readily_disprovable(self):
+        '''
+        By default, we will determine if this nonmembership is
+        readily disprovable if its "as_defined()" expression is
+        readily disprovable.
+        '''
+        try:
+            return self.as_defined().readily_disprovable()
+        except NotImplementedError:
+            # If 'as_defined' is not implemented, this default
+            # method for determining provability can never be true.
+            return False
+
+    @prover
+    def conclude(self, **defaults_config):
         raise NotImplementedError(
             "Nonmembership object has no 'conclude' method implemented")
 
@@ -264,6 +341,15 @@ class ClassNonmembership:
         raise NotImplementedError(
             "Nonmembership object has no 'definition' method implemented")
 
-    def deduce_in_bool(self, assumptions=USE_DEFAULTS):
+    def as_defined(self):
+        '''
+        Returns the expression that defines the nonmembership.
+        '''
+        raise NotImplementedError(
+            "Nonmembership object, %s, has no 'as_defined' method implemented" 
+            % str(self.__class__))
+
+    @prover
+    def deduce_in_bool(self, **defaults_config):
         raise NotImplementedError(
             "Nonmembership object has no 'deduce_in_bool' method implemented")

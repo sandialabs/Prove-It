@@ -180,7 +180,8 @@ class SetOfAll(OperationOverInstances):
 
     """
 
-    def unfold_membership(self, element, assumptions=USE_DEFAULTS):
+    @prover
+    def unfold_membership(self, element, **defaults_config):
         '''
         From (x in {y | Q(y)})_{y in S}, derive and return
         [(x in S) and Q(x)], where x is meant as the given element.
@@ -205,7 +206,8 @@ class SetOfAll(OperationOverInstances):
             f_op, f_sub = Function(f, self.instance_vars), self.instance_element
             return unfold_comprehension.instantiate({S:self.domain,  Q_op:Q_op_sub, f_op:f_sub, x:element}, {y_multi:self.instance_vars}).derive_conclusion(assumptions)
 
-    def deduce_membership(self, element, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_membership(self, element, **defaults_config):
         '''
         From P(x), derive and return (x in {y | P(y)}), where x is meant as the given element.
         '''

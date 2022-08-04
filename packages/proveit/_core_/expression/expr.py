@@ -2,6 +2,7 @@
 This is the expression module.
 """
 
+from proveit.util import OrderedSet
 from proveit._core_.defaults import (defaults, USE_DEFAULTS, 
                                      SimplificationDirectives)
 from proveit._core_.theory import Theory
@@ -168,12 +169,21 @@ class ExprType(type):
 
 
 class Expression(metaclass=ExprType):
-    # (expression, assumption) pairs for which conclude is in progress, tracked to prevent infinite
-    # recursion in the `prove` method.
+    # (expression, assumption) pairs for which conclude is in progress, 
+    # tracked to prevent infinite recursion in the `prove` method.
     in_progress_to_conclude = set()
+    
+    # (expression, assumption) pairs for which '_readily_provable' is
+    # in progress. Tracked to prevent infinite recursion.
+    in_progress_to_check_provability = set()
 
     # Map "labeled" meaning data to "canonical" meaning data.
     labeled_to_canonical_meaning_data = dict()
+    
+    # Map canonincal forms to sets of expressions with that canonical
+    # form and vice-versa.
+    canonical_form_to_exprs = dict()    
+    expr_to_canonical_form = dict()
 
     # Map Expression classes to their proper paths (as returned
     # by the Expression._class_path method).
@@ -204,7 +214,12 @@ class Expression(metaclass=ExprType):
         assert len(Expression.in_progress_to_conclude) == 0, (
                 "Unexpected remnant 'in_progress_to_conclude' items "
                 "(should have been temporary)")
+        assert len(Expression.in_progress_to_check_provability) == 0, (
+                "Unexpected remnant 'in_progress_to_check_provability'"
+                "items (should have been temporary)")
         Expression.labeled_to_canonical_meaning_data.clear()
+        Expression.canonical_form_to_exprs.clear()
+        Expression.expr_to_canonical_form.clear()
         Expression.class_paths.clear()
         #Expression.default_labeled_expr_styles.clear()
 
@@ -407,24 +422,27 @@ class Expression(metaclass=ExprType):
         See _build_canonical_form: this method should be overriden by
         each Expression type for build type-specific canonical forms.
         '''
-        if hasattr(self, '_canonical_form'):
-            return self._canonical_form
-        canonical_form = self._build_canonical_form()
-        self._canonical_form = canonical_form
-        if hasattr(canonical_form, '_canonical_form'):
-            if canonical_form != canonical_form._canonical_form:
-                raise ValueError("Inconsistent canonical forms: %s vs %s"
-                                 %(canonical_form, 
-                                   canonical_form._canonical_form))
+        if self in Expression.expr_to_canonical_form:
+            cf = Expression.expr_to_canonical_form[self]
         else:
-            canonical_form._canonical_form = canonical_form
-        return self._canonical_form 
+            cf = self._build_canonical_form()
+            Expression.expr_to_canonical_form[self] = cf
+            if cf in Expression.expr_to_canonical_form:
+                cf_of_cf = Expression.expr_to_canonical_form[cf]
+                if cf != cf_of_cf:
+                    raise ValueError("Inconsistent canonical forms: %s vs %s"
+                                     %(cf, cf_of_cf))
+            else:
+                Expression.expr_to_canonical_form[cf] = cf
+            Expression.canonical_form_to_exprs.setdefault(
+                    cf, OrderedSet()).update({self, cf})
+        return cf
 
     def _build_canonical_form(self):
         '''
         Build the canonical form of the Expression (see the
         Expression.canonical_form method).  Override to build
-        type-specific canonical forms.  By default, this recursed to
+        type-specific canonical forms.  By default, recurse to
         use canonical forms of sub-expressions.        
         '''
         canonical_sub_exprs = []
@@ -864,16 +882,19 @@ class Expression(metaclass=ExprType):
         free make attempts that may be cyclic.
         '''
         from proveit import Judgment, ProofFailure
-        from proveit.logic import Not
+        from proveit.relation import Relation
+        from proveit.logic import Not, TRUE, Equals
         assumptions = defaults.assumptions
         automation = defaults.conclude_automation
         assumptions_set = set(assumptions)
 
+        # See if this Expression already has a legitimate proof.
         found_truth = Judgment.find_judgment(self, assumptions_set)
         if found_truth is not None:
             found_truth.with_matching_styles(
                 self, assumptions)  # give it the appropriate style
-            return found_truth  # found an existing Judgment that does the job!
+            # found an existing Judgment that does the job!
+            return found_truth
 
         if self in assumptions_set:
             # prove by assumption if self is in the list of assumptions.
@@ -882,6 +903,24 @@ class Expression(metaclass=ExprType):
 
         if not automation:
             raise ProofFailure(self, assumptions, "No pre-existing proof")
+
+        # Maybe this Expression doesn't have a proof, but something
+        # else does with the same canonical form.
+        # If it is a Relation, however, we should use its 'conclude'
+        # method instead.
+        canonical_form = self.canonical_form()
+        if canonical_form != TRUE and not isinstance(self, Relation):
+            cf_to_proven_exprs = (
+                    Judgment.canonical_form_to_proven_exprs)
+            if canonical_form in cf_to_proven_exprs:
+                for proven_expr in cf_to_proven_exprs[canonical_form]:
+                    if proven_expr != self and proven_expr.proven():
+                        # Something with the same canonical form has 
+                        # been proven under applicable assumptions.
+                        # So prove what we want by equating it with what
+                        # we know.
+                        return Equals(proven_expr, 
+                                      self).derive_right_via_equality()
 
         # Use Expression.in_progress_to_conclude set to prevent an infinite
         # recursion
@@ -957,12 +996,57 @@ class Expression(metaclass=ExprType):
 
     def readily_provable(self, assumptions=USE_DEFAULTS):
         '''
-        May return True only if we readily know that this expression 
-        can be proven automatically and easily through its 'conclude' 
-        method and must return True if it is already proven.  Must be 
-        implemented for each Expression type.
+        May return True only if we readily know that this expression,
+        under the given assumptions, can be proven utomatically and 
+        easily through its 'conclude' method and will return True if
+        it is already proven.
         '''
-        return self.proven()
+        from proveit import Judgment, ExprTuple
+
+        if isinstance(self, ExprTuple):
+            return False # An ExprTuple cannot be true or false.
+
+        with defaults.temporary() as tmp_defaults:
+            # Make sure we derive assumption side-effects first.
+            if assumptions is not USE_DEFAULTS:
+                tmp_defaults.assumptions = assumptions
+            assumptions = defaults.assumptions
+                
+            if self.proven(): # this will "make" the assumptions
+                return True
+    
+            # Maybe this Expression doesn't have a proof, but something
+            # else does with the same canonical form.
+            cf = self.canonical_form()
+            cf_to_proven_exprs = Judgment.canonical_form_to_proven_exprs
+            if cf in cf_to_proven_exprs:
+                for proven_expr in cf_to_proven_exprs[cf]:
+                    if proven_expr != self and proven_expr.proven():
+                        return True
+            
+            # Try something specific to the Expression.
+            in_progress_key = (
+                self, tuple(sorted(assumptions, key=lambda expr: hash(expr))))
+            if in_progress_key in Expression.in_progress_to_check_provability:
+                # avoid infinite recursion by using
+                # in_progress_to_check_provability
+                return False
+            try:
+                Expression.in_progress_to_check_provability.add(
+                        in_progress_key)
+                return self._readily_provable()
+            finally:
+                Expression.in_progress_to_check_provability.remove(
+                        in_progress_key)
+
+    def _readily_provable(self):
+        '''
+        Override for Expression-specific strategies to see if the
+        expression is readily provable.  May return True only if we
+        readily know that this expression can be proven automatically
+        and easily through its 'conclude' method.
+        '''
+        return False
 
     @prover
     def disprove(self, **defaults_config):
@@ -987,7 +1071,30 @@ class Expression(metaclass=ExprType):
         except ProofFailure:
             return False
 
-    def conclude(self, assumptions=USE_DEFAULTS):
+    def readily_disprovable(self, assumptions=USE_DEFAULTS):
+        '''
+        May return True only if we readily know that this expression,
+        under the given assumptions, can be disproven automatically 
+        and easily through its 'conclude' method and will return True 
+        if it is already disproven.
+        '''
+        from proveit import ExprTuple
+        from proveit.logic import Not
+        if isinstance(self, ExprTuple):
+            return False # An ExprTuple cannot be true or false.
+        return Not(self).readily_provable(assumptions=assumptions)
+
+    def _readily_disprovable(self):
+        '''
+        Override for Expression-specific strategies to see if the
+        expression is readily disprovable.  May return True only if we
+        readily know that this expression can be disproven automatically
+        and easily through its 'conclude_negation' method.
+        '''
+        return False
+
+    @prover
+    def conclude(self, **defaults_config):
         '''
         Attempt to conclude this expression under the given assumptions,
         using automation specific to this type of expression.
@@ -1015,7 +1122,8 @@ class Expression(metaclass=ExprType):
         from proveit.logic import conclude_via_implication
         return conclude_via_implication(self)
 
-    def conclude_negation(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude_negation(self, **defaults_config):
         '''
         Attempt to conclude the negation of this expression under the given
         assumptions, using automation specific to the type of expression being negated.
@@ -1366,9 +1474,18 @@ class Expression(metaclass=ExprType):
         replacement = None
         if (auto_simplify_top_level and not is_irreducible_value(expr)
               and not isinstance(expr, ExprRange)):
-            if defaults.simplify_with_known_evaluations:
-                # Look for a known evaluation.
-                replacement = Equals.get_known_evaluation(expr)
+            if defaults.simplify_with_provable_evaluations:
+                # Look for an readily provable evaluation.
+                try:
+                    replacement = Equals.get_readily_provable_evaluation(expr)
+                except UnsatisfiedPrerequisites:
+                    replacement = None
+            elif defaults.simplify_with_known_evaluations:
+                # Look for an explicitly known evaluation.
+                try:
+                    replacement = Equals.get_known_evaluation(expr)
+                except UnsatisfiedPrerequisites:
+                    replacement = None
             else:
                 replacement = None
             if (replacement is None and 

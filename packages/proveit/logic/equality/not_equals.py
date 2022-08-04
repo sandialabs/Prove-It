@@ -29,15 +29,49 @@ class NotEquals(Relation):
             yield self.derive_via_double_negation  # A from A != False and A in Boolean
         yield self.unfold  # Not(x=y) from x != y
 
+    def _readily_provable(self):
+        '''
+        Return True iff this NotEquals is readily provable:
+            * one side is TRUE/FALSE and the other side is
+              disprovable/provable.
+            * one side has a 'readily_not_equal' method that returns
+              True when applied to the other side.
+            * the expanded version (with negation) is proven.
+        '''
+        from proveit.logic import Not, TRUE, FALSE
+        if (self.lhs == TRUE and self.rhs.readily_disprovable()) or (
+                self.rhs == TRUE and self.lhs.readily_disprovable()):
+            return True
+        if (self.lhs == FALSE and self.rhs.readily_provable()) or (
+                self.rhs == FALSE and self.lhs.readily_provable()):
+            return True
+        if hasattr(self.lhs, 'readily_not_equal'):
+            return self.lhs.readily_not_equal(self.rhs)
+        if hasattr(self.rhs, 'readily_not_equal'):
+            return self.rhs.readily_not_equal(self.lhs)
+        if Not(Equals(self.lhs, self.rhs)).proven():
+            # Use 'proven' rather than 'readily_proven' here to avoid
+            # infinite recursion.
+            return True
+        return False        
+
+    def _readily_disprovable(self):
+        '''
+        NotEquals is disprovable if Equals is provable.
+        '''
+        from .equals import Equals
+        return Equals(self.lhs, self.rhs).readily_provable()
+
     @prover
     def conclude(self, **defaults_config):
-        from proveit.logic import FALSE, Not, evaluation_or_simplification
+        from proveit.logic import TRUE, FALSE, Not
         if is_irreducible_value(self.lhs) and is_irreducible_value(self.rhs):
             # prove that two irreducible values are not equal
             return self.lhs.not_equal(self.rhs)
-        if self.lhs == FALSE or self.rhs == FALSE:
+        if self.lhs in (TRUE, FALSE) or self.rhs in (TRUE, FALSE):
             try:
-                # prove something is not false by proving it to be true
+                # prove something is not false 
+                # by proving it to be true
                 return self.conclude_via_double_negation()
             except BaseException:
                 pass
@@ -99,17 +133,22 @@ class NotEquals(Relation):
     @prover
     def conclude_via_double_negation(self, **defaults_config):
         '''
-        Prove and return self of the form A != FALSE or FALSE != A assuming A.
+        Prove and return self of the form 
+        A != FALSE or FALSE != A assuming A or
+        A != TRUE or TRUE != A assuming not A.
         Also see version in Not class.
         '''
-        from proveit.logic import FALSE
-        from proveit.logic.booleans import not_equals_false
-        if self.lhs == FALSE:
+        from proveit.logic import FALSE, TRUE
+        from proveit.logic.booleans import (
+                not_equals_false, not_equals_true)
+        if self.lhs == FALSE or self.lhs == TRUE:
             # switch left and right sides and prove it that way.
             NotEquals(self.rhs, self.lhs).prove()
             return self.prove()
         if self.rhs == FALSE:
             return not_equals_false.instantiate({A: self.lhs})
+        if self.rhs == TRUE:
+            return not_equals_true.instantiate({A: self.lhs})
 
     @equality_prover('defined', 'define')
     def definition(self, **defaults_config):

@@ -1,6 +1,6 @@
 from proveit import (Lambda, Conditional, OperationOverInstances, Judgment,
                      composite_expression, prover, relation_prover)
-from proveit import defaults, Literal, Function, ExprTuple, USE_DEFAULTS
+from proveit import defaults, Literal, Function, ExprTuple
 from proveit import n, x, y, z, A, B, P, Q, R, S, Px
 
 
@@ -328,7 +328,8 @@ class Exists(OperationOverInstances):
         return _impl.derive_consequent()
 
     """
-    def elim_domain(self, assumptions=USE_DEFAULTS):
+    @prover
+    def elim_domain(self, **defaults_config):
         '''
         From [exists_{x in S | Q(x)} P(x)], derive and return [exists_{x | Q(x)} P(x)],
         eliminating the domain which is a weaker form.
@@ -342,18 +343,29 @@ class Exists(OperationOverInstances):
             preserve_all=True).derive_consequent()
     """
 
+    def readily_in_bool(self):
+        '''
+        Existential quantification is always boolean.
+        '''
+        return True
+
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
         Deduce, then return, that this exists expression is in the set of BOOLEANS as
         all exists expressions are (they are taken to be false when not true).
         '''
-        from . import exists_is_bool
+        from . import exists_is_bool, exists_with_conditions_is_bool
         _x = self.instance_params
         _P = Lambda(_x, self.instance_expr)
+        _n = _x.num_elements()
+        if self.conditions.num_entries() == 0:
+            return exists_is_bool.instantiate(
+                {n: _n, P: _P, x: _x})
         _Q = Lambda(_x, self.condition)
-        return exists_is_bool.instantiate(
-            {P: _P, Q: _Q, S: self.domain, x: _x})
+        return exists_with_conditions_is_bool.instantiate(
+                {n: _n, P: _P, Q: _Q, x: _x}, preserve_expr=self,
+                auto_simplify=True)
 
     @prover
     def substitute_instances(self, universality, **defaults_config):
