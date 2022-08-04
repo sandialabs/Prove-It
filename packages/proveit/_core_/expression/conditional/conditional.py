@@ -303,7 +303,7 @@ class Conditional(Expression):
             etc.
         '''
         from proveit import a, m, n, Q, R
-        from proveit.logic import And, TRUE, Equals, is_irreducible_value
+        from proveit.logic import And, TRUE, Equals
         if self.condition == TRUE:
             from proveit.core_expr_types.conditionals import \
                 true_condition_reduction
@@ -319,19 +319,16 @@ class Conditional(Expression):
             return redundant_condition_reduction.instantiate(
                     {a: self.value.value, Q: self.condition})            
         elif isinstance(self.condition, And):
-            from proveit.core_expr_types.conditionals import \
-                (singular_conjunction_condition_reduction,
-                 condition_merger_reduction,
-                 condition_append_reduction, condition_prepend_reduction,
-                 true_condition_elimination,
-                 condition_with_true_on_left_reduction,
-                 condition_with_true_on_right_reduction)
             conditions = self.condition.operands
             if is_single(conditions):
+                from proveit.core_expr_types.conditionals import (
+                        singular_conjunction_condition_reduction)
                 return singular_conjunction_condition_reduction \
                     .instantiate({a: self.value, Q: conditions[0]})
             elif (conditions.is_double() and
                     all(isinstance(cond, And) for cond in conditions)):
+                from proveit.core_expr_types.conditionals import (
+                        condition_merger_reduction)                
                 _Q = conditions[0].operands
                 _R = conditions[1].operands
                 _m = _Q.num_elements()
@@ -342,6 +339,9 @@ class Conditional(Expression):
             elif (conditions.num_entries() == 2 and
                     any(isinstance(cond, And) for cond in conditions) and
                     any(cond == TRUE for cond in conditions)):
+                from proveit.core_expr_types.conditionals import (
+                        condition_with_true_on_left_reduction,
+                        condition_with_true_on_right_reduction)
                 if conditions[0] == TRUE:
                     thm = condition_with_true_on_left_reduction
                     _Q = conditions[1].operands
@@ -354,17 +354,23 @@ class Conditional(Expression):
                 return thm.instantiate({m: _m, a: _a, Q: _Q})
             elif (conditions.is_double() 
                       and isinstance(conditions[0], And)):
+                from proveit.core_expr_types.conditionals import (
+                        condition_append_reduction)                
                 _Q = conditions[0].operands
                 _m = _Q.num_elements()
                 return condition_append_reduction.instantiate(
                     {a: self.value, m: _m, Q: _Q, R: conditions[1]})
             elif (conditions.is_double()
                       and isinstance(conditions[1], And)):
+                from proveit.core_expr_types.conditionals import (
+                        condition_prepend_reduction)                
                 _R = conditions[1].operands
                 _n = _R.num_elements()
                 return condition_prepend_reduction.instantiate(
                     {a: self.value, n: _n, Q: conditions[0], R: _R})
             elif any(cond==TRUE for cond in conditions):
+                from proveit.core_expr_types.conditionals import (
+                        true_condition_elimination)                
                 idx = conditions.index(TRUE)
                 _Q = conditions[:idx]
                 _R = conditions[idx+1:]
