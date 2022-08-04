@@ -1,4 +1,4 @@
-from .quantification import Forall, Exists, NotExists
+from .quantification import Forall, Exists, NotExists, UniqueExists
 from .booleans import in_bool, BooleanSet, TrueLiteral, FalseLiteral
 from .conjunction import And, compose
 from .disjunction import Or

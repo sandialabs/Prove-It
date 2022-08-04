@@ -1,9 +1,10 @@
 # Boolean arithmetic, equality, and set theory.
 
 from .booleans import Boolean, TRUE, FALSE
-from .booleans import And, Or, Not, Implies, Iff, compose, conclude_via_implication
+from .booleans import (And, Or, Not, Implies, Iff, 
+                       compose, conclude_via_implication)
 from .booleans import in_bool, BooleanSet, TrueLiteral, FalseLiteral
-from .booleans import Forall, Exists, NotExists
+from .booleans import Forall, Exists, NotExists, UniqueExists
 from .equality import (
     Equals,
     NotEquals,

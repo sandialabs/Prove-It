@@ -1,6 +1,6 @@
 from .exists import Exists
 from .not_exists import NotExists
-
+from .unique_exists import UniqueExists
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.
