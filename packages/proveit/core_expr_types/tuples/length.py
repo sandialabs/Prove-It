@@ -1,6 +1,6 @@
 from proveit import (Expression, Lambda, Operation, Literal, safe_dummy_var,
                      single_or_composite_expression, ExprTuple,
-                     ExprRange, InnerExpr, defaults, USE_DEFAULTS,
+                     ExprRange, InnerExpr, defaults,
                      equality_prover, prover)
 from proveit import a, b, c, d, e, f, g, h, i, j, k, n, x, y
 
@@ -429,7 +429,8 @@ class Len(Operation):
         else:
             return Operation.shallow_simplification(self)
 
-    def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_in_number_set(self, number_set, **defaults_config):
         from proveit.core_expr_types.tuples import (
             range_len_is_nat, range_from1_len_is_nat)
         from proveit.numbers import Natural, one
@@ -444,10 +445,8 @@ class Len(Operation):
                 range_lambda = operands[0].lambda_map
                 if range_start == one:
                     return range_from1_len_is_nat.instantiate(
-                        {f: range_lambda, i: range_end},
-                        assumptions=assumptions)
+                        {f: range_lambda, i: range_end})
                 else:
                     return range_len_is_nat.instantiate(
-                        {f: range_lambda, i: range_start, j: range_end},
-                        assumptions=assumptions)
+                        {f: range_lambda, i: range_start, j: range_end})
 
