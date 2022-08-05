@@ -354,7 +354,7 @@ class Div(NumberOperation):
         Assumptions or previous work might be required to establish
         that the term_to_cancel is non-zero.
         '''
-        from proveit.numbers import one, Exp, Mult
+        from proveit.numbers import one, Exp, Mult, Neg
         expr = self
         eq = TransRelUpdater(expr)
 
@@ -372,13 +372,18 @@ class Div(NumberOperation):
             #     raise ValueError("%s not in the numerator of %s"
             #                      % (term_to_cancel, self))
             if ((not isinstance(self.numerator, Mult)
-                 and not isinstance(self.numerator, Exp))
+                 and not isinstance(self.numerator, Exp)
+                 and not isinstance(self.numerator, Neg))
                 or (isinstance(self.numerator, Mult)
                     and term_to_cancel not in self.numerator.operands)
                 or (isinstance(self.numerator, Exp)
                     and not (term_to_cancel == self.numerator.base
                              or (isinstance(term_to_cancel, Exp)
-                                 and term_to_cancel.base == self.numerator.base )))):
+                                 and term_to_cancel.base == self.numerator.base )))
+                or (isinstance(self.numerator, Neg)
+                    and not (term_to_cancel == self.numerator.operand )
+                    and not (isinstance(self.numerator.operand, Mult)
+                             and term_to_cancel in self.numerator.operand.operands) ) ):
                 raise ValueError("%s not in the numerator of %s"
                                  % (term_to_cancel, self))
             # Factor the term_to_cancel from the numerator to the left.
