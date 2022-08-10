@@ -490,7 +490,7 @@ class ExprTuple(Composite, Expression):
             else:
                 entry = entry.canonical_form()
             entries.append(entry)
-        return ExprTuple(*entries)
+        return type(self)(*entries)
 
     def yield_format_cell_info(self):
         '''

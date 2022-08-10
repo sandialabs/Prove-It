@@ -433,7 +433,7 @@ class OperationOverInstances(Operation):
         This override Expression._build_canonical_form to make
         sure that the domain conditions are kept in their proper place.
         '''
-        from proveit.logic import And
+        from proveit.logic import And, InClass
         canonical_operator = self.operator.canonical_form()
         assert self.operands.num_entries()==1
         lambda_map = self.operands[0]
@@ -446,13 +446,25 @@ class OperationOverInstances(Operation):
         num_explicit_domains = len(self.explicit_domains())
         # parameters should be unchanged:
         parameters = lambda_map.parameters
-        if isinstance(condition, And) and (
-                hasattr(condition, 'operands') and
-                num_explicit_domains > 0):
+        if num_explicit_domains > 0:
             # Keep the domain conditions in their proper place.
-            conds = condition.operands.entries
-            canonical_conditions = [cond.canonical_form() for cond in 
-                                    conds[:num_explicit_domains]]
+            if isinstance(condition, And):
+                if hasattr(condition, 'operands'):
+                    conds = condition.operands
+                else:
+                    conds = ExprTuple(condition.operand)
+            else:
+                conds = ExprTuple(condition)
+            # For domain conditions, just use the canonical form
+            # for the domain.
+            def processed_domain_cond(domain_cond):
+                assert isinstance(domain_cond, InClass)
+                return type(domain_cond)(
+                        domain_cond.element,
+                        domain_cond.domain.canonical_form())
+            canonical_conditions = (
+                    conds[:num_explicit_domains].map_elements(
+                            processed_domain_cond))
             canonical_conditions += sorted(
                     [cond.canonical_form() for cond 
                      in conds[num_explicit_domains:]], key=hash)
