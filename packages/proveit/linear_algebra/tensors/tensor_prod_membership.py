@@ -1,7 +1,8 @@
 from proveit import (defaults, USE_DEFAULTS, equality_prover, Lambda, 
                      ExprTuple, ExprRange, ProofFailure, prover)
 from proveit.linear_algebra import ScalarMult, TensorProd, VecSum
-from proveit.logic import SetMembership, SetNonmembership, CartExp
+from proveit.logic import (And, InSet, SetMembership, SetNonmembership, 
+                           CartExp)
 from proveit.numbers import num
 from proveit import a, b, f, i, j, m, n, x, A, K, Q, V
 
@@ -63,14 +64,40 @@ class TensorProdMembership(SetMembership):
     #     return membership_unfolding.instantiate(
     #         {m: _m, x: element, A: _A}, auto_simplify=False)
 
+    def _readily_provable(self):
+        '''
+        Return true if we can readily prove the tensor product
+        membership for the following cases:
+            1. (a⊗b⊗...⊗z) in A⊗B⊗...⊗Z if a in A, b in B, z in Z. 
+            2. k*x in A⊗B⊗...⊗Z if x in A⊗B⊗...⊗Z and k is in its field.
+            3. sum_i x_i in A⊗B⊗...⊗Z if all x_i in A⊗B⊗...⊗Z 
+        '''
+        from proveit.linear_algebra import VecSpaces
+        if isinstance(self.element, TensorProd):
+            try:
+                cond = And(*ExprTuple.map_elements_together(
+                        lambda elem, dom : InSet(elem, dom),
+                        self.element.operands, self.domain.operands))
+            except ValueError:
+                # The elements and domains must have aligned ExprRanges
+                # for this quick check to work.
+                return False
+            return cond.readily_provable()
+        elif isinstance(self.element, ScalarMult):
+            scalar = self.element.scalar
+            field = VecSpaces.known_field(self.domain)
+            if not InSet(scalar, field).readily_provable():
+                return False
+            return InSet(self.element.scaled, self.domain).readily_provable()
+        elif isinstance(self.element, VecSum):
+            return InSet(self.element.summand, self.domain).readily_provable(
+                    assumptions=defaults.assumptoins+(self.element.condition,))
+        return False
+
     @prover
     def conclude(self, **defaults_config):
-
         '''
-        Called on self = [elem in (A x B x ...)] (where x denotes
-        a tensor product and elem = a x b x ...) and knowing or
-        assuming that (a in A) and (b in B) and ..., derive and
-        return self.
+        Prove this tensor product membership.
         '''
         if isinstance(self.element, TensorProd):
             from . import tensor_prod_is_in_tensor_prod_space
@@ -82,7 +109,6 @@ class TensorProdMembership(SetMembership):
             _i_sub = _a_sub.num_elements()
             _K_sub = VecSpaces.known_field(self.domain)
             vec_spaces = self.domain.operands
-
             return tensor_prod_is_in_tensor_prod_space.instantiate(
                     {a: _a_sub, i: _i_sub, K: _K_sub,  V: vec_spaces})
 
@@ -91,7 +117,7 @@ class TensorProdMembership(SetMembership):
                     scalar_mult_closure)
             from proveit.linear_algebra import VecSpaces
             self.domain.deduce_as_vec_space()
-            _V_sub = VecSpaces.known_vec_space(self.element.scaled, field=None)
+            _V_sub = self.domain
             _K_sub = VecSpaces.known_field(_V_sub)
             _a_sub = self.element.scalar
             _x_sub = self.element.scaled
@@ -105,7 +131,7 @@ class TensorProdMembership(SetMembership):
             # might want to change the following to use
             # vec_space_membership = self.element.summand.deduce_in_vec_space()
             # then _V_sub = vec_space_membership.domain
-            _V_sub = VecSpaces.known_vec_space(self.element.summand)
+            _V_sub = self.domain
             _K_sub = VecSpaces.known_field(_V_sub)
             _b_sub = self.element.indices
             _j_sub = _b_sub.num_elements()
