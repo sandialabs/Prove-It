@@ -1462,8 +1462,10 @@ class ExprTuple(Composite, Expression):
     def map_elements(self, expr_func):
         '''
         Returns an ExprTuple obtained by mapping each element according
-        to 'expr_func' which should be an Expression:Expression 
+        to 'expr_func' which should be an Expression -> Expression 
         function.
+        
+        See also ExprTuple.map_elements_together.
         '''
         from proveit import ExprRange
         mapped_entries = []
@@ -1477,6 +1479,64 @@ class ExprTuple(Composite, Expression):
             mapped_entries.append(mapped_entry)
         return ExprTuple(*mapped_entries)
 
+    @staticmethod
+    def map_elements_together(expr_func, *tuples):
+        '''
+        Returns an ExprTuple obtained by mapping each of the elements
+        of self and other_tuples according to 'expr_func' which should 
+        be an Expression^k -> Expression function (where k is 1 +
+        len(other_tuples)).  ExprRanges must line up or ValueError
+        is raised.
+        
+        See also ExprTupe.map_elements
+        '''
+        from proveit import ExprRange, safe_dummy_var
+        mapped_entries = []
+        for expr_tuple in tuples:
+            if len(expr_tuple) != len(tuples[0].entries):
+                raise ValueError("Each of the ExprTuples must have "
+                                 "the same number of entries when "
+                                 "mapping elements together")
+        for entries in zip(*tuples):
+            if any(isinstance(entry, ExprRange) for entry in entries):
+                parameter = None
+                start_index = end_index = None
+                for entry in entries:
+                    if not isinstance(entry, ExprRange):
+                        raise ValueError(
+                                "ExprRanges must be aligned when mapping "
+                                "elements together.")
+                    if start_index is None:
+                        parameter = entry.parameter
+                        start_index, end_index = (
+                                entry.true_start_index, entry.true_end_index)
+                    else:
+                        if entry.true_start_index != start_index or (
+                                entry.true_end_index != end_index):
+                            raise ValueError(
+                                    "ExprRanges must be aligned with same "
+                                    "start and end indices when mapping "
+                                    "elements together")
+                        if entry.parameter != parameter:
+                            # we'll have to choose a new, safe paramter
+                            parameter = None
+                if parameter is None:
+                    parameter = safe_dummy_var(entries)
+                bodies = []
+                for entry in entries:
+                    if entry.parameter == parameter:
+                        body = entry.body
+                    else:
+                        body = entry.body.basic_replaced(
+                                {entry.parameter:parameter})
+                    bodies.append(body)
+                mapped_entry = ExprRange(
+                        parameter, expr_func(*bodies),
+                        start_index, end_index)
+            else:
+                mapped_entry = expr_func(*entries)
+            mapped_entries.append(mapped_entry)
+        return ExprTuple(*mapped_entries)
 
 def is_single(expr_tuple):
     '''
