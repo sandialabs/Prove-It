@@ -8,8 +8,8 @@ from proveit import TransRelUpdater
 from proveit import a, b, c, m, n, w, x, y, z
 from proveit.logic import Equals, NotEquals, InSet
 from proveit.numbers import (zero, NumberOperation, 
-                             is_numeric_int, is_numeric_rational)
-from proveit.numbers import NumberOperation, deduce_number_set
+                             is_numeric_int, is_numeric_rational, 
+                             deduce_number_set, readily_provable_number_set)
 from proveit.numbers.number_sets import (
     Natural, NaturalPos,
     Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
@@ -167,8 +167,9 @@ class Div(NumberOperation):
 
         if (Div._simplification_directives_.reduce_zero_numerator and
             isinstance(expr, Div)):
-            if ((expr.numerator==zero or Equals(expr.numerator, zero).proven())
-                and NotEquals(expr.denominator, zero).proven()):
+            if ((expr.numerator==zero or Equals(expr.numerator, 
+                                                zero).readily_provable())
+                and NotEquals(expr.denominator, zero).readily_provable()):
                 # we have something like 0/x so reduce to 0
                 expr = eq.update(expr.zero_numerator_reduction())
         
@@ -178,8 +179,9 @@ class Div(NumberOperation):
         # something else!
         if (isinstance(expr, Div)
             and isinstance(expr.denominator, Div)
-            and NotEquals(expr.denominator.numerator, zero).proven()
-            and NotEquals(expr.denominator.denominator, zero).prove() ):
+            and NotEquals(expr.denominator.numerator, zero).readily_provable()
+            and NotEquals(expr.denominator.denominator, 
+                          zero).readily_provable()):
             expr = eq.update(expr.div_in_denominator_reduction())
 
         if Div._simplification_directives_.distribute and (
@@ -784,10 +786,11 @@ class Div(NumberOperation):
                 possible_exponent_types = [NaturalPos, RealPos, Real,
                                            Complex]
                 for exponent in exponents:
-                    deduce_number_set(exponent)
+                    exp_ns = readily_provable_number_set(exponent,
+                                                         default=Complex)
                     while len(possible_exponent_types) > 1:
                         exponent_type = possible_exponent_types[0]
-                        if InSet(exponent, exponent_type).proven():
+                        if exponent_type.includes(exp_ns):
                             # This type is known for this exponent.
                             break
                         # We've eliminated a type from being known.
@@ -859,53 +862,53 @@ class Div(NumberOperation):
             thm = div_rational_nonzero_closure
         elif number_set == RationalPos:
             deduce_number_set(self.denominator)
-            if Less(self.denominator, zero).proven():
+            if Less(self.denominator, zero).readily_provable():
                 thm = div_rational_pos_from_double_neg
             else:
                 thm = div_rational_pos_closure
         elif number_set == RationalNeg:
             deduce_number_set(self.denominator)
-            if Less(self.denominator, zero).proven():
+            if Less(self.denominator, zero).readily_provable():
                 thm = div_rational_neg_from_neg_denom
             else:
                 thm = div_rational_neg_from_neg_numer
         elif number_set == RationalNonNeg:
             deduce_number_set(self.denominator)
-            if Less(self.denominator, zero).proven():
+            if Less(self.denominator, zero).readily_provable():
                 thm = div_rational_nonneg_from_double_neg
             else:
                 thm = div_rational_nonneg_closure
         elif number_set == RationalNonPos:
             deduce_number_set(self.denominator)
-            if Less(self.denominator, zero).proven():
+            if Less(self.denominator, zero).readily_provable():
                 thm = div_rational_nonpos_from_neg_denom
             else:
-                thm = div_rational_nonpos_from_neg_numer
+                thm = div_rational_nonpos_from_nonpos_numer
         elif number_set == Real:
             thm = div_real_closure
         elif number_set == RealNonZero:
             thm = div_real_nonzero_closure
         elif number_set == RealPos:
             deduce_number_set(self.denominator)
-            if Less(self.denominator, zero).proven():
+            if Less(self.denominator, zero).readily_provable():
                 thm = div_real_pos_from_double_neg
             else:
                 thm = div_real_pos_closure
         elif number_set == RealNeg:
             deduce_number_set(self.denominator)
-            if Less(self.denominator, zero).proven():
+            if Less(self.denominator, zero).readily_provable():
                 thm = div_real_neg_from_neg_denom
             else:
                 thm = div_real_neg_from_neg_numer
         elif number_set == RealNonNeg:
             deduce_number_set(self.denominator)
-            if Less(self.denominator, zero).proven():
+            if Less(self.denominator, zero).readily_provable():
                 thm = div_real_nonneg_from_double_neg
             else:
                 thm = div_real_nonneg_closure
         elif number_set == RealNonPos:
             deduce_number_set(self.denominator)
-            if Less(self.denominator, zero).proven():
+            if Less(self.denominator, zero).readily_provable():
                 thm = div_real_nonpos_from_neg_denom
             else:
                 thm = div_real_nonpos_from_nonpos_numer
@@ -919,65 +922,65 @@ class Div(NumberOperation):
             "'Div.deduce_in_number_set()' not implemented for the %s set"
             % str(number_set))
 
-    @relation_prover
-    def deduce_number_set(self, **defaults_config):
+    def readily_provable_number_set(self):
         '''
-        Prove membership of this expression in the most
-        restrictive standard number set we can readily know.
+        Return the most restrictive number set we can readily
+        prove contains the evaluation of this number operation.
         '''
-        numer_ns = deduce_number_set(self.numerator).domain
-        denom_ns = deduce_number_set(self.denominator).domain
+        numer_ns = readily_provable_number_set(self.numerator)
+        denom_ns = readily_provable_number_set(self.denominator)
+        if numer_ns is None or denom_ns is None: return None
         if RationalPos.includes(numer_ns) and RationalPos.includes(denom_ns):
-            return self.deduce_in_number_set(RationalPos)
+            return RationalPos
         if RationalNeg.includes(numer_ns) and RationalNeg.includes(denom_ns):
-            return self.deduce_in_number_set(RationalPos)
+            return RationalPos
         if RationalNeg.includes(numer_ns) and RationalPos.includes(denom_ns):
-            return self.deduce_in_number_set(RationalNeg)
+            return RationalNeg
         if RationalPos.includes(numer_ns) and RationalNeg.includes(denom_ns):
-            return self.deduce_in_number_set(RationalNeg)
+            return RationalNeg
         if (RationalNonNeg.includes(numer_ns)
                 and RationalPos.includes(denom_ns)):
-            return self.deduce_in_number_set(RationalNonNeg)
+            return RationalNonNeg
         if (RationalNonPos.includes(numer_ns)
                 and RationalPos.includes(denom_ns)):
-            return self.deduce_in_number_set(RationalNonPos)
+            return RationalNonPos
         if (RationalNonNeg.includes(numer_ns)
                 and RationalNeg.includes(denom_ns)):
-            return self.deduce_in_number_set(RationalNonPos)
+            return RationalNonPos
         if (RationalNonPos.includes(numer_ns)
                 and RationalNeg.includes(denom_ns)):
-            return self.deduce_in_number_set(RationalNonNeg)
+            return RationalNonNeg
         if (RationalNonZero.includes(numer_ns) and
                RationalNonZero.includes(denom_ns)):
-            return self.deduce_in_number_set(RationalNonZero)
+            return RationalNonZero
         if Rational.includes(numer_ns) and RationalNonZero.includes(denom_ns):
-            return self.deduce_in_number_set(Rational)
+            return Rational
         if RealPos.includes(numer_ns) and RealPos.includes(denom_ns):
-            return self.deduce_in_number_set(RealPos)
+            return RealPos
         if RealNeg.includes(numer_ns) and RealNeg.includes(denom_ns):
-            return self.deduce_in_number_set(RealPos)
+            return RealPos
         if RealPos.includes(numer_ns) and RealNeg.includes(denom_ns):
-            return self.deduce_in_number_set(RealNeg)
+            return RealNeg
         if RealNeg.includes(numer_ns) and RealPos.includes(denom_ns):
-            return self.deduce_in_number_set(RealNeg)
+            return RealNeg
         if RealNonNeg.includes(numer_ns) and RealPos.includes(denom_ns):
-            return self.deduce_in_number_set(RealNonNeg)
+            return RealNonNeg
         if RealNonPos.includes(numer_ns) and RealPos.includes(denom_ns):
-            return self.deduce_in_number_set(RealNonPos)
+            return RealNonPos
         if RealNonNeg.includes(numer_ns) and RealNeg.includes(denom_ns):
-            return self.deduce_in_number_set(RealNonPos)
+            return RealNonPos
         if RealNonPos.includes(numer_ns) and RealNeg.includes(denom_ns):
-            return self.deduce_in_number_set(RealNonNeg)
+            return RealNonNeg
         if Real.includes(numer_ns) and RealNonZero.includes(denom_ns):
-            return self.deduce_in_number_set(Real)
+            return Real
         if RealNonZero.includes(numer_ns) and RealNonZero.includes(denom_ns):
-            return self.deduce_in_number_set(RealNonZero)
+            return RealNonZero
         if Real.includes(numer_ns) and RealNonZero.includes(denom_ns):
-            return self.deduce_in_number_set(Real)
+            return Real
         if (ComplexNonZero.includes(numer_ns)
                 and ComplexNonZero.includes(denom_ns)):
-            return self.deduce_in_number_set(ComplexNonZero)
-        return self.deduce_in_number_set(Complex)
+            return ComplexNonZero
+        return Complex
 
     @relation_prover
     def bound_via_operand_bound(self, operand_relation, **defaults_config):
@@ -1033,14 +1036,14 @@ class Div(NumberOperation):
             deduce_number_set(self.denominator)
         except UnsatisfiedPrerequisites:
             pass
-        if greater(self.denominator, zero).proven():
+        if greater(self.denominator, zero).readily_provable():
             if isinstance(relation, Less):
                 bound = strong_div_from_numer_bound__pos_denom.instantiate(
                         {a: _a, x: _x, y: _y})
             elif isinstance(relation, LessEq):
                 bound =  weak_div_from_numer_bound__pos_denom.instantiate(
                         {a: _a, x: _x, y: _y})
-        elif Less(self.denominator, zero).proven():
+        elif Less(self.denominator, zero).readily_provable():
             if isinstance(relation, Less):
                 bound =  strong_div_from_numer_bound__neg_denom.instantiate(
                         {a: _a, x: _x, y: _y})
@@ -1101,10 +1104,10 @@ class Div(NumberOperation):
             deduce_number_set(self.denominator)
         except UnsatisfiedPrerequisites:
             pass
-        pos_numer = greater_eq(self.numerator, zero).proven()
-        neg_numer = LessEq(self.numerator, zero).proven()
-        pos_denom = greater(self.denominator, zero).proven()
-        neg_denom = Less(self.denominator, zero).proven()
+        pos_numer = greater_eq(self.numerator, zero).readily_provable()
+        neg_numer = LessEq(self.numerator, zero).readily_provable()
+        pos_denom = greater(self.denominator, zero).readily_provable()
+        neg_denom = Less(self.denominator, zero).readily_provable()
         if not (pos_numer or neg_numer) or not (pos_denom or neg_denom):
             raise UnsatisfiedPrerequisites(
                     "We must know the sign of the numerator and "

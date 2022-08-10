@@ -1,7 +1,7 @@
 from proveit import (equality_prover, Literal, ExprRange, Function,
                      relation_prover, UnsatisfiedPrerequisites)
 from proveit.numbers import (
-        deduce_number_set, merge_list_of_sets, NumberOperation, Real)
+        NumberOperation, readily_provable_number_set, merge_list_of_sets)
 from proveit import a, b, m, n, x, y, S
 
 
@@ -124,9 +124,6 @@ class Max(NumberOperation, Function):
         value in number_set. This will depend on the Max arguments
         a_1, ..., a_n all being known or assumed to be subsets of some
         superset number_set.
-        deduce_in_number_set() is also called from deduce_number_set(),
-        which first works to find some minimal standard number set
-        that includes the number sets deduced for each argument.
         '''
         from . import max_set_closure
         _S_sub = number_set
@@ -142,21 +139,19 @@ class Max(NumberOperation, Function):
                     "with the error: {}".
                     format(the_exception))
 
-    @relation_prover
-    def deduce_number_set(self, **defaults_config):
+    def readily_provable_number_set(self):
         '''
-        Prove membership of this expression in the most
-        restrictive standard number set we can readily know.
-        After deriving a candidate super set that contains the
-        number set deduced for each argument, the fxn then calls
-        the self.deduce_in_number_set() fxn defined above.
+        Return the most restrictive number set we can readily
+        prove contains the evaluation of this number operation.
         '''
         list_of_operand_sets = []
         # find a minimal std number set for operand
         for operand in self.operands:
-            operand_ns = deduce_number_set(operand).domain
+            operand_ns = readily_provable_number_set(operand)
+            if operand_ns is None: return None
             list_of_operand_sets.append(operand_ns)
         # merge the resulting list of std number sets into a
-        # single superset, if possible
-        minimal_super_set = merge_list_of_sets(list_of_operand_sets)
-        return self.deduce_in_number_set(minimal_super_set)
+        # single superset, if possible.
+        # We could take this further and take the most positive of the
+        # number sets.
+        return merge_list_of_sets(list_of_operand_sets)

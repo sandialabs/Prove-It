@@ -43,7 +43,7 @@ class Less(NumberOrderingRelation):
                 self, judgment):
             yield side_effect
         yield self.derive_not_equal
-        yield self.deduce_complement
+        yield self.derive_complement
 
     def negation_side_effects(self, judgment):
         '''
@@ -64,16 +64,16 @@ class Less(NumberOrderingRelation):
             return 'greater'
         # Use the default.
         return Operation.remake_constructor(self)
-    
+        
     @prover
     def conclude(self, **defaults_config):
         '''
         Conclude something of the form 
         a < b.
         '''
-        from proveit.logic import InSet
-        from proveit.numbers import Add, zero, RealPos, deduce_number_set
-        from . import positive_if_real_pos
+        from proveit.numbers import (Add, zero, RealPos, RealNeg,
+                                     readily_provable_number_set)
+        
         try:
             # If there is a known bound that is similar and at least
             # as strong, we can derive this bound from the known one.
@@ -82,14 +82,16 @@ class Less(NumberOrderingRelation):
             pass
         if self.upper == zero:
             # Special case with upper bound of zero.
-            from . import negative_if_real_neg
-            concluded = negative_if_real_neg.instantiate(
-                {a: self.lower})
-            return concluded
+            other_ns = readily_provable_number_set(self.lower)
+            if RealNeg.includes(other_ns):
+                from . import negative_if_real_neg
+                return negative_if_real_neg.instantiate(
+                    {a: self.lower})
         if self.lower == zero:
             # Special case with lower bound of zero.
-            deduce_number_set(self.upper)
-            if InSet(self.upper, RealPos).proven():
+            other_ns = readily_provable_number_set(self.upper)
+            if RealPos.includes(other_ns):
+                from . import positive_if_real_pos
                 positive_if_real_pos.instantiate({a: self.upper})
         if ((isinstance(self.lower, Add) and 
                 self.upper in self.lower.terms.entries) or
@@ -103,7 +105,7 @@ class Less(NumberOrderingRelation):
                 # we can still try something else.
                 pass
         return NumberOrderingRelation.conclude(self)
-    
+
     @prover
     def conclude_as_bounded_by_term(self, **defaults_config):
         '''
@@ -162,7 +164,16 @@ class Less(NumberOrderingRelation):
         concluded = relax_equal_to_less_eq.instantiate(
             {x: self.operands[0], y: self.operands[1]})
         return concluded
-    
+
+    @prover
+    def conclude_negation(self, **defaults_config):
+        '''
+        Automatically conclude the negation an OrderingRelation.
+        For example, not(7 < 3) from 3 ≤ 7.
+        '''
+        from .less_eq import LessEq
+        return LessEq(self.upper, self.lower).derive_complement()
+
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import less_than_is_bool
@@ -251,7 +262,7 @@ class Less(NumberOrderingRelation):
     #             {x:self.lower, y:self.upper}).derive_consequent()
 
     @prover
-    def deduce_complement(self, **defaults_config):
+    def derive_complement(self, **defaults_config):
         '''
         From a < b, derive and return Not(b <= a).
         '''

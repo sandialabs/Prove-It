@@ -70,7 +70,6 @@ class Interval(Operation):
             return interval_subset_eq.instantiate(
                 {a:_a, b:_b, c:_c, d:_d}, auto_simplify=False)
         else:
-            # print("Poop!")
             raise NotImplementedError (
                     "In calling the Interval.deduce_subset_eq_relation() "
                     "method, the proposed subset {} needs to be an Interval.".

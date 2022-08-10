@@ -3,7 +3,7 @@ import bisect
 from collections import deque, Counter
 
 from proveit import (Expression, Judgment, Literal, Operation, ExprTuple,
-                     ExprRange, defaults, USE_DEFAULTS, StyleOptions, 
+                     ExprRange, defaults, StyleOptions, 
                      prover, relation_prover, equality_prover,
                      maybe_fenced_latex, ProofFailure, InnerExpr,
                      UnsatisfiedPrerequisites,
@@ -12,7 +12,9 @@ from proveit import a, b, c, d, i, j, k, l, n, x, y, free_vars
 from proveit.logic import (And, Equals, NotEquals,
                            EvaluationError, InSet)
 from proveit.logic.irreducible_value import is_irreducible_value
-from proveit.numbers import NumberOperation, standard_number_set
+from proveit.numbers import (NumberOperation, standard_number_set,
+                             merge_list_of_sets, deduce_number_set,
+                             readily_provable_number_set)
 from proveit.numbers.numerals.decimals import DIGITS
 import proveit.numbers.numerals.decimals
 from proveit.abstract_algebra.generic_methods import (
@@ -22,8 +24,6 @@ from proveit.abstract_algebra.generic_methods import (
         sorting_operands, sorting_and_combining_like_operands,
         common_likeness_key)
 from proveit import TransRelUpdater
-from proveit.numbers import (NumberOperation, merge_list_of_sets,
-                             deduce_number_set)
 from proveit.numbers import (Integer, IntegerNeg, IntegerNonPos,
                              Natural, NaturalPos, IntegerNonZero,
                              Rational, RationalPos, RationalNonZero,
@@ -1220,9 +1220,9 @@ class Add(NumberOperation):
         if number_set in {NaturalPos, RationalPos, RealPos}:
             val = None
             for _i, operand in enumerate(self.operands.entries):
-                if greater(operand, zero).proven():
+                if greater(operand, zero).readily_provable():
                     val = _i
-                elif not greater_eq(operand, zero).proven():
+                elif not greater_eq(operand, zero).readily_provable():
                     # Not non-negative
                     val = None
                     break # Forget it.
@@ -1244,9 +1244,9 @@ class Add(NumberOperation):
         if number_set in {IntegerNeg, RationalNeg, RealNeg}:
             val = None
             for _i, operand in enumerate(self.operands.entries):
-                if greater(operand, zero).proven():
+                if greater(operand, zero).readily_provable():
                     val = _i
-                elif not greater_eq(operand, zero).proven():
+                elif not greater_eq(operand, zero).readily_provable():
                     # Not non-negative
                     val = None
                     break # Forget it.
@@ -1327,19 +1327,20 @@ class Add(NumberOperation):
         from .subtraction import pos_difference
 
         if greater(self, zero).proven():
-            # Already known
+            # Already known (don't use readily_provable).
             return greater(self, zero).prove()
         
         if self.terms.is_double() and isinstance(self.terms[1], Neg):
             # (a - b) with a > b => (a - b) is positive
             _a, _b = self.terms[0], self.terms[1].operand
-            if greater(_a, _b).proven():
+            if greater(_a, _b).readily_provable():
                 return pos_difference.instantiate({a:_a, b:_b})
 
         if try_deduce_number_set:
             # Try 'deduce_number_set'.
             deduce_number_set(self)
 
+        # Last resort attempt
         return greater(self, zero).prove()
 
     @relation_prover
@@ -1352,23 +1353,24 @@ class Add(NumberOperation):
         from .subtraction import neg_difference
 
         if Less(self, zero).proven():
-            # Already known
+            # Already known (don't use readily_provable).
             return Less(self, zero).prove()
         
         if self.terms.is_double() and isinstance(self.terms[1], Neg):
             # (a - b) with a < b => (a - b) is negative
             _a, _b = self.terms[0], self.terms[1].operand
-            if Less(_a, _b).proven():
+            if Less(_a, _b).readily_provable():
                 return neg_difference.instantiate({a:_a, b:_b})
 
         if try_deduce_number_set:
             # Try 'deduce_number_set'.
             deduce_number_set(self)
 
+        # Last resort attempt
         return Less(self, zero).prove()
 
     def deduce_non_positive(self, *, try_deduce_number_set=True,
-                            **defaults_config):
+                        **defaults_config):
         '''
         Prove the sum is non-positive.
         '''
@@ -1376,19 +1378,20 @@ class Add(NumberOperation):
         from .subtraction import nonpos_difference
 
         if LessEq(self, zero).proven():
-            # Already known
+            # Already known (don't use readily_provable).
             return LessEq(self, zero).prove()
         
         if self.terms.is_double() and isinstance(self.terms[1], Neg):
             # (a - b) with a <= b => (a - b) is non-positive
             _a, _b = self.terms[0], self.terms[1].operand
-            if LessEq(_a, _b).proven():
+            if LessEq(_a, _b).readily_provable():
                 return nonpos_difference.instantiate({a:_a, b:_b})
 
         if try_deduce_number_set:
             # Try 'deduce_number_set'.
             deduce_number_set(self)
 
+        # Last resort attempt
         return LessEq(self, zero).prove()
 
     def deduce_non_negative(self, *, try_deduce_number_set=True,
@@ -1400,39 +1403,39 @@ class Add(NumberOperation):
         from .subtraction import nonneg_difference
 
         if greater_eq(self, zero).proven():
-            # Already known
+            # Already known (don't use readily_provable).
             return greater_eq(self, zero).prove()
         
         if self.terms.is_double() and isinstance(self.terms[1], Neg):
             # (a - b) with a >= b => (a - b) is non-negative
             _a, _b = self.terms[0], self.terms[1].operand
-            if greater_eq(_a, _b).proven():
+            if greater_eq(_a, _b).readily_provable():
                 return nonneg_difference.instantiate({a:_a, b:_b})
 
         if try_deduce_number_set:
             # Try 'deduce_number_set'.
             deduce_number_set(self)
 
+        # Last resort attempt
         return greater_eq(self, zero).prove()
 
-
-    @relation_prover
-    def deduce_number_set(self, **defaults_config):
+    def readily_provable_number_set(self):
         '''
-        Prove membership of this expression in the most 
-        restrictive standard number set we can readily know.
+        Return the most restrictive number set we can readily
+        prove contains the evaluation of this number operation.
         '''
-        from proveit.numbers import (zero, Neg, greater, greater_eq,
+        from proveit.numbers import (Neg, greater, greater_eq,
                                      Less, LessEq)
         list_of_operand_sets = []
         # find a minimal std number set for operand
         any_positive = False
         any_negative = False
         for operand in self.operands:
-            operand_ns = deduce_number_set(operand).domain
-            if greater(operand, zero).proven():
+            operand_ns = readily_provable_number_set(operand)
+            if operand_ns is None: return None
+            if RealPos.includes(operand_ns):
                 any_positive = True
-            if Less(operand, zero).proven():
+            if RealNeg.includes(operand_ns):
                 any_negative = True
             list_of_operand_sets.append(operand_ns)
         # merge the resulting list of std number sets into a
@@ -1478,15 +1481,15 @@ class Add(NumberOperation):
             # a > b, a < b, a ≥ b, a ≤ b, or a ≠ b
             if self.terms.is_double() and isinstance(self.terms[1], Neg):
                 _a, _b = self.terms[0], self.terms[1].operand
-                if greater(_a, _b).proven():
+                if greater(_a, _b).readily_provable():
                     restriction = major_to_pos # positive
-                elif greater_eq(_a, _b).proven():
+                elif greater_eq(_a, _b).readily_provable():
                     restriction = major_to_nonneg # non-negative
-                elif Less(_a, _b).proven():
+                elif Less(_a, _b).readily_provable():
                     restriction = major_to_neg # negative
-                elif LessEq(_a, _b).proven():
+                elif LessEq(_a, _b).readily_provable():
                     restriction = major_to_nonpos # non-positive
-                elif NotEquals(_a, _b).proven():
+                elif NotEquals(_a, _b).readily_provable():
                     restriction = major_to_nonzero # non-zero
         
         # Use the positive, negative, non-negative, non-positive, or
@@ -1504,10 +1507,11 @@ class Add(NumberOperation):
             else:
                 number_set = restriction[Complex]
 
-        return self.deduce_in_number_set(number_set)
+        return number_set
 
     # IS THIS NECESSARY?
-    def deduce_difference_in_natural(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_difference_in_natural(self, **defaults_config):
         from proveit.numbers import Neg
         from proveit.numbers.number_sets.integers import difference_is_nat
         if not self.terms.is_double():
@@ -1517,11 +1521,11 @@ class Add(NumberOperation):
             raise ValueError("deduce_difference_in_natural only applicable "
                              "for a subtraction, got %s" % self)
         thm = difference_is_nat
-        return thm.instantiate({a: self.terms[0], b: self.terms[1].operand},
-                               assumptions=assumptions)
+        return thm.instantiate({a: self.terms[0], b: self.terms[1].operand})
 
     # IS THIS NECESSARY?
-    def deduce_difference_in_natural_pos(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_difference_in_natural_pos(self, **defaults_config):
         from proveit.numbers import Neg
         from proveit.numbers.number_sets.integers import difference_is_nat_pos
         if not self.terms.is_double():
@@ -1904,7 +1908,6 @@ class Add(NumberOperation):
                 # skip the term doing the bounding.
                 continue
             for number_set in list(relevant_number_sets):
-                deduce_number_set(term_entry)
                 if isinstance(term_entry, ExprRange):
                     in_number_set = And(ExprRange(
                             term_entry.parameter,
@@ -1913,7 +1916,7 @@ class Add(NumberOperation):
                             term_entry.true_end_index))
                 else:
                     in_number_set = InSet(term_entry, number_set)
-                if not in_number_set.proven():
+                if not in_number_set.readily_provable():
                     relevant_number_sets.discard(number_set)
         if len(relevant_number_sets) == 0:
             raise UnsatisfiedPrerequisites(
@@ -2009,8 +2012,8 @@ class Add(NumberOperation):
         Attempt to prove that self is not equal to other.
         '''
         from proveit.numbers import zero, Neg
-        if NotEquals(self, other).proven():
-            # Already known.
+        if NotEquals(self, other).readily_provable():
+            # Readily provable.
             return NotEquals(self, other).prove()
         if other == zero:
             if self.terms.is_double():
@@ -2027,8 +2030,9 @@ class Add(NumberOperation):
                                 {a:_a, b:_b})
             if try_deduce_number_set:
                 # Try deducing the number set.
-                deduce_number_set(self)
-                if NotEquals(self, zero).proven():
+                number_set = readily_provable_number_set(self)
+                if ComplexNonZero.includes(number_set):
+                    deduce_number_set(self)
                     return NotEquals(self, zero).prove()
         # If it isn't a special case treated here, just use
         # conclude-as-folded.

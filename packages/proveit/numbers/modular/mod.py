@@ -4,7 +4,8 @@ from proveit import (defaults, Literal, Operation, ProofFailure,
 from proveit import a, b, c, i, j, x, L
 from proveit.logic import Equals, InSet, SubsetEq
 from proveit.relation import TransRelUpdater
-from proveit.numbers import NumberOperation, deduce_number_set, Add
+from proveit.numbers import (NumberOperation, Add, deduce_number_set,
+                             readily_provable_number_set)
 
 class Mod(NumberOperation):
     # operator of the Mod operation.
@@ -34,7 +35,7 @@ class Mod(NumberOperation):
         from proveit.numbers import (
             NaturalPos, RealPos, Interval, IntervalCO, subtract, zero, one)
         deduce_number_set(self.dividend)
-        divisor_ns = deduce_number_set(self.divisor).domain
+        divisor_ns = readily_provable_number_set(self.divisor)
         if (NaturalPos.includes(divisor_ns) and 
                 InSet(self.dividend, 
                       Interval(zero, 
@@ -112,8 +113,8 @@ class Mod(NumberOperation):
                        mod_in_interval_c_o)
         from proveit.numbers import Integer, NaturalPos
         # from number_sets import deduce_in_integer, deduce_in_real
-        dividend_ns = deduce_number_set(self.dividend).domain
-        divisor_ns = deduce_number_set(self.divisor).domain
+        dividend_ns = readily_provable_number_set(self.dividend)
+        divisor_ns = readily_provable_number_set(self.divisor)
         int_dividend = Integer.includes(dividend_ns)
         if (int_dividend and NaturalPos.includes(divisor_ns)):
             return mod_natpos_in_interval.instantiate(
@@ -174,11 +175,25 @@ class Mod(NumberOperation):
             "'Mod.deduce_in_number_set()' not implemented for the %s set" 
             % str(number_set))
 
-    @relation_prover
-    def deduce_number_set(self, **defaults_config):
+    def readily_provable_number_set(self):
         '''
-        Prove membership of this expression in the most 
-        restrictive standard number set we can readily know.
+        Return the most restrictive number set we can readily
+        prove contains the evaluation of this number operation.
         '''
-        return self.deduce_in_interval()
-
+        from proveit.numbers import (zero, one, Interval, IntervalCO, 
+                                     Abs, subtract, NaturalPos, Integer)
+        _b = self.divisor
+        # from number_sets import deduce_in_integer, deduce_in_real
+        dividend_ns = readily_provable_number_set(self.dividend)
+        divisor_ns = readily_provable_number_set(self.divisor)
+        int_dividend = Integer.includes(dividend_ns)
+        if (int_dividend and NaturalPos.includes(divisor_ns)):
+            return Interval(zero, subtract(_b, one))
+        elif (int_dividend and Integer.includes(divisor_ns)):
+            # if the operands are integers, then we can deduce that
+            # a mod b is an integer in the set {0,1,...,(b-1)}
+            return Interval(zero, subtract(Abs(_b), one))
+        else:
+            # if the operands are reals, then we can deduce that
+            # a mod b is in half-open real interval [0, b)
+            return IntervalCO(zero, _b)

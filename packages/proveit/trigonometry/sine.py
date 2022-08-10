@@ -38,10 +38,6 @@ class Sin(Function):
                 Less(_theta, zero).proven()):
             return sine_neg_interval.instantiate(
                     {theta:_theta})
-        elif (Less(Neg(pi), _theta).proven() and
-                Less(_theta, zero).proven()):
-            return sine_neg_interval.instantiate(
-                    {theta:_theta})
         elif (LessEq(Neg(pi), _theta).proven() and
                 LessEq(_theta, zero).proven()):
             return sine_nonpos_interval.instantiate(
@@ -85,26 +81,31 @@ class Sin(Function):
             return bound.with_direction_reversed()
         return bound
 
-    @relation_prover
-    def deduce_in_number_set(self, number_set, **defaults_config):
-        from proveit.numbers import Complex
-        from . import real_closure
-        if number_set in (Real, Complex):
-            closure = real_closure.instantiate({theta:self.angle})
-            if number_set == Real:
-                return closure
-            return InSet(self, number_set).prove()
-        if number_set in (RealPos, RealNeg, RealNonNeg, RealNonPos):
-            # Maybe use deduce_interval to help
-            interval = self.deduce_in_interval().domain
-            raise NotImplementedError(
-                    "Implementation not quite finished")        
-        
-        raise NotImplementedError(
-                "'Sin.deduce_in_number_set()' not implemented for the "
-                "%s set" % str(number_set))        
-
-    @relation_prover
-    def deduce_number_set(self, **defaults_config):
-        return self.deduce_in_interval()
+    def readily_provable_number_set(self):
+        '''
+        Return the most restrictive number set we can readily
+        prove contains the evaluation of this number operation.
+        '''
+        from proveit.numbers import readily_provable_number_set, Complex
+        from proveit.numbers import (zero, one, pi, Less, LessEq, Neg,
+                                     IntervalCC, IntervalOC, IntervalCO)
+        _theta = self.angle
+        theta_ns = readily_provable_number_set(_theta)
+        if theta_ns is None: return None
+        if not Real.includes(theta_ns): return Complex
+        if (Less(zero, _theta).readily_provable() and
+                Less(_theta, pi).readily_provable()):
+            return IntervalOC(zero, one)
+        elif (LessEq(zero, _theta).readily_provable() and
+                LessEq(_theta, pi).readily_provable()):
+            return IntervalCC(zero, one)
+        elif (Less(Neg(pi), _theta).readily_provable() and
+                Less(_theta, zero).readily_provable()):
+            return IntervalCO(Neg(one), zero)
+        elif (LessEq(Neg(pi), _theta).readily_provable() and
+                LessEq(_theta, zero).readily_provable()):
+            return IntervalCC(Neg(one), zero)
+        else:
+            # Without knowing more, we can only bound it by +/-1.
+            return IntervalCC(Neg(one), one) 
 

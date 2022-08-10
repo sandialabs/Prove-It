@@ -12,7 +12,7 @@ from proveit.numbers.number_sets import (
         Real, RealNonZero, RealPos, RealNeg, RealNonNeg, RealNonPos,
         Complex, ComplexNonZero)
 from proveit import a, b, c, i, j, m, n, x, y, B
-from proveit.numbers import (NumberOperation, deduce_number_set,
+from proveit.numbers import (NumberOperation, readily_provable_number_set,
                              standard_number_set)
 
 class Neg(NumberOperation):
@@ -82,14 +82,17 @@ class Neg(NumberOperation):
         If negating an Add, distribute over the sum.
         If negating a Neg, undo the double negation.
         '''
-        from proveit.numbers import is_numeric_rational, one, Add, Mult
+        from proveit.numbers import is_numeric_rational, zero, one, Add, Mult
         canonical_operand = self.operand.canonical_form()
+        if canonical_operand == zero:
+            return zero # -0 = 0
         if (isinstance(canonical_operand, Mult) and 
                 is_numeric_rational(canonical_operand.factors[0])):
             # Apply the negation to the rational coefficient.
             coef = canonical_operand.factors[0]
             return Mult(Neg(coef).canonical_form(),
-                        *canonical_operand.factors.entries[1:])
+                        *canonical_operand.factors
+                        .entries[1:]).canonical_form()
         elif isinstance(canonical_operand, Add):
             # Distribute the negation over the sum.
             negated_terms = []
@@ -172,11 +175,10 @@ class Neg(NumberOperation):
         raise NotImplementedError(
             "No negation closure theorem for set %s" %str(number_set))
 
-    @relation_prover
-    def deduce_number_set(self, **defaults_config):
+    def readily_provable_number_set(self):
         '''
-        Prove membership of this expression in the most
-        restrictive standard number set we can readily know.
+        Return the most restrictive number set we can readily
+        prove contains the evaluation of this number operation.
         '''
         number_set_map = {
             NaturalPos: IntegerNeg,
@@ -200,12 +202,13 @@ class Neg(NumberOperation):
             ComplexNonZero: ComplexNonZero,
             Complex: Complex
             }
-        operand_ns = deduce_number_set(self.operand).domain
+        operand_ns = readily_provable_number_set(self.operand)
+        if operand_ns is None: return None
         # check if operand_ns is not a standard number set
         if operand_ns not in number_set_map.keys():
             # try to replace term_ns with a std number set
             operand_ns = standard_number_set(operand_ns)
-        return self.deduce_in_number_set(number_set_map[operand_ns])
+        return number_set_map[operand_ns]
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,

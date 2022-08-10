@@ -1,4 +1,4 @@
-from proveit import (Literal, USE_DEFAULTS, Operation, ExprRange, defaults,
+from proveit import (Literal, Operation, ExprRange, defaults,
                      UnsatisfiedPrerequisites,
                      prover, relation_prover, equality_prover)
 from proveit import a, b, c, d, k, m, n, x
@@ -105,19 +105,17 @@ class DecimalSequence(NumeralSequence):
         #                        "Cannot prove %d in NaturalPos" % self.n)
         # return Numeral._inNaturalPosStmts[self.n]
 
-    @relation_prover
-    def deduce_number_set(self, **defaults_config):
-        from proveit.numbers import deduce_number_set, greater
+    def readily_provable_number_set(self):
+        '''
+        Return the most restrictive number set we can readily
+        prove contains the evaluation of this number operation.
+        '''
+        from proveit.numbers import Natural, NaturalPos, greater
         _a = self.digits[0]
-        _b = self.digits[1:]
-        try:
-            deduce_number_set(_a)
-        except UnsatisfiedPrerequisites:
-            pass
-        if greater(_a, zero).proven():
-            return self.deduce_in_natural_pos()
+        if greater(_a, zero).readily_provable():
+            return NaturalPos
         else:
-            return self.deduce_in_natural()
+            return Natural
 
     @equality_prover('single_digit_reduced', 'single_digit_reduce')
     def single_digit_reduction(self, **defaults_config):
@@ -269,7 +267,8 @@ class DecimalSequence(NumeralSequence):
 
     '''
     # Shouldn't be needed given new auto-simplification approach.
-    def evaluate_add_digit(self, assumptions=USE_DEFAULTS):
+    @prover
+    def evaluate_add_digit(self, **defaults_config):
         """
         Evaluates each addition within the DecimalSequence
         """

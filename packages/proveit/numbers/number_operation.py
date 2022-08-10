@@ -1,6 +1,6 @@
 from collections import deque, Counter
 from proveit import (Expression, Judgment, Operation, ExprTuple, ExprRange,
-                     generate_inner_expressions, USE_DEFAULTS,
+                     generate_inner_expressions, defaults, USE_DEFAULTS,
                      prover, relation_prover,
                      ProofFailure, UnsatisfiedPrerequisites)
 from proveit.logic import Equals
@@ -198,6 +198,14 @@ class NumberOperation(Operation):
                 "'bound_via_operand_bound' not implemented for %s of type %s."
                 %(self, self.__class__))
 
+    def readily_not_equal(self, other):
+        '''
+        Return True iff self and other are numeric rationals that are
+        not equal to each other.
+        '''
+        from proveit.numbers.numerals.numeral import not_equal_numeric_rationals
+        return not_equal_numeric_rationals(self, other)
+
 @relation_prover
 def deduce_in_number_set(expr, number_set, **defaults_config):
     '''
@@ -330,84 +338,130 @@ nonzero_number_set = {
     Complex: ComplexNonZero,
     ComplexNonZero: ComplexNonZero}
 
-@relation_prover
-def deduce_number_set(expr, **defaults_config):
+found = False
+
+def readily_provable_number_set(expr, *, assumptions=USE_DEFAULTS,
+                                default=None, _compare_to_zero=True):
     '''
-    Prove that 'expr' is an Expression that represents a number
-    in a standard number set that is as restrictive as we can
-    readily know.
+    Return the most restrictive number set that the given expression 
+    may readily be proven to be within.  The expression may also be
+    an ExprRange where each instance is in the number set.
+    
+    Return the default (possibly None) if there are no readily provable
+    number memberships.
+    
+    _compare_to_zero is set to False internally to avoid infinite
+    recursion.
     '''
+    global found
     from proveit.logic import And, InSet, Equals, NotEquals
     from proveit.numbers import Less, LessEq, zero
+    from proveit._core_.proof import Assumption
+
+    # Make sure we derive assumption side-effects first.
+    assumptions = defaults.checked_assumptions(assumptions)
+    Assumption.make_assumptions(defaults.assumptions)
 
     # Find the first (most restrictive) number set that
     # contains 'expr' or something equal to it.
-
+    best_known_number_set = None
     for number_set in sorted_number_sets:
         membership = None
         for eq_expr in Equals.yield_known_equal_expressions(expr):
             if isinstance(eq_expr, ExprRange):
-                membership = And(ExprRange(eq_expr.parameter,
-                                           InSet(eq_expr.body, number_set),
-                                           eq_expr.true_start_index,
-                                           eq_expr.true_end_index,
-                                           styles=eq_expr.get_styles()))
+                membership = And(*ExprTuple(eq_expr).map_elements(
+                        lambda element : InSet(element, number_set)))
             else:
                 membership = InSet(eq_expr, number_set)
-            if membership.proven():
+            if membership.proven(): 
+                # Don't use readily_provable; avoid infinite recursion.
                 break # found a known number set membership
             else:
                 membership = None
         if membership is not None:
-            membership = InSet(expr, number_set).prove()
+            best_known_number_set = number_set
             break
 
-    if hasattr(expr, 'deduce_number_set'):
-        # Use 'deduce_number_set' method.
-        try:
-            deduced_membership = expr.deduce_number_set()
-        except (UnsatisfiedPrerequisites, ProofFailure):
-            deduced_membership = None
-        if deduced_membership is not None:
-            assert isinstance(deduced_membership, Judgment)
-            if not isinstance(deduced_membership.expr, InSet):
-                raise TypeError("'deduce_number_set' expected to prove an "
-                                "InSet type expression")
-            if deduced_membership.expr.element != expr:
-                raise TypeError("'deduce_number_set' was expected to prove "
-                                "that %s is in some number set"%expr)
-            # See if this deduced number set is more restrictive than
-            # what we had surmised already.
-            deduced_number_set = deduced_membership.domain
-            if membership is None:
-                membership = deduced_membership
-                number_set = deduced_number_set
-            elif (deduced_number_set != number_set and number_set.includes(
-                    deduced_number_set)):
-                number_set = deduced_number_set
-                membership = deduced_membership
+    # Technically we aren't checking the provability of the expression
+    # but we want to use Expression.in_progress_to_check_provability
+    # for convenience to avoid infinite/pointless recursion.
+    in_progress_key = (
+        expr, tuple(sorted(assumptions, key=lambda expr: hash(expr))))
+    if in_progress_key in Expression.in_progress_to_check_provability:
+        # avoid infinite/pointless recursion by using
+        # in_progress_to_check_provability
+        return default
 
-    if membership is None:
-        from proveit import defaults
-        raise UnsatisfiedPrerequisites(
-            "Unable to prove any number membership for %s"%expr)
+    try:
+        Expression.in_progress_to_check_provability.add(
+                in_progress_key)
+        if hasattr(expr, 'readily_provable_number_set'):
+            # Use 'readily_provable_number_set' method.
+            try:
+                number_set = expr.readily_provable_number_set()
+            except (UnsatisfiedPrerequisites, ProofFailure):
+                number_set = None
+            if number_set is not None:
+                # See if this number set is more restrictive than
+                # what we had surmised already.
+                if best_known_number_set is None:
+                    best_known_number_set = number_set
+                elif best_known_number_set != number_set and (
+                        best_known_number_set.includes(number_set)):
+                    best_known_number_set = number_set
+    
+        if best_known_number_set is None:
+            return default
+    
+        if isinstance(expr, ExprRange):
+            # Don't bother trying to restrict further if the expression
+            # is an ExprRange.
+            return best_known_number_set
+    
+        # Already proven to be in some number set,
+        # Let's see if we can restrict it further.
+        number_set = best_known_number_set
+    
+        if _compare_to_zero:
+            if number_set in pos_number_set and (
+                    Less(zero, expr).readily_provable()): # positive
+                number_set = pos_number_set[number_set]
+            elif number_set in neg_number_set and (
+                    Less(expr, zero).readily_provable()): # negative
+                number_set = neg_number_set[number_set]
+            elif number_set in nonneg_number_set and (
+                    LessEq(zero, expr).readily_provable()): # non-negative
+                number_set = nonneg_number_set[number_set]
+            elif number_set in nonpos_number_set and (
+                    LessEq(expr, zero).readily_provable()): # non-positive
+                number_set = nonpos_number_set[number_set]
+            elif number_set in nonzero_number_set and (
+                    NotEquals(expr, zero).readily_provable()):
+                number_set = nonzero_number_set[number_set]
+        return number_set
+    finally:
+        Expression.in_progress_to_check_provability.remove(
+                in_progress_key)
 
-    # Already proven to be in some number set,
-    # Let's see if we can restrict it further.
-    if Less(zero, expr).proven(): # positive
-        number_set = pos_number_set.get(number_set, None)
-    elif Less(expr, zero).proven(): # negative
-        number_set = neg_number_set.get(number_set, None)
-    elif LessEq(zero, expr).proven(): # non-negative
-        number_set = nonneg_number_set.get(number_set, None)
-    elif LessEq(expr, zero).proven(): # non-positive
-        number_set = nonpos_number_set.get(number_set, None)
-    elif NotEquals(expr, zero).proven():
-        number_set = nonzero_number_set.get(number_set, None)
-    if number_set is None:
-        # Just use what we have already proven.
-        return membership.prove()
-    return InSet(expr, number_set).prove()
+@relation_prover
+def deduce_number_set(expr, **defaults_config):
+    '''
+    Prove the most restrictive standard number set membership of the 
+    given expression.  The expression may also be an ExprRange in which
+    case we prove the conjunction that each instance of the range
+    is in the particular most-restrictive standard number set.
+    '''
+    from proveit.logic import And, InSet
+    number_set = readily_provable_number_set(expr)
+    if isinstance(expr, ExprRange):
+        return And(*ExprTuple(expr).map_elements(
+                lambda element : InSet(element, number_set))).prove()
+    membership = deduce_in_number_set(expr, number_set)
+    if membership.domain != number_set:
+        raise ValueError("'deduce_in_number_set' was directed to prove "
+                         "membership in %s but proved %s instead."
+                         %(number_set, membership))
+    return membership
 
 def standard_number_set(given_set, **defaults_config):
     '''

@@ -5,7 +5,7 @@ from proveit.numbers.number_sets import Integer, Natural, Real
 from proveit.numbers.rounding.rounding_methods import (
     apply_rounding_elimination, apply_rounding_extraction,
     apply_shallow_simplification, rounding_deduce_in_number_set,
-    rounding_deduce_number_set)
+    rounding_readily_provable_number_set)
 
 
 class Round(Function):
@@ -90,10 +90,9 @@ class Round(Function):
         return rounding_deduce_in_number_set(
             self, number_set, round_is_an_int, round_real_pos_closure)
 
-    @relation_prover
-    def deduce_number_set(self, **defaults_config):
+    def readily_provable_number_set(self):
         '''
-        Prove membership of this expression in the most 
-        restrictive standard number set we can readily know.
+        Return the most restrictive number set we can readily
+        prove contains the evaluation of this number operation.
         '''
-        return rounding_deduce_number_set(self)
+        return rounding_readily_provable_number_set(self)

@@ -22,6 +22,7 @@ class Numeral(Literal, IrreducibleValue):
         if not isinstance(n, int):
             raise ValueError("'n' of a Numeral must be an integer")
         self.n = n
+        
 
     @prover
     def eval_equality(self, other, **defaults_config):
@@ -29,6 +30,13 @@ class Numeral(Literal, IrreducibleValue):
             return Equals(self, self).prove().evaluation()
         self_neq_other = self.not_equal(other)
         return self_neq_other.unfold().equate_negated_to_false()
+
+    def readily_not_equal(self, other):
+        '''
+        Return True iff self and other are numeric rationals that are
+        not equal to each other.
+        '''
+        return not_equal_numeric_rationals(self, other)
 
     @prover
     def not_equal(self, other, **defaults_config):
@@ -380,6 +388,16 @@ def simplified_numeric_rational(numer_int, denom_int):
         return Neg(rational)
     return rational
 
+def not_equal_numeric_rationals(a, b):
+    '''
+    Return True iff a and b are numeric rational expressions that
+    are not equal to each other.
+    '''
+    if is_numeric_rational(a) and is_numeric_rational(b):
+        if numeric_rational_ints(a) != numeric_rational_ints(b):
+            return True
+    return False
+
 '''
 Comparators for numeric integers/rationals.
 '''
@@ -391,7 +409,7 @@ def less_numeric_ints(a, b):
     '''
     if not (is_numeric_int(a) and is_numeric_int(b)):
         raise ValueError("Both arguments to 'less_numeric_ints' should "
-                         "be literal ints, got %s and %s"%(a, b))
+                         "be numeric ints, got %s and %s"%(a, b))
     return a.as_int() < b.as_int()
 
 def less_eq_numeric_ints(a, b):
@@ -401,7 +419,7 @@ def less_eq_numeric_ints(a, b):
     '''
     if not (is_numeric_int(a) and is_numeric_int(b)):
         raise ValueError("Both arguments to 'less_numeric_ints' should "
-                         "be literal ints, got %s and %s"%(a, b))
+                         "be numeric ints, got %s and %s"%(a, b))
     return a.as_int() <= b.as_int()
 
 def _compare_numeric_rationals(a, b, comparator):
@@ -410,7 +428,7 @@ def _compare_numeric_rationals(a, b, comparator):
     '''
     if not (is_numeric_rational(a) and is_numeric_rational(b)):
         raise ValueError("Both arguments to 'less_numeric_ints' should "
-                         "be literal ints, got %s and %s"%(a, b))
+                         "be numeric ints, got %s and %s"%(a, b))
     a_numer, a_denom = numeric_rational_ints(a)
     b_numer, b_denom = numeric_rational_ints(b)
     assert a_denom > 0

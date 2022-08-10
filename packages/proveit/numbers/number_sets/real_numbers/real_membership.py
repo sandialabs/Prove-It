@@ -46,6 +46,7 @@ class RealNonZeroMembership(NumberMembership):
     @prover
     def conclude(self, **defaults_config):
         from proveit.numbers import zero
+        # Use "proven", not "readily_provable" here.
         if (InSet(self.element, Real).proven() and
                 NotEquals(self.element, zero).proven()):
             return self.conclude_as_last_resort()
@@ -110,6 +111,7 @@ class RealPosMembership(NumberMembership):
     @prover
     def conclude(self, **defaults_config):
         from proveit.numbers import zero, greater
+        # Use "proven", not "readily_provable" here.
         if (InSet(self.element, Real).proven() and
                 greater(self.element, zero).proven()):
             return self.conclude_as_last_resort()
@@ -180,6 +182,7 @@ class RealNegMembership(NumberMembership):
     @prover
     def conclude(self, **defaults_config):
         from proveit.numbers import zero, Less
+        # Use "proven", not "readily_provable" here.
         if (InSet(self.element, Real).proven() and
                 Less(self.element, zero).proven()):
             return self.conclude_as_last_resort()
@@ -248,6 +251,7 @@ class RealNonNegMembership(NumberMembership):
     @prover
     def conclude(self, **defaults_config):
         from proveit.numbers import zero, greater_eq
+        # Use "proven", not "readily_provable" here.
         if (InSet(self.element, Real).proven() and
                 greater_eq(self.element, zero).proven()):
             return self.conclude_as_last_resort()
@@ -302,6 +306,7 @@ class RealNonPosMembership(NumberMembership):
     @prover
     def conclude(self, **defaults_config):
         from proveit.numbers import zero, LessEq
+        # Use "proven", not "readily_provable" here.
         if (InSet(self.element, Real).proven() and
                 LessEq(self.element, zero).proven()):
             return self.conclude_as_last_resort()

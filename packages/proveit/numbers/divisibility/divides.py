@@ -5,8 +5,7 @@ from proveit import (as_expression, defaults, Literal,
                      prover, relation_prover)
 from proveit import a, b, k
 from proveit.logic import Equals, InSet, NotEquals
-from proveit.numbers import (zero, Complex, Integer, NaturalPos,
-                             deduce_number_set)
+from proveit.numbers import zero, Complex, Integer, NaturalPos
 
 
 class DividesRelation(TransitiveRelation):
@@ -31,33 +30,22 @@ class DividesRelation(TransitiveRelation):
 
         # For each of the following, use the default assumptions to
         # verify some conditions before yielding the side effect method
-        # (i.e. check using .proven() without arguments)
+        # (i.e. check using .readily_provable())
 
         # for 2|(b^n), derive 2|b.
         # (can be generalized to any prime number).
         if self.lhs==two and isinstance(self.rhs, Exp):
-            try:
-                deduce_number_set(self.rhs.base)
-                deduce_number_set(self.rhs.exponent)
-            except UnsatisfiedPrerequisites:
-                pass
-            if (InSet(self.rhs.base, Integer).proven() and
-                   InSet(self.rhs.exponent, Integer).proven()):
+            if (InSet(self.rhs.base, Integer).readily_provable() and
+                   InSet(self.rhs.exponent, Integer).readily_provable()):
                 yield self.eliminate_dividend_exponent
 
         # for (a^n)|(b^n)
         if (isinstance(self.rhs, Exp) and 
                 isinstance(self.lhs, Exp) and 
                 self.lhs.exponent==self.rhs.exponent):
-            try:
-                deduce_number_set(self.lhs.base)
-                deduce_number_set(self.rhs.base)
-                deduce_number_set(self.lhs.exponent)
-            except UnsatisfiedPrerequisites:
-                pass
-            if (InSet(self.lhs.base, Integer).proven() and
-                    InSet(self.rhs.base, Integer).proven() and
-                    InSet(self.lhs.exponent, NaturalPos).proven()):
+            if (InSet(self.lhs.base, Integer).readily_provable() and
+                    InSet(self.rhs.base, Integer).readily_provable() and
+                    InSet(self.lhs.exponent, NaturalPos).readily_provable()):
                 yield self.eliminate_common_exponent
 
         # for (ka)|(kb)
@@ -124,16 +112,14 @@ class Divides(DividesRelation):
         #-- -------------------------------------------------------- --#
         #-- Case (1): x|x with x != 0 known or assumed               --#
         #-- -------------------------------------------------------- --#
-        from proveit.logic import InSet, NotEquals
-        from proveit.numbers import zero, Complex
+        from proveit.logic import InSet
+        from proveit.numbers import (ComplexNonZero,
+                                     readily_provable_number_set)
         err_str = "In Divides.conclude() we tried:\n"
-        try:
-            deduce_number_set(self.lhs)
-        except UnsatisfiedPrerequisites:
-            pass
+        lhs_ns = readily_provable_number_set(self.lhs, default=Complex)
+
         if self.lhs == self.rhs:
-            if (NotEquals(self.lhs, zero).proven() and
-                    InSet(self.lhs, Complex).proven()):
+            if ComplexNonZero.includes(lhs_ns):
                 # Trivial x|x with complex x ≠ 0
                 return self.conclude_via_reflexivity()
             else:
@@ -149,8 +135,7 @@ class Divides(DividesRelation):
         #-- Case (2): x|0 with x != 0 known or assumed               --#
         #-- -------------------------------------------------------- --#
         if self.rhs == zero:
-            if (NotEquals(self.lhs, zero).proven() and
-                    InSet(self.lhs, Complex).proven()):
+            if ComplexNonZero.includes(lhs_ns):
                 # We have 0/x with complex x ≠ 0
                 return self.conclude_via_zero_factor()
             else:
@@ -179,16 +164,9 @@ class Divides(DividesRelation):
         if (isinstance(self.lhs, Exp) and isinstance(self.rhs, Exp) and
                 Equals(self.lhs.exponent, self.rhs.exponent) and
                 Divides(self.lhs.base, self.rhs.base).proven()):
-            try:
-                deduce_number_set(self.lhs.base)
-                deduce_number_set(self.rhs.base)
-                deduce_number_set(self.lhs.exponent)
-            except UnsatisfiedPrerequisites:
-                pass
-
-            if (InSet(self.lhs.base, Integer).proven() and
-                    InSet(self.rhs.base, Integer).proven() and
-                    InSet(self.lhs.exponent, NaturalPos).proven()):
+            if (InSet(self.lhs.base, Integer).readily_provable() and
+                    InSet(self.rhs.base, Integer).readily_provable() and
+                    InSet(self.lhs.exponent, NaturalPos).readily_provable()):
                 return (Divides(self.lhs.base, self.rhs.base).
                         introduce_common_exponent(self.lhs.exponent))
 
@@ -338,14 +316,9 @@ class Divides(DividesRelation):
             k = self.lhs.base
             a = self.rhs.base
             n = self.lhs.exponent
-            try:
-                for _expr in (k, a, n):
-                    deduce_number_set(_expr)
-            except UnsatisfiedPrerequisites:
-                pass
-            if (InSet(k, Integer).proven() and
-                InSet(a, Integer).proven() and
-                    InSet(n, NaturalPos).proven()):
+            if (InSet(k, Integer).readily_provable() and
+                InSet(a, Integer).readily_provable() and
+                    InSet(n, NaturalPos).readily_provable()):
 
                 from . import common_exponent_elimination
                 _k, _a, _n = common_exponent_elimination.instance_params
@@ -383,7 +356,7 @@ class Divides(DividesRelation):
         k must be a non-zero complex number.
         '''
         from . import common_factor_elimination
-        from proveit.numbers import Mult, one
+        from proveit.numbers import Mult, one, ComplexNonZero
         if self.lhs == self.rhs:
             # From x | x return 1 | 1.  It's vacuous, but whatever.
             return Divides(one, one).prove()
@@ -399,10 +372,8 @@ class Divides(DividesRelation):
                 lhs2 = self.lhs.operands[1]
                 rhs1 = self.rhs.operands[0]
                 rhs2 = self.rhs.operands[1]
-                deduce_number_set(lhs1)
-
-                if (lhs1 == rhs1 and InSet(lhs1, Complex).proven() and
-                        NotEquals(lhs1, zero).proven()):
+                if lhs1 == rhs1 and InSet(lhs1, 
+                                          ComplexNonZero).readily_provable():
                     return common_factor_elimination.instantiate(
                         {a: lhs2, b: rhs2, k: lhs1})
             
@@ -480,6 +451,13 @@ class Divides(DividesRelation):
                 'Divides expressions is equal to the rhs of the other '
                 'Divides expression. Instead we have: {0} vs {1}'.
                 format(self, other))
+
+    def readily_in_bool(self):
+        '''
+        A Divides operation is always boolean (but could only be
+        true for numbers).
+        '''
+        return True        
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):

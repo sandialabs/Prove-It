@@ -9,8 +9,9 @@ from proveit.logic import (
     InSet)
 from proveit.numbers import (
     zero, one, num, Add, NumberOperation, deduce_number_set,
-    standard_number_set, is_numeric_natural, is_numeric_int, 
-    is_numeric_rational)
+    readily_provable_number_set, standard_number_set, 
+    is_numeric_natural, is_numeric_int, is_numeric_rational,
+    standard_number_sets)
 from proveit.numbers.number_sets import (
     Natural, NaturalPos,
     Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
@@ -112,7 +113,8 @@ class Mult(NumberOperation):
                 if base in base_to_exponent:
                     prev_exponent = base_to_exponent[base]
                     if isinstance(prev_exponent, Add):
-                        exponent = Add(*prev_exponent.terms, exponent)
+                        exponent = Add(*prev_exponent.terms.entries, 
+                                       exponent)
                     else:
                         exponent = Add(prev_exponent, exponent)
                 base_to_exponent[base] = exponent
@@ -133,6 +135,8 @@ class Mult(NumberOperation):
         # Return the appropriate canonical form.
         if len(factors) == 0:
             return coef
+        if coef == zero:
+            return zero # 0*x = 0
         if coef == one:
             if len(factors) > 1:
                 return Mult(*factors)
@@ -154,105 +158,138 @@ class Mult(NumberOperation):
         import proveit.numbers.multiplication as mult_pkg
         if hasattr(self, 'number_set'):
             number_set = number_set.number_set
-        bin = False
-        if number_set == Integer:
-            if self.operands.is_double():
-                thm = mult_pkg.mult_int_closure_bin
-                bin = True
-            else:
-                thm = mult_pkg.mult_int_closure
-        elif number_set == Natural:
-            if self.operands.is_double():
-                thm = mult_pkg.mult_nat_closure_bin
-                bin = True
-            else:
-                thm = mult_pkg.mult_nat_closure
-        elif number_set == NaturalPos:
-            if self.operands.is_double():
-                thm = mult_pkg.mult_nat_pos_closure_bin
-                bin = True
-            else:
-                thm = mult_pkg.mult_nat_pos_closure
-        elif number_set == IntegerNonZero:
-            if self.operands.is_double():
-                thm = mult_pkg.mult_int_nonzero_closure_bin
-                bin = True
-            else:
-                thm = mult_pkg.mult_int_nonzero_closure
-        elif number_set == Rational:
-            if self.operands.is_double():
-                thm = mult_pkg.mult_rational_closure_bin
-                bin = True
-            else:
-                thm = mult_pkg.mult_rational_closure
-        elif number_set == RationalPos:
-            if self.operands.is_double():
-                thm = mult_pkg.mult_rational_pos_closure_bin
-                bin = True
-            else:
-                thm = mult_pkg.mult_rational_pos_closure
-        elif number_set == RationalNonNeg:
-            if self.operands.is_double():
-                thm = mult_pkg.mult_rational_nonneg_closure_bin
-                bin = True
-            else:
-                thm = mult_pkg.mult_rational_nonneg_closure
-        elif number_set == RationalNonZero:
-            if self.operands.is_double():
-                thm = mult_pkg.mult_rational_nonzero_closure_bin
-                bin = True
-            else:
-                thm = mult_pkg.mult_rational_nonzero_closure
-        elif number_set == Real:
-            if self.operands.is_double():
-                thm = mult_pkg.mult_real_closure_bin
-                bin = True
-            else:
-                thm = mult_pkg.mult_real_closure
-        elif number_set == RealPos:
-            if self.operands.is_double():
-                thm = mult_pkg.mult_real_pos_closure_bin
-                bin = True
-            else:
-                thm = mult_pkg.mult_real_pos_closure
-        elif number_set == RealNonNeg:
-            if self.operands.is_double():
-                thm = mult_pkg.mult_real_nonneg_closure_bin
-                bin = True
-            else:
-                thm = mult_pkg.mult_real_nonneg_closure
-        elif number_set == RealNonZero:
-            if self.operands.is_double():
-                thm = mult_pkg.mult_real_nonzero_closure_bin
-                bin = True
-            else:
-                thm = mult_pkg.mult_real_nonzero_closure
-        elif number_set == Complex:
-            if self.operands.is_double():
-                thm = mult_pkg.mult_complex_closure_bin
-                bin = True
-            else:
-                thm = mult_pkg.mult_complex_closure
-        elif number_set == ComplexNonZero:
-            if self.operands.is_double():
-                thm = mult_pkg.mult_complex_nonzero_closure_bin
-                bin = True
-            else:
-                thm = mult_pkg.mult_complex_nonzero_closure
-        else:
+        if number_set not in standard_number_sets:
             raise NotImplementedError(
                 "'Mult.deduce_in_number_set()' not implemented for the "
-                "%s set" % str(number_set))
-        if bin:
+                "%s set" % str(number_set))            
+        if self.operands.is_double():
+            _a, _b = self.operands
+            if number_set == Integer:
+                thm = mult_pkg.mult_int_closure_bin
+            elif number_set == Rational:
+                thm = mult_pkg.mult_rational_closure_bin
+            elif number_set == Real:
+                thm = mult_pkg.mult_real_closure_bin
+            elif number_set == Complex:
+                thm = mult_pkg.mult_complex_closure_bin
+            elif number_set == ComplexNonZero:
+                thm = mult_pkg.mult_complex_nonzero_closure_bin
+            else:
+                # We need more operand-specific infomation.
+                a_ns = readily_provable_number_set(_a)
+                b_ns = readily_provable_number_set(_b)
+                if number_set == NaturalPos:
+                    if RealNeg.includes(a_ns) and RealNeg.includes(b_ns):
+                        thm = mult_pkg.mult_nat_pos_from_double_neg
+                    else:
+                        thm = mult_pkg.mult_nat_pos_closure_bin
+                elif number_set == Natural:
+                    if RealNonPos.includes(a_ns) and RealNonPos.includes(b_ns):
+                        thm = mult_pkg.mult_nat_from_double_nonpos
+                    else:
+                        thm = mult_pkg.mult_nat_closure_bin
+                elif number_set == IntegerNeg:
+                    if RealNeg.includes(a_ns):
+                        thm = mult_pkg.mult_int_neg_from_left_neg
+                    else:
+                        thm = mult_pkg.mult_int_neg_from_right_neg
+                elif number_set == IntegerNonPos:
+                    if RealNonPos.includes(a_ns):
+                        thm = mult_pkg.mult_int_nonpos_from_left_nonpos
+                    else:
+                        thm = mult_pkg.mult_int_nonps_from_right_nonpos
+                elif number_set == RationalPos:
+                    if RealNeg.includes(a_ns) and RealNeg.includes(b_ns):
+                        thm = mult_pkg.mult_rational_pos_from_double_neg
+                    else:
+                        thm = mult_pkg.mult_rational_pos_closure_bin
+                elif number_set == RationalNonNeg:
+                    if RealNonPos.includes(a_ns) and RealNonPos.includes(b_ns):
+                        thm = mult_pkg.mult_rational_nonneg_from_double_nonpos
+                    else:
+                        thm = mult_pkg.mult_rational_nonneg_closure_bin
+                elif number_set == RationalNeg:
+                    if RealNeg.includes(a_ns):
+                        thm = mult_pkg.mult_rational_neg_from_left_neg
+                    else:
+                        thm = mult_pkg.mult_rational_neg_from_right_neg
+                elif number_set == RationalNonPos:
+                    if RealNonPos.includes(a_ns):
+                        thm = mult_pkg.mult_rational_nonpos_from_left_nonpos
+                    else:
+                        thm = mult_pkg.mult_rational_nonps_from_right_nonpos
+                elif number_set == RealPos:
+                    if RealNeg.includes(a_ns) and RealNeg.includes(b_ns):
+                        thm = mult_pkg.mult_real_pos_from_double_neg
+                    else:
+                        thm = mult_pkg.mult_real_pos_closure_bin
+                elif number_set == RealNonNeg:
+                    if RealNonPos.includes(a_ns) and RealNonPos.includes(b_ns):
+                        thm = mult_pkg.mult_real_nonneg_from_double_nonpos
+                    else:
+                        thm = mult_pkg.mult_real_nonneg_closure_bin
+                elif number_set == RealNeg:
+                    if RealNeg.includes(a_ns):
+                        thm = mult_pkg.mult_real_neg_from_left_neg
+                    else:
+                        thm = mult_pkg.mult_real_neg_from_right_neg
+                elif number_set == RealNonPos:
+                    if RealNonPos.includes(a_ns):
+                        thm = mult_pkg.mult_real_nonpos_from_left_nonpos
+                    else:
+                        thm = mult_pkg.mult_real_nonpos_from_right_nonpos
             return thm.instantiate({a: self.operands[0], b: self.operands[1]})
+        
+        # Not a simple binary operation.
+        if number_set == Integer:
+            thm = mult_pkg.mult_int_closure
+        elif number_set == Natural:
+            thm = mult_pkg.mult_nat_closure
+        elif number_set == Rational:
+            thm = mult_pkg.mult_rational_closure
+        elif number_set == Real:
+            thm = mult_pkg.mult_real_closure
+        elif number_set == Complex:
+            thm = mult_pkg.mult_complex_closure
+        elif number_set == ComplexNonZero:
+            thm = mult_pkg.mult_complex_nonzero_closure
+        else:
+            # We need more operand-specific infomation.
+            operand_ns_set = {readily_provable_number_set(operand) for
+                              operand in self.operands}
+            if not all(number_set.includes(operand_ns) for 
+                       operand_ns in operand_ns_set):
+                # Not the simple case, so break this down via
+                # association to be dealt with at a binary level where
+                # necessary.
+                if len(self.operands) > 2:
+                    # Need to implement; don't forget about ExprRanges.
+                    raise NotImplementedError(
+                            "Need to implement Mult.deduce_in_number_set "
+                            "multi-operand non-simple-closure case; ")
+            elif number_set == NaturalPos:
+                thm = mult_pkg.mult_nat_pos_closure
+            elif number_set == IntegerNonZero:
+                thm = mult_pkg.mult_int_nonzero_closure
+            elif number_set == RationalPos:
+                thm = mult_pkg.mult_rational_pos_closure
+            elif number_set == RationalNonNeg:
+                thm = mult_pkg.mult_rational_nonneg_closure
+            elif number_set == RationalNonZero:
+                thm = mult_pkg.mult_rational_nonzero_closure
+            elif number_set == RealPos:
+                thm = mult_pkg.mult_real_pos_closure
+            elif number_set == RealNonNeg:
+                thm = mult_pkg.mult_real_nonneg_closure
+            elif number_set == RealNonZero:
+                thm = mult_pkg.mult_real_nonzero_closure
         return thm.instantiate({n: self.operands.num_elements(),
                                 a: self.operands})
 
-    @relation_prover
-    def deduce_number_set(self, **defaults_config):
+    def readily_provable_number_set(self):
         '''
-        Prove membership of this expression in the most 
-        restrictive standard number set we can readily know.
+        Return the most restrictive number set we can readily
+        prove contains the evaluation of this number operation.
         '''
         from proveit.numbers import IntervalCC
         number_set_map = {
@@ -295,12 +332,8 @@ class Mult(NumberOperation):
         major = minor = -1
         all_nonzero = True
         for factor in self.factors:
-            factor_membership = deduce_number_set(factor)
-            if isinstance(factor, ExprRange):
-                # e.g. a_1 in S and ... and a_n in S
-                factor_ns = factor_membership.operands[0].body.domain
-            else:
-                factor_ns = factor_membership.domain
+            factor_ns = readily_provable_number_set(factor)
+            if factor_ns is None: return None
             # check if factor_ns is not a standard number set
             if factor_ns not in number_set_map.keys():
                 # try to replace factor_ns with a std number set
@@ -324,7 +357,7 @@ class Mult(NumberOperation):
         number_set = major_minor_to_set[(major, minor)]
         if all_nonzero and number_set in major_to_nonzero:
             number_set = major_to_nonzero # restrict to nonzero subset
-        return self.deduce_in_number_set(number_set)
+        return number_set
 
     @prover
     def deduce_divided_by(self, divisor, **defaults_config):
@@ -1481,9 +1514,8 @@ class Mult(NumberOperation):
                     exponent = ExprRange(
                             factor.parameter, factor.body.exponent,
                             factor.start_index, factor.end_index)
-                    exponent_number_set = deduce_number_set(
-                            factor.body.exponent, 
-                            assumptions=factor.parameter_condition()).domain
+                    exponent_number_set = readily_provable_number_set(
+                            exponent, default=Complex)
                     temp_factors.append(factor)
                 else:
                     # x^n = x * x * ..(n-3)x.. * x
@@ -1498,7 +1530,8 @@ class Mult(NumberOperation):
             elif isinstance(factor, Exp):
                 base = factor.base
                 exponent = factor.exponent
-                exponent_number_set = deduce_number_set(exponent).domain
+                exponent_number_set = readily_provable_number_set(
+                        exponent, default=Complex)
                 temp_factors.append(factor)
             else:
                 # Exploit a^1 = a.
@@ -1830,12 +1863,12 @@ class Mult(NumberOperation):
             for factor in self.factors:
                 deduce_number_set(factor)
             if (isinstance(factor_relation, Less) and
-                    all(greater(factor, zero).proven() for
+                    all(greater(factor, zero).readily_provable() for
                         factor in self.factors)):
                 # We can use the strong bound.
                 from . import strong_bound_via_factor_bound
                 thm = strong_bound_via_factor_bound
-            elif all(greater_eq(factor, zero).proven() for
+            elif all(greater_eq(factor, zero).readily_provable() for
                      factor in self.factors):
                 # We may only use the weak bound.
                 from . import weak_bound_via_factor_bound

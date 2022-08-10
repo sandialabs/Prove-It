@@ -83,6 +83,7 @@ class RationalNonZeroMembership(RationalMembership):
     @prover
     def conclude(self, **defaults_config):
         from proveit.numbers import Rational, zero
+        # Use proven, not readily provable here:
         if (InSet(self.element, Rational).proven() and
                 NotEquals(self.element, zero).proven()):
             return self.conclude_as_last_resort()
@@ -147,6 +148,7 @@ class RationalPosMembership(RationalMembership):
     @prover
     def conclude(self, **defaults_config):
         from proveit.numbers import Rational, greater, zero
+        # Use proven, not readily provable here:
         if (InSet(self.element, Rational).proven() and
                 greater(self.element, zero).proven()):
             return self.conclude_as_last_resort()
@@ -227,6 +229,7 @@ class RationalNegMembership(RationalMembership):
     @prover
     def conclude(self, **defaults_config):
         from proveit.numbers import Rational, Less, zero
+        # Use proven, not readily provable here:
         if (InSet(self.element, Rational).proven() and
                 Less(self.element, zero).proven()):
             return self.conclude_as_last_resort()
@@ -308,6 +311,7 @@ class RationalNonNegMembership(RationalMembership):
     @prover
     def conclude(self, **defaults_config):
         from proveit.numbers import Rational, greater_eq, zero
+        # Use proven, not readily provable here:
         if (InSet(self.element, Rational).proven() and
                 greater_eq(self.element, zero).proven()):
             return self.conclude_as_last_resort()
@@ -373,6 +377,7 @@ class RationalNonPosMembership(RationalMembership):
     @prover
     def conclude(self, **defaults_config):
         from proveit.numbers import Rational, LessEq, zero
+        # Use proven, not readily provable here:
         if (InSet(self.element, Rational).proven() and
                 LessEq(self.element, zero).proven()):
             return self.conclude_as_last_resort()

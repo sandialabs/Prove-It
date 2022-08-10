@@ -13,6 +13,11 @@ class OrderedSet(collections.OrderedDict, collections.MutableSet):
 
     def add(self, elem):
         self[elem] = None
+    
+    def pop(self):
+        elem = next(iter(self))
+        collections.OrderedDict.pop(self, elem)
+        return elem
 
     def discard(self, elem):
         self.pop(elem, None)

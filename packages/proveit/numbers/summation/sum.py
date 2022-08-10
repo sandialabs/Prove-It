@@ -9,7 +9,7 @@ from proveit.logic import Forall, InSet
 from proveit.numbers import one, Add, Neg, subtract
 from proveit.numbers import (Complex, Integer, Interval, Natural,
                              NaturalPos, Real, RealInterval,
-                             deduce_number_set)
+                             readily_provable_number_set)
 from proveit.numbers.ordering import Less, LessEq
 from proveit import TransRelUpdater
 
@@ -90,14 +90,16 @@ class Sum(OperationOverInstances):
             antecedent.conclude_via_generalization()
         return impl.derive_consequent()
 
-    @relation_prover
-    def deduce_number_set(self, **defaults_config):
+    def readily_provable_number_set(self):
         '''
-        Prove membership of this expression in the most 
-        restrictive standard number set we can readily know.
+        Return the most restrictive number set we can readily
+        prove contains the evaluation of this number operation.
         '''
-        summand_ns = deduce_number_set(self.summand, 
-                                       assumptions=self.conditions).domain
+        with defaults.temporary() as tmp_defaults:
+            tmp_defaults.assumptions = defaults.assumptions + tuple(
+                    self.conditions)
+            summand_ns = readily_provable_number_set(self.summand)
+        if summand_ns is None: return None
         return self.deduce_in_number_set(summand_ns)
 
     def _formatted(self, format_type, **kwargs):

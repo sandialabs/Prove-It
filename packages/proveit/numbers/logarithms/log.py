@@ -1,6 +1,7 @@
 from proveit import Function, Literal, relation_prover, equality_prover
 from proveit import a
-from proveit.numbers import deduce_number_set, NumberOperation
+from proveit.numbers import (deduce_number_set, NumberOperation,
+                             readily_provable_number_set)
 
 class Log(NumberOperation, Function):
     # operator of the Log operation.
@@ -46,8 +47,6 @@ class Log(NumberOperation, Function):
 
         from proveit.numbers import zero, Real
 
-        deduce_number_set(self.base)
-        deduce_number_set(self.antilog)
         if number_set == Real:
             return log_real_pos_real_closure.instantiate(
                 {a: self.base, b: self.antilog})
@@ -118,8 +117,8 @@ class Log(NumberOperation, Function):
         #  (4) base a > 1, 0 < y <= x
 
         # Cases (1)-(4): 0 < x < y or 0 < y < x
-        if ( greater(_a_sub, one).proven()
-             and greater(_x_sub, zero).proven() ):
+        if ( greater(_a_sub, one).readily_provable()
+             and greater(_x_sub, zero).readily_provable() ):
             if isinstance(operand_relation, Less):
                 from proveit.numbers.logarithms import (
                         log_increasing_less)
@@ -149,18 +148,15 @@ class Log(NumberOperation, Function):
             return bound.with_direction_reversed()
         return bound
 
-    @relation_prover
-    def deduce_number_set(self, **defaults_config):
+    def readily_provable_number_set(self):
         '''
-        Prove membership of this Log expression in the most
-        restrictive standard number set we can readily know.
-        Currently just implemented for Reals, but should be able
-        to augment this to allow more precise placement in
-        RealPos vs. RealNeg for suitable base/antilog combinations.
+        Return the most restrictive number set we can readily
+        prove contains the evaluation of this number operation.
         '''
         from proveit.numbers import Real, RealPos, Complex
-        base_ns = deduce_number_set(self.base).domain
-        antilog_ns = deduce_number_set(self.antilog).domain
+        base_ns = readily_provable_number_set(self.base)
+        antilog_ns = readily_provable_number_set(self.antilog)
         if RealPos.includes(base_ns) and RealPos.includes(antilog_ns):
-            return self.deduce_in_number_set(Real)
-        return self.deduce_in_number_set(Complex)
+            return Real
+        if base_ns is None or antilog_ns is None: return None
+        return Complex

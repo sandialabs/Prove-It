@@ -1,4 +1,5 @@
 from proveit import Judgment, UnsatisfiedPrerequisites, prover, defaults
+from proveit.logic import Equals
 from proveit.relation import TransitiveRelation, total_ordering
 
 
@@ -23,6 +24,62 @@ class NumberOrderingRelation(TransitiveRelation):
         # yield self.derive_negated # Needs to be implemented (again)
         if hasattr(self, 'derive_relaxed'):
             yield self.derive_relaxed
+
+    def _readily_provable(self):
+        from .less import Less
+        from .less_eq import LessEq
+        from proveit.numbers import (
+                zero, Add, greater, greater_eq, 
+                RealPos, RealNeg, RealNonNeg, RealNonPos,
+                readily_provable_number_set, is_numeric_rational, 
+                less_numeric_rationals, less_eq_numeric_rationals)
+        lower, upper = self.lower, self.upper
+        '''
+        lower_cf, upper_cf = lower.canonical_form(), upper.canonical_form()
+        if is_numeric_rational(lower_cf) and (
+                is_numeric_rational(upper_cf)):
+            # Numeric rationals can be compared directly.
+            if isinstance(self, Less):
+                return less_numeric_rationals(lower_cf, upper_cf)
+            else:
+                return less_eq_numeric_rationals(lower_cf, upper_cf)
+        '''
+        if isinstance(self, LessEq) and (
+                Equals(self.lhs, self.rhs).readily_provable()):
+            # LessEq via Equal.
+            return True
+        judgment = self.known_similar_but_possibly_stronger_bound()
+        if judgment is not None:
+            # There is a similar but possibly stronger bound we can
+            # derive this one from.
+            return True
+        if lower == zero or upper == zero:
+            # One side is zero.  Maybe we can determine a number set
+            # of the other side that would make this provable.
+            other = upper if lower==zero else lower
+            # Set _compare_to_zero False to avoid infinite recursion.
+            other_number_set = readily_provable_number_set(
+                    other, _compare_to_zero=False)
+            if RealPos.includes(other_number_set) and (
+                    self == greater(other, zero)):
+                return True
+            elif RealNeg.includes(other_number_set) and (
+                    self == Less(other, zero)):
+                return True
+            elif RealNonNeg.includes(other_number_set) and (
+                    self == greater_eq(other, zero)):
+                return True
+            elif RealNonPos.includes(other_number_set) and (
+                    self == LessEq(other, zero)):
+                return True
+        """
+        if ((isinstance(self.lower, Add) and 
+                self.upper in self.lower.terms.entries) or
+             (isinstance(self.upper, Add) and 
+                self.lower in self.upper.terms.entries)):
+            TODO
+        """
+        return False
     
     @prover
     def conclude(self, **defaults_config):
@@ -30,38 +87,36 @@ class NumberOrderingRelation(TransitiveRelation):
         Automatically conclude an OrderingRelation if a canonical
         version is known that is at least as strong.
         '''
-        try:
-            return self.conclude_from_known_bound()
-        except UnsatisfiedPrerequisites:
-            return TransitiveRelation.conclude(self)
-
-    @prover
-    def conclude_from_known_bound(self, **defaults_config):
-        from proveit.numbers import (zero, less_eq_numeric_rationals,
-                                     less_numeric_rationals)
         from .less import Less
         from .less_eq import LessEq
+        from proveit.numbers import is_numeric_int, is_numeric_rational
+        judgment = self.known_similar_but_possibly_stronger_bound()
+        '''
+        lower, upper = self.lower, self.upper
+        lower_cf, upper_cf = lower.canonical_form(), upper.canonical_form()
+        if is_numeric_rational(lower_cf) and is_numeric_rational(upper_cf):
+            if isinstance(self, LessEq) and lower_cf == upper_cf:
+                return self.conclude_via_equality()
+            # TODO: MAYBE USE SAME CANONICAL FORMS FOR RATIONAL COMPARISONS
+        ''' 
+        if judgment is not None:
+            return self.conclude_from_similar_bound(judgment)
+        # Explore transitive relations as a last resort.
+        return TransitiveRelation.conclude(self)
+        
+    def known_similar_but_possibly_stronger_bound(self):
+        '''
+        If there is a similar but possibly stronger known relation
+        based upon canonical forms, return the known Judgment.
+        Otherwise, return None.
+        '''
+        from .less import Less
+        from .less_eq import LessEq
+        from proveit.numbers import (zero, one, subtract,
+                                     is_numeric_int, is_numeric_rational,
+                                     less_eq_numeric_rationals,
+                                     less_numeric_rationals)
         canonical_form = self.canonical_form()
-        # This check seems unnecessary and creates problems;
-        # commenting out for now until further investigation.
-        # if canonical_form.normal_lhs == zero:
-        #     raise UnsatisfiedPrerequisites(
-        #             "'conclude_from_known_bound should not be applied "
-        #             "when the relation only involves literal, rationals: "
-        #             "%s"%self) 
-        desired_bound = canonical_form.rhs
-        known_strong_bounds = Less.known_canonical_bounds.get(
-                canonical_form.normal_lhs, tuple())
-        known_weak_bounds = LessEq.known_canonical_bounds.get(
-                canonical_form.normal_lhs, tuple())
-        # For the case where the known bound is strong, use:
-        # x < a, a ≤ b => x < b as well as x ≤ b
-        comparator = less_eq_numeric_rationals
-        for judgment, strong_bound in known_strong_bounds:
-            if judgment.is_applicable():
-                if (strong_bound == desired_bound or 
-                        comparator(strong_bound, desired_bound)):
-                    return self.conclude_from_similar_bound(judgment)
         is_weak = isinstance(self, LessEq)
         if is_weak:
             # x ≤ a, a ≤ b => x ≤ b
@@ -69,15 +124,51 @@ class NumberOrderingRelation(TransitiveRelation):
         else:
             # x ≤ a, a < b => x < b
             comparator = less_numeric_rationals
+        if is_numeric_rational(canonical_form.lhs) and (
+                is_numeric_rational(canonical_form.rhs)):
+            # If the canonical form simply compares numeric rationals,
+            # we should be able to readily prove a similar form.
+            rhs = subtract(canonical_form.rhs, canonical_form.lhs)
+            rhs = rhs.canonical_form()
+            if comparator(zero, rhs):
+                if is_numeric_int(rhs):
+                    return self.__class__(zero, rhs)
+                else:
+                    # rescaled version.
+                    return self.__class__(zero, one)
+        desired_bound = canonical_form.rhs
+        known_strong_bounds = Less.known_canonical_bounds.get(
+                canonical_form.normal_lhs, tuple())
+        known_weak_bounds = LessEq.known_canonical_bounds.get(
+                canonical_form.normal_lhs, tuple())
+        # For the case where the known bound is strong, use:
+        # x < a, a ≤ b => x < b as well as x ≤ b
+        for judgment, strong_bound in known_strong_bounds:
+            if judgment.is_applicable():
+                if (strong_bound == desired_bound or 
+                        less_eq_numeric_rationals(strong_bound, 
+                                                  desired_bound)):
+                    return judgment
         for judgment, weak_bound in known_weak_bounds:
             if judgment.is_applicable():
                 if ((is_weak and weak_bound == desired_bound) or 
                         comparator(weak_bound, desired_bound)):
-                    return self.conclude_from_similar_bound(judgment)  
-        raise UnsatisfiedPrerequisites(
+                    return judgment
+        return None
+
+    @prover
+    def conclude_from_known_bound(self, **defaults_config):
+        '''
+        Conclude this statement by using a known similar but possibly
+        stronger bound based upon canonical forms.
+        '''
+        judgment = self.known_similar_but_possibly_stronger_bound()
+        if judgment is None:
+            raise UnsatisfiedPrerequisites(
                 "No known bound that is similar to %s and at least "
                 "as strong"%self)
-    
+        return self.conclude_from_similar_bound(judgment)
+
     @prover
     def conclude_from_similar_bound(self, similar_bound, 
                                       **defaults_config):
@@ -100,9 +191,11 @@ class NumberOrderingRelation(TransitiveRelation):
         # Get the canonical forms and make sure they are 'similar'
         # (the same on the left side).
         canonical_form, inv_scale = (
-                self._canonical_form_and_inv_scale_factor())
+                self._canonical_form_and_inv_scale_factor(
+                        reduce_numeric_rational_form=True))
         other_canonical_form, other_inv_scale = (
-                similar_bound._canonical_form_and_inv_scale_factor())
+                similar_bound._canonical_form_and_inv_scale_factor(
+                        reduce_numeric_rational_form=True))
         if canonical_form.normal_lhs != other_canonical_form.normal_lhs:
             raise ValueError(
                     "Attempting to conclude %s from %s, but these do not "
@@ -129,7 +222,7 @@ class NumberOrderingRelation(TransitiveRelation):
                 fails_strength_check = True
         if fails_strength_check:
             raise TypeError(
-                    "'similar_bound' should be a stronger "
+                    "'similar_bound' ` "
                     "bound than what we are trying to conclude. "
                     "%s is weaker than %s"%(similar_bound, self))
         
@@ -228,14 +321,15 @@ class NumberOrderingRelation(TransitiveRelation):
         '''
         return self._canonical_form_and_inv_scale_factor()[0]
         
-    def _canonical_form_and_inv_scale_factor(self):
+    def _canonical_form_and_inv_scale_factor(
+            self, reduce_numeric_rational_form=False):
         '''
         Returns the canonical form and the inverse scale factor used in 
         obtaining the canonical form.  Helper function for
         canonical_form.
         '''
         from proveit.numbers import (zero, one, Add, Neg, Mult, Div, 
-                                     is_numeric_rational)
+                                     is_numeric_int, is_numeric_rational)
         # Obtain the canonical forms of both sides.
         canonical_lhs = self.normal_lhs.canonical_form()
         canonical_rhs = self.normal_rhs.canonical_form()
@@ -256,12 +350,30 @@ class NumberOrderingRelation(TransitiveRelation):
         rhs = Add(*constant_terms).canonical_form()
         
         if lhs == zero:
-            # Special case involving only literal, rationals.
-            if rhs == zero:
-                # Relation with zero on both sides.
-                return self.__class__(lhs, rhs), one
-            # Relation between zero and one.
-            return self.__class__(zero, one), rhs
+            # Special case involving only numeric rationals (after
+            # cancelations, possibly).            
+            if not is_numeric_rational(canonical_rhs):
+                # For example, x < x + 2 converts to 0 < 1 with 2 as
+                # the inverse scale factor.
+                return self.__class__(zero, one), rhs                
+            if not reduce_numeric_rational_form:
+                # Just use the canonical forms of each side with no
+                # further manipulation.
+                return self.__class__(canonical_lhs, canonical_rhs), one
+            else:
+                if rhs == zero or isinstance(rhs, Neg):
+                    # This is something trivial like 5 <= 5 or
+                    # something untrue like 6 < 5; let's keep it close 
+                    # to the original.
+                    return (self.__class__(canonical_lhs, canonical_rhs), 
+                            one)
+                if is_numeric_int(rhs):
+                    # For example, -2 < 5 converts to 0 < 7
+                    return self.__class__(zero, rhs), one
+                else:
+                    # For example, 1/4 < 2/3 converts to 0 < 1 with 5/12
+                    # as the inverse scale factor.
+                    return self.__class__(zero, one), rhs
         
         # Now deterministically scale both sides.
         inv_scale_factor = one
@@ -344,6 +456,16 @@ class NumberOrderingRelation(TransitiveRelation):
             shifted_other)  # e.g., a + c < b + d
         # Match style (e.g., use '>' if 'direction' is 'reversed').
         return new_rel.with_mimicked_style(self)
+
+    def readily_in_bool(self):
+        '''
+        A number ordering relation is a boolean iff the operands 
+        are Real.
+        '''
+        from proveit.logic import InSet
+        from proveit.numbers import Real
+        return (InSet(self.lhs, Real).readily_provable() and 
+                InSet(self.rhs, Real).readily_provable())
 
     @prover
     def square_both_sides(self, **defaults_config):

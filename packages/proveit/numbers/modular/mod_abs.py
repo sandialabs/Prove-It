@@ -1,17 +1,11 @@
 from proveit import (defaults, Literal, Operation, 
                      relation_prover, equality_prover)
-from proveit import a, b, c, i, j, L
+from proveit import a, b, c, i, j, L, N
 from proveit.logic import Equals
 from proveit.relation import TransRelUpdater
 from proveit.numbers import (
-        Integer, Real, deduce_number_set,
-        Add)
+        NumberOperation, Integer, Real, Add, readily_provable_number_set)
 from .mod import Mod
-from proveit import (
-        a, b, N, defaults, equality_prover, Literal, Operation,
-        relation_prover)
-from proveit.numbers import (
-        deduce_number_set, deduce_in_number_set, Integer, NumberOperation)
 
 class ModAbs(NumberOperation):
     # operator of the ModAbs operation.
@@ -88,15 +82,14 @@ class ModAbs(NumberOperation):
             "'ModAbs.deduce_in_number_set()' not implemented for the %s set"
             % str(number_set))
 
-    @relation_prover
-    def deduce_number_set(self, **defaults_config):
+    def readily_provable_number_set(self):
         '''
-        Prove membership of this expression in the most
-        restrictive standard number set we can readily know.
+        Return the most restrictive number set we can readily
+        prove contains the evaluation of this number operation.
         '''
-        value_ns = deduce_number_set(self.value).domain
-        divisor_ns = deduce_number_set(self.divisor).domain
+        value_ns = readily_provable_number_set(self.value)
+        divisor_ns = readily_provable_number_set(self.divisor)
         if (value_ns.includes(Integer) and divisor_ns.includes(Integer)):
-            return self.deduce_in_number_set(Integer)
+            return Integer
         else:
-            return self.deduce_in_number_set(Real)
+            return Real

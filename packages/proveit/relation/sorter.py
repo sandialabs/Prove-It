@@ -572,8 +572,11 @@ class TransitivitySorter:
         Return true iff there exists a strong relation within the
         given chain.
         '''
+        from proveit import Judgment
         for relation in chain:
-            if relation.expr.__class__ == self.strong_relation_class:
+            if isinstance(relation, Judgment):
+                relation = relation.expr
+            if relation.__class__ == self.strong_relation_class:
                 return True
         return False
 

@@ -251,7 +251,7 @@ class Relation(Operation):
         both_sides_str = '_both_sides'
         relation_name_str = '_of_' + self.__class__.__name__.lower()
         method_end_str = both_sides_str + relation_name_str
-        print('method_end_str', method_end_str)
+        #print('method_end_str', method_end_str)
         both_sides_methods = []
         from proveit.logic import InSet
         known_memberships = set()
