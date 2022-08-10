@@ -1049,17 +1049,18 @@ class Equals(TransitiveRelation):
                     expr, exceptions=defaults.preserved_exprs,
                     include_canonical_forms=use_canonical_forms):
                 eq_evaluation = None
-                if eq_expr.readily_provable():
-                    eq_evaluation = evaluate_truth(expr)
-                elif eq_expr.readily_disprovable():
-                    eq_evaluation = evaluate_falsehood(expr)
+                if eq_expr.proven():
+                    eq_evaluation = evaluate_truth(eq_expr)
+                elif eq_expr.disproven():
+                    eq_evaluation = evaluate_falsehood(eq_expr)
                 elif eq_expr != expr: 
                     eq_evaluation = Equals.get_known_evaluation(eq_expr)
                 if eq_evaluation is not None:
                     if expr == eq_expr:
                         return eq_evaluation
                     _eq = Equals(expr, eq_expr)
-                    if expr.canonical_form()==eq_expr.canonical_form():
+                    if use_canonical_forms and (
+                            expr.canonical_form()==eq_expr.canonical_form()):
                         # deduce equality via same canonical form
                         _eq = expr.deduce_equality(_eq)
                     else:
