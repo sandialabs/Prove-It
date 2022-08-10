@@ -54,14 +54,14 @@ class FunctionsMembership(SetMembership):
         From self=[f in Functions(A, B)] , return
         ∀_{a ∈ A} f(a) ∈ B
         '''
-        from proveit import Function, safe_dummy_var
+        from proveit import Lambda, Function, safe_dummy_var
         from proveit.logic import Forall, InSet
         _f = self.element
         domain = self.domain
         _A, _B = domain.domain, domain.codomain
         _x = safe_dummy_var(self.element, self.domain)
-        _fx = Function(_f, _x)
-        return Forall(_x, InSet(_fx, _B), domain=_A).readily_provable()
+        _fx = _f.apply(_x) if isinstance(_f, Lambda) else Function(_f, _x)
+        return Forall(_x, InSet(_fx, _B), domain=_A)
 
     @prover
     def unfold(self, **defaults_config):

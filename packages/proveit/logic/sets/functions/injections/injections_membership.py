@@ -57,15 +57,15 @@ class InjectionsMembership(SetMembership):
         ([f ∈ Functions(A, B)] and
          forall_{a, b ∈ A | a ≠ b} f(a) ≠ f(b))
         '''
-        from .functions import Functions
-        from proveit import Function, safe_dummy_vars
+        from proveit import Lambda, Function, safe_dummy_vars
+        from proveit.logic import Functions
         from proveit.logic import And, Forall, NotEquals, InSet
         _f = self.element
         domain = self.domain
         _A, _B = domain.domain, domain.codomain
         _a, _b = safe_dummy_vars(2, self.element, self.domain)
-        _fa = Function(_f, _a)
-        _fb = Function(_f, _b)
+        _fa = _f.apply(_a) if isinstance(_f, Lambda) else Function(_f, _a)
+        _fb = _f.apply(_b) if isinstance(_f, Lambda) else Function(_f, _b)
         return And(InSet(_f, Functions(_A, _B)),
                    Forall((_a, _b), NotEquals(_fa, _fb), domain=_A,
                           condition=NotEquals(_a, _b)))

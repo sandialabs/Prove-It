@@ -65,8 +65,7 @@ class BijectionsMembership(SetMembership):
         ([f ∈ Injections(A, B)] and [f ∈ Surjections(A, B)])
         '''
         from proveit.logic import And, InSet
-        from .injections import Injections
-        from .surjections import Surjections
+        from proveit.logic import Injections, Surjections
         _f = self.element
         domain = self.domain
         _A, _B = domain.domain, domain.codomain
