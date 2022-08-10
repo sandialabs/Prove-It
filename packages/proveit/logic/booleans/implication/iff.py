@@ -61,10 +61,10 @@ class Iff(TransitiveRelation):
         '''
         return (Implies(self.A, self.B).readily_disprovable() or
                 Implies(self.B, self.A).readily_disprovable() or 
-                (self.antecedent.readily_disprovable() and 
-                 self.consequent.readily_provable()) or
-                 (self.antecedent.readily_provable() and (
-                    self.consequent.readily_disprovable())))
+                (self.A.readily_disprovable() and 
+                 self.B.readily_provable()) or
+                 (self.A.readily_provable() and (
+                    self.B.readily_disprovable())))
 
     @prover
     def conclude(self, **defaults_config):
