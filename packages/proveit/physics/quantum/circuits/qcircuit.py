@@ -1341,7 +1341,8 @@ class Qcircuit(Function):
         
     
     """
-    def replace_equiv_circ(self, current, new, assumptions=USE_DEFAULTS):
+    @prover
+    def replace_equiv_circ(self, current, new, **defaults_config):
         '''
         Given the piece that is to be replaced, and the piece it is being replaced with,
         use either space_equiv or time_equiv to prove the replacement.

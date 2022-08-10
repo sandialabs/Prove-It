@@ -42,10 +42,7 @@ class QcircuitEquiv(TransitiveRelation):
         yield self.derive_reversed
 
     @staticmethod
-    def _lambda_expr(
-            lambda_map,
-            expr_being_replaced,
-            assumptions=USE_DEFAULTS):
+    def _lambda_expr(lambda_map, expr_being_replaced):
         from proveit import ExprRange, InnerExpr
         if isinstance(lambda_map, InnerExpr):
             lambda_map = lambda_map.repl_lambda()
@@ -67,7 +64,8 @@ class QcircuitEquiv(TransitiveRelation):
         return lambda_map
 
     """
-    def substitution(self, lambda_map, assumptions=USE_DEFAULTS):
+    @prover
+    def substitution(self, lambda_map, **defaults_config):
         '''
         From x equiv y, and given f(x), derive f(x) equiv f(y).
         f(x) is provided via lambda_map as a Lambda expression or an
@@ -326,8 +324,9 @@ class QcircuitEquiv(TransitiveRelation):
         return thm.instantiate(
             {Q:prob_relation_lambda, A:equiv.lhs, B:equiv.rhs})
 
+    @prover
     def sub_left_side_into(self, prob_relation_or_inner_expr, 
-                           assumptions=USE_DEFAULTS):
+                           **defaults_config):
         '''
         Derive a new quantum circuit probability relation from
         another one by substituting the left side of the equivalence
@@ -339,8 +338,9 @@ class QcircuitEquiv(TransitiveRelation):
         return self._sub_one_side_into(prob_relation_or_inner_expr,
                                        which_side = 'left')
 
+    @prover
     def sub_right_side_into(self, prob_relation_or_lambda_map, 
-                            assumptions=USE_DEFAULTS):
+                            **defaults_config):
         '''
         Derive a new quantum circuit from a proven one by
         substituting the right side of the equivalence in place
