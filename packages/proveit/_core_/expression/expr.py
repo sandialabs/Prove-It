@@ -469,19 +469,28 @@ class Expression(metaclass=ExprType):
         type-specific implementations.
         '''
         from proveit import Judgment, UnsatisfiedPrerequisites
+        from proveit.logic import Equals
         if equality.lhs != self:
             raise ValueError(
                     "'deduce_equality' expects an 'equality' with "
                     "'self' on the left side")
-        if equality.lhs.canonical_form() != equality.rhs.canonical_form():
+        lhs_cf = equality.lhs.canonical_form() 
+        rhs_cf = equality.rhs.canonical_form()
+        if lhs_cf != rhs_cf:
             raise UnsatisfiedPrerequisites(
                     "'deduce_equality' can only be used to prove equality "
                     "between expressions with the same canonical form. "
                     "%s and %s have distinct canonical forms %s and %s "
                     "respectively"%(equality.lhs, equality.rhs,
-                                    equality.lhs.canonical_form(),
-                                    equality.rhs.canonical_form()))
-        proven_eq = self._deduce_equality(equality)
+                                    lhs_cf, rhs_cf))
+        if equality.lhs == lhs_cf:
+            # If the lhs is already in the canonical form,
+            # deduce the equality from the other side.
+            proven_eq = equality.rhs._deduce_equality(Equals(equality.rhs,
+                                                             equality.lhs))
+            proven_eq = proven_eq.derive_reversed()
+        else:
+            proven_eq = self._deduce_equality(equality)
         if not isinstance(proven_eq, Judgment):
             raise TypeError("Expecting a proven Judgment to be returned "
                             "by '_deduce_equality")
@@ -497,7 +506,8 @@ class Expression(metaclass=ExprType):
         type-specific implementation if '_build_canonical_form' is
         type-specific.
         '''
-        if self._build_canonical_form != Expression._build_canonical_form:
+        if type(self)._build_canonical_form != (
+                Expression._build_canonical_form):
             raise NotImplementedError(
                     "'_deduce_equality' not implemented for %s"
                     %type(self))
