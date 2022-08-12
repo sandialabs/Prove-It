@@ -777,6 +777,7 @@ class InnerExprGenerator:
         search manner and optionally skipping over branches via the
         'skip_over_branch' method.
         '''
+        from proveit.core_expr_types import x_1_to_n
         next_inner_exprs = self.next_inner_exprs
         last_out = self._last_out
         if last_out is not None:
@@ -806,14 +807,13 @@ class InnerExprGenerator:
                 # all operands of an Operation that accepts
                 # a fixed number of operands.
                 operation = next_inner_expr.expr_hierarchy[-2]
-                sig = inspect.signature(type(operation).__init__)
-                param_items = list(sig.parameters.items())
-                if len(param_items) < 1 or (
-                        param_items[1][1].kind != 
-                        inspect.Parameter.VAR_POSITIONAL):
+                try:
+                    list(type(operation)._extract_init_args(
+                            operation.operator, ExprTuple(x_1_to_n)))
+                except ValueError:
                     # Skip this particular inner expression;
                     # it isn't proper to represent all operands
-                    # of this Operation because it only
+                    # of this Operation because it, presumably, only
                     # accept a fixed number of operands.
                     return next(self)
         return next_inner_expr
