@@ -385,13 +385,23 @@ def equality_prover(past_tense, present_tense):
                     if 'assumptions' in kwargs:
                         tmp_defaults.assumptions = kwargs['assumptions']
                     Assumption.make_assumptions(defaults.assumptions)
+                    cf = expr.canonical_form()
                     if expr.proven():
                         # The expression is proven so it equals true.
                         proven_truth = evaluate_truth(expr)
+                    elif is_irreducible_value(cf):
+                        eq_cf = Equals(expr, cf)
+                        if eq_cf.proven():
+                            proven_truth = eq_cf.prove()
+                        else:
+                            # Note: If the canonical form is 
+                            # irreducible, don't divert from calling
+                            # the appropriate method to perform the
+                            # evaluation.
+                            proven_truth = None
                     else:
                         try:
-                            proven_truth = (
-                                    Equals.get_readily_provable_evaluation(
+                            proven_truth = (Equals.get_readily_provable_evaluation(
                                             expr, use_canonical_forms=True))
                         except UnsatisfiedPrerequisites:
                             proven_truth = None

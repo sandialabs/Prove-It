@@ -313,7 +313,6 @@ class Operation(Expression):
             num_operands = (operands.num_entries() if 
                             isinstance(operands, ExprTuple) else 1)
             if implicit_operator and num_operands < len(pos_params):
-                print(cls, operands)
                 raise ValueError("Not enough supplied operands: "
                                  "needed %d got %d"%(len(pos_params),
                                                      num_operands))
