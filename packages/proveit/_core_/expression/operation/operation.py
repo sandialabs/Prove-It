@@ -310,11 +310,18 @@ class Operation(Expression):
             else:
                 operands_kw = None
             
+            num_operands = (operands.num_entries() if 
+                            isinstance(operands, ExprTuple) else 1)
+            if implicit_operator and num_operands < len(pos_params):
+                print(cls, operands)
+                raise ValueError("Not enough supplied operands: "
+                                 "needed %d got %d"%(len(pos_params),
+                                                     num_operands))
             if (varkw is None):
                 # handle default implicit operator case
                 if implicit_operator and (
                     (len(pos_params) == 0 and var_params is not None) or (
-                        len(pos_params) == operands.num_entries() 
+                        len(pos_params) == num_operands 
                         and var_params is None)):
                     if isinstance(operands, ExprTuple):
                         # yield each operand separately

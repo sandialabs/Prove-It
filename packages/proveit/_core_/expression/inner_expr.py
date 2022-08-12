@@ -8,6 +8,7 @@ from proveit._core_.defaults import defaults, USE_DEFAULTS
 from proveit.decorators import prover, equality_prover
 # from proveit.logic import InSet
 from collections import deque
+import inspect
 
 
 class InnerExpr:
@@ -786,13 +787,35 @@ class InnerExprGenerator:
                     # Skip the Lambda 'parameters'.
                     continue
                 next_inner_expr = last_out.sub_expr(k)
-                last_sub_expr = last_out.cur_sub_expr()
                 next_inner_exprs.append(next_inner_expr)
         if len(next_inner_exprs) == 0:
             raise StopIteration() # No more in the queue.
         # Pop out the next InnerExpr object from the queue.
         next_inner_expr = next_inner_exprs.popleft()
         self._last_out = next_inner_expr
+
+        # We will skip this particular inner expression if it
+        # is representing all operands of an Operation that only 
+        # accepts a fixed number of operands.
+        if isinstance(next_inner_expr.expr_hierarchy[-1], ExprTuple):
+            if len(next_inner_expr.expr_hierarchy) >= 2 and (
+                    isinstance(next_inner_expr.expr_hierarchy[-2],
+                               Operation)):
+                # See if we should skip over this -- if
+                # the inner expression is trying to represent
+                # all operands of an Operation that accepts
+                # a fixed number of operands.
+                operation = next_inner_expr.expr_hierarchy[-2]
+                sig = inspect.signature(type(operation).__init__)
+                param_items = list(sig.parameters.items())
+                if len(param_items) < 1 or (
+                        param_items[1][1].kind != 
+                        inspect.Parameter.VAR_POSITIONAL):
+                    # Skip this particular inner expression;
+                    # it isn't proper to represent all operands
+                    # of this Operation because it only
+                    # accept a fixed number of operands.
+                    return next(self)
         return next_inner_expr
     
     def skip_over_branch(self):
