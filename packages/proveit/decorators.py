@@ -379,8 +379,7 @@ def equality_prover(past_tense, present_tense):
                      and is_simplification_method))):
                 from proveit.logic import evaluate_truth
                 # See if there is a known evaluation (directly or
-                # indirectly, but not via canonical forms to avoid
-                # infinite recursion).
+                # indirectly and/or via canonical forms).
                 # First, make sure we derive assumption side-effects.
                 with defaults.temporary() as tmp_defaults:
                     if 'assumptions' in kwargs:
@@ -393,7 +392,7 @@ def equality_prover(past_tense, present_tense):
                         try:
                             proven_truth = (
                                     Equals.get_readily_provable_evaluation(
-                                            expr, use_canonical_forms=False))
+                                            expr, use_canonical_forms=True))
                         except UnsatisfiedPrerequisites:
                             proven_truth = None
                 # For an 'evaluation' or 'simplification', we should
