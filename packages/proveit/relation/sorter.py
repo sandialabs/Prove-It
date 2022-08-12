@@ -416,7 +416,8 @@ class TransitivitySorter:
                     endpoint, active_chain_by_item[(item, dir_id)] = \
                         chains.popleft()
                     active_known_relations_by_item[(item, dir_id)] = \
-                        known_relations(endpoint, assumptions_set)
+                        known_relations(endpoint, 
+                                        assumptions=assumptions_set)
 
         # Keep working until no new extensions can be generated.
         new_extensions = True

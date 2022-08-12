@@ -114,7 +114,8 @@ class TransitiveRelation(Relation):
                 cls._checkedWeakRelationClass())
 
     @classmethod
-    def known_relations_from_left(RelationClass, expr, assumptions_set):
+    def known_relations_from_left(RelationClass, expr, *,
+                                  assumptions=USE_DEFAULTS):
         '''
         Yield (Judgment, right-hand-side) pairs for this
         transitive relationship (or equality) that involve the given expression on
@@ -127,7 +128,7 @@ class TransitiveRelation(Relation):
         equiv_class = RelationClass.EquivalenceClass()
         # equivalence relationships are strongest and should come first.
         equiv_left_relations = equiv_class.known_relations_from_left(
-            expr, assumptions_set)
+            expr, assumptions=assumptions)
         for (judgment, other_expr) in equiv_left_relations:
             if expr != other_expr:  # exclude reflexive equations -- they don't count
                 yield (judgment, other_expr)
@@ -136,11 +137,12 @@ class TransitiveRelation(Relation):
             # stronger then weaker relations
             for _Relation in relation_classes:
                 for judgment in list(_Relation.known_left_sides.get(expr, [])):
-                    if judgment.is_applicable(assumptions_set):
+                    if judgment.is_applicable(assumptions):
                         yield (judgment, judgment.normal_rhs)
 
     @classmethod
-    def known_relations_from_right(RelationClass, expr, assumptions_set):
+    def known_relations_from_right(RelationClass, expr, *,
+                                   assumptions=USE_DEFAULTS):
         '''
         Yield (Judgment, left-hand-side) pairs for this
         transitivie relationship (or equality) that involve the given expression on
@@ -153,7 +155,7 @@ class TransitiveRelation(Relation):
         equiv_class = RelationClass.EquivalenceClass()
         # equivalence relationships are strongest and should come first.
         equiv_right_relations = equiv_class.known_relations_from_right(
-            expr, assumptions_set)
+            expr, assumptions=assumptions)
         for (judgment, other_expr) in equiv_right_relations:
             if expr != other_expr:  # exclude reflexive equations -- they don't count
                 yield (judgment, other_expr)
@@ -162,7 +164,7 @@ class TransitiveRelation(Relation):
             # stronger then weaker relations
             for _Relation in relation_classes:
                 for judgment in list(_Relation.known_right_sides.get(expr, [])):
-                    if judgment.is_applicable(assumptions_set):
+                    if judgment.is_applicable(assumptions):
                         yield (judgment, judgment.normal_lhs)
 
     @prover

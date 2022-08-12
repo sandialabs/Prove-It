@@ -181,25 +181,20 @@ class Equals(TransitiveRelation):
             # boolean.  Conclude equality via mutual implication.
             return Iff(self.lhs, self.rhs).derive_equality()
         
-        if hasattr(self.lhs, 'deduce_equality'):
-            # If there is a 'deduce_equality' method, use that.
-            # The responsibility then shifts to that method for
-            # determining what strategies should be attempted
-            # (with the recommendation that it should not attempt
-            # multiple non-trivial automation strategies), unless
-            # NotImplementedError is raised.
-            try:
-                eq = self.lhs.deduce_equality(self)
-                if eq.expr != self:
-                    raise ValueError("'deduce_equality' not implemented "
-                                     "correctly; must deduce the 'equality' "
-                                     "that it is given if it can: "
-                                     "'%s' != '%s'" % (eq.expr, self))
-                return eq
-            except (NotImplementedError, UnsatisfiedPrerequisites):
-                # 'deduce_equality' not implemented for this 
-                # particular case, so carry on with default approach.
-                pass
+        # Try the 'deduce_equality' method.  If NotImplementedError
+        # or UnsatisfiedPrerequisites is raised, we'll move on.
+        try:
+            eq = self.lhs.deduce_equality(self)
+            if eq.expr != self:
+                raise ValueError("'deduce_equality' not implemented "
+                                 "correctly; must deduce the 'equality' "
+                                 "that it is given if it can: "
+                                 "'%s' != '%s'" % (eq.expr, self))
+            return eq
+        except (NotImplementedError, UnsatisfiedPrerequisites):
+            # 'deduce_equality' not implemented for this 
+            # particular case, so carry on with default approach.
+            pass
 
         # Try to prove equality via standard TransitiveRelation
         # strategies (simplify both sides then try transitivity).
@@ -218,7 +213,7 @@ class Equals(TransitiveRelation):
         '''
         Prove that this Equals expression is true by directly and
         greedily substituting sub-expressions that differ but are
-        known to be equal.
+        known, or readily provable, to be equal
         
         For example, we can prove
         f(g(a, b), h(c, d)) = f(g(a, b'), h(c, d'))
@@ -277,9 +272,12 @@ class Equals(TransitiveRelation):
                 lhs_inner_gen.skip_over_branch()
                 rhs_inner_gen.skip_over_branch()
                 continue
-            if (not isinstance(lhs_sub_expr, ExprRange) and
-                not isinstance(lhs_sub_expr, ExprRange) and
-                    Equals(lhs_sub_expr, rhs_sub_expr).proven(assumptions)):
+            equality = Equals(lhs_sub_expr, rhs_sub_expr)
+            if equality != self and (
+                    (not isinstance(lhs_sub_expr, ExprRange) and
+                     not isinstance(lhs_sub_expr, ExprRange) and
+                     equality.readily_provable(
+                             assumptions=assumptions))):
                 # These sub-expressions are known to be equal,
                 # so let's replace the corresponding location
                 # with a lambda parameter for our lambda expression.
@@ -287,7 +285,6 @@ class Equals(TransitiveRelation):
                 # the current inner expression path and use this
                 # to create the new lambda_body and extend the
                 # parameters.
-                equality = Equals(lhs_sub_expr, rhs_sub_expr)
                 lambda_body_inner_expr = InnerExpr(
                         lambda_body, inner_expr_path=inner_expr_path)
                 params = free_vars(equality).intersection(
@@ -399,7 +396,32 @@ class Equals(TransitiveRelation):
         return Equals  # = is the strong and weak form of equality,
 
     @staticmethod
-    def known_relations_from_left(expr, assumptions_set,
+    def yield_directly_known_eq_exprs(expr, *, assumptions=USE_DEFAULTS,
+                                      include_canonical_forms=True):
+        '''
+        Generate expressions that are directly known to 
+        be equal to the given expression.  If 'include_canonical_form'
+        is True, also include expressions that are presumed to be
+        equal to the given one by having the same canonical form.
+        '''
+        known_equalities = Equals.known_equalities.get(expr, tuple())
+        # No need to report the expression we started with.
+        reported = set([expr])
+        for eq_judgment in known_equalities:
+            if eq_judgment.is_applicable(assumptions):
+                for expr in (eq_judgment.lhs, eq_judgment.rhs):
+                    if expr not in reported:
+                        reported.add(expr)
+                        yield expr
+        if include_canonical_forms:
+            cf = expr.canonical_form()
+            for expr in Expression.canonical_form_to_exprs[cf]:
+                if expr not in reported:
+                    reported.add(expr)
+                    yield expr
+
+    @staticmethod
+    def known_relations_from_left(expr, *, assumptions=USE_DEFAULTS,
                                   include_canonical_forms=True):
         '''
         For each Judgment that is an Equals involving the given 
@@ -409,17 +431,14 @@ class Equals(TransitiveRelation):
         Expression rather than a Judgment) if the equality has not
         yet actually been proven.
         '''
-        for judgment in Equals.known_equalities.get(expr, frozenset()):
-            if judgment.lhs == expr:
-                if judgment.is_applicable(assumptions_set):
-                    yield (judgment, judgment.rhs)
-        if include_canonical_forms and expr.canonical_form() != expr:
-            canonical_form_eq = Equals(expr, expr.canonical_form())
-            if not canonical_form_eq.proven(assumptions=assumptions_set):
-                return (canonical_form_eq, canonical_form_eq.rhs)
+        for other_expr in Equals.yield_directly_known_eq_exprs(
+                expr, assumptions=assumptions,
+                include_canonical_forms=include_canonical_forms):
+            eq = Equals(expr, other_expr)
+            yield (eq, eq.rhs)
 
     @staticmethod
-    def known_relations_from_right(expr, assumptions_set,
+    def known_relations_from_right(expr, *, assumptions=USE_DEFAULTS,
                                    include_canonical_forms=True):
         '''
         For each Judgment that is an Equals involving the given 
@@ -429,14 +448,11 @@ class Equals(TransitiveRelation):
         Expression rather than a Judgment) if the equality has not yet 
         actually been proven.
         '''
-        for judgment in Equals.known_equalities.get(expr, frozenset()):
-            if judgment.rhs == expr:
-                if judgment.is_applicable(assumptions_set):
-                    yield (judgment, judgment.lhs)
-        if include_canonical_forms and expr.canonical_form() != expr:
-            canonical_form_eq = Equals(expr.canonical_form(), expr)
-            if not canonical_form_eq.proven(assumptions=assumptions_set):
-                return (canonical_form_eq, canonical_form_eq.lhs)
+        for other_expr in Equals.yield_directly_known_eq_exprs(
+                expr, assumptions=assumptions,
+                include_canonical_forms=include_canonical_forms):
+            eq = Equals(other_expr, expr)
+            yield (eq, eq.lhs)
 
     @prover
     def conclude_via_reflexivity(self, **defaults_config):
@@ -474,21 +490,16 @@ class Equals(TransitiveRelation):
         the transitive property of equality.
         If 'exceptions' are provided, disregard known equalities
         with expressions in the 'exceptions' set.
-        If 'include_canonical_forms' is True, include canonical forms
-        in the search.
+        If 'include_canonical_forms' is True, also account for
+        presumed equalities by having the same canonical form.
         '''
         # Make sure we derive assumption side-effects first.
         from proveit import Assumption
         assumptions = defaults.checked_assumptions(assumptions)
         Assumption.make_assumptions(defaults.assumptions)
         assumptions_set = set(assumptions)
-
         to_process = OrderedSet()
         to_process.add(expr)
-        if include_canonical_forms:
-            canonical_expr = expr.canonical_form()
-            to_process.update(
-                    Expression.canonical_form_to_exprs[canonical_expr])
         processed = set()
         while len(to_process) > 0:
             expr = to_process.pop()
@@ -499,19 +510,11 @@ class Equals(TransitiveRelation):
                 continue
             yield expr
             processed.add(expr)
-            if expr not in Equals.known_equalities:
-                continue
-            for known_equality in Equals.known_equalities[expr]:
-                if known_equality.is_applicable(assumptions_set):
-                    # A valid equality.  See if something is new.
-                    for operand in known_equality.operands:
-                        if operand not in processed:
-                            to_process.add(operand)
-                            if include_canonical_forms:
-                                canonical_expr = operand.canonical_form()
-                                to_process.update(
-                                        Expression.canonical_form_to_exprs
-                                        [canonical_expr])
+            for expr in Equals.yield_directly_known_eq_exprs(
+                    expr, assumptions=assumptions_set,
+                    include_canonical_forms=include_canonical_forms):
+                if expr not in processed:
+                    to_process.add(expr)
 
     @prover
     def deduce_not_equals(self, **defaults_config):

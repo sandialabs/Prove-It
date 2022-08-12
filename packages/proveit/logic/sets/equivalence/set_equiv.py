@@ -1,4 +1,4 @@
-from proveit import (as_expression, defaults, 
+from proveit import (as_expression, defaults, USE_DEFAULTS,
                      ProofFailure, prover, relation_prover)
 from proveit import Literal
 from proveit import TransitiveRelation, TransitivityException
@@ -176,7 +176,7 @@ class SetEquiv(TransitiveRelation):
         return SetEquiv  # SetEquiv is the strong and weak form
     
     @staticmethod
-    def known_relations_from_left(expr, assumptions_set):
+    def known_relations_from_left(expr, *, assumptions=USE_DEFAULTS):
         '''
         For each Judgment that is an SetEquiv involving the given 
         expression on the left hand side, yield the Judgment and the 
@@ -184,11 +184,11 @@ class SetEquiv(TransitiveRelation):
         '''
         for judgment in SetEquiv.known_equivalences.get(expr, frozenset()):
             if judgment.lhs == expr:
-                if judgment.is_applicable(assumptions_set):
+                if judgment.is_applicable(assumptions):
                     yield (judgment, judgment.rhs)
 
     @staticmethod
-    def known_relations_from_right(expr, assumptions_set):
+    def known_relations_from_right(expr, *, assumptions=USE_DEFAULTS):
         '''
         For each Judgment that is an SetEquiv involving the given 
         expression on the right hand side, yield the Judgment and the
@@ -196,7 +196,7 @@ class SetEquiv(TransitiveRelation):
         '''
         for judgment in SetEquiv.known_equivalences.get(expr, frozenset()):
             if judgment.rhs == expr:
-                if judgment.is_applicable(assumptions_set):
+                if judgment.is_applicable(assumptions):
                     yield (judgment, judgment.lhs)
 
     @prover
