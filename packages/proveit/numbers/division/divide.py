@@ -172,15 +172,21 @@ class Div(NumberOperation):
                 # we have something like 0/x so reduce to 0
                 expr = eq.update(expr.zero_numerator_reduction())
         
-        # finally, check if we have something like (x/(y/z))
+        # finally, check if we have something like
+        # (x/(y/z)) or ((x/y)/z)
         # but! remember to check here if we still even have a Div expr
         # b/c some of the work above might have changed it to
         # something else!
-        if (isinstance(expr, Div)
+        if (isinstance(expr, Div) # (x/(y/z))
             and isinstance(expr.denominator, Div)
             and NotEquals(expr.denominator.numerator, zero).proven()
-            and NotEquals(expr.denominator.denominator, zero).prove() ):
+            and NotEquals(expr.denominator.denominator, zero).proven() ):
             expr = eq.update(expr.div_in_denominator_reduction())
+        if (isinstance(expr, Div) # (x/y)/z)
+            and isinstance(expr.numerator, Div)
+            and NotEquals(expr.numerator.denominator, zero).proven()
+            and NotEquals(expr.denominator, zero).proven() ):
+            expr = eq.update(expr.div_in_numerator_reduction())
 
         if Div._simplification_directives_.distribute and (
                 isinstance(self.numerator, Add) or 
@@ -307,6 +313,25 @@ class Div(NumberOperation):
         return div_by_frac_is_mult_by_reciprocal.instantiate(
                 {x: self.numerator, y: self.denominator.numerator,
                  z: self.denominator.denominator})
+
+    @equality_prover('div_in_numerator_reduced', 'div_in_numerator_reduce')
+    def div_in_numerator_reduction(self, **defaults_config):
+        '''
+        Deduce and return an equality between self of the form
+        (x/y)/z (i.e. a fraction with a fraction as its numerator)
+        and the form x/(yz). Will need to know or assume that x, y, z
+        are Complex with y != 0 and z != 0.
+        '''
+        if (not isinstance(self.numerator, Div)):
+            raise ValueError(
+                    "Div.div_in_numerator_reduction() method only "
+                    "applicable when the numerator is itself a Div."
+                    "Instead we have the expr {0} with numerator {1}.".
+                    format(self, self.numerator))
+        from proveit.numbers.division import numerator_frac_reduction
+        return numerator_frac_reduction.instantiate(
+                {x: self.numerator.numerator, y: self.numerator.denominator,
+                 z: self.denominator})
 
 
     @equality_prover('all_canceled', 'all_cancel')
