@@ -15,6 +15,12 @@ class NaturalMembership(NumberMembership):
     def __init__(self, element, number_set):
         NumberMembership.__init__(self, element, number_set)
 
+    def _readily_provable(self):
+        from proveit.numbers.number_sets.integers import (
+            nonneg_int_is_natural)
+        if not nonneg_int_is_natural.is_usable(): return False
+        return NumberMembership._readily_provable(self)
+
     @prover
     def conclude(self, **defaults_config):
         # Use proven, not readily provable here:

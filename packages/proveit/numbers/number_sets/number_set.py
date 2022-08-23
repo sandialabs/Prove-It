@@ -111,7 +111,7 @@ class NumberSet(Literal):
         '''
         Prove that a standard is a proper superset another standard 
         number set.
-        Raise UnsatisfiedPrerequisites if they are not standard number
+        Raise ProofFailure if they are not standard number
         sets that have the correct relationship.
         '''
         from proveit.numbers.number_operation import sorted_number_sets
@@ -125,7 +125,8 @@ class NumberSet(Literal):
                     ProperSubset(number_set, superset).proven()):
                 return ProperSubset(self, number_set).apply_transitivity(
                         ProperSubset(number_set, superset))
-        raise UnsatisfiedPrerequisites()
+        raise UnsatisfiedPrerequisites(
+                "%s subset %s not immediately known"%(self, superset))
 
 class NumberMembership(SetMembership):
     def __init__(self, element, number_set):
@@ -161,16 +162,17 @@ class NumberMembership(SetMembership):
 
     def _readily_provable(self):
         '''
-        Return True iff we can readily prove this number set membership;
-        specifically, return True if the most restrictive readily
-        provable standard number set of the element is included by the
-        number set of this membership.
+        Return True iff we can readily prove this number set membership
+        directly (not through known/provable equalities which is handled
+        at the InSet.conclude level);
+        specifically, return True if the most restrictive direct, 
+        readily provable standard number set of the element is included
+        by the number set of this membership.
         '''
         from proveit.numbers import readily_provable_number_set
-        try:
-            provable_number_set = readily_provable_number_set(self.element)
-        except UnsatisfiedPrerequisites:
-            return False
+        provable_number_set = readily_provable_number_set(
+                self.element, must_be_direct=True)
+        if provable_number_set is None: return False
         return self.number_set.includes(provable_number_set)
 
     @prover
@@ -179,8 +181,7 @@ class NumberMembership(SetMembership):
         Try to deduce that the given element is in the number set under
         the given assumptions.
         '''
-        from proveit.numbers import (readily_provable_number_set,
-                                     deduce_number_set)
+        from proveit.numbers import readily_provable_number_set
 
         element = self.element
         number_set = self.number_set
@@ -198,12 +199,12 @@ class NumberMembership(SetMembership):
                 return simplification.sub_left_side_into(elem_in_set, assumptions)
         '''
 
-        provable_number_set = readily_provable_number_set(element)
-        if number_set.includes(provable_number_set) and (
-                InSet(element, provable_number_set).proven()):
+        proven_number_set = readily_provable_number_set(
+                element, automation=False)
+        if number_set.includes(proven_number_set):
             # We already know the element is in a number set that
             # includes the desired one.
-            return (SubsetEq(provable_number_set, number_set)
+            return (SubsetEq(proven_number_set, number_set)
                     .derive_superset_membership(element))
 
         # Try the 'deduce_in_number_set' method.

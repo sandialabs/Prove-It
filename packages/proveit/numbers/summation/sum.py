@@ -7,8 +7,8 @@ from proveit import (Expression, Literal, Lambda, Function, Operation,
 from proveit import a, b, c, f, i, j, k, l, m, x, Q, S
 from proveit.logic import Forall, InSet
 from proveit.numbers import one, Add, Neg, subtract
-from proveit.numbers import (Complex, Integer, Interval, Natural,
-                             NaturalPos, Real, RealInterval,
+from proveit.numbers import (ZeroSet, Complex, Integer, Interval, Natural,
+                             NaturalPos, Rational, Real, RealInterval,
                              readily_provable_number_set)
 from proveit.numbers.ordering import Less, LessEq
 from proveit import TransRelUpdater
@@ -62,14 +62,16 @@ class Sum(OperationOverInstances):
 
     @relation_prover
     def deduce_in_number_set(self, number_set, **defaults_config):
-        from . import (summation_nat_closure, summation_nat_pos_closure,
-                       summation_int_closure, summation_real_closure,
-                       summation_complex_closure)
+        from . import (summation_zero_closure, summation_nat_closure,
+                       summation_nat_pos_closure, summation_int_closure, 
+                       summation_real_closure, summation_complex_closure)
         _x = self.instance_param
         _f = Lambda(_x, self.instance_expr)
         _Q = Lambda(_x, self.condition)
 
-        if number_set == Natural:
+        if number_set == ZeroSet:
+            thm = summation_zero_closure
+        elif number_set == Natural:
             thm = summation_nat_closure
         elif number_set == NaturalPos:
             thm = summation_nat_pos_closure
@@ -99,8 +101,18 @@ class Sum(OperationOverInstances):
             tmp_defaults.assumptions = defaults.assumptions + tuple(
                     self.conditions)
             summand_ns = readily_provable_number_set(self.summand)
-        if summand_ns is None: return None
-        return self.deduce_in_number_set(summand_ns)
+        if summand_ns is None:
+            return None
+        if summand_ns == ZeroSet:
+            return ZeroSet
+        if summand_ns in (Natural, NaturalPos, Integer, Real, Complex):
+            # We have proven closure for these.
+            # ToDo: implement more closure.
+            return summand_ns
+        if Integer.includes(summand_ns): return Integer
+        if Rational.includes(summand_ns): return Rational
+        if Real.includes(summand_ns): return Real
+        return Complex
 
     def _formatted(self, format_type, **kwargs):
         # MUST BE UPDATED TO DEAL WITH 'joining' NESTED LEVELS

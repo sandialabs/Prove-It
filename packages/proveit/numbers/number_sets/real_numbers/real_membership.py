@@ -43,6 +43,11 @@ class RealNonZeroMembership(NumberMembership):
     def __init__(self, element):
         NumberMembership.__init__(self, element, RealNonZero)
 
+    def _readily_provable(self):
+        from . import nonzero_real_is_real_nonzero
+        if not nonzero_real_is_real_nonzero.is_usable(): return False
+        return NumberMembership._readily_provable(self)
+
     @prover
     def conclude(self, **defaults_config):
         from proveit.numbers import zero
@@ -107,6 +112,11 @@ class RealPosMembership(NumberMembership):
 
     def __init__(self, element):
         NumberMembership.__init__(self, element, RealPos)
+
+    def _readily_provable(self):
+        from . import pos_real_is_real_pos
+        if not pos_real_is_real_pos.is_usable(): return False
+        return NumberMembership._readily_provable(self)
     
     @prover
     def conclude(self, **defaults_config):
@@ -178,7 +188,12 @@ class RealNegMembership(NumberMembership):
 
     def __init__(self, element):
         NumberMembership.__init__(self, element, RealNeg)
-    
+
+    def _readily_provable(self):
+        from . import neg_real_is_real_neg
+        if not neg_real_is_real_neg.is_usable(): return False
+        return NumberMembership._readily_provable(self)
+
     @prover
     def conclude(self, **defaults_config):
         from proveit.numbers import zero, Less
@@ -247,7 +262,12 @@ class RealNonNegMembership(NumberMembership):
 
     def __init__(self, element):
         NumberMembership.__init__(self, element, RealNonNeg)
-    
+
+    def _readily_provable(self):
+        from . import nonneg_real_is_real_nonneg
+        if not nonneg_real_is_real_nonneg.is_usable(): return False
+        return NumberMembership._readily_provable(self)
+
     @prover
     def conclude(self, **defaults_config):
         from proveit.numbers import zero, greater_eq
@@ -303,6 +323,12 @@ class RealNonPosMembership(NumberMembership):
     def __init__(self, element):
         NumberMembership.__init__(self, element, RealNonPos)
     
+
+    def _readily_provable(self):
+        from . import nonpos_real_is_real_nonpos
+        if not nonpos_real_is_real_nonpos.is_usable(): return False
+        return NumberMembership._readily_provable(self)
+
     @prover
     def conclude(self, **defaults_config):
         from proveit.numbers import zero, LessEq

@@ -13,7 +13,7 @@ from proveit.numbers import (
     is_numeric_natural, is_numeric_int, is_numeric_rational,
     standard_number_sets)
 from proveit.numbers.number_sets import (
-    Natural, NaturalPos,
+    ZeroSet, Natural, NaturalPos,
     Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
     Rational, RationalNonZero, RationalPos, RationalNeg, RationalNonNeg,
     RationalNonPos,
@@ -164,7 +164,9 @@ class Mult(NumberOperation):
                 "%s set" % str(number_set))            
         if self.operands.is_double():
             _a, _b = self.operands
-            if number_set == Integer:
+            if number_set == ZeroSet:
+                thm = mult_pkg.mult_in_zero_set_bin
+            elif number_set == Integer:
                 thm = mult_pkg.mult_int_closure_bin
             elif number_set == Rational:
                 thm = mult_pkg.mult_rational_closure_bin
@@ -241,7 +243,9 @@ class Mult(NumberOperation):
             return thm.instantiate({a: self.operands[0], b: self.operands[1]})
         
         # Not a simple binary operation.
-        if number_set == Integer:
+        if number_set == ZeroSet:
+            thm = mult_pkg.mult_in_zero_set
+        elif number_set == Integer:
             thm = mult_pkg.mult_int_closure
         elif number_set == Natural:
             thm = mult_pkg.mult_nat_closure
@@ -333,6 +337,10 @@ class Mult(NumberOperation):
         all_nonzero = True
         for factor in self.factors:
             factor_ns = readily_provable_number_set(factor)
+            if factor_ns == ZeroSet:
+                # If any factor is zero, the entire product (if it is
+                # valid) is zero.
+                return ZeroSet
             if factor_ns is None: return None
             # check if factor_ns is not a standard number set
             if factor_ns not in number_set_map.keys():

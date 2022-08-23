@@ -44,18 +44,22 @@ class LessEq(NumberOrderingRelation):
         # Use the default.
         return Operation.remake_constructor(self)
 
-    def side_effects(self, judgment):
+    def _record_as_proven(self, judgment):
         '''
-        In addition to the NumberOrderingRelation side-effects, also
-        derive a ≠ b from a < b as a side-effect.
+        Remember the canonical bound of this proven LessEq.
         '''
-        from proveit.numbers import is_numeric_int
-        # Remember the canonical bound.
+        NumberOrderingRelation._record_as_proven(self, judgment)
         canonical_form = self.canonical_form()
         known_canonical_bounds = LessEq.known_canonical_bounds
         known_canonical_bounds.setdefault(
                 canonical_form.lhs, OrderedSet()).add(
                 (judgment, canonical_form.rhs))
+        
+    def side_effects(self, judgment):
+        '''
+        In addition to the NumberOrderingRelation side-effects, also
+        derive a ≠ b from a < b as a side-effect.
+        '''
         for side_effect in NumberOrderingRelation.side_effects(
                 self, judgment):
             yield side_effect
@@ -75,31 +79,30 @@ class LessEq(NumberOrderingRelation):
         Conclude something of the form 
         a ≤ b.
         '''
-        from proveit.logic import InSet
-        from proveit.numbers import (Add, zero, RealNonNeg, RealNonPos, 
-                                     readily_provable_number_set)
-        if Equals(self.lower, self.upper).proven():
-            # We know that a = b, therefore a ≤ b.
+        from proveit.numbers import (Add, Real, RealNonNeg, RealNonPos, 
+                                     readily_provable_number_set,
+                                     deduce_number_set)
+        if Equals(self.lower, self.upper).readily_provable():
+            # We can prove that a = b, therefore a ≤ b.
             return self.conclude_via_equality()
+
+        lower, upper = self.lower, self.upper
+        lower_ns = readily_provable_number_set(
+                lower, _compare_to_zero=False, default=Real)
+        upper_ns = readily_provable_number_set(
+                upper, _compare_to_zero=False, default=Real)
+        if RealNonPos.includes(lower_ns) and RealNonNeg.includes(upper_ns):
+            # The inequality is determined by the number sets.
+            deduce_number_set(lower)
+            deduce_number_set(upper)
+
         try:
             # If there is a known bound that is similar and at least
             # as strong, we can derive this bound from the known one.
             return self.conclude_from_known_bound()
         except UnsatisfiedPrerequisites:
             pass
-        if self.upper == zero:
-            # Special case with upper bound of zero.
-            other_ns = readily_provable_number_set(self.lower)
-            if RealNonPos.includes(other_ns):
-                from . import non_pos_if_real_non_pos
-                return non_pos_if_real_non_pos.instantiate(
-                    {a: self.lower})
-        if self.lower == zero:
-            # Special case with lower bound of zero.
-            other_ns = readily_provable_number_set(self.upper)
-            if RealNonNeg.includes(other_ns):
-                from . import non_neg_if_real_non_neg
-                non_neg_if_real_non_neg.instantiate({a: self.upper})
+
         if ((isinstance(self.lower, Add) and 
                 self.upper in self.lower.terms.entries) or
              (isinstance(self.upper, Add) and 

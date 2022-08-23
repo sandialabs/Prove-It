@@ -21,6 +21,7 @@ class IntegerMembership(NumberMembership):
         Yield side-effects when proving 'n in Integer' for a given n.
         '''
         yield self.derive_element_in_rational
+        
         # Added but commented the following out while we debate the
         # wisdom of further side-effects
         # yield lambda: self.deduce_member_in_real(member)
@@ -51,6 +52,11 @@ class IntegerNonZeroMembership(NumberMembership):
 
     def __init__(self, element):
         NumberMembership.__init__(self, element, IntegerNonZero)
+
+    def _readily_provable(self):
+        from . import nonzero_int_is_int_nonzero
+        if not nonzero_int_is_int_nonzero.is_usable(): return False
+        return NumberMembership._readily_provable(self)
 
     @prover
     def conclude(self, **defaults_config):
@@ -115,6 +121,11 @@ class IntegerNegMembership(NumberMembership):
     def __init__(self, element):
         NumberMembership.__init__(self, element, IntegerNeg)
     
+    def _readily_provable(self):
+        from . import neg_int_is_int_neg
+        if not neg_int_is_int_neg.is_usable(): return False
+        return NumberMembership._readily_provable(self)
+
     @prover
     def conclude(self, **defaults_config):
         # Use proven, not readily provable here:

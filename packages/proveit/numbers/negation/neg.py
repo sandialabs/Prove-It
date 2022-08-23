@@ -5,7 +5,7 @@ from proveit import (Expression, Literal, Operation, ExprRange,
                      SimplificationDirectives)
 from proveit.logic import is_irreducible_value
 from proveit.numbers.number_sets import (
-        Natural, NaturalPos,
+        ZeroSet, Natural, NaturalPos,
         Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
         Rational, RationalNonZero, RationalPos, RationalNeg,
         RationalNonNeg, RationalNonPos,
@@ -122,56 +122,52 @@ class Neg(NumberOperation):
         given a number set, attempt to prove that the given expression
         is in that number set using the appropriate closure theorem
         '''
-        from . import (nat_closure, nat_pos_closure,
-                       int_closure, int_nonzero_closure,
-                       int_neg_closure, int_nonpos_closure,
-                       rational_closure, rational_nonzero_closure,
-                       rational_pos_closure, rational_neg_closure,
-                       rational_nonneg_closure, rational_nonpos_closure,
-                       real_closure, real_nonzero_closure,
-                       real_pos_closure, real_neg_closure,
-                       real_nonneg_closure, real_nonpos_closure,
-                       complex_closure, complex_nonzero_closure)
+        import proveit.numbers.negation as neg_pkg
+        thm = None
+        if number_set == ZeroSet:
+            thm = neg_pkg.neg_in_zero_set
         if number_set == Natural:
-            return nat_closure.instantiate({a: self.operand})
+            thm = neg_pkg.nat_closure
         elif number_set == NaturalPos:
-            return nat_pos_closure.instantiate({a: self.operand})
+            thm = neg_pkg.nat_pos_closure
         elif number_set == Integer:
-            return int_closure.instantiate({a: self.operand})
+            thm = neg_pkg.int_closure
         elif number_set == IntegerNonZero:
-            return int_nonzero_closure.instantiate({a: self.operand})
+            thm = neg_pkg.int_nonzero_closure
         elif number_set == IntegerNeg:
-            return int_neg_closure.instantiate({a: self.operand})
+            thm = neg_pkg.int_neg_closure
         elif number_set == IntegerNonPos:
-            return int_nonpos_closure.instantiate({a: self.operand})
+            thm = neg_pkg.int_nonpos_closure
         elif number_set == Rational:
-            return rational_closure.instantiate({a: self.operand})
+            thm = neg_pkg.rational_closure
         elif number_set == RationalNonZero:
-            return rational_nonzero_closure.instantiate({a: self.operand})
+            thm = neg_pkg.rational_nonzero_closure
         elif number_set == RationalPos:
-            return rational_pos_closure.instantiate({a: self.operand})
+            thm = neg_pkg.rational_pos_closure
         elif number_set == RationalNeg:
-            return rational_neg_closure.instantiate({a: self.operand})
+            thm = neg_pkg.rational_neg_closure
         elif number_set == RationalNonNeg:
-            return rational_nonneg_closure.instantiate({a: self.operand})
+            thm = neg_pkg.rational_nonneg_closure
         elif number_set == RationalNonPos:
-            return rational_nonpos_closure.instantiate({a: self.operand})
+            thm = neg_pkg.rational_nonpos_closure
         elif number_set == Real:
-            return real_closure.instantiate({a: self.operand})
+            thm = neg_pkg.real_closure
         elif number_set == RealNonZero:
-            return real_nonzero_closure.instantiate({a: self.operand})
+            thm = neg_pkg.real_nonzero_closure
         elif number_set == RealPos:
-            return real_pos_closure.instantiate({a: self.operand})
+            thm = neg_pkg.real_pos_closure
         elif number_set == RealNeg:
-            return real_neg_closure.instantiate({a: self.operand})
+            thm = neg_pkg.real_neg_closure
         elif number_set == RealNonNeg:
-            return real_nonneg_closure.instantiate({a: self.operand})
+            thm = neg_pkg.real_nonneg_closure
         elif number_set == RealNonPos:
-            return real_nonpos_closure.instantiate({a: self.operand})
+            thm = neg_pkg.real_nonpos_closure
         elif number_set == Complex:
-            return complex_closure.instantiate({a: self.operand})
+            thm = neg_pkg.complex_closure
         elif number_set == ComplexNonZero:
-            return complex_nonzero_closure.instantiate({a: self.operand})
+            thm = neg_pkg.complex_nonzero_closure
+        if thm is not None:
+            return thm.instantiate({a: self.operand})
         raise NotImplementedError(
             "No negation closure theorem for set %s" %str(number_set))
 
@@ -181,6 +177,7 @@ class Neg(NumberOperation):
         prove contains the evaluation of this number operation.
         '''
         number_set_map = {
+            ZeroSet: ZeroSet,
             NaturalPos: IntegerNeg,
             IntegerNeg: NaturalPos,
             Natural: IntegerNonPos,

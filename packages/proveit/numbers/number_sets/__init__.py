@@ -1,7 +1,7 @@
 from .integers import (
         Integer, IntegerNeg, IntegerNonZero, IntegerNonPos,
         Interval, infinity)
-from .natural_numbers import Natural, NaturalPos
+from .natural_numbers import ZeroSet, Natural, NaturalPos
 from .rational_numbers import (Rational, RationalNonZero,
                                RationalPos, RationalNeg,
                                RationalNonNeg, RationalNonPos)

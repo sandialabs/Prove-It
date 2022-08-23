@@ -1,7 +1,7 @@
 # Arithmetic and number theory concepts.
 
 from .number_sets import (
-    Natural, NaturalPos,
+    ZeroSet, Natural, NaturalPos,
     Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
     Rational, RationalNonZero, RationalPos, RationalNeg, RationalNonNeg,
     RationalNonPos,
@@ -17,6 +17,9 @@ from .number_operation import (NumberOperation, deduce_in_number_set,
                                sorted_number_sets, 
                                readily_provable_number_set, deduce_number_set,
                                standard_number_set, standard_number_sets,
+                               pos_number_set, neg_number_set, 
+                               nonneg_number_set, nonpos_number_set,
+                               nonzero_number_set,
                                merge_two_sets, merge_list_of_sets)
 from .rounding import Floor, Ceil, Round
 from .absolute_value import Abs
@@ -52,6 +55,13 @@ import proveit
 if proveit.defaults.sideeffect_automation:
     # Import some fundamental theorems without quantifiers
     from .number_sets.natural_numbers import zero_in_nats
+    from .number_sets.integers import zero_is_int, zero_is_nonpos_int
+    from .number_sets.rational_numbers import (
+            zero_is_rational, zero_is_nonneg_rational, 
+            zero_is_nonpos_rational)
+    from .number_sets.real_numbers import (
+            zero_is_real, zero_is_nonneg_real, zero_is_nonpos_real)
+    from .number_sets.complex_numbers import zero_is_complex
     from .numerals.decimals import less_0_1, less_1_2, less_2_3, less_3_4, less_4_5, less_5_6, less_6_7, less_7_8, less_8_9
     from .numerals.decimals import nat1, nat2, nat3, nat4, nat5, nat6, nat7, nat8, nat9
     from .numerals.decimals import posnat1, posnat2, posnat3, posnat4, posnat5, posnat6, posnat7, posnat8, posnat9

@@ -4,7 +4,8 @@ from proveit import a, b, c, i, j, L, N
 from proveit.logic import Equals
 from proveit.relation import TransRelUpdater
 from proveit.numbers import (
-        NumberOperation, Integer, Real, Add, readily_provable_number_set)
+        NumberOperation, Integer, Real, Add, ZeroSet,
+        readily_provable_number_set)
 from .mod import Mod
 
 class ModAbs(NumberOperation):
@@ -69,15 +70,21 @@ class ModAbs(NumberOperation):
         attempt to prove that the given ModAbs expression is in that
         number set using the appropriate closure theorem.
         '''
-        from proveit.numbers.modular import (
-            mod_abs_int_closure, mod_abs_real_closure)
+        import proveit.numbers.modular as mod_pkg
 
-        if number_set == Integer:
-            return mod_abs_int_closure.instantiate(
-                    {a: self.value, b: self.divisor})
-        if number_set == Real:
-            return mod_abs_real_closure.instantiate(
-                {a: self.value, b: self.divisor})
+        thm = None
+        if number_set == ZeroSet:
+            divisor_ns = readily_provable_number_set(self.divisor)
+            if Integer.includes(divisor_ns):
+                thm = mod_pkg.mod_abs_in_zero_set_int
+            else:
+                thm = mod_pkg.mod_abs_in_zero_set
+        elif number_set == Integer:
+            thm = mod_pkg.mod_abs_int_closure
+        elif number_set == Real:
+            thm = mod_pkg.mod_abs_real_closure
+        if thm is not None:
+            return thm.instantiate({a: self.value, b: self.divisor})
         raise NotImplementedError(
             "'ModAbs.deduce_in_number_set()' not implemented for the %s set"
             % str(number_set))
@@ -89,7 +96,9 @@ class ModAbs(NumberOperation):
         '''
         value_ns = readily_provable_number_set(self.value)
         divisor_ns = readily_provable_number_set(self.divisor)
-        if (value_ns.includes(Integer) and divisor_ns.includes(Integer)):
+        if value_ns == ZeroSet:
+            return ZeroSet # |0|_{mod b} = 0
+        elif (value_ns.includes(Integer) and divisor_ns.includes(Integer)):
             return Integer
         else:
             return Real

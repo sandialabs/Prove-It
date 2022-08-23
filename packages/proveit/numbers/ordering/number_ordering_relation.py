@@ -29,7 +29,9 @@ class NumberOrderingRelation(TransitiveRelation):
         from .less import Less
         from .less_eq import LessEq
         from proveit.numbers import (
-                zero, Add, greater, greater_eq, 
+                zero, Add, Neg, greater, greater_eq, one,
+                NaturalPos, IntegerNeg, IntegerNonPos, 
+                less_numeric_rationals, less_eq_numeric_rationals,
                 RealPos, RealNeg, RealNonNeg, RealNonPos,
                 readily_provable_number_set, is_numeric_rational, 
                 less_numeric_rationals, less_eq_numeric_rationals)
@@ -53,25 +55,40 @@ class NumberOrderingRelation(TransitiveRelation):
             # There is a similar but possibly stronger bound we can
             # derive this one from.
             return True
-        if lower == zero or upper == zero:
-            # One side is zero.  Maybe we can determine a number set
-            # of the other side that would make this provable.
-            other = upper if lower==zero else lower
-            # Set _compare_to_zero False to avoid infinite recursion.
-            other_number_set = readily_provable_number_set(
-                    other, _compare_to_zero=False)
-            if RealPos.includes(other_number_set) and (
-                    self == greater(other, zero)):
+        
+        # See if we can determine the validity of the inequality
+        # based upon provable number sets and how they relate to zero.
+        
+        # Set _compare_to_zero False to avoid infinite recursion.
+        lower_ns = readily_provable_number_set(
+                    lower, _compare_to_zero=False)
+        upper_ns = readily_provable_number_set(
+                    upper, _compare_to_zero=False)
+        if isinstance(self, LessEq):
+            if is_numeric_rational(lower) and (
+                    less_eq_numeric_rationals(lower, one)
+                    and NaturalPos.includes(upper_ns)):
                 return True
-            elif RealNeg.includes(other_number_set) and (
-                    self == Less(other, zero)):
+            if is_numeric_rational(upper) and (
+                    less_eq_numeric_rationals(upper, Neg(one))
+                    and IntegerNeg.includes(lower_ns)):
                 return True
-            elif RealNonNeg.includes(other_number_set) and (
-                    self == greater_eq(other, zero)):
+            if RealNonPos.includes(lower_ns) and RealNonNeg.includes(upper_ns):
                 return True
-            elif RealNonPos.includes(other_number_set) and (
-                    self == LessEq(other, zero)):
+        else:
+            if is_numeric_rational(lower) and (
+                    less_numeric_rationals(lower, one)
+                    and NaturalPos.includes(upper_ns)):
                 return True
+            if is_numeric_rational(upper) and (
+                    less_numeric_rationals(upper, Neg(one))
+                    and IntegerNeg.includes(lower_ns)):
+                return True
+            if RealNonPos.includes(lower_ns) and RealPos.includes(upper_ns):
+                return True
+            if RealNeg.includes(lower_ns) and RealNonNeg.includes(upper_ns):
+                return True
+
         """
         if ((isinstance(self.lower, Add) and 
                 self.upper in self.lower.terms.entries) or

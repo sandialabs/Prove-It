@@ -80,6 +80,11 @@ class RationalNonZeroMembership(RationalMembership):
         from proveit.numbers import RationalNonZero
         RationalMembership.__init__(self, element, RationalNonZero)
 
+    def _readily_provable(self):
+        from . import nonzero_rational_is_rational_nonzero
+        if not nonzero_rational_is_rational_nonzero.is_usable(): return False
+        return NumberMembership._readily_provable(self)
+
     @prover
     def conclude(self, **defaults_config):
         from proveit.numbers import Rational, zero
@@ -145,6 +150,11 @@ class RationalPosMembership(RationalMembership):
         from proveit.numbers import RationalPos
         RationalMembership.__init__(self, element, RationalPos)
     
+    def _readily_provable(self):
+        from . import pos_rational_is_rational_pos
+        if not pos_rational_is_rational_pos.is_usable(): return False
+        return NumberMembership._readily_provable(self)
+
     @prover
     def conclude(self, **defaults_config):
         from proveit.numbers import Rational, greater, zero
@@ -226,6 +236,11 @@ class RationalNegMembership(RationalMembership):
         from proveit.numbers import RationalNeg
         RationalMembership.__init__(self, element, RationalNeg)
     
+    def _readily_provable(self):
+        from . import neg_rational_is_rational_neg
+        if not neg_rational_is_rational_neg.is_usable(): return False
+        return NumberMembership._readily_provable(self)
+
     @prover
     def conclude(self, **defaults_config):
         from proveit.numbers import Rational, Less, zero
@@ -308,6 +323,11 @@ class RationalNonNegMembership(RationalMembership):
         from proveit.numbers import RationalNonNeg
         RationalMembership.__init__(self, element, RationalNonNeg)
     
+    def _readily_provable(self):
+        from . import nonneg_rational_is_rational_nonneg
+        if not nonneg_rational_is_rational_nonneg.is_usable(): return False
+        return NumberMembership._readily_provable(self)
+
     @prover
     def conclude(self, **defaults_config):
         from proveit.numbers import Rational, greater_eq, zero
@@ -373,6 +393,11 @@ class RationalNonPosMembership(RationalMembership):
     def __init__(self, element):
         from proveit.numbers import RationalNonPos
         RationalMembership.__init__(self, element, RationalNonPos)
+    
+    def _readily_provable(self):
+        from . import nonpos_rational_is_rational_nonpos
+        if not nonpos_rational_is_rational_nonpos.is_usable(): return False
+        return NumberMembership._readily_provable(self)
     
     @prover
     def conclude(self, **defaults_config):

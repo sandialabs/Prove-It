@@ -8,7 +8,7 @@ from proveit.relation import TransRelUpdater
 from proveit.abstract_algebra.generic_methods import (
         deduce_equality_via_commutation)
 from .number_sets import (
-    Natural, NaturalPos,
+    ZeroSet, Natural, NaturalPos,
     Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
     Rational, RationalNonZero, RationalPos, RationalNeg, RationalNonNeg,
     RationalNonPos,
@@ -249,7 +249,7 @@ def quick_simplified_index(expr):
 # Sorted standard number sets from most restrictive to least
 # restrictive.
 sorted_number_sets = (
-    NaturalPos, IntegerNeg, Natural, IntegerNonPos,
+    ZeroSet, NaturalPos, IntegerNeg, Natural, IntegerNonPos,
     IntegerNonZero, Integer,
     RationalPos, RationalNeg, RationalNonNeg, RationalNonPos,
     RationalNonZero, Rational,
@@ -295,6 +295,7 @@ neg_number_set = {
 
 # Map number sets to the non-negative number set it contains.
 nonneg_number_set = {
+    ZeroSet: ZeroSet,
     Natural: Natural,
     IntegerNonZero: Natural,
     Integer: Natural,
@@ -309,6 +310,7 @@ nonneg_number_set = {
 
 # Map number sets to the non-positive number set it contains.
 nonpos_number_set = {
+    ZeroSet: ZeroSet,
     IntegerNonPos: IntegerNonPos,
     IntegerNonZero: IntegerNonPos,
     Integer: IntegerNonPos,
@@ -338,9 +340,9 @@ nonzero_number_set = {
     Complex: ComplexNonZero,
     ComplexNonZero: ComplexNonZero}
 
-found = False
-
-def readily_provable_number_set(expr, *, assumptions=USE_DEFAULTS,
+def readily_provable_number_set(expr, *, automation=USE_DEFAULTS,
+                                assumptions=USE_DEFAULTS,
+                                must_be_direct=False,
                                 default=None, _compare_to_zero=True):
     '''
     Return the most restrictive number set that the given expression 
@@ -350,24 +352,36 @@ def readily_provable_number_set(expr, *, assumptions=USE_DEFAULTS,
     Return the default (possibly None) if there are no readily provable
     number memberships.
     
+    If automation/defaults.conclude_automation is disabled, only 
+    return a number set in which membership has already been proven.
+    
+    If must_be_direct is True, don't account for known/provable
+    equalities of the element.
+    
     _compare_to_zero is set to False internally to avoid infinite
     recursion.
     '''
-    global found
-    from proveit.logic import And, InSet, Equals, NotEquals
+    from proveit.logic import And, InSet, Set, Equals, NotEquals
     from proveit.numbers import Less, LessEq, zero
     from proveit._core_.proof import Assumption
 
     # Make sure we derive assumption side-effects first.
     assumptions = defaults.checked_assumptions(assumptions)
     Assumption.make_assumptions(defaults.assumptions)
+    
+    if automation is USE_DEFAULTS:
+        automation = defaults.conclude_automation
+    if not automation:
+        must_be_direct = True
 
     # Find the first (most restrictive) number set that
     # contains 'expr' or something equal to it.
     best_known_number_set = None
     for number_set in sorted_number_sets:
         membership = None
-        for eq_expr in Equals.yield_known_equal_expressions(expr):
+        eq_expr_generator = ((expr,) if must_be_direct else
+                             Equals.yield_known_equal_expressions(expr))
+        for eq_expr in eq_expr_generator:
             if isinstance(eq_expr, ExprRange):
                 membership = And(*ExprTuple(eq_expr).map_elements(
                         lambda element : InSet(element, number_set)))
@@ -381,6 +395,10 @@ def readily_provable_number_set(expr, *, assumptions=USE_DEFAULTS,
         if membership is not None:
             best_known_number_set = number_set
             break
+
+    if not automation:
+        # Just use what has already been proven if automation is off.
+        return best_known_number_set
 
     # Technically we aren't checking the provability of the expression
     # but we want to use Expression.in_progress_to_check_provability
@@ -421,6 +439,10 @@ def readily_provable_number_set(expr, *, assumptions=USE_DEFAULTS,
         # Already proven to be in some number set,
         # Let's see if we can restrict it further.
         number_set = best_known_number_set
+        # While this is comparing it zero, it won't lead to an
+        # infinite recursion problem.
+        if Equals(expr, zero).readily_provable():
+            number_set = Set(zero)
     
         if _compare_to_zero:
             if number_set in pos_number_set and (
@@ -453,6 +475,10 @@ def deduce_number_set(expr, **defaults_config):
     '''
     from proveit.logic import And, InSet
     number_set = readily_provable_number_set(expr)
+    if number_set is None:
+        raise UnsatisfiedPrerequisites(
+                "No readily provable number set membership for %s"
+                %expr)
     if isinstance(expr, ExprRange):
         return And(*ExprTuple(expr).map_elements(
                 lambda element : InSet(element, number_set))).prove()
@@ -485,6 +511,27 @@ def standard_number_set(given_set, **defaults_config):
 # number set that contains them both. This dictionary is then
 # used for the merge_two_sets() and merge_list_of_sets() fxns below.
 merging_dict = {
+    (ZeroSet, Natural):Natural,
+    (ZeroSet, NaturalPos):Natural,
+    (ZeroSet, Integer):Integer,
+    (ZeroSet, IntegerNeg):IntegerNonPos,
+    (ZeroSet, IntegerNonPos):IntegerNonPos,    
+    (ZeroSet, IntegerNonZero):Integer,    
+    (ZeroSet, Rational):Rational,
+    (ZeroSet, RationalPos):RationalNonNeg,
+    (ZeroSet, RationalNeg):RationalNonPos,
+    (ZeroSet, RationalNonPos):RationalNonPos,
+    (ZeroSet, RationalNonNeg):RationalNonNeg,
+    (ZeroSet, RationalNonZero):Rational,
+    (ZeroSet, Real):Real,
+    (ZeroSet, RealPos):RealNonNeg,
+    (ZeroSet, RealNeg):RealNonPos,
+    (ZeroSet, RealNonPos):RealNonPos,
+    (ZeroSet, RealNonNeg):RealNonNeg,
+    (ZeroSet, RealNonZero):Real,
+    (ZeroSet, Complex):Complex,
+    (ZeroSet, ComplexNonZero):Complex,
+    (ZeroSet, Natural):Natural,
     (NaturalPos, IntegerNeg): IntegerNonZero,
     (NaturalPos, Natural): Natural,
     (NaturalPos, IntegerNonPos): Integer,

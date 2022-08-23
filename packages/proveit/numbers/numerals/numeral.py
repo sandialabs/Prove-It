@@ -89,10 +89,13 @@ class Numeral(Literal, IrreducibleValue):
 
     @prover
     def deduce_in_number_set(self, number_set, **defaults_config):
-        from proveit.numbers import (Natural, NaturalPos, 
+        from proveit.logic import Set
+        from proveit.numbers import (zero, Natural, NaturalPos, 
                                      Digits, IntegerNonPos,
                                      RationalNonPos, RealNonPos)
         from proveit.logic import InSet, SubsetEq
+        if self == zero and number_set == Set(zero):
+            return InSet(zero, Set(zero)).conclude_as_folded()
         if number_set == Natural:
             return self.deduce_in_natural()
         elif number_set == NaturalPos:
@@ -155,8 +158,8 @@ class Numeral(Literal, IrreducibleValue):
         if self.n != 0:
             raise ProofFailure(InSet(self, IntegerNonPos), defaults.assumptions,
                                 "%s is positive"%self)
-        from proveit.numbers.number_sets.integers import zero_is_nonpos
-        return zero_is_nonpos
+        from proveit.numbers.number_sets.integers import zero_is_nonpos_int
+        return zero_is_nonpos_int
 
     '''
     def deduce_not_zero(self):

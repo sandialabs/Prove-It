@@ -126,10 +126,6 @@ class Abs(NumberOperation):
             if isinstance(self.operand, Neg):
                 # |-x| where 'x' is a literal.
                 return self.distribution()
-            else:
-                # If the operand is irreducible, we can just use 
-                # abs_elimination.
-                return self.abs_elimination()
         elif must_evaluate:
             # The simplification of the operands may not have
             # worked hard enough.  Let's work harder if we
@@ -227,28 +223,27 @@ class Abs(NumberOperation):
         attempt to prove that the given expression is in that number
         set using the appropriate closure theorem.
         '''
-        from proveit.numbers.absolute_value import (
-            abs_integer_closure, abs_integer_nonzero_closure, 
-            abs_rational_closure, abs_rational_nonzero_closure,
-            abs_complex_closure, abs_nonzero_closure)
+        import proveit.numbers.absolute_value as abs_pkg
         from proveit.numbers import (
-            Natural, NaturalPos, Integer, IntegerNonZero,
+            ZeroSet, Natural, NaturalPos, Integer, IntegerNonZero,
             Rational, RationalNonZero, RationalPos, RationalNonNeg,
             Real, RealNonNeg, RealPos, RealNonZero, ComplexNonZero)
 
         thm = None
-        if number_set in (NaturalPos, IntegerNonZero):
-            thm = abs_integer_nonzero_closure
+        if number_set == ZeroSet:
+            thm = abs_pkg.abs_zero_closure
+        elif number_set in (NaturalPos, IntegerNonZero):
+            thm = abs_pkg.abs_integer_nonzero_closure
         elif number_set in (Integer, Natural):
-            thm = abs_integer_closure
+            thm = abs_pkg.abs_integer_closure
         elif number_set in (RationalPos, RationalNonZero):
-            thm = abs_rational_nonzero_closure
+            thm = abs_pkg.abs_rational_nonzero_closure
         elif number_set in (Rational, RationalNonNeg):
-            thm = abs_rational_closure
+            thm = abs_pkg.abs_rational_closure
         elif number_set in (RealPos, RealNonZero, ComplexNonZero):
-            thm = abs_nonzero_closure            
+            thm = abs_pkg.abs_nonzero_closure            
         else:
-            thm = abs_complex_closure
+            thm = abs_pkg.abs_complex_closure
 
         if thm is not None:
             in_set = thm.instantiate({a: self.operand})
@@ -268,13 +263,13 @@ class Abs(NumberOperation):
         # If so, use the appropiate thm to determine that self is in X,
         # then prove that self must also be in Y since Y contains X.
         if SubsetEq(Real, number_set).readily_provable():
-            abs_complex_closure.instantiate({a: self.operand})
+            abs_pkg.abs_complex_closure.instantiate({a: self.operand})
             return InSet(self, number_set).prove()
         if SubsetEq(RealPos, number_set).readily_provable():
-            abs_nonzero_closure.instantiate({a: self.operand})
+            abs_pkg.abs_nonzero_closure.instantiate({a: self.operand})
             return InSet(self, number_set).prove()
         if SubsetEq(RealNonNeg, number_set).readily_provable():
-            abs_complex_closure_non_neg_real.instantiate({a: self.operand})
+            abs_pkg.abs_complex_closure_non_neg_real.instantiate({a: self.operand})
             return InSet(self, number_set).prove()
 
         # otherwise, we just don't have the right thm to make it work
@@ -288,12 +283,13 @@ class Abs(NumberOperation):
         prove contains the evaluation of this number operation.
         '''
         from proveit.numbers import (
-            Integer, IntegerNonZero, NaturalPos, Natural,
+            ZeroSet, Integer, IntegerNonZero, NaturalPos, Natural,
             Rational, RationalNonZero, RationalPos,
-            RationalNonNeg, Real, RealNonNeg, RealPos,
+            RationalNonNeg, Real, RealNonNeg, RealPos, RealNonZero,
             ComplexNonZero, Complex)
         operand_ns = readily_provable_number_set(self.operand)
         if operand_ns is None: return None
+        if operand_ns == ZeroSet: return ZeroSet
         if IntegerNonZero.includes(operand_ns):
             return NaturalPos
         if Integer.includes(operand_ns):
@@ -302,6 +298,10 @@ class Abs(NumberOperation):
             return RationalPos
         if Rational.includes(operand_ns):
             return RationalNonNeg
+        if RealNonZero.includes(operand_ns):
+            return RealPos
+        if Real.includes(operand_ns):
+            return RealNonNeg
         if ComplexNonZero.includes(operand_ns):
             return RealPos
         return RealNonNeg

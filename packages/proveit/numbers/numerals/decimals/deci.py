@@ -110,9 +110,15 @@ class DecimalSequence(NumeralSequence):
         Return the most restrictive number set we can readily
         prove contains the evaluation of this number operation.
         '''
-        from proveit.numbers import Natural, NaturalPos, greater
+        from proveit.logic import InSet
+        from proveit.numbers import Natural, NaturalPos
         _a = self.digits[0]
-        if greater(_a, zero).readily_provable():
+        if isinstance(_a, ExprRange):
+            # Checking for positivity is not implement for an ExprRange
+            # of digits.
+            #return Natural
+            return None # Not implemented for anything yet.
+        if InSet(_a, NaturalPos).readily_provable():
             return NaturalPos
         else:
             return Natural

@@ -32,6 +32,11 @@ class ComplexNonZeroMembership(NumberMembership):
     def __init__(self, element):
         NumberMembership.__init__(self, element, ComplexNonZero)
 
+    def _readily_provable(self):
+        from . import nonzero_complex_is_complex_nonzero
+        if not nonzero_complex_is_complex_nonzero.is_usable(): return False
+        return NumberMembership._readily_provable(self)
+
     @prover
     def conclude(self, **defaults_config):
         from proveit.logic import NotEquals, InSet

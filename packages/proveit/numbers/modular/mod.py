@@ -4,7 +4,8 @@ from proveit import (defaults, Literal, Operation, ProofFailure,
 from proveit import a, b, c, i, j, x, L
 from proveit.logic import Equals, InSet, SubsetEq
 from proveit.relation import TransRelUpdater
-from proveit.numbers import (NumberOperation, Add, deduce_number_set,
+from proveit.numbers import (NumberOperation, Add, ZeroSet,
+                             deduce_number_set,
                              readily_provable_number_set)
 
 class Mod(NumberOperation):
@@ -137,8 +138,7 @@ class Mod(NumberOperation):
         attempt to prove that the given Mod expression is in that number
         set using the appropriate closure theorem.
         '''
-        from proveit.numbers.modular import (
-            mod_int_closure, mod_int_to_nat_closure, mod_real_closure)
+        import proveit.numbers.modular as mod_pkg
         from proveit.numbers import (Integer, Natural, Real,
                                      Interval, RealInterval)
 
@@ -158,18 +158,22 @@ class Mod(NumberOperation):
             # subset of 'number_set'.
             set_relation = SubsetEq(mod_interval, number_set).prove()
             return set_relation.derive_superset_membership(self)
-            
-        if number_set == Integer:
-            return mod_int_closure.instantiate(
-                {a: self.dividend, b: self.divisor})
-
-        if number_set == Natural:
-            return mod_int_to_nat_closure.instantiate(
-                {a: self.dividend, b: self.divisor})
-
-        if number_set == Real:
-            return mod_real_closure.instantiate(
-                {a: self.dividend, b: self.divisor})
+        
+        thm = None
+        if number_set == ZeroSet:
+            divisor_ns = readily_provable_number_set(self.divisor)
+            if Integer.includes(divisor_ns):
+                thm = mod_pkg.mod_in_zero_set_int
+            else:
+                thm = mod_pkg.mod_in_zero_set
+        elif number_set == Integer:
+            thm = mod_pkg.mod_int_closure
+        elif number_set == Natural:
+            thm = mod_pkg.mod_int_to_nat_closure
+        elif number_set == Real:
+            thm = mod_pkg.mod_real_closure
+        if thm is not None:
+            return thm.instantiate({a: self.dividend, b: self.divisor})
 
         raise NotImplementedError(
             "'Mod.deduce_in_number_set()' not implemented for the %s set" 
@@ -185,6 +189,9 @@ class Mod(NumberOperation):
         _b = self.divisor
         # from number_sets import deduce_in_integer, deduce_in_real
         dividend_ns = readily_provable_number_set(self.dividend)
+        if dividend_ns == ZeroSet:
+            # 0 mod N = 0
+            return ZeroSet
         divisor_ns = readily_provable_number_set(self.divisor)
         int_dividend = Integer.includes(dividend_ns)
         if (int_dividend and NaturalPos.includes(divisor_ns)):

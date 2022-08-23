@@ -11,7 +11,7 @@ from proveit.numbers import zero, one, two, Div, frac, num, Real
 from proveit.numbers import (NumberOperation, deduce_number_set,
                              readily_provable_number_set)
 from proveit.numbers.number_sets import (
-    Natural, NaturalPos,
+    ZeroSet, Natural, NaturalPos,
     Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
     Rational, RationalNonZero, RationalPos, RationalNeg, RationalNonNeg,
     RationalNonPos,
@@ -812,7 +812,12 @@ class Exp(NumberOperation):
         from proveit.logic import InSet
         import proveit.numbers.exponentiation as exp_pkg
 
-        if number_set == NaturalPos:
+        if number_set == ZeroSet:
+            # Prove 0^x in {0}; while we are at it, prove 0^x = 0.
+            exp_pkg.exponentiated_zero.instantiate({x:self.exponent})
+            return exp_pkg.exp_in_zero_set.instantiate(
+                    {a: self.base, b: self.exponent})
+        elif number_set == NaturalPos:
             return exp_pkg.exp_natpos_closure.instantiate(
                 {a: self.base, b: self.exponent})
         elif number_set == Natural:
@@ -1113,6 +1118,9 @@ class Exp(NumberOperation):
         '''
         base_ns = readily_provable_number_set(self.base)
         exp_ns = readily_provable_number_set(self.exponent)
+        if base_ns == ZeroSet and RealPos.includes(exp_ns):
+            # 0^x = 0 for x > 0.
+            return ZeroSet
         if Natural.includes(base_ns) and Natural.includes(exp_ns):
             return NaturalPos
         if Integer.includes(base_ns) and Natural.includes(exp_ns):

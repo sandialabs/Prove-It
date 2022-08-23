@@ -13,6 +13,9 @@ from proveit.logic import (And, Equals, NotEquals,
                            EvaluationError, InSet)
 from proveit.logic.irreducible_value import is_irreducible_value
 from proveit.numbers import (NumberOperation, standard_number_set,
+                             pos_number_set, neg_number_set, 
+                             nonneg_number_set, nonpos_number_set,
+                             nonzero_number_set,
                              merge_list_of_sets, deduce_number_set,
                              readily_provable_number_set)
 from proveit.numbers.numerals.decimals import DIGITS
@@ -24,7 +27,7 @@ from proveit.abstract_algebra.generic_methods import (
         sorting_operands, sorting_and_combining_like_operands,
         common_likeness_key)
 from proveit import TransRelUpdater
-from proveit.numbers import (Integer, IntegerNeg, IntegerNonPos,
+from proveit.numbers import (ZeroSet, Integer, IntegerNeg, IntegerNonPos,
                              Natural, NaturalPos, IntegerNonZero,
                              Rational, RationalPos, RationalNonZero,
                              RationalNeg, RationalNonNeg,
@@ -1093,6 +1096,14 @@ class Add(NumberOperation):
         from proveit.numbers import (zero, one, Neg, greater,
                                      Less, LessEq, greater_eq)
         from proveit.logic import InSet
+        
+        if number_set == ZeroSet:
+            if self.operands.is_double():
+                return add_pkg.add_zero_closure_bin.instantiate(
+                    {a: self.operands[0], b: self.operands[1]})
+            _a = self.operands
+            _i = _a.num_elements()
+            return add_pkg.add_zero_closure.instantiate({i:_i, a: _a})
         if number_set == Integer:
             if self.operands.is_double():
                 return add_pkg.add_int_closure_bin.instantiate(
@@ -1441,71 +1452,43 @@ class Add(NumberOperation):
         # merge the resulting list of std number sets into a
         # single superset, if possible
         number_set = merge_list_of_sets(list_of_operand_sets)
-        
-
-        major_to_nonzero = {Integer:IntegerNonZero, 
-                            Rational:RationalNonZero,
-                            Real:RealNonZero, 
-                            Complex:ComplexNonZero}
-        major_to_nonneg = {Integer:Natural, 
-                           Rational:RationalNonNeg, 
-                           Real:RealNonNeg}
-        major_to_nonpos = {Integer:IntegerNonPos, 
-                           Rational:RationalNonPos, 
-                           Real:RealNonPos}
-        major_to_neg = {Integer:IntegerNeg, 
-                        Rational:RationalNeg, 
-                        Real:RealNeg}
-        major_to_pos = {Integer:NaturalPos, 
-                        Rational:RationalPos, 
-                        Real:RealPos}
 
         restriction = None
         if RealPos.includes(number_set):
-            restriction = major_to_pos # must be positive
+            restriction = pos_number_set # must be positive
         elif RealNeg.includes(number_set):
-            restriction = major_to_neg # must be negative
+            restriction = neg_number_set # must be negative
         elif RealNonNeg.includes(number_set):
             if any_positive:
-                restriction = major_to_pos # must be positive
+                restriction = pos_number_set # must be positive
             else:
-                restriction = major_to_nonneg # must be non-negative
+                restriction = nonneg_number_set # must be non-negative
         elif RealNonPos.includes(number_set):
             if any_negative:
-                restriction = major_to_neg # must be negative
+                restriction = neg_number_set # must be negative
             else:
-                restriction = major_to_nonpos # must be non-positive
+                restriction = nonpos_number_set # must be non-positive
 
-        if restriction not in (major_to_pos, major_to_neg):
+        if restriction not in (pos_number_set, neg_number_set):
             # Check for the special case of a - b where we know
             # a > b, a < b, a ≥ b, a ≤ b, or a ≠ b
             if self.terms.is_double() and isinstance(self.terms[1], Neg):
                 _a, _b = self.terms[0], self.terms[1].operand
                 if greater(_a, _b).readily_provable():
-                    restriction = major_to_pos # positive
+                    restriction = pos_number_set # positive
                 elif greater_eq(_a, _b).readily_provable():
-                    restriction = major_to_nonneg # non-negative
+                    restriction = nonneg_number_set # non-negative
                 elif Less(_a, _b).readily_provable():
-                    restriction = major_to_neg # negative
+                    restriction = neg_number_set # negative
                 elif LessEq(_a, _b).readily_provable():
-                    restriction = major_to_nonpos # non-positive
+                    restriction = nonpos_number_set # non-positive
                 elif NotEquals(_a, _b).readily_provable():
-                    restriction = major_to_nonzero # non-zero
+                    restriction = nonzero_number_set # non-zero
         
         # Use the positive, negative, non-negative, non-positive, or
         # non-zero restriction.
         if restriction is not None:
-            if Integer.includes(number_set):
-                number_set = restriction[Integer]
-            elif Rational.includes(number_set):
-                number_set = restriction[Rational]
-            elif (Real.includes(number_set) or 
-                  restriction != major_to_nonzero):
-                # Note: If we know whether it is positive, negative, 
-                # non-positive, or non-negative, it must be Real.
-                number_set = restriction[Real]
-            else:
-                number_set = restriction[Complex]
+            return restriction[number_set]
 
         return number_set
 

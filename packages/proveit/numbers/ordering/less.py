@@ -28,17 +28,22 @@ class Less(NumberOrderingRelation):
         NumberOrderingRelation.__init__(self, Less._operator_, lhs, rhs,
                                         styles=styles)
     
-    def side_effects(self, judgment):
+    def _record_as_proven(self, judgment):
         '''
-        In addition to the NumberOrderingRelation side-effects, also
-        derive a ≠ b from a < b as a side-effect.
+        Remember the canonical bound of this proven LessEq.
         '''
-        # Remember the canonical bound.
+        NumberOrderingRelation._record_as_proven(self, judgment)
         canonical_form = self.canonical_form()
         known_canonical_bounds = Less.known_canonical_bounds
         known_canonical_bounds.setdefault(
                 canonical_form.lhs, OrderedSet()).add(
                         (judgment, canonical_form.rhs))
+
+    def side_effects(self, judgment):
+        '''
+        In addition to the NumberOrderingRelation side-effects, also
+        derive a ≠ b from a < b as a side-effect.
+        '''
         for side_effect in NumberOrderingRelation.side_effects(
                 self, judgment):
             yield side_effect
@@ -71,32 +76,31 @@ class Less(NumberOrderingRelation):
         Conclude something of the form 
         a < b.
         '''
-        from proveit.numbers import (Add, zero, RealPos, RealNeg,
-                                     readily_provable_number_set)
+        from proveit.numbers import (Add, Real, RealPos, RealNeg,
+                                     RealNonPos, RealNonNeg,
+                                     readily_provable_number_set,
+                                     deduce_number_set)
         
+        lower, upper = self.lower, self.upper
+        lower_ns = readily_provable_number_set(
+                lower, _compare_to_zero=False, default=Real)
+        upper_ns = readily_provable_number_set(
+                upper, _compare_to_zero=False, default=Real)
+        if RealNonPos.includes(lower_ns) and RealPos.includes(upper_ns) or (
+                RealNeg.includes(lower_ns) and RealNonNeg.includes(upper_ns)):
+            # The inequality is determined by the number sets.
+            deduce_number_set(upper)
+            deduce_number_set(lower)
+
         try:
             # If there is a known bound that is similar and at least
             # as strong, we can derive this bound from the known one.
             return self.conclude_from_known_bound()
         except UnsatisfiedPrerequisites:
             pass
-        if self.upper == zero:
-            # Special case with upper bound of zero.
-            other_ns = readily_provable_number_set(self.lower)
-            if RealNeg.includes(other_ns):
-                from . import negative_if_real_neg
-                return negative_if_real_neg.instantiate(
-                    {a: self.lower})
-        if self.lower == zero:
-            # Special case with lower bound of zero.
-            other_ns = readily_provable_number_set(self.upper)
-            if RealPos.includes(other_ns):
-                from . import positive_if_real_pos
-                positive_if_real_pos.instantiate({a: self.upper})
-        if ((isinstance(self.lower, Add) and 
-                self.upper in self.lower.terms.entries) or
-             (isinstance(self.upper, Add) and 
-                self.lower in self.upper.terms.entries)):
+
+        if ((isinstance(lower, Add) and upper in lower.terms.entries) or
+             (isinstance(upper, Add) and lower in upper.terms.entries)):
             try:
                 # Conclude an sum is bounded by one of its terms.
                 return self.conclude_as_bounded_by_term()
@@ -173,6 +177,16 @@ class Less(NumberOrderingRelation):
         '''
         from .less_eq import LessEq
         return LessEq(self.upper, self.lower).derive_complement()
+
+    def readily_in_bool(self):
+        '''
+        Number ordering relation is readily provable as a Boolean iff
+        both sides are readily provable as real numbers.
+        '''
+        from proveit.logic import InSet
+        from proveit.numbers import Real
+        return InSet(self.lhs, Real).readily_provable() and (
+                InSet(self.rhs, Real).readily_provable())
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
