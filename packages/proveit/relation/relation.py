@@ -3,6 +3,7 @@ from functools import wraps
 from proveit import Expression, Operation, StyleOptions
 from proveit import (defaults, USE_DEFAULTS, Judgment, ProofFailure,
                      prover)
+from proveit.util import OrderedSet
 from .sorter import TransitivitySorter
 
 
@@ -37,6 +38,9 @@ class Relation(Operation):
         '''
         from proveit.logic import Equals, evaluation_or_simplification
         normal_lhs, normal_rhs = self.normal_lhs, self.normal_rhs
+        
+        # SHOULD WE DO SOMETHING A LITTLE DIFFERENT NOW WITH CANONICAL
+        # FORMS.
         normal_lhs_simplification = evaluation_or_simplification(normal_lhs)
         normal_rhs_simplification = evaluation_or_simplification(normal_rhs)
         simp_normal_lhs = normal_lhs_simplification.rhs
@@ -176,7 +180,7 @@ class Relation(Operation):
         both_sides_str = '_both_sides'
         if name[-len(both_sides_str):] == both_sides_str:
             from proveit.logic import InSet
-            known_memberships = set()
+            known_memberships = OrderedSet()
             if self.lhs in InSet.known_memberships:
                 known_memberships.update(InSet.known_memberships[self.lhs])
             elif self.rhs in InSet.known_memberships:
@@ -254,7 +258,7 @@ class Relation(Operation):
         #print('method_end_str', method_end_str)
         both_sides_methods = []
         from proveit.logic import InSet
-        known_memberships = set()
+        known_memberships = OrderedSet()
         if self.lhs in InSet.known_memberships:
             known_memberships.update(InSet.known_memberships[self.lhs])
         elif self.rhs in InSet.known_memberships:
@@ -272,4 +276,4 @@ class Relation(Operation):
                 if name[-len(method_end_str):] == method_end_str:
                     both_sides_methods.append(name[:-len(relation_name_str)])
         return sorted(set(dir(self.__class__) + list(self.__dict__.keys())
-                          + both_sides_methods + ('lhs', 'rhs')))
+                          + both_sides_methods + ['lhs', 'rhs']))

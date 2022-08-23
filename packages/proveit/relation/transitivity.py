@@ -37,13 +37,11 @@ class TransitiveRelation(Relation):
     def __init__(self, operator, normal_lhs, normal_rhs, *, styles):
         Relation.__init__(self,operator, normal_lhs, normal_rhs, styles=styles)
     
-    def side_effects(self, judgment):
+    def _record_as_proven(self, judgment):
         '''
-        Automatically derive the reversed form of transitive
-        relations as side effects (e.g., y > x from x < y).
-        Also, store known left sides and known right sides
+        Store known left sides and known right sides
         in class member dictionaries: known_left_sides, known_right_sides
-        whilc will enable transitivity searches.
+        which will enable transitivity searches.
         '''
         if (not hasattr(self.__class__, 'known_left_sides') 
                 or not hasattr(self.__class__, 'known_right_sides')):
@@ -55,8 +53,6 @@ class TransitiveRelation(Relation):
             self.normal_lhs, OrderedSet()).add(judgment)
         self.__class__.known_right_sides.setdefault(
             self.normal_rhs, OrderedSet()).add(judgment)
-        return
-        yield  # makes this a generator as it should be
 
     @prover
     def conclude(self, **defaults_config):
