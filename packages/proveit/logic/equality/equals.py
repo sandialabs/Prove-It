@@ -1049,7 +1049,7 @@ class Equals(EquivRelation):
             evaluations = Equals.known_evaluation_sets[expr]
             candidates = []
             for judgment in evaluations:
-                if judgment.is_applicable(assumptions):
+                if judgment.is_applicable(defaults.assumptions):
                     # Found existing evaluation suitable for the
                     # assumptions
                     candidates.append(judgment)
