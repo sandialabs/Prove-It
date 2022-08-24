@@ -77,16 +77,21 @@ class NotInClass(Relation):
             return self.unfold_not_in  # the default 'unfold' method
         raise AttributeError
 
-    def side_effects(self, judgment):
+    def _record_as_proven(self, judgment):
         '''
         Store the proven non-membership in known_nonmemberships.
+        '''
+        Relation._record_as_proven(self, judgment)
+        NotInClass.known_nonmemberships.setdefault(
+            self.element, set()).add(judgment)
+        
+    def side_effects(self, judgment):
+        '''
         Unfold x not-in S as Not(x in S) as an automatic side-effect.
         If the domain has a 'nonmembership_object' method, side effects
         will also be generated from the 'side_effects' object that it
         generates.
         '''
-        NotInClass.known_nonmemberships.setdefault(
-            self.element, set()).add(judgment)
         yield self.unfold_not_in
         if hasattr(self, 'nonmembership_object'):
             for side_effect in self.nonmembership_object.side_effects(
@@ -148,8 +153,6 @@ class NotInClass(Relation):
         if hasattr(self, 'nonmembership_object'):
             if self.nonmembership_object._readily_provable():
                 return True
-        if self.stronger_known_nonmembership() is not None:
-            return True
         return False
 
     def _readily_disprovable(self):

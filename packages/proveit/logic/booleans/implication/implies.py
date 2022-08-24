@@ -53,8 +53,12 @@ class Implies(TransitiveRelation):
         from proveit.logic.booleans import FALSE
         for side_effect in TransitiveRelation.side_effects(self, judgment):
             yield side_effect
-        if self.antecedent.proven():
+        if self.antecedent.readily_provable():
+            # Derive the consequent by proving the antecedent.
             yield self.derive_consequent  # B given A=>B and A
+        else:
+            yield lambda : self.derive_consequent(assumptions=(
+                    defaults.assumptions + (self.antecedent,)))
         if self.consequent == FALSE:
             # Not(A) given A=>FALSE or A given Not(A)=>FALSE
             yield self.derive_via_contradiction
@@ -70,10 +74,12 @@ class Implies(TransitiveRelation):
 
     def _readily_provable(self):
         '''
-        A => B is readily provable if B is readily provable or A
-        is readily disprovable.
+        A => B is readily provable if B is readily provable given A
+        or A is readily disprovable.
         '''
-        return self.consequent.readily_provable() or (
+        cons_assumptions = defaults.assumptions + (self.antecedent,)
+        return self.consequent.readily_provable(
+            assumptions=cons_assumptions) or (
                 self.antecedent.readily_disprovable())
 
     def _readily_disprovable(self):

@@ -1,5 +1,5 @@
 from proveit import (Literal, Function, Lambda, OperationOverInstances,
-                     ExprTuple, ExprRange, IndexedVar,
+                     ExprTuple, ExprRange, IndexedVar, UnusableProof,
                      defaults, USE_DEFAULTS, ProofFailure,
                      prover, relation_prover, equality_prover)
 from proveit import k, n, x, A, B, P, Q, S
@@ -32,6 +32,16 @@ class Forall(OperationOverInstances):
             condition=condition, conditions=conditions, styles=styles,
             _lambda_map=_lambda_map)
     
+    def _record_as_proven(self, judgment):
+        '''
+        Remember the proven Universal judgments by their
+        instance expressions.
+        '''
+        instance_map = Lambda(judgment.expr.instance_params,
+                              judgment.expr.instance_expr)
+        Forall.known_instance_maps.setdefault(
+                instance_map, set()).add(judgment)
+
     def side_effects(self, judgment):
         '''
         Side-effect derivations to attempt automatically for this
@@ -48,13 +58,6 @@ class Forall(OperationOverInstances):
         # but don't cascade further side-effects which can be
         # problematic.
         yield self._instantiate_generically
-
-        # Remember the proven Universal judgments by their
-        # instance expressions.
-        instance_map = Lambda(judgment.expr.instance_params,
-                              judgment.expr.instance_expr)
-        Forall.known_instance_maps.setdefault(
-                instance_map, set()).add(judgment)
         
     def _readily_provable(self):
         '''
@@ -96,11 +99,16 @@ class Forall(OperationOverInstances):
         '''
         from proveit.logic import SubsetEq
         
-        # First see if we can prove via generalization.
-        if self._readily_provable_via_generalization():
-            return self.conclude_via_generalization()
-        elif self.canonically_labeled()._readily_provable_via_generalization():
-            return self.canonically_labeled().conclude_via_generalization()
+        try:
+            # First see if we can prove via generalization.
+            if self._readily_provable_via_generalization():
+                return self.conclude_via_generalization()
+            elif (self.canonically_labeled()
+                  ._readily_provable_via_generalization()):
+                return self.canonically_labeled().conclude_via_generalization()
+        except UnusableProof:
+            # Try a different strategy if there was an unusable proof.
+            pass
         
         if (self.has_domain() and self.instance_params.is_single 
                 and self.conditions.is_single()):
@@ -172,12 +180,12 @@ class Forall(OperationOverInstances):
             canonical_version = self.canonically_labeled()
             if self._style_id != canonical_version._style_id:
                 # Instantiate the generic form for good measure.
-                canonical_version.prove(**defaults_config).instantiate(
+                canonical_version.prove().instantiate(
                         num_forall_eliminations=len(
                                 self.instance_param_lists()),
-                        assumptions=self.all_conditions())
+                        assumptions=canonical_version.all_conditions())
 
-            return self.prove(**defaults_config).instantiate(
+            return self.prove().instantiate(
                     num_forall_eliminations=len(self.instance_param_lists()),
                     assumptions=self.all_conditions())
 
@@ -210,9 +218,10 @@ class Forall(OperationOverInstances):
             with defaults.temporary() as temp_defaults:
                 temp_defaults.assumptions = (defaults.assumptions + 
                                              tuple(conditions))
-                if automation and not isinstance(expr, Forall):
-                    expr.prove()
                 if expr.proven():
+                    proven_inst_expr = expr.prove()
+                    break
+                elif automation and not isinstance(expr, Forall):
                     proven_inst_expr = expr.prove()
                     break
         if proven_inst_expr is not None:

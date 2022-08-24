@@ -723,6 +723,13 @@ class And(Operation):
         are provably boolean and therefore this conjunction is 
         provably boolean.
         '''
+        from proveit.logic import And
+        # Or.readily_in_bool calls And.readily_in_bool for convenience,
+        # so we have to check if this is really and And:
+        if isinstance(self, And):
+            from . import closure
+            if not self.operands.is_double() and not closure.is_usable():
+                return False
         return And(*self.operands.map_elements(in_bool)).readily_provable()
 
     @relation_prover

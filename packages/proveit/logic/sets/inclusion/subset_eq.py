@@ -56,26 +56,29 @@ class SubsetEq(InclusionRelation):
                 pass
         if Equals(self.subset, self.superset).readily_provable():
             return True
-        if SetEquiv(self.subset, self.superset).readily_provable():
+        if SetEquiv(self.subset, self.superset).proven():
             return True
         # No worry about conflicts with assumptions because the 
         # variable will be bound by a quantifier:
         _x = safe_dummy_var(self, avoid_default_assumption_conflicts=False)
         # forall_{x in A} x in B => A subseteq B:
         univ_quant = Forall(_x, InSet(_x, self.superset), domain=self.subset)
-        return univ_quant.readily_provable()
+        return univ_quant.proven()
 
     @prover
     def conclude(self, **defaults_config):
         from proveit import ProofFailure
         from proveit.logic import Equals, SetOfAll, SetEquiv
+        from . import subset_eq_via_equality
 
         # Equal sets include each other.
-        if Equals(*self.operands.entries).readily_provable():
+        if Equals(*self.operands.entries).readily_provable() and (
+                subset_eq_via_equality.is_usable()):
             return self.conclude_via_equality()
 
         # Equivalent sets include each other.
-        if SetEquiv(*self.operands.entries).readily_provable():
+        # Using "proven" here on purpose.
+        if SetEquiv(*self.operands.entries).proven():
             return self.conclude_via_equivalence()
 
         # Check for special case of set comprehension

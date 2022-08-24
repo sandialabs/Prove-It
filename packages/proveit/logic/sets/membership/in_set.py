@@ -36,12 +36,12 @@ class InSet(InClass):
         '''
         This membership is readily provable if the membership
         object indicates that it is readily provable or there is a 
-        known stronger membership (with known equal elements and the
+        known as-strong membership (with known equal elements and the
         domain a subset of the desired domain).
         '''
         if InClass._readily_provable(self):
             return True
-        if self.stronger_known_membership() is not None:
+        if self.as_strong_known_membership() is not None:
             return True
         return False
 
@@ -49,52 +49,78 @@ class InSet(InClass):
     def conclude(self, **defaults_config):
         '''
         Attempt to conclude that the element is in the domain.  First
-        see if there is a stronger known membership to use.  If not,
-        use the InClass conclude strategies (which uses the Relation
-        conclude stragegies that simplify both sides and then uses
-        the domain-specific conclude method of the membership object
-        as a last resort).
+        see if there is an equivalent known membership to use
+        (same domain).  If not, see if there is a membership object
+        that is readily provable and conclude via that object if so.
+        Then check for a membership that is at least as strong with
+        a possibly different domain to use.  Finally, defer to
+        InClass.conclude which defers to InRelation.conclude and
+        attempts simplifications.
         '''
-        from proveit.logic import Equals, SubsetEq
-
         # See if the element, or something known to be equal to
         # the element, is known to be a member of the domain or a subset
         # of the domain.
-        stronger_membership = self.stronger_known_membership()
-        if stronger_membership is not None:
-            elem_sub = stronger_membership.element
-            if stronger_membership.domain == self.domain:
-                elem_sub_in_domain = stronger_membership
-            else:
-                eq_rel = Equals(stronger_membership.domain, self.domain)
-                if eq_rel.readily_provable():
-                    # domains are equal -- just substitute the domain.
-                    elem_sub_in_domain = eq_rel.sub_right_side_into(
-                            stronger_membership.inner_expr().domain)
-                else:
-                    # S is a superset of R, so now we can prove x in S.
-                    sub_rel = SubsetEq(stronger_membership.domain, self.domain)
-                    try:
-                        sub_rel.prove()
-                    except ProofFailure:
-                        # May have been blocked to avoid infinite
-                        # recursion.
-                        return InClass.conclude(self)
-                    elem_sub_in_domain = sub_rel.derive_superset_membership(
-                            elem_sub)
-            if elem_sub == self.element:
-                return elem_sub_in_domain # done
-            # Just need to sub in the element for _elem_sub.
-            return elem_sub_in_domain.inner_expr().element.substitute(
-                    self.element)
-        return InClass.conclude(self)
+        as_strong_membership = self.as_strong_known_membership()
+        if as_strong_membership is not None:
+            if as_strong_membership.domain == self.domain:
+                # Use an equivalent known membership.
+                return self.conclude_from_as_strong_membership(
+                        as_strong_membership)
 
-    def stronger_known_membership(self):
+        if hasattr(self, 'membership_object') and (
+                self.membership_object._readily_provable()):
+            # Don't bother with a fancy, indirect approach if
+            # we can readily conclude membership via the membership
+            # object.
+            return self.membership_object.conclude()
+
+        if as_strong_membership is not None:
+            # Use a known membership that is at least as strong.
+            return self.conclude_from_as_strong_membership(
+                    as_strong_membership)
+
+        return InClass.conclude(self)
+    
+    @prover
+    def conclude_from_as_strong_membership(self, as_strong_membership,
+                                           **defaults_config):
         '''
-        If there is a known membership that is stronger than this one,
+        Conclude from a membership with an equal element and a domain
+        that is a subset of the desired domain.
+        '''
+        from proveit.logic import Equals, SubsetEq
+        elem_sub = as_strong_membership.element
+        if as_strong_membership.domain == self.domain:
+            elem_sub_in_domain = as_strong_membership
+        else:
+            eq_rel = Equals(as_strong_membership.domain, self.domain)
+            if eq_rel.readily_provable():
+                # domains are equal -- just substitute the domain.
+                elem_sub_in_domain = eq_rel.sub_right_side_into(
+                        as_strong_membership.inner_expr().domain)
+            else:
+                # S is a superset of R, so now we can prove x in S.
+                sub_rel = SubsetEq(as_strong_membership.domain, self.domain)
+                try:
+                    sub_rel.prove()
+                except ProofFailure:
+                    # May have been blocked to avoid infinite
+                    # recursion.
+                    return InClass.conclude(self)
+                elem_sub_in_domain = sub_rel.derive_superset_membership(
+                        elem_sub)
+        if elem_sub == self.element:
+            return elem_sub_in_domain # done
+        # Just need to sub in the element for _elem_sub.
+        return elem_sub_in_domain.inner_expr().element.substitute(
+                self.element)        
+
+    def as_strong_known_membership(self):
+        '''
+        If there is a known membership that is as strong as this one,
         where the element is known to be equal this one's element
         and the domain is a subset of this one's domain, return this
-        stronger known membership.  Otherwise, return None.
+        as-strong known membership.  Otherwise, return None.
         '''
         from proveit.logic import Equals, SubsetEq
         for elem_sub in Equals.yield_known_equal_expressions(self.element):

@@ -68,17 +68,20 @@ class Exists(OperationOverInstances):
                             return self.conclude_via_domain_inclusion(
                                     subset)
         
-    
-    def side_effects(self, judgment):
+    def _record_as_proven(self, judgment):
         '''
-        Side-effect derivations to attempt automatically for an exists operations.
+        Remember the proven Existential judgments by their
+        instance expressions.
         '''
-        # Remember the proven Existential judgments by their
-        # instance expressions.
         instance_map = Lambda(judgment.expr.instance_params,
                               judgment.expr.instance_expr)        
         Exists.known_instance_maps.setdefault(
                 instance_map, set()).add(judgment)
+
+    def side_effects(self, judgment):
+        '''
+        Side-effect derivations to attempt automatically for an exists operations.
+        '''
         return
         yield self.derive_negated_forall  # derive the negated forall form
 
@@ -231,10 +234,9 @@ class Exists(OperationOverInstances):
         Deduce notexists_{x | Q(x) P(x) assuming not(exists_{x | Q(x) P(x)),
         where self is exists_{x | Q(x) P(x).
         '''
-        raise NotImplementedError("Need to update")
         from .not_exists import NotExists
         not_exists_expr = NotExists(
-            self.instance_vars,
+            self.instance_params,
             self.instance_expr,
             domain=self.domain,
             conditions=self.conditions)

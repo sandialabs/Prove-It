@@ -174,6 +174,9 @@ class Not(Operation):
         Returns True if we can readily prove that the operand is
         provably boolean and therefore this negation is boolean.
         '''
+        from . import closure
+        if not closure.is_usable():
+            return False
         return in_bool(self.operand).readily_provable()
 
     @relation_prover

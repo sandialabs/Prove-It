@@ -1,6 +1,6 @@
 from proveit import OperationOverInstances
 from proveit import Literal, Operation, Lambda, prover, relation_prover
-from proveit import n, x, P, Q, S
+from proveit import n, x, y, P, Q, S
 
 
 class NotExists(OperationOverInstances):
@@ -43,6 +43,7 @@ class NotExists(OperationOverInstances):
         '''
         from . import not_exists_unfolding
         _x = _y = self.instance_params
+        _n = _x.num_elements()
         _Q = Lambda(_x, self.conditions)
         _P = Lambda(_x, self.instance_expr)
         return not_exists_unfolding.instantiate(
@@ -56,6 +57,7 @@ class NotExists(OperationOverInstances):
         '''
         from . import not_exists_folding
         _x = _y = self.instance_params
+        _n = _x.num_elements()
         _Q = Lambda(_x, self.conditions)
         _P = Lambda(_x, self.instance_expr)
         return not_exists_folding.instantiate(

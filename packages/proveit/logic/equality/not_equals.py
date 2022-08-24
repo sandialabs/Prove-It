@@ -45,14 +45,14 @@ class NotEquals(Relation):
         if (self.lhs == FALSE and self.rhs.readily_provable()) or (
                 self.rhs == FALSE and self.lhs.readily_provable()):
             return True
-        if hasattr(self.lhs, 'readily_not_equal'):
-            return self.lhs.readily_not_equal(self.rhs)
-        if hasattr(self.rhs, 'readily_not_equal'):
-            return self.rhs.readily_not_equal(self.lhs)
         if Not(Equals(self.lhs, self.rhs)).proven():
             # Use 'proven' rather than 'readily_proven' here to avoid
             # infinite recursion.
             return True
+        if hasattr(self.lhs, 'readily_not_equal'):
+            return self.lhs.readily_not_equal(self.rhs)
+        if hasattr(self.rhs, 'readily_not_equal'):
+            return self.rhs.readily_not_equal(self.lhs)
         return False        
 
     def _readily_disprovable(self):
@@ -65,17 +65,18 @@ class NotEquals(Relation):
     @prover
     def conclude(self, **defaults_config):
         from proveit.logic import TRUE, FALSE, Not
-        if is_irreducible_value(self.lhs) and is_irreducible_value(self.rhs):
+        lhs, rhs = self.lhs, self.rhs
+        if is_irreducible_value(lhs) and is_irreducible_value(rhs):
             # prove that two irreducible values are not equal
-            return self.lhs.not_equal(self.rhs)
-        if self.lhs in (TRUE, FALSE) or self.rhs in (TRUE, FALSE):
+            return lhs.not_equal(rhs)
+        if lhs in (TRUE, FALSE) or rhs in (TRUE, FALSE):
             try:
                 # prove something is not false 
                 # by proving it to be true
                 return self.conclude_via_double_negation()
             except BaseException:
                 pass
-        if Not(Equals(self.lhs, self.rhs)).proven():
+        if Not(Equals(lhs, rhs)).proven():
             # Conclude (x ≠ y) by knowing that Not(x = y) is true. 
             return self.conclude_as_folded()
 
@@ -87,7 +88,7 @@ class NotEquals(Relation):
             # Both sides are already irreducible or simplified.
             pass
 
-        if hasattr(self.lhs, 'not_equal'):
+        if hasattr(lhs, 'not_equal'):
             # If there is a 'not_equal' method, use that.
             # The responsibility then shifts to that method for
             # determining what strategies should be attempted
@@ -96,7 +97,7 @@ class NotEquals(Relation):
             # A good practice is to try the 'conclude_as_folded'
             # strategy if it doesn't fall into any specially-handled
             # case.
-            return self.lhs.not_equal(self.rhs)
+            return lhs.not_equal(rhs)
 
         return self.conclude_as_folded()
 

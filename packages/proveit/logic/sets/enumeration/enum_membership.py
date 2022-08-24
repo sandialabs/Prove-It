@@ -1,7 +1,6 @@
 from proveit import (defaults, USE_DEFAULTS, ExprTuple,
                      prover, equality_prover, relation_prover)
-from proveit.logic import SetMembership, SetNonmembership
-from proveit.numbers import num
+from proveit.logic.sets.membership import SetMembership, SetNonmembership
 from proveit import a, b, c, m, n, x, y
 
 
@@ -43,9 +42,19 @@ class EnumMembership(SetMembership):
                 return in_enumerated_set.instantiate(
                     {m: _m, n: _n, a: _a, b: _b, c: _c}, auto_simplify=False)
             except (ProofFailure, ValueError):
-                _y = enum_elements
-                _n = _y.num_elements()
-                return fold.instantiate({n: _n, x: self.element, y:_y})
+                return self.conclude_as_folded()
+
+    @prover
+    def conclude_as_folded(self, **defaults_config):
+        from . import fold
+        enum_elements = self.domain.elements
+        _y = enum_elements
+        _n = _y.num_elements()
+        if fold.is_usable():
+            return fold.instantiate({n: _n, x: self.element, y:_y})
+        else:
+            # fold isn't usable; let's prove this by definition.
+            return self.definition().derive_left_via_equality()
 
     @equality_prover('defined', 'define')
     def definition(self, **defaults_config):

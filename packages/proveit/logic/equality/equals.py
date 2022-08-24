@@ -5,12 +5,12 @@ from proveit import (Expression, Judgment, as_expression,
                      InnerExprGenerator, free_vars)
 from proveit.util import OrderedSet
 from proveit import Literal, Operation, Lambda, ArgumentExtractionError
-from proveit import TransitiveRelation, TransitivityException
+from proveit.relation import EquivRelation, TransitivityException
 from proveit import relation_prover, prover
 from proveit.logic.irreducible_value import is_irreducible_value
 from proveit import a, b, c, d, k, A, B, P, Q, f, n, x, y, z
 
-class Equals(TransitiveRelation):
+class Equals(EquivRelation):
     # operator of the Equals operation
     _operator_ = Literal(string_format='=', theory=__file__)
 
@@ -39,8 +39,7 @@ class Equals(TransitiveRelation):
     initializing = set()
 
     def __init__(self, a, b, *, styles=None):
-        TransitiveRelation.__init__(self, Equals._operator_, a, b,
-                                    styles=styles)
+        EquivRelation.__init__(self, Equals._operator_, a, b, styles=styles)
         '''
         # May be better not to be proactive but we need to see if this
         # breaks anything.
@@ -54,7 +53,7 @@ class Equals(TransitiveRelation):
             Equals.initializing.remove(self)
         '''
 
-    def side_effects(self, judgment):
+    def _record_as_proven(self, judgment):
         '''
         Record the judgment in Equals.known_equalities, associated from
         the left hand side and the right hand side.  This information
@@ -62,15 +61,8 @@ class Equals(TransitiveRelation):
         If the right hand side is an "irreducible value" (see
         is_irreducible_value), also record it in
         Equals.known_evaluation_sets for use when the evaluation
-        method is called.   Some side-effects derivations are also
-        attempted depending upon the form of this equality.
-        If the rhs is an "irreducible value" (see is_irreducible_value),
-        also record the judgment in the Equals.known_evaluation_sets 
-        dictionary, for use when the simplification or evaluation 
-        method is called. Some side-effects derivations are also 
-        attempted depending upon the form of this equality.
+        method is called.   
         '''
-        from proveit.logic.booleans import TRUE, FALSE
         Equals.known_equalities.setdefault(
                 self.lhs, OrderedSet()).add(judgment)
         Equals.known_equalities.setdefault(
@@ -81,8 +73,16 @@ class Equals(TransitiveRelation):
             # an evaluation.
             assert isinstance(judgment.expr, Equals)
             Equals.known_evaluation_sets.setdefault(
-                self.lhs, set()).add(judgment)
+                self.lhs, set()).add(judgment)        
 
+    def side_effects(self, judgment):
+        '''
+        Derive the reversed form.  If the rhs is TRUE/FALSE derive
+        the lhs or its negation.  Derive FALSE if the rhs is FALSE
+        and the lhs is readily provable.  Apply 'equality_side_effects'
+        ifthe lhs has a method with this name.
+        '''
+        from proveit.logic.booleans import TRUE, FALSE
         if self.lhs == self.rhs:
             # Don't bother with side-effects for reflexive equalities.
             return
@@ -90,12 +90,9 @@ class Equals(TransitiveRelation):
         # automatically derive the reversed form which is equivalent
         yield self.derive_reversed
         if self.rhs == FALSE:
-            try:
-                self.lhs.prove(automation=False)
+            if self.lhs.proven(): # readily provable doesn't seem to work here
                 # derive FALSE given lhs=FALSE and lhs.
                 yield self.derive_contradiction
-            except ProofFailure:
-                pass
             # Use this form after merging in 'Expression.proven' commite:
             # if self.lhs.proven(): # If lhs is proven using default assumptions.
             #    # derive FALSE given lhs=FALSE and lhs.
@@ -141,7 +138,9 @@ class Equals(TransitiveRelation):
                 Iff(self.lhs, self.rhs).readily_provable() and 
                 in_bool(self.lhs).readily_provable() and
                 in_bool(self.rhs).readily_provable()):
-            return True
+            from proveit.logic.booleans.implication import eq_from_iff
+            if eq_from_iff.is_usable():
+                return True
         for eq_expr in Equals.yield_known_equal_expressions(self.lhs):
             if eq_expr == self.rhs:
                 return True
@@ -162,43 +161,43 @@ class Equals(TransitiveRelation):
         irreducible). Use conclude_via_transitivity for transitivity cases.
         '''
         from proveit.logic import TRUE, FALSE, Iff, in_bool
-        if self.lhs == self.rhs:
+        lhs, rhs = self.lhs, self.rhs
+        if lhs == rhs:
             # Trivial x=x
             return self.conclude_via_reflexivity()
-        if (self.lhs in (TRUE, FALSE)) or (self.rhs in (TRUE, FALSE)):
+        if (lhs in (TRUE, FALSE)) or (rhs in (TRUE, FALSE)):
             try:
                 # Try to conclude as TRUE or FALSE.
                 return self.conclude_boolean_equality()
             except ProofFailure:
                 pass
+        
+        if lhs.canonical_form() == rhs.canonical_form():
+            # If the canonical forms are the same, we should be able
+            # to prove equality via 'deduce_equality'.
+            return lhs.deduce_equality(self)
 
-        if not isinstance(self.lhs, ExprTuple) and (
-                not isinstance(self.rhs, ExprTuple) and
-                Iff(self.lhs, self.rhs).readily_provable() and 
-                in_bool(self.lhs).readily_provable() and
-                in_bool(self.rhs).readily_provable()):
+        if not isinstance(lhs, ExprTuple) and (
+                not isinstance(rhs, ExprTuple) and
+                Iff(lhs, rhs).readily_provable() and 
+                in_bool(lhs).readily_provable() and
+                in_bool(rhs).readily_provable()):
             # There is mutual implication both sides are known to be
             # boolean.  Conclude equality via mutual implication.
-            return Iff(self.lhs, self.rhs).derive_equality()
+            self.conclude_via_mutual_implication()
         
         # Try the 'deduce_equality' method.  If NotImplementedError
         # or UnsatisfiedPrerequisites is raised, we'll move on.
         try:
-            eq = self.lhs.deduce_equality(self)
-            if eq.expr != self:
-                raise ValueError("'deduce_equality' not implemented "
-                                 "correctly; must deduce the 'equality' "
-                                 "that it is given if it can: "
-                                 "'%s' != '%s'" % (eq.expr, self))
-            return eq
+            return  lhs.deduce_equality(self)
         except (NotImplementedError, UnsatisfiedPrerequisites):
             # 'deduce_equality' not implemented for this 
             # particular case, so carry on with default approach.
             pass
 
-        # Try to prove equality via standard TransitiveRelation
+        # Try to prove equality via standard EquiRelation
         # strategies (simplify both sides then try transitivity).
-        return TransitiveRelation.conclude(self)
+        return EquivRelation.conclude(self)
 
     @prover
     def conclude_negation(self, **defaults_config):
@@ -207,6 +206,16 @@ class Equals(TransitiveRelation):
         '''
         from proveit.logic import NotEquals
         return NotEquals(self.lhs, self.rhs).unfold()
+
+
+    @prover
+    def conclude_via_mutual_implication(self, **defaults_config):
+        '''
+        Prove A = B via A <=> B.
+        '''
+        from proveit.logic import Iff
+        lhs, rhs = self.lhs, self.rhs
+        return Iff(lhs, rhs).derive_equality()
 
     @prover
     def conclude_via_direct_substitution(self, **defaults_config):
@@ -479,6 +488,15 @@ class Equals(TransitiveRelation):
         derive_reversed().
         '''
         return Equals(self.rhs, self.lhs)
+
+    @equality_prover("reversed", "reverse")
+    def symmetrization(self, **defaults_config):
+        '''
+        Prove (x = y) = (y = x).
+        '''
+        from . import equals_symmetry
+        return equals_symmetry.instantiate({y:self.lhs, x:self.rhs})
+
 
     @staticmethod
     def yield_known_equal_expressions(expr, *, exceptions=None,

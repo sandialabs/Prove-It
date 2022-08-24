@@ -85,11 +85,13 @@ class Iff(TransitiveRelation):
         if self.A.readily_provable() and self.B.readily_provable():
             # A <=> B because A and B are both true.
             from . import iff_via_both_true
-            return iff_via_both_true.instantiate({A:self.A, B:self.B})
+            if iff_via_both_true.is_usable():
+                return iff_via_both_true.instantiate({A:self.A, B:self.B})
         if  self.A.readily_disprovable() and self.B.readily_disprovable():
             # A <=> B because A and B are both false.
             from . import iff_via_both_false
-            return iff_via_both_false.instantiate({A:self.A, B:self.B})
+            if iff_via_both_false.is_usable():
+                return iff_via_both_false.instantiate({A:self.A, B:self.B})
         # Introduce the Iff via implications each way as a direct 
         # consequence of the definition.
         return self.conclude_by_definition()
@@ -210,8 +212,11 @@ class Iff(TransitiveRelation):
         '''
         Conclude (A <=> B) assuming both (A => B), (B => A).
         '''
-        from . import iff_intro
-        return iff_intro.instantiate({A: self.A, B: self.B})
+        from . import iff_def, iff_intro
+        if iff_intro.is_usable():
+            return iff_intro.instantiate({A: self.A, B: self.B})
+        return (iff_def.instantiate({A: self.A, B: self.B})
+                .derive_left_via_equality())
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
@@ -243,8 +248,8 @@ class Iff(TransitiveRelation):
         provably boolean and therefore this Iff is boolean.
         '''
         from proveit.logic import in_bool
-        return (in_bool(self.antecedent).readily_provable() and
-                in_bool(self.consequent).readily_provable())
+        return (in_bool(self.A).readily_provable() and
+                in_bool(self.B).readily_provable())
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
@@ -264,8 +269,8 @@ class Iff(TransitiveRelation):
         # We must be able to prove this Iff to do this derivation --
         # then either eq_from_iff or eq_from_mutual_impl can be used.
         self.prove()
-        # eq_from_mutual_impl may make for a shorter proof; do it both ways (if
-        # both are usable)
+        # eq_from_mutual_impl may make for a shorter proof; do it both 
+        # ways (if both are usable)
         if not eq_from_iff.is_usable():
             return eq_from_mutual_impl.instantiate(
                 {A: self.A, B: self.B})

@@ -57,6 +57,26 @@ class Or(Operation):
         Specifically, if any operand is provable, than the disjunction
         should be provable.
         '''
+        from . import (or_if_left, or_if_right, or_if_both,
+                       or_if_only_left, or_if_only_right)
+        operands = self.operands
+        if operands.is_double():
+            _A, _B = operands
+            provableA = _A.readily_provable()
+            provableB = _B.readily_provable()
+            if provableA and or_if_left.is_usable():
+                return True
+            if provableB and or_if_right.is_usable():
+                return True
+            if provableA and provableB and or_if_both.is_usable():
+                return True
+            disprovableA = _A.readily_disprovable()
+            disprovableB = _B.readily_disprovable()
+            if provableA and disprovableB and or_if_only_left.is_usable():
+                return True
+            if disprovableA and provableB and or_if_only_right.is_usable():
+                return True
+            return False
         existential_quant = self._as_quantification()
         if existential_quant is not None:
             # See if the corresponding existential quantification is
@@ -174,7 +194,6 @@ class Or(Operation):
         from proveit.logic import Not, And
         if self.operands.num_entries() == 0:
             return  # No side-effects needed for [Or]()
-        yield self.derive_in_bool  # A or B or .. or .. Z in Boolean
         if self.operands.is_double():  # Not(A or B)
             yield self.deduce_not_left_if_neither  # Not(A)
             yield self.deduce_not_right_if_neither  # Not(B)
@@ -632,7 +651,10 @@ class Or(Operation):
         are provably boolean and therefore this disjunction is 
         provably boolean.
         '''
+        from . import closure
         from proveit.logic import And
+        if not self.operands.is_double() and not closure.is_usable():
+            return False
         # The requirement for a conjunction is the same for a 
         # disjunction -- all operands must be provably boolean.
         return And.readily_in_bool(self)
@@ -662,23 +684,28 @@ class Or(Operation):
         '''
         from . import or_if_any, or_if_left, or_if_right
         index = self.operands.index(true_operand)
+        judgment = None
         if self.operands.is_double():
             if index == 0:
                 if self.operands[1].readily_provable():
                     # May be a shorter proof
-                    self.conclude_via_both()
+                    judgment = self.conclude_via_both()
                 elif self.operands[1].readily_disprovable():
                     # May be a shorter proof
-                    self.conclude_via_only_left()                    
+                    judgment = self.conclude_via_only_left()
+                if judgment is not None and not or_if_left.is_usable():
+                    return judgment
                 return or_if_left.instantiate(
                     {A: self.operands[0], B: self.operands[1]})
             elif index == 1:
                 if self.operands[0].readily_provable():
                     # May be a shorter proof
-                    self.conclude_via_both()
+                    judgment = self.conclude_via_both()
                 elif self.operands[0].readily_disprovable():
                     # May be a shorter proof
-                    self.conclude_via_only_right()    
+                    judgment = self.conclude_via_only_right()    
+                if judgment is not None and not or_if_right.is_usable():
+                    return judgment
                 return or_if_right.instantiate(
                     {A: self.operands[0], B: self.operands[1]})
         _A, _B, _C = (self.operands[:index], self.operands[index],

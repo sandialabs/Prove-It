@@ -92,15 +92,20 @@ class InClass(Relation):
         else:
             return 'contains_C'
 
-    def side_effects(self, judgment):
+    def _record_as_proven(self, judgment):
         '''
         Store the proven membership in known_memberships.
+        '''
+        Relation._record_as_proven(self, judgment)
+        InClass.known_memberships.setdefault(
+                self.element, OrderedSet()).add(judgment)
+        
+    def side_effects(self, judgment):
+        '''
         If the domain has a 'membership_object' method, side effects
         will also be generated from the 'side_effects' object that it
         generates.
         '''
-        InClass.known_memberships.setdefault(
-                self.element, OrderedSet()).add(judgment)
         if hasattr(self, 'membership_object'):
             for side_effect in self.membership_object.side_effects(judgment):
                 yield side_effect
@@ -161,6 +166,14 @@ class InClass(Relation):
         If that doesn't work, try using the domain-specific 'conclude' 
         method of the membership object.
         '''
+        
+        if hasattr(self, 'membership_object') and (
+                self.membership_object._readily_provable()):
+            # Don't bother with a fancy, indirect approach if
+            # we can readily conclude membership via the membership
+            # object.
+            return self.membership_object.conclude()
+        
         # Try the standard Relation strategies -- evaluate or
         # simplify both sides.
         try:

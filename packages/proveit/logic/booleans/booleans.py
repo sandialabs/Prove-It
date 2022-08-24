@@ -1,4 +1,4 @@
-from proveit import (Function, Literal, USE_DEFAULTS, ProofFailure,
+from proveit import (Function, Literal, ProofFailure, UnusableProof,
                      defaults, prover, relation_prover, equality_prover)
 from proveit.logic.irreducible_value import IrreducibleValue
 from proveit.logic.sets.membership import SetMembership, SetNonmembership
