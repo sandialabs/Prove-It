@@ -39,12 +39,13 @@ class Abs(NumberOperation):
     @equality_prover('distributed', 'distribute')
     def distribution(self, **defaults_config):
         '''
-        Equate this absolute value with its distribution over a product
-        or fraction.
+        Equate this absolute value with its distribution over a product,
+        fraction, or a sin() or cos().
         '''
         from . import abs_frac, abs_prod, abs_even
-        from proveit import n, x
+        from proveit import n, t, x
         from proveit.numbers import zero, Neg, Div, Mult
+        from proveit.trigonometry import Sin, Cos
         if isinstance(self.operand, Neg):
             return abs_even.instantiate({x: self.operand.operand})
         elif isinstance(self.operand, Div):
@@ -59,6 +60,14 @@ class Abs(NumberOperation):
             _x = self.operand.operands
             _n = _x.num_elements()
             return abs_prod.instantiate({n: _n, x: _x})
+        elif isinstance(self.operand, Sin):
+            from proveit.trigonometry import abs_sin
+            _t = self.operand.operand
+            return abs_sin.instantiate({t: _t})
+        elif isinstance(self.operand, Cos):
+            from proveit.trigonometry import abs_cos
+            _t = self.operand.operand
+            return abs_cos.instantiate({t: _t})
         else:
             raise ValueError(
                 'Unsupported operand type for Abs.distribution() '
@@ -103,24 +112,27 @@ class Abs(NumberOperation):
         expression assuming the operand has been simplified.
         
         Handles a number of absolute value simplifications:
-            1. ||x|| = |x| given x is complex
-            2. |x| = x given x ≥ 0
-            3. |x| = -x given x ≤ 0
+             1. ||x|| = |x| given x is complex
+             2. |x| = x given x ≥ 0
+             3. |x| = -x given x ≤ 0
                              (may try to prove this if easy to do)
-            4. |-x| = |x|
-            5. |x_1 * ... * x_n| = |x_1| * ... * |x_n|
-            6. |a / b| = |a| / |b|
-            7. |exp(i a)| = 1 given a in Real
-            8. |r exp(i a) - r exp(i b)| = 2 r sin(|a - b|/2)
+             4. |-x| = |x|
+             5. |x_1 * ... * x_n| = |x_1| * ... * |x_n|
+             6. |a / b| = |a| / |b|
+             7. |exp(i a)| = 1 given a in Real
+             8. |r exp(i a) - r exp(i b)| = 2 r sin(|a - b|/2)
                 given a and b in Real.
-            9. |x_1 + ... + x_n| = +/-(x_1 + ... + x_n) if
-               the terms are known to be all non-negative
-               or all non-positive.
+             9. |x_1 + ... + x_n| = +/-(x_1 + ... + x_n) if
+                the terms are known to be all non-negative
+                or all non-positive.
+            10. |sin(t)| = sin|t| for any real t
+            11. |cos(t)| = cos|t| for any real t
         '''
         from proveit.logic import Equals
         from proveit.numbers import zero, e, Add, Neg, LessEq, Mult, Div, Exp
         from proveit.numbers import RealNeg, RealPos, RealNonNeg, RealNonPos
         from proveit.logic import EvaluationError, is_irreducible_value
+        from proveit.trigonometry import Cos, Sin
                 
         if is_irreducible_value(self.operand):
             if isinstance(self.operand, Neg):
@@ -195,6 +207,12 @@ class Abs(NumberOperation):
                 # Do another pass now that we know the sign of
                 # the operand.
                 return self.shallow_simplification()
+
+        # |sin(t)| = sin|t| for any real t
+        # |cos(t)| = cos|t| for any real t
+        if (isinstance(self.operand, Sin)
+            or isinstance(self.operand, Cos)):
+            return self.distribution()
 
         # Default is no simplification.
         return Equals(self, self).prove()

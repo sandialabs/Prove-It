@@ -12,7 +12,6 @@ proveit.logic.booleans.conjunction.right_from_and
 proveit.logic.booleans.conjunction.true_and_true
 proveit.logic.booleans.disjunction.each_is_bool
 proveit.logic.booleans.disjunction.left_if_not_right
-proveit.logic.booleans.false_eq_false
 proveit.logic.booleans.fold_is_bool
 proveit.logic.booleans.from_not_false
 proveit.logic.booleans.implication.not_true_via_contradiction

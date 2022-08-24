@@ -173,16 +173,22 @@ class Div(NumberOperation):
                 # we have something like 0/x so reduce to 0
                 expr = eq.update(expr.zero_numerator_reduction())
         
-        # finally, check if we have something like (x/(y/z))
+        # finally, check if we have something like
+        # (x/(y/z)) or ((x/y)/z)
         # but! remember to check here if we still even have a Div expr
         # b/c some of the work above might have changed it to
         # something else!
-        if (isinstance(expr, Div)
+        if (isinstance(expr, Div) # (x/(y/z))
             and isinstance(expr.denominator, Div)
             and NotEquals(expr.denominator.numerator, zero).readily_provable()
             and NotEquals(expr.denominator.denominator, 
                           zero).readily_provable()):
             expr = eq.update(expr.div_in_denominator_reduction())
+        if (isinstance(expr, Div) # (x/y)/z)
+            and isinstance(expr.numerator, Div)
+            and NotEquals(expr.numerator.denominator, zero).proven()
+            and NotEquals(expr.denominator, zero).proven() ):
+            expr = eq.update(expr.div_in_numerator_reduction())
 
         if Div._simplification_directives_.distribute and (
                 isinstance(self.numerator, Add) or 
@@ -313,6 +319,25 @@ class Div(NumberOperation):
                 {x: self.numerator, y: self.denominator.numerator,
                  z: self.denominator.denominator})
 
+    @equality_prover('div_in_numerator_reduced', 'div_in_numerator_reduce')
+    def div_in_numerator_reduction(self, **defaults_config):
+        '''
+        Deduce and return an equality between self of the form
+        (x/y)/z (i.e. a fraction with a fraction as its numerator)
+        and the form x/(yz). Will need to know or assume that x, y, z
+        are Complex with y != 0 and z != 0.
+        '''
+        if (not isinstance(self.numerator, Div)):
+            raise ValueError(
+                    "Div.div_in_numerator_reduction() method only "
+                    "applicable when the numerator is itself a Div."
+                    "Instead we have the expr {0} with numerator {1}.".
+                    format(self, self.numerator))
+        from proveit.numbers.division import numerator_frac_reduction
+        return numerator_frac_reduction.instantiate(
+                {x: self.numerator.numerator, y: self.numerator.denominator,
+                 z: self.denominator})
+
 
     @equality_prover('all_canceled', 'all_cancel')
     def cancelations(self, **defaults_config):
@@ -359,7 +384,7 @@ class Div(NumberOperation):
         Assumptions or previous work might be required to establish
         that the term_to_cancel is non-zero.
         '''
-        from proveit.numbers import one, Exp, Mult
+        from proveit.numbers import one, Exp, Mult, Neg
 
         if self.numerator == self.denominator == term_to_cancel:
             # x/x = 1
@@ -377,13 +402,18 @@ class Div(NumberOperation):
             #     raise ValueError("%s not in the numerator of %s"
             #                      % (term_to_cancel, self))
             if ((not isinstance(self.numerator, Mult)
-                 and not isinstance(self.numerator, Exp))
+                 and not isinstance(self.numerator, Exp)
+                 and not isinstance(self.numerator, Neg))
                 or (isinstance(self.numerator, Mult)
                     and term_to_cancel not in self.numerator.operands)
                 or (isinstance(self.numerator, Exp)
                     and not (term_to_cancel == self.numerator.base
                              or (isinstance(term_to_cancel, Exp)
-                                 and term_to_cancel.base == self.numerator.base )))):
+                                 and term_to_cancel.base == self.numerator.base )))
+                or (isinstance(self.numerator, Neg)
+                    and not (term_to_cancel == self.numerator.operand )
+                    and not (isinstance(self.numerator.operand, Mult)
+                             and term_to_cancel in self.numerator.operand.operands) ) ):
                 raise ValueError("%s not in the numerator of %s"
                                  % (term_to_cancel, self))
             # Factor the term_to_cancel from the numerator to the left.

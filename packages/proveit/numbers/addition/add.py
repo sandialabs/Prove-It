@@ -275,9 +275,7 @@ class Add(NumberOperation):
             return zero # Add() = 0
         if len(remainder_to_rational_coef) == 1:
             # special case to avoid infinite recursion
-            # print("Caught the special case!")
             remainder, coeff = next(iter(remainder_to_rational_coef.items()))
-            # print("coeff, remainder = {0}, {1}".format(coeff, remainder))
             if coeff == one:
                 return remainder
         if contains_only_numeric_rationals:
@@ -622,7 +620,6 @@ class Add(NumberOperation):
                     expr = eq.update(expr.association(
                             _n, 1, replacements=[inner_simplification],
                             auto_simplify=False))
-                # print("n, length", n, length)
                 if (isinstance(operand, Add) or
                         (isinstance(operand, Neg) and
                          isinstance(operand.operand, Add))):

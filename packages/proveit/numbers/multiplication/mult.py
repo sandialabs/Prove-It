@@ -1217,13 +1217,26 @@ class Mult(NumberOperation):
                     auto_simplify=False))
             return eq.relation
 
-        if (idx is None and self.factors.is_double() and
-                all(isinstance(factor, Div) for factor in self.factors)):
-            return prod_of_fracs.instantiate(
-                {x: self.factors[0].numerator,
-                 y: self.factors[1].numerator,
-                 z: self.factors[0].denominator,
-                 w: self.factors[1].denominator})
+        if (idx is None and self.factors.is_double()):
+            if all(isinstance(factor, Div) for factor in self.factors):
+                return prod_of_fracs.instantiate(
+                    {x: self.factors[0].numerator,
+                     y: self.factors[1].numerator,
+                     z: self.factors[0].denominator,
+                     w: self.factors[1].denominator})
+            if isinstance(self.factors[0], Div):
+                from proveit.numbers.division import mult_frac_left
+                return mult_frac_left.instantiate(
+                    {x: self.factors[0].numerator,
+                     y: self.factors[1],
+                     z: self.factors[0].denominator})
+            if isinstance(self.factors[1], Div):
+                from proveit.numbers.division import mult_frac_right
+                return mult_frac_right.instantiate(
+                    {x: self.factors[0],
+                     y: self.factors[1].numerator,
+                     z: self.factors[1].denominator})
+
         operand = self.operands[idx]
         _a = self.operands[:idx]
         _c = self.operands[idx + 1:]
@@ -1799,6 +1812,8 @@ class Mult(NumberOperation):
             (a * b ... * (l * ... * m) * ... * y * z)
         '''
         from . import association
+        # print("In Mult.association():")
+        # print("  preserved_exprs = {}".format(defaults.preserved_exprs))
         return apply_association_thm(
             self, start_idx, length, association)
 
