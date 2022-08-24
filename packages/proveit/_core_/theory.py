@@ -444,7 +444,7 @@ class Theory:
         if it file was not in an expected format to be able
         to extract the title.
         '''
-        with open(filename, 'r') as _f:
+        with open(filename, 'r', encoding='utf8') as _f:
             nb_str = _f.read()
         proving_str = '"%proving '
         proving_str_idx = nb_str.find(proving_str)
@@ -459,7 +459,7 @@ class Theory:
             # Replace the name with the appropriate name.
             nb_str = (nb_str[:proving_str_idx] + proving_str +
                       theorem_name + nb_str[end_quote_idx:])
-            with open(filename, 'w') as _f:
+            with open(filename, 'w', encoding='utf8') as _f:
                 _f.write(nb_str)
         return nb_str
 
