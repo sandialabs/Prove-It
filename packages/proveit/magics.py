@@ -29,16 +29,21 @@ def ast_yield_expr_strs(ast_node):
         yield ast_node.id
         return
     if isinstance(ast_node, ast.Attribute):
-        if isinstance(ast_node.value, ast.Name):
-            yield "%s.%s"%(ast_node.value.id, ast_node.attr)
-            return
+        yield "%s.%s"%(next(ast_yield_expr_strs(ast_node.value)),
+                       ast_node.attr)
+        return
     if isinstance(ast_node, ast.Tuple) or isinstance(ast_node, list):
         elts = ast_node if isinstance(ast_node, list) else ast_node.elts
         for elt in elts:
             for expr_str in ast_yield_expr_strs(elt):
                 yield expr_str
         return
-    raise NotImplementedError("'ast_unparse' is limited")
+    if isinstance(ast_node, ast.Call):
+        yield "%s(%s)"%(next(ast_yield_expr_strs(ast_node.func)),
+                        ', '.join(ast_yield_expr_strs(ast_node.args)))
+        return
+    raise NotImplementedError("'ast_unparse' is limited, can't parse %s"
+                              %type(ast_node))
 
 class AssignmentBehaviorModifier:
     def __init__(self):
@@ -48,7 +53,7 @@ class AssignmentBehaviorModifier:
             # remember the original version of 'run_cell'
             ipython.orig_run_cell = ipython.run_cell
 
-    def _setBehavior(self, assignment_fn, last_line_fn):
+    def _setBehavior(self, assignment_fn):
         ipython = self.ipython
 
         def new_run_cell(self, raw_cell, *args, **kwargs):
@@ -70,17 +75,20 @@ class AssignmentBehaviorModifier:
                 # theory proof templates.
                 if target_strs is not None and 'theory' not in target_strs:
                     lines.append(assignment_fn(target_strs))
-            elif isinstance(last_ast_node, ast.Expr):
-                # We may alter the last line for dispaly purposes.
-                # This will work in Python 2.9:
-                #lines.append(last_line_fn(last_ast_node))
-                if isinstance(last_ast_node, ast.Expr):
-                    try:
-                        lines.append(last_line_fn(
-                                ', '.join(ast_yield_expr_strs(
-                                        last_ast_node.value))))
-                    except NotImplementedError:
-                        pass # forget it
+            elif isinstance(last_ast_node, ast.Expr) and (
+                    len(lines) < 2 or
+                    lines[-2][:21] != "len(gc.get_objects())"):
+                # This will display a tuple of expressions, for example,
+                # in a nice way.  (checking for "len(gc.get...)" avoids
+                # a bad interaction with build.py).
+                orig_lines = lines
+                lines = lines[:last_ast_node.lineno-1]
+                last_lines = orig_lines[last_ast_node.lineno-1:]
+                stripped = last_lines[0].lstrip()
+                whitespace = last_lines[0][:-len(stripped)]
+                lines.append(whitespace + "_ = " + stripped + 
+                             '\n'.join(last_lines[1:]))
+                lines.append(assignment_fn('_'))
             new_raw_cell = '\n'.join(lines)
             return ipython.orig_run_cell(new_raw_cell, *args, **kwargs)
 # ipython.run_cell = new.instancemethod(new_run_cell, ipython)#Comment out
@@ -97,15 +105,13 @@ class AssignmentBehaviorModifier:
         # for Python 3
         shell.ex("import proveit.magics")  # Comment in for Python 3
         self._setBehavior(
-            lambda varnames: "proveit.magics.Assignments([" +
+            lambda varnames: "proveit.magics.display_assignments([" +
             ','.join(
                 "'%s'" %
                 varname for varname in varnames) +
             "], [" +
             ','.join(varnames) +
-            "])",
-            lambda orig_last_line: "proveit.magics.possibly_wrap_html_display_objects(%s)" %
-            orig_last_line)
+            "])")
 
 
 class TheoryInterface:
@@ -1004,10 +1010,8 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         # assign the theorem name to the theorem expression
         # and display this assignment
         self.shell.user_ns[theorem_name] = begin_proof_result
-        return Assignments(
-            [theorem_name],
-            [begin_proof_result],
-            beginning_proof=True)
+        display_assignments([theorem_name], [begin_proof_result],
+                            beginning_proof=True)
 
     @line_magic
     def qed(self, line):
@@ -1031,157 +1035,141 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         thm_expr = self.shell.user_ns[line.strip()]
         ProveItMagicCommands.display_dependencies_latex(self, name, thm_expr)
 
-
-class Assignments:
-    def __init__(self, names, right_sides, beginning_proof=False):
-        from proveit import single_or_composite_expression, Judgment
-        self.beginning_proof = beginning_proof
-        
-        # While we are displaying assignments check if a theorem that 
-        # is being proven is readily provable; if so, indicate that 
-        # '%qed' is all that is needed.
-        Judgment._check_if_ready_for_qed()
-
-        processed_right_sides = []
-        for right_side in right_sides:
-            if not isinstance(right_side, Judgment):
-                try:
-                    # try to combine a composite expression if the right side is a
-                    # list or dictionary that should convert to an expression.
-                    right_side = single_or_composite_expression(
-                        right_side, wrap_expr_range_in_tuple=False)
-                except BaseException:
-                    pass
-            if prove_it_magic.kind in ('axioms', 'theorems', 'common'):
-                if not isinstance(
-                        right_side, Expression) and (
-                        right_side is not None):
-                    # raise ValueError("Right hand side of end-of-cell "
-                    #                  "assignment(s) is expected to be "
-                    #                  "Expression(s).")
-                    raise ValueError("Right hand side of end-of-cell "
-                                     "assignment(s) is {}, but is expected to "
-                                     "be Expression(s).".format(right_side))
-            processed_right_sides.append(right_side)
-        self.names = list(names)
-        self.right_sides = processed_right_sides
-        for name, right_side in zip(names, self.right_sides):
-            if name in prove_it_magic.definitions:
-                prev_def = prove_it_magic.definitions[name]
-                if right_side != prev_def and isinstance(prev_def, Expression):
-                    prove_it_magic.expr_names[prev_def].remove(name)
-                    if len(prove_it_magic.expr_names[prev_def]) == 0:
-                        prove_it_magic.expr_names.pop(prev_def)
-            if right_side is None:
-                # unsetting a defintion
-                prove_it_magic.lower_case_names.remove(name.lower())
-                prev_def = prove_it_magic.definitions[name]
-                prove_it_magic.definitions.pop(name)
-                continue
-            if prove_it_magic.kind == 'axioms' or prove_it_magic.kind == 'theorems':
-                # Axiom and theorem variables should all be bound
-                # though we will only check for variables that are
-                # entirely unbound because it would be challenging
-                # to consider partially bound instances and it isn't
-                # so critical -- it's just a good convention.
-                if len(free_vars(right_side)) > 0:
-                    raise ValueError(
-                        '%s should not have free variables; variables '
-                        'must all be bound (e.g. universally quantified). '
-                        ' Free variables: %s'
-                        % (prove_it_magic.kind, free_vars(right_side)))
-                if name in prove_it_magic.definitions:
-                    if prove_it_magic.definitions[name] != right_side:
-                        print('WARNING: Redefining', name)
-                elif name.lower() in prove_it_magic.lower_case_names:
-                    # allowed to come back around after it finished once
-                    if not(
-                            prove_it_magic.ran_finish and name in prove_it_magic.definitions):
-                        raise ProveItMagicFailure(
-                            "%s names must be unique regardless of capitalization" % prove_it_magic.kind[:-1])
-            prove_it_magic.lower_case_names.add(name.lower())
-            prove_it_magic.definitions[name] = right_side
-            if isinstance(right_side, Expression):
-                prove_it_magic.expr_names.setdefault(
-                    right_side, []).append(name)
-
-    def html_line(self, name, right_side):
-        lhs_html = name + ':'
-        name_kind_theory = None
-        kind = prove_it_magic.kind
-        theory = prove_it_magic.theory
-        if kind in ('axioms', 'theorems', 'common'):
-            if kind == 'axioms' or kind == 'theorems':
-                kind = kind[:-1]
-            name_kind_theory = (name, kind, theory)
-        right_side_str, expr = None, None
-        if isinstance(right_side, Expression):
-            expr = right_side
-            right_side_str = right_side._repr_html_(
-                unofficial_name_kind_theory=name_kind_theory)
-        elif hasattr(right_side, '_repr_html_'):
-            right_side_str = right_side._repr_html_()
-        if right_side_str is None:
-            right_side_str = str(right_side)
-        if kind in ('axiom', 'theorem', 'common'):
-            num_duplicates = len(prove_it_magic.expr_names[right_side]) - 1
-        if prove_it_magic.kind == 'theorems':
-            assert expr is not None, "Expecting an expression for the theorem"
-            proof_notebook_relurl = theory.thm_proof_notebook(
-                name, expr, num_duplicates)
-            status = 'conjecture without proof'  # default
+def display_assignments(names, right_sides, beginning_proof=False):
+    from proveit import single_or_composite_expression, Judgment
+    
+    processed_right_sides = []
+    for right_side in right_sides:
+        if right_side is None: continue
+        if not isinstance(right_side, Judgment):
             try:
-                thm = theory.get_stored_theorem(theory.name + '.' + name)
-                if thm.is_complete():
-                    status = 'established theorem'
-                elif thm.has_proof():
-                    status = 'conjecture with conjecture-based proof'
-            except KeyError:
-                pass  # e.g., a new theorem.
-            lhs_html = ('<a class="ProveItLink" href="%s">%s</a> (%s):<br>'
-                        % (proof_notebook_relurl, name, status))
-        if self.beginning_proof:
-            html = 'Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br>'
+                # try to combine a composite expression if the right side is a
+                # list or dictionary that should convert to an expression.
+                right_side = single_or_composite_expression(
+                    right_side, wrap_expr_range_in_tuple=False)
+            except BaseException:
+                pass
+        processed_right_sides.append(right_side)
+    names = list(names)
+    right_sides = processed_right_sides
+    for name, right_side in zip(names, right_sides):
+        if name == '_': continue
+        if prove_it_magic.kind in ('axioms', 'theorems', 'common'):
+            if not isinstance(
+                    right_side, Expression) and (
+                    right_side is not None):
+                raise ValueError("Right hand side of end-of-cell "
+                                 "assignment(s) is {}, but is expected to "
+                                 "be Expression(s).".format(right_side))
+        if name in prove_it_magic.definitions:
+            prev_def = prove_it_magic.definitions[name]
+            if right_side != prev_def and isinstance(prev_def, Expression):
+                prove_it_magic.expr_names[prev_def].remove(name)
+                if len(prove_it_magic.expr_names[prev_def]) == 0:
+                    prove_it_magic.expr_names.pop(prev_def)
+        if right_side is None:
+            # unsetting a defintion
+            prove_it_magic.lower_case_names.remove(name.lower())
+            prev_def = prove_it_magic.definitions[name]
+            prove_it_magic.definitions.pop(name)
+            continue
+        if prove_it_magic.kind == 'axioms' or prove_it_magic.kind == 'theorems':
+            # Axiom and theorem variables should all be bound
+            # though we will only check for variables that are
+            # entirely unbound because it would be challenging
+            # to consider partially bound instances and it isn't
+            # so critical -- it's just a good convention.
+            if len(free_vars(right_side)) > 0:
+                raise ValueError(
+                    '%s should not have free variables; variables '
+                    'must all be bound (e.g. universally quantified). '
+                    ' Free variables: %s'
+                    % (prove_it_magic.kind, free_vars(right_side)))
+            if name in prove_it_magic.definitions:
+                if prove_it_magic.definitions[name] != right_side:
+                    print('WARNING: Redefining', name)
+            elif name.lower() in prove_it_magic.lower_case_names:
+                # allowed to come back around after it finished once
+                if not(
+                        prove_it_magic.ran_finish and name in prove_it_magic.definitions):
+                    raise ProveItMagicFailure(
+                        "%s names must be unique regardless of capitalization" % prove_it_magic.kind[:-1])
+        prove_it_magic.lower_case_names.add(name.lower())
+        prove_it_magic.definitions[name] = right_side
+        if isinstance(right_side, Expression):
+            prove_it_magic.expr_names.setdefault(
+                right_side, []).append(name)
+    for name, right_side in zip(names, right_sides):
+        if name == '_':
+            # Not a real assignment
+            display(right_side)
         else:
-            html = ''
-        html += '<strong id="%s">%s</strong> %s<br>' % (
-            name, lhs_html, right_side_str)
-        if self.beginning_proof:
-            stored_thm = theory.get_stored_theorem(theory.name + '.' + name)
-            dependencies_notebook_path = os.path.join(
-                stored_thm.path, 'dependencies.ipynb')
-            html += '(see <a class="ProveItLink" href="%s">dependencies</a>)<br>' % (
-                relurl(dependencies_notebook_path))
-        if (kind in ('axiom', 'theorem', 'common')) and num_duplicates > 0:
-            prev = prove_it_magic.expr_names[right_side][-2]
-            if kind == 'theorem':
-                html += '(alternate proof for <a class="ProveItLink" href="#%s">%s</a>)<br>' % (prev, prev)
-            elif kind == 'axiom':
-                print('WARNING: Duplicate of', prev)
-        return html
+            display(HTML(assignment_html(name, right_side, 
+                                         beginning_proof=beginning_proof)))
 
-    def _repr_html_(self):
-        if len(self.names) == 0:
-            return
+    # While we are displaying assignments check if a theorem that 
+    # is being proven is readily provable; if so, indicate that 
+    # '%qed' is all that is needed.
+    Judgment._check_if_ready_for_qed()
+
+
+def assignment_html(name, right_side, beginning_proof=False):
+    lhs_html = name + ':'
+    name_kind_theory = None
+    kind = prove_it_magic.kind
+    theory = prove_it_magic.theory
+    if kind in ('axioms', 'theorems', 'common'):
+        if kind == 'axioms' or kind == 'theorems':
+            kind = kind[:-1]
+        name_kind_theory = (name, kind, theory)
+    right_side_str, expr = None, None
+    if isinstance(right_side, Expression) and name_kind_theory is not None:
+        expr = right_side
+        right_side_str = right_side._repr_html_(
+            unofficial_name_kind_theory=name_kind_theory)
+    elif hasattr(right_side, '_repr_html_'):
+        right_side_str = right_side._repr_html_()
+    if right_side_str is None:
+        right_side_str = str(right_side)
+    if kind in ('axiom', 'theorem', 'common'):
+        num_duplicates = len(prove_it_magic.expr_names[right_side]) - 1
+    if kind == 'theorem' and name != '_':
+        assert expr is not None, "Expecting an expression for the theorem"
+        proof_notebook_relurl = theory.thm_proof_notebook(
+            name, expr, num_duplicates)
+        status = 'conjecture without proof'  # default
         try:
-            return '\n'.join(
-                self.html_line(
-                    name, right_side) for name, right_side in zip(
-                    self.names, self.right_sides))
-        except Exception as e:
-            print(e)
-
-    def __repr__(self):
-        return '\n'.join('%s: %s' % (name, repr(right_side))
-                         for name, right_side in zip(self.names, self.right_sides))
-
+            thm = theory.get_stored_theorem(theory.name + '.' + name)
+            if thm.is_complete():
+                status = 'established theorem'
+            elif thm.has_proof():
+                status = 'conjecture with conjecture-based proof'
+        except KeyError:
+            pass  # e.g., a new theorem.
+        lhs_html = ('<a class="ProveItLink" href="%s">%s</a> (%s):<br>'
+                    % (proof_notebook_relurl, name, status))
+    if beginning_proof:
+        html = 'Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br>'
+    else:
+        html = ''
+    html += '<strong id="%s">%s</strong> %s<br>' % (
+        name, lhs_html, right_side_str)
+    if beginning_proof:
+        stored_thm = theory.get_stored_theorem(theory.name + '.' + name)
+        dependencies_notebook_path = os.path.join(
+            stored_thm.path, 'dependencies.ipynb')
+        html += '(see <a class="ProveItLink" href="%s">dependencies</a>)<br>' % (
+            relurl(dependencies_notebook_path))
+    if (kind in ('axiom', 'theorem', 'common')) and num_duplicates > 0:
+        prev = prove_it_magic.expr_names[right_side][-2]
+        if kind == 'theorem':
+            html += '(alternate proof for <a class="ProveItLink" href="#%s">%s</a>)<br>' % (prev, prev)
+        elif kind == 'axiom':
+            print('WARNING: Duplicate of', prev)
+    return html
 
 def possibly_wrap_html_display_objects(*orig_objects):
     from proveit import ExprTuple, Judgment
-    # While we are displaying object(s), check if a theorem that is 
-    # being proven is readily provable; if so, indicate that '%qed' is 
-    # all that is needed.
-    Judgment._check_if_ready_for_qed()
     for obj in orig_objects:
         if isinstance(obj, tuple) or isinstance(obj, list):
             '''
@@ -1191,6 +1179,10 @@ def possibly_wrap_html_display_objects(*orig_objects):
             if all(isinstance(_, Expression) for _ in obj):
                 obj = ExprTuple(*obj)
         display(obj)
+    # While we are displaying object(s), check if a theorem that is 
+    # being proven is readily provable; if so, indicate that '%qed' is 
+    # all that is needed.
+    Judgment._check_if_ready_for_qed()
 
 
 class HTML_DisplayObjects:
