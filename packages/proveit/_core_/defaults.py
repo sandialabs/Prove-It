@@ -11,7 +11,7 @@ class Defaults:
 
     def reset(self):
         # Default assumptions to use for proofs.
-        self.assumptions = OrderedSet()
+        self.assumptions = OrderedSet(mutable=False)
         self._sorted_assumptions = tuple()
         
         # Enable/disable two types of `automation`.
@@ -240,7 +240,7 @@ class Defaults:
         and derive their side-effects.
         '''
         if attr == 'assumptions' and hasattr(self, attr):
-            value = OrderedSet(self.checked_assumptions(value))
+            value = OrderedSet(self.checked_assumptions(value), mutable=False)
             if self.__dict__['assumptions'] == value:
                 return # Nothing has changed.
             # '_sorted_assumptions' are no longer valid.

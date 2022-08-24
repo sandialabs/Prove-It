@@ -263,7 +263,7 @@ class InnerExpr:
                 assumptions = kwargs.get('assumptions', defaults.assumptions)
                 # Add in 'assumptions' to be used by the InnerExpr 
                 # object.
-                assumptions = tuple(assumptions) + self.assumptions
+                assumptions = OrderedSet(assumptions) + self.assumptions
                 # Add in the conditions of the inner expression
                 # for the 'equiv_method' call.
                 kwargs['assumptions'] = (assumptions +

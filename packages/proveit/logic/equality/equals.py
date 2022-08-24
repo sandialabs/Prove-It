@@ -1248,9 +1248,7 @@ def default_simplification(inner_expr, in_place=False, must_evaluate=False,
     # ================================================================ #
 
     # construct the key for the known_simplifications dictionary
-    assumptions_sorted = sorted(defaults.assumptions, 
-                                key=lambda expr: hash(expr))
-    known_simplifications_key = (inner, tuple(assumptions_sorted))
+    known_simplifications_key = (inner, defaults.sorted_assumptions)
 
     if (must_evaluate and inner in Equals.known_evaluation_sets):
         evaluations = Equals.known_evaluation_sets[inner]

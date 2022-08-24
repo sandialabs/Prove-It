@@ -8,13 +8,17 @@ class OrderedSet(collections.OrderedDict, collections.MutableSet):
     additions during an iteration, and include those additions in the
     iteration, which is useful for our purposes.
     '''
-    def __init__(self, iterable=None):
+    def __init__(self, iterable=None, *, mutable=True):
         self._lock_count = 0
         self._to_add = []
         if iterable is not None:
+            self._mutable = True
             self.update(iterable)
+        self._mutable = mutable
 
     def update(self, *args, **kwargs):
+        if not self._mutable:
+            raise TypeError("Cannot update an OrderedSet that is immutable")
         if kwargs:
             raise TypeError("update() takes no keyword arguments")
 
@@ -51,6 +55,8 @@ class OrderedSet(collections.OrderedDict, collections.MutableSet):
                 self._to_add.clear()
 
     def add(self, elem):
+        if not self._mutable:
+            raise TypeError("Cannot add to an OrderedSet that is immutable")
         if self._lock_count > 0:
             # We are iterating through the elements, so we can't add
             # directly to the set; instead we add them to a temporary
@@ -80,6 +86,9 @@ class OrderedSet(collections.OrderedDict, collections.MutableSet):
         return collections.OrderedDict.__contains__(self, elem)
     
     def pop(self):
+        if not self._mutable:
+            raise TypeError("Cannot remove an element from an OrderedSet "
+                            "that is immutable")
         if self._lock_count > 0:
             raise NotImplementedError(
                     "Cannot remove an element while iterating over "
@@ -89,6 +98,9 @@ class OrderedSet(collections.OrderedDict, collections.MutableSet):
         return elem
 
     def discard(self, elem):
+        if not self._mutable:
+            raise TypeError("Cannot discard an element from an OrderedSet "
+                            "that is immutable")
         if self._lock_count > 0:
             raise NotImplementedError(
                     "Cannot remove an element while iterating over "

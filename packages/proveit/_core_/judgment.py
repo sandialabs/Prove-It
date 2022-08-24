@@ -155,7 +155,7 @@ class Judgment:
         self.expr = expression
         # Store the assumptions as an ordered set (with the desired 
         # order for display).
-        self.assumptions = OrderedSet(assumptions)
+        self.assumptions = OrderedSet(assumptions, mutable=False)
         
         # Associate the canonical form of the expression
         # with this Judgment.
@@ -726,7 +726,7 @@ class Judgment:
                             assumptions=defaults.assumptions
                         if not self.assumptions.issubset(assumptions):
                             defaults_config['assumptions'] = \
-                                tuple(assumptions) + self.assumptions
+                                OrderedSet(assumptions) + self.assumptions
                     return attr.__call__(*args, **defaults_config)
                 return call_method_with_judgment_assumptions
 
@@ -1473,7 +1473,7 @@ class Judgment:
         from .expression.inner_expr import InnerExpr
         if assumptions==USE_DEFAULTS:
             assumptions=defaults.assumptions
-        assumptions = tuple(assumptions) + self.assumptions
+        assumptions = OrderedSet(assumptions) + self.assumptions
         return InnerExpr(self, assumptions=assumptions)
     
     def _used_vars(self):
