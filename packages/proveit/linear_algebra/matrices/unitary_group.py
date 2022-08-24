@@ -1,6 +1,6 @@
 from proveit import Function, Literal, prover
 from proveit import m, n, A
-from proveit.logic import SetMembership
+from proveit.logic import InSet, SetMembership
 from proveit.numbers import Complex
 
 
@@ -84,6 +84,14 @@ class UnitaryMembership(SetMembership):
         return
         yield
 
+    def _readily_provable(self):
+        from proveit.linear_algebra import MatrixExp
+        element = self.element
+        if isinstance(element, MatrixExp):
+            if InSet(element.base, self.domain).readily_provable():
+                return True
+        return False
+
     @prover
     def conclude(self, **defaults_config):
         '''
@@ -106,6 +114,14 @@ class SpecialUnitaryMembership(SetMembership):
         '''
         return
         yield
+
+    def _readily_provable(self):
+        from proveit.linear_algebra import MatrixExp
+        element = self.element
+        if isinstance(element, MatrixExp):
+            if InSet(element.base, self.domain).readily_provable():
+                return True
+        return False
 
     @prover
     def conclude(self, **defaults_config):

@@ -91,7 +91,7 @@ class TensorProdMembership(SetMembership):
             return InSet(self.element.scaled, self.domain).readily_provable()
         elif isinstance(self.element, VecSum):
             return InSet(self.element.summand, self.domain).readily_provable(
-                    assumptions=defaults.assumptoins+(self.element.condition,))
+                    assumptions=defaults.assumptions+(self.element.condition,))
         return False
 
     @prover
