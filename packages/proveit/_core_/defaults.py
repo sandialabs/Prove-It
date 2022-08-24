@@ -261,6 +261,12 @@ class Defaults:
             # Turn "side-effect" and "conclude" automation on/off.
             self.sideeffect_automation = self.conclude_automation = value
         self.__dict__[attr] = value
+        # NOT SURE ABOUT THIS IN-PROGRESS MODIFICATION
+        if hasattr(self, 'replacements') and hasattr(self, 'preserved_exprs'):
+            for replacement in self.replacements:
+                if replacement.lhs in self.preserved_exprs:
+                    raise ValueError(
+                            "Cannot preserve and replace an expression")
 
 class TemporarySetter(object):
     '''
