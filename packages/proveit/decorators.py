@@ -1,7 +1,7 @@
 import functools
 from inspect import signature, Parameter
 from proveit._core_.defaults import defaults
-
+from proveit.util import OrderedSet
 
 def _make_decorated_prover(func):
     '''
@@ -39,11 +39,11 @@ def _make_decorated_prover(func):
             _self = args[0]
             if isinstance(_self, Judgment) or isinstance(_self, InnerExpr):
                 # Include the assumptions of the Judgment or InnerExpr
-                assumptions = kwargs.get('assumptions', None)
+                assumptions = OrderedSet(kwargs.get('assumptions', None))
                 if assumptions is None:
                     assumptions = defaults.assumptions
                 if not _self.assumptions.issubset(assumptions):
-                    assumptions = tuple(assumptions) + _self.assumptions
+                    assumptions.update(_self.assumptions)
                     kwargs['assumptions'] = assumptions
             if is_conclude_method:
                 # If the method starts with conclude 'conclude', we must
