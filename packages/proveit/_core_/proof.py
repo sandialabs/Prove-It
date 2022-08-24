@@ -220,6 +220,12 @@ class Proof:
             raise UnusableProof(
                 Judgment.theorem_being_proven,
                 self._meaning_data._unusable_proof)
+
+        # Record that this is proven whether side-effect automation is
+        # enabled or not.
+        self.proven_truth.expr._record_as_proven(self.proven_truth)         
+        
+        # Derive obvious consequences from this truth.
         self._derive_side_effects()
     
     def _derive_side_effects(self):

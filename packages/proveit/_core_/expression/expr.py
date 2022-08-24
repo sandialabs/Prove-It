@@ -502,15 +502,10 @@ class Expression(metaclass=ExprType):
                                                
     def _deduce_equality(self, equality):
         '''
-        Helper method for 'deduce_equality' which should have a
-        type-specific implementation if '_build_canonical_form' is
-        type-specific.
+        Helper method for 'deduce_equality'.  Typically, this should
+        should have a type-specific implementation if 
+        '_build_canonical_form' is type-specific.
         '''
-        if type(self)._build_canonical_form != (
-                Expression._build_canonical_form):
-            raise NotImplementedError(
-                    "'_deduce_equality' not implemented for %s"
-                    %type(self))
         # The generic version will work via direct substitutions 
         # equating sub-expressions that differ.
         return equality.conclude_via_direct_substitution() 
@@ -891,12 +886,16 @@ class Expression(metaclass=ExprType):
         same set of assumptions will be blocked, so `conclude` methods are
         free make attempts that may be cyclic.
         '''
-        from proveit import Judgment, ProofFailure
+        from proveit import Judgment, Assumption, ProofFailure
         from proveit.relation import Relation
         from proveit.logic import Not, TRUE, Equals
         assumptions = defaults.assumptions
         automation = defaults.conclude_automation
         assumptions_set = set(assumptions)
+
+        if defaults.sideeffect_automation:
+            # Generate assumption side-effects.
+            Assumption.make_assumptions(assumptions)
 
         # See if this Expression already has a legitimate proof.
         found_truth = Judgment.find_judgment(self, assumptions_set)
@@ -914,23 +913,26 @@ class Expression(metaclass=ExprType):
         if not automation:
             raise ProofFailure(self, assumptions, "No pre-existing proof")
 
-        # Maybe this Expression doesn't have a proof, but something
-        # else does with the same canonical form.
-        # If it is a Relation, however, we should use its 'conclude'
-        # method instead.
-        canonical_form = self.canonical_form()
-        if canonical_form != TRUE and not isinstance(self, Relation):
-            cf_to_proven_exprs = (
-                    Judgment.canonical_form_to_proven_exprs)
-            if canonical_form in cf_to_proven_exprs:
-                for proven_expr in cf_to_proven_exprs[canonical_form]:
-                    if proven_expr != self and proven_expr.proven():
-                        # Something with the same canonical form has 
-                        # been proven under applicable assumptions.
-                        # So prove what we want by equating it with what
-                        # we know.
-                        return Equals(proven_expr, 
-                                      self).derive_right_via_equality()
+        if not self._readily_provable():
+            # Maybe this Expression isn't readily provable by
+            # expression-specific means (note that '_readily_provable'
+            # is intended, not 'readily_provable'), but something else 
+            # does with the same canonical form.
+            # If it is a Relation, however, we should use its 'conclude'
+            # method instead.
+            canonical_form = self.canonical_form()
+            if canonical_form != TRUE and not isinstance(self, Relation):
+                cf_to_proven_exprs = (
+                        Judgment.canonical_form_to_proven_exprs)
+                if canonical_form in cf_to_proven_exprs:
+                    for proven_expr in cf_to_proven_exprs[canonical_form]:
+                        if proven_expr != self and proven_expr.proven():
+                            # Something with the same canonical form has 
+                            # been proven under applicable assumptions.
+                            # So prove what we want by equating it with what
+                            # we know.
+                            return Equals(proven_expr, 
+                                          self).derive_right_via_equality()
 
         # Use Expression.in_progress_to_conclude set to prevent an infinite
         # recursion
@@ -999,7 +1001,7 @@ class Expression(metaclass=ExprType):
         '''
         from proveit import ProofFailure
         try:
-            self.prove(assumptions=assumptions, automation=False)
+            self.prove(assumptions=assumptions, conclude_automation=False)
             return True
         except ProofFailure:
             return False
@@ -1011,7 +1013,7 @@ class Expression(metaclass=ExprType):
         easily through its 'conclude' method and will return True if
         it is already proven.
         '''
-        from proveit import Judgment, ExprTuple
+        from proveit import Judgment, ExprTuple, Assumption
 
         if isinstance(self, ExprTuple):
             return False # An ExprTuple cannot be true or false.
@@ -1021,10 +1023,11 @@ class Expression(metaclass=ExprType):
             if assumptions is not USE_DEFAULTS:
                 tmp_defaults.assumptions = assumptions
             assumptions = defaults.assumptions
+            Assumption.make_assumptions(assumptions)
                 
             if self.proven(): # this will "make" the assumptions
                 return True
-    
+                
             # Maybe this Expression doesn't have a proof, but something
             # else does with the same canonical form.
             cf = self.canonical_form()
@@ -1157,6 +1160,12 @@ class Expression(metaclass=ExprType):
         It also may be desirable to store the judgment for future automation.
         '''
         return iter(())
+    
+    def _record_as_proven(self, judgment):
+        '''
+        Record any Expression-specific information for future reference.
+        '''
+        pass
     
     @equality_prover('sub_expr_substituted', 'sub_expr_substitute')
     def sub_expr_substitution(self, new_sub_exprs, **defaults_config):

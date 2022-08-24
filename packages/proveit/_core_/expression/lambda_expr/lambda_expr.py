@@ -5,7 +5,7 @@ from proveit._core_.expression.expr import (Expression, MakeNotImplemented,
 from proveit._core_.expression.label.var import safe_dummy_var, safe_dummy_vars
 from proveit._core_.expression.composite import is_single
 from proveit._core_.defaults import defaults, USE_DEFAULTS
-from proveit.decorators import equality_prover
+from proveit.decorators import prover, equality_prover
 from collections import deque
 
 def get_param_var(parameter, *, _required_indices=None):
@@ -1156,6 +1156,60 @@ class Lambda(Expression):
                     {i: _i, f: _f, g: _g, 
                      a: _a, b: _b, c: _c},
                      preserve_expr=universal_eq).derive_consequent()
+
+
+    @prover
+    def _deduce_equality(self, equality, **defaults_config):
+        '''
+        Prove the equality of Lambda expressions that, for exapmle,
+        have the same canonical form.  This requires both side of
+        the equality to have the same canonically labeled parameters
+        and condition.
+        '''
+        from proveit import Conditional
+        from proveit.logic import Forall, Equals
+        assert isinstance(equality.rhs, Lambda), (
+                "Shouldn't call _deduce_equality if the sides of the "
+                "equality don't have the same canonical form and the "
+                "canonical form of a Lambda is a Lambda")
+        lhs, rhs = equality.lhs, equality.rhs
+        lhs_relabeled = lhs.canonically_labeled()
+        rhs_relabeled = rhs.canonically_labeled()
+        if (lhs_relabeled.parameters != rhs_relabeled.parameters):
+            raise NotImplementedError(
+                    "Lambda._deduce_equality requires the canonically "
+                    "labeled parameters to be the same on both sides "
+                    "(the only way this should be an issue if they "
+                    "have the same canonical form is if they are using "
+                    "dummy variables internally)")
+        lhs_body = lhs_relabeled.body
+        rhs_body = rhs_relabeled.body
+        lhs_has_condition = isinstance(lhs_body, Conditional)
+        rhs_has_condition = isinstance(rhs_body, Conditional)
+        rhs_condition = None
+        if lhs_has_condition or rhs_has_condition:
+            assert lhs_has_condition == rhs_has_condition, (
+                "Shouldn't call _deduce_equality if the sides of the "
+                "equality don't have the same canonical form and the "
+                "canonical form of a Conditional is a Conditional.")
+            condition = lhs_body.condition
+            rhs_condition = rhs_body.condition
+            universal_eq = Forall(lhs_relabeled.parameters, 
+                              Equals(lhs_body.value, rhs_body.value),
+                              condition=condition)
+        else:
+            universal_eq = Forall(lhs_relabeled.parameters, 
+                                  Equals(lhs_body, rhs_body))
+        if lhs_has_condition and rhs_condition != condition:
+            substitution = lhs_relabeled.substitution(
+                    universal_eq, auto_simplify=False)
+            # substitute the condition
+            substitution= substitution.inner_expr().rhs.body.substitute_condition(
+                    Equals(condition, rhs_condition))
+            return substitution
+        return self.substitution(universal_eq)
+    
+
 
     def global_repl(master_expr, sub_expr, assumptions=USE_DEFAULTS):
         '''

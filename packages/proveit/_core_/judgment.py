@@ -87,8 +87,8 @@ class Judgment:
     # Call the begin_proof method to begin a proof of a Theorem.
     theorem_being_proven = None  # Theorem being proven.
     theorem_being_proven_str = None # in string form.
-    # Has the theorem_being_proven been proven yet in this session?
-    has_been_proven = None  
+    # Have we already reported that the theorem is readily provable?
+    theorem_readily_provable = None  
     # Goes from None to False (after beginning a proof and disabling 
     # Theorems that cannot be used) to True (when there is a legitimate
     # proof).
@@ -120,7 +120,7 @@ class Judgment:
         Judgment.sideeffect_processed.clear()
         Judgment.theorem_being_proven = None
         Judgment.theorem_being_proven_str = None
-        Judgment.has_been_proven = None
+        Judgment.theorem_readily_provable = None
         Judgment.presumed_theorems_and_theories = None
         Judgment.presuming_theorem_and_theory_exclusions = None
         Judgment.presumed_theorems_and_dependencies = None
@@ -344,10 +344,8 @@ class Judgment:
         # change Judgment.has_been_proven
         # from None to False -- we can now test to see if
         # we have a proof for Judgment.theorem_being_proven
-        Judgment.has_been_proven = False
+        Judgment.theorem_readily_provable = False
 
-        if Judgment._check_if_ready_for_qed():
-            return self.expr  # already proven
         # can't use itself to prove itself
         theorem._meaning_data._unusable_proof = theorem
         return self.expr
@@ -393,12 +391,21 @@ class Judgment:
     def is_applicable(self, assumptions=USE_DEFAULTS):
         '''
         Return True iff this Judgment is usable and applicable under 
-        the default assumptions.
+        the default assumptions.  Also, if it is applicable, make sure
+        the side-effects are derived if sideeffect_automation is on
+        in case it was off when the Judgment was proven.
         '''
         if assumptions is USE_DEFAULTS:
             assumptions = defaults.assumptions
-        return (self.is_usable() and 
+        applicable = (self.is_usable() and 
                 self.assumptions_set.issubset(assumptions))
+        if applicable:
+            # Make sure the side-effects are derived if sideeffect
+            # automation is on in case it was off before.  This is
+            # a good place to do it since we should check applicability
+            # before using a Judgment.
+            self.derive_side_effects()
+        return applicable
 
     def as_theorem_or_axiom(self):
         '''
@@ -629,23 +636,23 @@ class Judgment:
 
     @staticmethod
     def _check_if_ready_for_qed():
-        if Judgment.has_been_proven is None:
+        if Judgment.theorem_readily_provable is None:
             return # A theorem proof hasn't been started.
         theorem_being_proven = Judgment.theorem_being_proven
         theorem_expr = Judgment.theorem_being_proven.proven_truth.expr
         if theorem_expr.readily_provable():
-            if not Judgment.has_been_proven:
+            if not Judgment.theorem_readily_provable:
+                Judgment.theorem_readily_provable = True
                 if theorem_expr.proven():
-                    Judgment.has_been_proven = True
                     print(
                         '%s has been proven. ' %
-                        theorem_being_proven.as_theorem_or_axiom().name,
+                        theorem_being_proven.name,
                         r'Now simply execute "%qed".')
                 else:
                     print(
-                        '%s is readily provable. ' %
-                        theorem_being_proven.as_theorem_or_axiom().name,
-                        r'Now simply execute "%qed".')
+                        '%s is now readily provable. ' %
+                        theorem_being_proven.name,
+                        r'Simply execute "%qed".')
                 
     '''
     def _checkIfReadyForQED(self, proof):

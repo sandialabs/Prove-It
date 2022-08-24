@@ -463,7 +463,7 @@ class Conditional(Expression):
                              %(equality, self))
 
     @equality_prover('condition_substituted', 
-                     'condition_substitute')
+                     'substitute_condition')
     def condition_substitution(self, condition_equivalence_or_equality, 
                                **defaults_config):
         '''
@@ -505,9 +505,9 @@ class Conditional(Expression):
                             "represent a logical equivalence (Iff) or "
                             "equality (equals), got %s."
                              %condition_equivalence_or_equality)
-        raise Value("%s expected to have %s on one of its sides"
-                    %(condition_equivalence_or_equality,
-                      self.condition))
+        raise ValueError("%s expected to have %s on one of its sides"
+                         %(condition_equivalence_or_equality,
+                           self.condition))
 
     @equality_prover('sub_expr_substituted', 'sub_expr_substitute')
     def sub_expr_substitution(self, new_sub_exprs, **defaults_config):
