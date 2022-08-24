@@ -8,9 +8,11 @@ class OrderedSet(collections.OrderedDict, collections.MutableSet):
     additions during an iteration, and include those additions in the
     iteration, which is useful for our purposes.
     '''
-    def __init__(self):
+    def __init__(self, iterable=None):
         self._lock_count = 0
         self._to_add = []
+        if iterable is not None:
+            self.update(iterable)
 
     def update(self, *args, **kwargs):
         if kwargs:
@@ -56,6 +58,14 @@ class OrderedSet(collections.OrderedDict, collections.MutableSet):
             self._to_add.append(elem)
         else:
             self[elem] = None
+    
+    def __add__(self, other):
+        '''
+        Concatenate with any other iterable.
+        '''
+        combined = OrderedSet(self)
+        combined.update(other)
+        return combined
 
     def __contains__(self, elem):
         '''

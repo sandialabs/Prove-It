@@ -14,6 +14,7 @@ from .defaults import defaults, USE_DEFAULTS
 import re
 from copy import copy
 from inspect import signature, Parameter
+from proveit.util import OrderedSet
 
 
 class _ExprProofs:
@@ -57,8 +58,8 @@ class _ExprProofs:
         best_unusable_proof = None
         goodness = None
         for proof in self._proofs:
-            if proof.proven_truth.assumptions_set.issubset(
-                    judgment.assumptions_set):
+            if proof.proven_truth.assumptions.issubset(
+                    judgment.assumptions):
                 assert proof.is_usable(), (
                         'unusable proofs should have been removed')
                 cur_goodness = proof._goodness()
@@ -152,11 +153,9 @@ class Judgment:
         # Note: these contained expressions are subject to style changes
         # on a Judgment instance basis.
         self.expr = expression
-        # Store the assumptions as an ordered list (with the desired 
-        # order for display) and an unordered set (for convenience when 
-        # checking whether one set subsumes another).
-        self.assumptions = tuple(assumptions)
-        self.assumptions_set = frozenset(assumptions)
+        # Store the assumptions as an ordered set (with the desired 
+        # order for display).
+        self.assumptions = OrderedSet(assumptions)
         
         # Associate the canonical form of the expression
         # with this Judgment.
@@ -243,13 +242,10 @@ class Judgment:
         from .proof import ProofFailure, UnsatisfiedPrerequisites
         if not defaults.sideeffect_automation:
             return  # automation disabled
-        # Sort the assumptions according to hash key so that sets of
-        # assumptions are unique for determining which side-effects have
-        # been processed already.
-        assumptions = defaults.assumptions
-        sorted_assumptions = tuple(
-            sorted(assumptions, key=lambda expr: hash(expr)))
-        if (self.expr, sorted_assumptions) in Judgment.sideeffect_processed:
+        # See if the side-effects for this expression under these
+        # assumptions (in no particular order) have been generated.
+        key = (self.expr, defaults.sorted_assumptions)
+        if key in Judgment.sideeffect_processed:
             return  # has already been processed
         if self not in Judgment.in_progress_to_derive_sideeffects:
             # avoid infinite recursion by using
@@ -276,7 +272,7 @@ class Judgment:
                             str(e))
             finally:
                 Judgment.in_progress_to_derive_sideeffects.remove(self)
-            Judgment.sideeffect_processed.add((self.expr, sorted_assumptions))
+            Judgment.sideeffect_processed.add(key)
 
     def order_of_appearance(self, sub_expressions):
         '''
@@ -398,7 +394,7 @@ class Judgment:
         if assumptions is USE_DEFAULTS:
             assumptions = defaults.assumptions
         applicable = (self.is_usable() and 
-                self.assumptions_set.issubset(assumptions))
+                self.assumptions.issubset(assumptions))
         if applicable:
             # Make sure the side-effects are derived if sideeffect
             # automation is on in case it was off before.  This is
@@ -502,8 +498,8 @@ class Judgment:
                 # Must match the number of literal generalization steps.
                 continue
             # Is 'newproof' applicable to 'expr_judgment'?
-            if newproof.proven_truth.assumptions_set.issubset(
-                    expr_judgment.assumptions_set):
+            if newproof.proven_truth.assumptions.issubset(
+                    expr_judgment.assumptions):
                 # replace if there was no pre-existing usable proof or 
                 # the new proof has more literal generalization steps
                 # (which can lead to fewer axiom/theorem requirements)
@@ -559,7 +555,7 @@ class Judgment:
         kept_truths = []
         born_obsolete = False
         for other in Judgment.expr_to_judgments[self.expr]:
-            if self.assumptions_set == other.assumptions_set:
+            if self.assumptions == other.assumptions:
                 if not other._proof.is_usable():
                     # use the new proof since the old one is unusable.
                     other._update_proof(new_proof)
@@ -578,10 +574,10 @@ class Judgment:
                     self._proof = other._proof # use an old proof that does the job better
                     kept_truths.append(other)
                     born_obsolete = True
-            elif self.assumptions_set.issubset(other.assumptions_set):
+            elif self.assumptions.issubset(other.assumptions):
                 # use the new proof that does the job better
                 other._update_proof(new_proof)
-            elif self.assumptions_set.issuperset(other.assumptions_set) and other._proof.is_usable():
+            elif self.assumptions.issuperset(other.assumptions) and other._proof.is_usable():
                 # the new proof was born obsolete, requiring more assumptions than an existing one
                 self._proof = other._proof # use an old proof that does the job better
                 kept_truths.append(other)
@@ -728,7 +724,7 @@ class Judgment:
                                 'assumptions', None)
                         if assumptions is None: 
                             assumptions=defaults.assumptions
-                        if not self.assumptions_set.issubset(assumptions):
+                        if not self.assumptions.issubset(assumptions):
                             defaults_config['assumptions'] = \
                                 tuple(assumptions) + self.assumptions
                     return attr.__call__(*args, **defaults_config)
@@ -803,7 +799,7 @@ class Judgment:
         return new_style_judgment
 
     @staticmethod
-    def find_judgment(expression, assumptions_set):
+    def find_judgment(expression, assumptions):
         '''
         Try to find a Judgment for this expression that applies to
         the given set of assumptions (its assumptions are a subset
@@ -816,7 +812,7 @@ class Judgment:
         for truth in truths:
             proof = truth.proof()
             if (proof is not None and proof.is_usable() and
-                    truth.assumptions_set.issubset(assumptions_set)):
+                    truth.assumptions.issubset(assumptions)):
                 suitable_truths.append(truth)
         if len(suitable_truths) == 0:
             return None  # no suitable truth
@@ -829,7 +825,7 @@ class Judgment:
         # Although this looks vacuous, it will map an assumption of
         # any style to the assumption of the desired style.
         assumptions_with_style = {assumption: assumption for
-                                  assumption in assumptions_set}
+                                  assumption in assumptions}
         if (best_judgment.expr._style_id != expression._style_id or
                 any(assumption._style_id != assumptions_with_style[assumption]
                     for assumption in best_judgment.assumptions)):

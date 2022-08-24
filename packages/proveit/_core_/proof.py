@@ -1210,9 +1210,10 @@ class ModusPonens(Proof):
                     str(implication_expr))
             # remove any unnecessary assumptions (but keep the order that was
             # provided)
-            assumptions_set = implication_truth.assumptions_set | antecedent_truth.assumptions_set
             assumptions = [
-                assumption for assumption in assumptions if assumption in assumptions_set]
+                assumption for assumption in assumptions if (
+                        assumption in implication_truth.assumptions or
+                        assumption in antecedent_truth.assumptions)]
             # we have what we need; set up the ModusPonens Proof
             num_lit_gen = (implication_truth.num_lit_gen + 
                            antecedent_truth.num_lit_gen)
@@ -1548,14 +1549,14 @@ class Instantiation(Proof):
     
         # Remove any unnecessary assumptions (but keep the order
         # that was provided).  Note that some assumptions of
-        # requirements may not be in the 'applied_assumptions_set'
+        # requirements may not be in the 'applied_assumptions'
         # if they made use of internal assumptions from a
         # Conditional and can be eliminated.
-        applied_assumptions_set = set(defaults.assumptions)
+        applied_assumptions = defaults.assumptions
         assumptions = list(orig_judgment.assumptions)
         for requirement in requirements:
             for assumption in requirement.assumptions:
-                if assumption in applied_assumptions_set:
+                if assumption in applied_assumptions:
                     assumptions.append(assumption)
         assumptions = list(OrderedDict.fromkeys(assumptions))
 

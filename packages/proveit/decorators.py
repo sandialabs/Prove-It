@@ -42,7 +42,7 @@ def _make_decorated_prover(func):
                 assumptions = kwargs.get('assumptions', None)
                 if assumptions is None:
                     assumptions = defaults.assumptions
-                if not _self.assumptions_set.issubset(assumptions):
+                if not _self.assumptions.issubset(assumptions):
                     assumptions = tuple(assumptions) + _self.assumptions
                     kwargs['assumptions'] = assumptions
             if is_conclude_method:

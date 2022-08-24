@@ -6,6 +6,7 @@ from .composite import (ExprTuple, Composite, NamedExprs,
                         single_or_composite_expression, composite_expression)
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 from proveit.decorators import prover, equality_prover
+from proveit.util import OrderedSet
 # from proveit.logic import InSet
 from collections import deque
 import inspect
@@ -108,8 +109,7 @@ class InnerExpr:
         self.inner_expr_path = tuple(inner_expr_path)
         self.expr_hierarchy = [top_level]
         if assumptions is None: assumptions = defaults.assumptions
-        self.assumptions = tuple(assumptions)
-        self.assumptions_set = set(assumptions)
+        self.assumptions = OrderedSet(assumptions)
         # list all of the lambda expression parameters encountered
         # along the way from the top-level expression to the inner
         # expression.

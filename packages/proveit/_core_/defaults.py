@@ -2,6 +2,7 @@ import hashlib
 import os
 import copy
 import collections
+from proveit.util import OrderedSet
 
 
 class Defaults:    
@@ -10,7 +11,8 @@ class Defaults:
 
     def reset(self):
         # Default assumptions to use for proofs.
-        self.assumptions = tuple()
+        self.assumptions = OrderedSet()
+        self._sorted_assumptions = tuple()
         
         # Enable/disable two types of `automation`.
         # Side-effect automation derives additional, related facts from
@@ -105,6 +107,17 @@ class Defaults:
         # imports of other common expressions.
         self.import_failure_filename = None
 
+    @property
+    def sorted_assumptions(self):
+        '''
+        Return the assumptions in a deterministic order, sorted by hash key.
+        Remember for next time.
+        '''
+        if self._sorted_assumptions is None:
+            self._sorted_assumptions = tuple(sorted(
+                    self.assumptions, key=lambda expr: hash(expr)))
+        return self._sorted_assumptions
+
     def preserve_expr(self, expr):
         '''
         Preserve the given expression so it is not automatically
@@ -114,6 +127,7 @@ class Defaults:
         if isinstance(expr, Judgment):
             expr = expr.expr
         self.preserved_exprs.add(expr)
+
 
     """
     def get_simplification_directives_id(self):
@@ -226,9 +240,11 @@ class Defaults:
         and derive their side-effects.
         '''
         if attr == 'assumptions' and hasattr(self, attr):
-            value = tuple(self.checked_assumptions(value))
+            value = OrderedSet(self.checked_assumptions(value))
             if self.__dict__['assumptions'] == value:
                 return # Nothing has changed.
+            # '_sorted_assumptions' are no longer valid.
+            self.__dict__['_sorted_assumptions'] = None
             # Invalidate the _simplification_directives_id since the
             # assumptions may have changed.
             # NOT USED ANYMORE

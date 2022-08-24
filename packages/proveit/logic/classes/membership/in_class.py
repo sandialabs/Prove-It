@@ -213,12 +213,11 @@ class InClass(Relation):
         # Make sure we derive assumption side-effects first.
         assumptions = defaults.checked_assumptions(assumptions)
         Assumption.make_assumptions(defaults.assumptions)
-        assumptions_set = set(assumptions)
 
         if element in InClass.known_memberships:
             known_memberships = list(InClass.known_memberships[element])
             for known_membership in known_memberships:
-                if known_membership.is_applicable(assumptions_set):
+                if known_membership.is_applicable(assumptions):
                     yield known_membership
 
     @equality_prover('shallow_simplified', 'shallow_simplify')

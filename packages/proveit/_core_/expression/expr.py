@@ -891,21 +891,20 @@ class Expression(metaclass=ExprType):
         from proveit.logic import Not, TRUE, Equals
         assumptions = defaults.assumptions
         automation = defaults.conclude_automation
-        assumptions_set = set(assumptions)
 
         if defaults.sideeffect_automation:
             # Generate assumption side-effects.
             Assumption.make_assumptions(assumptions)
 
         # See if this Expression already has a legitimate proof.
-        found_truth = Judgment.find_judgment(self, assumptions_set)
+        found_truth = Judgment.find_judgment(self, assumptions)
         if found_truth is not None:
             found_truth.with_matching_styles(
                 self, assumptions)  # give it the appropriate style
             # found an existing Judgment that does the job!
             return found_truth
 
-        if self in assumptions_set:
+        if self in assumptions:
             # prove by assumption if self is in the list of assumptions.
             from proveit._core_.proof import Assumption
             return Assumption.make_assumption(self, assumptions).proven_truth
@@ -976,12 +975,12 @@ class Expression(metaclass=ExprType):
                 raise ValueError(
                     "'conclude' method should return a Judgment for this Expression object: " + str(
                         concluded_truth.expr) + " does not match " + str(self))
-            if not concluded_truth.assumptions_set.issubset(assumptions_set):
+            if not concluded_truth.assumptions.issubset(assumptions):
                 raise ValueError("While proving " +
                                  str(self) +
                                  ", 'conclude' method returned a Judgment with extra assumptions: " +
                                  str(set(concluded_truth.assumptions) -
-                                     assumptions_set))
+                                     assumptions))
             if concluded_truth.expr._style_id == self._style_id:
                 # concluded_truth with the same style as self.
                 return concluded_truth
