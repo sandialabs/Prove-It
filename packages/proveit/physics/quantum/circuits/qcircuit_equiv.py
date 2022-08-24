@@ -1,13 +1,13 @@
 from proveit import (Expression, Literal, Lambda, VertExprArray,
-                     InnerExpr, TransitiveRelation, TransitivityException,
-                     as_expression, Judgment, prover, 
+                     InnerExpr, TransitivityException,
+                     as_expression, Judgment, prover, equality_prover,
                      defaults, USE_DEFAULTS)
 from proveit import j, k, l, m, A, B, C, D, Q
-from proveit.relation import TransRelUpdater
+from proveit.relation import EquivRelation, TransRelUpdater
 from proveit.statistics import Prob
 from .qcircuit import Qcircuit
 
-class QcircuitEquiv(TransitiveRelation):
+class QcircuitEquiv(EquivRelation):
     '''
     Class to capture the equivalence of 2 circuits A and B.
     CircuitEquiv(A, B) is a claim that the inputs and outputs of A are
@@ -19,15 +19,12 @@ class QcircuitEquiv(TransitiveRelation):
     # operator for the CircuitEquiv relation
     _operator_ = Literal(string_format='equiv', latex_format=r'\cong',
                          theory=__file__)
-    # map left-hand-sides to Subset Judgments
-    #   (populated in TransitivityRelation.derive_side_effects)
-    known_left_sides = dict()
-    # map right-hand-sides to Subset Judgments
-    #   (populated in TransitivityRelation.derive_side_effects)
-    known_right_sides = dict()
+    # map left/right sides to QcircuitEquiv Judgments
+    #   (populated in EquivRelation._record_as_proven)
+    known_equivalences = dict()
 
     def __init__(self, a, b, *, styles=None):
-        TransitiveRelation.__init__(self, QcircuitEquiv._operator_, a, b,
+        EquivRelation.__init__(self, QcircuitEquiv._operator_, a, b,
                                     styles=styles)
         self.a = a
         self.b = b
@@ -37,7 +34,7 @@ class QcircuitEquiv(TransitiveRelation):
         In addition to the TransitiveRelation side-effects, also
         attempt derive_reversed.
         '''        
-        for side_effect in TransitiveRelation.side_effects(self, judgment):
+        for side_effect in EquivRelation.side_effects(self, judgment):
             yield side_effect
         yield self.derive_reversed
 
@@ -170,7 +167,7 @@ class QcircuitEquiv(TransitiveRelation):
         from . import equiv_transitivity
         other = as_expression(other)
         if isinstance(other, Equals):
-            return TransitiveRelation.apply_transitivity(
+            return EquivRelation.apply_transitivity(
                 self, other)  # handles this special case
         elif self.rhs == other.lhs:
             return equiv_transitivity.instantiate(
@@ -201,9 +198,18 @@ class QcircuitEquiv(TransitiveRelation):
         '''
         From A ≅ B, derive B ≅ A.
         '''
-        from . import equiv_reflexivity
-        return equiv_reflexivity.instantiate(
+        from . import equiv_reversal
+        return equiv_reversal.instantiate(
                 {A:self.lhs, B:self.rhs})
+
+    @equality_prover("reversed", "reverse")
+    def symmetrization(self, **defaults_config):
+        '''
+        Prove (A ≅ B) = (B ≅ A).
+        '''
+        from . import equiv_symmetry
+        return equiv_symmetry.instantiate(
+                {B:self.lhs, A:self.rhs})
     
     @prover # Note: this should NOT be an @equality_prover.
     def substitution(self, circuit_or_lambda_map, **defaults_config):

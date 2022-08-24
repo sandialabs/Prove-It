@@ -1,4 +1,5 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit
 proveit.core_expr_types.conditionals.condition_append_reduction
 proveit.core_expr_types.conditionals.condition_merger_reduction
 proveit.core_expr_types.conditionals.condition_prepend_reduction

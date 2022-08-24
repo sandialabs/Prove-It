@@ -52,7 +52,6 @@ proveit.numbers.number_sets.rational_numbers.rational_nonzero_within_rational
 proveit.numbers.number_sets.rational_numbers.rational_pos_within_rational
 proveit.numbers.number_sets.rational_numbers.rational_pos_within_rational_nonneg
 proveit.numbers.number_sets.rational_numbers.rational_pos_within_rational_nonzero
-proveit.numbers.number_sets.rational_numbers.zero_is_rational
 proveit.numbers.number_sets.real_numbers.e_is_real_pos
 proveit.numbers.number_sets.real_numbers.int_within_real
 proveit.numbers.number_sets.real_numbers.nat_pos_within_real

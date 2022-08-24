@@ -33,7 +33,6 @@ proveit.numbers.number_sets.natural_numbers.natural_pos_lower_bound
 proveit.numbers.number_sets.rational_numbers.int_within_rational
 proveit.numbers.number_sets.rational_numbers.rational_neg_within_rational
 proveit.numbers.number_sets.rational_numbers.rational_pos_within_rational
-proveit.numbers.number_sets.rational_numbers.zero_is_rational
 proveit.numbers.number_sets.real_numbers.int_within_real
 proveit.numbers.number_sets.real_numbers.nat_pos_within_real
 proveit.numbers.number_sets.real_numbers.nat_pos_within_real_pos

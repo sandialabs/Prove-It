@@ -47,7 +47,6 @@ proveit.numbers.numerals.decimals.tuple_len_1
 proveit.numbers.ordering.less_eq_from_not_less
 proveit.numbers.ordering.less_from_not_less_eq
 proveit.numbers.ordering.less_is_not_eq
-proveit.numbers.ordering.non_neg_if_real_non_neg
 proveit.numbers.ordering.not_less_eq_from_less
 proveit.numbers.ordering.not_less_from_less_eq
 proveit.numbers.ordering.relax_equal_to_less_eq

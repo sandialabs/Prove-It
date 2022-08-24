@@ -9,6 +9,8 @@ proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
 proveit.logic.equality.not_equals_symmetry
 proveit.logic.equality.unfold_not_equals
+proveit.logic.sets.equivalence.left_membership_via_right
+proveit.logic.sets.equivalence.right_membership_via_left
 proveit.logic.sets.equivalence.set_equiv_fold
 proveit.logic.sets.equivalence.set_equiv_unfold
 # THEOREMS AND THEORIES TO EXCLUDE:
