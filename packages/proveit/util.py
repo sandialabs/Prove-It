@@ -1,33 +1,38 @@
 import collections
 
-# Modified from https://stackoverflow.com/questions/1653970/does-python-have-an-ordered-set
-class OrderedSet(collections.OrderedDict, collections.MutableSet):
+# Inspired by https://stackoverflow.com/questions/1653970/does-python-have-an-ordered-set
+class OrderedSet(collections.MutableSet):
     '''
     An ordered set that iterates in the order things are added
     but doesn't add duplicates.  This is specially designed to allow
     additions during an iteration, and include those additions in the
-    iteration, which is useful for our purposes.
+    iteration, which is useful for our purposes.  We can index into it as
+    if it were a list/tuple and we can make it mutable or not.
     '''
     def __init__(self, iterable=None, *, mutable=True):
-        self._lock_count = 0
-        self._to_add = []
+        self._lst = list()
+        self._set = set()
         if iterable is not None:
-            self._mutable = True
             self.update(iterable)
-        self._mutable = mutable
+        if not mutable:
+            self._lst = tuple(self._lst)
 
-    def update(self, *args, **kwargs):
-        if not self._mutable:
+    @property
+    def mutable(self):
+        return isinstance(self._lst, list)
+
+    def update(self, *args):
+        if not self.mutable:
             raise TypeError("Cannot update an OrderedSet that is immutable")
-        if kwargs:
-            raise TypeError("update() takes no keyword arguments")
 
         for s in args:
             for e in s:
-                 self.add(e)
+                if e not in self._set:
+                    self._lst.append(e)
+                    self._set.add(e)
 
     def __len__(self):
-        return collections.OrderedDict.__len__(self) + len(self._to_add)
+        return len(self._lst)
 
     def __iter__(self):
         '''
@@ -35,35 +40,15 @@ class OrderedSet(collections.OrderedDict, collections.MutableSet):
         go.  We yield the additions as well and add them properly
         when we finish iterating.
         '''
-        if self._lock_count == 0:
-            assert len(self._to_add) == 0, "Failed sanity check"
-        try:
-            yielded = set()
-            self._lock_count += 1
-            for _x in self.keys():
-                yielded.add(_x)
-                yield _x
-            for _x in self._to_add:
-                if _x not in yielded:
-                    yielded.add(_x)
-                    yield _x
-        finally:
-            self._lock_count -= 1
-            if self._lock_count == 0:
-                for _x in self._to_add:
-                    self.add(_x)
-                self._to_add.clear()
+        return iter(self._lst)
 
     def add(self, elem):
-        if not self._mutable:
+        if not self.mutable:
             raise TypeError("Cannot add to an OrderedSet that is immutable")
-        if self._lock_count > 0:
-            # We are iterating through the elements, so we can't add
-            # directly to the set; instead we add them to a temporary
-            # holding area.
-            self._to_add.append(elem)
-        else:
-            self[elem] = None
+        _set = self._set
+        if elem not in _set:
+            self._lst.append(elem)
+            _set.add(elem)
     
     def __add__(self, other):
         '''
@@ -73,39 +58,23 @@ class OrderedSet(collections.OrderedDict, collections.MutableSet):
         combined.update(other)
         return combined
 
+    def __getitem__(self, idx):
+        return self._lst[idx]
+
     def __contains__(self, elem):
         '''
         Return True if the element is in the Ordered set, including
         additions that may be in a temporary holding area (if elements
         were added while iterating).
         '''
-        if len(self._to_add) > 0:
-            assert self._lock_count > 0, "Failed sanity check"
-            return (collections.OrderedDict.__contains__(self, elem)
-                    or elem in self._to_add)
-        return collections.OrderedDict.__contains__(self, elem)
+        return elem in self._set
     
-    def pop(self):
-        if not self._mutable:
-            raise TypeError("Cannot remove an element from an OrderedSet "
-                            "that is immutable")
-        if self._lock_count > 0:
-            raise NotImplementedError(
-                    "Cannot remove an element while iterating over "
-                    "an OrderedDict (but adding is allowed)")
-        elem = next(iter(self))
-        collections.OrderedDict.pop(self, elem)
-        return elem
-
     def discard(self, elem):
-        if not self._mutable:
+        if not self.mutable:
             raise TypeError("Cannot discard an element from an OrderedSet "
                             "that is immutable")
-        if self._lock_count > 0:
-            raise NotImplementedError(
-                    "Cannot remove an element while iterating over "
-                    "an OrderedDict (but adding is allowed)")
-        self.pop(elem, None)
+        self._set.discard(elem)
+        self._lst.remove(elem)
 
     def __le__(self, other):
         return all(e in other for e in self)
@@ -123,7 +92,7 @@ class OrderedSet(collections.OrderedDict, collections.MutableSet):
         return 'OrderedSet([%s])' % (', '.join(map(repr, iter(self))))
 
     def __str__(self):
-        return '{%s}' % (', '.join(map(repr, self.keys())))
+        return '{%s}' % (', '.join(map(repr, iter(self))))
     
     difference = property(lambda self: self.__sub__)
     difference_update = property(lambda self: self.__isub__)
