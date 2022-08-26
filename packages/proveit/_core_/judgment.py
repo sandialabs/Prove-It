@@ -253,7 +253,6 @@ class Judgment:
             Judgment.in_progress_to_derive_sideeffects.add(self)
             try:
                 for side_effect in self.expr.side_effects(self):
-                    #print(self, "side-effect", side_effect)
                     # Attempt each side-effect derivation, specific to 
                     # thetype of Expression.
                     try:

@@ -219,8 +219,7 @@ class NotInClass(Relation):
         '''
         from proveit._core_.proof import Assumption
         # Make sure we derive assumption side-effects first.
-        assumptions = defaults.checked_assumptions(assumptions)
-        Assumption.make_assumptions(defaults.assumptions)
+        Assumption.make_assumptions()
 
         if element in NotInClass.known_nonmemberships:
             for known_nonmembership in (

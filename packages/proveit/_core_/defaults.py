@@ -206,10 +206,10 @@ class Defaults:
         performing appropriate automation (deriving side-effects).
         '''
         if assumptions is None:
-            return tuple(self.assumptions)
-        return tuple(self._checkAssumptions(assumptions))
+            return self.assumptions
+        return tuple(self._checked_assumptions(assumptions))
 
-    def _checkAssumptions(self, assumptions):
+    def _checked_assumptions(self, assumptions):
         '''
         Check that the given assumptions are valid -- an iterable
         collection of Expressions, and skip any repeats.
@@ -309,7 +309,11 @@ class TemporarySetter(object):
             return # No change.  Nothing need be done.
         self._original_values[attr] = self._obj.__dict__[attr]
 
-        if attr == 'preserve_all' and val==True:
+        if attr == 'assumptions':
+            # We also need to remember '_sorted_assumptions' when 
+            # setting assumptions.
+            attributes_to_remember = ('_sorted_assumptions', )
+        elif attr == 'preserve_all' and val==True:
             # We also need to remember 'replacements' and 
             # 'auto_simplify' when setting preserve_all=True
             attributes_to_remember = ('replacements', 'auto_simplify')

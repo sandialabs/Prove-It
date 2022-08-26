@@ -13,7 +13,7 @@ class TransitivitySorter:
     far.
     '''
 
-    def __init__(self, relation_class, items, assumptions=USE_DEFAULTS,
+    def __init__(self, relation_class, items, 
                  skip_exact_reps=False, skip_equiv_reps=False,
                  presorted_pair=False):
         '''
@@ -30,7 +30,7 @@ class TransitivitySorter:
         '''
         #print("sorting items", items)
 
-        self.assumptions = defaults.checked_assumptions(assumptions)
+        self.assumptions = defaults.assumptions
         self.relation_class = relation_class
         self.strong_relation_class = \
             relation_class._checkedStrongRelationClass()

@@ -11,7 +11,7 @@ from collections import OrderedDict, deque
 import re
 from proveit._core_.judgment import Judgment
 from proveit._core_._unique_data import meaning_data, style_data
-from .defaults import defaults
+from .defaults import defaults, USE_DEFAULTS
 from .theory import Theory
 
 
@@ -797,7 +797,7 @@ class Assumption(Proof):
         Assumption.all_assumptions[expr] = self
 
     @staticmethod
-    def make_assumption(expr, assumptions):
+    def make_assumption(expr):
         '''
         Return an Assumption object, only creating it if it doesn't
         already exist.  assumptions must already be 'checked' and in
@@ -810,34 +810,36 @@ class Assumption(Proof):
             # given assumptions.
             # This can happen when automation is temporarily disabled or
             # when assumptions change.
-            with defaults.temporary() as temp_defaults:
-                temp_defaults.assumptions = assumptions
-                preexisting.proven_truth.derive_side_effects()
+            preexisting.proven_truth.derive_side_effects()
             return preexisting
-        return Assumption(expr, assumptions)
+        return Assumption(expr, defaults.assumptions)
 
     @staticmethod
-    def make_assumptions(assumptions):
+    def make_assumptions(assumptions=USE_DEFAULTS):
         '''
         Prove each assumption, by assumption, to deduce any 
         side-effects (unless we have already processed this set of
         assumptions together before).
         '''
-        sorted_assumptions = tuple(
-            sorted(assumptions, key=lambda expr: hash(expr)))
+        with defaults.temporary() as temp_defaults:
+            if assumptions is not USE_DEFAULTS:
+                temp_defaults.assumptions = assumptions
+            assumptions = defaults.assumptions
+            sorted_assumptions = defaults.sorted_assumptions            
 
-        # avoid infinite recursion and extra work
-        if sorted_assumptions not in Assumption.considered_assumption_sets:
-            Assumption.considered_assumption_sets.add(sorted_assumptions)
-            for assumption in assumptions:
-                # Note that while we only need THE assumption to prove
-                # itself, having the other assumptions around can be
-                # useful for deriving side-effects.
-                Assumption.make_assumption(assumption, assumptions)
-            if not defaults.sideeffect_automation:
-                # consideration doesn't fully count if automation is off
-                Assumption.considered_assumption_sets.remove(
-                        sorted_assumptions)
+            # avoid infinite recursion and extra work
+            if sorted_assumptions not in Assumption.considered_assumption_sets:
+                Assumption.considered_assumption_sets.add(sorted_assumptions)
+                for assumption in assumptions:
+                    # Note that while we only need THE assumption to 
+                    # prove itself, having the other assumptions around 
+                    # can be useful for deriving side-effects.
+                    Assumption.make_assumption(assumption)
+                if not defaults.sideeffect_automation:
+                    # consideration doesn't fully count if automation is 
+                    # off
+                    Assumption.considered_assumption_sets.remove(
+                            sorted_assumptions)
 
     def step_type(self):
         return 'assumption'

@@ -211,8 +211,7 @@ class InClass(Relation):
         '''
         from proveit._core_.proof import Assumption
         # Make sure we derive assumption side-effects first.
-        assumptions = defaults.checked_assumptions(assumptions)
-        Assumption.make_assumptions(defaults.assumptions)
+        Assumption.make_assumptions()
 
         if element in InClass.known_memberships:
             known_memberships = list(InClass.known_memberships[element])

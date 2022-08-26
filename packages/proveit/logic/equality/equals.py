@@ -513,8 +513,7 @@ class Equals(EquivRelation):
         '''
         # Make sure we derive assumption side-effects first.
         from proveit import Assumption
-        assumptions = defaults.checked_assumptions(assumptions)
-        Assumption.make_assumptions(defaults.assumptions)
+        Assumption.make_assumptions()
         to_process = OrderedSet()
         to_process.add(expr)
         processed = set()
@@ -1097,8 +1096,7 @@ class Equals(EquivRelation):
         '''
         from proveit._core_.proof import Assumption
         # Make sure we derive assumption side-effects first.
-        assumptions = defaults.checked_assumptions(assumptions)
-        Assumption.make_assumptions(defaults.assumptions)
+        Assumption.make_assumptions()
 
         if (lambda_map, rhs) in Equals.inversions:
             # Previous solution(s) exist.  Use one if the assumptions are

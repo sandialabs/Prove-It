@@ -108,8 +108,18 @@ class InnerExpr:
         from proveit.logic import And
         self.inner_expr_path = tuple(inner_expr_path)
         self.expr_hierarchy = [top_level]
-        if assumptions is None: assumptions = defaults.assumptions
-        self.assumptions = OrderedSet(assumptions)
+
+        # set the assumptions
+        if assumptions is USE_DEFAULTS or (
+                assumptions is defaults.assumptions or
+                OrderedSet(assumptions) == defaults.assumptions):
+            # just use the defaults.
+            self.assumptions = defaults.assumptions
+        else:
+            with defaults.temporary() as tmp_defaults:
+                tmp_defaults.assumptions = assumptions
+                self.assumptions = defaults.assumptions
+
         # list all of the lambda expression parameters encountered
         # along the way from the top-level expression to the inner
         # expression.
