@@ -79,7 +79,7 @@ class EquivRelation(TransitiveRelation):
                           in self.operands.entries], key=hash))
 
     @prover
-    def _deduce_equality(self, equality, **defaults_config):
+    def _deduce_canonical_equality(self, equality, **defaults_config):
         '''
         Deduce EquivRelations are equal by having the same canonical
         form on the same side or opposite sides.

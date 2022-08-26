@@ -325,7 +325,7 @@ class Or(Operation):
         return Or(*sorted([operand.canonical_form() for operand 
                           in self.operands.entries], key=hash))
 
-    def _deduce_equality(self, equality):
+    def _deduce_canonical_equality(self, equality):
         return deduce_equality_via_commutation(equality, one_side=self)
 
     @prover

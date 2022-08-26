@@ -530,11 +530,33 @@ class Conditional(Expression):
                     Equals(self.sub_expr(1), new_sub_exprs[1])))
         return eq.relation
     
-    @equality_prover('equated', 'equate')
-    def deduce_equality(self, equality, **defaults_config):
+    def readily_provable_equality(self, equality):
+        '''
+        We can readily equate conditionals with the same condition and
+        readily equal values.
+        '''
         from proveit.logic import Equals
         if not isinstance(equality, Equals):
-            raise ValueError("The 'equality' should be an Equals expression")
+            raise TypeError("The 'equality' should be an Equals expression")
+        if equality.lhs != self:
+            raise ValueError("The left side of 'equality' should be 'self'")
+        rhs = equality.rhs
+        if not isinstance(rhs, Conditional):
+            return False
+        if not self.condition == rhs.condition:
+            # conditions must match
+            return False
+        return Equals(self.value, rhs.value).readily_provable()
+    
+    @equality_prover('equated', 'equate')
+    def deduce_equality(self, equality, **defaults_config):
+        '''
+        We can equate conditionals with the same condition and provably
+        equal values.
+        '''
+        from proveit.logic import Equals
+        if not isinstance(equality, Equals):
+            raise TypeError("The 'equality' should be an Equals expression")
         if equality.lhs != self:
             raise ValueError("The left side of 'equality' should be 'self'")
         if (isinstance(equality.rhs, Conditional) and 

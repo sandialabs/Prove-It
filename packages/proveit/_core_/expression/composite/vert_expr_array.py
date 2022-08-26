@@ -57,9 +57,9 @@ class VertExprArray(ExprArray):
     @equality_prover('equated', 'equate')
     def deduce_equality(self, equality, **defaults_config):
         from proveit.core_expr_types.expr_arrays import (
-                varray_eq_via_elem_eq_thm)
+                varray_eq_via_elem_eq)
         return ExprTuple.deduce_equality(
-                self, equality, eq_via_elem_eq_thm=varray_eq_via_elem_eq_thm)
+                self, equality, eq_via_elem_eq_thm=varray_eq_via_elem_eq)
 
     @relation_prover
     def not_equal(self, other_tuple, **defaults_config):

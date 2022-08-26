@@ -179,8 +179,8 @@ class VecAdd(GroupAdd):
         '''
         return generic_permutation(self, new_order, cycles)
 
-    @equality_prover('equated', 'equate')
-    def deduce_equality(self, equality, **defaults_config):
+    @prover
+    def _deduce_canonical_equality(self, equality, **defaults_config):
         return deduce_equality_via_commutation(equality, one_side=self)
 
     @equality_prover('factorized', 'factor')

@@ -420,9 +420,9 @@ class NumberOrderingRelation(TransitiveRelation):
         # sum of terms is less than (or equal) to a literal rational.
         return self.__class__(lhs, rhs), inv_scale_factor
     
-    def _deduce_equality(self, equality):
+    def _deduce_canonical_equality(self, equality):
         '''
-        Prove that this NumberOrderingRelation is equal an expression 
+        Prove that this NumberOrderingRelation is equal to an expression 
         that has the same canonical form.  Do this through mutual
         implication.
         '''

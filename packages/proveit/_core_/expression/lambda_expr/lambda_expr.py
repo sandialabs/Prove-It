@@ -1159,29 +1159,29 @@ class Lambda(Expression):
 
 
     @prover
-    def _deduce_equality(self, equality, **defaults_config):
+    def _deduce_canonical_equality(self, equality, **defaults_config):
         '''
-        Prove the equality of Lambda expressions that, for exapmle,
-        have the same canonical form.  This requires both side of
+        Prove the equality of Lambda expressions that have the same 
+        canonical form.  This requires both side of
         the equality to have the same canonically labeled parameters
         and condition.
         '''
         from proveit import Conditional
         from proveit.logic import Forall, Equals
         assert isinstance(equality.rhs, Lambda), (
-                "Shouldn't call _deduce_equality if the sides of the "
-                "equality don't have the same canonical form and the "
+                "Shouldn't call _deduce_canonical_equality if the sides of "
+                "the equality don't have the same canonical form and the "
                 "canonical form of a Lambda is a Lambda")
         lhs, rhs = equality.lhs, equality.rhs
         lhs_relabeled = lhs.canonically_labeled()
         rhs_relabeled = rhs.canonically_labeled()
         if (lhs_relabeled.parameters != rhs_relabeled.parameters):
             raise NotImplementedError(
-                    "Lambda._deduce_equality requires the canonically "
-                    "labeled parameters to be the same on both sides "
-                    "(the only way this should be an issue if they "
-                    "have the same canonical form is if they are using "
-                    "dummy variables internally)")
+                    "Lambda._deduce_canonical_equality requires the "
+                    "canonically labeled parameters to be the same on "
+                    "both sides (the only way this should be an issue if "
+                    "they have the same canonical form is if they are "
+                    "using dummy variables internally)")
         lhs_body = lhs_relabeled.body
         rhs_body = rhs_relabeled.body
         lhs_has_condition = isinstance(lhs_body, Conditional)
@@ -1189,8 +1189,8 @@ class Lambda(Expression):
         rhs_condition = None
         if lhs_has_condition or rhs_has_condition:
             assert lhs_has_condition == rhs_has_condition, (
-                "Shouldn't call _deduce_equality if the sides of the "
-                "equality don't have the same canonical form and the "
+                "Shouldn't call __deduce_canonical_equality if the sides "
+                "of the equality don't have the same canonical form and the "
                 "canonical form of a Conditional is a Conditional.")
             condition = lhs_body.condition
             rhs_condition = rhs_body.condition

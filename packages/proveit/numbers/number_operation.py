@@ -24,7 +24,7 @@ class NumberOperation(Operation):
     def __init__(self, operator, operand_or_operands, *, styles=None):
         Operation.__init__(self, operator, operand_or_operands, styles=styles)
 
-    def _deduce_equality(self, equality):
+    def _deduce_canonical_equality(self, equality):
         '''
         Prove that this number operation is equal to an expression that
         has the same canonical form.
