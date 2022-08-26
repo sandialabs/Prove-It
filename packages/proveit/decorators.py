@@ -1,7 +1,7 @@
 import functools
 from inspect import signature, Parameter
 from proveit._core_.defaults import defaults
-
+from proveit.util import OrderedSet
 
 def _make_decorated_prover(func):
     '''
@@ -39,12 +39,12 @@ def _make_decorated_prover(func):
             _self = args[0]
             if isinstance(_self, Judgment) or isinstance(_self, InnerExpr):
                 # Include the assumptions of the Judgment or InnerExpr
-                assumptions = kwargs.get('assumptions', None)
-                if assumptions is None:
-                    assumptions = defaults.assumptions
-                if not _self.assumptions_set.issubset(assumptions):
-                    assumptions = tuple(assumptions) + _self.assumptions
-                    kwargs['assumptions'] = assumptions
+                _assumptions = kwargs.get('assumptions', None)
+                if _assumptions is None:
+                    _assumptions = defaults.assumptions
+                if not _self.assumptions.issubset(_assumptions):
+                    _assumptions = OrderedSet(_assumptions, mutable=False)
+                    kwargs['assumptions'] = _assumptions + _self.assumptions
             if is_conclude_method:
                 # If the method starts with conclude 'conclude', we must
                 # preserve _self.
@@ -142,14 +142,14 @@ def _make_decorated_prover(func):
                         setattr(temp_defaults, key, kwargs[key])
                 kwargs.update(public_attributes_dict(defaults))
                 # Make sure we derive assumption side-effects first.
-                Assumption.make_assumptions(defaults.assumptions)
+                Assumption.make_assumptions()
                 # Now call the prover function.
                 proven_truth = checked_truth(func(*args, **kwargs))
         else:
             # No defaults reconfiguration.
             kwargs.update(public_attributes_dict(defaults))
             # Make sure we derive assumption side-effects first.
-            Assumption.make_assumptions(defaults.assumptions)
+            Assumption.make_assumptions()
             # Now call the prover function.
             proven_truth = checked_truth(func(*args, **kwargs))
                 
@@ -384,7 +384,7 @@ def equality_prover(past_tense, present_tense):
                 with defaults.temporary() as tmp_defaults:
                     if 'assumptions' in kwargs:
                         tmp_defaults.assumptions = kwargs['assumptions']
-                    Assumption.make_assumptions(defaults.assumptions)
+                    Assumption.make_assumptions()
                     cf = expr.canonical_form()
                     if expr.proven():
                         # The expression is proven so it equals true.

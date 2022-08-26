@@ -891,24 +891,23 @@ class Expression(metaclass=ExprType):
         from proveit.logic import Not, TRUE, Equals
         assumptions = defaults.assumptions
         automation = defaults.conclude_automation
-        assumptions_set = set(assumptions)
 
         if defaults.sideeffect_automation:
             # Generate assumption side-effects.
-            Assumption.make_assumptions(assumptions)
+            Assumption.make_assumptions()
 
         # See if this Expression already has a legitimate proof.
-        found_truth = Judgment.find_judgment(self, assumptions_set)
+        found_truth = Judgment.find_judgment(self, assumptions)
         if found_truth is not None:
             found_truth.with_matching_styles(
                 self, assumptions)  # give it the appropriate style
             # found an existing Judgment that does the job!
             return found_truth
 
-        if self in assumptions_set:
+        if self in assumptions:
             # prove by assumption if self is in the list of assumptions.
             from proveit._core_.proof import Assumption
-            return Assumption.make_assumption(self, assumptions).proven_truth
+            return Assumption.make_assumption(self).proven_truth
 
         if not automation:
             raise ProofFailure(self, assumptions, "No pre-existing proof")
@@ -936,9 +935,7 @@ class Expression(metaclass=ExprType):
 
         # Use Expression.in_progress_to_conclude set to prevent an infinite
         # recursion
-        in_progress_key = (
-            self, tuple(sorted(assumptions,
-                               key=lambda expr: hash(expr))))
+        in_progress_key = (self, defaults.sorted_assumptions)
         if in_progress_key in Expression.in_progress_to_conclude:
             raise ProofFailure(
                 self,
@@ -976,12 +973,12 @@ class Expression(metaclass=ExprType):
                 raise ValueError(
                     "'conclude' method should return a Judgment for this Expression object: " + str(
                         concluded_truth.expr) + " does not match " + str(self))
-            if not concluded_truth.assumptions_set.issubset(assumptions_set):
+            if not concluded_truth.assumptions.issubset(assumptions):
                 raise ValueError("While proving " +
                                  str(self) +
                                  ", 'conclude' method returned a Judgment with extra assumptions: " +
                                  str(set(concluded_truth.assumptions) -
-                                     assumptions_set))
+                                     assumptions))
             if concluded_truth.expr._style_id == self._style_id:
                 # concluded_truth with the same style as self.
                 return concluded_truth
@@ -1023,7 +1020,7 @@ class Expression(metaclass=ExprType):
             if assumptions is not USE_DEFAULTS:
                 tmp_defaults.assumptions = assumptions
             assumptions = defaults.assumptions
-            Assumption.make_assumptions(assumptions)
+            Assumption.make_assumptions()
                 
             if self.proven(): # this will "make" the assumptions
                 return True
@@ -1038,8 +1035,7 @@ class Expression(metaclass=ExprType):
                         return True
             
             # Try something specific to the Expression.
-            in_progress_key = (
-                self, tuple(sorted(assumptions, key=lambda expr: hash(expr))))
+            in_progress_key = (self, defaults.sorted_assumptions)
             if in_progress_key in Expression.in_progress_to_check_provability:
                 # avoid infinite recursion by using
                 # in_progress_to_check_provability

@@ -2,6 +2,7 @@ import hashlib
 import os
 import copy
 import collections
+from proveit.util import OrderedSet
 
 
 class Defaults:    
@@ -10,7 +11,8 @@ class Defaults:
 
     def reset(self):
         # Default assumptions to use for proofs.
-        self.assumptions = tuple()
+        self.assumptions = OrderedSet(mutable=False)
+        self._sorted_assumptions = tuple()
         
         # Enable/disable two types of `automation`.
         # Side-effect automation derives additional, related facts from
@@ -105,6 +107,17 @@ class Defaults:
         # imports of other common expressions.
         self.import_failure_filename = None
 
+    @property
+    def sorted_assumptions(self):
+        '''
+        Return the assumptions in a deterministic order, sorted by hash key.
+        Remember for next time.
+        '''
+        if self._sorted_assumptions is None:
+            self._sorted_assumptions = tuple(sorted(
+                    self.assumptions, key=lambda expr: hash(expr)))
+        return self._sorted_assumptions
+
     def preserve_expr(self, expr):
         '''
         Preserve the given expression so it is not automatically
@@ -114,6 +127,7 @@ class Defaults:
         if isinstance(expr, Judgment):
             expr = expr.expr
         self.preserved_exprs.add(expr)
+
 
     """
     def get_simplification_directives_id(self):
@@ -192,10 +206,10 @@ class Defaults:
         performing appropriate automation (deriving side-effects).
         '''
         if assumptions is None:
-            return tuple(self.assumptions)
-        return tuple(self._checkAssumptions(assumptions))
+            return self.assumptions
+        return tuple(self._checked_assumptions(assumptions))
 
-    def _checkAssumptions(self, assumptions):
+    def _checked_assumptions(self, assumptions):
         '''
         Check that the given assumptions are valid -- an iterable
         collection of Expressions, and skip any repeats.
@@ -226,9 +240,11 @@ class Defaults:
         and derive their side-effects.
         '''
         if attr == 'assumptions' and hasattr(self, attr):
-            value = tuple(self.checked_assumptions(value))
+            value = OrderedSet(self.checked_assumptions(value), mutable=False)
             if self.__dict__['assumptions'] == value:
                 return # Nothing has changed.
+            # '_sorted_assumptions' are no longer valid.
+            self.__dict__['_sorted_assumptions'] = None
             # Invalidate the _simplification_directives_id since the
             # assumptions may have changed.
             # NOT USED ANYMORE
@@ -293,7 +309,11 @@ class TemporarySetter(object):
             return # No change.  Nothing need be done.
         self._original_values[attr] = self._obj.__dict__[attr]
 
-        if attr == 'preserve_all' and val==True:
+        if attr == 'assumptions':
+            # We also need to remember '_sorted_assumptions' when 
+            # setting assumptions.
+            attributes_to_remember = ('_sorted_assumptions', )
+        elif attr == 'preserve_all' and val==True:
             # We also need to remember 'replacements' and 
             # 'auto_simplify' when setting preserve_all=True
             attributes_to_remember = ('replacements', 'auto_simplify')

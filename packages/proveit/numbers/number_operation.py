@@ -341,7 +341,6 @@ nonzero_number_set = {
     ComplexNonZero: ComplexNonZero}
 
 def readily_provable_number_set(expr, *, automation=USE_DEFAULTS,
-                                assumptions=USE_DEFAULTS,
                                 must_be_direct=False,
                                 default=None, _compare_to_zero=True):
     '''
@@ -366,8 +365,8 @@ def readily_provable_number_set(expr, *, automation=USE_DEFAULTS,
     from proveit._core_.proof import Assumption
 
     # Make sure we derive assumption side-effects first.
-    assumptions = defaults.checked_assumptions(assumptions)
-    Assumption.make_assumptions(defaults.assumptions)
+    Assumption.make_assumptions()
+    assumptions = defaults.assumptions
     
     if automation is USE_DEFAULTS:
         automation = defaults.conclude_automation

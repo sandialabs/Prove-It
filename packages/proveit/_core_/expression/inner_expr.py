@@ -6,6 +6,7 @@ from .composite import (ExprTuple, Composite, NamedExprs,
                         single_or_composite_expression, composite_expression)
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 from proveit.decorators import prover, equality_prover
+from proveit.util import OrderedSet
 # from proveit.logic import InSet
 from collections import deque
 import inspect
@@ -107,9 +108,18 @@ class InnerExpr:
         from proveit.logic import And
         self.inner_expr_path = tuple(inner_expr_path)
         self.expr_hierarchy = [top_level]
-        if assumptions is None: assumptions = defaults.assumptions
-        self.assumptions = tuple(assumptions)
-        self.assumptions_set = set(assumptions)
+
+        # set the assumptions
+        if assumptions is USE_DEFAULTS or (
+                assumptions is defaults.assumptions or
+                OrderedSet(assumptions) == defaults.assumptions):
+            # just use the defaults.
+            self.assumptions = defaults.assumptions
+        else:
+            with defaults.temporary() as tmp_defaults:
+                tmp_defaults.assumptions = assumptions
+                self.assumptions = defaults.assumptions
+
         # list all of the lambda expression parameters encountered
         # along the way from the top-level expression to the inner
         # expression.
@@ -263,7 +273,7 @@ class InnerExpr:
                 assumptions = kwargs.get('assumptions', defaults.assumptions)
                 # Add in 'assumptions' to be used by the InnerExpr 
                 # object.
-                assumptions = tuple(assumptions) + self.assumptions
+                assumptions = OrderedSet(assumptions) + self.assumptions
                 # Add in the conditions of the inner expression
                 # for the 'equiv_method' call.
                 kwargs['assumptions'] = (assumptions +

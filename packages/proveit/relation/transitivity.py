@@ -387,8 +387,7 @@ class TransitiveRelation(Relation):
             items = sorted(items, key=lambda item: item.as_int())
             reorder = False
         if reorder:
-            sorter = TransitivitySorter(cls, items, 
-                                        assumptions=defaults.assumptions)
+            sorter = TransitivitySorter(cls, items)
             return list(sorter)
         else:
             return cls._fixed_transitivity_sort(items).operands
@@ -456,7 +455,6 @@ class TransitiveRelation(Relation):
 
         # Create a TransitivitySorter.
         sorter = TransitivitySorter(cls, first_items, 
-                                    assumptions=defaults.assumptions,
                                     skip_exact_reps=skip_exact_reps,
                                     skip_equiv_reps=skip_equiv_reps)
         # Yield items in sorted order from the TransitivitySorter,
@@ -651,7 +649,6 @@ class TransitiveRelation(Relation):
             raise TransitivityException(relation, defaults.assumptions, msg)
 
         sorter = TransitivitySorter(cls, [left_item, right_item],
-                                    assumptions=defaults.assumptions,
                                     skip_exact_reps=False,
                                     skip_equiv_reps=False,
                                     presorted_pair=True)

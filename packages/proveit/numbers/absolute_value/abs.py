@@ -440,6 +440,7 @@ class Abs(NumberOperation):
         InSet(self, RealPos).prove()
         return greater(self, zero).prove()
 
+"""
 def is_equal_to_or_subset_eq_of(
         number_set, equal_sets=None, subset_sets=None, subset_eq_sets=None,
         assumptions=None):
@@ -473,3 +474,4 @@ def is_equal_to_or_subset_eq_of(
                             temp_set).readily_provable(assumptions):
                 return True
     return False
+"""

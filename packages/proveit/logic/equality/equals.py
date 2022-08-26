@@ -532,9 +532,7 @@ class Equals(EquivRelation):
         '''
         # Make sure we derive assumption side-effects first.
         from proveit import Assumption
-        assumptions = defaults.checked_assumptions(assumptions)
-        Assumption.make_assumptions(defaults.assumptions)
-        assumptions_set = set(assumptions)
+        Assumption.make_assumptions()
         to_process = OrderedSet()
         to_process.add(expr)
         processed = set()
@@ -548,7 +546,7 @@ class Equals(EquivRelation):
             yield expr
             processed.add(expr)
             for expr in Equals.yield_directly_known_eq_exprs(
-                    expr, assumptions=assumptions_set,
+                    expr, assumptions=assumptions,
                     include_canonical_forms=include_canonical_forms):
                 if expr not in processed:
                     to_process.add(expr)
@@ -1063,15 +1061,13 @@ class Equals(EquivRelation):
         with any "preserved" expressions (in defaults.preserved_exprs)
         whose evaluations are to be disregarded.
         '''
-        assumptions_set = set(defaults.assumptions)
-        
         if is_irreducible_value(expr):
             return Equals(expr, expr).conclude_via_reflexivity()
         if expr in Equals.known_evaluation_sets:
             evaluations = Equals.known_evaluation_sets[expr]
             candidates = []
             for judgment in evaluations:
-                if judgment.is_applicable(assumptions_set):
+                if judgment.is_applicable(defaults.assumptions):
                     # Found existing evaluation suitable for the
                     # assumptions
                     candidates.append(judgment)
@@ -1119,16 +1115,14 @@ class Equals(EquivRelation):
         '''
         from proveit._core_.proof import Assumption
         # Make sure we derive assumption side-effects first.
-        assumptions = defaults.checked_assumptions(assumptions)
-        Assumption.make_assumptions(defaults.assumptions)
-        assumptions_set = set(assumptions)
+        Assumption.make_assumptions()
 
         if (lambda_map, rhs) in Equals.inversions:
             # Previous solution(s) exist.  Use one if the assumptions are
             # sufficient.
             for known_equality, inversion in Equals.inversions[(
                     lambda_map, rhs)]:
-                if known_equality.is_applicable(assumptions_set):
+                if known_equality.is_applicable(assumptions):
                     return inversion
         # The mapping may be a trivial identity: f(x) = f(x)
         try:
@@ -1143,7 +1137,7 @@ class Equals(EquivRelation):
             pass  # well, it was worth a try
         # Search among known relations for a solution.
         for known_equality, lhs in Equals.known_relations_from_right(
-                rhs, assumptions_set):
+                rhs, assumptions):
             try:
                 x = lambda_map.extract_argument(lhs)
                 # Found an inversion.  Store it for future reference.
@@ -1242,13 +1236,12 @@ def default_simplification(inner_expr, in_place=False, must_evaluate=False,
         return inner_equivalence.substitution(inner_expr)
     if is_irreducible_value(inner):
         return Equals(inner, inner).prove()
-    assumptions_set = set(defaults.assumptions)
 
     # See if the expression is already known to be true as a special
     # case.
     try:
-        inner.prove(assumptions_set, automation=False)
-        true_eval = evaluate_truth(inner, assumptions_set)  # A=TRUE given A
+        inner.prove(assumptions, automation=False)
+        true_eval = evaluate_truth(inner, assumptions)  # A=TRUE given A
         if inner == top_level:
             if in_place:
                 return true_axiom
@@ -1260,9 +1253,9 @@ def default_simplification(inner_expr, in_place=False, must_evaluate=False,
     # See if the negation of the expression is already known to be true
     # as a special case.
     try:
-        inner.disprove(assumptions_set, automation=False)
+        inner.disprove(assumptions, automation=False)
         false_eval = evaluate_falsehood(
-            inner, assumptions_set)  # A=FALSE given Not(A)
+            inner, assumptions)  # A=FALSE given Not(A)
         return inner_simplification(false_eval)
     except BaseException:
         pass
@@ -1272,15 +1265,13 @@ def default_simplification(inner_expr, in_place=False, must_evaluate=False,
     # ================================================================ #
 
     # construct the key for the known_simplifications dictionary
-    assumptions_sorted = sorted(defaults.assumptions, 
-                                key=lambda expr: hash(expr))
-    known_simplifications_key = (inner, tuple(assumptions_sorted))
+    known_simplifications_key = (inner, defaults.sorted_assumptions)
 
     if (must_evaluate and inner in Equals.known_evaluation_sets):
         evaluations = Equals.known_evaluation_sets[inner]
         candidates = []
         for judgment in evaluations:
-            if judgment.is_applicable(assumptions_set):
+            if judgment.is_applicable(assumptions):
                 # Found existing evaluation suitable for the assumptions
                 candidates.append(judgment)
         if len(candidates) >= 1:
@@ -1307,7 +1298,7 @@ def default_simplification(inner_expr, in_place=False, must_evaluate=False,
     if inner in Equals.known_equalities:
         for known_eq in Equals.known_equalities[inner]:
             try:
-                if known_eq.is_applicable(assumptions_set):
+                if known_eq.is_applicable(assumptions):
                     if in_place:
                         # Should first substitute in the known
                         # equivalence then simplify that.

@@ -20,21 +20,15 @@ class Not(Operation):
         Side-effect derivations to attempt automatically.
         '''
         from proveit.logic import FALSE, Equals
-        if self.operand != FALSE:  # avoid infinite recursion
-            yield self.equate_negated_to_false  # A=FALSE given Not(A)
-        if not isinstance(self.operand, Equals):  # avoid infinite recursion
-            yield self.derive_untrue  # A != TRUE given Not(A)
+        #if self.operand != FALSE:  # avoid infinite recursion
+        #    yield self.equate_negated_to_false  # A=FALSE given Not(A)
+        #if not isinstance(self.operand, Equals):  # avoid infinite recursion
+        #    yield self.derive_untrue  # A != TRUE given Not(A)
         if isinstance(self.operand, Not):
             yield self.derive_via_double_negation  # A given Not(Not(A))
-        try:
-            try:
-                self.operand.prove(automation=False)
-                # derive FALSE given Not(A) and A
-                yield self.derive_contradiction
-            except ProofFailure:
-                pass
-        except BaseException:
-            pass  # no contradiction
+        if self.operand.proven():
+            # derive FALSE given Not(A) and A
+            yield self.derive_contradiction
         yield self.derive_in_bool  # [Not(A) in Boolean] given Not(A)
         if hasattr(self.operand, 'negation_side_effects'):
             # derive negation side-effects for the specific type of
