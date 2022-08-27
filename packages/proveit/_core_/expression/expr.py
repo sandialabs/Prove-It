@@ -461,12 +461,12 @@ class Expression(metaclass=ExprType):
             # No canonical form that is different from self.
             return self
     
-    @equality_prover('equated', 'equate')
-    def deduce_equality(self, equality, **defaults_config):
+    @equality_prover('canonical_equated', 'canonical_equate')
+    def deduce_canonical_equality(self, equality, **defaults_config):
         '''
         Prove that this expression is equal another one that has the
-        same canonical form.  Calls '_deduce_equality' which may have
-        type-specific implementations.
+        same canonical form.  Calls '_deduce_canonical_equality' which 
+        may have type-specific implementations.
         '''
         from proveit import Judgment, UnsatisfiedPrerequisites
         from proveit.logic import Equals
@@ -486,11 +486,11 @@ class Expression(metaclass=ExprType):
         if equality.lhs == lhs_cf:
             # If the lhs is already in the canonical form,
             # deduce the equality from the other side.
-            proven_eq = equality.rhs._deduce_equality(Equals(equality.rhs,
-                                                             equality.lhs))
+            proven_eq = equality.rhs._deduce_canonical_equality(
+                    Equals(equality.rhs, equality.lhs))
             proven_eq = proven_eq.derive_reversed()
         else:
-            proven_eq = self._deduce_equality(equality)
+            proven_eq = self._deduce_canonical_equality(equality)
         if not isinstance(proven_eq, Judgment):
             raise TypeError("Expecting a proven Judgment to be returned "
                             "by '_deduce_equality")
@@ -500,7 +500,7 @@ class Expression(metaclass=ExprType):
                                      proven_eq.expr, equality))
         return proven_eq
                                                
-    def _deduce_equality(self, equality):
+    def _deduce_canonical_equality(self, equality):
         '''
         Helper method for 'deduce_equality'.  Typically, this should
         should have a type-specific implementation if 

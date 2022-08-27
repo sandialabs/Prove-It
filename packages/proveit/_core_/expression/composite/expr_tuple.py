@@ -1106,6 +1106,36 @@ class ExprTuple(Composite, Expression):
                 eq.expr.inner_expr()[:2]))
         return eq.relation
 
+    def readily_provable_equality(self, equality):
+        '''
+        We can readily prove two ExprTuples are equal if we can prove 
+        that each of the elements are equal as a simple case.
+        '''
+        from proveit import ExprRange
+        from proveit.logic import Equals
+        if not isinstance(equality, Equals):
+            raise TypeError("Expected 'equality' to be an Equals expression")
+        if equality.lhs != self:
+            raise ValueError("Expecting %s to be on left side of %s"
+                             %(self, equality))
+        rhs = equality.rhs
+        if not isinstance(rhs, ExprTuple):
+            return False
+        if self.num_entries() != rhs.num_entries():
+            # Only handles simply case where we compare them entry-wise.
+            return False 
+        for left_elem, right_elem in zip(self, rhs):
+            if isinstance(left_elem, ExprRange) !=  (
+                    isinstance(right_elem, ExprRange)):
+                return False
+            if isinstance(left_elem, ExprRange):
+                if not Equals(ExprTuple(left_elem),
+                              ExprTuple(right_elem)).proven():
+                    return False
+            if not Equals(left_elem, right_elem).readily_provable():
+                return False
+        return True        
+
     @equality_prover('equated', 'equate')
     def deduce_equality(self, equality, *,
                         eq_via_elem_eq_thm=None, **defaults_config):

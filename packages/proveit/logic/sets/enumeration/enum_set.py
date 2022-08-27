@@ -74,8 +74,7 @@ class Set(Function):
         raise NotImplementedError(
                 "Set.includes only has simple checks by design.")      
     
-    @equality_prover('equated', 'equate')
-    def deduce_equality(self, equality, **defaults_config):
+    def _deduce_canonical_equality(self, equality, **defaults_config):
         return deduce_equality_via_commutation(equality, one_side=self)
 
     @equality_prover('shallow_simplified', 'shallow_simplify')

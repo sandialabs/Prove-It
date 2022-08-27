@@ -115,6 +115,8 @@ class Equals(EquivRelation):
         '''
         Return True iff this equality is readily provable:
             * The lhs and rhs have the same canonical form;
+            * The lhs has a '_readily_provable_equality' method that
+              returns True.
             * One side is TRUE/FALSE and the other side is
               provable/disprovable.,
             * The sides mutually imply each other and each side is
@@ -123,26 +125,33 @@ class Equals(EquivRelation):
               equalities and/or canonical forms.
         '''
         from proveit.logic import TRUE, FALSE, Iff, in_bool
-        if self.lhs == self.rhs:
+        lhs, rhs = self.lhs, self.rhs
+        if lhs == rhs:
             return True
-        if self.lhs.canonical_form() == self.rhs.canonical_form():
+        if hasattr(lhs, 'readily_provable_equality'):
+            if lhs.readily_provable_equality(self):
+                return True
+        if hasattr(rhs, 'readily_provable_equality'):
+            if rhs.readily_provable_equality(Equals(rhs, lhs)):
+                return True
+        if lhs.canonical_form() == rhs.canonical_form():
             return True
-        if (self.lhs == TRUE and self.rhs.readily_provable()) or (
-                self.rhs == TRUE and self.lhs.readily_provable()):
+        if (lhs == TRUE and rhs.readily_provable()) or (
+                rhs == TRUE and lhs.readily_provable()):
             return True
-        if (self.lhs == FALSE and self.rhs.readily_disprovable()) or (
-                self.rhs == FALSE and self.lhs.readily_disprovable()):
+        if (lhs == FALSE and rhs.readily_disprovable()) or (
+                rhs == FALSE and lhs.readily_disprovable()):
             return True
-        if not isinstance(self.lhs, ExprTuple) and (
-                not isinstance(self.rhs, ExprTuple) and
-                Iff(self.lhs, self.rhs).readily_provable() and 
-                in_bool(self.lhs).readily_provable() and
-                in_bool(self.rhs).readily_provable()):
+        if not isinstance(lhs, ExprTuple) and (
+                not isinstance(rhs, ExprTuple) and
+                Iff(lhs, rhs).readily_provable() and 
+                in_bool(lhs).readily_provable() and
+                in_bool(rhs).readily_provable()):
             from proveit.logic.booleans.implication import eq_from_iff
             if eq_from_iff.is_usable():
                 return True
-        for eq_expr in Equals.yield_known_equal_expressions(self.lhs):
-            if eq_expr == self.rhs:
+        for eq_expr in Equals.yield_known_equal_expressions(lhs):
+            if eq_expr == rhs:
                 return True
         return False
 
@@ -171,11 +180,21 @@ class Equals(EquivRelation):
                 return self.conclude_boolean_equality()
             except ProofFailure:
                 pass
+
+        if hasattr(lhs, 'readily_provable_equality') and (
+                lhs.readily_provable_equality(self)):
+            # Use an Expression-specific _deduce_equality.
+            return lhs.deduce_equality(self)
+        rev_eq = self.reversed()
+        if hasattr(rhs, 'readily_provable_equality') and (
+                rhs.readily_provable_equality(rev_eq)):
+            # Use an Expression-specific _deduce_equality in reverse.
+            return rhs.deduce_equality(rev_eq).derive_reversed()
         
         if lhs.canonical_form() == rhs.canonical_form():
             # If the canonical forms are the same, we should be able
-            # to prove equality via 'deduce_equality'.
-            return lhs.deduce_equality(self)
+            # to prove equality via 'deduce_canonical_equality'.
+            return lhs.deduce_canonical_equality(self)
 
         if not isinstance(lhs, ExprTuple) and (
                 not isinstance(rhs, ExprTuple) and

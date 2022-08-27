@@ -344,11 +344,16 @@ class Len(Operation):
                                   "this case: %s.  Try Len.deduce_equality "
                                   "instead." % self)
 
+    def readily_provable_equality(self, equality):
+        '''
+        ToDo: treat some simple cases as readily provable.
+        '''
+        return False
+
     @equality_prover('equated', 'equate')
     def deduce_equality(self, equality, **defaults_config):
         '''
         Prove the given equality with self on the left-hand side.
-        
         '''
         from proveit.logic import Equals
         if not isinstance(equality, Equals):
