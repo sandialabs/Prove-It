@@ -1136,6 +1136,10 @@ class ExprTuple(Composite, Expression):
                 return False
         return True        
 
+    @prover
+    def _deduce_canonical_equality(self, equality, **defaults_config):
+        return self.deduce_equality(equality)
+
     @equality_prover('equated', 'equate')
     def deduce_equality(self, equality, *,
                         eq_via_elem_eq_thm=None, **defaults_config):
