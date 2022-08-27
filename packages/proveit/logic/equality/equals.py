@@ -207,12 +207,13 @@ class Equals(EquivRelation):
         
         # Try the 'deduce_equality' method.  If NotImplementedError
         # or UnsatisfiedPrerequisites is raised, we'll move on.
-        try:
-            return  lhs.deduce_equality(self)
-        except (NotImplementedError, UnsatisfiedPrerequisites):
-            # 'deduce_equality' not implemented for this 
-            # particular case, so carry on with default approach.
-            pass
+        if hasattr(lhs, 'deduce_equality'):
+            try:
+                return lhs.deduce_equality(self)
+            except (NotImplementedError, UnsatisfiedPrerequisites):
+                # 'deduce_equality' not implemented for this 
+                # particular case, so carry on with default approach.
+                pass
 
         # Try to prove equality via standard EquiRelation
         # strategies (simplify both sides then try transitivity).
@@ -300,12 +301,43 @@ class Equals(EquivRelation):
                 lhs_inner_gen.skip_over_branch()
                 rhs_inner_gen.skip_over_branch()
                 continue
-            equality = Equals(lhs_sub_expr, rhs_sub_expr)
-            if equality != self and (
-                    (not isinstance(lhs_sub_expr, ExprRange) and
-                     not isinstance(lhs_sub_expr, ExprRange) and
-                     equality.readily_provable(
-                             assumptions=assumptions))):
+            if isinstance(lhs_sub_expr, ExprRange) or (
+                    isinstance(rhs_sub_expr, ExprRange)):
+                equality = None
+            else:
+                equality = Equals(lhs_sub_expr, rhs_sub_expr)
+            if isinstance(lhs_sub_expr, Lambda) and (
+                    isinstance(rhs_sub_expr, Lambda)):
+                # Don't replace Lambda's directly, replace their bodies
+                # and make sure their parameters are the same.
+                if lhs_sub_expr.parameters != rhs_sub_expr.parameters:
+                    raise_different_structures()
+                equality = None
+            if isinstance(lhs_sub_expr, ExprTuple) and (
+                    isinstance(rhs_sub_expr, ExprTuple) and
+                    lhs_sub_expr.num_entries() == rhs_sub_expr.num_entries()):
+                # Don't replace an entire ExprTuple if we can replace
+                # individual entries.
+                equal_entrywise = True
+                for left_entry, right_entry in zip(lhs_sub_expr.entries,
+                                                   rhs_sub_expr.entries):
+                    if left_entry == right_entry:
+                        continue # identical entries.
+                    if isinstance(left_entry, ExprRange) or (
+                            isinstance(right_entry, ExprRange)):
+                        # If there are non-identical expression ranges,
+                        # replace the entire ExprTuple if possible.
+                        equal_entrywise = False
+                        break
+                    if not Equals(left_entry, right_entry).proven(
+                            assumptions=assumptions):
+                        equal_entrywise = False
+                        break
+                if equal_entrywise:
+                    equality = None
+                
+            if equality is not None and equality != self and (
+                     equality.readily_provable(assumptions=assumptions)):
                 # These sub-expressions are known to be equal,
                 # so let's replace the corresponding location
                 # with a lambda parameter for our lambda expression.
@@ -378,7 +410,6 @@ class Equals(EquivRelation):
                              replacements=replacements)
         else:
             # Multi-operand substitution.
-            from proveit.core_expr_types.tuples import tuple_eq_via_elem_eq
             tuple_eq = Equals(ExprTuple(*all_equalities_lhs),
                               ExprTuple(*all_equalities_rhs))
             return tuple_eq.substitution(
@@ -1101,7 +1132,7 @@ class Equals(EquivRelation):
                     if use_canonical_forms and (
                             expr.canonical_form()==eq_expr.canonical_form()):
                         # deduce equality via same canonical form
-                        _eq = expr.deduce_equality(_eq)
+                        _eq = expr.deduce_canonical_equality(_eq)
                     else:
                         _eq = _eq.conclude_via_transitivity()
                     return _eq.apply_transitivity(eq_evaluation)
@@ -1424,7 +1455,7 @@ def deduce_equal_or_not(lhs, rhs, **defaults_config):
     if NotEquals(lhs, rhs).proven():
         return NotEquals(lhs, rhs).prove()
     if lhs.canonical_form() == rhs.canonical_form():
-        return lhs.deduce_equality(Equals(lhs, rhs))
+        return lhs.deduce_canonical_equality(Equals(lhs, rhs))
     if hasattr(lhs, 'deduce_equal_or_not'):
         return lhs.deduce_equal_or_not(rhs)
     if hasattr(rhs, 'deduce_equal_or_not'):
