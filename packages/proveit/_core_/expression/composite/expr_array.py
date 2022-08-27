@@ -267,9 +267,15 @@ class ExprArray(ExprTuple):
         return self._simple_formatted(format_type='string')
 
     def _simple_formatted(self, format_type):
-        
+        '''
+        Just use ExprTuple formatting except wrap after each comma.
+        '''
         return (self.__class__.__name__ + 
-                ExprTuple.formatted(self, format_type=format_type, fence=True))
+                ExprTuple.formatted(
+                        self, format_type=format_type, 
+                        fence=True, 
+                        wrap_positions=[2*pos for pos in
+                                        range(1, self.num_entries())]))
         
     
     def get_latex_formatted_cells(self, orientation='horizontal',
