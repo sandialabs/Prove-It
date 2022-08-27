@@ -988,6 +988,9 @@ class Equals(EquivRelation):
         raise ValueError(
             'The given expression is expected to be one of the sides of the equation')
 
+    def readily_in_bool(self):
+        return True # equality is always boolean
+
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''

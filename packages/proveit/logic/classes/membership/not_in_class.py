@@ -3,6 +3,7 @@ from proveit import (Literal, defaults, USE_DEFAULTS,
                      ProofFailure, UnsatisfiedPrerequisites)
 from proveit.relation import Relation
 from proveit import x, S
+from proveit.util import OrderedSet
 
 
 class NotInClass(Relation):
@@ -16,9 +17,9 @@ class NotInClass(Relation):
                          latex_format=r'\notin_{C}',
                          theory=__file__)
 
-    # maps elements to NotInSet Judgments.
-    # For example, map x to (x \nin S) if (x \nin S) is a Judgment.
-    known_nonmemberships = dict()
+    # maps canonical forms of elements to NotInSet Judgments.
+    # For example, map x to (1*x \nin S) if (1*x \nin S) is a Judgment.
+    known_nonmemberships_by_canonical_form = dict()
 
     # map (element, domain) pairs to corresponding NotInClass expressions
     notinclass_expressions = dict()
@@ -82,8 +83,8 @@ class NotInClass(Relation):
         Store the proven non-membership in known_nonmemberships.
         '''
         Relation._record_as_proven(self, judgment)
-        NotInClass.known_nonmemberships.setdefault(
-            self.element, set()).add(judgment)
+        NotInClass.known_nonmemberships_by_canonical_form.setdefault(
+                self.element.canonical_form(), OrderedSet()).add(judgment)
         
     def side_effects(self, judgment):
         '''
@@ -171,9 +172,32 @@ class NotInClass(Relation):
         Then try the ses the Relation conclude strategies that simplify 
         both sides.  Finally use the domain-specific conclude method of 
         the nonmembership object as a last resort.
-        '''        
+        '''
+        from proveit.logic import Equals, is_irreducible_value
+
         if self.negated().disproven(): # don't use readily_disprovable
             return self.conclude_as_folded()
+
+        if hasattr(self, 'nonmembership_object') and (
+                self.nonmembership_object._readily_provable()):
+            # Don't bother with a fancy, indirect approach if
+            # we can readily conclude membership via the membership
+            # object.
+            return self.nonmembership_object.conclude()
+
+        # Try a known evaluation of the element.
+        element = self.element
+        if not is_irreducible_value(element):
+            try:
+                evaluation = Equals.get_known_evaluation(element)
+            except UnsatisfiedPrerequisites:
+                evaluation = None
+            if evaluation is not None:
+                nonmembership = type(self)(evaluation.rhs, self.domain)
+                if nonmembership.readily_provable():
+                    nonmembership = nonmembership.prove()
+                    return nonmembership.inner_expr().element.substitute(
+                            element)
 
         # Try the standard Relation strategies -- evaluate or
         # simplify both sides.
@@ -218,14 +242,18 @@ class NotInClass(Relation):
         under the given assumptions.
         '''
         from proveit._core_.proof import Assumption
-        # Make sure we derive assumption side-effects first.
-        Assumption.make_assumptions()
-
-        if element in NotInClass.known_nonmemberships:
-            for known_nonmembership in (
-                    NotInClass.known_nonmemberships[element]):
-                if known_nonmembership.is_applicable(assumptions):
-                    yield known_nonmembership
+        with defaults.temporary() as tmp_defaults:
+            if assumptions is not USE_DEFAULTS:
+                tmp_defaults.assumptions = assumptions
+            # Make sure we derive assumption side-effects first.
+            Assumption.make_assumptions()
+        
+            element_cf = element.canonical_form()
+            if element_cf in NotInClass.known_nonmemberships_by_canonical_form:
+                for known_nonmembership in (
+                        NotInClass.known_nonmemberships_by_canonical_form[element_cf]):
+                    if known_nonmembership.is_applicable(assumptions):
+                        yield known_nonmembership
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,

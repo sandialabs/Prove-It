@@ -181,18 +181,23 @@ class Relation(Operation):
         if name[-len(both_sides_str):] == both_sides_str:
             from proveit.logic import InSet
             known_memberships = OrderedSet()
-            if self.lhs in InSet.known_memberships:
-                known_memberships.update(InSet.known_memberships[self.lhs])
-            elif self.rhs in InSet.known_memberships:
-                known_memberships.update(InSet.known_memberships[self.rhs])
+            lhs, rhs = self.lhs, self.rhs
+            lhs_cf = lhs.canonical_form()
+            rhs_cf = rhs.canonical_form()
+            if lhs_cf in InSet.known_memberships_by_canonical_form:
+                known_memberships.update(
+                        InSet.known_memberships_by_canonical_form[lhs_cf])
+            elif rhs_cf in InSet.known_memberships_by_canonical_form:
+                known_memberships.update(
+                        InSet.known_memberships_by_canonical_form[rhs_cf])
             # These classes may contain '_both_sides' methods that could
             # be applied via the Relation (also attach corresponding
             # domains as applicable):
-            if self.lhs.__class__ == self.rhs.__class__:
-                classes_and_domains = [(self.lhs.__class__, None)]
+            if lhs.__class__ == rhs.__class__:
+                classes_and_domains = [(lhs.__class__, None)]
             else:
-                classes_and_domains = [(self.lhs.__class__, None),
-                                       (self.rhs.__class__, None)]
+                classes_and_domains = [(lhs.__class__, None),
+                                       (rhs.__class__, None)]
             _last_try_classes_and_domains = []
             for known_membership in known_memberships:
                 # We don't require that the known_membership
@@ -258,17 +263,22 @@ class Relation(Operation):
         #print('method_end_str', method_end_str)
         both_sides_methods = []
         from proveit.logic import InSet
+        lhs, rhs = self.lhs, self.rhs
         known_memberships = OrderedSet()
-        if self.lhs in InSet.known_memberships:
-            known_memberships.update(InSet.known_memberships[self.lhs])
-        elif self.rhs in InSet.known_memberships:
-            known_memberships.update(InSet.known_memberships[self.rhs])
+        lhs_cf = lhs.canonical_form()
+        rhs_cf = rhs.canonical_form()
+        if lhs_cf in InSet.known_memberships_by_canonical_form:
+            known_memberships.update(
+                    InSet.known_memberships_by_canonical_form[lhs_cf])
+        elif rhs_cf in InSet.known_memberships_by_canonical_form:
+            known_memberships.update(
+                    InSet.known_memberships_by_canonical_form[rhs_cf])
         # These classes may contain '_both_sides' methods that could
         # be applied via the Relation:
-        if self.lhs.__class__ == self.rhs.__class__:
-            classes = [self.lhs.__class__]
+        if lhs.__class__ == rhs.__class__:
+            classes = [lhs.__class__]
         else:
-            classes = [self.lhs.__class__, self.rhs.__class__]
+            classes = [lhs.__class__, rhs.__class__]
         classes += [known_membership.domain.__class__ for known_membership
                     in known_memberships]
         for _class in classes:

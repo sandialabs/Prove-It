@@ -118,17 +118,6 @@ class IntersectNonmembership(SetNonmembership):
         return Or(*self.domain.operands.map_elements(
                 lambda subset : NotInSet(element, subset)))
 
-    def _readily_provable(self):
-        '''
-        Nonmembership in this intersection is readily provable
-        iff we can readily disprove the element being in any of the
-        intersecting sets.
-        '''
-        from proveit.logic import NotInSet, any_readily_provable
-        return any_readily_provable(
-                self.domain.operands,
-                lambda subset : NotInSet(self.element, subset))
-
     @prover
     def conclude(self, **defaults_config):
         '''

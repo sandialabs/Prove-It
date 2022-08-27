@@ -237,6 +237,9 @@ class NotEquals(Relation):
         from proveit.logic.booleans.implication import deny_via_contradiction
         return deny_via_contradiction(self, conclusion)
 
+    def readily_in_bool(self):
+        return True # NotEquals is always boolean
+
     @prover
     def deduce_in_bool(self, **defaults_config):
         '''

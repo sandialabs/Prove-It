@@ -77,13 +77,7 @@ class VecSpaces(Function):
         will be raised.
         '''
         field = VecSpaces.get_field(field, may_be_none=True)
-        if vec not in InSet.known_memberships:
-            return # No known memberships to potentially yield.
-        for membership in InSet.known_memberships[vec]:
-            if not membership.is_applicable():
-                # Skip it if it isn't usable under current default
-                # assumptions.
-                continue 
+        for membership in InClass.yield_known_memberships(vec):
             # Check if the membership domain is a vector space over the
             # specified field.
             domain = membership.domain

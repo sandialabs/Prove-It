@@ -360,38 +360,38 @@ def readily_provable_number_set(expr, *, automation=USE_DEFAULTS,
     _compare_to_zero is set to False internally to avoid infinite
     recursion.
     '''
-    from proveit.logic import And, InSet, Set, Equals, NotEquals
+    from proveit.logic import (And, InSet, InClass, Set, 
+                               Equals, NotEquals, is_irreducible_value)
     from proveit.numbers import Less, LessEq, zero
     from proveit._core_.proof import Assumption
 
     # Make sure we derive assumption side-effects first.
     Assumption.make_assumptions()
-    assumptions = defaults.assumptions
     
     if automation is USE_DEFAULTS:
         automation = defaults.conclude_automation
     if not automation:
         must_be_direct = True
 
+    if not is_irreducible_value(expr):
+        # See if the expression has a known evaluations.
+        try:
+            evaluation = Equals.get_known_evaluation(expr)
+        except UnsatisfiedPrerequisites:
+            evaluation = None
+        if evaluation is not None:
+            # Use the evaluated number to determine its number set.
+            return readily_provable_number_set(evaluation.rhs)
+
     # Find the first (most restrictive) number set that
     # contains 'expr' or something equal to it.
+    known_number_sets = set()
+    for known_membership in InClass.yield_known_memberships(expr):
+        if known_membership.domain in standard_number_sets:
+            known_number_sets.add(known_membership.domain)
     best_known_number_set = None
     for number_set in sorted_number_sets:
-        membership = None
-        eq_expr_generator = ((expr,) if must_be_direct else
-                             Equals.yield_known_equal_expressions(expr))
-        for eq_expr in eq_expr_generator:
-            if isinstance(eq_expr, ExprRange):
-                membership = And(*ExprTuple(eq_expr).map_elements(
-                        lambda element : InSet(element, number_set)))
-            else:
-                membership = InSet(eq_expr, number_set)
-            if membership.proven(): 
-                # Don't use readily_provable; avoid infinite recursion.
-                break # found a known number set membership
-            else:
-                membership = None
-        if membership is not None:
+        if number_set in known_number_sets:
             best_known_number_set = number_set
             break
 
@@ -402,8 +402,7 @@ def readily_provable_number_set(expr, *, automation=USE_DEFAULTS,
     # Technically we aren't checking the provability of the expression
     # but we want to use Expression.in_progress_to_check_provability
     # for convenience to avoid infinite/pointless recursion.
-    in_progress_key = (
-        expr, tuple(sorted(assumptions, key=lambda expr: hash(expr))))
+    in_progress_key = (expr, defaults.sorted_assumptions)
     if in_progress_key in Expression.in_progress_to_check_provability:
         # avoid infinite/pointless recursion by using
         # in_progress_to_check_provability

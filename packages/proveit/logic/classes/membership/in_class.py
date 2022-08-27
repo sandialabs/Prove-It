@@ -28,9 +28,9 @@ class InClass(Relation):
             latex_format=r'\underset{{\scriptscriptstyle c}}{\in}',
             theory=__file__)
 
-    # maps elements to InSet Judgments.
-    # For example, map x to (x in S) if (x in S) is a Judgment.
-    known_memberships = dict()
+    # maps canonical forms of elements to InSet Judgments.
+    # For example, map x to (1*x in S) if (1*x in S) is a Judgment.
+    known_memberships_by_canonical_form = dict()
     
     # map (element, domain) pairs to corresponding InClass expressions
     inclass_expressions = dict()
@@ -94,11 +94,13 @@ class InClass(Relation):
 
     def _record_as_proven(self, judgment):
         '''
-        Store the proven membership in known_memberships.
+        Store the proven membership in known_memberships, and
+        store the membership with the element in its canonical form
+        in known_canonical_memberships.
         '''
         Relation._record_as_proven(self, judgment)
-        InClass.known_memberships.setdefault(
-                self.element, OrderedSet()).add(judgment)
+        InClass.known_memberships_by_canonical_form.setdefault(
+                self.element.canonical_form(), OrderedSet()).add(judgment)
         
     def side_effects(self, judgment):
         '''
@@ -146,9 +148,20 @@ class InClass(Relation):
         This membership is readily provable if the membership
         object indicates that it is readily provable.
         '''
+        from proveit.logic import Equals, is_irreducible_value
         if hasattr(self, 'membership_object'):
             if self.membership_object._readily_provable():
                 return True
+        element = self.element
+        
+        # Try a known evaluation.
+        if not is_irreducible_value(element):
+            try:
+                elem_eval = Equals.get_known_evaluation(element).rhs
+            except UnsatisfiedPrerequisites:
+                return None
+            return type(self)(elem_eval, self.domain).readily_provable()
+            
         return False
 
     def _readily_disprovable(self):
@@ -166,6 +179,7 @@ class InClass(Relation):
         If that doesn't work, try using the domain-specific 'conclude' 
         method of the membership object.
         '''
+        from proveit.logic import Equals, is_irreducible_value
         
         if hasattr(self, 'membership_object') and (
                 self.membership_object._readily_provable()):
@@ -173,6 +187,20 @@ class InClass(Relation):
             # we can readily conclude membership via the membership
             # object.
             return self.membership_object.conclude()
+
+        # Try a known evaluation of the element.
+        element = self.element
+        if not is_irreducible_value(element):
+            try:
+                evaluation = Equals.get_known_evaluation(element)
+            except UnsatisfiedPrerequisites:
+                evaluation = None
+            if evaluation is not None:
+                membership = type(self)(evaluation.rhs, self.domain)
+                if membership.readily_provable():
+                    membership = membership.prove()
+                    return membership.inner_expr().element.substitute(
+                            element)
         
         # Try the standard Relation strategies -- evaluate or
         # simplify both sides.
@@ -210,14 +238,18 @@ class InClass(Relation):
         under the given assumptions.
         '''
         from proveit._core_.proof import Assumption
-        # Make sure we derive assumption side-effects first.
-        Assumption.make_assumptions()
-
-        if element in InClass.known_memberships:
-            known_memberships = list(InClass.known_memberships[element])
-            for known_membership in known_memberships:
-                if known_membership.is_applicable(assumptions):
-                    yield known_membership
+        with defaults.temporary() as tmp_defaults:
+            if assumptions is not USE_DEFAULTS:
+                tmp_defaults.assumptions = assumptions
+            # Make sure we derive assumption side-effects first.
+            Assumption.make_assumptions()
+    
+            element_cf = element.canonical_form()
+            if element_cf in InClass.known_memberships_by_canonical_form:
+                for known_membership in (
+                        InClass.known_memberships_by_canonical_form[element_cf]):
+                    if known_membership.is_applicable():
+                        yield known_membership
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,

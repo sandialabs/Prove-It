@@ -5,6 +5,11 @@ from proveit.logic import (Equals, InSet, SetMembership, SubsetEq,
 
 
 class NumberSet(Literal):
+    # Map pairs of standard number sets to True/False depending on
+    # whether the first includes the latter.  Used to speed up
+    # NumberSet.includes.
+    _standard_number_set_inclusion_truths = dict()
+    
     def __init__(self, string, latex, *, theory, styles, fence_when_forced=False):
         Literal.__init__(self, string, latex, theory=theory, styles=styles,
                          fence_when_forced=fence_when_forced)
@@ -54,17 +59,35 @@ class NumberSet(Literal):
         Return True if this NumberSet includes the 'other_set' set.
         '''
         from proveit.numbers.number_operation import (
-            sorted_number_sets, standard_number_sets, deduce_number_set)
+            sorted_number_sets, standard_number_sets)
         if other_set is None: return False
         if other_set == self: return True
-        if SubsetEq(other_set, self).proven():
-            return True
-
-        if other_set not in standard_number_sets:    
+        if self in standard_number_sets and other_set in standard_number_sets:
+            inclusion_truths = NumberSet._standard_number_set_inclusion_truths
+            if (self, other_set) in inclusion_truths:
+                return inclusion_truths[(self, other_set)]
+            does_include = False
+            if SubsetEq(other_set, self).proven():
+                does_include = True
+            else:
+                # Try one level of indirection via SubsetEq.
+                for number_set in sorted_number_sets:
+                    if number_set in (other_set, self):
+                        continue
+                    if (SubsetEq(other_set, number_set).proven() and
+                            SubsetEq(number_set, self).proven()):
+                        does_include = True
+                        break
+            # remember for future reference
+            inclusion_truths[(self, other_set)] = does_include
+            return does_include
+        else:
             # For example, 'other_set' could be an integer Interval
             # or real IntervalCC, IntervalOC, ...), so let's see if
             # we can prove that an arbitrary variable in the other_set
             # is also in self.
+            if SubsetEq(other_set, self).proven():
+                return True
 
             # No worry about conflicts with assumptions because the 
             # variable will be bound by a quantifier:
@@ -72,20 +95,7 @@ class NumberSet(Literal):
                                 avoid_default_assumption_conflicts=False)
             assumptions = defaults.assumptions + (InSet(_x, other_set),)
             #deduce_number_set(_x, assumptions=assumptions)
-            if InSet(_x, self).readily_provable(assumptions=assumptions):
-                #if not SubsetEq(other_set, self).proven():
-                #    SubsetEq(other_set, self).conclude_as_folded()
-                return True
-
-        # Try one level of indirection via SubsetEq.
-        for number_set in sorted_number_sets:
-            if number_set in (other_set, self):
-                continue
-            if (SubsetEq(other_set, number_set).proven() and
-                    SubsetEq(number_set, self).proven()):
-                return True
-
-        return False # Not known to include the 'other'
+            return InSet(_x, self).proven(assumptions=assumptions)
 
     def deduce_superset_eq_relation(self, superset):
         '''

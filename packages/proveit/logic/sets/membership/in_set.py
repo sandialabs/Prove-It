@@ -123,23 +123,25 @@ class InSet(InClass):
         as-strong known membership.  Otherwise, return None.
         '''
         from proveit.logic import Equals, SubsetEq
-        for elem_sub in Equals.yield_known_equal_expressions(self.element):
-            eq_membership = None # membership in an equal domain
-            subset_membership = None # membership in a subset
-            for known_membership in InClass.yield_known_memberships(elem_sub):
-                eq_rel = Equals(known_membership.domain, self.domain)
-                sub_rel = SubsetEq(known_membership.domain, self.domain)
-                if known_membership.domain == self.domain:
-                    # this is the best to use; we are done
-                    return known_membership
-                elif eq_rel.readily_provable():
-                    eq_membership = known_membership
-                elif sub_rel.readily_provable():
-                    subset_membership = known_membership
-            if eq_membership is not None:
-                return eq_membership
-            elif subset_membership is not None:
-                return subset_membership
+        known_memberships = list(
+                InClass.yield_known_memberships(self.element))
+        # First see of there is a known membership with the same domain.
+        for known_membership in known_memberships:
+            if known_membership.domain == self.domain:
+                # this is the best to use; we are done
+                return known_membership
+        # Next see of there is a known membership with a domain
+        # readily provable to be equal to this domain.
+        for known_membership in known_memberships:
+            eq_rel = Equals(known_membership.domain, self.domain)
+            if eq_rel.readily_provable():
+                return known_membership
+        # Finaly see of there is a known membership with a domain
+        # readily provable to be a subset of to this domain.
+        for known_membership in known_memberships:
+            sub_rel = SubsetEq(known_membership.domain, self.domain)
+            if sub_rel.readily_provable():
+                return known_membership
         return None # No match found.
 
 class SetMembership(ClassMembership):

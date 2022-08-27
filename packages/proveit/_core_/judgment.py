@@ -248,6 +248,7 @@ class Judgment:
         if key in Judgment.sideeffect_processed:
             return  # has already been processed
         if self not in Judgment.in_progress_to_derive_sideeffects:
+            #print(key)
             # avoid infinite recursion by using
             # in_progress_to_deduce_sideeffects
             Judgment.in_progress_to_derive_sideeffects.add(self)

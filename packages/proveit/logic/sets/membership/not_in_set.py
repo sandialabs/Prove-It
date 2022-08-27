@@ -156,24 +156,25 @@ class NotInSet(NotInClass):
         as-strong known membership.  Otherwise, return None.
         '''
         from proveit.logic import Equals, SubsetEq
-        for elem_sub in Equals.yield_known_equal_expressions(self.element):
-            eq_nonmembership = None # nonmembership in an equal domain
-            superset_nonmembership = None # nonmembership in a superset
-            for known_nonmembership in (
-                    NotInClass.yield_known_nonmemberships(elem_sub)):
-                eq_rel = Equals(known_nonmembership.domain, self.domain)
-                sub_rel = SubsetEq(self.domain, known_nonmembership.domain)
-                if known_nonmembership.domain == self.domain:
-                    # this is the best to use; we are done
-                    return known_nonmembership
-                elif eq_rel.readily_provable():
-                    eq_nonmembership = known_nonmembership
-                elif sub_rel.readily_provable():
-                    superset_nonmembership = known_nonmembership
-            if eq_nonmembership is not None:
-                return eq_nonmembership
-            elif superset_nonmembership is not None:
-                return superset_nonmembership
+        known_nonmemberships = list(
+                NotInClass.yield_known_nonmemberships(self.element))
+        # First see of there is a known nonmembership with the same domain.
+        for known_nonmembership in known_nonmemberships:
+            if known_nonmembership.domain == self.domain:
+                # this is the best to use; we are done
+                return known_nonmembership
+        # Next see of there is a known nonmembership with a domain
+        # readily provable to be equal to this domain.
+        for known_nonmembership in known_nonmemberships:
+            eq_rel = Equals(known_nonmembership.domain, self.domain)
+            if eq_rel.readily_provable():
+                return known_nonmembership
+        # Finaly see of there is a known nonmembership with a domain
+        # readily provable to be a superset of to this domain.
+        for known_nonmembership in known_nonmemberships:
+            sub_rel = SubsetEq(self.domain, known_nonmembership.domain)
+            if sub_rel.readily_provable():
+                return known_nonmembership
         return None # No match found.
 
 class SetNonmembership(ClassNonmembership):
