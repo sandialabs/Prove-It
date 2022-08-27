@@ -57,8 +57,9 @@ class Implies(TransitiveRelation):
             # Derive the consequent by proving the antecedent.
             yield self.derive_consequent  # B given A=>B and A
         else:
-            yield lambda : self.derive_consequent(assumptions=(
-                    defaults.assumptions + (self.antecedent,)))
+            # Derive the consequent by assuming the antecedent, but 
+            # don't propogate further side-effects.
+            yield self._derive_consequent_generically
         if self.consequent == FALSE:
             # Not(A) given A=>FALSE or A given Not(A)=>FALSE
             yield self.derive_via_contradiction
@@ -208,6 +209,17 @@ class Implies(TransitiveRelation):
         from proveit._core_.proof import ModusPonens
         self.antecedent.prove()
         return ModusPonens(self, defaults.assumptions).proven_truth
+
+    def _derive_consequent_generically(self, **defaults_config):
+        '''
+        Drive the consequent assuming the antecedent.  
+        Do not propagate further side-effects.
+        '''
+        with defaults.temporary() as tmp_defaults:
+            tmp_defaults.automation = False
+            tmp_defaults.assumptions = defaults.assumptions + (
+                    self.antecedent,)
+            return self.derive_consequent()
 
     @prover
     def derive_iff(self, **defaults_config):
