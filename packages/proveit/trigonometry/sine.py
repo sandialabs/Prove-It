@@ -97,7 +97,7 @@ class Sin(Function):
         _theta = self.angle
         theta_ns = readily_provable_number_set(_theta)
         if theta_ns is None: return None
-        if not Real.includes(theta_ns): return Complex
+        if not Real.readily_includes(theta_ns): return Complex
         if (Less(zero, _theta).readily_provable() and
                 Less(_theta, pi).readily_provable()):
             return IntervalOC(zero, one)
