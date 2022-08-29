@@ -998,7 +998,7 @@ class Expression(metaclass=ExprType):
         '''
         from proveit import ProofFailure
         try:
-            self.prove(assumptions=assumptions, conclude_automation=False)
+            self.prove(assumptions=assumptions, automation=False)
             return True
         except ProofFailure:
             return False
@@ -1019,8 +1019,7 @@ class Expression(metaclass=ExprType):
             # Make sure we derive assumption side-effects first.
             if assumptions is not USE_DEFAULTS:
                 tmp_defaults.assumptions = assumptions
-            assumptions = defaults.assumptions
-            Assumption.make_assumptions()
+            tmp_defaults.automation=False
                 
             if self.proven(): # this will "make" the assumptions
                 return True

@@ -17,12 +17,19 @@ from .theory import Theory
 
 class Proof:
 
+    # (Expression, sorted assumptions) pairs for which 
+    # derive_side_effects has been called.  We track this to make sure 
+    # we didn't miss anything while automation was disabled and then 
+    # re-enabled.
+    sideeffect_processed = set()    
+    
     @staticmethod
     def _clear_():
         '''
         Clear all references to Prove-It information in
         the Proof jurisdiction.
         '''
+        Proof.sideeffect_processed.clear()
         Assumption.all_assumptions.clear()
         Assumption.considered_assumption_sets.clear()
         Theorem.all_theorems.clear()
@@ -236,7 +243,13 @@ class Proof:
         if not defaults.sideeffect_automation:
             return # Side-effect automation is off, so don't do it.
         proven_truth = self.proven_truth
+        
         if proven_truth.proof() == self and self.is_usable(): 
+            key = (proven_truth.expr, defaults.sorted_assumptions,
+                   defaults.conclude_automation)
+            if key in Proof.sideeffect_processed:
+                return  # has already been processed
+
             # Don't bother with side effects if this proof was born 
             # obsolete or unusable.  May derive any side-effects that 
             # are obvious consequences arising from this truth
@@ -247,7 +260,9 @@ class Proof:
                 temp_defaults.auto_simplify = False
                 if len(defaults.replacements) > 0:
                     temp_defaults.replacements = []
+                #print(proven_truth)
                 proven_truth.derive_side_effects()
+            Proof.sideeffect_processed.add(key)
 
     def _update_dependencies(self, newproof):
         '''
@@ -810,7 +825,7 @@ class Assumption(Proof):
             # given assumptions.
             # This can happen when automation is temporarily disabled or
             # when assumptions change.
-            preexisting.proven_truth.derive_side_effects()
+            preexisting._derive_side_effects()
             return preexisting
         return Assumption(expr, defaults.assumptions)
 
@@ -1695,11 +1710,13 @@ class Instantiation(Proof):
                 equiv_alt_expansions=active_equiv_alt_expansions,
                 requirements=requirements)
             new_equality_repl_requirements = []
+            
             eq_replaced = instantiated.equality_replaced(
                     requirements=new_equality_repl_requirements,
                     auto_simplify_top_level=False,
                     simplify_only_where_marked=_simplify_only_where_marked,
                     markers_and_marked_expr=_markers_and_marked_expr)
+
             requirements.extend(new_equality_repl_requirements)
             equality_repl_requirements.update(new_equality_repl_requirements)
             return eq_replaced
@@ -2354,9 +2371,11 @@ class ProofFailure(Exception):
 class UnsatisfiedPrerequisites(Exception):
     def __init__(self, msg):
         self.msg = msg
+        self.assumptions = tuple(defaults.assumptions)
     
     def __str__(self):
-        return "Prerequisites not met: " + self.msg
+        return "Prerequisites not met while assuming %s: %s"%(
+                self.assumptions, self.msg)
 
 class ModusPonensFailure(ProofFailure):
     def __init__(self, expr, assumptions, message):

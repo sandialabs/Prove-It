@@ -234,6 +234,14 @@ class Defaults:
                 yield assumption
                 assumptions_set.add(assumption)
 
+    def make_assumptions(self):
+        '''
+        Make the default assumption Proof objects, deriving side-effects
+        if side-effect automation is on.
+        '''
+        from proveit._core_.proof import Assumption
+        Assumption.make_assumptions()
+
     def __setattr__(self, attr, value):
         '''
         When setting the assumptions, check that they are valid

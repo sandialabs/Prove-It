@@ -79,12 +79,6 @@ class Judgment:
     # with that canonical form.
     canonical_form_to_proven_exprs = dict()
 
-    # (Judgment, default assumptions) pairs for which 
-    # derive_side_effects has been called.  We track this to make sure 
-    # we didn't miss anything while automation was disabled and then 
-    # re-enabled.
-    sideeffect_processed = set()
-
     # Call the begin_proof method to begin a proof of a Theorem.
     theorem_being_proven = None  # Theorem being proven.
     theorem_being_proven_str = None # in string form.
@@ -118,7 +112,6 @@ class Judgment:
         '''
         Judgment.expr_to_judgments.clear()
         Judgment.canonical_form_to_proven_exprs.clear()
-        Judgment.sideeffect_processed.clear()
         Judgment.theorem_being_proven = None
         Judgment.theorem_being_proven_str = None
         Judgment.theorem_readily_provable = None
@@ -242,11 +235,6 @@ class Judgment:
         from .proof import ProofFailure, UnsatisfiedPrerequisites
         if not defaults.sideeffect_automation:
             return  # automation disabled
-        # See if the side-effects for this expression under these
-        # assumptions (in no particular order) have been generated.
-        key = (self.expr, defaults.sorted_assumptions)
-        if key in Judgment.sideeffect_processed:
-            return  # has already been processed
         if self not in Judgment.in_progress_to_derive_sideeffects:
             #print(key)
             # avoid infinite recursion by using
@@ -272,7 +260,6 @@ class Judgment:
                             str(e))
             finally:
                 Judgment.in_progress_to_derive_sideeffects.remove(self)
-            Judgment.sideeffect_processed.add(key)
 
     def order_of_appearance(self, sub_expressions):
         '''
@@ -400,7 +387,7 @@ class Judgment:
             # automation is on in case it was off before.  This is
             # a good place to do it since we should check applicability
             # before using a Judgment.
-            self.derive_side_effects()
+            self.proof()._derive_side_effects()
         return applicable
 
     def as_theorem_or_axiom(self):
