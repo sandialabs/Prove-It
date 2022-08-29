@@ -119,7 +119,7 @@ class Divides(DividesRelation):
         lhs_ns = readily_provable_number_set(self.lhs, default=Complex)
 
         if self.lhs == self.rhs:
-            if ComplexNonZero.includes(lhs_ns):
+            if ComplexNonZero.readily_includes(lhs_ns):
                 # Trivial x|x with complex x ≠ 0
                 return self.conclude_via_reflexivity()
             else:
@@ -135,7 +135,7 @@ class Divides(DividesRelation):
         #-- Case (2): x|0 with x != 0 known or assumed               --#
         #-- -------------------------------------------------------- --#
         if self.rhs == zero:
-            if ComplexNonZero.includes(lhs_ns):
+            if ComplexNonZero.readily_includes(lhs_ns):
                 # We have 0/x with complex x ≠ 0
                 return self.conclude_via_zero_factor()
             else:

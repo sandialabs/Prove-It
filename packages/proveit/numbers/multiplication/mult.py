@@ -181,62 +181,68 @@ class Mult(NumberOperation):
                 a_ns = readily_provable_number_set(_a)
                 b_ns = readily_provable_number_set(_b)
                 if number_set == NaturalPos:
-                    if RealNeg.includes(a_ns) and RealNeg.includes(b_ns):
+                    if RealNeg.readily_includes(a_ns) and (
+                            RealNeg.readily_includes(b_ns)):
                         thm = mult_pkg.mult_nat_pos_from_double_neg
                     else:
                         thm = mult_pkg.mult_nat_pos_closure_bin
                 elif number_set == Natural:
-                    if RealNonPos.includes(a_ns) and RealNonPos.includes(b_ns):
+                    if RealNonPos.readily_includes(a_ns) and (
+                            RealNonPos.readily_includes(b_ns)):
                         thm = mult_pkg.mult_nat_from_double_nonpos
                     else:
                         thm = mult_pkg.mult_nat_closure_bin
                 elif number_set == IntegerNeg:
-                    if RealNeg.includes(a_ns):
+                    if RealNeg.readily_includes(a_ns):
                         thm = mult_pkg.mult_int_neg_from_left_neg
                     else:
                         thm = mult_pkg.mult_int_neg_from_right_neg
                 elif number_set == IntegerNonPos:
-                    if RealNonPos.includes(a_ns):
+                    if RealNonPos.readily_includes(a_ns):
                         thm = mult_pkg.mult_int_nonpos_from_left_nonpos
                     else:
                         thm = mult_pkg.mult_int_nonps_from_right_nonpos
                 elif number_set == RationalPos:
-                    if RealNeg.includes(a_ns) and RealNeg.includes(b_ns):
+                    if RealNeg.readily_includes(a_ns) and (
+                            RealNeg.readily_includes(b_ns)):
                         thm = mult_pkg.mult_rational_pos_from_double_neg
                     else:
                         thm = mult_pkg.mult_rational_pos_closure_bin
                 elif number_set == RationalNonNeg:
-                    if RealNonPos.includes(a_ns) and RealNonPos.includes(b_ns):
+                    if RealNonPos.readily_includes(a_ns) and (
+                            RealNonPos.readily_includes(b_ns)):
                         thm = mult_pkg.mult_rational_nonneg_from_double_nonpos
                     else:
                         thm = mult_pkg.mult_rational_nonneg_closure_bin
                 elif number_set == RationalNeg:
-                    if RealNeg.includes(a_ns):
+                    if RealNeg.readily_includes(a_ns):
                         thm = mult_pkg.mult_rational_neg_from_left_neg
                     else:
                         thm = mult_pkg.mult_rational_neg_from_right_neg
                 elif number_set == RationalNonPos:
-                    if RealNonPos.includes(a_ns):
+                    if RealNonPos.readily_includes(a_ns):
                         thm = mult_pkg.mult_rational_nonpos_from_left_nonpos
                     else:
                         thm = mult_pkg.mult_rational_nonps_from_right_nonpos
                 elif number_set == RealPos:
-                    if RealNeg.includes(a_ns) and RealNeg.includes(b_ns):
+                    if RealNeg.readily_includes(a_ns) and (
+                            RealNeg.readily_includes(b_ns)):
                         thm = mult_pkg.mult_real_pos_from_double_neg
                     else:
                         thm = mult_pkg.mult_real_pos_closure_bin
                 elif number_set == RealNonNeg:
-                    if RealNonPos.includes(a_ns) and RealNonPos.includes(b_ns):
+                    if RealNonPos.readily_includes(a_ns) and (
+                            RealNonPos.readily_includes(b_ns)):
                         thm = mult_pkg.mult_real_nonneg_from_double_nonpos
                     else:
                         thm = mult_pkg.mult_real_nonneg_closure_bin
                 elif number_set == RealNeg:
-                    if RealNeg.includes(a_ns):
+                    if RealNeg.readily_includes(a_ns):
                         thm = mult_pkg.mult_real_neg_from_left_neg
                     else:
                         thm = mult_pkg.mult_real_neg_from_right_neg
                 elif number_set == RealNonPos:
-                    if RealNonPos.includes(a_ns):
+                    if RealNonPos.readily_includes(a_ns):
                         thm = mult_pkg.mult_real_nonpos_from_left_nonpos
                     else:
                         thm = mult_pkg.mult_real_nonpos_from_right_nonpos
@@ -261,7 +267,7 @@ class Mult(NumberOperation):
             # We need more operand-specific infomation.
             operand_ns_set = {readily_provable_number_set(operand) for
                               operand in self.operands}
-            if not all(number_set.includes(operand_ns) for 
+            if not all(number_set.readily_includes(operand_ns) for 
                        operand_ns in operand_ns_set):
                 # Not the simple case, so break this down via
                 # association to be dealt with at a binary level where
@@ -1576,13 +1582,13 @@ class Mult(NumberOperation):
         _a = next(iter(factor_bases))
         if self.factors.is_double():
             _b, _c = factor_exponents
-            if NaturalPos.includes(minimal_exponent_ns):
+            if NaturalPos.readily_includes(minimal_exponent_ns):
                 return exp_pkg.product_of_posnat_powers.instantiate(
                         {a:_a, m:_b, n:_c}, replacements=replacements)
-            elif RealPos.includes(minimal_exponent_ns):
+            elif RealPos.readily_includes(minimal_exponent_ns):
                 return exp_pkg.product_of_pos_powers.instantiate(
                         {a:_a, b:_b, c:_c}, replacements=replacements)
-            elif Real.includes(minimal_exponent_ns):
+            elif Real.readily_includes(minimal_exponent_ns):
                 return exp_pkg.product_of_real_powers.instantiate(
                         {a:_a, b:_b, c:_c}, replacements=replacements)
             else:
@@ -1591,13 +1597,13 @@ class Mult(NumberOperation):
         else:
             _b = ExprTuple(*factor_exponents)
             _m = _b.num_elements()
-            if NaturalPos.includes(minimal_exponent_ns):
+            if NaturalPos.readily_includes(minimal_exponent_ns):
                 return exp_pkg.products_of_posnat_powers.instantiate(
                         {m:_m, a:_a, k:_b}, replacements=replacements)
-            elif RealPos.includes(minimal_exponent_ns):
+            elif RealPos.readily_includes(minimal_exponent_ns):
                 return exp_pkg.products_of_pos_powers.instantiate(
                         {m:_m, a:_a, b:_b}, replacements=replacements)
-            elif Real.includes(minimal_exponent_ns):
+            elif Real.readily_includes(minimal_exponent_ns):
                 return exp_pkg.products_of_real_powers.instantiate(
                         {m:_m, a:_a, b:_b}, replacements=replacements)
             else:

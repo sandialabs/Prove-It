@@ -37,14 +37,14 @@ class Mod(NumberOperation):
             NaturalPos, RealPos, Interval, IntervalCO, subtract, zero, one)
         deduce_number_set(self.dividend)
         divisor_ns = readily_provable_number_set(self.divisor)
-        if (NaturalPos.includes(divisor_ns) and 
+        if (NaturalPos.readily_includes(divisor_ns) and 
                 InSet(self.dividend, 
                       Interval(zero, 
                                subtract(self.divisor, one))).proven()):
             # (x mod L) = x if L in N+ and x in {0 .. L-1}
             return int_mod_elimination.instantiate(
                 {x:self.dividend, L:self.divisor})
-        if (RealPos.includes(divisor_ns) and 
+        if (RealPos.readily_includes(divisor_ns) and 
                 InSet(self.dividend, 
                       IntervalCO(zero, self.divisor)).proven()):
             # (x mod L) = x if L in R+ and x in [0, L)
@@ -116,11 +116,11 @@ class Mod(NumberOperation):
         # from number_sets import deduce_in_integer, deduce_in_real
         dividend_ns = readily_provable_number_set(self.dividend)
         divisor_ns = readily_provable_number_set(self.divisor)
-        int_dividend = Integer.includes(dividend_ns)
-        if (int_dividend and NaturalPos.includes(divisor_ns)):
+        int_dividend = Integer.readily_includes(dividend_ns)
+        if (int_dividend and NaturalPos.readily_includes(divisor_ns)):
             return mod_natpos_in_interval.instantiate(
                 {a: self.dividend, b: self.divisor})
-        elif (int_dividend and Integer.includes(divisor_ns)):
+        elif (int_dividend and Integer.readily_includes(divisor_ns)):
             # if the operands are integers, then we can deduce that
             # a mod b is an integer in the set {0,1,...,(b-1)}
             return mod_in_interval.instantiate(
@@ -162,7 +162,7 @@ class Mod(NumberOperation):
         thm = None
         if number_set == ZeroSet:
             divisor_ns = readily_provable_number_set(self.divisor)
-            if Integer.includes(divisor_ns):
+            if Integer.readily_includes(divisor_ns):
                 thm = mod_pkg.mod_in_zero_set_int
             else:
                 thm = mod_pkg.mod_in_zero_set
@@ -193,10 +193,10 @@ class Mod(NumberOperation):
             # 0 mod N = 0
             return ZeroSet
         divisor_ns = readily_provable_number_set(self.divisor)
-        int_dividend = Integer.includes(dividend_ns)
-        if (int_dividend and NaturalPos.includes(divisor_ns)):
+        int_dividend = Integer.readily_includes(dividend_ns)
+        if (int_dividend and NaturalPos.readily_includes(divisor_ns)):
             return Interval(zero, subtract(_b, one))
-        elif (int_dividend and Integer.includes(divisor_ns)):
+        elif (int_dividend and Integer.readily_includes(divisor_ns)):
             # if the operands are integers, then we can deduce that
             # a mod b is an integer in the set {0,1,...,(b-1)}
             return Interval(zero, subtract(Abs(_b), one))

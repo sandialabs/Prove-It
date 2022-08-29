@@ -823,7 +823,7 @@ class Div(NumberOperation):
                                                          default=Complex)
                     while len(possible_exponent_types) > 1:
                         exponent_type = possible_exponent_types[0]
-                        if exponent_type.includes(exp_ns):
+                        if exponent_type.readily_includes(exp_ns):
                             # This type is known for this exponent.
                             break
                         # We've eliminated a type from being known.
@@ -948,55 +948,71 @@ class Div(NumberOperation):
         denom_ns = readily_provable_number_set(self.denominator)
         if numer_ns is None or denom_ns is None: return None
         if numer_ns == ZeroSet: return ZeroSet
-        if RationalPos.includes(numer_ns) and RationalPos.includes(denom_ns):
+        if RationalPos.readily_includes(numer_ns) and (
+                RationalPos.readily_includes(denom_ns)):
             return RationalPos
-        if RationalNeg.includes(numer_ns) and RationalNeg.includes(denom_ns):
+        if RationalNeg.readily_includes(numer_ns) and (
+                RationalNeg.readily_includes(denom_ns)):
             return RationalPos
-        if RationalNeg.includes(numer_ns) and RationalPos.includes(denom_ns):
+        if RationalNeg.readily_includes(numer_ns) and (
+                RationalPos.readily_includes(denom_ns)):
             return RationalNeg
-        if RationalPos.includes(numer_ns) and RationalNeg.includes(denom_ns):
+        if RationalPos.readily_includes(numer_ns) and (
+                RationalNeg.readily_includes(denom_ns)):
             return RationalNeg
-        if (RationalNonNeg.includes(numer_ns)
-                and RationalPos.includes(denom_ns)):
+        if (RationalNonNeg.readily_includes(numer_ns)
+                and RationalPos.readily_includes(denom_ns)):
             return RationalNonNeg
-        if (RationalNonPos.includes(numer_ns)
-                and RationalPos.includes(denom_ns)):
+        if (RationalNonPos.readily_includes(numer_ns)
+                and RationalPos.readily_includes(denom_ns)):
             return RationalNonPos
-        if (RationalNonNeg.includes(numer_ns)
-                and RationalNeg.includes(denom_ns)):
+        if (RationalNonNeg.readily_includes(numer_ns)
+                and RationalNeg.readily_includes(denom_ns)):
             return RationalNonPos
-        if (RationalNonPos.includes(numer_ns)
-                and RationalNeg.includes(denom_ns)):
+        if (RationalNonPos.readily_includes(numer_ns)
+                and RationalNeg.readily_includes(denom_ns)):
             return RationalNonNeg
-        if (RationalNonZero.includes(numer_ns) and
-               RationalNonZero.includes(denom_ns)):
+        if (RationalNonZero.readily_includes(numer_ns) and
+               RationalNonZero.readily_includes(denom_ns)):
             return RationalNonZero
-        if Rational.includes(numer_ns) and RationalNonZero.includes(denom_ns):
+        if Rational.readily_includes(numer_ns) and (
+                RationalNonZero.readily_includes(denom_ns)):
             return Rational
-        if RealPos.includes(numer_ns) and RealPos.includes(denom_ns):
+        if RealPos.readily_includes(numer_ns) and (
+                RealPos.readily_includes(denom_ns)):
             return RealPos
-        if RealNeg.includes(numer_ns) and RealNeg.includes(denom_ns):
+        if RealNeg.readily_includes(numer_ns) and (
+                RealNeg.readily_includes(denom_ns)):
             return RealPos
-        if RealPos.includes(numer_ns) and RealNeg.includes(denom_ns):
+        if RealPos.readily_includes(numer_ns) and (
+                RealNeg.readily_includes(denom_ns)):
             return RealNeg
-        if RealNeg.includes(numer_ns) and RealPos.includes(denom_ns):
+        if RealNeg.readily_includes(numer_ns) and (
+                RealPos.readily_includes(denom_ns)):
             return RealNeg
-        if RealNonNeg.includes(numer_ns) and RealPos.includes(denom_ns):
+        if RealNonNeg.readily_includes(numer_ns) and (
+                RealPos.readily_includes(denom_ns)):
             return RealNonNeg
-        if RealNonPos.includes(numer_ns) and RealPos.includes(denom_ns):
+        if RealNonPos.readily_includes(numer_ns) and (
+                RealPos.readily_includes(denom_ns)):
             return RealNonPos
-        if RealNonNeg.includes(numer_ns) and RealNeg.includes(denom_ns):
+        if RealNonNeg.readily_includes(numer_ns) and (
+                RealNeg.readily_includes(denom_ns)):
             return RealNonPos
-        if RealNonPos.includes(numer_ns) and RealNeg.includes(denom_ns):
+        if RealNonPos.readily_includes(numer_ns) and (
+                RealNeg.readily_includes(denom_ns)):
             return RealNonNeg
-        if Real.includes(numer_ns) and RealNonZero.includes(denom_ns):
+        if Real.readily_includes(numer_ns) and (
+                RealNonZero.readily_includes(denom_ns)):
             return Real
-        if RealNonZero.includes(numer_ns) and RealNonZero.includes(denom_ns):
+        if RealNonZero.readily_includes(numer_ns) and (
+                RealNonZero.readily_includes(denom_ns)):
             return RealNonZero
-        if Real.includes(numer_ns) and RealNonZero.includes(denom_ns):
+        if Real.readily_includes(numer_ns) and (
+                RealNonZero.readily_includes(denom_ns)):
             return Real
-        if (ComplexNonZero.includes(numer_ns)
-                and ComplexNonZero.includes(denom_ns)):
+        if (ComplexNonZero.readily_includes(numer_ns)
+                and ComplexNonZero.readily_includes(denom_ns)):
             return ComplexNonZero
         return Complex
 

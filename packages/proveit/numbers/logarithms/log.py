@@ -156,7 +156,8 @@ class Log(NumberOperation, Function):
         from proveit.numbers import Real, RealPos, Complex
         base_ns = readily_provable_number_set(self.base)
         antilog_ns = readily_provable_number_set(self.antilog)
-        if RealPos.includes(base_ns) and RealPos.includes(antilog_ns):
+        if RealPos.readily_includes(base_ns) and (
+                RealPos.readily_includes(antilog_ns)):
             return Real
         if base_ns is None or antilog_ns is None: return None
         return Complex

@@ -272,8 +272,8 @@ def rounding_deduce_in_number_set(expr, number_set, rounding_real_closure_thm,
 
     operand = expr.operand
     operand_ns = readily_provable_number_set(operand)
-    if number_set.includes(Integer):
-        if Real.includes(operand_ns):
+    if number_set.readily_includes(Integer):
+        if Real.readily_includes(operand_ns):
             int_membership = rounding_real_closure_thm.instantiate(
                 {x: expr.operand})
             if number_set == Integer:
@@ -295,7 +295,7 @@ def rounding_readily_provable_number_set(expr):
     from proveit.numbers import RealPos, Natural, Integer
     operand_ns = readily_provable_number_set(expr.operand)
     if operand_ns is None: return None
-    if RealPos.includes(operand_ns):
+    if RealPos.readily_includes(operand_ns):
         return Natural
     return Integer
 

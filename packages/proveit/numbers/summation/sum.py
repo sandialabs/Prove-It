@@ -109,9 +109,9 @@ class Sum(OperationOverInstances):
             # We have proven closure for these.
             # ToDo: implement more closure.
             return summand_ns
-        if Integer.includes(summand_ns): return Integer
-        if Rational.includes(summand_ns): return Rational
-        if Real.includes(summand_ns): return Real
+        if Integer.readily_includes(summand_ns): return Integer
+        if Rational.readily_includes(summand_ns): return Rational
+        if Real.readily_includes(summand_ns): return Real
         return Complex
 
     def _formatted(self, format_type, **kwargs):

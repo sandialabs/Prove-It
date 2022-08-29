@@ -1441,9 +1441,9 @@ class Add(NumberOperation):
         for operand in self.operands:
             operand_ns = readily_provable_number_set(operand)
             if operand_ns is None: return None
-            if RealPos.includes(operand_ns):
+            if RealPos.readily_includes(operand_ns):
                 any_positive = True
-            if RealNeg.includes(operand_ns):
+            if RealNeg.readily_includes(operand_ns):
                 any_negative = True
             list_of_operand_sets.append(operand_ns)
         # merge the resulting list of std number sets into a
@@ -1451,16 +1451,16 @@ class Add(NumberOperation):
         number_set = merge_list_of_sets(list_of_operand_sets)
 
         restriction = None
-        if RealPos.includes(number_set):
+        if RealPos.readily_includes(number_set):
             restriction = pos_number_set # must be positive
-        elif RealNeg.includes(number_set):
+        elif RealNeg.readily_includes(number_set):
             restriction = neg_number_set # must be negative
-        elif RealNonNeg.includes(number_set):
+        elif RealNonNeg.readily_includes(number_set):
             if any_positive:
                 restriction = pos_number_set # must be positive
             else:
                 restriction = nonneg_number_set # must be non-negative
-        elif RealNonPos.includes(number_set):
+        elif RealNonPos.readily_includes(number_set):
             if any_negative:
                 restriction = neg_number_set # must be negative
             else:
@@ -2011,7 +2011,7 @@ class Add(NumberOperation):
             if try_deduce_number_set:
                 # Try deducing the number set.
                 number_set = readily_provable_number_set(self)
-                if ComplexNonZero.includes(number_set):
+                if ComplexNonZero.readily_includes(number_set):
                     deduce_number_set(self)
                     return NotEquals(self, zero).prove()
         # If it isn't a special case treated here, just use

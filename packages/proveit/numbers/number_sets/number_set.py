@@ -54,48 +54,101 @@ class NumberSet(Literal):
         raise NotImplementedError(
                 "%s not known as an ininite set"%self)
 
-    def includes(self, other_set):
+    def readily_includes(self, other_set):
         '''
-        Return True if this NumberSet includes the 'other_set' set.
+        Return True if this NumberSet is expected to include 
+        the 'other_set' set (without a proof).
         '''
+        from proveit.numbers import (
+                Integer, Real, 
+                NaturalPos, Natural, IntegerNeg, IntegerNonPos,
+                RealPos, RealNonNeg, RealNeg, RealNonPos,
+                readily_provable_number_set,
+                Interval, IntervalCC, IntervalOC, IntervalCO, IntervalOO)
         from proveit.numbers.number_operation import (
             sorted_number_sets, standard_number_sets)
         if other_set is None: return False
         if other_set == self: return True
+        if SubsetEq(other_set, self).proven():
+            return True # already known
+
         if self in standard_number_sets and other_set in standard_number_sets:
             inclusion_truths = NumberSet._standard_number_set_inclusion_truths
             if (self, other_set) in inclusion_truths:
                 return inclusion_truths[(self, other_set)]
             does_include = False
-            if SubsetEq(other_set, self).proven():
-                does_include = True
-            else:
-                # Try one level of indirection via SubsetEq.
-                for number_set in sorted_number_sets:
-                    if number_set in (other_set, self):
-                        continue
-                    if (SubsetEq(other_set, number_set).proven() and
-                            SubsetEq(number_set, self).proven()):
-                        does_include = True
-                        break
+            # Try one level of indirection via SubsetEq.
+            for number_set in sorted_number_sets:
+                if number_set in (other_set, self):
+                    continue
+                if (SubsetEq(other_set, number_set).proven() and
+                        SubsetEq(number_set, self).proven()):
+                    does_include = True
+                    break
             # remember for future reference
             inclusion_truths[(self, other_set)] = does_include
             return does_include
-        else:
-            # For example, 'other_set' could be an integer Interval
-            # or real IntervalCC, IntervalOC, ...), so let's see if
-            # we can prove that an arbitrary variable in the other_set
-            # is also in self.
-            if SubsetEq(other_set, self).proven():
-                return True
+        elif self in standard_number_sets:
+            if isinstance(other_set, Interval):
+                # The other set is an integer interval.
+                if self.readily_includes(Integer):
+                    # Integer includes this integer interval.
+                    return True
+                lower_ns = readily_provable_number_set(other_set.lower_bound)
+                if NaturalPos.readily_includes(lower_ns):
+                    # NaturalPos includes this integer interval.
+                    return self.readily_includes(NaturalPos)
+                if Natural.readily_includes(lower_ns):
+                    # Natural includes this integer interval.
+                    return self.readily_includes(Natural)
+                upper_ns = readily_provable_number_set(other_set.upper_bound)
+                if IntegerNeg.readily_includes(upper_ns):
+                    # IntegerNeg includes this integer interval.
+                    return self.readily_includes(IntegerNeg)
+                if IntegerNonPos.readily_includes(upper_ns):
+                    # IntegerNonPos includes this integer interval.
+                    return self.readily_includes(IntegerNonPos)
+            elif isinstance(other_set, IntervalCC) or (
+                    isinstance(other_set, IntervalOC) or
+                    isinstance(other_set, IntervalCO) or
+                    isinstance(other_set, IntervalOO)):
+                # The other set is an real interval.
+                if self.readily_includes(Real):
+                    # Real includes this integer interval.
+                    return True
+                lower_ns = readily_provable_number_set(other_set.lower_bound)
+                if RealPos.readily_includes(lower_ns):
+                    # RealPos includes this integer interval.
+                    return self.readily_includes(RealPos)
+                if RealNonNeg.readily_includes(lower_ns):
+                    if isinstance(other_set, IntervalOC) or (
+                            isinstance(other_set, IntervalOO)):
+                        # RealPos includes this integer interval.
+                        return self.readily_includes(RealPos)
+                    # RealNonNeg includes this integer interval.
+                    return self.readily_includes(RealNonNeg)
+                upper_ns = readily_provable_number_set(other_set.upper_bound)
+                if RealNeg.readily_includes(upper_ns):
+                    # RealNeg includes this integer interval.
+                    return self.readily_includes(RealNeg)                
+                if RealNonPos.readily_includes(upper_ns):
+                    if isinstance(other_set, IntervalCO) or (
+                            isinstance(other_set, IntervalOO)):
+                        # RealNeg includes this integer interval.
+                        return self.readily_includes(RealNeg)
+                    # IntegerNonPos includes this integer interval.
+                    return self.readily_includes(RealNonPos)
+                
+        # As a last resort, check if membership in the other set 
+        # guarantees membership in the other purely by automation.
 
-            # No worry about conflicts with assumptions because the 
-            # variable will be bound by a quantifier:
-            _x = safe_dummy_var(self, other_set,
-                                avoid_default_assumption_conflicts=False)
-            assumptions = defaults.assumptions + (InSet(_x, other_set),)
-            #deduce_number_set(_x, assumptions=assumptions)
-            return InSet(_x, self).proven(assumptions=assumptions)
+        # No worry about conflicts with assumptions because the 
+        # variable will be bound by a quantifier:
+        _x = safe_dummy_var(self, other_set,
+                            avoid_default_assumption_conflicts=False)
+        assumptions = defaults.assumptions + (InSet(_x, other_set),)
+        #deduce_number_set(_x, assumptions=assumptions)
+        return InSet(_x, self).proven(assumptions=assumptions)
 
     def deduce_superset_eq_relation(self, superset):
         '''
@@ -183,7 +236,7 @@ class NumberMembership(SetMembership):
         provable_number_set = readily_provable_number_set(
                 self.element, must_be_direct=True)
         if provable_number_set is None: return False
-        return self.number_set.includes(provable_number_set)
+        return self.number_set.readily_includes(provable_number_set)
 
     @prover
     def conclude(self, **defaults_config):
@@ -211,7 +264,7 @@ class NumberMembership(SetMembership):
 
         proven_number_set = readily_provable_number_set(
                 element, automation=False)
-        if number_set.includes(proven_number_set):
+        if number_set.readily_includes(proven_number_set):
             # We already know the element is in a number set that
             # includes the desired one.
             return (SubsetEq(proven_number_set, number_set)

@@ -340,7 +340,7 @@ nonzero_number_set = {
     Complex: ComplexNonZero,
     ComplexNonZero: ComplexNonZero}
 
-def readily_provable_number_set(expr, *, automation=USE_DEFAULTS,
+def readily_provable_number_set(expr, *, automation=True,
                                 must_be_direct=False,
                                 default=None, _compare_to_zero=True):
     '''
@@ -351,8 +351,8 @@ def readily_provable_number_set(expr, *, automation=USE_DEFAULTS,
     Return the default (possibly None) if there are no readily provable
     number memberships.
     
-    If automation/defaults.conclude_automation is disabled, only 
-    return a number set in which membership has already been proven.
+    If automation is disabled, only return a number set in which 
+    membership has already been proven.
     
     If must_be_direct is True, don't account for known/provable
     equalities of the element.
@@ -366,14 +366,12 @@ def readily_provable_number_set(expr, *, automation=USE_DEFAULTS,
     from proveit._core_.proof import Assumption
 
     # Make sure we derive assumption side-effects first.
-    Assumption.make_assumptions()
+    #Assumption.make_assumptions()
     
-    if automation is USE_DEFAULTS:
-        automation = defaults.conclude_automation
     if not automation:
         must_be_direct = True
 
-    if not is_irreducible_value(expr):
+    if not must_be_direct and not is_irreducible_value(expr):
         # See if the expression has a known evaluations.
         try:
             evaluation = Equals.get_known_evaluation(expr)
@@ -423,7 +421,7 @@ def readily_provable_number_set(expr, *, automation=USE_DEFAULTS,
                 if best_known_number_set is None:
                     best_known_number_set = number_set
                 elif best_known_number_set != number_set and (
-                        best_known_number_set.includes(number_set)):
+                        best_known_number_set.readily_includes(number_set)):
                     best_known_number_set = number_set
     
         if best_known_number_set is None:
@@ -480,12 +478,7 @@ def deduce_number_set(expr, **defaults_config):
     if isinstance(expr, ExprRange):
         return And(*ExprTuple(expr).map_elements(
                 lambda element : InSet(element, number_set))).prove()
-    membership = deduce_in_number_set(expr, number_set)
-    if membership.domain != number_set:
-        raise ValueError("'deduce_in_number_set' was directed to prove "
-                         "membership in %s but proved %s instead."
-                         %(number_set, membership))
-    return membership
+    return InSet(expr, number_set).prove()
 
 def standard_number_set(given_set, **defaults_config):
     '''
@@ -498,7 +491,7 @@ def standard_number_set(given_set, **defaults_config):
     '''
     for std_number_set in sorted_number_sets:
         # return the first std set that includes our given_set
-        if std_number_set.includes(given_set):
+        if std_number_set.readily_includes(given_set):
             return std_number_set
 
     # return the original given_set if the
@@ -734,7 +727,7 @@ def merge_two_sets(set_01, set_02):
     elif (set_02, set_01) in merging_dict:
         return merging_dict[(set_02, set_01)]
     # default is to return Real if Real actually works
-    elif (Real.includes(set_01) and Real.includes(set_02)):
+    elif (Real.readily_includes(set_01) and Real.readily_includes(set_02)):
         return Real
     else:
         raise ValueError(

@@ -80,9 +80,10 @@ class Abs(NumberOperation):
         |x| = -x (for operand_type = 'negative'). Assumptions may be
         needed to deduce x >= 0 or x <= 0, respectively.
         '''
-        from proveit.numbers import LessEq, zero
+        from proveit.numbers import LessEq, zero, deduce_number_set
         from . import abs_non_neg_elim, abs_neg_elim
         operand = self.operand
+        deduce_number_set(operand)
         if LessEq(zero, operand).readily_provable():
             return abs_non_neg_elim.instantiate({x: operand})
         elif LessEq(operand, zero).readily_provable():
@@ -151,7 +152,8 @@ class Abs(NumberOperation):
         # Check if we have an established relationship between
         # self.operand and zero.
         operand_ns = readily_provable_number_set(self.operand)
-        if RealNonPos.includes(operand_ns) or RealNonNeg.includes(operand_ns):
+        if RealNonPos.readily_includes(operand_ns) or (
+                RealNonNeg.readily_includes(operand_ns)):
             # Either |x| = x or |x| = -x depending upon the sign
             # of x (comparison with zero).
             return self.abs_elimination()
@@ -308,19 +310,19 @@ class Abs(NumberOperation):
         operand_ns = readily_provable_number_set(self.operand)
         if operand_ns is None: return None
         if operand_ns == ZeroSet: return ZeroSet
-        if IntegerNonZero.includes(operand_ns):
+        if IntegerNonZero.readily_includes(operand_ns):
             return NaturalPos
-        if Integer.includes(operand_ns):
+        if Integer.readily_includes(operand_ns):
             return Natural
-        if RationalNonZero.includes(operand_ns):
+        if RationalNonZero.readily_includes(operand_ns):
             return RationalPos
-        if Rational.includes(operand_ns):
+        if Rational.readily_includes(operand_ns):
             return RationalNonNeg
-        if RealNonZero.includes(operand_ns):
+        if RealNonZero.readily_includes(operand_ns):
             return RealPos
-        if Real.includes(operand_ns):
+        if Real.readily_includes(operand_ns):
             return RealNonNeg
-        if ComplexNonZero.includes(operand_ns):
+        if ComplexNonZero.readily_includes(operand_ns):
             return RealPos
         return RealNonNeg
         

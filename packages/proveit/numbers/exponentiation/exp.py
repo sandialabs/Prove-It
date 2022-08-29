@@ -322,8 +322,8 @@ class Exp(NumberOperation):
             eq = TransRelUpdater(expr)
             base_ns = readily_provable_number_set(self.base, 
                                                   default=Complex)
-            rational_base = Rational.includes(base_ns)
-            real_base = Real.includes(base_ns)
+            rational_base = Rational.readily_includes(base_ns)
+            real_base = Real.readily_includes(base_ns)
             thm = None
             if rational_base:
                 thm = square_abs_rational_simp
@@ -347,8 +347,7 @@ class Exp(NumberOperation):
         elif Exp._simplification_directives_.distribute_exponent:
             # Distribute the exponent as directed.
             return self.distribution()
-        else:
-            return Equals(self, self).conclude_via_reflexivity()
+        return Equals(self, self).conclude_via_reflexivity()
     
     def is_irreducible_value(self):
         '''
@@ -1118,27 +1117,32 @@ class Exp(NumberOperation):
         '''
         base_ns = readily_provable_number_set(self.base)
         exp_ns = readily_provable_number_set(self.exponent)
-        if base_ns == ZeroSet and RealPos.includes(exp_ns):
+        if base_ns == ZeroSet and RealPos.readily_includes(exp_ns):
             # 0^x = 0 for x > 0.
             return ZeroSet
-        if Natural.includes(base_ns) and Natural.includes(exp_ns):
+        if Natural.readily_includes(base_ns) and (
+                Natural.readily_includes(exp_ns)):
             return NaturalPos
-        if Integer.includes(base_ns) and Natural.includes(exp_ns):
+        if Integer.readily_includes(base_ns) and (
+                Natural.readily_includes(exp_ns)):
             return Integer
-        if RationalPos.includes(base_ns) and Integer.includes(exp_ns):
+        if RationalPos.readily_includes(base_ns) and (
+                Integer.readily_includes(exp_ns)):
             return RationalPos
-        if (RationalNonZero.includes(base_ns)
-                and Integer.includes(exp_ns)):
+        if (RationalNonZero.readily_includes(base_ns)
+                and Integer.readily_includes(exp_ns)):
             return RationalNonZero
-        if Rational.includes(base_ns) and Natural.includes(exp_ns):
+        if Rational.readily_includes(base_ns) and (
+                Natural.readily_includes(exp_ns)):
             return Rational
-        if RealPos.includes(base_ns) and Real.includes(exp_ns):
+        if RealPos.readily_includes(base_ns) and Real.readily_includes(exp_ns):
             return RealPos
-        if RealNonNeg.includes(base_ns) and Real.includes(exp_ns):
+        if RealNonNeg.readily_includes(base_ns) and (
+                Real.readily_includes(exp_ns)):
             return RealNonNeg
-        if Real.includes(base_ns) and Natural.includes(exp_ns):
+        if Real.readily_includes(base_ns) and Natural.readily_includes(exp_ns):
             return Real
-        if ComplexNonZero.includes(base_ns):
+        if ComplexNonZero.readily_includes(base_ns):
             return ComplexNonZero
         return Complex
 

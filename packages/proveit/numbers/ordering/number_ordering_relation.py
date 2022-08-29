@@ -67,26 +67,29 @@ class NumberOrderingRelation(TransitiveRelation):
         if isinstance(self, LessEq):
             if is_numeric_rational(lower) and (
                     less_eq_numeric_rationals(lower, one)
-                    and NaturalPos.includes(upper_ns)):
+                    and NaturalPos.readily_includes(upper_ns)):
                 return True
             if is_numeric_rational(upper) and (
                     less_eq_numeric_rationals(upper, Neg(one))
-                    and IntegerNeg.includes(lower_ns)):
+                    and IntegerNeg.readily_includes(lower_ns)):
                 return True
-            if RealNonPos.includes(lower_ns) and RealNonNeg.includes(upper_ns):
+            if RealNonPos.readily_includes(lower_ns) and (
+                    RealNonNeg.readily_includes(upper_ns)):
                 return True
         else:
             if is_numeric_rational(lower) and (
                     less_numeric_rationals(lower, one)
-                    and NaturalPos.includes(upper_ns)):
+                    and NaturalPos.readily_includes(upper_ns)):
                 return True
             if is_numeric_rational(upper) and (
                     less_numeric_rationals(upper, Neg(one))
-                    and IntegerNeg.includes(lower_ns)):
+                    and IntegerNeg.readily_includes(lower_ns)):
                 return True
-            if RealNonPos.includes(lower_ns) and RealPos.includes(upper_ns):
+            if RealNonPos.readily_includes(lower_ns) and (
+                    RealPos.readily_includes(upper_ns)):
                 return True
-            if RealNeg.includes(lower_ns) and RealNonNeg.includes(upper_ns):
+            if RealNeg.readily_includes(lower_ns) and (
+                    RealNonNeg.readily_includes(upper_ns)):
                 return True
 
         """

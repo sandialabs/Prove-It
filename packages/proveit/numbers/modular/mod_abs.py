@@ -75,7 +75,7 @@ class ModAbs(NumberOperation):
         thm = None
         if number_set == ZeroSet:
             divisor_ns = readily_provable_number_set(self.divisor)
-            if Integer.includes(divisor_ns):
+            if Integer.readily_includes(divisor_ns):
                 thm = mod_pkg.mod_abs_in_zero_set_int
             else:
                 thm = mod_pkg.mod_abs_in_zero_set
@@ -98,7 +98,8 @@ class ModAbs(NumberOperation):
         divisor_ns = readily_provable_number_set(self.divisor)
         if value_ns == ZeroSet:
             return ZeroSet # |0|_{mod b} = 0
-        elif (value_ns.includes(Integer) and divisor_ns.includes(Integer)):
+        elif value_ns.readily_includes(Integer) and (
+                divisor_ns.readily_includes(Integer)):
             return Integer
         else:
             return Real
