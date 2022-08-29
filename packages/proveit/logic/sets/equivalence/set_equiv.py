@@ -323,6 +323,14 @@ class SetEquiv(EquivRelation):
         return sub_right_side_into.instantiate(
             {A: self.lhs, B: self.rhs, P: Plambda})
 
+    def readily_in_bool(self):
+        '''
+        Set equivalence is readily provable to be a Boolean if
+        the set_equiv_is_bool theorem is usable.
+        '''
+        from . import set_equiv_is_bool
+        return set_equiv_is_bool.is_usable()
+
     @relation_prover
     def deduce_in_bool(self,  **defaults_config):
         '''

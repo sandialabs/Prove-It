@@ -99,6 +99,19 @@ class Forall(OperationOverInstances):
         '''
         from proveit.logic import SubsetEq
         
+        # Make sure we derive side-effects from the conditions
+        # before checking of the generalization is readily provable
+        # for Forall.conclude purposes.
+        if hasattr(self, 'condition'):
+            with defaults.temporary() as tmp_defaults:
+                if hasattr(self, 'conditions'):
+                    tmp_defaults.assumptions = (
+                            defaults.assumptions+self.conditions)
+                if hasattr(self, 'conditions'):
+                    tmp_defaults.assumptions = (
+                            defaults.assumptions+(self.condition,))
+                defaults.make_assumptions()
+
         try:
             # First see if we can prove via generalization.
             if self._readily_provable_via_generalization():
@@ -147,12 +160,8 @@ class Forall(OperationOverInstances):
                                    "Unable to conclude automatically; the "
                                    "prove_by_cases method on the domain "
                                    "has failed. :o( ")
-
-        raise ProofFailure(self, defaults.assumptions,
-                           "Unable to conclude automatically; a "
-                           "universally quantified instance expression "
-                           "is not known to be true and the domain has "
-                           "no 'prove_by_cases' method.")
+        # conclude via generalization as last resort
+        return self.conclude_via_generalization()
 
     @prover
     def unfold(self, **defaults_config):

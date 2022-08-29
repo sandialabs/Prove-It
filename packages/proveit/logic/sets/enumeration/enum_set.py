@@ -56,7 +56,7 @@ class Set(Function):
         return Set(*sorted([operand.canonical_form() for operand 
                               in self.operands.entries], key=hash))
 
-    def includes(self, other_set):
+    def readily_includes(self, other_set):
         '''
         Returns true/false if this set includes/excludes 'other_set' 
         using fast checks.  Raise NotImplementedError otherwise.
@@ -72,7 +72,7 @@ class Set(Function):
             # We cannot say for sure if 'self' includes other_set
             # without more work.
         raise NotImplementedError(
-                "Set.includes only has simple checks by design.")      
+                "Set.readily_includes only has simple checks by design.")      
     
     def _deduce_canonical_equality(self, equality, **defaults_config):
         return deduce_equality_via_commutation(equality, one_side=self)

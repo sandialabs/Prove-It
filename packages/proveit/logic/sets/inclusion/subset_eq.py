@@ -47,11 +47,12 @@ class SubsetEq(InclusionRelation):
         Subset relation is provable, or
         '''
         from proveit.logic import Forall, Equals, InSet, SetEquiv
-        if hasattr(self.superset, 'includes'):
-            # If the superset has an 'includes' method, we may use
-            # as a faster way to check if this is readily provable.
+        if hasattr(self.superset, 'readily_includes'):
+            # If the superset has a 'readily_includes' method, we may
+            # use it as a faster way to check if this is readily 
+            # provable.
             try:
-                return self.superset.includes(self.subset)
+                return self.superset.readily_includes(self.subset)
             except (NotImplementedError, UnsatisfiedPrerequisites):
                 pass
         if Equals(self.subset, self.superset).readily_provable():
