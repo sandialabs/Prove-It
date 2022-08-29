@@ -64,8 +64,9 @@ class VecSpaces(Function):
         if VecSpaces.default_field is not None:
             return VecSpaces.default_field
         if not may_be_none:
-            raise ValueError("A field for vector spaces was not specified "
-                             "and VecSpaces.default_field was not set.")
+            raise UnsatisfiedPrerequisites(
+                    "A field for vector spaces was not specified "
+                    "and VecSpaces.default_field was not set.")
 
     @staticmethod
     def yield_known_vec_spaces(vec, *, field=None):
