@@ -271,7 +271,9 @@ class Conditional(Expression):
         if True:#not self.value.is_simplified():
             # Simplify the 'value'.
             expr = eq.update(
-                    expr.value_substitution(self.value.simplification()))
+                    expr.value_substitution(self.value.simplification(
+                            assumptions=defaults.assumptions+(
+                                    self.condition,))))
         if isinstance(self.condition, And):
             # Simplify the conditions.
             if True:#any(not condition.is_simplified() for condition 

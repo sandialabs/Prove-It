@@ -565,6 +565,10 @@ class Lambda(Expression):
         '''
         from proveit import ExprTuple, extract_var_tuple_indices
         from proveit.logic import Equals
+        
+        # derive side-effects if applicable
+        defaults.make_assumptions()
+
         try:
             if parameter_vars is None:
                 parameter_vars = \
@@ -1028,6 +1032,20 @@ class Lambda(Expression):
             "Relabeled version should be 'equal' to original")
         return relabeled
 
+    @equality_prover('simplified', 'simplify')
+    def simplification(self, **defaults_config):
+        '''
+        Equat this Lambda with a form in which the body has been
+        simplified.
+        '''
+        from proveit.logic import Equals
+        body_simplification = self.body.simplification()
+        if body_simplification == self.body:
+            # No simplification.
+            return Equals(self, self).conclude_via_reflexivity()
+        return self.substitution(body_simplification.generalize(
+                self.parameters), auto_simplify=False)
+
     def compose(self, lambda2):
         '''
         Given some x -> f(x) for self (lambda1) and y -> g(y) for lambda2,
@@ -1384,10 +1402,13 @@ def extract_param_replacements(parameters, parameter_vars,
                     param_tuple = ExprTuple(parameter)
                     param_operands_tuple = ExprTuple(*param_operands)
                     param_operands_len = Len(param_operands_tuple)
-                    len_req = Equals(param_operands_len, param_len)
-                    requirements.append(len_req.prove())
                     repl_map[param_var] = {param_tuple}
                     repl_map[param_tuple] = param_operands_tuple
+                    if param_operands_len==param_len:
+                        # Trivial length requirement
+                        continue
+                    len_req = Equals(param_operands_len, param_len)
+                    requirements.append(len_req.prove())
                     continue
                 
                 try:
