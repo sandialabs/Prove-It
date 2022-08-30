@@ -498,6 +498,20 @@ def standard_number_set(given_set, **defaults_config):
     # for loop above didn't find anything
     return given_set
 
+def major_number_set(given_set):
+    '''
+    Return Integer, Rational, Real, or Complex which is the smallest
+    number set that includes the given set.  Return Complex if nothing
+    else works.
+    '''
+    if Integer.readily_includes(given_set):
+        return Integer
+    if Rational.readily_includes(given_set):
+        return Rational
+    if Real.readily_includes(given_set):
+        return Real
+    return Complex
+
 # Map pairs of standard number sets to the minimal standard
 # number set that contains them both. This dictionary is then
 # used for the merge_two_sets() and merge_list_of_sets() fxns below.

@@ -1,7 +1,8 @@
 from collections import Counter
 from proveit import (
         defaults, Expression, Literal, ExprTuple, ExprRange, 
-        Judgment, ProofFailure, prover, relation_prover, equality_prover,
+        Judgment, ProofFailure, UnsatisfiedPrerequisites,
+        prover, relation_prover, equality_prover,
         SimplificationDirectives, TransRelUpdater, free_vars)
 from proveit import a, b, c, d, e, i, j, k, m, n, w, x, y, z
 from proveit.logic import (
@@ -161,9 +162,12 @@ class Mult(NumberOperation):
         if number_set not in standard_number_sets:
             raise NotImplementedError(
                 "'Mult.deduce_in_number_set()' not implemented for the "
-                "%s set" % str(number_set))            
-        if self.operands.is_double():
-            _a, _b = self.operands
+                "%s set" % str(number_set))
+        operands = self.operands
+        num_operand_entries = operands.num_entries()
+        thm = None
+        if operands.is_double():
+            _a, _b = operands
             if number_set == ZeroSet:
                 thm = mult_pkg.mult_in_zero_set_bin
             elif number_set == Integer:
@@ -201,7 +205,7 @@ class Mult(NumberOperation):
                     if RealNonPos.readily_includes(a_ns):
                         thm = mult_pkg.mult_int_nonpos_from_left_nonpos
                     else:
-                        thm = mult_pkg.mult_int_nonps_from_right_nonpos
+                        thm = mult_pkg.mult_int_nonpos_from_right_nonpos
                 elif number_set == RationalPos:
                     if RealNeg.readily_includes(a_ns) and (
                             RealNeg.readily_includes(b_ns)):
@@ -223,7 +227,7 @@ class Mult(NumberOperation):
                     if RealNonPos.readily_includes(a_ns):
                         thm = mult_pkg.mult_rational_nonpos_from_left_nonpos
                     else:
-                        thm = mult_pkg.mult_rational_nonps_from_right_nonpos
+                        thm = mult_pkg.mult_rational_nonpos_from_right_nonpos
                 elif number_set == RealPos:
                     if RealNeg.readily_includes(a_ns) and (
                             RealNeg.readily_includes(b_ns)):
@@ -246,6 +250,9 @@ class Mult(NumberOperation):
                         thm = mult_pkg.mult_real_nonpos_from_left_nonpos
                     else:
                         thm = mult_pkg.mult_real_nonpos_from_right_nonpos
+            if thm is None:
+                raise NotImplementedError(
+                        "Case not handled: %s in %s"%(self, number_set))
             return thm.instantiate({a: self.operands[0], b: self.operands[1]})
         
         # Not a simple binary operation.
@@ -266,112 +273,169 @@ class Mult(NumberOperation):
         else:
             # We need more operand-specific infomation.
             operand_ns_set = {readily_provable_number_set(operand) for
-                              operand in self.operands}
-            if not all(number_set.readily_includes(operand_ns) for 
-                       operand_ns in operand_ns_set):
-                # Not the simple case, so break this down via
-                # association to be dealt with at a binary level where
-                # necessary.
-                if len(self.operands) > 2:
-                    # Need to implement; don't forget about ExprRanges.
-                    raise NotImplementedError(
-                            "Need to implement Mult.deduce_in_number_set "
-                            "multi-operand non-simple-closure case; ")
-            elif number_set == NaturalPos:
-                thm = mult_pkg.mult_nat_pos_closure
-            elif number_set == IntegerNonZero:
-                thm = mult_pkg.mult_int_nonzero_closure
-            elif number_set == RationalPos:
-                thm = mult_pkg.mult_rational_pos_closure
-            elif number_set == RationalNonNeg:
-                thm = mult_pkg.mult_rational_nonneg_closure
-            elif number_set == RationalNonZero:
-                thm = mult_pkg.mult_rational_nonzero_closure
-            elif number_set == RealPos:
-                thm = mult_pkg.mult_real_pos_closure
-            elif number_set == RealNonNeg:
-                thm = mult_pkg.mult_real_nonneg_closure
-            elif number_set == RealNonZero:
-                thm = mult_pkg.mult_real_nonzero_closure
-        return thm.instantiate({n: self.operands.num_elements(),
-                                a: self.operands})
+                              operand in operands}
+        if num_operand_entries == 1:
+            singular_membership = InSet(self.operand, number_set).prove()
+            reduction = self.unary_reduction()
+            return reduction.sub_left_side_into(
+                    singular_membership.inner_expr().element)
+        elif (number_set not in (
+                NaturalPos, IntegerNonZero, RationalPos,
+                RationalNonNeg, RationalNonZero,
+                RealPos, RealNonNeg, RealNonZero) or
+                    not all(number_set.readily_includes(operand_ns) for 
+                            operand_ns in operand_ns_set)):
+            # Not the simple case, so break this down via
+            # association to be dealt with at a binary level where
+            # necessary.
+            if any(isinstance(operand, ExprRange) for operand in
+                   operands):
+                # If there are any ExprRanges, wrap them in Mult.
+                # and prove the number set membership in that
+                # manner.
+                range_locations = [_i for _i, operand 
+                                   in enumerate(operands)
+                                   if isinstance(operand, ExprRange)]
+                wrapped_operands = [
+                        Mult(operand) if isinstance(operand, ExprRange)
+                        else operand for operand in operands]
+                mult_wrapped = Mult(*wrapped_operands)
+                # Make a replacement to convert from the wrapped
+                # operand version to the original.
+                expr = mult_wrapped
+                eq = TransRelUpdater(expr)
+                for loc in range_locations:
+                    expr = eq.update(expr.disassociation(loc))
+                replacement = eq.relation
+            else:
+                # No ExprRanges.  Use a divide and conquer strategy.
+                assert num_operand_entries > 2
+                if num_operand_entries == 3:
+                    mult_wrapped = Mult(Mult(*operands[:2]), 
+                                        operands[2])
+                    replacement = mult_wrapped.disassociation(0)
+                else:
+                    mult_wrapped = Mult(
+                            Mult(*operands[:num_operand_entries//2]),
+                            Mult(*operands[num_operand_entries//2:]))
+                    replacement = mult_wrapped.disassociation(
+                            1, auto_simplify=False)
+                    replacement = replacement.apply_transitivity(
+                            replacement.rhs.disassociation(
+                                    0, auto_simplify=False))
+            # With a wrapped version and a replacement, we solve a
+            # reduced problem to solve this one.
+            wrapped_membership = mult_wrapped.deduce_in_number_set(
+                    number_set)
+            return replacement.sub_right_side_into(
+                    wrapped_membership.inner_expr().element)
+        elif number_set == NaturalPos:
+            thm = mult_pkg.mult_nat_pos_closure
+        elif number_set == IntegerNonZero:
+            thm = mult_pkg.mult_int_nonzero_closure
+        elif number_set == RationalPos:
+            thm = mult_pkg.mult_rational_pos_closure
+        elif number_set == RationalNonNeg:
+            thm = mult_pkg.mult_rational_nonneg_closure
+        elif number_set == RationalNonZero:
+            thm = mult_pkg.mult_rational_nonzero_closure
+        elif number_set == RealPos:
+            thm = mult_pkg.mult_real_pos_closure
+        elif number_set == RealNonNeg:
+            thm = mult_pkg.mult_real_nonneg_closure
+        elif number_set == RealNonZero:
+            thm = mult_pkg.mult_real_nonzero_closure
+        else:
+            raise UnsatisfiedPrerequisites(
+                    "Unable to prove %s in %s"
+                    %(self, number_set))
+        return thm.instantiate({n: operands.num_elements(),
+                                a: operands})
 
     def readily_provable_number_set(self):
         '''
         Return the most restrictive number set we can readily
         prove contains the evaluation of this number operation.
         '''
-        from proveit.numbers import IntervalCC
+        from proveit.numbers.number_operation import (
+                major_number_set, merge_list_of_sets)
         number_set_map = {
-            NaturalPos: NaturalPos,
-            IntegerNeg: Integer,
-            Natural: Natural,
-            IntegerNonPos: Integer,
-            IntegerNonZero: Integer,
-            Integer: Integer,
-            RationalPos: RationalPos,
-            RationalNeg: Rational,
-            RationalNonNeg: RationalNonNeg,
-            RationalNonPos: Rational,
-            RationalNonZero: Rational,
-            Rational: Rational,
-            RealPos: RealPos,
-            RealNeg: Real,
-            RealNonNeg: RealNonNeg,
-            RealNonPos: Real,
-            RealNonZero: Real,
-            Real: Real,
-            ComplexNonZero: Complex,
-            Complex: Complex
+            (Integer, RealPos): NaturalPos,
+            (Integer, RealNeg): IntegerNeg,
+            (Integer, RealNonNeg): Natural,
+            (Integer, RealNonPos): IntegerNonPos,
+            (Integer, RealNonZero): IntegerNonZero,
+            (Rational, RealPos): RationalPos,
+            (Rational, RealNeg): RationalNeg,
+            (Rational, RealNonNeg): RationalNonNeg,
+            (Rational, RealNonPos): RationalNonPos,
+            (Rational, RealNonZero): RationalNonZero,
+            (Real, RealPos): RealPos,
+            (Real, RealNeg): RealNeg,
+            (Real, RealNonNeg): RealNonNeg,
+            (Real, RealNonPos): RealNonPos,
+            (Real, RealNonZero): RealNonZero,
+            (Complex, ComplexNonZero): ComplexNonZero,
+            (Complex, Complex): Complex
         }
-        
-        priorities = {NaturalPos:(0,0), Natural:(0,1), Integer:(0,2),
-                      RationalPos:(1,0), RationalNonNeg:(1,1), Rational:(1,2),
-                      RealPos:(2,0), RealNonNeg:(2,1), Real:(2,2), 
-                      Complex:(3,2)}
-        major_minor_to_set = {
-            (major, minor):ns for ns, (major, minor) in priorities.items()}
-        nonzero_sets = {NaturalPos, IntegerNeg, IntegerNonZero, 
-                        RationalPos, RationalNeg, RationalNonZero,
-                        RealPos, RealNeg, RealNonZero, ComplexNonZero}
-        major_to_nonzero = {Natural: IntegerNonZero,
-                            Rational: RationalNonZero,
-                            Real: RealNonZero,
-                            Complex: ComplexNonZero}
 
-        major = minor = -1
-        all_nonzero = True
+        major_number_sets = []
+        # If we stay Real, this will keep track of the relation to zero:
+        zero_relation_number_set = None
         for factor in self.factors:
             factor_ns = readily_provable_number_set(factor)
             if factor_ns == ZeroSet:
                 # If any factor is zero, the entire product (if it is
                 # valid) is zero.
                 return ZeroSet
-            if factor_ns is None: return None
-            # check if factor_ns is not a standard number set
-            if factor_ns not in number_set_map.keys():
-                # try to replace factor_ns with a std number set
-                factor_ns = standard_number_set(factor_ns)
-            if factor_ns in number_set_map.keys():
-                factor_ns = number_set_map[factor_ns]
-            else:
-                raise ValueError(
-                        "In Mult.deduce_number_set(), the factor {0} "
-                        "is not known to be in one of our standard "
-                        "number sets (such as Real, RealPos, etc.), "
-                        "and instead is just known to be in {1}.".
-                        format(factor, factor_ns))
-            if all_nonzero and factor_ns not in nonzero_sets:
-                all_nonzero = False
-            _major, _minor = priorities[factor_ns]
-            major = max(_major, major)
-            minor = max(_minor, minor)
-        if major == minor == -1:
-            major, minor = 3, 2 # Complex
-        number_set = major_minor_to_set[(major, minor)]
-        if all_nonzero and number_set in major_to_nonzero:
-            number_set = major_to_nonzero # restrict to nonzero subset
-        return number_set
+            major_number_sets.append(major_number_set(factor_ns))
+            if zero_relation_number_set is None:
+                zero_relation_number_set = factor_ns
+                continue
+            if RealPos.readily_includes(zero_relation_number_set):
+                if RealPos.readily_includes(factor_ns):
+                    zero_relation_number_set = RealPos
+                    continue
+                elif RealNeg.readily_includes(factor_ns):
+                    zero_relation_number_set = RealNeg
+                    continue
+            elif RealNeg.readily_includes(zero_relation_number_set):
+                if RealPos.readily_includes(factor_ns):
+                    zero_relation_number_set = RealNeg
+                    continue
+                elif RealNeg.readily_includes(factor_ns):
+                    zero_relation_number_set = RealPos
+                    continue
+            if RealNonNeg.readily_includes(zero_relation_number_set):
+                if RealNonNeg.readily_includes(factor_ns):
+                    zero_relation_number_set = RealNonNeg
+                    continue
+                elif RealNonPos.readily_includes(factor_ns):
+                    zero_relation_number_set = RealNonPos
+                    continue
+            elif RealNonPos.readily_includes(zero_relation_number_set):
+                if RealNonNeg.readily_includes(factor_ns):
+                    zero_relation_number_set = RealNonPos
+                    continue
+                elif RealNonPos.readily_includes(factor_ns):
+                    zero_relation_number_set = RealNonNeg
+                    continue
+            if RealNonZero.readily_includes(zero_relation_number_set):
+                if RealNonZero.readily_includes(factor_ns):
+                    zero_relation_number_set = RealNonZero
+                    continue
+            if Real.readily_includes(zero_relation_number_set):
+                if Real.readily_includes(factor_ns):
+                    zero_relation_number_set = Real
+                    continue
+            if ComplexNonZero.readily_includes(zero_relation_number_set):
+                if ComplexNonZero.readily_includes(factor_ns):
+                    zero_relation_number_set = ComplexNonZero
+                    continue
+            zero_relation_number_set = Complex
+
+        major_number_set = merge_list_of_sets(major_number_sets)
+        return number_set_map[(major_number_set, zero_relation_number_set)]
 
     @prover
     def deduce_divided_by(self, divisor, **defaults_config):
@@ -429,7 +493,7 @@ class Mult(NumberOperation):
         '''
         from proveit.numbers import Neg, Div, Exp, is_numeric_rational
         from . import mult_zero_left, mult_zero_right, mult_zero_any
-        from . import empty_mult, unary_mult_reduction
+        from . import empty_mult
 
         if self.operands.num_entries() == 0:
              # Multiplication with no operands is equal to 1.
@@ -455,9 +519,8 @@ class Mult(NumberOperation):
             pass
 
         if self.operands.is_single():
-             # Multiplication with 1 operand is just that operand
-            return unary_mult_reduction.instantiate(
-                    {a:self.operands[0]}, auto_simplify=False)
+            # Multiplication with 1 operand is just that operand
+            return self.unary_reduction(auto_simplify=False)
 
         expr = self
         # for convenience updating our equation
@@ -610,6 +673,20 @@ class Mult(NumberOperation):
         """
         
         return eq.relation # Should be self=self.
+
+    @equality_prover('unary_reduced', 'unary_reduce')
+    def unary_reduction(self, **defaults_config):
+        '''
+        Reduce a unary multiplication to its operands:
+            Mult(a) = a
+        '''
+        from . import unary_mult_reduction
+        if not self.operands.is_single():
+            raise ValueError("Mult.unary_reduction only applicable to a "
+                             "unary Mult, not %s"%self)
+         # Multiplication with 1 operand is just that operand
+        return unary_mult_reduction.instantiate(
+                {a:self.operand}, auto_simplify=False)        
 
     def _natural_binary_eval(self):
         '''
