@@ -244,6 +244,7 @@ class NumberMembership(SetMembership):
         Try to deduce that the given element is in the number set under
         the given assumptions.
         '''
+        from proveit.logic import is_irreducible_value
         from proveit.numbers import readily_provable_number_set
 
         element = self.element
@@ -281,9 +282,19 @@ class NumberMembership(SetMembership):
                     return self.conclude_as_last_resort()
                 raise ProofFailure(InSet(self.element, self.number_set),
                                    defaults.assumptions, str(e))
-        else:
-            if hasattr(self, 'conclude_as_last_resort'):
-                return self.conclude_as_last_resort()
-            msg = str(element) + " has no 'deduce_in_number_set' method."
-            raise ProofFailure(InSet(self.element, self.number_set),
-                               defaults.assumptions, msg)
+        elif not is_irreducible_value(element):
+            # Try a known evaluation.
+            try:
+                evaluation = Equals.get_known_evaluation(element)
+            except UnsatisfiedPrerequisites:
+                evaluation = None
+            if evaluation is not None:
+                membership = InSet(evaluation.rhs, self.domain)
+                membership = membership.prove()
+                return membership.inner_expr().element.substitute(
+                        element)
+        if hasattr(self, 'conclude_as_last_resort'):
+            return self.conclude_as_last_resort()
+        msg = str(element) + " has no 'deduce_in_number_set' method."
+        raise ProofFailure(InSet(self.element, self.number_set),
+                           defaults.assumptions, msg)
