@@ -11,13 +11,9 @@ proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.double_negation_elim
 proveit.logic.booleans.negation.double_negation_intro
 proveit.logic.booleans.negation.negation_intro
-proveit.logic.booleans.negation.untrue_from_negation
 proveit.logic.booleans.quantification.universality.bundle
 proveit.logic.booleans.quantification.universality.bundling
 proveit.logic.equality.equals_reversal
-proveit.logic.equality.fold_not_equals
-proveit.logic.equality.not_equals_symmetry
-proveit.logic.equality.unfold_not_equals
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.numbers.number_sets.natural_numbers.nat_pos_within_nat
 proveit.numbers.number_sets.natural_numbers.natural_lower_bound

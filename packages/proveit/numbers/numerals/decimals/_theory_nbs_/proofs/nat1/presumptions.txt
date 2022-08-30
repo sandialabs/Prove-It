@@ -1,6 +1,5 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
 proveit.logic.booleans.from_not_false
-proveit.logic.booleans.negation.untrue_from_negation
 proveit.logic.equality.equals_reversal
 proveit.logic.equality.not_equals_symmetry
 proveit.logic.equality.sub_left_side_into
