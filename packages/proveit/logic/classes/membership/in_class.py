@@ -28,7 +28,9 @@ class InClass(Relation):
             latex_format=r'\underset{{\scriptscriptstyle c}}{\in}',
             theory=__file__)
 
-    # maps canonical forms of elements to InSet Judgments.
+    # maps elements to their known InClass Judgments.
+    known_memberships = dict()
+    # maps canonical forms of elements to InClass Judgments.
     # For example, map x to (1*x in S) if (1*x in S) is a Judgment.
     known_memberships_by_canonical_form = dict()
     
@@ -99,6 +101,8 @@ class InClass(Relation):
         in known_canonical_memberships.
         '''
         Relation._record_as_proven(self, judgment)
+        InClass.known_memberships.setdefault(
+                self.element, OrderedSet()).add(judgment)
         InClass.known_memberships_by_canonical_form.setdefault(
                 self.element.canonical_form(), OrderedSet()).add(judgment)
         
@@ -232,22 +236,30 @@ class InClass(Relation):
         return nonmembership.prove().unfold_not_in()
 
     @staticmethod
-    def yield_known_memberships(element, assumptions=USE_DEFAULTS):
+    def yield_known_memberships(element, *, include_canonical_forms=True,
+                                 assumptions=USE_DEFAULTS):
         '''
         Yield the known memberships of the given element applicable
-        under the given assumptions.
+        under the given assumptions.  In 'include_canonical_forms' is
+        True, then we can treat elements of the same canonical form
+        as the same for this purpose.
         '''
         from proveit._core_.proof import Assumption
+        known_memberships = (
+                InClass.known_memberships_by_canonical_form if 
+                include_canonical_forms else InClass.known_memberships)
         with defaults.temporary() as tmp_defaults:
             if assumptions is not USE_DEFAULTS:
                 tmp_defaults.assumptions = assumptions
             # Make sure we derive assumption side-effects first.
             Assumption.make_assumptions()
     
-            element_cf = element.canonical_form()
-            if element_cf in InClass.known_memberships_by_canonical_form:
-                for known_membership in (
-                        InClass.known_memberships_by_canonical_form[element_cf]):
+            if include_canonical_forms: 
+                key = element.canonical_form()
+            else:
+                key = element
+            if key in known_memberships:
+                for known_membership in known_memberships[key]:
                     if known_membership.is_applicable():
                         yield known_membership
 

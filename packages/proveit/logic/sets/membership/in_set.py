@@ -1,5 +1,5 @@
 from proveit import (Literal, defaults, USE_DEFAULTS, ProofFailure,
-                     single_or_composite_expression,
+                     UnusableProof, single_or_composite_expression,
                      prover, equality_prover, relation_prover)
 from proveit.relation import Relation
 from proveit.logic.classes import InClass, ClassMembership
@@ -63,10 +63,13 @@ class InSet(InClass):
         as_strong_membership = self.as_strong_known_membership()
         if as_strong_membership is not None:
             if as_strong_membership.domain == self.domain:
-                # Use an equivalent known membership.
-                return self.conclude_from_as_strong_membership(
-                        as_strong_membership)
-
+                try:
+                    # Use an equivalent known membership.
+                    return self.conclude_from_as_strong_membership(
+                            as_strong_membership)
+                except UnusableProof:
+                    pass
+        
         if hasattr(self, 'membership_object') and (
                 self.membership_object._readily_provable()):
             # Don't bother with a fancy, indirect approach if
