@@ -434,10 +434,19 @@ class Len(Operation):
         else:
             return Operation.shallow_simplification(self)
 
+
+    def readily_provable_number_set(self):
+        '''
+        The length should be a natural number.
+        '''
+        from proveit.numbers import Natural
+        return Natural
+
     @prover
     def deduce_in_number_set(self, number_set, **defaults_config):
         from proveit.core_expr_types.tuples import (
             range_len_is_nat, range_from1_len_is_nat)
+        from proveit.logic import InSet
         from proveit.numbers import Natural, one
         operands = self.operands
         if number_set == Natural:
@@ -454,4 +463,8 @@ class Len(Operation):
                 else:
                     return range_len_is_nat.instantiate(
                         {f: range_lambda, i: range_start, j: range_end})
+        # Otherwise, prove the number set through computation.
+        computation = self.computation()
+        InSet(computation.rhs, number_set).prove()
+        return InSet(self, number_set).prove()
 
