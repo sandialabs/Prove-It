@@ -73,7 +73,6 @@ proveit.numbers.multiplication.elim_one_any
 proveit.numbers.multiplication.elim_one_left
 proveit.numbers.multiplication.elim_one_right
 proveit.numbers.multiplication.leftward_commutation
-proveit.numbers.multiplication.mult_complex_closure_bin
 proveit.numbers.multiplication.mult_real_closure
 proveit.numbers.multiplication.mult_real_closure_bin
 proveit.numbers.multiplication.mult_zero_any
