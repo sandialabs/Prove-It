@@ -233,8 +233,9 @@ class NumberMembership(SetMembership):
         by the number set of this membership.
         '''
         from proveit.numbers import readily_provable_number_set
+        element = self.element
         provable_number_set = readily_provable_number_set(
-                self.element, must_be_direct=True)
+                element, must_be_direct=True)
         if provable_number_set is None: return False
         return self.number_set.readily_includes(provable_number_set)
 
@@ -262,15 +263,32 @@ class NumberMembership(SetMembership):
                 # Substitute into the original.
                 return simplification.sub_left_side_into(elem_in_set, assumptions)
         '''
+        
+        if hasattr(element, 'readily_provable_number_set'):
+            # If element.readily_provable_number_set returns a number
+            # set included by the desired number set, then we should
+            # be able to use element.deduce_in_number_set.
+            provable_number_set = element.readily_provable_number_set()                
+            if number_set.readily_includes(provable_number_set):
+                if InSet(element, provable_number_set).proven():
+                    # We already know the element is in a number set that
+                    # includes the desired one.
+                    return (SubsetEq(provable_number_set, number_set)
+                            .derive_superset_membership(element))
+                return element.deduce_in_number_set(number_set)
 
+        """            
         proven_number_set = readily_provable_number_set(
                 element, automation=False)
-        if number_set.readily_includes(proven_number_set):
+        if proven_number_set != number_set and (
+                number_set.readily_includes(proven_number_set)):
             # We already know the element is in a number set that
             # includes the desired one.
             return (SubsetEq(proven_number_set, number_set)
                     .derive_superset_membership(element))
+        """
 
+        """
         # Try the 'deduce_in_number_set' method.
         if hasattr(element, 'deduce_in_number_set'):
             # Try to deduce membership directly in the desired number
@@ -293,6 +311,7 @@ class NumberMembership(SetMembership):
                 membership = membership.prove()
                 return membership.inner_expr().element.substitute(
                         element)
+        """
         if hasattr(self, 'conclude_as_last_resort'):
             return self.conclude_as_last_resort()
         msg = str(element) + " has no 'deduce_in_number_set' method."

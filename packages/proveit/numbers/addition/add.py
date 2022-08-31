@@ -16,7 +16,7 @@ from proveit.numbers import (NumberOperation, standard_number_set,
                              pos_number_set, neg_number_set, 
                              nonneg_number_set, nonpos_number_set,
                              nonzero_number_set,
-                             merge_list_of_sets, deduce_number_set,
+                             union_number_set, deduce_number_set,
                              readily_provable_number_set)
 from proveit.numbers.numerals.decimals import DIGITS
 import proveit.numbers.numerals.decimals
@@ -1434,6 +1434,11 @@ class Add(NumberOperation):
         '''
         from proveit.numbers import (Neg, greater, greater_eq,
                                      Less, LessEq)
+        nonzero_to_full_number_set = {
+                IntegerNonZero:Integer,
+                RationalNonZero:Rational,
+                RealNonZero:Real,
+                ComplexNonZero:Complex}
         list_of_operand_sets = []
         # find a minimal std number set for operand
         any_positive = False
@@ -1446,9 +1451,14 @@ class Add(NumberOperation):
             if RealNeg.readily_includes(operand_ns):
                 any_negative = True
             list_of_operand_sets.append(operand_ns)
-        # merge the resulting list of std number sets into a
-        # single superset, if possible
-        number_set = merge_list_of_sets(list_of_operand_sets)
+        # Find the number set that 
+        number_set = union_number_set(*list_of_operand_sets)
+        
+        if number_set in nonzero_to_full_number_set:
+            # Adding non-zero operands provides no guarantee that the
+            # result will be non-zero (unlike adding positives,
+            # negatives, nonpositives, or nonnegatives).
+            number_set = nonzero_to_full_number_set[number_set]
 
         restriction = None
         if RealPos.readily_includes(number_set):

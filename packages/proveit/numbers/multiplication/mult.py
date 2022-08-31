@@ -358,23 +358,26 @@ class Mult(NumberOperation):
         prove contains the evaluation of this number operation.
         '''
         from proveit.numbers.number_operation import (
-                major_number_set, merge_list_of_sets)
+                major_number_set, union_number_set)
         number_set_map = {
             (Integer, RealPos): NaturalPos,
             (Integer, RealNeg): IntegerNeg,
             (Integer, RealNonNeg): Natural,
             (Integer, RealNonPos): IntegerNonPos,
             (Integer, RealNonZero): IntegerNonZero,
+            (Integer, Real): Integer,
             (Rational, RealPos): RationalPos,
             (Rational, RealNeg): RationalNeg,
             (Rational, RealNonNeg): RationalNonNeg,
             (Rational, RealNonPos): RationalNonPos,
             (Rational, RealNonZero): RationalNonZero,
+            (Rational, Real): Rational,
             (Real, RealPos): RealPos,
             (Real, RealNeg): RealNeg,
             (Real, RealNonNeg): RealNonNeg,
             (Real, RealNonPos): RealNonPos,
             (Real, RealNonZero): RealNonZero,
+            (Real, Real): Real,
             (Complex, ComplexNonZero): ComplexNonZero,
             (Complex, Complex): Complex
         }
@@ -434,7 +437,10 @@ class Mult(NumberOperation):
                     continue
             zero_relation_number_set = Complex
 
-        major_number_set = merge_list_of_sets(major_number_sets)
+        if zero_relation_number_set is None:
+            raise UnsatisfiedPrerequisites(
+                    "No readily provable number set for %s"%self)
+        major_number_set = union_number_set(*major_number_sets)
         return number_set_map[(major_number_set, zero_relation_number_set)]
 
     @prover
@@ -1537,7 +1543,7 @@ class Mult(NumberOperation):
         allow user to specify indices 0, 1, 3 to produce something like
         |- a^{b+c+d} b^a
         '''
-        from proveit.numbers.number_operation import merge_list_of_sets
+        from proveit.numbers.number_operation import union_number_set
         import proveit.numbers.exponentiation as exp_pkg
         from proveit.numbers import Exp
         from . import empty_mult
@@ -1605,7 +1611,7 @@ class Mult(NumberOperation):
         replacements = list(defaults.replacements)
         factor_bases = set()
         factor_exponents = []
-        exponent_number_sets = set()
+        exponent_number_sets = []
         temp_factors = []
         disassoc_indices = []
         for idx, factor in enumerate(factors):
@@ -1646,7 +1652,7 @@ class Mult(NumberOperation):
                 temp_factors.append(factor)
             factor_bases.add(base)
             factor_exponents.append(exponent)
-            exponent_number_sets.add(exponent_number_set)
+            exponent_number_sets.append(exponent_number_set)
             if len(factor_bases) > 1:
                 raise ValueError("Unable to combine exponents because "
                                  "exponential bases differ: %s"%self)
@@ -1654,7 +1660,7 @@ class Mult(NumberOperation):
             replacements.append(
                     multi_disassociation(Mult(*temp_factors),
                             *disassoc_indices, preserve_all=True))
-        minimal_exponent_ns = merge_list_of_sets(list(exponent_number_sets))
+        minimal_exponent_ns = union_number_set(*exponent_number_sets)
         assert len(factor_bases)==1
         _a = next(iter(factor_bases))
         if self.factors.is_double():

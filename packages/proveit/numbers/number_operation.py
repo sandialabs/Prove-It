@@ -384,7 +384,8 @@ def readily_provable_number_set(expr, *, automation=True,
     # Find the first (most restrictive) number set that
     # contains 'expr' or something equal to it.
     known_number_sets = set()
-    for known_membership in InClass.yield_known_memberships(expr):
+    for known_membership in InClass.yield_known_memberships(
+            expr, include_canonical_forms=not must_be_direct):
         if known_membership.domain in standard_number_sets:
             known_number_sets.add(known_membership.domain)
     best_known_number_set = None
@@ -442,19 +443,23 @@ def readily_provable_number_set(expr, *, automation=True,
     
         if _compare_to_zero:
             if number_set in pos_number_set and (
-                    Less(zero, expr).readily_provable()): # positive
+                    Less(zero, expr).readily_provable(
+                            check_number_sets=False)): # positive
                 number_set = pos_number_set[number_set]
             elif number_set in neg_number_set and (
-                    Less(expr, zero).readily_provable()): # negative
+                    Less(expr, zero).readily_provable(
+                            check_number_sets=False)): # negative
                 number_set = neg_number_set[number_set]
             elif number_set in nonneg_number_set and (
                     LessEq(zero, expr).readily_provable()): # non-negative
                 number_set = nonneg_number_set[number_set]
             elif number_set in nonpos_number_set and (
-                    LessEq(expr, zero).readily_provable()): # non-positive
+                    LessEq(expr, zero).readily_provable(
+                            check_number_sets=False)): # non-positive
                 number_set = nonpos_number_set[number_set]
             elif number_set in nonzero_number_set and (
-                    NotEquals(expr, zero).readily_provable()):
+                    NotEquals(expr, zero).readily_provable(
+                            check_number_sets=False)):
                 number_set = nonzero_number_set[number_set]
         return number_set
     finally:
@@ -728,40 +733,32 @@ merging_dict = {
     (Real, Complex): Complex,
     (ComplexNonZero, Complex): Complex}
 
-def merge_two_sets(set_01, set_02):
-    '''
-    A utility function to return the minimal standard number set
-    that contains both set_01 and set_02. Notice that this does
-    not prove the inclusion; it just provides a set that should
-    be proveable under the right conditions. This utility function
-    is utilized in the merge_list_of_sets() functions further below.
-    '''
-    if (set_01, set_02) in merging_dict:
-        return merging_dict[(set_01, set_02)]
-    elif (set_02, set_01) in merging_dict:
-        return merging_dict[(set_02, set_01)]
-    # default is to return Real if Real actually works
-    elif (Real.readily_includes(set_01) and Real.readily_includes(set_02)):
-        return Real
-    else:
-        raise ValueError(
-                "In calling merge_two_sets on sets {0} and {1}, "
-                "no standard number set was found that contained "
-                "both sets.".format(set_01, set_02))
 
-def merge_list_of_sets(list_of_sets):
+def union_number_set(*sets):
     '''
     Utility function to produce a minimal standard number set that
-    contains all the number sets in list_of_sets, if possible.
+    contains all the given number sets, if possible.
     Notice that the function does not prove the result, instead just
     providing a superset that should be proveable under the right
     conditions.
     '''
-    while len(list_of_sets) > 1:
-        if list_of_sets[0] == list_of_sets[1]:
-            list_of_sets = ([list_of_sets[0]]+list_of_sets[2:])
+    if len(sets) == 2:
+        set_01, set_02 = sets
+        if set_01==set_02:
+            return set_01
+        if (set_01, set_02) in merging_dict:
+            return merging_dict[(set_01, set_02)]
+        elif (set_02, set_01) in merging_dict:
+            return merging_dict[(set_02, set_01)]
+        # default is to return Real if Real actually works
+        elif (Real.readily_includes(set_01) and Real.readily_includes(set_02)):
+            return Real
         else:
-            list_of_sets = (
-                    [merge_two_sets(list_of_sets[0],
-                                    list_of_sets[1])]+list_of_sets[2:])
-    return list_of_sets[0]
+            raise ValueError(
+                    "In calling union_number_set on sets {0} and {1}, "
+                    "no standard number set was found that contained "
+                    "both sets.".format(set_01, set_02))
+    sets = list(sets)
+    while len(sets) > 1:
+        sets = ([union_number_set(sets[0], sets[1])]+sets[2:])
+    return sets[0]

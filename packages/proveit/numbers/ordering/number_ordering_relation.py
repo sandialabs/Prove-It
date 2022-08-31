@@ -25,7 +25,7 @@ class NumberOrderingRelation(TransitiveRelation):
         if hasattr(self, 'derive_relaxed'):
             yield self.derive_relaxed
 
-    def _readily_provable(self):
+    def _readily_provable(self, *, check_number_sets=True):
         from .less import Less
         from .less_eq import LessEq
         from proveit.numbers import (
@@ -55,6 +55,8 @@ class NumberOrderingRelation(TransitiveRelation):
             # There is a similar but possibly stronger bound we can
             # derive this one from.
             return True
+        if not check_number_sets:
+            return False
         
         # See if we can determine the validity of the inequality
         # based upon provable number sets and how they relate to zero.

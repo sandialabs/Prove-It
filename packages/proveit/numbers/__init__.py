@@ -20,7 +20,7 @@ from .number_operation import (NumberOperation, deduce_in_number_set,
                                pos_number_set, neg_number_set, 
                                nonneg_number_set, nonpos_number_set,
                                nonzero_number_set,
-                               merge_two_sets, merge_list_of_sets)
+                               union_number_set)
 from .rounding import Floor, Ceil, Round
 from .absolute_value import Abs
 from .numerals import (num, Numeral, DecimalSequence, Digits, DIGITS,

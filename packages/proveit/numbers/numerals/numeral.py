@@ -87,14 +87,22 @@ class Numeral(Literal, IrreducibleValue):
         n = int(extra_core_info[0])
         return Numeral(n, string_format, latex_format, styles=styles)
 
+    def readily_provable_number_set(self):
+        from proveit.numbers import zero, ZeroSet, Digits, NaturalPos
+        if self == zero:
+            return ZeroSet
+        if 0 < self.n < 9:
+            return Digits
+        return NaturalPos
+        
     @prover
     def deduce_in_number_set(self, number_set, **defaults_config):
         from proveit.logic import Set
-        from proveit.numbers import (zero, Natural, NaturalPos, 
+        from proveit.numbers import (zero, ZeroSet, Natural, NaturalPos, 
                                      Digits, IntegerNonPos,
                                      RationalNonPos, RealNonPos)
         from proveit.logic import InSet, SubsetEq
-        if self == zero and number_set == Set(zero):
+        if self == zero and number_set == ZeroSet:
             return InSet(zero, Set(zero)).conclude_as_folded()
         if number_set == Natural:
             return self.deduce_in_natural()

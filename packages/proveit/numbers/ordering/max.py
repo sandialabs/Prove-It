@@ -1,7 +1,7 @@
 from proveit import (equality_prover, Literal, ExprRange, Function,
                      relation_prover, UnsatisfiedPrerequisites)
 from proveit.numbers import (
-        NumberOperation, readily_provable_number_set, merge_list_of_sets)
+        NumberOperation, readily_provable_number_set, union_number_set)
 from proveit import a, b, m, n, x, y, S
 
 
@@ -154,4 +154,4 @@ class Max(NumberOperation, Function):
         # single superset, if possible.
         # We could take this further and take the most positive of the
         # number sets.
-        return merge_list_of_sets(list_of_operand_sets)
+        return union_number_set(*list_of_operand_sets)
