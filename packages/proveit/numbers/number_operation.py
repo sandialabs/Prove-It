@@ -436,10 +436,14 @@ def readily_provable_number_set(expr, *, automation=True,
         # Already proven to be in some number set,
         # Let's see if we can restrict it further.
         number_set = best_known_number_set
-        # While this is comparing it zero, it won't lead to an
-        # infinite recursion problem.
+
+        # While these are comparing to zero, it won't lead to an
+        # infinite recursion problem like the Less/LessEq would.
         if Equals(expr, zero).readily_provable():
-            number_set = Set(zero)
+            return ZeroSet
+        elif number_set in nonzero_number_set and (
+                    NotEquals(expr, zero).readily_provable()):
+            return nonzero_number_set[number_set]
     
         if _compare_to_zero:
             if number_set in pos_number_set and (
@@ -457,10 +461,6 @@ def readily_provable_number_set(expr, *, automation=True,
                     LessEq(expr, zero).readily_provable(
                             check_number_sets=False)): # non-positive
                 number_set = nonpos_number_set[number_set]
-            elif number_set in nonzero_number_set and (
-                    NotEquals(expr, zero).readily_provable(
-                            check_number_sets=False)):
-                number_set = nonzero_number_set[number_set]
         return number_set
     finally:
         Expression.in_progress_to_check_provability.remove(

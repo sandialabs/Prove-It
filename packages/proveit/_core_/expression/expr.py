@@ -1003,12 +1003,15 @@ class Expression(metaclass=ExprType):
         except ProofFailure:
             return False
 
-    def readily_provable(self, assumptions=USE_DEFAULTS):
+    def readily_provable(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         May return True only if we readily know that this expression,
         under the given assumptions, can be proven utomatically and 
         easily through its 'conclude' method and will return True if
         it is already proven.
+        
+        For special purposes, optional keyword arguments may be
+        passed through to the _readily_provable method.
         '''
         from proveit import Judgment, ExprTuple, Assumption
 
@@ -1042,12 +1045,12 @@ class Expression(metaclass=ExprType):
             try:
                 Expression.in_progress_to_check_provability.add(
                         in_progress_key)
-                return self._readily_provable()
+                return self._readily_provable(**kwargs)
             finally:
                 Expression.in_progress_to_check_provability.remove(
                         in_progress_key)
 
-    def _readily_provable(self):
+    def _readily_provable(self, **kwargs):
         '''
         Override for Expression-specific strategies to see if the
         expression is readily provable.  May return True only if we
