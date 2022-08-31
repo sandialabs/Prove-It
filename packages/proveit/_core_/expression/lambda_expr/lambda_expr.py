@@ -1039,7 +1039,11 @@ class Lambda(Expression):
         simplified.
         '''
         from proveit.logic import Equals
-        body_simplification = self.body.simplification()
+        inner_assumptions = \
+            [assumption for assumption in defaults.assumptions if
+             free_vars(assumption).isdisjoint(self.parameter_vars)]
+        body_simplification = self.body.simplification(
+                assumptions=inner_assumptions)
         if body_simplification == self.body:
             # No simplification.
             return Equals(self, self).conclude_via_reflexivity()

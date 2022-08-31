@@ -236,7 +236,6 @@ class Judgment:
         if not defaults.sideeffect_automation:
             return  # automation disabled
         if self not in Judgment.in_progress_to_derive_sideeffects:
-            #print(key)
             # avoid infinite recursion by using
             # in_progress_to_deduce_sideeffects
             Judgment.in_progress_to_derive_sideeffects.add(self)
