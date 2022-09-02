@@ -73,7 +73,6 @@ proveit.numbers.multiplication.mult_zero_any
 proveit.numbers.multiplication.mult_zero_left
 proveit.numbers.multiplication.mult_zero_right
 proveit.numbers.multiplication.right_mult_eq_rational
-proveit.numbers.multiplication.unary_mult_reduction
 proveit.numbers.negation.negated_zero
 proveit.numbers.number_sets.complex_numbers.complex_nonzero_within_complex
 proveit.numbers.number_sets.complex_numbers.i_is_complex_nonzero

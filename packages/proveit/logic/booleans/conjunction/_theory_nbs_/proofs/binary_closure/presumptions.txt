@@ -12,13 +12,5 @@ proveit.numbers.number_sets.natural_numbers.nat_pos_within_nat
 proveit.numbers.number_sets.natural_numbers.natural_lower_bound
 proveit.numbers.number_sets.natural_numbers.natural_pos_lower_bound
 proveit.numbers.numerals.decimals.posnat1
-proveit.numbers.numerals.decimals.posnat2
-proveit.numbers.numerals.decimals.posnat3
-proveit.numbers.numerals.decimals.posnat4
-proveit.numbers.numerals.decimals.posnat5
-proveit.numbers.numerals.decimals.posnat6
-proveit.numbers.numerals.decimals.posnat7
-proveit.numbers.numerals.decimals.posnat8
-proveit.numbers.numerals.decimals.posnat9
 proveit.numbers.numerals.decimals.tuple_len_1
 # THEOREMS AND THEORIES TO EXCLUDE:

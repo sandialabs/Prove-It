@@ -89,7 +89,6 @@ proveit.numbers.multiplication.mult_zero_any
 proveit.numbers.multiplication.mult_zero_left
 proveit.numbers.multiplication.mult_zero_right
 proveit.numbers.multiplication.rightward_commutation
-proveit.numbers.multiplication.unary_mult_reduction
 proveit.numbers.negation.complex_closure
 proveit.numbers.negation.neg_not_eq_zero
 proveit.numbers.negation.negated_zero
