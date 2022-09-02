@@ -632,8 +632,8 @@ class Judgment:
                         r'Now simply execute "%qed".')
                 else:
                     print(
-                        '%s is now readily provable. ' %
-                        theorem_being_proven.name,
+                        '%s may now be readily provable (assuming required '
+                        'theorems are usable). '%theorem_being_proven.name,
                         r'Simply execute "%qed".')
                 
     '''
