@@ -287,9 +287,9 @@ class RealNonPosSet(NumberSet):
         return RealNonPosMembership(element)
 
 
-if proveit.defaults.sideeffect_automation:
-    # Import some fundamental theorems without quantifiers that are
-    # imported when automation is used.
+if proveit.defaults.running_theory_notebook is None:
+    # Import some fundamental theorems without quantifiers when not 
+    # running an common/axioms/theorems theory notebook.
     from . import (
         zero_set_within_real, zero_set_within_real_nonneg, 
         zero_set_within_real_nonpos,
@@ -315,4 +315,5 @@ if proveit.defaults.sideeffect_automation:
         real_neg_within_real_nonzero,
         real_neg_within_real_nonpos,
         real_nonneg_within_real,
-        real_nonpos_within_real)
+        real_nonpos_within_real,
+        real_nonzero_within_real)

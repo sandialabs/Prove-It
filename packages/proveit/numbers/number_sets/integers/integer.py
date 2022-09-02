@@ -274,7 +274,9 @@ class IntegerNonPosSet(NumberSet):
         return IntegerNonPosMembership(element)
 
 
-if proveit.defaults.sideeffect_automation:
+if proveit.defaults.running_theory_notebook is None:
+    # Import some fundamental theorems without quantifiers when not 
+    # running an common/axioms/theorems theory notebook.
     from . import (zero_set_within_int, zero_set_within_nonpos_int,
                    nat_within_int,
                    nat_pos_within_int,

@@ -257,7 +257,7 @@ class NaturalPosSet(NumberSet):
 
 
 
-if proveit.defaults.sideeffect_automation:
-    # Import some fundamental theorems without quantifiers that are
-    # imported when automation is used.
+if proveit.defaults.running_theory_notebook is None:
+    # Import some fundamental theorems without quantifiers when not 
+    # running an common/axioms/theorems theory notebook.
     from . import zero_set_within_nat, nat_pos_within_nat

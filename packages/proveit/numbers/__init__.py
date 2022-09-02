@@ -52,8 +52,9 @@ from .functions import MonDecFuncs
 import proveit
 
 
-if proveit.defaults.sideeffect_automation:
-    # Import some fundamental theorems without quantifiers
+if proveit.defaults.running_theory_notebook is None:
+    # Import some fundamental theorems without quantifiers when not 
+    # running an common/axioms/theorems theory notebook.
     from .number_sets.natural_numbers import zero_in_nats
     from .number_sets.integers import zero_is_int, zero_is_nonpos_int
     from .number_sets.rational_numbers import (

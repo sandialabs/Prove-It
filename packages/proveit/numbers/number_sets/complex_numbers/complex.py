@@ -284,14 +284,9 @@ class ComplexNonZeroSet(NumberSet):
         return ComplexNonZeroMembership(element)
     
 
-# if proveit.defaults.automation:
-#     # Import some fundamental theorems without quantifiers that are
-#     # imported when automation is used.
-#     from . import real_within_complex, real_pos_within_complex, real_neg_within_complex, int_within_complex, nat_within_complex
-
-if proveit.defaults.sideeffect_automation:
-    # Import some fundamental theorems without quantifiers that are
-    # imported when automation is used.
+if proveit.defaults.running_theory_notebook is None:
+    # Import some fundamental theorems without quantifiers when not 
+    # running an common/axioms/theorems theory notebook.
     # Fails before running the _axioms_ and _theorems_ notebooks for the first
     # time, but fine after that.
     from . import (

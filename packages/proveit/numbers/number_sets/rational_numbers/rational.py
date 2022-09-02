@@ -302,10 +302,9 @@ class RationalNonPosSet(NumberSet):
         return RationalNonPosMembership(element)
 
 
-if proveit.defaults.sideeffect_automation:
-    # Import some fundamental axioms and theorems without quantifiers.
-    # Fails before running the _axioms_ and _theorems_ notebooks for
-    # the first time, but fine after that.
+if proveit.defaults.running_theory_notebook is None:
+    # Import some fundamental theorems without quantifiers when not 
+    # running an common/axioms/theorems theory notebook.
     from . import (            
             zero_set_within_rational, zero_set_within_rational_nonneg,
             zero_set_within_rational_nonpos,           
