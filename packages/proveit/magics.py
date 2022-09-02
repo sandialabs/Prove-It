@@ -567,7 +567,7 @@ class ProveItMagicCommands:
                 os.remove(import_failure_filename)
             proveit.defaults.import_failure_filename = \
                 import_failure_filename
-        proveit.defaults._running_proveit_notebook = (theory, kind)
+        proveit.defaults._running_theory_notebook = (theory, kind)
 
     def begin_axioms(self):
         # theory based upon current working directory
@@ -732,7 +732,7 @@ class ProveItMagicCommands:
             else:
                 print("These %s may now be imported from the theory package: %s" %
                       (kind, theory.name))
-        proveit.defaults._running_proveit_notebook = None
+        proveit.defaults._running_theory_notebook = None
         self.ran_finish = True
 
         if kind == 'theorems':

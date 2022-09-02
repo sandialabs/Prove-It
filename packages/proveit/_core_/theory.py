@@ -654,9 +654,9 @@ class TheoryPackage(ModuleType):
             return self._theory.get_common_expr(name)
         except (KeyError, OSError, TheoryException):
             import proveit
-            if proveit.defaults._running_proveit_notebook is not None:
+            if proveit.defaults._running_theory_notebook is not None:
                 running_theory, running_kind = \
-                    proveit.defaults._running_proveit_notebook
+                    proveit.defaults._running_theory_notebook
                 if running_kind == 'common':
                     # Failed to import a common expression while
                     # executing a common expression notebook.  Maybe the
@@ -706,11 +706,11 @@ class UnsetCommonExpressionPlaceholder(object):
         import proveit
         import_failure_filename = \
             proveit.defaults.import_failure_filename
-        assert proveit.defaults._running_proveit_notebook is not None, (
+        assert proveit.defaults._running_theory_notebook is not None, (
             "Should only use UnsetCommonExpressionPlaceholder when "
             "executing a common expression notebook.")
         running_theory, running_kind = \
-            proveit.defaults._running_proveit_notebook
+            proveit.defaults._running_theory_notebook
         assert self.theory.name != running_theory.name, (
             "Cannot reference %s.%s within the notebook that creates "
             "it." % (self.theory.name, self.name))

@@ -101,11 +101,15 @@ class Defaults:
 
         # Will be set to a (theory, kind) object when a common
         # expressions, axioms, or theorms notebook is being executed.
-        self._running_proveit_notebook = None
+        self._running_theory_notebook = None
         # When running a common expressions notebook, this will be
         # set to the appropriate file to send information about failed
         # imports of other common expressions.
         self.import_failure_filename = None
+
+    @property
+    def running_theory_notebook(self):
+        return self._running_theory_notebook
 
     @property
     def sorted_assumptions(self):
