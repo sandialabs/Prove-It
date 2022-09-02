@@ -69,7 +69,7 @@ class NumberSet(Literal):
             sorted_number_sets, standard_number_sets)
         if other_set is None: return False
         if other_set == self: return True
-        if SubsetEq(other_set, self).proven():
+        if ProperSubset(other_set, self).proven():
             return True # already known
 
         if self in standard_number_sets and other_set in standard_number_sets:
@@ -77,12 +77,12 @@ class NumberSet(Literal):
             if (self, other_set) in inclusion_truths:
                 return inclusion_truths[(self, other_set)]
             does_include = False
-            # Try one level of indirection via SubsetEq.
+            # Try one level of indirection via ProperSubset.
             for number_set in sorted_number_sets:
                 if number_set in (other_set, self):
                     continue
-                if (SubsetEq(other_set, number_set).proven() and
-                        SubsetEq(number_set, self).proven()):
+                if (ProperSubset(other_set, number_set).proven() and
+                        ProperSubset(number_set, self).proven()):
                     does_include = True
                     break
             # remember for future reference
@@ -276,17 +276,15 @@ class NumberMembership(SetMembership):
                     return (SubsetEq(provable_number_set, number_set)
                             .derive_superset_membership(element))
                 return element.deduce_in_number_set(number_set)
-
-        """            
-        proven_number_set = readily_provable_number_set(
-                element, automation=False)
-        if proven_number_set != number_set and (
-                number_set.readily_includes(proven_number_set)):
-            # We already know the element is in a number set that
-            # includes the desired one.
-            return (SubsetEq(proven_number_set, number_set)
-                    .derive_superset_membership(element))
-        """
+        else:
+            proven_number_set = readily_provable_number_set(
+                    element, must_be_direct=True, automation=False)
+            if proven_number_set != number_set and (
+                    number_set.readily_includes(proven_number_set)):
+                # We already know the element is in a number set that
+                # includes the desired one.
+                return (SubsetEq(proven_number_set, number_set)
+                        .derive_superset_membership(element))
 
         """
         # Try the 'deduce_in_number_set' method.
@@ -314,6 +312,12 @@ class NumberMembership(SetMembership):
         """
         if hasattr(self, 'conclude_as_last_resort'):
             return self.conclude_as_last_resort()
-        msg = str(element) + " has no 'deduce_in_number_set' method."
+        if hasattr(element, 'readily_provable_number_set'):
+            msg = ("(%s).readily_provable_number_set() does "
+                   "not return a number set that is readily included by %s"
+                   %(element, number_set))
+        else:
+            msg = ("%s has no 'readily_provable_number_set' method"
+                   %element)
         raise ProofFailure(InSet(self.element, self.number_set),
                            defaults.assumptions, msg)

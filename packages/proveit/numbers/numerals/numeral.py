@@ -88,12 +88,16 @@ class Numeral(Literal, IrreducibleValue):
         return Numeral(n, string_format, latex_format, styles=styles)
 
     def readily_provable_number_set(self):
-        from proveit.numbers import zero, ZeroSet, Digits, NaturalPos
+        '''
+        We can prove this numeral is in {0} or in NaturalPos.
+        We can also prove this is in Digits, but that is less useful
+        for this purpose.
+        '''
+        from proveit.numbers import zero, ZeroSet, NaturalPos
         if self == zero:
             return ZeroSet
-        if 0 < self.n < 9:
-            return Digits
-        return NaturalPos
+        else:
+            return NaturalPos
         
     @prover
     def deduce_in_number_set(self, number_set, **defaults_config):
