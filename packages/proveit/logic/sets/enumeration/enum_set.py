@@ -74,7 +74,9 @@ class Set(Function):
         raise NotImplementedError(
                 "Set.readily_includes only has simple checks by design.")      
     
-    def _deduce_canonical_equality(self, equality, **defaults_config):
+    def _deduce_canonically_equal(self, rhs, **defaults_config):
+        from proveit.logic import Equals
+        equality = Equals(self, rhs)
         return deduce_equality_via_commutation(equality, one_side=self)
 
     @equality_prover('shallow_simplified', 'shallow_simplify')

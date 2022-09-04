@@ -2,7 +2,7 @@ from proveit import (Expression, Literal, Operation, Conditional,
                      defaults, USE_DEFAULTS, ProofFailure, InnerExpr,
                      prover, relation_prover, equality_prover,
                      SimplificationDirectives, TransRelUpdater)
-from proveit.logic.equality import SimplificationError
+from proveit.logic.equality import Equals, SimplificationError
 from proveit import i, j, k, l, m, n, A, B, C, D, E, F, G, P
 from proveit.logic.booleans.booleans import in_bool
 from proveit.abstract_algebra.generic_methods import (
@@ -305,7 +305,8 @@ class And(Operation):
         return And(*sorted([operand.canonical_form() for operand 
                             in self.operands.entries], key=hash))
 
-    def _deduce_canonical_equality(self, equality):
+    def _deduce_canonically_equal(self, rhs):
+        equality = Equals(self, rhs)
         return deduce_equality_via_commutation(equality, one_side=self)
 
     @prover

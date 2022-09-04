@@ -310,7 +310,7 @@ class TrueLiteral(Literal, IrreducibleValue):
         return False
 
     @relation_prover
-    def not_equal(self, other, **defaults_config):
+    def deduce_not_equal(self, other, **defaults_config):
         from . import true_not_false
         from . import TRUE, FALSE
         if other == FALSE:
@@ -360,7 +360,7 @@ class FalseLiteral(Literal, IrreducibleValue):
         return False
 
     @relation_prover
-    def not_equal(self, other, **defaults_config):
+    def deduce_not_equal(self, other, **defaults_config):
         from _.theorems_ import false_not_true
         from . import TRUE, FALSE
         if other == TRUE:

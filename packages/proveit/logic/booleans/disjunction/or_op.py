@@ -59,6 +59,8 @@ class Or(Operation):
         '''
         from . import (or_if_left, or_if_right, or_if_both,
                        or_if_only_left, or_if_only_right)
+        from proveit.logic import And
+        from proveit.numbers import LessEq
         operands = self.operands
         if operands.is_double():
             _A, _B = operands
@@ -83,7 +85,16 @@ class Or(Operation):
             # readily provable:
             #   P(i) or ... or P(j) <=>
             #   exists_{k in {i .. j}} P(k)
-            return existential_quant.readily_provable()
+            if existential_quant.readily_provable():
+                return True
+            # With improved existential automation, this wouldn't be
+            # necessary; but, as a special case, check if the range is
+            # non-empty and the conjunction is readily provable.
+            if LessEq(existential_quant.domain.lower_bound,
+                      existential_quant.domain.upper_bound).readily_provable():
+                if And(*operands).readily_provable():
+                    return True            
+            return False
         for operand in self.operands:
             if isinstance(operand, ExprRange):
                 if Or(operand).readily_provable():
@@ -325,7 +336,9 @@ class Or(Operation):
         return Or(*sorted([operand.canonical_form() for operand 
                           in self.operands.entries], key=hash))
 
-    def _deduce_canonical_equality(self, equality):
+    def _deduce_canonically_equal(self, rhs):
+        from proveit.logic import Equals
+        equality = Equals(self, rhs)
         return deduce_equality_via_commutation(equality, one_side=self)
 
     @prover

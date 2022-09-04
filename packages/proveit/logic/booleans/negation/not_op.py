@@ -43,13 +43,13 @@ class Not(Operation):
         '''
         yield self.deduce_operand_in_bool
 
-    def _readily_provable(self):
+    def _readily_provable(self, **kwargs):
         '''
         Not(A) is readily provable if A is readily disprovable.
         '''
         # Note: here we need to call the '_' version; otherwise,
         # we will have an infinite recursion.
-        return self.operand._readily_disprovable()
+        return self.operand._readily_disprovable(**kwargs)
 
     def _readily_disprovable(self):
         '''

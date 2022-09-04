@@ -26,14 +26,23 @@ class IrreducibleValue:
         raise NotImplementedError(
             "eval_equality method must be implemented by IrreducibleValue objects")
 
+    def readily_not_equals(self, other):
+        '''
+        Should return True iff deduce_not_equal would work to prove that
+        self is not equal to other.
+        '''
+        raise NotImplementedError(
+            "readily_not_equal method must be implemented by IrreducibleValue objects")
+        
+
     @relation_prover
-    def not_equal(self, other_irreducible, **defaults_config):
+    def deduce_not_equal(self, other_irreducible, **defaults_config):
         '''
         Attempt to prove that this irreducible values is not equal to
         the other irreducible value, returning the Judgment.
         '''
         raise NotImplementedError(
-            "not_equal method must be implemented by IrreducibleValue objects")
+            "deduce_not_equal method must be implemented by IrreducibleValue objects")
 
 
 def is_irreducible_value(expr):

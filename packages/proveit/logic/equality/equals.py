@@ -111,11 +111,11 @@ class Equals(EquivRelation):
         '''
         yield self.deduce_not_equals  # A != B from not(A=B)
 
-    def _readily_provable(self):
+    def _readily_provable(self, try_readily_equal=True):
         '''
         Return True iff this equality is readily provable:
             * The lhs and rhs have the same canonical form;
-            * The lhs has a '_readily_provable_equality' method that
+            * The lhs has a '_readily_equal' method that
               returns True.
             * One side is TRUE/FALSE and the other side is
               provable/disprovable.,
@@ -128,12 +128,13 @@ class Equals(EquivRelation):
         lhs, rhs = self.lhs, self.rhs
         if lhs == rhs:
             return True
-        if hasattr(lhs, 'readily_provable_equality'):
-            if lhs.readily_provable_equality(self):
-                return True
-        if hasattr(rhs, 'readily_provable_equality'):
-            if rhs.readily_provable_equality(Equals(rhs, lhs)):
-                return True
+        if try_readily_equal:
+            if hasattr(lhs, 'readily_equal'):
+                if lhs.readily_equal(rhs):
+                    return True
+            if hasattr(rhs, 'readily_equal'):
+                if rhs.readily_equal(lhs):
+                    return True
         if lhs.canonical_form() == rhs.canonical_form():
             return True
         if (lhs == TRUE and rhs.readily_provable()) or (
@@ -181,20 +182,19 @@ class Equals(EquivRelation):
             except ProofFailure:
                 pass
 
-        if hasattr(lhs, 'readily_provable_equality') and (
-                lhs.readily_provable_equality(self)):
-            # Use an Expression-specific _deduce_equality.
-            return lhs.deduce_equality(self)
-        rev_eq = self.reversed()
-        if hasattr(rhs, 'readily_provable_equality') and (
-                rhs.readily_provable_equality(rev_eq)):
-            # Use an Expression-specific _deduce_equality in reverse.
-            return rhs.deduce_equality(rev_eq).derive_reversed()
+        if hasattr(lhs, 'readily_equal') and (
+                lhs.readily_equal(rhs)):
+            # Use an Expression-specific deduce_equal
+            return lhs.deduce_equal(rhs)
+        if hasattr(rhs, 'readily_equal') and (
+                rhs.readily_equal(lhs)):
+            # Use an Expression-specific deduce_equal in reverse.
+            return rhs.deduce_equal(lhs).derive_reversed()
         
         if lhs.canonical_form() == rhs.canonical_form():
             # If the canonical forms are the same, we should be able
-            # to prove equality via 'deduce_canonical_equality'.
-            return lhs.deduce_canonical_equality(self)
+            # to prove equality via 'deduce_canonically_equal'.
+            return lhs.deduce_canonically_equal(rhs)
 
         if not isinstance(lhs, ExprTuple) and (
                 not isinstance(rhs, ExprTuple) and
@@ -205,13 +205,13 @@ class Equals(EquivRelation):
             # boolean.  Conclude equality via mutual implication.
             self.conclude_via_mutual_implication()
         
-        # Try the 'deduce_equality' method.  If NotImplementedError
+        # Try the 'deduce_equal' method.  If NotImplementedError
         # or UnsatisfiedPrerequisites is raised, we'll move on.
-        if hasattr(lhs, 'deduce_equality'):
+        if hasattr(lhs, 'deduce_equal'):
             try:
-                return lhs.deduce_equality(self)
+                return lhs.deduce_equal(rhs)
             except (NotImplementedError, UnsatisfiedPrerequisites):
-                # 'deduce_equality' not implemented for this 
+                # 'deduce_equal' not implemented for this 
                 # particular case, so carry on with default approach.
                 pass
 
@@ -1132,7 +1132,7 @@ class Equals(EquivRelation):
                     if use_canonical_forms and (
                             expr.canonical_form()==eq_expr.canonical_form()):
                         # deduce equality via same canonical form
-                        _eq = expr.deduce_canonical_equality(_eq)
+                        _eq = expr.deduce_canonically_equal(eq_expr)
                     else:
                         _eq = _eq.conclude_via_transitivity()
                     return _eq.apply_transitivity(eq_evaluation)
@@ -1455,7 +1455,7 @@ def deduce_equal_or_not(lhs, rhs, **defaults_config):
     if NotEquals(lhs, rhs).proven():
         return NotEquals(lhs, rhs).prove()
     if lhs.canonical_form() == rhs.canonical_form():
-        return lhs.deduce_canonical_equality(Equals(lhs, rhs))
+        return lhs.deduce_canonically_equal(rhs)
     if hasattr(lhs, 'deduce_equal_or_not'):
         return lhs.deduce_equal_or_not(rhs)
     if hasattr(rhs, 'deduce_equal_or_not'):

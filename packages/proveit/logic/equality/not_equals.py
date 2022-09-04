@@ -29,7 +29,7 @@ class NotEquals(Relation):
             yield self.derive_via_double_negation  # A from A != False and A in Boolean
         yield self.unfold  # Not(x=y) from x != y
 
-    def _readily_provable(self):
+    def _readily_provable(self, try_readily_not_equal=True):
         '''
         Return True iff this NotEquals is readily provable:
             * one side is TRUE/FALSE and the other side is
@@ -49,10 +49,11 @@ class NotEquals(Relation):
             # Use 'proven' rather than 'readily_proven' here to avoid
             # infinite recursion.
             return True
-        if hasattr(self.lhs, 'readily_not_equal'):
-            return self.lhs.readily_not_equal(self.rhs)
-        if hasattr(self.rhs, 'readily_not_equal'):
-            return self.rhs.readily_not_equal(self.lhs)
+        if try_readily_not_equal:
+            if hasattr(self.lhs, 'readily_not_equal'):
+                return self.lhs.readily_not_equal(self.rhs)
+            if hasattr(self.rhs, 'readily_not_equal'):
+                return self.rhs.readily_not_equal(self.lhs)
         return False        
 
     def _readily_disprovable(self):
@@ -68,7 +69,7 @@ class NotEquals(Relation):
         lhs, rhs = self.lhs, self.rhs
         if is_irreducible_value(lhs) and is_irreducible_value(rhs):
             # prove that two irreducible values are not equal
-            return lhs.not_equal(rhs)
+            return lhs.deduce_not_equal(rhs)
         if lhs in (TRUE, FALSE) or rhs in (TRUE, FALSE):
             try:
                 # prove something is not false 
@@ -88,7 +89,7 @@ class NotEquals(Relation):
             # Both sides are already irreducible or simplified.
             pass
 
-        if hasattr(lhs, 'not_equal'):
+        if hasattr(lhs, 'deduce_not_equal'):
             # If there is a 'not_equal' method, use that.
             # The responsibility then shifts to that method for
             # determining what strategies should be attempted
@@ -97,7 +98,7 @@ class NotEquals(Relation):
             # A good practice is to try the 'conclude_as_folded'
             # strategy if it doesn't fall into any specially-handled
             # case.
-            return lhs.not_equal(rhs)
+            return lhs.deduce_not_equal(rhs)
 
         return self.conclude_as_folded()
 

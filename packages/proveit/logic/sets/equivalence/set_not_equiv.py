@@ -39,27 +39,6 @@ class SetNotEquiv(Operation):
         #     yield self.derive_via_double_negation # A from A != False and A in Boolean
         # yield self.unfold # Not(x=y) from x != y
 
-    # def conclude(self, assumptions):
-    #     from proveit.logic import FALSE
-    #     if is_irreducible_value(self.lhs) and is_irreducible_value(self.rhs):
-    #         # prove that two irreducible values are not equal
-    #         return self.lhs.not_equal(self.rhs, assumptions)
-    #     if self.lhs == FALSE or self.rhs == FALSE:
-    #         try:
-    #             # prove something is not false by proving it to be true
-    #             return self.conclude_via_double_negation(assumptions)
-    #         except:
-    #             pass
-    #     if hasattr(self.lhs, 'not_equal') and is_irreducible_value(self.rhs):
-    #         try:
-    #             return self.lhs.not_equal(self.rhs, assumptions)
-    #         except:
-    #             pass
-    #     try:
-    #         return self.conclude_as_folded(assumptions)
-    #     except:
-    # return Operation.conclude(assumptions) # try the default (reduction)
-
     @prover
     def derive_reversed(self,  **defaults_config):
         '''
