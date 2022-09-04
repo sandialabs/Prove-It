@@ -51,18 +51,18 @@ class MatrixMult(Operation):
                 else:
                     exp_factors = [bm.exponent]
                 if bm.base == e and isinstance(bm.exponent, Mult):
-                    print(bm.exponent.operands.num_entries())
+                    #print(bm.exponent.operands.num_entries())
                     if bm.exponent.operands.entries[:3] == (two, pi, i) and (
                             bm.exponent.operands.num_entries()==4):
                         remaining_factor = bm.exponent.operands.entries[3]
-                        print(remaining_factor)
+                        #print(remaining_factor)
                         if isinstance(remaining_factor, Mult):
                             # e.g, flatten 2 pi i (x y) to 2 pi i x y
                             exp_factors = [two, pi, i, 
                                            *remaining_factor.operands]
                 if _m in exp_factors:
                     exp_factors.remove(_m)
-                print(exp_factors, len(exp_factors))
+                #print(exp_factors, len(exp_factors))
                 if len(exp_factors) > 0:
                     _b = Exp(bm.base, Mult(*exp_factors))
                 elif len(exp_factors) == 1:
