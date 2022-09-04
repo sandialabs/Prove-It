@@ -53,7 +53,7 @@ class Abs(NumberOperation):
             # original denom is not zero, and thus maintain that
             # property
             _b = self.operand.denominator
-            Abs(_b).not_equal(zero)
+            Abs(_b).deduce_not_equal(zero)
             return abs_frac.instantiate(
                 {a: self.operand.numerator, b: _b})
         elif isinstance(self.operand, Mult):
