@@ -79,13 +79,16 @@ class EquivRelation(TransitiveRelation):
                           in self.operands.entries], key=hash))
 
     @prover
-    def _deduce_canonical_equality(self, equality, **defaults_config):
+    def _deduce_canonically_equal(self, rhs, **defaults_config):
         '''
         Deduce EquivRelations are equal by having the same canonical
         form on the same side or opposite sides.
         '''
-        if type(equality.rhs) == type(equality.lhs):
-            lhs_eq, rhs_eq = equality.lhs, equality.rhs
+        from proveit.logic import Equals
+        lhs = self
+        equality = Equals(lhs, rhs)
+        if type(rhs) == type(lhs):
+            lhs_eq, rhs_eq = lhs, rhs
             lhs_lhs_cf = lhs_eq.lhs.canonical_form()
             lhs_rhs_cf = lhs_eq.rhs.canonical_form()
             rhs_lhs_cf = rhs_eq.lhs.canonical_form()
@@ -94,5 +97,5 @@ class EquivRelation(TransitiveRelation):
                 return equality.conclude_via_direct_substitution()
             if (lhs_lhs_cf == rhs_rhs_cf) and (lhs_rhs_cf == rhs_lhs_cf):
                 return self.symmetrization()
-        assert False, ("Canonical forms don't match so _deduce_equality "
-                       "should not be called")
+        assert False, ("Canonical forms don't match so "
+                       "'deduce_canonically_equality' should not be called")
