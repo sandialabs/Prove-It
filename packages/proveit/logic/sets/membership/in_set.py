@@ -32,14 +32,16 @@ class InSet(InClass):
         from .not_in_set import NotInSet
         return NotInSet(self.element, self.domain)
 
-    def _readily_provable(self):
+    def _readily_provable(self, check_directly_known_elem_equality=True):
         '''
         This membership is readily provable if the membership
         object indicates that it is readily provable or there is a 
         known as-strong membership (with known equal elements and the
         domain a subset of the desired domain).
         '''
-        if InClass._readily_provable(self):
+        if InClass._readily_provable(
+                self, check_directly_known_elem_equality=(
+                        check_directly_known_elem_equality)):
             return True
         if self.as_strong_known_membership() is not None:
             return True

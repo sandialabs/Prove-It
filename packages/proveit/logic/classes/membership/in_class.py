@@ -147,16 +147,24 @@ class InClass(Relation):
         else:
             return Relation._build_canonical_form(self)
 
-    def _readily_provable(self):
+    def _readily_provable(self, check_directly_known_elem_equality=True):
         '''
         This membership is readily provable if the membership
         object indicates that it is readily provable.
+        
+        If check_directly_known_elem_equality is True and all else 
+        fails, we will check the first expression directly known to
+        be equal to the element to see if its membership in the daomin
+        is readily provable.  This helps, for example, when there is
+        an obvious definition to use.  Don't apply this recursively,
+        however.
         '''
         from proveit.logic import Equals, is_irreducible_value
         if hasattr(self, 'membership_object'):
             if self.membership_object._readily_provable():
                 return True
         element = self.element
+        domain = self.domain
         
         # Try a known evaluation.
         if not is_irreducible_value(element):
@@ -165,6 +173,17 @@ class InClass(Relation):
             except UnsatisfiedPrerequisites:
                 return None
             return type(self)(elem_eval, self.domain).readily_provable()
+
+        if check_directly_known_elem_equality:
+            # Check the first directly known equality of the element to
+            # see if this equal expression's membership is readily 
+            # provable.
+            for eq_expr in Equals.yield_directly_known_eq_exprs(
+                    element, include_canonical_forms=False):
+                if type(self)(eq_expr, domain).readily_provable(
+                        check_directly_known_elem_equality=False):
+                    return True
+                return False
             
         return False
 
@@ -194,17 +213,30 @@ class InClass(Relation):
 
         # Try a known evaluation of the element.
         element = self.element
+        domain = self.domain
         if not is_irreducible_value(element):
             try:
                 evaluation = Equals.get_known_evaluation(element)
             except UnsatisfiedPrerequisites:
                 evaluation = None
             if evaluation is not None:
-                membership = type(self)(evaluation.rhs, self.domain)
+                membership = type(self)(evaluation.rhs, domain)
                 if membership.readily_provable():
                     membership = membership.prove()
                     return membership.inner_expr().element.substitute(
                             element)
+        
+        # Check the first directly known expression equal to the element
+        # to see if we can prove it's membership.
+        for eq_expr in Equals.yield_directly_known_eq_exprs(
+                element, include_canonical_forms=False):
+            membership_of_eq_expr = type(self)(eq_expr, domain)
+            # Avoid applying this check recursively.
+            if membership_of_eq_expr.readily_provable(
+                    check_directly_known_elem_equality=False):
+                membership_of_eq_expr = membership_of_eq_expr.prove()
+                return membership_of_eq_expr.inner_expr().element.substitute(
+                        element)
         
         # Try the standard Relation strategies -- evaluate or
         # simplify both sides.
