@@ -808,7 +808,8 @@ class InnerExprGenerator:
         # We will skip this particular inner expression if it
         # is representing all operands of an Operation that only 
         # accepts a fixed number of operands.
-        if isinstance(next_inner_expr.expr_hierarchy[-1], ExprTuple):
+        if isinstance(next_inner_expr.expr_hierarchy[-1], 
+                      Composite):
             if len(next_inner_expr.expr_hierarchy) >= 2 and (
                     isinstance(next_inner_expr.expr_hierarchy[-2],
                                Operation)):

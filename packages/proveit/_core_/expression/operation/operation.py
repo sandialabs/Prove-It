@@ -217,11 +217,12 @@ class Operation(Expression):
         with the given operator and operands.
 
         First attempt to call 'extract_init_arg_value' (or 
-        'extract_my_init_arg_value' if 'obj' is provided) for each of 
-        the __init__ arguments to determine how to generate the 
-        appropriate __init__ parameters from the given operators
-        and operands.  If that is not implemented, fall back to one of 
-        the following default scenarios.
+        'extract_my_init_arg_value' if 'obj' is provided, or if the
+        operands is a NamedExprs then get the associated NamedExprs 
+        value) for each of the __init__ arguments to determine how to 
+        generate the appropriate __init__ parameters from the given 
+        operators and operands.  If that is not implemented, fall back 
+        to one of the following default scenarios.
 
         If the particular Operation class has an 'implicit operator' 
         defined via an _operator_ attribute and the number of __init__
@@ -245,7 +246,7 @@ class Operation(Expression):
         '''
         from .function import Function
         from proveit._core_.expression.composite import (
-            ExprTuple, Composite)
+            ExprTuple, Composite, NamedExprs)
         implicit_operator = cls._implicit_operator()
         matches_implicit_operator = (operator == implicit_operator)
         if implicit_operator is not None and not matches_implicit_operator:
@@ -254,7 +255,11 @@ class Operation(Expression):
         sig = inspect.signature(cls.__init__)
         Parameter = inspect.Parameter
         init_params = sig.parameters
-        if obj is None:
+        
+        if isinstance(operands, NamedExprs):
+            extract_init_arg_value_fn = (
+                    lambda arg : operands.get(arg))
+        elif obj is None:
             def extract_init_arg_value_fn(arg): 
                 return cls.extract_init_arg_value(arg, operator, operands)
         else:
@@ -270,8 +275,16 @@ class Operation(Expression):
                 if param_name=='styles':
                     continue # skip the styles parameter
                 param = init_params[param_name]
-                val = extract_init_arg_value_fn(param_name)
                 default = param.default
+                val = extract_init_arg_value_fn(param_name)
+                if val is None: 
+                    if isinstance(operands, NamedExprs) and (
+                            default is param.empty):
+                        raise TypeError(
+                                "'%s' not in the NamedExprs operand, %s, "
+                                "extracting init args of a %s"
+                                %(param_name, operands, cls))
+                    val = default
                 if default is param.empty or val != default:
                     # Override the default if there is one.
                     if not isinstance(val, Expression):
@@ -313,9 +326,10 @@ class Operation(Expression):
             num_operands = (operands.num_entries() if 
                             isinstance(operands, ExprTuple) else 1)
             if implicit_operator and num_operands < len(pos_params):
-                raise ValueError("Not enough supplied operands: "
-                                 "needed %d got %d"%(len(pos_params),
-                                                     num_operands))
+                raise ValueError(
+                        "Not enough supplied operands for extracting "
+                        "init args of a %s: needed %d got %d"%(
+                                cls, len(pos_params), num_operands))
             if (varkw is None):
                 # handle default implicit operator case
                 if implicit_operator and (

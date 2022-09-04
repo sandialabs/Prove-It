@@ -33,7 +33,7 @@ class NamedExprs(Composite, Expression):
                 raise TypeError("Values of NamedExprs must be Expressions")
             assert isinstance(val, Expression)
             elems[key] = val
-        self.keywords, self.elems = keywords, elems
+        self.keywords, self._elems = tuple(keywords), elems
         # ',' isn't allowed in the core info and ':' is not allowed
         # in NamedExprs keys, so swap one with the other to encode.
         core_info_enc_keywords = [key.replace(',', ':') for key in keywords]
@@ -42,26 +42,29 @@ class NamedExprs(Composite, Expression):
                             styles=styles)
 
     def __getitem__(self, key):
-        return self.elems[key]
+        return self._elems[key]
+    
+    def get(self, key, default=None):
+        return self._elems.get(key, default)
 
     def __contains__(self, key):
-        return key in self.elems
+        return key in self._elems
 
     def __len__(self):
-        return len(self.elems)
+        return len(self._elems)
 
     def __iter__(self):
-        return iter(self.elems)
+        return iter(self._elems)
 
     def items(self):
         for key in self.keywords:
-            yield key, self.elems[key]
+            yield key, self._elems[key]
 
     def keys(self):
         return self.keywords
 
     def values(self):
-        return self.elems.values()
+        return self._elems.values()
 
     def remake_arguments(self):
         '''
