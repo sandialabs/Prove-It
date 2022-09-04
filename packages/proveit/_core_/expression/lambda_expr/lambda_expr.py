@@ -1181,7 +1181,7 @@ class Lambda(Expression):
 
 
     @prover
-    def _deduce_canonical_equality(self, equality, **defaults_config):
+    def _deduce_canonically_equal(self, rhs, **defaults_config):
         '''
         Prove the equality of Lambda expressions that have the same 
         canonical form.  This requires both side of
@@ -1190,16 +1190,16 @@ class Lambda(Expression):
         '''
         from proveit import Conditional
         from proveit.logic import Forall, Equals
-        assert isinstance(equality.rhs, Lambda), (
-                "Shouldn't call _deduce_canonical_equality if the sides of "
+        lhs = self
+        assert isinstance(rhs, Lambda), (
+                "Shouldn't call _deduce_canonically_equal if the sides of "
                 "the equality don't have the same canonical form and the "
                 "canonical form of a Lambda is a Lambda")
-        lhs, rhs = equality.lhs, equality.rhs
         lhs_relabeled = lhs.canonically_labeled()
         rhs_relabeled = rhs.canonically_labeled()
         if (lhs_relabeled.parameters != rhs_relabeled.parameters):
             raise NotImplementedError(
-                    "Lambda._deduce_canonical_equality requires the "
+                    "Lambda._deduce_canonically_equal requires the "
                     "canonically labeled parameters to be the same on "
                     "both sides (the only way this should be an issue if "
                     "they have the same canonical form is if they are "
@@ -1211,7 +1211,7 @@ class Lambda(Expression):
         rhs_condition = None
         if lhs_has_condition or rhs_has_condition:
             assert lhs_has_condition == rhs_has_condition, (
-                "Shouldn't call __deduce_canonical_equality if the sides "
+                "Shouldn't call _deduce_canonically_equal if the sides "
                 "of the equality don't have the same canonical form and the "
                 "canonical form of a Conditional is a Conditional.")
             condition = lhs_body.condition
@@ -1447,7 +1447,7 @@ def extract_param_replacements(parameters, parameter_vars,
                         # A possible match to check.
                         if not len_req.proven():
                             try:
-                                len_req.lhs.deduce_equality(len_req)
+                                len_req.lhs.deduce_equal(len_req.rhs)
                                 assert len_req.proven()
                             except ProofFailure:
                                 pass
@@ -1462,8 +1462,8 @@ def extract_param_replacements(parameters, parameter_vars,
                             requirements.append(len_req.prove())
                             break
                         try:
-                            # Try to prove len_req via 'deduce_equality'
-                            len_req.lhs.deduce_equality(len_req)
+                            # Try to prove len_req via 'deduce_equal'
+                            len_req.lhs.deduce_equal(len_req.rhs)
                             requirements.append(len_req.prove())
                         except ProofFailure as e:
                             raise ValueError(

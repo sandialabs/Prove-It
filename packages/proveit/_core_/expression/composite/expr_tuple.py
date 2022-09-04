@@ -801,6 +801,90 @@ class ExprTuple(Composite, Expression):
                     {a:_a, b:_b, c:_c, d:_d, i:_i, k:_k},
                     preserve_all=True)
 
+    def readily_equal(self, rhs):
+        '''
+        Return True iff the rhs in an ExprTuple that matches with
+        self in an entrywise manner via readily provable equality.
+        '''
+        from proveit.logic import Equals
+        from .expr_range import ExprRange
+        if not isinstance(rhs, ExprTuple):
+            return False
+        if self.num_entries() != rhs.num_entries():
+            # Only readily equal if there is an entry-wize match.
+            return False
+        for lhs_elem, rhs_elem in zip(self.entries, rhs.entries):
+            if isinstance(lhs_elem, ExprRange) or (
+                    isinstance(rhs_elem, ExprRange)):
+                if isinstance(lhs_elem, ExprRange) != (
+                        isinstance(rhs_elem, ExprRange)):
+                    # entries must both be ExprRanges to match.
+                    return False
+                # If the index ranges are the same on both sides, we
+                # just need to see if their mappings are the same.
+                if lhs_elem.true_start_index==rhs_elem.true_start_index and (
+                        lhs_elem.true_end_index==rhs_elem.true_end_index):
+                    return Equals(lhs_elem.lambda_map, 
+                                  rhs_elem.lambda_map).readily_provable()
+                # try_readily_equal=False to avoid infinite
+                # recursion.
+                if not Equals(ExprTuple(lhs_elem), 
+                              ExprTuple(rhs_elem)).readily_provable(
+                                      try_readily_equal=False):
+                    return False
+            elif not Equals(lhs_elem, rhs_elem).readily_provable():
+                return False
+        return True
+        
+    def readily_not_equal(self, rhs):
+        '''
+        Return True iff the rhs in an ExprTuple that aligns with
+        self in an entrywise manner but has at least one readily 
+        disprovable equality between entries.  If there isn't an
+        entrywise alignment, it is hard to check whether they are
+        equal or not.
+        '''
+        from proveit.logic import Or, Equals, NotEquals
+        from .expr_range import ExprRange
+        if not isinstance(rhs, ExprTuple):
+            # rhs is not an ExprTuple but there is no guarantee that
+            # it isn't something that represents and ExprTuple.
+            return False
+        if self.num_entries() != rhs.num_entries():
+            # Only readily equal if there is an entry-wize alignment.
+            return False
+        for lhs_elem, rhs_elem in zip(self.entries, rhs.entries):
+            if isinstance(lhs_elem, ExprRange) or (
+                    isinstance(rhs_elem, ExprRange)):
+                if isinstance(lhs_elem, ExprRange) != (
+                        isinstance(rhs_elem, ExprRange)):
+                    # entries must both be ExprRanges to align.
+                    return False
+                # If the index ranges are the same on both sides, we
+                # can build a disjunction over a range to check.
+                if lhs_elem.true_start_index==rhs_elem.true_start_index and (
+                        lhs_elem.true_end_index==rhs_elem.true_end_index):
+                    param = lhs_elem.parameter
+                    lhs_body = lhs_elem.body
+                    if rhs_elem.parameter == param:
+                        rhs_body = rhs_elem.body
+                    else:
+                        rhs_body = rhs_elem.body.basic_replaced(
+                                {rhs_elem.parameter:param})
+                    if Or(ExprRange(param, NotEquals(lhs_body, rhs_body),
+                                    lhs_elem.true_start_index,
+                                    rhs_elem.true_end_index)).readily_provable():
+                        return True
+                # try_readily_not_equal=False to avoid infinite
+                # recursion.
+                if Equals(ExprTuple(lhs_elem), 
+                          ExprTuple(rhs_elem)).readily_disprovable(
+                                  try_readily_not_equal=False):
+                    return True
+            elif Equals(lhs_elem, rhs_elem).readily_disprovable():
+                return True
+        return False
+
     @relation_prover
     def deduce_equal_or_not(self, other_tuple, **defaults_config):
         '''
@@ -827,7 +911,7 @@ class ExprTuple(Composite, Expression):
              Less.sort([_i, _j]) # try sorting
         if NotEquals(_i, _j).proven():
             # Not equal because the lengths are different.
-            return self.not_equal(other_tuple)
+            return self.deduce_not_equal(other_tuple)
         elif not Equals(_i, _j).proven():
             raise UnsatisfiedPrerequisites(
                     "Unable to prove wether or not the lengths of "
@@ -882,8 +966,7 @@ class ExprTuple(Composite, Expression):
                     if isinstance(body_relation, Equals):
                         # Every element is equal, so the ExprTuples
                         # are equal.
-                        return self.deduce_equality(
-                                Equals(self, other_tuple))
+                        return self.deduce_equal(other_tuple)
                     else:
                         # Every element is not equal, so the ExprTuples
                         # are not equal.
@@ -892,7 +975,7 @@ class ExprTuple(Composite, Expression):
                                 param, NotEquals(lhs_range_body,
                                                  rhs_range_body),
                                 start_index, end_index)).prove()
-                        return self.not_equal(other_tuple)
+                        return self.deduce_not_equal(other_tuple)
                 except (NotImplementedError, UnsatisfiedPrerequisites):
                     pass
                 if And(ExprRange(param, Equals(lhs_range_body,
@@ -900,14 +983,13 @@ class ExprTuple(Composite, Expression):
                                  start_index, end_index)).proven():
                     # Every element is equal, so the ExprTuples
                     # are equal.
-                    return self.deduce_equality(
-                            Equals(self, other_tuple))
+                    return self.deduce_equal(other_tuple)
                 elif Or(ExprRange(param, NotEquals(lhs_range_body,
                                                    rhs_range_body),
                         start_index, end_index)).proven():
                     # Some element pair is not equal, so the ExprTuples
                     # are not equal.
-                    return self.not_equal(other_tuple)
+                    return self.deduce_not_equal(other_tuple)
                 raise UnsatisfiedPrerequisites(
                         "Could not determine whether %s = %s"
                         %(self, other_tuple))
@@ -941,9 +1023,9 @@ class ExprTuple(Composite, Expression):
                     relation = deduce_equal_or_not(_x, _y)
                 if isinstance(relation.expr, NotEquals):
                     # Aha! They are not equal.
-                    return self.not_equal(other_tuple)
+                    return self.deduce_not_equal(other_tuple)
             # They are equal!
-            return self.deduce_equality(Equals(self, other_tuple))
+            return self.deduce_equal(other_tuple)
 
         raise NotImplementedError(
                     "ExprTuple.deduce_equal_or_not is not implemented "
@@ -951,10 +1033,10 @@ class ExprTuple(Composite, Expression):
                     "entries.")
 
     @relation_prover
-    def not_equal(self, other_tuple, *,
-                  neq_with_diff_len_thm=None,
-                  neq_via_any_elem_neq_thm=None,
-                  **defaults_config):
+    def deduce_not_equal(self, other_tuple, *,
+                         neq_with_diff_len_thm=None,
+                         neq_via_any_elem_neq_thm=None,
+                         **defaults_config):
         '''
         Prove and return this ExprTuple not equal to the other
         ExprTuple.
@@ -988,6 +1070,84 @@ class ExprTuple(Composite, Expression):
                 neq_via_any_elem_neq_thm = tuple_neq_via_any_elem_neq
             return neq_via_any_elem_neq_thm.instantiate(
                     {i:_i, a:_a, b:_b})
+
+    @prover
+    def _deduce_canonically_equal(self, rhs, **defaults_config):
+        return self.deduce_equal(rhs)
+
+    @equality_prover('equated', 'equate')
+    def deduce_equal(self, rhs, *,
+                     eq_via_elem_eq_thm=None, **defaults_config):
+        from proveit import ExprRange
+        from proveit import a, b, i
+        from proveit.logic import Equals
+        from proveit.core_expr_types.tuples import tuple_eq_via_elem_eq
+        from proveit.relation import TransRelUpdater
+        from proveit.numbers import num, one
+        lhs = self
+
+        # Handle the special counting cases.  For example,
+        #   (1, 2, 3, 4) = (1, ..., 4)
+        _n = len(self.entries)
+        if all(self[_k] == num(_k + 1) for _k in range(_n)):
+            if (isinstance(rhs, ExprTuple)
+                    and rhs.num_entries() == 1
+                    and isinstance(rhs[0], ExprRange)):
+                expr_range = rhs[0]
+                if (expr_range.true_start_index == one and
+                        expr_range.true_end_index == num(_n)):
+                    if len(self.entries) >= 10:
+                        raise NotImplementedError("counting range equality "
+                                                  "not implemented for more "
+                                                  "then 10 elements")
+                    import proveit.numbers.numerals.decimals
+                    equiv_thm = proveit.numbers.numerals.decimals\
+                        .__getattr__('count_to_%d_range' % _n)
+                    return equiv_thm
+
+        if (lhs.num_entries() == rhs.num_entries() == 1
+                and isinstance(lhs[0], ExprRange)
+                and isinstance(rhs[0], ExprRange)):
+            # Prove the equality of two ExprRanges.
+            r_range = rhs[0]
+            expr = lhs
+            if expr[0].is_decreasing():
+                # We could handle different styles later, but
+                # let's be consistent with increasing order for now
+                # to make this easier to implement.
+                expr = expr.inner_expr()[0].with_increasing_order()
+            eq = TransRelUpdater(expr)
+            if expr[0].true_start_index != r_range.true_start_index:
+                # Shift indices so they have the same start.
+                expr = eq.update(expr[0].shift_equivalence(
+                        new_start=r_range.true_start_index))
+            if expr[0].lambda_map != r_range.lambda_map:
+                # Change the lambda map.
+                expr = eq.update(expr[0].range_fn_transformation(
+                        r_range.lambda_map))
+            if expr[0].true_end_index != r_range.true_end_index:
+                # Make the end indices be the same:
+                end_eq = Equals(expr[0].true_end_index, r_range.true_end_index).prove()
+                expr = eq.update(end_eq.substitution(
+                        expr.inner_expr()[0].true_end_index))
+            return eq.relation
+
+        # Try tuple_eq_via_elem_eq as the last resort.
+        _i = lhs.num_elements()
+        _a_orig = lhs
+        _b_orig = rhs
+
+        _a, _b = ExprTuple.align_ranges(_a_orig, _b_orig)
+        if eq_via_elem_eq_thm is None:
+            eq_via_elem_eq_thm = tuple_eq_via_elem_eq
+        equality = eq_via_elem_eq_thm.instantiate({i:_i, a:_a, b:_b})
+        # Substitute back in the originals if changed for alignment
+        # purposes.
+        if _a != _a_orig:
+            equality = equality.inner_expr().lhs.substitute(_a_orig)
+        if _b != _b_orig:
+            equality = equality.inner_expr().rhs.substitute(_b_orig)
+        return equality
 
     @equality_prover('merged', 'merge')
     def merger(self, **defaults_config):
@@ -1105,119 +1265,6 @@ class ExprTuple(Composite, Expression):
             eq.update(front_merger.substitution(
                 eq.expr.inner_expr()[:2]))
         return eq.relation
-
-    def readily_provable_equality(self, equality):
-        '''
-        We can readily prove two ExprTuples are equal if we can prove 
-        that each of the elements are equal as a simple case.
-        '''
-        from proveit import ExprRange
-        from proveit.logic import Equals
-        if not isinstance(equality, Equals):
-            raise TypeError("Expected 'equality' to be an Equals expression")
-        if equality.lhs != self:
-            raise ValueError("Expecting %s to be on left side of %s"
-                             %(self, equality))
-        rhs = equality.rhs
-        if not isinstance(rhs, ExprTuple):
-            return False
-        if self.num_entries() != rhs.num_entries():
-            # Only handles simply case where we compare them entry-wise.
-            return False 
-        for left_elem, right_elem in zip(self, rhs):
-            if isinstance(left_elem, ExprRange) !=  (
-                    isinstance(right_elem, ExprRange)):
-                return False
-            if isinstance(left_elem, ExprRange):
-                if not Equals(ExprTuple(left_elem),
-                              ExprTuple(right_elem)).proven():
-                    return False
-            if not Equals(left_elem, right_elem).readily_provable():
-                return False
-        return True        
-
-    @prover
-    def _deduce_canonical_equality(self, equality, **defaults_config):
-        return self.deduce_equality(equality)
-
-    @equality_prover('equated', 'equate')
-    def deduce_equality(self, equality, *,
-                        eq_via_elem_eq_thm=None, **defaults_config):
-        from proveit import ExprRange
-        from proveit import a, b, i
-        from proveit.logic import Equals
-        from proveit.core_expr_types.tuples import tuple_eq_via_elem_eq
-        from proveit.relation import TransRelUpdater
-        if not isinstance(equality, Equals):
-            raise ValueError("The 'equality' should be an Equals expression")
-        if equality.lhs != self:
-            raise ValueError("The left side of 'equality' should be 'self'")
-
-        from proveit.numbers import num, one
-
-        # Handle the special counting cases.  For example,
-        #   (1, 2, 3, 4) = (1, ..., 4)
-        _n = len(self.entries)
-        if all(self[_k] == num(_k + 1) for _k in range(_n)):
-            if (isinstance(equality.rhs, ExprTuple)
-                    and equality.rhs.num_entries() == 1
-                    and isinstance(equality.rhs[0], ExprRange)):
-                expr_range = equality.rhs[0]
-                if (expr_range.true_start_index == one and
-                        expr_range.true_end_index == num(_n)):
-                    if len(self.entries) >= 10:
-                        raise NotImplementedError("counting range equality "
-                                                  "not implemented for more "
-                                                  "then 10 elements")
-                    import proveit.numbers.numerals.decimals
-                    equiv_thm = proveit.numbers.numerals.decimals\
-                        .__getattr__('count_to_%d_range' % _n)
-                    return equiv_thm
-
-        lhs, rhs = equality.lhs, equality.rhs
-        if (lhs.num_entries() == rhs.num_entries() == 1
-                and isinstance(lhs[0], ExprRange)
-                and isinstance(rhs[0], ExprRange)):
-            # Prove the equality of two ExprRanges.
-            r_range = rhs[0]
-            expr = lhs
-            if expr[0].is_decreasing():
-                # We could handle different styles later, but
-                # let's be consistent with increasing order for now
-                # to make this easier to implement.
-                expr = expr.inner_expr()[0].with_increasing_order()
-            eq = TransRelUpdater(expr)
-            if expr[0].true_start_index != r_range.true_start_index:
-                # Shift indices so they have the same start.
-                expr = eq.update(expr[0].shift_equivalence(
-                        new_start=r_range.true_start_index))
-            if expr[0].lambda_map != r_range.lambda_map:
-                # Change the lambda map.
-                expr = eq.update(expr[0].range_fn_transformation(
-                        r_range.lambda_map))
-            if expr[0].true_end_index != r_range.true_end_index:
-                # Make the end indices be the same:
-                end_eq = Equals(expr[0].true_end_index, r_range.true_end_index).prove()
-                expr = eq.update(end_eq.substitution(
-                        expr.inner_expr()[0].true_end_index))
-            return eq.relation
-
-        # Try tuple_eq_via_elem_eq as the last resort.
-        _i = lhs.num_elements()
-        _a_orig = lhs
-        _b_orig = rhs
-
-        _a, _b = ExprTuple.align_ranges(_a_orig, _b_orig)
-        if eq_via_elem_eq_thm is None:
-            eq_via_elem_eq_thm = tuple_eq_via_elem_eq
-        equality = eq_via_elem_eq_thm.instantiate({i:_i, a:_a, b:_b})
-        # Substitute back in the originals if changed for alignment
-        # purposes.
-        if _a != _a_orig:
-            equality = equality.inner_expr().lhs.substitute(_a_orig)
-        if _b != _b_orig:
-            equality = equality.inner_expr().rhs.substitute(_b_orig)
-        return equality
 
     @staticmethod
     def align_ranges(*expr_tuples, equations=None,

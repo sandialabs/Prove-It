@@ -55,21 +55,21 @@ class VertExprArray(ExprArray):
             lt.packages.append('multirow')
 
     @equality_prover('equated', 'equate')
-    def deduce_equality(self, equality, **defaults_config):
+    def deduce_equal(self, rhs, **defaults_config):
         from proveit.core_expr_types.expr_arrays import (
                 varray_eq_via_elem_eq)
-        return ExprTuple.deduce_equality(
-                self, equality, eq_via_elem_eq_thm=varray_eq_via_elem_eq)
+        return ExprTuple.deduce_equal(
+                self, rhs, eq_via_elem_eq_thm=varray_eq_via_elem_eq)
 
     @relation_prover
-    def not_equal(self, other_tuple, **defaults_config):
+    def deduce_not_equal(self, other_tuple, **defaults_config):
         '''
         Prove and return this ExprArray not equal to the other
         ExprArray.
         '''
         from proveit.core_expr_types.expr_arrays import (
                 varray_neq_with_diff_len, varray_neq_via_any_elem_neq)
-        return ExprTuple.not_equal(
+        return ExprTuple.deduce_not_equal(
                 self, other_tuple, 
                 neq_with_diff_len_thm=varray_neq_with_diff_len,
                 neq_via_any_elem_neq_thm=varray_neq_via_any_elem_neq)

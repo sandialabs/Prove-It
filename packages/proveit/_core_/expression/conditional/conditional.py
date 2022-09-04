@@ -532,17 +532,12 @@ class Conditional(Expression):
                     Equals(self.sub_expr(1), new_sub_exprs[1])))
         return eq.relation
     
-    def readily_provable_equality(self, equality):
+    def readily_equal(self, rhs):
         '''
         We can readily equate conditionals with the same condition and
         readily equal values.
         '''
         from proveit.logic import Equals
-        if not isinstance(equality, Equals):
-            raise TypeError("The 'equality' should be an Equals expression")
-        if equality.lhs != self:
-            raise ValueError("The left side of 'equality' should be 'self'")
-        rhs = equality.rhs
         if not isinstance(rhs, Conditional):
             return False
         if not self.condition == rhs.condition:
@@ -551,21 +546,18 @@ class Conditional(Expression):
         return Equals(self.value, rhs.value).readily_provable()
     
     @equality_prover('equated', 'equate')
-    def deduce_equality(self, equality, **defaults_config):
+    def deduce_equal(self, rhs, **defaults_config):
         '''
         We can equate conditionals with the same condition and provably
         equal values.
         '''
         from proveit.logic import Equals
-        if not isinstance(equality, Equals):
-            raise TypeError("The 'equality' should be an Equals expression")
-        if equality.lhs != self:
-            raise ValueError("The left side of 'equality' should be 'self'")
-        if (isinstance(equality.rhs, Conditional) and 
-                equality.lhs.condition==equality.rhs.condition):
-            value_eq = Equals(equality.lhs.value, equality.rhs.value)
+        lhs = self
+        if (isinstance(rhs, Conditional) and 
+                lhs.condition==rhs.condition):
+            value_eq = Equals(lhs.value, rhs.value)
             value_eq.prove(assumptions=defaults.assumptions+(self.condition,))
-            return equality.lhs.value_substitution(value_eq)
-        raise NotImplementedError("Conditional.deduce_equality only implemented "
+            return lhs.value_substitution(value_eq)
+        raise NotImplementedError("Conditional.deduce_equal only implemented "
                                   "for equating Conditionals with the same "
                                   "condition.")

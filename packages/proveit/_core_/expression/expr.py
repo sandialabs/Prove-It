@@ -462,52 +462,50 @@ class Expression(metaclass=ExprType):
             return self
     
     @equality_prover('canonical_equated', 'canonical_equate')
-    def deduce_canonical_equality(self, equality, **defaults_config):
+    def deduce_canonically_equal(self, rhs, **defaults_config):
         '''
         Prove that this expression is equal another one that has the
-        same canonical form.  Calls '_deduce_canonical_equality' which 
+        same canonical form.  Calls '_deduce_canonically_equal' which 
         may have type-specific implementations.
         '''
         from proveit import Judgment, UnsatisfiedPrerequisites
         from proveit.logic import Equals
-        if equality.lhs != self:
-            raise ValueError(
-                    "'deduce_equality' expects an 'equality' with "
-                    "'self' on the left side")
-        lhs_cf = equality.lhs.canonical_form() 
-        rhs_cf = equality.rhs.canonical_form()
+        lhs = self
+        lhs_cf = lhs.canonical_form() 
+        rhs_cf = rhs.canonical_form()
         if lhs_cf != rhs_cf:
             raise UnsatisfiedPrerequisites(
-                    "'deduce_equality' can only be used to prove equality "
-                    "between expressions with the same canonical form. "
-                    "%s and %s have distinct canonical forms %s and %s "
-                    "respectively"%(equality.lhs, equality.rhs,
-                                    lhs_cf, rhs_cf))
-        if equality.lhs == lhs_cf:
+                    "'deduce_canonically_equal' can only be used to prove "
+                    "equality between expressions with the same canonical "
+                    "form. %s and %s have distinct canonical forms "
+                    "%s and %s respectively"%(lhs, rhs, lhs_cf, rhs_cf))
+        if lhs == lhs_cf:
             # If the lhs is already in the canonical form,
             # deduce the equality from the other side.
-            proven_eq = equality.rhs._deduce_canonical_equality(
-                    Equals(equality.rhs, equality.lhs))
+            proven_eq = rhs._deduce_canonically_equal(lhs)
             proven_eq = proven_eq.derive_reversed()
         else:
-            proven_eq = self._deduce_canonical_equality(equality)
+            proven_eq = self._deduce_canonically_equal(rhs)
         if not isinstance(proven_eq, Judgment):
             raise TypeError("Expecting a proven Judgment to be returned "
-                            "by '_deduce_equality")
+                            "by '_deduce_canonically_equal")
+        equality = Equals(lhs, rhs)
         if proven_eq.expr != equality:
-            raise ValueError("Expecting '_deduce_equality' to return the "
-                             "proven 'equality': %s vs %s"%(
+            raise ValueError("Expecting '_deduce_canonically_equal' to "
+                             "return the proven 'equality': %s vs %s"%(
                                      proven_eq.expr, equality))
         return proven_eq
                                                
-    def _deduce_canonical_equality(self, equality):
+    def _deduce_canonically_equal(self, rhs):
         '''
-        Helper method for 'deduce_equality'.  Typically, this should
+        Helper method for 'deduce_canonically_equal'.  Typically, this 
         should have a type-specific implementation if 
         '_build_canonical_form' is type-specific.
         '''
         # The generic version will work via direct substitutions 
         # equating sub-expressions that differ.
+        from proveit.logic import Equals
+        equality = Equals(self, rhs)
         return equality.conclude_via_direct_substitution() 
                                                
     def _establish_and_get_meaning_id(self):
@@ -1082,20 +1080,26 @@ class Expression(metaclass=ExprType):
         except ProofFailure:
             return False
 
-    def readily_disprovable(self, assumptions=USE_DEFAULTS):
+    def readily_disprovable(self, assumptions=USE_DEFAULTS, **kwargs):
         '''
         May return True only if we readily know that this expression,
         under the given assumptions, can be disproven automatically 
         and easily through its 'conclude' method and will return True 
         if it is already disproven.
+
+        For special purposes, optional keyword arguments may be
+        passed through to the _readily_disprovable method.
         '''
         from proveit import ExprTuple
         from proveit.logic import Not
         if isinstance(self, ExprTuple):
             return False # An ExprTuple cannot be true or false.
-        return Not(self).readily_provable(assumptions=assumptions)
+        
+        # Not._readily_provable will call _readily_disprovable on
+        # its operand.
+        return Not(self).readily_provable(assumptions=assumptions, )
 
-    def _readily_disprovable(self):
+    def _readily_disprovable(self, **kwargs):
         '''
         Override for Expression-specific strategies to see if the
         expression is readily disprovable.  May return True only if we

@@ -268,7 +268,7 @@ class Len(Operation):
         '''
         Attempt to prove that this Len expression is equal to
         something of the form |(i, ..., j)|.
-        More generally, use "deduce_equality" (which calls this
+        More generally, use "deduce_equal" (which calls this
         method when it can).
         Examples of handled cases:
             |(a, b, c)| = |(1, ..., 3)|
@@ -341,39 +341,37 @@ class Len(Operation):
                     {f: range_lambda, x: entries[1],
                      i: range_start, j: range_end}, auto_simplify=False)
         raise NotImplementedError("Len.typical_eq not implemented for "
-                                  "this case: %s.  Try Len.deduce_equality "
+                                  "this case: %s.  Try Len.deduce_equal "
                                   "instead." % self)
 
-    def readily_provable_equality(self, equality):
+    def readily_equal(self, rhs):
         '''
         ToDo: treat some simple cases as readily provable.
         '''
         return False
 
     @equality_prover('equated', 'equate')
-    def deduce_equality(self, equality, **defaults_config):
+    def deduce_equal(self, rhs, **defaults_config):
         '''
         Prove the given equality with self on the left-hand side.
         '''
         from proveit.logic import Equals
-        if not isinstance(equality, Equals):
-            raise ValueError("The 'equality' should be an Equals expression")
-        if equality.lhs != self:
-            raise ValueError("The left side of 'equality' should be 'self'")
+        equality = Equals(self, rhs)
         if equality.proven():
             return equality.prove() # Already proven.
+        lhs = self
         with defaults.temporary() as temp_defaults:
             # Auto-simplify everything except the left and right sides
             # of the equality.
-            temp_defaults.preserved_exprs={equality.lhs, equality.rhs}
+            temp_defaults.preserved_exprs={lhs, rhs}
             temp_defaults.auto_simplify=True
 
             # Try a special-case "typical equality".
-            if isinstance(equality.rhs, Len):
-                if (isinstance(equality.rhs.operands, ExprTuple)
+            if isinstance(rhs, Len):
+                if (isinstance(rhs.operands, ExprTuple)
                         and isinstance(self.operands, ExprTuple)):
-                    if (equality.rhs.operands.num_entries() == 1 and
-                            isinstance(equality.rhs.operands[0], ExprRange)):
+                    if (rhs.operands.num_entries() == 1 and
+                            isinstance(rhs.operands[0], ExprRange)):
                         try:
                             eq = self.typical_eq()
                             if eq.expr == equality:
@@ -383,11 +381,11 @@ class Len(Operation):
     
             # Next try to compute each side, simplify each side, and
             # prove they are equal.
-            lhs_computation = equality.lhs.computation()
-            if isinstance(equality.rhs, Len):
+            lhs_computation = lhs.computation()
+            if isinstance(rhs, Len):
                 # Compute both lengths and see if we can prove that they
                 # are equal.
-                rhs_computation = equality.rhs.computation()
+                rhs_computation = rhs.computation()
                 eq = Equals(lhs_computation.rhs, rhs_computation.rhs)
                 if eq.lhs == eq.rhs:
                     # Trivial reflection
@@ -400,7 +398,7 @@ class Len(Operation):
             else:
                 # Compute the lhs length and see if we can prove that it is
                 # equal to the rhs.
-                eq = Equals(lhs_computation.rhs, equality.rhs)
+                eq = Equals(lhs_computation.rhs, rhs)
                 if eq.lhs == eq.rhs:
                     # Trivial reflection
                     eq = eq.conclude_via_reflexivity()
