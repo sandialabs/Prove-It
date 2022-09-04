@@ -38,6 +38,7 @@ class Mult(NumberOperation):
             ungroup=True, 
             combine_numeric_rationals=True,
             combine_exponents=True,
+            distribute_numeric_rational=False,
             # By default, sort such that numeric, rationals come first 
             # but otherwise maintain the original order.
             order_key_fn = lambda factor : (
@@ -478,7 +479,7 @@ class Mult(NumberOperation):
                 format(self.operands[0], self.operands[1], divisor))
 
     @relation_prover
-    def not_equal(self, rhs, **defaults_config):
+    def deduce_not_equal(self, rhs, **defaults_config):
         from . import mult_not_eq_zero
         if rhs == zero:
             _n = self.operands.num_elements()
@@ -492,10 +493,22 @@ class Mult(NumberOperation):
                                **defaults_config):
         '''
         Returns a proven simplification equation for this Mult
-        expression assuming the operands have been simplified.
+        expression assuming the operands have been simplified
+        according to the simplification directives as follows:
 
-        Deals with disassociating any nested multiplications,
-        simplifying negations, and factors of one, and factors of 0.
+        If ungroup is true, dissociate nested multplications.
+        If combine_numeric_rationals is true, multiply numeric rational
+        factors into an evaluated numeric rational constant.
+        If combine_exponents is true, combine exponents of factors 
+        with a common base raised to a numeric rational power (or 
+        implicitly a power of 1).
+        Sort factors according to order_key_fn where the key is the
+        base that may be raised to a numeric rational power.
+        Eliminate any factors of one, and simplify to zero if there is
+        zero factor.
+        If distribute_numeric_rational is true and there is a single
+        non-constant factor that is an Add expression, distribute any
+        constant factor through the addition.
         '''
         from proveit.numbers import Neg, Div, Exp, is_numeric_rational
         from . import mult_zero_left, mult_zero_right, mult_zero_any
@@ -645,6 +658,16 @@ class Mult(NumberOperation):
             return eq.relation
         # See if we should reorder the factors.
         expr = eq.update(sorting_operands(expr, order_key_fn=order_key_fn))
+        
+        if Mult._simplification_directives_.distribute_numeric_rational:
+            # If there are exactly two factors and one is an Add and
+            # the other is a numeric literal, distribute over the Add.
+            if expr.operands.is_double():
+                a, b = self.operands
+                if isinstance(a, Add) or isinstance(b, Add):
+                    if is_numeric_rational(a) or is_numeric_rational(b):
+                        _k = 0 if isinstance(a, Add) else 1
+                        expr = eq.update(expr.distribution(_k))
         
         """
         if Mult._simplification_directives_.irreducibles_in_front:

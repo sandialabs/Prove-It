@@ -383,7 +383,7 @@ class Exp(NumberOperation):
                 {a: self.base, x: self.exponent.antilog})
 
     @relation_prover
-    def not_equal(self, other, **defaults_config):
+    def deduce_not_equal(self, other, **defaults_config):
         '''
         Attempt to prove that self is not equal to other.
         '''

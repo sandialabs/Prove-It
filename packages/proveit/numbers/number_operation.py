@@ -24,15 +24,15 @@ class NumberOperation(Operation):
     def __init__(self, operator, operand_or_operands, *, styles=None):
         Operation.__init__(self, operator, operand_or_operands, styles=styles)
 
-    def _deduce_canonical_equality(self, equality):
+    def _deduce_canonically_equal(self, rhs):
         '''
         Prove that this number operation is equal to an expression that
         has the same canonical form.
         '''
         from proveit.numbers import Add, Mult, Div, Exp, Neg
-        lhs, rhs = equality.lhs, equality.rhs
-        assert lhs == self
+        lhs = self
         assert lhs.canonical_form() == rhs.canonical_form()
+        equality = Equals(lhs, rhs)
 
         # If the rhs is the same type as the lhs and the
         # canonical forms of the operands are the same, we can
@@ -62,16 +62,19 @@ class NumberOperation(Operation):
         # But make sure we use the proper simplification directives
         # (mostly the default ones).
         with Div.temporary_simplification_directives(use_defaults=True) as div_simps, \
-             Exp.temporary_simplification_directives(use_defaults=True) as exp_simps:
+             Exp.temporary_simplification_directives(use_defaults=True) as exp_simps, \
+             Mult.temporary_simplification_directives(use_defaults=True) as mult_simps:
             with Add.temporary_simplification_directives(use_defaults=True), \
-                 Neg.temporary_simplification_directives(use_defaults=True), \
-                 Mult.temporary_simplification_directives(use_defaults=True):
+                 Neg.temporary_simplification_directives(use_defaults=True):
                 # Reduce division to multiplication, consistent
                 # with the canonical form.
                 div_simps.reduce_to_multiplication = True
                 # Distribute exponents consistent with the
                 # canonical form.
                 exp_simps.distribute_exponent = True
+                # Distribute a numeric rational contant consistent with
+                # the canonical form.
+                mult_simps.distribute_numeric_rational = True
                 lhs_simplification = lhs.simplification()
                 rhs_simplification = rhs.simplification()
         eq_simps = Equals(lhs_simplification.rhs,

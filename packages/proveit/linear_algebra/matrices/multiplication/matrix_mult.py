@@ -23,7 +23,7 @@ class MatrixMult(Operation):
         Operation.__init__(self, MatrixMult._operator_, operands,
                            styles=styles)
     
-    def readily_provable_equality(self, equality):
+    def readily_equal(self, rhs):
         '''
         We can handle the special case of proving an eigen
         exponentiation application:
@@ -39,9 +39,9 @@ class MatrixMult(Operation):
         from proveit.numbers import two, e, pi, i
         from proveit.linear_algebra import ScalarMult
         from proveit.linear_algebra.matrices.exponentiation import MatrixExp
-        if self.operands.is_double() and isinstance(equality.rhs, ScalarMult):
+        if self.operands.is_double() and isinstance(rhs, ScalarMult):
             Am, x_lhs = self.operands
-            bm, x_rhs = equality.rhs.operands
+            bm, x_rhs = rhs.operands
             if (x_lhs==x_rhs and isinstance(Am, MatrixExp) 
                   and isinstance(bm, Exp)):
                 _x = x_lhs
@@ -76,7 +76,7 @@ class MatrixMult(Operation):
         return False
 
     @equality_prover("equated", "equate")
-    def deduce_equality(self, equality, **defaults_config):
+    def deduce_equal(self, rhs, **defaults_config):
         '''
         We can handle the special case of proving an eigen
         exponentiation application:
@@ -91,18 +91,20 @@ class MatrixMult(Operation):
         '''
         from proveit.numbers import Mult, two, pi, e, i
         from proveit.linear_algebra import ScalarMult
+        lhs = self
+        equality = Equals(lhs, rhs)
         def raise_not_implemented():
             raise NotImplementedError(
-                "MatrixMult.deduce_equality is only implemented for "
+                "MatrixMult.deduce_equal is only implemented for "
                 "proving an eigen exponentiation application of the form "
                 "A^m x = b^m x, not %s"%equality)
-        if self.operands.is_double() and isinstance(equality.rhs, ScalarMult):
+        if self.operands.is_double() and isinstance(rhs, ScalarMult):
             from proveit.linear_algebra.matrices.exponentiation import (
                     MatrixExp, eigen_exp_application,
                     unital_eigen_exp_application,
                     unital2pi_eigen_exp_application)
             Am, x_lhs = self.operands
-            bm, x_rhs = equality.rhs.operands
+            bm, x_rhs = rhs.operands
             if (x_lhs==x_rhs and isinstance(Am, MatrixExp) 
                   and isinstance(bm, Exp)):
                 _m = Am.exponent

@@ -425,14 +425,14 @@ class NumberOrderingRelation(TransitiveRelation):
         # sum of terms is less than (or equal) to a literal rational.
         return self.__class__(lhs, rhs), inv_scale_factor
     
-    def _deduce_canonical_equality(self, equality):
+    def _deduce_canonically_equal(self, rhs):
         '''
         Prove that this NumberOrderingRelation is equal to an expression 
         that has the same canonical form.  Do this through mutual
         implication.
         '''
         from proveit.logic import Iff
-        mutual_impl = Iff(equality.lhs, equality.rhs).conclude_by_definition()
+        mutual_impl = Iff(self, rhs).conclude_by_definition()
         return mutual_impl.derive_equality()
         
     @staticmethod

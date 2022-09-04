@@ -28,7 +28,7 @@ class Numeral(Literal, IrreducibleValue):
     def eval_equality(self, other, **defaults_config):
         if other == self:
             return Equals(self, self).prove().evaluation()
-        self_neq_other = self.not_equal(other)
+        self_neq_other = self.deduce_not_equal(other)
         return self_neq_other.unfold().equate_negated_to_false()
 
     def readily_not_equal(self, other):
@@ -39,7 +39,7 @@ class Numeral(Literal, IrreducibleValue):
         return not_equal_numeric_rationals(self, other)
 
     @prover
-    def not_equal(self, other, **defaults_config):
+    def deduce_not_equal(self, other, **defaults_config):
         from proveit.numbers import Less
         from proveit.numbers.ordering import less_is_not_eq
         _a, _b = Less.sorted_items([self, other])
@@ -56,7 +56,7 @@ class Numeral(Literal, IrreducibleValue):
         if isinstance(relation, Equals):
             return relation
         if NotEquals(self, other).proven():
-            return self.not_equal(other)
+            return self.deduce_not_equal(other)
         raise UnsatisfiedPrerequisites(
                 "Unable to determine whether or not %s = %s"
                 %(self, other))
@@ -261,14 +261,14 @@ class NumeralSequence(Operation, IrreducibleValue):
     def eval_equality(self, other, **defaults_config):
         if other == self:
             return Equals(self, self).conclude_via_reflexivity()
-        self_neq_other = self.not_equal(other)
+        self_neq_other = self.deduce_not_equal(other)
         return self_neq_other.unfold().equate_negated_to_false()
 
 
     @prover
-    def not_equal(self, other, **defaults_config):
+    def deduce_not_equal(self, other, **defaults_config):
         # same method works for Numeral and NumeralSequence.
-        return Numeral.not_equals(self, other)
+        return Numeral.deduce_not_equals(self, other)
     
     def _prefix(self, format_type):
         raise NotImplementedError("'_prefix' must be implemented for each "

@@ -22,14 +22,14 @@ class Abs(NumberOperation):
         return r'\left|' + self.operand.latex() + r'\right|'
 
     @prover
-    def not_equal(self, rhs, **defaults_config):
+    def deduce_not_equal(self, rhs, **defaults_config):
         # accessed from conclude() method in not_equals.py
         from . import abs_not_eq_zero
         from proveit.logic import NotEquals
         from proveit.numbers import zero
         if rhs == zero:
             return abs_not_eq_zero.instantiate({a: self.operand})
-        return NotEquals(self, zero).conclude_as_folded()
+        return NotEquals(self, rhs).conclude_as_folded()
 
     @prover
     def deduce_greater_than_equals_zero(self, **defaults_config):

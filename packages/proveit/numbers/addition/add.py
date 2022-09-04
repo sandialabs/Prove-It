@@ -733,7 +733,7 @@ class Add(NumberOperation):
         '''
         Return a simplified version of this Add expression
         without any proof.  In particular, negations are distributed
-        nested additionas are ungrouped, integers are extracted,
+        nested additions are ungrouped, integers are extracted,
         added, and placed at the end, and cancelations are made on
         individual terms as well as expression ranges or portions of
         expression ranges.  We freely assume terms represent numbers
@@ -757,6 +757,18 @@ class Add(NumberOperation):
         # Map non-shiftted tail to earliest shift of ExprRange terms:
         earliest_tail_shift = dict() # (Lambda, index expr) -> int
         all_abs_terms = set()
+        
+        def expandable_range(term):
+            if not isinstance(term, ExprRange):
+                return False
+            # Currently this doesn't expand ExprRange bodies that
+            # are Add or Neg which would themselves be expanded.
+            # This algorithm needs to be redesigned to handle such
+            # fancy cases.
+            if isinstance(term.body, Add) or  isinstance(term.body, Neg):
+                return False
+            return True
+            
         while len(remaining_terms):
             term = remaining_terms.popleft()
             if term == Neg:
@@ -776,8 +788,9 @@ class Add(NumberOperation):
             if isinstance(term, Add):
                 remaining_terms.extendleft(reversed(term.terms.entries))
                 continue
-            if isinstance(term, ExprRange):
-                start_base, start_shift = split_int_shift(term.true_start_index)
+            if expandable_range(term):
+                start_base, start_shift = split_int_shift(
+                        term.true_start_index)
                 end_base, end_shift = split_int_shift(term.true_end_index)
                 lambda_map = term.lambda_map
                 latest_head_shift[(lambda_map, start_base)] = max(
@@ -789,7 +802,7 @@ class Add(NumberOperation):
             all_abs_terms.add(term)
             terms.append((sign, term))
         term = None
-                
+        
         # Extend the "latest heads" and "earliest tails" if there
         # are individual terms that match them so we can maximize
         # cancelations.
@@ -814,7 +827,7 @@ class Add(NumberOperation):
             old_terms = terms
             terms = []
             for sign, abs_term in old_terms:
-                if isinstance(abs_term, ExprRange):
+                if expandable_range(abs_term):
                     start_base, start_shift = split_int_shift(abs_term.true_start_index)
                     end_base, end_shift = split_int_shift(abs_term.true_end_index)
                     lambda_map = abs_term.lambda_map
@@ -884,7 +897,7 @@ class Add(NumberOperation):
             for sign, abs_term in reversed(old_terms):
                 if following_term is not None:
                     if (sign==following_term[0] 
-                            and isinstance(following_term[1], ExprRange)):
+                            and expandable_range(following_term[1])):
                         # See if the current term prepends the head of
                         # the following range.
                         start_base, start_shift = split_int_shift(
@@ -909,7 +922,7 @@ class Add(NumberOperation):
             for sign, abs_term in reversed(reversed_terms):
                 if prev_term is not None:
                     if (sign==prev_term[0] and 
-                            isinstance(prev_term[1], ExprRange)):
+                            expandable_range(prev_term[1])):
                         # See if the current term extends the tail of
                         # the previous range.
                         end_base, end_shift = split_int_shift(
@@ -1278,7 +1291,7 @@ class Add(NumberOperation):
                           ComplexNonZero}:
             # Prove it is not zero and prove it is in the corresponding
             # major number set (Integer, Rational, Real, or Complex)
-            self.not_equal(zero, try_deduce_number_set=False)
+            self.deduce_not_equal(zero, try_deduce_number_set=False)
             to_major_number_set = {IntegerNonZero:Integer,
                                    RationalNonZero:Rational,
                                    RealNonZero:Real,
@@ -1996,8 +2009,8 @@ class Add(NumberOperation):
         return thm.instantiate({i: _i, j: _j, a: _a, b: _b, c: _c})        
 
     @relation_prover
-    def not_equal(self, other, *, try_deduce_number_set=True,
-                  **defaults_config):
+    def deduce_not_equal(self, other, *, try_deduce_number_set=True,
+                         **defaults_config):
         '''
         Attempt to prove that self is not equal to other.
         '''

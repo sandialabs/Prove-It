@@ -180,7 +180,8 @@ class VecAdd(GroupAdd):
         return generic_permutation(self, new_order, cycles)
 
     @prover
-    def _deduce_canonical_equality(self, equality, **defaults_config):
+    def _deduce_canonically_equal(self, rhs, **defaults_config):
+        equality = Equals(self, rhs)
         return deduce_equality_via_commutation(equality, one_side=self)
 
     @equality_prover('factorized', 'factor')
