@@ -2,7 +2,8 @@ from proveit import (Judgment, Expression, Operation,
                      Function, Literal, IndexedVar,
                      ConditionalSet, Conditional, ExprRange,
                      ExprTuple, ExprArray, VertExprArray, ProofFailure,
-                     StyleOptions, free_vars, prover, relation_prover,
+                     StyleOptions, free_vars, prover, 
+                     equality_prover, relation_prover,
                      defaults, safe_dummy_var, TransRelUpdater)
 from proveit import i, j, k, l, m, n, A, B, U, V, N
 from proveit.core_expr_types import n_k
@@ -1308,6 +1309,60 @@ class Qcircuit(Function):
                              "a Qcircuit, not %s"
                              %prob_relation.lhs.operand)
         return prob_relation.lhs.operand
+
+    def readily_equal(self, rhs):
+        '''
+        Qcircuits are readily equal if all of the circuit elements
+        match entrywise.
+        '''
+        if not isinstance(rhs, Qcircuit):
+            return False
+        return self.vert_expr_array.readily_equal(rhs.vert_expr_array)
+
+    def readily_not_equal(self, rhs):
+        '''
+        Qcircuits are readily equal if all of the circuit elements
+        align entrywise but there is at least on entry that doesn't
+        match.  If they are not equal, it does not mean that they
+        are not equivalent circuits with respect to QcircuitEquiv.
+        '''
+        if not isinstance(rhs, Qcircuit):
+            return False
+        return self.vert_expr_array.readily_not_equal(rhs.vert_expr_array)
+    
+    @equality_prover('equated', 'equate')
+    def deduce_equal(self, rhs, **defaults_config):
+        from . import qcircuit_eq
+        if not isinstance(rhs, Qcircuit):
+            raise TypeError(
+                    "Qcircuit.deduce_equal requires 'other' to be a "
+                    "Qcircuit.")
+        _k = self.vert_expr_array.num_elements()
+        _l = self.vert_expr_array[0].num_elements()
+        # Expand all of the other entries consecutively.
+        _A = ExprTuple(*[entry for column in self.vert_expr_array
+                         for entry in column])
+        _B = ExprTuple(*[entry for column in rhs.vert_expr_array
+                         for entry in column])
+        return qcircuit_eq.instantiate(
+            {k:_k, l:_l, A:_A, B:_B}).derive_consequent()
+    
+    @relation_prover
+    def deduce_not_equal(self, rhs, **defaults_config):
+        from . import qcircuit_neq
+        if not isinstance(rhs, Qcircuit):
+            raise TypeError(
+                    "Qcircuit.deduce_equal requires 'other' to be a "
+                    "Qcircuit.")
+        _k = self.vert_expr_array.num_elements()
+        _l = self.vert_expr_array[0].num_elements()
+        # Expand all of the other entries consecutively.
+        _A = ExprTuple(*[entry for column in self.vert_expr_array
+                         for entry in column])
+        _B = ExprTuple(*[entry for column in rhs.vert_expr_array
+                         for entry in column])
+        return qcircuit_neq.instantiate(
+            {k:_k, l:_l, A:_A, B:_B}).derive_consequent()
 
     @relation_prover
     def deduce_equal_or_not(self, other_qcircuit, **defaults_config):

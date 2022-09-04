@@ -5,7 +5,7 @@ from proveit import (Literal, Function, NamedExprs, safe_dummy_var,
                      relation_prover, equality_prover)
 from proveit import A, B, C, D, E, F, G, h, i, j, k, m, n, p, Q, R, S, U
 from proveit._core_.expression.composite import ExprArray, ExprTuple, ExprRange
-from proveit.logic import Equals, Set, deduce_equal_or_not
+from proveit.logic import Equals, NotEquals, Set, deduce_equal_or_not
 from proveit.numbers import one, num, Interval, Add, Neg, subtract
 
 
@@ -125,8 +125,9 @@ class QcircuitElement(Function):
     
     def _config_latex_tool(self, lt):
         config_latex_tool(lt)
-    
-    def _deduce_equal_or_not(self, rhs, operand_name, eq_thm, neq_thm):
+
+    def _deduce_equal_or_not(self, rhs, operand_name, *,
+                             eq_thm=None, neq_thm=None):
         my_cls = self.__class__
         if not isinstance(rhs, my_cls):
             raise NotImplementedError(
@@ -141,6 +142,13 @@ class QcircuitElement(Function):
                     %(my_cls, my_cls))
         _A = self.operands[operand_name]
         _B = rhs.operands[operand_name]
+        if eq_thm is None:
+            # Derive NotEqual only.
+            return neq_thm.instantiate({A:_A, B:_B})
+        if neq_thm is None:
+            # Derive Equal only.
+            return eq_thm.instantiate({A:_A, B:_B})
+        # Derive either Equal or not.
         relation = deduce_equal_or_not(_A, _B)
         if isinstance(relation, Equals):
             return eq_thm.instantiate({A:_A, B:_B})
@@ -166,6 +174,22 @@ class Input(QcircuitElement):
             operands = NamedExprs(("state", state), ("part", part))
         QcircuitElement.__init__(self, Input._operator_, operands, 
                                  styles=styles)
+    
+    def readily_equal(self, rhs):
+        '''
+        Inputs are equal iff their states are equal.
+        '''
+        if not isinstance(rhs, Input):
+            return False
+        return self.state.readily_equal(rhs.state)
+
+    def readily_not_equal(self, rhs):
+        '''
+        Inputs are not equal iff their states are not equal.
+        '''
+        if not isinstance(rhs, Input):
+            return False
+        return NotEquals(self.state, rhs.state).readily_provable()
 
     def circuit_elem_latex(self, *, show_explicitly):
         '''
@@ -174,13 +198,26 @@ class Input(QcircuitElement):
         if show_explicitly and hasattr(self, 'part'):
             return r'\qin{%s~\mbox{part}~%s}'%(self.state.latex(), self.part.latex())
         return r'\qin{' + self.state.latex() + r'}'
-    
+
+    @equality_prover('equated', 'equate')
+    def deduce_equal(self, rhs, **defaults_config):   
+        from . import qcircuit_input_eq
+        return self._deduce_equal_or_not(
+                rhs, 'state', eq_thm=qcircuit_input_eq)
+
+    @relation_prover
+    def deduce_not_equal(self, rhs, **defaults_config):   
+        from . import qcircuit_input_neq
+        return self._deduce_equal_or_not(
+                rhs, 'state', neq_thm=qcircuit_input_neq)
+
     @relation_prover
     def deduce_equal_or_not(self, rhs, **defaults_config):   
         from . import qcircuit_input_eq, qcircuit_input_neq
         return self._deduce_equal_or_not(
-                rhs, 'state', qcircuit_input_eq, qcircuit_input_neq)
-
+                rhs, 'state', 
+                eq_thm=qcircuit_input_eq, neq_thm=qcircuit_input_neq)
+    
 
 class Output(QcircuitElement):
     '''
@@ -209,12 +246,40 @@ class Output(QcircuitElement):
             return r'& \qout{%s~\mbox{part}~%s}'%(self.state.latex(), self.part.latex())
         return r'& \qout{' + self.state.latex() + r'}'
 
+    def readily_equal(self, rhs):
+        '''
+        Outputs are equal iff their states are equal.
+        '''
+        if not isinstance(rhs, Output):
+            return False
+        return self.state.readily_equal(rhs.state)
+
+    def readily_not_equal(self, rhs):
+        '''
+        Outputs are not equal iff their states are not equal.
+        '''
+        if not isinstance(rhs, Output):
+            return False
+        return self.state.readily_not_equal(rhs.state)
+    
+    @equality_prover('equated', 'equate')
+    def deduce_equal(self, rhs, **defaults_config):   
+        from . import qcircuit_output_eq
+        return self._deduce_equal_or_not(
+                rhs, 'state', eq_thm=qcircuit_output_eq)
+
+    @relation_prover
+    def deduce_not_equal(self, rhs, **defaults_config):   
+        from . import qcircuit_output_neq
+        return self._deduce_equal_or_not(
+                rhs, 'state', neq_thm=qcircuit_output_neq)
+
     @relation_prover
     def deduce_equal_or_not(self, rhs, **defaults_config):   
         from . import qcircuit_output_eq, qcircuit_output_neq
         return self._deduce_equal_or_not(
-                rhs, 'state', qcircuit_output_eq, qcircuit_output_neq)
-
+                rhs, 'state', 
+                eq_thm=qcircuit_output_eq, neq_thm=qcircuit_output_neq)
 
 class Measure(QcircuitElement):
     '''
@@ -507,6 +572,69 @@ class MultiQubitElem(QcircuitElement):
         return unary_multi_qubit_elem_reduction.instantiate(
             {U: self.gate_operation})
 
+    def _readily_equal_or_not(self, rhs, *, _eq_case):
+        '''
+        Readily equal or not equal is only supported for multi-
+        inputs/outputs with identical parts and targets.
+        '''
+        if not isinstance(rhs, MultiQubitElem):
+            return False
+        element = self.element
+        if type(element) != type(rhs.element):
+            return False
+        if not ((isinstance(element, Input) or isinstance(element, Output))):
+            # Only supported for multi-inputs/outputs
+            return False
+        if self.targets != rhs.targets:
+            return False
+        if element.part != rhs.element.part:
+            return False
+        if _eq_case:
+            return Equals(element.state, rhs.element.state).readily_provable()
+        return NotEquals(element.state, rhs.element.state).readily_provable()
+
+    def readily_equal(self, rhs):
+        '''
+        Readily equal if multi-inputs/outputs have identical parts and 
+        targets and readily equal states.
+        '''
+        return self._readily_equal_or_not(rhs, _eq_case=True)
+
+    def readily_not_equal(self, rhs):
+        '''
+        Readily not equal if multi-inputs/outputs have identical parts and 
+        targets and readily not equal states.
+        '''
+        return self._readily_equal_or_not(rhs, _eq_case=False)
+
+    @equality_prover('equated', 'equate')
+    def deduce_equal(self, rhs, **defaults_config):   
+        from . import (qcircuit_input_part_eq, qcircuit_output_part_eq)
+        if isinstance(self.element, Input):
+            return self._deduce_equal_or_not(
+                    rhs, 'state', eq_thm=qcircuit_input_part_eq)
+        if isinstance(self.element, Output):
+            return self._deduce_equal_or_not(
+                    rhs, 'state', eq_thm=qcircuit_output_part_eq)
+        raise NotImplementedError(
+                "MultiQubitElem.deduce_equal_or_not only implemented for "
+                "mult-input or mult-output element parts currently")
+
+
+    @relation_prover
+    def deduce_not_equal(self, rhs, **defaults_config):   
+        from . import (qcircuit_input_part_neq, qcircuit_output_part_neq)
+        if isinstance(self.element, Input):
+            return self._deduce_equal_or_not(
+                    rhs, 'state', neq_thm=qcircuit_input_part_neq)
+        if isinstance(self.element, Output):
+            return self._deduce_equal_or_not(
+                    rhs, 'state', neq_thm=qcircuit_output_part_neq)
+        raise NotImplementedError(
+                "MultiQubitElem.deduce_equal_or_not only implemented for "
+                "mult-input or mult-output element parts currently")
+
+
     @relation_prover
     def deduce_equal_or_not(self, rhs, **defaults_config):   
         from . import (
@@ -514,17 +642,18 @@ class MultiQubitElem(QcircuitElement):
                 qcircuit_output_part_eq, qcircuit_output_part_neq)
         if isinstance(self.element, Input):
             return self._deduce_equal_or_not(
-                    rhs, 'state', qcircuit_input_part_eq, 
-                    qcircuit_input_part_neq)
+                    rhs, 'state', eq_thm=qcircuit_input_part_eq, 
+                    neq_thm=qcircuit_input_part_neq)
         if isinstance(self.element, Output):
             return self._deduce_equal_or_not(
-                    rhs, 'state', qcircuit_output_part_eq, 
-                    qcircuit_output_part_neq)
+                    rhs, 'state', eq_thm=qcircuit_output_part_eq, 
+                    neq_thm=qcircuit_output_part_neq)
         raise NotImplementedError(
                 "MultiQubitElem.deduce_equal_or_not only implemented for "
                 "mult-input or mult-output element parts currently")
 
-    def _deduce_equal_or_not(self, rhs, operand_name, eq_thm, neq_thm):
+    def _deduce_equal_or_not(self, rhs, operand_name, *,
+                             eq_thm=None, neq_thm=None):
         my_cls = self.__class__
         if not isinstance(rhs, my_cls):
             raise NotImplementedError(
@@ -543,7 +672,6 @@ class MultiQubitElem(QcircuitElement):
         _B = rhs.element.operands[operand_name]
         _S = self.targets
         repl_map = {A:_A, B:_B, S:_S}
-        relation = deduce_equal_or_not(_A, _B)
         if hasattr(self.element, 'part'):
             if self.element.part != rhs.element.part:
                 raise NotImplementedError(
@@ -552,6 +680,14 @@ class MultiQubitElem(QcircuitElement):
                         %my_cls)
             _k = self.element.part
             repl_map[k] = _k
+        if neq_thm is None:
+            # Only prove the Equal case.
+            return eq_thm.instantiate(repl_map)
+        if eq_thm is None:
+            # Only prove the NotEqual case.
+            return neq_thm.instantiate(repl_map)
+        # May prove either the Equal or the NotEqual case as applicable.
+        relation = deduce_equal_or_not(_A, _B)
         if isinstance(relation, Equals):
             return eq_thm.instantiate(repl_map)
         else:
