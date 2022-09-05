@@ -382,11 +382,15 @@ class Mult(NumberOperation):
             (Complex, ComplexNonZero): ComplexNonZero,
             (Complex, Complex): Complex
         }
+        
+        factors = self.factors
+        if factors.num_entries() == 0:
+            return NaturalPos # [*]() = 1
 
         major_number_sets = []
         # If we stay Real, this will keep track of the relation to zero:
         zero_relation_number_set = None
-        for factor in self.factors:
+        for factor in factors:
             factor_ns = readily_provable_number_set(factor)
             if factor_ns == ZeroSet:
                 # If any factor is zero, the entire product (if it is

@@ -585,7 +585,7 @@ class Add(NumberOperation):
         from . import empty_addition, unary_add_reduction
         
         if self.operands.num_entries() == 0:
-            # +() = 0
+            # [+]() = 0
             return empty_addition
         
         if self.operands.is_single():
@@ -1452,11 +1452,14 @@ class Add(NumberOperation):
                 RationalNonZero:Rational,
                 RealNonZero:Real,
                 ComplexNonZero:Complex}
+        operands = self.operands
+        if operands.num_entries() == 0:
+            return ZeroSet # [+]() = 0
         list_of_operand_sets = []
         # find a minimal std number set for operand
         any_positive = False
         any_negative = False
-        for operand in self.operands:
+        for operand in operands:
             operand_ns = readily_provable_number_set(operand)
             if operand_ns is None: return None
             if RealPos.readily_includes(operand_ns):
