@@ -237,6 +237,7 @@ class InClass(Relation):
                 membership_of_eq_expr = membership_of_eq_expr.prove()
                 return membership_of_eq_expr.inner_expr().element.substitute(
                         element)
+            break # only try the first known equal expression
         
         # Try the standard Relation strategies -- evaluate or
         # simplify both sides.
