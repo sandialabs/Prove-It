@@ -4,7 +4,6 @@ proveit.linear_algebra.inner_products.complex_set_is_inner_prod_space
 proveit.linear_algebra.inner_products.inner_prod_space_is_vec_space
 proveit.linear_algebra.inner_products.rational_set_is_inner_prod_space
 proveit.linear_algebra.inner_products.real_set_is_inner_prod_space
-proveit.logic.booleans.false_eq_false
 proveit.logic.booleans.fold_is_bool
 proveit.logic.booleans.from_not_false
 proveit.logic.booleans.implication.not_true_via_contradiction
@@ -27,14 +26,9 @@ proveit.logic.sets.inclusion.unfold_subset_eq
 proveit.numbers.addition.disassociation
 proveit.numbers.addition.subtraction.add_cancel_basic
 proveit.numbers.addition.subtraction.add_cancel_general
-proveit.numbers.addition.subtraction.add_cancel_general_rev
-proveit.numbers.addition.subtraction.add_cancel_reverse
 proveit.numbers.addition.subtraction.add_cancel_triple_12
 proveit.numbers.addition.subtraction.add_cancel_triple_13
-proveit.numbers.addition.subtraction.add_cancel_triple_21
 proveit.numbers.addition.subtraction.add_cancel_triple_23
-proveit.numbers.addition.subtraction.add_cancel_triple_31
-proveit.numbers.addition.subtraction.add_cancel_triple_32
 proveit.numbers.addition.subtraction.subtraction_disassociation
 proveit.numbers.addition.unary_add_reduction
 proveit.numbers.division.div_complex_closure
