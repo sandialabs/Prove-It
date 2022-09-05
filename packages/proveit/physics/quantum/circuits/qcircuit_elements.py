@@ -181,7 +181,7 @@ class Input(QcircuitElement):
         '''
         if not isinstance(rhs, Input):
             return False
-        return self.state.readily_equal(rhs.state)
+        return Equals(self.state, rhs.state).readily_provable()
 
     def readily_not_equal(self, rhs):
         '''
@@ -252,7 +252,7 @@ class Output(QcircuitElement):
         '''
         if not isinstance(rhs, Output):
             return False
-        return self.state.readily_equal(rhs.state)
+        return Equals(self.state, rhs.state).readily_provable
 
     def readily_not_equal(self, rhs):
         '''
@@ -260,7 +260,7 @@ class Output(QcircuitElement):
         '''
         if not isinstance(rhs, Output):
             return False
-        return self.state.readily_not_equal(rhs.state)
+        return NotEquals(self.state, rhs.state).readily_provable()
     
     @equality_prover('equated', 'equate')
     def deduce_equal(self, rhs, **defaults_config):   

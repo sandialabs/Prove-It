@@ -7,7 +7,7 @@ from proveit import (Judgment, Expression, Operation,
                      defaults, safe_dummy_var, TransRelUpdater)
 from proveit import i, j, k, l, m, n, A, B, U, V, N
 from proveit.core_expr_types import n_k
-from proveit.logic import Equals, deduce_equal_or_not, Set, InSet
+from proveit.logic import Equals, NotEquals, deduce_equal_or_not, Set, InSet
 from proveit.relation import Relation
 from proveit.numbers import (Interval, zero, one, two, num, Add, Neg, Mult,
                              subtract, is_numeric_int, quick_simplified_index)
@@ -1317,7 +1317,8 @@ class Qcircuit(Function):
         '''
         if not isinstance(rhs, Qcircuit):
             return False
-        return self.vert_expr_array.readily_equal(rhs.vert_expr_array)
+        return Equals(self.vert_expr_array, 
+                      rhs.vert_expr_array).readily_provable()
 
     def readily_not_equal(self, rhs):
         '''
@@ -1328,7 +1329,8 @@ class Qcircuit(Function):
         '''
         if not isinstance(rhs, Qcircuit):
             return False
-        return self.vert_expr_array.readily_not_equal(rhs.vert_expr_array)
+        return NotEquals(self.vert_expr_array,
+                         rhs.vert_expr_array).readily_provable()
     
     @equality_prover('equated', 'equate')
     def deduce_equal(self, rhs, **defaults_config):
