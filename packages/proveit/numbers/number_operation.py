@@ -343,9 +343,9 @@ nonzero_number_set = {
     Complex: ComplexNonZero,
     ComplexNonZero: ComplexNonZero}
 
-def readily_provable_number_set(expr, *, automation=True,
-                                must_be_direct=False,
-                                default=None, _compare_to_zero=True):
+def readily_provable_number_set(
+        expr, *, automation=True, must_be_direct=False, default=None, 
+        _check_order_against_zero=True):
     '''
     Return the most restrictive number set that the given expression 
     may readily be proven to be within.  The expression may also be
@@ -360,13 +360,12 @@ def readily_provable_number_set(expr, *, automation=True,
     If must_be_direct is True, don't account for known/provable
     equalities of the element.
     
-    _compare_to_zero is set to False internally to avoid infinite
+    _check_order_against_zero is set to False internally to avoid infinite
     recursion.
     '''
-    from proveit.logic import (And, InSet, InClass, Set, 
-                               Equals, NotEquals, is_irreducible_value)
+    from proveit.logic import (InClass, Equals, NotEquals, 
+                               is_irreducible_value)
     from proveit.numbers import Less, LessEq, zero
-    from proveit._core_.proof import Assumption
 
     # Make sure we derive assumption side-effects first.
     #Assumption.make_assumptions()
@@ -440,15 +439,10 @@ def readily_provable_number_set(expr, *, automation=True,
         # Let's see if we can restrict it further.
         number_set = best_known_number_set
 
-        # While these are comparing to zero, it won't lead to an
-        # infinite recursion problem like the Less/LessEq would.
         if Equals(expr, zero).readily_provable():
             return ZeroSet
-        elif number_set in nonzero_number_set and (
-                    NotEquals(expr, zero).readily_provable()):
-            return nonzero_number_set[number_set]
     
-        if _compare_to_zero:
+        if _check_order_against_zero:
             if number_set in pos_number_set and (
                     Less(zero, expr).readily_provable(
                             check_number_sets=False)): # positive
@@ -464,6 +458,11 @@ def readily_provable_number_set(expr, *, automation=True,
                     LessEq(expr, zero).readily_provable(
                             check_number_sets=False)): # non-positive
                 number_set = nonpos_number_set[number_set]
+
+        if number_set in nonzero_number_set and (
+                    NotEquals(expr, zero).readily_provable()):
+            return nonzero_number_set[number_set]
+
         return number_set
     finally:
         Expression.in_progress_to_check_provability.remove(

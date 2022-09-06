@@ -61,11 +61,11 @@ class NumberOrderingRelation(TransitiveRelation):
         # See if we can determine the validity of the inequality
         # based upon provable number sets and how they relate to zero.
         
-        # Set _compare_to_zero False to avoid infinite recursion.
+        # _check_order_against_zero=False to avoid infinite recursion.
         lower_ns = readily_provable_number_set(
-                    lower, _compare_to_zero=False)
+                    lower, _check_order_against_zero=False)
         upper_ns = readily_provable_number_set(
-                    upper, _compare_to_zero=False)
+                    upper, _check_order_against_zero=False)
         if isinstance(self, LessEq):
             if is_numeric_rational(lower) and (
                     less_eq_numeric_rationals(lower, one)

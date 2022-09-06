@@ -83,9 +83,9 @@ class Less(NumberOrderingRelation):
         
         lower, upper = self.lower, self.upper
         lower_ns = readily_provable_number_set(
-                lower, _compare_to_zero=False, default=Real)
+                lower, _check_order_against_zero=False, default=Real)
         upper_ns = readily_provable_number_set(
-                upper, _compare_to_zero=False, default=Real)
+                upper, _check_order_against_zero=False, default=Real)
         if (RealNonPos.readily_includes(lower_ns) and 
             RealPos.readily_includes(upper_ns)) or (
                     RealNeg.readily_includes(lower_ns) and 
