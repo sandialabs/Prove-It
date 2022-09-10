@@ -16,7 +16,6 @@ proveit.logic.booleans.quantification.universality.bundling
 proveit.logic.equality.equals_reversal
 proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
-proveit.logic.sets.inclusion.unfold_subset_eq
 proveit.numbers.number_sets.natural_numbers.nat_pos_within_nat
 proveit.numbers.number_sets.natural_numbers.natural_lower_bound
 proveit.numbers.number_sets.natural_numbers.natural_pos_lower_bound
