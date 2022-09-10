@@ -25,7 +25,8 @@ class NumberOrderingRelation(TransitiveRelation):
         if hasattr(self, 'derive_relaxed'):
             yield self.derive_relaxed
 
-    def _readily_provable(self, *, check_number_sets=True):
+    def _readily_provable(self, *, check_number_sets=True,
+                          must_be_direct=False):
         from .less import Less
         from .less_eq import LessEq
         from proveit.numbers import (
@@ -50,11 +51,12 @@ class NumberOrderingRelation(TransitiveRelation):
                 Equals(self.lhs, self.rhs).readily_provable()):
             # LessEq via Equal.
             return True
-        judgment = self.known_similar_but_possibly_stronger_bound()
-        if judgment is not None:
-            # There is a similar but possibly stronger bound we can
-            # derive this one from.
-            return True
+        if not must_be_direct:
+            judgment = self.known_similar_but_possibly_stronger_bound()
+            if judgment is not None:
+                # There is a similar but possibly stronger bound we can
+                # derive this one from.
+                return True
         if not check_number_sets:
             return False
         

@@ -1001,17 +1001,21 @@ class Expression(metaclass=ExprType):
         except ProofFailure:
             return False
 
-    def readily_provable(self, assumptions=USE_DEFAULTS, **kwargs):
+    def readily_provable(self, assumptions=USE_DEFAULTS, 
+                         must_be_direct=False,**kwargs):
         '''
         May return True only if we readily know that this expression,
-        under the given assumptions, can be proven utomatically and 
+        under the given assumptions, can be proven automatically and 
         easily through its 'conclude' method and will return True if
         it is already proven.
+        
+        If must_be_direct=False, we will check if an Expression with
+        the same canonical form is provable.
         
         For special purposes, optional keyword arguments may be
         passed through to the _readily_provable method.
         '''
-        from proveit import Judgment, ExprTuple, Assumption
+        from proveit import Judgment, ExprTuple
 
         if isinstance(self, ExprTuple):
             return False # An ExprTuple cannot be true or false.
@@ -1024,15 +1028,16 @@ class Expression(metaclass=ExprType):
                 
             if self.proven(): # this will "make" the assumptions
                 return True
-                
-            # Maybe this Expression doesn't have a proof, but something
-            # else does with the same canonical form.
-            cf = self.canonical_form()
-            cf_to_proven_exprs = Judgment.canonical_form_to_proven_exprs
-            if cf in cf_to_proven_exprs:
-                for proven_expr in cf_to_proven_exprs[cf]:
-                    if proven_expr != self and proven_expr.proven():
-                        return True
+            
+            if not must_be_direct:
+                # Maybe this Expression doesn't have a proof, but 
+                # something else does with the same canonical form.
+                cf = self.canonical_form()
+                cf_to_proven_exprs = Judgment.canonical_form_to_proven_exprs
+                if cf in cf_to_proven_exprs:
+                    for proven_expr in cf_to_proven_exprs[cf]:
+                        if proven_expr != self and proven_expr.proven():
+                            return True
             
             # Try something specific to the Expression.
             in_progress_key = (self, defaults.sorted_assumptions)
@@ -1043,6 +1048,9 @@ class Expression(metaclass=ExprType):
             try:
                 Expression.in_progress_to_check_provability.add(
                         in_progress_key)
+                if must_be_direct:
+                    return self._readily_provable(must_be_direct=True,
+                                                  **kwargs)
                 return self._readily_provable(**kwargs)
             finally:
                 Expression.in_progress_to_check_provability.remove(

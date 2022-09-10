@@ -62,7 +62,8 @@ class InSet(InClass):
         # See if the element, or something known to be equal to
         # the element, is known to be a member of the domain or a subset
         # of the domain.
-        as_strong_membership = self.as_strong_known_membership()
+        as_strong_membership = self.as_strong_known_membership(
+                include_canonical_forms=False)
         if as_strong_membership is not None:
             if as_strong_membership.domain == self.domain:
                 try:
@@ -79,6 +80,8 @@ class InSet(InClass):
             # object.
             return self.membership_object.conclude()
 
+        as_strong_membership = self.as_strong_known_membership(
+                include_canonical_forms=True)
         if as_strong_membership is not None:
             # Use a known membership that is at least as strong.
             return self.conclude_from_as_strong_membership(
@@ -120,7 +123,7 @@ class InSet(InClass):
         return elem_sub_in_domain.inner_expr().element.substitute(
                 self.element)        
 
-    def as_strong_known_membership(self):
+    def as_strong_known_membership(self, include_canonical_forms=True):
         '''
         If there is a known membership that is as strong as this one,
         where the element is known to be equal this one's element
@@ -129,7 +132,9 @@ class InSet(InClass):
         '''
         from proveit.logic import Equals, SubsetEq
         known_memberships = list(
-                InClass.yield_known_memberships(self.element))
+                InClass.yield_known_memberships(
+                        self.element, 
+                        include_canonical_forms=include_canonical_forms))
         # First see of there is a known membership with the same domain.
         for known_membership in known_memberships:
             if known_membership.domain == self.domain:

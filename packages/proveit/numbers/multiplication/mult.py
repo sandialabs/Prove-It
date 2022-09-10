@@ -667,7 +667,7 @@ class Mult(NumberOperation):
             # If there are exactly two factors and one is an Add and
             # the other is a numeric literal, distribute over the Add.
             if expr.operands.is_double():
-                _a, _b = self.operands
+                _a, _b = expr.operands
                 if isinstance(_a, Add) or isinstance(_b, Add):
                     if is_numeric_rational(_a) or is_numeric_rational(_b):
                         _k = 0 if isinstance(_a, Add) else 1
