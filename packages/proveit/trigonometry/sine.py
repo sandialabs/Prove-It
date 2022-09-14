@@ -1,8 +1,9 @@
 from proveit import Function, Literal, USE_DEFAULTS, prover, relation_prover, equality_prover
 from proveit import theta
 from proveit.logic import InSet
-from proveit.numbers import Real, RealPos, RealNeg, RealNonNeg, RealNonPos
-from proveit.numbers import Abs, deduce_number_set
+from proveit.numbers import (
+        Real, RealPos, RealNeg, RealNonNeg, RealNonPos, Complex)
+from proveit.numbers import Abs, deduce_number_set, readily_provable_number_set
 
 class Sin(Function):
     # operator of the Sin operation.
@@ -26,20 +27,19 @@ class Sin(Function):
                        sine_neg_interval)
         from proveit.numbers import (zero, pi, Less, LessEq, Neg)
         _theta = self.angle
-        deduce_number_set(_theta)
-        if (Less(zero, _theta).proven() and
-                Less(_theta, pi).proven()):
+        if (Less(zero, _theta).readily_provable() and
+                Less(_theta, pi).readily_provable()):
             return sine_pos_interval.instantiate({theta:_theta})
-        elif (LessEq(zero, _theta).proven() and
-                LessEq(_theta, pi).proven()):
+        elif (LessEq(zero, _theta).readily_provable() and
+                LessEq(_theta, pi).readily_provable()):
             return sine_nonneg_interval.instantiate(
                     {theta:_theta})
-        elif (Less(Neg(pi), _theta).proven() and
-                Less(_theta, zero).proven()):
+        elif (Less(Neg(pi), _theta).readily_provable() and
+                Less(_theta, zero).readily_provable()):
             return sine_neg_interval.instantiate(
                     {theta:_theta})
-        elif (LessEq(Neg(pi), _theta).proven() and
-                LessEq(_theta, zero).proven()):
+        elif (LessEq(Neg(pi), _theta).readily_provable() and
+                LessEq(_theta, zero).readily_provable()):
             return sine_nonpos_interval.instantiate(
                     {theta:_theta})
         else:
@@ -61,21 +61,21 @@ class Sin(Function):
                        sine_linear_bound_nonneg, sine_linear_bound_neg,
                        sine_linear_bound_nonpos)
 
-        deduce_number_set(self.angle)
+        angle_ns = readily_provable_number_set(self.angle, default=Complex)
 
         if isinstance(self.angle, Abs):
             bound = sine_linear_bound.instantiate(
                     {theta: self.angle.operand})
-        elif InSet(self.angle, RealPos).proven():
+        elif RealPos.readily_includes(angle_ns):
             bound = sine_linear_bound_pos.instantiate(
                     {theta: self.angle})
-        elif InSet(self.angle, RealNeg).proven():
+        elif RealNeg.readily_includes(angle_ns):
             bound = sine_linear_bound_neg.instantiate(
                     {theta: self.angle})
-        elif InSet(self.angle, RealNonNeg).proven():
+        elif RealNonNeg.readily_includes(angle_ns):
             bound = sine_linear_bound_nonneg.instantiate(
                     {theta: self.angle})
-        elif InSet(self.angle, RealNonPos).proven():
+        elif RealNonPos.readily_includes(angle_ns):
             bound = sine_linear_bound_nonpos.instantiate(
                     {theta: self.angle})
         else:
@@ -124,7 +124,6 @@ class Sin(Function):
         Sin(theta) > (2/pi)(theta) or Sin(theta) >= (2/pi)(theta),
         depending on the domain of the angle theta.
         '''
-        deduce_number_set(self.angle)
 
         if isinstance(self.angle, Abs):
             # for sin|theta|, try the chord y = (2/pi)|theta|,
@@ -132,24 +131,24 @@ class Sin(Function):
             from . import sine_linear_bound
             bound = sine_linear_bound.instantiate(
                     {theta: self.angle.operand})
-        elif InSet(self.angle, RealPos).proven():
+        elif InSet(self.angle, RealPos).readily_provable():
             # for theta > 0, try the chord y = (2/pi)|theta|,
             # but works only for 0 < theta < Pi/2
             from . import sine_linear_bound_pos
             bound = sine_linear_bound_pos.instantiate(
                     {theta: self.angle})
-        elif InSet(self.angle, RealNeg).proven():
+        elif InSet(self.angle, RealNeg).readily_provable():
             # for theta < 0, use the line y = theta
             from . import sine_linear_bound_by_arg_neg
             bound = sine_linear_bound_by_arg_neg.instantiate(
                     {theta: self.angle})
-        elif InSet(self.angle, RealNonNeg).proven():
+        elif InSet(self.angle, RealNonNeg).readily_provable():
             # for theta >= 0, try the chord y = (2/pi)|theta|,
             # but works only for 0 <= theta <= Pi/2
             from . import sine_linear_bound_nonneg
             bound = sine_linear_bound_nonneg.instantiate(
                     {theta: self.angle})
-        elif InSet(self.angle, RealNonPos).proven():
+        elif InSet(self.angle, RealNonPos).readily_provable():
             # for theta <= 0 use the line y = theta
             from . import sine_linear_bound_by_arg_nonpos
             bound = sine_linear_bound_by_arg_nonpos.instantiate(
@@ -173,30 +172,29 @@ class Sin(Function):
         Sin(theta) < (2/pi)(theta) or Sin(theta) <= (2/pi)(theta),
         depending on the domain of the angle theta.
         '''
-        deduce_number_set(self.angle)
 
         if isinstance(self.angle, Abs):
             # for all sin|theta|, use the line y = |theta|
             from . import sine_linear_bound_by_arg
             bound = sine_linear_bound_by_arg.instantiate(
                     {theta: self.angle.operand})
-        elif InSet(self.angle, RealPos).proven():
+        elif InSet(self.angle, RealPos).readily_provable():
             # for theta > 0, use the line y = theta
             from . import sine_linear_bound_by_arg_pos
             bound = sine_linear_bound_by_arg_pos.instantiate(
                     {theta: self.angle})
-        elif InSet(self.angle, RealNeg).proven():
+        elif InSet(self.angle, RealNeg).readily_provable():
             # for theta < 0, try the chord y = (2/pi)(theta)
             # but will only work for -Pi/2 < theta < 0
             from . import sine_linear_bound_neg
             bound = sine_linear_bound_neg.instantiate(
                     {theta: self.angle})
-        elif InSet(self.angle, RealNonNeg).proven():
+        elif InSet(self.angle, RealNonNeg).readily_provable():
             # for theta >= 0, use the line y = theta
             from . import sine_linear_bound_by_arg_nonneg
             bound = sine_linear_bound_by_arg_nonneg.instantiate(
                     {theta: self.angle})
-        elif InSet(self.angle, RealNonPos).proven():
+        elif InSet(self.angle, RealNonPos).readily_provable():
             # for theta <= 0 try the chord y = (2/pi)(theta)
             # but will only work for -Pi/2 <= theta <= 0
             from . import sine_linear_bound_nonpos
@@ -215,17 +213,17 @@ class Sin(Function):
     def deduce_in_number_set(self, number_set, **defaults_config):
         from proveit.numbers import Complex
         from . import real_closure
+        if Real.readily_includes(number_set):
+            # While we are at it, let's prove that this Sin
+            # is within an appropriate interval (e.g. between +/-1).
+            self.deduce_in_interval()
+            if InSet(self, number_set).proven():
+                return InSet(self, number_set).prove()
         if number_set in (Real, Complex):
             closure = real_closure.instantiate({theta:self.angle})
             if number_set == Real:
                 return closure
-            return InSet(self, number_set).prove()
-        if number_set in (RealPos, RealNeg, RealNonNeg, RealNonPos):
-            # Maybe use deduce_interval to help
-            interval = self.deduce_in_interval().domain
-            raise NotImplementedError(
-                    "Implementation not quite finished")        
-        
+            return InSet(self, number_set).prove()        
         raise NotImplementedError(
                 "'Sin.deduce_in_number_set()' not implemented for the "
                 "%s set" % str(number_set))        
