@@ -241,7 +241,8 @@ class Relation(Operation):
                 # the sides (the left side, arbitrarily) is still in
                 # the domain so it will have a known membership for
                 # next time.
-                if _domain is not None:
+                if _domain is not None and (
+                        InSet(relation.lhs, _domain).readily_provable()):
                     InSet(relation.lhs, _domain).prove()
                 return relation
             # Use the doc string from the wrapped method 
