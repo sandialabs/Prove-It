@@ -407,6 +407,9 @@ def readily_provable_number_set(
     if in_progress_key in Expression.in_progress_to_check_provability:
         # avoid infinite/pointless recursion by using
         # in_progress_to_check_provability
+        if default is None:
+            raise UnsatisfiedPrerequisites(
+                "No readily provable number set for %s"%expr)
         return default
 
     try:
@@ -428,6 +431,10 @@ def readily_provable_number_set(
                     best_known_number_set = number_set
     
         if best_known_number_set is None:
+            if default is None:
+                raise UnsatisfiedPrerequisites(
+                    "No readily provable number set for %s"%expr)
+
             return default
     
         if isinstance(expr, ExprRange):

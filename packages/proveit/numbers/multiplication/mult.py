@@ -442,10 +442,12 @@ class Mult(NumberOperation):
                     continue
             zero_relation_number_set = Complex
 
-        if zero_relation_number_set is None:
-            raise UnsatisfiedPrerequisites(
-                    "No readily provable number set for %s"%self)
         major_number_set = union_number_set(*major_number_sets)
+        if major_number_set != Complex and zero_relation_number_set == Complex:
+            zero_relation_number_set = Real
+        if major_number_set != Complex and (
+                zero_relation_number_set == ComplexNonZero):
+            zero_relation_number_set = RealNonZero
         return number_set_map[(major_number_set, zero_relation_number_set)]
 
     @prover

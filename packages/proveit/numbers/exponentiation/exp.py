@@ -7,7 +7,7 @@ from proveit import (defaults, equality_prover, ExprRange, ExprTuple,
 import proveit
 from proveit import a, b, c, k, m, n, x, y, S
 from proveit.logic import Equals, InSet, SetMembership, NotEquals
-from proveit.numbers import zero, one, two, Div, frac, num, Real
+from proveit.numbers import zero, one, two, Div, frac, num, greater_eq
 from proveit.numbers import (NumberOperation, deduce_number_set,
                              readily_provable_number_set)
 from proveit.numbers.number_sets import (
@@ -254,18 +254,22 @@ class Exp(NumberOperation):
             return self.power_of_one_reduction()
         elif self.base == one:
             return exponentiated_one.instantiate({x: self.exponent})  # =1
-        elif (isinstance(self.base, Exp) and
-            isinstance(self.base.exponent, Div) and
-            self.base.exponent.numerator == one and
-                self.base.exponent.denominator == self.exponent):
+        elif (isinstance(self.base, Exp) and (
+                isinstance(self.base.exponent, Div) and
+                self.base.exponent.numerator == one and
+                self.base.exponent.denominator == self.exponent and
+                greater_eq(self.base.base, zero).readily_provable() and
+                InSet(self.exponent, NaturalPos).readily_provable())):
             from . import nth_power_of_nth_root
-            _n, _x = nth_power_of_nth_root.instance_params
             return nth_power_of_nth_root.instantiate(
-                {_n: self.exponent, _x: self.base.base})
-        elif (isinstance(self.base, Exp) and
-            isinstance(self.exponent, Div) and
-            self.exponent.numerator == one and
-                self.exponent.denominator == self.base.exponent):
+                {n: self.exponent, x: self.base.base})
+        elif (isinstance(self.base, Exp) and (
+                isinstance(self.exponent, Div) and
+                self.exponent.numerator == one and
+                self.exponent.denominator == self.base.exponent and
+                (self.base.exponent == two or
+                 (greater_eq(self.base.base, zero).readily_provable()) and
+                 InSet(self.base.exponent, NaturalPos).readily_provable()))):
             from . import nth_root_of_nth_power, sqrt_of_square
             _n = self.base.exponent
             _x =  self.base.base
@@ -401,14 +405,13 @@ class Exp(NumberOperation):
         Prove that this exponential is not zero given that
         the base is not zero.
         '''
-        from proveit.logic import InSet
-        from proveit.numbers import RationalPos
+        from proveit.numbers import readily_provable_number_set, RationalPos
         from . import exp_rational_non_zero__not_zero, exp_not_eq_zero
-        deduce_number_set(self.base)
-        deduce_number_set(self.exponent)
+        base_ns = readily_provable_number_set(self.base, default=Complex)
+        exp_ns = readily_provable_number_set(self.exponent, default=Complex)
         if (not exp_not_eq_zero.is_usable() or (
-                InSet(self.base, RationalPos).proven() and
-                InSet(self.exponent, RationalPos).proven())):
+                RationalPos.readily_includes(base_ns) and
+                RationalPos.readily_includes(exp_ns))):
             # Special case where the base and exponent are RationalPos.
             return exp_rational_non_zero__not_zero.instantiate(
                 {a: self.base, b: self.exponent})
@@ -476,6 +479,8 @@ class Exp(NumberOperation):
         from proveit.numbers.exponentiation import (
                 exp_factored_int, exp_factored_real)
 
+        base_ns = readily_provable_number_set(self.base, default=Complex)
+        exp_ns = readily_provable_number_set(self.exponent, default=Complex)
         if isinstance(the_factors, Expression): 
             # i.e. we have a single factor supplied rather than a
             # list of factors
@@ -484,13 +489,12 @@ class Exp(NumberOperation):
                 # In both cases below, we turn off auto_simplify to
                 # keep the Exp factors produce from being immediately
                 # recombined on the rhs
-                if InSet(self.base, RealPos).proven():
+                if RealPos.readily_includes(base_ns):
                     expr = eq.update(exp_factored_real.instantiate(
                             {a: self.base, b: self.exponent, c: one},
                             auto_simplify=False))
-                elif (InSet(self.base, Real).proven()
-                      and NotEquals(self.base, zero).proven()
-                      and InSet(self.exponent, Integer).proven()):
+                elif RealNonZero.readily_includes(base_ns) and (
+                      Integer.readily_includes(exp_ns)):
                     expr = eq.update(exp_factored_int.instantiate(
                             {a: self.base, b: self.exponent, c: one},
                             auto_simplify=False))
@@ -505,15 +509,17 @@ class Exp(NumberOperation):
             elif (isinstance(the_factors, Exp)
                   and (the_factors.base == self.base)):
                 # we have a factor of a^c while self is a^b
-                if InSet(self.base, RealPos).proven():
+                if RealPos.readily_includes(base_ns):
                     expr = eq.update(exp_factored_real.instantiate(
                             {a: self.base, b: self.exponent,
                              c: the_factors.exponent},
                             auto_simplify=False))
-                elif (InSet(self.base, Real).proven()
-                      and NotEquals(self.base, zero).proven()
-                      and InSet(self.exponent, Integer).proven()
-                      and InSet(the_factors.exponent, Integer).proven()):
+                elif RealNonZero.readily_includes(base_ns) and (
+                        Integer.readily_includes(exp_ns) and
+                        Integer.readily_includes(
+                                readily_provable_number_set(
+                                        the_factors.exponent, 
+                                        default=Complex))):
                     expr = eq.update(exp_factored_int.instantiate(
                             {a: self.base, b: self.exponent,
                              c: the_factors.exponent},
@@ -543,28 +549,28 @@ class Exp(NumberOperation):
         import proveit.numbers.exponentiation as exp_pkg
         base = self.base
         exponent = self.exponent
-        deduce_number_set(exponent)
+        exp_ns = readily_provable_number_set(exponent, default=Complex)
         if isinstance(base, Mult):
             if self.base.operands.is_double():
                 _a, _b = self.base.operands
             else:
                 _m = self.base.operands.num_elements()
                 _a = self.base.operands
-            if InSet(exponent, NaturalPos).proven():
+            if NaturalPos.readily_includes(exp_ns):
                 if self.base.operands.is_double():
                     return exp_pkg.posnat_power_of_product.instantiate(
                         {a: _a, b: _b, n: exponent})
                 else:
                     return exp_pkg.posnat_power_of_products.instantiate(
                         {m: _m, a: _a, n: exponent})
-            elif InSet(exponent, RealPos).proven():
+            elif RealPos.readily_includes(exp_ns):
                 if self.base.operands.is_double():
                     return exp_pkg.pos_power_of_product.instantiate(
                         {a: _a, b: _b, c: exponent})
                 else:
                     return exp_pkg.pos_power_of_products.instantiate(
                         {m: _m, a: _a, b: exponent})
-            elif InSet(exponent, Real).proven():
+            elif Real.readily_includes(exp_ns):
                 if self.base.operands.is_double():
                     return exp_pkg.real_power_of_product.instantiate(
                         {a: _a, b: _b, c: exponent})
@@ -581,13 +587,13 @@ class Exp(NumberOperation):
         elif isinstance(base, Div):
             assert self.base.operands.is_double()
             _a, _b = self.base.operands
-            if InSet(exponent, NaturalPos).proven():
+            if NaturalPos.readily_includes(exp_ns):
                 return exp_pkg.posnat_power_of_quotient.instantiate(
                     {a: _a, b: _b, n: exponent})
             else:
-                if InSet(exponent, RealPos).proven():
+                if RealPos.readily_includes(exp_ns):
                     thm = exp_pkg.pos_power_of_quotient
-                elif InSet(exponent, Real).proven():
+                elif Real.readily_includes(exp_ns):
                     thm = exp_pkg.real_power_of_quotient
                 else:  # Complex is the default
                     thm = exp_pkg.complex_power_of_quotient
@@ -603,28 +609,25 @@ class Exp(NumberOperation):
         import proveit.numbers.exponentiation as exp_pkg
         base = self.base
         exponent = self.exponent
-        deduce_number_set(exponent)
+        exp_ns = readily_provable_number_set(exponent, default=Complex)
         if not isinstance(base, Exp):
             raise ValueError("'double_exponent_reduction' only applicable "
                              "when the 'base' is an exponential, not for %s"
                              %self)
         
         _a = base.base
-        # if InSet(exponent, NaturalPos).proven():
-        #     _m, _n = base.exponent, exponent
-        #     return posnat_power_of_posnat_power.instantiate(
-        #         {a: _a, m: _m, n: _n})
-        # TRYING TO ANTICIPATE MORE POSSIBILITIES
-        if InSet(exponent, NaturalPos).proven():
-            if InSet(base.exponent, NaturalPos).proven():
+        if NaturalPos.readily_includes(exp_ns):
+            base_exp_ns = readily_provable_number_set(
+                    base.exponent, default=Complex)
+            if NaturalPos.readily_includes(base_exp_ns):
                 _m, _n = base.exponent, exponent
                 return exp_pkg.posnat_power_of_posnat_power.instantiate(
                     {a: _a, m: _m, n: _n})
             else:
                 _b, _c = base.exponent, exponent
-                if InSet(base.exponent, RealPos).proven():
+                if RealPos.readily_includes(base_exp_ns):
                     thm = exp_pkg.pos_power_of_pos_power
-                elif InSet(base.exponent, Real).proven():
+                elif Real.readily_includes(base_exp_ns):
                     thm = exp_pkg.real_power_of_real_power
                 else:  # Complex is the default
                     thm = exp_pkg.complex_power_of_complex_power
@@ -632,9 +635,9 @@ class Exp(NumberOperation):
                     {a: _a, b: _b, c: _c})
         else:
             _b, _c = base.exponent, exponent
-            if InSet(exponent, RealPos).proven():
+            if RealPos.readily_includes(exp_ns):
                 thm = exp_pkg.pos_power_of_pos_power
-            elif InSet(exponent, Real).proven():
+            elif Real.readily_includes(exp_ns):
                 thm = exp_pkg.real_power_of_real_power
             else:  # Complex is the default
                 thm = exp_pkg.complex_power_of_complex_power
@@ -965,8 +968,8 @@ class Exp(NumberOperation):
             # (10) a = 2, y ≤ x < 0
 
             # Cases (1) and (2): exponent a > 0
-            if (greater(_a_sub, zero).proven() and
-                greater_eq(_x_sub, zero).proven()):
+            if (greater(_a_sub, zero).readily_provable() and
+                greater_eq(_x_sub, zero).readily_provable()):
                 if isinstance(operand_relation, Less):
                     from proveit.numbers.exponentiation import exp_pos_less
                     bound = exp_pos_less.instantiate(
@@ -983,8 +986,8 @@ class Exp(NumberOperation):
                         format(operand_relation))
 
             # Cases (3) and (4): exponent a ≥ 0
-            elif (greater_eq(_a_sub, zero).proven() and
-                greater(_x_sub, zero).proven()):
+            elif (greater_eq(_a_sub, zero).readily_provable() and
+                greater(_x_sub, zero).readily_provable()):
                 if isinstance(operand_relation, Less):
                     from proveit.numbers.exponentiation import exp_nonneg_less
                     bound = exp_nonneg_less.instantiate(
@@ -1001,8 +1004,8 @@ class Exp(NumberOperation):
                         format(operand_relation))
 
             # Cases (5) and (6): exponent a < 0
-            elif (Less(_a_sub, zero).proven() and
-                greater(_x_sub, zero).proven()):
+            elif (Less(_a_sub, zero).readily_provable() and
+                greater(_x_sub, zero).readily_provable()):
                 if isinstance(operand_relation, Less):
                     from proveit.numbers.exponentiation import exp_neg_less
                     bound = exp_neg_less.instantiate(
@@ -1019,8 +1022,8 @@ class Exp(NumberOperation):
                         format(operand_relation))
 
             # Cases (7) and (8): exponent a ≤ 0
-            elif (LessEq(_a_sub, zero).proven() and
-                greater(_x_sub, zero).proven()):
+            elif (LessEq(_a_sub, zero).readily_provable() and
+                greater(_x_sub, zero).readily_provable()):
                 if isinstance(operand_relation, Less):
                     from proveit.numbers.exponentiation import exp_nonpos_less
                     bound = exp_nonpos_less.instantiate(
@@ -1040,7 +1043,7 @@ class Exp(NumberOperation):
             # with x < y < 0 or x ≤ y < 0
 
             elif (_a_sub == two and
-                Less(_y_sub, zero).proven()):
+                Less(_y_sub, zero).readily_provable()):
                 if isinstance(operand_relation, Less):
                     from proveit.numbers.exponentiation import (
                             exp_even_neg_base_less)
@@ -1078,8 +1081,8 @@ class Exp(NumberOperation):
             # which produces a monotonically-decreasing function.
 
             # Cases (1)-(4): base a > 1, a^x monotonically increasing
-            if (greater(_a_sub, one).proven() and
-                InSet(_x_sub, Real).proven()):
+            if (greater(_a_sub, one).readily_provable() and
+                InSet(_x_sub, Real).readily_provable()):
                 if isinstance(operand_relation, Less):
                     from proveit.numbers.exponentiation import (
                             exp_monotonicity_large_base_less)
@@ -1115,11 +1118,26 @@ class Exp(NumberOperation):
         Return the most restrictive number set we can readily
         prove contains the evaluation of this number operation.
         '''
-        base_ns = readily_provable_number_set(self.base)
-        exp_ns = readily_provable_number_set(self.exponent)
+        base_ns = readily_provable_number_set(self.base, default=Complex)
+        exp_ns = readily_provable_number_set(self.exponent, default=Complex)
         if base_ns == ZeroSet and RealPos.readily_includes(exp_ns):
             # 0^x = 0 for x > 0.
             return ZeroSet
+        if self.exponent==two:
+            # Squaring is handled as a special case, but we should
+            # extend this to all ven powers.
+            if IntegerNonZero.readily_includes(base_ns):
+                return NaturalPos
+            if Integer.readily_includes(base_ns):
+                return Natural
+            if RationalNonZero.readily_includes(base_ns):
+                return RationalPos
+            if Rational.readily_includes(base_ns):
+                return RationalNonNeg
+            if RealNonZero.readily_includes(base_ns):
+                return RealPos
+            if Real.readily_includes(base_ns):
+                return RealNonNeg
         if Natural.readily_includes(base_ns) and (
                 Natural.readily_includes(exp_ns)):
             return NaturalPos

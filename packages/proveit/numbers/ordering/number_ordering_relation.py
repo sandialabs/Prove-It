@@ -33,7 +33,7 @@ class NumberOrderingRelation(TransitiveRelation):
                 zero, Add, Neg, greater, greater_eq, one,
                 NaturalPos, IntegerNeg, IntegerNonPos, 
                 less_numeric_rationals, less_eq_numeric_rationals,
-                RealPos, RealNeg, RealNonNeg, RealNonPos,
+                RealPos, RealNeg, RealNonNeg, RealNonPos, Complex,
                 readily_provable_number_set, is_numeric_rational, 
                 less_numeric_rationals, less_eq_numeric_rationals)
         lower, upper = self.lower, self.upper
@@ -65,9 +65,9 @@ class NumberOrderingRelation(TransitiveRelation):
         
         # _check_order_against_zero=False to avoid infinite recursion.
         lower_ns = readily_provable_number_set(
-                    lower, _check_order_against_zero=False)
+                    lower, default=Complex, _check_order_against_zero=False)
         upper_ns = readily_provable_number_set(
-                    upper, _check_order_against_zero=False)
+                    upper, default=Complex, _check_order_against_zero=False)
         if isinstance(self, LessEq):
             if is_numeric_rational(lower) and (
                     less_eq_numeric_rationals(lower, one)
