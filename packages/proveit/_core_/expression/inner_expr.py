@@ -550,23 +550,35 @@ class InnerExpr:
                                 "an Equals expression")
             expected_lhs = cur_inner_expr
             if isinstance(cur_inner_expr, ExprRange):
-                expected_lhs = ExprTuple(expected_lhs)
-            if equality_or_replacement.lhs != expected_lhs:
-                # make some error-related information available at run
-                # time for debugging purposes, then raise error
-                Judgment.error_info_obtained = equality_or_replacement
-                Judgment.error_info_expected_lhs = expected_lhs
-                raise ValueError(
-                        "Expecting lhs of {0} to be {1}. "
-                        "For debugging purposes, the obtained equality "
-                        "is stored as Judgment.error_info_obtained, and "
-                        "the expected lhs is stored as "
-                        "Judgment.error_info_expected_lhs. ".
-                        format(equality_or_replacement, expected_lhs))
-            if prove_equality:
-                return equality_or_replacement
-            else:
-                return equality_or_replacement.expr
+                expected_lhs = ExprTuple(expected_lhs)            
+            if equality_or_replacement.lhs == expected_lhs:
+                # The lhs of the equality Judgment is the same as what
+                # we expect.  We are good to go. 
+                if prove_equality:
+                    return equality_or_replacement
+                else:
+                    return equality_or_replacement.expr
+            eq = Equals(equality_or_replacement.lhs, expected_lhs)
+            if eq.readily_provable():
+                # The lhs of the equality Judgment is not the same as
+                # what we expect, but we should be able to prove they
+                # are equal and use transitivity.
+                if prove_equality:
+                    return eq.prove().apply_transitivity(
+                            equality_or_replacement)
+                else:
+                    return Equals(expected_lhs, equality_or_replacement.rhs)
+            # make some error-related information available at run
+            # time for debugging purposes, then raise error
+            Judgment.error_info_obtained = equality_or_replacement
+            Judgment.error_info_expected_lhs = expected_lhs
+            raise ValueError(
+                    "Expecting lhs of {0} to be {1}. "
+                    "For debugging purposes, the obtained equality "
+                    "is stored as Judgment.error_info_obtained, and "
+                    "the expected lhs is stored as "
+                    "Judgment.error_info_expected_lhs. ".
+                    format(equality_or_replacement, expected_lhs))
 
         replacement = equality_or_replacement
         equality = Equals(cur_inner_expr, replacement)
