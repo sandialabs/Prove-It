@@ -1824,8 +1824,14 @@ class Mult(NumberOperation):
                 # of distributing an exponent.
                 _new_prod = Mult(*factor_bases)
                 _new_exp = Exp(_new_prod, factor_exponents[0])
+                replacements = []
+                if defaults.auto_simplify:
+                    _new_exp_simp = _new_exp.simplification()
+                    if _new_exp_simp.lhs != _new_exp_simp.rhs:
+                       replacements.append(_new_exp_simp)
                 try:
-                    return _new_exp.distribution().derive_reversed()
+                    return _new_exp.distribution().derive_reversed(
+                            replacements=replacements)
                 except Exception as the_exception:
                     raise Exception("An Exception! All factors appeared to "
                         "have the same exponent, but the Exp.distribution() "
