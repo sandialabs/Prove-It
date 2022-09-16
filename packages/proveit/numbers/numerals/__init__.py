@@ -6,7 +6,9 @@ from .numeral import (Numeral, NumeralSequence,
                       less_numeric_ints,
                       less_eq_numeric_ints,
                       less_numeric_rationals,
-                      less_eq_numeric_rationals)
+                      less_eq_numeric_rationals,
+                      not_equal_numeric_rationals,
+                      deduce_not_equal_numeric_rationals)
 #from .binaries import BinarySequence, binnum
 #from .hexidecimals import HexSequence, hexnum
 

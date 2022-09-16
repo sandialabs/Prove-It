@@ -442,10 +442,12 @@ class Mult(NumberOperation):
                     continue
             zero_relation_number_set = Complex
 
-        if zero_relation_number_set is None:
-            raise UnsatisfiedPrerequisites(
-                    "No readily provable number set for %s"%self)
         major_number_set = union_number_set(*major_number_sets)
+        if major_number_set != Complex and zero_relation_number_set == Complex:
+            zero_relation_number_set = Real
+        if major_number_set != Complex and (
+                zero_relation_number_set == ComplexNonZero):
+            zero_relation_number_set = RealNonZero
         return number_set_map[(major_number_set, zero_relation_number_set)]
 
     @prover
@@ -1116,16 +1118,16 @@ class Mult(NumberOperation):
                     assert (isinstance(canceling_denom_expr, Mult) and
                             canceling_denom_expr.factors.is_double())
                     _b = canceling_denom_expr.factors[0]
-                if isinstance(right_factor, Div):
-                    _d = right_factor.denominator
-                else:
-                    _d = one
                 if canceling_numer_expr == term_to_cancel:
-                    _e = one
+                    _d = one
                 else:
                     assert (isinstance(canceling_numer_expr, Mult) and
                             canceling_numer_expr.factors.is_double())
-                    _e = canceling_numer_expr.factors[1]
+                    _d = canceling_numer_expr.factors[1]
+                if isinstance(right_factor, Div):
+                    _e = right_factor.denominator
+                else:
+                    _e = one
                 cancelation = mult_frac_cancel_denom_left.instantiate(
                     {a: _a, b: _b, c: _c, d: _d, e: _e})
             # Eliminate ones in the cancelation; it should now
@@ -2056,6 +2058,16 @@ class Mult(NumberOperation):
         InSet(self, RealPos).prove()
         return greater(self, zero).prove()
 
+def compose_factors(*factors):
+    '''
+    Return the Mult of the factors if there are multiple factors,
+    or a single factor as appropriate.
+    '''
+    if len(factors) == 0:
+        return one
+    elif len(factors) == 1:
+        return factors[0]
+    return Mult(*factors)
 
 def coefficient_and_remainder(expr):
     '''

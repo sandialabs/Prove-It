@@ -1461,7 +1461,6 @@ class Add(NumberOperation):
         any_negative = False
         for operand in operands:
             operand_ns = readily_provable_number_set(operand)
-            if operand_ns is None: return None
             if RealPos.readily_includes(operand_ns):
                 any_positive = True
             if RealNeg.readily_includes(operand_ns):

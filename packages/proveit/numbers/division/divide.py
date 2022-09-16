@@ -9,6 +9,8 @@ from proveit import a, b, c, m, n, w, x, y, z
 from proveit.logic import Equals, NotEquals, InSet
 from proveit.numbers import (zero, NumberOperation, 
                              is_numeric_int, is_numeric_rational, 
+                             numeric_rational_ints,
+                             simplified_numeric_rational,
                              deduce_number_set, readily_provable_number_set)
 from proveit.numbers.number_sets import (
     ZeroSet, Natural, NaturalPos,
@@ -29,6 +31,7 @@ class Div(NumberOperation):
             factor_negation = True, 
             reduce_zero_numerator = True,
             reduce_to_multiplication = False,
+            reduce_rational = True,
             distribute = False)
 
     def __init__(self, numerator, denominator, *, styles=None):
@@ -108,18 +111,19 @@ class Div(NumberOperation):
         Specifically, cancels common factors and eliminates ones.
         '''
         from proveit.logic import is_irreducible_value
-        from proveit.numbers import one, Neg, Add, Sum
+        from proveit.numbers import one, Neg, Add, Sum, Mult, num
 
         if self.is_irreducible_value():
             # already irreducible
             return Equals(self, self).conclude_via_reflexivity()
         
         numer, denom = self.numerator, self.denominator
-        if is_numeric_rational(numer) and is_numeric_rational(denom) and (
-                denom != zero):
+        if Div._simplification_directives_.reduce_rational and (
+                is_numeric_rational(numer) and is_numeric_rational(denom) 
+                and denom != zero):
             # If the numerator and denominator are rational numerals, 
             # so go ahead and evaluate it to an irreducible form.
-            return self.reduction_to_irreducible_rational()
+            return self.rational_reduction()
         
         if Div._simplification_directives_.reduce_to_multiplication:
             # (x/y) = x*y^{-1}_deduce
@@ -147,7 +151,7 @@ class Div(NumberOperation):
                 return self.evaluation()
             canonical_form = self.canonical_form()
             if is_numeric_rational(canonical_form):
-                return self.reduction_to_irreducible_rational()
+                return self.rational_reduction()
             elif is_irreducible_value(canonical_form):
                 # Equate to the irreducible canonical form.
                 return Equals(self, canonical_form).prove()
@@ -193,7 +197,13 @@ class Div(NumberOperation):
         if Div._simplification_directives_.distribute and (
                 isinstance(self.numerator, Add) or 
                 isinstance(self.numerator, Sum)):
-            expr = eq.update(expr.distribution())            
+            expr = eq.update(expr.distribution())
+
+        if Div._simplification_directives_.reduce_rational and (
+                isinstance(expr, Div)):
+            # Reduce numeric rationals in the numerator and denominator
+            # to an irreducible rational form.
+            expr = eq.update(expr.rational_reduction())
 
         return eq.relation
 
@@ -202,7 +212,6 @@ class Div(NumberOperation):
         This needs work, but we know that 1/x is irreducible if
         x is irreducible, not a negation, not 0 and not 1.
         '''
-        from proveit.numbers import simplified_numeric_rational
         if is_numeric_int(self.numerator) and is_numeric_int(self.denominator):
             # This is an irreducible rational if and only if it is the
             # same as the corresponding 'simiplified_rational_expr'.
@@ -212,25 +221,27 @@ class Div(NumberOperation):
             return self == simplified_numeric_rational(numer_int, denom_int)
         return False
 
-    @equality_prover('reduced_to_irreducible_rational', 
-                     'reduce_to_irreducible_rational')
-    def reduction_to_irreducible_rational(self, **defaults_config):
+    @equality_prover('rational_reduced', 
+                     'reduce_rational')
+    def rational_reduction(self, **defaults_config):
         '''
-        Equate this fraction to an irreducible, numeric rational.        
+        Equate this fraction to an irreducible, numeric rational if
+        it is a numeric rational.  More generally, reduce the numeric
+        rationals in the numerator and denominator to an irreducible 
+        rational form.  For example:
+            ((4/3) x) / ((2/3) y) = (2 x) / y
         '''
-        from proveit.numbers import Mult, num
+        from proveit.numbers import Mult, num, one, compose_factors
         from proveit.numbers.division import frac_cancel_left
-        canonical_form = self.canonical_form()
-        if not is_numeric_rational(canonical_form):
-            raise ValueError("'reduction_to_irreducible_rational' only "
-                             "applicable when the canonical form is "
-                             "a numerical rational.")
-        numer = self.numerator.canonical_form()
-        denom = self.denominator.canonical_form()
+
+        numerator, denominator = self.numerator, self.denominator
+        canonical_numer = self.numerator.canonical_form()
+        canonical_denom = self.denominator.canonical_form()
         # Treat the case where the numerator and denominator evaluate
         # to integers.
-        if is_numeric_int(numer) and is_numeric_int(denom):
+        if is_numeric_int(canonical_numer) and is_numeric_int(canonical_denom):
             # Find out the greatest common divisor.
+            numer, denom = canonical_numer, canonical_denom
             numer_int, denom_int = numer.as_int(), denom.as_int()
             if abs(numer_int) == abs(denom_int):
                 if numer_int != denom_int:
@@ -276,9 +287,61 @@ class Div(NumberOperation):
             if abs(denom_int) == 1:
                 expr = eq.update(expr.divide_by_one_elimination())
             return eq.relation
-        # Reduce to a multiplication and then sort it out to handle
-        # the more general case.
-        return self.reduction_to_mult().evaluation()
+
+        canonical_form = self.canonical_form()
+        if  is_numeric_rational(canonical_form):
+            # Reduce to a multiplication and then sort it out to handle
+            # the more general case.
+            return self.reduction_to_mult(auto_simplify=True)
+        
+        # Extract the rational and remainder parts of the
+        # numerator and denominator.
+        numer_rational = denom_rational = one
+        numer_remainder_factors = denom_remainder_factors = []
+        if is_numeric_rational(numerator):
+            numer_rational = numerator
+        elif isinstance(numerator, Mult) and (
+                len(numerator.operands) > 0 and
+                is_numeric_rational(numerator.operands[0])):
+            numer_rational = numerator.operands[0]
+            numer_remainder_factors = numerator.operands[1:]
+        elif numerator != one:
+            numer_remainder_factors = [numerator]
+        if is_numeric_rational(denominator):
+            denom_rational = denominator
+        elif isinstance(denominator, Mult) and (
+                len(denominator.operands) > 0 and
+                is_numeric_rational(denominator.operands[0])):
+            denom_rational = denominator.operands[0]
+            denom_remainder_factors = denominator.operands[1:]
+        elif denominator != one:
+            denom_remainder_factors = [denominator]
+        numer_ints = numeric_rational_ints(numer_rational)
+        denom_ints = numeric_rational_ints(denom_rational)
+        # (a/b)/(c/d) = (a*d)/(b*c):
+        numer_int = numer_ints[0] * denom_ints[1]
+        denom_int = denom_ints[0] * numer_ints[1]
+        numer_int, denom_int = numeric_rational_ints(
+                simplified_numeric_rational(numer_int, denom_int))
+        if numer_int != numer_rational or denom_int != denom_rational:
+            # A simplification should be performed.
+            if numer_int == 1:
+                numer = compose_factors(*numer_remainder_factors)
+            else:
+                numer = compose_factors(num(numer_int), 
+                                        *numer_remainder_factors)
+            if denom_int == 1:
+                denom = compose_factors(*denom_remainder_factors)
+            else:
+                denom = compose_factors(num(denom_int), 
+                                        *denom_remainder_factors)
+            if denom == one:
+                rhs = numer
+            else:
+                rhs = Div(numer, denom)
+            return self.deduce_canonically_equal(rhs)
+
+        return Equals(self, self).conclude_via_reflexivity()
     
     @equality_prover('reduced_to_mult', 'reduce_to_mult')
     def reduction_to_mult(self, **defaults_config):
@@ -856,6 +919,28 @@ class Div(NumberOperation):
         else:
             raise NotImplementedError("Need to implement degenerate cases "
                                       "of a^b/a and a/a^b.")
+
+    def readily_not_equal(self, other):
+        '''
+        Return True iff self and other are numeric rationals (at least
+        in canonical form) that are not equal to each other.
+        '''
+        from proveit.numbers import not_equal_numeric_rationals
+        return not_equal_numeric_rationals(self, other.canonical_form())
+
+    @relation_prover
+    def deduce_not_equal(self, other, **defaults_config):
+        '''
+        Prove and return self ≠ other if self and other are numeric
+        rational.
+        '''
+        from proveit.numbers import (
+                is_numeric_rational, deduce_not_equal_numeric_rationals)
+        if not (is_numeric_rational(self) and is_numeric_rational(other)):
+            raise NotImplementedError(
+                    "Divide.deduce_not_equal only handles the case of "
+                    "numeric rationals.  Given %s and %s"%(self, other))
+        return deduce_not_equal_numeric_rationals(self, other)
 
     @relation_prover
     def deduce_in_number_set(self, number_set, **defaults_config):
