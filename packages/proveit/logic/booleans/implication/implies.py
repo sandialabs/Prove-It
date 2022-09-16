@@ -135,11 +135,15 @@ class Implies(TransitiveRelation):
             # falsified_antecedent_implication.
             return falsified_antecedent_implication.instantiate(
                 {A: self.antecedent, B: self.consequent})
-        elif self.consequent.readily_provable():
-            # The consequent is provable, so we can prove the 
-            # implication via Deduction.
-            return self.consequent.prove().as_implication(
-                self.antecedent)
+
+        with defaults.temporary() as tmp_defaults:
+            tmp_defaults.assumptions = (
+                    defaults.assumptions + (self.antecedent,))
+            if self.consequent.readily_provable():
+                # The consequent is provable assuming the antecedent, 
+                # so we can prove the implication via Deduction.
+                return self.consequent.prove().as_implication(
+                    self.antecedent)
 
         try:
             # try to prove the implication via deduction.
