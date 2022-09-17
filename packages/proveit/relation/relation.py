@@ -37,10 +37,8 @@ class Relation(Operation):
         sides.
         '''
         from proveit.logic import Equals, evaluation_or_simplification
-        normal_lhs, normal_rhs = self.normal_lhs, self.normal_rhs
-        
-        # SHOULD WE DO SOMETHING A LITTLE DIFFERENT NOW WITH CANONICAL
-        # FORMS.
+        normal_lhs, normal_rhs = self.normal_lhs, self.normal_rhs 
+    
         normal_lhs_simplification = evaluation_or_simplification(normal_lhs)
         normal_rhs_simplification = evaluation_or_simplification(normal_rhs)
         simp_normal_lhs = normal_lhs_simplification.rhs
@@ -57,6 +55,22 @@ class Relation(Operation):
             return normal_rhs_simplification.sub_left_side_into(
                     proven_relation.inner_expr().normal_rhs,
                     preserve_all=True)
+        
+        if not isinstance(self, Equals):
+            normal_lhs_cf = normal_lhs.canonical_form()
+            normal_rhs_cf = normal_rhs.canonical_form()
+            if (normal_lhs_cf != normal_lhs) or (normal_rhs_cf != normal_rhs):
+                # Prove the version using canonical forms.
+                relation = self.__class__(
+                        normal_lhs_cf, normal_rhs_cf,
+                        styles=self.get_styles())
+                if relation.readily_provable():
+                    relation = relation.prove()
+                    relation = relation.inner_expr().normal_lhs.substitute(
+                            normal_lhs)
+                    return relation.inner_expr().normal_rhs.substitute(
+                            normal_rhs) 
+        
         raise ProofFailure(self, defaults.assumptions,
                            "Unable to conclude %s"%self)
 
