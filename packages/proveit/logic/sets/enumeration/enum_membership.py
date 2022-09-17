@@ -136,6 +136,12 @@ class EnumMembership(SetMembership):
                     {n: _n, x: self.element, y: _y}, 
                     auto_simplify=False)
 
+    def readily_in_bool(self):
+        '''
+        Membership in an enumerated set is always boolean.
+        '''
+        return True
+
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import in_singleton_is_bool, in_enum_set_is_bool
@@ -233,6 +239,12 @@ class EnumNonmembership(SetNonmembership):
             return nonmembership_unfold.instantiate(
                 {n: _n, x: self.element, y: _y},
                 auto_simplify=False)
+
+    def readily_in_bool(self):
+        '''
+        Nonmembership in an enumerated set is always boolean.
+        '''
+        return True
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
