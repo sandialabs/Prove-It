@@ -614,11 +614,11 @@ class Exp(NumberOperation):
             raise ValueError("'double_exponent_reduction' only applicable "
                              "when the 'base' is an exponential, not for %s"
                              %self)
+        base_exp_ns = readily_provable_number_set(
+                base.exponent, default=Complex)
         
         _a = base.base
         if NaturalPos.readily_includes(exp_ns):
-            base_exp_ns = readily_provable_number_set(
-                    base.exponent, default=Complex)
             if NaturalPos.readily_includes(base_exp_ns):
                 _m, _n = base.exponent, exponent
                 return exp_pkg.posnat_power_of_posnat_power.instantiate(
@@ -635,9 +635,11 @@ class Exp(NumberOperation):
                     {a: _a, b: _b, c: _c})
         else:
             _b, _c = base.exponent, exponent
-            if RealPos.readily_includes(exp_ns):
+            if RealPos.readily_includes(exp_ns) and (
+                    RealPos.readily_includes(base_exp_ns)):
                 thm = exp_pkg.pos_power_of_pos_power
-            elif Real.readily_includes(exp_ns):
+            elif Real.readily_includes(exp_ns) and (
+                    Real.readily_includes(base_exp_ns)):
                 thm = exp_pkg.real_power_of_real_power
             else:  # Complex is the default
                 thm = exp_pkg.complex_power_of_complex_power
