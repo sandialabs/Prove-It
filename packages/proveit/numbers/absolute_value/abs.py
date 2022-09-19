@@ -308,7 +308,8 @@ class Abs(NumberOperation):
             Rational, RationalNonZero, RationalPos,
             RationalNonNeg, Real, RealNonNeg, RealPos, RealNonZero,
             ComplexNonZero, Complex)
-        operand_ns = readily_provable_number_set(self.operand)
+        operand_ns = readily_provable_number_set(self.operand,
+                                                 default=Complex)
         if operand_ns is None: return None
         if operand_ns == ZeroSet: return ZeroSet
         if IntegerNonZero.readily_includes(operand_ns):
@@ -326,8 +327,7 @@ class Abs(NumberOperation):
         if ComplexNonZero.readily_includes(operand_ns):
             return RealPos
         return RealNonNeg
-        
-
+    
     @equality_prover('unit_length_simplified', 'unit_length_simplify')
     def unit_length_simplification(self, **defaults_config):
         '''

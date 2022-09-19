@@ -24,9 +24,15 @@ class IntervalMembership(NumberMembership):
         is readily known to be an integer and it's readily known to be 
         within the interval range.
         '''
-        _a = self.domain.lower_bound
-        _b = self.domain.upper_bound
+        from proveit.logic import SubsetEq
+        from proveit.numbers import readily_provable_number_set
+        domain = self.domain
+        _a = domain.lower_bound
+        _b = domain.upper_bound
         _x = self.element
+        elem_ns = readily_provable_number_set(_x)
+        if SubsetEq(elem_ns, domain).readily_provable():
+            return True
         return InSet(_x, Integer).readily_provable() and (
                 LessEq(_a, _x).readily_provable() and
                 LessEq(_x, _b).readily_provable())
@@ -38,13 +44,17 @@ class IntervalMembership(NumberMembership):
         [element <= upper_bound], derive and return
         [element in Interval(lower_bound, upper_bound)]
         '''
+        from proveit.logic import SubsetEq
+        from proveit.numbers import (readily_provable_number_set,
+                                     deduce_in_number_set)
         element = self.element
-        if hasattr(element, 'deduce_in_number_set'):
-            try:
-                return element.deduce_in_number_set(self.domain)
-            except (NotImplementedError, UnsatisfiedPrerequisites):
-                # If that didn't work, try 'deduce_elem_in_set'.
-                pass
+        domain = self.domain
+        elem_ns = readily_provable_number_set(element)
+        if elem_ns == domain:
+            return deduce_in_number_set(element, domain)
+        sub_rel = SubsetEq(elem_ns, domain)
+        if sub_rel.readily_provable():
+            return sub_rel.derive_superset_membership(element)
         return self.domain.deduce_elem_in_set(element)
 
     def side_effects(self, judgment):
@@ -60,7 +70,7 @@ class IntervalMembership(NumberMembership):
         # Added but commented the following out while we debate the
         # wisdom of further side-effects
         # yield lambda: self.deduce_member_in_real(member)
-
+        
     @prover
     def deduce_in_bool(self, **defaults_config):
         from . import interval_membership_is_bool
