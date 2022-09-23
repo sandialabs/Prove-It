@@ -3,7 +3,7 @@ from proveit import theta
 from proveit.logic import InSet
 from proveit.numbers import (
         Real, RealPos, RealNeg, RealNonNeg, RealNonPos, Complex)
-from proveit.numbers import Abs, deduce_number_set, readily_provable_number_set
+from proveit.numbers import Abs, readily_provable_number_set
 
 class Sin(Function):
     # operator of the Sin operation.
@@ -204,7 +204,10 @@ class Sin(Function):
             closure = real_closure.instantiate({theta:self.angle})
             if number_set == Real:
                 return closure
-            return InSet(self, number_set).prove()        
+            return InSet(self, number_set).prove()
+        self.deduce_in_interval()
+        if InSet(self, number_set).readily_provable():
+            return InSet(self, number_set).conclude_as_last_resort()
         raise NotImplementedError(
                 "'Sin.deduce_in_number_set()' not implemented for the "
                 "%s set" % str(number_set))        
