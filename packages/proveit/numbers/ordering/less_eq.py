@@ -13,10 +13,10 @@ class LessEq(NumberOrderingRelation):
         theory=__file__)
 
     # map left-hand-sides to "<=" Judgments
-    #   (populated in TransitivityRelation.derive_side_effects)
+    #   (populated in TransitivityRelation._record_as_proven)
     known_left_sides = dict()
     # map right-hand-sides to "<=" Judgments
-    #   (populated in TransitivityRelation.derive_side_effects)
+    #   (populated in TransitivityRelation._record_as_proven)
     known_right_sides = dict()
 
     # map canonical left hand sides to '<' Judgments paired with

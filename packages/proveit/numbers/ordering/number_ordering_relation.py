@@ -26,7 +26,8 @@ class NumberOrderingRelation(TransitiveRelation):
             yield self.derive_relaxed
 
     def _readily_provable(self, *, check_number_sets=True,
-                          must_be_direct=False):
+                          must_be_direct=False,
+                          check_transitive_pair=True):
         from .less import Less
         from .less_eq import LessEq
         from proveit.numbers import (
@@ -103,8 +104,22 @@ class NumberOrderingRelation(TransitiveRelation):
                 self.lower in self.upper.terms.entries)):
             TODO
         """
+        if check_transitive_pair:
+            return TransitiveRelation._readily_provable(self)
+        
         return False
-    
+
+    def _readily_disprovable(self, *, check_number_sets=True,
+                          must_be_direct=False,
+                          check_transitive_pair=True):
+        from .less import Less
+        from .less_eq import LessEq
+        if isinstance(self, Less) and (
+                LessEq(self.rhs, self.lhs).readily_provable()):
+            # Not(x < y) via x ≥ y.
+            return True
+        return False
+        
     @prover
     def conclude(self, **defaults_config):
         '''
@@ -375,22 +390,22 @@ class NumberOrderingRelation(TransitiveRelation):
         
         if lhs == zero:
             # Special case involving only numeric rationals (after
-            # cancelations, possibly).            
-            if not is_numeric_rational(canonical_rhs):
+            # cancelations, possibly).
+            if rhs == zero or isinstance(rhs, Neg):
+                # This is something trivial like 5 <= 5 or
+                # something untrue like 6 < 5; let's keep it close 
+                # to the original.
+                return (self.__class__(canonical_lhs, canonical_rhs), 
+                        one)
+            elif not is_numeric_rational(canonical_rhs):
                 # For example, x < x + 2 converts to 0 < 1 with 2 as
                 # the inverse scale factor.
                 return self.__class__(zero, one), rhs                
-            if not reduce_numeric_rational_form:
+            elif not reduce_numeric_rational_form:
                 # Just use the canonical forms of each side with no
                 # further manipulation.
                 return self.__class__(canonical_lhs, canonical_rhs), one
             else:
-                if rhs == zero or isinstance(rhs, Neg):
-                    # This is something trivial like 5 <= 5 or
-                    # something untrue like 6 < 5; let's keep it close 
-                    # to the original.
-                    return (self.__class__(canonical_lhs, canonical_rhs), 
-                            one)
                 if is_numeric_int(rhs):
                     # For example, -2 < 5 converts to 0 < 7
                     return self.__class__(zero, rhs), one

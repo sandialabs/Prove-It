@@ -98,7 +98,10 @@ class NotEquals(Relation):
             # A good practice is to try the 'conclude_as_folded'
             # strategy if it doesn't fall into any specially-handled
             # case.
-            return lhs.deduce_not_equal(rhs)
+            try:
+                return lhs.deduce_not_equal(rhs)
+            except (NotImplementedError, UnsatisfiedPrerequisites):
+                pass
 
         return self.conclude_as_folded()
 

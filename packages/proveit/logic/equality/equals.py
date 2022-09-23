@@ -111,7 +111,8 @@ class Equals(EquivRelation):
         '''
         yield self.deduce_not_equals  # A != B from not(A=B)
 
-    def _readily_provable(self, try_readily_equal=True):
+    def _readily_provable(self, try_readily_equal=True,
+                          check_transitive_pair=None):
         '''
         Return True iff this equality is readily provable:
             * The lhs and rhs have the same canonical form;
@@ -123,6 +124,11 @@ class Equals(EquivRelation):
               provably boolean.
             * There is a known (indirect) equality through the known
               equalities and/or canonical forms.
+        'check_transitive_pair' isn't used since this is already
+        essentially more powerful via indirect known equalities and/or
+        canonical forms (this should be revisited/tested to make sure
+        we can conclude everything that is readily provable and that
+        this isn't too slow).
         '''
         from proveit.logic import TRUE, FALSE, Iff, in_bool
         lhs, rhs = self.lhs, self.rhs

@@ -40,7 +40,7 @@ class SubsetEq(InclusionRelation):
         # Use the default.
         return Operation.remake_constructor(self)
 
-    def _readily_provable(self):
+    def _readily_provable(self, *, check_transitive_pair=False):
         '''
         This SubsetEq relation is readily provable if the sets
         are provably equal or set equivalent, the corresponding
@@ -59,6 +59,10 @@ class SubsetEq(InclusionRelation):
             return True
         if SetEquiv(self.subset, self.superset).proven():
             return True
+        if InclusionRelation._readily_provable(
+                self, check_transitive_pair=check_transitive_pair):
+            return True
+
         # No worry about conflicts with assumptions because the 
         # variable will be bound by a quantifier:
         _x = safe_dummy_var(self, avoid_default_assumption_conflicts=False)

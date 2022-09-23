@@ -10,10 +10,10 @@ class Less(NumberOrderingRelation):
     _operator_ = Literal(string_format='<', theory=__file__)
 
     # map left-hand-sides to "<" Judgments
-    #   (populated in TransitivityRelation.side_effects)
+    #   (populated in TransitivityRelation._record_as_proven)
     known_left_sides = dict()
     # map right-hand-sides to "<" Judgments
-    #   (populated in TransitivityRelation.side_effects)
+    #   (populated in TransitivityRelation._record_as_proven)
     known_right_sides = dict()
 
     # map canonical left hand sides to '<' Judgments paired with
@@ -162,13 +162,6 @@ class Less(NumberOrderingRelation):
                              "applicable if one side of the Less "
                              "expression is an addition and the other "
                              "side is one of the terms")
-        return concluded
-
-    @prover
-    def conclude_via_equality(self, **defaults_config):
-        from . import relax_equal_to_less_eq
-        concluded = relax_equal_to_less_eq.instantiate(
-            {x: self.operands[0], y: self.operands[1]})
         return concluded
 
     @prover
