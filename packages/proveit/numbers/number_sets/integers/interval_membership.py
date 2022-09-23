@@ -30,9 +30,13 @@ class IntervalMembership(NumberMembership):
         _a = domain.lower_bound
         _b = domain.upper_bound
         _x = self.element
-        elem_ns = readily_provable_number_set(_x)
-        if SubsetEq(elem_ns, domain).readily_provable():
-            return True
+        try:
+            elem_ns = readily_provable_number_set(_x)
+        except UnsatisfiedPrerequisites:
+            elem_ns = None
+        if elem_ns is not None:
+            if SubsetEq(elem_ns, domain).readily_provable():
+                return True
         return InSet(_x, Integer).readily_provable() and (
                 LessEq(_a, _x).readily_provable() and
                 LessEq(_x, _b).readily_provable())

@@ -31,9 +31,13 @@ class RealIntervalMembership(NumberMembership):
         from proveit.numbers import readily_provable_number_set
         domain = self.domain
         _x = self.element
-        elem_ns = readily_provable_number_set(_x)
-        if SubsetEq(elem_ns, domain).readily_provable():
-            return True
+        try:
+            elem_ns = readily_provable_number_set(_x)
+        except UnsatisfiedPrerequisites:
+            elem_ns = None
+        if elem_ns is not None:
+            if SubsetEq(elem_ns, domain).readily_provable():
+                return True
         lb, ub = domain.member_bounds(_x)
         return InSet(_x, Real).readily_provable() and (
                 lb.readily_provable() and ub.readily_provable())
