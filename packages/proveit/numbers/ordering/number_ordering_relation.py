@@ -156,6 +156,12 @@ class NumberOrderingRelation(TransitiveRelation):
                                      less_eq_numeric_rationals,
                                      less_numeric_rationals)
         canonical_form = self.canonical_form()
+        desired_bound = canonical_form.rhs
+        if not is_numeric_rational(desired_bound):
+            # If the canonical form doesn't have a numeric rational on
+            # the right side, then this is something trivially either
+            # true or not true.
+            return None
         is_weak = isinstance(self, LessEq)
         if is_weak:
             # x ≤ a, a ≤ b => x ≤ b
@@ -175,7 +181,6 @@ class NumberOrderingRelation(TransitiveRelation):
                 else:
                     # rescaled version.
                     return self.__class__(zero, one)
-        desired_bound = canonical_form.rhs
         known_strong_bounds = Less.known_canonical_bounds.get(
                 canonical_form.normal_lhs, tuple())
         known_weak_bounds = LessEq.known_canonical_bounds.get(
