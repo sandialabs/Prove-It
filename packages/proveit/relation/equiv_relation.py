@@ -40,7 +40,7 @@ class EquivRelation(TransitiveRelation):
                 if judgment.is_applicable(assumptions):
                     yield (judgment, judgment.rhs)
 
-    @staticmethod
+    @classmethod
     def known_relations_from_right(RelationClass, expr, *, 
                                    assumptions=USE_DEFAULTS):
         '''
