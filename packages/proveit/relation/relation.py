@@ -37,8 +37,8 @@ class Relation(Operation):
         sides.
         '''
         from proveit.logic import Equals, evaluation_or_simplification
-        normal_lhs, normal_rhs = self.normal_lhs, self.normal_rhs 
-    
+        normal_lhs, normal_rhs = self.normal_lhs, self.normal_rhs
+        
         normal_lhs_simplification = evaluation_or_simplification(normal_lhs)
         normal_rhs_simplification = evaluation_or_simplification(normal_rhs)
         simp_normal_lhs = normal_lhs_simplification.rhs
@@ -232,8 +232,10 @@ class Relation(Operation):
                     _class_attr = getattr(_class, method_name)
                     methods_and_domains_to_try.append((_class_attr, _domain))
             if len(methods_and_domains_to_try) == 0:
-                raise AttributeError("'%s' object has no attribute '%s'"
-                                     %(self.__class__, name))
+                raise AttributeError(
+                        "'%s' object has no attribute '%s' applicable to "
+                        "the types and known domains for the expressions "
+                        "on each side"%(self.__class__, name))
             @prover
             @wraps(methods_and_domains_to_try[0][0])
             def transform_both_sides(*args, **defaults_config):
