@@ -5,7 +5,7 @@ from proveit import (defaults, equality_prover, ExprRange, ExprTuple,
                      ProofFailure, prover, relation_prover, StyleOptions,
                      UnsatisfiedPrerequisites, USE_DEFAULTS)
 import proveit
-from proveit import a, b, c, k, m, n, x, y, S
+from proveit import a, b, c, k, m, n, r, x, y, S, theta
 from proveit.logic import Equals, InSet, SetMembership, NotEquals
 from proveit.numbers import zero, one, two, Div, frac, num, greater_eq
 from proveit.numbers import (NumberOperation, deduce_number_set,
@@ -387,17 +387,63 @@ class Exp(NumberOperation):
                 {a: self.base, x: self.exponent.antilog})
 
     @relation_prover
+    def deduce_equal(self, other, **defaults_config):
+        '''
+        Attempt to prove that self is equal to other.
+        Handles r exp(i theta) = r. 
+        '''
+        from proveit.numbers import complex_polar_coordinates
+        reductions = set()
+        try:
+            _r, _theta = complex_polar_coordinates(
+                    self, reductions=reductions)
+        except ValueError:
+            _r = _theta = None
+        if _theta is not None:
+            if _r == other:
+                # r exp(i theta) ≠ r if theta/(2 pi) is not an integer
+                if _r == one:
+                    from . import unit_complex_polar_num_eq_one
+                    return unit_complex_polar_num_eq_one.instantiate(
+                            {theta: _theta}, replacements=reductions)
+                else:
+                    from . import complex_polar_num_eq_one
+                    return complex_polar_num_eq_one.instantiate(
+                            {r: _r, theta: _theta}, replacements=reductions)
+        raise NotImplementedError(
+                "deduce_equal case not handled: %s ≠ %s"%
+                (self, other))
+
+    @relation_prover
     def deduce_not_equal(self, other, **defaults_config):
         '''
         Attempt to prove that self is not equal to other.
+        Handles a^b ≠ 0 and r exp(i theta) ≠ r. 
         '''
-        from proveit.logic import NotEquals
-        from proveit.numbers import zero
+        from proveit.numbers import zero, complex_polar_coordinates
+        #from . import 
         if other == zero:
             return self.deduce_not_zero()
-        # If it isn't a special case treated here, just use
-        # conclude-as-folded.
-        return NotEquals(self, other).conclude_as_folded()
+        reductions = set()
+        try:
+            _r, _theta = complex_polar_coordinates(
+                    self, reductions=reductions)
+        except ValueError:
+            _r = _theta = None
+        if _theta is not None:
+            if _r == other:
+                # r exp(i theta) ≠ r if theta/(2 pi) is not an integer
+                if _r == one:
+                    from . import unit_complex_polar_num_neq_one
+                    return unit_complex_polar_num_neq_one.instantiate(
+                            {theta: _theta}, replacements=reductions)
+                else:
+                    from . import complex_polar_num_neq_one
+                    return complex_polar_num_neq_one.instantiate(
+                            {r: _r, theta: _theta}, replacements=reductions)
+        raise NotImplementedError(
+                "deduce_not_equal case not handled: %s ≠ %s"%
+                (self, other))
 
     @relation_prover
     def deduce_not_zero(self, **defaults_config):
