@@ -58,8 +58,12 @@ class NumberOrderingRelation(TransitiveRelation):
                 # There is a similar but possibly stronger bound we can
                 # derive this one from.
                 return True
+
         if not check_number_sets:
             return False
+        if check_transitive_pair:
+            if TransitiveRelation._readily_provable(self):
+                return True
         
         # See if we can determine the validity of the inequality
         # based upon provable number sets and how they relate to zero.
@@ -104,8 +108,6 @@ class NumberOrderingRelation(TransitiveRelation):
                 self.lower in self.upper.terms.entries)):
             TODO
         """
-        if check_transitive_pair:
-            return TransitiveRelation._readily_provable(self)
         
         return False
 
@@ -115,7 +117,7 @@ class NumberOrderingRelation(TransitiveRelation):
         from .less import Less
         from .less_eq import LessEq
         if isinstance(self, Less) and (
-                LessEq(self.rhs, self.lhs).readily_provable()):
+                LessEq(self.normal_rhs, self.normal_lhs).readily_provable()):
             # Not(x < y) via x ≥ y.
             return True
         return False
@@ -140,6 +142,10 @@ class NumberOrderingRelation(TransitiveRelation):
         ''' 
         if judgment is not None:
             return self.conclude_from_similar_bound(judgment)
+        if self._readily_provable(check_transitive_pair=False):
+            # Provable via number sets -- so there should be a
+            # transitive relation.
+            return self.conclude_via_transitivity()
         # Explore transitive relations as a last resort.
         return TransitiveRelation.conclude(self)
         
@@ -190,13 +196,15 @@ class NumberOrderingRelation(TransitiveRelation):
         for judgment, strong_bound in known_strong_bounds:
             if judgment.is_applicable():
                 if (strong_bound == desired_bound or 
-                        less_eq_numeric_rationals(strong_bound, 
-                                                  desired_bound)):
+                        (is_numeric_rational(strong_bound) and
+                         less_eq_numeric_rationals(strong_bound, 
+                                                   desired_bound))):
                     return judgment
         for judgment, weak_bound in known_weak_bounds:
             if judgment.is_applicable():
                 if ((is_weak and weak_bound == desired_bound) or 
-                        comparator(weak_bound, desired_bound)):
+                        (is_numeric_rational(weak_bound) and 
+                         comparator(weak_bound, desired_bound))):
                     return judgment
         return None
 
