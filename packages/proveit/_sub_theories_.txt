@@ -5,4 +5,3 @@ trigonometry
 abstract_algebra
 linear_algebra
 statistics
-physics
