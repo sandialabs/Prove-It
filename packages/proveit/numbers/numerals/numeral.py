@@ -45,7 +45,11 @@ class Numeral(Literal, IrreducibleValue):
         Prove and return self ≠ other if other is a numeric
         rational.
         '''
-        return deduce_not_equal_numeric_rationals(self, other)
+        if is_numeric_rational(other):
+            return deduce_not_equal_numeric_rationals(self, other)
+        raise NotImplementedError(
+                "Numeral.deduce_not_equal only implemented for "
+                "comparing numeric rationals, not %s"%other)
     
     @relation_prover
     def deduce_equal_or_not(self, other, **defaults_config):
