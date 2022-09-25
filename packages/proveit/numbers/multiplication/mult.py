@@ -37,7 +37,8 @@ class Mult(NumberOperation):
     _simplification_directives_ = SimplificationDirectives(
             ungroup=True, 
             combine_numeric_rationals=True,
-            combine_exponents=True,
+            combine_numeric_rational_exponents=True,
+            combine_all_exponents=False,
             distribute_numeric_rational=False,
             # By default, sort such that numeric, rationals come first 
             # but otherwise maintain the original order.
@@ -505,9 +506,11 @@ class Mult(NumberOperation):
         If ungroup is true, dissociate nested multplications.
         If combine_numeric_rationals is true, multiply numeric rational
         factors into an evaluated numeric rational constant.
-        If combine_exponents is true, combine exponents of factors 
-        with a common base raised to a numeric rational power (or 
-        implicitly a power of 1).
+        If combine_numeric_rational_exponents is true, combine exponents
+        of factors with a common base raised to a numeric rational power
+        (or implicitly a power of 1).
+        If combine_all_exponents is true, exponents with a common base
+        will be combined for any type of exponents.
         Sort factors according to order_key_fn where the key is the
         base that may be raised to a numeric rational power.
         Eliminate any factors of one, and simplify to zero if there is
@@ -628,13 +631,19 @@ class Mult(NumberOperation):
                 "Cabability to evaluate %s is not implemented"%expr)
 
         order_key_fn = Mult._simplification_directives_.order_key_fn
-        if Mult._simplification_directives_.combine_exponents:
+        combine_all_exponents = (
+                Mult._simplification_directives_.combine_all_exponents)
+        if combine_all_exponents or (
+                Mult._simplification_directives_
+                .combine_numeric_rational_exponents):
             # Like factors are ones that are implicit/explicit
             # exponentials with the same base raised to a literal, 
-            # rational power (everyting is implicitly raised to the 
+            # rational power (everything is implicitly raised to the 
             # power of 1).
             def likeness_key_fn(factor):
-                if isinstance(factor, Exp):
+                if isinstance(factor, Exp) and (
+                        combine_all_exponents or is_numeric_rational(
+                                factor.exponent)):
                     return factor.base
                 else:
                     return factor

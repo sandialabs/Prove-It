@@ -28,7 +28,8 @@ class Exp(NumberOperation):
 
     _simplification_directives_ = SimplificationDirectives(
             reduce_double_exponent = True,
-            distribute_exponent = False)
+            distribute_exponent = False,
+            factor_numeric_rational = True)
 
     def __init__(self, base, exponent, *, styles=None):
         r'''
@@ -152,7 +153,7 @@ class Exp(NumberOperation):
         to be nonzero, but these should work as long as the expression
         is not a garbage expression.
         '''
-        from proveit.numbers import (one, zero, Neg, Mult, 
+        from proveit.numbers import (one, zero, Add, Neg, Mult, 
                                      is_numeric_rational, is_numeric_int,
                                      numeric_rational_ints,
                                      simplified_numeric_rational)
@@ -184,7 +185,7 @@ class Exp(NumberOperation):
                 return base.base
             return Exp(base.base, exponent)
         elif is_numeric_rational(base) and is_numeric_int(exponent):
-            # Raising a literal rational to an integer power.
+            # Raising a numeric rational to an integer power.
             numer, denom = numeric_rational_ints(base)
             if isinstance(exponent, Neg):
                 # A negative power will flip the numerator
@@ -194,6 +195,20 @@ class Exp(NumberOperation):
             numer = numer**(exponent.as_int())
             denom = denom**(exponent.as_int())
             return simplified_numeric_rational(numer, denom)
+        elif is_numeric_rational(base) and (
+                isinstance(exponent, Add) and 
+                any(is_numeric_rational(_term) for _term 
+                    in exponent.operands.entries)):
+            # Raising a numeric rational to a power with a numeric
+            # rational term; factor out the numeric rational via
+            # a^{x + b} = a^b * a^x
+            numeric_exp_terms = [_term for _term in exponent.terms.entries
+                                 if is_numeric_rational(_term)]
+            nonnumeric_exp_terms = [_term for _term in exponent.terms.entries
+                                    if not is_numeric_rational(_term)]
+            assert len(numeric_exp_terms)==1
+            return Mult(Exp(base, numeric_exp_terms[0]).canonical_form(),
+                        Exp(base, Add(*nonnumeric_exp_terms)).canonical_form())
         elif base != self.base or exponent != self.exponent:
             # Use the canonical forms of the base and exponent.
             return Exp(base, exponent)
@@ -206,20 +221,27 @@ class Exp(NumberOperation):
         Returns a proven simplification equation for this Exp
         expression assuming the operands have been simplified.
 
-        Handles the following evaluations:
+        Handles the following simplifications:
             a^0 = 1 for any complex a
             0^x = 0 for any positive x
             1^x = 1 for any complex x
             a^(Log(a, x)) = x for RealPos a and x, a != 1.
             x^n = x*x*...*x = ? for a natural n and irreducible x.
-
-        Handles a zero or one exponent or zero or one base as
-        simplifications.
+        
+        Additionally may do the following depending upon simplification
+        directives:
+            * If reduce_double_exponent is True:
+                (x^y)^z = x^{y*z}
+            * If distribute_exponent is True:
+                (a*b*c)^f = a^f * b^f * c^f
+                (a/b)^f = (a^f / b^f)
+            * If factor_numeric_rational is True:
+                a^{x+b} = a^b a^x if a and b are numeric rationals.
         '''
         from proveit.relation import TransRelUpdater
         from proveit.logic import is_irreducible_value
         from proveit.logic import InSet
-        from proveit.numbers import (zero, one, two, is_numeric_int,
+        from proveit.numbers import (zero, one, two, Add, is_numeric_int,
                                      is_numeric_rational,
                                      numeric_rational_ints,
                                      Log, Rational, Abs)
@@ -350,7 +372,48 @@ class Exp(NumberOperation):
                 return self.double_exponent_reduction()
         elif Exp._simplification_directives_.distribute_exponent:
             # Distribute the exponent as directed.
-            return self.distribution()
+            return self.distribution(auto_simplify=True)
+        elif Exp._simplification_directives_.factor_numeric_rational:
+            # a^{x+b} = a^b a^x if a and b are numeric rationals
+            base, exponent = self.base, self.exponent
+            if is_numeric_rational(base) and (
+                    isinstance(exponent, Add) and 
+                    any(is_numeric_rational(_term) for _term 
+                        in exponent.operands.entries)):
+                # The base and one of the exponent terms is a numeric
+                # rational.
+                expr = self
+                eq = TransRelUpdater(expr)
+                # Pull numeric rationals to the front of the exponent
+                # terms.
+                with Add.temporary_simplification_directives() as _tmp_drvs:
+                    _tmp_drvs.ungroup = False
+                    _tmp_drvs.combine_like_terms = False
+                    _tmp_drvs.order_key_fn = lambda term : (
+                            0 if is_numeric_rational(term) else 1)
+                    expr = eq.update(
+                            expr.inner_expr()
+                            .exponent.shallow_simplification())
+                # Associate into two terms: numeric rationals and
+                # everything else.
+                for _k, _term in enumerate(expr.exponent.terms.entries):
+                    if not is_numeric_rational(_term):
+                        break
+                _terms = expr.exponent.terms
+                _num_terms = _terms.num_entries()
+                if _k < _num_terms:
+                    if _k+1 < expr.exponent.terms.num_entries():
+                        expr = eq.update(
+                                expr.inner_expr().exponent.association(
+                                        _k, _num_terms-_k, preserve_all=True))
+                    if _k > 1:
+                        expr = eq.update(
+                                expr.inner_expr().exponent.association(
+                                        0, _k, auto_simplify=False))
+                expr = eq.update(expr.exponent_separation(preserve_all=True))
+                eq.update(expr.inner_expr().factors[0].simplification())
+                return eq.relation
+                    
         return Equals(self, self).conclude_via_reflexivity()
     
     def is_irreducible_value(self):
@@ -804,13 +867,14 @@ class Exp(NumberOperation):
         mult_equiv = Mult(*the_new_factors)
 
         # use the Mult.combining_exponents() to deduce equality to self
-        exp_separated = mult_equiv.combining_exponents()
+        exp_separated = mult_equiv.combining_exponents(preserve_all=True)
 
         replacements = list(defaults.replacements)
         if defaults.auto_simplify:
             with Mult.temporary_simplification_directives() as tmp_directives:
                 # Don't recombine the exponents after separating them.
-                tmp_directives.combine_exponents = False
+                tmp_directives.combine_all_exponents = False
+                tmp_directives.combine_numeric_rational_exponents = False
                 replacements.append(mult_equiv.shallow_simplification())
 
         # reverse the equality relationship and return
