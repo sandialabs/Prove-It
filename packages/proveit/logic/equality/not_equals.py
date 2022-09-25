@@ -103,6 +103,13 @@ class NotEquals(Relation):
             except (NotImplementedError, UnsatisfiedPrerequisites):
                 pass
 
+        if hasattr(rhs, 'deduce_not_equal'):
+            # Try from the right side as well.
+            try:
+                return rhs.deduce_not_equal(lhs).derive_reversed()
+            except (NotImplementedError, UnsatisfiedPrerequisites):
+                pass
+
         return self.conclude_as_folded()
 
     @prover
