@@ -479,9 +479,11 @@ class Expression(metaclass=ExprType):
                     "equality between expressions with the same canonical "
                     "form. %s and %s have distinct canonical forms "
                     "%s and %s respectively"%(lhs, rhs, lhs_cf, rhs_cf))
-        if lhs == lhs_cf:
-            # If the lhs is already in the canonical form,
-            # deduce the equality from the other side.
+        if lhs == lhs_cf or (type(lhs) == type(lhs_cf) and
+                             type(rhs) != type(lhs_cf)):
+            # If the lhs is already in the canonical form or
+            # if the lhs has the same type as the canonical form but
+            # the rhs does not, deduce the equality from the other side.
             proven_eq = rhs._deduce_canonically_equal(lhs)
             proven_eq = proven_eq.derive_reversed()
         else:
@@ -915,10 +917,14 @@ class Expression(metaclass=ExprType):
             # expression-specific means (note that '_readily_provable'
             # is intended, not 'readily_provable'), but something else 
             # does with the same canonical form.
-            # If it is a Relation, however, we should use its 'conclude'
-            # method instead.
+            # If it is a Relation, however, and it's canonical form is
+            # not simply from the canonical form on each side, we 
+            # should use its 'conclude' method instead to derive
+            # the relation more directly.
             canonical_form = self.canonical_form()
-            if canonical_form != TRUE and not isinstance(self, Relation):
+            if canonical_form != TRUE and (
+                    not isinstance(self, Relation) or
+                    canonical_form == Expression._build_canonical_form(self)):
                 cf_to_proven_exprs = (
                         Judgment.canonical_form_to_proven_exprs)
                 if canonical_form in cf_to_proven_exprs:
