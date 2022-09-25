@@ -441,6 +441,14 @@ class ClassMembership:
             "Membership object, %s, has no 'as_defined' method implemented" % str(
                 self.__class__))
 
+    def _deduce_canonically_equal(self, rhs):
+        '''
+        Equate 'self' to the 'rhs' via the definition.
+        '''
+        definition = self.definition()
+        def_eq_rhs = definition.deduce_canonically_equal(rhs)
+        return definition.apply_transitivity(def_eq_rhs)
+
     def readily_in_bool(self, **defaults_config):
         '''
         Unless this is overridden, we won't presume that the membership

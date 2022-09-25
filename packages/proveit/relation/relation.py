@@ -65,7 +65,7 @@ class Relation(Operation):
                         normal_lhs_cf, normal_rhs_cf,
                         styles=self.get_styles())
                 if relation.readily_provable():
-                    relation = relation.prove()
+                    relation = relation.prove(auto_simplify=False)
                     relation = relation.inner_expr().normal_lhs.substitute(
                             normal_lhs)
                     return relation.inner_expr().normal_rhs.substitute(

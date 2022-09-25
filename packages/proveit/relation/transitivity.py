@@ -70,7 +70,7 @@ class TransitiveRelation(Relation):
         return False
 
     @prover
-    def conclude(self, **defaults_config):
+    def conclude(self, check_transitive_pair=True, **defaults_config):
         '''
         Try to conclude the TransitivityRelation using other
         TransitivityRelations or Equals that are known to be true via transitivity.
@@ -78,13 +78,13 @@ class TransitiveRelation(Relation):
         truths (under the given assumptions), we can conclude that
         a<d (under these assumptions).
         '''
-        transitive_pair = self.known_plus_provable_transitive_pair()
-        if transitive_pair is not None:
-            # Prove via transitivity from a known relation and a
-            # readily provable relation.
-            return transitive_pair[0].apply_transitivity(
-                    transitive_pair[1])
-
+        if check_transitive_pair:
+            transitive_pair = self.known_plus_provable_transitive_pair()
+            if transitive_pair is not None:
+                # Prove via transitivity from a known relation and a
+                # readily provable relation.
+                transitive_pair[0].apply_transitivity(transitive_pair[1])
+                return self.prove() # relax if needed.
         try:
             # Try to conclude via simplification of each side.
             return Relation.conclude(self)

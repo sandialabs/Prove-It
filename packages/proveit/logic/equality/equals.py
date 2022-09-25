@@ -223,7 +223,8 @@ class Equals(EquivRelation):
 
         # Try to prove equality via standard EquiRelation
         # strategies (simplify both sides then try transitivity).
-        return EquivRelation.conclude(self)
+        return EquivRelation.conclude(self,
+                                      check_transitive_pair=False)
 
     @prover
     def conclude_negation(self, **defaults_config):
