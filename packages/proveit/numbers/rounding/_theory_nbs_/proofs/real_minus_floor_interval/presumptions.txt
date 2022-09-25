@@ -13,8 +13,8 @@ proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.logic.sets.inclusion.unfold_subset_eq
 proveit.numbers.addition.add_real_closure_bin
-proveit.numbers.negation.int_closure
 proveit.numbers.negation.negated_zero
+proveit.numbers.negation.real_closure
 proveit.numbers.number_sets.complex_numbers.int_within_complex
 proveit.numbers.number_sets.complex_numbers.nat_within_complex
 proveit.numbers.number_sets.complex_numbers.real_within_complex
