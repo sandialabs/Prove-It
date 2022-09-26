@@ -241,8 +241,8 @@ class Exp(NumberOperation):
         from proveit.relation import TransRelUpdater
         from proveit.logic import is_irreducible_value
         from proveit.logic import InSet
-        from proveit.numbers import (zero, one, two, Add, is_numeric_int,
-                                     is_numeric_rational,
+        from proveit.numbers import (zero, one, two, Add, Mult, Div,
+                                     is_numeric_int, is_numeric_rational,
                                      numeric_rational_ints,
                                      Log, Rational, Abs)
         from . import (exp_zero_eq_one, exponentiated_zero,
@@ -263,49 +263,50 @@ class Exp(NumberOperation):
                         operand.evaluation()
                 return self.evaluation()
         
-        if is_numeric_rational(self.base):
-            _a, _b = numeric_rational_ints(self.base)
+        base, exponent = self.base, self.exponent
+        if is_numeric_rational(base):
+            _a, _b = numeric_rational_ints(base)
 
-        if self.exponent == zero:
-            return exp_zero_eq_one.instantiate({a: self.base})  # =1
-        elif self.base == zero:
+        if exponent == zero:
+            return exp_zero_eq_one.instantiate({a: base})  # =1
+        elif base == zero:
             # Will fail if the exponent is not positive, but this
             # is the only sensible thing to try.
-            return exponentiated_zero.instantiate({x: self.exponent})  # =0
-        elif self.exponent == one:
+            return exponentiated_zero.instantiate({x: exponent})  # =0
+        elif exponent == one:
             return self.power_of_one_reduction()
-        elif self.base == one:
-            return exponentiated_one.instantiate({x: self.exponent})  # =1
-        elif (isinstance(self.base, Exp) and (
-                isinstance(self.base.exponent, Div) and
-                self.base.exponent.numerator == one and
-                self.base.exponent.denominator == self.exponent and
-                greater_eq(self.base.base, zero).readily_provable() and
-                InSet(self.exponent, NaturalPos).readily_provable())):
+        elif base == one:
+            return exponentiated_one.instantiate({x: exponent})  # =1
+        elif (isinstance(base, Exp) and (
+                isinstance(base.exponent, Div) and
+                base.exponent.numerator == one and
+                base.exponent.denominator == exponent and
+                greater_eq(base.base, zero).readily_provable() and
+                InSet(exponent, NaturalPos).readily_provable())):
             from . import nth_power_of_nth_root
             return nth_power_of_nth_root.instantiate(
-                {n: self.exponent, x: self.base.base})
-        elif (isinstance(self.base, Exp) and (
-                isinstance(self.exponent, Div) and
-                self.exponent.numerator == one and
-                self.exponent.denominator == self.base.exponent and
-                (self.base.exponent == two or
-                 (greater_eq(self.base.base, zero).readily_provable()) and
-                 InSet(self.base.exponent, NaturalPos).readily_provable()))):
+                {n: exponent, x: base.base})
+        elif (isinstance(base, Exp) and (
+                isinstance(exponent, Div) and
+                exponent.numerator == one and
+                exponent.denominator == base.exponent and
+                (base.exponent == two or
+                 (greater_eq(base.base, zero).readily_provable()) and
+                 InSet(base.exponent, NaturalPos).readily_provable()))):
             from . import nth_root_of_nth_power, sqrt_of_square
-            _n = self.base.exponent
-            _x =  self.base.base
+            _n = base.exponent
+            _x =  base.base
             if _n == two:
                 return sqrt_of_square.instantiate({x: _x})
             return nth_root_of_nth_power.instantiate({n: _n, x: _x})
-        elif (is_numeric_rational(self.base) and
-                  is_numeric_int(self.exponent) and
-                  self.exponent.as_int() > 1):
+        elif (is_numeric_rational(base) and
+                  is_numeric_int(exponent) and
+                  exponent.as_int() > 1):
             # exponentiate a rational to a positive integer
             expr = self
             eq = TransRelUpdater(expr)
             expr = eq.update(exp_nat_pos_expansion.instantiate(
-                    {x:self.base, n:self.exponent}, preserve_all=True))
+                    {x:base, n:exponent}, preserve_all=True))
             # We should come up with a better way of reducing
             # ExprRanges representing repetitions:
             _n = self.exponent.as_int()
@@ -313,40 +314,40 @@ class Exp(NumberOperation):
                 raise NotImplementedError("Currently only implemented for 1-9")
             repetition_thm = proveit.numbers.numerals.decimals \
                 .__getattr__('reduce_%s_repeats' % _n)
-            rep_reduction = repetition_thm.instantiate({x: self.base})
+            rep_reduction = repetition_thm.instantiate({x: base})
             expr = eq.update(expr.inner_expr().operands.substitution(
                     rep_reduction.rhs, preserve_all=True))
             expr = eq.update(expr.evaluation())
             return eq.relation
-        elif (is_numeric_rational(self.base) and _b != 0 and
-                  is_numeric_int(self.exponent) and
-                  self.exponent.as_int() < 0):
+        elif (is_numeric_rational(base) and _b != 0 and
+                  is_numeric_int(exponent) and
+                  exponent.as_int() < 0):
             # exponentiate a rational to a negative integer
             # _a and _b are the numerator and denominator as ints.
             from proveit.numbers.exponentiation import (
                     neg_power_as_div, neg_power_of_quotient)
-            _n = num(-self.exponent.as_int())
+            _n = num(-exponent.as_int())
             if _b == 1:
                 return neg_power_as_div.instantiate({a:num(_a), n:_n})
             else:
                 return neg_power_of_quotient.instantiate(
                         {a:num(_a), b:num(_b), n:_n})
-        elif (isinstance(self.exponent, Log)
-            and self.base == self.exponent.base):
-            # base_ns  = self.base.deduce_number_set()
-            # antilog_ns = self.exponent.antilog.deduce_number_set()
-            if InSet(self.base, RealPos).readily_provable() and (
-                    InSet(self.exponent.antilog, RealPos).readily_provable()
-                    and NotEquals(self.base, one).readily_provable()):
+        elif (isinstance(exponent, Log)
+            and base == exponent.base):
+            # base_ns  = base.deduce_number_set()
+            # antilog_ns = exponent.antilog.deduce_number_set()
+            if InSet(base, RealPos).readily_provable() and (
+                    InSet(exponent.antilog, RealPos).readily_provable()
+                    and NotEquals(base, one).readily_provable()):
                 return self.power_of_log_reduction()
-        elif self.exponent == two and isinstance(self.base, Abs):
+        elif exponent == two and isinstance(base, Abs):
             from . import (square_abs_rational_simp,
                                      square_abs_real_simp)
             # |a|^2 = a if a is real
             expr = self
             # for convenience updating our equation:
             eq = TransRelUpdater(expr)
-            base_ns = readily_provable_number_set(self.base, 
+            base_ns = readily_provable_number_set(base, 
                                                   default=Complex)
             rational_base = Rational.readily_includes(base_ns)
             real_base = Real.readily_includes(base_ns)
@@ -356,26 +357,26 @@ class Exp(NumberOperation):
             elif real_base:
                 thm = square_abs_real_simp
             if thm is not None:
-                simp = thm.instantiate({a: self.base.operand})
+                simp = thm.instantiate({a: base.operand})
                 expr = eq.update(simp)
                 # A further simplification may be possible after
                 # eliminating the absolute value.
                 expr = eq.update(expr.simplification())
             return eq.relation
-        elif isinstance(self.base, Exp) and (
+        elif isinstance(base, Exp) and (
                 Exp._simplification_directives_.reduce_double_exponent):
-            if ((InSet(self.exponent, Real).readily_provable() and 
-                 InSet(self.base.exponent, Real).readily_provable() and
-                 NotEquals(self.base.base, zero).readily_provable()) or (
-                         InSet(self.base.base, RealPos).readily_provable())):
+            if ((InSet(exponent, Real).readily_provable() and 
+                 InSet(base.exponent, Real).readily_provable() and
+                 NotEquals(base.base, zero).readily_provable()) or (
+                         InSet(base.base, RealPos).readily_provable())):
                 # (a^b)^c = a^{b*c}
                 return self.double_exponent_reduction()
-        elif Exp._simplification_directives_.distribute_exponent:
+        if Exp._simplification_directives_.distribute_exponent and (
+                isinstance(base, Mult) or isinstance(base, Div)):
             # Distribute the exponent as directed.
             return self.distribution(auto_simplify=True)
         elif Exp._simplification_directives_.factor_numeric_rational:
             # a^{x+b} = a^b a^x if a and b are numeric rationals
-            base, exponent = self.base, self.exponent
             if is_numeric_rational(base) and (
                     isinstance(exponent, Add) and 
                     any(is_numeric_rational(_term) for _term 
