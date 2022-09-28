@@ -29,6 +29,7 @@ proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
 proveit.logic.equality.four_chain_transitivity
 proveit.logic.equality.not_equals_symmetry
+proveit.logic.equality.rhs_via_equality
 proveit.logic.equality.sub_left_side_into
 proveit.logic.equality.sub_right_side_into
 proveit.logic.equality.substitute_falsehood
@@ -46,6 +47,7 @@ proveit.logic.sets.enumeration.unfold_singleton
 proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.logic.sets.inclusion.unfold_subset_eq
+proveit.logic.sets.membership.unfold_not_in_set
 proveit.numbers.absolute_value.abs_complex_closure
 proveit.numbers.absolute_value.abs_diff_reversal
 proveit.numbers.absolute_value.abs_eq
@@ -67,7 +69,9 @@ proveit.numbers.addition.elim_zero_any
 proveit.numbers.addition.elim_zero_left
 proveit.numbers.addition.elim_zero_right
 proveit.numbers.addition.leftward_commutation
+proveit.numbers.addition.rational_pair_addition
 proveit.numbers.addition.rightward_commutation
+proveit.numbers.addition.strong_bound_via_left_term_bound
 proveit.numbers.addition.subtraction.negated_add
 proveit.numbers.addition.subtraction.nonzero_difference_if_different
 proveit.numbers.addition.subtraction.sub_one_is_nat
@@ -78,8 +82,10 @@ proveit.numbers.addition.unary_add_reduction
 proveit.numbers.division.div_as_mult
 proveit.numbers.division.div_complex_closure
 proveit.numbers.division.div_rational_nonzero_closure
+proveit.numbers.division.div_rational_pos_closure
 proveit.numbers.division.div_real_closure
 proveit.numbers.division.div_real_nonneg_closure
+proveit.numbers.division.frac_cancel_complete
 proveit.numbers.division.frac_cancel_left
 proveit.numbers.division.frac_one_denom
 proveit.numbers.division.mult_frac_cancel_denom_left
@@ -113,10 +119,11 @@ proveit.numbers.exponentiation.neg_power_as_div
 proveit.numbers.exponentiation.neg_power_of_quotient
 proveit.numbers.exponentiation.posnat_power_of_product
 proveit.numbers.exponentiation.posnat_power_of_quotient
-proveit.numbers.exponentiation.real_power_of_product
+proveit.numbers.exponentiation.real_power_of_products
 proveit.numbers.exponentiation.real_power_of_real_power
 proveit.numbers.exponentiation.square_abs_rational_simp
 proveit.numbers.exponentiation.square_abs_real_simp
+proveit.numbers.exponentiation.unit_complex_polar_num_neq_one
 proveit.numbers.multiplication.association
 proveit.numbers.multiplication.commutation
 proveit.numbers.multiplication.disassociation
@@ -129,6 +136,7 @@ proveit.numbers.multiplication.elim_one_right
 proveit.numbers.multiplication.leftward_commutation
 proveit.numbers.multiplication.mult_complex_closure
 proveit.numbers.multiplication.mult_complex_closure_bin
+proveit.numbers.multiplication.mult_complex_nonzero_closure_bin
 proveit.numbers.multiplication.mult_neg_any
 proveit.numbers.multiplication.mult_neg_left
 proveit.numbers.multiplication.mult_neg_right
@@ -140,9 +148,13 @@ proveit.numbers.multiplication.mult_real_pos_closure_bin
 proveit.numbers.multiplication.mult_zero_any
 proveit.numbers.multiplication.mult_zero_left
 proveit.numbers.multiplication.mult_zero_right
+proveit.numbers.multiplication.reversed_strong_bound_via_right_factor_bound
+proveit.numbers.multiplication.reversed_weak_bound_via_right_factor_bound
 proveit.numbers.multiplication.rightward_commutation
 proveit.numbers.multiplication.strong_bound_via_factor_bound
+proveit.numbers.multiplication.strong_bound_via_right_factor_bound
 proveit.numbers.multiplication.weak_bound_via_factor_bound
+proveit.numbers.multiplication.weak_bound_via_right_factor_bound
 proveit.numbers.negation.complex_closure
 proveit.numbers.negation.int_closure
 proveit.numbers.negation.int_nonzero_closure
@@ -212,6 +224,7 @@ proveit.numbers.number_sets.rational_numbers.nonpos_int_within_rational_nonpos
 proveit.numbers.number_sets.rational_numbers.nonzero_if_in_rational_nonzero
 proveit.numbers.number_sets.rational_numbers.nonzero_int_within_rational_nonzero
 proveit.numbers.number_sets.rational_numbers.nonzero_rational_is_rational_nonzero
+proveit.numbers.number_sets.rational_numbers.pos_rational_is_rational_pos
 proveit.numbers.number_sets.rational_numbers.positive_if_in_rational_pos
 proveit.numbers.number_sets.rational_numbers.rational_neg_within_rational
 proveit.numbers.number_sets.rational_numbers.rational_neg_within_rational_nonpos
@@ -231,7 +244,9 @@ proveit.numbers.number_sets.rational_numbers.zero_set_within_rational_nonpos
 proveit.numbers.number_sets.real_numbers.all_in_interval_cc__is__real
 proveit.numbers.number_sets.real_numbers.all_in_interval_co__is__real
 proveit.numbers.number_sets.real_numbers.all_in_interval_oc__is__real
+proveit.numbers.number_sets.real_numbers.all_in_interval_oo__is__real
 proveit.numbers.number_sets.real_numbers.e_is_real_pos
+proveit.numbers.number_sets.real_numbers.in_IntervalOO
 proveit.numbers.number_sets.real_numbers.int_within_real
 proveit.numbers.number_sets.real_numbers.interval_cc_lower_bound
 proveit.numbers.number_sets.real_numbers.interval_cc_upper_bound
@@ -239,6 +254,8 @@ proveit.numbers.number_sets.real_numbers.interval_co_lower_bound
 proveit.numbers.number_sets.real_numbers.interval_co_upper_bound
 proveit.numbers.number_sets.real_numbers.interval_oc_lower_bound
 proveit.numbers.number_sets.real_numbers.interval_oc_upper_bound
+proveit.numbers.number_sets.real_numbers.interval_oo_lower_bound
+proveit.numbers.number_sets.real_numbers.interval_oo_upper_bound
 proveit.numbers.number_sets.real_numbers.nat_pos_within_real
 proveit.numbers.number_sets.real_numbers.nat_pos_within_real_nonneg
 proveit.numbers.number_sets.real_numbers.nat_pos_within_real_pos
@@ -271,6 +288,9 @@ proveit.numbers.number_sets.real_numbers.real_pos_within_real_nonneg
 proveit.numbers.number_sets.real_numbers.real_pos_within_real_nonzero
 proveit.numbers.number_sets.real_numbers.relax_IntervalCO
 proveit.numbers.number_sets.real_numbers.relax_IntervalOC
+proveit.numbers.number_sets.real_numbers.relax_IntervalOO_left
+proveit.numbers.number_sets.real_numbers.relax_IntervalOO_left_right
+proveit.numbers.number_sets.real_numbers.relax_IntervalOO_right
 proveit.numbers.number_sets.real_numbers.zero_is_nonneg_real
 proveit.numbers.number_sets.real_numbers.zero_is_nonpos_real
 proveit.numbers.number_sets.real_numbers.zero_is_real
@@ -278,6 +298,7 @@ proveit.numbers.number_sets.real_numbers.zero_set_within_real
 proveit.numbers.number_sets.real_numbers.zero_set_within_real_nonneg
 proveit.numbers.number_sets.real_numbers.zero_set_within_real_nonpos
 proveit.numbers.numerals.decimals.add_1_1
+proveit.numbers.numerals.decimals.add_2_2
 proveit.numbers.numerals.decimals.less_0_1
 proveit.numbers.numerals.decimals.less_1_2
 proveit.numbers.numerals.decimals.less_2_3
@@ -322,14 +343,14 @@ proveit.numbers.ordering.symmetric_less_eq
 proveit.numbers.ordering.transitivity_less_eq_less
 proveit.numbers.ordering.transitivity_less_eq_less_eq
 proveit.numbers.ordering.transitivity_less_less_eq
-proveit.physics.quantum.QPE._all_alpha_l_is_complex
-proveit.physics.quantum.QPE._alpha_b_plus_l_summed
+proveit.physics.quantum.QPE._alpha_are_complex
+proveit.physics.quantum.QPE._alpha_summed
 proveit.physics.quantum.QPE._best_floor_is_int
-proveit.physics.quantum.QPE._delta_b_diff_exp_not_one
 proveit.physics.quantum.QPE._delta_b_floor_diff_in_interval
 proveit.physics.quantum.QPE._delta_b_is_real
 proveit.physics.quantum.QPE._delta_b_not_eq_scaledNonzeroInt
 proveit.physics.quantum.QPE._mod_add_closure
+proveit.physics.quantum.QPE._non_int_delta_b_diff
 proveit.physics.quantum.QPE._scaled_abs_delta_b_floor_diff_interval
 proveit.physics.quantum.QPE._scaled_delta_b_floor_in_interval
 proveit.physics.quantum.QPE._scaled_delta_b_not_eq_nonzeroInt
