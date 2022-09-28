@@ -475,10 +475,10 @@ class Equals(EquivRelation):
         reported = set([expr])
         for eq_judgment in known_equalities:
             if eq_judgment.is_applicable(assumptions):
-                for expr in (eq_judgment.lhs, eq_judgment.rhs):
-                    if expr not in reported:
-                        reported.add(expr)
-                        yield expr
+                for _expr in (eq_judgment.lhs, eq_judgment.rhs):
+                    if _expr not in reported:
+                        reported.add(_expr)
+                        yield _expr
         if include_canonical_forms:
             cf = expr.canonical_form()
             for expr in Expression.canonical_form_to_exprs[cf]:

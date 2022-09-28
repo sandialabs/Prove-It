@@ -142,6 +142,12 @@ class ModAdd(Operation):
         _a, _b = self.operands
         return _mod_add_closure.instantiate({a:_a, b:_b})
 
+    def readily_provable_number_set(self):
+        from . import _two_pow_t
+        from proveit.numbers import Mod, Add
+        return Mod(Add(self.operands[0], self.operands[1]),
+                   _two_pow_t).readily_provable_number_set()
+        
     @prover
     def deduce_in_number_set(self, number_set, **defaults_config):
         interval_membership = self.deduce_in_interval()

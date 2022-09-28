@@ -344,6 +344,16 @@ class InClass(Relation):
         except BaseException:
             pass
         return evaluation
+
+    def _deduce_canonically_equal(self, rhs):
+        '''
+        Call _deduce_canonically_equal on the membership obect if there
+        is one.
+        '''
+        if hasattr(self, 'membership_object'):
+            return self.membership_object._deduce_canonically_equal(rhs)
+        else:
+            return Relation._deduce_canonically_equal(self, rhs)
     
     @staticmethod
     def check_proven_class_membership(membership, element, class_of_class):
