@@ -351,9 +351,11 @@ class InClass(Relation):
         is one.
         '''
         if hasattr(self, 'membership_object'):
-            return self.membership_object._deduce_canonically_equal(rhs)
-        else:
-            return Relation._deduce_canonically_equal(self, rhs)
+            try:
+                return self.membership_object._deduce_canonically_equal(rhs)
+            except NotImplementedError:
+                pass
+        return Relation._deduce_canonically_equal(self, rhs)
     
     @staticmethod
     def check_proven_class_membership(membership, element, class_of_class):
@@ -453,12 +455,13 @@ class ClassMembership:
 
     def _deduce_canonically_equal(self, rhs):
         '''
-        Equate 'self' to the 'rhs' via the definition.
+        Equate 'self' to the 'rhs' via the definition.  Raises 
+        NotImplementedError if 'definition' is not implemented.
         '''
         definition = self.definition()
         def_eq_rhs = definition.deduce_canonically_equal(rhs)
         return definition.apply_transitivity(def_eq_rhs)
-
+        
     def readily_in_bool(self, **defaults_config):
         '''
         Unless this is overridden, we won't presume that the membership
