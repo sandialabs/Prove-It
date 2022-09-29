@@ -26,6 +26,17 @@ class EquivRelation(TransitiveRelation):
             self.normal_lhs, OrderedSet()).add(judgment)
         self.__class__.known_equivalences.setdefault(
             self.normal_rhs, OrderedSet()).add(judgment)
+
+
+    @classmethod
+    def WeakRelationClass(cls):
+        # An EquivRelation is the strong and weak form of itself.
+        return cls
+
+    @classmethod
+    def StrongRelationClass(cls):
+        # An EquivRelation is the strong and weak form of itself.
+        return cls
     
     @classmethod
     def known_relations_from_left(RelationClass, expr, *, 

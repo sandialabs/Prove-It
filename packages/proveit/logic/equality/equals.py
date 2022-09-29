@@ -454,14 +454,6 @@ class Equals(EquivRelation):
     """
 
     @staticmethod
-    def WeakRelationClass():
-        return Equals  # = is the strong and weak form of equality,
-
-    @staticmethod
-    def StrongRelationClass():
-        return Equals  # = is the strong and weak form of equality,
-
-    @staticmethod
     def yield_directly_known_eq_exprs(expr, *, assumptions=USE_DEFAULTS,
                                       include_canonical_forms=True):
         '''
