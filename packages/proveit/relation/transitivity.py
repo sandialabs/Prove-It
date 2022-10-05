@@ -53,9 +53,24 @@ class TransitiveRelation(Relation):
             self.normal_lhs, OrderedSet()).add(judgment)
         self.__class__.known_right_sides.setdefault(
             self.normal_rhs, OrderedSet()).add(judgment)
+    
+    def _readily_provable(self, *, check_transitive_pair=True):
+        '''
+        If check_transitive_pair is True, we will return True if
+        we can find a combination of a known plus a provable pair
+        of relations that is a transitive decomposition of this 
+        relation.  For example, for "a < c" it may return
+        (a < b, b < c) as a transitive decomposition if one is known
+        and the other is provable.
+        '''
+        if check_transitive_pair:
+            transitive_pair = self.known_plus_provable_transitive_pair()
+            if transitive_pair is not None:
+                return True
+        return False
 
     @prover
-    def conclude(self, **defaults_config):
+    def conclude(self, check_transitive_pair=True, **defaults_config):
         '''
         Try to conclude the TransitivityRelation using other
         TransitivityRelations or Equals that are known to be true via transitivity.
@@ -63,6 +78,13 @@ class TransitiveRelation(Relation):
         truths (under the given assumptions), we can conclude that
         a<d (under these assumptions).
         '''
+        if check_transitive_pair:
+            transitive_pair = self.known_plus_provable_transitive_pair()
+            if transitive_pair is not None:
+                # Prove via transitivity from a known relation and a
+                # readily provable relation.
+                transitive_pair[0].apply_transitivity(transitive_pair[1])
+                return self.prove() # relax if needed.
         try:
             # Try to conclude via simplification of each side.
             return Relation.conclude(self)
@@ -121,10 +143,14 @@ class TransitiveRelation(Relation):
         Weak relations will only be yielded if this is a weak
         relation class.
         '''
+        from proveit.logic import Equals
         equiv_class = RelationClass.EquivalenceClass()
         # equivalence relationships are strongest and should come first.
+        _kwargs = {'assumptions':assumptions}
+        if equiv_class==Equals: 
+            _kwargs['include_canonical_forms'] = False
         equiv_left_relations = equiv_class.known_relations_from_left(
-            expr, assumptions=assumptions)
+            expr, **_kwargs)
         for (judgment, other_expr) in equiv_left_relations:
             if expr != other_expr:  # exclude reflexive equations -- they don't count
                 yield (judgment, other_expr)
@@ -162,6 +188,71 @@ class TransitiveRelation(Relation):
                 for judgment in list(_Relation.known_right_sides.get(expr, [])):
                     if judgment.is_applicable(assumptions):
                         yield (judgment, judgment.normal_lhs)
+
+    def known_plus_provable_transitive_pair(self):
+        '''
+        Find and return a pair of relations that form a transitive
+        decomposition of this relation in which one of the relations
+        is known and the other is readily provable under default
+        assumptions.  For example, if self is "a < c", "a < b" is known,
+        and "b < c" is provable, it may return (a < b, b < c).  If no 
+        such pair is found, return None.
+        
+        To keep this manageable and relevant, known relations starting 
+        from irreducible values are not considered.  We also skip
+        relations with the same canonical form (e.g., trivial 
+        equalities).
+        '''
+        from proveit.logic import is_irreducible_value
+        MyClass = type(self)
+        WeakRelationClass = type(self).WeakRelationClass()
+        if not is_irreducible_value(self.normal_lhs):
+            for relation, _ in WeakRelationClass.known_relations_from_left(
+                    self.normal_lhs):
+                if (relation.lhs.canonical_form()==
+                        relation.rhs.canonical_form()):
+                    continue
+                completing_relation = MyClass(relation.normal_rhs, 
+                                              self.normal_rhs)
+                if completing_relation.readily_provable(
+                        check_transitive_pair=False):
+                    return (relation, completing_relation)
+        if not is_irreducible_value(self.normal_rhs):
+            for relation, _ in WeakRelationClass.known_relations_from_right(
+                    self.normal_rhs):
+                if (relation.lhs.canonical_form()==
+                        relation.rhs.canonical_form()):
+                    continue
+                completing_relation = MyClass(self.normal_lhs, 
+                                              relation.normal_lhs)
+                if completing_relation.readily_provable(
+                        check_transitive_pair=False):
+                    return (relation, completing_relation)
+        if WeakRelationClass is MyClass:
+            # Trying to prove a weak relation; we check weak relations
+            # so we are don.
+            return None
+        # Trying to prove a strong relation.  We check a combination
+        # of a known weak relation and a provable strong relation.  Now
+        # check for a known strong relation and provable weak relation.
+        if not is_irreducible_value(self.normal_lhs):
+            for relation, _ in MyClass.known_relations_from_left(
+                    self.normal_lhs):
+                if not isinstance(relation, MyClass): continue
+                completing_relation = WeakRelationClass(relation.normal_rhs, 
+                                                        self.normal_rhs)
+                if completing_relation.readily_provable(
+                        check_transitive_pair=False):
+                    return (relation, completing_relation)
+        if not is_irreducible_value(self.normal_rhs):
+            for relation, _ in MyClass.known_relations_from_right(
+                    self.normal_rhs):
+                if not isinstance(relation, MyClass): continue
+                completing_relation = WeakRelationClass(self.normal_lhs, 
+                                                        relation.normal_lhs)
+                if completing_relation.readily_provable(
+                        check_transitive_pair=False):
+                    return (relation, completing_relation)
 
     @prover
     def apply_transitivity(self, other, **defaults_config):

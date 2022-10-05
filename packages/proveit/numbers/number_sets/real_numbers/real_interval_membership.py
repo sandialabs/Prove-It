@@ -27,8 +27,18 @@ class RealIntervalMembership(NumberMembership):
         is readily known to be Real and it's readily known to be 
         within the interval range.
         '''
+        from proveit.logic import SubsetEq
+        from proveit.numbers import readily_provable_number_set
+        domain = self.domain
         _x = self.element
-        lb, ub = self.domain.member_bounds(_x)
+        try:
+            elem_ns = readily_provable_number_set(_x)
+        except UnsatisfiedPrerequisites:
+            elem_ns = None
+        if elem_ns is not None:
+            if SubsetEq(elem_ns, domain).readily_provable():
+                return True
+        lb, ub = domain.member_bounds(_x)
         return InSet(_x, Real).readily_provable() and (
                 lb.readily_provable() and ub.readily_provable())
 
@@ -40,14 +50,18 @@ class RealIntervalMembership(NumberMembership):
         [element in IntervalCC(lower_bound, upper_bound)] (and
         similarly for strict upper and/or lower bounds).
         '''
+        from proveit.logic import SubsetEq
+        from proveit.numbers import (readily_provable_number_set,
+                                     deduce_in_number_set)
+        domain = self.domain
         element = self.element
-        if hasattr(element, 'deduce_in_number_set'):
-            try:
-                return element.deduce_in_number_set(self.domain)
-            except (NotImplementedError, UnsatisfiedPrerequisites):
-                # If that didn't work, try 'deduce_elem_in_set'.
-                pass
-        return self.domain.deduce_elem_in_set(self.element)
+        elem_ns = readily_provable_number_set(element)
+        if elem_ns == domain:
+            return deduce_in_number_set(element, domain)
+        sub_rel = SubsetEq(elem_ns, domain)
+        if sub_rel.readily_provable():
+            return sub_rel.derive_superset_membership(element)
+        return domain.deduce_elem_in_set(element)
 
     def side_effects(self, judgment):
         '''

@@ -25,14 +25,16 @@ class NumberOrderingRelation(TransitiveRelation):
         if hasattr(self, 'derive_relaxed'):
             yield self.derive_relaxed
 
-    def _readily_provable(self, *, check_number_sets=True):
+    def _readily_provable(self, *, check_number_sets=True,
+                          must_be_direct=False,
+                          check_transitive_pair=True):
         from .less import Less
         from .less_eq import LessEq
         from proveit.numbers import (
                 zero, Add, Neg, greater, greater_eq, one,
                 NaturalPos, IntegerNeg, IntegerNonPos, 
                 less_numeric_rationals, less_eq_numeric_rationals,
-                RealPos, RealNeg, RealNonNeg, RealNonPos,
+                RealPos, RealNeg, RealNonNeg, RealNonPos, Complex,
                 readily_provable_number_set, is_numeric_rational, 
                 less_numeric_rationals, less_eq_numeric_rationals)
         lower, upper = self.lower, self.upper
@@ -50,22 +52,27 @@ class NumberOrderingRelation(TransitiveRelation):
                 Equals(self.lhs, self.rhs).readily_provable()):
             # LessEq via Equal.
             return True
-        judgment = self.known_similar_but_possibly_stronger_bound()
-        if judgment is not None:
-            # There is a similar but possibly stronger bound we can
-            # derive this one from.
-            return True
+        if not must_be_direct:
+            judgment = self.known_similar_but_possibly_stronger_bound()
+            if judgment is not None:
+                # There is a similar but possibly stronger bound we can
+                # derive this one from.
+                return True
+
         if not check_number_sets:
             return False
+        if check_transitive_pair:
+            if TransitiveRelation._readily_provable(self):
+                return True
         
         # See if we can determine the validity of the inequality
         # based upon provable number sets and how they relate to zero.
         
         # _check_order_against_zero=False to avoid infinite recursion.
         lower_ns = readily_provable_number_set(
-                    lower, _check_order_against_zero=False)
+                    lower, default=Complex, _check_order_against_zero=False)
         upper_ns = readily_provable_number_set(
-                    upper, _check_order_against_zero=False)
+                    upper, default=Complex, _check_order_against_zero=False)
         if isinstance(self, LessEq):
             if is_numeric_rational(lower) and (
                     less_eq_numeric_rationals(lower, one)
@@ -101,8 +108,20 @@ class NumberOrderingRelation(TransitiveRelation):
                 self.lower in self.upper.terms.entries)):
             TODO
         """
+        
         return False
-    
+
+    def _readily_disprovable(self, *, check_number_sets=True,
+                          must_be_direct=False,
+                          check_transitive_pair=True):
+        from .less import Less
+        from .less_eq import LessEq
+        if isinstance(self, Less) and (
+                LessEq(self.normal_rhs, self.normal_lhs).readily_provable()):
+            # Not(x < y) via x ≥ y.
+            return True
+        return False
+        
     @prover
     def conclude(self, **defaults_config):
         '''
@@ -123,6 +142,10 @@ class NumberOrderingRelation(TransitiveRelation):
         ''' 
         if judgment is not None:
             return self.conclude_from_similar_bound(judgment)
+        if self._readily_provable(check_transitive_pair=False):
+            # Provable via number sets -- so there should be a
+            # transitive relation.
+            return self.conclude_via_transitivity()
         # Explore transitive relations as a last resort.
         return TransitiveRelation.conclude(self)
         
@@ -139,6 +162,12 @@ class NumberOrderingRelation(TransitiveRelation):
                                      less_eq_numeric_rationals,
                                      less_numeric_rationals)
         canonical_form = self.canonical_form()
+        desired_bound = canonical_form.rhs
+        if not is_numeric_rational(desired_bound):
+            # If the canonical form doesn't have a numeric rational on
+            # the right side, then this is something trivially either
+            # true or not true.
+            return None
         is_weak = isinstance(self, LessEq)
         if is_weak:
             # x ≤ a, a ≤ b => x ≤ b
@@ -158,7 +187,6 @@ class NumberOrderingRelation(TransitiveRelation):
                 else:
                     # rescaled version.
                     return self.__class__(zero, one)
-        desired_bound = canonical_form.rhs
         known_strong_bounds = Less.known_canonical_bounds.get(
                 canonical_form.normal_lhs, tuple())
         known_weak_bounds = LessEq.known_canonical_bounds.get(
@@ -168,13 +196,15 @@ class NumberOrderingRelation(TransitiveRelation):
         for judgment, strong_bound in known_strong_bounds:
             if judgment.is_applicable():
                 if (strong_bound == desired_bound or 
-                        less_eq_numeric_rationals(strong_bound, 
-                                                  desired_bound)):
+                        (is_numeric_rational(strong_bound) and
+                         less_eq_numeric_rationals(strong_bound, 
+                                                   desired_bound))):
                     return judgment
         for judgment, weak_bound in known_weak_bounds:
             if judgment.is_applicable():
                 if ((is_weak and weak_bound == desired_bound) or 
-                        comparator(weak_bound, desired_bound)):
+                        (is_numeric_rational(weak_bound) and 
+                         comparator(weak_bound, desired_bound))):
                     return judgment
         return None
 
@@ -373,22 +403,22 @@ class NumberOrderingRelation(TransitiveRelation):
         
         if lhs == zero:
             # Special case involving only numeric rationals (after
-            # cancelations, possibly).            
-            if not is_numeric_rational(canonical_rhs):
+            # cancelations, possibly).
+            if rhs == zero or isinstance(rhs, Neg):
+                # This is something trivial like 5 <= 5 or
+                # something untrue like 6 < 5; let's keep it close 
+                # to the original.
+                return (self.__class__(canonical_lhs, canonical_rhs), 
+                        one)
+            elif not is_numeric_rational(canonical_rhs):
                 # For example, x < x + 2 converts to 0 < 1 with 2 as
                 # the inverse scale factor.
                 return self.__class__(zero, one), rhs                
-            if not reduce_numeric_rational_form:
+            elif not reduce_numeric_rational_form:
                 # Just use the canonical forms of each side with no
                 # further manipulation.
                 return self.__class__(canonical_lhs, canonical_rhs), one
             else:
-                if rhs == zero or isinstance(rhs, Neg):
-                    # This is something trivial like 5 <= 5 or
-                    # something untrue like 6 < 5; let's keep it close 
-                    # to the original.
-                    return (self.__class__(canonical_lhs, canonical_rhs), 
-                            one)
                 if is_numeric_int(rhs):
                     # For example, -2 < 5 converts to 0 < 7
                     return self.__class__(zero, rhs), one

@@ -26,18 +26,21 @@ from .absolute_value import Abs
 from .numerals import (num, Numeral, DecimalSequence, Digits, DIGITS,
                        BinarySequence, Bit, BITS, 
                        is_numeric_natural, is_numeric_int, 
-                       is_numeric_rational, numeric_rational_ints,
+                       is_numeric_rational,
+                       numeric_rational_ints,
                        simplified_numeric_rational,
                        less_numeric_ints,
                        less_eq_numeric_ints,
                        less_numeric_rationals,
-                       less_eq_numeric_rationals)
+                       less_eq_numeric_rationals,
+                       not_equal_numeric_rationals,
+                       deduce_not_equal_numeric_rationals)
 from .numerals import zero, one, two, three, four, five, six, seven, eight, nine, hexa, hexb, hexc, hexd, hexe, hexf
 from .addition import (Add, subtract, dist_subtract, dist_add)
 from .negation import Neg, negated
 from .ordering import (NumberOrderingRelation, number_ordering,
                        Less, LessEq, greater, greater_eq, Min, Max)
-from .multiplication import Mult
+from .multiplication import Mult, compose_factors
 from .division import Div, frac
 from .divisibility import Divides, DividesProper, GCD
 from .modular import Mod, ModAbs

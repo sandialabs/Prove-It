@@ -71,12 +71,16 @@ class SetEquiv(EquivRelation):
         '''
         yield self.deduce_not_equiv  # A not_equiv B from not(A equiv B)
 
-    def _readily_provable(self):
+    def _readily_provable(self, check_transitive_pair=True):
         from proveit import safe_dummy_var
         from proveit.logic import Equals, Forall, InSet
         lhs, rhs = self.lhs, self.rhs
         if Equals(lhs, rhs).readily_provable():
             return True
+        if EquivRelation._readily_provable(
+                self, check_transitive_pair=check_transitive_pair):
+            return True
+
         # No worry about conflicts with assumptions because the 
         # variable will be bound by a quantifier:
         _x = safe_dummy_var(self, avoid_default_assumption_conflicts=False)

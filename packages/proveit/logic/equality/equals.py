@@ -111,7 +111,8 @@ class Equals(EquivRelation):
         '''
         yield self.deduce_not_equals  # A != B from not(A=B)
 
-    def _readily_provable(self, try_readily_equal=True):
+    def _readily_provable(self, try_readily_equal=True,
+                          check_transitive_pair=None):
         '''
         Return True iff this equality is readily provable:
             * The lhs and rhs have the same canonical form;
@@ -123,6 +124,11 @@ class Equals(EquivRelation):
               provably boolean.
             * There is a known (indirect) equality through the known
               equalities and/or canonical forms.
+        'check_transitive_pair' isn't used since this is already
+        essentially more powerful via indirect known equalities and/or
+        canonical forms (this should be revisited/tested to make sure
+        we can conclude everything that is readily provable and that
+        this isn't too slow).
         '''
         from proveit.logic import TRUE, FALSE, Iff, in_bool
         lhs, rhs = self.lhs, self.rhs
@@ -217,7 +223,8 @@ class Equals(EquivRelation):
 
         # Try to prove equality via standard EquiRelation
         # strategies (simplify both sides then try transitivity).
-        return EquivRelation.conclude(self)
+        return EquivRelation.conclude(self,
+                                      check_transitive_pair=False)
 
     @prover
     def conclude_negation(self, **defaults_config):
@@ -447,14 +454,6 @@ class Equals(EquivRelation):
     """
 
     @staticmethod
-    def WeakRelationClass():
-        return Equals  # = is the strong and weak form of equality,
-
-    @staticmethod
-    def StrongRelationClass():
-        return Equals  # = is the strong and weak form of equality,
-
-    @staticmethod
     def yield_directly_known_eq_exprs(expr, *, assumptions=USE_DEFAULTS,
                                       include_canonical_forms=True):
         '''
@@ -468,10 +467,10 @@ class Equals(EquivRelation):
         reported = set([expr])
         for eq_judgment in known_equalities:
             if eq_judgment.is_applicable(assumptions):
-                for expr in (eq_judgment.lhs, eq_judgment.rhs):
-                    if expr not in reported:
-                        reported.add(expr)
-                        yield expr
+                for _expr in (eq_judgment.lhs, eq_judgment.rhs):
+                    if _expr not in reported:
+                        reported.add(_expr)
+                        yield _expr
         if include_canonical_forms:
             cf = expr.canonical_form()
             for expr in Expression.canonical_form_to_exprs[cf]:

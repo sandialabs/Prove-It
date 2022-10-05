@@ -695,11 +695,11 @@ class Sum(OperationOverInstances):
         if isinstance(summand_relation.instance_expr, LessEq):
             # Use weak form
             sum_rel_impl = weak_summation_from_summands_bound.instantiate(
-                    {a:_a, b:_b, S:_S})
+                    {a:_a, b:_b, S:_S}, preserve_all=True)
         else:
             # Use strong form
             sum_rel_impl = strong_summation_from_summands_bound.instantiate(
-                    {a:_a, b:_b, S:_S})
+                    {a:_a, b:_b, S:_S}, preserve_all=True)
         sum_relation = sum_rel_impl.derive_consequent()
         if summand_lambda == greater_lambda:
             return sum_relation.with_direction_reversed()

@@ -37,7 +37,8 @@ class Mult(NumberOperation):
     _simplification_directives_ = SimplificationDirectives(
             ungroup=True, 
             combine_numeric_rationals=True,
-            combine_exponents=True,
+            combine_numeric_rational_exponents=True,
+            combine_all_exponents=False,
             distribute_numeric_rational=False,
             # By default, sort such that numeric, rationals come first 
             # but otherwise maintain the original order.
@@ -442,10 +443,12 @@ class Mult(NumberOperation):
                     continue
             zero_relation_number_set = Complex
 
-        if zero_relation_number_set is None:
-            raise UnsatisfiedPrerequisites(
-                    "No readily provable number set for %s"%self)
         major_number_set = union_number_set(*major_number_sets)
+        if major_number_set != Complex and zero_relation_number_set == Complex:
+            zero_relation_number_set = Real
+        if major_number_set != Complex and (
+                zero_relation_number_set == ComplexNonZero):
+            zero_relation_number_set = RealNonZero
         return number_set_map[(major_number_set, zero_relation_number_set)]
 
     @prover
@@ -503,9 +506,11 @@ class Mult(NumberOperation):
         If ungroup is true, dissociate nested multplications.
         If combine_numeric_rationals is true, multiply numeric rational
         factors into an evaluated numeric rational constant.
-        If combine_exponents is true, combine exponents of factors 
-        with a common base raised to a numeric rational power (or 
-        implicitly a power of 1).
+        If combine_numeric_rational_exponents is true, combine exponents
+        of factors with a common base raised to a numeric rational power
+        (or implicitly a power of 1).
+        If combine_all_exponents is true, exponents with a common base
+        will be combined for any type of exponents.
         Sort factors according to order_key_fn where the key is the
         base that may be raised to a numeric rational power.
         Eliminate any factors of one, and simplify to zero if there is
@@ -626,13 +631,19 @@ class Mult(NumberOperation):
                 "Cabability to evaluate %s is not implemented"%expr)
 
         order_key_fn = Mult._simplification_directives_.order_key_fn
-        if Mult._simplification_directives_.combine_exponents:
+        combine_all_exponents = (
+                Mult._simplification_directives_.combine_all_exponents)
+        if combine_all_exponents or (
+                Mult._simplification_directives_
+                .combine_numeric_rational_exponents):
             # Like factors are ones that are implicit/explicit
             # exponentials with the same base raised to a literal, 
-            # rational power (everyting is implicitly raised to the 
+            # rational power (everything is implicitly raised to the 
             # power of 1).
             def likeness_key_fn(factor):
-                if isinstance(factor, Exp):
+                if isinstance(factor, Exp) and (
+                        combine_all_exponents or is_numeric_rational(
+                                factor.exponent)):
                     return factor.base
                 else:
                     return factor
@@ -667,7 +678,7 @@ class Mult(NumberOperation):
             # If there are exactly two factors and one is an Add and
             # the other is a numeric literal, distribute over the Add.
             if expr.operands.is_double():
-                _a, _b = self.operands
+                _a, _b = expr.operands
                 if isinstance(_a, Add) or isinstance(_b, Add):
                     if is_numeric_rational(_a) or is_numeric_rational(_b):
                         _k = 0 if isinstance(_a, Add) else 1
@@ -1116,16 +1127,16 @@ class Mult(NumberOperation):
                     assert (isinstance(canceling_denom_expr, Mult) and
                             canceling_denom_expr.factors.is_double())
                     _b = canceling_denom_expr.factors[0]
-                if isinstance(right_factor, Div):
-                    _d = right_factor.denominator
-                else:
-                    _d = one
                 if canceling_numer_expr == term_to_cancel:
-                    _e = one
+                    _d = one
                 else:
                     assert (isinstance(canceling_numer_expr, Mult) and
                             canceling_numer_expr.factors.is_double())
-                    _e = canceling_numer_expr.factors[1]
+                    _d = canceling_numer_expr.factors[1]
+                if isinstance(right_factor, Div):
+                    _e = right_factor.denominator
+                else:
+                    _e = one
                 cancelation = mult_frac_cancel_denom_left.instantiate(
                     {a: _a, b: _b, c: _c, d: _d, e: _e})
             # Eliminate ones in the cancelation; it should now
@@ -1824,8 +1835,14 @@ class Mult(NumberOperation):
                 # of distributing an exponent.
                 _new_prod = Mult(*factor_bases)
                 _new_exp = Exp(_new_prod, factor_exponents[0])
+                replacements = []
+                if defaults.auto_simplify:
+                    _new_exp_simp = _new_exp.simplification()
+                    if _new_exp_simp.lhs != _new_exp_simp.rhs:
+                       replacements.append(_new_exp_simp)
                 try:
-                    return _new_exp.distribution().derive_reversed()
+                    return _new_exp.distribution().derive_reversed(
+                            replacements=replacements)
                 except Exception as the_exception:
                     raise Exception("An Exception! All factors appeared to "
                         "have the same exponent, but the Exp.distribution() "
@@ -2050,6 +2067,16 @@ class Mult(NumberOperation):
         InSet(self, RealPos).prove()
         return greater(self, zero).prove()
 
+def compose_factors(*factors):
+    '''
+    Return the Mult of the factors if there are multiple factors,
+    or a single factor as appropriate.
+    '''
+    if len(factors) == 0:
+        return one
+    elif len(factors) == 1:
+        return factors[0]
+    return Mult(*factors)
 
 def coefficient_and_remainder(expr):
     '''

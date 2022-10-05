@@ -407,6 +407,9 @@ def readily_provable_number_set(
     if in_progress_key in Expression.in_progress_to_check_provability:
         # avoid infinite/pointless recursion by using
         # in_progress_to_check_provability
+        if default is None:
+            raise UnsatisfiedPrerequisites(
+                "No readily provable number set for %s"%expr)
         return default
 
     try:
@@ -428,6 +431,10 @@ def readily_provable_number_set(
                     best_known_number_set = number_set
     
         if best_known_number_set is None:
+            if default is None:
+                raise UnsatisfiedPrerequisites(
+                    "No readily provable number set for %s"%expr)
+
             return default
     
         if isinstance(expr, ExprRange):
@@ -445,18 +452,23 @@ def readily_provable_number_set(
         if _check_order_against_zero:
             if number_set in pos_number_set and (
                     Less(zero, expr).readily_provable(
-                            check_number_sets=False)): # positive
+                            check_number_sets=False,
+                            must_be_direct=must_be_direct)): # positive
                 number_set = pos_number_set[number_set]
             elif number_set in neg_number_set and (
                     Less(expr, zero).readily_provable(
-                            check_number_sets=False)): # negative
+                            check_number_sets=False,
+                            must_be_direct=must_be_direct)): # negative
                 number_set = neg_number_set[number_set]
             elif number_set in nonneg_number_set and (
-                    LessEq(zero, expr).readily_provable()): # non-negative
+                    LessEq(zero, expr).readily_provable(
+                            check_number_sets=False,
+                            must_be_direct=must_be_direct)): # non-negative
                 number_set = nonneg_number_set[number_set]
             elif number_set in nonpos_number_set and (
                     LessEq(expr, zero).readily_provable(
-                            check_number_sets=False)): # non-positive
+                            check_number_sets=False,
+                            must_be_direct=must_be_direct)): # non-positive
                 number_set = nonpos_number_set[number_set]
 
         if number_set in nonzero_number_set and (

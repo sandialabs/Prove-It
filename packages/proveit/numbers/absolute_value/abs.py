@@ -80,10 +80,9 @@ class Abs(NumberOperation):
         |x| = -x (for operand_type = 'negative'). Assumptions may be
         needed to deduce x >= 0 or x <= 0, respectively.
         '''
-        from proveit.numbers import LessEq, zero, deduce_number_set
         from . import abs_non_neg_elim, abs_neg_elim
+        from proveit.numbers import LessEq, zero
         operand = self.operand
-        deduce_number_set(operand)
         if LessEq(zero, operand).readily_provable():
             return abs_non_neg_elim.instantiate({x: operand})
         elif LessEq(operand, zero).readily_provable():
@@ -131,7 +130,8 @@ class Abs(NumberOperation):
         '''
         from proveit.logic import Equals
         from proveit.numbers import zero, e, Add, Neg, LessEq, Mult, Div, Exp
-        from proveit.numbers import RealNeg, RealPos, RealNonNeg, RealNonPos
+        from proveit.numbers import (
+                RealNeg, RealPos, RealNonNeg, RealNonPos, Complex)
         from proveit.logic import EvaluationError, is_irreducible_value
         from proveit.trigonometry import Cos, Sin
                 
@@ -151,7 +151,8 @@ class Abs(NumberOperation):
 
         # Check if we have an established relationship between
         # self.operand and zero.
-        operand_ns = readily_provable_number_set(self.operand)
+        operand_ns = readily_provable_number_set(self.operand, 
+                                                 default=Complex)
         if RealNonPos.readily_includes(operand_ns) or (
                 RealNonNeg.readily_includes(operand_ns)):
             # Either |x| = x or |x| = -x depending upon the sign
@@ -307,7 +308,8 @@ class Abs(NumberOperation):
             Rational, RationalNonZero, RationalPos,
             RationalNonNeg, Real, RealNonNeg, RealPos, RealNonZero,
             ComplexNonZero, Complex)
-        operand_ns = readily_provable_number_set(self.operand)
+        operand_ns = readily_provable_number_set(self.operand,
+                                                 default=Complex)
         if operand_ns is None: return None
         if operand_ns == ZeroSet: return ZeroSet
         if IntegerNonZero.readily_includes(operand_ns):
@@ -325,8 +327,7 @@ class Abs(NumberOperation):
         if ComplexNonZero.readily_includes(operand_ns):
             return RealPos
         return RealNonNeg
-        
-
+    
     @equality_prover('unit_length_simplified', 'unit_length_simplify')
     def unit_length_simplification(self, **defaults_config):
         '''

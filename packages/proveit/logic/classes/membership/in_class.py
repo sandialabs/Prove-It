@@ -344,6 +344,18 @@ class InClass(Relation):
         except BaseException:
             pass
         return evaluation
+
+    def _deduce_canonically_equal(self, rhs):
+        '''
+        Call _deduce_canonically_equal on the membership obect if there
+        is one.
+        '''
+        if hasattr(self, 'membership_object'):
+            try:
+                return self.membership_object._deduce_canonically_equal(rhs)
+            except NotImplementedError:
+                pass
+        return Relation._deduce_canonically_equal(self, rhs)
     
     @staticmethod
     def check_proven_class_membership(membership, element, class_of_class):
@@ -441,6 +453,15 @@ class ClassMembership:
             "Membership object, %s, has no 'as_defined' method implemented" % str(
                 self.__class__))
 
+    def _deduce_canonically_equal(self, rhs):
+        '''
+        Equate 'self' to the 'rhs' via the definition.  Raises 
+        NotImplementedError if 'definition' is not implemented.
+        '''
+        definition = self.definition()
+        def_eq_rhs = definition.deduce_canonically_equal(rhs)
+        return definition.apply_transitivity(def_eq_rhs)
+        
     def readily_in_bool(self, **defaults_config):
         '''
         Unless this is overridden, we won't presume that the membership

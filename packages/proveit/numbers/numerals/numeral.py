@@ -1,5 +1,6 @@
 from proveit import (defaults, Literal, Operation, ProofFailure, 
-                     UnsatisfiedPrerequisites, USE_DEFAULTS, prover)
+                     UnsatisfiedPrerequisites, USE_DEFAULTS, 
+                     relation_prover, prover)
 from proveit.logic import IrreducibleValue, Equals, NotEquals
 from proveit import a, b
 import math
@@ -36,20 +37,21 @@ class Numeral(Literal, IrreducibleValue):
         Return True iff self and other are numeric rationals that are
         not equal to each other.
         '''
-        return not_equal_numeric_rationals(self, other)
+        return not_equal_numeric_rationals(self, other.canonical_form())
 
-    @prover
+    @relation_prover
     def deduce_not_equal(self, other, **defaults_config):
-        from proveit.numbers import Less
-        from proveit.numbers.ordering import less_is_not_eq
-        _a, _b = Less.sorted_items([self, other])
-        not_eq_stmt = less_is_not_eq.instantiate({a: _a, b: _b})
-        if not_eq_stmt.lhs != self:
-            # We need to reverse the statement.
-            return not_eq_stmt.derive_reversed()
-        return not_eq_stmt
+        '''
+        Prove and return self ≠ other if other is a numeric
+        rational.
+        '''
+        if is_numeric_rational(other):
+            return deduce_not_equal_numeric_rationals(self, other)
+        raise NotImplementedError(
+                "Numeral.deduce_not_equal only implemented for "
+                "comparing numeric rationals, not %s"%other)
     
-    @prover
+    @relation_prover
     def deduce_equal_or_not(self, other, **defaults_config):
         from proveit.numbers import Less
         relation = Less.sort([self, other]).expr
@@ -442,8 +444,9 @@ def _compare_numeric_rationals(a, b, comparator):
     Helper for less_numeric_rationals and less_eq_numeric_rationals.
     '''
     if not (is_numeric_rational(a) and is_numeric_rational(b)):
-        raise ValueError("Both arguments to 'less_numeric_ints' should "
-                         "be numeric ints, got %s and %s"%(a, b))
+        raise ValueError(
+                "Both arguments to '_compare_numeric_rationals' should "
+                "be numeric rationals, got %s and %s"%(a, b))
     a_numer, a_denom = numeric_rational_ints(a)
     b_numer, b_denom = numeric_rational_ints(b)
     assert a_denom > 0
@@ -464,3 +467,20 @@ def less_eq_numeric_rationals(a, b):
     a and b must be numeric rational expressions.
     '''
     return _compare_numeric_rationals(a, b, lambda x, y: x <= y)
+
+@prover
+def deduce_not_equal_numeric_rationals(lhs, rhs, **defaults_config):
+    '''
+    Assuming a and b are numeric rationals, prove and return that
+    a ≠ b.
+    '''
+    from proveit.numbers.ordering import less_is_not_eq
+    if less_numeric_rationals(lhs.canonical_form(), rhs.canonical_form()):
+        _a, _b = lhs, rhs
+    else:
+        _a, _b = rhs, lhs
+    not_eq_stmt = less_is_not_eq.instantiate({a: _a, b: _b})
+    if not_eq_stmt.lhs != lhs:
+        # We need to reverse the statement.
+        return not_eq_stmt.derive_reversed()
+    return not_eq_stmt

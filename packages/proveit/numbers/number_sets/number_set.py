@@ -234,9 +234,11 @@ class NumberMembership(SetMembership):
         '''
         from proveit.numbers import readily_provable_number_set
         element = self.element
-        provable_number_set = readily_provable_number_set(
-                element, must_be_direct=True)
-        if provable_number_set is None: return False
+        try:
+            provable_number_set = readily_provable_number_set(
+                    element, must_be_direct=True)
+        except UnsatisfiedPrerequisites:
+            return False
         return self.number_set.readily_includes(provable_number_set)
 
     @prover
@@ -268,7 +270,10 @@ class NumberMembership(SetMembership):
             # If element.readily_provable_number_set returns a number
             # set included by the desired number set, then we should
             # be able to use element.deduce_in_number_set.
-            provable_number_set = element.readily_provable_number_set()                
+            try:
+                provable_number_set = element.readily_provable_number_set()                
+            except UnsatisfiedPrerequisites:
+                provable_number_set = None
             if number_set.readily_includes(provable_number_set):
                 if InSet(element, provable_number_set).proven():
                     # We already know the element is in a number set that
