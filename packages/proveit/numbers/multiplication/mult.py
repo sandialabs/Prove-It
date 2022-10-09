@@ -38,7 +38,7 @@ class Mult(NumberOperation):
             ungroup=True, 
             combine_numeric_rationals=True,
             combine_numeric_rational_exponents=True,
-            combine_all_exponents=False,
+            combine_all_exponents=True,
             distribute_numeric_rational=False,
             # By default, sort such that numeric, rationals come first 
             # but otherwise maintain the original order.
@@ -102,8 +102,7 @@ class Mult(NumberOperation):
                 numer *= factor.numerator.as_int()
                 denom *= factor.denominator.as_int()
             else:
-                if isinstance(factor, Exp) and (
-                        is_numeric_rational(factor.exponent)):
+                if isinstance(factor, Exp):
                     exponent = factor.exponent
                     base = factor.base
                 else:

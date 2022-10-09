@@ -72,7 +72,7 @@ class NumberOperation(Operation):
                 # Distribute exponents consistent with the
                 # canonical form.
                 exp_simps.distribute_exponent = True
-                # Distribute a numeric rational contant consistent with
+                # Distribute a numeric rational constant consistent with
                 # the canonical form.
                 mult_simps.distribute_numeric_rational = True
                 lhs_simplification = lhs.simplification()
