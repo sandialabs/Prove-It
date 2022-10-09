@@ -551,6 +551,7 @@ def sorting_and_combining_like_operands(
             key_to_indices[key] = [_k]
             # first come first serve:
             key_order.append(key)
+    orig_expr_type = type(expr)
     if len(key_to_indices) > 1:
         eq = TransRelUpdater(expr)
         # Reorder the terms so like terms are adjacent.
@@ -571,10 +572,15 @@ def sorting_and_combining_like_operands(
                         *expr.operands.entries[_m:_m+num_like_operands])
                 combination = (grouped_operation.combining_operands(
                         preserve_expr=preserve_expr))
-                expr = eq.update(expr.association(
-                    _m, length=len(key_to_indices[key]),
-                    replacements=[combination],
-                    auto_simplify=False))
+                if combination.lhs != combination.rhs:
+                    expr = eq.update(expr.association(
+                        _m, length=len(key_to_indices[key]),
+                        replacements=[combination],
+                        auto_simplify=False))
+                    if isinstance(combination.rhs, orig_expr_type):
+                        # Now we need to disassociate.
+                        expr = eq.update(expr.disassociation(
+                                _m, preserve_all=True))
             elif num_like_operands==1:
                 operand = expr.operands[_m]
                 if isinstance(operand, ExprRange) and (
