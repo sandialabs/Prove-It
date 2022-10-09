@@ -132,7 +132,20 @@ class IntegerNegMembership(NumberMembership):
         if (InSet(self.element, Integer).proven() and
                 Less(self.element, zero).proven()):
             return self.conclude_as_last_resort()
+        if (InSet(self.element, IntegerNonPos).proven() and
+                NotEquals(self.element, zero).readily_provable()):
+            return self.conclude_via_nonzero()
         return NumberMembership.conclude(self)
+
+    @prover
+    def conclude_via_nonzero(self, **defaults_config):
+        '''
+        Conclude element in IntegerNeg by proving it is a non-positive
+        integer and nonzero.
+        '''
+        from proveit.numbers.number_sets.integers import (
+            nonzero_nonpos_int_is_neg_int)
+        return nonzero_nonpos_int_is_neg_int.instantiate({a:self.element})
 
     @prover
     def conclude_as_last_resort(self, **defaults_config):

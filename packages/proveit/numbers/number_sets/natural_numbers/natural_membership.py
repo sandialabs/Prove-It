@@ -91,7 +91,20 @@ class NaturalPosMembership(NaturalMembership):
         if (InSet(self.element, Integer).proven() and
                 greater(self.element, zero).proven()):
             return self.conclude_as_last_resort()
+        if (InSet(self.element, Natural).proven() and
+                NotEquals(self.element, zero).readily_provable()):
+            return self.conclude_via_nonzero()
         return NumberMembership.conclude(self)
+
+    @prover
+    def conclude_via_nonzero(self, **defaults_config):
+        '''
+        Conclude element in NaturalPos by proving it is natural
+        and nonzero.
+        '''
+        from proveit.numbers.number_sets.integers import (
+            nonzero_nat_is_natural_pos)
+        return nonzero_nat_is_natural_pos.instantiate({a:self.element})
 
     @prover
     def conclude_as_last_resort(self, **defaults_config):
