@@ -509,7 +509,10 @@ class Mult(NumberOperation):
         of factors with a common base raised to a numeric rational power
         (or implicitly a power of 1).
         If combine_all_exponents is true, exponents with a common base
-        will be combined for any type of exponents.
+        will be combined for any type of exponents; as an exception,
+        if the 'factor_numeric_rational' simplification directive of 
+        Exp is enabled then numeric rationals will not be combined with
+        factors that are not numeric rationals.
         Sort factors according to order_key_fn where the key is the
         base that may be raised to a numeric rational power.
         Eliminate any factors of one, and simplify to zero if there is
