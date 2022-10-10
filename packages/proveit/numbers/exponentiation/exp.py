@@ -29,7 +29,7 @@ class Exp(NumberOperation):
     _simplification_directives_ = SimplificationDirectives(
             reduce_double_exponent = True,
             distribute_exponent = False,
-            factor_numeric_rational = True)
+            factor_numeric_rational = False)
 
     def __init__(self, base, exponent, *, styles=None):
         r'''
