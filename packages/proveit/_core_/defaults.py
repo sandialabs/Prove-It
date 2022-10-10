@@ -319,7 +319,8 @@ class TemporarySetter(object):
                                  %(attr, self._obj))
         if self._obj.__dict__[attr] == val:
             return # No change.  Nothing need be done.
-        self._original_values[attr] = self._obj.__dict__[attr]
+        if attr not in self._original_values:
+            self._original_values[attr] = self._obj.__dict__[attr]
 
         if attr == 'assumptions':
             # We also need to remember '_sorted_assumptions' when 
