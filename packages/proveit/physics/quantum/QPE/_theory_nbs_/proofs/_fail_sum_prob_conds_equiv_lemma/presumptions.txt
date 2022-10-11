@@ -120,14 +120,12 @@ proveit.numbers.addition.subtraction.subtraction_disassociation
 proveit.numbers.addition.unary_add_reduction
 proveit.numbers.addition.weak_bound_via_left_term_bound
 proveit.numbers.division.div_complex_closure
-proveit.numbers.division.div_real_closure
 proveit.numbers.exponentiation.complex_x_to_first_power_is_x
 proveit.numbers.exponentiation.exp_complex_closure
 proveit.numbers.exponentiation.exp_int_closure
 proveit.numbers.exponentiation.exp_nat_pos_expansion
 proveit.numbers.exponentiation.exp_not_eq_zero
 proveit.numbers.exponentiation.exp_rational_non_zero__not_zero
-proveit.numbers.exponentiation.exp_real_closure_nat_power
 proveit.numbers.exponentiation.exp_zero_eq_one
 proveit.numbers.exponentiation.exponentiated_one
 proveit.numbers.exponentiation.exponentiated_zero

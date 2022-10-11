@@ -72,6 +72,11 @@ proveit.numbers.addition.leftward_commutation
 proveit.numbers.addition.rational_pair_addition
 proveit.numbers.addition.rightward_commutation
 proveit.numbers.addition.strong_bound_via_left_term_bound
+proveit.numbers.addition.subtraction.add_cancel_basic
+proveit.numbers.addition.subtraction.add_cancel_general
+proveit.numbers.addition.subtraction.add_cancel_triple_12
+proveit.numbers.addition.subtraction.add_cancel_triple_13
+proveit.numbers.addition.subtraction.add_cancel_triple_23
 proveit.numbers.addition.subtraction.negated_add
 proveit.numbers.addition.subtraction.nonzero_difference_if_different
 proveit.numbers.addition.subtraction.sub_one_is_nat
@@ -119,6 +124,8 @@ proveit.numbers.exponentiation.neg_power_as_div
 proveit.numbers.exponentiation.neg_power_of_quotient
 proveit.numbers.exponentiation.posnat_power_of_product
 proveit.numbers.exponentiation.posnat_power_of_quotient
+proveit.numbers.exponentiation.product_of_real_powers
+proveit.numbers.exponentiation.real_power_of_product
 proveit.numbers.exponentiation.real_power_of_products
 proveit.numbers.exponentiation.real_power_of_real_power
 proveit.numbers.exponentiation.square_abs_rational_simp
