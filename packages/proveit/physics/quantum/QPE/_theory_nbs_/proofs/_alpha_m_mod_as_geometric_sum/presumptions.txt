@@ -55,7 +55,6 @@ proveit.numbers.exponentiation.int_exp_of_exp
 proveit.numbers.exponentiation.int_exp_of_neg_exp
 proveit.numbers.exponentiation.product_of_complex_powers
 proveit.numbers.exponentiation.real_power_of_product
-proveit.numbers.exponentiation.real_power_of_real_power
 proveit.numbers.modular.int_mod_elimination
 proveit.numbers.modular.real_mod_elimination
 proveit.numbers.modular.redundant_mod_elimination

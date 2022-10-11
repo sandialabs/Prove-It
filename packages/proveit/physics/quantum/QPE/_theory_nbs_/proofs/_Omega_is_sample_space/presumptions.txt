@@ -29,13 +29,10 @@ proveit.logic.equality.not_equals_symmetry
 proveit.logic.equality.unfold_not_equals
 proveit.logic.sets.cartesian_products.cart_exp_unfold_abstract
 proveit.logic.sets.cartesian_products.cart_exp_unfold_explicit
-proveit.logic.sets.equivalence.set_equiv_is_bool
 proveit.logic.sets.functions.bijections.membership_unfolding
 proveit.logic.sets.functions.injections.membership_unfolding
 proveit.logic.sets.functions.membership_unfolding
-proveit.logic.sets.inclusion.fold_subset_eq
 proveit.logic.sets.inclusion.relax_proper_subset
-proveit.logic.sets.inclusion.subset_eq_via_equality
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.logic.sets.inclusion.unfold_subset_eq
 proveit.numbers.addition.add_int_closure_bin

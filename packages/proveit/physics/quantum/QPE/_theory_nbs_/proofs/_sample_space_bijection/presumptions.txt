@@ -1,12 +1,18 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.core_expr_types.expr_arrays.varray_eq_via_elem_eq
 proveit.core_expr_types.expr_arrays.varray_neq_via_any_elem_neq
 proveit.core_expr_types.operations.operands_substitution_via_tuple
 proveit.core_expr_types.tuples.general_len
 proveit.core_expr_types.tuples.len_of_empty_range_of_ranges
 proveit.core_expr_types.tuples.len_of_ranges_with_repeated_indices
 proveit.core_expr_types.tuples.len_of_ranges_with_repeated_indices_from_1
+proveit.core_expr_types.tuples.negated_shift_equivalence
+proveit.core_expr_types.tuples.negated_shift_equivalence_both
 proveit.core_expr_types.tuples.range_from1_len
 proveit.core_expr_types.tuples.range_from1_len_typical_eq
+proveit.core_expr_types.tuples.shift_equivalence
+proveit.core_expr_types.tuples.shift_equivalence_both
+proveit.core_expr_types.tuples.tuple_eq_via_elem_eq
 proveit.core_expr_types.tuples.tuple_len_0_typical_eq
 proveit.core_expr_types.tuples.tuple_neq_via_any_elem_neq
 proveit.linear_algebra.inner_products.complex_set_is_inner_prod_space
@@ -19,6 +25,8 @@ proveit.logic.booleans.conjunction.each_is_bool
 proveit.logic.booleans.conjunction.from_unary_and
 proveit.logic.booleans.conjunction.left_from_and
 proveit.logic.booleans.conjunction.quantification_from_conjunction
+proveit.logic.booleans.conjunction.redundant_conjunction
+proveit.logic.booleans.conjunction.redundant_conjunction_general
 proveit.logic.booleans.conjunction.right_from_and
 proveit.logic.booleans.conjunction.true_and_true
 proveit.logic.booleans.disjunction.any_if_all
@@ -49,6 +57,7 @@ proveit.logic.equality.fold_not_equals
 proveit.logic.equality.four_chain_transitivity
 proveit.logic.equality.not_equals_is_bool
 proveit.logic.equality.not_equals_symmetry
+proveit.logic.equality.rhs_via_equality
 proveit.logic.equality.sub_left_side_into
 proveit.logic.equality.sub_right_side_into
 proveit.logic.equality.substitute_falsehood
@@ -58,11 +67,6 @@ proveit.logic.equality.substitute_truth
 proveit.logic.equality.unfold_not_equals
 proveit.logic.sets.cartesian_products.cart_exp_unfold_abstract
 proveit.logic.sets.cartesian_products.cart_exp_unfold_explicit
-proveit.logic.sets.enumeration.fold
-proveit.logic.sets.enumeration.fold_singleton
-proveit.logic.sets.enumeration.in_enumerated_set
-proveit.logic.sets.enumeration.unfold
-proveit.logic.sets.enumeration.unfold_singleton
 proveit.logic.sets.functions.bijections.bijective_by_uniqueness
 proveit.logic.sets.functions.bijections.membership_unfolding
 proveit.logic.sets.functions.injections.membership_unfolding
@@ -72,7 +76,9 @@ proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.logic.sets.inclusion.unfold_subset_eq
 proveit.numbers.addition.add_complex_closure_bin
 proveit.numbers.addition.add_int_closure_bin
+proveit.numbers.addition.add_nat_closure_bin
 proveit.numbers.addition.add_nat_pos_closure_bin
+proveit.numbers.addition.add_real_closure
 proveit.numbers.addition.add_real_closure_bin
 proveit.numbers.addition.association
 proveit.numbers.addition.commutation
@@ -93,6 +99,7 @@ proveit.numbers.addition.subtraction.add_cancel_triple_23
 proveit.numbers.addition.subtraction.add_cancel_triple_31
 proveit.numbers.addition.subtraction.add_cancel_triple_32
 proveit.numbers.addition.subtraction.negated_add
+proveit.numbers.addition.subtraction.nonneg_difference
 proveit.numbers.addition.subtraction.sub_one_is_nat
 proveit.numbers.addition.subtraction.subtract_from_add
 proveit.numbers.addition.subtraction.subtract_from_add_reversed
@@ -118,7 +125,9 @@ proveit.numbers.negation.distribute_neg_through_div_numerator
 proveit.numbers.negation.distribute_neg_through_subtract
 proveit.numbers.negation.distribute_neg_through_sum
 proveit.numbers.negation.int_closure
+proveit.numbers.negation.int_neg_closure
 proveit.numbers.negation.negated_zero
+proveit.numbers.negation.real_closure
 proveit.numbers.number_sets.complex_numbers.complex_nonzero_within_complex
 proveit.numbers.number_sets.complex_numbers.i_is_complex_nonzero
 proveit.numbers.number_sets.complex_numbers.int_neg_within_complex_nonzero
@@ -146,14 +155,17 @@ proveit.numbers.number_sets.integers.interval_upper_bound
 proveit.numbers.number_sets.integers.nat_pos_within_int
 proveit.numbers.number_sets.integers.nat_pos_within_nonzero_int
 proveit.numbers.number_sets.integers.nat_within_int
+proveit.numbers.number_sets.integers.neg_int_is_int_neg
 proveit.numbers.number_sets.integers.neg_int_within_int
 proveit.numbers.number_sets.integers.neg_int_within_nonpos_int
 proveit.numbers.number_sets.integers.neg_int_within_nonzero_int
+proveit.numbers.number_sets.integers.negative_if_in_neg_int
 proveit.numbers.number_sets.integers.nonneg_int_is_natural
 proveit.numbers.number_sets.integers.nonpos_if_in_nonpos_int
 proveit.numbers.number_sets.integers.nonpos_int_within_int
 proveit.numbers.number_sets.integers.nonzero_if_in_nonzero_int
 proveit.numbers.number_sets.integers.nonzero_int_within_int
+proveit.numbers.number_sets.integers.nonzero_nat_is_natural_pos
 proveit.numbers.number_sets.integers.pos_int_is_natural_pos
 proveit.numbers.number_sets.integers.zero_is_int
 proveit.numbers.number_sets.integers.zero_is_nonpos_int
@@ -170,6 +182,7 @@ proveit.numbers.number_sets.rational_numbers.nat_pos_within_rational_pos
 proveit.numbers.number_sets.rational_numbers.nat_within_rational
 proveit.numbers.number_sets.rational_numbers.nat_within_rational_nonneg
 proveit.numbers.number_sets.rational_numbers.neg_int_within_rational_neg
+proveit.numbers.number_sets.rational_numbers.negative_if_in_rational_neg
 proveit.numbers.number_sets.rational_numbers.nonneg_if_in_rational_nonneg
 proveit.numbers.number_sets.rational_numbers.nonpos_if_in_rational_nonpos
 proveit.numbers.number_sets.rational_numbers.nonpos_int_within_rational_nonpos
@@ -199,6 +212,7 @@ proveit.numbers.number_sets.real_numbers.nat_pos_within_real_pos
 proveit.numbers.number_sets.real_numbers.nat_within_real
 proveit.numbers.number_sets.real_numbers.nat_within_real_nonneg
 proveit.numbers.number_sets.real_numbers.neg_int_within_real_neg
+proveit.numbers.number_sets.real_numbers.negative_if_in_real_neg
 proveit.numbers.number_sets.real_numbers.nonneg_if_in_real_nonneg
 proveit.numbers.number_sets.real_numbers.nonpos_if_in_real_nonpos
 proveit.numbers.number_sets.real_numbers.nonpos_int_within_real_nonpos
@@ -268,8 +282,6 @@ proveit.numbers.numerals.decimals.tuple_len_5
 proveit.numbers.numerals.decimals.tuple_len_5_typical_eq
 proveit.numbers.numerals.decimals.tuple_len_8
 proveit.numbers.numerals.decimals.tuple_len_8_typical_eq
-proveit.numbers.ordering.less_add_right
-proveit.numbers.ordering.less_add_right_weak
 proveit.numbers.ordering.less_eq_from_not_less
 proveit.numbers.ordering.less_from_not_less_eq
 proveit.numbers.ordering.less_is_not_eq
@@ -289,7 +301,10 @@ proveit.physics.quantum.algebra.ket_zero_and_one_are_orthogonal
 proveit.physics.quantum.algebra.ket_zero_in_qubit_space
 proveit.physics.quantum.algebra.ket_zero_norm
 proveit.physics.quantum.algebra.num_ket_neq
+proveit.physics.quantum.circuits.qcircuit_eq
+proveit.physics.quantum.circuits.qcircuit_input_eq
 proveit.physics.quantum.circuits.qcircuit_input_part_neq
 proveit.physics.quantum.circuits.qcircuit_neq
+proveit.physics.quantum.circuits.qcircuit_output_eq
 proveit.physics.quantum.circuits.qcircuit_output_part_neq
 # THEOREMS AND THEORIES TO EXCLUDE:

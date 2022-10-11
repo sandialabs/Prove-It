@@ -49,7 +49,6 @@ proveit.numbers.exponentiation.exp_zero_eq_one
 proveit.numbers.exponentiation.exponentiated_one
 proveit.numbers.exponentiation.exponentiated_zero
 proveit.numbers.exponentiation.product_of_complex_powers
-proveit.numbers.exponentiation.real_power_of_real_power
 proveit.numbers.modular.int_mod_elimination
 proveit.numbers.modular.mod_natpos_in_interval
 proveit.numbers.modular.real_mod_elimination
