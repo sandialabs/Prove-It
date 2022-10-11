@@ -539,7 +539,7 @@ def sorting_and_combining_like_operands(
             # For an ExprRange operand, use the body's likeness key
             # iff it is parameter independent.
             key = likeness_key_fn(operand.body)
-            if operand.parameter in free_vars(key):
+            if key is not None and operand.parameter in free_vars(key):
                 # It's not parameter independent -- each instance has
                 # a different likeness key, so use the ExprRange itself.
                 key = operand
