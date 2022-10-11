@@ -129,7 +129,9 @@ class Mult(NumberOperation):
         for base in sorted(base_to_exponent.keys(), key=hash):
             # Canonize the exponentiated factor.
             exponent = base_to_exponent[base].canonical_form()
-            if exponent == one:
+            if exponent == zero:
+                continue # x^0 = 1
+            elif exponent == one:
                 factor = base
             else:
                 factor = Exp(base, exponent).canonical_form()
