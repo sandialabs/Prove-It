@@ -375,7 +375,8 @@ class Exp(NumberOperation):
                     InSet(exponent.antilog, RealPos).readily_provable()
                     and NotEquals(base, one).readily_provable()):
                 return self.power_of_log_reduction()
-        elif exponent == two and isinstance(base, Abs):
+        elif exponent == two and isinstance(base, Abs) and (
+                InSet(base.operand, Real).readily_provable()):
             from . import (square_abs_rational_simp,
                                      square_abs_real_simp)
             # |a|^2 = a if a is real
