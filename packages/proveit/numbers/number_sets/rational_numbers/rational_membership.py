@@ -157,12 +157,27 @@ class RationalPosMembership(RationalMembership):
 
     @prover
     def conclude(self, **defaults_config):
-        from proveit.numbers import Rational, greater, zero
+        from proveit.numbers import (Rational, RationalNonNeg, 
+                                     greater, zero)
         # Use proven, not readily provable here:
         if (InSet(self.element, Rational).proven() and
                 greater(self.element, zero).proven()):
             return self.conclude_as_last_resort()
+        if (InSet(self.element, RationalNonNeg).proven() and
+                NotEquals(self.element, zero).readily_provable()):
+            return self.conclude_via_nonzero()
         return NumberMembership.conclude(self)
+
+    @prover
+    def conclude_via_nonzero(self, **defaults_config):
+        '''
+        Conclude element in RationalPos by proving it is a non-negative
+        rational and nonzero.
+        '''
+        from proveit.numbers.number_sets.integers import (
+            nonzero_nonneg_rational_is_rational_pos)
+        return nonzero_nonneg_rational_is_rational_pos.instantiate(
+                {q:self.element})
 
     @prover
     def conclude_as_last_resort(self, **defaults_config):
@@ -243,12 +258,26 @@ class RationalNegMembership(RationalMembership):
 
     @prover
     def conclude(self, **defaults_config):
-        from proveit.numbers import Rational, Less, zero
+        from proveit.numbers import Rational, RationalNonPos, Less, zero
         # Use proven, not readily provable here:
         if (InSet(self.element, Rational).proven() and
                 Less(self.element, zero).proven()):
             return self.conclude_as_last_resort()
+        if (InSet(self.element, RationalNonPos).proven() and
+                NotEquals(self.element, zero).readily_provable()):
+            return self.conclude_via_nonzero()
         return NumberMembership.conclude(self)
+
+    @prover
+    def conclude_via_nonzero(self, **defaults_config):
+        '''
+        Conclude element in RationalNeg by proving it is a non-positive
+        rational and nonzero.
+        '''
+        from proveit.numbers.number_sets.integers import (
+            nonzero_nonpos_rational_is_rational_neg)
+        return nonzero_nonpos_rational_is_rational_neg.instantiate(
+                {q:self.element})
 
     @prover
     def conclude_as_last_resort(self, **defaults_config):

@@ -829,12 +829,12 @@ class Qcircuit(Function):
 
         front_output_col = front_circuit.vert_expr_array[-1]
         if front_output_col.num_entries() > 1:
-            # We'll need to replaced the merged front output with the
+            # We'll need to replace the merged front output with the
             # desired split version.
             replacements.append(front_output_col.merger().derive_reversed())
         back_input_col = back_circuit.vert_expr_array[0]
         if back_input_col.num_entries() > 1:
-            # We'll need to replaced the merged back output with the
+            # We'll need to replace the merged back output with the
             # desired split version.
             replacements.append(back_input_col.merger().derive_reversed())
 
@@ -1072,7 +1072,6 @@ class Qcircuit(Function):
         # If we need to do mergers afterwards, don't auto-simplify.
         consolidation = thm.instantiate(repl_map, 
                                         replacements=replacements)
-        
         # Remerge where splits were necessary:
         if len(split_locations) > 0:
             consolidation = (

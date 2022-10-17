@@ -8,7 +8,8 @@ from proveit import (Expression, Judgment, Literal, Operation, ExprTuple,
                      maybe_fenced_latex, ProofFailure, InnerExpr,
                      UnsatisfiedPrerequisites,
                      SimplificationDirectives, TransRelUpdater)
-from proveit import a, b, c, d, i, j, k, l, n, x, y, free_vars
+from proveit.util import OrderedSet
+from proveit import a, b, c, d, e, i, j, k, l, n, x, y, free_vars
 from proveit.logic import (And, Equals, NotEquals,
                            EvaluationError, InSet)
 from proveit.logic.irreducible_value import is_irreducible_value
@@ -430,18 +431,21 @@ class Add(NumberOperation):
         neg_operand_indices = dict()
         for _i, operand in enumerate(self.operands.entries):
             if isinstance(operand, Neg):
-                neg_operand_indices.setdefault(operand.operand, set()).add(_i)
+                neg_operand_indices.setdefault(
+                        operand.operand.canonical_form(), 
+                        OrderedSet()).add(_i)
 
         canceled_indices = []
         for _i, operand in enumerate(self.operands.entries):
             if isinstance(operand, Neg):
                 continue
-            if operand in neg_operand_indices:
-                indices = neg_operand_indices[operand]
+            operand_cf = operand.canonical_form()
+            if operand_cf in neg_operand_indices:
+                indices = neg_operand_indices[operand_cf]
                 _j = indices.pop()
                 if len(indices) == 0:
                     # no more indices to use in the future
-                    neg_operand_indices.pop(operand)
+                    neg_operand_indices.pop(operand_cf)
                 # By finding where i and j will be inserted into the 
                 # canceled_indices array, we can figure out how much 
                 # they need to shift by to compensate for previous 
@@ -474,44 +478,47 @@ class Add(NumberOperation):
             # choose i to be less than j
             return self.cancelation(idx2, idx1)
 
-        if Neg(self.operands[idx1]) == self.operands[idx2]:
+        if isinstance(self.operands[idx2], Neg):
             basic_thm = sub_pkg.add_cancel_basic
             triple_thms = (
                 sub_pkg.add_cancel_triple_12,
                 sub_pkg.add_cancel_triple_13,
                 sub_pkg.add_cancel_triple_23)
             general_thm = sub_pkg.add_cancel_general
-            canceled_op = self.operands[idx1]
-        elif self.operands[idx1] == Neg(self.operands[idx2]):
+            _a = self.operands[idx1]
+            _b = self.operands[idx2].operand
+        elif isinstance(self.operands[idx1], Neg):
             basic_thm = sub_pkg.add_cancel_reverse
             triple_thms = (
                 sub_pkg.add_cancel_triple_21,
                 sub_pkg.add_cancel_triple_31,
                 sub_pkg.add_cancel_triple_32)
             general_thm = sub_pkg.add_cancel_general_rev
-            canceled_op = self.operands[idx2]
+            _a = self.operands[idx1].operand
+            _b = self.operands[idx2]
         else:
-            raise ValueError("Unable to cancel operands idx1 and idx2; "
-                             "one is not the negation of the other.")
+            raise ValueError("Unable to cancel %s and %s; "
+                             "neither is in an explicitly negated form."
+                             %(self.operands[idx1], self.operands[idx2]))
 
         if self.operands.is_double():
-            return basic_thm.instantiate({a: canceled_op})
+            return basic_thm.instantiate({a:_a, b:_b})
         elif (not self.operands.contains_range() 
                 and self.operands.num_entries() == 3):
             # _k is the 3rd index, completing i and j in the set {0,1,2}.
             _k = {0, 1, 2}.difference([idx1, idx2]).pop()
             thm = triple_thms[2 - _k]
-            return thm.instantiate({a: canceled_op, b: self.operands[_k]})
+            return thm.instantiate({a:_a, b:_b, c: self.operands[_k]})
         else:
+            _b, _d = _a, _b
             _a = self.operands[:idx1]
-            _b = canceled_op
             _c = self.operands[idx1 + 1:idx2]
-            _d = self.operands[idx2 + 1:]
+            _e = self.operands[idx2 + 1:]
             _i = _a.num_elements()
             _j = _c.num_elements()
-            _k = _d.num_elements()
+            _k = _e.num_elements()
             return general_thm.instantiate(
-                {i: _i, j: _j, k: _k, a: _a, b: _b, c: _c, d: _d})
+                {i: _i, j: _j, k: _k, a: _a, b: _b, c: _c, d: _d, e: _e})
 
     @equality_prover('eliminated_zeros', 'eliminate_zeros')   
     def zero_eliminations(self, **defaults_config):

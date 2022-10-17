@@ -69,10 +69,11 @@ class NumberOperation(Operation):
                 # Reduce division to multiplication, consistent
                 # with the canonical form.
                 div_simps.reduce_to_multiplication = True
-                # Distribute exponents consistent with the
-                # canonical form.
+                # Distribute exponents and factor numeric rationals
+                # consistent with the canonical form.
                 exp_simps.distribute_exponent = True
-                # Distribute a numeric rational contant consistent with
+                exp_simps.factor_numeric_rational = True
+                # Distribute a numeric rational constant consistent with
                 # the canonical form.
                 mult_simps.distribute_numeric_rational = True
                 lhs_simplification = lhs.simplification()

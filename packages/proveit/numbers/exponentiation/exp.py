@@ -29,7 +29,7 @@ class Exp(NumberOperation):
     _simplification_directives_ = SimplificationDirectives(
             reduce_double_exponent = True,
             distribute_exponent = False,
-            factor_numeric_rational = True)
+            factor_numeric_rational = False)
 
     def __init__(self, base, exponent, *, styles=None):
         r'''
@@ -146,7 +146,8 @@ class Exp(NumberOperation):
             x^0 = 1
             x^1 = x
             (x*y*z)^a = x^a * y^a * z^a
-            (x^a)^b = x^(a*b) if a and b are literal rationals.
+            (x^a)^b = x^(a*b) if a and b are numeric rationals.
+            x^{2n} = (-x)^{2n} if 2n is a numeric even number (2, 4, ..)
         Also, raising a literal rational to an integer power equates
         to a irreducible rational.
         Some of these equalities require the base of the exponent
@@ -183,7 +184,7 @@ class Exp(NumberOperation):
             exponent = Mult(base.exponent, exponent).canonical_form()
             if exponent == one:
                 return base.base
-            return Exp(base.base, exponent)
+            return Exp(base.base, exponent).canonical_form()
         elif is_numeric_rational(base) and is_numeric_int(exponent):
             # Raising a numeric rational to an integer power.
             numer, denom = numeric_rational_ints(base)
@@ -209,10 +210,44 @@ class Exp(NumberOperation):
             assert len(numeric_exp_terms)==1
             return Mult(Exp(base, numeric_exp_terms[0]).canonical_form(),
                         Exp(base, Add(*nonnumeric_exp_terms)).canonical_form())
-        elif base != self.base or exponent != self.exponent:
+        elif is_numeric_int(exponent) and (exponent.as_int() % 2 == 0):
+            # x^{2n} = (-x)^{2n}, so choose one of these forms 
+            # deterministically.
+            from proveit.numbers import Abs
+            # reuse code dealing with |x| = |-x|:
+            base = Abs(base).canonical_form().operand
+        if base != self.base or exponent != self.exponent:
             # Use the canonical forms of the base and exponent.
             return Exp(base, exponent)
         return self
+
+    def _deduce_canonically_equal(self, rhs):
+        '''
+        Prove equality of Exp asssuming they have the same canonical
+        form.
+        '''
+        from proveit.numbers import Neg, Mult, num, is_numeric_int
+        base = self.base
+        exponent = self.exponent
+        if isinstance(rhs, Exp) and (
+                exponent == rhs.exponent and 
+                is_numeric_int(self.exponent) and
+                exponent.as_int() % 2 == 0 and (
+                        Neg(base).canonical_form() ==
+                        rhs.base.canonical_form())):
+            # This is a x^{2n} = (-x)^{2n} case.
+            from . import even_pow_is_even_fn_rev
+            _x = base
+            _n = num(exponent.as_int()//2)
+            replacements = []
+            replacements.append(Equals(Mult(two, _n), exponent).prove())
+            replacements.append(Equals(Neg(_x), rhs.base).prove())
+            return even_pow_is_even_fn_rev.instantiate(
+                    {x:_x, n:_n}, replacements=replacements,
+                    auto_simplify=False)
+        
+        # Prove equality using standard techniques.
+        return NumberOperation._deduce_canonically_equal(self, rhs)        
         
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
@@ -340,7 +375,8 @@ class Exp(NumberOperation):
                     InSet(exponent.antilog, RealPos).readily_provable()
                     and NotEquals(base, one).readily_provable()):
                 return self.power_of_log_reduction()
-        elif exponent == two and isinstance(base, Abs):
+        elif exponent == two and isinstance(base, Abs) and (
+                InSet(base.operand, Real).readily_provable()):
             from . import (square_abs_rational_simp,
                                      square_abs_real_simp)
             # |a|^2 = a if a is real

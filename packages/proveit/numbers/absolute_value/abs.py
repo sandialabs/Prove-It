@@ -20,6 +20,43 @@ class Abs(NumberOperation):
 
     def latex(self, **kwargs):
         return r'\left|' + self.operand.latex() + r'\right|'
+    
+    def _build_canonical_form(self):
+        '''
+        Returns a form of this Abs that deterministically chooses
+        either Abs of the canonical form of the operand or its negation
+        since |x| = |-x|.
+        '''
+        from proveit.numbers import Neg
+        operand_cf = self.operand.canonical_form()
+        neg_operand_cf = Neg(self.operand).canonical_form()
+        if hash(operand_cf) < hash(neg_operand_cf):
+            return Abs(operand_cf) # Choose |x|
+        else:
+            return Abs(neg_operand_cf) # Choose |-x|
+    
+    def _deduce_canonically_equal(self, rhs):
+        '''
+        Prove Abs equal to 'rhs' asssuming they have the same canonical
+        form.
+        '''
+        from proveit.numbers import Neg
+        from proveit.logic import Equals
+        assert isinstance(rhs, Abs)
+        operand_cf = self.operand.canonical_form()
+        rhs_operand_cf = rhs.canonical_form()
+        if operand_cf == rhs_operand_cf:
+            # Prove equality using standard techniques.
+            return NumberOperation._deduce_canonically_equal(self, rhs)
+        else:
+            # Prove equality via |x| = |-x|.
+            assert (Neg(self.operand).canonical_form()==
+                    rhs.operand.canonical_form())
+            from . import abs_even_rev
+            _x = self.operand
+            replacements = [Equals(Neg(_x), rhs.operand).prove()]
+            return abs_even_rev.instantiate(
+                    {x:_x}, replacements=replacements, auto_simplify=False)
 
     @prover
     def deduce_not_equal(self, rhs, **defaults_config):

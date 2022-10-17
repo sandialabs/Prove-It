@@ -38,7 +38,7 @@ class Mult(NumberOperation):
             ungroup=True, 
             combine_numeric_rationals=True,
             combine_numeric_rational_exponents=True,
-            combine_all_exponents=False,
+            combine_all_exponents=True,
             distribute_numeric_rational=False,
             # By default, sort such that numeric, rationals come first 
             # but otherwise maintain the original order.
@@ -102,8 +102,7 @@ class Mult(NumberOperation):
                 numer *= factor.numerator.as_int()
                 denom *= factor.denominator.as_int()
             else:
-                if isinstance(factor, Exp) and (
-                        is_numeric_rational(factor.exponent)):
+                if isinstance(factor, Exp):
                     exponent = factor.exponent
                     base = factor.base
                 else:
@@ -130,7 +129,9 @@ class Mult(NumberOperation):
         for base in sorted(base_to_exponent.keys(), key=hash):
             # Canonize the exponentiated factor.
             exponent = base_to_exponent[base].canonical_form()
-            if exponent == one:
+            if exponent == zero:
+                continue # x^0 = 1
+            elif exponent == one:
                 factor = base
             else:
                 factor = Exp(base, exponent).canonical_form()
@@ -510,7 +511,8 @@ class Mult(NumberOperation):
         of factors with a common base raised to a numeric rational power
         (or implicitly a power of 1).
         If combine_all_exponents is true, exponents with a common base
-        will be combined for any type of exponents.
+        will be combined for any type of exponents (including implicit
+        powers of 1).
         Sort factors according to order_key_fn where the key is the
         base that may be raised to a numeric rational power.
         Eliminate any factors of one, and simplify to zero if there is
@@ -645,11 +647,17 @@ class Mult(NumberOperation):
                         combine_all_exponents or is_numeric_rational(
                                 factor.exponent)):
                     return factor.base
+                elif (Exp._simplification_directives_
+                      .factor_numeric_rational and
+                      is_numeric_rational(factor)):
+                    # Don't combine numeric rationals only to be
+                    # factored again.
+                    return None
                 else:
                     return factor
-            # Sort and combine like operands.
+            # Combine like operands.
             expr = eq.update(sorting_and_combining_like_operands(
-                    expr, order_key_fn=order_key_fn, 
+                    expr, order_key_fn=lambda likeness_key : 0, 
                     likeness_key_fn=likeness_key_fn,
                     preserve_likeness_keys=True, auto_simplify=True))
         if not isinstance(expr, Mult):
@@ -663,9 +671,9 @@ class Mult(NumberOperation):
                     return one
                 else:
                     return factor
-            # Sort and combine like operands.
+            # Combine like operands.
             expr = eq.update(sorting_and_combining_like_operands(
-                    expr, order_key_fn=order_key_fn, 
+                    expr, order_key_fn=lambda likeness_key : 0, 
                     likeness_key_fn=likeness_key_fn,
                     preserve_likeness_keys=True, auto_simplify=True))
         if not isinstance(expr, Mult):

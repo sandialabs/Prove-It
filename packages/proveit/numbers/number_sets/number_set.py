@@ -247,8 +247,11 @@ class NumberMembership(SetMembership):
         Try to deduce that the given element is in the number set under
         the given assumptions.
         '''
-        from proveit.logic import is_irreducible_value
-        from proveit.numbers import readily_provable_number_set
+        from proveit.logic import NotEquals
+        from proveit.numbers import (zero, readily_provable_number_set,
+                                     ZeroSet)
+        from proveit.numbers.number_operation import (
+                nonzero_number_set)
 
         element = self.element
         number_set = self.number_set
@@ -290,6 +293,26 @@ class NumberMembership(SetMembership):
                 # includes the desired one.
                 return (SubsetEq(proven_number_set, number_set)
                         .derive_superset_membership(element))
+        
+        if Equals(element, zero).readily_provable() and (
+                element != zero and
+                number_set.readily_includes(ZeroSet)):
+            # We can prove the element is zero and zero is in the
+            # number set.
+            return Equals(element, zero).sub_left_side_into(
+                    InSet(zero, number_set))
+                
+        if NotEquals(element, zero).readily_provable():
+            # Maybe we can prove the number set via proving the
+            # element is not zero.
+            provable_number_set = readily_provable_number_set(
+                    element, must_be_direct=False, automation=False)
+            if not number_set.readily_includes(provable_number_set) and (
+                    provable_number_set in nonzero_number_set):
+                provable_number_set = nonzero_number_set[provable_number_set]
+                if number_set.readily_includes(provable_number_set):
+                    if hasattr(self, 'conclude_via_nonzero'):
+                        return self.conclude_via_nonzero()
 
         """
         # Try the 'deduce_in_number_set' method.
