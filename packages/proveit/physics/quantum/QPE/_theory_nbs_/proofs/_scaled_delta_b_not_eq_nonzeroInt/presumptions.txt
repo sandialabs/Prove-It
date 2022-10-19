@@ -14,14 +14,11 @@ proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.double_negation_elim
 proveit.logic.booleans.negation.falsified_negation_intro
 proveit.logic.booleans.negation.negation_intro
-proveit.logic.booleans.negation.untrue_from_negation
-proveit.logic.booleans.true_is_bool
 proveit.logic.booleans.unfold_is_bool
 proveit.logic.booleans.unfold_is_bool_explicit
 proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
 proveit.logic.equality.not_equals_symmetry
-proveit.logic.equality.sub_left_side_into
 proveit.logic.equality.sub_right_side_into
 proveit.logic.equality.substitute_falsehood
 proveit.logic.equality.substitute_in_false
@@ -42,7 +39,6 @@ proveit.numbers.exponentiation.exponentiated_zero
 proveit.numbers.multiplication.mult_zero_any
 proveit.numbers.multiplication.mult_zero_left
 proveit.numbers.multiplication.mult_zero_right
-proveit.numbers.multiplication.unary_mult_reduction
 proveit.numbers.number_sets.complex_numbers.real_within_complex
 proveit.numbers.number_sets.integers.nat_within_int
 proveit.numbers.number_sets.integers.nonpos_int_within_int

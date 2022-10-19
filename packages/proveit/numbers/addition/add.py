@@ -2033,11 +2033,9 @@ class Add(NumberOperation):
                     from .subtraction import nonzero_difference_if_different
                     _a = self.terms[0]
                     _b = self.terms[1].operand
-                    #if (NotEquals(_a, _b).proven(assumptions) and
-                    #        nonzero_difference_if_different.is_usable()):
-                    if nonzero_difference_if_different.is_usable():
-                        # If we know that _a ≠ _b then we can 
-                        # prove _a - _b ≠ 0.
+                    if NotEquals(_a, _b).readily_provable():
+                        # If we know (or can readily prove) that
+                        # _a != _b then we can prove _a - _b != 0.
                         return nonzero_difference_if_different.instantiate(
                                 {a:_a, b:_b})
             if try_deduce_number_set:

@@ -164,8 +164,13 @@ class NumberOperation(Operation):
                 # Don't simplify or make replacements if there
                 # is more to go:
                 preserve_all = (len(inner_expr_bounds) > 0)
-                container_relation.update(expr.bound_via_operand_bound(
-                        inner_expr_bound, preserve_all=preserve_all))
+                try:
+                    container_relation.update(expr.bound_via_operand_bound(
+                            inner_expr_bound, preserve_all=preserve_all))
+                except TypeError:
+                    # skip over this inner_expr where the bound doesn't
+                    # apply
+                    continue
                 # Append the relation for processing
                 if container is self:
                     # No further processing needed when the container

@@ -68,7 +68,6 @@ proveit.logic.sets.enumeration.unfold
 proveit.logic.sets.enumeration.unfold_singleton
 proveit.logic.sets.equivalence.set_equiv_is_bool
 proveit.logic.sets.inclusion.relax_proper_subset
-proveit.logic.sets.inclusion.subset_eq_via_equality
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.logic.sets.inclusion.transitivity_subset_eq_subset
 proveit.logic.sets.inclusion.transitivity_subset_eq_subset_eq
