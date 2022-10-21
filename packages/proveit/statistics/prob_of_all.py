@@ -1,5 +1,5 @@
 from proveit import (Literal, OperationOverInstances, Lambda,
-                     prover, equality_prover)
+                     prover, relation_prover, equality_prover)
 from proveit import x, y, f, g, A, B, C, P, Q, R, S, X, Omega
 
 
@@ -132,5 +132,49 @@ class ProbOfAll(OperationOverInstances):
         impl = complementary_event_prob_of_all.instantiate(
                 {Omega:_Omega, X:_X, f:_f, Q:_Q, R:_R, x:_x, y:_y})
         return impl.derive_consequent()
-        
+
+    @relation_prover        
+    def weaker_condition_bound(self, weaker_condition, sample_space,
+                               **defaults_config):
+        '''
+        Bound this event probability as less than or equal to an 
+        event probability with a weaker (more relaxed) condition.
+        The weaker_condition may be provided as an explicit
+        Lambda map or an expression in terms of the instance parameter
+        of this ProbOfAll object.
+        '''
+        from . import constrained_event_prob_bound
+        _Omega = sample_space
+        _X = self.domain
+        _f = Lambda(self.instance_param, self.instance_expr)
+        _Q = Lambda(self.instance_param, self.non_domain_condition())
+        if isinstance(weaker_condition, Lambda):
+            _R = weaker_condition
+        else:
+            _R = Lambda(self.instance_param, weaker_condition)
+        _x = self.instance_param
+        impl = constrained_event_prob_bound.instantiate(
+                {Omega:_Omega, X:_X, f:_f, Q:_Q, R:_R, x:_x})
+        return impl.derive_consequent()
+    
+    @relation_prover
+    def stronger_condition_bound(self, stronger_condition, sample_space,
+                                 **defaults_config):
+        '''
+        Bound this event probability as greater than or equal to an event
+        probability with a stronger (more constraining) condition.
+        The stronger_condition may be provided as an explicit
+        Lambda map or an expression in terms of the instance parameter
+        of this ProbOfAll object.
+        '''
+        if isinstance(stronger_condition, Lambda):
+            if stronger_condition.parameter != self.instance_param:
+                stronger_condition = weaker_condition.relabeled(
+                        {stronger_condition.parameter:self.instance_param})
+            stronger_condition = stronger_condition.body
+        bounding_prob = ProbOfAll(
+                self.instance_param, self.instance_element,
+                domain=self.domain, condition=stronger_condition)
+        return bounding_prob.weaker_condition_bound(
+                self.non_domain_condition(), sample_space).reversed()
         
