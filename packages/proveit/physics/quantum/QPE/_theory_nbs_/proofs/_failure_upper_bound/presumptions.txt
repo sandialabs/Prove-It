@@ -83,6 +83,7 @@ proveit.numbers.addition.subtraction.add_cancel_triple_31
 proveit.numbers.addition.subtraction.add_cancel_triple_32
 proveit.numbers.addition.subtraction.neg_difference
 proveit.numbers.addition.subtraction.negated_add
+proveit.numbers.addition.subtraction.nonzero_difference_if_different
 proveit.numbers.addition.subtraction.pos_difference
 proveit.numbers.addition.subtraction.sub_one_is_nat
 proveit.numbers.addition.subtraction.subtract_from_add
@@ -121,7 +122,6 @@ proveit.numbers.exponentiation.exponentiated_zero
 proveit.numbers.exponentiation.neg_power_as_div
 proveit.numbers.exponentiation.neg_power_of_quotient
 proveit.numbers.exponentiation.posnat_power_of_quotient
-proveit.numbers.exponentiation.product_of_real_powers
 proveit.numbers.exponentiation.real_power_of_product
 proveit.numbers.exponentiation.real_power_of_real_power
 proveit.numbers.exponentiation.sqrd_pos_closure
