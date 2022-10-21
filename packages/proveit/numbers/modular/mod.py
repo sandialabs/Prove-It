@@ -59,6 +59,18 @@ class Mod(NumberOperation):
             expr, mod_elimination_thm, mod_elimination_in_sum_thm):
         '''
         For use by Mod and ModAbs for shallow_simplification.
+        Examples:
+        If expr = Mod(Mod(a, b), b), then calling
+        Mod._redundant_mod_elimination(expr,
+            redundant_mod_elimination_in_modabs,
+            redundant_mod_elimination_in_sum_in_modabs)
+        returns Mod(a, b).
+        If expr = Mod( Add(Mod(a, b), c), b ) = ((a mod b) + c) mod b,
+        then calling
+        Mod._redundant_mod_elimination(expr,
+            redundant_mod_elimination_in_modabs,
+            redundant_mod_elimination_in_sum_in_modabs)
+        returns Mod(Add(a, c), b) i.e. (a+c) mod b
         '''
         dividend = expr.dividend
         divisor = expr.divisor
