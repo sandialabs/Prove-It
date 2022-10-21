@@ -1,16 +1,23 @@
 from proveit import (defaults, Literal, Operation, 
-                     relation_prover, equality_prover)
-from proveit import a, b, c, i, j, L, N
+                     relation_prover, equality_prover,
+                     SimplificationDirectives)
+from proveit import a, b, c, i, j, x, L, N
 from proveit.logic import Equals
 from proveit.relation import TransRelUpdater
 from proveit.numbers import (
-        NumberOperation, Integer, Real, Add, ZeroSet,
-        readily_provable_number_set)
+        two, Abs, Add, Div, Integer, LessEq, NumberOperation,
+        readily_provable_number_set, Real, ZeroSet)
 from .mod import Mod
 
 class ModAbs(NumberOperation):
     # operator of the ModAbs operation.
     _operator_ = Literal(string_format='ModAbs', theory=__file__)
+
+    # The eliminate_mod simplification directive controls the
+    # simplification of an expression like |x|_{mod L} to |x| when
+    # we know or can readily prove that |x| <= L/2.
+    _simplification_directives_ = SimplificationDirectives(
+            eliminate_mod = True)
 
     def __init__(self, value, divisor, *, styles=None):
         Operation.__init__(self, ModAbs._operator_, (value, divisor),
@@ -35,13 +42,36 @@ class ModAbs(NumberOperation):
         expression assuming the operands have been simplified.
 
         Specifically, performs reductions of the form
-        |a mod L + b|_{mod L} = |a + b}_{mod L}.
+        |a mod L + b|_{mod L} = |a + b|_{mod L},
+        and if we know (or can readily prove) that |x| <= L/2,
+        then performs reductions of the form |x|_{mod L} = |x|
         '''
         from . import (redundant_mod_elimination_in_modabs,
                        redundant_mod_elimination_in_sum_in_modabs)
-        return Mod._redundant_mod_elimination(
+
+        eq = TransRelUpdater(self) # eq is then self = self
+
+        # (1) First deal with |a mod L + b|_{mod L}
+        expr = eq.update(Mod._redundant_mod_elimination(
                 self, redundant_mod_elimination_in_modabs,
-                redundant_mod_elimination_in_sum_in_modabs)
+                redundant_mod_elimination_in_sum_in_modabs))
+
+        # (2) IF we still have a ModAbs of the form |x|_{mod L},
+        # and the simplification directive 'eliminate_mod' is True,
+        # further simplify to just |x| if we can readily prove that
+        # |x| <= L/2
+        if (ModAbs._simplification_directives_.eliminate_mod
+            and isinstance(eq.relation.rhs, ModAbs)):
+            _dividend = eq.relation.rhs.dividend
+            _divisor =  eq.relation.rhs.divisor
+            if LessEq(Abs(_dividend), Div(_divisor, two)).readily_provable():
+                from . import mod_abs_x_reduce_to_abs_x
+                _x_sub = _dividend
+                _N_sub = _divisor
+                eq.update(mod_abs_x_reduce_to_abs_x.instantiate(
+                        {x: _x_sub, N: _N_sub}))
+
+        return eq.relation
 
     @equality_prover('reversed_difference', 'reverse_difference')
     def difference_reversal(self, **defaults_config):
