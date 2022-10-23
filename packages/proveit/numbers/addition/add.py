@@ -1551,8 +1551,7 @@ class Add(NumberOperation):
                 "for a subtraction, got %s" %
                 self)
         thm = difference_is_nat_pos
-        return thm.instantiate({a: self.terms[0], b: self.terms[1].operand},
-                               assumptions=assumptions)
+        return thm.instantiate({a: self.terms[0], b: self.terms[1].operand})
 
     def index(self, the_term, also_return_num=False):
         '''
