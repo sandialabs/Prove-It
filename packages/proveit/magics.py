@@ -813,7 +813,7 @@ class ProveItMagicCommands:
                     '<h3>Theorems/conjectures that depend directly on %s</h3>' %
                     name))
             display(HTML('<dl>'))
-            for dependent in sorted(proof.direct_dependents(), key=stmt_sort):
+            for dependent in sorted(proof.direct_dependents(), key=str):
                 self.display_special_stmt(Theory.find_theorem(dependent))
             display(HTML('</dl>'))
 
