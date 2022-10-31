@@ -51,9 +51,11 @@ class NotEquals(Relation):
             return True
         if try_readily_not_equal:
             if hasattr(self.lhs, 'readily_not_equal'):
-                return self.lhs.readily_not_equal(self.rhs)
+                if self.lhs.readily_not_equal(self.rhs):
+                    return True
             if hasattr(self.rhs, 'readily_not_equal'):
-                return self.rhs.readily_not_equal(self.lhs)
+                if self.rhs.readily_not_equal(self.lhs):
+                    return True
         return False        
 
     def _readily_disprovable(self):
@@ -111,6 +113,22 @@ class NotEquals(Relation):
                 pass
 
         return self.conclude_as_folded()
+
+    def _build_canonical_form(self):
+        '''
+        The canonical form of NotEquals is the negation of the
+        corresponding equality.
+        '''
+        from proveit.logic import Not
+        return Not(Equals(self.lhs, self.rhs).canonical_form())
+
+    def _deduce_canonically_equal(self, rhs):
+        '''
+        Prove (x != y) = not(x = y).
+        '''
+        definition = self.definition()
+        assert definition.rhs == rhs
+        return definition
 
     @prover
     def derive_reversed(self, **defaults_config):
