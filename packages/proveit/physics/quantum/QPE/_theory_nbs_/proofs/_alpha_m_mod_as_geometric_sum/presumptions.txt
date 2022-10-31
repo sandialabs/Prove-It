@@ -20,6 +20,7 @@ proveit.logic.equality.fold_not_equals
 proveit.logic.equality.four_chain_transitivity
 proveit.logic.equality.not_equals_symmetry
 proveit.logic.equality.rhs_via_equality
+proveit.logic.equality.sub_left_side_into
 proveit.logic.equality.sub_right_side_into
 proveit.logic.equality.substitute_falsehood
 proveit.logic.equality.substitute_in_false
@@ -40,6 +41,7 @@ proveit.numbers.addition.subtraction.sub_one_is_nat
 proveit.numbers.addition.subtraction.subtract_nat_closure_bin
 proveit.numbers.addition.unary_add_reduction
 proveit.numbers.division.div_complex_closure
+proveit.numbers.division.frac_cancel_left
 proveit.numbers.division.frac_one_denom
 proveit.numbers.division.mult_frac_left
 proveit.numbers.division.mult_frac_right
@@ -69,6 +71,9 @@ proveit.numbers.multiplication.elim_one_right
 proveit.numbers.multiplication.leftward_commutation
 proveit.numbers.multiplication.mult_complex_closure
 proveit.numbers.multiplication.mult_complex_closure_bin
+proveit.numbers.multiplication.mult_neg_any
+proveit.numbers.multiplication.mult_neg_left
+proveit.numbers.multiplication.mult_neg_right
 proveit.numbers.multiplication.mult_zero_any
 proveit.numbers.multiplication.mult_zero_left
 proveit.numbers.multiplication.mult_zero_right
@@ -77,9 +82,7 @@ proveit.numbers.negation.complex_closure
 proveit.numbers.negation.int_closure
 proveit.numbers.negation.mult_neg_one_left
 proveit.numbers.negation.mult_neg_one_right
-proveit.numbers.negation.neg_times_pos
 proveit.numbers.negation.negated_zero
-proveit.numbers.negation.pos_times_neg
 proveit.numbers.number_sets.complex_numbers.complex_nonzero_within_complex
 proveit.numbers.number_sets.complex_numbers.i_is_complex
 proveit.numbers.number_sets.complex_numbers.i_is_complex_nonzero

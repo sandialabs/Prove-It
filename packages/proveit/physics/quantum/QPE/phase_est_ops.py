@@ -1,4 +1,5 @@
 from proveit import Literal, Operation, Function, prover, equality_prover
+from proveit import UnsatisfiedPrerequisites
 from proveit import a, b
 from proveit.logic import InSet
 from proveit.numbers import Interval
@@ -143,8 +144,10 @@ class ModAdd(Operation):
         return _mod_add_closure.instantiate({a:_a, b:_b})
 
     def readily_provable_number_set(self):
-        from . import _two_pow_t
+        from . import _two_pow_t, _mod_add_closure
         from proveit.numbers import Mod, Add
+        if not _mod_add_closure.is_usable():
+            raise UnsatisfiedPrerequisites("_mod_add_closure not usable")
         return Mod(Add(self.operands[0], self.operands[1]),
                    _two_pow_t).readily_provable_number_set()
         

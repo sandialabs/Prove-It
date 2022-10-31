@@ -29,7 +29,6 @@ proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
 proveit.logic.equality.four_chain_transitivity
 proveit.logic.equality.not_equals_symmetry
-proveit.logic.equality.rhs_via_equality
 proveit.logic.equality.sub_left_side_into
 proveit.logic.equality.sub_right_side_into
 proveit.logic.equality.substitute_falsehood
@@ -121,6 +120,7 @@ proveit.numbers.exponentiation.exp_nonneg_lesseq
 proveit.numbers.exponentiation.exp_nonpos_lesseq
 proveit.numbers.exponentiation.exp_pos_lesseq
 proveit.numbers.exponentiation.exp_real_closure_nat_power
+proveit.numbers.exponentiation.exp_real_pos_closure
 proveit.numbers.exponentiation.exp_zero_eq_one
 proveit.numbers.exponentiation.exponentiated_one
 proveit.numbers.exponentiation.exponentiated_zero
@@ -130,7 +130,6 @@ proveit.numbers.exponentiation.posnat_power_of_product
 proveit.numbers.exponentiation.posnat_power_of_quotient
 proveit.numbers.exponentiation.product_of_real_powers
 proveit.numbers.exponentiation.real_power_of_product
-proveit.numbers.exponentiation.real_power_of_products
 proveit.numbers.exponentiation.real_power_of_real_power
 proveit.numbers.exponentiation.square_abs_rational_simp
 proveit.numbers.exponentiation.square_abs_real_simp

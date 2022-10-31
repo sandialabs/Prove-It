@@ -36,6 +36,7 @@ proveit.numbers.addition.subtraction.sub_one_is_nat
 proveit.numbers.addition.subtraction.subtract_nat_closure_bin
 proveit.numbers.addition.unary_add_reduction
 proveit.numbers.division.div_complex_closure
+proveit.numbers.division.frac_cancel_left
 proveit.numbers.division.frac_one_denom
 proveit.numbers.division.mult_frac_left
 proveit.numbers.division.mult_frac_right

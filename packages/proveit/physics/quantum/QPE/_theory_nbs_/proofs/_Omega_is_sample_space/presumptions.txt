@@ -44,8 +44,6 @@ proveit.numbers.exponentiation.exp_natpos_closure
 proveit.numbers.exponentiation.exp_zero_eq_one
 proveit.numbers.exponentiation.exponentiated_one
 proveit.numbers.exponentiation.exponentiated_zero
-proveit.numbers.exponentiation.square_abs_rational_simp
-proveit.numbers.exponentiation.square_abs_real_simp
 proveit.numbers.negation.int_closure
 proveit.numbers.negation.negated_zero
 proveit.numbers.number_sets.complex_numbers.complex_nonzero_within_complex
