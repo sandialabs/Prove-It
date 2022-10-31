@@ -278,12 +278,20 @@ class NumberMembership(SetMembership):
             except UnsatisfiedPrerequisites:
                 provable_number_set = None
             if number_set.readily_includes(provable_number_set):
-                if InSet(element, provable_number_set).proven():
-                    # We already know the element is in a number set that
-                    # includes the desired one.
-                    return (SubsetEq(provable_number_set, number_set)
-                            .derive_superset_membership(element))
-                return element.deduce_in_number_set(number_set)
+                if not InSet(element, provable_number_set).proven():
+                    try:
+                        # First try to prove membership in the number 
+                        # set directly.
+                        return element.deduce_in_number_set(number_set)
+                    except NotImplementedError:
+                        # Otherwise, proven it is in the readily
+                        # provable number set as a stepping stone.
+                        element.deduce_in_number_set(provable_number_set)
+                # We already know the element is in a number set that
+                # includes the desired one.
+                return (SubsetEq(provable_number_set, number_set)
+                        .derive_superset_membership(element))
+                    
         else:
             proven_number_set = readily_provable_number_set(
                     element, must_be_direct=True, automation=False)
