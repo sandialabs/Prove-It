@@ -2024,9 +2024,6 @@ class Add(NumberOperation):
         Attempt to prove that self is not equal to other.
         '''
         from proveit.numbers import zero, Neg
-        if NotEquals(self, other).readily_provable():
-            # Readily provable.
-            return NotEquals(self, other).prove()
         if other == zero:
             if self.terms.is_double():
                 if isinstance(self.terms[1], Neg):
@@ -2044,6 +2041,9 @@ class Add(NumberOperation):
                 if ComplexNonZero.readily_includes(number_set):
                     deduce_number_set(self)
                     return NotEquals(self, zero).prove()
+        if NotEquals(self, other).readily_provable():
+            # Readily provable.
+            return NotEquals(self, other).prove()
         # If it isn't a special case treated here, just use
         # conclude-as-folded.
         return NotEquals(self, other).conclude_as_folded()
