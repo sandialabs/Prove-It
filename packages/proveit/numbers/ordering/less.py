@@ -334,13 +334,22 @@ class Less(NumberOrderingRelation):
             temp_rel = self.with_styles(direction='normal')
             new_rel = temp_rel.add_right(addend, strong=strong)
         else:
-            from . import less_add_left, less_add_left_weak
+            from proveit.logic import InSet
+            from proveit.numbers import Integer
+            _a, _b, _c = self.lower, self.upper, addend
             if strong:
-                new_rel = less_add_left.instantiate(
-                    {a: self.lower, b: self.upper, c: addend})
+                from . import less_add_left
+                new_rel = less_add_left.instantiate({a:_a, b:_b, c:_c})
             else:
-                new_rel = less_add_left_weak.instantiate(
-                    {a: self.lower, b: self.upper, c: addend})
+                if InSet(_a, Integer).readily_provable() and (
+                        InSet(_b, Integer).readily_provable() and
+                        InSet(_c, Integer).readily_provable()):
+                    from . import less_add_left_weak_int
+                    thm = less_add_left_weak_int
+                else:
+                    from . import less_add_left_weak
+                    thm = less_add_left_weak
+                new_rel = thm.instantiate({a:_a, b:_b, c:_c})
         return new_rel.with_mimicked_style(self)
 
     @prover
@@ -358,13 +367,22 @@ class Less(NumberOrderingRelation):
             temp_rel = self.with_styles(direction='normal')
             new_rel = temp_rel.add_left(addend, strong=strong)
         else:
-            from . import less_add_right, less_add_right_weak
+            from proveit.logic import InSet
+            from proveit.numbers import Integer
+            _a, _b, _c = self.lower, self.upper, addend
             if strong:
-                new_rel = less_add_right.instantiate(
-                    {a: self.lower, b: self.upper, c: addend})
+                from . import less_add_right
+                new_rel = less_add_right.instantiate({a:_a, b:_b, c:_c})
             else:
-                new_rel = less_add_right_weak.instantiate(
-                    {a: self.lower, b: self.upper, c: addend})
+                if InSet(_a, Integer).readily_provable() and (
+                        InSet(_b, Integer).readily_provable() and
+                        InSet(_c, Integer).readily_provable()):
+                    from . import less_add_right_weak_int
+                    thm = less_add_right_weak_int
+                else:
+                    from . import less_add_right_weak
+                    thm = less_add_right_weak
+                new_rel = thm.instantiate({a:_a, b:_b, c:_c})
         return new_rel.with_mimicked_style(self)
     
     @prover
