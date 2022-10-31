@@ -152,8 +152,9 @@ class Judgment:
         
         # Associate the canonical form of the expression
         # with this Judgment.
-        Judgment.canonical_form_to_proven_exprs.setdefault(
-                expression.canonical_form(), set()).add(expression)
+        if defaults.sideeffect_automation:
+            Judgment.canonical_form_to_proven_exprs.setdefault(
+                    expression.canonical_form(), set()).add(expression)
 
         # We use the number of literal generalizations to distinguish
         # truths with different axiom/theorem eliminations; we assume

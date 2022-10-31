@@ -2973,7 +2973,7 @@ class StoredTheorem(StoredSpecialStmt):
                     # When there are eliminated axioms or theorems, we
                     # must call all_requirements recursively to make
                     # sure we do the elimination properly.
-                    _req_axioms, _req_theorems = (
+                    _req_axioms, _req_theorems, _ = (
                         stored_theorem.all_requirements(
                             dead_end_theorem_exprs=dead_end_theorem_exprs,
                             excluded_names=excluded_names))

@@ -1987,6 +1987,7 @@ class Generalization(Proof):
         if isinstance(new_conditions, ExprTuple):
             new_conditions = list(new_conditions.entries)
 
+        assumptions = list(instance_truth.assumptions)
         instance_expr = instance_truth.expr
         if len(generalized_literals) > 0:
             # Literal generalization convert literals to variables.
@@ -1998,11 +1999,13 @@ class Generalization(Proof):
             new_conditions = [new_condition
                               .literals_as_variables(*generalized_literals)
                               for new_condition in new_conditions]
+            assumptions = [assumption
+                           .literals_as_variables(*generalized_literals)
+                              for assumption in assumptions]
         
         # The assumptions required for the generalization are the
         # assumptions of the original Judgment minus the all of the
         # new conditions (including those implied by the new domain).
-        assumptions = set(instance_truth.assumptions)
         prev_default_assumptions = defaults.assumptions
         # these assumptions will be used for deriving any side-effects
         defaults.assumptions = assumptions
@@ -2041,7 +2044,9 @@ class Generalization(Proof):
                          in zip(condition_applicability, remaining_conditions)
                          if not applicable]
                 # new conditions can eliminate corresponding assumptions
-                assumptions -= set(_conditions)
+                _conditions_set = set(_conditions)
+                assumptions = [assumption for assumption in assumptions
+                               if assumption not in _conditions_set]
                 # create the new generalized expression
                 generalized_expr = Forall(
                     instance_param_or_params=new_forall_params,
