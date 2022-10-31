@@ -527,7 +527,9 @@ def sorting_and_combining_like_operands(
     from proveit import ExprRange
     from proveit import TransRelUpdater
     from proveit.logic import Equals
-    if expr.operands.num_entries() <= 1:
+    if expr.operands.num_entries()==0 or expr.operands.is_single() or (
+            expr.operands.num_entries()==1 and
+                not expr.operands[0].is_parameter_independent):
         # Nothing to combine or sort.
         return Equals(expr, expr).conclude_via_reflexivity()
     # Separate the types of operands in a dictionary so we can
@@ -539,7 +541,7 @@ def sorting_and_combining_like_operands(
             # For an ExprRange operand, use the body's likeness key
             # iff it is parameter independent.
             key = likeness_key_fn(operand.body)
-            if key is not None and operand.parameter in free_vars(key):
+            if key is not None and not operand.is_parameter_independent:
                 # It's not parameter independent -- each instance has
                 # a different likeness key, so use the ExprRange itself.
                 key = operand
@@ -586,7 +588,7 @@ def sorting_and_combining_like_operands(
                 if isinstance(operand, ExprRange) and (
                         key != operand):
                     # A single ExprRange to combine.
-                    expr = eq.update(expr.inner_expr().operands[_m].
+                    expr = eq.update(expr.inner_expr().operands[_m:_m+1].
                                      combining_operands(
                                              preserve_expr=preserve_expr))
         return eq.relation
