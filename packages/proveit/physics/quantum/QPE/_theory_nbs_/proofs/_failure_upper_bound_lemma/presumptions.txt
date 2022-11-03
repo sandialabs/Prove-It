@@ -281,11 +281,12 @@ proveit.numbers.summation.summation_real_closure
 proveit.numbers.summation.summation_zero_closure
 proveit.numbers.summation.trivial_sum
 proveit.numbers.summation.weak_summation_from_summands_bound
+proveit.physics.quantum.QPE._alpha_are_complex
 proveit.physics.quantum.QPE._alpha_sqrd_upper_bound
 proveit.physics.quantum.QPE._best_floor_is_int
 proveit.physics.quantum.QPE._delta_b_is_real
 proveit.physics.quantum.QPE._fail_sum
-proveit.physics.quantum.QPE._rel_indexed_alpha_are_complex
+proveit.physics.quantum.QPE._mod_add_closure
 proveit.physics.quantum.QPE._scaled_delta_b_not_eq_nonzeroInt
 proveit.physics.quantum.QPE._two_pow_t_is_nat_pos
 proveit.physics.quantum.QPE._two_pow_t_minus_one_is_nat_pos
