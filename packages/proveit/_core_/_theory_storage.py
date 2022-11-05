@@ -2902,15 +2902,18 @@ class StoredTheorem(StoredSpecialStmt):
         list of conservative definitions.
         '''
         from .theory import Theory
-        required_axioms, required_deadend_theorems = (
+        required_axioms, required_deadend_theorems, required_cons_defs = (
                 StoredTheorem.requirements_of_theorems(
                         [self], dead_end_theorem_exprs=dead_end_theorem_exprs,
                         excluded_names=excluded_names, sort_key=sort_key))
         thm = Theory.find_theorem(str(self))
-        return StoredTheorem._extract_conservative_definitions(
-                thm.proven_truth.expr,
-                required_axioms, required_deadend_theorems,
-                sort_key=sort_key)
+        axioms, theorems, cons_defs = (
+                StoredTheorem._extract_conservative_definitions(
+                        thm.proven_truth.expr,
+                        required_axioms, required_deadend_theorems,
+                        sort_key=sort_key))
+        return (axioms, theorems, 
+                list(required_cons_defs) + cons_defs)
 
     @staticmethod
     def requirements_of_theorems(theorems, *, dead_end_theorem_exprs=None,
@@ -2920,9 +2923,11 @@ class StoredTheorem(StoredSpecialStmt):
         indirectly) by the theorems.  Also, return the set of "dead-end"
         theorems that are required (directly or indirectly).  A 
         "dead-end" theorem is either unproven or has an expression that
-        matches one in the optionally provided `dead_end_theorem_exprs`
+        matches one in the optionally provided `dead_end_theorem_exprs`.
+        Also returns the conservative definitions used indirectly.
 
-        Returns this axiom set and theorem set as a tuple.
+        Returns these axiom, theorem, and conservative definitions as
+        a tuple.
         '''
         from .theory import Theory
         if excluded_names is None: excluded_names = frozenset()
@@ -2949,6 +2954,7 @@ class StoredTheorem(StoredSpecialStmt):
             dead_end_theorem_exprs = frozenset()
         required_axioms = set()
         required_deadend_theorems = set()
+        required_conservative_definitions = set()
         processed = set()
         to_process = set([str(theorem) for theorem in theorems])
         while len(to_process) > 0:
@@ -2973,12 +2979,14 @@ class StoredTheorem(StoredSpecialStmt):
                     # When there are eliminated axioms or theorems, we
                     # must call all_requirements recursively to make
                     # sure we do the elimination properly.
-                    _req_axioms, _req_theorems, _ = (
+                    _req_axioms, _req_theorems, _required_cons_defs = (
                         stored_theorem.all_requirements(
                             dead_end_theorem_exprs=dead_end_theorem_exprs,
                             excluded_names=excluded_names))
                     required_axioms.update(_req_axioms)
                     required_deadend_theorems.update(_req_theorems)
+                    required_conservative_definitions.update(
+                            _required_cons_defs)
                     continue
             used_axiom_names, used_theorem_names = (
                 stored_theorem.read_used_axioms(), 
@@ -2990,7 +2998,8 @@ class StoredTheorem(StoredSpecialStmt):
                 if used_theorem_name not in processed:
                     if used_theorem_name not in excluded_names:
                         to_process.add(used_theorem_name)
-        return (required_axioms, required_deadend_theorems)
+        return (required_axioms, required_deadend_theorems,
+                required_conservative_definitions)
     
     @staticmethod
     def _extract_conservative_definitions(

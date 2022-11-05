@@ -157,7 +157,7 @@ class Proof:
                     # No proof steps to eliminate.
                     _proofs = Proof.requirements_of_proofs(proofs_to_check)
                 # Get all direct/indirect Axiom/Theorem requirements.
-                axioms_to_check, thms_to_check = (
+                axioms_to_check, thms_to_check, _ = (
                     StoredTheorem.requirements_of_theorems(
                         [_proof for _proof in _proofs 
                          if isinstance(_proof, Theorem)]))
@@ -2205,7 +2205,7 @@ class Generalization(Proof):
 
         # Search through the requirements of the required theorems
         # for indirectly eliminated axioms/theorems.
-        required_axioms, required_deadend_theorems = (
+        required_axioms, required_deadend_theorems, _ = (
             StoredTheorem.requirements_of_theorems(
                 required_theorems, 
                 dead_end_theorem_exprs=converted_conditions,
