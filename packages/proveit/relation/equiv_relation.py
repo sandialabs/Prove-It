@@ -107,6 +107,8 @@ class EquivRelation(TransitiveRelation):
             if (lhs_lhs_cf == rhs_lhs_cf) and (lhs_rhs_cf == rhs_rhs_cf):
                 return equality.conclude_via_direct_substitution()
             if (lhs_lhs_cf == rhs_rhs_cf) and (lhs_rhs_cf == rhs_lhs_cf):
-                return self.symmetrization()
+                symmetrization = self.symmetrization()
+                return symmetrization.apply_transitivity(
+                        symmetrization.rhs.deduce_canonically_equal(rhs))
         assert False, ("Canonical forms don't match so "
                        "'deduce_canonically_equality' should not be called")
