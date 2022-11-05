@@ -214,19 +214,27 @@ class Forall(OperationOverInstances):
         we will attempt to prove the innermost instance expression,
         under appropriate assumptions, via automation if necessary.
         '''
+        from proveit import free_vars
         automation = defaults.conclude_automation
         expr = self
         instance_param_lists = []
         conditions = []
         proven_inst_expr = None
+        inner_assumptions = defaults.assumptions
         while isinstance(expr, Forall):
             new_params = expr.explicit_instance_params()
+            new_vars = expr.explicit_instance_vars()
             instance_param_lists.append(list(new_params))
-            conditions += list(expr.conditions.entries)
+            # Can't use assumptions involving instance variables
+            # except from the conditions that we will explicitly add.
+            inner_assumptions = \
+                [assumption for assumption in inner_assumptions if
+                 free_vars(assumption).isdisjoint(new_vars)]
+            inner_assumptions += expr.conditions.entries
+            conditions += expr.conditions.entries
             expr = expr.instance_expr
             with defaults.temporary() as temp_defaults:
-                temp_defaults.assumptions = (defaults.assumptions + 
-                                             tuple(conditions))
+                temp_defaults.assumptions = inner_assumptions
                 if expr.proven():
                     proven_inst_expr = expr.prove()
                     break

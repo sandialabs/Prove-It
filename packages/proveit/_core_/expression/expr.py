@@ -923,7 +923,7 @@ class Expression(metaclass=ExprType):
             # the relation more directly.
             canonical_form = self.canonical_form()
             if canonical_form != TRUE and (
-                    not isinstance(self, Relation) or
+                    not self._is_effective_relation() or
                     canonical_form == Expression._build_canonical_form(self)):
                 cf_to_proven_exprs = (
                         Judgment.canonical_form_to_proven_exprs)
@@ -1022,6 +1022,7 @@ class Expression(metaclass=ExprType):
         passed through to the _readily_provable method.
         '''
         from proveit import Judgment, ExprTuple
+        from proveit.logic import TRUE
 
         if isinstance(self, ExprTuple):
             return False # An ExprTuple cannot be true or false.
@@ -1040,7 +1041,12 @@ class Expression(metaclass=ExprType):
                 # something else does with the same canonical form.
                 cf = self.canonical_form()
                 cf_to_proven_exprs = Judgment.canonical_form_to_proven_exprs
-                if cf in cf_to_proven_exprs:
+                if cf in cf_to_proven_exprs and cf != TRUE and (
+                        not self._is_effective_relation() or
+                        cf == Expression._build_canonical_form(self)):
+                    # We must use the same stipulations as those
+                    # used in Expression.prove for using a proven
+                    # expression with the same canonical form.
                     for proven_expr in cf_to_proven_exprs[cf]:
                         if proven_expr != self and proven_expr.proven():
                             return True
@@ -1070,6 +1076,17 @@ class Expression(metaclass=ExprType):
         and easily through its 'conclude' method.
         '''
         return False
+    
+    def _is_effective_relation(self):
+        '''
+        Return True if self is a Relation or the logical negation
+        of a relation which is essentially also a relation.
+        '''
+        from proveit.relation import Relation
+        from proveit.logic import Not
+        return isinstance(self, Relation) or (
+                isinstance(self, Not) and
+                isinstance(self.operand, Relation))        
 
     @prover
     def disprove(self, **defaults_config):

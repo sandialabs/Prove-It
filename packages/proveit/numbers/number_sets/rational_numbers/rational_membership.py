@@ -81,8 +81,6 @@ class RationalNonZeroMembership(RationalMembership):
         RationalMembership.__init__(self, element, RationalNonZero)
 
     def _readily_provable(self):
-        from . import nonzero_rational_is_rational_nonzero
-        if not nonzero_rational_is_rational_nonzero.is_usable(): return False
         return NumberMembership._readily_provable(self)
 
     @prover
@@ -151,8 +149,6 @@ class RationalPosMembership(RationalMembership):
         RationalMembership.__init__(self, element, RationalPos)
     
     def _readily_provable(self):
-        from . import pos_rational_is_rational_pos
-        if not pos_rational_is_rational_pos.is_usable(): return False
         return NumberMembership._readily_provable(self)
 
     @prover
@@ -252,8 +248,6 @@ class RationalNegMembership(RationalMembership):
         RationalMembership.__init__(self, element, RationalNeg)
     
     def _readily_provable(self):
-        from . import neg_rational_is_rational_neg
-        if not neg_rational_is_rational_neg.is_usable(): return False
         return NumberMembership._readily_provable(self)
 
     @prover
@@ -353,8 +347,6 @@ class RationalNonNegMembership(RationalMembership):
         RationalMembership.__init__(self, element, RationalNonNeg)
     
     def _readily_provable(self):
-        from . import nonneg_rational_is_rational_nonneg
-        if not nonneg_rational_is_rational_nonneg.is_usable(): return False
         return NumberMembership._readily_provable(self)
 
     @prover
@@ -424,8 +416,6 @@ class RationalNonPosMembership(RationalMembership):
         RationalMembership.__init__(self, element, RationalNonPos)
     
     def _readily_provable(self):
-        from . import nonpos_rational_is_rational_nonpos
-        if not nonpos_rational_is_rational_nonpos.is_usable(): return False
         return NumberMembership._readily_provable(self)
     
     @prover
