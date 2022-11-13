@@ -16,12 +16,26 @@ class RealInterval(Operation):
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
 
-    def includes(self, other_set):
+    def readily_includes(self, other_set):
         '''
         Return True if this NumberSet includes the 'other_set' set.
         '''
         from proveit.numbers.number_sets.number_set import NumberSet
-        return NumberSet.includes(self, other_set)
+        return NumberSet.readily_includes(self, other_set)
+    
+    def member_bounds(self, element):
+        from proveit.numbers import Less, LessEq
+        _x = element
+        _a, _b = self.lower_bound, self.upper_bound
+        if isinstance(self, IntervalOO):
+            lb, ub = Less(_a, _x), Less(_x, _b)
+        elif isinstance(self, IntervalCO):
+            lb, ub = LessEq(_a, _x), Less(_x, _b)
+        elif isinstance(self, IntervalOC):
+            lb, ub = Less(_a, _x), LessEq(_x, _b)
+        elif isinstance(self, IntervalCC):
+            lb, ub = LessEq(_a, _x), LessEq(_x, _b)
+        return lb, ub
 
 
 class IntervalOO(RealInterval):

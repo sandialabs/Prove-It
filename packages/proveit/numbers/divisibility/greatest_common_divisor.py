@@ -1,4 +1,4 @@
-from proveit import Theory, Function, Literal, USE_DEFAULTS
+from proveit import Theory, Function, Literal, prover
 from proveit.logic import Equals
 from proveit.numbers import one
 
@@ -10,7 +10,8 @@ class GCD(Function):
     def __init__(self, a, b, *, styles=None):
         Function.__init__(self, GCD._operator_, [a, b], styles=styles)
 
-    def deduce_relatively_prime(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_relatively_prime(self, **defaults_config):
         '''
         From GCD(a,b) expression and knowledge or assumption that
         GCD(a,b)=1, deduce that a, b are relatively prime and return
@@ -20,5 +21,4 @@ class GCD(Function):
         from . import GCD_one_def
         _a, _b = GCD_one_def.instance_params
         return GCD_one_def.instantiate(
-            {_a: self.operands[0], _b: self.operands[1]},
-            assumptions=assumptions)
+            {_a: self.operands[0], _b: self.operands[1]})

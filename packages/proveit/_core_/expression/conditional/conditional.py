@@ -176,15 +176,18 @@ class Conditional(Expression):
         return Conditional(subbed_val, subbed_cond,
                            styles=self._style_data.styles)
 
-    def _auto_simplified_sub_exprs(self, *, requirements, stored_replacements):
+    def _auto_simplified_sub_exprs(self, *, requirements, stored_replacements,
+                                   markers_and_marked_expr):
         '''
         Properly handle the Conditional scope while doing 
         auto-simplification replacements.
         '''
-        recursion_fn = lambda expr, requirements, stored_replacements : (
+        recursion_fn = lambda expr, requirements, stored_repls, sub_expr_fn : (
                      expr._auto_simplified(
                         requirements=requirements, 
-                        stored_replacements=stored_replacements))
+                        stored_replacements=stored_repls,
+                        markers_and_marked_expr=self._update_marked_expr(
+                                markers_and_marked_expr, sub_expr_fn)))
         subbed_val, subbed_cond = self._equality_replaced_sub_exprs(
                 recursion_fn, requirements=requirements,
                 stored_replacements=stored_replacements)
@@ -209,8 +212,11 @@ class Conditional(Expression):
         # subsequent conditions.
         if isinstance(self.condition, And):
             conditions = self.condition.operands.entries
+            build_get_cond_fn = lambda _k : (
+                    lambda _expr : _expr.condition.operands[_k]) 
         else:
             conditions = [self.condition]
+            build_get_cond_fn = lambda _k : (lambda _expr : _expr.condition) 
         
         # For each condition, we'll assume the previous substituted
         # conditions.
@@ -228,8 +234,8 @@ class Conditional(Expression):
                     inner_stored_repls = dict()
                 prev_assumptions = defaults.assumptions
                 subbed_conds.append(
-                        recursion_fn(cond, requirements=requirements, 
-                                     stored_replacements=inner_stored_repls))
+                        recursion_fn(cond, requirements, inner_stored_repls,
+                                     build_get_cond_fn(_k)))
     
         # For the value, we'll assume all of the substituted conditions.
         inner_assumptions = (defaults.assumptions  + tuple(subbed_conds))
@@ -240,8 +246,8 @@ class Conditional(Expression):
                 # use the stored_replacements from before.
                 inner_stored_repls = dict()
             subbed_val = recursion_fn(self.value,
-                    requirements=requirements,
-                    stored_replacements=inner_stored_repls)
+                    requirements, inner_stored_repls, 
+                    lambda _expr : _expr.value)
         if len(subbed_conds) == 1:
             return (subbed_val, subbed_conds[0])
         else:
@@ -251,8 +257,8 @@ class Conditional(Expression):
                 # conjunction; use the original assumptions and
                 # stored replacements.
                 subbed_condition = recursion_fn(
-                        subbed_condition, requirements=requirements,
-                        stored_replacements=stored_replacements)
+                        subbed_condition, requirements, stored_replacements, 
+                        lambda _expr : _expr.condition)
             return (subbed_val, subbed_condition)
 
     @equality_prover('simplified', 'simplify')
@@ -265,7 +271,9 @@ class Conditional(Expression):
         if True:#not self.value.is_simplified():
             # Simplify the 'value'.
             expr = eq.update(
-                    expr.value_substitution(self.value.simplification()))
+                    expr.value_substitution(self.value.simplification(
+                            assumptions=defaults.assumptions+(
+                                    self.condition,))))
         if isinstance(self.condition, And):
             # Simplify the conditions.
             if True:#any(not condition.is_simplified() for condition 
@@ -297,7 +305,7 @@ class Conditional(Expression):
             etc.
         '''
         from proveit import a, m, n, Q, R
-        from proveit.logic import And, TRUE, Equals, is_irreducible_value
+        from proveit.logic import And, TRUE, Equals
         if self.condition == TRUE:
             from proveit.core_expr_types.conditionals import \
                 true_condition_reduction
@@ -313,19 +321,16 @@ class Conditional(Expression):
             return redundant_condition_reduction.instantiate(
                     {a: self.value.value, Q: self.condition})            
         elif isinstance(self.condition, And):
-            from proveit.core_expr_types.conditionals import \
-                (singular_conjunction_condition_reduction,
-                 condition_merger_reduction,
-                 condition_append_reduction, condition_prepend_reduction,
-                 true_condition_elimination,
-                 condition_with_true_on_left_reduction,
-                 condition_with_true_on_right_reduction)
             conditions = self.condition.operands
             if is_single(conditions):
+                from proveit.core_expr_types.conditionals import (
+                        singular_conjunction_condition_reduction)
                 return singular_conjunction_condition_reduction \
                     .instantiate({a: self.value, Q: conditions[0]})
             elif (conditions.is_double() and
                     all(isinstance(cond, And) for cond in conditions)):
+                from proveit.core_expr_types.conditionals import (
+                        condition_merger_reduction)                
                 _Q = conditions[0].operands
                 _R = conditions[1].operands
                 _m = _Q.num_elements()
@@ -336,6 +341,9 @@ class Conditional(Expression):
             elif (conditions.num_entries() == 2 and
                     any(isinstance(cond, And) for cond in conditions) and
                     any(cond == TRUE for cond in conditions)):
+                from proveit.core_expr_types.conditionals import (
+                        condition_with_true_on_left_reduction,
+                        condition_with_true_on_right_reduction)
                 if conditions[0] == TRUE:
                     thm = condition_with_true_on_left_reduction
                     _Q = conditions[1].operands
@@ -348,17 +356,23 @@ class Conditional(Expression):
                 return thm.instantiate({m: _m, a: _a, Q: _Q})
             elif (conditions.is_double() 
                       and isinstance(conditions[0], And)):
+                from proveit.core_expr_types.conditionals import (
+                        condition_append_reduction)                
                 _Q = conditions[0].operands
                 _m = _Q.num_elements()
                 return condition_append_reduction.instantiate(
                     {a: self.value, m: _m, Q: _Q, R: conditions[1]})
             elif (conditions.is_double()
                       and isinstance(conditions[1], And)):
+                from proveit.core_expr_types.conditionals import (
+                        condition_prepend_reduction)                
                 _R = conditions[1].operands
                 _n = _R.num_elements()
                 return condition_prepend_reduction.instantiate(
                     {a: self.value, n: _n, Q: conditions[0], R: _R})
             elif any(cond==TRUE for cond in conditions):
+                from proveit.core_expr_types.conditionals import (
+                        true_condition_elimination)                
                 idx = conditions.index(TRUE)
                 _Q = conditions[:idx]
                 _R = conditions[idx+1:]
@@ -451,7 +465,7 @@ class Conditional(Expression):
                              %(equality, self))
 
     @equality_prover('condition_substituted', 
-                     'condition_substitute')
+                     'substitute_condition')
     def condition_substitution(self, condition_equivalence_or_equality, 
                                **defaults_config):
         '''
@@ -493,9 +507,9 @@ class Conditional(Expression):
                             "represent a logical equivalence (Iff) or "
                             "equality (equals), got %s."
                              %condition_equivalence_or_equality)
-        raise Value("%s expected to have %s on one of its sides"
-                    %(condition_equivalence_or_equality,
-                      self.condition))
+        raise ValueError("%s expected to have %s on one of its sides"
+                         %(condition_equivalence_or_equality,
+                           self.condition))
 
     @equality_prover('sub_expr_substituted', 'sub_expr_substitute')
     def sub_expr_substitution(self, new_sub_exprs, **defaults_config):
@@ -518,18 +532,32 @@ class Conditional(Expression):
                     Equals(self.sub_expr(1), new_sub_exprs[1])))
         return eq.relation
     
-    @equality_prover('equated', 'equate')
-    def deduce_equality(self, equality, **defaults_config):
+    def readily_equal(self, rhs):
+        '''
+        We can readily equate conditionals with the same condition and
+        readily equal values.
+        '''
         from proveit.logic import Equals
-        if not isinstance(equality, Equals):
-            raise ValueError("The 'equality' should be an Equals expression")
-        if equality.lhs != self:
-            raise ValueError("The left side of 'equality' should be 'self'")
-        if (isinstance(equality.rhs, Conditional) and 
-                equality.lhs.condition==equality.rhs.condition):
-            value_eq = Equals(equality.lhs.value, equality.rhs.value)
+        if not isinstance(rhs, Conditional):
+            return False
+        if not self.condition == rhs.condition:
+            # conditions must match
+            return False
+        return Equals(self.value, rhs.value).readily_provable()
+    
+    @equality_prover('equated', 'equate')
+    def deduce_equal(self, rhs, **defaults_config):
+        '''
+        We can equate conditionals with the same condition and provably
+        equal values.
+        '''
+        from proveit.logic import Equals
+        lhs = self
+        if (isinstance(rhs, Conditional) and 
+                lhs.condition==rhs.condition):
+            value_eq = Equals(lhs.value, rhs.value)
             value_eq.prove(assumptions=defaults.assumptions+(self.condition,))
-            return equality.lhs.value_substitution(value_eq)
-        raise NotImplementedError("Conditional.deduce_equality only implemented "
+            return lhs.value_substitution(value_eq)
+        raise NotImplementedError("Conditional.deduce_equal only implemented "
                                   "for equating Conditionals with the same "
                                   "condition.")

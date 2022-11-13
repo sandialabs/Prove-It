@@ -1,7 +1,8 @@
-from proveit import (Judgment, Literal, defaults, USE_DEFAULTS,
+from proveit import (Expression, Judgment, Literal, defaults, USE_DEFAULTS,
                      prover, equality_prover, relation_prover,
                      ProofFailure, UnsatisfiedPrerequisites)
 from proveit.relation import Relation
+from proveit.util import OrderedSet
 
 class InClass(Relation):
     '''
@@ -27,9 +28,11 @@ class InClass(Relation):
             latex_format=r'\underset{{\scriptscriptstyle c}}{\in}',
             theory=__file__)
 
-    # maps elements to InSet Judgments.
-    # For example, map x to (x in S) if (x in S) is a Judgment.
+    # maps elements to their known InClass Judgments.
     known_memberships = dict()
+    # maps canonical forms of elements to InClass Judgments.
+    # For example, map x to (1*x in S) if (1*x in S) is a Judgment.
+    known_memberships_by_canonical_form = dict()
     
     # map (element, domain) pairs to corresponding InClass expressions
     inclass_expressions = dict()
@@ -91,14 +94,24 @@ class InClass(Relation):
         else:
             return 'contains_C'
 
+    def _record_as_proven(self, judgment):
+        '''
+        Store the proven membership in known_memberships, and
+        store the membership with the element in its canonical form
+        in known_canonical_memberships.
+        '''
+        Relation._record_as_proven(self, judgment)
+        InClass.known_memberships.setdefault(
+                self.element, OrderedSet()).add(judgment)
+        InClass.known_memberships_by_canonical_form.setdefault(
+                self.element.canonical_form(), OrderedSet()).add(judgment)
+        
     def side_effects(self, judgment):
         '''
-        Store the proven membership in known_memberships.
         If the domain has a 'membership_object' method, side effects
         will also be generated from the 'side_effects' object that it
         generates.
         '''
-        InClass.known_memberships.setdefault(self.element, set()).add(judgment)
         if hasattr(self, 'membership_object'):
             for side_effect in self.membership_object.side_effects(judgment):
                 yield side_effect
@@ -124,60 +137,108 @@ class InClass(Relation):
         '''
         return self.negated().prove()
 
+    def _build_canonical_form(self):
+        '''
+        The canonical form of this membership is based upon
+        'as_defined' which defines what the membership means.
+        '''
+        if hasattr(self, 'membership_object'):
+            return self.membership_object._build_canonical_form()
+        else:
+            return Relation._build_canonical_form(self)
+
+    def _readily_provable(self, check_directly_known_elem_equality=True):
+        '''
+        This membership is readily provable if the membership
+        object indicates that it is readily provable.
+        
+        If check_directly_known_elem_equality is True and all else 
+        fails, we will check the first expression directly known to
+        be equal to the element to see if its membership in the daomin
+        is readily provable.  This helps, for example, when there is
+        an obvious definition to use.  Don't apply this recursively,
+        however.
+        '''
+        from proveit.logic import Equals, is_irreducible_value
+        if hasattr(self, 'membership_object'):
+            if self.membership_object._readily_provable():
+                return True
+        element = self.element
+        domain = self.domain
+        
+        # Try a known evaluation.
+        if not is_irreducible_value(element):
+            try:
+                elem_eval = Equals.get_known_evaluation(element).rhs
+            except UnsatisfiedPrerequisites:
+                return None
+            return type(self)(elem_eval, self.domain).readily_provable()
+
+        if check_directly_known_elem_equality:
+            # Check the first directly known equality of the element to
+            # see if this equal expression's membership is readily 
+            # provable.
+            for eq_expr in Equals.yield_directly_known_eq_exprs(
+                    element, include_canonical_forms=False):
+                if type(self)(eq_expr, domain).readily_provable(
+                        check_directly_known_elem_equality=False):
+                    return True
+                return False
+            
+        return False
+
+    def _readily_disprovable(self):
+        '''
+        This membership is readily disprovable if the corresponding
+        nonmembership is readily provable.
+        '''
+        return self.negated().readily_provable()
+
     @prover
     def conclude(self, **defaults_config):
         '''
-        Attempt to conclude that the element is in the domain.  First, 
-        see if it is known to be contained in a known subset of the
-        domain.  Next, check if the element has a known simplification; 
-        if so, try to derive membership via this simplification.
-        If there isn't a known simplification, next try to call
-        the 'self.domain.membership_object.conclude(..)' method to prove
-        the membership.  If that fails, try simplifying the element
-        again, this time using automation to push the simplification 
-        through if possible.
+        Attempt to conclude that the element is in the domain.  Try
+        standard relation strategies (evaluate or somplify both sides).
+        If that doesn't work, try using the domain-specific 'conclude' 
+        method of the membership object.
         '''
-        from proveit.logic import Equals, SubsetEq, evaluation_or_simplification
+        from proveit.logic import Equals, is_irreducible_value
+        
+        if hasattr(self, 'membership_object') and (
+                self.membership_object._readily_provable()):
+            # Don't bother with a fancy, indirect approach if
+            # we can readily conclude membership via the membership
+            # object.
+            return self.membership_object.conclude()
 
-        # See if the element, or something known to be equal to
-        # the element, is known to be a member of the domain or a subset
-        # of the domain.
-        for elem_sub in Equals.yield_known_equal_expressions(self.element):
-            same_membership = None # membership in self.domain
-            eq_membership = None # membership in an equal domain
-            subset_membership = None # membership in a subset
-            for known_membership in InClass.yield_known_memberships(elem_sub):
-                eq_rel = Equals(known_membership.domain, self.domain)
-                sub_rel = SubsetEq(known_membership.domain, self.domain)
-                if known_membership.domain == self.domain:
-                    same_membership = known_membership
-                    break # this is the best to use; we are done
-                elif eq_rel.proven():
-                    eq_membership = known_membership
-                elif sub_rel.proven():
-                    subset_membership = known_membership
-            elem_sub_in_domain = None
-            if same_membership is not None:
-                elem_sub_in_domain = same_membership
-            elif eq_membership is not None:
-                # domains are equal -- just substitute to domain.
-                eq_rel = Equals(eq_membership.domain, self.domain)
-                elem_sub_in_domain = eq_rel.sub_right_side_into(
-                    eq_membership.inner_expr().domain)
-            elif subset_membership is not None:
-                # S is a superset of R, so now we can prove x in S.
-                sub_rel = SubsetEq(subset_membership.domain, self.domain)
-                elem_sub_in_domain = sub_rel.derive_superset_membership(
-                        elem_sub)
-            if elem_sub_in_domain is not None:
-                # We found what we are looking for.
-                if elem_sub == self.element:
-                    return elem_sub_in_domain # done
-                # Just need to sub in the element for _elem_sub.
-                Equals(elem_sub, self.element).conclude_via_transitivity()
-                return elem_sub_in_domain.inner_expr().element.substitute(
-                        self.element)
-
+        # Try a known evaluation of the element.
+        element = self.element
+        domain = self.domain
+        if not is_irreducible_value(element):
+            try:
+                evaluation = Equals.get_known_evaluation(element)
+            except UnsatisfiedPrerequisites:
+                evaluation = None
+            if evaluation is not None:
+                membership = type(self)(evaluation.rhs, domain)
+                if membership.readily_provable():
+                    membership = membership.prove()
+                    return membership.inner_expr().element.substitute(
+                            element)
+        
+        # Check the first directly known expression equal to the element
+        # to see if we can prove it's membership.
+        for eq_expr in Equals.yield_directly_known_eq_exprs(
+                element, include_canonical_forms=False):
+            membership_of_eq_expr = type(self)(eq_expr, domain)
+            # Avoid applying this check recursively.
+            if membership_of_eq_expr.readily_provable(
+                    check_directly_known_elem_equality=False):
+                membership_of_eq_expr = membership_of_eq_expr.prove()
+                return membership_of_eq_expr.inner_expr().element.substitute(
+                        element)
+            break # only try the first known equal expression
+        
         # Try the standard Relation strategies -- evaluate or
         # simplify both sides.
         try:
@@ -197,18 +258,43 @@ class InClass(Relation):
                            "the domain, %s, has no 'membership_object' "
                            "method with a strategy for proving "
                            "membership." % self.domain)
-    
+
+    @prover
+    def conclude_negation(self, **defaults_config):
+        '''
+        Attempt to conclude that the element is not in the domain
+        via proving nonmembership.
+        '''
+        nonmembership = self.negated()
+        return nonmembership.prove().unfold_not_in()
+
     @staticmethod
-    def yield_known_memberships(element, assumptions=USE_DEFAULTS):
+    def yield_known_memberships(element, *, include_canonical_forms=True,
+                                 assumptions=USE_DEFAULTS):
         '''
         Yield the known memberships of the given element applicable
-        under the given assumptions.
+        under the given assumptions.  In 'include_canonical_forms' is
+        True, then we can treat elements of the same canonical form
+        as the same for this purpose.
         '''
-        assumptions = defaults.checked_assumptions(assumptions)       
-        if element in InClass.known_memberships:
-            for known_membership in InClass.known_memberships[element]:
-                if known_membership.is_applicable(assumptions):
-                    yield known_membership
+        from proveit._core_.proof import Assumption
+        known_memberships = (
+                InClass.known_memberships_by_canonical_form if 
+                include_canonical_forms else InClass.known_memberships)
+        with defaults.temporary() as tmp_defaults:
+            if assumptions is not USE_DEFAULTS:
+                tmp_defaults.assumptions = assumptions
+            # Make sure we derive assumption side-effects first.
+            Assumption.make_assumptions()
+    
+            if include_canonical_forms: 
+                key = element.canonical_form()
+            else:
+                key = element
+            if key in known_memberships:
+                for known_membership in known_memberships[key]:
+                    if known_membership.is_applicable():
+                        yield known_membership
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
@@ -258,6 +344,18 @@ class InClass(Relation):
         except BaseException:
             pass
         return evaluation
+
+    def _deduce_canonically_equal(self, rhs):
+        '''
+        Call _deduce_canonically_equal on the membership obect if there
+        is one.
+        '''
+        if hasattr(self, 'membership_object'):
+            try:
+                return self.membership_object._deduce_canonically_equal(rhs)
+            except NotImplementedError:
+                pass
+        return Relation._deduce_canonically_equal(self, rhs)
     
     @staticmethod
     def check_proven_class_membership(membership, element, class_of_class):
@@ -293,6 +391,44 @@ class ClassMembership:
             "Membership object, %s, has no 'side_effects' method implemented" % str(
                 self.__class__))
 
+    def _build_canonical_form(self):
+        '''
+        The canonical form of this membership is based upon
+        'as_defined' which defines what the membership means.
+        '''
+        try:
+            return self.as_defined().canonical_form()
+        except NotImplementedError:
+            # If 'as_defined' is not implemented, use the default
+            # method of building the canonical form.
+            return Relation._build_canonical_form(self.expr)
+
+    def _readily_provable(self):
+        '''
+        By default, we will determine if this membership is
+        readily provable if its "as_defined()" expression is
+        readily provable.
+        '''
+        try:
+            return self.as_defined().readily_provable()
+        except NotImplementedError:
+            # If 'as_defined' is not implemented, this default
+            # method for determining provability can never be true.
+            return False
+
+    def _readily_disprovable(self):
+        '''
+        By default, we will determine if this membership is
+        readily disprovable if its "as_defined()" expression is
+        readily disprovable.
+        '''
+        try:
+            return self.as_defined().readily_disprovable()
+        except NotImplementedError:
+            # If 'as_defined' is not implemented, this default
+            # method for determining provability can never be true.
+            return False
+
     @prover
     def conclude(self, **defaults_config):
         raise NotImplementedError(
@@ -301,9 +437,37 @@ class ClassMembership:
 
     @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
+        '''
+        Prove the membership equal to an expression that defines the
+        membership.
+        '''
         raise NotImplementedError(
             "Membership object, %s, has no 'definition' method implemented" % str(
                 self.__class__))
+    
+    def as_defined(self):
+        '''
+        Returns the expression that defines the membership.
+        '''
+        raise NotImplementedError(
+            "Membership object, %s, has no 'as_defined' method implemented" % str(
+                self.__class__))
+
+    def _deduce_canonically_equal(self, rhs):
+        '''
+        Equate 'self' to the 'rhs' via the definition.  Raises 
+        NotImplementedError if 'definition' is not implemented.
+        '''
+        definition = self.definition()
+        def_eq_rhs = definition.deduce_canonically_equal(rhs)
+        return definition.apply_transitivity(def_eq_rhs)
+        
+    def readily_in_bool(self, **defaults_config):
+        '''
+        Unless this is overridden, we won't presume that the membership
+        is readily provable to be boolean.
+        '''
+        return False
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):

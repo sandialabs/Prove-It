@@ -15,8 +15,12 @@ class NaturalMembership(NumberMembership):
     def __init__(self, element, number_set):
         NumberMembership.__init__(self, element, number_set)
 
+    def _readily_provable(self):
+        return NumberMembership._readily_provable(self)
+
     @prover
     def conclude(self, **defaults_config):
+        # Use proven, not readily provable here:
         if (InSet(self.element, Integer).proven() and
                 greater_eq(self.element, zero).proven()):
             return self.conclude_as_last_resort()
@@ -80,10 +84,24 @@ class NaturalPosMembership(NaturalMembership):
 
     @prover
     def conclude(self, **defaults_config):
+        # Use proven, not readily provable here:
         if (InSet(self.element, Integer).proven() and
                 greater(self.element, zero).proven()):
             return self.conclude_as_last_resort()
+        if (InSet(self.element, Natural).proven() and
+                NotEquals(self.element, zero).readily_provable()):
+            return self.conclude_via_nonzero()
         return NumberMembership.conclude(self)
+
+    @prover
+    def conclude_via_nonzero(self, **defaults_config):
+        '''
+        Conclude element in NaturalPos by proving it is natural
+        and nonzero.
+        '''
+        from proveit.numbers.number_sets.integers import (
+            nonzero_nat_is_natural_pos)
+        return nonzero_nat_is_natural_pos.instantiate({a:self.element})
 
     @prover
     def conclude_as_last_resort(self, **defaults_config):
@@ -101,6 +119,7 @@ class NaturalPosMembership(NaturalMembership):
         Yield side-effects when proving 'n in NaturalPos' for a given n.
         '''
         yield self.derive_element_lower_bound
+        yield self.derive_element_is_positive
         yield self.derive_element_in_nat
         yield self.derive_element_in_int
         yield self.derive_element_in_nonzero_int
@@ -121,6 +140,13 @@ class NaturalPosMembership(NaturalMembership):
                 natural_pos_lower_bound)
         return natural_pos_lower_bound.instantiate({n: self.element},
                                                    auto_simplify=False)
+
+    @prover
+    def derive_element_is_positive(self, **defaults_config):
+        from proveit.numbers.number_sets.natural_numbers import (
+                natural_pos_is_pos)
+        return natural_pos_is_pos.instantiate(
+            {n: self.element}, auto_simplify=False)
 
     @prover
     def derive_element_nonzero(self, **defaults_config):

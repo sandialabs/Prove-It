@@ -3,7 +3,7 @@ from proveit import Literal, Operation, equality_prover
 # from proveit.logic.generic_ops import AssociativeOperation, BinaryOperation
 from proveit import b, m, x, A, alpha, beta, theta, rho
 from proveit.logic import Equals
-from proveit.numbers import Exp
+from proveit.numbers import Mult, Exp
 
 class MatrixMult(Operation):
     '''
@@ -22,9 +22,61 @@ class MatrixMult(Operation):
         '''
         Operation.__init__(self, MatrixMult._operator_, operands,
                            styles=styles)
+    
+    def readily_equal(self, rhs):
+        '''
+        We can handle the special case of proving an eigen
+        exponentiation application:
+            A^m x = b^m x
+            if A x = b x.
+        or
+            A^m x = exp(i m theta) x
+            if A x = exp(i theta) x
+        or
+            A^m x = exp(2 pi i m theta) x
+            if A x = exp(2 pi i theta) x
+        '''
+        from proveit.numbers import two, e, pi, i
+        from proveit.linear_algebra import ScalarMult
+        from proveit.linear_algebra.matrices.exponentiation import MatrixExp
+        if self.operands.is_double() and isinstance(rhs, ScalarMult):
+            Am, x_lhs = self.operands
+            bm, x_rhs = rhs.operands
+            if (x_lhs==x_rhs and isinstance(Am, MatrixExp) 
+                  and isinstance(bm, Exp)):
+                _x = x_lhs
+                _m = Am.exponent
+                if isinstance(bm, Mult):
+                    exp_factors = list(bm.exponent.operands.entries)
+                else:
+                    exp_factors = [bm.exponent]
+                if bm.base == e and isinstance(bm.exponent, Mult):
+                    #print(bm.exponent.operands.num_entries())
+                    if bm.exponent.operands.entries[:3] == (two, pi, i) and (
+                            bm.exponent.operands.num_entries()==4):
+                        remaining_factor = bm.exponent.operands.entries[3]
+                        #print(remaining_factor)
+                        if isinstance(remaining_factor, Mult):
+                            # e.g, flatten 2 pi i (x y) to 2 pi i x y
+                            exp_factors = [two, pi, i, 
+                                           *remaining_factor.operands]
+                if _m in exp_factors:
+                    exp_factors.remove(_m)
+                #print(exp_factors, len(exp_factors))
+                if len(exp_factors) > 0:
+                    _b = Exp(bm.base, Mult(*exp_factors))
+                elif len(exp_factors) == 1:
+                    _b = Exp(bm.base, exp_factors[0])
+                else:
+                    _b = bm.base
+                eigen_eq = Equals(MatrixMult(Am.base, _x),
+                                  ScalarMult(_b, _x))
+                if eigen_eq.proven():
+                    return True
+        return False
 
-    @equality_prover('equated', 'equate')
-    def deduce_equality(self, equality, **defaults_config):
+    @equality_prover("equated", "equate")
+    def deduce_equal(self, rhs, **defaults_config):
         '''
         We can handle the special case of proving an eigen
         exponentiation application:
@@ -39,22 +91,20 @@ class MatrixMult(Operation):
         '''
         from proveit.numbers import Mult, two, pi, e, i
         from proveit.linear_algebra import ScalarMult
-        if not isinstance(equality, Equals):
-            raise ValueError("The 'equality' should be an Equals expression")
-        if equality.lhs != self:
-            raise ValueError("The left side of 'equality' should be 'self'")
+        lhs = self
+        equality = Equals(lhs, rhs)
         def raise_not_implemented():
             raise NotImplementedError(
-                "MatrixMult.deduce_equality is only implemented for "
+                "MatrixMult.deduce_equal is only implemented for "
                 "proving an eigen exponentiation application of the form "
                 "A^m x = b^m x, not %s"%equality)
-        if self.operands.is_double() and isinstance(equality.rhs, ScalarMult):
+        if self.operands.is_double() and isinstance(rhs, ScalarMult):
             from proveit.linear_algebra.matrices.exponentiation import (
                     MatrixExp, eigen_exp_application,
                     unital_eigen_exp_application,
                     unital2pi_eigen_exp_application)
             Am, x_lhs = self.operands
-            bm, x_rhs = equality.rhs.operands
+            bm, x_rhs = rhs.operands
             if (x_lhs==x_rhs and isinstance(Am, MatrixExp) 
                   and isinstance(bm, Exp)):
                 _m = Am.exponent

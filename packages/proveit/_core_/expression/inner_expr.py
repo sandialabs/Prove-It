@@ -6,8 +6,10 @@ from .composite import (ExprTuple, Composite, NamedExprs,
                         single_or_composite_expression, composite_expression)
 from proveit._core_.defaults import defaults, USE_DEFAULTS
 from proveit.decorators import prover, equality_prover
+from proveit.util import OrderedSet
 # from proveit.logic import InSet
 from collections import deque
+import inspect
 
 
 class InnerExpr:
@@ -76,6 +78,9 @@ class InnerExpr:
     7. inner_expr.substitute(a + 1 - 2) would return
            |- [((a - 1) + b + (a + 1 - 2)/d) < e]
 
+    Note: When substitituting, auto-simplification may only affect 
+    sub-expressions touched by a substitution.
+    
     In addition, the InnerExpr class has 'simplify_operands' and
     'evaluate_operands' methods for effecting 'simplify' or 'evaluate'
     (respectively) on all of the operands of the inner expression.
@@ -103,9 +108,18 @@ class InnerExpr:
         from proveit.logic import And
         self.inner_expr_path = tuple(inner_expr_path)
         self.expr_hierarchy = [top_level]
-        if assumptions is None: assumptions = defaults.assumptions
-        self.assumptions = tuple(assumptions)
-        self.assumptions_set = set(assumptions)
+
+        # set the assumptions
+        if assumptions is USE_DEFAULTS or (
+                assumptions is defaults.assumptions or
+                OrderedSet(assumptions) == defaults.assumptions):
+            # just use the defaults.
+            self.assumptions = defaults.assumptions
+        else:
+            with defaults.temporary() as tmp_defaults:
+                tmp_defaults.assumptions = assumptions
+                self.assumptions = defaults.assumptions
+
         # list all of the lambda expression parameters encountered
         # along the way from the top-level expression to the inner
         # expression.
@@ -259,7 +273,7 @@ class InnerExpr:
                 assumptions = kwargs.get('assumptions', defaults.assumptions)
                 # Add in 'assumptions' to be used by the InnerExpr 
                 # object.
-                assumptions = tuple(assumptions) + self.assumptions
+                assumptions = OrderedSet(assumptions) + self.assumptions
                 # Add in the conditions of the inner expression
                 # for the 'equiv_method' call.
                 kwargs['assumptions'] = (assumptions +
@@ -536,14 +550,35 @@ class InnerExpr:
                                 "an Equals expression")
             expected_lhs = cur_inner_expr
             if isinstance(cur_inner_expr, ExprRange):
-                expected_lhs = ExprTuple(expected_lhs)
-            if equality_or_replacement.lhs != expected_lhs:
-                raise ValueError("Expecting lhs of %s to be %s"%
-                                 (equality_or_replacement, expected_lhs))
-            if prove_equality:
-                return equality_or_replacement
-            else:
-                return equality_or_replacement.expr
+                expected_lhs = ExprTuple(expected_lhs)            
+            if equality_or_replacement.lhs == expected_lhs:
+                # The lhs of the equality Judgment is the same as what
+                # we expect.  We are good to go. 
+                if prove_equality:
+                    return equality_or_replacement
+                else:
+                    return equality_or_replacement.expr
+            eq = Equals(equality_or_replacement.lhs, expected_lhs)
+            if eq.readily_provable():
+                # The lhs of the equality Judgment is not the same as
+                # what we expect, but we should be able to prove they
+                # are equal and use transitivity.
+                if prove_equality:
+                    return eq.prove().apply_transitivity(
+                            equality_or_replacement)
+                else:
+                    return Equals(expected_lhs, equality_or_replacement.rhs)
+            # make some error-related information available at run
+            # time for debugging purposes, then raise error
+            Judgment.error_info_obtained = equality_or_replacement
+            Judgment.error_info_expected_lhs = expected_lhs
+            raise ValueError(
+                    "Expecting lhs of {0} to be {1}. "
+                    "For debugging purposes, the obtained equality "
+                    "is stored as Judgment.error_info_obtained, and "
+                    "the expected lhs is stored as "
+                    "Judgment.error_info_expected_lhs. ".
+                    format(equality_or_replacement, expected_lhs))
 
         replacement = equality_or_replacement
         equality = Equals(cur_inner_expr, replacement)
@@ -651,6 +686,9 @@ class InnerExpr:
         equality_or_replacement may be a proven equality with the 
         current inner expression on the left side or it may be the
         replacement.
+
+        Note: auto-simplification may only affect sub-expressions
+        touched by the substitution.
         '''
         return self._substitution(equality_or_replacement)
 
@@ -664,6 +702,9 @@ class InnerExpr:
         equality_or_replacement may be a proven equality with the 
         current inner expression on the left side or it may be the
         replacement.
+
+        Note: auto-simplification may only affect sub-expressions
+        touched by the substitution.
         '''        
         from proveit import x, P
         from proveit.logic import TRUE, FALSE
@@ -758,6 +799,7 @@ class InnerExprGenerator:
         search manner and optionally skipping over branches via the
         'skip_over_branch' method.
         '''
+        from proveit.core_expr_types import x_1_to_n
         next_inner_exprs = self.next_inner_exprs
         last_out = self._last_out
         if last_out is not None:
@@ -768,13 +810,35 @@ class InnerExprGenerator:
                     # Skip the Lambda 'parameters'.
                     continue
                 next_inner_expr = last_out.sub_expr(k)
-                last_sub_expr = last_out.cur_sub_expr()
                 next_inner_exprs.append(next_inner_expr)
         if len(next_inner_exprs) == 0:
             raise StopIteration() # No more in the queue.
         # Pop out the next InnerExpr object from the queue.
         next_inner_expr = next_inner_exprs.popleft()
         self._last_out = next_inner_expr
+
+        # We will skip this particular inner expression if it
+        # is representing all operands of an Operation that only 
+        # accepts a fixed number of operands.
+        if isinstance(next_inner_expr.expr_hierarchy[-1], 
+                      Composite):
+            if len(next_inner_expr.expr_hierarchy) >= 2 and (
+                    isinstance(next_inner_expr.expr_hierarchy[-2],
+                               Operation)):
+                # See if we should skip over this -- if
+                # the inner expression is trying to represent
+                # all operands of an Operation that accepts
+                # a fixed number of operands.
+                operation = next_inner_expr.expr_hierarchy[-2]
+                try:
+                    list(type(operation)._extract_init_args(
+                            operation.operator, ExprTuple(x_1_to_n)))
+                except ValueError:
+                    # Skip this particular inner expression;
+                    # it isn't proper to represent all operands
+                    # of this Operation because it, presumably, only
+                    # accept a fixed number of operands.
+                    return next(self)
         return next_inner_expr
     
     def skip_over_branch(self):

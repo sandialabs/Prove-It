@@ -37,12 +37,12 @@ class Interval(Operation):
         from .interval_membership import IntervalNonmembership
         return IntervalNonmembership(element, self)
 
-    def includes(self, other_set):
+    def readily_includes(self, other_set):
         '''
         Return True if this NumberSet includes the 'other_set' set.
         '''
         from proveit.numbers.number_sets.number_set import NumberSet
-        return NumberSet.includes(self, other_set)
+        return NumberSet.readily_includes(self, other_set)
 
     @prover
     def deduce_elem_in_set(self, member, **defaults_config):
@@ -70,7 +70,6 @@ class Interval(Operation):
             return interval_subset_eq.instantiate(
                 {a:_a, b:_b, c:_c, d:_d}, auto_simplify=False)
         else:
-            # print("Poop!")
             raise NotImplementedError (
                     "In calling the Interval.deduce_subset_eq_relation() "
                     "method, the proposed subset {} needs to be an Interval.".

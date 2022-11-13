@@ -34,6 +34,16 @@ class UnionMembership(SetMembership):
         return union_def.instantiate(
                 {m: _m, x: element, A: _A}, auto_simplify=False)
 
+    def as_defined(self):
+        '''
+        From self=[elem in (A U B U ...)], return
+        [(element in A) or (element in B) or ...].
+        '''
+        from proveit.logic import Or, InSet
+        element = self.element
+        return Or(*self.domain.operands.map_elements(
+                lambda subset : InSet(element, subset)))
+
     @prover
     def unfold(self, **defaults_config):
         '''
@@ -93,6 +103,16 @@ class UnionNonmembership(SetNonmembership):
         _m = _A.num_elements()
         return nonmembership_equiv.instantiate(
             {m: _m, x: element, A: _A}, auto_simplify=False)
+
+    def as_defined(self):
+        '''
+        From self=[elem not in (A U B U ...)], return
+        [(element not in A) and (element not in B) and ...].
+        '''
+        from proveit.logic import And, NotInSet
+        element = self.element
+        return And(*self.domain.operands.map_elements(
+                lambda subset : NotInSet(element, subset)))
 
     @prover
     def conclude(self, **defaults_config):

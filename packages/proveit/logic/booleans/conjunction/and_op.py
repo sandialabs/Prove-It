@@ -2,12 +2,13 @@ from proveit import (Expression, Literal, Operation, Conditional,
                      defaults, USE_DEFAULTS, ProofFailure, InnerExpr,
                      prover, relation_prover, equality_prover,
                      SimplificationDirectives, TransRelUpdater)
-from proveit.logic.equality import SimplificationError
+from proveit.logic.equality import Equals, SimplificationError
 from proveit import i, j, k, l, m, n, A, B, C, D, E, F, G, P
 from proveit.logic.booleans.booleans import in_bool
 from proveit.abstract_algebra.generic_methods import (
         apply_commutation_thm, apply_association_thm, apply_disassociation_thm, 
-        group_commutation, group_commute, prove_via_grouping_ranges)
+        group_commutation, group_commute, generic_permutation,
+        deduce_equality_via_commutation, prove_via_grouping_ranges)
 
 
 class And(Operation):
@@ -110,6 +111,69 @@ class And(Operation):
         self._check_total_ordering_applicability()
         return self.with_styles(as_total_ordering='True')
 
+    def _readily_provable(self):
+        '''
+        Return True iff we should be able to conclude this conjunction.
+        Specifically, if all operands are provable, than the conjunction
+        should be provable.
+        '''
+        from proveit import ExprRange
+        univ_quant = self._as_quantification()
+        if univ_quant is not None:
+            # See if the corresponding universal quantification is
+            # readily provable:
+            #   P(i) and ... and P(j) <=>
+            #   forall_{k in {i .. j}} P(k)
+            return univ_quant.readily_provable()
+        for operand in self.operands:
+            if isinstance(operand, ExprRange):
+                if not And(operand).readily_provable():
+                    return False
+            elif not operand.readily_provable():
+                return False
+        return True
+
+    def _readily_disprovable(self):
+        '''
+        Return True iff we should be able to conclude the negation
+        of this conjunction.
+        Specifically, if any operands is disprovable, than the 
+        negation of the conjunction should be provable.
+        '''
+        from proveit import ExprRange
+        univ_quant = self._as_quantification()
+        if univ_quant is not None:
+            # See if the corresponding universal quantification is
+            # readily disprovable:
+            #   P(i) and ... and P(j) <=>
+            #   forall_{k in {i .. j}} P(k)
+            return univ_quant.readily_disprovable()
+        for operand in self.operands:
+            if isinstance(operand, ExprRange):
+                if And(operand).readily_disprovable():
+                    return True
+            elif operand.readily_disprovable():
+                return True
+        return False
+
+    def _as_quantification(self):
+        '''
+        If this is a conjunction over a single ExprRange entry,
+        return the equivalent universal quantification:
+            P(i) and ... and P(j) <=> forall_{k in {i .. j}} P(k)
+        '''
+        from proveit import ExprRange
+        if (self.operands.num_entries() == 1 and
+                isinstance(self.operands[0], ExprRange)):
+            from proveit.logic import Forall
+            expr_range = self.operands[0]
+            univ_quant = Forall(
+                    expr_range.parameter,
+                    expr_range.body,
+                    condition = expr_range.parameter_condition())
+            return univ_quant
+        return None
+
     @prover
     def conclude(self, **defaults_config):
         '''
@@ -136,14 +200,14 @@ class And(Operation):
 
     @prover
     def conclude_negation(self, **defaults_config):
-        # Created by JML on 6/24/19
+        '''
+        Prove the negation of this conjunction (by disproving any
+        operand).
+        '''
         from . import (
             true_and_false_negated,
             false_and_true_negated,
-            false_and_false_negated,
-            nand_if_neither,
-            nand_if_left_but_not_right,
-            nand_if_right_but_not_left)
+            false_and_false_negated)
         from proveit.logic import Not, FALSE
         not_self = Not(self)
         if not_self in {
@@ -155,12 +219,7 @@ class And(Operation):
             return not_self.prove()
             # Prove that the conjunction is true by proving that one of
             # its operands is false and then negate it.
-        # In the first attempt, don't use automation to prove any of the
-        # operands so that
-        # we don't waste time trying to prove operands when we already
-        # know one to be false
-        use_automation_possibilities = (
-                [False, True] if defaults.automation else [False])
+
         if self.operands.contains_range():
             if self.operands.num_entries()==1:
                 # Just a single ExprRange.  Conclude the negation
@@ -178,44 +237,12 @@ class And(Operation):
                     self,
                     lambda expr, **kwargs: expr.conclude_negation(**kwargs))
         
-        for use_automation_for_operand in use_automation_possibilities:
-            disproven_operand_indices = []
-            for _k, operand in enumerate(self.operands):
-                try:
-                    operand.disprove(automation=use_automation_for_operand)
-                    disproven_operand_indices.append(_k)
-                    # possible way to prove it
-                    self.conclude_negation_via_example(operand)
-                except Exception:
-                    pass
-            if self.operands.is_double() and len(disproven_operand_indices) > 0:
-                # One or both of the two operands were known to be true
-                # (without automation).
-                # Try a possibly simpler proof than
-                # conclude_negation_via_example.
-                try:
-                    if len(disproven_operand_indices) == 2:
-                        return nand_if_neither.instantiate(
-                            {A: self.operands[0], B: self.operands[1]})
-                    elif disproven_operand_indices[0] == 0:
-                        return nand_if_right_but_not_left.instantiate(
-                            {A: self.operands[0], B: self.operands[1]})
-                    else:
-                        return nand_if_left_but_not_right.instantiate(
-                            {A: self.operands[0], B: self.operands[1]})
-                except BaseException:
-                    pass
-            if len(disproven_operand_indices) > 0:
-                # Not(self) should have been proven via
-                # conclude_negation_via_example above
-                try:
-                    return not_self.prove(automation=False)
-                except BaseException:
-                    # If it wasn't proven via
-                    # conclude_negation_via_example, let's
-                    # call it again to raise the appropriate exception.
-                    operand = self.operands[disproven_operand_indices[0]]
-                    return self.conclude_negation_via_example(operand)
+        for operand in self.operands:
+            if operand.readily_disprovable():
+                # With one disprovable operand, we can prove the 
+                # negated conjunction.
+                return self.conclude_negation_via_example(operand)
+        
         raise ProofFailure(not_self, defaults.assumptions,
                            "Unable to conclude the negated conjunction; "
                            "we could not disprove any of the conjunction "
@@ -267,6 +294,20 @@ class And(Operation):
         for _i in range(self.operands.num_entries()):
             if not isinstance(self.operands[_i], ExprRange):
                 yield lambda : self.deduce_part_in_bool(_i)
+
+    def _build_canonical_form(self):
+        '''
+        Returns a form of this operation in which the operands are 
+        in a deterministically sorted order used to determine equal 
+        expressions given commutativity of this operation under
+        appropriate conditions.
+        '''
+        return And(*sorted([operand.canonical_form() for operand 
+                            in self.operands.entries], key=hash))
+
+    def _deduce_canonically_equal(self, rhs):
+        equality = Equals(self, rhs)
+        return deduce_equality_via_commutation(equality, one_side=self)
 
     @prover
     def derive_any(self, index_or_expr, **defaults_config):
@@ -362,7 +403,7 @@ class And(Operation):
                 {i:_i, j:_j, k:_k, P:_P},
                 preserve_expr=self).derive_consequent()
             
-        if defaults.automation:
+        if defaults.sideeffect_automation:
             # While we are at it, as an "unofficial" side-effect,
             # let's instantatiate forall_{k in {i .. j}} P(k) to derive
             # {k in {i .. j}} |- P(k)
@@ -372,7 +413,7 @@ class And(Operation):
             proven_quantification.instantiate(assumptions=assumptions)
             # We'll do it with the canonical variable as well for good
             # measure, if it is any different.
-            canonical_version = proven_quantification.canonical_version()
+            canonical_version = proven_quantification.canonically_labeled()
             if canonical_version._style_id != proven_quantification._style_id:
                 _k = canonical_version.instance_var
                 assumptions = defaults.assumptions + (
@@ -493,13 +534,28 @@ class And(Operation):
         conjunction.  Requires all of the operands to be in the
         BOOLEAN set.
         '''
-        from . import nand_if_not_one, nand_if_not_left, nand_if_not_right
+        from . import (nand_if_not_one, nand_if_not_left, nand_if_not_right,
+                       nand_if_neither, nand_if_right_but_not_left,
+                       nand_if_left_but_not_right)
         index = self.operands.index(false_operand)
         if self.operands.is_double():
+            _A, _B = self.operands
             if index == 0:
+                if self.operands[1].readily_disprovable():
+                    # May be a shorter proof
+                    nand_if_neither.instantiate({A:_A, B:_B})
+                elif self.operands[1].readily_provable():
+                    # May be a shorter proof
+                    nand_if_right_but_not_left.instantiate({A:_A, B:_B})
                 return nand_if_not_left.instantiate(
                     {A: self.operands[0], B: self.operands[1]})
             elif index == 1:
+                if self.operands[0].readily_disprovable():
+                    # May be a shorter proof
+                    nand_if_neither.instantiate({A:_A, B:_B})
+                elif self.operands[0].readily_provable():
+                    # May be a shorter proof
+                    nand_if_left_but_not_right.instantiate({A:_A, B:_B})
                 return nand_if_not_right.instantiate(
                     {A: self.operands[0], B: self.operands[1]})
         _A = self.operands[:index]
@@ -539,9 +595,8 @@ class And(Operation):
     @prover
     def conclude_over_expr_range(self, **defaults_config):
         '''
-        Conclude a conjunction over an ExprRange via each element 
-        of the ExprRange being True. This could be conceptualized as
-        a generalization of the conclude_as_redundant() method above.
+        Conclude a conjunction over an ExprRange via the
+        equivalent universal quantification.
         '''
         from proveit import ExprRange, Lambda
         from . import conjunction_from_quantification
@@ -663,6 +718,21 @@ class And(Operation):
 
         return Expression.shallow_simplification(self)
 
+    def readily_in_bool(self):
+        '''
+        Returns True if we can readily prove that all of the operands
+        are provably boolean and therefore this conjunction is 
+        provably boolean.
+        '''
+        from proveit.logic import And
+        # Or.readily_in_bool calls And.readily_in_bool for convenience,
+        # so we have to check if this is really and And:
+        if isinstance(self, And):
+            from . import closure
+            if not self.operands.is_double() and not closure.is_usable():
+                return False
+        return And(*self.operands.map_elements(in_bool)).readily_provable()
+
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
@@ -738,6 +808,33 @@ class And(Operation):
         '''
         return group_commute(
             self, init_idx, final_idx, length, disassociate)
+
+
+    @equality_prover('moved', 'move')
+    def permutation_move(self, init_idx=None, final_idx=None,
+                         **defaults_config):
+        '''
+        Given numerical operands, deduce that this expression is equal 
+        to a form in which the operand
+        at index init_idx has been moved to final_idx.
+        For example, (a ∧ b · ... ∧ y ∧ z) = (a ∧ ... ∧ y ∧ b ∧ z)
+        via init_idx = 1 and final_idx = -2.
+        '''
+        return self.commutation(init_idx=init_idx, final_idx=final_idx)
+
+    @equality_prover('permuted', 'permute')
+    def permutation(self, new_order=None, cycles=None, **defaults_config):
+        '''
+        Deduce that this Add expression is equal to an Add in which
+        the terms at indices 0, 1, …, n-1 have been reordered as
+        specified EITHER by the new_order list OR by the cycles list
+        parameter. For example,
+            (a∧b∧c∧d).permutation_general(new_order=[0, 2, 3, 1])
+        and
+            (a∧b∧c∧d).permutation_general(cycles=[(1, 2, 3)])
+        would both return ⊢ (a∧b∧c∧d) = (a∧c∧d∧b).
+        '''
+        return generic_permutation(self, new_order, cycles)
 
     @equality_prover('associated', 'associate')
     def association(self, start_idx, length, **defaults_config):

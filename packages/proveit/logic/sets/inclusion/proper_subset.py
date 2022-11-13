@@ -1,4 +1,5 @@
 from proveit import (as_expression, Literal, Operation, safe_dummy_var,
+                     Judgment, UnsatisfiedPrerequisites,
                      prover, relation_prover, ProofFailure, defaults)
 from proveit import A, B, C, x
 from proveit import f, S
@@ -51,9 +52,19 @@ class ProperSubset(InclusionRelation):
     def conclude(self, **defaults_config):
         '''
         '''
-        #print("Entering the ProperSubset.conclude() method!")                   # for testing; delete later
-        raise ProofFailure(self, defaults.assumptions,
-                       "ProperSubset.conclude() not implemented.")
+        _A, _B = self.operands.entries
+        if hasattr(_A, 'deduce_proper_superset_relation'):
+            try:
+                return _A.deduce_proper_superset_relation(_B)
+            except (NotImplementedError, UnsatisfiedPrerequisites):
+                pass
+        if hasattr(_B, 'deduce_proper_subset_relation'):
+            try:
+                return _B.deduce_proper_subset_relation(_A)
+            except (NotImplementedError, UnsatisfiedPrerequisites):
+                pass
+        raise NotImplementedError("ProperSubset.conclude() not fully "
+                                  "implemented.")
 
     @prover
     def unfold(self, **defaults_config):
@@ -97,8 +108,10 @@ class ProperSubset(InclusionRelation):
         from . import (
             transitivity_subset_subset, transitivity_subset_eq_subset,
             transitivity_subset_subset_eq,)
+        other = as_expression(other)
         if isinstance(other, Equals) or isinstance(other, SetEquiv):
             return InclusionRelation.apply_transitivity(self, other)
+        new_rel = None
         if other.subset == self.superset:
             if isinstance(other, ProperSubset):
                 new_rel = transitivity_subset_subset.instantiate(
@@ -117,7 +130,7 @@ class ProperSubset(InclusionRelation):
                 new_rel = transitivity_subset_eq_subset.instantiate(
                     {A: other.subset, B: other.superset, C: self.superset},
                     preserve_all=True)
-        else:
+        if new_rel is None:
             raise ValueError(
                 "Cannot perform transitivity with {0} and {1}!".
                 format(self, other))

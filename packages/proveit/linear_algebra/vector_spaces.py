@@ -64,8 +64,9 @@ class VecSpaces(Function):
         if VecSpaces.default_field is not None:
             return VecSpaces.default_field
         if not may_be_none:
-            raise ValueError("A field for vector spaces was not specified "
-                             "and VecSpaces.default_field was not set.")
+            raise UnsatisfiedPrerequisites(
+                    "A field for vector spaces was not specified "
+                    "and VecSpaces.default_field was not set.")
 
     @staticmethod
     def yield_known_vec_spaces(vec, *, field=None):
@@ -77,13 +78,7 @@ class VecSpaces(Function):
         will be raised.
         '''
         field = VecSpaces.get_field(field, may_be_none=True)
-        if vec not in InSet.known_memberships:
-            return # No known memberships to potentially yield.
-        for membership in InSet.known_memberships[vec]:
-            if not membership.is_applicable():
-                # Skip it if it isn't usable under current default
-                # assumptions.
-                continue 
+        for membership in InClass.yield_known_memberships(vec):
             # Check if the membership domain is a vector space over the
             # specified field.
             domain = membership.domain

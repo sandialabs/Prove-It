@@ -21,6 +21,7 @@ is an equality (in which case, substitution may simply be performed).
 
 from proveit import defaults, USE_DEFAULTS, Judgment, ProofFailure
 from proveit.decorators import prover
+from proveit.util import OrderedSet
 from .sorter import TransitivitySorter
 from .relation import Relation
 
@@ -36,13 +37,11 @@ class TransitiveRelation(Relation):
     def __init__(self, operator, normal_lhs, normal_rhs, *, styles):
         Relation.__init__(self,operator, normal_lhs, normal_rhs, styles=styles)
     
-    def side_effects(self, judgment):
+    def _record_as_proven(self, judgment):
         '''
-        Automatically derive the reversed form of transitive
-        relations as side effects (e.g., y > x from x < y).
-        Also, store known left sides and known right sides
+        Store known left sides and known right sides
         in class member dictionaries: known_left_sides, known_right_sides
-        whilc will enable transitivity searches.
+        which will enable transitivity searches.
         '''
         if (not hasattr(self.__class__, 'known_left_sides') 
                 or not hasattr(self.__class__, 'known_right_sides')):
@@ -51,14 +50,27 @@ class TransitiveRelation(Relation):
                 "'known_left_sides' and 'known_right_sides' as class "
                 "variables")
         self.__class__.known_left_sides.setdefault(
-            self.normal_lhs, set()).add(judgment)
+            self.normal_lhs, OrderedSet()).add(judgment)
         self.__class__.known_right_sides.setdefault(
-            self.normal_rhs, set()).add(judgment)
-        return
-        yield  # makes this a generator as it should be
+            self.normal_rhs, OrderedSet()).add(judgment)
+    
+    def _readily_provable(self, *, check_transitive_pair=True):
+        '''
+        If check_transitive_pair is True, we will return True if
+        we can find a combination of a known plus a provable pair
+        of relations that is a transitive decomposition of this 
+        relation.  For example, for "a < c" it may return
+        (a < b, b < c) as a transitive decomposition if one is known
+        and the other is provable.
+        '''
+        if check_transitive_pair:
+            transitive_pair = self.known_plus_provable_transitive_pair()
+            if transitive_pair is not None:
+                return True
+        return False
 
     @prover
-    def conclude(self, **defaults_config):
+    def conclude(self, check_transitive_pair=True, **defaults_config):
         '''
         Try to conclude the TransitivityRelation using other
         TransitivityRelations or Equals that are known to be true via transitivity.
@@ -66,6 +78,13 @@ class TransitiveRelation(Relation):
         truths (under the given assumptions), we can conclude that
         a<d (under these assumptions).
         '''
+        if check_transitive_pair:
+            transitive_pair = self.known_plus_provable_transitive_pair()
+            if transitive_pair is not None:
+                # Prove via transitivity from a known relation and a
+                # readily provable relation.
+                transitive_pair[0].apply_transitivity(transitive_pair[1])
+                return self.prove() # relax if needed.
         try:
             # Try to conclude via simplification of each side.
             return Relation.conclude(self)
@@ -113,7 +132,8 @@ class TransitiveRelation(Relation):
                 cls._checkedWeakRelationClass())
 
     @classmethod
-    def known_relations_from_left(RelationClass, expr, assumptions_set):
+    def known_relations_from_left(RelationClass, expr, *,
+                                  assumptions=USE_DEFAULTS):
         '''
         Yield (Judgment, right-hand-side) pairs for this
         transitive relationship (or equality) that involve the given expression on
@@ -123,10 +143,14 @@ class TransitiveRelation(Relation):
         Weak relations will only be yielded if this is a weak
         relation class.
         '''
+        from proveit.logic import Equals
         equiv_class = RelationClass.EquivalenceClass()
         # equivalence relationships are strongest and should come first.
+        _kwargs = {'assumptions':assumptions}
+        if equiv_class==Equals: 
+            _kwargs['include_canonical_forms'] = False
         equiv_left_relations = equiv_class.known_relations_from_left(
-            expr, assumptions_set)
+            expr, **_kwargs)
         for (judgment, other_expr) in equiv_left_relations:
             if expr != other_expr:  # exclude reflexive equations -- they don't count
                 yield (judgment, other_expr)
@@ -135,11 +159,12 @@ class TransitiveRelation(Relation):
             # stronger then weaker relations
             for _Relation in relation_classes:
                 for judgment in list(_Relation.known_left_sides.get(expr, [])):
-                    if judgment.is_applicable(assumptions_set):
+                    if judgment.is_applicable(assumptions):
                         yield (judgment, judgment.normal_rhs)
 
     @classmethod
-    def known_relations_from_right(RelationClass, expr, assumptions_set):
+    def known_relations_from_right(RelationClass, expr, *,
+                                   assumptions=USE_DEFAULTS):
         '''
         Yield (Judgment, left-hand-side) pairs for this
         transitivie relationship (or equality) that involve the given expression on
@@ -152,7 +177,7 @@ class TransitiveRelation(Relation):
         equiv_class = RelationClass.EquivalenceClass()
         # equivalence relationships are strongest and should come first.
         equiv_right_relations = equiv_class.known_relations_from_right(
-            expr, assumptions_set)
+            expr, assumptions=assumptions)
         for (judgment, other_expr) in equiv_right_relations:
             if expr != other_expr:  # exclude reflexive equations -- they don't count
                 yield (judgment, other_expr)
@@ -161,8 +186,73 @@ class TransitiveRelation(Relation):
             # stronger then weaker relations
             for _Relation in relation_classes:
                 for judgment in list(_Relation.known_right_sides.get(expr, [])):
-                    if judgment.is_applicable(assumptions_set):
+                    if judgment.is_applicable(assumptions):
                         yield (judgment, judgment.normal_lhs)
+
+    def known_plus_provable_transitive_pair(self):
+        '''
+        Find and return a pair of relations that form a transitive
+        decomposition of this relation in which one of the relations
+        is known and the other is readily provable under default
+        assumptions.  For example, if self is "a < c", "a < b" is known,
+        and "b < c" is provable, it may return (a < b, b < c).  If no 
+        such pair is found, return None.
+        
+        To keep this manageable and relevant, known relations starting 
+        from irreducible values are not considered.  We also skip
+        relations with the same canonical form (e.g., trivial 
+        equalities).
+        '''
+        from proveit.logic import is_irreducible_value
+        MyClass = type(self)
+        WeakRelationClass = type(self).WeakRelationClass()
+        if not is_irreducible_value(self.normal_lhs):
+            for relation, _ in WeakRelationClass.known_relations_from_left(
+                    self.normal_lhs):
+                if (relation.lhs.canonical_form()==
+                        relation.rhs.canonical_form()):
+                    continue
+                completing_relation = MyClass(relation.normal_rhs, 
+                                              self.normal_rhs)
+                if completing_relation.readily_provable(
+                        check_transitive_pair=False):
+                    return (relation, completing_relation)
+        if not is_irreducible_value(self.normal_rhs):
+            for relation, _ in WeakRelationClass.known_relations_from_right(
+                    self.normal_rhs):
+                if (relation.lhs.canonical_form()==
+                        relation.rhs.canonical_form()):
+                    continue
+                completing_relation = MyClass(self.normal_lhs, 
+                                              relation.normal_lhs)
+                if completing_relation.readily_provable(
+                        check_transitive_pair=False):
+                    return (relation, completing_relation)
+        if WeakRelationClass is MyClass:
+            # Trying to prove a weak relation; we check weak relations
+            # so we are don.
+            return None
+        # Trying to prove a strong relation.  We check a combination
+        # of a known weak relation and a provable strong relation.  Now
+        # check for a known strong relation and provable weak relation.
+        if not is_irreducible_value(self.normal_lhs):
+            for relation, _ in MyClass.known_relations_from_left(
+                    self.normal_lhs):
+                if not isinstance(relation, MyClass): continue
+                completing_relation = WeakRelationClass(relation.normal_rhs, 
+                                                        self.normal_rhs)
+                if completing_relation.readily_provable(
+                        check_transitive_pair=False):
+                    return (relation, completing_relation)
+        if not is_irreducible_value(self.normal_rhs):
+            for relation, _ in MyClass.known_relations_from_right(
+                    self.normal_rhs):
+                if not isinstance(relation, MyClass): continue
+                completing_relation = WeakRelationClass(self.normal_lhs, 
+                                                        relation.normal_lhs)
+                if completing_relation.readily_provable(
+                        check_transitive_pair=False):
+                    return (relation, completing_relation)
 
     @prover
     def apply_transitivity(self, other, **defaults_config):
@@ -202,6 +292,98 @@ class TransitiveRelation(Relation):
     @prover
     def apply_transitivities(chain, **defaults_config):
         '''
+        Apply transitvity rules on a list of relations in the given 
+        chain to proof the relation over the chain end points.
+        Each element of the chain must represent a TransitiveRelation.
+        The chain must "connect" in the sense that any two neighbors 
+        in the chain can be joined via apply_transitivity.
+        
+        If the relation types are all the same, and that relation
+        class has a 'relate_across_chain_transitively' method,
+        apply that method for a potentially streamlined proof.
+        Otherwise, use 'apply_transitivity' on the relations in a
+        pairwise fashion from the left.
+        '''
+        if len(chain) == 0:
+            raise TransitivityException(
+                None, defaults.assumptions, 
+                'Empty transitivity relation train')
+        transitive_relation_types = set()
+        #print('chain', chain)
+        for relation in chain:
+            if isinstance(relation, Judgment):
+                relation = relation.expr
+            if not isinstance(relation, TransitiveRelation):
+                raise TypeError("The 'chain' must be composed of "
+                                "TransitiveRelation expressions/judgments, "
+                                "not %s of type %s"%(relation, 
+                                                     type(relation)))
+            transitive_relation_types.add(type(relation))
+        if len(chain) == 1:
+            # Trivial case of a single relation.
+            return chain[0].prove()
+        if len(transitive_relation_types) != 1 or (
+                not hasattr(next(iter(transitive_relation_types)),
+                            'relate_across_chain_transitively')):
+            # When there is more than one relation type, we will
+            # simply use 'apply_transitivity' in a pairwise fasion.
+            return (TransitiveRelation.
+                    _apply_transitivities_via_apply_transitivity(chain))
+        # Extract the successive elements being related along the
+        # chain and then call 'relate_across_chain_transitively'.
+        chain_iter = iter(chain)
+        _x = [] # Expressions being related in the transitivity chain
+        first = next(chain_iter)
+        second = next(chain_iter)
+        is_reversed = first.is_reversed()
+        # Add the first two items of _x by looking at the first two
+        # relations.
+        if first.rhs in (second.lhs, second.rhs):
+            _x.extend((first.lhs, first.rhs))
+        elif first.lhs in (second.lhs, second.rhs):
+            _x.extend((first.rhs, first.lhs))
+        else:
+            raise TransitivityException(
+                None, defaults.assumptions, 
+                'Transitivity cannot be applied unless there is something '
+                'in common in the equalities: %s vs %s' %
+                (str(first), str(second)))
+        # Add subsequently to _x by looking at each relation.
+        for relation in chain_iter:
+            first = second
+            second = relation
+            if _x[-1] == first.lhs:
+                _x.append(first.rhs)
+            else:
+                _x.append(first.lhs)
+            if _x[-1] not in (second.lhs, second.rhs):
+                raise TransitivityException(
+                    None, defaults.assumptions, 
+                    'Transitivity cannot be applied unless there is '
+                    'something in common in the equalities: %s vs %s' %
+                    (str(first), str(second)))
+        # Add the last item to _x.
+        if _x[-1] == second.lhs:
+            _x.append(second.rhs)
+        else:
+            _x.append(second.lhs)
+        relation_class = next(iter(transitive_relation_types))
+        try:
+            relation = relation_class.relate_across_chain_transitively(*_x)
+        except NotImplementedError:
+            # Fall back to the serial approach.
+            return (TransitiveRelation.
+                    _apply_transitivities_via_apply_transitivity(chain))
+        if is_reversed:
+            # Reverse the direction in the style, consistent with
+            # the first relation of the chain.
+            return relation.with_direction_reversed()
+        return relation
+
+    @staticmethod
+    @prover
+    def _apply_transitivities_via_apply_transitivity(chain, **defaults_config):
+        '''
         Apply transitvity rules on a list of relations in the given chain
         to proof the relation over the chain end points.
         Each element of the chain must be a Judgment object that represents
@@ -214,8 +396,15 @@ class TransitiveRelation(Relation):
         if len(chain) == 0:
             raise TransitivityException(
                 None, defaults.assumptions, 'Empty transitivity relation train')
-        if not all(isinstance(element, Judgment) for element in chain):
-            raise TypeError('Expecting chain elements to be Judgment objects')
+        for relation in chain:
+            if isinstance(relation, Judgment):
+                relation = relation.expr
+            if not isinstance(relation, TransitiveRelation):
+                raise TypeError("The 'chain' must be composed of "
+                                "TransitiveRelation expressions/judgments, "
+                                "not %s of type %s"%(relation, 
+                                                     type(relation)))
+        chain = list(chain)
         while len(chain) >= 2:
             first = chain.pop(0)
             second = chain.pop(0)
@@ -281,16 +470,15 @@ class TransitiveRelation(Relation):
         this method on a weak relation class (otherwise, only
         equality and strong relations are used in the sorting).
         '''
-        from proveit.numbers import is_literal_int
-        if all(is_literal_int(item) for item in items):
+        from proveit.numbers import is_numeric_int
+        if all(is_numeric_int(item) for item in items):
             # All the items are integers.  Use efficient n log(n) sorting to
             # get them in the proper order and then use fixed_transitivity_sort
             # to efficiently prove this order.
             items = sorted(items, key=lambda item: item.as_int())
             reorder = False
         if reorder:
-            sorter = TransitivitySorter(cls, items, 
-                                        assumptions=defaults.assumptions)
+            sorter = TransitivitySorter(cls, items)
             return list(sorter)
         else:
             return cls._fixed_transitivity_sort(items).operands
@@ -358,7 +546,6 @@ class TransitiveRelation(Relation):
 
         # Create a TransitivitySorter.
         sorter = TransitivitySorter(cls, first_items, 
-                                    assumptions=defaults.assumptions,
                                     skip_exact_reps=skip_exact_reps,
                                     skip_equiv_reps=skip_equiv_reps)
         # Yield items in sorted order from the TransitivitySorter,
@@ -546,14 +733,13 @@ class TransitiveRelation(Relation):
                 except (ProofFailure, NotImplementedError):
                     pass
 
-        if not defaults.automation:
+        if not defaults.conclude_automation:
             relation = cls(left_item, right_item)
             msg = ('No proof found via applying transitivity amongst'
                    ' known proven relations.')
             raise TransitivityException(relation, defaults.assumptions, msg)
 
         sorter = TransitivitySorter(cls, [left_item, right_item],
-                                    assumptions=defaults.assumptions,
                                     skip_exact_reps=False,
                                     skip_equiv_reps=False,
                                     presorted_pair=True)

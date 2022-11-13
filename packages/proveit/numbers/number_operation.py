@@ -1,11 +1,14 @@
-from collections import deque
+from collections import deque, Counter
 from proveit import (Expression, Judgment, Operation, ExprTuple, ExprRange,
-                     generate_inner_expressions, USE_DEFAULTS,
+                     generate_inner_expressions, defaults, USE_DEFAULTS,
                      prover, relation_prover,
                      ProofFailure, UnsatisfiedPrerequisites)
+from proveit.logic import Equals
 from proveit.relation import TransRelUpdater
+from proveit.abstract_algebra.generic_methods import (
+        deduce_equality_via_commutation)
 from .number_sets import (
-    Natural, NaturalPos,
+    ZeroSet, Natural, NaturalPos,
     Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
     Rational, RationalNonZero, RationalPos, RationalNeg, RationalNonNeg,
     RationalNonPos,
@@ -17,23 +20,83 @@ class NumberOperation(Operation):
     '''
     Base class for number operation (i.e. arithmetic operations).
     '''
-    
+
     def __init__(self, operator, operand_or_operands, *, styles=None):
         Operation.__init__(self, operator, operand_or_operands, styles=styles)
 
+    def _deduce_canonically_equal(self, rhs):
+        '''
+        Prove that this number operation is equal to an expression that
+        has the same canonical form.
+        '''
+        from proveit.numbers import Add, Mult, Div, Exp, Neg
+        lhs = self
+        assert lhs.canonical_form() == rhs.canonical_form()
+        equality = Equals(lhs, rhs)
+
+        # If the rhs is the same type as the lhs and the
+        # canonical forms of the operands are the same, we can
+        # use direct substitution and/or a permutation for operations
+        # that commute (Add and Mult).
+        if isinstance(rhs, type(lhs)):
+            canonical_lhs_operands = [operand.canonical_form() for operand
+                                      in lhs.operands]
+            canonical_rhs_operands = [operand.canonical_form() for operand
+                                      in rhs.operands]
+            if canonical_lhs_operands == canonical_rhs_operands:
+                # Just use direct substitution and proving that
+                # corresponding operands are equal.
+                for lhs_operand, rhs_operand in zip(lhs.operands,
+                                                    rhs.operands):
+                    if lhs_operand != rhs_operand:
+                        Equals(lhs_operand, rhs_operand).prove()
+                return equality.conclude_via_direct_substitution()
+            elif (isinstance(self, Add) or isinstance(self, Mult)) and (
+                    Counter(canonical_lhs_operands) ==
+                    Counter(canonical_rhs_operands)):
+                # We just need direct substitution and permutation.
+                return deduce_equality_via_commutation(equality, one_side=self)
+
+        # Since the canonical forms are the same, we should be
+        # able to equate their simplifications.
+        # But make sure we use the proper simplification directives
+        # (mostly the default ones).
+        with Div.temporary_simplification_directives(use_defaults=True) as div_simps, \
+             Exp.temporary_simplification_directives(use_defaults=True) as exp_simps, \
+             Mult.temporary_simplification_directives(use_defaults=True) as mult_simps:
+            with Add.temporary_simplification_directives(use_defaults=True), \
+                 Neg.temporary_simplification_directives(use_defaults=True):
+                # Reduce division to multiplication, consistent
+                # with the canonical form.
+                div_simps.reduce_to_multiplication = True
+                # Distribute exponents and factor numeric rationals
+                # consistent with the canonical form.
+                exp_simps.distribute_exponent = True
+                exp_simps.factor_numeric_rational = True
+                # Distribute a numeric rational constant consistent with
+                # the canonical form.
+                mult_simps.distribute_numeric_rational = True
+                lhs_simplification = lhs.simplification()
+                rhs_simplification = rhs.simplification()
+        eq_simps = Equals(lhs_simplification.rhs,
+                          rhs_simplification.rhs).prove()
+        return Equals.apply_transitivities([lhs_simplification,
+                                            eq_simps,
+                                            rhs_simplification])
+
     @relation_prover
-    def deduce_bound(self, inner_expr_bound_or_bounds, 
+    def deduce_bound(self, inner_expr_bound_or_bounds,
                      inner_exprs_to_bound = None,
                      **defaults_config):
         '''
         Return a bound of this arithmetic expression based upon
-        the bounds of any number of inner expressions.  The inner 
+        the bounds of any number of inner expressions.  The inner
         expression should appear on the left side of the corresponding
         bound which should be a number ordering relation (< or <=).
-        The returned, proven bound will have this expression on the 
+        The returned, proven bound will have this expression on the
         left-hand side.  The bounds of the inner expressions will be
         processed in the order they are provided.
-        
+
         If inner_exprs_to_bound is provided, restrict the bounding
         to these particular InnerExpr objects.  Otherwise, all inner
         expressions are fair game.
@@ -52,7 +115,7 @@ class NumberOperation(Operation):
             raise ValueError("Expecting one or more 'inner_expr_bounds'")
         while len(inner_expr_bounds) > 0:
             inner_expr_bound = inner_expr_bounds.popleft()
-            print('inner_expr_bound', inner_expr_bound)
+            #print('inner_expr_bound', inner_expr_bound)
             if isinstance(inner_expr_bound, TransRelUpdater):
                 # May be one of the internally generated
                 # TransRelUpdater for percolating bounds up through
@@ -71,7 +134,7 @@ class NumberOperation(Operation):
             if inner_exprs_to_bound is None:
                 inner_exprs = generate_inner_expressions(self, inner)
             else:
-                inner_exprs = inner_exprs_to_bound 
+                inner_exprs = inner_exprs_to_bound
             for inner_expr in inner_exprs:
                 no_such_inner_expr = False
                 inner_expr_depth = len(inner_expr.expr_hierarchy)
@@ -80,7 +143,7 @@ class NumberOperation(Operation):
                         "equal to the full expression. What's the deal?")
                 # Create/update the relation for the container of this
                 # inner expression.
-                if inner_expr_depth >= 3:            
+                if inner_expr_depth >= 3:
                     container = inner_expr.expr_hierarchy[-2]
                     if isinstance(container, ExprTuple):
                         # Skip an ExprTuple layer.
@@ -101,13 +164,18 @@ class NumberOperation(Operation):
                 # Don't simplify or make replacements if there
                 # is more to go:
                 preserve_all = (len(inner_expr_bounds) > 0)
-                container_relation.update(expr.bound_via_operand_bound(
-                        inner_expr_bound, preserve_all=preserve_all))
+                try:
+                    container_relation.update(expr.bound_via_operand_bound(
+                            inner_expr_bound, preserve_all=preserve_all))
+                except TypeError:
+                    # skip over this inner_expr where the bound doesn't
+                    # apply
+                    continue
                 # Append the relation for processing
                 if container is self:
                     # No further processing needed when the container
                     continue # is self.
-                if (len(inner_expr_bounds) == 0 or 
+                if (len(inner_expr_bounds) == 0 or
                         inner_expr_bounds[-1] != container_relation):
                     inner_expr_bounds.append(container_relation)
             if no_such_inner_expr:
@@ -132,12 +200,20 @@ class NumberOperation(Operation):
         on the left side of the operand_bound which should be a
         number ordering relation (< or <=).  The returned, proven
         bound will have this expression on the left-hand side.
-        
+
         Also see NumberOperation.deduce_bound.
         '''
         raise NotImplementedError(
                 "'bound_via_operand_bound' not implemented for %s of type %s."
                 %(self, self.__class__))
+
+    def readily_not_equal(self, other):
+        '''
+        Return True iff self and other are numeric rationals that are
+        not equal to each other.
+        '''
+        from proveit.numbers.numerals.numeral import not_equal_numeric_rationals
+        return not_equal_numeric_rationals(self, other)
 
 @relation_prover
 def deduce_in_number_set(expr, number_set, **defaults_config):
@@ -158,14 +234,14 @@ def deduce_in_number_set(expr, number_set, **defaults_config):
 
 def quick_simplified_index(expr):
     '''
-    Return a simplified version of this expression with a 
+    Return a simplified version of this expression with a
     quick-n-dirty approach suitable for additively shifted and/or
     negated integer indices and nested versions thereof.
-    In particular, negations are distributed nested additionas are 
+    In particular, negations are distributed nested additionas are
     ungrouped, literal integers are extracted, added, and placed at the
-    end, and cancelations are made on ndividual terms as well as 
-    expression ranges or portions of expression ranges.  We freely 
-    assume terms represent numbers and expression ranges are 
+    end, and cancelations are made on ndividual terms as well as
+    expression ranges or portions of expression ranges.  We freely
+    assume terms represent numbers and expression ranges are
     well-formed.
     Used for ExprRange formatting and for hints along the way when
     provably expanding ExprRanges through an instantiation (this
@@ -182,7 +258,7 @@ def quick_simplified_index(expr):
 # Sorted standard number sets from most restrictive to least
 # restrictive.
 sorted_number_sets = (
-    NaturalPos, IntegerNeg, Natural, IntegerNonPos, 
+    ZeroSet, NaturalPos, IntegerNeg, Natural, IntegerNonPos,
     IntegerNonZero, Integer,
     RationalPos, RationalNeg, RationalNonNeg, RationalNonPos,
     RationalNonZero, Rational,
@@ -228,6 +304,7 @@ neg_number_set = {
 
 # Map number sets to the non-negative number set it contains.
 nonneg_number_set = {
+    ZeroSet: ZeroSet,
     Natural: Natural,
     IntegerNonZero: Natural,
     Integer: Natural,
@@ -242,6 +319,7 @@ nonneg_number_set = {
 
 # Map number sets to the non-positive number set it contains.
 nonpos_number_set = {
+    ZeroSet: ZeroSet,
     IntegerNonPos: IntegerNonPos,
     IntegerNonZero: IntegerNonPos,
     Integer: IntegerNonPos,
@@ -271,83 +349,160 @@ nonzero_number_set = {
     Complex: ComplexNonZero,
     ComplexNonZero: ComplexNonZero}
 
-@relation_prover
-def deduce_number_set(expr, **defaults_config):
+def readily_provable_number_set(
+        expr, *, automation=True, must_be_direct=False, default=None, 
+        _check_order_against_zero=True):
     '''
-    Prove that 'expr' is an Expression that represents a number
-    in a standard number set that is as restrictive as we can
-    readily know.
+    Return the most restrictive number set that the given expression 
+    may readily be proven to be within.  The expression may also be
+    an ExprRange where each instance is in the number set.
+    
+    Return the default (possibly None) if there are no readily provable
+    number memberships.
+    
+    If automation is disabled, only return a number set in which 
+    membership has already been proven.
+    
+    If must_be_direct is True, don't account for known/provable
+    equalities of the element.
+    
+    _check_order_against_zero is set to False internally to avoid infinite
+    recursion.
     '''
-    from proveit.logic import And, InSet, Equals, NotEquals
+    from proveit.logic import (InClass, Equals, NotEquals, 
+                               is_irreducible_value)
     from proveit.numbers import Less, LessEq, zero
+
+    # Make sure we derive assumption side-effects first.
+    #Assumption.make_assumptions()
+    
+    if not automation:
+        must_be_direct = True
+
+    if not must_be_direct and not is_irreducible_value(expr):
+        # See if the expression has a known evaluations.
+        try:
+            evaluation = Equals.get_known_evaluation(expr)
+        except UnsatisfiedPrerequisites:
+            evaluation = None
+        if evaluation is not None:
+            # Use the evaluated number to determine its number set.
+            return readily_provable_number_set(evaluation.rhs)
 
     # Find the first (most restrictive) number set that
     # contains 'expr' or something equal to it.
-    
+    known_number_sets = set()
+    for known_membership in InClass.yield_known_memberships(
+            expr, include_canonical_forms=not must_be_direct):
+        if known_membership.domain in standard_number_sets:
+            known_number_sets.add(known_membership.domain)
+    best_known_number_set = None
     for number_set in sorted_number_sets:
-        membership = None
-        for eq_expr in Equals.yield_known_equal_expressions(expr):
-            if isinstance(eq_expr, ExprRange):
-                membership = And(ExprRange(eq_expr.parameter, 
-                                           InSet(eq_expr.body, number_set),
-                                           eq_expr.true_start_index,
-                                           eq_expr.true_end_index,
-                                           styles=eq_expr.get_styles()))
-            else:
-                membership = InSet(eq_expr, number_set)
-            if membership.proven():
-                break # found a known number set membership
-            else:
-                membership = None
-        if membership is not None:
-            membership = InSet(expr, number_set).prove()
+        if number_set in known_number_sets:
+            best_known_number_set = number_set
             break
 
-    if hasattr(expr, 'deduce_number_set'):
-        # Use 'deduce_number_set' method.
-        try:
-            deduced_membership = expr.deduce_number_set()
-        except (UnsatisfiedPrerequisites, ProofFailure):
-            deduced_membership = None
-        if deduced_membership is not None:
-            assert isinstance(deduced_membership, Judgment)
-            if not isinstance(deduced_membership.expr, InSet):
-                raise TypeError("'deduce_number_set' expected to prove an "
-                                "InSet type expression")
-            if deduced_membership.expr.element != expr:
-                raise TypeError("'deduce_number_set' was expected to prove "
-                                "that %s is in some number set"%expr)
-            # See if this deduced number set is more restrictive than
-            # what we had surmised already.
-            deduced_number_set = deduced_membership.domain
-            if membership is None:
-                membership = deduced_membership
-                number_set = deduced_number_set
-            elif (deduced_number_set != number_set and number_set.includes(
-                    deduced_number_set)):
-                number_set = deduced_number_set
-                membership = deduced_membership
+    if not automation:
+        # Just use what has already been proven if automation is off.
+        return best_known_number_set
 
-    if membership is None:
-        from proveit import defaults
-        raise UnsatisfiedPrerequisites(
-            "Unable to prove any number membership for %s"%expr)
+    # Technically we aren't checking the provability of the expression
+    # but we want to use Expression.in_progress_to_check_provability
+    # for convenience to avoid infinite/pointless recursion.
+    in_progress_key = (expr, defaults.sorted_assumptions)
+    if in_progress_key in Expression.in_progress_to_check_provability:
+        # avoid infinite/pointless recursion by using
+        # in_progress_to_check_provability
+        if default is None:
+            raise UnsatisfiedPrerequisites(
+                "No readily provable number set for %s"%expr)
+        return default
 
-    # Already proven to be in some number set,
-    # Let's see if we can restrict it further.
-    if Less(zero, expr).proven(): # positive
-        number_set = pos_number_set.get(number_set, None)
-    elif Less(expr, zero).proven(): # negative
-        number_set = neg_number_set.get(number_set, None)
-    elif LessEq(zero, expr).proven(): # non-negative
-        number_set = nonneg_number_set.get(number_set, None)
-    elif LessEq(expr, zero).proven(): # non-positive
-        number_set = nonpos_number_set.get(number_set, None)
-    elif NotEquals(expr, zero).proven():
-        number_set = nonzero_number_set.get(number_set, None)
+    try:
+        Expression.in_progress_to_check_provability.add(
+                in_progress_key)
+        if hasattr(expr, 'readily_provable_number_set'):
+            # Use 'readily_provable_number_set' method.
+            try:
+                number_set = expr.readily_provable_number_set()
+            except (UnsatisfiedPrerequisites, ProofFailure):
+                number_set = None
+            if number_set is not None:
+                # See if this number set is more restrictive than
+                # what we had surmised already.
+                if best_known_number_set is None:
+                    best_known_number_set = number_set
+                elif best_known_number_set != number_set and (
+                        best_known_number_set.readily_includes(number_set)):
+                    best_known_number_set = number_set
+    
+        if best_known_number_set is None:
+            if default is None:
+                raise UnsatisfiedPrerequisites(
+                    "No readily provable number set for %s"%expr)
+
+            return default
+    
+        if isinstance(expr, ExprRange):
+            # Don't bother trying to restrict further if the expression
+            # is an ExprRange.
+            return best_known_number_set
+    
+        # Already proven to be in some number set,
+        # Let's see if we can restrict it further.
+        number_set = best_known_number_set
+
+        if Equals(expr, zero).readily_provable():
+            return ZeroSet
+    
+        if _check_order_against_zero:
+            if number_set in pos_number_set and (
+                    Less(zero, expr).readily_provable(
+                            check_number_sets=False,
+                            must_be_direct=must_be_direct)): # positive
+                number_set = pos_number_set[number_set]
+            elif number_set in neg_number_set and (
+                    Less(expr, zero).readily_provable(
+                            check_number_sets=False,
+                            must_be_direct=must_be_direct)): # negative
+                number_set = neg_number_set[number_set]
+            elif number_set in nonneg_number_set and (
+                    LessEq(zero, expr).readily_provable(
+                            check_number_sets=False,
+                            must_be_direct=must_be_direct)): # non-negative
+                number_set = nonneg_number_set[number_set]
+            elif number_set in nonpos_number_set and (
+                    LessEq(expr, zero).readily_provable(
+                            check_number_sets=False,
+                            must_be_direct=must_be_direct)): # non-positive
+                number_set = nonpos_number_set[number_set]
+
+        if number_set in nonzero_number_set and (
+                    NotEquals(expr, zero).readily_provable()):
+            return nonzero_number_set[number_set]
+
+        return number_set
+    finally:
+        Expression.in_progress_to_check_provability.remove(
+                in_progress_key)
+
+@relation_prover
+def deduce_number_set(expr, **defaults_config):
+    '''
+    Prove the most restrictive standard number set membership of the 
+    given expression.  The expression may also be an ExprRange in which
+    case we prove the conjunction that each instance of the range
+    is in the particular most-restrictive standard number set.
+    '''
+    from proveit.logic import And, InSet
+    number_set = readily_provable_number_set(expr)
     if number_set is None:
-        # Just use what we have already proven.
-        return membership.prove()
+        raise UnsatisfiedPrerequisites(
+                "No readily provable number set membership for %s"
+                %expr)
+    if isinstance(expr, ExprRange):
+        return And(*ExprTuple(expr).map_elements(
+                lambda element : InSet(element, number_set))).prove()
     return InSet(expr, number_set).prove()
 
 def standard_number_set(given_set, **defaults_config):
@@ -361,17 +516,52 @@ def standard_number_set(given_set, **defaults_config):
     '''
     for std_number_set in sorted_number_sets:
         # return the first std set that includes our given_set
-        if std_number_set.includes(given_set):
+        if std_number_set.readily_includes(given_set):
             return std_number_set
 
     # return the original given_set if the
     # for loop above didn't find anything
     return given_set
 
+def major_number_set(given_set):
+    '''
+    Return Integer, Rational, Real, or Complex which is the smallest
+    number set that includes the given set.  Return Complex if nothing
+    else works.
+    '''
+    if Integer.readily_includes(given_set):
+        return Integer
+    if Rational.readily_includes(given_set):
+        return Rational
+    if Real.readily_includes(given_set):
+        return Real
+    return Complex
+
 # Map pairs of standard number sets to the minimal standard
 # number set that contains them both. This dictionary is then
 # used for the merge_two_sets() and merge_list_of_sets() fxns below.
 merging_dict = {
+    (ZeroSet, Natural):Natural,
+    (ZeroSet, NaturalPos):Natural,
+    (ZeroSet, Integer):Integer,
+    (ZeroSet, IntegerNeg):IntegerNonPos,
+    (ZeroSet, IntegerNonPos):IntegerNonPos,    
+    (ZeroSet, IntegerNonZero):Integer,    
+    (ZeroSet, Rational):Rational,
+    (ZeroSet, RationalPos):RationalNonNeg,
+    (ZeroSet, RationalNeg):RationalNonPos,
+    (ZeroSet, RationalNonPos):RationalNonPos,
+    (ZeroSet, RationalNonNeg):RationalNonNeg,
+    (ZeroSet, RationalNonZero):Rational,
+    (ZeroSet, Real):Real,
+    (ZeroSet, RealPos):RealNonNeg,
+    (ZeroSet, RealNeg):RealNonPos,
+    (ZeroSet, RealNonPos):RealNonPos,
+    (ZeroSet, RealNonNeg):RealNonNeg,
+    (ZeroSet, RealNonZero):Real,
+    (ZeroSet, Complex):Complex,
+    (ZeroSet, ComplexNonZero):Complex,
+    (ZeroSet, Natural):Natural,
     (NaturalPos, IntegerNeg): IntegerNonZero,
     (NaturalPos, Natural): Natural,
     (NaturalPos, IntegerNonPos): Integer,
@@ -563,41 +753,32 @@ merging_dict = {
     (Real, Complex): Complex,
     (ComplexNonZero, Complex): Complex}
 
-def merge_two_sets(set_01, set_02):
-    '''
-    A utility function to return the minimal standard number set
-    that contains both set_01 and set_02. Notice that this does
-    not prove the inclusion; it just provides a set that should
-    be proveable under the right conditions. This utility function
-    is utilized in the merge_list_of_sets() functions further below.
-    '''
-    if (set_01, set_02) in merging_dict:
-        return merging_dict[(set_01, set_02)]
-    elif (set_02, set_01) in merging_dict:
-        return merging_dict[(set_02, set_01)]
-    # default is to return Real if Real actually works
-    elif (Real.includes(set_01) and Real.includes(set_02)):
-        return Real
-    else:
-        raise ValueError(
-                "In calling merge_two_sets on sets {0} and {1}, "
-                "no standard number set was found that contained "
-                "both sets.".format(set_01, set_02))
 
-def merge_list_of_sets(list_of_sets):
+def union_number_set(*sets):
     '''
     Utility function to produce a minimal standard number set that
-    contains all the number sets in list_of_sets, if possible.
+    contains all the given number sets, if possible.
     Notice that the function does not prove the result, instead just
     providing a superset that should be proveable under the right
     conditions.
     '''
-    while len(list_of_sets) > 1:
-        if list_of_sets[0] == list_of_sets[1]:
-            list_of_sets = ([list_of_sets[0]]+list_of_sets[2:])
+    if len(sets) == 2:
+        set_01, set_02 = sets
+        if set_01==set_02:
+            return set_01
+        if (set_01, set_02) in merging_dict:
+            return merging_dict[(set_01, set_02)]
+        elif (set_02, set_01) in merging_dict:
+            return merging_dict[(set_02, set_01)]
+        # default is to return Real if Real actually works
+        elif (Real.readily_includes(set_01) and Real.readily_includes(set_02)):
+            return Real
         else:
-            list_of_sets = (
-                    [merge_two_sets(list_of_sets[0],
-                                    list_of_sets[1])]+list_of_sets[2:])
-    return list_of_sets[0]
-
+            raise ValueError(
+                    "In calling union_number_set on sets {0} and {1}, "
+                    "no standard number set was found that contained "
+                    "both sets.".format(set_01, set_02))
+    sets = list(sets)
+    while len(sets) > 1:
+        sets = ([union_number_set(sets[0], sets[1])]+sets[2:])
+    return sets[0]

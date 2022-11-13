@@ -1,0 +1,28 @@
+# THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.logic.booleans.fold_is_bool
+proveit.logic.booleans.from_not_false
+proveit.logic.booleans.implication.eq_from_iff
+proveit.logic.booleans.implication.eq_from_mutual_impl
+proveit.logic.booleans.implication.false_antecedent_implication
+proveit.logic.booleans.implication.falsified_antecedent_implication
+proveit.logic.booleans.implication.iff_f_f
+proveit.logic.booleans.implication.iff_f_t
+proveit.logic.booleans.implication.iff_implies_left
+proveit.logic.booleans.implication.iff_implies_right
+proveit.logic.booleans.implication.iff_intro
+proveit.logic.booleans.implication.iff_symmetry
+proveit.logic.booleans.implication.iff_t_f
+proveit.logic.booleans.implication.iff_t_t
+proveit.logic.booleans.implication.not_true_via_contradiction
+proveit.logic.booleans.implication.untrue_antecedent_implication
+proveit.logic.booleans.in_bool_if_false
+proveit.logic.booleans.in_bool_if_true
+proveit.logic.booleans.negation.negation_intro
+proveit.logic.booleans.true_is_bool
+proveit.logic.booleans.unfold_is_bool
+proveit.logic.booleans.unfold_is_bool_explicit
+proveit.logic.equality.equals_reversal
+proveit.logic.equality.fold_not_equals
+proveit.logic.equality.not_equals_symmetry
+proveit.logic.equality.unfold_not_equals
+# THEOREMS AND THEORIES TO EXCLUDE:

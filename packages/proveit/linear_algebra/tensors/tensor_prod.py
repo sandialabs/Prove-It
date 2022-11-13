@@ -82,9 +82,11 @@ class TensorProd(Operation):
             # Next, pull out scalar factors
             try:
                 VecSpaces.known_vec_space(self)
-            except ValueError:
-                raise UnsatisfiedPrerequisites(
-                        "No known vector space for %s"%self)
+            except (ValueError, UnsatisfiedPrerequisites):
+                # Don't pull out scalar factors if the operands aren't
+                # known to be in vector spaces (e.g., maybe the operands
+                # are vectors spaces themselves).
+                return eq.relation
             for _k, operand in enumerate(expr.operands):
                 if isinstance(operand, ScalarMult):
                     # Just pull out the first one we see and let

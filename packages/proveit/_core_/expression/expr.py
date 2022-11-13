@@ -2,6 +2,7 @@
 This is the expression module.
 """
 
+from proveit.util import OrderedSet
 from proveit._core_.defaults import (defaults, USE_DEFAULTS, 
                                      SimplificationDirectives)
 from proveit._core_.theory import Theory
@@ -28,17 +29,17 @@ class ExprType(type):
 
     # These attributes should not be overridden by classes outside
     # of the core.
-    protected = {'_apply', 'canonical_version',
-                 'replaced', 'basic_replaced', 'instance_context',
+    protected = {'_apply', 'replaced', 'basic_replaced', 'instance_context',
                  '_replaced_entries', 
                  'equality_replaced', '_manual_equality_replaced',
                  '_auto_simplified', '_auto_simplified_sub_exprs',
                  '_range_reduction', 'relabeled',
                  'sub_expr_substitution',
+                 'canonically_labeled', 'canonical_form',
                  '_make', '_checked_make', '_reduced', '_used_vars',
                  '_free_var_ranges', '_parameterized_var_ranges',
                  '_repr_html_', '_core_info',
-                 '_sub_expressions', '_canonical_expr',
+                 '_sub_expressions', '_canonically_labeled',
                  '_meaning_data', '_meaning_id',
                  '_style_data', '_style_id',
                  'is_parameter_independent', 'literal_int_extent'}
@@ -168,12 +169,21 @@ class ExprType(type):
 
 
 class Expression(metaclass=ExprType):
-    # (expression, assumption) pairs for which conclude is in progress, tracked to prevent infinite
-    # recursion in the `prove` method.
+    # (expression, assumption) pairs for which conclude is in progress, 
+    # tracked to prevent infinite recursion in the `prove` method.
     in_progress_to_conclude = set()
+    
+    # (expression, assumption) pairs for which '_readily_provable' is
+    # in progress. Tracked to prevent infinite recursion.
+    in_progress_to_check_provability = set()
 
     # Map "labeled" meaning data to "canonical" meaning data.
     labeled_to_canonical_meaning_data = dict()
+    
+    # Map canonincal forms to sets of expressions with that canonical
+    # form and vice-versa.
+    canonical_form_to_exprs = dict()    
+    expr_to_canonical_form = dict()
 
     # Map Expression classes to their proper paths (as returned
     # by the Expression._class_path method).
@@ -204,7 +214,12 @@ class Expression(metaclass=ExprType):
         assert len(Expression.in_progress_to_conclude) == 0, (
                 "Unexpected remnant 'in_progress_to_conclude' items "
                 "(should have been temporary)")
+        assert len(Expression.in_progress_to_check_provability) == 0, (
+                "Unexpected remnant 'in_progress_to_check_provability'"
+                "items (should have been temporary)")
         Expression.labeled_to_canonical_meaning_data.clear()
+        Expression.canonical_form_to_exprs.clear()
+        Expression.expr_to_canonical_form.clear()
         Expression.class_paths.clear()
         #Expression.default_labeled_expr_styles.clear()
 
@@ -301,7 +316,7 @@ class Expression(metaclass=ExprType):
             # When there are no sub-expressions, we can immediately
             # declare that the canonical expression is simply "self"
             # and the "true" meaning data is the "labeled" meaning data.
-            self._canonical_expr = self
+            self._canonically_labeled = self
             self._meaning_data = self._labeled_meaning_data
             self._meaning_id = self._meaning_data._unique_id
         
@@ -322,18 +337,18 @@ class Expression(metaclass=ExprType):
                     self._labeled_meaning_id] = styles
         """
 
-    def canonical_version(self):
+    def canonically_labeled(self):
         '''
         Retrieve (and create if necessary) the canonical version of this
         expression in which deterministic 'dummy' variables are used as
         Lambda parameters, determining the 'meaning' of the expression.
         '''
-        if hasattr(self, '_canonical_expr'):
-            return self._canonical_expr
+        if hasattr(self, '_canonically_labeled'):
+            return self._canonically_labeled
         if hasattr(self, '_meaning_data'):
             # Set via '_meaning_data':
-            self._canonical_expr = self._meaning_data.canonical_expr
-            return self._canonical_expr
+            self._canonically_labeled = self._meaning_data.canonically_labeled
+            return self._canonically_labeled
         labeled_to_canonical_meaning_data = (
             Expression.labeled_to_canonical_meaning_data)
         if self._labeled_meaning_data in labeled_to_canonical_meaning_data:
@@ -342,12 +357,13 @@ class Expression(metaclass=ExprType):
             self._meaning_data = (
                 labeled_to_canonical_meaning_data[self._labeled_meaning_data])
             self._meaning_id = self._meaning_data._unique_id
-            # Now we can set the _canonical_expr via the '_meaning_data'.
-            return self.canonical_version()
+            # Now we can set the _canonically_labeled via the
+            # '_meaning_data'.
+            return self.canonically_labeled()
 
-        # Get the canonical versions of the sub-expressions.
+        # Get the canonical labeling of the sub-expressions.
         canonical_sub_expressions = tuple(
-            sub_expr.canonical_version()
+            sub_expr.canonically_labeled()
             for sub_expr in self._sub_expressions)
         # Get the styles of the sub expressions.
         sub_expression_styles = tuple(sub_expr._style_data
@@ -365,7 +381,7 @@ class Expression(metaclass=ExprType):
         if (self._style_data.styles == canonical_styles and
                 sub_expression_styles == canonical_sub_expression_styles):
             # This is the canonical version.
-            self._canonical_expr = self
+            self._canonically_labeled = self
             return self
 
         # The 'canonical' sub-expressions are different than the
@@ -375,19 +391,125 @@ class Expression(metaclass=ExprType):
         with defaults.temporary() as temp_defaults:
             # Force the canonical styles.
             temp_defaults.use_consistent_styles = False
-            canonical_expr = self.__class__._checked_make(
+            canonically_labeled = self.__class__._checked_make(
                 self._core_info, canonical_sub_expressions, 
                 style_preferences=canonical_styles)
         """
-        canonical_expr = self.__class__._checked_make(
+        canonically_labeled = self.__class__._checked_make(
             self._core_info, canonical_sub_expressions, 
             style_preferences=canonical_styles)
-        assert canonical_expr.canonical_version() == canonical_expr, (
-                "The canonical version of a canonical expression should "
-                "be itself.")
-        self._canonical_expr = canonical_expr
-        return canonical_expr
+        assert (canonically_labeled.canonically_labeled() ==
+                canonically_labeled), (
+                        "The canonical version of a canonical expression "
+                        "should be itself.")
+        self._canonically_labeled = canonically_labeled
+        return canonically_labeled
 
+    def canonical_form(self):
+        '''
+        Returns a form of this expression that should be provably
+        equal to the original, assuming the original expression is
+        known not to be "garbage" (e.g., proper types, no division
+        by zero, etc.).
+        
+        For example,
+            "a + b + c + d" and "d + c + a + b" should have the
+        same canonical forms (which has an arbitrary but
+        deterministic order for the terms) and we can prove that these 
+        are equal as long as we know that a, b, c, and d are numbers
+        (members of the set of complex numbers).
+        
+        See _build_canonical_form: this method should be overriden by
+        each Expression type for build type-specific canonical forms.
+        '''
+        if self in Expression.expr_to_canonical_form:
+            cf = Expression.expr_to_canonical_form[self]
+        else:
+            cf = self._build_canonical_form()
+            Expression.expr_to_canonical_form[self] = cf
+            if cf in Expression.expr_to_canonical_form:
+                cf_of_cf = Expression.expr_to_canonical_form[cf]
+                if cf != cf_of_cf:
+                    raise ValueError("Inconsistent canonical forms: %s vs %s"
+                                     %(cf, cf_of_cf))
+            else:
+                Expression.expr_to_canonical_form[cf] = cf
+            Expression.canonical_form_to_exprs.setdefault(
+                    cf, OrderedSet()).update({self, cf})
+        return cf
+
+    def _build_canonical_form(self):
+        '''
+        Build the canonical form of the Expression (see the
+        Expression.canonical_form method).  Override to build
+        type-specific canonical forms.  By default, recurse to
+        use canonical forms of sub-expressions.        
+        '''
+        canonical_sub_exprs = []
+        has_distinct_canonical_form = False
+        for sub_expr in self.sub_expr_iter():
+            canonical_sub_expr = sub_expr.canonical_form()
+            if sub_expr != canonical_sub_expr:
+                has_distinct_canonical_form = True
+            canonical_sub_exprs.append(canonical_sub_expr)
+        if has_distinct_canonical_form:
+            # Use the canonical forms of the sub-expressions.
+            return self._checked_make(
+                self._core_info, canonical_sub_exprs,
+                style_preferences=self._style_data.styles)
+        else:
+            # No canonical form that is different from self.
+            return self
+    
+    @equality_prover('canonical_equated', 'canonical_equate')
+    def deduce_canonically_equal(self, rhs, **defaults_config):
+        '''
+        Prove that this expression is equal another one that has the
+        same canonical form.  Calls '_deduce_canonically_equal' which 
+        may have type-specific implementations.
+        '''
+        from proveit import Judgment, UnsatisfiedPrerequisites
+        from proveit.logic import Equals
+        lhs = self
+        lhs_cf = lhs.canonical_form() 
+        rhs_cf = rhs.canonical_form()
+        if lhs_cf != rhs_cf:
+            raise UnsatisfiedPrerequisites(
+                    "'deduce_canonically_equal' can only be used to prove "
+                    "equality between expressions with the same canonical "
+                    "form. %s and %s have distinct canonical forms "
+                    "%s and %s respectively"%(lhs, rhs, lhs_cf, rhs_cf))
+        if lhs == lhs_cf or (type(lhs) == type(lhs_cf) and
+                             type(rhs) != type(lhs_cf)):
+            # If the lhs is already in the canonical form or
+            # if the lhs has the same type as the canonical form but
+            # the rhs does not, deduce the equality from the other side.
+            proven_eq = rhs._deduce_canonically_equal(lhs)
+            proven_eq = proven_eq.derive_reversed()
+        else:
+            proven_eq = self._deduce_canonically_equal(rhs)
+        if not isinstance(proven_eq, Judgment):
+            raise TypeError("Expecting a proven Judgment to be returned "
+                            "by '_deduce_canonically_equal")
+        equality = Equals(lhs, rhs)
+        if proven_eq.expr != equality:
+            raise ValueError("Expecting '_deduce_canonically_equal' to "
+                             "return the proven 'equality': %s vs %s"%(
+                                     proven_eq.expr, equality))
+        return proven_eq
+                                               
+    def _deduce_canonically_equal(self, rhs):
+        '''
+        Helper method for 'deduce_canonically_equal'.  Typically, this 
+        should have a type-specific implementation if 
+        '_build_canonical_form' is type-specific.
+        '''
+        # The generic version will work via direct substitutions 
+        # equating sub-expressions that differ.
+        from proveit.logic import Equals
+        equality = Equals(self, rhs)
+        return equality.conclude_via_direct_substitution() 
+                                               
     def _establish_and_get_meaning_id(self):
         '''
         The "meaning" of an expression is determined by it's
@@ -396,19 +518,19 @@ class Expression(metaclass=ExprType):
         '''
         if hasattr(self, '_meaning_id'):
             return self._meaning_id
-        canonical_expr = self.canonical_version()
+        canonically_labeled = self.canonically_labeled()
         if hasattr(self, '_meaning_id'):
-            # It may have been set via the 'canonical_version' call.
+            # It may have been set via the 'canonically_labeled' call.
             return self._meaning_id
-        if canonical_expr is self:
+        if canonically_labeled is self:
             # The "true" meaning data is the "labeled" meaning data.
             self._meaning_data = self._labeled_meaning_data
         else:
-            canonical_expr._establish_and_get_meaning_id()
-            self._meaning_data = canonical_expr._meaning_data
-        if not hasattr(self._meaning_data, 'canonical_expr'):
+            canonically_labeled._establish_and_get_meaning_id()
+            self._meaning_data = canonically_labeled._meaning_data
+        if not hasattr(self._meaning_data, 'canonically_labeled'):
             # store the canonical expression for future reference
-            self._meaning_data.canonical_expr = canonical_expr
+            self._meaning_data.canonically_labeled = canonically_labeled
         # Anything with the same "labeled meaning data" must have the
         # same "canonical meaning data".
         labeled_to_canonical_meaning_data = \
@@ -550,7 +672,7 @@ class Expression(metaclass=ExprType):
 
     @classmethod
     def _make(cls, core_info, sub_expressions, *, styles, 
-              canonical_version=None):
+              canonically_labeled=None):
         '''
         Should make the Expression object for the specific Expression sub-class
         based upon the core_info and sub_expressions.  Must be implemented for
@@ -560,7 +682,7 @@ class Expression(metaclass=ExprType):
 
     @classmethod
     def _checked_make(cls, core_info, sub_expressions, *, style_preferences,
-                      canonical_version=None):
+                      canonically_labeled=None):
         '''
         Check that '_make' is done appropriately since it is not
         entirely within the control of the core.
@@ -571,12 +693,12 @@ class Expression(metaclass=ExprType):
         # rather than raising an expection.
         style_preferences = dict(style_preferences)
         style_preferences['__IGNORE_INAPPLICABLE_STYLES__'] = True
-        if canonical_version is None:
+        if canonically_labeled is None:
             made = cls._make(core_info, sub_expressions,
                              styles=style_preferences)
         else:
             made = cls._make(core_info, sub_expressions,
-                             canonical_version=canonical_version, 
+                             canonically_labeled=canonically_labeled, 
                              styles=style_preferences)
         assert made._core_info == core_info, (
             "%s vs %s" % (made._core_info, core_info))
@@ -764,31 +886,60 @@ class Expression(metaclass=ExprType):
         same set of assumptions will be blocked, so `conclude` methods are
         free make attempts that may be cyclic.
         '''
-        from proveit import Judgment, ProofFailure
-        from proveit.logic import Not
+        from proveit import Judgment, Assumption, ProofFailure
+        from proveit.relation import Relation
+        from proveit.logic import Not, TRUE, Equals
         assumptions = defaults.assumptions
-        automation = defaults.automation
-        assumptions_set = set(assumptions)
+        automation = defaults.conclude_automation
 
-        found_truth = Judgment.find_judgment(self, assumptions_set)
+        if defaults.sideeffect_automation:
+            # Generate assumption side-effects.
+            Assumption.make_assumptions()
+
+        # See if this Expression already has a legitimate proof.
+        found_truth = Judgment.find_judgment(self, assumptions)
         if found_truth is not None:
             found_truth.with_matching_styles(
                 self, assumptions)  # give it the appropriate style
-            return found_truth  # found an existing Judgment that does the job!
+            # found an existing Judgment that does the job!
+            return found_truth
 
-        if self in assumptions_set:
+        if self in assumptions:
             # prove by assumption if self is in the list of assumptions.
             from proveit._core_.proof import Assumption
-            return Assumption.make_assumption(self, assumptions).proven_truth
+            return Assumption.make_assumption(self).proven_truth
 
         if not automation:
             raise ProofFailure(self, assumptions, "No pre-existing proof")
 
+        if not self._readily_provable():
+            # Maybe this Expression isn't readily provable by
+            # expression-specific means (note that '_readily_provable'
+            # is intended, not 'readily_provable'), but something else 
+            # does with the same canonical form.
+            # If it is a Relation, however, and it's canonical form is
+            # not simply from the canonical form on each side, we 
+            # should use its 'conclude' method instead to derive
+            # the relation more directly.
+            canonical_form = self.canonical_form()
+            if canonical_form != TRUE and (
+                    not self._is_effective_relation() or
+                    canonical_form == Expression._build_canonical_form(self)):
+                cf_to_proven_exprs = (
+                        Judgment.canonical_form_to_proven_exprs)
+                if canonical_form in cf_to_proven_exprs:
+                    for proven_expr in cf_to_proven_exprs[canonical_form]:
+                        if proven_expr != self and proven_expr.proven():
+                            # Something with the same canonical form has 
+                            # been proven under applicable assumptions.
+                            # So prove what we want by equating it with what
+                            # we know.
+                            return Equals(proven_expr, 
+                                          self).derive_right_via_equality()
+
         # Use Expression.in_progress_to_conclude set to prevent an infinite
         # recursion
-        in_progress_key = (
-            self, tuple(sorted(assumptions,
-                               key=lambda expr: hash(expr))))
+        in_progress_key = (self, defaults.sorted_assumptions)
         if in_progress_key in Expression.in_progress_to_conclude:
             raise ProofFailure(
                 self,
@@ -826,12 +977,12 @@ class Expression(metaclass=ExprType):
                 raise ValueError(
                     "'conclude' method should return a Judgment for this Expression object: " + str(
                         concluded_truth.expr) + " does not match " + str(self))
-            if not concluded_truth.assumptions_set.issubset(assumptions_set):
+            if not concluded_truth.assumptions.issubset(assumptions):
                 raise ValueError("While proving " +
                                  str(self) +
                                  ", 'conclude' method returned a Judgment with extra assumptions: " +
                                  str(set(concluded_truth.assumptions) -
-                                     assumptions_set))
+                                     assumptions))
             if concluded_truth.expr._style_id == self._style_id:
                 # concluded_truth with the same style as self.
                 return concluded_truth
@@ -856,6 +1007,87 @@ class Expression(metaclass=ExprType):
         except ProofFailure:
             return False
 
+    def readily_provable(self, assumptions=USE_DEFAULTS, 
+                         must_be_direct=False,**kwargs):
+        '''
+        May return True only if we readily know that this expression,
+        under the given assumptions, can be proven automatically and 
+        easily through its 'conclude' method and will return True if
+        it is already proven.
+        
+        If must_be_direct=False, we will check if an Expression with
+        the same canonical form is provable.
+        
+        For special purposes, optional keyword arguments may be
+        passed through to the _readily_provable method.
+        '''
+        from proveit import Judgment, ExprTuple
+        from proveit.logic import TRUE
+
+        if isinstance(self, ExprTuple):
+            return False # An ExprTuple cannot be true or false.
+
+        with defaults.temporary() as tmp_defaults:
+            # Make sure we derive assumption side-effects first.
+            if assumptions is not USE_DEFAULTS:
+                tmp_defaults.assumptions = assumptions
+            tmp_defaults.automation=False
+                
+            if self.proven(): # this will "make" the assumptions
+                return True
+            
+            if not must_be_direct:
+                # Maybe this Expression doesn't have a proof, but 
+                # something else does with the same canonical form.
+                cf = self.canonical_form()
+                cf_to_proven_exprs = Judgment.canonical_form_to_proven_exprs
+                if cf in cf_to_proven_exprs and cf != TRUE and (
+                        not self._is_effective_relation() or
+                        cf == Expression._build_canonical_form(self)):
+                    # We must use the same stipulations as those
+                    # used in Expression.prove for using a proven
+                    # expression with the same canonical form.
+                    for proven_expr in cf_to_proven_exprs[cf]:
+                        if proven_expr != self and proven_expr.proven():
+                            return True
+            
+            # Try something specific to the Expression.
+            in_progress_key = (self, defaults.sorted_assumptions)
+            if in_progress_key in Expression.in_progress_to_check_provability:
+                # avoid infinite recursion by using
+                # in_progress_to_check_provability
+                return False
+            try:
+                Expression.in_progress_to_check_provability.add(
+                        in_progress_key)
+                if must_be_direct:
+                    return self._readily_provable(must_be_direct=True,
+                                                  **kwargs)
+                return self._readily_provable(**kwargs)
+            finally:
+                Expression.in_progress_to_check_provability.remove(
+                        in_progress_key)
+
+    def _readily_provable(self, **kwargs):
+        '''
+        Override for Expression-specific strategies to see if the
+        expression is readily provable.  May return True only if we
+        readily know that this expression can be proven automatically
+        and easily through its 'conclude' method.
+        '''
+        return False
+    
+    def _is_effective_relation(self):
+        '''
+        Return True if self is a Relation or the logical negation
+        of a relation which is essentially also a relation.
+        '''
+        from proveit.relation import Relation
+        from proveit.logic import Not
+        return isinstance(self, Relation) or (
+                isinstance(self, Not) and
+                isinstance(self.operand, Relation))        
+
     @prover
     def disprove(self, **defaults_config):
         '''
@@ -879,7 +1111,36 @@ class Expression(metaclass=ExprType):
         except ProofFailure:
             return False
 
-    def conclude(self, assumptions=USE_DEFAULTS):
+    def readily_disprovable(self, assumptions=USE_DEFAULTS, **kwargs):
+        '''
+        May return True only if we readily know that this expression,
+        under the given assumptions, can be disproven automatically 
+        and easily through its 'conclude' method and will return True 
+        if it is already disproven.
+
+        For special purposes, optional keyword arguments may be
+        passed through to the _readily_disprovable method.
+        '''
+        from proveit import ExprTuple
+        from proveit.logic import Not
+        if isinstance(self, ExprTuple):
+            return False # An ExprTuple cannot be true or false.
+        
+        # Not._readily_provable will call _readily_disprovable on
+        # its operand.
+        return Not(self).readily_provable(assumptions=assumptions, )
+
+    def _readily_disprovable(self, **kwargs):
+        '''
+        Override for Expression-specific strategies to see if the
+        expression is readily disprovable.  May return True only if we
+        readily know that this expression can be disproven automatically
+        and easily through its 'conclude_negation' method.
+        '''
+        return False
+
+    @prover
+    def conclude(self, **defaults_config):
         '''
         Attempt to conclude this expression under the given assumptions,
         using automation specific to this type of expression.
@@ -907,7 +1168,8 @@ class Expression(metaclass=ExprType):
         from proveit.logic import conclude_via_implication
         return conclude_via_implication(self)
 
-    def conclude_negation(self, assumptions=USE_DEFAULTS):
+    @prover
+    def conclude_negation(self, **defaults_config):
         '''
         Attempt to conclude the negation of this expression under the given
         assumptions, using automation specific to the type of expression being negated.
@@ -931,6 +1193,12 @@ class Expression(metaclass=ExprType):
         It also may be desirable to store the judgment for future automation.
         '''
         return iter(())
+    
+    def _record_as_proven(self, judgment):
+        '''
+        Record any Expression-specific information for future reference.
+        '''
+        pass
     
     @equality_prover('sub_expr_substituted', 'sub_expr_substitute')
     def sub_expr_substitution(self, new_sub_exprs, **defaults_config):
@@ -1028,7 +1296,9 @@ class Expression(metaclass=ExprType):
                 style_preferences=self._style_data.styles)
 
     def equality_replaced(self, requirements,
-                          auto_simplify_top_level=USE_DEFAULTS):
+                          auto_simplify_top_level=USE_DEFAULTS,
+                          simplify_only_where_marked=False,
+                          markers_and_marked_expr=None):
         '''
         Return something equal to this expression with replacements
         made via proven equalities, either simplifications or
@@ -1041,7 +1311,7 @@ class Expression(metaclass=ExprType):
         generally don't want to get back TRUE as the judgment.
         Deeper sub-expressions are fair game, however.
         '''
-        from proveit import Judgment  
+        from proveit import Judgment, Variable
         from proveit.logic import Equals
         
         if defaults.preserve_all:
@@ -1070,10 +1340,34 @@ class Expression(metaclass=ExprType):
                 # Let's turn on automation while auto-simplifying at
                 # least.
                 temp_defaults.automation = True
-                expr = expr._auto_simplified(
+                if simplify_only_where_marked:
+                    markers, marked_expr = markers_and_marked_expr
+                    for marker in markers:
+                        if not isinstance(marker, Variable):
+                            raise TypeError("'marker', should be a Variable. "
+                                            "Got %s of type %s"
+                                            %(marker, type(marker)))
+                    if not isinstance(marked_expr, Expression):
+                        raise TypeError("'marked_expr', should be an "
+                                        "Expression. Got %s of type %s"
+                                        %(marked_expr, type(marked_expr)))
+                else:
+                    markers_and_marked_expr = None
+                try:
+                    expr = expr._auto_simplified(
                         requirements=requirements,
                         stored_replacements=dict(),
-                        auto_simplify_top_level=auto_simplify_top_level)
+                        auto_simplify_top_level=auto_simplify_top_level,
+                        markers_and_marked_expr=markers_and_marked_expr)
+                except MarkedExprError as e:
+                    raise ValueError(
+                        "%s doesn't match %s while delving into %s "
+                        "which should match %s except where "
+                        "marked by %s."
+                        %(e.actual_subexpr, e.marked_expr_subexpr,
+                          self, markers_and_marked_expr[1],
+                          markers_and_marked_expr[0]))
+
         return expr
 
     def _manual_equality_replaced(self, equality_repl_map, *,
@@ -1118,11 +1412,11 @@ class Expression(metaclass=ExprType):
         elif isinstance(self, Conditional):
             # Add the condition as an assumption for the equality
             # replacement of the value.
-            recursion_fn = lambda expr, requirements, stored_replacements : (
+            recursion_fn = lambda expr, requirements, stored_repls, _ : (
                          expr._manual_equality_replaced(
                                  equality_repl_map,
                                  requirements=requirements, 
-                                 stored_replacements=stored_replacements))
+                                 stored_replacements=stored_repls))
             subbed_sub_exprs = self._equality_replaced_sub_exprs(
                     recursion_fn, requirements=requirements,
                     stored_replacements=stored_replacements)
@@ -1177,12 +1471,13 @@ class Expression(metaclass=ExprType):
     
     def _auto_simplified(
             self, *, requirements, stored_replacements,
-            auto_simplify_top_level=USE_DEFAULTS):
+            auto_simplify_top_level=USE_DEFAULTS,
+            markers_and_marked_expr = None):
         '''
         Helper method for equality_replaced which handles the automatic
         simplification replacements.
         '''
-        from proveit import Judgment, ExprRange       
+        from proveit import Judgment, Operation, ExprRange   
         from proveit._core_.proof import (
                 ProofFailure, UnsatisfiedPrerequisites)
         from proveit.logic import (Equals, SimplificationError,
@@ -1192,6 +1487,25 @@ class Expression(metaclass=ExprType):
             # This expression should be preserved, so don't 
             # auto-simplify.
             return self
+        elif markers_and_marked_expr is not None:
+            markers, marked_expr = markers_and_marked_expr
+            if free_vars(marked_expr).isdisjoint(markers):
+                # This is unmarked territory; preserve it.
+                if self != marked_expr:
+                    raise MarkedExprError(marked_expr, self)
+                return self
+            elif isinstance(marked_expr, Operation) and (
+                    marked_expr.operator in markers):
+                # If the operator is a marker then all of this
+                # sub-expression is fair game for simplification
+                # (the operation itself may have been substituted).
+                markers_and_marked_expr = None
+            elif len(self._sub_expressions) == 0 and (
+                    len(marked_expr._sub_expressions) > 0):
+                # The marked expression has sub-expressions, but self
+                # does not.  That is a mismatch.
+                raise MarkedExprError(marked_expr, self)
+
         elif self in stored_replacements:
             # We've handled this one before, so reuse it.
             return stored_replacements[self]
@@ -1200,7 +1514,8 @@ class Expression(metaclass=ExprType):
         new_requirements = []
         expr = self._auto_simplified_sub_exprs(
                 requirements=new_requirements, 
-                stored_replacements=stored_replacements)
+                stored_replacements=stored_replacements,
+                markers_and_marked_expr=markers_and_marked_expr)
         if (expr != self) and (expr in defaults.preserved_exprs):
             # The new expression should be preserved, so don't make
             # any further auto-simplification.
@@ -1211,9 +1526,18 @@ class Expression(metaclass=ExprType):
         replacement = None
         if (auto_simplify_top_level and not is_irreducible_value(expr)
               and not isinstance(expr, ExprRange)):
-            if defaults.simplify_with_known_evaluations:
-                # Look for a known evaluation.
-                replacement = Equals.get_known_evaluation(expr)
+            if defaults.simplify_with_provable_evaluations:
+                # Look for an readily provable evaluation.
+                try:
+                    replacement = Equals.get_readily_provable_evaluation(expr)
+                except UnsatisfiedPrerequisites:
+                    replacement = None
+            elif defaults.simplify_with_known_evaluations:
+                # Look for an explicitly known evaluation.
+                try:
+                    replacement = Equals.get_known_evaluation(expr)
+                except UnsatisfiedPrerequisites:
+                    replacement = None
             else:
                 replacement = None
             if (replacement is None and 
@@ -1281,7 +1605,8 @@ class Expression(metaclass=ExprType):
             return self
 
     def _auto_simplified_sub_exprs(
-            self, *, requirements, stored_replacements):
+            self, *, requirements, stored_replacements,
+            markers_and_marked_expr):
         '''
         Helper method for _auto_simplified to handle auto-simplification
         replacements for sub-expressions.
@@ -1291,8 +1616,11 @@ class Expression(metaclass=ExprType):
         subbed_sub_exprs = \
             tuple(sub_expr._auto_simplified(
                     requirements=requirements, 
-                    stored_replacements=stored_replacements)
-                  for sub_expr in sub_exprs)
+                    stored_replacements=stored_replacements,
+                    markers_and_marked_expr=self._update_marked_expr(
+                            markers_and_marked_expr, 
+                            lambda _expr : _expr._sub_expressions[_k]))
+                  for _k, sub_expr in enumerate(sub_exprs))
         if all(subbed_sub._style_id == sub._style_id for
                subbed_sub, sub in zip(subbed_sub_exprs, sub_exprs)):
             # Nothing change, so don't remake anything.
@@ -1300,7 +1628,19 @@ class Expression(metaclass=ExprType):
         return self.__class__._checked_make(
             self._core_info, subbed_sub_exprs,
             style_preferences=self._style_data.styles)
-            
+
+    def _update_marked_expr(self, markers_and_marked_expr,
+                            sub_expr_fn):
+        if markers_and_marked_expr is None:
+            return None
+        try:
+            markers, marked_expr = markers_and_marked_expr
+            marked_expr = sub_expr_fn(marked_expr)
+            assert isinstance(marked_expr, Expression)
+            return (markers, marked_expr)
+        except:
+            raise MarkedExprError(marked_expr, self)
+    
     def copy(self):
         '''
         Make a copy of the Expression with the same styles.
@@ -1329,7 +1669,7 @@ class Expression(metaclass=ExprType):
 
     def _contained_parameter_vars(self):
         '''
-        Return all of the Variables of this Expression that may
+        Return all of the Variables of this Expression that
         are parameter variables of a contained Lambda.
         '''
         return set().union(*[expr._contained_parameter_vars() for
@@ -1459,7 +1799,7 @@ class Expression(metaclass=ExprType):
                 if key[0] != '_']
 
     @classmethod
-    def temporary_simplification_directives(cls):
+    def temporary_simplification_directives(cls, *, use_defaults=False):
         '''
         Returns a context manager for temporarily setting simplification
         directives for this expression class.  Specifically, the
@@ -1477,6 +1817,10 @@ class Expression(metaclass=ExprType):
         Add._simplification_directives_ to False but will restore it
         to its previous value upon exiting the 'with' block.
         
+        If 'use_defaults' is True, the simplification directives will
+        temporarily be set to the original values from when the
+        SimplificationDirectives object was constructed
+        
         See also change_simplification_directives.
         '''
         if not hasattr(cls, '_simplification_directives_'):
@@ -1486,7 +1830,7 @@ class Expression(metaclass=ExprType):
             raise TypeError(
                     "The '_simplification_directives_' of an Expression "
                     "class should be of type SimplificationDirectives")
-        return simplification_directives.temporary()
+        return simplification_directives.temporary(use_defaults=use_defaults)
     
     @classmethod
     def change_simplification_directives(cls, **kwargs):
@@ -1712,3 +2056,8 @@ class ImproperReplacement(Exception):
     def __str__(self):
         return ("Improper replacement of %s via %s:\n%s"
                 % (self.orig_expr, self.repl_map, self.message))
+
+class MarkedExprError(Exception):
+    def __init__(self, marked_expr_subexpr, actual_subexpr):
+        self.marked_expr_subexpr = marked_expr_subexpr
+        self.actual_subexpr = actual_subexpr

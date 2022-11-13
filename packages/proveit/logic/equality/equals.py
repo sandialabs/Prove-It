@@ -1,15 +1,16 @@
-from proveit import (as_expression, defaults, USE_DEFAULTS, ProofFailure,
+from proveit import (Expression, Judgment, as_expression, 
+                     defaults, USE_DEFAULTS, ProofFailure,
                      UnsatisfiedPrerequisites,
                      Conditional, ExprTuple, equality_prover, InnerExpr,
                      InnerExprGenerator, free_vars)
+from proveit.util import OrderedSet
 from proveit import Literal, Operation, Lambda, ArgumentExtractionError
-from proveit import TransitiveRelation, TransitivityException
+from proveit.relation import EquivRelation, TransitivityException
 from proveit import relation_prover, prover
 from proveit.logic.irreducible_value import is_irreducible_value
-from proveit import A, B, P, Q, f, n, x, y, z
+from proveit import a, b, c, d, k, A, B, P, Q, f, n, x, y, z
 
-
-class Equals(TransitiveRelation):
+class Equals(EquivRelation):
     # operator of the Equals operation
     _operator_ = Literal(string_format='=', theory=__file__)
 
@@ -38,8 +39,7 @@ class Equals(TransitiveRelation):
     initializing = set()
 
     def __init__(self, a, b, *, styles=None):
-        TransitiveRelation.__init__(self, Equals._operator_, a, b,
-                                    styles=styles)
+        EquivRelation.__init__(self, Equals._operator_, a, b, styles=styles)
         '''
         # May be better not to be proactive but we need to see if this
         # breaks anything.
@@ -53,7 +53,7 @@ class Equals(TransitiveRelation):
             Equals.initializing.remove(self)
         '''
 
-    def side_effects(self, judgment):
+    def _record_as_proven(self, judgment):
         '''
         Record the judgment in Equals.known_equalities, associated from
         the left hand side and the right hand side.  This information
@@ -61,35 +61,38 @@ class Equals(TransitiveRelation):
         If the right hand side is an "irreducible value" (see
         is_irreducible_value), also record it in
         Equals.known_evaluation_sets for use when the evaluation
-        method is called.   Some side-effects derivations are also
-        attempted depending upon the form of this equality.
-        If the rhs is an "irreducible value" (see is_irreducible_value),
-        also record the judgment in the Equals.known_evaluation_sets 
-        dictionary, for use when the simplification or evaluation 
-        method is called. Some side-effects derivations are also 
-        attempted depending upon the form of this equality.
+        method is called.   
         '''
-        from proveit.logic.booleans import TRUE, FALSE
-        Equals.known_equalities.setdefault(self.lhs, set()).add(judgment)
-        Equals.known_equalities.setdefault(self.rhs, set()).add(judgment)
+        Equals.known_equalities.setdefault(
+                self.lhs, OrderedSet()).add(judgment)
+        Equals.known_equalities.setdefault(
+                self.rhs, OrderedSet()).add(judgment)
 
         if is_irreducible_value(self.rhs):
             # With an irreducible right hand side, remember this as
             # an evaluation.
             assert isinstance(judgment.expr, Equals)
             Equals.known_evaluation_sets.setdefault(
-                self.lhs, set()).add(judgment)
+                self.lhs, set()).add(judgment)        
 
-        if (self.lhs != self.rhs):
-            # automatically derive the reversed form which is equivalent
-            yield self.derive_reversed
+    def side_effects(self, judgment):
+        '''
+        Derive the reversed form.  If the rhs is TRUE/FALSE derive
+        the lhs or its negation.  Derive FALSE if the rhs is FALSE
+        and the lhs is readily provable.  Apply 'equality_side_effects'
+        ifthe lhs has a method with this name.
+        '''
+        from proveit.logic.booleans import TRUE, FALSE
+        if self.lhs == self.rhs:
+            # Don't bother with side-effects for reflexive equalities.
+            return
+
+        # automatically derive the reversed form which is equivalent
+        yield self.derive_reversed
         if self.rhs == FALSE:
-            try:
-                self.lhs.prove(automation=False)
+            if self.lhs.proven(): # readily provable doesn't seem to work here
                 # derive FALSE given lhs=FALSE and lhs.
                 yield self.derive_contradiction
-            except ProofFailure:
-                pass
             # Use this form after merging in 'Expression.proven' commite:
             # if self.lhs.proven(): # If lhs is proven using default assumptions.
             #    # derive FALSE given lhs=FALSE and lhs.
@@ -108,6 +111,64 @@ class Equals(TransitiveRelation):
         '''
         yield self.deduce_not_equals  # A != B from not(A=B)
 
+    def _readily_provable(self, try_readily_equal=True,
+                          check_transitive_pair=None):
+        '''
+        Return True iff this equality is readily provable:
+            * The lhs and rhs have the same canonical form;
+            * The lhs has a '_readily_equal' method that
+              returns True.
+            * One side is TRUE/FALSE and the other side is
+              provable/disprovable.,
+            * The sides mutually imply each other and each side is
+              provably boolean.
+            * There is a known (indirect) equality through the known
+              equalities and/or canonical forms.
+        'check_transitive_pair' isn't used since this is already
+        essentially more powerful via indirect known equalities and/or
+        canonical forms (this should be revisited/tested to make sure
+        we can conclude everything that is readily provable and that
+        this isn't too slow).
+        '''
+        from proveit.logic import TRUE, FALSE, Iff, in_bool
+        lhs, rhs = self.lhs, self.rhs
+        if lhs == rhs:
+            return True
+        if try_readily_equal:
+            if hasattr(lhs, 'readily_equal'):
+                if lhs.readily_equal(rhs):
+                    return True
+            if hasattr(rhs, 'readily_equal'):
+                if rhs.readily_equal(lhs):
+                    return True
+        if lhs.canonical_form() == rhs.canonical_form():
+            return True
+        if (lhs == TRUE and rhs.readily_provable()) or (
+                rhs == TRUE and lhs.readily_provable()):
+            return True
+        if (lhs == FALSE and rhs.readily_disprovable()) or (
+                rhs == FALSE and lhs.readily_disprovable()):
+            return True
+        if not isinstance(lhs, ExprTuple) and (
+                not isinstance(rhs, ExprTuple) and
+                Iff(lhs, rhs).readily_provable() and 
+                in_bool(lhs).readily_provable() and
+                in_bool(rhs).readily_provable()):
+            from proveit.logic.booleans.implication import eq_from_iff
+            if eq_from_iff.is_usable():
+                return True
+        for eq_expr in Equals.yield_known_equal_expressions(lhs):
+            if eq_expr == rhs:
+                return True
+        return False
+
+    def _readily_disprovable(self):
+        '''
+        Equals is disprovable if NotEquals is provable.
+        '''
+        from .not_equals import NotEquals
+        return NotEquals(self.lhs, self.rhs).readily_provable()
+
     @prover
     def conclude(self, **defaults_config):
         '''
@@ -115,54 +176,82 @@ class Equals(TransitiveRelation):
         simple reflexivity (x=x), via an evaluation (if one side is an
         irreducible). Use conclude_via_transitivity for transitivity cases.
         '''
-        from proveit.logic import TRUE, FALSE, Implies, Iff, in_bool
-        if self.lhs == self.rhs:
+        from proveit.logic import TRUE, FALSE, Iff, in_bool
+        lhs, rhs = self.lhs, self.rhs
+        if lhs == rhs:
             # Trivial x=x
             return self.conclude_via_reflexivity()
-        if (self.lhs in (TRUE, FALSE)) or (self.rhs in (TRUE, FALSE)):
+        if (lhs in (TRUE, FALSE)) or (rhs in (TRUE, FALSE)):
             try:
                 # Try to conclude as TRUE or FALSE.
                 return self.conclude_boolean_equality()
             except ProofFailure:
                 pass
 
-        if (Implies(self.lhs, self.rhs).proven() and
-                Implies(self.rhs, self.lhs).proven() and
-                in_bool(self.lhs).proven() and
-                in_bool(self.rhs).proven()):
+        if hasattr(lhs, 'readily_equal') and (
+                lhs.readily_equal(rhs)):
+            # Use an Expression-specific deduce_equal
+            return lhs.deduce_equal(rhs)
+        if hasattr(rhs, 'readily_equal') and (
+                rhs.readily_equal(lhs)):
+            # Use an Expression-specific deduce_equal in reverse.
+            return rhs.deduce_equal(lhs).derive_reversed()
+        
+        if lhs.canonical_form() == rhs.canonical_form() and (
+                not lhs._is_effective_relation() or
+                self.canonical_form() == Expression._build_canonical_form(self)):
+            # If the canonical forms are the same, we should be able
+            # to prove equality via 'deduce_canonically_equal'.
+            return lhs.deduce_canonically_equal(rhs)
+
+        if not isinstance(lhs, ExprTuple) and (
+                not isinstance(rhs, ExprTuple) and
+                Iff(lhs, rhs).readily_provable() and 
+                in_bool(lhs).readily_provable() and
+                in_bool(rhs).readily_provable()):
             # There is mutual implication both sides are known to be
             # boolean.  Conclude equality via mutual implication.
-            return Iff(self.lhs, self.rhs).derive_equality()
+            self.conclude_via_mutual_implication()
         
-        if hasattr(self.lhs, 'deduce_equality'):
-            # If there is a 'deduce_equality' method, use that.
-            # The responsibility then shifts to that method for
-            # determining what strategies should be attempted
-            # (with the recommendation that it should not attempt
-            # multiple non-trivial automation strategies), unless
-            # NotImplementedError is raised.
+        # Try the 'deduce_equal' method.  If NotImplementedError
+        # or UnsatisfiedPrerequisites is raised, we'll move on.
+        if hasattr(lhs, 'deduce_equal'):
             try:
-                eq = self.lhs.deduce_equality(self)
-                if eq.expr != self:
-                    raise ValueError("'deduce_equality' not implemented "
-                                     "correctly; must deduce the 'equality' "
-                                     "that it is given if it can: "
-                                     "'%s' != '%s'" % (eq.expr, self))
-                return eq
-            except NotImplementedError:
-                # 'deduce_equality' not implemented for this 
+                return lhs.deduce_equal(rhs)
+            except (NotImplementedError, UnsatisfiedPrerequisites):
+                # 'deduce_equal' not implemented for this 
                 # particular case, so carry on with default approach.
                 pass
 
-        # Try to prove equality via standard TransitiveRelation
+        # Try to prove equality via standard EquiRelation
         # strategies (simplify both sides then try transitivity).
-        return TransitiveRelation.conclude(self)
+        return EquivRelation.conclude(self,
+                                      check_transitive_pair=False)
+
+    @prover
+    def conclude_negation(self, **defaults_config):
+        '''
+        Attempt to conclude the negation of this equality.
+        '''
+        from proveit.logic import NotEquals
+        return NotEquals(self.lhs, self.rhs).unfold()
+
+
+    @prover
+    def conclude_via_mutual_implication(self, **defaults_config):
+        '''
+        Prove A = B via A <=> B.
+        '''
+        from proveit.logic import Iff
+        lhs, rhs = self.lhs, self.rhs
+        return Iff(lhs, rhs).derive_equality()
 
     @prover
     def conclude_via_direct_substitution(self, **defaults_config):
         '''
         Prove that this Equals expression is true by directly and
-        greedily equating sub-expressions that differ.
+        greedily substituting sub-expressions that differ but are
+        known, or readily provable, to be equal
         
         For example, we can prove
         f(g(a, b), h(c, d)) = f(g(a, b'), h(c, d'))
@@ -221,9 +310,43 @@ class Equals(TransitiveRelation):
                 lhs_inner_gen.skip_over_branch()
                 rhs_inner_gen.skip_over_branch()
                 continue
-            if (not isinstance(lhs_sub_expr, ExprRange) and
-                not isinstance(lhs_sub_expr, ExprRange) and
-                    Equals(lhs_sub_expr, rhs_sub_expr).proven(assumptions)):
+            if isinstance(lhs_sub_expr, ExprRange) or (
+                    isinstance(rhs_sub_expr, ExprRange)):
+                equality = None
+            else:
+                equality = Equals(lhs_sub_expr, rhs_sub_expr)
+            if isinstance(lhs_sub_expr, Lambda) and (
+                    isinstance(rhs_sub_expr, Lambda)):
+                # Don't replace Lambda's directly, replace their bodies
+                # and make sure their parameters are the same.
+                if lhs_sub_expr.parameters != rhs_sub_expr.parameters:
+                    raise_different_structures()
+                equality = None
+            if isinstance(lhs_sub_expr, ExprTuple) and (
+                    isinstance(rhs_sub_expr, ExprTuple) and
+                    lhs_sub_expr.num_entries() == rhs_sub_expr.num_entries()):
+                # Don't replace an entire ExprTuple if we can replace
+                # individual entries.
+                equal_entrywise = True
+                for left_entry, right_entry in zip(lhs_sub_expr.entries,
+                                                   rhs_sub_expr.entries):
+                    if left_entry == right_entry:
+                        continue # identical entries.
+                    if isinstance(left_entry, ExprRange) or (
+                            isinstance(right_entry, ExprRange)):
+                        # If there are non-identical expression ranges,
+                        # replace the entire ExprTuple if possible.
+                        equal_entrywise = False
+                        break
+                    if not Equals(left_entry, right_entry).proven(
+                            assumptions=assumptions):
+                        equal_entrywise = False
+                        break
+                if equal_entrywise:
+                    equality = None
+                
+            if equality is not None and equality != self and (
+                     equality.readily_provable(assumptions=assumptions)):
                 # These sub-expressions are known to be equal,
                 # so let's replace the corresponding location
                 # with a lambda parameter for our lambda expression.
@@ -231,7 +354,6 @@ class Equals(TransitiveRelation):
                 # the current inner expression path and use this
                 # to create the new lambda_body and extend the
                 # parameters.
-                equality = Equals(lhs_sub_expr, rhs_sub_expr)
                 lambda_body_inner_expr = InnerExpr(
                         lambda_body, inner_expr_path=inner_expr_path)
                 params = free_vars(equality).intersection(
@@ -297,7 +419,6 @@ class Equals(TransitiveRelation):
                              replacements=replacements)
         else:
             # Multi-operand substitution.
-            from proveit.core_expr_types.tuples import tuple_eq_via_elem_eq
             tuple_eq = Equals(ExprTuple(*all_equalities_lhs),
                               ExprTuple(*all_equalities_rhs))
             return tuple_eq.substitution(
@@ -335,36 +456,63 @@ class Equals(TransitiveRelation):
     """
 
     @staticmethod
-    def WeakRelationClass():
-        return Equals  # = is the strong and weak form of equality,
+    def yield_directly_known_eq_exprs(expr, *, assumptions=USE_DEFAULTS,
+                                      include_canonical_forms=True):
+        '''
+        Generate expressions that are directly known to 
+        be equal to the given expression.  If 'include_canonical_form'
+        is True, also include expressions that are presumed to be
+        equal to the given one by having the same canonical form.
+        '''
+        known_equalities = Equals.known_equalities.get(expr, tuple())
+        # No need to report the expression we started with.
+        reported = set([expr])
+        for eq_judgment in known_equalities:
+            if eq_judgment.is_applicable(assumptions):
+                for _expr in (eq_judgment.lhs, eq_judgment.rhs):
+                    if _expr not in reported:
+                        reported.add(_expr)
+                        yield _expr
+        if include_canonical_forms:
+            cf = expr.canonical_form()
+            for expr in Expression.canonical_form_to_exprs[cf]:
+                if expr not in reported:
+                    reported.add(expr)
+                    yield expr
 
     @staticmethod
-    def StrongRelationClass():
-        return Equals  # = is the strong and weak form of equality,
-
-    @staticmethod
-    def known_relations_from_left(expr, assumptions_set):
+    def known_relations_from_left(expr, *, assumptions=USE_DEFAULTS,
+                                  include_canonical_forms=True):
         '''
         For each Judgment that is an Equals involving the given 
         expression on the left hand side, yield the Judgment and the 
         right hand side.
+        By default, canonical forms will also be included (as an
+        Expression rather than a Judgment) if the equality has not
+        yet actually been proven.
         '''
-        for judgment in Equals.known_equalities.get(expr, frozenset()):
-            if judgment.lhs == expr:
-                if judgment.is_applicable(assumptions_set):
-                    yield (judgment, judgment.rhs)
+        for other_expr in Equals.yield_directly_known_eq_exprs(
+                expr, assumptions=assumptions,
+                include_canonical_forms=include_canonical_forms):
+            eq = Equals(expr, other_expr)
+            yield (eq, eq.rhs)
 
     @staticmethod
-    def known_relations_from_right(expr, assumptions_set):
+    def known_relations_from_right(expr, *, assumptions=USE_DEFAULTS,
+                                   include_canonical_forms=True):
         '''
         For each Judgment that is an Equals involving the given 
         expression on the right hand side, yield the Judgment and the 
         left hand side.
+        By default, canonical forms will also be included (as an
+        Expression rather than a Judgment) if the equality has not yet 
+        actually been proven.
         '''
-        for judgment in Equals.known_equalities.get(expr, frozenset()):
-            if judgment.rhs == expr:
-                if judgment.is_applicable(assumptions_set):
-                    yield (judgment, judgment.lhs)
+        for other_expr in Equals.yield_directly_known_eq_exprs(
+                expr, assumptions=assumptions,
+                include_canonical_forms=include_canonical_forms):
+            eq = Equals(other_expr, expr)
+            yield (eq, eq.lhs)
 
     @prover
     def conclude_via_reflexivity(self, **defaults_config):
@@ -392,33 +540,48 @@ class Equals(TransitiveRelation):
         '''
         return Equals(self.rhs, self.lhs)
 
+    @equality_prover("reversed", "reverse")
+    def symmetrization(self, **defaults_config):
+        '''
+        Prove (x = y) = (y = x).
+        '''
+        from . import equals_symmetry
+        return equals_symmetry.instantiate({y:self.lhs, x:self.rhs})
+
+
     @staticmethod
-    def yield_known_equal_expressions(expr, *, exceptions=None):
+    def yield_known_equal_expressions(expr, *, exceptions=None,
+                                      include_canonical_forms=True,
+                                      assumptions=USE_DEFAULTS):
         '''
         Yield everything known to be equal to the given expression
         under the given assumptions directly or indirectly through 
         the transitive property of equality.
         If 'exceptions' are provided, disregard known equalities
         with expressions in the 'exceptions' set.
+        If 'include_canonical_forms' is True, also account for
+        presumed equalities by having the same canonical form.
         '''
-        assumptions = defaults.assumptions
-        to_process = {expr}
+        # Make sure we derive assumption side-effects first.
+        from proveit import Assumption
+        Assumption.make_assumptions()
+        to_process = OrderedSet()
+        to_process.add(expr)
         processed = set()
         while len(to_process) > 0:
             expr = to_process.pop()
+            if expr in processed:
+                continue
             if (exceptions is not None and expr in exceptions):
                 # Skip this 'exception'.
                 continue
             yield expr
             processed.add(expr)
-            if expr not in Equals.known_equalities:
-                continue
-            for known_equality in Equals.known_equalities[expr]:
-                if known_equality.is_applicable(assumptions):
-                    # A valid equality.  See if something is new.
-                    for operand in known_equality.operands:
-                        if operand not in processed:
-                            to_process.add(operand)
+            for expr in Equals.yield_directly_known_eq_exprs(
+                    expr, assumptions=assumptions,
+                    include_canonical_forms=include_canonical_forms):
+                if expr not in processed:
+                    to_process.add(expr)
 
     @prover
     def deduce_not_equals(self, **defaults_config):
@@ -484,6 +647,74 @@ class Equals(TransitiveRelation):
                 'Transitivity cannot be applied unless there is something in common in the equalities: %s vs %s' %
                 (str(self), str(other)))
 
+    @staticmethod
+    @prover
+    def relate_across_chain_transitively(*elements, **defaults_config):
+        '''
+        Use transitivity to relate the first element to the last
+        element through a chain of relations through all of the 
+        elements in order.
+        '''
+        from proveit import ExprRange
+        num_elements = len(elements)
+        if num_elements == 0:
+            raise TransitivityException(
+                None, defaults.assumptions, 
+                'Empty chain of elements to relate')         
+        if num_elements == 1:
+            # Trivial case of a single element equal to itself.
+            elem = elements[0]
+            return Equals(elem, elem).conclude_via_reflexivity()
+        elif num_elements == 2:
+            # Simple case of a single relation.
+            return Equals(*elements).prove()
+        elif num_elements == 3:
+            # x=y and y=z => x=z
+            return Equals(*elements[:2]).apply_transitivity(
+                    Equals(*elements[1:]))
+        elif num_elements == 4:
+            # a=b, b=c, c=d => a=d
+            from . import four_chain_transitivity
+            _a, _b, _c, _d = elements
+            return four_chain_transitivity.instantiate(
+                    {a:_a, b:_b, c:_c, d:_d})
+        else:
+            raise NotImplementedError(
+                    "There are issues instantiating transitivity_chain "
+                    "that need to be resolved; may require ExprRange "
+                    "fixes") 
+            """
+            # A chain with more than 4 elements
+            from proveit import IndexedVar
+            from proveit.numbers import subtract, one, quick_simplified_index
+            from proveit.numbers import Add
+            from proveit.core_expr_types import x_1_to_np1
+            from . import transitivity_chain
+            _x = ExprTuple(*elements)
+            if isinstance(_x[0], ExprRange) or isinstance(_x[1], ExprRange):
+                raise NotImplementedError(
+                        "'relate_across_chain_transitively' not implemented "
+                        "when there is an ExprRange at as the first or last "
+                        "of the entries, though it should be possible.")
+            _np1 = quick_simplified_index(_x.num_elements())
+            _n = quick_simplified_index(subtract(_x.num_elements(), one))
+            x_full = ExprTuple(x_1_to_np1).basic_replaced({n:_n})
+            # We really need to simplify instantiating this sort of 
+            # thing. (see Issue #264)
+            
+            print(ExprRange(k, k, one, _np1).partition(_n))
+            #print(ExprRange(k, k, one, _np1).partition(
+            #        one).inner_expr().rhs[1].shifted(
+            #                new_start=one))
+            print(ExprRange(k, k, one, _np1).partition(one))
+            x_split1 = x_full[0].partitioned(_n)
+            #x_split2 = x_full[0].partition(one).inner_expr().rhs[1].shift(
+            #        new_start=one).rhs # (x_1, x_{1+1}, ..., x_{n+1}) 
+            x_split2 = x_full[0].partitioned(one)
+            return transitivity_chain.instantiate(
+                    {n:_n, x:_x, x_split1:_x, x_split2:_x})
+            """
+    
     @prover
     def derive_via_boolean_equality(self, **defaults_config):
         '''
@@ -587,6 +818,9 @@ class Equals(TransitiveRelation):
         proveit.lambda_map, proveit.lambda_map.SubExprRepl in
         particular), or, if neither of those, an expression upon
         which to perform a global replacement of self.lhs.
+        
+        Note: auto-simplification may only affect sub-expressions
+        touched by the substitution.
         '''
         from proveit import Conditional
         from . import substitution
@@ -600,7 +834,10 @@ class Equals(TransitiveRelation):
                 return conditional.value_substitution(self)
 
         lambda_map = Equals._lambda_expr(lambda_map, self.lhs)
-        
+        extra_kwargs = {'simplify_only_where_marked': True,
+                        'markers_and_marked_expr': (
+                                lambda_map.parameter_vars,
+                                Equals(lambda_map.body, lambda_map.body))}
         if not lambda_map.parameters.is_single():
             # We must use operands_substitution for ExprTuple
             # substitution.
@@ -611,14 +848,16 @@ class Equals(TransitiveRelation):
                 # If we know the tuples are equal, use the theorem
                 # with this equality as a prerequisite.
                 return operands_substitution_via_tuple.instantiate(
-                    {n: _n, f: lambda_map, x: self.lhs, y: self.rhs})
+                    {n: _n, f: lambda_map, x: self.lhs, y: self.rhs},
+                    **extra_kwargs)
             # Otherwise, we'll use the axiom in which the prerequisite
             # is that the individual elements are equal.
             return operands_substitution.instantiate(
-                {n: _n, f: lambda_map, x: self.lhs, y: self.rhs})
+                {n: _n, f: lambda_map, x: self.lhs, y: self.rhs},
+                **extra_kwargs)
         # Regular single-operand substitution:
         return substitution.instantiate(
-            {f: lambda_map, x: self.lhs, y: self.rhs})
+            {f: lambda_map, x: self.lhs, y: self.rhs}, **extra_kwargs)
 
     @prover
     def sub_left_side_into(self, lambda_map, **defaults_config):
@@ -630,6 +869,9 @@ class Equals(TransitiveRelation):
         (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in
         particular), or, if neither of those, an expression to upon
         which to perform a global replacement of self.rhs.
+
+        Note: auto-simplification may only affect sub-expressions
+        touched by the substitution.
         '''
         from . import sub_left_side_into
         from . import (substitute_truth, substitute_in_true, 
@@ -646,6 +888,9 @@ class Equals(TransitiveRelation):
                 # Reverse it for a shorter proof.
                 return reversed_eq.sub_right_side_into(lambda_map)
         
+        extra_kwargs = {'simplify_only_where_marked': True,
+                        'markers_and_marked_expr': (lambda_map.parameter_vars,
+                                                    lambda_map.body)}
         if not lambda_map.parameters.is_single():
             # We must use sub_in_left_operands for ExprTuple
             # substitution.
@@ -656,9 +901,11 @@ class Equals(TransitiveRelation):
                 # If we know the tuples are equal, use the theorem
                 # with this equality as a prerequisite.
                 return sub_in_left_operands_via_tuple.instantiate(
-                    {n: _n, P: lambda_map, x: self.lhs, y: self.rhs})                    
+                    {n: _n, P: lambda_map, x: self.lhs, y: self.rhs},
+                    **extra_kwargs)                    
             return sub_in_left_operands.instantiate(
-                {n: _n, P: lambda_map, x: self.lhs, y: self.rhs})
+                {n: _n, P: lambda_map, x: self.lhs, y: self.rhs},
+                **extra_kwargs)
     
         try:
             # try some alternative proofs that may be shorter, if
@@ -667,26 +914,26 @@ class Equals(TransitiveRelation):
                 # substitute_truth may provide a shorter proof
                 # option
                 substitute_truth.instantiate(
-                    {x: self.lhs, P: lambda_map})
+                    {x: self.lhs, P: lambda_map}, **extra_kwargs)
             elif self.lhs == TRUE:
                 # substitute_in_true may provide a shorter proof
                 # option
                 substitute_in_true.instantiate(
-                    {x: self.rhs, P: lambda_map})
+                    {x: self.rhs, P: lambda_map}, **extra_kwargs)
             elif self.rhs == FALSE:
                 # substitute_falsehood may provide a shorter proof
                 # option
                 substitute_falsehood.instantiate(
-                    {x: self.lhs, P: lambda_map})
+                    {x: self.lhs, P: lambda_map}, **extra_kwargs)
             elif self.lhs == FALSE:
                 # substitute_in_false may provide a shorter proof
                 # option
                 substitute_in_false.instantiate(
-                    {x: self.rhs, P: lambda_map})
+                    {x: self.rhs, P: lambda_map}, **extra_kwargs)
         except BaseException:
             pass
         return sub_left_side_into.instantiate(
-            {x: self.lhs, y: self.rhs, P: lambda_map})
+            {x: self.lhs, y: self.rhs, P: lambda_map}, **extra_kwargs)
 
     @prover
     def sub_right_side_into(self, lambda_map, **defaults_config):
@@ -698,6 +945,9 @@ class Equals(TransitiveRelation):
         (see proveit.lambda_map, proveit.lambda_map.SubExprRepl in
         particular), or, if neither of those, an expression to upon
         which to perform a global replacement of self.lhs.
+
+        Note: auto-simplification may only affect sub-expressions
+        touched by the substitution.
         '''
         from . import sub_right_side_into
         from . import (substitute_truth, substitute_in_true, 
@@ -714,7 +964,9 @@ class Equals(TransitiveRelation):
                 return reversed_eq.sub_left_side_into(lambda_map)
         
         lambda_map = Equals._lambda_expr(lambda_map, self.lhs)
-
+        extra_kwargs = {'simplify_only_where_marked': True,
+                        'markers_and_marked_expr': (lambda_map.parameter_vars,
+                                                    lambda_map.body)}
         if not lambda_map.parameters.is_single():
             # We must use sub_in_right_operands for ExprTuple
             # substitution.
@@ -725,9 +977,11 @@ class Equals(TransitiveRelation):
                 # If we know the tuples are equal, use the theorem
                 # with this equality as a prerequisite.
                 return sub_in_right_operands_via_tuple.instantiate(
-                    {n: _n, P: lambda_map, x: self.lhs, y: self.rhs})
+                    {n: _n, P: lambda_map, x: self.lhs, y: self.rhs},
+                    **extra_kwargs)
             return sub_in_right_operands.instantiate(
-                {n: _n, P: lambda_map, x: self.lhs, y: self.rhs})
+                {n: _n, P: lambda_map, x: self.lhs, y: self.rhs},
+                **extra_kwargs)
     
         try:
             # try some alternative proofs that may be shorter, if 
@@ -736,26 +990,26 @@ class Equals(TransitiveRelation):
                 # substitute_truth may provide a shorter proof
                 # options
                 substitute_truth.instantiate(
-                    {x: self.rhs, P: lambda_map})
+                    {x: self.rhs, P: lambda_map}, **extra_kwargs)
             elif self.rhs == TRUE:
                 # substitute_in_true may provide a shorter proof
                 # options
                 substitute_in_true.instantiate(
-                    {x: self.lhs, P: lambda_map})
+                    {x: self.lhs, P: lambda_map}, **extra_kwargs)
             elif self.lhs == FALSE:
                 # substitute_falsehood may provide a shorter proof
                 # options
                 substitute_falsehood.instantiate(
-                    {x: self.rhs, P: lambda_map})
+                    {x: self.rhs, P: lambda_map}, **extra_kwargs)
             elif self.rhs == FALSE:
                 # substitute_in_false may provide a shorter proof
                 # options
                 substitute_in_false.instantiate(
-                    {x: self.lhs, P: lambda_map})
+                    {x: self.lhs, P: lambda_map}, **extra_kwargs)
         except BaseException:
             pass
         return sub_right_side_into.instantiate(
-            {x: self.lhs, y: self.rhs, P: lambda_map})
+            {x: self.lhs, y: self.rhs, P: lambda_map}, **extra_kwargs)
 
     @prover
     def derive_right_via_equality(self, **defaults_config):
@@ -784,6 +1038,9 @@ class Equals(TransitiveRelation):
             return self.lhs
         raise ValueError(
             'The given expression is expected to be one of the sides of the equation')
+
+    def readily_in_bool(self):
+        return True # equality is always boolean
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
@@ -816,101 +1073,72 @@ class Equals(TransitiveRelation):
         return Operation.shallow_simplification(self)
 
     @staticmethod
-    def get_known_evaluation(expr, *, automation=USE_DEFAULTS):
+    @prover
+    def get_known_evaluation(expr, **defaults_config):
         '''
-        Return an applicable evaluation (under current defaults) for 
-        the given expression if one is known; otherwise return None.
-        If automation is True, we are allow to derive
-        an evaluation via transitivity with through any number of known 
-        equalities, excluding equalities with any "preserved" 
-        expressions (in defaults.preserved_exprs) whose evaluations
-        are to be disregarded.
+        Return an applicable evaluation for the given expression if one
+        is explicitly known; otherwise raise UnsatisfiedPrerequisites.
+        Also see Equals.get_readily_provable_evaluation.
         '''
+        return Equals.get_readily_provable_evaluation(expr, automation=False)
+
+    @staticmethod
+    @prover
+    def get_readily_provable_evaluation(
+            expr, *, use_canonical_forms=True, **defaults_config):
+        '''
+        Return an applicable evaluation for the given expression if one
+        is readily provable; otherwise raise UnsatisfiedPrerequisites.
+        If conclude_automation is True, we are allowed to derive
+        an evaluation via transitivity through any number of known 
+        equalities and/or expressions with the same canonical form
+        (if use_canonical_forms is also True),  excluding equalities 
+        with any "preserved" expressions (in defaults.preserved_exprs)
+        whose evaluations are to be disregarded.
+        '''
+        if is_irreducible_value(expr):
+            return Equals(expr, expr).conclude_via_reflexivity()
         if expr in Equals.known_evaluation_sets:
             evaluations = Equals.known_evaluation_sets[expr]
             candidates = []
-            assumptions = defaults.assumptions
-            assumptions_set = set(assumptions)
             for judgment in evaluations:
-                if judgment.is_applicable(assumptions_set):
+                if judgment.is_applicable(defaults.assumptions):
                     # Found existing evaluation suitable for the
                     # assumptions
                     candidates.append(judgment)
             if len(candidates) >= 1:
-                # Return the "best" candidate with respect to fewest number
-                # of steps.
+                # Return the "best" candidate with respect to fewest 
+                # number of steps.
                 def min_key(judgment): return judgment.proof().num_steps()
                 return min(candidates, key=min_key)
-        if automation is USE_DEFAULTS:
-            automation = defaults.automation
-        if automation:
+        if defaults.conclude_automation:
             # An evaluation isn't directly known, but we may know
             # something equal to this that has an evaluation and
-            # therefore we have an evaluation by transitivity as long
-            # as 'automation' is allowed.
+            # therefore we have an evaluation by transitivity and/or
+            # same canonical forms as long as 'automation' is allowed.
             for eq_expr in Equals.yield_known_equal_expressions(
-                    expr, exceptions=defaults.preserved_exprs):
-                if eq_expr == expr: continue
-                eq_evaluation = Equals.get_known_evaluation(
-                        eq_expr, automation=False)
+                    expr, exceptions=defaults.preserved_exprs,
+                    include_canonical_forms=use_canonical_forms):
+                eq_evaluation = None
+                if eq_expr.proven():
+                    eq_evaluation = evaluate_truth(eq_expr)
+                elif eq_expr.disproven():
+                    eq_evaluation = evaluate_falsehood(eq_expr)
+                elif eq_expr != expr: 
+                    eq_evaluation = Equals.get_known_evaluation(eq_expr)
                 if eq_evaluation is not None:
-                    _eq = Equals(expr, eq_expr).conclude_via_transitivity()
+                    if expr == eq_expr:
+                        return eq_evaluation
+                    _eq = Equals(expr, eq_expr)
+                    if use_canonical_forms and (
+                            expr.canonical_form()==eq_expr.canonical_form()):
+                        # deduce equality via same canonical form
+                        _eq = expr.deduce_canonically_equal(eq_expr)
+                    else:
+                        _eq = _eq.conclude_via_transitivity()
                     return _eq.apply_transitivity(eq_evaluation)
-        return None
-
-    """
-    @staticmethod
-    def get_known_simplification(expr):
-        '''
-        Return an applicable simplification (under current defaults) 
-        for the given expression if one is known; otherwise return None.
-        If 'expr' is a "preserved expression" (in 
-        defaults.preserved_exprs), we disregard known simplifications.        
-        If defaults.automation is True, we are allow to derive
-        an simplification via transitivity with through any number of 
-        known equalities, excluding equalities with any "preserved" 
-        expressions (in defaults.preserved_exprs) whose simplifications
-        are to be disregarded.
-        '''
-        if expr in defaults.preserved_exprs:
-            return None
-        key = (expr, defaults.get_simplification_directives_id())
-        if key in Equals.known_simplifications:
-            simplifications = Equals.known_simplifications[key]
-            for simplification in simplifications:
-                if simplification.is_applicable():
-                    return simplification
-        if defaults.automation:
-            # An simplification isn't directly known, but we may know
-            # something equal to this that has a simplification and
-            # therefore we have a simplification by transitivity as long
-            # as 'automation' is allowed.
-            for eq_expr in Equals.yield_known_equal_expressions(
-                    expr, exceptions=defaults.preserved_exprs):
-                if eq_expr == expr: continue
-                eq_simplification = Equals.get_known_simplification(eq_expr)
-                if eq_simplification is not None:
-                    return Equals(expr, eq_expr).prove().apply_transitivity(
-                            eq_simplification)
-        return None
-
-    @staticmethod
-    def remember_simplification(simplification):
-        '''
-        Given a proven equality, remember this as a simplification
-        of the left-hand side.
-        '''
-        from proveit import Judgment
-        if not isinstance(simplification, Judgment):
-            raise TypeError("Expecting 'simplification' to be a Judgment")
-        if not isinstance(simplification.expr, Equals):
-            raise TypeError("Expecting 'simplification' to be an "
-                            "equality Judgment")
-        expr = simplification.expr.lhs
-        key = (expr, defaults.get_simplification_directives_id())
-        Equals.known_simplifications.setdefault(key, set()).add(
-                simplification)
-    """
+        raise UnsatisfiedPrerequisites(
+                "No readily provable evaluation")
 
     @staticmethod
     def invert(lambda_map, rhs, assumptions=USE_DEFAULTS):
@@ -920,13 +1148,16 @@ class Equals(TransitiveRelation):
         given assumptions.  Return this x if one is found; return
         None otherwise.
         '''
-        assumptions_set = set(defaults.checked_assumptions(assumptions))
+        from proveit._core_.proof import Assumption
+        # Make sure we derive assumption side-effects first.
+        Assumption.make_assumptions()
+
         if (lambda_map, rhs) in Equals.inversions:
             # Previous solution(s) exist.  Use one if the assumptions are
             # sufficient.
             for known_equality, inversion in Equals.inversions[(
                     lambda_map, rhs)]:
-                if known_equality.is_applicable(assumptions_set):
+                if known_equality.is_applicable(assumptions):
                     return inversion
         # The mapping may be a trivial identity: f(x) = f(x)
         try:
@@ -941,7 +1172,7 @@ class Equals(TransitiveRelation):
             pass  # well, it was worth a try
         # Search among known relations for a solution.
         for known_equality, lhs in Equals.known_relations_from_right(
-                rhs, assumptions_set):
+                rhs, assumptions):
             try:
                 x = lambda_map.extract_argument(lhs)
                 # Found an inversion.  Store it for future reference.
@@ -1040,13 +1271,12 @@ def default_simplification(inner_expr, in_place=False, must_evaluate=False,
         return inner_equivalence.substitution(inner_expr)
     if is_irreducible_value(inner):
         return Equals(inner, inner).prove()
-    assumptions_set = set(defaults.assumptions)
 
     # See if the expression is already known to be true as a special
     # case.
     try:
-        inner.prove(assumptions_set, automation=False)
-        true_eval = evaluate_truth(inner, assumptions_set)  # A=TRUE given A
+        inner.prove(assumptions, automation=False)
+        true_eval = evaluate_truth(inner, assumptions)  # A=TRUE given A
         if inner == top_level:
             if in_place:
                 return true_axiom
@@ -1058,9 +1288,9 @@ def default_simplification(inner_expr, in_place=False, must_evaluate=False,
     # See if the negation of the expression is already known to be true
     # as a special case.
     try:
-        inner.disprove(assumptions_set, automation=False)
+        inner.disprove(assumptions, automation=False)
         false_eval = evaluate_falsehood(
-            inner, assumptions_set)  # A=FALSE given Not(A)
+            inner, assumptions)  # A=FALSE given Not(A)
         return inner_simplification(false_eval)
     except BaseException:
         pass
@@ -1070,15 +1300,13 @@ def default_simplification(inner_expr, in_place=False, must_evaluate=False,
     # ================================================================ #
 
     # construct the key for the known_simplifications dictionary
-    assumptions_sorted = sorted(defaults.assumptions, 
-                                key=lambda expr: hash(expr))
-    known_simplifications_key = (inner, tuple(assumptions_sorted))
+    known_simplifications_key = (inner, defaults.sorted_assumptions)
 
     if (must_evaluate and inner in Equals.known_evaluation_sets):
         evaluations = Equals.known_evaluation_sets[inner]
         candidates = []
         for judgment in evaluations:
-            if judgment.is_applicable(assumptions_set):
+            if judgment.is_applicable(assumptions):
                 # Found existing evaluation suitable for the assumptions
                 candidates.append(judgment)
         if len(candidates) >= 1:
@@ -1105,7 +1333,7 @@ def default_simplification(inner_expr, in_place=False, must_evaluate=False,
     if inner in Equals.known_equalities:
         for known_eq in Equals.known_equalities[inner]:
             try:
-                if known_eq.is_applicable(assumptions_set):
+                if known_eq.is_applicable(assumptions):
                     if in_place:
                         # Should first substitute in the known
                         # equivalence then simplify that.
@@ -1222,13 +1450,17 @@ def deduce_equal_or_not(lhs, rhs, **defaults_config):
     '''
     from proveit.logic import NotEquals
     if Equals(lhs, rhs).proven():
-        return Equals(lhs, rhs).prove()
+        return Equals(lhs, rhs).prove()    
     if lhs == rhs:
         return Equals(lhs, rhs).conclude_via_reflexivity()
     if NotEquals(lhs, rhs).proven():
         return NotEquals(lhs, rhs).prove()
+    if lhs.canonical_form() == rhs.canonical_form():
+        return lhs.deduce_canonically_equal(rhs)
     if hasattr(lhs, 'deduce_equal_or_not'):
         return lhs.deduce_equal_or_not(rhs)
+    if hasattr(rhs, 'deduce_equal_or_not'):
+        return rhs.deduce_equal_or_not(lhs).derive_reversed()
     raise UnsatisfiedPrerequisites(
             "We cannot readily prove whether or not %s=%s"
             %(lhs, rhs))

@@ -13,7 +13,7 @@ class TransitivitySorter:
     far.
     '''
 
-    def __init__(self, relation_class, items, assumptions=USE_DEFAULTS,
+    def __init__(self, relation_class, items, 
                  skip_exact_reps=False, skip_equiv_reps=False,
                  presorted_pair=False):
         '''
@@ -30,8 +30,7 @@ class TransitivitySorter:
         '''
         #print("sorting items", items)
 
-        self.assumptions = defaults.checked_assumptions(assumptions)
-        self.assumptions_set = set(self.assumptions)
+        self.assumptions = defaults.assumptions
         self.relation_class = relation_class
         self.strong_relation_class = \
             relation_class._checkedStrongRelationClass()
@@ -357,7 +356,7 @@ class TransitivitySorter:
             return  # no relationships when there is just one item
 
         relation_class = self.relation_class
-        assumptions_set = self.assumptions_set
+        assumptions = self.assumptions
         left_most_candidates = self.left_most_candidates
         eq_sets = self.eq_sets
         eq_set_rep = self.eq_set_rep
@@ -416,7 +415,8 @@ class TransitivitySorter:
                     endpoint, active_chain_by_item[(item, dir_id)] = \
                         chains.popleft()
                     active_known_relations_by_item[(item, dir_id)] = \
-                        known_relations(endpoint, assumptions_set)
+                        known_relations(endpoint, 
+                                        assumptions=assumptions)
 
         # Keep working until no new extensions can be generated.
         new_extensions = True
@@ -572,8 +572,11 @@ class TransitivitySorter:
         Return true iff there exists a strong relation within the
         given chain.
         '''
+        from proveit import Judgment
         for relation in chain:
-            if relation.expr.__class__ == self.strong_relation_class:
+            if isinstance(relation, Judgment):
+                relation = relation.expr
+            if relation.__class__ == self.strong_relation_class:
                 return True
         return False
 

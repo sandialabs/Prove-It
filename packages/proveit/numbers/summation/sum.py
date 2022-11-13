@@ -7,9 +7,9 @@ from proveit import (Expression, Literal, Lambda, Function, Operation,
 from proveit import a, b, c, f, i, j, k, l, m, x, Q, S
 from proveit.logic import Forall, InSet
 from proveit.numbers import one, Add, Neg, subtract
-from proveit.numbers import (Complex, Integer, Interval, Natural,
-                             NaturalPos, Real, RealInterval,
-                             deduce_number_set)
+from proveit.numbers import (ZeroSet, Complex, Integer, Interval, Natural,
+                             NaturalPos, Rational, Real, RealInterval,
+                             readily_provable_number_set)
 from proveit.numbers.ordering import Less, LessEq
 from proveit import TransRelUpdater
 
@@ -62,14 +62,16 @@ class Sum(OperationOverInstances):
 
     @relation_prover
     def deduce_in_number_set(self, number_set, **defaults_config):
-        from . import (summation_nat_closure, summation_nat_pos_closure,
-                       summation_int_closure, summation_real_closure,
-                       summation_complex_closure)
+        from . import (summation_zero_closure, summation_nat_closure,
+                       summation_nat_pos_closure, summation_int_closure, 
+                       summation_real_closure, summation_complex_closure)
         _x = self.instance_param
         _f = Lambda(_x, self.instance_expr)
         _Q = Lambda(_x, self.condition)
 
-        if number_set == Natural:
+        if number_set == ZeroSet:
+            thm = summation_zero_closure
+        elif number_set == Natural:
             thm = summation_nat_closure
         elif number_set == NaturalPos:
             thm = summation_nat_pos_closure
@@ -90,15 +92,27 @@ class Sum(OperationOverInstances):
             antecedent.conclude_via_generalization()
         return impl.derive_consequent()
 
-    @relation_prover
-    def deduce_number_set(self, **defaults_config):
+    def readily_provable_number_set(self):
         '''
-        Prove membership of this expression in the most 
-        restrictive standard number set we can readily know.
+        Return the most restrictive number set we can readily
+        prove contains the evaluation of this number operation.
         '''
-        summand_ns = deduce_number_set(self.summand, 
-                                       assumptions=self.conditions).domain
-        return self.deduce_in_number_set(summand_ns)
+        with defaults.temporary() as tmp_defaults:
+            tmp_defaults.assumptions = defaults.assumptions + tuple(
+                    self.conditions)
+            summand_ns = readily_provable_number_set(self.summand)
+        if summand_ns is None:
+            return None
+        if summand_ns == ZeroSet:
+            return ZeroSet
+        if summand_ns in (Natural, NaturalPos, Integer, Real, Complex):
+            # We have proven closure for these.
+            # ToDo: implement more closure.
+            return summand_ns
+        if Integer.readily_includes(summand_ns): return Integer
+        if Rational.readily_includes(summand_ns): return Rational
+        if Real.readily_includes(summand_ns): return Real
+        return Complex
 
     def _formatted(self, format_type, **kwargs):
         # MUST BE UPDATED TO DEAL WITH 'joining' NESTED LEVELS
@@ -681,11 +695,11 @@ class Sum(OperationOverInstances):
         if isinstance(summand_relation.instance_expr, LessEq):
             # Use weak form
             sum_rel_impl = weak_summation_from_summands_bound.instantiate(
-                    {a:_a, b:_b, S:_S})
+                    {a:_a, b:_b, S:_S}, preserve_all=True)
         else:
             # Use strong form
             sum_rel_impl = strong_summation_from_summands_bound.instantiate(
-                    {a:_a, b:_b, S:_S})
+                    {a:_a, b:_b, S:_S}, preserve_all=True)
         sum_relation = sum_rel_impl.derive_consequent()
         if summand_lambda == greater_lambda:
             return sum_relation.with_direction_reversed()

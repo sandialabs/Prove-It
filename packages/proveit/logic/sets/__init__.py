@@ -18,6 +18,14 @@ from .cardinality import Card
 from .functions import (Functions, Injections, Surjections, Bijections, 
                         Image, InvImage)
 
+def is_infinite_set(expr):
+    if hasattr(expr, 'is_infinite_set'):
+        return expr.is_infinite_set()
+    if isinstance(expr, Set):
+        return False # finite set
+    raise NotImplementedError(
+            "%s not known to be an infinite set with simple checks."%expr)
+
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.
 # This allows us to import common expression, axioms, and theorems of

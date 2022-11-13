@@ -267,9 +267,15 @@ class ExprArray(ExprTuple):
         return self._simple_formatted(format_type='string')
 
     def _simple_formatted(self, format_type):
-        
+        '''
+        Just use ExprTuple formatting except wrap after each comma.
+        '''
         return (self.__class__.__name__ + 
-                ExprTuple.formatted(self, format_type=format_type, fence=True))
+                ExprTuple.formatted(
+                        self, format_type=format_type, 
+                        fence=True, 
+                        wrap_positions=[2*pos for pos in
+                                        range(1, self.num_entries())]))
         
     
     def get_latex_formatted_cells(self, orientation='horizontal',
@@ -541,21 +547,21 @@ class ExprArray(ExprTuple):
         return Len(self[:]).computed(**defaults_config)
 
     @equality_prover('equated', 'equate')
-    def deduce_equality(self, equality, **defaults_config):
+    def deduce_equal(self, rhs, **defaults_config):
         from proveit.core_expr_types.expr_arrays import (
                 array_eq_via_elem_eq_thm)
-        return ExprTuple.deduce_equality(
-                self, equality, eq_via_elem_eq_thm=array_eq_via_elem_eq_thm)
+        return ExprTuple.deduce_equal(
+                self, rhs, eq_via_elem_eq_thm=array_eq_via_elem_eq_thm)
 
     @relation_prover
-    def not_equal(self, other_tuple, **defaults_config):
+    def deduce_not_equal(self, other_tuple, **defaults_config):
         '''
         Prove and return this ExprArray not equal to the other
         ExprArray.
         '''
         from proveit.core_expr_types.expr_arrays import (
                 array_neq_with_diff_len, array_neq_via_any_elem_neq)
-        return ExprTuple.not_equal(
+        return ExprTuple.deduce_not_equal(
                 self, other_tuple, 
                 neq_with_diff_len_thm=array_neq_with_diff_len,
                 neq_via_any_elem_neq_thm=array_neq_via_any_elem_neq)

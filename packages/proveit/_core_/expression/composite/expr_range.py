@@ -10,7 +10,7 @@ from proveit._core_.expression.composite import (
         singular_expression, single_or_composite_expression, ExprTuple)
 from proveit._core_.expression.conditional import Conditional
 from proveit._core_.proof import ProofFailure, UnsatisfiedPrerequisites
-from proveit._core_.defaults import defaults, USE_DEFAULTS
+from proveit._core_.defaults import defaults
 from proveit.decorators import prover, equality_prover
 
 class ExprRange(Expression):
@@ -174,7 +174,7 @@ class ExprRange(Expression):
             # or we would loose any style information.
             body = lambda_map.body
             orig_param = lambda_map.parameter
-            param = lambda_map.canonical_version().parameter
+            param = lambda_map.canonically_labeled().parameter
             if orig_param != param:
                 lambda_map = Lambda(
                     param, body.basic_replaced({orig_param:param}))
@@ -310,7 +310,8 @@ class ExprRange(Expression):
                 style_preferences=self._style_data.styles)
         return replaced
 
-    def _auto_simplified_sub_exprs(self, *, requirements, stored_replacements):
+    def _auto_simplified_sub_exprs(self, *, requirements, stored_replacements,
+                                   markers_and_marked_expr):
         '''
         Properly handle the ExprRange scope while doing 
         auto-simplification replacements.  This combines the behavior
@@ -318,11 +319,14 @@ class ExprRange(Expression):
         '''
         # Standard approach for the subbed indices.
         subbed_indices = \
-            tuple(sub_expr._auto_simplified(
+            tuple(sub_expr_fn(self)._auto_simplified(
                     requirements=requirements, 
-                    stored_replacements=stored_replacements)
-                  for sub_expr in (self.true_start_index, 
-                                   self.true_end_index))
+                    stored_replacements=stored_replacements,
+                    markers_and_marked_expr=self._update_marked_expr(
+                            markers_and_marked_expr, sub_expr_fn))
+                  for sub_expr_fn in (
+                          lambda _expr : _expr.true_start_index,
+                          lambda _expr : _expr.true_end_index))
         parameter = self.parameter
         # Special assumptions for the body.  We can't use
         # assumptions involving the parameter except the
@@ -337,7 +341,10 @@ class ExprRange(Expression):
             # the stored_replacements from before.
             subbed_body = self.body._auto_simplified(
                     requirements=requirements, 
-                    stored_replacements=dict())
+                    stored_replacements=dict(),
+                    markers_and_marked_expr=self._update_marked_expr(
+                           markers_and_marked_expr,
+                           lambda _expr : _expr.body))
             subbed_lambda = Lambda(parameter, subbed_body)
         subbed_sub_exprs = (subbed_lambda, *subbed_indices)
         sub_exprs = self._sub_expressions
@@ -379,8 +386,8 @@ class ExprRange(Expression):
             a_{1,1}, ..., a_{1,3}, ......, a_{4,1}, ..., a_{4,3}
         has a literal_int_extent of 12.
         '''
-        from proveit.numbers import is_literal_int
-        if (is_literal_int(self.true_start_index) and is_literal_int(self.true_end_index)):
+        from proveit.numbers import is_numeric_int
+        if (is_numeric_int(self.true_start_index) and is_numeric_int(self.true_end_index)):
             toplevel_extent = (
                 self.true_end_index.as_int() -
                 self.true_start_index.as_int() +
@@ -1309,14 +1316,14 @@ class ExprRange(Expression):
         # If the start and end are literal integers and form an
         # empty range, then it should be straightforward to
         # prove that the range is empty.
-        from proveit.numbers import is_literal_int
+        from proveit.numbers import is_numeric_int
         default_order = 'increasing'
         if self.get_style('order', default_order) == 'decreasing':
             decreasing = True
         else:
             decreasing = False
         empty_req = Equals(Add(simp_end_index, one), simp_start_index)
-        if is_literal_int(simp_start_index) and is_literal_int(simp_end_index):
+        if is_numeric_int(simp_start_index) and is_numeric_int(simp_end_index):
             if simp_end_index.as_int() + 1 == simp_start_index.as_int():
                 empty_req.prove()
         first = self.first()
@@ -1373,11 +1380,11 @@ class ExprRange(Expression):
             # If the start and end of the inner range are literal
             # integers and form an empty range, then it should be
             # straightforward to prove that the entire range is empty.
-            from proveit.numbers import is_literal_int
+            from proveit.numbers import is_numeric_int
             empty_req = Equals(
                 Add(first.true_end_index, one), first.true_start_index)
-            if is_literal_int(
-                    first.true_start_index) and is_literal_int(
+            if is_numeric_int(
+                    first.true_start_index) and is_numeric_int(
                     first.true_end_index):
                 if first.true_end_index.as_int() + \
                         1 == first.true_start_index.as_int():
@@ -1743,9 +1750,10 @@ class ExprRange(Expression):
                     self, repl_map,
                     "Failure to expand %s because there is no explicit "
                     "expansion for %s.  The known expansions for "
-                    "this variable are %s.  "
+                    "this variable are %s.\n"
                     "(Note that multiple, equivalent expansion forms "
-                    "may be provided to fulfill this requirement)."
+                    "may be provided to fulfill this requirement "
+                    "and ExprTuple.align_ranges may be useful)."
                     % (self, var_tuple, var_replacements))
             repl = inner_repl_map.pop(var_tuple)
             if not isinstance(repl, ExprTuple):
@@ -1764,7 +1772,10 @@ class ExprRange(Expression):
                 "When expanding IndexedVars within an ExprRange whose "
                 "parameter is the index, their expansion ExprRange "
                 "indices must all match. %s vs %s do not match as "
-                "respective expansions for %s and %s."
+                "respective expansions for %s and %s.\n"
+                "ExprTuple.align_ranges may be useful.\n"
+                "Using multiple, equivalent expansion forms could also "
+                "help."
                 % (first_expansion, expansion,
                    first_indexed_var_or_range, indexed_var_or_range))
 
@@ -2276,32 +2287,13 @@ class ExprRange(Expression):
         Expression._var_index_shifts_in_ranges(self, var, shifts)
     """
 
-    """
-    TODO: change register_equivalence_method to allow and fascilitate these
-    method stubs for purposes of generating useful documentation.
-
-    def partitioned(self, before_split_idx, assumptions=USE_DEFAULTS):
-        '''
-        Return the right-hand-side of a 'partition'.
-        '''
-        raise Exception("Should be implemented via InnerExpr.register_equivalence_method")
-
-    def split(self, before_split_idx, assumptions=USE_DEFAULTS):
-        '''
-        As an InnerExpr method when the inner expression is an ExprRange,
-        return the expression with the inner expression replaced by its
-        'partitioned' version.
-        '''
-        raise Exception("Implemented via InnerExpr.register_equivalence_method "
-                        "only to be applied to an InnerExpr object.")
-    """
 
 def simplified_index(index, *, requirements=None):
     return list(simplified_indices(index, requirements=requirements))[0]
 
 def simplified_indices(*indices, requirements=None):
     from proveit.logic import Equals
-    from proveit.numbers import Add, quick_simplified_index, is_literal_int
+    from proveit.numbers import Add, quick_simplified_index, is_numeric_int
     for index in indices:
         simplified_index = quick_simplified_index(index)
         if requirements is not None:
@@ -2312,13 +2304,12 @@ def simplified_indices(*indices, requirements=None):
                     requirements.append(requirement.prove())
                     yield simplified_index
                     continue
-                if defaults.automation:
-                    with Add.temporary_simplification_directives() as directives:
-                        # Move literal integers to the end via the
-                        # 'order_key' simplification directive for Add.
-                        directives.order_key = lambda term : (
-                            1 if is_literal_int(term) else 0)
-                        index.simplified() 
+                with Add.temporary_simplification_directives() as directives:
+                    # Move literal integers to the end via the
+                    # 'order_key_fn' simplification directive for Add.
+                    directives.order_key_fn = lambda term : (
+                        1 if is_numeric_int(term) else 0)
+                    index.simplified() 
                 try:
                     requirements.append(requirement.prove())
                 except ProofFailure as e:

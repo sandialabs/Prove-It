@@ -12,10 +12,7 @@ def complex_polar_coordinates(expr, *, radius_must_be_nonneg=True,
     Real (and r is preferably RealNonNeg) under the given assumptions, 
     return
         (r, theta)
-    as a tuple pair. If defaults.automation=False, the r and theta must
-    already be known to be RealNonNeg and Real respectively. If
-    defaults.automation=True, we may attempt to prove these through 
-    automation.
+    as a tuple pair.
     
     If radius_must_be_nonneg and nonneg_radius_preferred are False, 
     we won't worry about ensuring that r is non-negative (so the result
@@ -50,12 +47,12 @@ def complex_polar_coordinates(expr, *, radius_must_be_nonneg=True,
     '''
     from . import complex_polar_negation, complex_polar_radius_negation
     from proveit.logic import InSet, Equals
-    from proveit.numbers import deduce_in_number_set, deduce_number_set
+    from proveit.numbers import (deduce_in_number_set, 
+                                 readily_provable_number_set)
     from proveit.numbers import zero, one, e, i, pi
     from proveit.numbers import Real, RealNonPos, RealNonNeg, Complex
     from proveit.numbers import Add, LessEq, Neg, Mult, Exp
     orig_expr = expr
-    automation = defaults.automation
     simplify = defaults.auto_simplify
     if reductions is None: reductions = set()
 
@@ -220,13 +217,13 @@ def complex_polar_coordinates(expr, *, radius_must_be_nonneg=True,
     assert expr.operands.is_double() and isinstance(expr.operands[1], Exp)
     # Check that r0 is real and that we know it's relation with zero.
     _r0 = expr.operands[0]
-    _r0_ns = deduce_number_set(_r0).domain
-    if Real.includes(_r0_ns):
+    _r0_ns = readily_provable_number_set(_r0)
+    if Real.readily_includes(_r0_ns):
         InSet(_r0, Real).prove()
     else:
         raise_not_valid_form("%s not known to be real."%_r0)  
-    is_known_nonneg = RealNonNeg.includes(_r0_ns)
-    is_known_nonpos = RealNonPos.includes(_r0_ns)
+    is_known_nonneg = RealNonNeg.readily_includes(_r0_ns)
+    is_known_nonpos = RealNonPos.readily_includes(_r0_ns)
     if radius_must_be_nonneg:
         # We must know the relationship between r0 and 0 so we
         # can ensure r is non-negative.
@@ -269,9 +266,6 @@ def unit_length_complex_polar_angle(expr, *, reductions=None):
         exp(i * theta),
     or something obviously equivalent to this, where r is RealNonNeg 
     and theta is Real under the given assumptions, return theta.
-    If defaults.automation=False, theta must already be known to be 
-    Real. If defaults.automation=True, we may attempt to prove these 
-    through automation.
     
     If expr is not exactly in this complex number polar form and
     'reductions' is provided as a set, add to the 'reductions' set
@@ -290,7 +284,8 @@ def unit_length_complex_polar_angle(expr, *, reductions=None):
     '''
     from proveit import ExprRange
     from proveit.logic import Equals, InSet
-    from proveit.numbers import deduce_in_number_set, deduce_number_set
+    from proveit.numbers import (deduce_in_number_set,
+                                 readily_provable_number_set)
     from proveit.numbers import zero, one, e, i, pi
     from proveit.numbers import Add, Neg, Mult, Exp, Real, Complex
     from . import unit_length_complex_polar_negation
@@ -302,7 +297,6 @@ def unit_length_complex_polar_angle(expr, *, reductions=None):
         raise ValueError("%s not in a form that is obviously "
                          "reducible from an exp(i*theta) form. %s"
                          %(orig_expr, extra_msg))
-    automation = defaults.automation
     simplify = defaults.auto_simplify
     def add_reduction(reduction, _theta):
         '''
@@ -344,8 +338,8 @@ def unit_length_complex_polar_angle(expr, *, reductions=None):
                 # Already in the proper form.  No reduction needed,
                 # but we do need to check that theta is real.
                 _theta = expr.exponent.factors[1]
-                _theta_ns = deduce_number_set(_theta).domain
-                if not Real.includes(_theta_ns):
+                _theta_ns = readily_provable_number_set(_theta)
+                if not Real.readily_includes(_theta_ns):
                     raise_not_valid_form("%s known to be %s but not Real."
                                          %(_theta, _theta_ns))
                 deduce_in_number_set(_theta, Real)
@@ -365,8 +359,8 @@ def unit_length_complex_polar_angle(expr, *, reductions=None):
                 assert expr.exponent.factors.is_double()
                 assert expr.exponent.factors[0] == i
                 _theta = expr.exponent.factors[1]
-                _theta_ns = deduce_number_set(_theta).domain
-                if not Real.includes(_theta_ns):
+                _theta_ns = readily_provable_number_set(_theta)
+                if not Real.readily_includes(_theta_ns):
                     raise_not_valid_form("%s known to be %s but not Real."
                                          %(_theta, _theta_ns))
                 # reduction: exp(i * theta) = orig_expr

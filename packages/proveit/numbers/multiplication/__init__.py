@@ -1,4 +1,4 @@
-from .mult import Mult
+from .mult import Mult, compose_factors
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

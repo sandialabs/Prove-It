@@ -3,7 +3,8 @@ from proveit import (defaults, ExprTuple, Function, InnerExpr, Literal,
                      relation_prover, SimplificationDirectives)
 from proveit.logic.irreducible_value import is_irreducible_value
 from proveit.abstract_algebra.generic_methods import (
-    apply_commutation_thm, generic_permutation)
+    apply_commutation_thm, deduce_equality_via_commutation,
+    generic_permutation)
 from proveit import TransRelUpdater
 
 class Set(Function):
@@ -44,11 +45,44 @@ class Set(Function):
 
     def latex(self, **kwargs):
         return r'\left\{' + self.elements.latex(fence=False) + r'\right\}'
+
+    def _build_canonical_form(self):
+        '''
+        Returns a form of this operation in which the operands are 
+        in a deterministically sorted order used to determine equal 
+        expressions given commutativity of this operation under
+        appropriate conditions.
+        '''
+        return Set(*sorted([operand.canonical_form() for operand 
+                              in self.operands.entries], key=hash))
+
+    def readily_includes(self, other_set):
+        '''
+        Returns true/false if this set includes/excludes 'other_set' 
+        using fast checks.  Raise NotImplementedError otherwise.
+        '''
+        from proveit.logic.sets import is_infinite_set
+        if is_infinite_set(other_set):
+            # A finite set cannot include an infinite one.
+            return False
+        if isinstance(other_set, Set):
+            if set(self.elements).issuperset(set(other_set.elements)):
+                # We know self includes other_set
+                return True
+            # We cannot say for sure if 'self' includes other_set
+            # without more work.
+        raise NotImplementedError(
+                "Set.readily_includes only has simple checks by design.")      
     
+    def _deduce_canonically_equal(self, rhs, **defaults_config):
+        from proveit.logic import Equals
+        equality = Equals(self, rhs)
+        return deduce_equality_via_commutation(equality, one_side=self)
+
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self,  *, must_evaluate=False,
                                **defaults_config):
-        from proveit.numbers import is_literal_int, num
+        from proveit.numbers import is_numeric_int, num
 
         # A convenience to allow successive update to the equation via 
         # transitivities. (starting with self=self).
@@ -70,7 +104,7 @@ class Set(Function):
             # Sort if all of the elements are literal integers.
             int_elems = []
             for elem in expr.operands:
-                if not is_literal_int(elem):
+                if not is_numeric_int(elem):
                     break
                 int_elems.append(elem.as_int())
             if len(int_elems) == expr.operands.num_entries():
@@ -262,6 +296,56 @@ class Set(Function):
         would both return |- {a, b, c, d} = {a, c, d, b}.
         '''
         return generic_permutation(self, new_order, cycles)
+
+    @prover
+    def deduce_subset_eq_relation(self, subset, **defaults_config):
+        '''
+        Deduce a simple subset_eq relation between this Set
+        expression and another one whose entries are all included by
+        this one.  For example,
+            {a, b, c, d}.deduce_subset_eq_relation({a, c})
+        would return |- {a, c} subset_eq {a, b, c, d}.
+        '''
+        if not isinstance(subset, Set):
+            raise NotImplementedError(
+                    "'deduce_superset_eq_relation' only implemented for "
+                    "a 'superset' that is a enumerated Set expression")
+        if not set(subset.elements).issubset(self.elements):
+            raise NotImplementedError(
+                    "'deduce_superset_eq_relation' only implemented for "
+                    "a 'subset' whose entries are all included in "
+                    "'self': %s does not include all of %s"
+                    %(self, subset))
+        return self.deduce_as_superset_eq_of(subset=subset)
+
+    @relation_prover
+    def deduce_proper_subset_relation(self, subset, **defaults_config):
+        '''
+        Deduce a proper subset relation between this Set
+        expression and another one whose entries are all included by
+        this one.  For example,
+            {a, b, c, d}.deduce_proper_superset_relation({a, c})
+        would return |- {a, c} superset {a, b, c, d}.
+        '''
+        # TODO: Needs work to ensur there is an element not in the
+        # superset by using NotEquals.readily_provable, here and
+        # in deduce_as_proper_superset_of for choosing the proper
+        # element.
+        if not isinstance(subset, Set):
+            raise NotImplementedError(
+                    "'deduce_superset_eq_relation' only implemented for "
+                    "a 'superset' that is a enumerated Set expression")
+        if not set(subset.elements).issubset(self.elements):
+            raise NotImplementedError(
+                    "'deduce_superset_eq_relation' only implemented for "
+                    "a 'subset' whose entries are all included in "
+                    "'self': %s does not include all of %s"
+                    %(self, subset))
+        try:
+            return self.deduce_as_proper_superset_of(subset=subset)
+        except ValueError:
+            raise NotImplementedError(
+                    "This case not implemented: See above TODO")
 
     @prover
     def deduce_enum_subset_eq(self, subset_indices=None, subset=None,

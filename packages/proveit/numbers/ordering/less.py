@@ -1,6 +1,7 @@
 from proveit import (Literal, Operation, USE_DEFAULTS, as_expression,
                      UnsatisfiedPrerequisites, prover, relation_prover)
 from proveit.logic import Equals
+from proveit.util import OrderedSet
 from proveit import a, b, c, d, x, y, z
 from .number_ordering_relation import NumberOrderingRelation
 
@@ -9,11 +10,16 @@ class Less(NumberOrderingRelation):
     _operator_ = Literal(string_format='<', theory=__file__)
 
     # map left-hand-sides to "<" Judgments
-    #   (populated in TransitivityRelation.side_effects)
+    #   (populated in TransitivityRelation._record_as_proven)
     known_left_sides = dict()
     # map right-hand-sides to "<" Judgments
-    #   (populated in TransitivityRelation.side_effects)
+    #   (populated in TransitivityRelation._record_as_proven)
     known_right_sides = dict()
+
+    # map canonical left hand sides to '<' Judgments paired with
+    # canonical left hand sides.
+    known_canonical_bounds = dict()
+
 
     def __init__(self, lhs, rhs, *, styles=None):
         r'''
@@ -22,6 +28,17 @@ class Less(NumberOrderingRelation):
         NumberOrderingRelation.__init__(self, Less._operator_, lhs, rhs,
                                         styles=styles)
     
+    def _record_as_proven(self, judgment):
+        '''
+        Remember the canonical bound of this proven LessEq.
+        '''
+        NumberOrderingRelation._record_as_proven(self, judgment)
+        canonical_form = self.canonical_form()
+        known_canonical_bounds = Less.known_canonical_bounds
+        known_canonical_bounds.setdefault(
+                canonical_form.lhs, OrderedSet()).add(
+                        (judgment, canonical_form.rhs))
+
     def side_effects(self, judgment):
         '''
         In addition to the NumberOrderingRelation side-effects, also
@@ -31,7 +48,7 @@ class Less(NumberOrderingRelation):
                 self, judgment):
             yield side_effect
         yield self.derive_not_equal
-        yield self.deduce_complement
+        yield self.derive_complement
 
     def negation_side_effects(self, judgment):
         '''
@@ -52,31 +69,40 @@ class Less(NumberOrderingRelation):
             return 'greater'
         # Use the default.
         return Operation.remake_constructor(self)
-    
+        
     @prover
     def conclude(self, **defaults_config):
         '''
         Conclude something of the form 
         a < b.
         '''
-        from proveit.logic import InSet
-        from proveit.numbers import Add, zero, RealPos, deduce_number_set
-        from . import positive_if_real_pos
-        if self.upper == zero:
-            # Special case with upper bound of zero.
-            from . import negative_if_real_neg
-            concluded = negative_if_real_neg.instantiate(
-                {a: self.lower})
-            return concluded
-        if self.lower == zero:
-            # Special case with lower bound of zero.
-            deduce_number_set(self.upper)
-            if InSet(self.upper, RealPos).proven():
-                positive_if_real_pos.instantiate({a: self.upper})
-        if ((isinstance(self.lower, Add) and 
-                self.upper in self.lower.terms.entries) or
-             (isinstance(self.upper, Add) and 
-                self.lower in self.upper.terms.entries)):
+        from proveit.numbers import (Add, Real, RealPos, RealNeg,
+                                     RealNonPos, RealNonNeg,
+                                     readily_provable_number_set,
+                                     deduce_number_set)
+        
+        lower, upper = self.lower, self.upper
+        lower_ns = readily_provable_number_set(
+                lower, _check_order_against_zero=False, default=Real)
+        upper_ns = readily_provable_number_set(
+                upper, _check_order_against_zero=False, default=Real)
+        if (RealNonPos.readily_includes(lower_ns) and 
+            RealPos.readily_includes(upper_ns)) or (
+                    RealNeg.readily_includes(lower_ns) and 
+                    RealNonNeg.readily_includes(upper_ns)):
+            # The inequality is determined by the number sets.
+            deduce_number_set(upper)
+            deduce_number_set(lower)
+
+        try:
+            # If there is a known bound that is similar and at least
+            # as strong, we can derive this bound from the known one.
+            return self.conclude_from_known_bound()
+        except UnsatisfiedPrerequisites:
+            pass
+
+        if ((isinstance(lower, Add) and upper in lower.terms.entries) or
+             (isinstance(upper, Add) and lower in upper.terms.entries)):
             try:
                 # Conclude an sum is bounded by one of its terms.
                 return self.conclude_as_bounded_by_term()
@@ -85,7 +111,7 @@ class Less(NumberOrderingRelation):
                 # we can still try something else.
                 pass
         return NumberOrderingRelation.conclude(self)
-    
+
     @prover
     def conclude_as_bounded_by_term(self, **defaults_config):
         '''
@@ -139,12 +165,24 @@ class Less(NumberOrderingRelation):
         return concluded
 
     @prover
-    def conclude_via_equality(self, **defaults_config):
-        from . import relax_equal_to_less_eq
-        concluded = relax_equal_to_less_eq.instantiate(
-            {x: self.operands[0], y: self.operands[1]})
-        return concluded
-    
+    def conclude_negation(self, **defaults_config):
+        '''
+        Automatically conclude the negation an OrderingRelation.
+        For example, not(7 < 3) from 3 ≤ 7.
+        '''
+        from .less_eq import LessEq
+        return LessEq(self.upper, self.lower).derive_complement()
+
+    def readily_in_bool(self):
+        '''
+        Number ordering relation is readily provable as a Boolean iff
+        both sides are readily provable as real numbers.
+        '''
+        from proveit.logic import InSet
+        from proveit.numbers import Real
+        return InSet(self.lhs, Real).readily_provable() and (
+                InSet(self.rhs, Real).readily_provable())
+
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import less_than_is_bool
@@ -233,7 +271,7 @@ class Less(NumberOrderingRelation):
     #             {x:self.lower, y:self.upper}).derive_consequent()
 
     @prover
-    def deduce_complement(self, **defaults_config):
+    def derive_complement(self, **defaults_config):
         '''
         From a < b, derive and return Not(b <= a).
         '''
@@ -282,35 +320,69 @@ class Less(NumberOrderingRelation):
         return new_rel.with_mimicked_style(self)
 
     @prover
-    def add_left(self, addend, **defaults_config):
+    def add_left(self, addend, *, strong=True, **defaults_config):
         '''
         From a < b, derive and return a + c < b given c <= 0 
         Or from a > b, derive and return a + c > b given 0 <= c 
         (and a, b, c are all Real) where c is the given 'addend'.
+
+        If 'strong' is False, we derive the weak ≤ (≥) form
+        (same as if we use the derive_relaxed method on the result).
         '''
         if self.get_style('direction', 'normal') == 'reversed':
             # Left and right are reversed.
-            new_rel = self.add_right(addend)
+            temp_rel = self.with_styles(direction='normal')
+            new_rel = temp_rel.add_right(addend, strong=strong)
         else:
-            from . import less_add_left
-            new_rel = less_add_left.instantiate(
-                    {a: self.lower, b: self.upper, c: addend})
+            from proveit.logic import InSet
+            from proveit.numbers import Integer
+            _a, _b, _c = self.lower, self.upper, addend
+            if strong:
+                from . import less_add_left
+                new_rel = less_add_left.instantiate({a:_a, b:_b, c:_c})
+            else:
+                if InSet(_a, Integer).readily_provable() and (
+                        InSet(_b, Integer).readily_provable() and
+                        InSet(_c, Integer).readily_provable()):
+                    from . import less_add_left_weak_int
+                    thm = less_add_left_weak_int
+                else:
+                    from . import less_add_left_weak
+                    thm = less_add_left_weak
+                new_rel = thm.instantiate({a:_a, b:_b, c:_c})
         return new_rel.with_mimicked_style(self)
 
     @prover
-    def add_right(self, addend, **defaults_config):
+    def add_right(self, addend, *, strong=True, **defaults_config):
         '''
         From a < b, derive and return a < b + c given 0 <= c 
         Or from a > b, derive and return a > b + c given c <= 0 
         (and a, b, c are all Real) where c is the given 'addend'.
+
+        If 'strong' is False, we derive the weak ≤ (≥) form
+        (same as if we use the derive_relaxed method on the result).
         '''
         if self.get_style('direction', 'normal') == 'reversed':
             # Left and right are reversed.
-            new_rel = self.add_left(addend)
+            temp_rel = self.with_styles(direction='normal')
+            new_rel = temp_rel.add_left(addend, strong=strong)
         else:
-            from . import less_add_right
-            new_rel = less_add_right.instantiate(
-                {a: self.lower, b: self.upper, c: addend})
+            from proveit.logic import InSet
+            from proveit.numbers import Integer
+            _a, _b, _c = self.lower, self.upper, addend
+            if strong:
+                from . import less_add_right
+                new_rel = less_add_right.instantiate({a:_a, b:_b, c:_c})
+            else:
+                if InSet(_a, Integer).readily_provable() and (
+                        InSet(_b, Integer).readily_provable() and
+                        InSet(_c, Integer).readily_provable()):
+                    from . import less_add_right_weak_int
+                    thm = less_add_right_weak_int
+                else:
+                    from . import less_add_right_weak
+                    thm = less_add_right_weak
+                new_rel = thm.instantiate({a:_a, b:_b, c:_c})
         return new_rel.with_mimicked_style(self)
     
     @prover

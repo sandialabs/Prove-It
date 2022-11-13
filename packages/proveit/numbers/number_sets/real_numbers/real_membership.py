@@ -43,9 +43,13 @@ class RealNonZeroMembership(NumberMembership):
     def __init__(self, element):
         NumberMembership.__init__(self, element, RealNonZero)
 
+    def _readily_provable(self):
+        return NumberMembership._readily_provable(self)
+
     @prover
     def conclude(self, **defaults_config):
         from proveit.numbers import zero
+        # Use "proven", not "readily_provable" here.
         if (InSet(self.element, Real).proven() and
                 NotEquals(self.element, zero).proven()):
             return self.conclude_as_last_resort()
@@ -106,14 +110,32 @@ class RealPosMembership(NumberMembership):
 
     def __init__(self, element):
         NumberMembership.__init__(self, element, RealPos)
+
+    def _readily_provable(self):
+        return NumberMembership._readily_provable(self)
     
     @prover
     def conclude(self, **defaults_config):
         from proveit.numbers import zero, greater
+        # Use "proven", not "readily_provable" here.
         if (InSet(self.element, Real).proven() and
                 greater(self.element, zero).proven()):
             return self.conclude_as_last_resort()
+        if (InSet(self.element, RealNonNeg).proven() and
+                NotEquals(self.element, zero).readily_provable()):
+            return self.conclude_via_nonzero()
         return NumberMembership.conclude(self)
+
+    @prover
+    def conclude_via_nonzero(self, **defaults_config):
+        '''
+        Conclude element in RationalPos by proving it is a non-negative
+        real and nonzero.
+        '''
+        from proveit.numbers.number_sets.integers import (
+            nonzero_nonneg_real_is_real_pos)
+        return nonzero_nonneg_real_is_real_pos.instantiate(
+                {a:self.element})
 
     @prover
     def conclude_as_last_resort(self, **defaults_config):
@@ -176,14 +198,32 @@ class RealNegMembership(NumberMembership):
 
     def __init__(self, element):
         NumberMembership.__init__(self, element, RealNeg)
-    
+
+    def _readily_provable(self):
+        return NumberMembership._readily_provable(self)
+
     @prover
     def conclude(self, **defaults_config):
         from proveit.numbers import zero, Less
+        # Use "proven", not "readily_provable" here.
         if (InSet(self.element, Real).proven() and
                 Less(self.element, zero).proven()):
             return self.conclude_as_last_resort()
+        if (InSet(self.element, RealNonPos).proven() and
+                NotEquals(self.element, zero).readily_provable()):
+            return self.conclude_via_nonzero()
         return NumberMembership.conclude(self)
+
+    @prover
+    def conclude_via_nonzero(self, **defaults_config):
+        '''
+        Conclude element in RationalNeg by proving it is a non-positive
+        real and nonzero.
+        '''
+        from proveit.numbers.number_sets.integers import (
+            nonzero_nonpos_real_is_real_neg)
+        return nonzero_nonpos_real_is_real_neg.instantiate(
+                {a:self.element})
 
     @prover
     def conclude_as_last_resort(self, **defaults_config):
@@ -244,10 +284,14 @@ class RealNonNegMembership(NumberMembership):
 
     def __init__(self, element):
         NumberMembership.__init__(self, element, RealNonNeg)
-    
+
+    def _readily_provable(self):
+        return NumberMembership._readily_provable(self)
+
     @prover
     def conclude(self, **defaults_config):
         from proveit.numbers import zero, greater_eq
+        # Use "proven", not "readily_provable" here.
         if (InSet(self.element, Real).proven() and
                 greater_eq(self.element, zero).proven()):
             return self.conclude_as_last_resort()
@@ -298,10 +342,14 @@ class RealNonPosMembership(NumberMembership):
 
     def __init__(self, element):
         NumberMembership.__init__(self, element, RealNonPos)
-    
+
+    def _readily_provable(self):
+        return NumberMembership._readily_provable(self)
+
     @prover
     def conclude(self, **defaults_config):
         from proveit.numbers import zero, LessEq
+        # Use "proven", not "readily_provable" here.
         if (InSet(self.element, Real).proven() and
                 LessEq(self.element, zero).proven()):
             return self.conclude_as_last_resort()

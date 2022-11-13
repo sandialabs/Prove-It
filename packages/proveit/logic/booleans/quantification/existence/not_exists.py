@@ -1,6 +1,6 @@
 from proveit import OperationOverInstances
-from proveit import Literal, Operation, prover
-from proveit import P, Q, S
+from proveit import Literal, Operation, Lambda, prover, relation_prover
+from proveit import n, x, y, P, Q, S
 
 
 class NotExists(OperationOverInstances):
@@ -43,6 +43,7 @@ class NotExists(OperationOverInstances):
         '''
         from . import not_exists_unfolding
         _x = _y = self.instance_params
+        _n = _x.num_elements()
         _Q = Lambda(_x, self.conditions)
         _P = Lambda(_x, self.instance_expr)
         return not_exists_unfolding.instantiate(
@@ -56,6 +57,7 @@ class NotExists(OperationOverInstances):
         '''
         from . import not_exists_folding
         _x = _y = self.instance_params
+        _n = _x.num_elements()
         _Q = Lambda(_x, self.conditions)
         _P = Lambda(_x, self.instance_expr)
         return not_exists_folding.instantiate(
@@ -86,3 +88,26 @@ class NotExists(OperationOverInstances):
             return not_exists_via_forall.instantiate(
                 {x: _x, y: _y, n: _n, P: _P, Q:_Q}).derive_consequent()
 
+    def readily_in_bool(self):
+        '''
+        Existential quantification is always boolean.
+        '''
+        return True
+
+    @relation_prover
+    def deduce_in_bool(self, **defaults_config):
+        '''
+        Deduce, then return, that this exists expression is in the set of BOOLEANS as
+        all exists expressions are (they are taken to be false when not true).
+        '''
+        from . import notexists_is_bool, notexists_with_conditions_is_bool
+        _x = self.instance_params
+        _P = Lambda(_x, self.instance_expr)
+        _n = _x.num_elements()
+        if self.conditions.num_entries() == 0:
+            return notexists_is_bool.instantiate(
+                {n: _n, P: _P, x: _x})
+        _Q = Lambda(_x, self.condition)
+        return notexists_with_conditions_is_bool.instantiate(
+                {n: _n, P: _P, Q: _Q, x: _x}, preserve_expr=self,
+                auto_simplify=True)

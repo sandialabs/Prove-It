@@ -5,7 +5,7 @@ from proveit._core_.expression.expr import (Expression, MakeNotImplemented,
 from proveit._core_.expression.label.var import safe_dummy_var, safe_dummy_vars
 from proveit._core_.expression.composite import is_single
 from proveit._core_.defaults import defaults, USE_DEFAULTS
-from proveit.decorators import equality_prover
+from proveit.decorators import prover, equality_prover
 from collections import deque
 
 def get_param_var(parameter, *, _required_indices=None):
@@ -211,23 +211,20 @@ class Lambda(Expression):
                     free_vars(parameter.index))
         return free_vars_of_indices
     
-    def canonical_version(self):
-        return self._canonical_version()
+    def canonically_labeled(self):
+        return self._canonically_labeled_lambda()
 
-    def _canonical_version(self, stored_canonical_version=None):
+    def _canonically_labeled_lambda(self):
         '''
         Retrieve (and create if necessary) the canonical version of this
         Lambda expression in which its parameters are replaced with
         deterministic 'dummy' variables.
-        If 'stored_canonical_version' is provided, we'll use
-        that, instead of building it from scratch, after we
-        check that it is valid.
         '''
         from proveit._core_.expression.operation.indexed_var import (
             IndexedVar)
 
-        if hasattr(self, '_canonical_expr'):
-            return self._canonical_expr
+        if hasattr(self, '_canonically_labeled'):
+            return self._canonically_labeled
 
         # Relabel parameter variables to something deterministic
         # independent of the original labels.
@@ -258,8 +255,8 @@ class Lambda(Expression):
         # potentially-independent interanlly bound variables to
         # determine what may be contestable), skipping over free 
         # variables that happen to match any of these dummy variables.
-        canonical_parameters = parameters.canonical_version()
-        canonical_body = self.body.canonical_version()
+        canonical_parameters = parameters.canonically_labeled()
+        canonical_body = self.body.canonically_labeled()
         canonical_body_free_vars = free_vars(canonical_body)
         canonical_parameters_free_vars = free_vars(canonical_parameters)
         lambda_free_vars = set(canonical_body_free_vars)
@@ -297,19 +294,44 @@ class Lambda(Expression):
                      for param_var, canonical_param_var
                      in zip(effective_param_vars, canonical_param_vars)}
                 canonical_parameters = parameters.basic_replaced(
-                    relabel_map).canonical_version()
+                    relabel_map).canonically_labeled()
                 canonical_body = canonical_body.basic_replaced(
-                    relabel_map).canonical_version()
-                canonical_expr = Lambda(canonical_parameters, canonical_body)
+                    relabel_map).canonically_labeled()
+                canonically_labeled = Lambda(canonical_parameters, 
+                                            canonical_body)
             elif (self._style_data.styles == canonical_styles and
                   canonical_body._style_id == self.body._style_id and
                   canonical_parameters._style_id == self.parameters._style_id):
-                canonical_expr = self
+                canonically_labeled = self
             else:
-                canonical_expr = Lambda(canonical_parameters, canonical_body)
-        self._canonical_expr = canonical_expr
-        canonical_expr._canonical_expr = canonical_expr
-        return canonical_expr
+                canonically_labeled = Lambda(canonical_parameters, 
+                                            canonical_body)
+        self._canonically_labeled = canonically_labeled
+        canonically_labeled._canonically_labeled = canonically_labeled
+        return canonically_labeled
+
+    def _build_canonical_form(self):
+        '''
+        Build the canonical form of this Lambda.
+        This override Expression._build_canonical_form to leave
+        parameters unchanged.
+        '''
+        # Leave the parameters unchanged:
+        canonical_sub_exprs = [self.parameters]
+        has_distinct_canonical_form = False
+        for sub_expr in self._sub_expressions[1:]:
+            canonical_sub_expr = sub_expr.canonical_form()
+            if sub_expr != canonical_sub_expr:
+                has_distinct_canonical_form = True
+            canonical_sub_exprs.append(canonical_sub_expr)
+        if has_distinct_canonical_form:
+            # Use the canonical forms of the sub-expressions.
+            return self._checked_make(
+                self._core_info, canonical_sub_exprs,
+                style_preferences=self._style_data.styles)
+        else:
+            # No canonical form that is different from self.
+            return self        
 
     def extract_argument(self, mapped_expr):
         '''
@@ -543,6 +565,10 @@ class Lambda(Expression):
         '''
         from proveit import ExprTuple, extract_var_tuple_indices
         from proveit.logic import Equals
+        
+        # derive side-effects if applicable
+        defaults.make_assumptions()
+
         try:
             if parameter_vars is None:
                 parameter_vars = \
@@ -709,7 +735,8 @@ class Lambda(Expression):
 
         return replaced
 
-    def _auto_simplified_sub_exprs(self, *, requirements, stored_replacements):
+    def _auto_simplified_sub_exprs(self, *, requirements, stored_replacements,
+                                   markers_and_marked_expr):
         '''
         Properly handle the Lambda scope while doing auto-simplification
         replacements.  Also, don't replace parameter variables.
@@ -724,7 +751,10 @@ class Lambda(Expression):
             # the stored_replacements from before.
             subbed_body = self.body._auto_simplified(
                     requirements=requirements, 
-                    stored_replacements=dict())
+                    stored_replacements=dict(),
+                    markers_and_marked_expr=self._update_marked_expr(
+                            markers_and_marked_expr, 
+                            lambda _expr : _expr.body))
             if subbed_body == self.body:
                 # Nothing change, so don't remake anything.
                 return self                
@@ -1002,6 +1032,24 @@ class Lambda(Expression):
             "Relabeled version should be 'equal' to original")
         return relabeled
 
+    @equality_prover('simplified', 'simplify')
+    def simplification(self, **defaults_config):
+        '''
+        Equat this Lambda with a form in which the body has been
+        simplified.
+        '''
+        from proveit.logic import Equals
+        inner_assumptions = \
+            [assumption for assumption in defaults.assumptions if
+             free_vars(assumption).isdisjoint(self.parameter_vars)]
+        body_simplification = self.body.simplification(
+                assumptions=inner_assumptions)
+        if body_simplification == self.body:
+            # No simplification.
+            return Equals(self, self).conclude_via_reflexivity()
+        return self.substitution(body_simplification.generalize(
+                self.parameters), auto_simplify=False)
+
     def compose(self, lambda2):
         '''
         Given some x -> f(x) for self (lambda1) and y -> g(y) for lambda2,
@@ -1131,6 +1179,60 @@ class Lambda(Expression):
                      a: _a, b: _b, c: _c},
                      preserve_expr=universal_eq).derive_consequent()
 
+
+    @prover
+    def _deduce_canonically_equal(self, rhs, **defaults_config):
+        '''
+        Prove the equality of Lambda expressions that have the same 
+        canonical form.  This requires both side of
+        the equality to have the same canonically labeled parameters
+        and condition.
+        '''
+        from proveit import Conditional
+        from proveit.logic import Forall, Equals
+        lhs = self
+        assert isinstance(rhs, Lambda), (
+                "Shouldn't call _deduce_canonically_equal if the sides of "
+                "the equality don't have the same canonical form and the "
+                "canonical form of a Lambda is a Lambda")
+        lhs_relabeled = lhs.canonically_labeled()
+        rhs_relabeled = rhs.canonically_labeled()
+        if (lhs_relabeled.parameters != rhs_relabeled.parameters):
+            raise NotImplementedError(
+                    "Lambda._deduce_canonically_equal requires the "
+                    "canonically labeled parameters to be the same on "
+                    "both sides (the only way this should be an issue if "
+                    "they have the same canonical form is if they are "
+                    "using dummy variables internally)")
+        lhs_body = lhs_relabeled.body
+        rhs_body = rhs_relabeled.body
+        lhs_has_condition = isinstance(lhs_body, Conditional)
+        rhs_has_condition = isinstance(rhs_body, Conditional)
+        rhs_condition = None
+        if lhs_has_condition or rhs_has_condition:
+            assert lhs_has_condition == rhs_has_condition, (
+                "Shouldn't call _deduce_canonically_equal if the sides "
+                "of the equality don't have the same canonical form and the "
+                "canonical form of a Conditional is a Conditional.")
+            condition = lhs_body.condition
+            rhs_condition = rhs_body.condition
+            universal_eq = Forall(lhs_relabeled.parameters, 
+                              Equals(lhs_body.value, rhs_body.value),
+                              condition=condition)
+        else:
+            universal_eq = Forall(lhs_relabeled.parameters, 
+                                  Equals(lhs_body, rhs_body))
+        if lhs_has_condition and rhs_condition != condition:
+            substitution = lhs_relabeled.substitution(
+                    universal_eq, auto_simplify=False)
+            # substitute the condition
+            substitution= substitution.inner_expr().rhs.body.substitute_condition(
+                    Equals(condition, rhs_condition))
+            return substitution
+        return self.substitution(universal_eq)
+    
+
+
     def global_repl(master_expr, sub_expr, assumptions=USE_DEFAULTS):
         '''
         Returns the Lambda map for replacing the given sub-Expression
@@ -1220,7 +1322,7 @@ class Lambda(Expression):
 
     def _contained_parameter_vars(self):
         '''
-        Return all of the Variables of this Expression that may
+        Return all of the Variables of this Expression that
         are parameter variables of a contained Lambda.
         '''
         return self.parameter_var_set.union(
@@ -1304,10 +1406,13 @@ def extract_param_replacements(parameters, parameter_vars,
                     param_tuple = ExprTuple(parameter)
                     param_operands_tuple = ExprTuple(*param_operands)
                     param_operands_len = Len(param_operands_tuple)
-                    len_req = Equals(param_operands_len, param_len)
-                    requirements.append(len_req.prove())
                     repl_map[param_var] = {param_tuple}
                     repl_map[param_tuple] = param_operands_tuple
+                    if param_operands_len==param_len:
+                        # Trivial length requirement
+                        continue
+                    len_req = Equals(param_operands_len, param_len)
+                    requirements.append(len_req.prove())
                     continue
                 
                 try:
@@ -1342,7 +1447,7 @@ def extract_param_replacements(parameters, parameter_vars,
                         # A possible match to check.
                         if not len_req.proven():
                             try:
-                                len_req.lhs.deduce_equality(len_req)
+                                len_req.lhs.deduce_equal(len_req.rhs)
                                 assert len_req.proven()
                             except ProofFailure:
                                 pass
@@ -1357,8 +1462,8 @@ def extract_param_replacements(parameters, parameter_vars,
                             requirements.append(len_req.prove())
                             break
                         try:
-                            # Try to prove len_req via 'deduce_equality'
-                            len_req.lhs.deduce_equality(len_req)
+                            # Try to prove len_req via 'deduce_equal'
+                            len_req.lhs.deduce_equal(len_req.rhs)
                             requirements.append(len_req.prove())
                         except ProofFailure as e:
                             raise ValueError(

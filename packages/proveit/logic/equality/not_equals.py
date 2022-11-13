@@ -29,19 +29,57 @@ class NotEquals(Relation):
             yield self.derive_via_double_negation  # A from A != False and A in Boolean
         yield self.unfold  # Not(x=y) from x != y
 
+    def _readily_provable(self, try_readily_not_equal=True):
+        '''
+        Return True iff this NotEquals is readily provable:
+            * one side is TRUE/FALSE and the other side is
+              disprovable/provable.
+            * one side has a 'readily_not_equal' method that returns
+              True when applied to the other side.
+            * the expanded version (with negation) is proven.
+        '''
+        from proveit.logic import Not, TRUE, FALSE
+        if (self.lhs == TRUE and self.rhs.readily_disprovable()) or (
+                self.rhs == TRUE and self.lhs.readily_disprovable()):
+            return True
+        if (self.lhs == FALSE and self.rhs.readily_provable()) or (
+                self.rhs == FALSE and self.lhs.readily_provable()):
+            return True
+        if Not(Equals(self.lhs, self.rhs)).proven():
+            # Use 'proven' rather than 'readily_proven' here to avoid
+            # infinite recursion.
+            return True
+        if try_readily_not_equal:
+            if hasattr(self.lhs, 'readily_not_equal'):
+                if self.lhs.readily_not_equal(self.rhs):
+                    return True
+            if hasattr(self.rhs, 'readily_not_equal'):
+                if self.rhs.readily_not_equal(self.lhs):
+                    return True
+        return False        
+
+    def _readily_disprovable(self):
+        '''
+        NotEquals is disprovable if Equals is provable.
+        '''
+        from .equals import Equals
+        return Equals(self.lhs, self.rhs).readily_provable()
+
     @prover
     def conclude(self, **defaults_config):
-        from proveit.logic import FALSE, Not, evaluation_or_simplification
-        if is_irreducible_value(self.lhs) and is_irreducible_value(self.rhs):
+        from proveit.logic import TRUE, FALSE, Not
+        lhs, rhs = self.lhs, self.rhs
+        if is_irreducible_value(lhs) and is_irreducible_value(rhs):
             # prove that two irreducible values are not equal
-            return self.lhs.not_equal(self.rhs)
-        if self.lhs == FALSE or self.rhs == FALSE:
+            return lhs.deduce_not_equal(rhs)
+        if lhs in (TRUE, FALSE) or rhs in (TRUE, FALSE):
             try:
-                # prove something is not false by proving it to be true
+                # prove something is not false 
+                # by proving it to be true
                 return self.conclude_via_double_negation()
             except BaseException:
                 pass
-        if Not(Equals(self.lhs, self.rhs)).proven():
+        if Not(Equals(lhs, rhs)).proven():
             # Conclude (x ≠ y) by knowing that Not(x = y) is true. 
             return self.conclude_as_folded()
 
@@ -53,7 +91,7 @@ class NotEquals(Relation):
             # Both sides are already irreducible or simplified.
             pass
 
-        if hasattr(self.lhs, 'not_equal'):
+        if hasattr(lhs, 'deduce_not_equal'):
             # If there is a 'not_equal' method, use that.
             # The responsibility then shifts to that method for
             # determining what strategies should be attempted
@@ -62,9 +100,57 @@ class NotEquals(Relation):
             # A good practice is to try the 'conclude_as_folded'
             # strategy if it doesn't fall into any specially-handled
             # case.
-            return self.lhs.not_equal(self.rhs)
+            try:
+                return lhs.deduce_not_equal(rhs)
+            except (NotImplementedError, UnsatisfiedPrerequisites):
+                pass
+
+        if hasattr(rhs, 'deduce_not_equal'):
+            # Try from the right side as well.
+            try:
+                return rhs.deduce_not_equal(lhs).derive_reversed()
+            except (NotImplementedError, UnsatisfiedPrerequisites):
+                pass
 
         return self.conclude_as_folded()
+
+    def _build_canonical_form(self):
+        '''
+        The canonical form of NotEquals is the negation of the
+        corresponding equality.
+        '''
+        from proveit.logic import Not
+        return Not(Equals(self.lhs, self.rhs).canonical_form())
+
+    def _deduce_canonically_equal(self, rhs):
+        '''
+        Prove (x != y) from something canonically equal
+        to it; e.g., not(y = x).
+        '''
+        from proveit.logic import Not
+        if isinstance(rhs, Not):
+            definition = self.definition()
+            return definition.apply_transitivity(
+                    definition.rhs.deduce_canonically_equal(rhs))
+        else:
+            assert isinstance(rhs, NotEquals)
+            lhs_cf = self.lhs.canonical_form()
+            rhs_cf = self.rhs.canonical_form()
+            lhs_cf_of_rhs = rhs.lhs.canonical_form()
+            rhs_cf_of_rhs = rhs.rhs.canonical_form()
+            if lhs_cf == lhs_cf_of_rhs:
+                assert rhs_cf == rhs_cf_of_rhs
+                return self.conclude_via_direct_substitution(rhs)
+            elif lhs_cf == rhs_cf_of_rhs:
+                assert rhs_cf == lhs_cf_of_rhs
+                # Symmetrization needs to be implemented
+                symmetrization = self.symmetrization()
+                return symmetrization.apply_transitivity(
+                        symmetrization.rhs.deduce_canonically_equals(rhs))
+            else:
+                assert self.canonical_form() == rhs.canonical_form()
+                assert False, ("How are these the same canonical form: "
+                               "%s vs %s"%(self, rhs))                
 
     @prover
     def derive_reversed(self, **defaults_config):
@@ -80,6 +166,14 @@ class NotEquals(Relation):
         reversed from this one. This is not a derivation: see derive_reversed().
         '''
         return NotEquals(self.rhs, self.lhs)
+
+    @equality_prover("reversed", "reverse")
+    def symmetrization(self, **defaults_config):
+        '''
+        Prove (x != y) = (y != x).
+        '''
+        from . import not_equals_symmetry
+        return not_equals_symmetry.instantiate({y:self.lhs, x:self.rhs})
 
     @prover
     def derive_via_double_negation(self, **defaults_config):
@@ -99,17 +193,22 @@ class NotEquals(Relation):
     @prover
     def conclude_via_double_negation(self, **defaults_config):
         '''
-        Prove and return self of the form A != FALSE or FALSE != A assuming A.
+        Prove and return self of the form 
+        A != FALSE or FALSE != A assuming A or
+        A != TRUE or TRUE != A assuming not A.
         Also see version in Not class.
         '''
-        from proveit.logic import FALSE
-        from proveit.logic.booleans import not_equals_false
-        if self.lhs == FALSE:
+        from proveit.logic import FALSE, TRUE
+        from proveit.logic.booleans import (
+                not_equals_false, not_equals_true)
+        if self.lhs == FALSE or self.lhs == TRUE:
             # switch left and right sides and prove it that way.
             NotEquals(self.rhs, self.lhs).prove()
             return self.prove()
         if self.rhs == FALSE:
             return not_equals_false.instantiate({A: self.lhs})
+        if self.rhs == TRUE:
+            return not_equals_true.instantiate({A: self.lhs})
 
     @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
@@ -196,6 +295,9 @@ class NotEquals(Relation):
         '''
         from proveit.logic.booleans.implication import deny_via_contradiction
         return deny_via_contradiction(self, conclusion)
+
+    def readily_in_bool(self):
+        return True # NotEquals is always boolean
 
     @prover
     def deduce_in_bool(self, **defaults_config):

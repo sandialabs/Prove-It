@@ -1,4 +1,4 @@
-from proveit import (Literal, Operation, USE_DEFAULTS, 
+from proveit import (Literal, Operation, 
                      prover, relation_prover, equality_prover)
 from .set_equiv import SetEquiv
 # from .equals import Equals
@@ -39,27 +39,6 @@ class SetNotEquiv(Operation):
         #     yield self.derive_via_double_negation # A from A != False and A in Boolean
         # yield self.unfold # Not(x=y) from x != y
 
-    # def conclude(self, assumptions):
-    #     from proveit.logic import FALSE
-    #     if is_irreducible_value(self.lhs) and is_irreducible_value(self.rhs):
-    #         # prove that two irreducible values are not equal
-    #         return self.lhs.not_equal(self.rhs, assumptions)
-    #     if self.lhs == FALSE or self.rhs == FALSE:
-    #         try:
-    #             # prove something is not false by proving it to be true
-    #             return self.conclude_via_double_negation(assumptions)
-    #         except:
-    #             pass
-    #     if hasattr(self.lhs, 'not_equal') and is_irreducible_value(self.rhs):
-    #         try:
-    #             return self.lhs.not_equal(self.rhs, assumptions)
-    #         except:
-    #             pass
-    #     try:
-    #         return self.conclude_as_folded(assumptions)
-    #     except:
-    # return Operation.conclude(assumptions) # try the default (reduction)
-
     @prover
     def derive_reversed(self,  **defaults_config):
         '''
@@ -73,7 +52,8 @@ class SetNotEquiv(Operation):
     # Later consider a form of double negation like
     # Not(SetNotEquiv(A, B)) giving SetEquiv(A, B)
     # Useful or not?
-    # def derive_via_double_negation(self, assumptions=USE_DEFAULTS):
+    # @prover
+    # def derive_via_double_negation(self, **defaults_config):
     #     '''
     #     From A != FALSE, derive and return A assuming in_bool(A).
     #     Also see version in Not class.
@@ -83,8 +63,8 @@ class SetNotEquiv(Operation):
     #     if self.rhs == FALSE:
     #         return from_not_false.instantiate({A:self.lhs})
     #     raise ValueError("derive_via_double_negation does not apply to " + str(self) + " which is not of the form A != FALSE")
-
-    # def conclude_via_double_negation(self, assumptions=USE_DEFAULTS):
+    # @prover
+    # def conclude_via_double_negation(self, **defaults_config):
     #     '''
     #     Prove and return self of the form A != FALSE or FALSE != A assuming A.
     #     Also see version in Not class.
@@ -126,7 +106,8 @@ class SetNotEquiv(Operation):
         return fold_set_not_equiv.instantiate(
             {A: self.lhs, B: self.rhs})
 
-    # def evaluation(self, assumptions=USE_DEFAULTS):
+    # @prover
+    # def evaluation(self, **defaults_config):
     #     '''
     #     Given operands that may be evaluated to irreducible values that
     #     may be compared, or if there is a known evaluation of this
@@ -147,7 +128,8 @@ class SetNotEquiv(Operation):
         return set_not_equiv_contradiction.instantiate(
             {A: self.lhs, B: self.rhs})
 
-    # def affirm_via_contradiction(self, conclusion, assumptions=USE_DEFAULTS):
+    # @prover
+    # def affirm_via_contradiction(self, conclusion, **defaults_config):
     #     '''
     #     From A not_equiv B, derive the conclusion, provided that
     #     the negated conclusion implies ((A not_equiv B) AND
@@ -156,8 +138,9 @@ class SetNotEquiv(Operation):
     #     '''
     #     from proveit.logic.booleans.implication import affirm_via_contradiction
     #     return affirm_via_contradiction(self, conclusion, assumptions)
-
-    # def deny_via_contradiction(self, conclusion, assumptions=USE_DEFAULTS):
+    
+    # @prover
+    # def deny_via_contradiction(self, conclusion, **defaults_config):
     #     '''
     #     From x != y, derive the negated conclusion provided that the conclusion
     #     implies x != y and x = y, and the conclusion is a Boolean.

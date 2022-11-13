@@ -1,6 +1,8 @@
+from collections import Counter
 from proveit import (
         defaults, Expression, Literal, ExprTuple, ExprRange, 
-        Judgment, ProofFailure, prover, relation_prover, equality_prover,
+        Judgment, ProofFailure, UnsatisfiedPrerequisites,
+        prover, relation_prover, equality_prover,
         SimplificationDirectives, TransRelUpdater, free_vars)
 from proveit import a, b, c, d, e, i, j, k, m, n, w, x, y, z
 from proveit.logic import (
@@ -8,9 +10,11 @@ from proveit.logic import (
     InSet)
 from proveit.numbers import (
     zero, one, num, Add, NumberOperation, deduce_number_set,
-    standard_number_set, is_literal_int)
+    readily_provable_number_set, standard_number_set, 
+    is_numeric_natural, is_numeric_int, is_numeric_rational,
+    standard_number_sets)
 from proveit.numbers.number_sets import (
-    Natural, NaturalPos,
+    ZeroSet, Natural, NaturalPos,
     Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
     Rational, RationalNonZero, RationalPos, RationalNeg, RationalNonNeg,
     RationalNonPos,
@@ -20,7 +24,10 @@ import proveit.numbers.numerals.decimals
 from proveit.numbers.numerals.decimals import DIGITS
 from proveit.abstract_algebra.generic_methods import (
         apply_commutation_thm, apply_association_thm, apply_disassociation_thm,
-        group_commutation, pairwise_evaluation)
+        group_commutation, pairwise_evaluation,
+        deduce_equality_via_commutation, generic_permutation,
+        sorting_and_combining_like_operands, sorting_operands,
+        multi_disassociation)
 
 class Mult(NumberOperation):
     # operator of the Mult operation.
@@ -28,8 +35,15 @@ class Mult(NumberOperation):
                          theory=__file__)
 
     _simplification_directives_ = SimplificationDirectives(
-            ungroup=True, combine_exponents=True,
-            irreducibles_in_front=True)
+            ungroup=True, 
+            combine_numeric_rationals=True,
+            combine_numeric_rational_exponents=True,
+            combine_all_exponents=True,
+            distribute_numeric_rational=False,
+            # By default, sort such that numeric, rationals come first 
+            # but otherwise maintain the original order.
+            order_key_fn = lambda factor : (
+                    0 if is_numeric_rational(factor) else 1))
 
     def __init__(self, *operands, styles=None):
         r'''
@@ -39,213 +53,404 @@ class Mult(NumberOperation):
                                  styles=styles)
         self.factors = self.operands
 
+    def _build_canonical_form(self):
+        '''
+        Returns a form of this Mult with operands in their canonical
+        forms, nested multiplication is ungrouped, literal rational 
+        factors are pulled to the front and turned into an irreducible 
+        coefficient, "common" factors that are the same up to literal,
+        rational exponents are combined, and these factors are
+        deterministically sorted according to hash values of the
+        exponential factor bases.  If, after pulling out the 
+        'constants' and combining exponents, there is only one 
+        non-constant factor that remains, and this factor is an Add 
+        expression, distribute the constant through; that is,
+            (2/3) * (a + b + c)  ->  (2/3)*a + (2/3)*b + (2/3)*c.
+            
+            [x * ((1/2)*y + ((2*z1)*(3*z2)*z3))] * 2
+            
+        Example:  (a/b)^{2/3) * c * (-2) * (a/b)^{-1/4} * c * (1/3) * d 
+            ->    (-2/3) * a^{5/12} * b^{-5/12} * c^2  * d
+        The order of the factors is arbitrary but deterministic
+        (sorted by hash value) except the literal rational coefficient
+        will be the first factor (or omitted if it is 1).
+        '''
+        from proveit.numbers import (Neg, Exp, one, 
+                                     simplified_numeric_rational)
+        # Extract the literal rational factors from the rest.
+        # Generate canonical forms of factors and ungroup nested
+        # multiplications.
+        def gen_factors(expr):
+            for factor in expr.factors:
+                canonical_factor = factor.canonical_form()
+                if isinstance(canonical_factor, Mult):
+                    for sub_factor in gen_factors(canonical_factor):
+                        yield sub_factor
+                else:
+                    yield canonical_factor
+        # Populate base_to_exponent and extracted coefficient
+        # numerator/denominator from the generated factors.
+        numer, denom = 1, 1
+        base_to_exponent = dict()
+        for factor in gen_factors(self):
+            if isinstance(factor, Neg):
+                numer *= -1
+                factor = factor.operand
+            if is_numeric_int(factor):
+                numer *= factor.as_int()
+            elif is_numeric_rational(factor):
+                numer *= factor.numerator.as_int()
+                denom *= factor.denominator.as_int()
+            else:
+                if isinstance(factor, Exp):
+                    exponent = factor.exponent
+                    base = factor.base
+                else:
+                    exponent = one
+                    base = factor
+                if isinstance(base, ExprRange):
+                    base = Mult(base)
+                else:
+                    base = base.canonical_form() # canonicalize the base
+                if base in base_to_exponent:
+                    prev_exponent = base_to_exponent[base]
+                    if isinstance(prev_exponent, Add):
+                        exponent = Add(*prev_exponent.terms.entries, 
+                                       exponent)
+                    else:
+                        exponent = Add(prev_exponent, exponent)
+                base_to_exponent[base] = exponent
+        if denom == 0:
+            # Division by zero; the expression is garbage
+            raise self # we can't do anything with it.
+        coef = simplified_numeric_rational(numer, denom)
+        # Obtain the sorted, combined, canonical factors.
+        factors = []
+        for base in sorted(base_to_exponent.keys(), key=hash):
+            # Canonize the exponentiated factor.
+            exponent = base_to_exponent[base].canonical_form()
+            if exponent == zero:
+                continue # x^0 = 1
+            elif exponent == one:
+                factor = base
+            else:
+                factor = Exp(base, exponent).canonical_form()
+            factors.append(factor)
+        # Return the appropriate canonical form.
+        if len(factors) == 0:
+            return coef
+        if coef == zero:
+            return zero # 0*x = 0
+        if coef == one:
+            if len(factors) > 1:
+                return Mult(*factors)
+            else:
+                return factors[0]
+        if len(factors) == 1:
+            # A single factor; if it is an Add, distribute the coef.
+            factor = factors[0]
+            if isinstance(factor, Add):
+                return Add(*[Mult(coef, term).canonical_form() for term
+                             in factor.terms])
+        return Mult(coef, *factors)
+
     @relation_prover
     def deduce_in_number_set(self, number_set, **defaults_config):
         '''
         Attempt to prove that this product is in the given number_set.
         '''
-        from . import (
-            mult_int_closure,
-            mult_int_closure_bin,
-            mult_nat_closure,
-            mult_nat_closure_bin,
-            mult_nat_pos_closure,
-            mult_nat_pos_closure_bin,
-            mult_int_nonzero_closure,
-            mult_int_nonzero_closure_bin,
-            mult_rational_closure,
-            mult_rational_closure_bin,
-            mult_rational_pos_closure,
-            mult_rational_pos_closure_bin,
-            mult_rational_nonneg_closure,
-            mult_rational_nonneg_closure_bin,
-            mult_rational_nonzero_closure,
-            mult_rational_nonzero_closure_bin,
-            mult_real_closure,
-            mult_real_closure_bin,
-            mult_real_pos_closure,
-            mult_real_pos_closure_bin,
-            mult_real_nonneg_closure,
-            mult_real_nonneg_closure_bin,
-            mult_real_nonzero_closure,
-            mult_real_nonzero_closure_bin,
-            mult_complex_closure,
-            mult_complex_closure_bin,
-            mult_complex_nonzero_closure,
-            mult_complex_nonzero_closure_bin)
+        import proveit.numbers.multiplication as mult_pkg
         if hasattr(self, 'number_set'):
             number_set = number_set.number_set
-        bin = False
-        if number_set == Integer:
-            if self.operands.is_double():
-                thm = mult_int_closure_bin
-                bin = True
-            else:
-                thm = mult_int_closure
-        elif number_set == Natural:
-            if self.operands.is_double():
-                thm = mult_nat_closure_bin
-                bin = True
-            else:
-                thm = mult_nat_closure
-        elif number_set == NaturalPos:
-            if self.operands.is_double():
-                thm = mult_nat_pos_closure_bin
-                bin = True
-            else:
-                thm = mult_nat_pos_closure
-        elif number_set == IntegerNonZero:
-            if self.operands.is_double():
-                thm = mult_int_nonzero_closure_bin
-                bin = True
-            else:
-                thm = mult_int_nonzero_closure
-        elif number_set == Rational:
-            if self.operands.is_double():
-                thm = mult_rational_closure_bin
-                bin = True
-            else:
-                thm = mult_rational_closure
-        elif number_set == RationalPos:
-            if self.operands.is_double():
-                thm = mult_rational_pos_closure_bin
-                bin = True
-            else:
-                thm = mult_rational_pos_closure
-        elif number_set == RationalNonNeg:
-            if self.operands.is_double():
-                thm = mult_rational_nonneg_closure_bin
-                bin = True
-            else:
-                thm = mult_rational_nonneg_closure
-        elif number_set == RationalNonZero:
-            if self.operands.is_double():
-                thm = mult_rational_nonzero_closure_bin
-                bin = True
-            else:
-                thm = mult_rational_nonzero_closure
-        elif number_set == Real:
-            if self.operands.is_double():
-                thm = mult_real_closure_bin
-                bin = True
-            else:
-                thm = mult_real_closure
-        elif number_set == RealPos:
-            if self.operands.is_double():
-                thm = mult_real_pos_closure_bin
-                bin = True
-            else:
-                thm = mult_real_pos_closure
-        elif number_set == RealNonNeg:
-            if self.operands.is_double():
-                thm = mult_real_nonneg_closure_bin
-                bin = True
-            else:
-                thm = mult_real_nonneg_closure
-        elif number_set == RealNonZero:
-            if self.operands.is_double():
-                thm = mult_real_nonzero_closure_bin
-                bin = True
-            else:
-                thm = mult_real_nonzero_closure
-        elif number_set == Complex:
-            if self.operands.is_double():
-                thm = mult_complex_closure_bin
-                bin = True
-            else:
-                thm = mult_complex_closure
-        elif number_set == ComplexNonZero:
-            if self.operands.is_double():
-                thm = mult_complex_nonzero_closure_bin
-                bin = True
-            else:
-                thm = mult_complex_nonzero_closure
-        else:
+        if number_set not in standard_number_sets:
             raise NotImplementedError(
                 "'Mult.deduce_in_number_set()' not implemented for the "
                 "%s set" % str(number_set))
-        if bin:
+        operands = self.operands
+        num_operand_entries = operands.num_entries()
+        thm = None
+        if operands.is_double():
+            _a, _b = operands
+            if number_set == ZeroSet:
+                thm = mult_pkg.mult_in_zero_set_bin
+            elif number_set == Integer:
+                thm = mult_pkg.mult_int_closure_bin
+            elif number_set == Rational:
+                thm = mult_pkg.mult_rational_closure_bin
+            elif number_set == Real:
+                thm = mult_pkg.mult_real_closure_bin
+            elif number_set == Complex:
+                thm = mult_pkg.mult_complex_closure_bin
+            elif number_set == ComplexNonZero:
+                thm = mult_pkg.mult_complex_nonzero_closure_bin
+            else:
+                # We need more operand-specific infomation.
+                a_ns = readily_provable_number_set(_a)
+                b_ns = readily_provable_number_set(_b)
+                if number_set == NaturalPos:
+                    if RealNeg.readily_includes(a_ns) and (
+                            RealNeg.readily_includes(b_ns)):
+                        thm = mult_pkg.mult_nat_pos_from_double_neg
+                    else:
+                        thm = mult_pkg.mult_nat_pos_closure_bin
+                elif number_set == Natural:
+                    if RealNonPos.readily_includes(a_ns) and (
+                            RealNonPos.readily_includes(b_ns)):
+                        thm = mult_pkg.mult_nat_from_double_nonpos
+                    else:
+                        thm = mult_pkg.mult_nat_closure_bin
+                elif number_set == IntegerNeg:
+                    if RealNeg.readily_includes(a_ns):
+                        thm = mult_pkg.mult_int_neg_from_left_neg
+                    else:
+                        thm = mult_pkg.mult_int_neg_from_right_neg
+                elif number_set == IntegerNonPos:
+                    if RealNonPos.readily_includes(a_ns):
+                        thm = mult_pkg.mult_int_nonpos_from_left_nonpos
+                    else:
+                        thm = mult_pkg.mult_int_nonpos_from_right_nonpos
+                elif number_set == RationalPos:
+                    if RealNeg.readily_includes(a_ns) and (
+                            RealNeg.readily_includes(b_ns)):
+                        thm = mult_pkg.mult_rational_pos_from_double_neg
+                    else:
+                        thm = mult_pkg.mult_rational_pos_closure_bin
+                elif number_set == RationalNonNeg:
+                    if RealNonPos.readily_includes(a_ns) and (
+                            RealNonPos.readily_includes(b_ns)):
+                        thm = mult_pkg.mult_rational_nonneg_from_double_nonpos
+                    else:
+                        thm = mult_pkg.mult_rational_nonneg_closure_bin
+                elif number_set == RationalNeg:
+                    if RealNeg.readily_includes(a_ns):
+                        thm = mult_pkg.mult_rational_neg_from_left_neg
+                    else:
+                        thm = mult_pkg.mult_rational_neg_from_right_neg
+                elif number_set == RationalNonPos:
+                    if RealNonPos.readily_includes(a_ns):
+                        thm = mult_pkg.mult_rational_nonpos_from_left_nonpos
+                    else:
+                        thm = mult_pkg.mult_rational_nonpos_from_right_nonpos
+                elif number_set == RealPos:
+                    if RealNeg.readily_includes(a_ns) and (
+                            RealNeg.readily_includes(b_ns)):
+                        thm = mult_pkg.mult_real_pos_from_double_neg
+                    else:
+                        thm = mult_pkg.mult_real_pos_closure_bin
+                elif number_set == RealNonNeg:
+                    if RealNonPos.readily_includes(a_ns) and (
+                            RealNonPos.readily_includes(b_ns)):
+                        thm = mult_pkg.mult_real_nonneg_from_double_nonpos
+                    else:
+                        thm = mult_pkg.mult_real_nonneg_closure_bin
+                elif number_set == RealNeg:
+                    if RealNeg.readily_includes(a_ns):
+                        thm = mult_pkg.mult_real_neg_from_left_neg
+                    else:
+                        thm = mult_pkg.mult_real_neg_from_right_neg
+                elif number_set == RealNonPos:
+                    if RealNonPos.readily_includes(a_ns):
+                        thm = mult_pkg.mult_real_nonpos_from_left_nonpos
+                    else:
+                        thm = mult_pkg.mult_real_nonpos_from_right_nonpos
+            if thm is None:
+                raise NotImplementedError(
+                        "Case not handled: %s in %s"%(self, number_set))
             return thm.instantiate({a: self.operands[0], b: self.operands[1]})
-        return thm.instantiate({n: self.operands.num_elements(),
-                                a: self.operands})
+        
+        # Not a simple binary operation.
+        if number_set == ZeroSet:
+            thm = mult_pkg.mult_in_zero_set
+        elif number_set == Integer:
+            thm = mult_pkg.mult_int_closure
+        elif number_set == Natural:
+            thm = mult_pkg.mult_nat_closure
+        elif number_set == Rational:
+            thm = mult_pkg.mult_rational_closure
+        elif number_set == Real:
+            thm = mult_pkg.mult_real_closure
+        elif number_set == Complex:
+            thm = mult_pkg.mult_complex_closure
+        elif number_set == ComplexNonZero:
+            thm = mult_pkg.mult_complex_nonzero_closure
+        else:
+            # We need more operand-specific infomation.
+            operand_ns_set = {readily_provable_number_set(operand) for
+                              operand in operands}
+        if num_operand_entries == 1:
+            singular_membership = InSet(self.operand, number_set).prove()
+            reduction = self.unary_reduction()
+            return reduction.sub_left_side_into(
+                    singular_membership.inner_expr().element)
+        elif (number_set not in (
+                NaturalPos, IntegerNonZero, RationalPos,
+                RationalNonNeg, RationalNonZero,
+                RealPos, RealNonNeg, RealNonZero) or
+                    not all(number_set.readily_includes(operand_ns) for 
+                            operand_ns in operand_ns_set)):
+            # Not the simple case, so break this down via
+            # association to be dealt with at a binary level where
+            # necessary.
+            if any(isinstance(operand, ExprRange) for operand in
+                   operands):
+                # If there are any ExprRanges, wrap them in Mult.
+                # and prove the number set membership in that
+                # manner.
+                range_locations = [_i for _i, operand 
+                                   in enumerate(operands)
+                                   if isinstance(operand, ExprRange)]
+                wrapped_operands = [
+                        Mult(operand) if isinstance(operand, ExprRange)
+                        else operand for operand in operands]
+                mult_wrapped = Mult(*wrapped_operands)
+                # Make a replacement to convert from the wrapped
+                # operand version to the original.
+                expr = mult_wrapped
+                eq = TransRelUpdater(expr)
+                for loc in range_locations:
+                    expr = eq.update(expr.disassociation(loc))
+                replacement = eq.relation
+            else:
+                # No ExprRanges.  Use a divide and conquer strategy.
+                assert num_operand_entries > 2
+                if num_operand_entries == 3:
+                    mult_wrapped = Mult(Mult(*operands[:2]), 
+                                        operands[2])
+                    replacement = mult_wrapped.disassociation(0)
+                else:
+                    mult_wrapped = Mult(
+                            Mult(*operands[:num_operand_entries//2]),
+                            Mult(*operands[num_operand_entries//2:]))
+                    replacement = mult_wrapped.disassociation(
+                            1, auto_simplify=False)
+                    replacement = replacement.apply_transitivity(
+                            replacement.rhs.disassociation(
+                                    0, auto_simplify=False))
+            # With a wrapped version and a replacement, we solve a
+            # reduced problem to solve this one.
+            wrapped_membership = mult_wrapped.deduce_in_number_set(
+                    number_set)
+            return replacement.sub_right_side_into(
+                    wrapped_membership.inner_expr().element)
+        elif number_set == NaturalPos:
+            thm = mult_pkg.mult_nat_pos_closure
+        elif number_set == IntegerNonZero:
+            thm = mult_pkg.mult_int_nonzero_closure
+        elif number_set == RationalPos:
+            thm = mult_pkg.mult_rational_pos_closure
+        elif number_set == RationalNonNeg:
+            thm = mult_pkg.mult_rational_nonneg_closure
+        elif number_set == RationalNonZero:
+            thm = mult_pkg.mult_rational_nonzero_closure
+        elif number_set == RealPos:
+            thm = mult_pkg.mult_real_pos_closure
+        elif number_set == RealNonNeg:
+            thm = mult_pkg.mult_real_nonneg_closure
+        elif number_set == RealNonZero:
+            thm = mult_pkg.mult_real_nonzero_closure
+        else:
+            raise UnsatisfiedPrerequisites(
+                    "Unable to prove %s in %s"
+                    %(self, number_set))
+        return thm.instantiate({n: operands.num_elements(),
+                                a: operands})
 
-    @relation_prover
-    def deduce_number_set(self, **defaults_config):
+    def readily_provable_number_set(self):
         '''
-        Prove membership of this expression in the most 
-        restrictive standard number set we can readily know.
+        Return the most restrictive number set we can readily
+        prove contains the evaluation of this number operation.
         '''
-        from proveit.numbers import IntervalCC
+        from proveit.numbers.number_operation import (
+                major_number_set, union_number_set)
         number_set_map = {
-            NaturalPos: NaturalPos,
-            IntegerNeg: Integer,
-            Natural: Natural,
-            IntegerNonPos: Integer,
-            IntegerNonZero: Integer,
-            Integer: Integer,
-            RationalPos: RationalPos,
-            RationalNeg: Rational,
-            RationalNonNeg: RationalNonNeg,
-            RationalNonPos: Rational,
-            RationalNonZero: Rational,
-            Rational: Rational,
-            RealPos: RealPos,
-            RealNeg: Real,
-            RealNonNeg: RealNonNeg,
-            RealNonPos: Real,
-            RealNonZero: Real,
-            Real: Real,
-            ComplexNonZero: Complex,
-            Complex: Complex
+            (Integer, RealPos): NaturalPos,
+            (Integer, RealNeg): IntegerNeg,
+            (Integer, RealNonNeg): Natural,
+            (Integer, RealNonPos): IntegerNonPos,
+            (Integer, RealNonZero): IntegerNonZero,
+            (Integer, Real): Integer,
+            (Rational, RealPos): RationalPos,
+            (Rational, RealNeg): RationalNeg,
+            (Rational, RealNonNeg): RationalNonNeg,
+            (Rational, RealNonPos): RationalNonPos,
+            (Rational, RealNonZero): RationalNonZero,
+            (Rational, Real): Rational,
+            (Real, RealPos): RealPos,
+            (Real, RealNeg): RealNeg,
+            (Real, RealNonNeg): RealNonNeg,
+            (Real, RealNonPos): RealNonPos,
+            (Real, RealNonZero): RealNonZero,
+            (Real, Real): Real,
+            (Complex, ComplexNonZero): ComplexNonZero,
+            (Complex, Complex): Complex
         }
         
-        priorities = {NaturalPos:(0,0), Natural:(0,1), Integer:(0,2),
-                      RationalPos:(1,0), RationalNonNeg:(1,1), Rational:(1,2),
-                      RealPos:(2,0), RealNonNeg:(2,1), Real:(2,2), 
-                      Complex:(3,2)}
-        major_minor_to_set = {
-            (major, minor):ns for ns, (major, minor) in priorities.items()}
-        nonzero_sets = {NaturalPos, IntegerNeg, IntegerNonZero, 
-                        RationalPos, RationalNeg, RationalNonZero,
-                        RealPos, RealNeg, RealNonZero, ComplexNonZero}
-        major_to_nonzero = {Natural: IntegerNonZero,
-                            Rational: RationalNonZero,
-                            Real: RealNonZero,
-                            Complex: ComplexNonZero}
+        factors = self.factors
+        if factors.num_entries() == 0:
+            return NaturalPos # [*]() = 1
 
-        major = minor = -1
-        all_nonzero = True
-        for factor in self.factors:
-            factor_membership = deduce_number_set(factor)
-            if isinstance(factor, ExprRange):
-                # e.g. a_1 in S and ... and a_n in S
-                factor_ns = factor_membership.operands[0].body.domain
-            else:
-                factor_ns = factor_membership.domain
-            # check if factor_ns is not a standard number set
-            if factor_ns not in number_set_map.keys():
-                # try to replace factor_ns with a std number set
-                factor_ns = standard_number_set(factor_ns)
-            if factor_ns in number_set_map.keys():
-                factor_ns = number_set_map[factor_ns]
-            else:
-                raise ValueError(
-                        "In Mult.deduce_number_set(), the factor {0} "
-                        "is not known to be in one of our standard "
-                        "number sets (such as Real, RealPos, etc.), "
-                        "and instead is just known to be in {1}.".
-                        format(factor, factor_ns))
-            if all_nonzero and factor_ns not in nonzero_sets:
-                all_nonzero = False
-            _major, _minor = priorities[factor_ns]
-            major = max(_major, major)
-            minor = max(_minor, minor)
-        if major == minor == -1:
-            major, minor = 3, 2 # Complex
-        number_set = major_minor_to_set[(major, minor)]
-        if all_nonzero and number_set in major_to_nonzero:
-            number_set = major_to_nonzero # restrict to nonzero subset
-        return self.deduce_in_number_set(number_set)
+        major_number_sets = []
+        # If we stay Real, this will keep track of the relation to zero:
+        zero_relation_number_set = None
+        for factor in factors:
+            factor_ns = readily_provable_number_set(factor)
+            if factor_ns == ZeroSet:
+                # If any factor is zero, the entire product (if it is
+                # valid) is zero.
+                return ZeroSet
+            major_number_sets.append(major_number_set(factor_ns))
+            if zero_relation_number_set is None:
+                zero_relation_number_set = factor_ns
+                continue
+            if RealPos.readily_includes(zero_relation_number_set):
+                if RealPos.readily_includes(factor_ns):
+                    zero_relation_number_set = RealPos
+                    continue
+                elif RealNeg.readily_includes(factor_ns):
+                    zero_relation_number_set = RealNeg
+                    continue
+            elif RealNeg.readily_includes(zero_relation_number_set):
+                if RealPos.readily_includes(factor_ns):
+                    zero_relation_number_set = RealNeg
+                    continue
+                elif RealNeg.readily_includes(factor_ns):
+                    zero_relation_number_set = RealPos
+                    continue
+            if RealNonNeg.readily_includes(zero_relation_number_set):
+                if RealNonNeg.readily_includes(factor_ns):
+                    zero_relation_number_set = RealNonNeg
+                    continue
+                elif RealNonPos.readily_includes(factor_ns):
+                    zero_relation_number_set = RealNonPos
+                    continue
+            elif RealNonPos.readily_includes(zero_relation_number_set):
+                if RealNonNeg.readily_includes(factor_ns):
+                    zero_relation_number_set = RealNonPos
+                    continue
+                elif RealNonPos.readily_includes(factor_ns):
+                    zero_relation_number_set = RealNonNeg
+                    continue
+            if RealNonZero.readily_includes(zero_relation_number_set):
+                if RealNonZero.readily_includes(factor_ns):
+                    zero_relation_number_set = RealNonZero
+                    continue
+            if Real.readily_includes(zero_relation_number_set):
+                if Real.readily_includes(factor_ns):
+                    zero_relation_number_set = Real
+                    continue
+            if ComplexNonZero.readily_includes(zero_relation_number_set):
+                if ComplexNonZero.readily_includes(factor_ns):
+                    zero_relation_number_set = ComplexNonZero
+                    continue
+            zero_relation_number_set = Complex
+
+        major_number_set = union_number_set(*major_number_sets)
+        if major_number_set != Complex and zero_relation_number_set == Complex:
+            zero_relation_number_set = Real
+        if major_number_set != Complex and (
+                zero_relation_number_set == ComplexNonZero):
+            zero_relation_number_set = RealNonZero
+        return number_set_map[(major_number_set, zero_relation_number_set)]
 
     @prover
     def deduce_divided_by(self, divisor, **defaults_config):
@@ -282,7 +487,7 @@ class Mult(NumberOperation):
                 format(self.operands[0], self.operands[1], divisor))
 
     @relation_prover
-    def not_equal(self, rhs, **defaults_config):
+    def deduce_not_equal(self, rhs, **defaults_config):
         from . import mult_not_eq_zero
         if rhs == zero:
             _n = self.operands.num_elements()
@@ -296,14 +501,29 @@ class Mult(NumberOperation):
                                **defaults_config):
         '''
         Returns a proven simplification equation for this Mult
-        expression assuming the operands have been simplified.
+        expression assuming the operands have been simplified
+        according to the simplification directives as follows:
 
-        Deals with disassociating any nested multiplications,
-        simplifying negations, and factors of one, and factors of 0.
+        If ungroup is true, dissociate nested multplications.
+        If combine_numeric_rationals is true, multiply numeric rational
+        factors into an evaluated numeric rational constant.
+        If combine_numeric_rational_exponents is true, combine exponents
+        of factors with a common base raised to a numeric rational power
+        (or implicitly a power of 1).
+        If combine_all_exponents is true, exponents with a common base
+        will be combined for any type of exponents (including implicit
+        powers of 1).
+        Sort factors according to order_key_fn where the key is the
+        base that may be raised to a numeric rational power.
+        Eliminate any factors of one, and simplify to zero if there is
+        zero factor.
+        If distribute_numeric_rational is true and there is a single
+        non-constant factor that is an Add expression, distribute any
+        constant factor through the addition.
         '''
-        from proveit.numbers import Exp
+        from proveit.numbers import Neg, Div, Exp, is_numeric_rational
         from . import mult_zero_left, mult_zero_right, mult_zero_any
-        from . import empty_mult, unary_mult_reduction
+        from . import empty_mult
 
         if self.operands.num_entries() == 0:
              # Multiplication with no operands is equal to 1.
@@ -329,9 +549,8 @@ class Mult(NumberOperation):
             pass
 
         if self.operands.is_single():
-             # Multiplication with 1 operand is just that operand
-            return unary_mult_reduction.instantiate(
-                    {a:self.operands[0]}, auto_simplify=False)
+            # Multiplication with 1 operand is just that operand
+            return self.unary_reduction(auto_simplify=False)
 
         expr = self
         # for convenience updating our equation
@@ -371,8 +590,19 @@ class Mult(NumberOperation):
 
         if is_irreducible_value(expr):
             return eq.relation  # done
-
-        if must_evaluate and not expr.operands_are_irreducible():
+        
+        if expr != self:
+            if must_evaluate or (isinstance(expr, Mult) and
+                                 expr not in self.factors.entries):
+                # Try starting over with a call to
+                # shallow_simplification, but only if must_evaluate
+                # is True or the new expression is a Mult not
+                # contained in the original (try to keep the 
+                # simplification shallow).
+                eq.update(expr.shallow_simplification(
+                        must_evaluate=must_evaluate))
+            return eq.relation
+        elif must_evaluate and not expr.operands_are_irreducible():
             # Without a zero factor, shallow evaluation of Mult is only
             # viable if the operands are all irreducible.
             for _k, factor in enumerate(expr.factors):
@@ -384,72 +614,15 @@ class Mult(NumberOperation):
             eq.update(expr.evaluation())
             return eq.relation
 
-        if (Mult._simplification_directives_.combine_exponents
-                and not must_evaluate):
-            # We should generalize this to work analogously like 
-            # combining and sorting terms in Add.shallow_simplification,
-            # but this at least handles the simple case of combining
-            # exponents when all factors are exponents with the same 
-            # base.
-            # Only simple case of an ExprRange is currently handled.
-            # We can improve this later as well.
-            if (isinstance(expr, Mult) and expr.factors.num_entries()==1
-                    and isinstance(expr.factors[0], ExprRange) and
-                    expr.factors[0].is_parameter_independent):
-                # x * x * ... * x = x^n
-                factor_range = expr.factors[0]
-                assert isinstance(factor_range, ExprRange)
-                from proveit.numbers.exponentiation import exp_nat_pos_rev
-                _x = factor_range.body                    
-                _n = expr.operands.num_elements()
-                if factor_range.start_index != one:
-                    # Make the ExprRange start at 1.
-                    eq.update(expr.inner_expr().operands[0].reduction())
-                eq.update(exp_nat_pos_rev.instantiate(
-                        {n:_n, x:_x}, preserve_expr=expr))
-                return eq.relation
-            if isinstance(expr, Mult) and expr.factors.num_entries()!=1:                 
-                common_base = None
-                has_exp_factor = False
-                for factor in self.factors:
-                    factor_base = None
-                    if isinstance(factor, Exp):
-                        has_exp_factor = True
-                        factor_base = factor.base
-                    else:
-                        factor_base = factor
-                    if common_base is None:
-                        common_base = factor_base
-                    elif common_base != factor_base:
-                        common_base = None
-                        break
-                if has_exp_factor and (common_base is not None):
-                    expr = eq.update(expr.exponent_combination())
-        
-        if expr != self:
-            if (must_evaluate or (
-                    isinstance(expr, Mult) and 
-                    not set(expr.factors.entries).issubset(
-                            self.factors.entries))):
-                # Try starting over with a call to
-                # shallow_simplification, but only if must_evaluate
-                # is True or we've done nothing but make some
-                # cancelations -- that way, the simplification stays
-                # shallow.
-                eq.update(expr.shallow_simplification(
-                        must_evaluate=must_evaluate))
-            return eq.relation
-
-        if all(is_literal_int(factor) for factor in self.factors):
+        if all(is_numeric_rational(factor) for factor in self.factors):
             if self.operands.is_double():
-                if all(factor in DIGITS for factor in self.factors):
-                    # Prove single-digit multiplication by importing the
-                    # appropriate theorem.
-                    return proveit.numbers.numerals.decimals.__getattr__(
-                        'mult_%d_%d' % (self.factors[0].as_int(), self.factors[1].as_int()))
+                if all(is_numeric_int(factor) for factor in self.factors):
+                    # Because we do neg_simplifications(), we can
+                    # assume these integers are indeed natural numbers.
+                    return self._natural_binary_eval()
                 else:
-                    raise NotImplementedError("Only single-digit multiplication "
-                                              "is currently implemented")
+                    # Multiply a pair of rational numerals.
+                    return self._rational_binary_eval()
             else:
                 # Use pairwise evaluation when multiplying more then 2
                 # operands.
@@ -458,7 +631,68 @@ class Mult(NumberOperation):
         elif must_evaluate:
             raise NotImplementedError(
                 "Cabability to evaluate %s is not implemented"%expr)
+
+        order_key_fn = Mult._simplification_directives_.order_key_fn
+        combine_all_exponents = (
+                Mult._simplification_directives_.combine_all_exponents)
+        if combine_all_exponents or (
+                Mult._simplification_directives_
+                .combine_numeric_rational_exponents):
+            # Like factors are ones that are implicit/explicit
+            # exponentials with the same base raised to a literal, 
+            # rational power (everything is implicitly raised to the 
+            # power of 1).
+            def likeness_key_fn(factor):
+                if isinstance(factor, Exp) and (
+                        combine_all_exponents or is_numeric_rational(
+                                factor.exponent)):
+                    return factor.base
+                elif (Exp._simplification_directives_
+                      .factor_numeric_rational and
+                      is_numeric_rational(factor)):
+                    # Don't combine numeric rationals only to be
+                    # factored again.
+                    return None
+                else:
+                    return factor
+            # Combine like operands.
+            expr = eq.update(sorting_and_combining_like_operands(
+                    expr, order_key_fn=lambda likeness_key : 0, 
+                    likeness_key_fn=likeness_key_fn,
+                    preserve_likeness_keys=True, auto_simplify=True))
+        if not isinstance(expr, Mult):
+            # Simplified to a non-Mult. We're done.
+            return eq.relation
+        if Mult._simplification_directives_.combine_numeric_rationals:
+            # Combines numeric rationals as well as exactly like
+            # factors.
+            def likeness_key_fn(factor):
+                if is_numeric_rational(factor):
+                    return one
+                else:
+                    return factor
+            # Combine like operands.
+            expr = eq.update(sorting_and_combining_like_operands(
+                    expr, order_key_fn=lambda likeness_key : 0, 
+                    likeness_key_fn=likeness_key_fn,
+                    preserve_likeness_keys=True, auto_simplify=True))
+        if not isinstance(expr, Mult):
+            # Simplified to a non-Mult. We're done.
+            return eq.relation
+        # See if we should reorder the factors.
+        expr = eq.update(sorting_operands(expr, order_key_fn=order_key_fn))
         
+        if Mult._simplification_directives_.distribute_numeric_rational:
+            # If there are exactly two factors and one is an Add and
+            # the other is a numeric literal, distribute over the Add.
+            if expr.operands.is_double():
+                _a, _b = expr.operands
+                if isinstance(_a, Add) or isinstance(_b, Add):
+                    if is_numeric_rational(_a) or is_numeric_rational(_b):
+                        _k = 0 if isinstance(_a, Add) else 1
+                        expr = eq.update(expr.distribution(_k))
+        
+        """
         if Mult._simplification_directives_.irreducibles_in_front:
             # Move irreducibles to the front.
             irreducible_factor_index_ranges = []
@@ -488,9 +722,74 @@ class Mult(NumberOperation):
                             start+offset, 0, end-start+1, 
                             auto_simplify=False))
                     offset += end - start + 1
+        """
         
         return eq.relation # Should be self=self.
 
+    @equality_prover('unary_reduced', 'unary_reduce')
+    def unary_reduction(self, **defaults_config):
+        '''
+        Reduce a unary multiplication to its operands:
+            Mult(a) = a
+        '''
+        from . import unary_mult_reduction
+        if not self.operands.is_single():
+            raise ValueError("Mult.unary_reduction only applicable to a "
+                             "unary Mult, not %s"%self)
+         # Multiplication with 1 operand is just that operand
+        return unary_mult_reduction.instantiate(
+                {a:self.operand}, auto_simplify=False)        
+
+    def _natural_binary_eval(self):
+        '''
+        Evaluate the multiplication of two natural numbers.
+        '''
+        from proveit.numbers.numerals import DecimalSequence
+        factors = self.factors
+        assert factors.is_double()
+        assert all(is_numeric_natural(factor) for factor in factors)
+        _a, _b = factors
+        if not all(factor in DIGITS for factor in factors):
+            # multi-digit multiplication
+            return DecimalSequence.mult_eval(_a.as_int(), _b.as_int())
+        # for single digit addition, import the theorem that provides
+        # the evaluation
+        return proveit.numbers.numerals.decimals.__getattr__(
+                'mult_%d_%d' % (_a.as_int(), _b.as_int()))
+
+    def _rational_binary_eval(self):
+        '''
+        Evaluate the multiplication of two non-negated
+        rational numbers.
+        '''
+        from proveit.numbers import Neg, Div
+        from proveit.numbers.division import prod_of_fracs
+        factors = self.factors
+        assert factors.is_double()
+        assert all(is_numeric_rational(factor) for factor in factors)
+        replacements = []
+        rational_factors = []
+        for factor in self.factors:
+            # The factors should not be negated (that should be dealt
+            # with first via the neg_simplifications method).
+            assert not isinstance(factor, Neg)
+            if is_numeric_int(factor):
+                factor = Div(factor, one)
+                # n/1 = n:
+                replacements.append(
+                        factor.divide_by_one_elimination(
+                                preserve_all=True))
+            rational_factors.append(factor)
+        assert len(rational_factors) == 2
+        assert isinstance(rational_factors[0], Div)
+        assert isinstance(rational_factors[1], Div)
+        _x, _z = rational_factors[0].operands
+        _y, _w = rational_factors[1].operands
+        return prod_of_fracs.instantiate(
+                {x:_x, y:_y, z:_z, w:_w}, auto_simplify=True,
+                replacements=replacements,
+                preserve_expr=self)
+        
     @equality_prover('simplified_negations', 'simplify_negations')
     def neg_simplifications(self, **defaults_config):
         '''
@@ -836,16 +1135,16 @@ class Mult(NumberOperation):
                     assert (isinstance(canceling_denom_expr, Mult) and
                             canceling_denom_expr.factors.is_double())
                     _b = canceling_denom_expr.factors[0]
-                if isinstance(right_factor, Div):
-                    _d = right_factor.denominator
-                else:
-                    _d = one
                 if canceling_numer_expr == term_to_cancel:
-                    _e = one
+                    _d = one
                 else:
                     assert (isinstance(canceling_numer_expr, Mult) and
                             canceling_numer_expr.factors.is_double())
-                    _e = canceling_numer_expr.factors[1]
+                    _d = canceling_numer_expr.factors[1]
+                if isinstance(right_factor, Div):
+                    _e = right_factor.denominator
+                else:
+                    _e = one
                 cancelation = mult_frac_cancel_denom_left.instantiate(
                     {a: _a, b: _b, c: _c, d: _d, e: _e})
             # Eliminate ones in the cancelation; it should now
@@ -964,7 +1263,9 @@ class Mult(NumberOperation):
         return (idx, num) if also_return_num else idx
 
     @equality_prover('distributed', 'distribute')
-    def distribution(self, idx=None, **defaults_config):
+    def distribution(self, idx=None, *, 
+                     left_factors=None, right_factors=None, 
+                     **defaults_config):
         r'''
         Distribute through the operand at the given index.
         Returns the equality that equates self to this new version.
@@ -973,21 +1274,104 @@ class Mult(NumberOperation):
             a (b - c) d = a b d - a c d
             a (\sum_x f(x)) c = \sum_x a f(x) c
             (a/b)*(c/d) = (a*b)/(c*d)
-        Give any assumptions necessary to prove that the operands are in
-        the Complex numbers so that the associative and commutation
-        theorems are applicable.
+        
+        For more flexibility, 'left_factors' and 'right_factors'
+        may be specified to indicate subsets of the factors to
+        distribute on the left vs right. The 'left_factors' and 
+        'right_factors' may be provided as indices instead.
+        Examples:
+            a b (c + d) e f = a (b c f + b d f) e
+        with left_factors: [b], right_factors: [f]
+        or left_factors: [1], right_factors: [4]
+            a b (c + d) e f = a (f c b e + f d b e)
+        with left_factors: [f], right_factors: [b, e]
+        or left_factors: [4], right_factors: [1, 3]
+        If one of these is specified but not the other, the emtpy set
+        is used for the one that isn't specified.
         '''
         from . import (distribute_through_sum, distribute_through_subtract,
                        distribute_through_abs_sum)
         from proveit.numbers.division import prod_of_fracs
-        from proveit.numbers import Add, Neg, Abs, Div, Sum
-        if (idx is None and self.factors.is_double() and
-                all(isinstance(factor, Div) for factor in self.factors)):
-            return prod_of_fracs.instantiate(
-                {x: self.factors[0].numerator,
-                 y: self.factors[1].numerator,
-                 z: self.factors[0].denominator,
-                 w: self.factors[1].denominator})
+        from proveit.numbers import Neg, Abs, Div, Sum
+        if left_factors is not None or right_factors is not None:
+            # Specific factors to be applied to the left and/or right
+            # were provided.  So we'll reorder the factors and then
+            # associate appropriately before distributing.
+            if left_factors is None: left_factors = []
+            if right_factors is None: right_factors = []
+            # Convert from expressions to indices for the left and
+            # right factors (exclude the 'idx').
+            factor_to_index = {factor:_k for _k, factor 
+                               in enumerate(self.factors) if _k != idx}
+            left_factor_indices = list(left_factors)
+            right_factor_indices = list(right_factors)
+            for factor_indices in (left_factor_indices, right_factor_indices):
+                for _k, factor in enumerate(factor_indices):
+                    try:
+                        if isinstance(factor, Expression):
+                            factor_indices[_k] = factor_to_index.pop(factor)
+                    except KeyError:
+                        raise ValueError(
+                                "The 'left_factors', %s, and 'right_factors'"
+                                ", %s, do not all appear in %s"
+                                %(self, left_factors, right_factors))
+            # Permute the factors so the left factors come just before
+            # the factor to distribute through and the right factors 
+            # come just after.
+            factors = self.factors.entries
+            num_factors = len(factors)
+            special_indices = set(left_factor_indices).union(
+                    right_factor_indices)
+            before_indices = [_idx for _idx in range(idx) if
+                              _idx not in special_indices]
+            after_indices = [_idx for _idx in range(idx+1, num_factors) if
+                              _idx not in special_indices]
+            new_order = (before_indices + left_factor_indices + [idx] +
+                         right_factor_indices + after_indices)
+            eq = TransRelUpdater(self)
+            expr = eq.update(self.permutation(new_order, auto_simplify=False))
+            # Convert from indices to expressions.
+            left_factors = [factors[_i] for _i in left_factor_indices]
+            right_factors = [factors[_i] for _i in right_factor_indices]
+            # Make the distribution.
+            num_left_factors = len(left_factors)
+            distribution = Mult(*left_factors, factors[idx], 
+                                *right_factors).distribution(
+                                        num_left_factors)
+            if len(before_indices)==len(after_indices)==0:
+                # No factors are left out of the distribution.
+                # For example: a b (c + d) e f = a f c b e + a f d b e
+                eq.update(distribution)
+                return eq.relation
+            # Now associate to include from left factors to right
+            # factors and simultaneously replace with the distribution.
+            start = len(before_indices)
+            length = num_left_factors + len(right_factors) + 1
+            eq.update(expr.association(
+                    start, length, replacements=[distribution],
+                    auto_simplify=False))
+            return eq.relation
+
+        if (idx is None and self.factors.is_double()):
+            if all(isinstance(factor, Div) for factor in self.factors):
+                return prod_of_fracs.instantiate(
+                    {x: self.factors[0].numerator,
+                     y: self.factors[1].numerator,
+                     z: self.factors[0].denominator,
+                     w: self.factors[1].denominator})
+            if isinstance(self.factors[0], Div):
+                from proveit.numbers.division import mult_frac_left
+                return mult_frac_left.instantiate(
+                    {x: self.factors[0].numerator,
+                     y: self.factors[1],
+                     z: self.factors[0].denominator})
+            if isinstance(self.factors[1], Div):
+                from proveit.numbers.division import mult_frac_right
+                return mult_frac_right.instantiate(
+                    {x: self.factors[0],
+                     y: self.factors[1].numerator,
+                     z: self.factors[1].denominator})
+
         operand = self.operands[idx]
         _a = self.operands[:idx]
         _c = self.operands[idx + 1:]
@@ -1182,7 +1566,7 @@ class Mult(NumberOperation):
         return eq.relation
 
     @equality_prover('combined_exponents', 'combine_exponents')
-    def exponent_combination(self, start_idx=None, end_idx=None,
+    def combining_exponents(self, start_idx=None, end_idx=None,
                              **defaults_config):
         '''
         Derive and return this Mult expression equated to the
@@ -1194,32 +1578,21 @@ class Mult(NumberOperation):
         |- a^b a^{-c} = a^{b-c},
         |- a^b a      = a^{b+1},
         |- a a^b      = a^{1+b},
-        |- a^c b^c    = (a b)^c. Maybe handle this case with something else?
         This also should work more generally with more than 2 factors,
         for example taking a^b a^c a^d to
         |- (a^b a^c a^d) = a^{b+c+d}.
         The start_idx and end_idx can be used to apply the process to
         a contiguous subset of factors within a larger set of factors.
-        Automatically attempts to reduce a resulting new exponent sum,
-        but not a new base product, unless call includes
-        auto_simplify=False.
         Planned but not implemented: allow user to specify non-
         contiguous factors to combine. For example, given self as
         a^b a^c b^a a^d
         allow user to specify indices 0, 1, 3 to produce something like
         |- a^{b+c+d} b^a
         '''
-        from proveit.numbers.exponentiation import (
-            product_of_posnat_powers, products_of_posnat_powers,
-            product_of_pos_powers, products_of_pos_powers,
-            product_of_real_powers, products_of_real_powers,
-            product_of_complex_powers, products_of_complex_powers)
-        from proveit.numbers.exponentiation import (
-            add_one_right_in_exp, add_one_left_in_exp,
-            add_one_left_in_exp_poss_zero_base)
+        from proveit.numbers.number_operation import union_number_set
+        import proveit.numbers.exponentiation as exp_pkg
         from proveit.numbers import Exp
-
-        error_msg = ""
+        from . import empty_mult
 
         # If the start_idx and/or end_idx has been specified
         if start_idx is not None or end_idx is not None:
@@ -1242,11 +1615,11 @@ class Mult(NumberOperation):
             # using call to this same method
             inner_combination = (
                     grouped.rhs.factors[start_idx].
-                    exponent_combination())
+                    combining_exponents())
             # substitute the combined factors back into the
             # grouped expression and return the deduced equality
             return inner_combination.sub_right_side_into(grouped)
-
+        
         # Else neither the start_idx nor the end_idx has been specified,
         # indicating we intend to combine all possible factors, either:
         # (1) all like-bases combined with a single exponent, such as
@@ -1254,212 +1627,125 @@ class Mult(NumberOperation):
         # OR
         # (2) all like-exponents
         #     a^z b^z c^z = (abc)^z
+        
+        if self.factors.num_entries()==0:
+            # [*]() = 1
+            return empty_mult
+        
+        if self.factors.num_entries()==1 and (
+                isinstance(self.factors[0], ExprRange) and 
+                self.factors[0].is_parameter_independent):
+            # x * x * ..(n-3)x.. * x = x^n
+            factor_range = self.factors[0]
+            _x = factor_range.body                    
+            _n = self.factors.num_elements()
+            replacements = list(defaults.replacements)
+            if factor_range.start_index != one:
+                # Transform from as ExprRange that start at 1.
+                replacements.append(factor_range.reduction().derive_reversed(
+                        preserve_all=True))
+            inst = exp_pkg.exp_nat_pos_rev.instantiate(
+                    {n:_n, x:_x}, replacements=replacements)
+            return inst
+        
+        factors = list(self.factors.entries)
+        if all(is_numeric_rational(factor) for factor in factors):
+            # The factors are all numerical rational numbers, so
+            # just evaluate the product.
+            return self.evaluation()
+        # Determine the base and the exponents to combine.
         replacements = list(defaults.replacements)
-        factors = []
-        for factor in self.factors:
-            if not isinstance(factor, Exp):
+        factor_bases = set()
+        factor_exponents = []
+        exponent_number_sets = []
+        temp_factors = []
+        disassoc_indices = []
+        for idx, factor in enumerate(factors):
+            if isinstance(factor, ExprRange):
+                if isinstance(factor.body, Exp):
+                    # x^{n_1} * ... * x^{n_k}
+                    if factor.parameter in free_vars(factor.body.base):
+                        base = None # signal a problem
+                    # n_1, ..., n_k:
+                    exponent = ExprRange(
+                            factor.parameter, factor.body.exponent,
+                            factor.start_index, factor.end_index)
+                    exponent_number_set = readily_provable_number_set(
+                            exponent, default=Complex)
+                    temp_factors.append(factor)
+                else:
+                    # x^n = x * x * ..(n-3)x.. * x
+                    replacements.append(Mult(factor).combining_exponents(
+                            preserve_all=True).derive_reversed(
+                                    preserve_all=True))
+                    temp_factors.append(replacements[-1].rhs)
+                    disassoc_indices.append(idx)
+                    # exponent = factor.num_elements()
+                    exponent = replacements[-1].lhs.exponent
+                    exponent_number_set = NaturalPos
+            elif isinstance(factor, Exp):
+                base = factor.base
+                exponent = factor.exponent
+                exponent_number_set = readily_provable_number_set(
+                        exponent, default=Complex)
+                temp_factors.append(factor)
+            else:
                 # Exploit a^1 = a.
-                factor = Exp(factor, one)
-                replacements.append(factor.power_of_one_reduction())
-            factors.append(factor)
-        factor_bases = [factor.base for factor in factors]
-        factor_exponents = [factor.exponent for factor in factors]
-        from proveit.numbers.exponentiation import (
-            products_of_complex_powers)
-
-        # (1) all same bases to combine with a single exponent,
-        # such as a^b a^c a^d = a^{b+c+d}
-        if len(set(factor_bases)) == 1:
-
-            _m_sub = num(len(factor_exponents))
-            _a_sub = factor_bases[0]
-            _b_sub = factor_exponents
-            try:
-                return products_of_complex_powers.instantiate(
-                    {m: _m_sub, a: _a_sub, b: _b_sub},
-                    replacements=replacements)
-            except Exception as the_exception:
-                # something went wrong
-                error_msg = (
-                    error_msg +
-                    "All factors appeared to have same base, but "
-                    "attempt failed with error message: \n" +
-                    str(the_exception))
-                pass
-
-        # (2) all same exponent to combine with a single base,
-        # such as a^d b^d c^d = (a b c)^d.
-        # Less common but sometimes useful.
-        if len(set(factor_exponents)) == 1:
-
-            # Same exponent: equate $a^c b^c = (a b)^c$
-            # Combining the exponents in this case is the reverse
-            # of disibuting an exponent.
-            _new_prod = Mult(*factor_bases)
-            _new_exp = Exp(_new_prod, factor_exponents[0])
-            try:
-                return _new_exp.distribution(
-                    replacements=replacements).derive_reversed()
-            except Exception as the_exception:
-                # something went wrong; append to error message
-                error_msg = (
-                    error_msg +
-                    "All factors appeared to have the same exponent, "
-                    "but attempt failed with error message: \n" +
-                    str(the_exception)) + "\n"
-                pass
-
-        exp_operand_msg = (
-            'Combine exponents only implemented for a product '
-            'of two exponentiated operands (or a simple variant)')
-
-        # I wonder if we might simply take any non-exp factor a and
-        # convert it to Exp(a, one) (i.e. a^1). This might simplify
-        # the process, making things a bit more mechanical ....
-
-        if (not self.operands.is_double()
-                or not isinstance(self.operands[0], Exp)
-                or not isinstance(self.operands[1], Exp)):
-
-            if (self.operands.is_double()
-                    and isinstance(self.operands[0], Exp)
-                    and self.operands[0].base == self.operands[1]):
-                # self is of the form: (a^b) a
-                return add_one_right_in_exp.instantiate(
-                    {a: self.operands[1], b: self.operands[0].exponent})
-
-            elif (self.operands.is_double() and
-                  isinstance(self.operands[1], Exp) and
-                  self.operands[1].base == self.operands[0]):
-                # self is of the form: a (a^b)
-
-                try: # case where base a != 0
-                    return add_one_left_in_exp.instantiate(
-                        {a: self.operands[0], b: self.operands[1].exponent})
-                except Exception as the_exception:
-                    # case where base might be 0 but exponent != 0
-                    return add_one_left_in_exp_poss_zero_base.instantiate(
-                        {a: self.operands[0], b: self.operands[1].exponent})
-
-        # More complex efforts if code above does not catch the
-        # specific instance. The code below remains from earlier.
-        # ============================================================
-        # Create a list of bases and ranges of bases,
-        # and a list of exponents and ranges of exponents,
-        # and determine if all of the represented bases are the same
-        # or if all of the represented exponents are the same.
-        # For example,
-        #   (a_1^c * ... * a_n^c * b^c)
-        # would result in:
-        #   same_base=False, same_exponent=c,
-        #   operand_bases = [a_1, ..., a_n, b]
-        #   operand_exonents = [c, ..n repeats.. c, c]
-        operand_bases = []
-        operand_exponents = []
-        same_base = None
-        same_exponent = None
-        for operand in self.operands:
-            if isinstance(operand, ExprRange):
-                if not isinstance(operand.body, Exp):
-                    raise ValueError(exp_operand_msg)
-                operand_bases.append(operand.mapped_range(
-                    lambda exponential: exponential.base))
-                operand_exponents.append(operand.mapped_range(
-                    lambda exponential: exponential.exponent))
-                base = operand_bases.innermost_body()
-                exponent = operand_exponents.innermost_body()
-                operand_parameters = operand.parameters()
-                if not free_vars(base).isdisjoint(operand_parameters):
-                    # Can't have the same base unless the base
-                    # is independent of range parameters.
-                    same_base = False
-                if not free_vars(exponent).isdisjoint(operand_parameters):
-                    # Can't have the same exponent unless the exponent
-                    # is independent of range parameters.
-                    same_exponent = False
+                base = factor
+                exponent = one
+                exponent_number_set = NaturalPos
+                replacements.append(Exp(base, one).power_of_one_reduction())
+                temp_factors.append(factor)
+            factor_bases.add(base)
+            factor_exponents.append(exponent)
+            exponent_number_sets.append(exponent_number_set)
+            if len(factor_bases) > 1:
+                raise ValueError("Unable to combine exponents because "
+                                 "exponential bases differ: %s"%self)
+        if temp_factors != factors:
+            replacements.append(
+                    multi_disassociation(Mult(*temp_factors),
+                            *disassoc_indices, preserve_all=True))
+        minimal_exponent_ns = union_number_set(*exponent_number_sets)
+        assert len(factor_bases)==1
+        _a = next(iter(factor_bases))
+        if self.factors.is_double():
+            _b, _c = factor_exponents
+            if NaturalPos.readily_includes(minimal_exponent_ns):
+                return exp_pkg.product_of_posnat_powers.instantiate(
+                        {a:_a, m:_b, n:_c}, replacements=replacements)
+            elif RealPos.readily_includes(minimal_exponent_ns):
+                return exp_pkg.product_of_pos_powers.instantiate(
+                        {a:_a, b:_b, c:_c}, replacements=replacements)
+            elif Real.readily_includes(minimal_exponent_ns):
+                return exp_pkg.product_of_real_powers.instantiate(
+                        {a:_a, b:_b, c:_c}, replacements=replacements)
             else:
-                if not isinstance(operand, Exp):
-                    raise ValueError(exp_operand_msg)
-                base = operand.base
-                exponent = operand.exponent
-                operand_bases.append(base)
-                operand_exponents.append(exponent)
-            if same_base is None:
-                same_base = base
-            elif same_base != base:
-                # Not all bases are the same
-                same_base = False
-            if same_exponent is None:
-                same_exponent = base
-            elif same_exponent != base:
-                # Not all exponents are the same
-                same_exponent = False
-
-        if same_base not in (None, False):
-            # Same base: a^b a^c = a^{b+c}$, or something similar
-
-            # Find out the known type of the exponents.
-            possible_exponent_types = [NaturalPos, RealPos, Real,
-                                       Complex]
-            for exponent in operand_exponents:
-                deduce_number_set(exponent)
-                while len(possible_exponent_types) > 1:
-                    exponent_type = possible_exponent_types[0]
-                    if isinstance(exponent, ExprRange):
-                        in_sets = exponent.mapped_range(
-                            lambda exp_range_body:
-                            InSet(exp_range_body, exponent_type))
-                        if And(in_sets).proven():
-                            # This type is known for these exponents.
-                            break
-                    else:
-                        if InSet(exponent, exponent_type).proven():
-                            # This type is known for this exponent.
-                            break
-                    # We've eliminated a type from being known.
-                    possible_exponent_types.pop(0)
-            known_exponent_type = possible_exponent_types[0]
-
-            if known_exponent_type == NaturalPos:
-                if self.operands.is_double():
-                    _m, _n = operand_exponents
-                    return product_of_posnat_powers.instantiate(
-                        {a: same_base, m: _m, n: _n})
-                else:
-                    _k = ExprTuple(*operand_exponents)
-                    _m = _k.num_elements()
-                    return products_of_posnat_powers.instantiate(
-                        {a: same_base, m: _m, k: _k})
+                return exp_pkg.product_of_complex_powers.instantiate(
+                        {a:_a, b:_b, c:_c}, replacements=replacements)
+        else:
+            _b = ExprTuple(*factor_exponents)
+            _m = _b.num_elements()
+            if NaturalPos.readily_includes(minimal_exponent_ns):
+                return exp_pkg.products_of_posnat_powers.instantiate(
+                        {m:_m, a:_a, k:_b}, replacements=replacements)
+            elif RealPos.readily_includes(minimal_exponent_ns):
+                return exp_pkg.products_of_pos_powers.instantiate(
+                        {m:_m, a:_a, b:_b}, replacements=replacements)
+            elif Real.readily_includes(minimal_exponent_ns):
+                return exp_pkg.products_of_real_powers.instantiate(
+                        {m:_m, a:_a, b:_b}, replacements=replacements)
             else:
-                if self.operands.is_double():
-                    _b, _c = operand_exponents
-                    if known_exponent_type == RealPos:
-                        thm = product_of_pos_powers
-                    elif known_exponent_type == Real:
-                        thm = product_of_real_powers
-                    else:  # Complex is default
-                        thm = product_of_complex_powers
-                    return thm.instantiate({a: same_base, b: _b, c: _c})
-                else:
-                    _b = ExprTuple(*operand_exponents)
-                    _m = _b.num_elements()
-                    if known_exponent_type == RealPos:
-                        thm = products_of_pos_powers  # plural products
-                    elif known_exponent_type == Real:
-                        thm = products_of_real_powers  # plural products
-                    else:  # Complex is default
-                        thm = products_of_complex_powers
-                    return thm.instantiate({m: _m, a: same_base, b: _b})
+                return exp_pkg.products_of_complex_powers.instantiate(
+                        {m:_m, a:_a, b:_b}, replacements=replacements)
 
-        elif same_exponent not in (None, False):
-            # Same exponent: equate $a^c b^c = (a b)^c$
-            # Combining the exponents in this case is the reverse
-            # of disibuting an exponent.
-            prod = Mult(*operand_bases)
-            exp = Exp(prod, same_exponent)
-            return exp.distribution().derive_reversed()
-        raise ValueError('Product is not in a correct form to '
-                         'combine exponents: ' + str(self))
+    @equality_prover('combined_operands', 'combine_operands')
+    def combining_operands(self, **defaults_config):
+        '''
+        Combine factors, adding their literal, rational exponents.
+        Alias for `combining_exponents`.
+        '''
+        return self.combining_exponents()    
 
     @equality_prover('common_power_extracted', 'common_power_extract')
     def common_power_extraction(self, start_idx=None, end_idx=None,
@@ -1487,14 +1773,6 @@ class Mult(NumberOperation):
         allow user to specify indices 0, 2 to produce something like
         |- a^k b^c d^k e^d = (a d)^k b^c e^d
         '''
-        from proveit.numbers.exponentiation import (
-            product_of_posnat_powers, products_of_posnat_powers,
-            product_of_pos_powers, products_of_pos_powers,
-            product_of_real_powers, products_of_real_powers,
-            product_of_complex_powers, products_of_complex_powers)
-        from proveit.numbers.exponentiation import (
-            add_one_right_in_exp, add_one_left_in_exp,
-            add_one_left_in_exp_poss_zero_base)
         from proveit.numbers import Exp
 
         error_msg = ""
@@ -1565,8 +1843,14 @@ class Mult(NumberOperation):
                 # of distributing an exponent.
                 _new_prod = Mult(*factor_bases)
                 _new_exp = Exp(_new_prod, factor_exponents[0])
+                replacements = []
+                if defaults.auto_simplify:
+                    _new_exp_simp = _new_exp.simplification()
+                    if _new_exp_simp.lhs != _new_exp_simp.rhs:
+                       replacements.append(_new_exp_simp)
                 try:
-                    return _new_exp.distribution().derive_reversed()
+                    return _new_exp.distribution().derive_reversed(
+                            replacements=replacements)
                 except Exception as the_exception:
                     raise Exception("An Exception! All factors appeared to "
                         "have the same exponent, but the Exp.distribution() "
@@ -1611,7 +1895,7 @@ class Mult(NumberOperation):
         Given numerical operands, deduce that this expression is equal
         to a form in which the operand at index init_idx has been moved
         to final_idx.
-        For example, (a + b + ... + y + z) = (a + ... + y + b + z)
+        For example, (a · b · ... · y · z) = (a · ... · y · b · z)
         via init_idx = 1 and final_idx = -2.
         '''
         from . import commutation, leftward_commutation, rightward_commutation
@@ -1633,6 +1917,32 @@ class Mult(NumberOperation):
         return group_commutation(
             self, init_idx, final_idx, length, disassociate=disassociate)
 
+    @equality_prover('moved', 'move')
+    def permutation_move(self, init_idx=None, final_idx=None,
+                         **defaults_config):
+        '''
+        Given numerical operands, deduce that this expression is equal 
+        to a form in which the operand
+        at index init_idx has been moved to final_idx.
+        For example, (a · b · ... · y · z) = (a · ... · y · b · z)
+        via init_idx = 1 and final_idx = -2.
+        '''
+        return self.commutation(init_idx=init_idx, final_idx=final_idx)
+
+    @equality_prover('permuted', 'permute')
+    def permutation(self, new_order=None, cycles=None, **defaults_config):
+        '''
+        Deduce that this Add expression is equal to an Add in which
+        the terms at indices 0, 1, …, n-1 have been reordered as
+        specified EITHER by the new_order list OR by the cycles list
+        parameter. For example,
+            (a·b·c·d).permutation_general(new_order=[0, 2, 3, 1])
+        and
+            (a·b·c·d).permutation_general(cycles=[(1, 2, 3)])
+        would both return ⊢ (a·b·c·d) = (a·c·d·b).
+        '''
+        return generic_permutation(self, new_order, cycles)
+    
     @equality_prover('associated', 'associate')
     def association(self, start_idx, length, **defaults_config):
         '''
@@ -1643,6 +1953,8 @@ class Mult(NumberOperation):
             (a * b ... * (l * ... * m) * ... * y * z)
         '''
         from . import association
+        # print("In Mult.association():")
+        # print("  preserved_exprs = {}".format(defaults.preserved_exprs))
         return apply_association_thm(
             self, start_idx, length, association)
 
@@ -1654,6 +1966,8 @@ class Mult(NumberOperation):
         at index idx is no longer grouped together.
         For example, (a * b ... * (l * ... * m) * ... * y* z)
             = (a * b * ... * y * z)
+        Multiple indices can be provided for multiple disassociations
+        simultaneously, e.g. expr.disassociation(2, 3, 4)
         '''
         from . import disassociation
         return apply_disassociation_thm(self, idx, disassociation)
@@ -1713,12 +2027,12 @@ class Mult(NumberOperation):
             for factor in self.factors:
                 deduce_number_set(factor)
             if (isinstance(factor_relation, Less) and
-                    all(greater(factor, zero).proven() for
+                    all(greater(factor, zero).readily_provable() for
                         factor in self.factors)):
                 # We can use the strong bound.
                 from . import strong_bound_via_factor_bound
                 thm = strong_bound_via_factor_bound
-            elif all(greater_eq(factor, zero).proven() for
+            elif all(greater_eq(factor, zero).readily_provable() for
                      factor in self.factors):
                 # We may only use the weak bound.
                 from . import weak_bound_via_factor_bound
@@ -1760,3 +2074,47 @@ class Mult(NumberOperation):
         from proveit.numbers import RealPos, zero, greater
         InSet(self, RealPos).prove()
         return greater(self, zero).prove()
+
+def compose_factors(*factors):
+    '''
+    Return the Mult of the factors if there are multiple factors,
+    or a single factor as appropriate.
+    '''
+    if len(factors) == 0:
+        return one
+    elif len(factors) == 1:
+        return factors[0]
+    return Mult(*factors)
+
+def coefficient_and_remainder(expr):
+    '''
+    Returns the coefficient and remainder of the given expression.
+    '''
+    from proveit.numbers import Neg, Div, is_numeric_rational
+    if isinstance(expr, Neg):
+        # Put the negation in the coefficient.
+        coef, remainder = coefficient_and_remainder(expr.operand)
+        coef = coef.operand if isinstance(coef, Neg) else Neg(coef)
+        return coef, remainder
+    if isinstance(expr, Mult) and (
+            expr.factors.num_entries() >= 1 and
+            is_numeric_rational(expr.factors[0])):
+        # Extract a numerical coefficient if it appears at the
+        # beginning of the Mult.
+        coef = expr.factors[0].canonical_form() # irreducible coef
+        num_factors = expr.factors.num_entries()
+        if num_factors > 2:
+            remainder = Mult(*expr.factors.entries[1:])
+        elif num_factors == 2:
+            remainder = expr.factors[1]
+        else:
+            remainder = one
+    elif is_numeric_rational(expr):
+        # Already a numerical rational number.
+        coef = expr.canonical_form() # irreducible coef
+        remainder = one
+    else:
+        # Just the trivial coefficient of 1.
+        coef = one
+        remainder = expr
+    return coef, remainder

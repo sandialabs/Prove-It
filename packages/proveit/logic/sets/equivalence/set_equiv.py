@@ -1,13 +1,14 @@
-from proveit import (as_expression, defaults, USE_DEFAULTS, 
-                     ProofFailure, prover, relation_prover)
+from proveit import (as_expression, defaults, USE_DEFAULTS, UnusableProof,
+                     ProofFailure, equality_prover, prover, relation_prover)
 from proveit import Literal
-from proveit import TransitiveRelation, TransitivityException
+from proveit.relation import EquivRelation, TransitivityException
+from proveit.util import OrderedSet
 from proveit.logic.irreducible_value import (
         IrreducibleValue, is_irreducible_value)
 from proveit import A, B, C, P, f, x, y, z
 
 
-class SetEquiv(TransitiveRelation):
+class SetEquiv(EquivRelation):
     '''
     Class to capture the membership equivalence of 2 sets A and B.
     SetEquiv(A, B) is a claim that all elements of A are also elements
@@ -24,30 +25,14 @@ class SetEquiv(TransitiveRelation):
     # known_equalities = dict()
     known_equivalences = dict()
 
-    # Map Expressions to a subset of known_equivalences that are
-    # deemed to effect simplifications of the inner expression
-    # on the right hand side according to some canonical method
-    # of simplication determined by each operation.
-    simplifications = dict()
-
-    # Specific simplifications that simplify the inner expression to
-    # IrreducibleValue objects.
-    evaluations = dict()
-
-    # Record found inversions.  See the invert method.
-    # Maps (lambda_map, rhs) pairs to a list of
-    # (known_equivalence, inversion) pairs, recording previous results
-    # of the invert method for future reference.
-    inversions = dict()
-
     # Record the SetEquiv objects being initialized (to avoid infinite
     # recursion while automatically deducing an equality is in the
     # Boolean set).
     initializing = set()
 
     def __init__(self, a, b, *, styles=None):
-        TransitiveRelation.__init__(self, SetEquiv._operator_, a, b, 
-                                    styles=styles)
+        EquivRelation.__init__(self, SetEquiv._operator_, a, b, 
+                               styles=styles)
         if self not in SetEquiv.initializing:
             SetEquiv.initializing.add(self)
             try:
@@ -61,25 +46,18 @@ class SetEquiv(TransitiveRelation):
 
     def side_effects(self, judgment):
         '''
-        Record the judgment in SetEquiv.known_equivalences, associated
-        from the left hand side and the right hand side.  This
-        information may be useful for concluding new equivalences via
-        transitivity. If the right hand side is an "irreducible value"
-        (see is_irreducible_value), also record it in
-        SetEquiv.evaluations for use when the evaluation method is
-        called. Some side-effects derivations are also attempted
-        depending upon the form of this equivalence.
+        Derive the revised form, unfold, and derive, as universal
+        quantifications, left/right membership conditioned on right/left
+        membership.
         '''
         from proveit.logic.booleans import TRUE, FALSE
-        SetEquiv.known_equivalences.setdefault(self.lhs, set()).add(judgment)
-        SetEquiv.known_equivalences.setdefault(self.rhs, set()).add(judgment)
-        # not yet clear if the irreducible value check is relevant for sets
-        # if is_irreducible_value(self.rhs):
-        #     SetEquiv.simplifications.setdefault(self.lhs, set()).add(judgment)
-        #     SetEquiv.evaluations.setdefault(self.lhs, set()).add(judgment)
         if (self.lhs != self.rhs):  # e.g. if we don't have SetEquiv(A, A)
             # automatically derive the reversed form which is equivalent
             yield self.derive_reversed
+        
+        yield self.unfold
+        yield self.derive_left_membership_via_right
+        yield self.derive_right_membership_via_left
         
         # STILL CHECKING ON THE RELEVANCE OF THE FOLLOWING
         # if hasattr(self.lhs, 'equality_side_effects'):
@@ -91,8 +69,25 @@ class SetEquiv(TransitiveRelation):
         Side-effect derivations to attempt automatically for a
         negated equivalence. IN PROGRESS
         '''
-        from proveit.logic.booleans import FALSE
         yield self.deduce_not_equiv  # A not_equiv B from not(A equiv B)
+
+    def _readily_provable(self, check_transitive_pair=True):
+        from proveit import safe_dummy_var
+        from proveit.logic import Equals, Forall, InSet
+        lhs, rhs = self.lhs, self.rhs
+        if Equals(lhs, rhs).readily_provable():
+            return True
+        if EquivRelation._readily_provable(
+                self, check_transitive_pair=check_transitive_pair):
+            return True
+
+        # No worry about conflicts with assumptions because the 
+        # variable will be bound by a quantifier:
+        _x = safe_dummy_var(self, avoid_default_assumption_conflicts=False)
+        if Forall(_x, InSet(_x, lhs), domain=rhs).proven() and (
+                Forall(_x, InSet(_x, rhs), domain=lhs).proven()):
+            return True
+        return False
 
     @prover
     def conclude(self, **defaults_config):
@@ -102,12 +97,12 @@ class SetEquiv(TransitiveRelation):
         is an irreducible), or via transitivity.
         IN PROGRESS
         '''
-        if self.lhs == self.rhs:
+        from proveit.logic import Equals
+        if Equals(self.lhs, self.rhs).readily_provable():
             try:
-                # Trivial A = A
                 return self.conclude_via_reflexivity()
-            except BaseException:
-                pass  # e.g., reflexivity theorem may not be usable
+            except UnusableProof:
+                pass
         try:
             return self.conclude_as_folded()
         except ProofFailure:
@@ -161,40 +156,26 @@ class SetEquiv(TransitiveRelation):
     #     """
         # Use a breadth-first search approach to find the shortest
         # path to get from one end-point to the other.
-        return TransitiveRelation.conclude(self)
+        return EquivRelation.conclude(self)
 
-    # @staticmethod
-    # def known_relations_from_left(expr, assumptions_set):
-    #     '''
-    #     For each Judgment that is an Equals involving the given expression on
-    #     the left hand side, yield the Judgment and the right hand side.
-    #     '''
-    #     for judgment in Equals.known_equalities.get(expr, frozenset()):
-    #         if judgment.lhs == expr:
-    #             if judgment.is_applicable(assumptions_set):
-    #                 yield (judgment, judgment.rhs)
 
-    # @staticmethod
-    # def known_relations_from_right(expr, assumptions_set):
-    #     '''
-    #     For each Judgment that is an Equals involving the given expression on
-    #     the right hand side, yield the Judgment and the left hand side.
-    #     '''
-    #     for judgment in Equals.known_equalities.get(expr, frozenset()):
-    #         if judgment.rhs == expr:
-    #             if judgment.is_applicable(assumptions_set):
-    #                 yield (judgment, judgment.lhs)
+    @staticmethod
+    def WeakRelationClass():
+        return SetEquiv  # SetEquiv is the strong and weak form
+
+    @staticmethod
+    def StrongRelationClass():
+        return SetEquiv  # SetEquiv is the strong and weak form
 
     @prover
     def conclude_via_reflexivity(self, **defaults_config):
         '''
         Prove and return self of the form A equiv A.
         '''
-        from . import set_equiv_reflexivity
-        assert self.lhs == self.rhs, (
-                "self.lhs ({0}) is not set-equiv to self.rhs ({1})".
-                format(self.lhs, self.rhs))
-        return set_equiv_reflexivity.instantiate({A: self.lhs})
+        from . import set_equiv_reflexivity, set_equiv_reflection
+        if self.lhs == self.rhs:
+            return set_equiv_reflexivity.instantiate({A: self.lhs})
+        return set_equiv_reflection.instantiate({A:self.lhs, B:self.rhs})
 
     @prover
     def conclude_as_folded(self, **defaults_config):
@@ -221,6 +202,25 @@ class SetEquiv(TransitiveRelation):
         return set_equiv_unfold.instantiate({A: self.lhs, B: self.rhs})
 
     @prover
+    def derive_left_membership_via_right(self, **defaults_config):
+        '''
+        From A ≅ B, derive that forall_{x in B} x in A.
+        '''
+        from . import left_membership_via_right
+        return left_membership_via_right.instantiate(
+                {A:self.lhs, B:self.rhs})
+
+    @prover
+    def derive_right_membership_via_left(self, **defaults_config):
+        '''
+        From A ≅ B, derive that forall_{x in A} x in B.
+        '''
+        from . import right_membership_via_left
+        return right_membership_via_left.instantiate(
+                {A:self.lhs, B:self.rhs})
+
+
+    @prover
     def derive_reversed(self, **defaults_config):
         '''
         From A set_equiv B derive B set_equiv A.
@@ -228,6 +228,15 @@ class SetEquiv(TransitiveRelation):
         '''
         from . import set_equiv_reversal
         return set_equiv_reversal.instantiate({A: self.lhs, B: self.rhs})
+
+    @equality_prover("reversed", "reverse")
+    def symmetrization(self, **defaults_config):
+        '''
+        Prove (A ≅ B) = (B ≅ A).
+        '''
+        from . import set_equiv_symmetry
+        return set_equiv_symmetry.instantiate({B:self.lhs, A:self.rhs})
+
 
     @prover
     def deduce_not_equiv(self, **defaults_config):
@@ -281,7 +290,8 @@ class SetEquiv(TransitiveRelation):
                 'something in common in the set equivalences: '
                 '%s vs %s' % (str(self), str(other)))
 
-    def sub_left_side_into(self, lambda_map, assumptions=USE_DEFAULTS):
+    @prover
+    def sub_left_side_into(self, lambda_map, **defaults_config):
         '''
         From A equiv B, and given P(B), derive P(A) assuming P(B).
         UNDER CONSTRUCTION, adapted from Equals class.
@@ -297,9 +307,10 @@ class SetEquiv(TransitiveRelation):
         Plambda = Equals._lambda_expr(lambda_map, self.rhs)
 
         return sub_left_side_into.instantiate(
-            {A: self.lhs, B: self.rhs, P: Plambda}, assumptions=assumptions)
+            {A: self.lhs, B: self.rhs, P: Plambda})
 
-    def sub_right_side_into(self, lambda_map, assumptions=USE_DEFAULTS):
+    @prover
+    def sub_right_side_into(self, lambda_map, **defaults_config):
         '''
         From A equiv B, and given P(A), derive P(B) assuming P(A).
         UNDER CONSTRUCTION, adapted from Equals class.
@@ -314,7 +325,15 @@ class SetEquiv(TransitiveRelation):
         from proveit.logic import Equals
         Plambda = Equals._lambda_expr(lambda_map, self.lhs)
         return sub_right_side_into.instantiate(
-            {A: self.lhs, B: self.rhs, P: Plambda}, assumptions=assumptions)
+            {A: self.lhs, B: self.rhs, P: Plambda})
+
+    def readily_in_bool(self):
+        '''
+        Set equivalence is readily provable to be a Boolean if
+        the set_equiv_is_bool theorem is usable.
+        '''
+        from . import set_equiv_is_bool
+        return set_equiv_is_bool.is_usable()
 
     @relation_prover
     def deduce_in_bool(self,  **defaults_config):

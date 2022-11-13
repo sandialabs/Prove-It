@@ -2,9 +2,8 @@ from proveit import (defaults, prover, relation_prover,
                      ProofFailure, UnsatisfiedPrerequisites)
 from proveit import a, b, n, x
 from proveit.logic import InSet, NotInSet, SetNonmembership
-from proveit.numbers.number_sets.real_numbers import Real
-from proveit.numbers.number_sets.real_numbers.interval import (
-        IntervalOO, IntervalCO, IntervalOC, IntervalCC)
+from proveit.numbers import (
+        Less, LessEq, Real, IntervalOO, IntervalCO, IntervalOC, IntervalCC)
 from proveit.numbers.number_sets.number_set import NumberMembership
 
 class RealIntervalMembership(NumberMembership):
@@ -22,6 +21,27 @@ class RealIntervalMembership(NumberMembership):
         NumberMembership.__init__(self, element, domain)
         self.domain = domain
 
+    def _readily_provable(self):
+        '''
+        The Membership is readily provabile if the element
+        is readily known to be Real and it's readily known to be 
+        within the interval range.
+        '''
+        from proveit.logic import SubsetEq
+        from proveit.numbers import readily_provable_number_set
+        domain = self.domain
+        _x = self.element
+        try:
+            elem_ns = readily_provable_number_set(_x)
+        except UnsatisfiedPrerequisites:
+            elem_ns = None
+        if elem_ns is not None:
+            if SubsetEq(elem_ns, domain).readily_provable():
+                return True
+        lb, ub = domain.member_bounds(_x)
+        return InSet(_x, Real).readily_provable() and (
+                lb.readily_provable() and ub.readily_provable())
+
     @prover
     def conclude(self, **defaults_config):
         '''
@@ -30,14 +50,18 @@ class RealIntervalMembership(NumberMembership):
         [element in IntervalCC(lower_bound, upper_bound)] (and
         similarly for strict upper and/or lower bounds).
         '''
+        from proveit.logic import SubsetEq
+        from proveit.numbers import (readily_provable_number_set,
+                                     deduce_in_number_set)
+        domain = self.domain
         element = self.element
-        if hasattr(element, 'deduce_in_number_set'):
-            try:
-                return element.deduce_in_number_set(self.domain)
-            except Exception:
-                # If that didn't work, try 'deduce_elem_in_set'.
-                pass
-        return self.domain.deduce_elem_in_set(self.element)
+        elem_ns = readily_provable_number_set(element)
+        if elem_ns == domain:
+            return deduce_in_number_set(element, domain)
+        sub_rel = SubsetEq(elem_ns, domain)
+        if sub_rel.readily_provable():
+            return sub_rel.derive_superset_membership(element)
+        return domain.deduce_elem_in_set(element)
 
     def side_effects(self, judgment):
         '''
@@ -113,22 +137,11 @@ class RealIntervalMembership(NumberMembership):
         from proveit.numbers import RealNonNeg, RealNonPos
         _a = self.domain.lower_bound
         _b = self.domain.upper_bound
-        if (InSet(_a, RealNonNeg).proven() or 
-                InSet(_b, RealNonPos).proven()):
+        if (InSet(_a, RealNonNeg).readily_provable() or 
+                InSet(_b, RealNonPos).readily_provable()):
             return self.derive_element_in_restricted_number_set()
-        # Without employing further automation, can we prove the
-        # lower bound is non-negative or the upper bound is
-        # non-positive?
-        try:
-            _a.deduce_in_number_set(RealNonNeg, automation=False)
-        except Exception:
-            pass
-        try:
-            _b.deduce_in_number_set(RealNonPos, automation=False)
-        except Exception:
-            pass
-        if (InSet(_a, RealNonNeg).proven() or 
-                InSet(_b, RealNonPos).proven()):
+        if (InSet(_a, RealNonNeg).readily_provable() or 
+                InSet(_b, RealNonPos).readily_provable()):
             return self.derive_element_in_restricted_number_set()
         raise UnsatisfiedPrerequisites(
                 "Must know that the lower bound is non-negative or the "
@@ -153,55 +166,41 @@ class RealIntervalMembership(NumberMembership):
         # membership fact:
         self.expr.prove()
 
-        if (not InSet(_a, RealNonNeg).proven() and 
-                not InSet(_b, RealNonPos).proven()):
-            try:
-                _a.deduce_in_number_set(RealNonNeg, automation=False)
-            except Exception:
-                pass
-            try:
-                _b.deduce_in_number_set(RealNonPos, automation=False)
-            except Exception:
-                pass
-            if (not InSet(_a, RealNonNeg).proven() and 
-                    not InSet(_b, RealNonPos).proven()):
-                # If we don't know that a ≥ 0 or b ≤ 0, we can't prove
-                # the element is in either restricted number set
-                # (NaturalPos or IntegerNeg).  So, try to sort a, b, 0
-                # to work this out.
-                LessEq.sort([_a, _b, zero])
+        if (not InSet(_a, RealNonNeg).readily_provable() and 
+                not InSet(_b, RealNonPos).readily_provable()):
+            # If we don't know that a ≥ 0 or b ≤ 0, we can't prove
+            # the element is in either restricted number set
+            # (NaturalPos or IntegerNeg).  So, try to sort a, b, 0
+            # to work this out.
+            LessEq.sort([_a, _b, zero])
 
-        if InSet(_a, RealNonNeg).proven():
-            try:
-                _a.deduce_in_number_set(RealPos, automation=False)
-            except Exception:
-                pass
+        if InSet(_a, RealNonNeg).readily_provable():
             lower_bound = self.derive_element_lower_bound()
             a_bound = greater_eq(_a, zero)
-            if InSet(_a, RealPos).proven():
+            if InSet(_a, RealPos).readily_provable():
                 a_bound = greater(_a, zero)
             lower_bound.apply_transitivity(a_bound)
             if (isinstance(self, IntervalOO) 
                     or isinstance(self, IntervalOC)
-                    or InSet(_a, RealPos).proven()):
+                    or InSet(_a, RealPos).readily_provable()):
                 # member in R^{>0}
                 return InSet(_n, RealPos).prove()
             else:
                 # member in R^{≥0}
                 return InSet(_n, RealNonNeg).prove()
-        if InSet(_b, RealNonPos).proven():
+        if InSet(_b, RealNonPos).readily_provable():
             try:
                 _b.deduce_in_number_set(RealNeg, automation=False)
             except Exception:
                 pass
             upper_bound = self.derive_element_upper_bound()
             b_bound = LessEq(_b, zero)
-            if InSet(_b, RealNeg).proven():
+            if InSet(_b, RealNeg).readily_provable():
                 b_bound = Less(_b, zero)                
             upper_bound.apply_transitivity(b_bound)
             if (isinstance(self, IntervalOO)
                     or isinstance(self, IntervalCO)
-                    or InSet(_b, RealNeg).proven()):
+                    or InSet(_b, RealNeg).readily_provable()):
                 # member in R^{<0}
                 return InSet(_n, RealNeg).prove()
             else:
@@ -355,10 +354,21 @@ class RealIntervalNonmembership(SetNonmembership):
         _a = self.domain.lower_bound
         _b = self.domain.upper_bound
         _x = self.element
-        if ((InSet(_a, Real)).proven() and
-           (InSet(_b, Real)).proven() and
-           (InSet(_x, Real)).proven()):
+        if ((InSet(_a, Real)).readily_provable() and
+           (InSet(_b, Real)).readily_provable() and
+           (InSet(_x, Real)).readily_provable()):
             yield self.deduce_real_element_bounds
+
+    def _readily_provable(self):
+        '''
+        The Nonmembership is readily provabile if the element
+        is readily known to be non-Real or its readily known to be 
+        below/above the lower/upper bound.
+        '''
+        _x = self.element
+        lb, ub = self.domain.member_bounds(_x)
+        return InSet(_x, Real).readily_disprovable() or (
+                lb.readily_disprovable() or ub.readily_disprovable())
 
     @prover
     def conclude(self, **defaults_config):
@@ -374,7 +384,7 @@ class RealIntervalNonmembership(SetNonmembership):
         _x = self.element
 
         # if x not real, then x cannot be in a real interval
-        if NotInSet(_x, Real).proven():
+        if NotInSet(_x, Real).readily_provable():
 
             # 4 cases corresponding to the 4 types of real intervals
 
@@ -427,7 +437,8 @@ class RealIntervalNonmembership(SetNonmembership):
         #     return int_not_in_interval.instantiate(
         #             {a: _a, b: _b, x: _x}, assumptions=assumptions)
 
-    # def deduce_int_element_bounds(self, assumptions=USE_DEFAULTS):
+    # @prover
+    # def deduce_int_element_bounds(self, **defaults_config):
     #     from . import bounds_for_int_not_in_interval
     #     _a = self.domain.lower_bound
     #     _b = self.domain.upper_bound

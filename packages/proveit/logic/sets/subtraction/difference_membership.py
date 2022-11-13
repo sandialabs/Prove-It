@@ -15,7 +15,7 @@ class DifferenceMembership(SetMembership):
         Unfold the membership as a side-effect.
         '''
         yield self.unfold
-    
+
     @prover
     def conclude(self, **defaults_config):
         return self.conclude_as_folded()
@@ -42,12 +42,22 @@ class DifferenceMembership(SetMembership):
     def definition(self, **defaults_config):
         '''
         Deduce and return something of the form
-        [x ∈ (A - B)] = [(x ∈ A) and (x ∉ B).
+        [x ∈ (A - B)] = [(x ∈ A) and (x ∉ B)].
         '''
         from . import difference_def
         _A, _B = self.domain.operands.entries
         return difference_def.instantiate(
             {x: self.element, A: _A, B: _B}, auto_simplify=False)
+
+    def as_defined(self):
+        '''
+        From self=[x ∈ (A - B))], return
+        [(x ∈ A) and (x ∉ B)]
+        '''
+        from proveit.logic import And, InSet, NotInSet
+        element = self.element
+        _A, _B = self.domain.operands.entries        
+        return And(InSet(element, _A), NotInSet(element, _B))
 
     @prover
     def unfold(self, **defaults_config):
@@ -85,7 +95,7 @@ class DifferenceNonmembership(SetNonmembership):
         Unfold the membership as a side-effect.
         '''
         yield self.unfold
-    
+
     @prover
     def conclude(self, **defaults_config):
         return self.conclude_as_folded()

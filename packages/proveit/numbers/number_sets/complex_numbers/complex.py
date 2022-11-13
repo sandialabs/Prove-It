@@ -15,98 +15,6 @@ class ComplexSet(NumberSet):
 
     @staticmethod
     @prover
-    def left_mult_both_sides_of_equals(relation, multiplier,
-                                       **defaults_config):
-        '''
-        Multiply both sides of an Equals relation by the 'multiplier'
-        on the left.
-        '''
-        from proveit.logic import Equals
-        from proveit.numbers.multiplication import left_mult_eq
-        if not isinstance(relation, Equals):
-            TypeError("'relation' expected to be Equals")
-        return left_mult_eq.instantiate(
-            {a: multiplier, x: relation.lhs, y: relation.rhs})
-
-    @staticmethod
-    @prover
-    def left_mult_both_sides_of_notequals(relation, multiplier,
-                                          **defaults_config):
-        '''
-        Multiply both sides of a NonEquals relation by the 'multiplier'
-        on the left.
-        '''
-        from proveit.logic import NotEquals
-        from proveit.numbers.multiplication import left_mult_neq
-        if not isinstance(relation, NotEquals):
-            TypeError("'relation' expected to be NotEquals")
-        return left_mult_neq.instantiate(
-            {a: multiplier, x: relation.lhs, y: relation.rhs})
-
-    @staticmethod
-    @prover
-    def right_mult_both_sides_of_equals(relation, multiplier,
-                                        **defaults_config):
-        '''
-        Multiply both sides of an Equals relation by the 'multiplier'
-        on the right.
-        '''
-        from proveit.logic import Equals
-        from proveit.numbers.multiplication import right_mult_eq
-        if not isinstance(relation, Equals):
-            TypeError("'relation' expected to be Equals")
-        
-        from proveit import defaults
-        return right_mult_eq.instantiate(
-            {a: multiplier, x: relation.lhs, y: relation.rhs})
-
-    @staticmethod
-    @prover
-    def right_mult_both_sides_of_notequals(relation, multiplier,
-                                           **defaults_config):
-        '''
-        Multiply both sides of a NotEquals relation by the 'multiplier'
-        on the right.
-        '''
-        from proveit.logic import NotEquals
-        from proveit.numbers.multiplication import right_mult_neq
-        if not isinstance(relation, NotEquals):
-            TypeError("'relation' expected to be NotEquals")
-        return right_mult_neq.instantiate(
-            {a: multiplier, x: relation.lhs, y: relation.rhs})
-
-    @staticmethod
-    @prover
-    def divide_both_sides_of_equals(relation, divisor,
-                                    **defaults_config):
-        '''
-        Divide both sides of the Equals relation by the 'divisor'.
-        '''
-        from proveit.logic import Equals
-        from proveit.numbers.division import div_eq
-        if not isinstance(relation, Equals):
-            TypeError("'relation' expected to be Equals")
-
-        from proveit import defaults
-        return div_eq.instantiate(
-            {a: divisor, x: relation.lhs, y: relation.rhs})
-
-    @staticmethod
-    @prover
-    def divide_both_sides_of_notequals(relation, divisor, 
-                                       **defaults_config):
-        '''
-        Divide both sides of the NotEquals relation by the 'divisor'.
-        '''
-        from proveit.logic import NotEquals
-        from proveit.numbers.division import div_neq
-        if not isinstance(relation, NotEquals):
-            TypeError("'relation' expected to be NotEquals")
-        return div_neq.instantiate(
-            {a: divisor, x: relation.lhs, y: relation.rhs})
-
-    @staticmethod
-    @prover
     def left_add_both_sides_of_equals(relation, addend,
                                       **defaults_config):
         '''
@@ -167,6 +75,94 @@ class ComplexSet(NumberSet):
 
     @staticmethod
     @prover
+    def left_mult_both_sides_of_equals(relation, multiplier,
+                                       **defaults_config):
+        '''
+        Multiply both sides of an Equals relation by the 'multiplier'
+        on the left.
+        '''
+        from proveit.logic import Equals
+        from proveit.numbers.multiplication import left_mult_eq
+        if not isinstance(relation, Equals):
+            TypeError("'relation' expected to be Equals")
+        return left_mult_eq.instantiate(
+            {a: multiplier, x: relation.lhs, y: relation.rhs})
+
+    @staticmethod
+    @prover
+    def left_mult_both_sides_of_notequals(relation, multiplier,
+                                          **defaults_config):
+        '''
+        Multiply both sides of a NonEquals relation by the 'multiplier'
+        on the left.
+        '''
+        from proveit.logic import NotEquals
+        from proveit.numbers.multiplication import left_mult_neq
+        if not isinstance(relation, NotEquals):
+            TypeError("'relation' expected to be NotEquals")
+        return left_mult_neq.instantiate(
+            {a: multiplier, x: relation.lhs, y: relation.rhs})
+
+    @staticmethod
+    @prover
+    def right_mult_both_sides_of_equals(relation, multiplier,
+                                        **defaults_config):
+        '''
+        Multiply both sides of an Equals relation by the 'multiplier'
+        on the right.
+        '''
+        from proveit.logic import Equals
+        from proveit.numbers.multiplication import right_mult_eq
+        if not isinstance(relation, Equals):
+            TypeError("'relation' expected to be Equals")
+        return right_mult_eq.instantiate(
+            {a: multiplier, x: relation.lhs, y: relation.rhs})
+
+    @staticmethod
+    @prover
+    def right_mult_both_sides_of_notequals(relation, multiplier,
+                                           **defaults_config):
+        '''
+        Multiply both sides of a NotEquals relation by the 'multiplier'
+        on the right.
+        '''
+        from proveit.logic import NotEquals
+        from proveit.numbers.multiplication import right_mult_neq
+        if not isinstance(relation, NotEquals):
+            TypeError("'relation' expected to be NotEquals")
+        return right_mult_neq.instantiate(
+            {a: multiplier, x: relation.lhs, y: relation.rhs})
+
+    @staticmethod
+    @prover
+    def divide_both_sides_of_equals(relation, divisor,
+                                    **defaults_config):
+        '''
+        Divide both sides of the Equals relation by the 'divisor'.
+        '''
+        from proveit.logic import Equals
+        from proveit.numbers.division import div_eq
+        if not isinstance(relation, Equals):
+            TypeError("'relation' expected to be Equals")
+        return div_eq.instantiate(
+            {a: divisor, x: relation.lhs, y: relation.rhs})
+
+    @staticmethod
+    @prover
+    def divide_both_sides_of_notequals(relation, divisor, 
+                                       **defaults_config):
+        '''
+        Divide both sides of the NotEquals relation by the 'divisor'.
+        '''
+        from proveit.logic import NotEquals
+        from proveit.numbers.division import div_neq
+        if not isinstance(relation, NotEquals):
+            TypeError("'relation' expected to be NotEquals")
+        return div_neq.instantiate(
+            {a: divisor, x: relation.lhs, y: relation.rhs})
+
+    @staticmethod
+    @prover
     def exponentiate_both_sides_of_equals(relation, exponent,
                                           **defaults_config):
         '''
@@ -179,6 +175,7 @@ class ComplexSet(NumberSet):
         return exp_eq.instantiate(
             {a: exponent, x: relation.lhs, y: relation.rhs})
 
+    """
     @staticmethod
     @prover
     def exponentiate_both_sides_of_notequals(relation, exponent,
@@ -192,6 +189,7 @@ class ComplexSet(NumberSet):
             TypeError("'relation' expected to be NotEquals")
         return exp_neq.instantiate(
             {a: exponent, x: relation.lhs, y: relation.rhs})
+    """
 
     @staticmethod
     @prover
@@ -286,17 +284,13 @@ class ComplexNonZeroSet(NumberSet):
         return ComplexNonZeroMembership(element)
     
 
-# if proveit.defaults.automation:
-#     # Import some fundamental theorems without quantifiers that are
-#     # imported when automation is used.
-#     from . import real_within_complex, real_pos_within_complex, real_neg_within_complex, int_within_complex, nat_within_complex
-
-if proveit.defaults.automation:
-    # Import some fundamental theorems without quantifiers that are
-    # imported when automation is used.
+if proveit.defaults.running_theory_notebook is None:
+    # Import some fundamental theorems without quantifiers when not 
+    # running an common/axioms/theorems theory notebook.
     # Fails before running the _axioms_ and _theorems_ notebooks for the first
     # time, but fine after that.
     from . import (
+        zero_set_within_complex, 
         nat_within_complex, int_within_complex, int_nonpos_within_complex,
         int_neg_within_complex_nonzero,  nat_pos_within_complex_nonzero,
         int_nonzero_within_complex_nonzero,

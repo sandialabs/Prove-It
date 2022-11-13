@@ -1,7 +1,9 @@
 from proveit import (defaults, Literal, Operation, ProofFailure, 
-                     USE_DEFAULTS, prover)
-from proveit.logic import IrreducibleValue, Equals
+                     UnsatisfiedPrerequisites, USE_DEFAULTS, 
+                     relation_prover, prover)
+from proveit.logic import IrreducibleValue, Equals, NotEquals
 from proveit import a, b
+import math
 
 
 class Numeral(Literal, IrreducibleValue):
@@ -21,24 +23,45 @@ class Numeral(Literal, IrreducibleValue):
         if not isinstance(n, int):
             raise ValueError("'n' of a Numeral must be an integer")
         self.n = n
+        
 
     @prover
     def eval_equality(self, other, **defaults_config):
         if other == self:
             return Equals(self, self).prove().evaluation()
-        self_neq_other = self.not_equal(other)
+        self_neq_other = self.deduce_not_equal(other)
         return self_neq_other.unfold().equate_negated_to_false()
 
-    @prover
-    def not_equal(self, other, **defaults_config):
+    def readily_not_equal(self, other):
+        '''
+        Return True iff self and other are numeric rationals that are
+        not equal to each other.
+        '''
+        return not_equal_numeric_rationals(self, other.canonical_form())
+
+    @relation_prover
+    def deduce_not_equal(self, other, **defaults_config):
+        '''
+        Prove and return self ≠ other if other is a numeric
+        rational.
+        '''
+        if is_numeric_rational(other):
+            return deduce_not_equal_numeric_rationals(self, other)
+        raise NotImplementedError(
+                "Numeral.deduce_not_equal only implemented for "
+                "comparing numeric rationals, not %s"%other)
+    
+    @relation_prover
+    def deduce_equal_or_not(self, other, **defaults_config):
         from proveit.numbers import Less
-        from proveit.numbers.ordering import less_is_not_eq
-        _a, _b = Less.sorted_items([self, other])
-        not_eq_stmt = less_is_not_eq.instantiate({a: _a, b: _b})
-        if not_eq_stmt.lhs != self:
-            # We need to reverse the statement.
-            return not_eq_stmt.derive_reversed()
-        return not_eq_stmt       
+        relation = Less.sort([self, other]).expr
+        if isinstance(relation, Equals):
+            return relation
+        if NotEquals(self, other).proven():
+            return self.deduce_not_equal(other)
+        raise UnsatisfiedPrerequisites(
+                "Unable to determine whether or not %s = %s"
+                %(self, other))
     
     def remake_arguments(self):
         '''
@@ -66,12 +89,27 @@ class Numeral(Literal, IrreducibleValue):
         n = int(extra_core_info[0])
         return Numeral(n, string_format, latex_format, styles=styles)
 
+    def readily_provable_number_set(self):
+        '''
+        We can prove this numeral is in {0} or in NaturalPos.
+        We can also prove this is in Digits, but that is less useful
+        for this purpose.
+        '''
+        from proveit.numbers import zero, ZeroSet, NaturalPos
+        if self == zero:
+            return ZeroSet
+        else:
+            return NaturalPos
+        
     @prover
     def deduce_in_number_set(self, number_set, **defaults_config):
-        from proveit.numbers import (Natural, NaturalPos, 
+        from proveit.logic import Set
+        from proveit.numbers import (zero, ZeroSet, Natural, NaturalPos, 
                                      Digits, IntegerNonPos,
                                      RationalNonPos, RealNonPos)
         from proveit.logic import InSet, SubsetEq
+        if self == zero and number_set == ZeroSet:
+            return InSet(zero, Set(zero)).conclude_as_folded()
         if number_set == Natural:
             return self.deduce_in_natural()
         elif number_set == NaturalPos:
@@ -134,8 +172,8 @@ class Numeral(Literal, IrreducibleValue):
         if self.n != 0:
             raise ProofFailure(InSet(self, IntegerNonPos), defaults.assumptions,
                                 "%s is positive"%self)
-        from proveit.numbers.number_sets.integers import zero_is_nonpos
-        return zero_is_nonpos
+        from proveit.numbers.number_sets.integers import zero_is_nonpos_int
+        return zero_is_nonpos_int
 
     '''
     def deduce_not_zero(self):
@@ -225,14 +263,14 @@ class NumeralSequence(Operation, IrreducibleValue):
     def eval_equality(self, other, **defaults_config):
         if other == self:
             return Equals(self, self).conclude_via_reflexivity()
-        self_neq_other = self.not_equal(other)
+        self_neq_other = self.deduce_not_equal(other)
         return self_neq_other.unfold().equate_negated_to_false()
 
 
     @prover
-    def not_equal(self, other, **defaults_config):
+    def deduce_not_equal(self, other, **defaults_config):
         # same method works for Numeral and NumeralSequence.
-        return Numeral.not_equals(self, other)
+        return Numeral.deduce_not_equals(self, other)
     
     def _prefix(self, format_type):
         raise NotImplementedError("'_prefix' must be implemented for each "
@@ -286,19 +324,163 @@ class NumeralSequence(Operation, IrreducibleValue):
     def _function_formatted(self, format_type, **kwargs):
         return self._formatted(format_type, **kwargs)
 
-def is_literal_int(expr):
-    from proveit.numbers import Neg
+def is_numeric_natural(expr):
+    '''
+    Return True iff the 'expr' represents an explicit, numeric natural
+    number.
+    '''
     if isinstance(expr, Numeral):
         return True
     elif isinstance(expr, NumeralSequence):
         return expr.is_irreducible_value()
-    elif isinstance(expr, Neg) and is_literal_int(expr.operand):
+    return False    
+
+def is_numeric_int(expr):
+    '''
+    Return True iff the 'expr' represents an explicit, numeric integer.
+    '''
+    from proveit.numbers import Neg
+    return is_numeric_natural(expr) or (
+            isinstance(expr, Neg) and is_numeric_natural(expr.operand))
+
+def is_numeric_rational(expr):
+    '''
+    Return True iff 'expr' represents an explicit, numeric rational
+    number (as a numeric integer or fraction of numeric integers
+    with a nonzero denominator).
+    '''
+    from proveit.numbers import Neg, Div, zero
+    if isinstance(expr, Neg) and is_numeric_rational(expr.operand):
         return True
+    if isinstance(expr, Div):
+        return (is_numeric_int(expr.numerator) and
+                is_numeric_int(expr.denominator) and
+                expr.denominator != zero)
+    return is_numeric_int(expr)
+
+def numeric_rational_ints(expr):
+    '''
+    Return the integer numerator and denominator of a numeric rational.
+    Never returns a negative denominator (multiplies top and bottom
+    by -1 to avoid that).
+    '''
+    from proveit.numbers import Neg, Div
+    sign = 1
+    while isinstance(expr, Neg):
+        sign *= -1
+        expr = expr.operand
+    if isinstance(expr, Div):
+        numer, denom = expr.numerator.as_int(), expr.denominator.as_int()
+        if denom < 0:
+            # The denominator is negative; multiply top and bottom
+            # by negative 1.
+            return -numer, -denom
+        return numer*sign, denom
+    return expr.as_int()*sign, 1
+
+def simplified_numeric_rational(numer_int, denom_int):
+    '''
+    Given a numerator and a denominator as integers, return
+    an Expression of the equivalent irreducible rational.
+    '''
+    from proveit.numbers import num, Div, Neg
+    # Extract the sign.
+    sign = 1
+    if numer_int < 0:
+        sign *= -1
+        numer_int *= -1
+    if denom_int < 0:
+        sign *= -1
+        denom_int *= -1
+    # Find the greatest common divisor and divide it out.
+    gcd = int(math.gcd(numer_int, denom_int))
+    numer_int = numer_int // gcd
+    denom_int = denom_int // gcd
+    # Build and return the expression.
+    if denom_int == 1:
+        rational = num(numer_int)
+    else:
+        rational = Div(num(numer_int), num(denom_int))    
+    if sign == -1:
+        return Neg(rational)
+    return rational
+
+def not_equal_numeric_rationals(a, b):
+    '''
+    Return True iff a and b are numeric rational expressions that
+    are not equal to each other.
+    '''
+    if is_numeric_rational(a) and is_numeric_rational(b):
+        if numeric_rational_ints(a) != numeric_rational_ints(b):
+            return True
     return False
 
-def is_literal_rational(expr):
-    from proveit.numbers import Div
-    if isinstance(expr, Div):
-        return (is_literal_int(expr.numerator) and
-                is_literal_int(expr.denominator))
-    return is_literal_int(expr)
+'''
+Comparators for numeric integers/rationals.
+'''
+
+def less_numeric_ints(a, b):
+    '''
+    Return True iff a < b.
+    a and b must be numeric integer expressions.
+    '''
+    if not (is_numeric_int(a) and is_numeric_int(b)):
+        raise ValueError("Both arguments to 'less_numeric_ints' should "
+                         "be numeric ints, got %s and %s"%(a, b))
+    return a.as_int() < b.as_int()
+
+def less_eq_numeric_ints(a, b):
+    '''
+    Return True iff a ≤ b.
+    a and b must be numeric integer expressions.
+    '''
+    if not (is_numeric_int(a) and is_numeric_int(b)):
+        raise ValueError("Both arguments to 'less_numeric_ints' should "
+                         "be numeric ints, got %s and %s"%(a, b))
+    return a.as_int() <= b.as_int()
+
+def _compare_numeric_rationals(a, b, comparator):
+    '''
+    Helper for less_numeric_rationals and less_eq_numeric_rationals.
+    '''
+    if not (is_numeric_rational(a) and is_numeric_rational(b)):
+        raise ValueError(
+                "Both arguments to '_compare_numeric_rationals' should "
+                "be numeric rationals, got %s and %s"%(a, b))
+    a_numer, a_denom = numeric_rational_ints(a)
+    b_numer, b_denom = numeric_rational_ints(b)
+    assert a_denom > 0
+    assert b_denom > 0
+    # Multiply both sides by both denominators:
+    return comparator(a_numer*b_denom, b_numer*a_denom)
+
+def less_numeric_rationals(a, b):
+    '''
+    Return True iff a < b.
+    a and b must be numeric rational expressions.
+    '''
+    return _compare_numeric_rationals(a, b, lambda x, y: x < y)
+
+def less_eq_numeric_rationals(a, b):
+    '''
+    Return True iff a ≤ b.
+    a and b must be numeric rational expressions.
+    '''
+    return _compare_numeric_rationals(a, b, lambda x, y: x <= y)
+
+@prover
+def deduce_not_equal_numeric_rationals(lhs, rhs, **defaults_config):
+    '''
+    Assuming a and b are numeric rationals, prove and return that
+    a ≠ b.
+    '''
+    from proveit.numbers.ordering import less_is_not_eq
+    if less_numeric_rationals(lhs.canonical_form(), rhs.canonical_form()):
+        _a, _b = lhs, rhs
+    else:
+        _a, _b = rhs, lhs
+    not_eq_stmt = less_is_not_eq.instantiate({a: _a, b: _b})
+    if not_eq_stmt.lhs != lhs:
+        # We need to reverse the statement.
+        return not_eq_stmt.derive_reversed()
+    return not_eq_stmt

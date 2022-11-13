@@ -1,5 +1,5 @@
 from .universality import Forall
-from .existence import Exists, NotExists
+from .existence import Exists, NotExists, UniqueExists
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

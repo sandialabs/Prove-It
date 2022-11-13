@@ -1,7 +1,7 @@
 from proveit import (Function, Literal, 
                      relation_prover, equality_prover, prover)
 from proveit import b, n, j, k, x
-from proveit.logic import Equals, deduce_equal_or_not
+from proveit.logic import Equals, NotEquals, deduce_equal_or_not
 from proveit.numbers import one, Complex
 from proveit.relation import TransRelUpdater
 
@@ -213,9 +213,47 @@ class NumKet(Function):
                                                 vec_space))
         return membership
 
+    def readily_equal(self, rhs):
+        '''
+        Readily equal if the num and size of NumKets are the same.
+        '''
+        if not isinstance(rhs, NumKet):
+            return False # Must both be NumKets
+        if self.size != rhs.size:
+            # Must have identical sizes in our implementation
+            return False
+        return Equals(self.num, rhs.num).readily_provable()
+
+    def readily_not_equal(self, rhs):
+        '''
+        Readily not equal the size of the NumKets are the same but
+        the num is different.
+        '''
+        if not isinstance(rhs, NumKet):
+            return False # Must both be NumKets
+        if self.size != rhs.size:
+            # Must have identical sizes in our implementation
+            return False
+        return NotEquals(self.num, rhs.num).readily_provable()
+
+    @equality_prover('equated', 'equate')
+    def deduce_equal(self, rhs, **defaults_config):
+        from . import num_ket_eq
+        return self._deduce_equal_or_not(rhs, eq_thm=num_ket_eq)
+
+    @relation_prover
+    def deduce_not_equal(self, rhs, **defaults_config):
+        from . import num_ket_neq
+        return self._deduce_equal_or_not(rhs, neq_thm=num_ket_neq)        
+
     @relation_prover
     def deduce_equal_or_not(self, other_ket, **defaults_config):
         from . import num_ket_eq, num_ket_neq
+        return self._deduce_equal_or_not(
+                other_ket, eq_thm=num_ket_eq,  neq_thm=num_ket_neq)
+
+    def _deduce_equal_or_not(self, other_ket, *,
+                             eq_thm=None, neq_thm=None):
         if not isinstance(other_ket, NumKet):
             raise NotImplementedError(
                     "NumKet.deduce_equal_or_not only implemented for a "
@@ -225,12 +263,21 @@ class NumKet(Function):
                     "NumKet.deduce_equal_or_not only implemented for a "
                     "comparison with another NumKet of the same size "
                     "explicitly (same Expression).")
+        if neq_thm is None:
+            # Only prove the Equals case.
+            return eq_thm.instantiate(
+                    {n:self.size, j:self.num, k:other_ket.num})
+        if eq_thm is None:
+            # Only prove the NotEquals case.
+            return neq_thm.instantiate(
+                    {n:self.size, j:self.num, k:other_ket.num})
+        # May prove either the Equal or the NotEqual case as applicable.
         relation = deduce_equal_or_not(self.num, other_ket.num)
         if isinstance(relation.expr, Equals):
-            return num_ket_eq.instantiate(
+            return eq_thm.instantiate(
                     {n:self.size, j:self.num, k:other_ket.num})
         else:
-            return num_ket_neq.instantiate(
+            return neq_thm.instantiate(
                     {n:self.size, j:self.num, k:other_ket.num})
 
     @prover

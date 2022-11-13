@@ -1,3 +1,6 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
-proveit
+proveit.core_expr_types.tuples.range_from1_len
+proveit.core_expr_types.tuples.range_from1_len_typical_eq
+proveit.logic.equality.lhs_via_equality
+proveit.logic.equality.sub_right_side_into
 # THEOREMS AND THEORIES TO EXCLUDE:

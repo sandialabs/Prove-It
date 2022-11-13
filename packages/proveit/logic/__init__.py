@@ -1,9 +1,10 @@
 # Boolean arithmetic, equality, and set theory.
 
 from .booleans import Boolean, TRUE, FALSE
-from .booleans import And, Or, Not, Implies, Iff, compose, conclude_via_implication
+from .booleans import (And, Or, Not, Implies, Iff, 
+                       compose, conclude_via_implication)
 from .booleans import in_bool, BooleanSet, TrueLiteral, FalseLiteral
-from .booleans import Forall, Exists, NotExists
+from .booleans import Forall, Exists, NotExists, UniqueExists
 from .equality import (
     Equals,
     NotEquals,
@@ -33,9 +34,9 @@ from .classes import InClass, NotInClass, ClassMembership, ClassNonmembership
 
 import proveit
 
-if proveit.defaults.automation:
-    # Import some fundamental theorems without quantifiers that are
-    # imported when automation is used.
+if proveit.defaults.running_theory_notebook is None:
+    # Import some fundamental theorems without quantifiers when not 
+    # running an common/axioms/theorems theory notebook.
     # Fails before running the _axioms_ and _theorems_ notebooks for the first
     # time, but fine after that.
     from .booleans.negation import not_f, not_t

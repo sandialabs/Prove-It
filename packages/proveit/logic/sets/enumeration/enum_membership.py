@@ -1,7 +1,6 @@
 from proveit import (defaults, USE_DEFAULTS, ExprTuple,
                      prover, equality_prover, relation_prover)
-from proveit.logic import SetMembership, SetNonmembership
-from proveit.numbers import num
+from proveit.logic.sets.membership import SetMembership, SetNonmembership
 from proveit import a, b, c, m, n, x, y
 
 
@@ -43,9 +42,19 @@ class EnumMembership(SetMembership):
                 return in_enumerated_set.instantiate(
                     {m: _m, n: _n, a: _a, b: _b, c: _c}, auto_simplify=False)
             except (ProofFailure, ValueError):
-                _y = enum_elements
-                _n = _y.num_elements()
-                return fold.instantiate({n: _n, x: self.element, y:_y})
+                return self.conclude_as_folded()
+
+    @prover
+    def conclude_as_folded(self, **defaults_config):
+        from . import fold
+        enum_elements = self.domain.elements
+        _y = enum_elements
+        _n = _y.num_elements()
+        if fold.is_usable():
+            return fold.instantiate({n: _n, x: self.element, y:_y})
+        else:
+            # fold isn't usable; let's prove this by definition.
+            return self.definition().derive_left_via_equality()
 
     @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
@@ -66,6 +75,16 @@ class EnumMembership(SetMembership):
             _n = _y.num_elements()
             return enum_set_def.instantiate(
                     {n: _n, x: self.element, y: _y}, auto_simplify=False)
+
+    def as_defined(self):
+        '''
+        From the EnumMembership object [element in {a, ..., n}],
+        return [(element=a) or ... or (element=n)]
+        '''
+        from proveit.logic import Or, Equals
+        element = self.element
+        return Or(*self.domain.operands.map_elements(
+                lambda domain_elem : Equals(element, domain_elem)))
 
     @prover
     def derive_in_singleton(self, expression, **defaults_config):
@@ -117,6 +136,12 @@ class EnumMembership(SetMembership):
                     {n: _n, x: self.element, y: _y}, 
                     auto_simplify=False)
 
+    def readily_in_bool(self):
+        '''
+        Membership in an enumerated set is always boolean.
+        '''
+        return True
+
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import in_singleton_is_bool, in_enum_set_is_bool
@@ -150,7 +175,7 @@ class EnumNonmembership(SetNonmembership):
         '''
         Deduce and return
         |– [element not in {a, ..., n}] =
-           [(element != a) and ... and (element != n)]
+           [(element ≠ a) and ... and (element ≠ n)]
         where self is the EnumNonmembership object.
         '''
         from . import not_in_singleton_equiv, nonmembership_equiv
@@ -163,6 +188,16 @@ class EnumNonmembership(SetNonmembership):
             _n = _y.num_elements()
             return nonmembership_equiv.instantiate(
                     {n: _n, x: self.element, y: _y})
+
+    def as_defined(self):
+        '''
+        From the EnumMembership object [element not in {a, ..., n}],
+        return [(element≠a) and ... and (element≠n)]
+        '''
+        from proveit.logic import And, NotEquals
+        element = self.element
+        return And(*self.domain.operands.map_elements(
+                lambda domain_elem : NotEquals(element, domain_elem)))
 
     @prover
     def conclude(self, **defaults_config):
@@ -204,6 +239,12 @@ class EnumNonmembership(SetNonmembership):
             return nonmembership_unfold.instantiate(
                 {n: _n, x: self.element, y: _y},
                 auto_simplify=False)
+
+    def readily_in_bool(self):
+        '''
+        Nonmembership in an enumerated set is always boolean.
+        '''
+        return True
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):

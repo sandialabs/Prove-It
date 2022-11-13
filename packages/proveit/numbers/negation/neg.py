@@ -1,17 +1,18 @@
-from proveit import (Expression, Literal, Operation, maybe_fenced_string, 
-                     maybe_fenced_latex, InnerExpr, defaults, USE_DEFAULTS, 
+from proveit import (Expression, Literal, Operation, ExprRange,
+                     maybe_fenced_string, maybe_fenced_latex, 
+                     InnerExpr, defaults, USE_DEFAULTS, 
                      ProofFailure, relation_prover, equality_prover,
                      SimplificationDirectives)
 from proveit.logic import is_irreducible_value
 from proveit.numbers.number_sets import (
-        Natural, NaturalPos,
+        ZeroSet, Natural, NaturalPos,
         Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
         Rational, RationalNonZero, RationalPos, RationalNeg,
         RationalNonNeg, RationalNonPos,
         Real, RealNonZero, RealPos, RealNeg, RealNonNeg, RealNonPos,
         Complex, ComplexNonZero)
 from proveit import a, b, c, i, j, m, n, x, y, B
-from proveit.numbers import (NumberOperation, deduce_number_set,
+from proveit.numbers import (NumberOperation, readily_provable_number_set,
                              standard_number_set)
 
 class Neg(NumberOperation):
@@ -23,6 +24,9 @@ class Neg(NumberOperation):
 
     def __init__(self, A, *, styles=None):
         NumberOperation.__init__(self, Neg._operator_, A, styles=styles)
+        if not hasattr(self, 'operand'):
+            raise ValueError("Neg must be unary! But we were given: {}".
+                    format(A))
 
     def style_options(self):
         '''
@@ -71,72 +75,109 @@ class Neg(NumberOperation):
             return False # double negation is reducible
         return is_irreducible_value(self.operand) and self.operand != zero
 
+    def _build_canonical_form(self):
+        '''
+        If negating a Mult with a nontrivial coefficient, pull the 
+        negation into its coefficient.
+        If negating an Add, distribute over the sum.
+        If negating a Neg, undo the double negation.
+        '''
+        from proveit.numbers import is_numeric_rational, zero, one, Add, Mult
+        canonical_operand = self.operand.canonical_form()
+        if canonical_operand == zero:
+            return zero # -0 = 0
+        if (isinstance(canonical_operand, Mult) and 
+                is_numeric_rational(canonical_operand.factors[0])):
+            # Apply the negation to the rational coefficient.
+            coef = canonical_operand.factors[0]
+            return Mult(Neg(coef).canonical_form(),
+                        *canonical_operand.factors
+                        .entries[1:]).canonical_form()
+        elif isinstance(canonical_operand, Add):
+            # Distribute the negation over the sum.
+            negated_terms = []
+            for term in canonical_operand.terms:
+                if isinstance(term, ExprRange):
+                    neg_term = ExprRange(term.parameter, Neg(term.body),
+                                         term.true_start_index,
+                                         term.true_end_index)
+                else:
+                    neg_term = Neg(term)
+                negated_terms.append(neg_term)
+            return Add(*negated_terms).canonical_form() 
+        elif isinstance(canonical_operand, Neg):
+            return canonical_operand.operand # double negation
+        elif is_numeric_rational(canonical_operand):
+            if canonical_operand != self.operand:
+                return Neg(canonical_operand)
+            return self
+        else:
+            # in the following, probably don't need the
+            # final canonical_form() method call at the end
+            return Mult(Neg(one), canonical_operand) #.canonical_form()
+
     @relation_prover
     def deduce_in_number_set(self, number_set, **defaults_config):
         '''
         given a number set, attempt to prove that the given expression
         is in that number set using the appropriate closure theorem
         '''
-        from . import (nat_closure, nat_pos_closure,
-                       int_closure, int_nonzero_closure,
-                       int_neg_closure, int_nonpos_closure,
-                       rational_closure, rational_nonzero_closure,
-                       rational_pos_closure, rational_neg_closure,
-                       rational_nonneg_closure, rational_nonpos_closure,
-                       real_closure, real_nonzero_closure,
-                       real_pos_closure, real_neg_closure,
-                       real_nonneg_closure, real_nonpos_closure,
-                       complex_closure, complex_nonzero_closure)
+        import proveit.numbers.negation as neg_pkg
+        thm = None
+        if number_set == ZeroSet:
+            thm = neg_pkg.neg_in_zero_set
         if number_set == Natural:
-            return nat_closure.instantiate({a: self.operand})
+            thm = neg_pkg.nat_closure
         elif number_set == NaturalPos:
-            return nat_pos_closure.instantiate({a: self.operand})
+            thm = neg_pkg.nat_pos_closure
         elif number_set == Integer:
-            return int_closure.instantiate({a: self.operand})
+            thm = neg_pkg.int_closure
         elif number_set == IntegerNonZero:
-            return int_nonzero_closure.instantiate({a: self.operand})
+            thm = neg_pkg.int_nonzero_closure
         elif number_set == IntegerNeg:
-            return int_neg_closure.instantiate({a: self.operand})
+            thm = neg_pkg.int_neg_closure
         elif number_set == IntegerNonPos:
-            return int_nonpos_closure.instantiate({a: self.operand})
+            thm = neg_pkg.int_nonpos_closure
         elif number_set == Rational:
-            return rational_closure.instantiate({a: self.operand})
+            thm = neg_pkg.rational_closure
         elif number_set == RationalNonZero:
-            return rational_nonzero_closure.instantiate({a: self.operand})
+            thm = neg_pkg.rational_nonzero_closure
         elif number_set == RationalPos:
-            return rational_pos_closure.instantiate({a: self.operand})
+            thm = neg_pkg.rational_pos_closure
         elif number_set == RationalNeg:
-            return rational_neg_closure.instantiate({a: self.operand})
+            thm = neg_pkg.rational_neg_closure
         elif number_set == RationalNonNeg:
-            return rational_nonneg_closure.instantiate({a: self.operand})
+            thm = neg_pkg.rational_nonneg_closure
         elif number_set == RationalNonPos:
-            return rational_nonpos_closure.instantiate({a: self.operand})
+            thm = neg_pkg.rational_nonpos_closure
         elif number_set == Real:
-            return real_closure.instantiate({a: self.operand})
+            thm = neg_pkg.real_closure
         elif number_set == RealNonZero:
-            return real_nonzero_closure.instantiate({a: self.operand})
+            thm = neg_pkg.real_nonzero_closure
         elif number_set == RealPos:
-            return real_pos_closure.instantiate({a: self.operand})
+            thm = neg_pkg.real_pos_closure
         elif number_set == RealNeg:
-            return real_neg_closure.instantiate({a: self.operand})
+            thm = neg_pkg.real_neg_closure
         elif number_set == RealNonNeg:
-            return real_nonneg_closure.instantiate({a: self.operand})
+            thm = neg_pkg.real_nonneg_closure
         elif number_set == RealNonPos:
-            return real_nonpos_closure.instantiate({a: self.operand})
+            thm = neg_pkg.real_nonpos_closure
         elif number_set == Complex:
-            return complex_closure.instantiate({a: self.operand})
+            thm = neg_pkg.complex_closure
         elif number_set == ComplexNonZero:
-            return complex_nonzero_closure.instantiate({a: self.operand})
+            thm = neg_pkg.complex_nonzero_closure
+        if thm is not None:
+            return thm.instantiate({a: self.operand})
         raise NotImplementedError(
             "No negation closure theorem for set %s" %str(number_set))
 
-    @relation_prover
-    def deduce_number_set(self, **defaults_config):
+    def readily_provable_number_set(self):
         '''
-        Prove membership of this expression in the most
-        restrictive standard number set we can readily know.
+        Return the most restrictive number set we can readily
+        prove contains the evaluation of this number operation.
         '''
         number_set_map = {
+            ZeroSet: ZeroSet,
             NaturalPos: IntegerNeg,
             IntegerNeg: NaturalPos,
             Natural: IntegerNonPos,
@@ -158,12 +199,13 @@ class Neg(NumberOperation):
             ComplexNonZero: ComplexNonZero,
             Complex: Complex
             }
-        operand_ns = deduce_number_set(self.operand).domain
+        operand_ns = readily_provable_number_set(self.operand)
+        if operand_ns is None: return None
         # check if operand_ns is not a standard number set
         if operand_ns not in number_set_map.keys():
             # try to replace term_ns with a std number set
             operand_ns = standard_number_set(operand_ns)
-        return self.deduce_in_number_set(number_set_map[operand_ns])
+        return number_set_map[operand_ns]
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,

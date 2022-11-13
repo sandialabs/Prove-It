@@ -431,7 +431,7 @@ class Theory:
                 # new capitalization (e.g., in Windows where
                 # capitalization can be flexible)
                 os.remove(filename)
-                with open(filename, 'w') as _f:
+                with open(filename, 'w', encoding='utf8') as _f:
                     _f.write(nb_str)
         return nb_str
 
@@ -444,7 +444,7 @@ class Theory:
         if it file was not in an expected format to be able
         to extract the title.
         '''
-        with open(filename, 'r') as _f:
+        with open(filename, 'r', encoding='utf8') as _f:
             nb_str = _f.read()
         proving_str = '"%proving '
         proving_str_idx = nb_str.find(proving_str)
@@ -459,7 +459,7 @@ class Theory:
             # Replace the name with the appropriate name.
             nb_str = (nb_str[:proving_str_idx] + proving_str +
                       theorem_name + nb_str[end_quote_idx:])
-            with open(filename, 'w') as _f:
+            with open(filename, 'w', encoding='utf8') as _f:
                 _f.write(nb_str)
         return nb_str
 
@@ -654,9 +654,9 @@ class TheoryPackage(ModuleType):
             return self._theory.get_common_expr(name)
         except (KeyError, OSError, TheoryException):
             import proveit
-            if proveit.defaults._running_proveit_notebook is not None:
+            if proveit.defaults._running_theory_notebook is not None:
                 running_theory, running_kind = \
-                    proveit.defaults._running_proveit_notebook
+                    proveit.defaults._running_theory_notebook
                 if running_kind == 'common':
                     # Failed to import a common expression while
                     # executing a common expression notebook.  Maybe the
@@ -706,11 +706,11 @@ class UnsetCommonExpressionPlaceholder(object):
         import proveit
         import_failure_filename = \
             proveit.defaults.import_failure_filename
-        assert proveit.defaults._running_proveit_notebook is not None, (
+        assert proveit.defaults._running_theory_notebook is not None, (
             "Should only use UnsetCommonExpressionPlaceholder when "
             "executing a common expression notebook.")
         running_theory, running_kind = \
-            proveit.defaults._running_proveit_notebook
+            proveit.defaults._running_theory_notebook
         assert self.theory.name != running_theory.name, (
             "Cannot reference %s.%s within the notebook that creates "
             "it." % (self.theory.name, self.name))

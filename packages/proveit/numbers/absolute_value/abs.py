@@ -1,11 +1,10 @@
 from proveit import (defaults, Literal, Operation, ExprRange, InnerExpr,
                      UnsatisfiedPrerequisites, ProofFailure, 
-                     USE_DEFAULTS, relation_prover,
-                     equality_prover)
+                     prover, relation_prover, equality_prover)
 from proveit import a, b, c, n, r, x, theta
 from proveit.logic import InSet
 from proveit.logic.sets import ProperSubset, SubsetEq
-from proveit.numbers import NumberOperation, deduce_number_set
+from proveit.numbers import NumberOperation, readily_provable_number_set
 
 
 class Abs(NumberOperation):
@@ -21,31 +20,69 @@ class Abs(NumberOperation):
 
     def latex(self, **kwargs):
         return r'\left|' + self.operand.latex() + r'\right|'
+    
+    def _build_canonical_form(self):
+        '''
+        Returns a form of this Abs that deterministically chooses
+        either Abs of the canonical form of the operand or its negation
+        since |x| = |-x|.
+        '''
+        from proveit.numbers import Neg
+        operand_cf = self.operand.canonical_form()
+        neg_operand_cf = Neg(self.operand).canonical_form()
+        if hash(operand_cf) < hash(neg_operand_cf):
+            return Abs(operand_cf) # Choose |x|
+        else:
+            return Abs(neg_operand_cf) # Choose |-x|
+    
+    def _deduce_canonically_equal(self, rhs):
+        '''
+        Prove Abs equal to 'rhs' asssuming they have the same canonical
+        form.
+        '''
+        from proveit.numbers import Neg
+        from proveit.logic import Equals
+        assert isinstance(rhs, Abs)
+        operand_cf = self.operand.canonical_form()
+        rhs_operand_cf = rhs.canonical_form()
+        if operand_cf == rhs_operand_cf:
+            # Prove equality using standard techniques.
+            return NumberOperation._deduce_canonically_equal(self, rhs)
+        else:
+            # Prove equality via |x| = |-x|.
+            assert (Neg(self.operand).canonical_form()==
+                    rhs.operand.canonical_form())
+            from . import abs_even_rev
+            _x = self.operand
+            replacements = [Equals(Neg(_x), rhs.operand).prove()]
+            return abs_even_rev.instantiate(
+                    {x:_x}, replacements=replacements, auto_simplify=False)
 
-    def not_equal(self, rhs, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_not_equal(self, rhs, **defaults_config):
         # accessed from conclude() method in not_equals.py
         from . import abs_not_eq_zero
         from proveit.logic import NotEquals
         from proveit.numbers import zero
         if rhs == zero:
-            return abs_not_eq_zero.instantiate(
-                {a: self.operand}, assumptions=assumptions)
-        raise NotEquals(self, zero).conclude_as_folded(assumptions)
+            return abs_not_eq_zero.instantiate({a: self.operand})
+        return NotEquals(self, rhs).conclude_as_folded()
 
-    def deduce_greater_than_equals_zero(self, assumptions=USE_DEFAULTS):
+    @prover
+    def deduce_greater_than_equals_zero(self, **defaults_config):
         from . import abs_is_non_neg
-        return abs_is_non_neg.instantiate(
-            {a: self.operand}, assumptions=assumptions)
+        return abs_is_non_neg.instantiate({a: self.operand})
 
     @equality_prover('distributed', 'distribute')
     def distribution(self, **defaults_config):
         '''
-        Equate this absolute value with its distribution over a product
-        or fraction.
+        Equate this absolute value with its distribution over a product,
+        fraction, or a sin() or cos().
         '''
         from . import abs_frac, abs_prod, abs_even
-        from proveit import n, x
+        from proveit import n, t, x
         from proveit.numbers import zero, Neg, Div, Mult
+        from proveit.trigonometry import Sin, Cos
         if isinstance(self.operand, Neg):
             return abs_even.instantiate({x: self.operand.operand})
         elif isinstance(self.operand, Div):
@@ -53,48 +90,44 @@ class Abs(NumberOperation):
             # original denom is not zero, and thus maintain that
             # property
             _b = self.operand.denominator
-            Abs(_b).not_equal(zero)
+            Abs(_b).deduce_not_equal(zero)
             return abs_frac.instantiate(
                 {a: self.operand.numerator, b: _b})
         elif isinstance(self.operand, Mult):
             _x = self.operand.operands
             _n = _x.num_elements()
             return abs_prod.instantiate({n: _n, x: _x})
+        elif isinstance(self.operand, Sin):
+            from proveit.trigonometry import abs_sin
+            _t = self.operand.operand
+            return abs_sin.instantiate({t: _t})
+        elif isinstance(self.operand, Cos):
+            from proveit.trigonometry import abs_cos
+            _t = self.operand.operand
+            return abs_cos.instantiate({t: _t})
         else:
             raise ValueError(
                 'Unsupported operand type for Abs.distribution() '
                 'method: ', str(self.operand.__class__))
 
     @equality_prover('abs_eliminated', 'abs_eliminate')
-    def abs_elimination(self, operand_type=None, **defaults_config):
+    def abs_elimination(self, **defaults_config):
         '''
         For some |x| expression, deduce either |x| = x (the default) OR
         |x| = -x (for operand_type = 'negative'). Assumptions may be
-        needed to deduce x >= 0 or x < 0, respectively.
+        needed to deduce x >= 0 or x <= 0, respectively.
         '''
-        from proveit.numbers import LessEq, zero
         from . import abs_non_neg_elim, abs_neg_elim
-        if operand_type is None:
-            # LessEq.sort uses a bidirectional search which should
-            # be fairly efficient, as long as there aren't too
-            # many known relationship directly or indirectly involving
-            # self.operand or zero.
-            relation_with_zero = LessEq.sort([zero, self.operand])
-            if relation_with_zero.normal_lhs == zero:
-                operand_type = 'non-negative'
-            else:
-                operand_type = 'negative'        
-        # deduce_non_neg(self.operand, assumptions) # NOT YET IMPLEMENTED
-        if operand_type is None or operand_type == 'non-negative':
-            return abs_non_neg_elim.instantiate({x: self.operand})
-        elif operand_type == 'negative':
-            return abs_neg_elim.instantiate({x: self.operand})
+        from proveit.numbers import LessEq, zero
+        operand = self.operand
+        if LessEq(zero, operand).readily_provable():
+            return abs_non_neg_elim.instantiate({x: operand})
+        elif LessEq(operand, zero).readily_provable():
+            return abs_neg_elim.instantiate({x: operand})
         else:
             raise ValueError(
                 "Unsupported operand type for Abs.abs_elimination() "
-                "method; operand type should be omitted or specified "
-                "as 'negative' or 'non-negative', but instead was "
-                "given as operand_type = {}.".format(operand_type))
+                "method; the sign of %s is not readily provable."%operand)
 
     @equality_prover('double_abs_eliminated', 'double_abs_eliminate')
     def double_abs_elimination(self, **defaults_config):
@@ -116,33 +149,33 @@ class Abs(NumberOperation):
         expression assuming the operand has been simplified.
         
         Handles a number of absolute value simplifications:
-            1. ||x|| = |x| given x is complex
-            2. |x| = x given x ≥ 0
-            3. |x| = -x given x ≤ 0
+             1. ||x|| = |x| given x is complex
+             2. |x| = x given x ≥ 0
+             3. |x| = -x given x ≤ 0
                              (may try to prove this if easy to do)
-            4. |-x| = |x|
-            5. |x_1 * ... * x_n| = |x_1| * ... * |x_n|
-            6. |a / b| = |a| / |b|
-            7. |exp(i a)| = 1 given a in Real
-            8. |r exp(i a) - r exp(i b)| = 2 r sin(|a - b|/2)
+             4. |-x| = |x|
+             5. |x_1 * ... * x_n| = |x_1| * ... * |x_n|
+             6. |a / b| = |a| / |b|
+             7. |exp(i a)| = 1 given a in Real
+             8. |r exp(i a) - r exp(i b)| = 2 r sin(|a - b|/2)
                 given a and b in Real.
-            9. |x_1 + ... + x_n| = +/-(x_1 + ... + x_n) if
-               the terms are known to be all non-negative
-               or all non-positive.
+             9. |x_1 + ... + x_n| = +/-(x_1 + ... + x_n) if
+                the terms are known to be all non-negative
+                or all non-positive.
+            10. |sin(t)| = sin|t| for any real t
+            11. |cos(t)| = cos|t| for any real t
         '''
         from proveit.logic import Equals
-        from proveit.numbers import e, Add, Neg, LessEq, Mult, Div, Exp
-        from proveit.numbers import zero, RealNonNeg, RealNonPos
+        from proveit.numbers import zero, e, Add, Neg, LessEq, Mult, Div, Exp
+        from proveit.numbers import (
+                RealNeg, RealPos, RealNonNeg, RealNonPos, Complex)
         from proveit.logic import EvaluationError, is_irreducible_value
+        from proveit.trigonometry import Cos, Sin
                 
         if is_irreducible_value(self.operand):
             if isinstance(self.operand, Neg):
                 # |-x| where 'x' is a literal.
                 return self.distribution()
-            else:
-                # If the operand is irreducible, we can just use 
-                # abs_elimination.
-                return self.abs_elimination()
         elif must_evaluate:
             # The simplification of the operands may not have
             # worked hard enough.  Let's work harder if we
@@ -155,12 +188,10 @@ class Abs(NumberOperation):
 
         # Check if we have an established relationship between
         # self.operand and zero.
-        try:
-            deduce_number_set(self.operand)
-        except UnsatisfiedPrerequisites:
-            pass
-        if (LessEq(zero, self.operand).proven() or
-                LessEq(self.operand, zero).proven()):
+        operand_ns = readily_provable_number_set(self.operand, 
+                                                 default=Complex)
+        if RealNonPos.readily_includes(operand_ns) or (
+                RealNonNeg.readily_includes(operand_ns)):
             # Either |x| = x or |x| = -x depending upon the sign
             # of x (comparison with zero).
             return self.abs_elimination()
@@ -204,9 +235,9 @@ class Abs(NumberOperation):
                 # Note that "not proven" is not the same as "disproven".
                 # Not proven means there is something we do not know.
                 # Disproven means that we do know the converse.
-                if all_nonneg and not LessEq(zero, term).proven():
+                if all_nonneg and not LessEq(zero, term).readily_provable():
                     all_nonneg = False
-                if all_nonpos and not LessEq(term, zero).proven():
+                if all_nonpos and not LessEq(term, zero).readily_provable():
                     all_nonpos = False
             if all_nonpos:
                 InSet(self.operand, RealNonPos).prove()
@@ -216,6 +247,12 @@ class Abs(NumberOperation):
                 # Do another pass now that we know the sign of
                 # the operand.
                 return self.shallow_simplification()
+
+        # |sin(t)| = sin|t| for any real t
+        # |cos(t)| = cos|t| for any real t
+        if (isinstance(self.operand, Sin)
+            or isinstance(self.operand, Cos)):
+            return self.distribution()
 
         # Default is no simplification.
         return Equals(self, self).prove()
@@ -244,28 +281,27 @@ class Abs(NumberOperation):
         attempt to prove that the given expression is in that number
         set using the appropriate closure theorem.
         '''
-        from proveit.numbers.absolute_value import (
-            abs_integer_closure, abs_integer_nonzero_closure, 
-            abs_rational_closure, abs_rational_nonzero_closure,
-            abs_complex_closure, abs_nonzero_closure)
+        import proveit.numbers.absolute_value as abs_pkg
         from proveit.numbers import (
-            Natural, NaturalPos, Integer, IntegerNonZero,
+            ZeroSet, Natural, NaturalPos, Integer, IntegerNonZero,
             Rational, RationalNonZero, RationalPos, RationalNonNeg,
             Real, RealNonNeg, RealPos, RealNonZero, ComplexNonZero)
 
         thm = None
-        if number_set in (NaturalPos, IntegerNonZero):
-            thm = abs_integer_nonzero_closure
+        if number_set == ZeroSet:
+            thm = abs_pkg.abs_zero_closure
+        elif number_set in (NaturalPos, IntegerNonZero):
+            thm = abs_pkg.abs_integer_nonzero_closure
         elif number_set in (Integer, Natural):
-            thm = abs_integer_closure
+            thm = abs_pkg.abs_integer_closure
         elif number_set in (RationalPos, RationalNonZero):
-            thm = abs_rational_nonzero_closure
+            thm = abs_pkg.abs_rational_nonzero_closure
         elif number_set in (Rational, RationalNonNeg):
-            thm = abs_rational_closure
+            thm = abs_pkg.abs_rational_closure
         elif number_set in (RealPos, RealNonZero, ComplexNonZero):
-            thm = abs_nonzero_closure            
+            thm = abs_pkg.abs_nonzero_closure            
         else:
-            thm = abs_complex_closure
+            thm = abs_pkg.abs_complex_closure
 
         if thm is not None:
             in_set = thm.instantiate({a: self.operand})
@@ -284,14 +320,14 @@ class Abs(NumberOperation):
         # but we don't have specific thms for those supersets Y.
         # If so, use the appropiate thm to determine that self is in X,
         # then prove that self must also be in Y since Y contains X.
-        if SubsetEq(Real, number_set).proven():
-            abs_complex_closure.instantiate({a: self.operand})
+        if SubsetEq(Real, number_set).readily_provable():
+            abs_pkg.abs_complex_closure.instantiate({a: self.operand})
             return InSet(self, number_set).prove()
-        if SubsetEq(RealPos, number_set).proven():
-            abs_nonzero_closure.instantiate({a: self.operand})
+        if SubsetEq(RealPos, number_set).readily_provable():
+            abs_pkg.abs_nonzero_closure.instantiate({a: self.operand})
             return InSet(self, number_set).prove()
-        if SubsetEq(RealNonNeg, number_set).proven():
-            abs_complex_closure_non_neg_real.instantiate({a: self.operand})
+        if SubsetEq(RealNonNeg, number_set).readily_provable():
+            abs_pkg.abs_complex_closure_non_neg_real.instantiate({a: self.operand})
             return InSet(self, number_set).prove()
 
         # otherwise, we just don't have the right thm to make it work
@@ -299,31 +335,36 @@ class Abs(NumberOperation):
             "'Abs.deduce_in_number_set()' not implemented for "
             "the %s set" % str(number_set))
 
-    @relation_prover
-    def deduce_number_set(self, **defaults_config):
+    def readily_provable_number_set(self):
         '''
-        Prove membership of this expression in the most
-        restrictive standard number set we can readily know.
+        Return the most restrictive number set we can readily
+        prove contains the evaluation of this number operation.
         '''
         from proveit.numbers import (
-            Integer, IntegerNonZero, NaturalPos, Natural,
+            ZeroSet, Integer, IntegerNonZero, NaturalPos, Natural,
             Rational, RationalNonZero, RationalPos,
-            RationalNonNeg, Real, RealNonNeg, RealPos,
+            RationalNonNeg, Real, RealNonNeg, RealPos, RealNonZero,
             ComplexNonZero, Complex)
-        operand_ns = deduce_number_set(self.operand).domain
-        if IntegerNonZero.includes(operand_ns):
-            return self.deduce_in_number_set(NaturalPos)
-        if Integer.includes(operand_ns):
-            return self.deduce_in_number_set(Natural)
-        if RationalNonZero.includes(operand_ns):
-            return self.deduce_in_number_set(RationalPos)
-        if Rational.includes(operand_ns):
-            return self.deduce_in_number_set(RationalNonNeg)
-        if ComplexNonZero.includes(operand_ns):
-            return self.deduce_in_number_set(RealPos)
-        return self.deduce_in_number_set(RealNonNeg)
-        
-
+        operand_ns = readily_provable_number_set(self.operand,
+                                                 default=Complex)
+        if operand_ns is None: return None
+        if operand_ns == ZeroSet: return ZeroSet
+        if IntegerNonZero.readily_includes(operand_ns):
+            return NaturalPos
+        if Integer.readily_includes(operand_ns):
+            return Natural
+        if RationalNonZero.readily_includes(operand_ns):
+            return RationalPos
+        if Rational.readily_includes(operand_ns):
+            return RationalNonNeg
+        if RealNonZero.readily_includes(operand_ns):
+            return RealPos
+        if Real.readily_includes(operand_ns):
+            return RealNonNeg
+        if ComplexNonZero.readily_includes(operand_ns):
+            return RealPos
+        return RealNonNeg
+    
     @equality_prover('unit_length_simplified', 'unit_length_simplify')
     def unit_length_simplification(self, **defaults_config):
         '''
@@ -439,6 +480,7 @@ class Abs(NumberOperation):
         InSet(self, RealPos).prove()
         return greater(self, zero).prove()
 
+"""
 def is_equal_to_or_subset_eq_of(
         number_set, equal_sets=None, subset_sets=None, subset_eq_sets=None,
         assumptions=None):
@@ -464,10 +506,12 @@ def is_equal_to_or_subset_eq_of(
                 return True
     if subset_eq_sets is not None:
         for temp_set in subset_eq_sets:
-            if SubsetEq(number_set, temp_set).proven(assumptions):
+            if SubsetEq(number_set, temp_set).readily_provable(assumptions):
                 return True
     if subset_sets is not None:
         for temp_set in subset_sets:
-            if ProperSubset(number_set, temp_set).proven(assumptions):
+            if ProperSubset(number_set, 
+                            temp_set).readily_provable(assumptions):
                 return True
     return False
+"""

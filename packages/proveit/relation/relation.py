@@ -3,6 +3,7 @@ from functools import wraps
 from proveit import Expression, Operation, StyleOptions
 from proveit import (defaults, USE_DEFAULTS, Judgment, ProofFailure,
                      prover)
+from proveit.util import OrderedSet
 from .sorter import TransitivitySorter
 
 
@@ -37,6 +38,7 @@ class Relation(Operation):
         '''
         from proveit.logic import Equals, evaluation_or_simplification
         normal_lhs, normal_rhs = self.normal_lhs, self.normal_rhs
+        
         normal_lhs_simplification = evaluation_or_simplification(normal_lhs)
         normal_rhs_simplification = evaluation_or_simplification(normal_rhs)
         simp_normal_lhs = normal_lhs_simplification.rhs
@@ -53,6 +55,22 @@ class Relation(Operation):
             return normal_rhs_simplification.sub_left_side_into(
                     proven_relation.inner_expr().normal_rhs,
                     preserve_all=True)
+        
+        if not isinstance(self, Equals):
+            normal_lhs_cf = normal_lhs.canonical_form()
+            normal_rhs_cf = normal_rhs.canonical_form()
+            if (normal_lhs_cf != normal_lhs) or (normal_rhs_cf != normal_rhs):
+                # Prove the version using canonical forms.
+                relation = self.__class__(
+                        normal_lhs_cf, normal_rhs_cf,
+                        styles=self.get_styles())
+                if relation.readily_provable():
+                    relation = relation.prove(auto_simplify=False)
+                    relation = relation.inner_expr().normal_lhs.substitute(
+                            normal_lhs)
+                    return relation.inner_expr().normal_rhs.substitute(
+                            normal_rhs) 
+        
         raise ProofFailure(self, defaults.assumptions,
                            "Unable to conclude %s"%self)
 
@@ -176,19 +194,24 @@ class Relation(Operation):
         both_sides_str = '_both_sides'
         if name[-len(both_sides_str):] == both_sides_str:
             from proveit.logic import InSet
-            known_memberships = set()
-            if self.lhs in InSet.known_memberships:
-                known_memberships.update(InSet.known_memberships[self.lhs])
-            elif self.rhs in InSet.known_memberships:
-                known_memberships.update(InSet.known_memberships[self.rhs])
+            known_memberships = OrderedSet()
+            lhs, rhs = self.lhs, self.rhs
+            lhs_cf = lhs.canonical_form()
+            rhs_cf = rhs.canonical_form()
+            if lhs_cf in InSet.known_memberships_by_canonical_form:
+                known_memberships.update(
+                        InSet.known_memberships_by_canonical_form[lhs_cf])
+            elif rhs_cf in InSet.known_memberships_by_canonical_form:
+                known_memberships.update(
+                        InSet.known_memberships_by_canonical_form[rhs_cf])
             # These classes may contain '_both_sides' methods that could
             # be applied via the Relation (also attach corresponding
             # domains as applicable):
-            if self.lhs.__class__ == self.rhs.__class__:
-                classes_and_domains = [(self.lhs.__class__, None)]
+            if lhs.__class__ == rhs.__class__:
+                classes_and_domains = [(lhs.__class__, None)]
             else:
-                classes_and_domains = [(self.lhs.__class__, None),
-                                       (self.rhs.__class__, None)]
+                classes_and_domains = [(lhs.__class__, None),
+                                       (rhs.__class__, None)]
             _last_try_classes_and_domains = []
             for known_membership in known_memberships:
                 # We don't require that the known_membership
@@ -209,8 +232,10 @@ class Relation(Operation):
                     _class_attr = getattr(_class, method_name)
                     methods_and_domains_to_try.append((_class_attr, _domain))
             if len(methods_and_domains_to_try) == 0:
-                raise AttributeError("'%s' object has no attribute '%s'"
-                                     %(self.__class__, name))
+                raise AttributeError(
+                        "'%s' object has no attribute '%s' applicable to "
+                        "the types and known domains for the expressions "
+                        "on each side"%(self.__class__, name))
             @prover
             @wraps(methods_and_domains_to_try[0][0])
             def transform_both_sides(*args, **defaults_config):
@@ -232,7 +257,8 @@ class Relation(Operation):
                 # the sides (the left side, arbitrarily) is still in
                 # the domain so it will have a known membership for
                 # next time.
-                if _domain is not None:
+                if _domain is not None and (
+                        InSet(relation.lhs, _domain).readily_provable()):
                     InSet(relation.lhs, _domain).prove()
                 return relation
             # Use the doc string from the wrapped method 
@@ -251,20 +277,25 @@ class Relation(Operation):
         both_sides_str = '_both_sides'
         relation_name_str = '_of_' + self.__class__.__name__.lower()
         method_end_str = both_sides_str + relation_name_str
-        print('method_end_str', method_end_str)
+        #print('method_end_str', method_end_str)
         both_sides_methods = []
         from proveit.logic import InSet
-        known_memberships = set()
-        if self.lhs in InSet.known_memberships:
-            known_memberships.update(InSet.known_memberships[self.lhs])
-        elif self.rhs in InSet.known_memberships:
-            known_memberships.update(InSet.known_memberships[self.rhs])
+        lhs, rhs = self.lhs, self.rhs
+        known_memberships = OrderedSet()
+        lhs_cf = lhs.canonical_form()
+        rhs_cf = rhs.canonical_form()
+        if lhs_cf in InSet.known_memberships_by_canonical_form:
+            known_memberships.update(
+                    InSet.known_memberships_by_canonical_form[lhs_cf])
+        elif rhs_cf in InSet.known_memberships_by_canonical_form:
+            known_memberships.update(
+                    InSet.known_memberships_by_canonical_form[rhs_cf])
         # These classes may contain '_both_sides' methods that could
         # be applied via the Relation:
-        if self.lhs.__class__ == self.rhs.__class__:
-            classes = [self.lhs.__class__]
+        if lhs.__class__ == rhs.__class__:
+            classes = [lhs.__class__]
         else:
-            classes = [self.lhs.__class__, self.rhs.__class__]
+            classes = [lhs.__class__, rhs.__class__]
         classes += [known_membership.domain.__class__ for known_membership
                     in known_memberships]
         for _class in classes:
@@ -272,4 +303,4 @@ class Relation(Operation):
                 if name[-len(method_end_str):] == method_end_str:
                     both_sides_methods.append(name[:-len(relation_name_str)])
         return sorted(set(dir(self.__class__) + list(self.__dict__.keys())
-                          + both_sides_methods + ('lhs', 'rhs')))
+                          + both_sides_methods + ['lhs', 'rhs']))

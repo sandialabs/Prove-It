@@ -2,14 +2,15 @@ from proveit import (Judgment, Expression, Operation,
                      Function, Literal, IndexedVar,
                      ConditionalSet, Conditional, ExprRange,
                      ExprTuple, ExprArray, VertExprArray, ProofFailure,
-                     StyleOptions, free_vars, prover, relation_prover,
+                     StyleOptions, free_vars, prover, 
+                     equality_prover, relation_prover,
                      defaults, safe_dummy_var, TransRelUpdater)
 from proveit import i, j, k, l, m, n, A, B, U, V, N
 from proveit.core_expr_types import n_k
-from proveit.logic import Equals, deduce_equal_or_not, Set, InSet
+from proveit.logic import Equals, NotEquals, deduce_equal_or_not, Set, InSet
 from proveit.relation import Relation
 from proveit.numbers import (Interval, zero, one, two, num, Add, Neg, Mult,
-                             subtract, is_literal_int, quick_simplified_index)
+                             subtract, is_numeric_int, quick_simplified_index)
 from proveit.statistics import Prob
 from proveit.physics.quantum import var_ket_psi, var_ket_u, var_ket_v
 from proveit.physics.quantum.circuits.qcircuit_elements import (
@@ -828,12 +829,12 @@ class Qcircuit(Function):
 
         front_output_col = front_circuit.vert_expr_array[-1]
         if front_output_col.num_entries() > 1:
-            # We'll need to replaced the merged front output with the
+            # We'll need to replace the merged front output with the
             # desired split version.
             replacements.append(front_output_col.merger().derive_reversed())
         back_input_col = back_circuit.vert_expr_array[0]
         if back_input_col.num_entries() > 1:
-            # We'll need to replaced the merged back output with the
+            # We'll need to replace the merged back output with the
             # desired split version.
             replacements.append(back_input_col.merger().derive_reversed())
 
@@ -1071,7 +1072,6 @@ class Qcircuit(Function):
         # If we need to do mergers afterwards, don't auto-simplify.
         consolidation = thm.instantiate(repl_map, 
                                         replacements=replacements)
-        
         # Remerge where splits were necessary:
         if len(split_locations) > 0:
             consolidation = (
@@ -1309,6 +1309,62 @@ class Qcircuit(Function):
                              %prob_relation.lhs.operand)
         return prob_relation.lhs.operand
 
+    def readily_equal(self, rhs):
+        '''
+        Qcircuits are readily equal if all of the circuit elements
+        match entrywise.
+        '''
+        if not isinstance(rhs, Qcircuit):
+            return False
+        return Equals(self.vert_expr_array, 
+                      rhs.vert_expr_array).readily_provable()
+
+    def readily_not_equal(self, rhs):
+        '''
+        Qcircuits are readily equal if all of the circuit elements
+        align entrywise but there is at least on entry that doesn't
+        match.  If they are not equal, it does not mean that they
+        are not equivalent circuits with respect to QcircuitEquiv.
+        '''
+        if not isinstance(rhs, Qcircuit):
+            return False
+        return NotEquals(self.vert_expr_array,
+                         rhs.vert_expr_array).readily_provable()
+    
+    @equality_prover('equated', 'equate')
+    def deduce_equal(self, rhs, **defaults_config):
+        from . import qcircuit_eq
+        if not isinstance(rhs, Qcircuit):
+            raise TypeError(
+                    "Qcircuit.deduce_equal requires 'other' to be a "
+                    "Qcircuit.")
+        _k = self.vert_expr_array.num_elements()
+        _l = self.vert_expr_array[0].num_elements()
+        # Expand all of the other entries consecutively.
+        _A = ExprTuple(*[entry for column in self.vert_expr_array
+                         for entry in column])
+        _B = ExprTuple(*[entry for column in rhs.vert_expr_array
+                         for entry in column])
+        return qcircuit_eq.instantiate(
+            {k:_k, l:_l, A:_A, B:_B}).derive_consequent()
+    
+    @relation_prover
+    def deduce_not_equal(self, rhs, **defaults_config):
+        from . import qcircuit_neq
+        if not isinstance(rhs, Qcircuit):
+            raise TypeError(
+                    "Qcircuit.deduce_equal requires 'other' to be a "
+                    "Qcircuit.")
+        _k = self.vert_expr_array.num_elements()
+        _l = self.vert_expr_array[0].num_elements()
+        # Expand all of the other entries consecutively.
+        _A = ExprTuple(*[entry for column in self.vert_expr_array
+                         for entry in column])
+        _B = ExprTuple(*[entry for column in rhs.vert_expr_array
+                         for entry in column])
+        return qcircuit_neq.instantiate(
+            {k:_k, l:_l, A:_A, B:_B}).derive_consequent()
+
     @relation_prover
     def deduce_equal_or_not(self, other_qcircuit, **defaults_config):
         from . import qcircuit_eq, qcircuit_neq
@@ -1341,7 +1397,8 @@ class Qcircuit(Function):
         
     
     """
-    def replace_equiv_circ(self, current, new, assumptions=USE_DEFAULTS):
+    @prover
+    def replace_equiv_circ(self, current, new, **defaults_config):
         '''
         Given the piece that is to be replaced, and the piece it is being replaced with,
         use either space_equiv or time_equiv to prove the replacement.

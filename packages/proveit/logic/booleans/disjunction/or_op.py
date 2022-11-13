@@ -1,13 +1,14 @@
 from proveit import (Expression, Literal, Operation, ExprRange, 
-                     defaults, USE_DEFAULTS,
+                     defaults, USE_DEFAULTS, UnsatisfiedPrerequisites,
                      ProofFailure, InnerExpr, UnusableProof,
                      prover, relation_prover, equality_prover,
                      SimplificationDirectives, TransRelUpdater)
-from proveit import A, B, C, D, m, n
+from proveit import i, j, k, m, n, A, B, C, D, P
 from proveit.logic.booleans.booleans import in_bool
 from proveit.abstract_algebra.generic_methods import (
         apply_commutation_thm, apply_association_thm,
         apply_disassociation_thm, group_commutation, group_commute,
+        generic_permutation, deduce_equality_via_commutation, 
         prove_via_grouping_ranges)
 
 
@@ -50,6 +51,98 @@ class Or(Operation):
             except BaseException:
                 pass
 
+    def _readily_provable(self):
+        '''
+        Return True iff we should be able to conclude this disjunction.
+        Specifically, if any operand is provable, than the disjunction
+        should be provable.
+        '''
+        from . import (or_if_left, or_if_right, or_if_both,
+                       or_if_only_left, or_if_only_right)
+        from proveit.logic import And
+        from proveit.numbers import LessEq
+        operands = self.operands
+        if operands.is_double():
+            _A, _B = operands
+            provableA = _A.readily_provable()
+            provableB = _B.readily_provable()
+            if provableA and or_if_left.is_usable():
+                return True
+            if provableB and or_if_right.is_usable():
+                return True
+            if provableA and provableB and or_if_both.is_usable():
+                return True
+            disprovableA = _A.readily_disprovable()
+            disprovableB = _B.readily_disprovable()
+            if provableA and disprovableB and or_if_only_left.is_usable():
+                return True
+            if disprovableA and provableB and or_if_only_right.is_usable():
+                return True
+            return False
+        existential_quant = self._as_quantification()
+        if existential_quant is not None:
+            # See if the corresponding existential quantification is
+            # readily provable:
+            #   P(i) or ... or P(j) <=>
+            #   exists_{k in {i .. j}} P(k)
+            if existential_quant.readily_provable():
+                return True
+            # With improved existential automation, this wouldn't be
+            # necessary; but, as a special case, check if the range is
+            # non-empty and the conjunction is readily provable.
+            if LessEq(existential_quant.domain.lower_bound,
+                      existential_quant.domain.upper_bound).readily_provable():
+                if And(*operands).readily_provable():
+                    return True            
+            return False
+        for operand in self.operands:
+            if isinstance(operand, ExprRange):
+                if Or(operand).readily_provable():
+                    return True
+            elif operand.readily_provable():
+                return True
+        return False
+
+    def _readily_disprovable(self):
+        '''
+        Return True iff we should be able to conclude the negation
+        of this disjunction.
+        Specifically, if all operands are disprovable, than the 
+        negation of the disjunction should be provable.
+        '''
+        existential_quant = self._as_quantification()
+        if existential_quant is not None:
+            # See if the corresponding existential quantification is
+            # readily disprovable:
+            #   P(i) or ... or P(j) <=>
+            #   exists_{k in {i .. j}} P(k)
+            return existential_quant.readily_disprovable()
+        for operand in self.operands:
+            if isinstance(operand, ExprRange):
+                if not Or(operand).readily_disprovable():
+                    return False
+            elif not operand.readily_disprovable():
+                return False
+        return True
+
+    def _as_quantification(self):
+        '''
+        If this is a disjunction over a single ExprRange entry,
+        return the equivalent existential quantification:
+            P(i) or ... or P(j) <=> exists_{k in {i .. j}} P(k)
+        '''
+        from proveit import ExprRange
+        if (self.operands.num_entries() == 1 and
+                isinstance(self.operands[0], ExprRange)):
+            from proveit.logic import Exists
+            expr_range = self.operands[0]
+            existential_quant = Exists(
+                    expr_range.parameter,
+                    expr_range.body,
+                    condition = expr_range.parameter_condition())
+            return existential_quant
+        return None
+
     @prover
     def conclude(self, **defaults_config):
         '''
@@ -64,66 +157,51 @@ class Or(Operation):
             # should be proven via one of the imported theorems as a
             # simple special case
             return self.prove()
-        # Prove that the disjunction is true by proving that ANY of its
-        # operands is true.   In the first attempt, don't use automation
-        # to prove any of the operands so that  we don't waste time
-        # trying to prove operands when we already know one to be true.
-        use_automation_possibilities = (
-                [False, True] if defaults.automation else [False])
+        
+        if self.operands.is_double():
+            # See if we can prove this via the law of the excluded
+            # middle.
+            from proveit.logic import Not
+            _A = self.operands[0]
+            _B = self.operands[1]
+            _A_cf = _A.canonical_form()
+            _B_cf = _B.canonical_form()
+            if _B_cf == Not(_A_cf):
+                # Prove A or Not(A)
+                from proveit.logic.booleans import unfold_is_bool
+                replacements = []
+                if _B != Not(_A):
+                    replacements.append(Not(_A).deduce_canonically_equal(_B))
+                return unfold_is_bool.instantiate(
+                        {A:_A}, replacements=replacements)
+            elif _A_cf == Not(_B_cf):
+                # Prove Not(A) or A
+                return Or(_B, _A).prove().inner_expr().commute()
 
         if self.operands.contains_range():
             # There are ExprRange operands.
             if self.operands.num_entries()==1:
                 # Just a single ExprRange.
-                if And(self.operands.entries[0]).proven():
+                if And(self.operands.entries[0]).readily_provable():
                     # Trivally, if all of the operands are
                     # True then any of them are, as long as
                     # there is at list one (note,
                     # Or() = FALSE, so we shouldn't try to
                     # conclude Or() anyway).
-                    return self.conclude_any_via_all()                            
-                # Use DeMorgan's law.
-                return self.conclude_via_demorgans()
+                    return self.conclude_any_via_all()
+                # Conclude via the equivalent existential 
+                # quantification.
+                return self.conclude_over_expr_range()
             # Group each ExprRange operand, call conclude_negation,
             # then disassociate the ExprRange operands.
             return prove_via_grouping_ranges(
-                    self,
-                    lambda expr, **kwargs: expr.conclude(**kwargs))
+                    self, lambda expr, **kwargs: expr.conclude(**kwargs))
 
-        for use_automation_for_operand in use_automation_possibilities:
-            proven_operand_indices = []
-            for _k, operand in enumerate(self.operands):
-                try:
-                    operand.prove(automation=use_automation_for_operand)
-                    proven_operand_indices.append(_k)
-                    # possible way to prove it:
-                    self.conclude_via_example(operand)
-                except ProofFailure:
-                    pass
-            if self.operands.is_double() and len(proven_operand_indices) > 0:
-                # One or both of the two operands were known to be true
-                # (without automation).   Try a possibly simpler proof
-                # than conclude_via_example.
-                try:
-                    if len(proven_operand_indices) == 2:
-                        return self.conclude_via_both()
-                    elif proven_operand_indices[0] == 0:
-                        return self.conclude_via_only_left()
-                    else:
-                        return self.conclude_via_only_right()
-                except BaseException:
-                    pass
-            if len(proven_operand_indices) > 0:
-                try:
-                    # proven using conclude_via_example above
-                    # (unless or_if[Any,Left,Right] was not a usable
-                    # theorem, in which case this will fail and we
-                    # can simply try the default below)
-                    return self.prove(automation=False)
-                except UnusableProof:
-                    # or_if[Any,Left,Right] must not have been a usable
-                    # theorem; use the default below.
-                    break
+        for _k, operand in enumerate(self.operands):
+            if operand.readily_provable():
+                # With one provable operand, we can prove the 
+                # disjunction.
+                return self.conclude_via_example(operand)
 
         raise ProofFailure(self, defaults.assumptions,
                 "Or.conclude() has failed to find a proof for the "
@@ -147,7 +225,6 @@ class Or(Operation):
         from proveit.logic import Not, And
         if self.operands.num_entries() == 0:
             return  # No side-effects needed for [Or]()
-        yield self.derive_in_bool  # A or B or .. or .. Z in Boolean
         if self.operands.is_double():  # Not(A or B)
             yield self.deduce_not_left_if_neither  # Not(A)
             yield self.deduce_not_right_if_neither  # Not(B)
@@ -242,6 +319,47 @@ class Or(Operation):
         _A = self.operands
         _m = _A.num_elements()
         return any_if_all.instantiate({m:_m, A:_A})
+
+    @prover
+    def conclude_over_expr_range(self, **defaults_config):
+        '''
+        Conclude a conjunction over an ExprRange via the
+        equivalent existential quantification.
+        '''
+        from proveit import ExprRange, Lambda
+        from . import disjunction_from_quantification
+        if (self.operands.num_entries() != 1 or
+                not isinstance(self.operands[0], ExprRange)):
+            raise ValueError(
+                    "'Or.conclude_over_expr_range()' only allowed "
+                    "for a disjunction of the form "
+                    "P(i) or P(i+1) or .. or P(j) (i.e. a disjunction "
+                    "over a single ExprRange), but instead you have: {}".
+                    format(self))
+
+        the_expr_range = self.operands[0]
+        _i_sub = the_expr_range.true_start_index
+        _j_sub = the_expr_range.true_end_index
+        _k_sub = the_expr_range.parameter
+        _P_sub = Lambda(the_expr_range.parameter, the_expr_range.body)
+        impl =  disjunction_from_quantification.instantiate(
+            {i: _i_sub, j: _j_sub, k: _k_sub, P: _P_sub})
+        return impl.derive_consequent()
+
+    def _build_canonical_form(self):
+        '''
+        Returns a form of this operation in which the operands are 
+        in a deterministically sorted order used to determine equal 
+        expressions given commutativity of this operation under
+        appropriate conditions.
+        '''
+        return Or(*sorted([operand.canonical_form() for operand 
+                          in self.operands.entries], key=hash))
+
+    def _deduce_canonically_equal(self, rhs):
+        from proveit.logic import Equals
+        equality = Equals(self, rhs)
+        return deduce_equality_via_commutation(equality, one_side=self)
 
     @prover
     def derive_right_if_not_left(self, **defaults_config):
@@ -444,7 +562,8 @@ class Or(Operation):
         from proveit.logic import (Equals, FALSE, TRUE, EvaluationError,
                                    is_irreducible_value)
         # load in truth-table evaluations
-        from . import or_t_t, or_t_f, or_f_t, or_f_f
+        from . import (or_t_t, or_t_f, or_f_t, or_f_f,
+                       disjunction_eq_quantification)
         if self.operands.num_entries() == 0:
             from proveit.logic.booleans.disjunction import \
                 empty_disjunction_eval
@@ -471,6 +590,21 @@ class Or(Operation):
             return Equals(self, FALSE).prove()
 
         if must_evaluate:
+            if self.operands.contains_range():
+                if self.operands.num_entries() == 1:
+                    # Disjunction of a single ExprRange.  Convert to an
+                    # existential quantification and evaluate that.
+                    expr_range = self.operands[0]
+                    _i = expr_range.true_start_index
+                    _j = expr_range.true_end_index
+                    _P = expr_range.lambda_map
+                    conj_eq_quant = (disjunction_eq_quantification
+                                     .instantiate({i:_i, j:_j, P:_P},
+                                                  preserve_all=True))
+                    return conj_eq_quant.apply_transitivity(
+                            conj_eq_quant.rhs.evaluation())
+                return prove_via_grouping_ranges(
+                        self, lambda expr, **kwargs: expr.evaluation(**kwargs))
             if not all(is_irreducible_value(operand) for
                        operand in self.operands):
                 # The simplification of the operands may not have
@@ -544,6 +678,20 @@ class Or(Operation):
         from proveit.logic.booleans.implication import deny_via_contradiction
         return deny_via_contradiction(self, conclusion)
 
+    def readily_in_bool(self):
+        '''
+        Returns True if we can readily prove that all of the operands
+        are provably boolean and therefore this disjunction is 
+        provably boolean.
+        '''
+        from . import closure
+        from proveit.logic import And
+        if not self.operands.is_double() and not closure.is_usable():
+            return False
+        # The requirement for a conjunction is the same for a 
+        # disjunction -- all operands must be provably boolean.
+        return And.readily_in_bool(self)
+
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
@@ -569,11 +717,28 @@ class Or(Operation):
         '''
         from . import or_if_any, or_if_left, or_if_right
         index = self.operands.index(true_operand)
+        judgment = None
         if self.operands.is_double():
             if index == 0:
+                if self.operands[1].readily_provable():
+                    # May be a shorter proof
+                    judgment = self.conclude_via_both()
+                elif self.operands[1].readily_disprovable():
+                    # May be a shorter proof
+                    judgment = self.conclude_via_only_left()
+                if judgment is not None and not or_if_left.is_usable():
+                    return judgment
                 return or_if_left.instantiate(
                     {A: self.operands[0], B: self.operands[1]})
             elif index == 1:
+                if self.operands[0].readily_provable():
+                    # May be a shorter proof
+                    judgment = self.conclude_via_both()
+                elif self.operands[0].readily_disprovable():
+                    # May be a shorter proof
+                    judgment = self.conclude_via_only_right()    
+                if judgment is not None and not or_if_right.is_usable():
+                    return judgment
                 return or_if_right.instantiate(
                     {A: self.operands[0], B: self.operands[1]})
         _A, _B, _C = (self.operands[:index], self.operands[index],
@@ -759,6 +924,32 @@ class Or(Operation):
         '''
         return group_commute(
             self, init_idx,  final_idx, length, disassociate)
+
+    @equality_prover('moved', 'move')
+    def permutation_move(self, init_idx=None, final_idx=None,
+                         **defaults_config):
+        '''
+        Given numerical operands, deduce that this expression is equal 
+        to a form in which the operand
+        at index init_idx has been moved to final_idx.
+        For example, (a ∧ b · ... ∧ y ∧ z) = (a ∧ ... ∧ y ∧ b ∧ z)
+        via init_idx = 1 and final_idx = -2.
+        '''
+        return self.commutation(init_idx=init_idx, final_idx=final_idx)
+
+    @equality_prover('permuted', 'permute')
+    def permutation(self, new_order=None, cycles=None, **defaults_config):
+        '''
+        Deduce that this Add expression is equal to an Add in which
+        the terms at indices 0, 1, …, n-1 have been reordered as
+        specified EITHER by the new_order list OR by the cycles list
+        parameter. For example,
+            (a∨b∨c∨d).permutation_general(new_order=[0, 2, 3, 1])
+        and
+            (a∨b∨c∨d).permutation_general(cycles=[(1, 2, 3)])
+        would both return ⊢ (a∨b∨c∨d) = (a∨c∨d∨b).
+        '''
+        return generic_permutation(self, new_order, cycles)
 
     @equality_prover('associated', 'associate')
     def association(self, start_idx, length, **defaults_config):

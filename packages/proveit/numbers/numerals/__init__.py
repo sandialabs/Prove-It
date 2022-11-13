@@ -1,5 +1,14 @@
 from .numeral import (Numeral, NumeralSequence, 
-                      is_literal_int, is_literal_rational)
+                      is_numeric_natural, is_numeric_int, 
+                      is_numeric_rational,
+                      numeric_rational_ints,
+                      simplified_numeric_rational,
+                      less_numeric_ints,
+                      less_eq_numeric_ints,
+                      less_numeric_rationals,
+                      less_eq_numeric_rationals,
+                      not_equal_numeric_rationals,
+                      deduce_not_equal_numeric_rationals)
 #from .binaries import BinarySequence, binnum
 #from .hexidecimals import HexSequence, hexnum
 

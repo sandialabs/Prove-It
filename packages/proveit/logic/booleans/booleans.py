@@ -1,4 +1,4 @@
-from proveit import (Function, Literal, USE_DEFAULTS, ProofFailure,
+from proveit import (Function, Literal, ProofFailure, UnusableProof,
                      defaults, prover, relation_prover, equality_prover)
 from proveit.logic.irreducible_value import IrreducibleValue
 from proveit.logic.sets.membership import SetMembership, SetNonmembership
@@ -179,6 +179,18 @@ class BooleanMembership(SetMembership):
         if unfold_is_bool.is_usable():
             yield self.unfold
 
+    def _readily_provable(self):
+        '''
+        This Boolean membership is readily provable if the element
+        is readily provable or disprovable.
+        '''
+        element = self.element
+        if element.readily_provable() or element.readily_disprovable():
+            return True
+        if hasattr(element, 'readily_in_bool'):
+            return element.readily_in_bool()
+        return False
+
     @prover
     def conclude(self, **defaults_config):
         '''
@@ -245,6 +257,9 @@ class BooleanMembership(SetMembership):
         return from_excluded_middle.instantiate(
             {A: self.element, C: consequent}, preserve_expr=consequent)
 
+    def readily_in_bool(self):
+        return True
+
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
         from . import in_bool_is_bool
@@ -285,8 +300,17 @@ class TrueLiteral(Literal, IrreducibleValue):
         elif other == FALSE:
             return true_not_false.unfold().equate_negated_to_false()
 
+    def readily_not_equal(self, other):
+        '''
+        Return True iff 'other' is FALSE.
+        '''
+        from . import FALSE
+        if other==FALSE:
+            return True
+        return False
+
     @relation_prover
-    def not_equal(self, other, **defaults_config):
+    def deduce_not_equal(self, other, **defaults_config):
         from . import true_not_false
         from . import TRUE, FALSE
         if other == FALSE:
@@ -296,6 +320,9 @@ class TrueLiteral(Literal, IrreducibleValue):
                 "Cannot prove TRUE != TRUE since that statement is false")
         raise ProofFailure(
             "Inequality between TRUE and a non-boolean not defined")
+
+    def readily_in_bool(self):
+        return True
 
     @prover
     def deduce_in_bool(self, **defaults_config):
@@ -323,8 +350,17 @@ class FalseLiteral(Literal, IrreducibleValue):
         from proveit.logic.booleans.negation import not_false
         return not_false  # the negation of FALSE
 
+    def readily_not_equal(self, other):
+        '''
+        Return True iff 'other' is TRUE.
+        '''
+        from . import TRUE
+        if other==TRUE:
+            return True
+        return False
+
     @relation_prover
-    def not_equal(self, other, **defaults_config):
+    def deduce_not_equal(self, other, **defaults_config):
         from _.theorems_ import false_not_true
         from . import TRUE, FALSE
         if other == TRUE:
@@ -334,6 +370,9 @@ class FalseLiteral(Literal, IrreducibleValue):
                 "Cannot prove FALSE != FALSE since that statement is false")
         raise ProofFailure(
             "Inequality between FALSE and a non-boolean not defined")
+
+    def readily_in_bool(self):
+        return True
 
     @prover
     def deduce_in_bool(self, **defaults_config):

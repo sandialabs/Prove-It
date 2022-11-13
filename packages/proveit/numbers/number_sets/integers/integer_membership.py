@@ -21,6 +21,7 @@ class IntegerMembership(NumberMembership):
         Yield side-effects when proving 'n in Integer' for a given n.
         '''
         yield self.derive_element_in_rational
+        
         # Added but commented the following out while we debate the
         # wisdom of further side-effects
         # yield lambda: self.deduce_member_in_real(member)
@@ -52,8 +53,12 @@ class IntegerNonZeroMembership(NumberMembership):
     def __init__(self, element):
         NumberMembership.__init__(self, element, IntegerNonZero)
 
+    def _readily_provable(self):
+        return NumberMembership._readily_provable(self)
+
     @prover
     def conclude(self, **defaults_config):
+        # Use proven, not readily provable here:
         if (InSet(self.element, Integer).proven() and
                 NotEquals(self.element, zero).proven()):
             return self.conclude_as_last_resort()
@@ -114,12 +119,29 @@ class IntegerNegMembership(NumberMembership):
     def __init__(self, element):
         NumberMembership.__init__(self, element, IntegerNeg)
     
+    def _readily_provable(self):
+        return NumberMembership._readily_provable(self)
+
     @prover
     def conclude(self, **defaults_config):
+        # Use proven, not readily provable here:
         if (InSet(self.element, Integer).proven() and
                 Less(self.element, zero).proven()):
             return self.conclude_as_last_resort()
+        if (InSet(self.element, IntegerNonPos).proven() and
+                NotEquals(self.element, zero).readily_provable()):
+            return self.conclude_via_nonzero()
         return NumberMembership.conclude(self)
+
+    @prover
+    def conclude_via_nonzero(self, **defaults_config):
+        '''
+        Conclude element in IntegerNeg by proving it is a non-positive
+        integer and nonzero.
+        '''
+        from proveit.numbers.number_sets.integers import (
+            nonzero_nonpos_int_is_neg_int)
+        return nonzero_nonpos_int_is_neg_int.instantiate({a:self.element})
 
     @prover
     def conclude_as_last_resort(self, **defaults_config):
@@ -192,6 +214,7 @@ class IntegerNonPosMembership(NumberMembership):
 
     @prover
     def conclude(self, **defaults_config):
+        # Use proven, not readily provable here:
         if (InSet(self.element, Integer).proven() and
                 LessEq(self.element, zero).proven()):
             return self.conclude_as_last_resort()

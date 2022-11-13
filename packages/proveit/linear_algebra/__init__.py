@@ -20,7 +20,8 @@ from proveit._core_.theory import TheoryPackage
 sys.modules[__name__] = TheoryPackage(__name__, __file__, locals())
 
 import proveit
-if proveit.defaults.automation:
-    # Import some fundamental theorems without quantifiers
+if proveit.defaults.running_theory_notebook is None:
+    # Import some fundamental theorems without quantifiers when not 
+    # running an common/axioms/theorems theory notebook.
     from . import (rational_set_is_vec_space, real_set_is_vec_space,
                    complex_set_is_vec_space)

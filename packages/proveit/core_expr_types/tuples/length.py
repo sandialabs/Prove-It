@@ -1,6 +1,6 @@
 from proveit import (Expression, Lambda, Operation, Literal, safe_dummy_var,
                      single_or_composite_expression, ExprTuple,
-                     ExprRange, InnerExpr, defaults, USE_DEFAULTS,
+                     ExprRange, InnerExpr, defaults,
                      equality_prover, prover)
 from proveit import a, b, c, d, e, f, g, h, i, j, k, n, x, y
 
@@ -190,13 +190,13 @@ class Len(Operation):
                 # If the start and end are literal ints and form an
                 # empty range, then it should be straightforward to
                 # prove that the range is empty.
-                from proveit.numbers import is_literal_int, Add
+                from proveit.numbers import is_numeric_int, Add
                 from proveit.logic import Equals
                 from proveit import m
                 _m = entries[0].true_start_index
                 _n = entries[0].true_end_index
                 empty_req = Equals(Add(_n, one), _m)
-                if is_literal_int(_m) and is_literal_int(_n):
+                if is_numeric_int(_m) and is_numeric_int(_n):
                     if _n.as_int() + 1 == _m.as_int():
                         empty_req.prove()
                 if empty_req.proven():
@@ -214,10 +214,10 @@ class Len(Operation):
             _j = [entry_end(entry) for entry in entries]
             _n = Len(_i).computed()
 
-            from proveit.numbers import is_literal_int
+            from proveit.numbers import is_numeric_int
             if len(entries) == 1 and isinstance(entries[0], ExprRange):
-                if (is_literal_int(entries[0].true_start_index) and 
-                        is_literal_int(entries[0].true_end_index)):
+                if (is_numeric_int(entries[0].true_start_index) and 
+                        is_numeric_int(entries[0].true_end_index)):
                     if (entries[0].true_end_index.as_int() + 1 
                             == entries[0].true_start_index.as_int()):
                         return empty_range(_i[0], _j[0], _f)
@@ -268,7 +268,7 @@ class Len(Operation):
         '''
         Attempt to prove that this Len expression is equal to
         something of the form |(i, ..., j)|.
-        More generally, use "deduce_equality" (which calls this
+        More generally, use "deduce_equal" (which calls this
         method when it can).
         Examples of handled cases:
             |(a, b, c)| = |(1, ..., 3)|
@@ -341,34 +341,37 @@ class Len(Operation):
                     {f: range_lambda, x: entries[1],
                      i: range_start, j: range_end}, auto_simplify=False)
         raise NotImplementedError("Len.typical_eq not implemented for "
-                                  "this case: %s.  Try Len.deduce_equality "
+                                  "this case: %s.  Try Len.deduce_equal "
                                   "instead." % self)
 
+    def readily_equal(self, rhs):
+        '''
+        ToDo: treat some simple cases as readily provable.
+        '''
+        return False
+
     @equality_prover('equated', 'equate')
-    def deduce_equality(self, equality, **defaults_config):
+    def deduce_equal(self, rhs, **defaults_config):
         '''
         Prove the given equality with self on the left-hand side.
-        
         '''
         from proveit.logic import Equals
-        if not isinstance(equality, Equals):
-            raise ValueError("The 'equality' should be an Equals expression")
-        if equality.lhs != self:
-            raise ValueError("The left side of 'equality' should be 'self'")
+        equality = Equals(self, rhs)
         if equality.proven():
-            return equality # Already proven.
+            return equality.prove() # Already proven.
+        lhs = self
         with defaults.temporary() as temp_defaults:
             # Auto-simplify everything except the left and right sides
             # of the equality.
-            temp_defaults.preserved_exprs={equality.lhs, equality.rhs}
+            temp_defaults.preserved_exprs={lhs, rhs}
             temp_defaults.auto_simplify=True
 
             # Try a special-case "typical equality".
-            if isinstance(equality.rhs, Len):
-                if (isinstance(equality.rhs.operands, ExprTuple)
+            if isinstance(rhs, Len):
+                if (isinstance(rhs.operands, ExprTuple)
                         and isinstance(self.operands, ExprTuple)):
-                    if (equality.rhs.operands.num_entries() == 1 and
-                            isinstance(equality.rhs.operands[0], ExprRange)):
+                    if (rhs.operands.num_entries() == 1 and
+                            isinstance(rhs.operands[0], ExprRange)):
                         try:
                             eq = self.typical_eq()
                             if eq.expr == equality:
@@ -378,23 +381,24 @@ class Len(Operation):
     
             # Next try to compute each side, simplify each side, and
             # prove they are equal.
-            lhs_computation = equality.lhs.computation()
-            if isinstance(equality.rhs, Len):
+            lhs_computation = lhs.computation()
+            if isinstance(rhs, Len):
                 # Compute both lengths and see if we can prove that they
                 # are equal.
-                rhs_computation = equality.rhs.computation()
+                rhs_computation = rhs.computation()
                 eq = Equals(lhs_computation.rhs, rhs_computation.rhs)
                 if eq.lhs == eq.rhs:
                     # Trivial reflection
                     eq = eq.conclude_via_reflexivity()
                 else:
-                    eq = eq.conclude_via_transitivity()
+                    # eq = eq.conclude_via_transitivity()
+                    eq = eq.prove() # will use canonical forms
                 return Equals.apply_transitivities(
                     [lhs_computation, eq, rhs_computation])
             else:
                 # Compute the lhs length and see if we can prove that it is
                 # equal to the rhs.
-                eq = Equals(lhs_computation.rhs, equality.rhs)
+                eq = Equals(lhs_computation.rhs, rhs)
                 if eq.lhs == eq.rhs:
                     # Trivial reflection
                     eq = eq.conclude_via_reflexivity()
@@ -428,9 +432,19 @@ class Len(Operation):
         else:
             return Operation.shallow_simplification(self)
 
-    def deduce_in_number_set(self, number_set, assumptions=USE_DEFAULTS):
+
+    def readily_provable_number_set(self):
+        '''
+        The length should be a natural number.
+        '''
+        from proveit.numbers import Natural
+        return Natural
+
+    @prover
+    def deduce_in_number_set(self, number_set, **defaults_config):
         from proveit.core_expr_types.tuples import (
             range_len_is_nat, range_from1_len_is_nat)
+        from proveit.logic import InSet
         from proveit.numbers import Natural, one
         operands = self.operands
         if number_set == Natural:
@@ -443,10 +457,12 @@ class Len(Operation):
                 range_lambda = operands[0].lambda_map
                 if range_start == one:
                     return range_from1_len_is_nat.instantiate(
-                        {f: range_lambda, i: range_end},
-                        assumptions=assumptions)
+                        {f: range_lambda, i: range_end})
                 else:
                     return range_len_is_nat.instantiate(
-                        {f: range_lambda, i: range_start, j: range_end},
-                        assumptions=assumptions)
+                        {f: range_lambda, i: range_start, j: range_end})
+        # Otherwise, prove the number set through computation.
+        computation = self.computation()
+        InSet(computation.rhs, number_set).prove()
+        return InSet(self, number_set).prove()
 

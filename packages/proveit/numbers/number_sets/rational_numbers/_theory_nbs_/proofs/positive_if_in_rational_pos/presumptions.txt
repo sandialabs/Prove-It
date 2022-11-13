@@ -1,25 +1,16 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
-proveit.logic.booleans.conjunction.any_from_and
-proveit.logic.booleans.conjunction.each_is_bool
-proveit.logic.booleans.conjunction.from_unary_and
-proveit.logic.booleans.conjunction.left_from_and
-proveit.logic.booleans.conjunction.right_from_and
-proveit.logic.booleans.false_eq_false
 proveit.logic.booleans.fold_is_bool
 proveit.logic.booleans.from_not_false
 proveit.logic.booleans.implication.not_true_via_contradiction
-proveit.logic.booleans.in_bool_if_false
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.double_negation_elim
 proveit.logic.booleans.negation.negation_intro
-proveit.logic.booleans.negation.untrue_from_negation
 proveit.logic.booleans.unfold_is_bool
 proveit.logic.booleans.unfold_is_bool_explicit
 proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
 proveit.logic.equality.not_equals_symmetry
 proveit.logic.equality.unfold_not_equals
-proveit.logic.sets.inclusion.inclusive_universal_quantification
 proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.logic.sets.inclusion.unfold_subset_eq

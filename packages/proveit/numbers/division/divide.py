@@ -1,3 +1,4 @@
+import math
 from proveit import (Judgment, Expression, Literal, Operation,
                      maybe_fenced_latex, defaults,
                      Function, ExprTuple, InnerExpr, USE_DEFAULTS,
@@ -6,10 +7,13 @@ from proveit import (Judgment, Expression, Literal, Operation,
 from proveit import TransRelUpdater
 from proveit import a, b, c, m, n, w, x, y, z
 from proveit.logic import Equals, NotEquals, InSet
-from proveit.numbers import zero, NumberOperation, is_literal_int
-from proveit.numbers import NumberOperation, deduce_number_set
+from proveit.numbers import (zero, NumberOperation, 
+                             is_numeric_int, is_numeric_rational, 
+                             numeric_rational_ints,
+                             simplified_numeric_rational,
+                             deduce_number_set, readily_provable_number_set)
 from proveit.numbers.number_sets import (
-    Natural, NaturalPos,
+    ZeroSet, Natural, NaturalPos,
     Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
     Rational, RationalNonZero, RationalPos, RationalNeg, RationalNonNeg,
     RationalNonPos,
@@ -24,7 +28,11 @@ class Div(NumberOperation):
         theory=__file__)
 
     _simplification_directives_ = SimplificationDirectives(
-            factor_negation = True, reduce_zero_numerator = True)
+            factor_negation = True, 
+            reduce_zero_numerator = True,
+            reduce_to_multiplication = False,
+            reduce_rational = True,
+            distribute = False)
 
     def __init__(self, numerator, denominator, *, styles=None):
         r'''
@@ -77,6 +85,22 @@ class Div(NumberOperation):
             return 'frac'  # use a different constructor if using the fraction style
         return Operation.remake_constructor(self)
 
+    def _build_canonical_form(self):
+        '''
+        If this is a literal rational, returns the irreducible form.
+        Otherwise, returns the canonical form of the numerator
+        multiplied by the denominator raised to the power of -1:
+            x/y = x*y^{-1}
+        '''
+        from proveit.numbers import (one, Neg, Mult, Exp, 
+                                     simplified_numeric_rational)
+        if is_numeric_rational(self):
+            # Return the irreducible rational.
+            return simplified_numeric_rational(self.numerator.as_int(),
+                                            self.denominator.as_int())
+        as_mult = Mult(self.numerator, Exp(self.denominator, Neg(one)))
+        return as_mult.canonical_form()
+
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
                                **defaults_config):
@@ -87,9 +111,26 @@ class Div(NumberOperation):
         Specifically, cancels common factors and eliminates ones.
         '''
         from proveit.logic import is_irreducible_value
-        from proveit.numbers import one, Neg
-        expr = self
+        from proveit.numbers import one, Neg, Add, Sum, Mult, num
+
+        if self.is_irreducible_value():
+            # already irreducible
+            return Equals(self, self).conclude_via_reflexivity()
+        
+        numer, denom = self.numerator, self.denominator
+        if Div._simplification_directives_.reduce_rational and (
+                is_numeric_rational(numer) and is_numeric_rational(denom) 
+                and denom != zero):
+            # If the numerator and denominator are rational numerals, 
+            # so go ahead and evaluate it to an irreducible form.
+            return self.rational_reduction()
+        
+        if Div._simplification_directives_.reduce_to_multiplication:
+            # (x/y) = x*y^{-1}_deduce
+            return self.reduction_to_mult(auto_simplify=True)
+        
         # for convenience updating our equation
+        expr = self
         eq = TransRelUpdater(expr)
 
         # perform cancelations where possible
@@ -98,19 +139,24 @@ class Div(NumberOperation):
             # complete cancelation.
             return eq.relation
 
-        if self.is_irreducible_value():
-            # already irreducible
-            return Equals(self, self).conclude_via_reflexivity()
-
-        if must_evaluate and not all(
-                is_irreducible_value(operand) for operand in self.operands):
-            for operand in self.operands:
-                if not is_irreducible_value(operand):
-                    # The simplification of the operands may not have
-                    # worked hard enough.  Let's work harder if we
-                    # must evaluate.
-                    operand.evaluation()
-            return self.evaluation()
+        if must_evaluate:
+            if not all(is_irreducible_value(operand) for operand 
+                       in self.operands):
+                for operand in self.operands:
+                    if not is_irreducible_value(operand):
+                        # The simplification of the operands may not have
+                        # worked hard enough.  Let's work harder if we
+                        # must evaluate.
+                        operand.evaluation()
+                return self.evaluation()
+            canonical_form = self.canonical_form()
+            if is_numeric_rational(canonical_form):
+                return self.rational_reduction()
+            elif is_irreducible_value(canonical_form):
+                # Equate to the irreducible canonical form.
+                return Equals(self, canonical_form).prove()
+            raise NotImplementedError(
+                    "Evaluation of %s is not implemented"%self)
 
         if expr.denominator == one:
             # eliminate division by one
@@ -125,20 +171,39 @@ class Div(NumberOperation):
 
         if (Div._simplification_directives_.reduce_zero_numerator and
             isinstance(expr, Div)):
-            if ((expr.numerator==zero or Equals(expr.numerator, zero).proven())
-                and NotEquals(expr.denominator, zero).proven()):
+            if ((expr.numerator==zero or Equals(expr.numerator, 
+                                                zero).readily_provable())
+                and NotEquals(expr.denominator, zero).readily_provable()):
                 # we have something like 0/x so reduce to 0
                 expr = eq.update(expr.zero_numerator_reduction())
         
-        # finally, check if we have something like (x/(y/z))
+        # finally, check if we have something like
+        # (x/(y/z)) or ((x/y)/z)
         # but! remember to check here if we still even have a Div expr
         # b/c some of the work above might have changed it to
         # something else!
-        if (isinstance(expr, Div)
+        if (isinstance(expr, Div) # (x/(y/z))
             and isinstance(expr.denominator, Div)
-            and NotEquals(expr.denominator.numerator, zero).proven()
-            and NotEquals(expr.denominator.denominator, zero).prove() ):
+            and NotEquals(expr.denominator.numerator, zero).readily_provable()
+            and NotEquals(expr.denominator.denominator, 
+                          zero).readily_provable()):
             expr = eq.update(expr.div_in_denominator_reduction())
+        if (isinstance(expr, Div) # (x/y)/z)
+            and isinstance(expr.numerator, Div)
+            and NotEquals(expr.numerator.denominator, zero).proven()
+            and NotEquals(expr.denominator, zero).proven() ):
+            expr = eq.update(expr.div_in_numerator_reduction())
+
+        if Div._simplification_directives_.distribute and (
+                isinstance(self.numerator, Add) or 
+                isinstance(self.numerator, Sum)):
+            expr = eq.update(expr.distribution())
+
+        if Div._simplification_directives_.reduce_rational and (
+                isinstance(expr, Div)):
+            # Reduce numeric rationals in the numerator and denominator
+            # to an irreducible rational form.
+            expr = eq.update(expr.rational_reduction())
 
         return eq.relation
 
@@ -147,14 +212,146 @@ class Div(NumberOperation):
         This needs work, but we know that 1/x is irreducible if
         x is irreducible, not a negation, not 0 and not 1.
         '''
-        from proveit.logic import is_irreducible_value
-        from proveit.numbers import zero, one, Neg
-        if (self.numerator == one and self.denominator not in (zero, one) 
-                and not isinstance(self.denominator, Neg)
-                and is_irreducible_value(self.denominator)):
-            return True
-        return False # TODO: handle any proper fraction, etc.
-            
+        if is_numeric_int(self.numerator) and is_numeric_int(self.denominator):
+            # This is an irreducible rational if and only if it is the
+            # same as the corresponding 'simiplified_rational_expr'.
+            # (which divides out the gcd and extracts any negation).
+            numer_int = self.numerator.as_int()
+            denom_int = self.denominator.as_int()
+            return self == simplified_numeric_rational(numer_int, denom_int)
+        return False
+
+    @equality_prover('rational_reduced', 
+                     'reduce_rational')
+    def rational_reduction(self, **defaults_config):
+        '''
+        Equate this fraction to an irreducible, numeric rational if
+        it is a numeric rational.  More generally, reduce the numeric
+        rationals in the numerator and denominator to an irreducible 
+        rational form.  For example:
+            ((4/3) x) / ((2/3) y) = (2 x) / y
+        '''
+        from proveit.numbers import Mult, num, one, compose_factors
+        from proveit.numbers.division import frac_cancel_left
+
+        numerator, denominator = self.numerator, self.denominator
+        canonical_numer = self.numerator.canonical_form()
+        canonical_denom = self.denominator.canonical_form()
+        # Treat the case where the numerator and denominator evaluate
+        # to integers.
+        if is_numeric_int(canonical_numer) and is_numeric_int(canonical_denom):
+            # Find out the greatest common divisor.
+            numer, denom = canonical_numer, canonical_denom
+            numer_int, denom_int = numer.as_int(), denom.as_int()
+            if abs(numer_int) == abs(denom_int):
+                if numer_int != denom_int:
+                    # -n/n = -1 or n/(-n) = -1
+                    return self.neg_extraction(auto_simplify=True)
+                # n/n=1
+                replacements = [Equals(numer, self.numerator).prove(),
+                                Equals(denom, self.denominator).prove()]
+                return Div(numer, denom).cancelation(
+                        num(abs(numer_int)), replacements=replacements,
+                        preserve_expr=self, alter_lhs=True)
+            gcd = math.gcd(numer_int, denom_int)
+            expr = self
+            eq = TransRelUpdater(expr)
+            if gcd == 1:
+                # No common divisor to factor out.
+                expr = eq.update(expr.inner_expr().numerator.evaluation())
+                expr = eq.update(expr.inner_expr().denominator.evaluation())
+            else:
+                # Factor out the gcd and cancel it.
+                # Replace the factored numerator and denominator with 
+                # the original form.
+                factored_numer = Mult(num(gcd), num(numer_int//gcd))
+                factored_denom = Mult(num(gcd), num(denom_int//gcd))
+                numer_eval = self.numerator.evaluation()
+                denom_eval = self.denominator.evaluation()
+                replacements = [
+                        factored_numer.evaluation().apply_transitivity(
+                                numer_eval),
+                        factored_denom.evaluation().apply_transitivity(
+                                denom_eval),
+                        ]
+                expr = eq.update(frac_cancel_left.instantiate(
+                        {x: num(gcd), y: factored_numer.factors[1], 
+                         z: factored_denom.factors[1]},
+                        replacements=replacements, preserve_expr=self))
+            if numer_int < 0 and denom_int < 0:
+                # cancel negations in the numerator and denominator
+                expr = eq.update(expr.neg_cancelation())
+            elif numer_int < 0 or denom_int < 0:
+                # extract the negation for the irreducible form.
+                expr = eq.update(expr.neg_extraction())
+            if abs(denom_int) == 1:
+                expr = eq.update(expr.divide_by_one_elimination())
+            return eq.relation
+
+        canonical_form = self.canonical_form()
+        if  is_numeric_rational(canonical_form):
+            # Reduce to a multiplication and then sort it out to handle
+            # the more general case.
+            return self.reduction_to_mult(auto_simplify=True)
+        
+        # Extract the rational and remainder parts of the
+        # numerator and denominator.
+        numer_rational = denom_rational = one
+        numer_remainder_factors = denom_remainder_factors = []
+        if is_numeric_rational(numerator):
+            numer_rational = numerator
+        elif isinstance(numerator, Mult) and (
+                len(numerator.operands) > 0 and
+                is_numeric_rational(numerator.operands[0])):
+            numer_rational = numerator.operands[0]
+            numer_remainder_factors = numerator.operands[1:]
+        elif numerator != one:
+            numer_remainder_factors = [numerator]
+        if is_numeric_rational(denominator):
+            denom_rational = denominator
+        elif isinstance(denominator, Mult) and (
+                len(denominator.operands) > 0 and
+                is_numeric_rational(denominator.operands[0])):
+            denom_rational = denominator.operands[0]
+            denom_remainder_factors = denominator.operands[1:]
+        elif denominator != one:
+            denom_remainder_factors = [denominator]
+        numer_ints = numeric_rational_ints(numer_rational)
+        denom_ints = numeric_rational_ints(denom_rational)
+        # (a/b)/(c/d) = (a*d)/(b*c):
+        numer_int = numer_ints[0] * denom_ints[1]
+        denom_int = denom_ints[0] * numer_ints[1]
+        numer_int, denom_int = numeric_rational_ints(
+                simplified_numeric_rational(numer_int, denom_int))
+        if numer_int != numer_rational or denom_int != denom_rational:
+            # A simplification should be performed.
+            if numer_int == 1:
+                numer = compose_factors(*numer_remainder_factors)
+            else:
+                numer = compose_factors(num(numer_int), 
+                                        *numer_remainder_factors)
+            if denom_int == 1:
+                denom = compose_factors(*denom_remainder_factors)
+            else:
+                denom = compose_factors(num(denom_int), 
+                                        *denom_remainder_factors)
+            if denom == one:
+                rhs = numer
+            else:
+                rhs = Div(numer, denom)
+            return self.deduce_canonically_equal(rhs)
+
+        return Equals(self, self).conclude_via_reflexivity()
+    
+    @equality_prover('reduced_to_mult', 'reduce_to_mult')
+    def reduction_to_mult(self, **defaults_config):
+        '''
+        Equate (x/y) to x*y^{-1}.
+        '''
+        from proveit.numbers.division import div_as_mult
+        return div_as_mult.instantiate({x:self.numerator, 
+                                        y:self.denominator})
+        
     @equality_prover('zero_numerator_reduced', 'zero_numerator_reduce')
     def zero_numerator_reduction(self, **defaults_config):
         '''
@@ -185,26 +382,50 @@ class Div(NumberOperation):
                 {x: self.numerator, y: self.denominator.numerator,
                  z: self.denominator.denominator})
 
+    @equality_prover('div_in_numerator_reduced', 'div_in_numerator_reduce')
+    def div_in_numerator_reduction(self, **defaults_config):
+        '''
+        Deduce and return an equality between self of the form
+        (x/y)/z (i.e. a fraction with a fraction as its numerator)
+        and the form x/(yz). Will need to know or assume that x, y, z
+        are Complex with y != 0 and z != 0.
+        '''
+        if (not isinstance(self.numerator, Div)):
+            raise ValueError(
+                    "Div.div_in_numerator_reduction() method only "
+                    "applicable when the numerator is itself a Div."
+                    "Instead we have the expr {0} with numerator {1}.".
+                    format(self, self.numerator))
+        from proveit.numbers.division import numerator_frac_reduction
+        return numerator_frac_reduction.instantiate(
+                {x: self.numerator.numerator, y: self.numerator.denominator,
+                 z: self.denominator})
+
 
     @equality_prover('all_canceled', 'all_cancel')
     def cancelations(self, **defaults_config):
         '''
         Deduce and return an equality between self and a form in which
-        all simple division cancellations are performed.
+        all simple division cancelations are performed.
         '''
-        from proveit.numbers import Mult
+        from proveit.numbers import Neg, Mult
         expr = self
 
         # A convenience to allow successive update to the equation via transitivities.
         # (starting with self=self).
         eq = TransRelUpdater(self)
+        
+        if isinstance(expr.numerator, Neg) and (
+                isinstance(expr.denominator, Neg)):
+            # cancel negation in the numerator and denominator.
+            expr = eq.update(expr.neg_cancelation(preserve_all=True))
 
-        numer_factors = (self.numerator.operands if
-                         isinstance(self.numerator, Mult) else
-                         [self.numerator])
-        denom_factors = (self.denominator.operands if
-                         isinstance(self.denominator, Mult) else
-                         [self.denominator])
+        numer_factors = (expr.numerator.operands if
+                         isinstance(expr.numerator, Mult) else
+                         [expr.numerator])
+        denom_factors = (expr.denominator.operands if
+                         isinstance(expr.denominator, Mult) else
+                         [expr.denominator])
         denom_factors_set = set(denom_factors)
 
         for numer_factor in numer_factors:
@@ -226,9 +447,7 @@ class Div(NumberOperation):
         Assumptions or previous work might be required to establish
         that the term_to_cancel is non-zero.
         '''
-        from proveit.numbers import Mult, one
-        expr = self
-        eq = TransRelUpdater(expr)
+        from proveit.numbers import one, Exp, Mult, Neg
 
         if self.numerator == self.denominator == term_to_cancel:
             # x/x = 1
@@ -236,11 +455,28 @@ class Div(NumberOperation):
             return frac_cancel_complete.instantiate(
                 {x: term_to_cancel})
 
+        expr = self
+        eq = TransRelUpdater(expr)
         if term_to_cancel != self.numerator:
             # try to catch Exp objects here as well?
             # after all, Exp(term_to_cancel, n) has factors!
-            if (not isinstance(self.numerator, Mult) or
-                    term_to_cancel not in self.numerator.operands):
+            # if (not isinstance(self.numerator, Mult) or
+            #         term_to_cancel not in self.numerator.operands):
+            #     raise ValueError("%s not in the numerator of %s"
+            #                      % (term_to_cancel, self))
+            if ((not isinstance(self.numerator, Mult)
+                 and not isinstance(self.numerator, Exp)
+                 and not isinstance(self.numerator, Neg))
+                or (isinstance(self.numerator, Mult)
+                    and term_to_cancel not in self.numerator.operands)
+                or (isinstance(self.numerator, Exp)
+                    and not (term_to_cancel == self.numerator.base
+                             or (isinstance(term_to_cancel, Exp)
+                                 and term_to_cancel.base == self.numerator.base )))
+                or (isinstance(self.numerator, Neg)
+                    and not (term_to_cancel == self.numerator.operand )
+                    and not (isinstance(self.numerator.operand, Mult)
+                             and term_to_cancel in self.numerator.operand.operands) ) ):
                 raise ValueError("%s not in the numerator of %s"
                                  % (term_to_cancel, self))
             # Factor the term_to_cancel from the numerator to the left.
@@ -504,6 +740,20 @@ class Div(NumberOperation):
                 "Unsupported operand type to distribute over: " +
                 str(self.numerator.__class__))
 
+
+    @equality_prover('neg_canceled', 'neg_cancel')
+    def neg_cancelation(self, **defaults_config):
+        '''
+        Derive ((-x)/(-y)) = (x/y).
+        '''
+        from proveit.numbers import Neg
+        from proveit.numbers.division import cancel_negations
+        if not isinstance(self.numerator, Neg) or not(
+                isinstance(self.denominator, Neg)):
+            return cancel_negations.instantiate(
+                    {x:self.numerator.operator,
+                     y:self.denominator.operator})
+
     @equality_prover('neg_extracted', 'neg_extract')
     def neg_extraction(self, neg_loc=None, **defaults_config):
         '''
@@ -565,24 +815,24 @@ class Div(NumberOperation):
                     "{}".format(self.denominator))
         # add error checks here for neg_loc values 'numerator_factor'
         # and 'denominator_factor'
-        from proveit.numbers.division import (
-                neg_frac_neg_numerator, neg_frac_neg_denominator,
-                neg_frac_neg_numerator_gen, neg_frac_neg_denominator_gen)
+        import proveit.numbers.division as div_pkg
 
         # Case (1) Neg(x)/y = Neg(x/y)
         if neg_loc == 'numerator':
-            _x, _y = neg_frac_neg_numerator.instance_params
+            thm = div_pkg.neg_frac_neg_numerator
+            _x, _y = thm.instance_params
             _x_sub = self.numerator.operand
             _y_sub = self.denominator
-            return neg_frac_neg_numerator.instantiate(
+            return thm.instantiate(
                     {_x: _x_sub, _y: _y_sub})
 
         # Case (2) x/Neg(y) = Neg(x/y)
         if neg_loc == 'denominator':
-            _x, _y = neg_frac_neg_denominator.instance_params
+            thm = div_pkg.neg_frac_neg_denominator
+            _x, _y = thm.instance_params
             _x_sub = self.numerator
             _y_sub = self.denominator.operand
-            return neg_frac_neg_denominator.instantiate(
+            return thm.instantiate(
                     {_x: _x_sub, _y: _y_sub})
 
         # Case (3) Neg is a factor in the numerator
@@ -617,7 +867,6 @@ class Div(NumberOperation):
         Equates $a^m/a^n$ to $a^{m-n} or
         $a^c/b^c$ to $(a/b)^c$.
         '''
-        from proveit.logic import InSet
         from proveit.numbers import Exp
         from proveit.numbers.exponentiation import (
             quotient_of_posnat_powers, quotient_of_pos_powers,
@@ -633,10 +882,11 @@ class Div(NumberOperation):
                 possible_exponent_types = [NaturalPos, RealPos, Real,
                                            Complex]
                 for exponent in exponents:
-                    deduce_number_set(exponent)
+                    exp_ns = readily_provable_number_set(exponent,
+                                                         default=Complex)
                     while len(possible_exponent_types) > 1:
                         exponent_type = possible_exponent_types[0]
-                        if InSet(exponent, exponent_type).proven():
+                        if exponent_type.readily_includes(exp_ns):
                             # This type is known for this exponent.
                             break
                         # We've eliminated a type from being known.
@@ -670,6 +920,28 @@ class Div(NumberOperation):
             raise NotImplementedError("Need to implement degenerate cases "
                                       "of a^b/a and a/a^b.")
 
+    def readily_not_equal(self, other):
+        '''
+        Return True iff self and other are numeric rationals (at least
+        in canonical form) that are not equal to each other.
+        '''
+        from proveit.numbers import not_equal_numeric_rationals
+        return not_equal_numeric_rationals(self, other.canonical_form())
+
+    @relation_prover
+    def deduce_not_equal(self, other, **defaults_config):
+        '''
+        Prove and return self ≠ other if self and other are numeric
+        rational.
+        '''
+        from proveit.numbers import (
+                is_numeric_rational, deduce_not_equal_numeric_rationals)
+        if not (is_numeric_rational(self) and is_numeric_rational(other)):
+            raise NotImplementedError(
+                    "Divide.deduce_not_equal only handles the case of "
+                    "numeric rationals.  Given %s and %s"%(self, other))
+        return deduce_not_equal_numeric_rationals(self, other)
+
     @relation_prover
     def deduce_in_number_set(self, number_set, **defaults_config):
         '''
@@ -679,154 +951,155 @@ class Div(NumberOperation):
         '''
         from proveit import a, b
         from proveit.numbers import Less, zero
-        from proveit.numbers.division import (
-            div_rational_closure, div_rational_nonzero_closure,
-            div_rational_pos_closure,
-            div_rational_pos_from_double_neg,
-            div_rational_neg_from_neg_denom,
-            div_rational_neg_from_neg_numer,
-            div_rational_nonneg_closure,
-            div_rational_nonneg_from_double_neg,
-            div_rational_nonpos_from_neg_denom,
-            div_rational_nonpos_from_nonpos_numer,
-            div_real_closure, div_real_nonzero_closure,
-            div_real_pos_closure,
-            div_real_pos_from_double_neg,
-            div_real_neg_from_neg_denom,
-            div_real_neg_from_neg_numer,
-            div_real_nonneg_closure,
-            div_real_nonneg_from_double_neg,
-            div_real_nonpos_from_neg_denom,
-            div_real_nonpos_from_nonpos_numer,
-            div_complex_nonzero_closure,
-            div_complex_closure)
+        import proveit.numbers.division as div_pkg
 
         thm = None
-        if number_set == Rational:
-            thm = div_rational_closure
+        if number_set == ZeroSet:
+            # prove 0/x in {0}; while we are at it, prove 0/x = 0
+            div_pkg.frac_zero_numer.instantiate({x:self.denominator})
+            thm = div_pkg.frac_in_zero_set
+        elif number_set == Rational:
+            thm = div_pkg.div_rational_closure
         elif number_set == RationalNonZero:
-            thm = div_rational_nonzero_closure
+            thm = div_pkg.div_rational_nonzero_closure
         elif number_set == RationalPos:
             deduce_number_set(self.denominator)
-            if Less(self.denominator, zero).proven():
-                thm = div_rational_pos_from_double_neg
+            if Less(self.denominator, zero).readily_provable():
+                thm = div_pkg.div_rational_pos_from_double_neg
             else:
-                thm = div_rational_pos_closure
+                thm = div_pkg.div_rational_pos_closure
         elif number_set == RationalNeg:
             deduce_number_set(self.denominator)
-            if Less(self.denominator, zero).proven():
-                thm = div_rational_neg_from_neg_denom
+            if Less(self.denominator, zero).readily_provable():
+                thm = div_pkg.div_rational_neg_from_neg_denom
             else:
-                thm = div_rational_neg_from_neg_numer
+                thm = div_pkg.div_rational_neg_from_neg_numer
         elif number_set == RationalNonNeg:
             deduce_number_set(self.denominator)
-            if Less(self.denominator, zero).proven():
-                thm = div_rational_nonneg_from_double_neg
+            if Less(self.denominator, zero).readily_provable():
+                thm = div_pkg.div_rational_nonneg_from_double_neg
             else:
-                thm = div_rational_nonneg_closure
+                thm = div_pkg.div_rational_nonneg_closure
         elif number_set == RationalNonPos:
             deduce_number_set(self.denominator)
-            if Less(self.denominator, zero).proven():
-                thm = div_rational_nonpos_from_neg_denom
+            if Less(self.denominator, zero).readily_provable():
+                thm = div_pkg.div_rational_nonpos_from_neg_denom
             else:
-                thm = div_rational_nonpos_from_neg_numer
+                thm = div_pkg.div_rational_nonpos_from_nonpos_numer
         elif number_set == Real:
-            thm = div_real_closure
+            thm = div_pkg.div_real_closure
         elif number_set == RealNonZero:
-            thm = div_real_nonzero_closure
+            thm = div_pkg.div_real_nonzero_closure
         elif number_set == RealPos:
             deduce_number_set(self.denominator)
-            if Less(self.denominator, zero).proven():
-                thm = div_real_pos_from_double_neg
+            if Less(self.denominator, zero).readily_provable():
+                thm = div_pkg.div_real_pos_from_double_neg
             else:
-                thm = div_real_pos_closure
+                thm = div_pkg.div_real_pos_closure
         elif number_set == RealNeg:
             deduce_number_set(self.denominator)
-            if Less(self.denominator, zero).proven():
-                thm = div_real_neg_from_neg_denom
+            if Less(self.denominator, zero).readily_provable():
+                thm = div_pkg.div_real_neg_from_neg_denom
             else:
-                thm = div_real_neg_from_neg_numer
+                thm = div_pkg.div_real_neg_from_neg_numer
         elif number_set == RealNonNeg:
             deduce_number_set(self.denominator)
-            if Less(self.denominator, zero).proven():
-                thm = div_real_nonneg_from_double_neg
+            if Less(self.denominator, zero).readily_provable():
+                thm = div_pkg.div_real_nonneg_from_double_neg
             else:
-                thm = div_real_nonneg_closure
+                thm = div_pkg.div_real_nonneg_closure
         elif number_set == RealNonPos:
             deduce_number_set(self.denominator)
-            if Less(self.denominator, zero).proven():
-                thm = div_real_nonpos_from_neg_denom
+            if Less(self.denominator, zero).readily_provable():
+                thm = div_pkg.div_real_nonpos_from_neg_denom
             else:
-                thm = div_real_nonpos_from_nonpos_numer
+                thm = div_pkg.div_real_nonpos_from_nonpos_numer
         elif number_set == ComplexNonZero:
-            thm = div_complex_nonzero_closure
+            thm = div_pkg.div_complex_nonzero_closure
         elif number_set == Complex:
-            thm = div_complex_closure
+            thm = div_pkg.div_complex_closure
         if thm is not None:
             return thm.instantiate({a: self.numerator, b: self.denominator})
         raise NotImplementedError(
             "'Div.deduce_in_number_set()' not implemented for the %s set"
             % str(number_set))
 
-    @relation_prover
-    def deduce_number_set(self, **defaults_config):
+    def readily_provable_number_set(self):
         '''
-        Prove membership of this expression in the most
-        restrictive standard number set we can readily know.
+        Return the most restrictive number set we can readily
+        prove contains the evaluation of this number operation.
         '''
-        numer_ns = deduce_number_set(self.numerator).domain
-        denom_ns = deduce_number_set(self.denominator).domain
-        if RationalPos.includes(numer_ns) and RationalPos.includes(denom_ns):
-            return self.deduce_in_number_set(RationalPos)
-        if RationalNeg.includes(numer_ns) and RationalNeg.includes(denom_ns):
-            return self.deduce_in_number_set(RationalPos)
-        if RationalNeg.includes(numer_ns) and RationalPos.includes(denom_ns):
-            return self.deduce_in_number_set(RationalNeg)
-        if RationalPos.includes(numer_ns) and RationalNeg.includes(denom_ns):
-            return self.deduce_in_number_set(RationalNeg)
-        if (RationalNonNeg.includes(numer_ns)
-                and RationalPos.includes(denom_ns)):
-            return self.deduce_in_number_set(RationalNonNeg)
-        if (RationalNonPos.includes(numer_ns)
-                and RationalPos.includes(denom_ns)):
-            return self.deduce_in_number_set(RationalNonPos)
-        if (RationalNonNeg.includes(numer_ns)
-                and RationalNeg.includes(denom_ns)):
-            return self.deduce_in_number_set(RationalNonPos)
-        if (RationalNonPos.includes(numer_ns)
-                and RationalNeg.includes(denom_ns)):
-            return self.deduce_in_number_set(RationalNonNeg)
-        if (RationalNonZero.includes(numer_ns) and
-               RationalNonZero.includes(denom_ns)):
-            return self.deduce_in_number_set(RationalNonZero)
-        if Rational.includes(numer_ns) and RationalNonZero.includes(denom_ns):
-            return self.deduce_in_number_set(Rational)
-        if RealPos.includes(numer_ns) and RealPos.includes(denom_ns):
-            return self.deduce_in_number_set(RealPos)
-        if RealNeg.includes(numer_ns) and RealNeg.includes(denom_ns):
-            return self.deduce_in_number_set(RealPos)
-        if RealPos.includes(numer_ns) and RealNeg.includes(denom_ns):
-            return self.deduce_in_number_set(RealNeg)
-        if RealNeg.includes(numer_ns) and RealPos.includes(denom_ns):
-            return self.deduce_in_number_set(RealNeg)
-        if RealNonNeg.includes(numer_ns) and RealPos.includes(denom_ns):
-            return self.deduce_in_number_set(RealNonNeg)
-        if RealNonPos.includes(numer_ns) and RealPos.includes(denom_ns):
-            return self.deduce_in_number_set(RealNonPos)
-        if RealNonNeg.includes(numer_ns) and RealNeg.includes(denom_ns):
-            return self.deduce_in_number_set(RealNonPos)
-        if RealNonPos.includes(numer_ns) and RealNeg.includes(denom_ns):
-            return self.deduce_in_number_set(RealNonNeg)
-        if Real.includes(numer_ns) and RealNonZero.includes(denom_ns):
-            return self.deduce_in_number_set(Real)
-        if RealNonZero.includes(numer_ns) and RealNonZero.includes(denom_ns):
-            return self.deduce_in_number_set(RealNonZero)
-        if Real.includes(numer_ns) and RealNonZero.includes(denom_ns):
-            return self.deduce_in_number_set(Real)
-        if (ComplexNonZero.includes(numer_ns)
-                and ComplexNonZero.includes(denom_ns)):
-            return self.deduce_in_number_set(ComplexNonZero)
-        return self.deduce_in_number_set(Complex)
+        numer_ns = readily_provable_number_set(self.numerator)
+        denom_ns = readily_provable_number_set(self.denominator)
+        if numer_ns is None or denom_ns is None: return None
+        if numer_ns == ZeroSet: return ZeroSet
+        if RationalPos.readily_includes(numer_ns) and (
+                RationalPos.readily_includes(denom_ns)):
+            return RationalPos
+        if RationalNeg.readily_includes(numer_ns) and (
+                RationalNeg.readily_includes(denom_ns)):
+            return RationalPos
+        if RationalNeg.readily_includes(numer_ns) and (
+                RationalPos.readily_includes(denom_ns)):
+            return RationalNeg
+        if RationalPos.readily_includes(numer_ns) and (
+                RationalNeg.readily_includes(denom_ns)):
+            return RationalNeg
+        if (RationalNonNeg.readily_includes(numer_ns)
+                and RationalPos.readily_includes(denom_ns)):
+            return RationalNonNeg
+        if (RationalNonPos.readily_includes(numer_ns)
+                and RationalPos.readily_includes(denom_ns)):
+            return RationalNonPos
+        if (RationalNonNeg.readily_includes(numer_ns)
+                and RationalNeg.readily_includes(denom_ns)):
+            return RationalNonPos
+        if (RationalNonPos.readily_includes(numer_ns)
+                and RationalNeg.readily_includes(denom_ns)):
+            return RationalNonNeg
+        if (RationalNonZero.readily_includes(numer_ns) and
+               RationalNonZero.readily_includes(denom_ns)):
+            return RationalNonZero
+        if Rational.readily_includes(numer_ns) and (
+                RationalNonZero.readily_includes(denom_ns)):
+            return Rational
+        if RealPos.readily_includes(numer_ns) and (
+                RealPos.readily_includes(denom_ns)):
+            return RealPos
+        if RealNeg.readily_includes(numer_ns) and (
+                RealNeg.readily_includes(denom_ns)):
+            return RealPos
+        if RealPos.readily_includes(numer_ns) and (
+                RealNeg.readily_includes(denom_ns)):
+            return RealNeg
+        if RealNeg.readily_includes(numer_ns) and (
+                RealPos.readily_includes(denom_ns)):
+            return RealNeg
+        if RealNonNeg.readily_includes(numer_ns) and (
+                RealPos.readily_includes(denom_ns)):
+            return RealNonNeg
+        if RealNonPos.readily_includes(numer_ns) and (
+                RealPos.readily_includes(denom_ns)):
+            return RealNonPos
+        if RealNonNeg.readily_includes(numer_ns) and (
+                RealNeg.readily_includes(denom_ns)):
+            return RealNonPos
+        if RealNonPos.readily_includes(numer_ns) and (
+                RealNeg.readily_includes(denom_ns)):
+            return RealNonNeg
+        if Real.readily_includes(numer_ns) and (
+                RealNonZero.readily_includes(denom_ns)):
+            return Real
+        if RealNonZero.readily_includes(numer_ns) and (
+                RealNonZero.readily_includes(denom_ns)):
+            return RealNonZero
+        if Real.readily_includes(numer_ns) and (
+                RealNonZero.readily_includes(denom_ns)):
+            return Real
+        if (ComplexNonZero.readily_includes(numer_ns)
+                and ComplexNonZero.readily_includes(denom_ns)):
+            return ComplexNonZero
+        return Complex
 
     @relation_prover
     def bound_via_operand_bound(self, operand_relation, **defaults_config):
@@ -882,14 +1155,14 @@ class Div(NumberOperation):
             deduce_number_set(self.denominator)
         except UnsatisfiedPrerequisites:
             pass
-        if greater(self.denominator, zero).proven():
+        if greater(self.denominator, zero).readily_provable():
             if isinstance(relation, Less):
                 bound = strong_div_from_numer_bound__pos_denom.instantiate(
                         {a: _a, x: _x, y: _y})
             elif isinstance(relation, LessEq):
                 bound =  weak_div_from_numer_bound__pos_denom.instantiate(
                         {a: _a, x: _x, y: _y})
-        elif Less(self.denominator, zero).proven():
+        elif Less(self.denominator, zero).readily_provable():
             if isinstance(relation, Less):
                 bound =  strong_div_from_numer_bound__neg_denom.instantiate(
                         {a: _a, x: _x, y: _y})
@@ -950,10 +1223,10 @@ class Div(NumberOperation):
             deduce_number_set(self.denominator)
         except UnsatisfiedPrerequisites:
             pass
-        pos_numer = greater_eq(self.numerator, zero).proven()
-        neg_numer = LessEq(self.numerator, zero).proven()
-        pos_denom = greater(self.denominator, zero).proven()
-        neg_denom = Less(self.denominator, zero).proven()
+        pos_numer = greater_eq(self.numerator, zero).readily_provable()
+        neg_numer = LessEq(self.numerator, zero).readily_provable()
+        pos_denom = greater(self.denominator, zero).readily_provable()
+        neg_denom = Less(self.denominator, zero).readily_provable()
         if not (pos_numer or neg_numer) or not (pos_denom or neg_denom):
             raise UnsatisfiedPrerequisites(
                     "We must know the sign of the numerator and "
