@@ -30,7 +30,6 @@ proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
 proveit.logic.equality.four_chain_transitivity
 proveit.logic.equality.not_equals_symmetry
-proveit.logic.equality.rhs_via_equality
 proveit.logic.equality.sub_left_side_into
 proveit.logic.equality.sub_right_side_into
 proveit.logic.equality.substitute_falsehood
@@ -86,11 +85,10 @@ proveit.numbers.addition.subtraction.subtract_nat_closure_bin
 proveit.numbers.addition.subtraction.subtraction_disassociation
 proveit.numbers.addition.unary_add_reduction
 proveit.numbers.addition.weak_bound_via_left_term_bound
+proveit.numbers.division.div_as_mult
 proveit.numbers.division.div_complex_closure
 proveit.numbers.division.div_rational_pos_closure
 proveit.numbers.division.div_real_closure
-proveit.numbers.division.frac_cancel_left
-proveit.numbers.division.frac_one_denom
 proveit.numbers.exponentiation.complex_x_to_first_power_is_x
 proveit.numbers.exponentiation.exp_complex_closure
 proveit.numbers.exponentiation.exp_int_closure

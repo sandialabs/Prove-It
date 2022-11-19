@@ -157,7 +157,7 @@ class Proof:
                     # No proof steps to eliminate.
                     _proofs = Proof.requirements_of_proofs(proofs_to_check)
                 # Get all direct/indirect Axiom/Theorem requirements.
-                axioms_to_check, thms_to_check = (
+                axioms_to_check, thms_to_check, _ = (
                     StoredTheorem.requirements_of_theorems(
                         [_proof for _proof in _proofs 
                          if isinstance(_proof, Theorem)]))
@@ -1987,6 +1987,7 @@ class Generalization(Proof):
         if isinstance(new_conditions, ExprTuple):
             new_conditions = list(new_conditions.entries)
 
+        assumptions = list(instance_truth.assumptions)
         instance_expr = instance_truth.expr
         if len(generalized_literals) > 0:
             # Literal generalization convert literals to variables.
@@ -1998,11 +1999,13 @@ class Generalization(Proof):
             new_conditions = [new_condition
                               .literals_as_variables(*generalized_literals)
                               for new_condition in new_conditions]
+            assumptions = [assumption
+                           .literals_as_variables(*generalized_literals)
+                              for assumption in assumptions]
         
         # The assumptions required for the generalization are the
         # assumptions of the original Judgment minus the all of the
         # new conditions (including those implied by the new domain).
-        assumptions = set(instance_truth.assumptions)
         prev_default_assumptions = defaults.assumptions
         # these assumptions will be used for deriving any side-effects
         defaults.assumptions = assumptions
@@ -2041,7 +2044,9 @@ class Generalization(Proof):
                          in zip(condition_applicability, remaining_conditions)
                          if not applicable]
                 # new conditions can eliminate corresponding assumptions
-                assumptions -= set(_conditions)
+                _conditions_set = set(_conditions)
+                assumptions = [assumption for assumption in assumptions
+                               if assumption not in _conditions_set]
                 # create the new generalized expression
                 generalized_expr = Forall(
                     instance_param_or_params=new_forall_params,
@@ -2200,7 +2205,7 @@ class Generalization(Proof):
 
         # Search through the requirements of the required theorems
         # for indirectly eliminated axioms/theorems.
-        required_axioms, required_deadend_theorems = (
+        required_axioms, required_deadend_theorems, _ = (
             StoredTheorem.requirements_of_theorems(
                 required_theorems, 
                 dead_end_theorem_exprs=converted_conditions,

@@ -197,7 +197,9 @@ class Equals(EquivRelation):
             # Use an Expression-specific deduce_equal in reverse.
             return rhs.deduce_equal(lhs).derive_reversed()
         
-        if lhs.canonical_form() == rhs.canonical_form():
+        if lhs.canonical_form() == rhs.canonical_form() and (
+                not lhs._is_effective_relation() or
+                self.canonical_form() == Expression._build_canonical_form(self)):
             # If the canonical forms are the same, we should be able
             # to prove equality via 'deduce_canonically_equal'.
             return lhs.deduce_canonically_equal(rhs)

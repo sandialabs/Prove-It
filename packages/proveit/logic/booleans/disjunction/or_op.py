@@ -157,6 +157,26 @@ class Or(Operation):
             # should be proven via one of the imported theorems as a
             # simple special case
             return self.prove()
+        
+        if self.operands.is_double():
+            # See if we can prove this via the law of the excluded
+            # middle.
+            from proveit.logic import Not
+            _A = self.operands[0]
+            _B = self.operands[1]
+            _A_cf = _A.canonical_form()
+            _B_cf = _B.canonical_form()
+            if _B_cf == Not(_A_cf):
+                # Prove A or Not(A)
+                from proveit.logic.booleans import unfold_is_bool
+                replacements = []
+                if _B != Not(_A):
+                    replacements.append(Not(_A).deduce_canonically_equal(_B))
+                return unfold_is_bool.instantiate(
+                        {A:_A}, replacements=replacements)
+            elif _A_cf == Not(_B_cf):
+                # Prove Not(A) or A
+                return Or(_B, _A).prove().inner_expr().commute()
 
         if self.operands.contains_range():
             # There are ExprRange operands.

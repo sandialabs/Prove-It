@@ -51,9 +51,11 @@ class NotEquals(Relation):
             return True
         if try_readily_not_equal:
             if hasattr(self.lhs, 'readily_not_equal'):
-                return self.lhs.readily_not_equal(self.rhs)
+                if self.lhs.readily_not_equal(self.rhs):
+                    return True
             if hasattr(self.rhs, 'readily_not_equal'):
-                return self.rhs.readily_not_equal(self.lhs)
+                if self.rhs.readily_not_equal(self.lhs):
+                    return True
         return False        
 
     def _readily_disprovable(self):
@@ -112,6 +114,44 @@ class NotEquals(Relation):
 
         return self.conclude_as_folded()
 
+    def _build_canonical_form(self):
+        '''
+        The canonical form of NotEquals is the negation of the
+        corresponding equality.
+        '''
+        from proveit.logic import Not
+        return Not(Equals(self.lhs, self.rhs).canonical_form())
+
+    def _deduce_canonically_equal(self, rhs):
+        '''
+        Prove (x != y) from something canonically equal
+        to it; e.g., not(y = x).
+        '''
+        from proveit.logic import Not
+        if isinstance(rhs, Not):
+            definition = self.definition()
+            return definition.apply_transitivity(
+                    definition.rhs.deduce_canonically_equal(rhs))
+        else:
+            assert isinstance(rhs, NotEquals)
+            lhs_cf = self.lhs.canonical_form()
+            rhs_cf = self.rhs.canonical_form()
+            lhs_cf_of_rhs = rhs.lhs.canonical_form()
+            rhs_cf_of_rhs = rhs.rhs.canonical_form()
+            if lhs_cf == lhs_cf_of_rhs:
+                assert rhs_cf == rhs_cf_of_rhs
+                return self.conclude_via_direct_substitution(rhs)
+            elif lhs_cf == rhs_cf_of_rhs:
+                assert rhs_cf == lhs_cf_of_rhs
+                # Symmetrization needs to be implemented
+                symmetrization = self.symmetrization()
+                return symmetrization.apply_transitivity(
+                        symmetrization.rhs.deduce_canonically_equals(rhs))
+            else:
+                assert self.canonical_form() == rhs.canonical_form()
+                assert False, ("How are these the same canonical form: "
+                               "%s vs %s"%(self, rhs))                
+
     @prover
     def derive_reversed(self, **defaults_config):
         '''
@@ -126,6 +166,14 @@ class NotEquals(Relation):
         reversed from this one. This is not a derivation: see derive_reversed().
         '''
         return NotEquals(self.rhs, self.lhs)
+
+    @equality_prover("reversed", "reverse")
+    def symmetrization(self, **defaults_config):
+        '''
+        Prove (x != y) = (y != x).
+        '''
+        from . import not_equals_symmetry
+        return not_equals_symmetry.instantiate({y:self.lhs, x:self.rhs})
 
     @prover
     def derive_via_double_negation(self, **defaults_config):

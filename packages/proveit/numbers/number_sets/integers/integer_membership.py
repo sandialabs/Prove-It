@@ -54,8 +54,6 @@ class IntegerNonZeroMembership(NumberMembership):
         NumberMembership.__init__(self, element, IntegerNonZero)
 
     def _readily_provable(self):
-        from . import nonzero_int_is_int_nonzero
-        if not nonzero_int_is_int_nonzero.is_usable(): return False
         return NumberMembership._readily_provable(self)
 
     @prover
@@ -122,8 +120,6 @@ class IntegerNegMembership(NumberMembership):
         NumberMembership.__init__(self, element, IntegerNeg)
     
     def _readily_provable(self):
-        from . import neg_int_is_int_neg
-        if not neg_int_is_int_neg.is_usable(): return False
         return NumberMembership._readily_provable(self)
 
     @prover

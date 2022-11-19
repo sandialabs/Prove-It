@@ -17,6 +17,7 @@ proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
 proveit.logic.equality.four_chain_transitivity
 proveit.logic.equality.not_equals_symmetry
+proveit.logic.equality.sub_left_side_into
 proveit.logic.equality.sub_right_side_into
 proveit.logic.equality.substitute_falsehood
 proveit.logic.equality.substitute_in_false
@@ -25,7 +26,10 @@ proveit.logic.equality.substitute_truth
 proveit.logic.equality.unfold_not_equals
 proveit.logic.sets.cartesian_products.cart_exp_unfold_abstract
 proveit.logic.sets.cartesian_products.cart_exp_unfold_explicit
+proveit.logic.sets.equivalence.set_equiv_is_bool
+proveit.logic.sets.inclusion.fold_subset_eq
 proveit.logic.sets.inclusion.relax_proper_subset
+proveit.logic.sets.inclusion.subset_eq_via_equality
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.logic.sets.inclusion.unfold_subset_eq
 proveit.numbers.addition.add_int_closure_bin
@@ -125,6 +129,7 @@ proveit.numbers.number_sets.rational_numbers.rational_nonzero_within_rational
 proveit.numbers.number_sets.rational_numbers.rational_pos_within_rational
 proveit.numbers.number_sets.rational_numbers.rational_pos_within_rational_nonneg
 proveit.numbers.number_sets.rational_numbers.rational_pos_within_rational_nonzero
+proveit.numbers.number_sets.rational_numbers.zero_is_rational
 proveit.numbers.number_sets.rational_numbers.zero_set_within_rational
 proveit.numbers.number_sets.rational_numbers.zero_set_within_rational_nonneg
 proveit.numbers.number_sets.rational_numbers.zero_set_within_rational_nonpos
@@ -209,7 +214,7 @@ proveit.numbers.ordering.transitivity_less_eq_less
 proveit.numbers.ordering.transitivity_less_eq_less_eq
 proveit.numbers.ordering.transitivity_less_less_eq
 proveit.numbers.rounding.real_minus_floor_interval
-proveit.physics.quantum.QPE._best_floor_is_in_b_domain
+proveit.physics.quantum.QPE._best_floor_is_in_m_domain
 proveit.physics.quantum.QPE._phase_is_real
 proveit.physics.quantum.algebra.complex_set_is_hilbert_space
 proveit.physics.quantum.algebra.hilbert_space_is_inner_prod_space

@@ -52,7 +52,6 @@ proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
 proveit.logic.equality.four_chain_transitivity
 proveit.logic.equality.not_equals_symmetry
-proveit.logic.equality.rhs_via_equality
 proveit.logic.equality.sub_left_side_into
 proveit.logic.equality.sub_right_side_into
 proveit.logic.equality.substitute_falsehood
@@ -290,7 +289,6 @@ proveit.numbers.numerals.decimals.tuple_len_5_typical_eq
 proveit.numbers.numerals.decimals.tuple_len_6
 proveit.numbers.numerals.decimals.tuple_len_6_typical_eq
 proveit.numbers.ordering.less_add_right
-proveit.numbers.ordering.less_add_right_weak
 proveit.numbers.ordering.less_eq_from_not_less
 proveit.numbers.ordering.less_from_not_less_eq
 proveit.numbers.ordering.less_is_not_eq

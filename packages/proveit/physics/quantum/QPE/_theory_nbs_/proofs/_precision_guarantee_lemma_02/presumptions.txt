@@ -31,6 +31,11 @@ proveit.logic.equality.substitute_truth
 proveit.logic.equality.unfold_not_equals
 proveit.logic.sets.cartesian_products.cart_exp_unfold_abstract
 proveit.logic.sets.cartesian_products.cart_exp_unfold_explicit
+proveit.logic.sets.enumeration.fold
+proveit.logic.sets.enumeration.fold_singleton
+proveit.logic.sets.enumeration.in_enumerated_set
+proveit.logic.sets.enumeration.unfold
+proveit.logic.sets.enumeration.unfold_singleton
 proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.logic.sets.inclusion.unfold_subset_eq
@@ -186,6 +191,7 @@ proveit.numbers.number_sets.rational_numbers.rational_pos_within_rational
 proveit.numbers.number_sets.rational_numbers.rational_pos_within_rational_nonneg
 proveit.numbers.number_sets.rational_numbers.rational_pos_within_rational_nonzero
 proveit.numbers.number_sets.rational_numbers.zero_is_nonneg_rational
+proveit.numbers.number_sets.rational_numbers.zero_is_nonpos_rational
 proveit.numbers.number_sets.rational_numbers.zero_is_rational
 proveit.numbers.number_sets.rational_numbers.zero_set_within_rational
 proveit.numbers.number_sets.rational_numbers.zero_set_within_rational_nonneg
@@ -230,6 +236,7 @@ proveit.numbers.number_sets.real_numbers.real_pos_within_real_nonneg
 proveit.numbers.number_sets.real_numbers.real_pos_within_real_nonzero
 proveit.numbers.number_sets.real_numbers.relax_IntervalCO
 proveit.numbers.number_sets.real_numbers.zero_is_nonneg_real
+proveit.numbers.number_sets.real_numbers.zero_is_nonpos_real
 proveit.numbers.number_sets.real_numbers.zero_is_real
 proveit.numbers.number_sets.real_numbers.zero_set_within_real
 proveit.numbers.number_sets.real_numbers.zero_set_within_real_nonneg

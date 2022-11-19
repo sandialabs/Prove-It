@@ -323,7 +323,6 @@ proveit.numbers.numerals.decimals.tuple_len_1
 proveit.numbers.numerals.decimals.tuple_len_2
 proveit.numbers.numerals.decimals.tuple_len_2_typical_eq
 proveit.numbers.ordering.less_add_right
-proveit.numbers.ordering.less_add_right_weak
 proveit.numbers.ordering.less_eq_add_right
 proveit.numbers.ordering.less_eq_add_right_strong
 proveit.numbers.ordering.less_eq_from_not_less
@@ -352,14 +351,9 @@ proveit.numbers.summation.weak_summation_from_summands_bound
 proveit.physics.quantum.QPE._best_floor_is_int
 proveit.physics.quantum.QPE._delta_b_is_real
 proveit.physics.quantum.QPE._failure_upper_bound_lemma
-proveit.physics.quantum.QPE._neg_domain_in_full_domain_sans_zero
-proveit.physics.quantum.QPE._neg_domain_within_integer
 proveit.physics.quantum.QPE._pfail_in_real
 proveit.physics.quantum.QPE._phase_is_real
-proveit.physics.quantum.QPE._pos_domain_in_full_domain_sans_zero
-proveit.physics.quantum.QPE._pos_domain_within_integer
 proveit.physics.quantum.QPE._scaled_delta_b_floor_in_interval
-proveit.physics.quantum.QPE._scaled_delta_b_is_zero_or_non_int
 proveit.physics.quantum.QPE._two_pow_t_minus_one_is_nat_pos
 proveit.physics.quantum.algebra.complex_set_is_hilbert_space
 proveit.physics.quantum.algebra.hilbert_space_is_inner_prod_space

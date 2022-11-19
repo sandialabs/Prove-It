@@ -1,4 +1,5 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
+proveit.core_expr_types.conditionals.condition_substitution
 proveit.core_expr_types.conditionals.true_condition_elimination
 proveit.core_expr_types.tuples.tuple_len_0_typical_eq
 proveit.linear_algebra.inner_products.complex_set_is_inner_prod_space
@@ -20,8 +21,10 @@ proveit.logic.booleans.fold_is_bool
 proveit.logic.booleans.from_not_false
 proveit.logic.booleans.implication.eq_from_iff
 proveit.logic.booleans.implication.eq_from_mutual_impl
+proveit.logic.booleans.implication.false_antecedent_implication
 proveit.logic.booleans.implication.false_implies_false
 proveit.logic.booleans.implication.false_implies_true
+proveit.logic.booleans.implication.falsified_antecedent_implication
 proveit.logic.booleans.implication.iff_f_f
 proveit.logic.booleans.implication.iff_f_t
 proveit.logic.booleans.implication.iff_implies_left
@@ -31,6 +34,7 @@ proveit.logic.booleans.implication.iff_t_f
 proveit.logic.booleans.implication.iff_t_t
 proveit.logic.booleans.implication.not_true_via_contradiction
 proveit.logic.booleans.implication.true_implies_true
+proveit.logic.booleans.implication.untrue_antecedent_implication
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.double_negation_elim
 proveit.logic.booleans.negation.negation_intro
@@ -42,7 +46,6 @@ proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
 proveit.logic.equality.four_chain_transitivity
 proveit.logic.equality.not_equals_symmetry
-proveit.logic.equality.rhs_via_equality
 proveit.logic.equality.sub_left_side_into
 proveit.logic.equality.sub_right_side_into
 proveit.logic.equality.substitute_falsehood
@@ -73,8 +76,9 @@ proveit.logic.sets.unification.union_inclusion
 proveit.numbers.absolute_value.abs_neg_elim
 proveit.numbers.absolute_value.abs_non_neg_elim
 proveit.numbers.addition.add_complex_closure
+proveit.numbers.addition.add_complex_closure_bin
 proveit.numbers.addition.add_int_closure_bin
-proveit.numbers.addition.add_int_neg_closure_bin
+proveit.numbers.addition.add_nat_pos_closure_bin
 proveit.numbers.addition.add_real_closure
 proveit.numbers.addition.add_real_closure_bin
 proveit.numbers.addition.association
@@ -118,8 +122,6 @@ proveit.numbers.exponentiation.exponentiated_zero
 proveit.numbers.exponentiation.neg_power_as_div
 proveit.numbers.exponentiation.neg_power_of_quotient
 proveit.numbers.exponentiation.product_of_real_powers
-proveit.numbers.exponentiation.square_abs_rational_simp
-proveit.numbers.exponentiation.square_abs_real_simp
 proveit.numbers.modular.int_mod_elimination
 proveit.numbers.modular.interval_left_shift_bijection
 proveit.numbers.modular.mod_abs_real_closure
@@ -307,7 +309,6 @@ proveit.numbers.numerals.decimals.tuple_len_2_typical_eq
 proveit.numbers.numerals.decimals.tuple_len_3
 proveit.numbers.numerals.decimals.tuple_len_3_typical_eq
 proveit.numbers.ordering.less_add_right
-proveit.numbers.ordering.less_add_right_weak
 proveit.numbers.ordering.less_eq_add_right
 proveit.numbers.ordering.less_eq_add_right_strong
 proveit.numbers.ordering.less_eq_from_not_less
@@ -324,7 +325,6 @@ proveit.numbers.ordering.transitivity_less_less_eq
 proveit.numbers.summation.trivial_sum
 proveit.physics.quantum.QPE._Omega_is_sample_space
 proveit.physics.quantum.QPE._best_floor_is_int
-proveit.physics.quantum.QPE._e_domain_sorting
 proveit.physics.quantum.QPE._fail_sum_prob_conds_equiv_lemma
 proveit.physics.quantum.QPE._mod_add_closure
 proveit.physics.quantum.QPE._modabs_in_full_domain_simp

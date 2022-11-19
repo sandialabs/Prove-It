@@ -56,8 +56,13 @@ proveit.logic.equality.substitute_truth
 proveit.logic.equality.unfold_not_equals
 proveit.logic.sets.cartesian_products.cart_exp_unfold_abstract
 proveit.logic.sets.cartesian_products.cart_exp_unfold_explicit
+proveit.logic.sets.equivalence.set_equiv_is_bool
 proveit.logic.sets.inclusion.relax_proper_subset
+proveit.logic.sets.inclusion.subset_eq_via_equality
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
+proveit.logic.sets.inclusion.transitivity_subset_eq_subset
+proveit.logic.sets.inclusion.transitivity_subset_eq_subset_eq
+proveit.logic.sets.inclusion.transitivity_subset_subset_eq
 proveit.logic.sets.inclusion.unfold_subset_eq
 proveit.numbers.addition.add_int_closure_bin
 proveit.numbers.addition.commutation
@@ -71,8 +76,7 @@ proveit.numbers.addition.subtraction.subtract_nat_closure_bin
 proveit.numbers.addition.unary_add_reduction
 proveit.numbers.division.div_as_mult
 proveit.numbers.division.div_complex_closure
-proveit.numbers.division.div_rational_nonzero_closure
-proveit.numbers.division.div_real_closure
+proveit.numbers.division.div_rational_pos_closure
 proveit.numbers.division.frac_cancel_left
 proveit.numbers.division.frac_one_denom
 proveit.numbers.division.mult_frac_cancel_denom_left
@@ -105,7 +109,7 @@ proveit.numbers.multiplication.mult_complex_closure_bin
 proveit.numbers.multiplication.mult_neg_any
 proveit.numbers.multiplication.mult_neg_left
 proveit.numbers.multiplication.mult_neg_right
-proveit.numbers.multiplication.mult_real_closure_bin
+proveit.numbers.multiplication.mult_rational_pos_closure_bin
 proveit.numbers.multiplication.mult_zero_any
 proveit.numbers.multiplication.mult_zero_left
 proveit.numbers.multiplication.mult_zero_right
@@ -171,6 +175,7 @@ proveit.numbers.number_sets.rational_numbers.nonpos_int_within_rational_nonpos
 proveit.numbers.number_sets.rational_numbers.nonzero_if_in_rational_nonzero
 proveit.numbers.number_sets.rational_numbers.nonzero_int_within_rational_nonzero
 proveit.numbers.number_sets.rational_numbers.nonzero_rational_is_rational_nonzero
+proveit.numbers.number_sets.rational_numbers.pos_rational_is_rational_pos
 proveit.numbers.number_sets.rational_numbers.positive_if_in_rational_pos
 proveit.numbers.number_sets.rational_numbers.rational_neg_within_rational
 proveit.numbers.number_sets.rational_numbers.rational_neg_within_rational_nonpos

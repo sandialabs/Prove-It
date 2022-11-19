@@ -501,7 +501,7 @@ class Exp(NumberOperation):
             _r = _theta = None
         if _theta is not None:
             if _r == other:
-                # r exp(i theta) ≠ r if theta/(2 pi) is not an integer
+                # r exp(i theta) = r if theta/(2 pi) is an integer
                 if _r == one:
                     from . import unit_complex_polar_num_eq_one
                     return unit_complex_polar_num_eq_one.instantiate(
@@ -514,11 +514,39 @@ class Exp(NumberOperation):
                 "deduce_equal case not handled: %s ≠ %s"%
                 (self, other))
 
+    def readily_not_equal(self, other):
+        '''
+        Return True if we can readily prove 'self' is not 'other'.
+        Handles a^b ≠ 0 and exp(i theta) ≠ 1. 
+        '''
+        from proveit.numbers import Mult, Neg, e, i
+        if other == zero:
+            # a^b ≠ 0 or a ≠ 0 
+            return NotEquals(self.base, zero).readily_provable()
+        if other == one and self.base == e:
+            exponent = self.exponent
+            if isinstance(exponent, Neg):
+                # exp(i theta) ≠ 1 if and only if exp(-i theta) ≠ 1,
+                # so the sign doesn't matter.
+                exponent = exponent.operand
+            if self.exponent == i:
+                return True # exp(i) ≠ 1
+            if isinstance(exponent, Mult):
+                exponent_factors = exponent.operands.entries
+                if i not in exponent_factors:
+                    return False
+                i_idx = exponent_factors.index(i)
+                theta_factors = [f for _idx, f in enumerate(exponent_factors)
+                                 if _idx != i_idx]
+                if InSet(Mult(*theta_factors), Real).readily_provable():
+                    return True                
+        return False            
+
     @relation_prover
     def deduce_not_equal(self, other, **defaults_config):
         '''
         Attempt to prove that self is not equal to other.
-        Handles a^b ≠ 0 and r exp(i theta) ≠ r. 
+        Handles a^b ≠ 0 and exp(i theta) ≠ 1. 
         '''
         from proveit.numbers import zero, complex_polar_coordinates
         #from . import 

@@ -26,11 +26,8 @@ proveit.logic.booleans.disjunction.true_or_true
 proveit.logic.booleans.false_is_bool
 proveit.logic.booleans.fold_is_bool
 proveit.logic.booleans.from_not_false
-proveit.logic.booleans.implication.false_antecedent_implication
 proveit.logic.booleans.implication.false_implies_true
-proveit.logic.booleans.implication.falsified_antecedent_implication
 proveit.logic.booleans.implication.not_true_via_contradiction
-proveit.logic.booleans.implication.untrue_antecedent_implication
 proveit.logic.booleans.in_bool_if_false
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.closure
@@ -45,6 +42,7 @@ proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
 proveit.logic.equality.four_chain_transitivity
 proveit.logic.equality.not_equals_symmetry
+proveit.logic.equality.rhs_via_equality
 proveit.logic.equality.sub_left_side_into
 proveit.logic.equality.sub_right_side_into
 proveit.logic.equality.substitute_falsehood
@@ -272,7 +270,6 @@ proveit.numbers.numerals.decimals.tuple_len_1
 proveit.numbers.numerals.decimals.tuple_len_2
 proveit.numbers.numerals.decimals.tuple_len_2_typical_eq
 proveit.numbers.ordering.less_add_right
-proveit.numbers.ordering.less_add_right_weak
 proveit.numbers.ordering.less_eq_add_right
 proveit.numbers.ordering.less_eq_add_right_strong
 proveit.numbers.ordering.less_eq_from_not_less
