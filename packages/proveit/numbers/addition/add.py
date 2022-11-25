@@ -1585,6 +1585,20 @@ class Add(NumberOperation):
                 raise ValueError("Term is absent!")
         return (idx, num) if also_return_num else idx
 
+    def readily_factorable(self, factor):
+        '''
+        Return True iff 'factor' is factorable from 'self' in an
+        obvious manner.  For this Add, it is readily factorable if
+        it is readily factorable from all terms.
+        '''
+        from proveit.numbers import readily_factorable
+        if self == factor:
+            return True
+        for term in self.terms:
+            if not readily_factorable(term, factor):
+                return False
+        return True
+
     @equality_prover('factorized', 'factor')
     def factorization(self, the_factors, pull="left", 
                       group_factors=True, group_remainder=True,
