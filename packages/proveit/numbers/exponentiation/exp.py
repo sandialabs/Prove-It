@@ -622,10 +622,17 @@ class Exp(NumberOperation):
         from c^d if a is factorable from c and either
         d >= b >= 0 or d <= b <= 0 is readily provable.
         '''
-        from proveit.numbers import is_readily_factorable, zero, one
+        from proveit.numbers import zero, one, LessEq, Mult, Neg
         if self == factor:
             return True
-        if isinstance(Exp, factor):
+        if isinstance(factor, Div):
+            # Convert a/b to a*b^{-1}
+            if factor.numerator==one:
+                factor = Exp(factor.denominator, Neg(one))
+            else:
+                factor = Mult(factor.numerator, 
+                              Exp(factor.denominator, Neg(one)))
+        if isinstance(factor, Exp):
             factor_base = factor.base
             if self.base.readily_factorable(factor_base):
                 for ineq_type in (greater_eq, LessEq):
@@ -635,7 +642,7 @@ class Exp(NumberOperation):
                         # from c and d >= b.
                         return True
         if self.base.readily_factorable(factor):
-            if greater_eq(self.exponent, one).is_readily_provable():
+            if greater_eq(self.exponent, one).readily_provable():
                 # a factorable from c^d because a is factorable
                 # from c and d >= 1.
                 return True
@@ -668,12 +675,22 @@ class Exp(NumberOperation):
         # trivial or base case
         if factor == self:
             return eq.relation  # self = self
+        
+        if isinstance(factor, Div):
+            reduction = factor.reduction_to_mult()
+            factor = reduction.rhs
+            replacements = [reduction.derive_reversed()]
+            return self.factorization(
+                    factor, pull=pull, group_factors=group_factors,
+                    group_remainder=group_remainder,
+                    replacements=replacements)
 
         base_ns = readily_provable_number_set(self.base, default=Complex)
         exp_ns = readily_provable_number_set(self.exponent, default=Complex)
         if not isinstance(factor, Expression): 
             raise TypeError("Expecting 'factor' to be an Expression")            
-            
+        
+        
         with Mult.temporary_simplification_directives() as tmp_directives:
             # Prevent exponents from re-combining as we factor them out.
             tmp_directives.combine_numeric_rational_exponents=False

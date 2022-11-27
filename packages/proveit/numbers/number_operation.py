@@ -226,7 +226,8 @@ def readily_factorable(term, factor):
     '''
     Return True iff the 'factor' can obviously be factors out of 'term'.
     '''
-    if term == factor:
+    from proveit.numbers import one
+    if term == factor or factor == one:
         return True
     if hasattr(term, 'readily_factorable'):
         return term.readily_factorable(factor)

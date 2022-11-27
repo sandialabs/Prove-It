@@ -1505,11 +1505,20 @@ class Mult(NumberOperation):
         If group_remainder is True and there are multiple remaining
         operands, then these remaining
         '''
-        from proveit.numbers import readily_factorable
+        from proveit.numbers import Div, readily_factorable
         expr = self
         eq = TransRelUpdater(expr)
         if the_factors_or_index == self:
             return eq.relation  # self = self
+
+        if isinstance(the_factors_or_index, Div):
+            reduction = the_factors_or_index.reduction_to_mult()
+            factor = reduction.rhs
+            replacements = [reduction.derive_reversed()]
+            return self.factorization(
+                    factor, pull=pull, group_factors=group_factors,
+                    group_remainder=group_remainder,
+                    replacements=replacements)
 
         if isinstance(the_factors_or_index, Expression):
             try:
