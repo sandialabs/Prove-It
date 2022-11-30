@@ -24,6 +24,13 @@ class NumberOperation(Operation):
     def __init__(self, operator, operand_or_operands, *, styles=None):
         Operation.__init__(self, operator, operand_or_operands, styles=styles)
 
+    def readily_factorable(self, factor):
+        '''
+        Return True iff 'factor' is factorable from 'self' in an
+        obvious manner.
+        '''
+        return self == factor
+
     def _deduce_canonically_equal(self, rhs):
         '''
         Prove that this number operation is equal to an expression that
@@ -214,6 +221,17 @@ class NumberOperation(Operation):
         '''
         from proveit.numbers.numerals.numeral import not_equal_numeric_rationals
         return not_equal_numeric_rationals(self, other)
+
+def readily_factorable(term, factor):
+    '''
+    Return True iff the 'factor' can obviously be factors out of 'term'.
+    '''
+    from proveit.numbers import one
+    if term == factor or factor == one:
+        return True
+    if hasattr(term, 'readily_factorable'):
+        return term.readily_factorable(factor)
+    return False
 
 @relation_prover
 def deduce_in_number_set(expr, number_set, **defaults_config):

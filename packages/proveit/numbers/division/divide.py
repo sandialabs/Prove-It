@@ -552,9 +552,18 @@ class Div(NumberOperation):
                              "if the denominator is precisely one.")
         return frac_one_denom.instantiate({x: self.numerator})
 
+    def readily_factorable(self, factor):
+        '''
+        Return True iff 'factor' is factorable from 'self' in an
+        obvious manner.  For this Div, it is readily factorable if
+        it is readily factorable from the correxponding Mult:
+            x/y = x*(y^{-1})
+        '''
+        return self.canonical_form().readily_factorable(factor)
+
     @equality_prover('factorized', 'factor')
     def factorization(self, the_factors, pull="left",
-                      group_factors=True, group_remainder=True,
+                      group_factors=True, group_remainder=False,
                       **defaults_config):
         '''
         Return the proven factorization (equality with the factored
@@ -563,8 +572,10 @@ class Div(NumberOperation):
         occurrence is used.
         If group_factors is True, the factors are
         grouped together as a sub-product.
-        The group_remainder parameter is not relevant here but kept
-        for consistency with other factorization methods.
+        The group_remainder parameter ensures that the remainder is
+        grouped together as a sub-product (which is only relevant
+        if this division needed to be converted into a product in
+        order to perform this factoring).
 
         Examples:
 
@@ -579,7 +590,7 @@ class Div(NumberOperation):
             [(a*b)/d].factorization((a/d), pull='right')
             proves (a*b)/d = b*(a/d)
         '''
-        from proveit.numbers import one, Mult
+        from proveit.numbers import one, Mult, readily_factorable
         from . import mult_frac_left, mult_frac_right, prod_of_fracs
         expr = self
         eq = TransRelUpdater(expr)
@@ -626,7 +637,8 @@ class Div(NumberOperation):
             _z = expr.denominator
             eq.update(thm.instantiate({x:_x, y:_y, z:_z},
                                       replacements=replacements))
-        else:
+        elif (readily_factorable(expr.numerator, the_factor_numer) and
+              readily_factorable(expr.denominator, the_factor_denom)):
             # Factor (x*y)/(z*w) into (x/z)*(y/w).
             thm = prod_of_fracs
             if the_factor_denom not in (one, expr.denominator):
@@ -683,6 +695,14 @@ class Div(NumberOperation):
             eq.update(thm.instantiate({x:_x, y:_y, z:_z, w:_w},
                     replacements=replacements,
                     preserve_expr=expr))
+        else:
+            # As a last resort, convert this division to a 
+            # multiplication and factor that.
+            expr = eq.update(expr.reduction_to_mult())
+            expr = eq.update(expr.factorization(
+                    the_factors, pull=pull,
+                    group_factors=group_factors, 
+                    group_remainder=group_remainder))
 
         return eq.relation
 

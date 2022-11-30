@@ -12,7 +12,8 @@ from .number_sets import (
 
 from .number_sets import Interval, RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC
 from .number_sets import e, pi, i, infinity
-from .number_operation import (NumberOperation, deduce_in_number_set,
+from .number_operation import (NumberOperation, readily_factorable,
+                               deduce_in_number_set,
                                quick_simplified_index,
                                sorted_number_sets, 
                                readily_provable_number_set, deduce_number_set,

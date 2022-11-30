@@ -1441,6 +1441,54 @@ class Mult(NumberOperation):
                 "Unsupported operand type to distribute over: " +
                 str(operand.__class__))
 
+    def readily_factorable(self, factor):
+        '''
+        Return True iff 'factor' is factorable from 'self' in an
+        obvious manner.  For this Mult, it is readily factorable if
+        it is readily factorable from any factor of the Mult.
+        '''
+        from proveit.numbers import one, Div, Neg, Exp, readily_factorable
+        if self == factor:
+            return True
+        # First check to see if there is a direct factor.
+        for _factor in self.factors:
+            if readily_factorable(_factor, factor):
+                return True
+        # Check to see if factors are distributed throughout.
+        remaining_factors = {factor}
+        if isinstance(factor, Mult):
+            remaining_factors = set(factor.factors)
+        elif isinstance(factor, Div):
+            remaining_factors = {factor.numerator, 
+                                 Exp(factor.denominator, Neg(one))}
+        # Find which of the remaining factors of 'factor' can be
+        # pulled out of each factor of 'self'; return True when there
+        # are no more factors remaining or return False if there is
+        # anything left over.
+        for _factor in self.factors:
+            cur_factors = tuple()
+            for remaining_factor in list(remaining_factors):
+                if len(cur_factors) > 0:
+                    # Extend the collection of factors that we can
+                    # pull out of this particular factor of 'self'.
+                    potential_factors = [*cur_factors, remaining_factor]
+                    potential_factor = Mult(*potential_factors)
+                else:
+                    # See if we can pull out this one factor from this
+                    # particular factor of 'self'.
+                    potential_factors = (remaining_factor,)
+                    potential_factor = remaining_factor
+                if readily_factorable(_factor, potential_factor):
+                    # Found something that is readily factorable.
+                    # If there is more, continue on to see if more
+                    # can be factored out from this factor of 'self'.
+                    cur_factors = potential_factors
+                    remaining_factors.remove(remaining_factor)
+                    if len(remaining_factors)==0:
+                        # No remaining factors; we are done.
+                        return True
+        return False
+
     @equality_prover('factorized', 'factor')
     def factorization(self, the_factors_or_index, pull="left",
                       group_factors=True, group_remainder=False,
@@ -1457,10 +1505,20 @@ class Mult(NumberOperation):
         If group_remainder is True and there are multiple remaining
         operands, then these remaining
         '''
+        from proveit.numbers import Div, readily_factorable
         expr = self
         eq = TransRelUpdater(expr)
         if the_factors_or_index == self:
             return eq.relation  # self = self
+
+        if isinstance(the_factors_or_index, Div):
+            reduction = the_factors_or_index.reduction_to_mult()
+            factor = reduction.rhs
+            replacements = [reduction.derive_reversed()]
+            return self.factorization(
+                    factor, pull=pull, group_factors=group_factors,
+                    group_remainder=group_remainder,
+                    replacements=replacements)
 
         if isinstance(the_factors_or_index, Expression):
             try:
@@ -1477,79 +1535,152 @@ class Mult(NumberOperation):
                     the_factors_or_index = [the_factors_or_index]
         if isinstance(the_factors_or_index, int):
             idx = the_factors_or_index
-            num = 1
+            num_factored = 1
             the_factor = self.operands[idx]
             expr = eq.update(expr.commutation(
-                    idx, 0 if pull=='left' else -num,
+                    idx, 0 if pull=='left' else -num_factored,
                     preserve_expr=the_factor))    
             all_factors = [the_factor]
         else:
             # Look for one or more factors, pull them out,
             # grouping where possible.
-            factors_iter = iter(the_factors_or_index)
+            the_factors = list(the_factors_or_index)
+            the_factors_idx = 0
             all_factors = []
             my_factors = self.operands.entries
-            the_slice = None
-            num = 0
-            try:
-                # Handle all but the last, always looking ahead one
-                # to see if consecutive factors can move together.
-                while True:
-                    next_factor = next(factors_iter)
-                    all_factors.append(next_factor)
-                    try:
-                        next_idx = my_factors.index(next_factor)
-                    except ValueError:
-                        raise ValueError(
-                            "%s not found as a direct factor of %s"
-                            %(next_factor, self))
-                    if the_slice is None:
-                        # We want to look ahead one if possible.
-                        the_slice = slice(next_idx, next_idx+1)
-                        continue
-                    if next_idx == the_slice.stop:
-                        # Extend the slice then look at the next one.
-                        the_slice = slice(the_slice.start, next_idx+1)
-                        continue
-                    # Go ahead and move 'the_slice'
-                    idx = the_slice.start
-                    length = the_slice.stop - idx
-                    # Preserve all until the last one.
-                    expr = eq.update(expr.group_commutation(
-                        idx, num if pull == 'left' else -num-length, 
-                        length=length,
-                        preserve_all=True))
-                    num += length
-                    the_slice = slice(next_idx, next_idx+1)
-            except StopIteration:
-                # Handle the last slice.
-                preserved_exprs = (
-                        defaults.preserved_exprs.union(all_factors))
-                disassociate = (len(all_factors) > 1 or
-                                not group_factors)
+            num_factored = 0
+            shift = 0
+                        
+            def move_slice(expr, the_slice, shift, num_factored, **kwargs):
                 idx = the_slice.start
                 length = the_slice.stop - idx
-                # Don't simplify if our goal is to group the factors
-                # or remainder.  Simplification could defeat this 
-                # purpose.
-                preserve_all=(group_factors or group_remainder)
-                expr = eq.update(expr.group_commutation(
-                    idx, num if pull == 'left' else -num-length, 
-                    length=length, disassociate=disassociate,
-                    preserved_exprs=preserved_exprs,
-                    preserve_all=preserve_all))
-                num += length
-        
+                idx += shift
+                _num_factors = expr.factors.num_entries()
+                if not ((pull=='left' and idx==num_factored) or
+                        (pull=='right' and 
+                         idx==_num_factors-length)):
+                    # Preserve-all until the last step.
+                    expr = eq.update(expr.group_commutation(
+                        idx, (num_factored if pull == 'left' 
+                              else -length), 
+                        length=length, **kwargs))
+                    if kwargs.get('disassociate', False):
+                        length=1
+                return expr, length
+            
+            while the_factors_idx < len(the_factors):
+                # Find the next factor.
+                next_factor = the_factors[the_factors_idx]
+                all_factors.append(next_factor)
+                try:
+                    next_idx = my_factors.index(next_factor)
+                    nested_factor = None
+                except ValueError:
+                    next_idx = None
+                    for idx, factor in enumerate(my_factors):
+                        if readily_factorable(factor, next_factor):
+                            # Factor 'next_factor' out of one of
+                            # the factors of 'self'.
+                            nested_factor = next_factor
+                            next_idx = idx
+                    if next_idx is None:
+                        raise ValueError(
+                            "%s not found as a factor of %s"
+                            %(next_factor, self))
+                the_factors_idx += 1
+                
+                # Join with any other factors that appear consecutively.
+                num_expr_factors = expr.factors.num_entries()
+                the_slice = slice(next_idx, next_idx+1)
+                if pull=='right' or (nested_factor is None):
+                    while the_factors_idx < len(the_factors):
+                        _factor = the_factors[the_factors_idx]
+                        stop = the_slice.stop
+                        if stop == len(my_factors):
+                            break
+                        if my_factors[stop]==_factor:
+                            the_slice = slice(the_slice.start,
+                                              the_slice.stop + 1)
+                            all_factors.append(_factor)
+                            the_factors_idx += 1
+                            continue
+                        if (pull=='left' and readily_factorable(
+                                my_factors[stop], _factor)):
+                            nested_factor = _factor
+                            the_slice = slice(the_slice.start,
+                                              the_slice.stop + 1)
+                            all_factors.append(_factor)
+                            the_factors_idx += 1
+                            break
+                        break # end of consecutive factors
+                
+                if nested_factor is not None:
+                    # Don't simplify if there is more to go or our goal 
+                    # is to group the factors or remainder.
+                    # Simplification could defeat this purpose.
+                    preserve_all=(len(all_factors)<len(the_factors) or (
+                                  (group_factors and num_factored > 1) or 
+                                  group_remainder))
+                    prev_num_expr_factors = num_expr_factors
+                    _idx = (shift+the_slice.stop-1 if pull=='left' else
+                            shift+the_slice.start)
+                    expr = eq.update(
+                            expr.inner_expr().factors[_idx]
+                            .factorization(nested_factor, pull=pull,
+                                           group_factors=True,
+                                           group_remainder=False,
+                                           preserve_all=True))
+                    expr = eq.update(
+                            expr.inner_expr().disassociation(
+                                    _idx, preserve_all=preserve_all))
+                    if pull=='right':
+                        # Shift the slice to account for the
+                        # factorization.
+                        extra_shift = (expr.factors.num_entries() -
+                                       prev_num_expr_factors)
+                        the_slice = slice(the_slice.start+extra_shift,
+                                          the_slice.stop+extra_shift)
+
+                # Go ahead and move 'the_slice'
+                if the_factors_idx < len(the_factors):
+                    # Move this slice with more factors to find.
+                    expr, length = move_slice(
+                            expr, the_slice, shift, num_factored, 
+                            preserve_all=True)
+                else:
+                    # Last one to move. Possibly simplify and/or keep
+                    # associated.
+                    preserved_exprs = (
+                            defaults.preserved_exprs.union(all_factors))
+                    disassociate = (num_factored > 0 or not group_factors)
+                    # Don't simplify if our goal is to group the factors
+                    # or remainder.  Simplification could defeat this 
+                    # purpose.
+                    preserve_all=((group_factors and disassociate) or 
+                                  group_remainder)
+                    expr, length = move_slice(
+                            expr, the_slice, shift, num_factored, 
+                            disassociate=disassociate,
+                            preserved_exprs=preserved_exprs,
+                            preserve_all=True)
+                    
+                num_factored += length
+                if pull == 'left':
+                    shift += length
+                    my_factors = expr.factors.entries[num_factored:]
+                else:
+                    my_factors = expr.factors.entries[:-num_factored]
+
         # Group the factors if needed.
-        if group_factors and len(all_factors) > 1:
-            # use 0:num type of convention like standard python
+        if group_factors and num_factored > 1:
+            # use 0:num_factored type of convention like standard python
             if pull == 'left':
                 expr = eq.update(expr.association(
-                        0, num, preserve_all=True))
+                        0, num_factored, preserve_all=True))
             elif pull == 'right':
                 expr = eq.update(expr.association(
-                        -num, num, preserve_all=True))
-        num_factor_operands = 1 if group_factors else num
+                        -num_factored, num_factored, preserve_all=True))
+        num_factor_operands = 1 if group_factors else num_factored
         if (group_remainder and 
                 expr.operands.num_entries() - num_factor_operands > 1):
             # if the factor has been group, effectively there is just 1
