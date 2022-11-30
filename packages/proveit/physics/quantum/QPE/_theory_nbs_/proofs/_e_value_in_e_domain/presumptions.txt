@@ -105,7 +105,7 @@ proveit.numbers.exponentiation.exp_real_pos_closure
 proveit.numbers.exponentiation.exp_zero_eq_one
 proveit.numbers.exponentiation.exponentiated_one
 proveit.numbers.exponentiation.exponentiated_zero
-proveit.numbers.exponentiation.product_of_posnat_powers
+proveit.numbers.exponentiation.product_of_real_powers
 proveit.numbers.logarithms.log_base_large_a_greater_one
 proveit.numbers.logarithms.log_increasing_less_eq
 proveit.numbers.logarithms.log_real_pos_real_closure
@@ -160,7 +160,6 @@ proveit.numbers.number_sets.integers.interval_upper_bound
 proveit.numbers.number_sets.integers.nat_pos_within_int
 proveit.numbers.number_sets.integers.nat_pos_within_nonzero_int
 proveit.numbers.number_sets.integers.nat_within_int
-proveit.numbers.number_sets.integers.neg_int_is_int_neg
 proveit.numbers.number_sets.integers.neg_int_within_int
 proveit.numbers.number_sets.integers.neg_int_within_nonpos_int
 proveit.numbers.number_sets.integers.neg_int_within_nonzero_int
@@ -191,7 +190,6 @@ proveit.numbers.number_sets.rational_numbers.nonpos_if_in_rational_nonpos
 proveit.numbers.number_sets.rational_numbers.nonpos_int_within_rational_nonpos
 proveit.numbers.number_sets.rational_numbers.nonzero_if_in_rational_nonzero
 proveit.numbers.number_sets.rational_numbers.nonzero_int_within_rational_nonzero
-proveit.numbers.number_sets.rational_numbers.pos_rational_is_rational_pos
 proveit.numbers.number_sets.rational_numbers.positive_if_in_rational_pos
 proveit.numbers.number_sets.rational_numbers.rational_neg_within_rational
 proveit.numbers.number_sets.rational_numbers.rational_neg_within_rational_nonpos
