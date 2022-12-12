@@ -444,7 +444,6 @@ class VecSum(GroupSum, VecOperation):
             factor_scaled = the_factor            
         if isinstance(factor_scaled, VecSum) and factor_scaled.indices==self.indices:
             # Factoring out the summation part.
-            print("factor", factor_scaled.summand, "from", self.summand)
             expr = self
             eq = TransRelUpdater(expr)
             expr = eq.update(expr.inner_expr().summand.factorization(
@@ -455,7 +454,6 @@ class VecSum(GroupSum, VecOperation):
             reverse_pull = 'left' if pull=='right' else 'left'
             _idx = 0 if reverse_pull=='left' else -1
             remainder = expr.summand.operands[_idx]
-            print('remainder', remainder)
             expr = eq.update(expr.shallow_factorization(
                              remainder, pull=reverse_pull, 
                              group_factors=(group_remainder and 
@@ -464,11 +462,9 @@ class VecSum(GroupSum, VecOperation):
                              _check_index_independence=False,
                              preserve_all=(factor_scalar==one)))
             if factor_scalar != one:
-                print("NOW factor", the_factor, "from", expr)
                 expr = eq.update(expr.factorization(
                         the_factor, pull=pull, group_factors=group_factors,
                         group_remainder=group_remainder, field=field))
-                print("FINALLY", expr)
                 
             return eq.relation
         

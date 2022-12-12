@@ -542,7 +542,6 @@ class TensorProd(VecOperation):
                 the_factors = the_factors.factors
             if group_remainder and len(remainder_factors)>1:
                 remainder_factors = [TensorProd(*remainder_factors)]
-        print('the_factors', the_factors, 'remainder_factors', remainder_factors)
         if pull=='left':
             desired = TensorProd(*the_factors, *remainder_factors)
         else:

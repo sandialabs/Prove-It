@@ -309,8 +309,6 @@ class ScalarMult(VecOperation):
         # of its scalar factors.
         factor_scalar, factor_scaled = canonical_scalar_and_scaled(
                 the_factor)
-        print('factor_scalar', factor_scalar, 'factor_scaled', factor_scaled)
-        
         remaining_scalar = remove_common_factors(
                 self.scalar, factor_scalar)
         inner_factor_scalar = remove_common_factors(factor_scalar,
@@ -318,9 +316,6 @@ class ScalarMult(VecOperation):
         # We can put this in canonical form since it doesn't
         # go directly into the end result.
         inner_factor_scalar = inner_factor_scalar
-        print('remaining_scalar', remaining_scalar)
-        print('inner_factor_scalar', inner_factor_scalar)
-        print('inner_factor_scalar_cf', inner_factor_scalar.canonical_form())
         if inner_factor_scalar != one:
             inner_factor = ScalarMult(
                     inner_factor_scalar, factor_scaled)
@@ -385,10 +380,6 @@ class ScalarMult(VecOperation):
         else:
             raise ValueError("'pull' must be 'left' or 'right', not %s"
                              %pull)
-        print('the_factor', the_factor, 'vec_factored', vec_factored, 
-              'remaining_scalar', remaining_scalar)
-
-        print('self', self, 'desired', desired)
 
         # We should be able to prove that are desired form is equal
         # to the factorization_of_vec form by having the same canonical

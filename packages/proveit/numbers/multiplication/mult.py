@@ -2385,16 +2385,11 @@ def _remove_common_factors(expr, canonical_factor_exponents):
                 return one
         # Recursively remove common factors, with altered exponents,
         # within the base.
-        print('exponent', exponent, 'canonical_factor_exponents',
-              canonical_factor_exponents)
         canonical_factor_adjusted_exponents = {
                 factor: compose_fraction(_exponent, exponent)
                 for factor, _exponent in canonical_factor_exponents.items()}
         remaining_base = _remove_common_factors(
                 base, canonical_factor_adjusted_exponents)
-        print('canonical_factor_adjusted_exponents',
-              canonical_factor_adjusted_exponents,
-              'expr.base', expr.base, 'remaining_base', remaining_base)
         canonical_factor_exponents.clear()
         canonical_factor_exponents.update(
                 {factor: compose_product(_exponent, exponent)

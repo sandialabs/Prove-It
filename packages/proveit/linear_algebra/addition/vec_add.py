@@ -260,8 +260,6 @@ class VecAdd(GroupAdd, VecOperation):
         from proveit.linear_algebra import (
                 ScalarMult, TensorProd)
         
-        print("shallow factorization of", self)
-
         _V = vec_space = VecSpaces.common_known_vec_space(
                 self.terms, field=field)
         _K = VecSpaces.known_field(vec_space)
