@@ -1,4 +1,4 @@
-from .divide import Div, frac
+from .divide import Div, frac, compose_fraction
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

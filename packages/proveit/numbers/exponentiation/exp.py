@@ -622,7 +622,8 @@ class Exp(NumberOperation):
         from c^d if a is factorable from c and either
         d >= b >= 0 or d <= b <= 0 is readily provable.
         '''
-        from proveit.numbers import zero, one, LessEq, Mult, Neg
+        from proveit.numbers import (zero, one, LessEq, Mult, Neg,
+                                     readily_factorable)
         if self == factor:
             return True
         if isinstance(factor, Div):
@@ -634,14 +635,16 @@ class Exp(NumberOperation):
                               Exp(factor.denominator, Neg(one)))
         if isinstance(factor, Exp):
             factor_base = factor.base
-            if self.base.readily_factorable(factor_base):
+            if readily_factorable(self.base, factor_base):
                 for ineq_type in (greater_eq, LessEq):
-                    if ineq_type(self.exponent, factor.exponent) and (
-                            ineq_type(factor.exponent, zero)):
+                    if ineq_type(self.exponent, 
+                                 factor.exponent).readily_provable() and (
+                            ineq_type(factor.exponent, 
+                                      zero).readily_provable()):
                         # a^b factorable from c^d because a is factorable
                         # from c and d >= b.
                         return True
-        if self.base.readily_factorable(factor):
+        if readily_factorable(self.base, factor):
             if greater_eq(self.exponent, one).readily_provable():
                 # a factorable from c^d because a is factorable
                 # from c and d >= 1.

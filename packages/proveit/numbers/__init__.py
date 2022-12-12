@@ -41,8 +41,8 @@ from .addition import (Add, subtract, dist_subtract, dist_add)
 from .negation import Neg, negated
 from .ordering import (NumberOrderingRelation, number_ordering,
                        Less, LessEq, greater, greater_eq, Min, Max)
-from .multiplication import Mult, compose_factors
-from .division import Div, frac
+from .multiplication import Mult, compose_product, remove_common_factors
+from .division import Div, frac, compose_fraction
 from .divisibility import Divides, DividesProper, GCD
 from .modular import Mod, ModAbs
 from .exponentiation import Exp, exp, exp2pi_i, sqrt, sqrd
