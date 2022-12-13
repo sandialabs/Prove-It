@@ -33,14 +33,13 @@ proveit.linear_algebra.inner_products.rational_set_is_inner_prod_space
 proveit.linear_algebra.inner_products.real_set_is_inner_prod_space
 proveit.linear_algebra.rational_vec_set_is_vec_space
 proveit.linear_algebra.real_vec_set_is_vec_space
-proveit.linear_algebra.scalar_multiplication.distribution_over_vec_sum_with_scalar_mult
 proveit.linear_algebra.scalar_multiplication.doubly_scaled_as_singly_scaled
 proveit.linear_algebra.scalar_multiplication.one_as_scalar_mult_id
 proveit.linear_algebra.scalar_multiplication.scalar_mult_closure
 proveit.linear_algebra.tensors.factor_scalar_from_tensor_prod
 proveit.linear_algebra.tensors.tensor_prod_disassociation
-proveit.linear_algebra.tensors.tensor_prod_distribution_over_add
-proveit.linear_algebra.tensors.tensor_prod_distribution_over_summation_with_scalar_mult
+proveit.linear_algebra.tensors.tensor_prod_factorization_from_add
+proveit.linear_algebra.tensors.tensor_prod_factorization_from_summation
 proveit.linear_algebra.tensors.tensor_prod_is_in_tensor_prod_space
 proveit.linear_algebra.tensors.tensor_prod_of_cart_exps_within_cart_exp
 proveit.linear_algebra.tensors.tensor_prod_of_vec_spaces_is_vec_space
@@ -55,7 +54,6 @@ proveit.logic.booleans.conjunction.quantification_from_conjunction
 proveit.logic.booleans.conjunction.redundant_conjunction
 proveit.logic.booleans.conjunction.redundant_conjunction_general
 proveit.logic.booleans.conjunction.right_from_and
-proveit.logic.booleans.conjunction.true_and_true
 proveit.logic.booleans.false_is_bool
 proveit.logic.booleans.fold_is_bool
 proveit.logic.booleans.from_not_false
@@ -99,6 +97,7 @@ proveit.logic.sets.inclusion.transitivity_subset_eq_subset
 proveit.logic.sets.inclusion.transitivity_subset_eq_subset_eq
 proveit.logic.sets.inclusion.transitivity_subset_subset_eq
 proveit.logic.sets.inclusion.unfold_subset_eq
+proveit.numbers.addition.add_complex_closure_bin
 proveit.numbers.addition.add_int_closure
 proveit.numbers.addition.add_int_closure_bin
 proveit.numbers.addition.add_nat_closure

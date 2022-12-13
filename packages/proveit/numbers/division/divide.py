@@ -11,7 +11,8 @@ from proveit.numbers import (zero, NumberOperation,
                              is_numeric_int, is_numeric_rational, 
                              numeric_rational_ints,
                              simplified_numeric_rational,
-                             deduce_number_set, readily_provable_number_set)
+                             deduce_number_set, readily_factorable,
+                             readily_provable_number_set)
 from proveit.numbers.number_sets import (
     ZeroSet, Natural, NaturalPos,
     Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
@@ -231,7 +232,7 @@ class Div(NumberOperation):
         rational form.  For example:
             ((4/3) x) / ((2/3) y) = (2 x) / y
         '''
-        from proveit.numbers import Mult, num, one, compose_factors
+        from proveit.numbers import Mult, num, one, compose_product
         from proveit.numbers.division import frac_cancel_left
 
         numerator, denominator = self.numerator, self.denominator
@@ -326,14 +327,14 @@ class Div(NumberOperation):
         if numer_int != numer_rational or denom_int != denom_rational:
             # A simplification should be performed.
             if numer_int == 1:
-                numer = compose_factors(*numer_remainder_factors)
+                numer = compose_product(*numer_remainder_factors)
             else:
-                numer = compose_factors(num(numer_int), 
+                numer = compose_product(num(numer_int), 
                                         *numer_remainder_factors)
             if denom_int == 1:
-                denom = compose_factors(*denom_remainder_factors)
+                denom = compose_product(*denom_remainder_factors)
             else:
-                denom = compose_factors(num(denom_int), 
+                denom = compose_product(num(denom_int), 
                                         *denom_remainder_factors)
             if denom == one:
                 rhs = numer
@@ -552,9 +553,22 @@ class Div(NumberOperation):
                              "if the denominator is precisely one.")
         return frac_one_denom.instantiate({x: self.numerator})
 
+    def readily_factorable(self, factor):
+        '''
+        Return True iff 'factor' is factorable from 'self' in an
+        obvious manner.  For this Div, it is readily factorable if
+        it is readily factorable from the correxponding Mult:
+            x/y = x*(y^{-1})
+        '''
+        cf = self.canonical_form()
+        if cf != self:
+            return readily_factorable(self.canonical_form(), factor)
+        else:
+            return False
+
     @equality_prover('factorized', 'factor')
     def factorization(self, the_factors, pull="left",
-                      group_factors=True, group_remainder=True,
+                      group_factors=True, group_remainder=False,
                       **defaults_config):
         '''
         Return the proven factorization (equality with the factored
@@ -563,8 +577,10 @@ class Div(NumberOperation):
         occurrence is used.
         If group_factors is True, the factors are
         grouped together as a sub-product.
-        The group_remainder parameter is not relevant here but kept
-        for consistency with other factorization methods.
+        The group_remainder parameter ensures that the remainder is
+        grouped together as a sub-product (which is only relevant
+        if this division needed to be converted into a product in
+        order to perform this factoring).
 
         Examples:
 
@@ -579,7 +595,7 @@ class Div(NumberOperation):
             [(a*b)/d].factorization((a/d), pull='right')
             proves (a*b)/d = b*(a/d)
         '''
-        from proveit.numbers import one, Mult
+        from proveit.numbers import one, Mult, readily_factorable
         from . import mult_frac_left, mult_frac_right, prod_of_fracs
         expr = self
         eq = TransRelUpdater(expr)
@@ -626,7 +642,8 @@ class Div(NumberOperation):
             _z = expr.denominator
             eq.update(thm.instantiate({x:_x, y:_y, z:_z},
                                       replacements=replacements))
-        else:
+        elif (readily_factorable(expr.numerator, the_factor_numer) and
+              readily_factorable(expr.denominator, the_factor_denom)):
             # Factor (x*y)/(z*w) into (x/z)*(y/w).
             thm = prod_of_fracs
             if the_factor_denom not in (one, expr.denominator):
@@ -683,6 +700,14 @@ class Div(NumberOperation):
             eq.update(thm.instantiate({x:_x, y:_y, z:_z, w:_w},
                     replacements=replacements,
                     preserve_expr=expr))
+        else:
+            # As a last resort, convert this division to a 
+            # multiplication and factor that.
+            expr = eq.update(expr.reduction_to_mult())
+            expr = eq.update(expr.factorization(
+                    the_factors, pull=pull,
+                    group_factors=group_factors, 
+                    group_remainder=group_remainder))
 
         return eq.relation
 
@@ -1272,3 +1297,24 @@ class Div(NumberOperation):
 
 def frac(numer, denom):
     return Div(numer, denom)
+
+def compose_fraction(numerator, denominator):
+    '''
+    Return the expression representing a fraction making obvious 
+    simplifications if the denominator is one or if either/both the
+    numerator/denominator are fractions.
+    '''
+    from proveit.numbers import one, compose_product
+    if denominator == one:
+        return numerator
+    if isinstance(numerator, Div) and isinstance(denominator, Div):
+        numerator, denominator = (
+                compose_product(numerator.numerator, denominator.denominator),
+                compose_product(numerator.denominator, denominator.numerator))
+    elif isinstance(numerator, Div):
+        denominator = compose_product(numerator.denominator, denominator)
+        numerator = numerator.numerator
+    elif isinstance(denominator, Div):
+        numerator = compose_product(numerator, denominator.denominator)
+        denominator = denominator.numerator
+    return Div(numerator, denominator)

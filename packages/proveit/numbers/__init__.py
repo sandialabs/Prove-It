@@ -12,7 +12,8 @@ from .number_sets import (
 
 from .number_sets import Interval, RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC
 from .number_sets import e, pi, i, infinity
-from .number_operation import (NumberOperation, deduce_in_number_set,
+from .number_operation import (NumberOperation, readily_factorable,
+                               deduce_in_number_set,
                                quick_simplified_index,
                                sorted_number_sets, 
                                readily_provable_number_set, deduce_number_set,
@@ -40,8 +41,8 @@ from .addition import (Add, subtract, dist_subtract, dist_add)
 from .negation import Neg, negated
 from .ordering import (NumberOrderingRelation, number_ordering,
                        Less, LessEq, greater, greater_eq, Min, Max)
-from .multiplication import Mult, compose_factors
-from .division import Div, frac
+from .multiplication import Mult, compose_product, remove_common_factors
+from .division import Div, frac, compose_fraction
 from .divisibility import Divides, DividesProper, GCD
 from .modular import Mod, ModAbs
 from .exponentiation import Exp, exp, exp2pi_i, sqrt, sqrd

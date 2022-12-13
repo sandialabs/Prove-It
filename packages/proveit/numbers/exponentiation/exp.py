@@ -5,7 +5,7 @@ from proveit import (defaults, equality_prover, ExprRange, ExprTuple,
                      ProofFailure, prover, relation_prover, StyleOptions,
                      UnsatisfiedPrerequisites, USE_DEFAULTS)
 import proveit
-from proveit import a, b, c, k, m, n, r, x, y, S, theta
+from proveit import a, b, c, d, k, m, n, r, x, y, S, theta
 from proveit.logic import Equals, InSet, SetMembership, NotEquals
 from proveit.numbers import zero, one, two, Div, frac, num, greater_eq
 from proveit.numbers import (NumberOperation, deduce_number_set,
@@ -615,31 +615,60 @@ class Exp(NumberOperation):
                          "powers n=2 or n=3, but received an exponential "
                          "power of {0}.".format(exponent))
 
+    def readily_factorable(self, factor):
+        '''
+        Return True iff 'factor' is factorable from 'self' in an
+        obvious manner.  For this Exp, a^b is readily factorable
+        from c^d if a is factorable from c and either
+        d >= b >= 0 or d <= b <= 0 is readily provable.
+        '''
+        from proveit.numbers import (zero, one, LessEq, Mult, Neg,
+                                     readily_factorable)
+        if self == factor:
+            return True
+        if isinstance(factor, Div):
+            # Convert a/b to a*b^{-1}
+            if factor.numerator==one:
+                factor = Exp(factor.denominator, Neg(one))
+            else:
+                factor = Mult(factor.numerator, 
+                              Exp(factor.denominator, Neg(one)))
+        if isinstance(factor, Exp):
+            factor_base = factor.base
+            if readily_factorable(self.base, factor_base):
+                for ineq_type in (greater_eq, LessEq):
+                    if ineq_type(self.exponent, 
+                                 factor.exponent).readily_provable() and (
+                            ineq_type(factor.exponent, 
+                                      zero).readily_provable()):
+                        # a^b factorable from c^d because a is factorable
+                        # from c and d >= b.
+                        return True
+        if readily_factorable(self.base, factor):
+            if greater_eq(self.exponent, one).readily_provable():
+                # a factorable from c^d because a is factorable
+                # from c and d >= 1.
+                return True
+        return False
+
     @equality_prover('factorized', 'factor')
-    def factorization(self, the_factors, pull="left",
+    def factorization(self, factor, pull="left",
                       group_factors=True, group_remainder=False,
                       **defaults_config):
         '''
-        Return the proven equality between the self Exp() and a
-        factored form of self, pulling the factor(s) from the Exp to
-        the "left" or "right". the_factors may be an iterable, a Mult, 
-        or another Exp; in any case, the individual factors will be
-        pulled together in the pull direction.
-        Initially this factorization() method is quite simplistic,
-        accepting as factors only factors expressed in terms of the
-        original base used in the self Exp. For example, if
-        self = 2^5, then only factors expressed as 2 or 2^r (with r
-        a Real) are accepted as candidates, and except for the
-        case where self=the_factors, the factorization is allowed
-        to proceed literally --- for example, we can factor 2^8 out
-        from 2^5 to obtain 2^5 = 2^8 2^{-3}. Because, why not?
-        If group_factors is True, the factors are grouped together as
-        a sub-product. If group_remainder is True and there are
-        multiple remaining operands, then these remaining factors
-        are grouped (actually right now there should always only be
-        a single remaining factor, in the form a^b).
+        Return the proven factorization (equality with the factored
+        form) from pulling the factor(s) from this exponentiation to 
+        the "left" or "right".  Examples:
+            (a*b)^c = (a^c)*(b^c), pulling a^c to the left or
+                                   pulling b^c to the right
+            (a*b)^c = (a^d)*(a^{d-c})(b^c) pulling a^d to the left
+            (a*b)^c = a*((a^{c-1})*(b^c)) pulling a to the left with
+                                          group_remainder=True.
         '''
         from proveit import Expression, TransRelUpdater
+        from proveit.numbers import Mult, subtract, readily_factorable
+        from proveit.numbers.exponentiation import (
+                exp_factored_int, exp_factored_real)
 
         expr = self
         # A convenience for iteratively updating our equation,
@@ -647,67 +676,106 @@ class Exp(NumberOperation):
         eq = TransRelUpdater(expr)
 
         # trivial or base case
-        if the_factors == self:
+        if factor == self:
             return eq.relation  # self = self
-
-        from proveit.numbers.exponentiation import (
-                exp_factored_int, exp_factored_real)
+        
+        if isinstance(factor, Div):
+            reduction = factor.reduction_to_mult()
+            factor = reduction.rhs
+            replacements = [reduction.derive_reversed()]
+            return self.factorization(
+                    factor, pull=pull, group_factors=group_factors,
+                    group_remainder=group_remainder,
+                    replacements=replacements)
 
         base_ns = readily_provable_number_set(self.base, default=Complex)
         exp_ns = readily_provable_number_set(self.exponent, default=Complex)
-        if isinstance(the_factors, Expression): 
-            # i.e. we have a single factor supplied rather than a
-            # list of factors
-            # Case (1) the_factors = self.base
-            if (the_factors == self.base):
-                # In both cases below, we turn off auto_simplify to
-                # keep the Exp factors produce from being immediately
-                # recombined on the rhs
+        if not isinstance(factor, Expression): 
+            raise TypeError("Expecting 'factor' to be an Expression")            
+        
+        
+        with Mult.temporary_simplification_directives() as tmp_directives:
+            # Prevent exponents from re-combining as we factor them out.
+            tmp_directives.combine_numeric_rational_exponents=False
+            tmp_directives.combine_all_exponents=False
+            
+            replacements = None
+            if (factor == self.base):
+                if self.exponent == one:
+                    # Special case factoring a out of a^1 as a^1 = 1.
+                    return self.power_of_one_reduction()
+                factor_base = factor
+                _b, _c, _d = self.exponent, one, subtract(self.exponent, one)
+                replacements = [Exp(factor, one).power_of_one_reduction()]
+            elif isinstance(factor, Exp) and factor.base == self.base:
+                factor_base = factor.base
+                _b, _c, _d = self.exponent, factor.exponent, (
+                        subtract(self.exponent, factor.exponent))
+                replacements = []
+            if replacements is not None:
+                # Factor a or a^c from a^b.
+                if pull=='right':
+                    _c, _d = _d, _c
                 if RealPos.readily_includes(base_ns):
                     expr = eq.update(exp_factored_real.instantiate(
-                            {a: self.base, b: self.exponent, c: one},
-                            auto_simplify=False))
+                            {a: self.base, b: _b, c: _c, d: _d},
+                            replacements=replacements))
+                    return eq.relation
                 elif RealNonZero.readily_includes(base_ns) and (
                       Integer.readily_includes(exp_ns)):
                     expr = eq.update(exp_factored_int.instantiate(
-                            {a: self.base, b: self.exponent, c: one},
-                            auto_simplify=False))
-                # then specifically simplify the a^1 to a
-                expr = (eq.update(expr.inner_expr().operands[0].
-                        simplification()))
-                # then specifically simplify the a^{b-1} just in case
-                # the (b-1) can be reduced
-                expr = (eq.update(expr.inner_expr().operands[1].
-                        simplification()))
+                            {a: self.base, b: _b, c: _c, d: _d},
+                            replacements=replacements))
+                    return eq.relation
+                else:
+                    raise UnsatisfiedPrerequisites(
+                            "%s is not readily provable to be a positive "
+                            "number, or a nonzero real with %s as an "
+                            "integer in order to enable the factorization "
+                            "of %s."
+                            %(self.base, self.exponent, self))
+            
+            factor_base = None
+            if readily_factorable(expr.base, factor):
+                factor_base = factor
+            elif isinstance(factor, Exp):
+                factor_base = factor.base
+            
+            if factor_base is None or not (
+                    readily_factorable(expr.base, factor_base)):
+                raise UnsatisfiedPrerequisites(
+                        "%s is not readily factorable from %s"
+                        %(factor, self))
+            
+            # Factor within the base. For example,
+            # a = b*c
+            # a^d = (b^d) * (c^d) = b^e * b^(e-d) * c^d
+            expr = eq.update(expr.inner_expr().base.factorization(
+                factor_base, pull=pull, group_factors=True, 
+                group_remainder=True, preserve_all=True))
+            # distribute: (b^d) * (c^d)
+            expr = eq.update(expr.inner_expr().distribution(
+                    preserve_all=True))
+            num_entries = expr.operands.num_entries()
+            idx = 0 if pull=='left' else -1
+            if factor==expr.operands[idx]:
+                # e.g., a^c factored out of (a*b)^c
                 return eq.relation
-            elif (isinstance(the_factors, Exp)
-                  and (the_factors.base == self.base)):
-                # we have a factor of a^c while self is a^b
-                if RealPos.readily_includes(base_ns):
-                    expr = eq.update(exp_factored_real.instantiate(
-                            {a: self.base, b: self.exponent,
-                             c: the_factors.exponent},
-                            auto_simplify=False))
-                elif RealNonZero.readily_includes(base_ns) and (
-                        Integer.readily_includes(exp_ns) and
-                        Integer.readily_includes(
-                                readily_provable_number_set(
-                                        the_factors.exponent, 
-                                        default=Complex))):
-                    expr = eq.update(exp_factored_int.instantiate(
-                            {a: self.base, b: self.exponent,
-                             c: the_factors.exponent},
-                            auto_simplify=False))
-                # then specifically simplify the a^{b-c} just in case
-                # the (b-c) can be reduced
-                expr = (eq.update(expr.inner_expr().operands[1].
-                        simplification()))
-                return eq.relation
+            # factor portion: (b^e * b^(e-d)) * c^d
+            inner_expr = expr.inner_expr().operands[idx]
+            expr = eq.update(inner_expr.factorization(
+                                factor, pull=pull,
+                                group_factors=group_factors, 
+                                group_remainder=False, preserve_all=True))
+            # disassociate: b^e * b^(e-d) * c^d
+            expr = eq.update(expr.disassociation(
+                    idx, preserve_all=group_remainder))
+            if group_remainder:
+                expr = eq.update(expr.association(
+                        0 if pull=='right' else -num_entries,
+                        num_entries))
 
-            return eq.relation  # still self = self
-
-        else:
-            return eq.relation  # still self = self
+        return eq.relation
 
     @equality_prover('distributed', 'distribute')
     def distribution(self, **defaults_config):

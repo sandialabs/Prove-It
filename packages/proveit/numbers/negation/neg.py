@@ -335,6 +335,17 @@ class Neg(NumberOperation):
                 "Only negation distribution through a sum, subtract, or "
                 "fraction (Div) is implemented.")
 
+    def readily_factorable(self, factor):
+        # Return True iff 'factor' is factorable from 'self' in an
+        # obvious manner.  For this Neg, it is readily factorable if
+        # it is readily factorable from its operand.  If 'factor' is
+        # a Neg, just use its operand.
+        if self == factor:
+            return True
+        if isinstance(factor, Neg):
+            factor = factor.operand
+        return self.operand.readily_factorable(factor)
+
     @equality_prover('factorized', 'factor')
     def factorization(self, the_factors, pull="left", group_factors=None,
                       group_remainder=None, **defaults_config):

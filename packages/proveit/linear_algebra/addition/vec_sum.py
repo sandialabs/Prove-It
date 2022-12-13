@@ -1,13 +1,15 @@
 from proveit import (defaults, free_vars, Literal, Function, Lambda, 
+                     ExprTuple,
+                     SimplificationDirectives,
                      relation_prover, equality_prover,
                      TransRelUpdater, UnsatisfiedPrerequisites)
 from proveit import a, b, c, f, i, j, k, v, K, Q, V
 from proveit.logic import InSet
-from proveit.numbers import Interval, Mult
+from proveit.numbers import zero, one, Interval, Mult
 from proveit.abstract_algebra import GroupSum 
-from proveit.linear_algebra import VecSpaces
+from proveit.linear_algebra import VecSpaces, VecOperation
 
-class VecSum(GroupSum):
+class VecSum(GroupSum, VecOperation):
     '''
     Denote general summation over a set of elements of any field in 
     analogy to number summation.
@@ -16,7 +18,10 @@ class VecSum(GroupSum):
     # operator of the Sum operation.
     _operator_ = Literal(string_format='Sum',  latex_format=r'\sum',
                          theory=__file__)
-        
+
+    _simplification_directives_ = SimplificationDirectives(
+            pull_out_index_indep_factors=False)
+
     def __init__(self, index_or_indices, summand, *,
                  domain=None, domains=None, condition=None,
                  conditions=None, styles=None, _lambda_map=None):
@@ -26,6 +31,50 @@ class VecSum(GroupSum):
                           domain=domain, domains=domains,
                           condition=condition, conditions=conditions,
                           styles=styles, _lambda_map=_lambda_map)
+
+    def _build_canonical_form(self):
+        '''
+        Returns a canonical form of this VecSum with any 
+        index-independent scalar factors pulled out in front.
+        '''
+        from proveit.linear_algebra import ScalarMult
+        canonical_summand = self.summand.canonical_form()
+        if isinstance(canonical_summand, ScalarMult):
+            # Pull any index-independent scalar factors in front.
+            scalar = canonical_summand.scalar
+            index_dep_scalar_factors = []
+            index_indep_scalar_factors = []
+            if free_vars(scalar).isdisjoint(self.indices):
+                index_dep_scalar_factors = []
+                index_indep_scalar_factors = [scalar]
+            elif isinstance(scalar, Mult):
+                for scalar_factor in scalar.factors:
+                    if free_vars(scalar_factor).isdisjoint(self.indices):
+                        index_indep_scalar_factors.append(scalar_factor)
+                    else:
+                        index_dep_scalar_factors.append(scalar_factor)
+            else:                
+                index_dep_scalar_factors = [scalar]
+                index_indep_scalar_factors = []
+            if len(index_indep_scalar_factors) > 0:
+                # Pulling out some index-independent scalar factors.
+                if len(index_dep_scalar_factors) > 0:
+                    # Keeping some index-dependent scalar factors
+                    # within the VecSum.
+                    canonical_summand = ScalarMult(
+                            Mult(*index_dep_scalar_factors),
+                            canonical_summand.scaled).canonical_form()
+                else:
+                    canonical_summand = canonical_summand.scaled
+                # Build/return the ScalarMult with the VecSum.
+                vec_sum = VecSum(self.indices, canonical_summand,
+                      conditions=self.conditions.canonical_form())
+                return ScalarMult(
+                        Mult(*index_dep_scalar_factors),
+                        vec_sum).canonical_form()
+        # Build the canonical VecSum.
+        return VecSum(self.indices, canonical_summand,
+                      conditions=self.conditions.canonical_form())
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
@@ -57,6 +106,8 @@ class VecSum(GroupSum):
             # If the operands are all complex numbers, this
             # VecAdd will reduce to number Add.
             return self.number_sum_reduction()
+        if VecSum._simplification_directives_.pull_out_index_indep_factors:
+            return self.factors_extraction()
         return GroupSum.shallow_simplification(
                 self, must_evaluate=must_evaluate)
 
@@ -332,6 +383,217 @@ class VecSum(GroupSum):
                 "The VecSum {0} has index or indices {1} and domain {2}."
                 .format(self, self.indices, self.domain))
 
+    def readily_factorable(self, factor, *, pull):
+        '''
+        Return True if 'factor' may be easily factored from this
+        VecSum, pulling either to the 'left' or the 'right'.
+        The 'factor' must be independent of the summation indices
+        in order to factor it out.
+        If pulling to the 'left', the factor must be at the front
+        of any tensor product of vectors.  If pulling to the 'right', 
+        the factor must be at the back of any tensor product of vectors.
+        '''
+        from proveit.linear_algebra import readily_factorable
+        if self == factor:
+            return True
+        if not free_vars(factor).isdisjoint(self.indices):
+            # We cannot pull out 'factor' because it is 
+            # index-dependent.
+            return False
+        return readily_factorable(self.summand, factor, pull=pull)
+
+    @equality_prover('factorized', 'factor')
+    def factorization(self, the_factor, *, pull,
+            group_factors=True, group_remainder=False,
+            field=None, **defaults_config):
+        '''
+        Factor 'the_factor' from this summation over vectors.
+        
+        An index-independent scalar factor may be pulled to the 'left', 
+        an index-independent vector factor may be pulled to the 'right',
+        an index-indepedent portion of a tensor product may be pulled
+        to either side, or a vector summation may be pulled from
+        an index-independent remainder in a reverse fashion.
+        
+        Respective examples:
+            \sum_i a x_i = a \sum x_i
+            \sum a_i x = (\sum a_i) x
+            (\sum_i a_i x_i⊗y⊗z) = (\sum_i a_i x_i)⊗(y⊗z)
+                                 = (\sum_i a_i x_i)⊗y⊗z
+            (\sum_i b_i a z⊗x_i) = (a z) ⊗ (\sum_i b_i x_i)
+        In any of these examples, the factor being pulled could
+        be the index-independent parts or the summation.
+ 
+        For the tensor product case, the factors may be grouped or not.
+        In other cases, grouping will happen regardless.
+        The remainders will be grouped regardless for the VecSum
+        case (we ave 'group_remainder' as a parameter just for recursion
+        compatibility).
+        '''
+        from proveit.numbers import compose_fraction
+        from proveit.linear_algebra import ScalarMult
+        if not pull in ('left', 'right'):
+            raise ValueError("'pull' must be 'left' or 'right', not %s"
+                             %pull)
+        
+        if isinstance(the_factor, ScalarMult):
+            factor_scalar = the_factor.scalar
+            factor_scaled = the_factor.scaled
+        else:
+            factor_scalar = one
+            factor_scaled = the_factor            
+        if isinstance(factor_scaled, VecSum) and factor_scaled.indices==self.indices:
+            # Factoring out the summation part.
+            expr = self
+            eq = TransRelUpdater(expr)
+            expr = eq.update(expr.inner_expr().summand.factorization(
+                    factor_scaled.summand, pull=pull, 
+                    group_factors=True, group_remainder=True, 
+                    field=field, preserve_all=True))
+            # Switch the roles now.
+            reverse_pull = 'left' if pull=='right' else 'left'
+            _idx = 0 if reverse_pull=='left' else -1
+            remainder = expr.summand.operands[_idx]
+            expr = eq.update(expr.shallow_factorization(
+                             remainder, pull=reverse_pull, 
+                             group_factors=(group_remainder and 
+                                            factor_scalar==one),
+                             group_remainder=True, field=field,
+                             _check_index_independence=False,
+                             preserve_all=(factor_scalar==one)))
+            if factor_scalar != one:
+                expr = eq.update(expr.factorization(
+                        the_factor, pull=pull, group_factors=group_factors,
+                        group_remainder=group_remainder, field=field))
+                
+            return eq.relation
+        
+        # Make sure that 'the_factor' is independent of any
+        # summation index.
+        if not free_vars(the_factor).isdisjoint(self.indices):
+            raise ValueError("Cannot factor %s from %s because it is not "
+                             "independent of the indices"%(the_factor, 
+                                                           self))
+        # Factor the summand.
+        summand_factorization = self.inner_expr().summand.factorization(
+                the_factor, pull=pull, group_factors=group_factors,
+                group_remainder=True, field=field, preserve_all=True)
+        return summand_factorization.apply_transitivity(
+                 summand_factorization.rhs.shallow_factorization(
+                         the_factor, pull=pull, group_factors=group_factors,
+                         group_remainder=group_remainder, field=field,
+                         _check_index_independence=False))
+
+    @equality_prover('shallow_factorized', 'shallow_factor')
+    def shallow_factorization(self, the_factor, *, pull,
+            group_factors=True, group_remainder=False,
+            field=None, _check_index_independence=True,
+            **defaults_config):
+        '''
+        Perform a factorization at this level (no recursive 
+        factorization).  Also see 'factorization' which does include
+        recursive factorization.
+        '''
+        from proveit.linear_algebra import ScalarMult, TensorProd
+
+        if _check_index_independence:
+            # Make sure there that 'the_factor' is independent of any
+            # summation index.
+            if not free_vars(the_factor).isdisjoint(self.indices):
+                raise ValueError("Cannot factor %s from %s because it is not "
+                                 "independent of the indices"%(the_factor, 
+                                                               self))
+
+        _V = vec_space = VecSpaces.known_vec_space(self, field=field)
+        _K = VecSpaces.known_field(vec_space)
+        summand = self.summand
+        _j = self.indices.num_elements()
+        _Q = Lambda(self.indices, self.condition)
+        if isinstance(summand, ScalarMult) and (
+                summand.scalar == the_factor):
+            from proveit.linear_algebra.scalar_multiplication import (
+                    factorization_from_vec_sum)
+            # Factoring out a scalar from the sum.  For example,
+            #   \sum_i a x_i = a \sum x_i
+            assert pull=='left', ("Scalars must be pulled to the 'left' "
+                                  "when factoring from vectors")
+            _k = the_factor
+            _f = Lambda(self.indices, summand.scaled)
+            return (factorization_from_vec_sum.instantiate(
+                    {K:_K, f:_f, Q:_Q, j:_j, V:_V, k:_k})
+                    .derive_consequent().with_wrapping_at())
+        elif isinstance(summand, ScalarMult) and (
+                summand.scaled == the_factor):
+            # Factoring out a vector from the sum.  For example,
+            #   \sum a_i x = (\sum a_i) x
+            from proveit.linear_algebra.scalar_multiplication import (
+                    scalar_sum_factorization)
+            assert pull=='right', ("Vectors must be pulled to the 'right' "
+                                   "when factoring from scaled versions")
+            _v = the_factor
+            _f = Lambda(self.indices, summand.scalar)
+            return (scalar_sum_factorization.instantiate(
+                    {K:_K, f:_f, Q:_Q, j:_j, V:_V, v:_v})
+                   .derive_consequent().with_wrapping_at())
+            
+        else:
+            # The only remaining possibility is factoring a vector
+            # to one side of a tensor product within the summand. Examples:
+            #   (\sum_i a_i x_i⊗y⊗z) = (\sum_i a_i x_i)⊗y⊗z
+            #   (\sum_i a_i z⊗x_i) = z ⊗ (\sum_i a_i x_i)
+            #   (\sum_i a b_i x_i⊗z)  = (\sum_i b_i x_i) ⊗ (a z) 
+            #   (\sum_i b_i a z⊗x_i) = (a z) ⊗ (\sum_i b_i x_i)
+            from proveit.linear_algebra.tensors import (
+                    tensor_prod_factorization_from_summation)
+    
+            if not group_factors and isinstance(the_factor, TensorProd):
+                num_factor_entries = the_factor.operands.num_entries()
+                factor_entries = the_factor.operands.entries
+            else:
+                num_factor_entries = 1
+                factor_entries = (the_factor,)
+            _b = self.indices
+            _j = _b.num_elements()
+            if pull == 'left':
+                if not isinstance(summand, TensorProd) or (
+                        tuple(summand.factors[:num_factor_entries]) != 
+                        factor_entries):
+                    raise ValueError(
+                            "%s not immediately factorable from "
+                            "the left of %s"%(the_factor, summand))
+                _k = zero # right side is empty
+                # the actual factor operands
+                _a = ExprTuple(*factor_entries)
+                # middle has the remainder summation
+                summand_remainders = self.summand.factors[num_factor_entries:]
+                # the other side is empty
+                _c = ()
+                _i = _a.num_elements()
+            elif pull == 'right':
+                if not isinstance(summand, TensorProd) or (
+                        tuple(summand.factors[-num_factor_entries:]) !=
+                        the_factor):
+                    raise ValueError(
+                            "%s not immediately factorable from "
+                            "the right of %s"%(the_factor, summand))
+                _i = zero  # left side is empty
+                # left side is empty
+                _a = ()
+                # middle has the remainder summation
+                summand_remainders = self.summand.factors[:num_factor_entries]
+                # right side has the factor
+                _c = ExprTuple(*factor_entries)
+                _k = _c.num_elements()
+            if len(summand_remainders) != 1:
+                    raise ValueError(
+                            "%s does not factor from %s as a 'shallow' "
+                            "factorization. Use 'factorization' instead"%
+                            (the_factor, self))
+            _f = Lambda(self.indices, summand_remainders[0])
+            return tensor_prod_factorization_from_summation.instantiate(
+                    {K:_K, f:_f, Q:_Q, V:_V, i:_i, j:_j, k:_k,
+                     a:_a, b:_b, c:_c}).derive_consequent().with_wrapping_at()
+
     @equality_prover('factors_extracted', 'factors_extract')
     def factors_extraction(self, field=None, **defaults_config):
         '''
@@ -507,9 +769,16 @@ class VecSum(GroupSum):
         # or (2) expr = ScalarMult (we found some scalar factors to
         # extract), with a VecSum as the scaled component.
 
-        if isinstance(expr, VecSum):
+        if isinstance(expr, VecSum) and (
+                isinstance(expr.summand, TensorProd) or
+                (isinstance(expr.summand, ScalarMult) and
+                 isinstance(expr.summand.scaled, TensorProd))):
             expr = eq.update(expr.tensor_prod_factoring())
-        elif isinstance(expr, ScalarMult) and isinstance(expr.scaled, VecSum):
+        elif isinstance(expr, ScalarMult) and (
+                isinstance(expr.scaled, VecSum) and
+                (isinstance(expr.scaled.summand, TensorProd) or
+                 (isinstance(expr.scaled.summand, ScalarMult) and
+                  isinstance(expr.scaled.summand.scaled, TensorProd)))):
             expr = eq.update(expr.inner_expr().scaled.tensor_prod_factoring())
 
         return eq.relation
@@ -589,13 +858,13 @@ class VecSum(GroupSum):
                 
                 idx_beg = -1
                 idx_end = -1
-                for i in range(len(expr.summand.operands.entries)):
-                    if expr.index in free_vars(tensor_prod_expr.operands[i]):
+                for _i in range(len(expr.summand.operands.entries)):
+                    if expr.index in free_vars(tensor_prod_expr.operands[_i]):
                         if idx_beg == -1:
-                            idx_beg = i
+                            idx_beg = _i
                             idx_end = idx_beg
                         else:
-                            idx_end = i
+                            idx_end = _i
             else:
                 # The alternative is that the summand is
                 # a ScalarMult with the scalar (but not the scaled)
@@ -638,9 +907,9 @@ class VecSum(GroupSum):
         # Check that the TensorProd factors to be factored out do not
         # rely on the VecSum index of summation
         summation_index = expr.index
-        for i in range(num_vec_factors):
-            if i < idx_beg or i > idx_end:
-                the_factor = tensor_prod_factors_list[i]
+        for _i in range(num_vec_factors):
+            if _i < idx_beg or _i > idx_end:
+                the_factor = tensor_prod_factors_list[_i]
                 if summation_index in free_vars(the_factor):
                     raise ValueError(
                             "TensorProd factor {0} cannot be factored "
