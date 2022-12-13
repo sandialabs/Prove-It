@@ -208,7 +208,7 @@ class ScalarMult(VecOperation):
         return scaled_norm.instantiate(
                 {K:field, H:vec_space, alpha:self.scalar, x:self.scaled})
 
-    def readily_factorable(self, factor, *, pull):
+    def readily_factorable(self, factor, *, pull='left'):
         '''
         Return True if 'factor' may be easily factored from this
         VecAdd, pulling either to the 'left' or the 'right'.
@@ -223,8 +223,6 @@ class ScalarMult(VecOperation):
         # Put the 'self' and the candidate factor in canonical form 
         # which will put scalars in the front.
         canonical_self = self.canonical_form()
-        if canonical_self.factors.num_entries()==0:
-            return False # Empty tensor product cannot be factored.
         canonical_factor = factor.canonical_form()
         if isinstance(canonical_factor, ScalarMult):
             if not isinstance(canonical_self, ScalarMult):
@@ -238,10 +236,10 @@ class ScalarMult(VecOperation):
         if isinstance(canonical_self, ScalarMult):
             # We've addressed any scalar part.
             canonical_self = canonical_self.scaled
-        return canonical_self.readily_factorable(canonical_factor)
+        return readily_factorable(canonical_self, canonical_factor, pull=pull)
 
     @equality_prover('factorized', 'factor')
-    def factorization(self, the_factor, *, pull,
+    def factorization(self, the_factor, *, pull='left',
             group_factors=True, group_remainder=False,
             field=None, **defaults_config):
         '''
@@ -280,29 +278,21 @@ class ScalarMult(VecOperation):
                 # Simple case of factoring the entire scalar.
                 desired = ScalarMult(the_factor, self.scaled)
             else:
-                remaining_scalar = remove_common_factors(self.scalar, 
-                                                         the_factor)
-                remaining_scalars = (
-                        remaining_scalar.factors if isinstance(
-                                remaining_scalar, Mult)
-                        else (remaining_scalar,))
-                if group_remainder:
-                    # e.g., (a b c) x = (b c) (a x)
-                    desired = ScalarMult(
-                            the_factor, ScalarMult(remaining_scalar,
-                                                   self.scaled))
-                elif group_factors:
+                # Factor from the scalar.
+                assert pull == 'left'
+                scalar_factorization = (
+                    self.inner_expr().scalar.factorization(
+                        the_factor, group_factors=group_factors, 
+                        group_remainder=group_remainder, pull=pull))
+                if not group_remainder:
                     # e.g., (a b c) x = ((b c) a) x
-                    desired = ScalarMult(
-                            Mult(the_factor, *remaining_scalars),
-                            self.scaled)
-                else:
-                    # e.g., (a b c) x = (b c a) x
-                    if isinstance(the_factor, Mult):
-                        the_factor = the_factor.factors
-                    desired = ScalarMult(
-                            Mult(the_factor, *remaining_scalars),
-                            self.scaled)
+                    # or (a b c) x = (b c a) x
+                    return scalar_factorization
+                # e.g., (a b c) x = (b c) (a x)
+                remaining_scalar = scalar_factorization.rhs.scalar.factors[-1]
+                desired = ScalarMult(
+                    the_factor, ScalarMult(remaining_scalar,
+                                           self.scaled))
             return deduce_canonically_equal(self, desired, field=field)
 
         # Put the factor in its canonical form and separate out any
