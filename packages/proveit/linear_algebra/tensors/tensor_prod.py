@@ -51,7 +51,9 @@ class TensorProd(VecOperation):
             factor = factor.canonical_form()
             if isinstance(factor, ScalarMult):
                 scalars.append(factor.scalar)
-                canonical_factors.append(factor.scaled)
+                factor = factor.scaled
+            if isinstance(factor, TensorProd):
+                canonical_factors.extend(factor.factors)
             else:
                 canonical_factors.append(factor)
         if len(scalars) == 0:
@@ -195,11 +197,17 @@ class TensorProd(VecOperation):
 
         if not TensorProd.all_ops_are_cart_exp(self):
             from . import tensor_prod_association
-            _V = VecSpaces.known_vec_space(self, field=field)
-            _K = VecSpaces.known_field(_V)
+            _vspace = VecSpaces.known_vec_space(self, field=field)
+            _K = VecSpaces.known_field(_vspace)
+            _U = VecSpaces.known_vec_spaces(self.factors[:start_idx], 
+                                            field=_K)
+            _V = VecSpaces.known_vec_spaces(
+                self.factors[start_idx:start_idx+length], field=_K)
+            _W = VecSpaces.known_vec_spaces(
+                self.factors[start_idx+length:], field=_K)
             eq = apply_association_thm(
                 self, start_idx, length, tensor_prod_association,
-                repl_map_extras={K:_K, V:_V}).derive_consequent()
+                repl_map_extras={K:_K, U:_U, V:_V, W:_W})
             return eq.with_wrapping_at()
         else:
             from . import tensor_prod_vec_space_association
@@ -245,11 +253,22 @@ class TensorProd(VecOperation):
 
         if not TensorProd.all_ops_are_cart_exp(self):
             from . import tensor_prod_disassociation
-            _V = VecSpaces.known_vec_space(self, field=field)
-            _K = VecSpaces.known_field(_V)
+            _vspace = VecSpaces.known_vec_space(self, field=field)
+            _K = VecSpaces.known_field(_vspace)
+            _U = VecSpaces.known_vec_spaces(self.factors[:idx], 
+                                            field=_K)
+            nested_group = self.operands[idx]
+            if not isinstance(nested_group, TensorProd):
+                raise ValueError(
+                    "Cannot disassociate index %d from %s."
+                    %(idx, self))
+            _V = VecSpaces.known_vec_spaces(
+                nested_group.factors, field=_K)
+            _W = VecSpaces.known_vec_spaces(
+                self.factors[idx+1:], field=_K)
             eq = apply_disassociation_thm(
                     self, idx, tensor_prod_disassociation,
-                    repl_map_extras={K:_K, V:_V}).derive_consequent()
+                    repl_map_extras={K:_K, U:_U, V:_V, W:_W})
             return eq.with_wrapping_at()
         else:
             from . import tensor_prod_vec_space_disassociation
@@ -375,17 +394,21 @@ class TensorProd(VecOperation):
         if not isinstance(self.operands[idx], ScalarMult):
             raise TypeError("Expected the 'operand' and 'operand_idx' to be "
                             "a ScalarMult")            
-        _V = VecSpaces.known_vec_space(self, field=field)
-        _K = VecSpaces.known_field(_V)
+        _vspace = VecSpaces.known_vec_space(self, field=field)
+        _K = VecSpaces.known_field(_vspace)
         _alpha = self.operands[idx].scalar
         _a = self.operands[:idx]
         _b = self.operands[idx].scaled
         _c = self.operands[idx+1:]
         _i = _a.num_elements()
         _k = _c.num_elements()
-        impl = factor_scalar_from_tensor_prod.instantiate(
-                {K:_K, alpha:_alpha, i:_i, k:_k, V:_V, a:_a, b:_b, c:_c})
-        return impl.derive_consequent().with_wrapping_at()
+        _U = VecSpaces.known_vec_spaces(_a, field=_K)
+        _V = VecSpaces.known_vec_space(_b, field=_K)
+        _W = VecSpaces.known_vec_spaces(_c, field=_K)
+        inst = factor_scalar_from_tensor_prod.instantiate(
+            {K:_K, alpha:_alpha, i:_i, k:_k, U:_U, V:_V, W:_W,
+             a:_a, b:_b, c:_c})
+        return inst.with_wrapping_at()
     
     def readily_factorable(self, factor, *, pull):
         '''

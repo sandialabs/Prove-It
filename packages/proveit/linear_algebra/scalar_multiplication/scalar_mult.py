@@ -268,7 +268,6 @@ class ScalarMult(VecOperation):
         if self.canonical_form() == the_factor_cf:
             # Trivial case of factoring the entire ScalarMult.
             return deduce_canonically_equal(self, the_factor, field=field)
-        
         if proveit.numbers.readily_factorable(self.scalar, the_factor):
             # Factor just from the scalar part.
             if pull != 'left':
