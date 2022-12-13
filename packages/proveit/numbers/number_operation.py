@@ -229,8 +229,8 @@ def readily_factorable(term, factor):
     from proveit.numbers import one, is_numeric_rational
     if term.canonical_form() == factor.canonical_form() or factor == one:
         return True
-    if is_numeric_rational(term) and is_numeric_rational(factor):
-        return True
+    #if is_numeric_rational(term) and is_numeric_rational(factor):
+    #    return True
     if hasattr(term, 'readily_factorable'):
         return term.readily_factorable(factor)
     return False
