@@ -20,10 +20,7 @@ proveit.core_expr_types.tuples.shift_equivalence_both
 proveit.core_expr_types.tuples.tuple_eq_via_elem_eq
 proveit.core_expr_types.tuples.tuple_len_0_typical_eq
 proveit.linear_algebra.addition.binary_closure
-proveit.linear_algebra.addition.binary_permutation
 proveit.linear_algebra.addition.closure
-proveit.linear_algebra.addition.leftward_permutation
-proveit.linear_algebra.addition.rightward_permutation
 proveit.linear_algebra.addition.summation_closure
 proveit.linear_algebra.addition.vec_sum_index_shift
 proveit.linear_algebra.addition.vec_sum_split_after
@@ -70,7 +67,6 @@ proveit.logic.booleans.implication.untrue_antecedent_implication
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.double_negation_elim
 proveit.logic.booleans.negation.negation_intro
-proveit.logic.booleans.negation.not_false
 proveit.logic.booleans.true_is_bool
 proveit.logic.booleans.unfold_is_bool
 proveit.logic.booleans.unfold_is_bool_explicit
@@ -266,8 +262,6 @@ proveit.numbers.number_sets.rational_numbers.nonpos_if_in_rational_nonpos
 proveit.numbers.number_sets.rational_numbers.nonpos_int_within_rational_nonpos
 proveit.numbers.number_sets.rational_numbers.nonzero_if_in_rational_nonzero
 proveit.numbers.number_sets.rational_numbers.nonzero_int_within_rational_nonzero
-proveit.numbers.number_sets.rational_numbers.nonzero_rational_is_rational_nonzero
-proveit.numbers.number_sets.rational_numbers.pos_rational_is_rational_pos
 proveit.numbers.number_sets.rational_numbers.positive_if_in_rational_pos
 proveit.numbers.number_sets.rational_numbers.rational_neg_within_rational
 proveit.numbers.number_sets.rational_numbers.rational_neg_within_rational_nonpos

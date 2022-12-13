@@ -207,7 +207,6 @@ proveit.numbers.numerals.decimals.tuple_len_1
 proveit.numbers.numerals.decimals.tuple_len_2
 proveit.numbers.numerals.decimals.tuple_len_2_typical_eq
 proveit.numbers.ordering.less_add_left
-proveit.numbers.ordering.less_add_left_weak
 proveit.numbers.ordering.less_eq_add_right
 proveit.numbers.ordering.less_eq_add_right_strong
 proveit.numbers.ordering.less_eq_from_not_less
