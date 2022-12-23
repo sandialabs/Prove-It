@@ -209,8 +209,10 @@ class Sum(OperationOverInstances):
                 for factor in summand.factors:
                     if free_vars(factor).isdisjoint(self.indices):
                         index_indep_factors.append(factor)
-                return self.factorization(index_indep_factors, pull='left',
-                                          group_factors=False)
+                if len(index_indep_factors) > 0:
+                    return self.factorization(
+                        index_indep_factors, pull='left',
+                        group_factors=False)
 
         raise SimplificationError(
             "Sum simplification only implemented for a summation over an "

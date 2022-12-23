@@ -643,7 +643,8 @@ class Div(NumberOperation):
             eq.update(thm.instantiate({x:_x, y:_y, z:_z},
                                       replacements=replacements))
         elif (readily_factorable(expr.numerator, the_factor_numer) and
-              readily_factorable(expr.denominator, the_factor_denom)):
+              (the_factor_denom == one or
+               readily_factorable(expr.denominator, the_factor_denom))):
             # Factor (x*y)/(z*w) into (x/z)*(y/w).
             thm = prod_of_fracs
             if the_factor_denom not in (one, expr.denominator):
@@ -696,7 +697,6 @@ class Div(NumberOperation):
             if _w == one:
                 replacements.append(frac(_y, _w).divide_by_one_elimination(
                         preserve_all=True))
-
             eq.update(thm.instantiate({x:_x, y:_y, z:_z, w:_w},
                     replacements=replacements,
                     preserve_expr=expr))
@@ -1304,7 +1304,10 @@ def compose_fraction(numerator, denominator):
     simplifications if the denominator is one or if either/both the
     numerator/denominator are fractions.
     '''
-    from proveit.numbers import one, compose_product
+    from proveit.numbers import one, compose_product, negated, Neg
+    if isinstance(denominator, Neg):
+        denominator = denominator.operand
+        numerator = negated(numerator)
     if denominator == one:
         return numerator
     if isinstance(numerator, Div) and isinstance(denominator, Div):
@@ -1317,4 +1320,6 @@ def compose_fraction(numerator, denominator):
     elif isinstance(denominator, Div):
         numerator = compose_product(numerator, denominator.denominator)
         denominator = denominator.numerator
+    if isinstance(numerator, Neg):
+        return Neg(Div(numerator.operand, denominator))
     return Div(numerator, denominator)
