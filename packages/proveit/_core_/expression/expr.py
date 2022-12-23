@@ -492,10 +492,11 @@ class Expression(metaclass=ExprType):
             raise TypeError("Expecting a proven Judgment to be returned "
                             "by '_deduce_canonically_equal")
         equality = Equals(lhs, rhs)
-        if proven_eq.expr != equality:
+        if not defaults.auto_simplify and len(defaults.replacements)==0 and (
+                proven_eq.expr != equality):
             raise ValueError("Expecting '_deduce_canonically_equal' to "
-                             "return the proven 'equality': %s vs %s"%(
-                                     proven_eq.expr, equality))
+                             "return %s but got %s"%(
+                                     equality, proven_eq.expr))
         return proven_eq
                                                
     def _deduce_canonically_equal(self, rhs):
