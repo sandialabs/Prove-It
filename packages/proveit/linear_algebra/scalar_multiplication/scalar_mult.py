@@ -1,9 +1,9 @@
 from proveit import (Operation, Literal, prover, relation_prover,
-                     SimplificationDirectives,
+                     free_vars, SimplificationDirectives,
                      equality_prover, TransRelUpdater, UnsatisfiedPrerequisites)
 from proveit import a, b, x, H, K, V, alpha, beta
 from proveit.logic import InSet, Equals
-from proveit.numbers import one, Complex
+from proveit.numbers import one, Complex, Mult
 from proveit.abstract_algebra import plus, times
 from proveit.linear_algebra import (
         VecSpaces, VecOperation, deduce_canonically_equal)
@@ -296,7 +296,7 @@ class ScalarMult(VecOperation):
 
         # Put the factor in its canonical form and separate out any
         # of its scalar factors.
-        factor_scalar, factor_scaled = canonical_scalar_and_scaled(
+        factor_scalar, factor_scaled = extract_scalar_and_scaled(
                 the_factor)
         remaining_scalar = remove_common_factors(
                 self.scalar, factor_scalar)
@@ -376,11 +376,49 @@ class ScalarMult(VecOperation):
         return factorization_of_vec.apply_transitivity(
                 deduce_canonically_equal(factorization_of_vec.rhs,
                                          desired, field=field))
-        
 
-def canonical_scalar_and_scaled(expr):
-    canonical_form = expr.canonical_form()
-    if isinstance(canonical_form, ScalarMult):
-        return canonical_form.scalar, canonical_form.scaled
-    else:
-        return one, canonical_form
+
+def extract_scalar_and_scaled(expr):
+    '''
+    Pull out scalar versus scaled factors from the given
+    expression in a recursive manner.
+    '''
+    from proveit.linear_algebra import TensorProd, VecSum
+    from proveit.numbers import compose_product
+    if isinstance(expr, ScalarMult):
+        scalar, scaled = extract_scalar_and_scaled(expr.scaled)
+        return compose_product(expr.scalar, scalar), scaled
+    if isinstance(expr, TensorProd):
+        scalar_factors = []
+        scaled_factors = []
+        for factor in expr.factors:
+            scalar_factor, scaled_factor = extract_scalar_and_scaled(
+                factor)
+            scalar_factors.append(scalar_factor)
+            scaled_factors.append(scaled_factor)
+        return compose_product(scalar_factors), TensorProd(
+            *scaled_factors)
+    if isinstance(expr, VecSum):
+        summand_scalar, summand_scaled = extract_scalar_and_scaled(
+            expr.summand)
+        if free_vars(summand_scalar).isdisjoint(expr.indices):
+            return summand_scalar, VecSum(summand_scaled)
+        elif isinstance(summand_scalar, Mult):
+            index_indep_factors = []
+            index_dep_factors = []
+            for scalar_factor in summand_scalar.factors:
+                if free_vars(scalar_factor).isdijoint(expr.indices):
+                    index_indep_factors.append(scalar_factor)
+                else:
+                    index_dep_factors.append(scalar_factor)
+            if len(index_dep_factors) == 0:
+                summand = summand_scaled
+            else:
+                summand = ScalarMult(compose_product(*index_dep_factors),
+                                     summand_scaled)
+            return (compose_product(*index_indep_factors),
+                    VecSum(expr.indices, summand,
+                           conditions=expr.conditions))
+                    
+    return one, expr
+

@@ -20,7 +20,7 @@ class VecSum(GroupSum, VecOperation):
                          theory=__file__)
 
     _simplification_directives_ = SimplificationDirectives(
-            pull_out_index_indep_factors=False)
+            pull_out_index_indep_factors=True)
 
     def __init__(self, index_or_indices, summand, *,
                  domain=None, domains=None, condition=None,
@@ -139,10 +139,9 @@ class VecSum(GroupSum, VecOperation):
         '''
 
         expr = self
-        summation_index = expr.index
         eq = TransRelUpdater(expr)
 
-        if summation_index not in free_vars(expr.summand):
+        if free_vars(expr.summand).isdisjoint(expr.indices):
             vec_space_membership = expr.summand.deduce_in_vec_space(
                 field=field,
                 assumptions = defaults.assumptions + expr.conditions.entries)
@@ -157,8 +156,8 @@ class VecSum(GroupSum, VecOperation):
 
         else:
             print("VecSum cannot be eliminated. The summand {0} appears "
-                  "to depend on the index of summation {1}".
-                  format(expr.summand, summation_index))
+                  "to depend an index of summation {1}".
+                  format(expr.summand, expr.indices))
 
         return eq.relation
 
@@ -620,7 +619,6 @@ class VecSum(GroupSum, VecOperation):
         VecSum.
         '''
         expr = self
-        summation_index = expr.index
         assumptions = defaults.assumptions + expr.conditions.entries
         assumptions_with_conditions = (
                 defaults.assumptions + expr.conditions.entries)
@@ -649,7 +647,7 @@ class VecSum(GroupSum, VecOperation):
             tensor_prod_summand = True # not clearly useful; review please
 
         if isinstance(expr.summand, ScalarMult):
-            if summation_index not in free_vars(expr.summand.scalar):
+            if free_vars(expr.summand.scalar).isdisjoint(expr.indices):
                 # it doesn't matter what the scalar is; the whole thing
                 # can be pulled out in front of the VecSum
                 from proveit.linear_algebra.scalar_multiplication import (
@@ -666,7 +664,8 @@ class VecSum(GroupSum, VecOperation):
                 imp = distribution_over_vec_sum.instantiate(
                         {V: _V_sub, K: _K_sub, b: _b_sub, j: _j_sub,
                          f: _f_sub, Q: _Q_sub, k: _k_sub},
-                         assumptions=assumptions_with_conditions)
+                         assumptions=assumptions_with_conditions,
+                         preserve_all=True)
                 expr = eq.update(imp.derive_consequent(
                     assumptions=assumptions_with_conditions).derive_reversed())
             else:
@@ -684,10 +683,11 @@ class VecSum(GroupSum, VecOperation):
                     _num_unfactored = len(expr.summand.scalar.operands.entries)
 
                     # go through factors from back to front
+                    _prev_expr = expr
                     for the_factor in reversed(
                             expr.summand.scalar.operands.entries):
 
-                        if summation_index not in free_vars(the_factor):
+                        if free_vars(the_factor).isdisjoint(expr.indices):
                             expr = eq.update(
                                 expr.inner_expr().summand.scalar.factorization(
                                     the_factor,
@@ -698,14 +698,14 @@ class VecSum(GroupSum, VecOperation):
 
                     # group the factorable factors
                     # if _num_factored > 0:
-                    if _num_factored > 1:
+                    if _num_factored > 1 and _num_unfactored > 0:
                         expr = eq.update(
                             expr.inner_expr().summand.scalar.association(
                                 0, _num_factored,
                                 assumptions=assumptions_with_conditions,
                                 preserve_all=True))
                     # group the unfactorable factors
-                    if _num_unfactored > 1:
+                    if _num_unfactored > 1 and _num_factored > 0:
                         expr = eq.update(
                             expr.inner_expr().summand.scalar.association(
                                 1, _num_unfactored,
@@ -739,7 +739,8 @@ class VecSum(GroupSum, VecOperation):
                                 {V:_V_sub, K:_K_sub, b: _b_sub, j: _j_sub,
                                  f: _f_sub, Q: _Q_sub, c:_c_sub, k: _k_sub},
                                  preserve_expr=expr,
-                                assumptions=assumptions_with_conditions)
+                                assumptions=assumptions_with_conditions,
+                                preserve_all=True)
                         expr = eq.update(impl.derive_consequent(
                                 assumptions=assumptions_with_conditions).
                                 derive_reversed())
@@ -748,9 +749,9 @@ class VecSum(GroupSum, VecOperation):
                     # The scalar component is dependent on summation
                     # index but is not a Mult.
                     # Revert everything and return self = self.
-                    print("Found summation index {0} in the scalar {1} "
-                          "and the scalar is not a Mult object.".
-                      format(summation_index, expr.summand.scalar))
+                    #print("Found summation index {0} in the scalar {1} "
+                    #      "and the scalar is not a Mult object.".
+                    #  format(summation_index, expr.summand.scalar))
                     eq = TransRelUpdater(self)
 
         # ============================================================ #
@@ -826,6 +827,7 @@ class VecSum(GroupSum, VecOperation):
             # ScalarMults and multiplicative identities
             expr = eq.update(expr.inner_expr().summand.shallow_simplification())
             the_summand = expr.summand
+        indices = expr.indices
         if isinstance(the_summand, TensorProd):
             tensor_prod_expr = the_summand
             tensor_prod_summand = True
@@ -847,11 +849,11 @@ class VecSum(GroupSum, VecOperation):
         if idx is None and idx_beg is None and idx_end is None:
             # prepare to take out all possible factors, including
             # the complete elimination of the VecSum if possible
-            if expr.index not in free_vars(expr.summand):
-                # summand does not depend on index of summation
+            if free_vars(expr.summand).isdisjoint(indices):
+                # summand does not depend on indices of summation
                 # so we can eliminate the VecSum entirely
                 return expr.vec_sum_elimination(field=field)
-            if expr.index in free_vars(tensor_prod_expr):
+            if not free_vars(tensor_prod_expr).isdisjoint(indices):
                 # identify the extractable vs. non-extractable
                 # TensorProd factors (and there must be at least
                 # one such non-extractable factor)
@@ -859,7 +861,8 @@ class VecSum(GroupSum, VecOperation):
                 idx_beg = -1
                 idx_end = -1
                 for _i in range(len(expr.summand.operands.entries)):
-                    if expr.index in free_vars(tensor_prod_expr.operands[_i]):
+                    if not free_vars(tensor_prod_expr.operands[_i]).isdisjoint(
+                            indices):
                         if idx_beg == -1:
                             idx_beg = _i
                             idx_end = idx_beg
@@ -906,16 +909,15 @@ class VecSum(GroupSum, VecOperation):
 
         # Check that the TensorProd factors to be factored out do not
         # rely on the VecSum index of summation
-        summation_index = expr.index
         for _i in range(num_vec_factors):
             if _i < idx_beg or _i > idx_end:
                 the_factor = tensor_prod_factors_list[_i]
-                if summation_index in free_vars(the_factor):
+                if not free_vars(the_factor).isdisjoint(indices):
                     raise ValueError(
                             "TensorProd factor {0} cannot be factored "
                             "out of the given VecSum summation because "
-                            "it is a function of the summation index {1}.".
-                            format(the_factor, summation_index))
+                            "it is a function of a summation index {1}.".
+                            format(the_factor, indices))
         
         # Everything checks out as best we can tell, so prepare to
         # import and instantiate the appropriate theorem,
@@ -933,11 +935,11 @@ class VecSum(GroupSum, VecOperation):
             # but process is slightly different in the two cases
             if tensor_prod_summand:
                 expr = eq.update(expr.inner_expr().summand.association(
-                        idx_beg, idx_end-idx_beg+1))
+                        idx_beg, idx_end-idx_beg+1, preserve_all=True))
                 tensor_prod_expr = expr.summand
             else:
                 expr = eq.update(expr.inner_expr().summand.scaled.association(
-                        idx_beg, idx_end-idx_beg+1))
+                        idx_beg, idx_end-idx_beg+1, preserve_all=True))
                 tensor_prod_expr = expr.summand.scaled
         idx = idx_beg
 

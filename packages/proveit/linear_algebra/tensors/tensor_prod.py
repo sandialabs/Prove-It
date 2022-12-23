@@ -472,11 +472,11 @@ class TensorProd(VecOperation):
         from proveit.numbers import (
                 one, remove_common_factors, compose_product, compose_fraction)
         from proveit.linear_algebra.scalar_multiplication.scalar_mult import (
-                canonical_scalar_and_scaled)
+                extract_scalar_and_scaled)
 
         # Put the factor in its canonical form and separate out any
         # of its scalar factors.
-        factor_scalar, factor_scaled = canonical_scalar_and_scaled(the_factor)
+        factor_scalar, factor_scaled = extract_scalar_and_scaled(the_factor)
         self_cf = self.canonical_form()
 
         if self_cf == the_factor.canonical_form():
@@ -491,25 +491,25 @@ class TensorProd(VecOperation):
         
         def raise_not_factorable():
             raise ValueError("Unable to factor %s from %s"%(the_factor, self))            
-        
-        if isinstance(factor_scaled, TensorProd):
-            num_to_factor = factor_scaled.factors.num_entries()
+        canonical_factor_scaled = factor_scaled.canonical_form()
+        if isinstance(canonical_factor_scaled, TensorProd):
+            num_to_factor = fanonical_factor_scaled.factors.num_entries()
             if num_to_factor > num_tensor_entries:
                 raise_not_factorable() 
-            factor_scaled_factors = factor_scaled.factors.entries
+            canonical_factors = canonical_factor_scaled.factors.entries
         else:
             num_to_factor = 1
-            factor_scaled_factors = (factor_scaled,)
+            canonical_factors = (canonical_factor_scaled,)
                 
         if pull=='left':
             if (canonical_tensor_prod.factors[:num_to_factor].entries
-                    != factor_scaled_factors):
+                    != canonical_factors):
                 raise_not_factorable()
             pull_side_factors = self.factors[:num_to_factor]
             far_side_factors = self.factors[num_to_factor:]
         elif pull=='right':
             if (canonical_tensor_prod.factors[num_to_factor:].entries
-                    != factor_scaled_factors):
+                    != canonical_factors):
                 raise_not_factorable()
             pull_side_factors = reversed(self.factors[num_to_factor:])
             far_side_factors = reversed(self.factors[:num_to_factor])
