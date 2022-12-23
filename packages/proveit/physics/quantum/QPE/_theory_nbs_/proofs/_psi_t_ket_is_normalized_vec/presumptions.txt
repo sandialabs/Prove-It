@@ -1,5 +1,4 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
-proveit.core_expr_types.operations.operands_substitution_via_tuple
 proveit.core_expr_types.tuples.negated_shift_equivalence
 proveit.core_expr_types.tuples.negated_shift_equivalence_both
 proveit.core_expr_types.tuples.range_from1_len
@@ -31,6 +30,7 @@ proveit.linear_algebra.tensors.norm_of_tensor_prod
 proveit.linear_algebra.tensors.norm_preserving_tensor_prod
 proveit.linear_algebra.tensors.tensor_prod_is_in_tensor_prod_space
 proveit.linear_algebra.tensors.tensor_prod_of_cart_exps_within_cart_exp
+proveit.linear_algebra.tensors.tensor_prod_of_vec_spaces_is_vec_space
 proveit.logic.booleans.conjunction.and_if_both
 proveit.logic.booleans.conjunction.any_from_and
 proveit.logic.booleans.conjunction.conjunction_from_quantification

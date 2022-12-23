@@ -32,6 +32,7 @@ proveit.linear_algebra.rational_vec_set_is_vec_space
 proveit.linear_algebra.real_vec_set_is_vec_space
 proveit.linear_algebra.tensors.tensor_prod_is_in_tensor_prod_space
 proveit.linear_algebra.tensors.tensor_prod_of_cart_exps_within_cart_exp
+proveit.linear_algebra.tensors.tensor_prod_of_vec_spaces_is_vec_space
 proveit.logic.booleans.conjunction.and_if_all
 proveit.logic.booleans.conjunction.any_from_and
 proveit.logic.booleans.conjunction.each_is_bool

@@ -13,12 +13,15 @@ proveit.core_expr_types.tuples.partition
 proveit.core_expr_types.tuples.partition_back
 proveit.core_expr_types.tuples.partition_front
 proveit.core_expr_types.tuples.range_from1_len
+proveit.core_expr_types.tuples.range_from1_len_typical_eq
 proveit.core_expr_types.tuples.range_len
 proveit.core_expr_types.tuples.range_len_typical_eq
 proveit.core_expr_types.tuples.shift_equivalence
 proveit.core_expr_types.tuples.shift_equivalence_both
+proveit.core_expr_types.tuples.tuple_elem_substitution
 proveit.core_expr_types.tuples.tuple_eq_via_elem_eq
 proveit.core_expr_types.tuples.tuple_len_0_typical_eq
+proveit.core_expr_types.tuples.tuple_portion_substitution
 proveit.linear_algebra.addition.binary_closure
 proveit.linear_algebra.addition.closure
 proveit.linear_algebra.addition.summation_closure
@@ -33,13 +36,14 @@ proveit.linear_algebra.inner_products.rational_set_is_inner_prod_space
 proveit.linear_algebra.inner_products.real_set_is_inner_prod_space
 proveit.linear_algebra.rational_vec_set_is_vec_space
 proveit.linear_algebra.real_vec_set_is_vec_space
+proveit.linear_algebra.scalar_multiplication.distribution_over_vec_sum_with_scalar_mult
 proveit.linear_algebra.scalar_multiplication.doubly_scaled_as_singly_scaled
 proveit.linear_algebra.scalar_multiplication.one_as_scalar_mult_id
 proveit.linear_algebra.scalar_multiplication.scalar_mult_closure
 proveit.linear_algebra.tensors.factor_scalar_from_tensor_prod
 proveit.linear_algebra.tensors.tensor_prod_disassociation
+proveit.linear_algebra.tensors.tensor_prod_distribution_over_summation_with_scalar_mult
 proveit.linear_algebra.tensors.tensor_prod_factorization_from_add
-proveit.linear_algebra.tensors.tensor_prod_factorization_from_summation
 proveit.linear_algebra.tensors.tensor_prod_is_in_tensor_prod_space
 proveit.linear_algebra.tensors.tensor_prod_of_cart_exps_within_cart_exp
 proveit.linear_algebra.tensors.tensor_prod_of_vec_spaces_is_vec_space
@@ -143,7 +147,6 @@ proveit.numbers.division.prod_of_fracs
 proveit.numbers.exponentiation.complex_x_to_first_power_is_x
 proveit.numbers.exponentiation.exp_complex_closure
 proveit.numbers.exponentiation.exp_int_closure
-proveit.numbers.exponentiation.exp_monotonicity_large_base_less
 proveit.numbers.exponentiation.exp_nat_pos_expansion
 proveit.numbers.exponentiation.exp_nat_pos_rev
 proveit.numbers.exponentiation.exp_natpos_closure
@@ -237,7 +240,6 @@ proveit.numbers.number_sets.integers.nonpos_int_is_int_nonpos
 proveit.numbers.number_sets.integers.nonpos_int_within_int
 proveit.numbers.number_sets.integers.nonzero_if_in_nonzero_int
 proveit.numbers.number_sets.integers.nonzero_int_within_int
-proveit.numbers.number_sets.integers.nonzero_nat_is_natural_pos
 proveit.numbers.number_sets.integers.pos_int_is_natural_pos
 proveit.numbers.number_sets.integers.zero_is_int
 proveit.numbers.number_sets.integers.zero_is_nonpos_int
