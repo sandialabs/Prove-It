@@ -30,6 +30,7 @@ proveit.linear_algebra.rational_vec_set_is_vec_space
 proveit.linear_algebra.real_vec_set_is_vec_space
 proveit.linear_algebra.tensors.tensor_prod_is_in_tensor_prod_space
 proveit.linear_algebra.tensors.tensor_prod_of_cart_exps_within_cart_exp
+proveit.linear_algebra.tensors.tensor_prod_of_vec_spaces_is_vec_space
 proveit.logic.booleans.conjunction.and_if_all
 proveit.logic.booleans.conjunction.any_from_and
 proveit.logic.booleans.conjunction.each_is_bool
@@ -163,7 +164,6 @@ proveit.numbers.number_sets.integers.interval_upper_bound
 proveit.numbers.number_sets.integers.nat_pos_within_int
 proveit.numbers.number_sets.integers.nat_pos_within_nonzero_int
 proveit.numbers.number_sets.integers.nat_within_int
-proveit.numbers.number_sets.integers.neg_int_is_int_neg
 proveit.numbers.number_sets.integers.neg_int_within_int
 proveit.numbers.number_sets.integers.neg_int_within_nonpos_int
 proveit.numbers.number_sets.integers.neg_int_within_nonzero_int
@@ -173,7 +173,6 @@ proveit.numbers.number_sets.integers.nonpos_if_in_nonpos_int
 proveit.numbers.number_sets.integers.nonpos_int_within_int
 proveit.numbers.number_sets.integers.nonzero_if_in_nonzero_int
 proveit.numbers.number_sets.integers.nonzero_int_within_int
-proveit.numbers.number_sets.integers.nonzero_nat_is_natural_pos
 proveit.numbers.number_sets.integers.pos_int_is_natural_pos
 proveit.numbers.number_sets.integers.zero_is_int
 proveit.numbers.number_sets.integers.zero_is_nonpos_int

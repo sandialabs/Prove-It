@@ -29,7 +29,7 @@ class NumberOperation(Operation):
         Return True iff 'factor' is factorable from 'self' in an
         obvious manner.
         '''
-        return self == factor
+        return self.canonical_form() == factor.canonical_form()
 
     def _deduce_canonically_equal(self, rhs):
         '''
@@ -226,9 +226,11 @@ def readily_factorable(term, factor):
     '''
     Return True iff the 'factor' can obviously be factors out of 'term'.
     '''
-    from proveit.numbers import one
-    if term == factor or factor == one:
+    from proveit.numbers import one, is_numeric_rational
+    if term.canonical_form() == factor.canonical_form() or factor == one:
         return True
+    #if is_numeric_rational(term) and is_numeric_rational(factor):
+    #    return True
     if hasattr(term, 'readily_factorable'):
         return term.readily_factorable(factor)
     return False
@@ -257,7 +259,7 @@ def quick_simplified_index(expr):
     negated integer indices and nested versions thereof.
     In particular, negations are distributed nested additionas are
     ungrouped, literal integers are extracted, added, and placed at the
-    end, and cancelations are made on ndividual terms as well as
+    end, and cancelations are made on individual terms as well as
     expression ranges or portions of expression ranges.  We freely
     assume terms represent numbers and expression ranges are
     well-formed.

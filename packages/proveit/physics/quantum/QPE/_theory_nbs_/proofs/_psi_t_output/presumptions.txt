@@ -143,7 +143,6 @@ proveit.numbers.exponentiation.exp_zero_eq_one
 proveit.numbers.exponentiation.exponentiated_one
 proveit.numbers.exponentiation.exponentiated_zero
 proveit.numbers.exponentiation.sqrt_complex_closure
-proveit.numbers.multiplication.association
 proveit.numbers.multiplication.commutation
 proveit.numbers.multiplication.disassociation
 proveit.numbers.multiplication.elim_one_any
@@ -230,7 +229,6 @@ proveit.numbers.number_sets.rational_numbers.nonpos_if_in_rational_nonpos
 proveit.numbers.number_sets.rational_numbers.nonpos_int_within_rational_nonpos
 proveit.numbers.number_sets.rational_numbers.nonzero_if_in_rational_nonzero
 proveit.numbers.number_sets.rational_numbers.nonzero_int_within_rational_nonzero
-proveit.numbers.number_sets.rational_numbers.nonzero_rational_is_rational_nonzero
 proveit.numbers.number_sets.rational_numbers.positive_if_in_rational_pos
 proveit.numbers.number_sets.rational_numbers.rational_neg_within_rational
 proveit.numbers.number_sets.rational_numbers.rational_neg_within_rational_nonpos

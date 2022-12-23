@@ -1607,7 +1607,9 @@ class Add(NumberOperation):
         the "left" or "right".
         If group_factors is True, the factors are grouped
         together as a sub-product.
-        Returns the equality that equates self to this new version.
+        In the Add case, the remainder will always be grouped (we
+        have 'group_remainder' as a parameter just for recursion
+        compatibility).
         '''
         from proveit.numbers.multiplication import distribute_through_sum
         from proveit.numbers import one, Mult

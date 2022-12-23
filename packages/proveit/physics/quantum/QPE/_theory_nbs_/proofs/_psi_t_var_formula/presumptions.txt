@@ -13,17 +13,17 @@ proveit.core_expr_types.tuples.partition
 proveit.core_expr_types.tuples.partition_back
 proveit.core_expr_types.tuples.partition_front
 proveit.core_expr_types.tuples.range_from1_len
+proveit.core_expr_types.tuples.range_from1_len_typical_eq
 proveit.core_expr_types.tuples.range_len
 proveit.core_expr_types.tuples.range_len_typical_eq
 proveit.core_expr_types.tuples.shift_equivalence
 proveit.core_expr_types.tuples.shift_equivalence_both
+proveit.core_expr_types.tuples.tuple_elem_substitution
 proveit.core_expr_types.tuples.tuple_eq_via_elem_eq
 proveit.core_expr_types.tuples.tuple_len_0_typical_eq
+proveit.core_expr_types.tuples.tuple_portion_substitution
 proveit.linear_algebra.addition.binary_closure
-proveit.linear_algebra.addition.binary_permutation
 proveit.linear_algebra.addition.closure
-proveit.linear_algebra.addition.leftward_permutation
-proveit.linear_algebra.addition.rightward_permutation
 proveit.linear_algebra.addition.summation_closure
 proveit.linear_algebra.addition.vec_sum_index_shift
 proveit.linear_algebra.addition.vec_sum_split_after
@@ -42,8 +42,8 @@ proveit.linear_algebra.scalar_multiplication.one_as_scalar_mult_id
 proveit.linear_algebra.scalar_multiplication.scalar_mult_closure
 proveit.linear_algebra.tensors.factor_scalar_from_tensor_prod
 proveit.linear_algebra.tensors.tensor_prod_disassociation
-proveit.linear_algebra.tensors.tensor_prod_distribution_over_add
 proveit.linear_algebra.tensors.tensor_prod_distribution_over_summation_with_scalar_mult
+proveit.linear_algebra.tensors.tensor_prod_factorization_from_add
 proveit.linear_algebra.tensors.tensor_prod_is_in_tensor_prod_space
 proveit.linear_algebra.tensors.tensor_prod_of_cart_exps_within_cart_exp
 proveit.linear_algebra.tensors.tensor_prod_of_vec_spaces_is_vec_space
@@ -58,7 +58,6 @@ proveit.logic.booleans.conjunction.quantification_from_conjunction
 proveit.logic.booleans.conjunction.redundant_conjunction
 proveit.logic.booleans.conjunction.redundant_conjunction_general
 proveit.logic.booleans.conjunction.right_from_and
-proveit.logic.booleans.conjunction.true_and_true
 proveit.logic.booleans.false_is_bool
 proveit.logic.booleans.fold_is_bool
 proveit.logic.booleans.from_not_false
@@ -70,7 +69,6 @@ proveit.logic.booleans.implication.untrue_antecedent_implication
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.double_negation_elim
 proveit.logic.booleans.negation.negation_intro
-proveit.logic.booleans.negation.not_false
 proveit.logic.booleans.true_is_bool
 proveit.logic.booleans.unfold_is_bool
 proveit.logic.booleans.unfold_is_bool_explicit
@@ -103,6 +101,7 @@ proveit.logic.sets.inclusion.transitivity_subset_eq_subset
 proveit.logic.sets.inclusion.transitivity_subset_eq_subset_eq
 proveit.logic.sets.inclusion.transitivity_subset_subset_eq
 proveit.logic.sets.inclusion.unfold_subset_eq
+proveit.numbers.addition.add_complex_closure_bin
 proveit.numbers.addition.add_int_closure
 proveit.numbers.addition.add_int_closure_bin
 proveit.numbers.addition.add_nat_closure
@@ -148,7 +147,6 @@ proveit.numbers.division.prod_of_fracs
 proveit.numbers.exponentiation.complex_x_to_first_power_is_x
 proveit.numbers.exponentiation.exp_complex_closure
 proveit.numbers.exponentiation.exp_int_closure
-proveit.numbers.exponentiation.exp_monotonicity_large_base_less
 proveit.numbers.exponentiation.exp_nat_pos_expansion
 proveit.numbers.exponentiation.exp_nat_pos_rev
 proveit.numbers.exponentiation.exp_natpos_closure
@@ -242,7 +240,6 @@ proveit.numbers.number_sets.integers.nonpos_int_is_int_nonpos
 proveit.numbers.number_sets.integers.nonpos_int_within_int
 proveit.numbers.number_sets.integers.nonzero_if_in_nonzero_int
 proveit.numbers.number_sets.integers.nonzero_int_within_int
-proveit.numbers.number_sets.integers.nonzero_nat_is_natural_pos
 proveit.numbers.number_sets.integers.pos_int_is_natural_pos
 proveit.numbers.number_sets.integers.zero_is_int
 proveit.numbers.number_sets.integers.zero_is_nonpos_int
@@ -266,8 +263,6 @@ proveit.numbers.number_sets.rational_numbers.nonpos_if_in_rational_nonpos
 proveit.numbers.number_sets.rational_numbers.nonpos_int_within_rational_nonpos
 proveit.numbers.number_sets.rational_numbers.nonzero_if_in_rational_nonzero
 proveit.numbers.number_sets.rational_numbers.nonzero_int_within_rational_nonzero
-proveit.numbers.number_sets.rational_numbers.nonzero_rational_is_rational_nonzero
-proveit.numbers.number_sets.rational_numbers.pos_rational_is_rational_pos
 proveit.numbers.number_sets.rational_numbers.positive_if_in_rational_pos
 proveit.numbers.number_sets.rational_numbers.rational_neg_within_rational
 proveit.numbers.number_sets.rational_numbers.rational_neg_within_rational_nonpos

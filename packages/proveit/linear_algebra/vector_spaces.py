@@ -2,7 +2,7 @@ from proveit import (defaults, ExprRange, Function, Literal, Judgment,
                      ProofFailure, UnsatisfiedPrerequisites, prover)
 from proveit import n
 from proveit.logic import InClass, ClassMembership, InSet
-from proveit.numbers import Interval
+from proveit.numbers import Interval, Complex
 
 class VecSpaces(Function):
     '''
@@ -29,7 +29,7 @@ class VecSpaces(Function):
 
     # A default field may be set for convenience when determining
     # a known vector spaces (see 'yield_known_vec_spaces').
-    default_field = None
+    default_field = Complex # appropriate in typical cases.
     
     # Map vector spaces to their known membership(s) within 
     # VecSpaces(K) for some field K. Such a membership relation is the 

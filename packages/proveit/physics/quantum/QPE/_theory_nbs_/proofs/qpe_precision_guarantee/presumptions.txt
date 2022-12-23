@@ -43,15 +43,13 @@ proveit.linear_algebra.inner_products.scaled_norm
 proveit.linear_algebra.matrices.exponentiation.U_closure
 proveit.linear_algebra.matrices.exponentiation.unital2pi_eigen_exp_application
 proveit.linear_algebra.matrices.unitaries_are_matrices
-proveit.linear_algebra.scalar_multiplication.distribution_over_vec_sum_with_scalar_mult
 proveit.linear_algebra.scalar_multiplication.doubly_scaled_as_singly_scaled
 proveit.linear_algebra.scalar_multiplication.one_as_scalar_mult_id
 proveit.linear_algebra.scalar_multiplication.scalar_mult_closure
 proveit.linear_algebra.tensors.factor_scalar_from_tensor_prod
 proveit.linear_algebra.tensors.norm_preserving_tensor_prod
 proveit.linear_algebra.tensors.tensor_prod_disassociation
-proveit.linear_algebra.tensors.tensor_prod_distribution_over_add
-proveit.linear_algebra.tensors.tensor_prod_distribution_over_summation_with_scalar_mult
+proveit.linear_algebra.tensors.tensor_prod_factorization_from_add
 proveit.linear_algebra.tensors.tensor_prod_is_in_tensor_prod_space
 proveit.linear_algebra.tensors.tensor_prod_of_cart_exps_within_cart_exp
 proveit.linear_algebra.tensors.tensor_prod_of_vec_spaces_is_vec_space
@@ -252,9 +250,9 @@ proveit.numbers.exponentiation.exp_real_pos_closure
 proveit.numbers.exponentiation.exp_zero_eq_one
 proveit.numbers.exponentiation.exponent_log_with_same_base
 proveit.numbers.exponentiation.exponentiated_one
+proveit.numbers.exponentiation.exponentiated_zero
 proveit.numbers.exponentiation.int_exp_of_exp
 proveit.numbers.exponentiation.int_exp_of_neg_exp
-proveit.numbers.exponentiation.nat_pos_to_nat_pos_lower_bound
 proveit.numbers.exponentiation.neg_power_as_div
 proveit.numbers.exponentiation.posnat_power_of_product
 proveit.numbers.exponentiation.posnat_power_of_quotient
@@ -375,7 +373,6 @@ proveit.numbers.number_sets.integers.nonpos_int_is_int_nonpos
 proveit.numbers.number_sets.integers.nonpos_int_within_int
 proveit.numbers.number_sets.integers.nonzero_if_in_nonzero_int
 proveit.numbers.number_sets.integers.nonzero_int_within_int
-proveit.numbers.number_sets.integers.nonzero_nat_is_natural_pos
 proveit.numbers.number_sets.integers.pos_int_is_natural_pos
 proveit.numbers.number_sets.integers.zero_is_int
 proveit.numbers.number_sets.integers.zero_is_nonpos_int
@@ -393,6 +390,7 @@ proveit.numbers.number_sets.rational_numbers.nat_pos_within_rational_pos
 proveit.numbers.number_sets.rational_numbers.nat_within_rational
 proveit.numbers.number_sets.rational_numbers.nat_within_rational_nonneg
 proveit.numbers.number_sets.rational_numbers.neg_int_within_rational_neg
+proveit.numbers.number_sets.rational_numbers.negative_if_in_rational_neg
 proveit.numbers.number_sets.rational_numbers.nonneg_if_in_rational_nonneg
 proveit.numbers.number_sets.rational_numbers.nonpos_if_in_rational_nonpos
 proveit.numbers.number_sets.rational_numbers.nonpos_int_within_rational_nonpos
@@ -438,6 +436,7 @@ proveit.numbers.number_sets.real_numbers.nat_pos_within_real_pos
 proveit.numbers.number_sets.real_numbers.nat_within_real
 proveit.numbers.number_sets.real_numbers.nat_within_real_nonneg
 proveit.numbers.number_sets.real_numbers.neg_int_within_real_neg
+proveit.numbers.number_sets.real_numbers.negative_if_in_real_neg
 proveit.numbers.number_sets.real_numbers.nonneg_if_in_real_nonneg
 proveit.numbers.number_sets.real_numbers.nonneg_real_is_real_nonneg
 proveit.numbers.number_sets.real_numbers.nonpos_if_in_real_nonpos
@@ -446,6 +445,7 @@ proveit.numbers.number_sets.real_numbers.nonzero_if_in_real_nonzero
 proveit.numbers.number_sets.real_numbers.nonzero_int_within_real_nonzero
 proveit.numbers.number_sets.real_numbers.not_int_if_not_int_in_interval
 proveit.numbers.number_sets.real_numbers.pi_is_real_pos
+proveit.numbers.number_sets.real_numbers.pos_real_is_real_pos
 proveit.numbers.number_sets.real_numbers.positive_if_in_real_pos
 proveit.numbers.number_sets.real_numbers.rational_neg_within_real_neg
 proveit.numbers.number_sets.real_numbers.rational_nonneg_within_real_nonneg
@@ -470,10 +470,10 @@ proveit.numbers.number_sets.real_numbers.zero_is_real
 proveit.numbers.number_sets.real_numbers.zero_set_within_real
 proveit.numbers.number_sets.real_numbers.zero_set_within_real_nonneg
 proveit.numbers.number_sets.real_numbers.zero_set_within_real_nonpos
-proveit.numbers.numerals.decimals.add_1_3
 proveit.numbers.numerals.decimals.add_1_4
 proveit.numbers.numerals.decimals.add_2_1
 proveit.numbers.numerals.decimals.add_2_2
+proveit.numbers.numerals.decimals.add_3_1
 proveit.numbers.numerals.decimals.add_4_4
 proveit.numbers.numerals.decimals.less_0_1
 proveit.numbers.numerals.decimals.less_1_2
@@ -516,7 +516,7 @@ proveit.numbers.numerals.decimals.tuple_len_5_typical_eq
 proveit.numbers.numerals.decimals.tuple_len_6_typical_eq
 proveit.numbers.numerals.decimals.tuple_len_8_typical_eq
 proveit.numbers.ordering.less_add_right
-proveit.numbers.ordering.less_add_right_weak
+proveit.numbers.ordering.less_add_right_weak_int
 proveit.numbers.ordering.less_complement_is_greater_eq
 proveit.numbers.ordering.less_eq_add_right
 proveit.numbers.ordering.less_eq_add_right_strong
@@ -562,14 +562,13 @@ proveit.physics.quantum.QPE._alpha_m_mod_as_geometric_sum
 proveit.physics.quantum.QPE._alpha_m_mod_evaluation
 proveit.physics.quantum.QPE._alpha_sqrd_upper_bound
 proveit.physics.quantum.QPE._alpha_summed
-proveit.physics.quantum.QPE._best_floor_is_in_b_domain
+proveit.physics.quantum.QPE._best_floor_is_in_m_domain
 proveit.physics.quantum.QPE._best_floor_is_int
 proveit.physics.quantum.QPE._best_round_is_int
 proveit.physics.quantum.QPE._delta_b_floor_diff_in_interval
 proveit.physics.quantum.QPE._delta_b_in_interval
 proveit.physics.quantum.QPE._delta_b_is_real
 proveit.physics.quantum.QPE._delta_b_not_eq_scaledNonzeroInt
-proveit.physics.quantum.QPE._e_domain_sorting
 proveit.physics.quantum.QPE._e_value_ge_two
 proveit.physics.quantum.QPE._e_value_in_e_domain
 proveit.physics.quantum.QPE._fail_sum
@@ -588,7 +587,6 @@ proveit.physics.quantum.QPE._precision_guarantee_lemma_02
 proveit.physics.quantum.QPE._psi_t_ket_is_normalized_vec
 proveit.physics.quantum.QPE._psi_t_output
 proveit.physics.quantum.QPE._psi_t_var_formula
-proveit.physics.quantum.QPE._rel_indexed_alpha_are_complex
 proveit.physics.quantum.QPE._sample_space_bijection
 proveit.physics.quantum.QPE._scaled_abs_delta_b_floor_diff_interval
 proveit.physics.quantum.QPE._scaled_delta_b_floor_in_interval
@@ -596,8 +594,6 @@ proveit.physics.quantum.QPE._scaled_delta_b_is_zero_or_non_int
 proveit.physics.quantum.QPE._scaled_delta_b_not_eq_nonzeroInt
 proveit.physics.quantum.QPE._scaled_delta_b_round_in_interval
 proveit.physics.quantum.QPE._success_complements_failure
-proveit.physics.quantum.QPE._two_pow_t_is_nat_pos
-proveit.physics.quantum.QPE._two_pow_t_less_one_is_nat_pos
 proveit.physics.quantum.QPE._two_pow_t_minus_one_is_nat_pos
 proveit.physics.quantum.algebra.complex_set_is_hilbert_space
 proveit.physics.quantum.algebra.complex_vec_set_is_hilbert_space

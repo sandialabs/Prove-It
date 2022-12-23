@@ -11,7 +11,8 @@ from proveit.numbers import (zero, NumberOperation,
                              is_numeric_int, is_numeric_rational, 
                              numeric_rational_ints,
                              simplified_numeric_rational,
-                             deduce_number_set, readily_provable_number_set)
+                             deduce_number_set, readily_factorable,
+                             readily_provable_number_set)
 from proveit.numbers.number_sets import (
     ZeroSet, Natural, NaturalPos,
     Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
@@ -231,7 +232,7 @@ class Div(NumberOperation):
         rational form.  For example:
             ((4/3) x) / ((2/3) y) = (2 x) / y
         '''
-        from proveit.numbers import Mult, num, one, compose_factors
+        from proveit.numbers import Mult, num, one, compose_product
         from proveit.numbers.division import frac_cancel_left
 
         numerator, denominator = self.numerator, self.denominator
@@ -326,14 +327,14 @@ class Div(NumberOperation):
         if numer_int != numer_rational or denom_int != denom_rational:
             # A simplification should be performed.
             if numer_int == 1:
-                numer = compose_factors(*numer_remainder_factors)
+                numer = compose_product(*numer_remainder_factors)
             else:
-                numer = compose_factors(num(numer_int), 
+                numer = compose_product(num(numer_int), 
                                         *numer_remainder_factors)
             if denom_int == 1:
-                denom = compose_factors(*denom_remainder_factors)
+                denom = compose_product(*denom_remainder_factors)
             else:
-                denom = compose_factors(num(denom_int), 
+                denom = compose_product(num(denom_int), 
                                         *denom_remainder_factors)
             if denom == one:
                 rhs = numer
@@ -559,7 +560,11 @@ class Div(NumberOperation):
         it is readily factorable from the correxponding Mult:
             x/y = x*(y^{-1})
         '''
-        return self.canonical_form().readily_factorable(factor)
+        cf = self.canonical_form()
+        if cf != self:
+            return readily_factorable(self.canonical_form(), factor)
+        else:
+            return False
 
     @equality_prover('factorized', 'factor')
     def factorization(self, the_factors, pull="left",
@@ -638,7 +643,8 @@ class Div(NumberOperation):
             eq.update(thm.instantiate({x:_x, y:_y, z:_z},
                                       replacements=replacements))
         elif (readily_factorable(expr.numerator, the_factor_numer) and
-              readily_factorable(expr.denominator, the_factor_denom)):
+              (the_factor_denom == one or
+               readily_factorable(expr.denominator, the_factor_denom))):
             # Factor (x*y)/(z*w) into (x/z)*(y/w).
             thm = prod_of_fracs
             if the_factor_denom not in (one, expr.denominator):
@@ -691,7 +697,6 @@ class Div(NumberOperation):
             if _w == one:
                 replacements.append(frac(_y, _w).divide_by_one_elimination(
                         preserve_all=True))
-
             eq.update(thm.instantiate({x:_x, y:_y, z:_z, w:_w},
                     replacements=replacements,
                     preserve_expr=expr))
@@ -1292,3 +1297,29 @@ class Div(NumberOperation):
 
 def frac(numer, denom):
     return Div(numer, denom)
+
+def compose_fraction(numerator, denominator):
+    '''
+    Return the expression representing a fraction making obvious 
+    simplifications if the denominator is one or if either/both the
+    numerator/denominator are fractions.
+    '''
+    from proveit.numbers import one, compose_product, negated, Neg
+    if isinstance(denominator, Neg):
+        denominator = denominator.operand
+        numerator = negated(numerator)
+    if denominator == one:
+        return numerator
+    if isinstance(numerator, Div) and isinstance(denominator, Div):
+        numerator, denominator = (
+                compose_product(numerator.numerator, denominator.denominator),
+                compose_product(numerator.denominator, denominator.numerator))
+    elif isinstance(numerator, Div):
+        denominator = compose_product(numerator.denominator, denominator)
+        numerator = numerator.numerator
+    elif isinstance(denominator, Div):
+        numerator = compose_product(numerator, denominator.denominator)
+        denominator = denominator.numerator
+    if isinstance(numerator, Neg):
+        return Neg(Div(numerator.operand, denominator))
+    return Div(numerator, denominator)

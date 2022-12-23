@@ -3,7 +3,7 @@ from proveit import (Expression, Literal, Lambda, Function, Operation,
                      Judgment, free_vars, maybe_fenced, USE_DEFAULTS,
                      ProofFailure, defaults,
                      prover, relation_prover, equality_prover,
-                     UnsatisfiedPrerequisites)
+                     SimplificationDirectives, UnsatisfiedPrerequisites)
 from proveit import a, b, c, f, i, j, k, l, m, x, Q, S
 from proveit.logic import Forall, InSet
 from proveit.numbers import one, Add, Neg, subtract
@@ -22,6 +22,9 @@ class Sum(OperationOverInstances):
         theory=__file__)
     _init_argname_mapping_ = {'index_or_indices': 'instance_param_or_params',
                               'summand': 'instance_expr'}
+
+    _simplification_directives_ = SimplificationDirectives(
+            pull_out_index_indep_factors=True)
 
     def __init__(self, index_or_indices, summand, *,
                  domain=None, domains=None, condition=None,
@@ -59,6 +62,40 @@ class Sum(OperationOverInstances):
         elif self.domain == Natural:
             self.domain = Interval(zero,infinity)
         """
+
+    def _build_canonical_form(self):
+        '''
+        Returns a canonical form of this Sum with any 
+        index-independent factors pulled out in front.
+        '''
+        from proveit.numbers import Mult
+        canonical_summand = self.summand.canonical_form()
+        if isinstance(canonical_summand, Mult):
+            # Pull any index-independent scalar factors in front.
+            index_indep_factors = []
+            index_dep_factors = []
+            for factor in canonical_summand.factors:
+                if free_vars(factor).isdisjoint(self.indices):
+                    index_indep_factors.append(factor)
+                else:
+                    index_dep_factors.append(factor)
+            if len(index_indep_factors) > 0:
+                # Pulling out some index-independent scalar factors.
+                if len(index_dep_factors) > 0:
+                    # Keeping some index-dependent scalar factors
+                    # within the VecSum.
+                    canonical_summand = Mult(
+                            *index_dep_factors).canonical_form()
+                else:
+                    canonical_summand = one
+                # Build/return the Mult with the Sum.
+                _sum = Sum(self.indices, canonical_summand,
+                      conditions=self.conditions.canonical_form())
+                return Mult(
+                        Mult(*index_indep_factors), _sum).canonical_form()
+        # Build the canonical VecSum.
+        return Sum(self.indices, canonical_summand,
+                   conditions=self.conditions.canonical_form())
 
     @relation_prover
     def deduce_in_number_set(self, number_set, **defaults_config):
@@ -148,22 +185,35 @@ class Sum(OperationOverInstances):
         NEEDS UPDATING
         '''
         from proveit.logic import TRUE, SimplificationError
+        from proveit.numbers import Mult
         from . import sum_single, trivial_sum
+        summand = self.summand
         if (isinstance(self.domain,Interval) and
             self.domain.lower_bound == self.domain.upper_bound):
             if hasattr(self, 'index'):
                 return sum_single.instantiate(
-                    {Function(f, self.index): self.summand,
+                    {Function(f, self.index): summand,
                      a: self.domain.lower_bound})
         if (isinstance(self.domain,Interval) and
-                self.instance_param not in free_vars(self.summand)
+                self.instance_param not in free_vars(summand)
                 and self.non_domain_condition()==TRUE):
             # Trivial sum: summand independent of parameter.
             _a = self.domain.lower_bound
             _b = self.domain.upper_bound
-            _x = self.summand
+            _x = summand
             return trivial_sum.instantiate(
                     {a:_a, b:_b, x:_x})
+        if Sum._simplification_directives_.pull_out_index_indep_factors:
+            if isinstance(summand, Mult):
+                index_indep_factors = []
+                for factor in summand.factors:
+                    if free_vars(factor).isdisjoint(self.indices):
+                        index_indep_factors.append(factor)
+                if len(index_indep_factors) > 0:
+                    return self.factorization(
+                        index_indep_factors, pull='left',
+                        group_factors=False)
+
         raise SimplificationError(
             "Sum simplification only implemented for a summation over an "
             "integer Interval of one instance variable where the upper "

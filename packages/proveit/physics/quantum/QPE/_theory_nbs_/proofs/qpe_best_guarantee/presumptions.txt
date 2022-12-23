@@ -39,15 +39,13 @@ proveit.linear_algebra.inner_products.scaled_norm
 proveit.linear_algebra.matrices.exponentiation.U_closure
 proveit.linear_algebra.matrices.exponentiation.unital2pi_eigen_exp_application
 proveit.linear_algebra.matrices.unitaries_are_matrices
-proveit.linear_algebra.scalar_multiplication.distribution_over_vec_sum_with_scalar_mult
 proveit.linear_algebra.scalar_multiplication.doubly_scaled_as_singly_scaled
 proveit.linear_algebra.scalar_multiplication.one_as_scalar_mult_id
 proveit.linear_algebra.scalar_multiplication.scalar_mult_closure
 proveit.linear_algebra.tensors.factor_scalar_from_tensor_prod
 proveit.linear_algebra.tensors.norm_preserving_tensor_prod
 proveit.linear_algebra.tensors.tensor_prod_disassociation
-proveit.linear_algebra.tensors.tensor_prod_distribution_over_add
-proveit.linear_algebra.tensors.tensor_prod_distribution_over_summation_with_scalar_mult
+proveit.linear_algebra.tensors.tensor_prod_factorization_from_add
 proveit.linear_algebra.tensors.tensor_prod_is_in_tensor_prod_space
 proveit.linear_algebra.tensors.tensor_prod_of_cart_exps_within_cart_exp
 proveit.linear_algebra.tensors.tensor_prod_of_vec_spaces_is_vec_space
@@ -81,7 +79,6 @@ proveit.logic.booleans.disjunction.singular_constructive_dilemma
 proveit.logic.booleans.disjunction.singular_constructive_dilemma_lemma
 proveit.logic.booleans.disjunction.true_or_false
 proveit.logic.booleans.disjunction.true_or_true
-proveit.logic.booleans.disjunction.unary_or_reduction
 proveit.logic.booleans.fold_is_bool
 proveit.logic.booleans.forall_over_bool_by_cases
 proveit.logic.booleans.from_not_false
@@ -188,7 +185,6 @@ proveit.numbers.division.weak_div_from_numer_bound__pos_denom
 proveit.numbers.exponentiation.complex_power_of_complex_power
 proveit.numbers.exponentiation.complex_x_to_first_power_is_x
 proveit.numbers.exponentiation.exp_complex_closure
-proveit.numbers.exponentiation.exp_complex_nonzero_closure
 proveit.numbers.exponentiation.exp_eq
 proveit.numbers.exponentiation.exp_eq_real
 proveit.numbers.exponentiation.exp_int_closure
@@ -302,7 +298,6 @@ proveit.numbers.number_sets.integers.nonpos_int_is_int_nonpos
 proveit.numbers.number_sets.integers.nonpos_int_within_int
 proveit.numbers.number_sets.integers.nonzero_if_in_nonzero_int
 proveit.numbers.number_sets.integers.nonzero_int_within_int
-proveit.numbers.number_sets.integers.nonzero_nat_is_natural_pos
 proveit.numbers.number_sets.integers.pos_int_is_natural_pos
 proveit.numbers.number_sets.integers.zero_is_int
 proveit.numbers.number_sets.integers.zero_is_nonpos_int
@@ -367,6 +362,7 @@ proveit.numbers.number_sets.real_numbers.nonzero_int_within_real_nonzero
 proveit.numbers.number_sets.real_numbers.not_int_if_not_int_in_interval
 proveit.numbers.number_sets.real_numbers.pi_between_3_and_4
 proveit.numbers.number_sets.real_numbers.pi_is_real_pos
+proveit.numbers.number_sets.real_numbers.pos_real_is_real_pos
 proveit.numbers.number_sets.real_numbers.positive_if_in_real_pos
 proveit.numbers.number_sets.real_numbers.rational_neg_within_real_neg
 proveit.numbers.number_sets.real_numbers.rational_nonneg_within_real_nonneg
@@ -467,8 +463,7 @@ proveit.physics.quantum.QPE._alpha_ideal_case
 proveit.physics.quantum.QPE._alpha_m_evaluation
 proveit.physics.quantum.QPE._alpha_m_mod_as_geometric_sum
 proveit.physics.quantum.QPE._alpha_m_mod_evaluation
-proveit.physics.quantum.QPE._best_floor_is_in_b_domain
-proveit.physics.quantum.QPE._best_floor_is_int
+proveit.physics.quantum.QPE._best_floor_is_in_m_domain
 proveit.physics.quantum.QPE._best_guarantee
 proveit.physics.quantum.QPE._best_guarantee_delta_nonzero
 proveit.physics.quantum.QPE._best_round_is_int

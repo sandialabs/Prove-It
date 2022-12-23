@@ -198,7 +198,6 @@ proveit.numbers.number_sets.integers.neg_int_within_int
 proveit.numbers.number_sets.integers.neg_int_within_nonpos_int
 proveit.numbers.number_sets.integers.neg_int_within_nonzero_int
 proveit.numbers.number_sets.integers.negative_if_in_neg_int
-proveit.numbers.number_sets.integers.nonneg_int_is_natural
 proveit.numbers.number_sets.integers.nonpos_if_in_nonpos_int
 proveit.numbers.number_sets.integers.nonpos_int_within_int
 proveit.numbers.number_sets.integers.nonzero_if_in_nonzero_int
@@ -225,7 +224,6 @@ proveit.numbers.number_sets.rational_numbers.nonpos_if_in_rational_nonpos
 proveit.numbers.number_sets.rational_numbers.nonpos_int_within_rational_nonpos
 proveit.numbers.number_sets.rational_numbers.nonzero_if_in_rational_nonzero
 proveit.numbers.number_sets.rational_numbers.nonzero_int_within_rational_nonzero
-proveit.numbers.number_sets.rational_numbers.pos_rational_is_rational_pos
 proveit.numbers.number_sets.rational_numbers.positive_if_in_rational_pos
 proveit.numbers.number_sets.rational_numbers.rational_neg_within_rational
 proveit.numbers.number_sets.rational_numbers.rational_neg_within_rational_nonpos

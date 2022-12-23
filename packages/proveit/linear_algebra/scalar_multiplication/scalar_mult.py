@@ -1,12 +1,14 @@
 from proveit import (Operation, Literal, prover, relation_prover,
+                     free_vars, SimplificationDirectives,
                      equality_prover, TransRelUpdater, UnsatisfiedPrerequisites)
 from proveit import a, b, x, H, K, V, alpha, beta
-from proveit.logic import InSet
+from proveit.logic import InSet, Equals
+from proveit.numbers import one, Complex, Mult
 from proveit.abstract_algebra import plus, times
-from proveit.linear_algebra import VecSpaces
-from proveit.numbers import one, Complex
+from proveit.linear_algebra import (
+        VecSpaces, VecOperation, deduce_canonically_equal)
 
-class ScalarMult(Operation):
+class ScalarMult(VecOperation):
     '''
     The ScalarMult operation is the default for the scalar 
     multiplication of a vector and may also be used for scalar
@@ -19,6 +21,8 @@ class ScalarMult(Operation):
     _operator_ = Literal(string_format=r'*', latex_format=r'\cdot',
                          theory=__file__)
 
+    _simplification_directives_ = SimplificationDirectives()
+
     def __init__(self, scalar, scaled, *, styles=None):
         r'''
         Product between a scalar and a matrix (or vector).
@@ -27,6 +31,28 @@ class ScalarMult(Operation):
                            styles=styles)
         self.scalar = scalar
         self.scaled = scaled
+
+    def _build_canonical_form(self):
+        '''
+        Returns the canonical form of this ScalarMult, combining
+        scalars as possible.
+        '''
+        from proveit.numbers import one, Mult
+        canonical_scalar = self.scalar.canonical_form()
+        canonical_scaled = self.scaled.canonical_form()
+        if isinstance(canonical_scaled, ScalarMult):
+            combined_scalar = Mult(canonical_scalar, 
+                                   canonical_scaled.scalar)
+            canonical_scalar = combined_scalar.canonical_form()
+            canonical_scaled = canonical_scaled.scaled
+        if canonical_scalar == one:
+            return canonical_scaled
+        # We can only do the following if we know the vector space.
+        # Not sure the best way to handle this since the canonical
+        # form should not depend upon assumptions:
+        #elif canonical_scalar == zero:
+        #    return VecZero
+        return ScalarMult(canonical_scalar, canonical_scaled)
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
@@ -181,4 +207,218 @@ class ScalarMult(Operation):
         field = VecSpaces.known_field(vec_space)
         return scaled_norm.instantiate(
                 {K:field, H:vec_space, alpha:self.scalar, x:self.scaled})
+
+    def readily_factorable(self, factor, *, pull='left'):
+        '''
+        Return True if 'factor' may be easily factored from this
+        VecAdd, pulling either to the 'left' or the 'right'.
+        If pulling to the 'left', the factor must be at the front
+        of any tensor product of vectors.  If pulling to the 'right', 
+        the factor must be at the back of any tensor product of vectors.
+        '''
+        from proveit.linear_algebra import readily_factorable
+        if self == factor:
+            return True
+
+        # Put the 'self' and the candidate factor in canonical form 
+        # which will put scalars in the front.
+        canonical_self = self.canonical_form()
+        canonical_factor = factor.canonical_form()
+        if isinstance(canonical_factor, ScalarMult):
+            if not isinstance(canonical_self, ScalarMult):
+                # Nothing to factor the scalar from.
+                return False
+            if not readily_factorable(canonical_self.scalar,
+                                      canonical_factor.scalar):
+                # Can't factor the scalar part.
+                return False
+            canonical_factor = canonical_factor.scaled
+        if isinstance(canonical_self, ScalarMult):
+            # We've addressed any scalar part.
+            canonical_self = canonical_self.scaled
+        return readily_factorable(canonical_self, canonical_factor, pull=pull)
+
+    @equality_prover('factorized', 'factor')
+    def factorization(self, the_factor, *, pull='left',
+            group_factors=True, group_remainder=False,
+            field=None, **defaults_config):
+        '''
+        Factor 'the_factor' from this ScalarMult.
+
+        A scalar factor may be pulled to the left, a vector factor
+        may be pulled to the right, or a portion of a tensor product
+        may be pulled to either side.  These are examples for each
+        of these cases respectively:
+            (a b c) x = (b c) (a x) = ((b c) a) x = (b c a) x
+            a x⊗y⊗z = (a x)⊗(y⊗z) = (a x)⊗y⊗z
+            a x⊗(b y)⊗z = (b x)⊗(a y⊗z)
+            a x⊗(b y)⊗z = (b a x) ⊗ (y⊗z)
+            a b x⊗y⊗z = (b x)⊗(a y⊗z)
+        
+        Different possibilities of group_factors=True/False and 
+        group_remainder=True/False are shown via multiple equalities
+        in a line.
+        '''
+        import proveit.numbers
+        from proveit.numbers import (
+                Mult, one, remove_common_factors)
+        from proveit.linear_algebra import TensorProd
+        
+        the_factor_cf = the_factor.canonical_form()
+        if self.canonical_form() == the_factor_cf:
+            # Trivial case of factoring the entire ScalarMult.
+            return deduce_canonically_equal(self, the_factor, field=field)
+        if proveit.numbers.readily_factorable(self.scalar, the_factor):
+            # Factor just from the scalar part.
+            if pull != 'left':
+                raise ValueError("Scalars must be pulled to the 'left' "
+                                 "when factoring from vectors")
+            if self.scalar.canonical_form() == the_factor_cf:
+                # Simple case of factoring the entire scalar.
+                desired = ScalarMult(the_factor, self.scaled)
+            else:
+                # Factor from the scalar.
+                assert pull == 'left'
+                scalar_factorization = (
+                    self.inner_expr().scalar.factorization(
+                        the_factor, group_factors=group_factors, 
+                        group_remainder=group_remainder, pull=pull))
+                if not group_remainder:
+                    # e.g., (a b c) x = ((b c) a) x
+                    # or (a b c) x = (b c a) x
+                    return scalar_factorization
+                # e.g., (a b c) x = (b c) (a x)
+                remaining_scalar = scalar_factorization.rhs.scalar.factors[-1]
+                desired = ScalarMult(
+                    the_factor, ScalarMult(remaining_scalar,
+                                           self.scaled))
+            return deduce_canonically_equal(self, desired, field=field)
+
+        # Put the factor in its canonical form and separate out any
+        # of its scalar factors.
+        factor_scalar, factor_scaled = extract_scalar_and_scaled(
+                the_factor)
+        remaining_scalar = remove_common_factors(
+                self.scalar, factor_scalar)
+        inner_factor_scalar = remove_common_factors(factor_scalar,
+                                                    self.scalar)
+        # We can put this in canonical form since it doesn't
+        # go directly into the end result.
+        inner_factor_scalar = inner_factor_scalar
+        if inner_factor_scalar != one:
+            inner_factor = ScalarMult(
+                    inner_factor_scalar, factor_scaled)
+        else:
+            inner_factor = factor_scaled
+        
+        # Factor from the vector part so we can get the remainder
+        # that we will combine with the remaining part of the scalar.
+        factorization_of_vec = self.inner_expr().scaled.factorization(
+                inner_factor, pull=pull, field=field, group_factors=True,
+                group_remainder=(group_remainder and
+                                 remaining_scalar==one))
+        vec_factored = factorization_of_vec.rhs.scaled
+        
+        
+        if pull=='left':
+            if isinstance(vec_factored, TensorProd):
+                vec_remainder = TensorProd(*vec_factored[1:])
+                if remaining_scalar == one:
+                    # e.g., a x⊗(b y)⊗z = (b a x) ⊗ (y⊗z)
+                    desired = TensorProd(the_factor, vec_remainder)
+                else:
+                    # e.g., a x⊗(b y)⊗z = (b x)⊗(a y⊗z)
+                    desired = TensorProd(
+                            the_factor, ScalarMult(remaining_scalar, 
+                                                   vec_remainder))
+            else:
+                raise ValueError(
+                        "Cannot pull a vector factor to the 'left' "
+                        "unless it is a portion of a tensor product.")
+        elif pull=='right':
+            if isinstance(vec_factored, TensorProd):
+                vec_remainder_factors = vec_factored.factors[:-1]
+                if len(vec_remainder_factors) > 1:
+                    vec_remainder = TensorProd(*vec_remainder_factors)
+                elif len(vec_remainder_factors) == 1:
+                    vec_remainder = vec_remainder_factors[0]
+                    if remaining_scalar == one:
+                        # e.g., a x⊗(b y)⊗z = (b x)⊗(a y⊗z)
+                        desired = TensorProd(vec_remainder, the_factor)
+                    else:
+                        # e.g., a b x⊗y⊗z = (b x)⊗(a y⊗z)
+                        desired = TensorProd(
+                                ScalarMult(remaining_scalar, 
+                                           vec_remainder), the_factor)
+                elif remaining_scalar == one:
+                    desired = the_factor
+                else:
+                    desired = ScalarMult(remaining_scalar, the_factor)
+            elif isinstance(vec_factored, ScalarMult):
+                if remaining_scalar==one:
+                    # e.g., a (b c x) = (b c) (a x)
+                    desired = ScalarMult(vec_factored.scalar, the_factor)
+                else:
+                    # e.g., a (b c x) = (a (b c)) x, pull x to right
+                    desired = ScalarMult(
+                            Mult(remaining_scalar, vec_factored.scalar), 
+                            the_factor)
+            else:
+                assert False, ("%s is not an expected factorized form"
+                               %vec_factored)
+        else:
+            raise ValueError("'pull' must be 'left' or 'right', not %s"
+                             %pull)
+
+        # We should be able to prove that are desired form is equal
+        # to the factorization_of_vec form by having the same canonical
+        # form.
+        return factorization_of_vec.apply_transitivity(
+                deduce_canonically_equal(factorization_of_vec.rhs,
+                                         desired, field=field))
+
+
+def extract_scalar_and_scaled(expr):
+    '''
+    Pull out scalar versus scaled factors from the given
+    expression in a recursive manner.
+    '''
+    from proveit.linear_algebra import TensorProd, VecSum
+    from proveit.numbers import compose_product
+    if isinstance(expr, ScalarMult):
+        scalar, scaled = extract_scalar_and_scaled(expr.scaled)
+        return compose_product(expr.scalar, scalar), scaled
+    if isinstance(expr, TensorProd):
+        scalar_factors = []
+        scaled_factors = []
+        for factor in expr.factors:
+            scalar_factor, scaled_factor = extract_scalar_and_scaled(
+                factor)
+            scalar_factors.append(scalar_factor)
+            scaled_factors.append(scaled_factor)
+        return compose_product(scalar_factors), TensorProd(
+            *scaled_factors)
+    if isinstance(expr, VecSum):
+        summand_scalar, summand_scaled = extract_scalar_and_scaled(
+            expr.summand)
+        if free_vars(summand_scalar).isdisjoint(expr.indices):
+            return summand_scalar, VecSum(summand_scaled)
+        elif isinstance(summand_scalar, Mult):
+            index_indep_factors = []
+            index_dep_factors = []
+            for scalar_factor in summand_scalar.factors:
+                if free_vars(scalar_factor).isdijoint(expr.indices):
+                    index_indep_factors.append(scalar_factor)
+                else:
+                    index_dep_factors.append(scalar_factor)
+            if len(index_dep_factors) == 0:
+                summand = summand_scaled
+            else:
+                summand = ScalarMult(compose_product(*index_dep_factors),
+                                     summand_scaled)
+            return (compose_product(*index_indep_factors),
+                    VecSum(expr.indices, summand,
+                           conditions=expr.conditions))
+                    
+    return one, expr
 

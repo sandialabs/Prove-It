@@ -130,6 +130,7 @@ proveit.numbers.exponentiation.posnat_power_of_product
 proveit.numbers.exponentiation.posnat_power_of_quotient
 proveit.numbers.exponentiation.product_of_real_powers
 proveit.numbers.exponentiation.real_power_of_product
+proveit.numbers.exponentiation.real_power_of_products
 proveit.numbers.exponentiation.real_power_of_real_power
 proveit.numbers.exponentiation.square_abs_rational_simp
 proveit.numbers.exponentiation.square_abs_real_simp
@@ -175,6 +176,7 @@ proveit.numbers.negation.int_nonzero_closure
 proveit.numbers.negation.negated_zero
 proveit.numbers.negation.rational_nonzero_closure
 proveit.numbers.negation.real_closure
+proveit.numbers.negation.real_nonpos_closure
 proveit.numbers.number_sets.complex_numbers.complex_nonzero_within_complex
 proveit.numbers.number_sets.complex_numbers.complex_polar_negation
 proveit.numbers.number_sets.complex_numbers.complex_polar_radius_negation
@@ -237,7 +239,6 @@ proveit.numbers.number_sets.rational_numbers.nonpos_int_within_rational_nonpos
 proveit.numbers.number_sets.rational_numbers.nonzero_if_in_rational_nonzero
 proveit.numbers.number_sets.rational_numbers.nonzero_int_within_rational_nonzero
 proveit.numbers.number_sets.rational_numbers.nonzero_rational_is_rational_nonzero
-proveit.numbers.number_sets.rational_numbers.pos_rational_is_rational_pos
 proveit.numbers.number_sets.rational_numbers.positive_if_in_rational_pos
 proveit.numbers.number_sets.rational_numbers.rational_neg_within_rational
 proveit.numbers.number_sets.rational_numbers.rational_neg_within_rational_nonpos
