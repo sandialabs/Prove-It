@@ -68,6 +68,7 @@ proveit.numbers.addition.subtraction.add_cancel_triple_12
 proveit.numbers.addition.subtraction.add_cancel_triple_13
 proveit.numbers.addition.subtraction.add_cancel_triple_23
 proveit.numbers.addition.subtraction.negated_add
+proveit.numbers.addition.subtraction.nonneg_difference
 proveit.numbers.addition.subtraction.pos_difference
 proveit.numbers.addition.subtraction.sub_one_is_nat
 proveit.numbers.addition.subtraction.subtract_from_add
@@ -104,6 +105,8 @@ proveit.numbers.division.weak_div_from_denom_bound__pos_over_neg
 proveit.numbers.exponentiation.complex_x_to_first_power_is_x
 proveit.numbers.exponentiation.exp_complex_closure
 proveit.numbers.exponentiation.exp_complex_nonzero_closure
+proveit.numbers.exponentiation.exp_factored_int
+proveit.numbers.exponentiation.exp_factored_real
 proveit.numbers.exponentiation.exp_monotonicity_large_base_less_eq
 proveit.numbers.exponentiation.exp_nat_pos_expansion
 proveit.numbers.exponentiation.exp_not_eq_zero
@@ -142,7 +145,6 @@ proveit.numbers.multiplication.mult_neg_left
 proveit.numbers.multiplication.mult_neg_right
 proveit.numbers.multiplication.mult_not_eq_zero
 proveit.numbers.multiplication.mult_rational_pos_closure_bin
-proveit.numbers.multiplication.mult_real_closure
 proveit.numbers.multiplication.mult_real_closure_bin
 proveit.numbers.multiplication.mult_real_pos_closure_bin
 proveit.numbers.multiplication.mult_zero_any
@@ -193,6 +195,7 @@ proveit.numbers.number_sets.integers.neg_int_within_int
 proveit.numbers.number_sets.integers.neg_int_within_nonpos_int
 proveit.numbers.number_sets.integers.neg_int_within_nonzero_int
 proveit.numbers.number_sets.integers.negative_if_in_neg_int
+proveit.numbers.number_sets.integers.nonneg_int_is_natural
 proveit.numbers.number_sets.integers.nonpos_if_in_nonpos_int
 proveit.numbers.number_sets.integers.nonpos_int_within_int
 proveit.numbers.number_sets.integers.nonzero_if_in_nonzero_int
