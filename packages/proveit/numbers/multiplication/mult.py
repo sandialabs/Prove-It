@@ -40,6 +40,7 @@ class Mult(NumberOperation):
             combine_numeric_rational_exponents=True,
             combine_all_exponents=True,
             distribute_numeric_rational=False,
+            distribute_fractions=False,
             # By default, sort such that numeric, rationals come first 
             # but otherwise maintain the original order.
             order_key_fn = lambda factor : (
@@ -523,7 +524,7 @@ class Mult(NumberOperation):
         non-constant factor that is an Add expression, distribute any
         constant factor through the addition.
         '''
-        from proveit.numbers import Exp, is_numeric_rational
+        from proveit.numbers import Exp, Div, is_numeric_rational
         from . import mult_zero_left, mult_zero_right, mult_zero_any
         from . import empty_mult
 
@@ -684,7 +685,12 @@ class Mult(NumberOperation):
         # See if we should reorder the factors.
         expr = eq.update(sorting_operands(expr, order_key_fn=order_key_fn))
         
-        if Mult._simplification_directives_.distribute_numeric_rational:
+        if Mult._simplification_directives_.distribute_fractions and (
+                expr.operands.is_double() and 
+                (isinstance(expr.operands[0], Div) or
+                 isisntance(expr.operands[1], Div))):
+            expr = eq.update(expr.distribution())
+        elif Mult._simplification_directives_.distribute_numeric_rational:
             # If there are exactly two factors and one is an Add and
             # the other is a numeric literal, distribute over the Add.
             if expr.operands.is_double():
