@@ -140,7 +140,7 @@ class NotEquals(Relation):
             rhs_cf_of_rhs = rhs.rhs.canonical_form()
             if lhs_cf == lhs_cf_of_rhs:
                 assert rhs_cf == rhs_cf_of_rhs
-                return self.conclude_via_direct_substitution(rhs)
+                return Equals(self, rhs).conclude_via_direct_substitution()
             elif lhs_cf == rhs_cf_of_rhs:
                 assert rhs_cf == lhs_cf_of_rhs
                 # Symmetrization needs to be implemented
