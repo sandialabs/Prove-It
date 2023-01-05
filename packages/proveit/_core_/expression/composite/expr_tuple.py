@@ -321,7 +321,7 @@ class ExprTuple(Composite, Expression):
                 # The entire ExprTuple is marked, so this entire
                 # sub-expression is fair game for auto-simplification.
                 return Expression._auto_simplified_sub_exprs(
-                        requirements=requirements,
+                        self, requirements=requirements,
                         stored_replacements=stored_replacements,
                         markers_and_marked_expr=None)
             raise MarkedExprError(orig_marked_expr, self)

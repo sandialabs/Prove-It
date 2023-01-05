@@ -734,7 +734,7 @@ class Judgment:
         '''
         if expr != self.expr:
             raise ValueError(
-                "Cannot match styles when expressions are do "
+                "Cannot match styles when expressions do "
                 "not have the same meaning: %s ≠ %s."%(self.expr, expr))
         if expr._style_id == self.expr._style_id:
             return self # Nothing has changed
