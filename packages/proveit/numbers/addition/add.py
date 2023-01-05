@@ -5,6 +5,7 @@ from collections import deque, Counter
 from proveit import (Expression, Judgment, Literal, Operation, ExprTuple,
                      ExprRange, defaults, StyleOptions, 
                      prover, relation_prover, equality_prover,
+                     auto_prover, auto_relation_prover, auto_equality_prover,
                      maybe_fenced_latex, ProofFailure, InnerExpr,
                      UnsatisfiedPrerequisites,
                      SimplificationDirectives, TransRelUpdater)
@@ -1599,7 +1600,7 @@ class Add(NumberOperation):
                 return False
         return True
 
-    @equality_prover('factorized', 'factor')
+    @auto_equality_prover('factorized', 'factor')
     def factorization(self, the_factors, pull="left", 
                       group_factors=True, group_remainder=True,
                       **defaults_config):
@@ -1642,7 +1643,7 @@ class Add(NumberOperation):
                         (the_factors, _i, self))
                 term_factorization = term.factorization(
                     the_factors, pull, group_factors=group_factors,
-                    group_remainder=True, preserve_all=True)
+                    group_remainder=True)
                 if not isinstance(term_factorization.rhs, Mult):
                     raise ValueError(
                         "Expecting right hand side of each factorization "
@@ -1657,7 +1658,7 @@ class Add(NumberOperation):
                     _b.append(term_factorization.rhs.operands[0])
                 # substitute in the factorized term
                 expr = eq.update(term_factorization.substitution(
-                    expr.inner_expr().terms[_i], preserve_all=True))
+                    expr.inner_expr().terms[_i]))
         if not group_factors and isinstance(the_factors, Mult):
             factor_sub = the_factors.operands
         else:
@@ -1668,10 +1669,6 @@ class Add(NumberOperation):
         else:
             _a = ExprTuple()
             _c = factor_sub
-        if defaults.auto_simplify:
-            # Simplify the remainder of the factorization if
-            # auto-simplify is enabled.
-            replacements.append(Add(*_b).simplification())
         _b = ExprTuple(*_b)
         _i = _a.num_elements()
         _j = _b.num_elements()

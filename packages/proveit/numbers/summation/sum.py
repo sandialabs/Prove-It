@@ -3,6 +3,7 @@ from proveit import (Expression, Literal, Lambda, Function, Operation,
                      Judgment, free_vars, maybe_fenced, USE_DEFAULTS,
                      ProofFailure, defaults,
                      prover, relation_prover, equality_prover,
+                     auto_prover, auto_relation_prover, auto_equality_prover,
                      SimplificationDirectives, UnsatisfiedPrerequisites)
 from proveit import a, b, c, f, i, j, k, l, m, x, Q, S
 from proveit.logic import Forall, InSet
@@ -630,7 +631,7 @@ class Sum(OperationOverInstances):
                 "index or indices {} and domain {}."
                 .format(self, self.indices, self.domain))
 
-    @equality_prover('factorized', 'factor')
+    @auto_equality_prover('factorized', 'factor')
     def factorization(self, the_factors, pull="left", group_factors=True,
                       group_remainder=None, **defaults_config):
         '''
@@ -667,8 +668,8 @@ class Sum(OperationOverInstances):
         if summand_factorization.lhs != summand_factorization.rhs:
             gen_summand_factorization = summand_factorization.generalize(
                     self.instance_params, conditions=self.conditions)
-            expr = eq.update(expr.instance_substitution(gen_summand_factorization,
-                                                        preserve_all=True))
+            expr = eq.update(expr.instance_substitution(
+                gen_summand_factorization))
         if not group_factors and isinstance(the_factors, Mult):
             factors = the_factors.factors
         else:
@@ -691,11 +692,9 @@ class Sum(OperationOverInstances):
         _f = Lambda(expr.instance_params, summand_remainder)
         _Q = Lambda(expr.instance_params, expr.condition)
         _impl = distribute_through_summation.instantiate(
-                {i: _i, j: _j, k: _k, f:_f, Q:_Q, b:_b},
-                preserve_all=True)
-        quantified_eq = _impl.derive_consequent(preserve_all=True)
-        eq.update(quantified_eq.instantiate(
-                {a: _a, c: _c}, preserve_all=True))
+                {i: _i, j: _j, k: _k, f:_f, Q:_Q, b:_b})
+        quantified_eq = _impl.derive_consequent()
+        eq.update(quantified_eq.instantiate({a: _a, c: _c}))
 
         return eq.relation
 
