@@ -3,7 +3,8 @@ from proveit import (Judgment, Expression, Literal, Operation,
                      maybe_fenced_latex, defaults,
                      Function, ExprTuple, InnerExpr, USE_DEFAULTS,
                      UnsatisfiedPrerequisites, relation_prover,
-                     equality_prover, SimplificationDirectives)
+                     equality_prover, auto_relation_prover,
+                     auto_equality_prover, SimplificationDirectives)
 from proveit import TransRelUpdater
 from proveit import a, b, c, m, n, w, x, y, z
 from proveit.logic import Equals, NotEquals, InSet
@@ -566,7 +567,7 @@ class Div(NumberOperation):
         else:
             return False
 
-    @equality_prover('factorized', 'factor')
+    @auto_equality_prover('factorized', 'factor')
     def factorization(self, the_factors, pull="left",
                       group_factors=True, group_remainder=False,
                       **defaults_config):
@@ -595,7 +596,7 @@ class Div(NumberOperation):
             [(a*b)/d].factorization((a/d), pull='right')
             proves (a*b)/d = b*(a/d)
         '''
-        from proveit.numbers import one, Mult, readily_factorable
+        from proveit.numbers import one, Mult, Neg, Exp, readily_factorable
         from . import mult_frac_left, mult_frac_right, prod_of_fracs
         expr = self
         eq = TransRelUpdater(expr)
@@ -615,8 +616,7 @@ class Div(NumberOperation):
             if the_factor_numer not in (one, expr.numerator):
                 expr = eq.update(expr.inner_expr().numerator.factorization(
                         the_factors.numerator, pull=pull,
-                        group_factors=True, group_remainder=True,
-                        preserve_all=True))
+                        group_factors=True, group_remainder=True))
             if pull == 'left':
                 # factor (x*y)/z into (x/z)*y
                 thm = mult_frac_left
@@ -624,8 +624,7 @@ class Div(NumberOperation):
                     # factor y/z into (1/z)*y
                     _x = one
                     _y = expr.numerator
-                    replacements.append(Mult(_x, _y).one_elimination(
-                            0, preserve_all=True))
+                    replacements.append(Mult(_x, _y).one_elimination(0))
             else:
                 # factor (x*y)/z into x*(y/z)
                 thm = mult_frac_right
@@ -633,14 +632,14 @@ class Div(NumberOperation):
                     # factor x/z into x*(1/z)
                     _x = expr.numerator
                     _y = one
-                    replacements.append(Mult(_x, _y).one_elimination(
-                            1, preserve_all=True))
+                    replacements.append(Mult(_x, _y).one_elimination(1))
             if the_factor_numer != one:
                 assert expr.numerator.operands.num_entries() == 2
                 _x = expr.numerator.operands.entries[0]
                 _y = expr.numerator.operands.entries[1]
             _z = expr.denominator
             eq.update(thm.instantiate({x:_x, y:_y, z:_z},
+                                      preserve_expr=expr,
                                       replacements=replacements))
         elif (readily_factorable(expr.numerator, the_factor_numer) and
               (the_factor_denom == one or
@@ -650,7 +649,7 @@ class Div(NumberOperation):
             if the_factor_denom not in (one, expr.denominator):
                 expr = eq.update(expr.inner_expr().denominator.factorization(
                         the_factor_denom, pull=pull,
-                        group_factors=True, preserve_all=True))
+                        group_factors=True))
                 assert expr.denominator.operands.num_entries() == 2
                 _z = expr.denominator.operands.entries[0]
                 _w = expr.denominator.operands.entries[1]
@@ -658,20 +657,17 @@ class Div(NumberOperation):
                 # Factor (x*y)/w into x*(y/w).
                 _z = one
                 _w = expr.denominator
-                replacements.append(Mult(_z, _w).one_elimination(
-                        0, preserve_all=True))
+                replacements.append(Mult(_z, _w).one_elimination(0))
             else:
                 # Factor (x*y)/z into (x/z)*y.
                 _z = expr.denominator
                 _w = one
-                replacements.append(Mult(_z, _w).one_elimination(
-                        1, preserve_all=True))
+                replacements.append(Mult(_z, _w).one_elimination(1))
             # Factor the numerator parts unless there is a 1 numerator.
             if the_factor_numer not in (one, expr.numerator):
                 expr = eq.update(expr.inner_expr().numerator.factorization(
                         the_factor_numer, pull=pull,
-                        group_factors=True, group_remainder=True,
-                        preserve_all=True))
+                        group_factors=True, group_remainder=True))
                 assert expr.numerator.operands.num_entries() == 2
                 # Factor (x*y)/(z*w) into (x/z)*(y/w)
                 _x = expr.numerator.operands.entries[0]
@@ -680,30 +676,31 @@ class Div(NumberOperation):
                 # Factor y/(z*w) into (1/z)*(y/w)
                 _x = one
                 _y = expr.numerator
-                replacements.append(Mult(_x, _y).one_elimination(
-                        0, preserve_all=True))
+                replacements.append(Mult(_x, _y).one_elimination(0))
             else:
                 # Factor x/(y*z) into (x/y)*(1/z)
                 _x = expr.numerator
                 _y = one
-                replacements.append(Mult(_x, _y).one_elimination(
-                        1, preserve_all=True))
+                replacements.append(Mult(_x, _y).one_elimination(1))
             # create POSSIBLE replacements for inadvertently generated
             # fractions of the form _x/1 (i.e. _z = 1)
             # or _y/1 (i.e. _w = 1):
             if _z == one:
-                replacements.append(frac(_x, _z).divide_by_one_elimination(
-                        preserve_all=True))
+                replacements.append(frac(_x, _z).divide_by_one_elimination())
             if _w == one:
-                replacements.append(frac(_y, _w).divide_by_one_elimination(
-                        preserve_all=True))
+                replacements.append(frac(_y, _w).divide_by_one_elimination())
             eq.update(thm.instantiate({x:_x, y:_y, z:_z, w:_w},
-                    replacements=replacements,
-                    preserve_expr=expr))
+                    preserve_expr=expr, replacements=replacements))
         else:
             # As a last resort, convert this division to a 
             # multiplication and factor that.
-            expr = eq.update(expr.reduction_to_mult())
+            if isinstance(expr.denominator, Mult):
+                replacements = [Exp(expr.denominator, Neg(one)).distribution()]
+            expr = eq.update(expr.reduction_to_mult(replacements=replacements))
+            if isinstance(expr.operands[1], Mult):
+                expr = eq.update(expr.disassociation(1))
+            if isinstance(expr.operands[0], Mult):
+                expr = eq.update(expr.disassociation(0))
             expr = eq.update(expr.factorization(
                     the_factors, pull=pull,
                     group_factors=group_factors, 
@@ -874,8 +871,7 @@ class Div(NumberOperation):
         # -- then re-call the exp_extraction() method
         if neg_loc == 'denominator_factor':
             intermed_equality = (
-                    self.inner_expr().denominator.neg_simplifications(
-                        preserve_all=True))
+                    self.inner_expr().denominator.neg_simplifications())
             return intermed_equality.inner_expr().rhs.neg_extract()
 
         # Other cases here?

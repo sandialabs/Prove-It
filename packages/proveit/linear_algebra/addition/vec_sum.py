@@ -2,6 +2,7 @@ from proveit import (defaults, free_vars, Literal, Function, Lambda,
                      ExprTuple,
                      SimplificationDirectives,
                      relation_prover, equality_prover,
+                     auto_relation_prover, auto_equality_prover,
                      TransRelUpdater, UnsatisfiedPrerequisites)
 from proveit import a, b, c, f, i, j, k, v, K, Q, V
 from proveit.logic import InSet
@@ -401,7 +402,7 @@ class VecSum(GroupSum, VecOperation):
             return False
         return readily_factorable(self.summand, factor, pull=pull)
 
-    @equality_prover('factorized', 'factor')
+    @auto_equality_prover('factorized', 'factor')
     def factorization(self, the_factor, *, pull,
             group_factors=True, group_remainder=False,
             field=None, **defaults_config):
@@ -448,7 +449,7 @@ class VecSum(GroupSum, VecOperation):
             expr = eq.update(expr.inner_expr().summand.factorization(
                     factor_scaled.summand, pull=pull, 
                     group_factors=True, group_remainder=True, 
-                    field=field, preserve_all=True))
+                    field=field))
             # Switch the roles now.
             reverse_pull = 'left' if pull=='right' else 'left'
             _idx = 0 if reverse_pull=='left' else -1
@@ -458,8 +459,7 @@ class VecSum(GroupSum, VecOperation):
                              group_factors=(group_remainder and 
                                             factor_scalar==one),
                              group_remainder=True, field=field,
-                             _check_index_independence=False,
-                             preserve_all=(factor_scalar==one)))
+                             _check_index_independence=False))
             if factor_scalar != one:
                 expr = eq.update(expr.factorization(
                         the_factor, pull=pull, group_factors=group_factors,
@@ -476,14 +476,14 @@ class VecSum(GroupSum, VecOperation):
         # Factor the summand.
         summand_factorization = self.inner_expr().summand.factorization(
                 the_factor, pull=pull, group_factors=group_factors,
-                group_remainder=True, field=field, preserve_all=True)
+                group_remainder=True, field=field)
         return summand_factorization.apply_transitivity(
                  summand_factorization.rhs.shallow_factorization(
                          the_factor, pull=pull, group_factors=group_factors,
                          group_remainder=group_remainder, field=field,
                          _check_index_independence=False))
 
-    @equality_prover('shallow_factorized', 'shallow_factor')
+    @auto_equality_prover('shallow_factorized', 'shallow_factor')
     def shallow_factorization(self, the_factor, *, pull,
             group_factors=True, group_remainder=False,
             field=None, _check_index_independence=True,
@@ -593,7 +593,7 @@ class VecSum(GroupSum, VecOperation):
                     {K:_K, f:_f, Q:_Q, V:_V, i:_i, j:_j, k:_k,
                      a:_a, b:_b, c:_c}).derive_consequent().with_wrapping_at()
 
-    @equality_prover('factors_extracted', 'factors_extract')
+    @auto_equality_prover('factors_extracted', 'factors_extract')
     def factors_extraction(self, field=None, **defaults_config):
         '''
         Derive an equality between this VecSum and the result
@@ -664,8 +664,7 @@ class VecSum(GroupSum, VecOperation):
                 imp = distribution_over_vec_sum.instantiate(
                         {V: _V_sub, K: _K_sub, b: _b_sub, j: _j_sub,
                          f: _f_sub, Q: _Q_sub, k: _k_sub},
-                         assumptions=assumptions_with_conditions,
-                         preserve_all=True)
+                         assumptions=assumptions_with_conditions)
                 expr = eq.update(imp.derive_consequent(
                     assumptions=assumptions_with_conditions).derive_reversed())
             else:
@@ -691,8 +690,7 @@ class VecSum(GroupSum, VecOperation):
                             expr = eq.update(
                                 expr.inner_expr().summand.scalar.factorization(
                                     the_factor,
-                                    assumptions=assumptions_with_conditions,
-                                    preserve_all=True))
+                                    assumptions=assumptions_with_conditions))
                             _num_factored += 1
                             _num_unfactored -= 1
 
@@ -702,15 +700,13 @@ class VecSum(GroupSum, VecOperation):
                         expr = eq.update(
                             expr.inner_expr().summand.scalar.association(
                                 0, _num_factored,
-                                assumptions=assumptions_with_conditions,
-                                preserve_all=True))
+                                assumptions=assumptions_with_conditions))
                     # group the unfactorable factors
                     if _num_unfactored > 1 and _num_factored > 0:
                         expr = eq.update(
                             expr.inner_expr().summand.scalar.association(
                                 1, _num_unfactored,
-                                assumptions=assumptions_with_conditions,
-                                preserve_all=True))
+                                assumptions=assumptions_with_conditions))
 
                     # finally, extract any factorable scalar factors
                     if _num_factored > 0:
@@ -732,19 +728,15 @@ class VecSum(GroupSum, VecOperation):
                         _c_sub = Lambda(expr.indices,
                                         expr.summand.scalar.operands[1])
                         _k_sub = expr.summand.scalar.operands[0]
-                        # when instantiating, we set preserve_expr=expr;
-                        # otherwise auto_simplification disassociates inside
-                        # the Mult.
                         impl = distribution_over_vec_sum_with_scalar_mult.instantiate(
                                 {V:_V_sub, K:_K_sub, b: _b_sub, j: _j_sub,
                                  f: _f_sub, Q: _Q_sub, c:_c_sub, k: _k_sub},
-                                 preserve_expr=expr,
-                                assumptions=assumptions_with_conditions,
-                                preserve_all=True)
+                                assumptions=assumptions_with_conditions)
                         expr = eq.update(impl.derive_consequent(
                                 assumptions=assumptions_with_conditions).
                                 derive_reversed())
 
+                """
                 else:
                     # The scalar component is dependent on summation
                     # index but is not a Mult.
@@ -753,6 +745,7 @@ class VecSum(GroupSum, VecOperation):
                     #      "and the scalar is not a Mult object.".
                     #  format(summation_index, expr.summand.scalar))
                     eq = TransRelUpdater(self)
+                """
 
         # ============================================================ #
         # VECTOR FACTORS                                               #
@@ -784,7 +777,7 @@ class VecSum(GroupSum, VecOperation):
 
         return eq.relation
 
-    @equality_prover('tensor_prod_factored', 'tensor_prod_factor')
+    @auto_equality_prover('tensor_prod_factored', 'tensor_prod_factor')
     def tensor_prod_factoring(self, idx=None, idx_beg=None, idx_end=None,
                               field=None, **defaults_config):
         '''
@@ -935,11 +928,11 @@ class VecSum(GroupSum, VecOperation):
             # but process is slightly different in the two cases
             if tensor_prod_summand:
                 expr = eq.update(expr.inner_expr().summand.association(
-                        idx_beg, idx_end-idx_beg+1, preserve_all=True))
+                        idx_beg, idx_end-idx_beg+1))
                 tensor_prod_expr = expr.summand
             else:
                 expr = eq.update(expr.inner_expr().summand.scaled.association(
-                        idx_beg, idx_end-idx_beg+1, preserve_all=True))
+                        idx_beg, idx_end-idx_beg+1))
                 tensor_prod_expr = expr.summand.scaled
         idx = idx_beg
 
@@ -968,14 +961,13 @@ class VecSum(GroupSum, VecOperation):
         if tensor_prod_summand:
             impl = tensor_prod_distribution_over_summation.instantiate(
                     {K:_K_sub, f:_f_sub, Q:_Q_sub, i:_i_sub, j:_j_sub,
-                     k:_k_sub, V:_V_sub, a:_a_sub, b:_b_sub, c:_c_sub},
-                     preserve_expr=expr)
+                     k:_k_sub, V:_V_sub, a:_a_sub, b:_b_sub, c:_c_sub})
         else:
             impl = (tensor_prod_distribution_over_summation_with_scalar_mult.
                    instantiate(
                     {K:_K_sub, f:_f_sub, Q:_Q_sub, i:_i_sub, j:_j_sub,
                      k:_k_sub, V:_V_sub, a:_a_sub, b:_b_sub, c:_c_sub,
-                     s: _s_sub}, preserve_expr=expr))
+                     s: _s_sub}))
 
         expr = eq.update(impl.derive_consequent(
                 assumptions = defaults.assumptions + expr.conditions.entries).

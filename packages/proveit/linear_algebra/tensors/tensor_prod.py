@@ -1,5 +1,6 @@
 from proveit import (Judgment, defaults, ExprRange, relation_prover, 
-                     equality_prover, Literal, Operation, Lambda, 
+                     equality_prover, auto_equality_prover,
+                     Literal, Operation, Lambda, 
                      UnsatisfiedPrerequisites,
                      prover, TransRelUpdater, SimplificationDirectives)
 from proveit import a, b, c, d, e, f, i, j, k, A, K, Q, U, V, W, alpha
@@ -331,7 +332,7 @@ class TensorProd(VecOperation):
                 "Don't know how to distribute tensor product over " +
                 str(sum_factor.__class__) + " factor")
 
-    @equality_prover('scalars_factorized', 'factor_scalars')
+    @auto_equality_prover('scalars_factorized', 'factor_scalars')
     def scalars_factorization(self, *, field=None, **defaults_config):
         '''
         Equate this TensorProd with a form that has all of the
@@ -350,17 +351,13 @@ class TensorProd(VecOperation):
         
         last_scalar_mult_idx = scalar_mult_indices[-1]
         for _k in scalar_mult_indices:
-            # Use preserve_all for all but the last scalar 
-            # factorization.
-            preserve_all = _k < last_scalar_mult_idx
             if isinstance(expr, ScalarMult):
                 expr = expr.inner_expr().scaled
-            expr = eq.update(expr.scalar_factorization(
-                _k, field=field, preserve_all=preserve_all))
+            expr = eq.update(expr.scalar_factorization(_k, field=field))
         
         return eq.relation
         
-    @equality_prover('scalar_factorized', 'factor_scalar')
+    @auto_equality_prover('scalar_factorized', 'factor_scalar')
     def scalar_factorization(self, idx=None, *, field=None,
                              **defaults_config):
         '''
@@ -457,7 +454,7 @@ class TensorProd(VecOperation):
             raise ValueError("'pull' must be 'left' or 'right', not %s"
                              %pull)
 
-    @equality_prover('factorized', 'factor')
+    @auto_equality_prover('factorized', 'factor')
     def factorization(self, the_factor, *, pull,
             group_factors=True, group_remainder=False,
             field=None, **defaults_config):
@@ -490,7 +487,7 @@ class TensorProd(VecOperation):
         num_tensor_entries = canonical_tensor_prod.factors.num_entries()
         
         def raise_not_factorable():
-            raise ValueError("Unable to factor %s from %s"%(the_factor, self))            
+            raise ValueError("Unable to factor %s from %s"%(the_factor, self))
         canonical_factor_scaled = factor_scaled.canonical_form()
         if isinstance(canonical_factor_scaled, TensorProd):
             num_to_factor = fanonical_factor_scaled.factors.num_entries()

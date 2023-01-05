@@ -3,6 +3,7 @@ from proveit import (
         defaults, Expression, Literal, ExprTuple, ExprRange, 
         Judgment, ProofFailure, UnsatisfiedPrerequisites,
         prover, relation_prover, equality_prover,
+        auto_prover, auto_relation_prover, auto_equality_prover,
         SimplificationDirectives, TransRelUpdater, free_vars)
 from proveit import a, b, c, d, e, i, j, k, m, n, w, x, y, z
 from proveit.logic import (
@@ -1475,7 +1476,7 @@ class Mult(NumberOperation):
         # of self.
         return remove_common_factors(factor, self)==one
 
-    @equality_prover('factorized', 'factor')
+    @auto_equality_prover('factorized', 'factor')
     def factorization(self, the_factors_or_index, pull="left",
                       group_factors=True, group_remainder=False,
                       **defaults_config):
@@ -1498,7 +1499,8 @@ class Mult(NumberOperation):
             return eq.relation  # self = self
 
         if isinstance(the_factors_or_index, Div):
-            reduction = the_factors_or_index.reduction_to_mult()
+            reduction = the_factors_or_index.reduction_to_mult(
+                auto_simplify=True)
             factor = reduction.rhs
             replacements = list(defaults.replacements)
             replacements.append(reduction.derive_reversed())
@@ -1525,8 +1527,7 @@ class Mult(NumberOperation):
             num_factored = 1
             the_factor = self.operands[idx]
             expr = eq.update(expr.commutation(
-                    idx, 0 if pull=='left' else -num_factored,
-                    preserve_expr=the_factor))    
+                    idx, 0 if pull=='left' else -num_factored))
             all_factors = [the_factor]
         else:
             # Look for one or more factors, pull them out,
@@ -1602,12 +1603,6 @@ class Mult(NumberOperation):
                         break # end of consecutive factors
                 
                 if nested_factor is not None:
-                    # Don't simplify if there is more to go or our goal 
-                    # is to group the factors or remainder.
-                    # Simplification could defeat this purpose.
-                    preserve_all=(len(all_factors)<len(the_factors) or (
-                                  (group_factors and num_factored > 1) or 
-                                  group_remainder))
                     prev_num_expr_factors = num_expr_factors
                     _idx = (shift+the_slice.stop-1 if pull=='left' else
                             shift+the_slice.start)
@@ -1619,18 +1614,15 @@ class Mult(NumberOperation):
                         expr = eq.update(
                                 expr.inner_expr().factors[_idx]
                                 .deduce_canonically_equal(
-                                        nested_factor, 
-                                        preserve_all=preserve_all))
+                                        nested_factor))
                     else:
                         expr = eq.update(
                                 expr.inner_expr().factors[_idx]
                                 .factorization(nested_factor, pull=pull,
                                                group_factors=True,
-                                               group_remainder=False,
-                                               preserve_all=True))
+                                               group_remainder=False))
                         expr = eq.update(
-                                expr.inner_expr().disassociation(
-                                        _idx, preserve_all=preserve_all))
+                                expr.inner_expr().disassociation(_idx))
                         if pull=='right':
                             # Shift the slice to account for the
                             # factorization.
@@ -1643,24 +1635,14 @@ class Mult(NumberOperation):
                 if the_factors_idx < len(the_factors):
                     # Move this slice with more factors to find.
                     expr, length = move_slice(
-                            expr, the_slice, shift, num_factored, 
-                            preserve_all=True)
+                            expr, the_slice, shift, num_factored)
                 else:
                     # Last one to move. Possibly simplify and/or keep
                     # associated.
-                    #preserved_exprs = (
-                    #        defaults.preserved_exprs.union(all_factors))
                     disassociate = (num_factored > 0 or not group_factors)
-                    # Don't simplify if our goal is to group the factors
-                    # or remainder.  Simplification could defeat this 
-                    # purpose.
-                    preserve_all=((group_factors and disassociate) or 
-                                  group_remainder)
                     expr, length = move_slice(
                             expr, the_slice, shift, num_factored, 
-                            disassociate=disassociate,
-                            #preserved_exprs=preserved_exprs,
-                            preserve_all=preserve_all)
+                            disassociate=disassociate)
                     
                 num_factored += length
                 if pull == 'left':
@@ -1677,11 +1659,10 @@ class Mult(NumberOperation):
             # use 0:num_factored type of convention like standard python
             if pull == 'left':
                 expr = eq.update(expr.association(
-                        0, num_factored, preserve_all=not group_remainder))
+                        0, num_factored))
             elif pull == 'right':
                 expr = eq.update(expr.association(
-                        -num_factored, num_factored,
-                        preserve_all=not group_remainder))
+                        -num_factored, num_factored))
         num_factor_operands = 1 if group_factors else num_factored
         if group_remainder:
             # if the factor has been group, effectively there is just 1
@@ -1696,7 +1677,7 @@ class Mult(NumberOperation):
                         0, num_remainder_operands))
         return eq.relation
 
-    @equality_prover('combined_exponents', 'combine_exponents')
+    @auto_equality_prover('combined_exponents', 'combine_exponents')
     def combining_exponents(self, start_idx=None, end_idx=None,
                              **defaults_config):
         '''
@@ -1740,8 +1721,7 @@ class Mult(NumberOperation):
 
             # associate the factors intended for combination
             # warning: 2nd arg of association() fxn is length not index
-            grouped = self.association(start_idx, assoc_length,
-                                       preserve_all=True)
+            grouped = self.association(start_idx, assoc_length)
             # isolate the targeted factors and combine them as desired
             # using call to this same method
             inner_combination = (
@@ -1773,8 +1753,7 @@ class Mult(NumberOperation):
             replacements = list(defaults.replacements)
             if factor_range.start_index != one:
                 # Transform from as ExprRange that start at 1.
-                replacements.append(factor_range.reduction().derive_reversed(
-                        preserve_all=True))
+                replacements.append(factor_range.reduction().derive_reversed())
             inst = exp_pkg.exp_nat_pos_rev.instantiate(
                     {n:_n, x:_x}, replacements=replacements)
             return inst
@@ -1806,9 +1785,8 @@ class Mult(NumberOperation):
                     temp_factors.append(factor)
                 else:
                     # x^n = x * x * ..(n-3)x.. * x
-                    replacements.append(Mult(factor).combining_exponents(
-                            preserve_all=True).derive_reversed(
-                                    preserve_all=True))
+                    replacements.append(Mult(factor).combining_exponents()
+                            .derive_reversed())
                     temp_factors.append(replacements[-1].rhs)
                     disassoc_indices.append(idx)
                     # exponent = factor.num_elements()
@@ -1836,7 +1814,7 @@ class Mult(NumberOperation):
         if temp_factors != factors:
             replacements.append(
                     multi_disassociation(Mult(*temp_factors),
-                            *disassoc_indices, preserve_all=True))
+                            *disassoc_indices))
         minimal_exponent_ns = union_number_set(*exponent_number_sets)
         assert len(factor_bases)==1
         _a = next(iter(factor_bases))
@@ -1870,7 +1848,7 @@ class Mult(NumberOperation):
                 return exp_pkg.products_of_complex_powers.instantiate(
                         {m:_m, a:_a, b:_b}, replacements=replacements)
 
-    @equality_prover('combined_operands', 'combine_operands')
+    @auto_equality_prover('combined_operands', 'combine_operands')
     def combining_operands(self, **defaults_config):
         '''
         Combine factors, adding their literal, rational exponents.
@@ -1878,7 +1856,7 @@ class Mult(NumberOperation):
         '''
         return self.combining_exponents()    
 
-    @equality_prover('common_power_extracted', 'common_power_extract')
+    @auto_equality_prover('common_power_extracted', 'common_power_extract')
     def common_power_extraction(self, start_idx=None, end_idx=None,
                                 exp_factor=None,
                                 **defaults_config):
@@ -1933,8 +1911,7 @@ class Mult(NumberOperation):
                 # without specifying the indices
                 return self.common_power_extraction(exp_factor=exp_factor)
             else:
-                grouped = self.association(start_idx, assoc_length,
-                                           preserve_all=True)
+                grouped = self.association(start_idx, assoc_length,)
             # isolate the targeted factors and combine them as desired
             # using call to this same method
             inner_combination = (
@@ -2003,7 +1980,7 @@ class Mult(NumberOperation):
                 if temp_expr.operands[idx].exponent != exp_factor:
                     temp_expr = eq.update(
                             temp_expr.inner_expr().operands[idx]
-                            .exp_factorization(exp_factor, preserve_all=True))
+                            .exp_factorization(exp_factor))
             # eq.relation now has each factor with the specified the_factor
             # extracted to produce something along the lines of
             # |- a^{f j} b^{j, k} = (a^f)^j (b^k)^j

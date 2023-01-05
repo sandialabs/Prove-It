@@ -46,7 +46,6 @@ class Proof:
         if not isinstance(self, Theorem) and not isinstance(self, Axiom):
             print "prove", proven_truth.expr
         '''
-
         assert isinstance(proven_truth, Judgment)
         for required_truth in required_truths:
             assert isinstance(required_truth, Judgment)
@@ -234,6 +233,49 @@ class Proof:
         
         # Derive obvious consequences from this truth.
         self._derive_side_effects()
+
+    def regenerate_proof_object(self, simplify_only_where_marked=False,
+                                markers_and_marked_expr=None):
+        '''
+        Regenerate this proof object under active defaults which may
+        effect simplifications or replacements.
+        '''
+        if len(defaults.replacements) == 0 and not defaults.auto_simplify:
+            # The active defaults will not induce any changes.
+            return self
+        all_requirements = list(self.required_truths)
+        eq_replaced_expr = self.proven_truth.expr.equality_replaced(
+            requirements=all_requirements,
+            auto_simplify_top_level=False,
+            simplify_only_where_marked=simplify_only_where_marked,
+            markers_and_marked_expr=markers_and_marked_expr)
+        if eq_replaced_expr == self.proven_truth.expr:
+            return self # No change.
+
+        # Remove any unnecessary assumptions (but keep the order
+        # that was provided).  Note that some assumptions of
+        # requirements may not be in the 'applied_assumptions'
+        # if they made use of internal assumptions from a
+        # Conditional and can be eliminated.
+        applied_assumptions = defaults.assumptions
+        assumptions = list(self.proven_truth.assumptions)
+        for requirement in all_requirements[len(self.required_truths):]:
+            for assumption in requirement.assumptions:
+                if assumption in applied_assumptions:
+                    assumptions.append(assumption)
+        assumptions = list(OrderedDict.fromkeys(assumptions))
+        proven_truth = Judgment(eq_replaced_expr, assumptions)
+        # Mark the requirements that are "equality replacements".
+        marked_req_indices = set(self.marked_required_truth_indices)
+        for k in range(len(self.required_truths), len(all_requirements)):
+            marked_req_indices.add(k)
+        return self._regenerate_proof_object(
+            proven_truth, all_requirements, marked_req_indices)
+
+    def _regenerate_proof_object(self, proven_truth, requirements,
+                                 marked_req_indices):
+        raise NotImplementedError("Must be implemented for each Proof "
+                                  "object")
     
     def _derive_side_effects(self):
         '''
@@ -784,8 +826,15 @@ class Assumption(Proof):
     all_assumptions = dict()
     considered_assumption_sets = set()    
 
-    def __init__(self, expr, assumptions=None):
+    def __init__(self, expr, assumptions=None, *,
+                 _proven_truth=None, _requirements=None,
+                 _marked_req_indices=None):
         from proveit import ExprRange
+        if _proven_truth is not None:
+            # Via _regenerate_proof_object:
+            Proof.__init__(self, _proven_truth, _requirements,
+                           _marked_req_indices)
+            return
         assert expr not in Assumption.all_assumptions, \
             ("Do not create an Assumption object directly; "
              "use Assumption.make_assumption instead.")
@@ -810,6 +859,12 @@ class Assumption(Proof):
             # Restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
         Assumption.all_assumptions[expr] = self
+
+    def _regenerate_proof_object(self, proven_truth, requirements,
+                                 marked_req_indices):
+        return Assumption(
+            None, _proven_truth=proven_truth, _requirements=requirements,
+            _marked_req_indices=marked_req_indices)
 
     @staticmethod
     def make_assumption(expr):
@@ -861,14 +916,28 @@ class Assumption(Proof):
 
 
 class Axiom(Proof):
-    def __init__(self, expr, theory, name):
+    def __init__(self, expr, theory, name, *, 
+                 _proven_truth=None, _requirements=None,
+                 _marked_req_indices=None):
         if not isinstance(theory, Theory):
             raise ValueError("An axiom 'theory' must be a Theory object")
         if not isinstance(name, str):
             raise ValueError("An axiom 'name' must be a string")
         self.theory = theory
         self.name = name
-        Proof.__init__(self, Judgment(expr, frozenset()), [])
+        if _proven_truth is not None:
+            # Via _regenerate_proof_object:
+            Proof.__init__(self, _proven_truth, _requirements,
+                           _marked_req_indices)
+            return
+        else:
+            Proof.__init__(self, Judgment(expr, frozenset()), [])
+
+    def _regenerate_proof_object(self, proven_truth, requirements,
+                                 marked_req_indices):
+        return Axiom(None, self.theory, self.name,
+                     _proven_truth=proven_truth, _requirements=requirements,
+                     _marked_req_indices=marked_req_indices)
 
     def _generate_step_info(self, object_rep_fn):
         return self.step_type() + '_' + str(self) + ':'
@@ -906,7 +975,9 @@ class Theorem(Proof):
     all_theorems = []
     all_used_theorems = set()
 
-    def __init__(self, expr, theory, name):
+    def __init__(self, expr, theory, name, *,
+                 _proven_truth=None, _requirements=None,
+                 _marked_req_indices=None):
         if not isinstance(theory, Theory):
             raise ValueError("A theorem 'package' must be a Theory object")
         if not isinstance(name, str):
@@ -916,9 +987,21 @@ class Theorem(Proof):
         # keep track of proofs that may be used to prove the theorem
         # before 'begin_proof' is called so we will have the proof handy.
         self._possibleProofs = []
-        # Note that _mark_usability will be called within Proof.__init__
-        Proof.__init__(self, Judgment(expr, frozenset()), [])
+        if _proven_truth is not None:
+            # Via _regenerate_proof_object:
+            Proof.__init__(self, _proven_truth, _requirements,
+                           _marked_req_indices)
+            return
+        else:
+            # Note that _mark_usability will be called within Proof.__init__
+            Proof.__init__(self, Judgment(expr, frozenset()), [])
         Theorem.all_theorems.append(self)
+
+    def _regenerate_proof_object(self, proven_truth, requirements,
+                                 marked_req_indices):
+        return Theorem(None, self.theory, self.name,
+                       _proven_truth=proven_truth, _requirements=requirements,
+                       _marked_req_indices=marked_req_indices)
 
     def _generate_step_info(self, object_rep_fn):
         # For these purposes, we should use 'theorem' even if the
@@ -1192,9 +1275,18 @@ def _checkImplication(implication_expr, antecedent_expr, consequent_expr):
 
 
 class ModusPonens(Proof):
-    def __init__(self, implication_expr, assumptions=None):
+    def __init__(self, implication_expr, assumptions=None, *,
+                 _proven_truth=None, _requirements=None,
+                 _marked_req_indices=None):
         from proveit.logic import Implies
         from proveit._core_.expression.composite import is_double
+        if _proven_truth is not None:
+            # Via _regenerate_proof_object:
+            self.implication_truth = _requirements[0]
+            self.antecedent_truth = _requirements[1]
+            Proof.__init__(self, _proven_truth, _requirements,
+                           _marked_req_indices)
+            return
         assumptions = defaults.checked_assumptions(assumptions)
         prev_default_assumptions = defaults.assumptions
         # these assumptions will be used for deriving any side-effects
@@ -1250,14 +1342,28 @@ class ModusPonens(Proof):
             # restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
 
+    def _regenerate_proof_object(self, proven_truth, requirements,
+                                 marked_req_indices):
+        return ModusPonens(
+            None, _proven_truth=proven_truth, _requirements=requirements,
+            _marked_req_indices=marked_req_indices)
+
     def step_type(self):
         return 'modus ponens'
 
 
 class Deduction(Proof):
-    def __init__(self, consequent_truth, antecedent_expr):
+    def __init__(self, consequent_truth, antecedent_expr, *,
+                 _proven_truth=None, _requirements=None,
+                 _marked_req_indices=None):
         from proveit import ExprRange
         from proveit.logic import Implies, And
+        if _proven_truth is not None:
+            # Via _regenerate_proof_object:
+            self.consequent_truth = _requirements[0]
+            Proof.__init__(self, _proven_truth, _requirements,
+                           _marked_req_indices)
+            return
         if isinstance(antecedent_expr, ExprRange):
             # Assumption ranges must be transformed to a
             # conjunction form on the other side.
@@ -1282,6 +1388,12 @@ class Deduction(Proof):
         finally:
             # restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
+
+    def _regenerate_proof_object(self, proven_truth, requirements,
+                                 marked_req_indices):
+        return Deduction(
+            None, None, _proven_truth=proven_truth,
+            _requirements=requirements, _marked_req_indices=marked_req_indices)
 
     def step_type(self):
         return 'deduction'
@@ -1465,7 +1577,9 @@ class Instantiation(Proof):
     def __init__(self, orig_judgment, num_forall_eliminations,
                  repl_map, equiv_alt_expansions,
                  mapping, mapping_key_order,
-                 simplify_only_where_marked, markers_and_marked_expr):
+                 simplify_only_where_marked, markers_and_marked_expr, *,
+                 _proven_truth=None, _requirements=None,
+                 _marked_req_indices=None):
         '''
         Create the instantiation proof step that eliminates some number
         of nested Forall operations and simultaneously replaces 
@@ -1483,6 +1597,15 @@ class Instantiation(Proof):
         from proveit._core_.expression.expr import contained_parameter_vars
         from proveit._core_.expression.lambda_expr.lambda_expr import \
             (get_param_var, valid_params, LambdaApplicationError)
+
+        if _proven_truth is not None:
+            # Via _regenerate_proof_object:
+            self.general_truth = _requirements[0]
+            self.mapping = mapping
+            self.mapping_key_order = mapping_key_order
+            Proof.__init__(self, _proven_truth, _requirements,
+                           _marked_req_indices)
+            return
         
         # Determine the set of variables that will be instantiated
         # via eliminated foralls.
@@ -1590,8 +1713,17 @@ class Instantiation(Proof):
         for k, req in enumerate(requirements):
             if req in equality_repl_requirements:
                 marked_req_indices.add(k)
+        self.general_truth = orig_judgment
         Proof.__init__(self, instantiated_truth, requirements,
                        marked_req_indices)
+
+    def _regenerate_proof_object(self, proven_truth, requirements,
+                                 marked_req_indices):
+        inst = Instantiation(
+            None, None, None, None, self.mapping, self.mapping_key_order, 
+            None, None, _proven_truth=proven_truth, _requirements=requirements,
+            _marked_req_indices=marked_req_indices)
+        return inst
 
     def _generate_step_info(self, object_rep_fn):
         '''
@@ -1904,11 +2036,9 @@ class Instantiation(Proof):
 
 class Generalization(Proof):
     def __init__(
-            self,
-            instance_truth,
-            new_forall_param_lists,
-            new_conditions=tuple(),
-            new_antecedent=None):
+            self, instance_truth, new_forall_param_lists,
+            new_conditions=tuple(), new_antecedent=None, *, 
+            _proven_truth=None, _requirements=None, _marked_req_indices=None):
         '''
         A Generalization step wraps a Judgment (instance_truth) in one 
         or more Forall operations.  The number of Forall operations
@@ -1951,6 +2081,13 @@ class Generalization(Proof):
             (get_param_var)
         from proveit._core_.expression.composite.expr_tuple import ExprTuple
         from proveit.logic import Forall
+        if _proven_truth is not None:
+            # Via _regenerate_proof_object:
+            self.instance_truth = _requirements[0]
+            Proof.__init__(self, _proven_truth, _requirements,
+                           _marked_req_indices)
+            return
+
         if not isinstance(instance_truth, Judgment):
             raise GeneralizationFailure(
                 None, [], 'May only generalize a Judgment instance')
@@ -2103,6 +2240,19 @@ class Generalization(Proof):
         finally:
             # restore the original default assumptions
             defaults.assumptions = prev_default_assumptions
+
+    def _regenerate_proof_object(self, proven_truth, requirements,
+                                 marked_req_indices):
+        gen = Generalization(
+            None, None, _proven_truth=proven_truth, _requirements=requirements,
+            _marked_req_indices=marked_req_indices)
+        gen.new_forall_vars = self.new_forall_vars
+        gen.new_conditions = self.new_conditions
+        gen.generalized_literals = self.generalized_literals
+        gen._eliminated_proof_steps = self._eliminated_proof_steps
+        gen._eliminated_axioms = self._eliminated_axioms
+        gen._eliminated_theorems = self._eliminated_theorems
+        return gen
 
     def _append_eliminated_requirements_and_check_violation(
             self, instance_truth, new_conditions,
