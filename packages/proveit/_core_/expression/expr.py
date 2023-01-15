@@ -1636,6 +1636,10 @@ class Expression(metaclass=ExprType):
             return None
         try:
             markers, marked_expr = markers_and_marked_expr
+            if marked_expr in markers:
+                # This entire sub-expression is marked, so we
+                # all simplifications are fair game here.
+                return None
             marked_expr = sub_expr_fn(marked_expr)
             assert isinstance(marked_expr, Expression)
             return (markers, marked_expr)
