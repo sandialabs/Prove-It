@@ -590,7 +590,8 @@ class Mult(NumberOperation):
         # eliminate factors of one.
         # Since this is supposed to be a shallow simplification,
         # turn off auto-simplification for these cancelations.
-        expr = eq.update(expr.cancelations(auto_simplify=False))
+        if Div._simplification_directives_.cancel_factors:
+            expr = eq.update(expr.cancelations(auto_simplify=False))
 
         if is_irreducible_value(expr):
             return eq.relation  # done
