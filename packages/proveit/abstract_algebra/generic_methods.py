@@ -593,9 +593,11 @@ def sorting_and_combining_like_operands(
                                              preserve_expr=preserve_expr))
         return eq.relation
     # Only one type of operand -- combine them.
-    preserve_expr = (iter(key_to_indices.keys()) if preserve_likeness_keys 
-                     else None)
-    return expr.combining_operands(preserve_expr=preserve_expr)
+    preserved_exprs = set(defaults.preserved_exprs)
+    if preserve_likeness_keys:
+        preserved_exprs.update([key for key in key_to_indices.keys()
+                                if key is not None])
+    return expr.combining_operands(preserved_exprs=preserved_exprs)
 
 def common_likeness_key(expr, *, likeness_key_fn):
     '''

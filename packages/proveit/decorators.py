@@ -3,7 +3,7 @@ from inspect import signature, Parameter
 from proveit._core_.defaults import defaults
 from proveit.util import OrderedSet
 
-def _make_decorated_prover(func):
+def _make_decorated_prover(func, automatic=False):
     '''
     Use for decorating 'prover' methods 
     (@prover, @relation_prover, or @equality_prover).
@@ -126,9 +126,10 @@ def _make_decorated_prover(func):
                                 "assumptions: %s"
                                 %(func, proven_truth, defaults.assumptions)) 
             return proven_truth
-        
-        if len(defaults_to_change) > 0:
-            # Temporarily reconfigure defaults with 
+
+        if (automatic and not defaults.preserve_all) or (
+                len(defaults_to_change) > 0):
+            # Temporarily reconfigure defaults
             with defaults.temporary() as temp_defaults:
                 if 'assumptions' in defaults_to_change:
                     # Set 'assumptions' first (before turning off
@@ -140,19 +141,43 @@ def _make_decorated_prover(func):
                     if key != 'assumptions':
                         # Temporarily alter a default:
                         setattr(temp_defaults, key, kwargs[key])
-                kwargs.update(public_attributes_dict(defaults))
+                if automatic:
+                    temp_defaults.preserve_all=True
+                    temp_defaults.preserved_exprs = set()
+                internal_kwargs = dict(kwargs)
+                internal_kwargs.update(public_attributes_dict(defaults))
                 # Make sure we derive assumption side-effects first.
                 Assumption.make_assumptions()
                 # Now call the prover function.
-                proven_truth = checked_truth(func(*args, **kwargs))
+                proven_truth = checked_truth(func(*args, **internal_kwargs))
         else:
             # No defaults reconfiguration.
-            kwargs.update(public_attributes_dict(defaults))
+            internal_kwargs = dict(kwargs)
+            internal_kwargs.update(public_attributes_dict(defaults))
             # Make sure we derive assumption side-effects first.
             Assumption.make_assumptions()
             # Now call the prover function.
-            proven_truth = checked_truth(func(*args, **kwargs))
-                
+            proven_truth = checked_truth(func(*args, **internal_kwargs))
+
+        if automatic and not defaults.preserve_all:
+            # Temporarily reconfigure defaults
+            with defaults.temporary() as temp_defaults:
+                for key in defaults_to_change:
+                    # Temporarily alter a default:
+                    setattr(temp_defaults, key, kwargs[key])
+                #print(func.__name__, proven_truth)
+                # Effect the replacements and/or auto-simplification by
+                # regenerating the proof object under the active defaults.
+                orig_proven_truth = proven_truth
+                new_proven_truth = (
+                    proven_truth.proof().regenerate_proof_object()
+                    .proven_truth)
+                proven_truth = (new_proven_truth.inner_expr()
+                                .with_mimicked_style(proven_truth.expr))
+                #print('preserved_exprs', defaults.preserved_exprs,
+                #      'orig_proven_truth', orig_proven_truth,
+                #      'proven_truth', proven_truth)
+
         if is_conclude_method:
             self = args[0]
             if isinstance(self, Expression):
@@ -188,7 +213,7 @@ def _make_decorated_prover(func):
         return proven_truth
     return decorated_prover    
 
-def _make_decorated_relation_prover(func):
+def _make_decorated_relation_prover(func, automatic=False):
     '''
     Use for decorating 'relation_prover' methods 
     (@relation_prover or @equality_prover).  In addition
@@ -200,7 +225,8 @@ def _make_decorated_relation_prover(func):
     is on the left side of the returned Relation Judgment.
     '''
 
-    decorated_prover = _make_decorated_prover(func)
+    decorated_prover = _make_decorated_prover(func, 
+                                              automatic=automatic)
     
     def decorated_relation_prover(*args, **kwargs):
         from proveit._core_.expression.expr import Expression
@@ -289,6 +315,12 @@ def prover(func):
     '''
     return _wraps(func, _make_decorated_prover(func))
 
+def auto_prover(func):
+    '''
+
+    '''
+    return _wraps(func, _make_decorated_prover(func, automatic=True))
+
 def relation_prover(func):
     '''
     @relation_prover is a decorator for methods that are to return a 
@@ -301,12 +333,19 @@ def relation_prover(func):
     '''
     return _wraps(func, _make_decorated_relation_prover(func))
 
+def auto_relation_prover(func):
+    '''
+
+    '''
+    return _wraps(func, _make_decorated_relation_prover(func, 
+                                                        automatic=True))
+
 # Keep track of equivalence provers so we may register them during
 # Expression class construction (see ExprType.__init__ in expr.py).
 _equality_prover_fn_to_tenses = dict()
 _equality_prover_name_to_tenses = dict()
 
-def equality_prover(past_tense, present_tense):
+def equality_prover(past_tense, present_tense, automatic=False):
     '''
     @equality_prover works the same way as the @relation_prover decorator
     except that it also registers the "equality method" in
@@ -339,7 +378,8 @@ def equality_prover(past_tense, present_tense):
         is_evaluation_method = (name == 'evaluation')
         is_shallow_simplification_method = (name == 'shallow_simplification')
         is_simplification_method = (name == 'simplification')
-        decorated_relation_prover = _make_decorated_relation_prover(func)
+        decorated_relation_prover = _make_decorated_relation_prover(
+            func, automatic=automatic)
 
         def wrapper(*args, **kwargs):   
             '''
@@ -437,6 +477,9 @@ def equality_prover(past_tense, present_tense):
         return _wraps(func, wrapper, extra_doc=extra_doc)
 
     return wrapper_maker
+
+def auto_equality_prover(past_tense, present_tense):
+    return equality_prover(past_tense, present_tense, automatic=True)
 
 """
 def equality_prover(past_tense, present_tense):

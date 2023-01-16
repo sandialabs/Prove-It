@@ -188,7 +188,6 @@ proveit.numbers.exponentiation.exp_complex_closure
 proveit.numbers.exponentiation.exp_eq
 proveit.numbers.exponentiation.exp_eq_real
 proveit.numbers.exponentiation.exp_int_closure
-proveit.numbers.exponentiation.exp_monotonicity_large_base_less
 proveit.numbers.exponentiation.exp_monotonicity_large_base_less_eq
 proveit.numbers.exponentiation.exp_nat_pos_expansion
 proveit.numbers.exponentiation.exp_nat_pos_rev
