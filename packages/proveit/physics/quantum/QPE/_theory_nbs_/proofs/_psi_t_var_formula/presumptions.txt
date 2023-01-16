@@ -23,7 +23,10 @@ proveit.core_expr_types.tuples.tuple_eq_via_elem_eq
 proveit.core_expr_types.tuples.tuple_len_0_typical_eq
 proveit.core_expr_types.tuples.tuple_portion_substitution
 proveit.linear_algebra.addition.binary_closure
+proveit.linear_algebra.addition.binary_permutation
 proveit.linear_algebra.addition.closure
+proveit.linear_algebra.addition.leftward_permutation
+proveit.linear_algebra.addition.rightward_permutation
 proveit.linear_algebra.addition.summation_closure
 proveit.linear_algebra.addition.vec_sum_index_shift
 proveit.linear_algebra.addition.vec_sum_split_after
@@ -40,6 +43,7 @@ proveit.linear_algebra.scalar_multiplication.distribution_over_vec_sum_with_scal
 proveit.linear_algebra.scalar_multiplication.doubly_scaled_as_singly_scaled
 proveit.linear_algebra.scalar_multiplication.one_as_scalar_mult_id
 proveit.linear_algebra.scalar_multiplication.scalar_mult_closure
+proveit.linear_algebra.scalar_multiplication.scalar_mult_eq
 proveit.linear_algebra.tensors.factor_scalar_from_tensor_prod
 proveit.linear_algebra.tensors.tensor_prod_disassociation
 proveit.linear_algebra.tensors.tensor_prod_distribution_over_summation_with_scalar_mult
@@ -58,6 +62,7 @@ proveit.logic.booleans.conjunction.quantification_from_conjunction
 proveit.logic.booleans.conjunction.redundant_conjunction
 proveit.logic.booleans.conjunction.redundant_conjunction_general
 proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.booleans.conjunction.true_and_true
 proveit.logic.booleans.fold_is_bool
 proveit.logic.booleans.from_not_false
 proveit.logic.booleans.implication.false_antecedent_implication
@@ -68,6 +73,7 @@ proveit.logic.booleans.implication.untrue_antecedent_implication
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.negation.double_negation_elim
 proveit.logic.booleans.negation.negation_intro
+proveit.logic.booleans.true_is_bool
 proveit.logic.booleans.unfold_is_bool
 proveit.logic.booleans.unfold_is_bool_explicit
 proveit.logic.equality.equals_reversal
