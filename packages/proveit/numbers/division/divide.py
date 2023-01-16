@@ -29,12 +29,19 @@ class Div(NumberOperation):
         latex_format=r'\div',
         theory=__file__)
 
+    # The following _simplification_directives are used as flags
+    # to control automatic simplification of Div (or frac) exprs,
+    # with:
+    #   cancel_factors: controls canceling of common factors in
+    #                   numerator and denominator
+    #
     _simplification_directives_ = SimplificationDirectives(
             factor_negation = True, 
             reduce_zero_numerator = True,
             reduce_to_multiplication = False,
             reduce_rational = True,
-            distribute = False)
+            distribute = False,
+            cancel_factors = True)
 
     def __init__(self, numerator, denominator, *, styles=None):
         r'''
@@ -136,10 +143,11 @@ class Div(NumberOperation):
         eq = TransRelUpdater(expr)
 
         # perform cancelations where possible
-        expr = eq.update(expr.cancelations(preserve_all=True))
-        if not isinstance(expr, Div):
-            # complete cancelation.
-            return eq.relation
+        if Div._simplification_directives_.cancel_factors:
+            expr = eq.update(expr.cancelations(preserve_all=True))
+            if not isinstance(expr, Div):
+                # complete cancelation.
+                return eq.relation
 
         if must_evaluate:
             if not all(is_irreducible_value(operand) for operand 
@@ -522,6 +530,88 @@ class Div(NumberOperation):
                 {x: term_to_cancel, y: _y, z: _z},
                  replacements=replacements, preserve_expr=expr))
             return eq.relation
+
+    @equality_prover('top_and_bottom_multiplied',
+                          'top_and_bottom_multiply')
+    def top_and_bottom_multiplication(
+            self, multiplier, numerator_mult="left",
+            denominator_mult="left", **defaults_config):
+        '''
+        Deduce and return an equality between self and a form in which
+        the given multiplier now appears as a multiplicand in both the
+        numerator and denominator. This is essentially the inverse
+        method for the Div.cancelation() method defined above.
+        For example,[(a*b)/(b*c)].cancelation(b) would return
+            (a*b)/(b*c) = a / c,
+        whereas [a/c].top_and_bottom_multiplication(b) would return
+            a/c = ba/(bc).
+        Assumptions or previous work might be required to establish
+        that the multiplier and original denominator are non-zero.
+        Although technically it shouldn't matter if the original Div
+        had a zero in the denom (multiplying top and bottom by
+        something non-zero will give an undefined term equal to
+        another undefined term), we go ahead and maintain the
+        requirement that the original Div expression has a non-zero
+        denom.
+        The method initially only allows multiplication "on the left"
+        for the introduced multipler in both the numerator and
+        denominator (i.e. a/c can be taken to ba/bc but not directly
+        to ab/(bc) nor ba/(cb) nor ab/(cb)).
+        '''
+        from proveit.numbers import Mult
+
+        expr = self
+
+        # A convenience to allow successive updates to the equation
+        # via transitivities (starting with self=self).
+        eq = TransRelUpdater(expr)
+
+        replacements = list(defaults.replacements)
+
+        # We want to avoid automatically canceling the multiplier
+        # we're introducing in the numerator and denominator, so
+        # we modify the cancel_factors directive, and we do so within
+        # a 'with' construct in case the process fails (keeping us 
+        # from inadvertently getting stuck with the changed directive).
+        with Div.temporary_simplification_directives() as tmp_directives:
+            tmp_directives.cancel_factors = False
+            _y_sub = self.numerator
+            _z_sub = self.denominator
+            # expr = eq.update(frac_cancel_left.instantiate(
+            #         {x: multiplier, y: _y_sub, z: _z_sub},
+            #          replacements=replacements, preserve_expr=expr))
+            if numerator_mult=="left":
+                from . import frac_cancel_left
+                expr = eq.update(frac_cancel_left.instantiate(
+                        {x: multiplier, y: _y_sub, z: _z_sub},
+                        replacements=replacements, preserve_expr=expr))
+                if (denominator_mult=="right" and
+                   isinstance(expr.denominator, Mult)):
+                    # commute multiplicands in denominator;
+                    # skip this if denom has already been simplified
+                    # to be an Exp
+                    _init_idx = 0
+                    _final_idx = len(expr.denominator.operands) - 1
+                    expr = eq.update(
+                            expr.inner_expr().denominator.
+                            commutation(_init_idx, _final_idx))
+            if numerator_mult=="right":
+                from . import frac_cancel_right
+                expr = eq.update(frac_cancel_right.instantiate(
+                        {x: multiplier, y: _y_sub, z: _z_sub},
+                        replacements=replacements, preserve_expr=expr))
+                if (denominator_mult=="left" and
+                    isinstance(expr.denominator, Mult)):
+                    # commute multiplicands in denominator;
+                    # skip this if denom has already been simplified
+                    # to be an Exp
+                    _init_idx = 0
+                    _final_idx = len(expr.denominator.operands)-1
+                    expr = eq.update(
+                            expr.inner_expr().denominator.
+                            commutation(_init_idx, _final_idx))
+
+        return eq.relation
 
     @equality_prover('deep_eliminated_ones', 'deep_eliminate_ones')
     def deep_one_eliminations(self, **defaults_config):
