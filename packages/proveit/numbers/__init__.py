@@ -6,7 +6,7 @@ from .number_sets import (
     Rational, RationalNonZero, RationalPos, RationalNeg, RationalNonNeg,
     RationalNonPos,
     Real, RealNonZero, RealNeg, RealPos, RealNonNeg, RealNonPos,
-    Complex, ComplexNonZero,
+    Complex, ComplexNonZero, Conjugate,
     complex_polar_coordinates, 
     unit_length_complex_polar_angle)
 
@@ -51,7 +51,7 @@ from .summation import Sum
 from .product import Prod
 from .integration import Integrate
 
-from .functions import MonDecFuncs
+from .functions import MonDecFuncs, KroneckerDelta
 
 import proveit
 

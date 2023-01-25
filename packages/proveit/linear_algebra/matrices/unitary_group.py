@@ -15,7 +15,7 @@ class Unitary(Function):
 
     def __init__(self, n, *, styles=None):
         '''
-        Create some U(n), the special unitary of degree n.
+        Create some U(n), the unitary group of degree n.
         '''
         Function.__init__(self, Unitary._operator_, n, styles=styles)
         # self.operand = n
@@ -49,7 +49,7 @@ class SpecialUnitary(Function):
 
     def __init__(self, n, *, styles=None):
         '''
-        Create some SU(n), the special unitary of degree n.
+        Create some SU(n), the special unitary group of degree n.
         '''
         Function.__init__(self, SpecialUnitary._operator_, n, styles=styles)
         # self.operand = n

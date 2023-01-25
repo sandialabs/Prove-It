@@ -3,8 +3,7 @@ from proveit import (Function, Literal, Judgment, UnsatisfiedPrerequisites,
 from proveit import n
 from proveit.logic import InClass, ClassMembership, InSet
 from proveit.numbers import Complex
-from proveit.linear_algebra import (
-        VecSpaces, InnerProdSpaces, containing_vec_space)
+from .inner_prod_spaces import InnerProdSpaces
 
 class HilbertSpacesLiteral(Literal):
     '''
@@ -40,6 +39,7 @@ class HilbertSpacesLiteral(Literal):
         Given a vector expression, vec, yield any Hilbert spaces
         known to contain vec.
         '''
+        from proveit.linear_algebra import VecSpaces
         for vec_space in VecSpaces.yield_known_vec_spaces(vec, field=Complex):
             if vec_space in HilbertSpacesLiteral.known_spaces_memberships:
                 # This vector space is already known to be an inner
@@ -60,6 +60,7 @@ class HilbertSpacesLiteral(Literal):
         Return the known inner product space of the given vec under the
         specified field (or the default field).
         '''
+        from proveit.linear_algebra import containing_vec_space
         try:
             return next(HilbertSpacesLiteral.yield_known_hilbert_spaces(vec))
         except StopIteration:

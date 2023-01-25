@@ -2,6 +2,7 @@ addition
 negation
 scalar_multiplication
 inner_products
+vector_sets
 linear_maps
 matrices
 tensors
