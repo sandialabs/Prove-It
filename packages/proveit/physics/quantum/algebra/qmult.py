@@ -707,6 +707,7 @@ class QmultCodomainMembership(ClassMembership):
                     QmultCodomain.membership_object(Qmult(op1)).conclude()
                 
                 # Next, handle the op-ket case.
+                # TODO: handle the ket-ket case.
                 thm = None
                 for _Hspace in yield_known_hilbert_spaces(op2):
                     for linmap in containing_hilbert_space_linmap_sets(op1):

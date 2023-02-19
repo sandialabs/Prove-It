@@ -9,7 +9,7 @@ from .vector_sets import (
         Span, SpanningSets, LinDepSets, Bases, Dim)
 from .inner_products import (
         InnerProd, InnerProdSpaces, HilbertSpaces, Hspace,
-        Norm, OrthoNormBases, Proj, Adj, deduce_as_inner_prod_space)
+        Norm, OrthoNormBases, OrthoProj, Adj, deduce_as_inner_prod_space)
 from .linear_maps import (LinMap, LinMapAdd, Identity,
                           Commutator, AntiCommutator)
 from .matrices import (MatrixSpace, MatrixMult, MatrixExp,

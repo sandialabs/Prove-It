@@ -2,7 +2,7 @@ from .inner_prod_spaces import InnerProdSpaces, deduce_as_inner_prod_space
 from .inner_prod import InnerProd
 from .norm import Norm
 from .ortho_norm_bases import OrthoNormBases
-from .projector import Proj
+from .ortho_projector import OrthoProj
 from .adjoint import Adj
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
