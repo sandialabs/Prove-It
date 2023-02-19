@@ -50,6 +50,7 @@ class Add(NumberOperation):
     _simplification_directives_ = SimplificationDirectives(
             ungroup = True,
             combine_like_terms = True,
+            combine_like_denoms = False,
             order_key_fn = lambda term : 0)
 
     def __init__(self, *operands, styles=None):
@@ -585,7 +586,7 @@ class Add(NumberOperation):
         cancel common terms that are subtracted, combine like terms,
         convert repeated addition to multiplication, etc.
         '''
-        from proveit.numbers import (one, Add, Neg, Mult, 
+        from proveit.numbers import (one, Add, Div, Neg, Mult, 
                                      is_numeric_int,
                                      is_numeric_rational)
         from proveit.numbers.multiplication.mult import (
@@ -703,6 +704,13 @@ class Add(NumberOperation):
             # apart from literal, rational coefficients.
             likeness_key_fn = lambda term : (
                     coefficient_and_remainder(term)[1])
+            if Add._simplification_directives_.combine_like_denoms:
+                # likeness_key_fn = lambda term : (
+                #     Div(one, term.denominator) if isinstance(term, Div)
+                #     else likeness_key_fn(term))
+                likeness_key_fn = lambda term : (
+                    Div(one, term.denominator) if isinstance(term, Div)
+                    else coefficient_and_remainder(term)[1])
             # Sort and combine like operands.
             expr = eq.update(sorting_and_combining_like_operands(
                     expr, order_key_fn=order_key_fn, 
@@ -1552,8 +1560,7 @@ class Add(NumberOperation):
                 "for a subtraction, got %s" %
                 self)
         thm = difference_is_nat_pos
-        return thm.instantiate({a: self.terms[0], b: self.terms[1].operand},
-                               assumptions=assumptions)
+        return thm.instantiate({a: self.terms[0], b: self.terms[1].operand})
 
     def index(self, the_term, also_return_num=False):
         '''
@@ -1682,17 +1689,48 @@ class Add(NumberOperation):
     @equality_prover('combined_terms', 'combine_terms')
     def combining_terms(self, **defaults_config):
         '''
-        Combine terms, adding their literal, rational coeffiicents.
+        Combine terms, adding their literal, rational coefficients.
         Alias for `combining_operands`.
         '''
-        from proveit.numbers import one
+        from proveit.numbers import one, Div
         from proveit.numbers.multiplication.mult import (
                 coefficient_and_remainder)
         # Obtain the common term "remainder" (sans coefficient),
         # raising a ValueError if the terms are not all like terms.
         likeness_key_fn = lambda term : (
                 coefficient_and_remainder(term)[1])
-        key = common_likeness_key(self, likeness_key_fn=likeness_key_fn)
+        try:
+            key = common_likeness_key(self, likeness_key_fn=likeness_key_fn)
+            if isinstance(key, ExprRange):
+                raise ValueError
+        except ValueError as _e:
+            if any( not(
+                    isinstance(term, Div) or
+                    (isinstance(term, ExprRange) and isinstance(term.body, Div)))
+                    for term in self.terms):
+                return _e
+            # testing new denominator def to accommodate ExprRange?
+            # denominator = common_likeness_key(
+            #         self, likeness_key_fn = lambda term: term.denominator)
+            denominator = common_likeness_key(
+                    self,
+                    likeness_key_fn = (
+                        lambda term: term.denominator if isinstance(term, Div)
+                                else term.body.denominator))
+            # the following handles both a set of fracs and an
+            # ExprRange of fracs and any combination of the two
+            numerator_terms = self.terms.map_elements(
+                    lambda term: term.numerator)
+            # create our desired combination of like fractions
+            combined = Div(Add(*numerator_terms), denominator)
+            replacements = list(defaults.replacements)
+            if defaults.auto_simplify:
+                combined_simp = combined.simplification()
+                if combined_simp.lhs != combined_simp.rhs:
+                    replacements.append(combined_simp)
+            return (combined.distribution(preserve_all=True).
+                    derive_reversed(replacements=replacements))
+
         if key != one:
             # Factor out the common part from the coefficients.
             return self.factorization(key, pull="right")
