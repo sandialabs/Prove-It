@@ -690,7 +690,7 @@ class Mult(NumberOperation):
         if Mult._simplification_directives_.distribute_fractions and (
                 expr.operands.is_double() and 
                 (isinstance(expr.operands[0], Div) or
-                 isisntance(expr.operands[1], Div))):
+                 isinstance(expr.operands[1], Div))):
             expr = eq.update(expr.distribution())
         elif Mult._simplification_directives_.distribute_numeric_rational:
             # If there are exactly two factors and one is an Add and
@@ -1284,6 +1284,10 @@ class Mult(NumberOperation):
             a (b - c) d = a b d - a c d
             a (\sum_x f(x)) c = \sum_x a f(x) c
             (a/b)*(c/d) = (a*b)/(c*d)
+        Example for a distribute_all_sums:
+            recursively looks for first add or sum to distribute through
+            (a+b)(c+d)ef = a(c+d)ef + b(c+d)ef
+                         = acef + adef + bcef + bdef
         
         For more flexibility, 'left_factors' and 'right_factors'
         may be specified to indicate subsets of the factors to
@@ -2062,8 +2066,6 @@ class Mult(NumberOperation):
             (a * b ... * (l * ... * m) * ... * y * z)
         '''
         from . import association
-        # print("In Mult.association():")
-        # print("  preserved_exprs = {}".format(defaults.preserved_exprs))
         return apply_association_thm(
             self, start_idx, length, association)
 
