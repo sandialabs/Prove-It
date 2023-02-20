@@ -11,8 +11,11 @@ proveit.linear_algebra.addition.binary_closure
 proveit.linear_algebra.addition.closure
 proveit.linear_algebra.addition.norm_of_sum_of_orthogonal_pair
 proveit.linear_algebra.complex_vec_set_is_vec_space
+proveit.linear_algebra.inner_products.complex_set_is_hilbert_space
 proveit.linear_algebra.inner_products.complex_set_is_inner_prod_space
 proveit.linear_algebra.inner_products.complex_vec_set_is_inner_prod_space
+proveit.linear_algebra.inner_products.hilbert_space_is_inner_prod_space
+proveit.linear_algebra.inner_products.hilbert_space_is_vec_space
 proveit.linear_algebra.inner_products.inner_prod_scalar_mult_left
 proveit.linear_algebra.inner_products.inner_prod_scalar_mult_right
 proveit.linear_algebra.inner_products.inner_prod_space_is_vec_space
@@ -308,12 +311,10 @@ proveit.numbers.ordering.transitivity_less_eq_less
 proveit.numbers.ordering.transitivity_less_eq_less_eq
 proveit.numbers.ordering.transitivity_less_less_eq
 proveit.physics.quantum.QPE._phase_is_real
-proveit.physics.quantum.algebra.complex_set_is_hilbert_space
-proveit.physics.quantum.algebra.hilbert_space_is_inner_prod_space
-proveit.physics.quantum.algebra.hilbert_space_is_vec_space
 proveit.physics.quantum.algebra.ket_one_in_qubit_space
 proveit.physics.quantum.algebra.ket_one_norm
 proveit.physics.quantum.algebra.ket_zero_and_one_are_orthogonal
+proveit.physics.quantum.algebra.ket_zero_and_one_have_zero_inner_prod
 proveit.physics.quantum.algebra.ket_zero_in_qubit_space
 proveit.physics.quantum.algebra.ket_zero_norm
 # THEOREMS AND THEORIES TO EXCLUDE:

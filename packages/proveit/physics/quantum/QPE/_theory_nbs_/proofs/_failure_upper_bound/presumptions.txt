@@ -5,7 +5,10 @@ proveit.core_expr_types.lambda_maps.general_lambda_substitution
 proveit.core_expr_types.operations.operands_substitution_via_tuple
 proveit.core_expr_types.tuples.tuple_eq_via_elem_eq
 proveit.core_expr_types.tuples.tuple_len_0_typical_eq
+proveit.linear_algebra.inner_products.complex_set_is_hilbert_space
 proveit.linear_algebra.inner_products.complex_set_is_inner_prod_space
+proveit.linear_algebra.inner_products.hilbert_space_is_inner_prod_space
+proveit.linear_algebra.inner_products.hilbert_space_is_vec_space
 proveit.linear_algebra.inner_products.inner_prod_space_is_vec_space
 proveit.linear_algebra.inner_products.rational_set_is_inner_prod_space
 proveit.linear_algebra.inner_products.real_set_is_inner_prod_space
@@ -353,9 +356,6 @@ proveit.physics.quantum.QPE._pfail_in_real
 proveit.physics.quantum.QPE._phase_is_real
 proveit.physics.quantum.QPE._scaled_delta_b_floor_in_interval
 proveit.physics.quantum.QPE._two_pow_t_minus_one_is_nat_pos
-proveit.physics.quantum.algebra.complex_set_is_hilbert_space
-proveit.physics.quantum.algebra.hilbert_space_is_inner_prod_space
-proveit.physics.quantum.algebra.hilbert_space_is_vec_space
 proveit.physics.quantum.algebra.ket_one_in_qubit_space
 proveit.physics.quantum.algebra.ket_one_norm
 proveit.physics.quantum.algebra.ket_zero_and_one_are_orthogonal
