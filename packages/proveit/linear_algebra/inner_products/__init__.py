@@ -18,4 +18,5 @@ if proveit.defaults.sideeffect_automation:
     # Import some fundamental theorems without quantifiers
     from . import (rational_set_is_inner_prod_space, 
                    real_set_is_inner_prod_space,
-                   complex_set_is_inner_prod_space)
+                   complex_set_is_inner_prod_space,
+                   complex_set_is_hilbert_space)

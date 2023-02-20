@@ -14,8 +14,8 @@ sys.modules[__name__] = TheoryPackage(__name__, __file__, locals())
 if proveit.defaults.running_theory_notebook is None:
     # Import some fundamental theorems without quantifiers when not 
     # running an common/axioms/theorems theory notebook.
-    from . import (complex_set_is_hilbert_space,
-                   ket_zero_in_qubit_space,
+    from . import (ket_zero_in_qubit_space,
                    ket_one_in_qubit_space,
                    ket_zero_norm, ket_one_norm,
-                   ket_zero_and_one_are_orthogonal)
+                   ket_zero_and_one_are_orthogonal,
+                   ket_zero_and_one_have_zero_inner_prod)
