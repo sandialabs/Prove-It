@@ -219,7 +219,6 @@ proveit.numbers.multiplication.elim_one_right
 proveit.numbers.multiplication.leftward_commutation
 proveit.numbers.multiplication.mult_complex_closure_bin
 proveit.numbers.multiplication.mult_int_closure_bin
-proveit.numbers.multiplication.mult_nat_pos_closure_bin
 proveit.numbers.multiplication.mult_neg_any
 proveit.numbers.multiplication.mult_neg_left
 proveit.numbers.multiplication.mult_neg_right
