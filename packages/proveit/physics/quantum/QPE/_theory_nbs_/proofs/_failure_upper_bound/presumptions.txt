@@ -1,6 +1,5 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
 proveit.core_expr_types.conditionals.condition_substitution
-proveit.core_expr_types.conditionals.satisfied_condition_reduction
 proveit.core_expr_types.lambda_maps.general_lambda_substitution
 proveit.core_expr_types.operations.operands_substitution_via_tuple
 proveit.core_expr_types.tuples.tuple_eq_via_elem_eq
@@ -36,7 +35,6 @@ proveit.logic.equality.equals_reversal
 proveit.logic.equality.fold_not_equals
 proveit.logic.equality.four_chain_transitivity
 proveit.logic.equality.not_equals_symmetry
-proveit.logic.equality.rhs_via_equality
 proveit.logic.equality.sub_left_side_into
 proveit.logic.equality.sub_right_side_into
 proveit.logic.equality.substitute_falsehood
@@ -76,14 +74,9 @@ proveit.numbers.addition.strong_bound_via_left_term_bound
 proveit.numbers.addition.strong_bound_via_right_term_bound
 proveit.numbers.addition.subtraction.add_cancel_basic
 proveit.numbers.addition.subtraction.add_cancel_general
-proveit.numbers.addition.subtraction.add_cancel_general_rev
-proveit.numbers.addition.subtraction.add_cancel_reverse
 proveit.numbers.addition.subtraction.add_cancel_triple_12
 proveit.numbers.addition.subtraction.add_cancel_triple_13
-proveit.numbers.addition.subtraction.add_cancel_triple_21
 proveit.numbers.addition.subtraction.add_cancel_triple_23
-proveit.numbers.addition.subtraction.add_cancel_triple_31
-proveit.numbers.addition.subtraction.add_cancel_triple_32
 proveit.numbers.addition.subtraction.neg_difference
 proveit.numbers.addition.subtraction.negated_add
 proveit.numbers.addition.subtraction.nonzero_difference_if_different
@@ -112,6 +105,7 @@ proveit.numbers.division.weak_div_from_denom_bound__all_pos
 proveit.numbers.division.weak_div_from_denom_bound__neg_over_pos
 proveit.numbers.division.weak_div_from_denom_bound__pos_over_neg
 proveit.numbers.exponentiation.complex_x_to_first_power_is_x
+proveit.numbers.exponentiation.even_pow_is_even_fn
 proveit.numbers.exponentiation.exp_complex_closure
 proveit.numbers.exponentiation.exp_even_neg_base_lesseq
 proveit.numbers.exponentiation.exp_nat_pos_expansion
@@ -124,17 +118,12 @@ proveit.numbers.exponentiation.exponentiated_one
 proveit.numbers.exponentiation.exponentiated_zero
 proveit.numbers.exponentiation.neg_power_as_div
 proveit.numbers.exponentiation.neg_power_of_quotient
-proveit.numbers.exponentiation.posnat_power_of_quotient
+proveit.numbers.exponentiation.product_of_real_powers
 proveit.numbers.exponentiation.real_power_of_product
 proveit.numbers.exponentiation.real_power_of_real_power
 proveit.numbers.exponentiation.sqrd_pos_closure
 proveit.numbers.functions.one_over_x_sqrd_in_mon_dec_fxns
 proveit.numbers.integration.boundedInvSqrdIntegral
-proveit.numbers.integration.integration_real_closure
-proveit.numbers.integration.integration_real_neg_closure
-proveit.numbers.integration.integration_real_non_neg_closure
-proveit.numbers.integration.integration_real_non_pos_closure
-proveit.numbers.integration.integration_real_pos_closure
 proveit.numbers.multiplication.association
 proveit.numbers.multiplication.disassociation
 proveit.numbers.multiplication.distribute_through_abs_sum
@@ -336,10 +325,10 @@ proveit.numbers.ordering.symmetric_less_eq
 proveit.numbers.ordering.transitivity_less_eq_less
 proveit.numbers.ordering.transitivity_less_eq_less_eq
 proveit.numbers.ordering.transitivity_less_less_eq
-proveit.numbers.summation.even_fxn_sum
+proveit.numbers.summation.index_negate
 proveit.numbers.summation.index_shift
+proveit.numbers.summation.integral_upper_bound_of_sum
 proveit.numbers.summation.strong_summation_from_summands_bound
-proveit.numbers.summation.sum_integrate_ineq_NC
 proveit.numbers.summation.sum_split_first
 proveit.numbers.summation.summation_complex_closure
 proveit.numbers.summation.summation_int_closure
@@ -352,13 +341,13 @@ proveit.numbers.summation.weak_summation_from_summands_bound
 proveit.physics.quantum.QPE._best_floor_is_int
 proveit.physics.quantum.QPE._delta_b_is_real
 proveit.physics.quantum.QPE._failure_upper_bound_lemma
-proveit.physics.quantum.QPE._pfail_in_real
 proveit.physics.quantum.QPE._phase_is_real
 proveit.physics.quantum.QPE._scaled_delta_b_floor_in_interval
 proveit.physics.quantum.QPE._two_pow_t_minus_one_is_nat_pos
 proveit.physics.quantum.algebra.ket_one_in_qubit_space
 proveit.physics.quantum.algebra.ket_one_norm
 proveit.physics.quantum.algebra.ket_zero_and_one_are_orthogonal
+proveit.physics.quantum.algebra.ket_zero_and_one_have_zero_inner_prod
 proveit.physics.quantum.algebra.ket_zero_in_qubit_space
 proveit.physics.quantum.algebra.ket_zero_norm
 # THEOREMS AND THEORIES TO EXCLUDE:

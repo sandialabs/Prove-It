@@ -263,7 +263,6 @@ proveit.numbers.exponentiation.sqrt_real_pos_closure
 proveit.numbers.exponentiation.square_abs_real_simp
 proveit.numbers.exponentiation.unit_complex_polar_num_neq_one
 proveit.numbers.integration.boundedInvSqrdIntegral
-proveit.numbers.integration.integration_real_closure
 proveit.numbers.logarithms.log_base_large_a_greater_one
 proveit.numbers.logarithms.log_eq_1
 proveit.numbers.logarithms.log_increasing_less
@@ -529,15 +528,12 @@ proveit.numbers.rounding.ceil_x_ge_x
 proveit.numbers.rounding.floor_increasing_less_eq
 proveit.numbers.rounding.floor_of_integer
 proveit.numbers.rounding.floor_of_real_below_int
-proveit.numbers.rounding.floor_x_le_x
 proveit.numbers.rounding.real_minus_floor_interval
 proveit.numbers.rounding.real_minus_floor_lower_bound
 proveit.numbers.rounding.real_minus_floor_upper_bound
 proveit.numbers.rounding.round_in_terms_of_floor
-proveit.numbers.summation.even_fxn_sum
 proveit.numbers.summation.gen_finite_geom_sum
 proveit.numbers.summation.index_shift
-proveit.numbers.summation.sum_integrate_ineq_NC
 proveit.numbers.summation.sum_split_first
 proveit.numbers.summation.summation_complex_closure
 proveit.numbers.summation.summation_real_closure
@@ -573,7 +569,6 @@ proveit.physics.quantum.QPE._precision_guarantee
 proveit.physics.quantum.QPE._precision_guarantee_lemma_01
 proveit.physics.quantum.QPE._precision_guarantee_lemma_02
 proveit.physics.quantum.QPE._psi_t_ket_is_normalized_vec
-proveit.physics.quantum.QPE._psi_t_var_formula
 proveit.physics.quantum.QPE._sample_space_bijection
 proveit.physics.quantum.QPE._scaled_abs_delta_b_floor_diff_interval
 proveit.physics.quantum.QPE._scaled_delta_b_floor_in_interval
@@ -581,7 +576,6 @@ proveit.physics.quantum.QPE._scaled_delta_b_is_zero_or_non_int
 proveit.physics.quantum.QPE._scaled_delta_b_not_eq_nonzeroInt
 proveit.physics.quantum.QPE._scaled_delta_b_round_in_interval
 proveit.physics.quantum.QPE._success_complements_failure
-proveit.physics.quantum.QPE._two_pow_t_is_nat_pos
 proveit.physics.quantum.QPE._two_pow_t_minus_one_is_nat_pos
 proveit.physics.quantum.algebra.ket_one_in_qubit_space
 proveit.physics.quantum.algebra.ket_one_norm

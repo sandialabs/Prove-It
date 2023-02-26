@@ -481,7 +481,6 @@ proveit.physics.quantum.QPE._phase_from_best_with_delta_b
 proveit.physics.quantum.QPE._phase_is_real
 proveit.physics.quantum.QPE._psi_t_ket_is_normalized_vec
 proveit.physics.quantum.QPE._psi_t_output
-proveit.physics.quantum.QPE._psi_t_var_formula
 proveit.physics.quantum.QPE._scaled_delta_b_floor_in_interval
 proveit.physics.quantum.QPE._scaled_delta_b_round_in_interval
 proveit.physics.quantum.QPE._two_pow_t_is_nat_pos

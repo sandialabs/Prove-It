@@ -426,9 +426,7 @@ proveit.physics.quantum.QPE._outcome_prob
 proveit.physics.quantum.QPE._phase_is_real
 proveit.physics.quantum.QPE._psi_t_ket_is_normalized_vec
 proveit.physics.quantum.QPE._psi_t_output
-proveit.physics.quantum.QPE._psi_t_var_formula
 proveit.physics.quantum.QPE._two_pow_t_is_nat_pos
-proveit.physics.quantum.QPE._two_pow_t_less_one_is_nat_pos
 proveit.physics.quantum.algebra.ket_one_in_qubit_space
 proveit.physics.quantum.algebra.ket_one_norm
 proveit.physics.quantum.algebra.ket_zero_and_one_are_orthogonal

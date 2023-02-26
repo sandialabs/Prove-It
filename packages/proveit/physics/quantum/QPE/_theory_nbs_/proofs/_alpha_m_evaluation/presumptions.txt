@@ -280,7 +280,7 @@ proveit.numbers.summation.trivial_sum
 proveit.physics.quantum.QFT.invFT_is_unitary
 proveit.physics.quantum.QFT.invFT_on_matrix_elem
 proveit.physics.quantum.QPE._phase_is_real
-proveit.physics.quantum.QPE._psi_t_var_formula
+proveit.physics.quantum.QPE._psi_t_formula
 proveit.physics.quantum.algebra.bra_in_QmultCodomain
 proveit.physics.quantum.algebra.bra_is_linmap
 proveit.physics.quantum.algebra.complex_in_QmultCodomain
@@ -288,6 +288,7 @@ proveit.physics.quantum.algebra.ket_in_QmultCodomain
 proveit.physics.quantum.algebra.ket_one_in_qubit_space
 proveit.physics.quantum.algebra.ket_one_norm
 proveit.physics.quantum.algebra.ket_zero_and_one_are_orthogonal
+proveit.physics.quantum.algebra.ket_zero_and_one_have_zero_inner_prod
 proveit.physics.quantum.algebra.ket_zero_in_qubit_space
 proveit.physics.quantum.algebra.ket_zero_norm
 proveit.physics.quantum.algebra.num_bra_is_lin_map

@@ -75,7 +75,6 @@ proveit.numbers.number_sets.integers.nat_within_int
 proveit.numbers.number_sets.integers.neg_int_within_int
 proveit.numbers.number_sets.integers.neg_int_within_nonpos_int
 proveit.numbers.number_sets.integers.neg_int_within_nonzero_int
-proveit.numbers.number_sets.integers.nonneg_int_is_natural
 proveit.numbers.number_sets.integers.nonpos_if_in_nonpos_int
 proveit.numbers.number_sets.integers.nonpos_int_within_int
 proveit.numbers.number_sets.integers.nonzero_if_in_nonzero_int
@@ -183,13 +182,8 @@ proveit.numbers.ordering.less_is_not_eq
 proveit.numbers.ordering.not_less_eq_from_less
 proveit.numbers.ordering.not_less_from_less_eq
 proveit.numbers.ordering.relax_less
-proveit.numbers.ordering.symmetric_less_eq
-proveit.numbers.ordering.transitivity_less_eq_less
-proveit.numbers.ordering.transitivity_less_eq_less_eq
-proveit.numbers.ordering.transitivity_less_less_eq
 proveit.physics.quantum.QPE._Psi_ket_is_normalized_vec
 proveit.physics.quantum.QPE._two_pow_t_is_nat_pos
-proveit.physics.quantum.QPE._two_pow_t_less_one_is_nat_pos
 proveit.physics.quantum.algebra.bra_in_QmultCodomain
 proveit.physics.quantum.algebra.bra_is_linmap
 proveit.physics.quantum.algebra.complex_in_QmultCodomain

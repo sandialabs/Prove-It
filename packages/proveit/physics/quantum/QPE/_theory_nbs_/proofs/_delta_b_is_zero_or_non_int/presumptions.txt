@@ -88,10 +88,7 @@ proveit.numbers.division.div_rational_pos_closure
 proveit.numbers.division.div_real_closure
 proveit.numbers.division.frac_cancel_complete
 proveit.numbers.division.frac_cancel_left
-proveit.numbers.division.mult_frac_left
-proveit.numbers.division.mult_frac_right
 proveit.numbers.division.neg_frac_neg_numerator
-proveit.numbers.division.prod_of_fracs
 proveit.numbers.multiplication.elim_one_any
 proveit.numbers.multiplication.elim_one_left
 proveit.numbers.multiplication.elim_one_right
