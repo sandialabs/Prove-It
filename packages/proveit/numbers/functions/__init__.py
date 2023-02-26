@@ -1,4 +1,4 @@
-from .mon_dec_funcs import MonDecFuncs
+from .mon_dec_funcs import MonDecFuncs, deduce_as_mon_dec_func
 from .delta import KroneckerDelta
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

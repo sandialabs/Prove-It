@@ -51,7 +51,8 @@ from .summation import Sum
 from .product import Prod
 from .integration import Integrate
 
-from .functions import MonDecFuncs, KroneckerDelta
+from .functions import (MonDecFuncs, deduce_as_mon_dec_func,
+                        KroneckerDelta)
 
 import proveit
 
