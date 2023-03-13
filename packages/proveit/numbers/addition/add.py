@@ -1709,9 +1709,6 @@ class Add(NumberOperation):
                     (isinstance(term, ExprRange) and isinstance(term.body, Div)))
                     for term in self.terms):
                 return _e
-            # testing new denominator def to accommodate ExprRange?
-            # denominator = common_likeness_key(
-            #         self, likeness_key_fn = lambda term: term.denominator)
             denominator = common_likeness_key(
                     self,
                     likeness_key_fn = (
