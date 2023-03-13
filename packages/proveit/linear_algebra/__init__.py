@@ -2,16 +2,19 @@ from .vector_spaces import (VecSpaces, deduce_as_vec_space,
                             containing_vec_space, including_vec_space)
 from .vec_operation import (VecOperation, readily_factorable,
                             deduce_canonically_equal)
-from .addition import VecAdd, VecSum, VecZero
+from .addition import VecAdd, VecSum, VecZero, vec_subtract
 from .negation import VecNeg
 from .scalar_multiplication import ScalarMult
-from .inner_products import (InnerProdSpaces, InnerProd, Norm,
-                             deduce_as_inner_prod_space)
-from .linear_maps import LinMap, LinMapAdd
+from .vector_sets import (
+        Span, SpanningSets, LinDepSets, Bases, Dim)
+from .inner_products import (
+        InnerProd, InnerProdSpaces, HilbertSpaces, Hspace,
+        Norm, OrthoNormBases, OrthoProj, Adj, deduce_as_inner_prod_space)
+from .linear_maps import (LinMap, LinMapAdd, Identity,
+                          Commutator, AntiCommutator)
 from .matrices import (MatrixSpace, MatrixMult, MatrixExp,
-                       Unitary, SpecialUnitary)
+                       Unitary, SpecialUnitary, Diagonal)
 from .tensors import TensorExp, TensorProd
-
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.

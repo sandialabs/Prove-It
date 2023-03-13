@@ -34,6 +34,7 @@ def _make_decorated_prover(func, automatic=False):
             raise ValueError(
                     "Adding 'replacements' and setting 'preserve_all' "
                     "to True are incompatible settings.")
+        preserve_lhs = kwargs.pop('preserve_lhs', False)
         preserve_expr = kwargs.pop('preserve_expr', None)
         if len(args) > 0:
             _self = args[0]
@@ -169,8 +170,24 @@ def _make_decorated_prover(func, automatic=False):
                 # Effect the replacements and/or auto-simplification by
                 # regenerating the proof object under the active defaults.
                 orig_proven_truth = proven_truth
+                if preserve_lhs:
+                    from proveit import safe_dummy_var
+                    from proveit.relation import Relation
+                    _expr = proven_truth.expr
+                    if not isinstance(_expr, Relation):
+                        raise TypeError(
+                            "@relation_proven, %s, expected to prove a"
+                            "Relation expression but got %s"%(func, _expr))
+                    simplify_only_where_marked = True
+                    dummy_var = safe_dummy_var(_expr)
+                    markers_and_marked_expr = (
+                        (dummy_var,), type(_expr)(_expr.lhs, dummy_var))
+                else:
+                    simplify_only_where_marked = False
+                    marker_and_Marked_expr = None
                 new_proven_truth = (
-                    proven_truth.proof().regenerate_proof_object()
+                    proven_truth.proof().regenerate_proof_object(
+                        simplify_only_where_marked, markers_and_marked_expr)
                     .proven_truth)
                 proven_truth = (new_proven_truth.inner_expr()
                                 .with_mimicked_style(proven_truth.expr))
@@ -246,16 +263,19 @@ def _make_decorated_relation_prover(func, automatic=False):
                             "have an 'expr' attribute."%func)
         alter_lhs = kwargs.pop('alter_lhs', False)
         if not alter_lhs:
-            # preserve the left side.
-            if 'preserve_expr' in kwargs:
-                if 'preserved_exprs' in kwargs:
-                    kwargs['preserved_exprs'] = (
-                            kwargs['preserved_exprs'].union([expr]))
-                else:
-                    kwargs['preserved_exprs'] = (
-                           defaults.preserved_exprs.union([expr]))
+            if automatic:
+                kwargs['preserve_lhs'] = True
             else:
-                kwargs['preserve_expr'] = expr
+                # preserve the left side.
+                if 'preserve_expr' in kwargs:
+                    if 'preserved_exprs' in kwargs:
+                        kwargs['preserved_exprs'] = (
+                            kwargs['preserved_exprs'].union([expr]))
+                    else:
+                        kwargs['preserved_exprs'] = (
+                            defaults.preserved_exprs.union([expr]))
+                else:
+                    kwargs['preserve_expr'] = expr
         
         # Use the regular @prover wrapper.
         proven_truth = decorated_prover(*args, **kwargs)

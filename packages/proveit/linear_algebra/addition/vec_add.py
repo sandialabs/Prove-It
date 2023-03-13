@@ -375,3 +375,7 @@ class VecAdd(GroupAdd, VecOperation):
         raise NotImplementedError(
                 "VecAdd.compute_norm is only implemented for an "
                 "orthogonal pair of vectors")
+
+def vec_subtract(x, y):
+    from proveit.linear_algebra import VecNeg
+    return VecAdd(x, VecNeg(y))

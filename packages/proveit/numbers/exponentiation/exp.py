@@ -262,6 +262,7 @@ class Exp(NumberOperation):
             1^x = 1 for any complex x
             a^(Log(a, x)) = x for RealPos a and x, a != 1.
             x^n = x*x*...*x = ? for a natural n and irreducible x.
+            (-x)^2 = x^2 or any even, numeric power
         
         Additionally may do the following depending upon simplification
         directives:
@@ -276,7 +277,7 @@ class Exp(NumberOperation):
         from proveit.relation import TransRelUpdater
         from proveit.logic import is_irreducible_value
         from proveit.logic import InSet
-        from proveit.numbers import (zero, one, two, Add, Mult, Div,
+        from proveit.numbers import (zero, one, two, Add, Neg, Mult, Div,
                                      is_numeric_int, is_numeric_rational,
                                      numeric_rational_ints,
                                      Log, Rational, Abs)
@@ -399,6 +400,14 @@ class Exp(NumberOperation):
                 # eliminating the absolute value.
                 expr = eq.update(expr.simplification())
             return eq.relation
+        elif isinstance(base, Neg) and is_numeric_int(exponent) and (exponent.as_int() % 2 == 0):
+            # (-x)^2 = x^2, (-x)^4 = x^4, etc.
+            from . import even_pow_is_even_fn
+            _n = num(exponent.as_int()//2)
+            replacements = []
+            replacements.append(Equals(Mult(two, _n), exponent).prove())
+            return even_pow_is_even_fn.instantiate(
+                    {x:base.operand, n:_n}, replacements=replacements)        
         elif isinstance(base, Exp) and (
                 Exp._simplification_directives_.reduce_double_exponent):
             if ((InSet(exponent, Real).readily_provable() and 

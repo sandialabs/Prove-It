@@ -740,6 +740,9 @@ class Proof:
                     % (proof_id, n, n, mark_str))
         proof_num_map = {proof: k for k, proof in enumerate(proof_steps)}
         for k, proof in enumerate(proof_steps):
+            if hasattr(self, '_steps_to_include'):
+                if k not in self._steps_to_include:
+                    continue
             html += '<tr><td><a name="%s_step%d">%d</a></td>' % (
                 proof_id, k, k)
             if k == 0:
@@ -758,7 +761,7 @@ class Proof:
                 proof.step_type(), required_proof_nums)
             html += '<td>%s</td>' % proof.proven_truth._repr_html_()
             html += '</tr>\n'
-            if proof.step_type() == 'instantiation':
+            if proof.step_type() == 'instantiation' and not hasattr(self, '_steps_to_include'):
                 html += '<tr><td>&nbsp;</td><td colspan=4 style="text-align:left">' + \
                     proof._mapping('HTML') + '</td></tr>'
             if proof.step_type() in {'axiom', 'theorem', 'conjecture'}:

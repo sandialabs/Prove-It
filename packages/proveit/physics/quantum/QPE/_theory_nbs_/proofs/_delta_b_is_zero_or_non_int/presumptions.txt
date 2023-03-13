@@ -1,7 +1,10 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
 proveit.core_expr_types.operations.operands_substitution_via_tuple
 proveit.core_expr_types.tuples.tuple_len_0_typical_eq
+proveit.linear_algebra.inner_products.complex_set_is_hilbert_space
 proveit.linear_algebra.inner_products.complex_set_is_inner_prod_space
+proveit.linear_algebra.inner_products.hilbert_space_is_inner_prod_space
+proveit.linear_algebra.inner_products.hilbert_space_is_vec_space
 proveit.linear_algebra.inner_products.inner_prod_space_is_vec_space
 proveit.linear_algebra.inner_products.rational_set_is_inner_prod_space
 proveit.linear_algebra.inner_products.real_set_is_inner_prod_space
@@ -85,10 +88,7 @@ proveit.numbers.division.div_rational_pos_closure
 proveit.numbers.division.div_real_closure
 proveit.numbers.division.frac_cancel_complete
 proveit.numbers.division.frac_cancel_left
-proveit.numbers.division.mult_frac_left
-proveit.numbers.division.mult_frac_right
 proveit.numbers.division.neg_frac_neg_numerator
-proveit.numbers.division.prod_of_fracs
 proveit.numbers.multiplication.elim_one_any
 proveit.numbers.multiplication.elim_one_left
 proveit.numbers.multiplication.elim_one_right
@@ -278,12 +278,10 @@ proveit.numbers.ordering.not_less_eq_from_less
 proveit.numbers.ordering.not_less_from_less_eq
 proveit.numbers.ordering.relax_less
 proveit.physics.quantum.QPE._delta_b_in_interval
-proveit.physics.quantum.algebra.complex_set_is_hilbert_space
-proveit.physics.quantum.algebra.hilbert_space_is_inner_prod_space
-proveit.physics.quantum.algebra.hilbert_space_is_vec_space
 proveit.physics.quantum.algebra.ket_one_in_qubit_space
 proveit.physics.quantum.algebra.ket_one_norm
 proveit.physics.quantum.algebra.ket_zero_and_one_are_orthogonal
+proveit.physics.quantum.algebra.ket_zero_and_one_have_zero_inner_prod
 proveit.physics.quantum.algebra.ket_zero_in_qubit_space
 proveit.physics.quantum.algebra.ket_zero_norm
 # THEOREMS AND THEORIES TO EXCLUDE:

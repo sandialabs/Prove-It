@@ -1,4 +1,4 @@
-from .vec_add import VecAdd
+from .vec_add import VecAdd, vec_subtract
 from .vec_sum import VecSum
 from .vec_zero import VecZero
 

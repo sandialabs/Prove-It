@@ -1,5 +1,6 @@
 from collections import Counter
 from proveit import Operation
+from proveit import x, y, alpha
 from proveit.logic import Equals
 from proveit.abstract_algebra.generic_methods import (
         deduce_equality_via_commutation)
@@ -72,6 +73,13 @@ class VecOperation(Operation):
         return Equals.apply_transitivities([lhs_simplification,
                                             eq_simps,
                                             rhs_simplification])
+
+    @staticmethod
+    def scalar_mult_both_sides_of_equals(relation, scalar, **defaults_config):
+        from proveit.linear_algebra.scalar_multiplication import scalar_mult_eq
+        return scalar_mult_eq.instantiate(
+                {x:relation.lhs, y:relation.rhs, alpha:scalar})
+
 
 def readily_factorable(term, factor, *, pull):
     '''

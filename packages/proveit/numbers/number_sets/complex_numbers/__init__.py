@@ -1,6 +1,7 @@
 from .complex_polar_form import (
         complex_polar_coordinates, 
         unit_length_complex_polar_angle)
+from .conjugate import Conjugate
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.

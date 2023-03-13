@@ -1,4 +1,7 @@
 from .lin_map import LinMap, LinMapAdd
+from .identity import Identity
+from .commutator import Commutator
+from .anti_commutator import AntiCommutator
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.

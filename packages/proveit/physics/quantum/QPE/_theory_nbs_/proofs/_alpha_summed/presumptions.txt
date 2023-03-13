@@ -1,6 +1,9 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
 proveit.core_expr_types.tuples.tuple_len_0_typical_eq
+proveit.linear_algebra.inner_products.complex_set_is_hilbert_space
 proveit.linear_algebra.inner_products.complex_set_is_inner_prod_space
+proveit.linear_algebra.inner_products.hilbert_space_is_inner_prod_space
+proveit.linear_algebra.inner_products.hilbert_space_is_vec_space
 proveit.linear_algebra.inner_products.inner_prod_space_is_vec_space
 proveit.linear_algebra.inner_products.rational_set_is_inner_prod_space
 proveit.linear_algebra.inner_products.real_set_is_inner_prod_space
@@ -35,7 +38,6 @@ proveit.logic.sets.cartesian_products.cart_exp_unfold_explicit
 proveit.logic.sets.enumeration.fold
 proveit.logic.sets.enumeration.fold_singleton
 proveit.logic.sets.enumeration.in_enumerated_set
-proveit.logic.sets.enumeration.true_for_each_then_true_for_all
 proveit.logic.sets.enumeration.unfold
 proveit.logic.sets.enumeration.unfold_singleton
 proveit.logic.sets.inclusion.relax_proper_subset
@@ -300,16 +302,12 @@ proveit.numbers.summation.inf_geom_sum
 proveit.numbers.summation.trivial_sum
 proveit.physics.quantum.QPE._alpha_m_mod_as_geometric_sum
 proveit.physics.quantum.QPE._best_floor_is_int
-proveit.physics.quantum.QPE._best_round_is_int
 proveit.physics.quantum.QPE._delta_b_is_real
 proveit.physics.quantum.QPE._non_int_delta_b_diff
 proveit.physics.quantum.QPE._phase_from_best_with_delta_b
 proveit.physics.quantum.QPE._phase_is_real
 proveit.physics.quantum.QPE._two_pow_t_is_nat_pos
 proveit.physics.quantum.QPE._two_pow_t_minus_one_is_nat_pos
-proveit.physics.quantum.algebra.complex_set_is_hilbert_space
-proveit.physics.quantum.algebra.hilbert_space_is_inner_prod_space
-proveit.physics.quantum.algebra.hilbert_space_is_vec_space
 proveit.physics.quantum.algebra.ket_one_in_qubit_space
 proveit.physics.quantum.algebra.ket_one_norm
 proveit.physics.quantum.algebra.ket_zero_and_one_are_orthogonal

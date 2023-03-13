@@ -9,7 +9,8 @@ from proveit.numbers import Complex, subtract, one, two, Exp
 from proveit.abstract_algebra.generic_methods import (
         apply_association_thm, apply_disassociation_thm)
 from proveit.linear_algebra import (VecSpaces, VecAdd, VecSum, LinMap,
-                                    MatrixSpace, Norm)
+                                    MatrixSpace, Norm, 
+                                    HilbertSpaces, Hspace)
 
 class Qmult(Operation):
     '''
@@ -86,7 +87,6 @@ class Qmult(Operation):
         from proveit.physics.quantum import (
                 Bra, Ket, HilbertSpaces,
                 varphi, var_ket_psi)
-        from proveit.physics.quantum.algebra import Hspace
         yield_known_hilbert_spaces = HilbertSpaces.yield_known_hilbert_spaces
         
         if self.operands.is_single():
@@ -485,7 +485,7 @@ class QmultCodomainMembership(ClassMembership):
         from proveit.physics.quantum import (
                 Bra, Ket, varphi, var_ket_psi, HilbertSpaces)
         from proveit.physics.quantum.algebra import (
-                Hspace, QmultCodomain)
+                QmultCodomain)
         from . import (
                 qmult_complex_in_QmultCodomain,
                 qmult_complex_left_closure, qmult_complex_right_closure,
@@ -707,6 +707,7 @@ class QmultCodomainMembership(ClassMembership):
                     QmultCodomain.membership_object(Qmult(op1)).conclude()
                 
                 # Next, handle the op-ket case.
+                # TODO: handle the ket-ket case.
                 thm = None
                 for _Hspace in yield_known_hilbert_spaces(op2):
                     for linmap in containing_hilbert_space_linmap_sets(op1):
@@ -875,8 +876,8 @@ def containing_hilbert_space_linmap_sets(qobj):
     between vectors spaces over complex fields (Hilbert spaces) which
     contain the given 'qobj'.
     '''
-    from . import HilbertSpaces
-    from .hilbert_spaces import deduce_as_hilbert_space
+    from proveit.linear_algebra.inner_products.hilbert_spaces import (
+            deduce_as_hilbert_space)
     known_linmap_memberships = LinMap.known_memberships
     # Prove the membership of qobj in Q* to prove
     # the side-effect linear map membership as well.

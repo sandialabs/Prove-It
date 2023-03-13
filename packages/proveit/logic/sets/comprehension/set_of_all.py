@@ -53,6 +53,7 @@ class SetOfAll(OperationOverInstances):
             formatted_instance_element = instance_element.formatted(
                     format_type, fence=inner_fence)
         explicit_domains = self.explicit_domains()
+        has_multi_domain = not self.has_one_domain()
         domain_conditions = ExprTuple(*self.domain_conditions())
         if format_type == 'latex':
             out_str += r"\left\{"
@@ -73,17 +74,15 @@ class SetOfAll(OperationOverInstances):
             out_str += "}"
         out_str += '_{'
         instance_param_or_params = self.instance_param_or_params
-        if (not any(isinstance(entry, ExprRange) for entry in explicit_domains)
-                and explicit_domains == [explicit_domains[0]] * len(explicit_domains)):
+        if has_multi_domain:
+            out_str += domain_conditions.formatted(
+                    format_type, operator_or_operators=',', fence=False)
+        else:
             # all in the same domain
             out_str += instance_param_or_params.formatted(
                 format_type, operator_or_operators=',', fence=False)
             out_str += r' \in ' if format_type == 'latex' else ' in '
             out_str += explicit_domains[0].formatted(format_type)
-        else:
-            out_str += domain_conditions.formatted(format_type,
-                                                   operator_or_operators=',',
-                                                   fence=False)
         out_str += '}'
         return out_str
 

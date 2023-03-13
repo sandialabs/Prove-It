@@ -185,7 +185,7 @@ class Sum(OperationOverInstances):
         for the simplification.
         NEEDS UPDATING
         '''
-        from proveit.logic import TRUE, SimplificationError
+        from proveit.logic import TRUE, Equals
         from proveit.numbers import Mult
         from . import sum_single, trivial_sum
         summand = self.summand
@@ -214,11 +214,11 @@ class Sum(OperationOverInstances):
                     return self.factorization(
                         index_indep_factors, pull='left',
                         group_factors=False)
-
-        raise SimplificationError(
-            "Sum simplification only implemented for a summation over an "
-            "integer Interval of one instance variable where the upper "
-            "and lower bounds are the same.")
+        return Equals(self, self).conclude_via_reflexivity()
+        #raise SimplificationError(
+        #    "Sum simplification only implemented for a summation over an "
+        #    "integer Interval of one instance variable where the upper "
+        #    "and lower bounds are the same.")
 
     @equality_prover('geom_sum_reduced', 'geom_sum_reduce')
     def geom_sum_reduction(self, **defaults_config):
@@ -329,6 +329,31 @@ class Sum(OperationOverInstances):
         return index_shift.instantiate(
             {f_op: f_op_sub, x: _x, a: _a, b: _b, c: _c})
 
+    @equality_prover('negated_index', 'negate_index')
+    def index_negation(self, **defaults_config):
+        from . import index_negate
+        _x = self.index
+        _a = self.domain.lower_bound
+        _b = self.domain.upper_bound
+
+        # We could make this more general eventually
+        # (to handle multiple indices or domains other than Intervals),
+        # but we only have a simple version implemented for now.
+        if not hasattr(self, 'index'):
+            raise NotImplementedError(
+                "Sum.index_negation() only implemented for summations with a single "
+                "index over an Interval. The sum {} has indices {}."
+                .format(self, self.indices))
+        if not isinstance(self.domain, Interval):
+            raise NotImplementedError(
+                "Sum.shifting() only implemented for summations with a single "
+                "index over an Interval. The sum {} has domain {}."
+                .format(self, self.domain))
+         
+        f_op, f_op_sub = Function(f, self.index), self.summand
+        return index_negate.instantiate(
+            {f_op: f_op_sub, x: _x, a: _a, b: _b})
+    
     @prover
     def joining(self, second_summation, **defaults_config):
         '''
@@ -753,3 +778,34 @@ class Sum(OperationOverInstances):
         if summand_lambda == greater_lambda:
             return sum_relation.with_direction_reversed()
         return sum_relation
+
+    @relation_prover
+    def upper_bound_as_integral(self, **defaults_config):
+        '''
+        If the summand is a monotonically decreasing function over the
+        continuous [a-1, b] interval, when can bound the sum from a to b
+        by the integra from a-1 to b.
+        '''
+        from proveit.numbers import IntervalCC, deduce_as_mon_dec_func
+        from . import integral_upper_bound_of_sum
+        
+        # We could make this more general eventually
+        # (at least to handle multiple indices),
+        # but we only have a simple version implemented for now.
+        if not hasattr(self, 'index'):
+            raise NotImplementedError(
+                "Sum.upper_bound_as_integral() only implemented for summations with a single "
+                "index over an Interval. The sum {} has indices {}."
+                .format(self, self.indices))
+        if not isinstance(self.domain, Interval):
+            raise NotImplementedError(
+                "Sum.upper_bound_as_integral() only implemented for summations with a single "
+                "index over an Interval. The sum {} has domain {}."
+                .format(self, self.domain))
+           
+        _a = self.domain.lower_bound
+        _b = self.domain.upper_bound
+        _f = Lambda(self.index, self.summand)
+        membership = deduce_as_mon_dec_func(_f, domain=IntervalCC(subtract(_a, one), _b))
+        _S = membership.domain.domain
+        return integral_upper_bound_of_sum.instantiate({a:_a, b:_b, f:_f, S:_S})
