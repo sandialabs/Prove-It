@@ -1,6 +1,10 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
 proveit.linear_algebra.complex_vec_set_is_vec_space
+proveit.linear_algebra.inner_products.complex_set_is_hilbert_space
 proveit.linear_algebra.inner_products.complex_set_is_inner_prod_space
+proveit.linear_algebra.inner_products.complex_vec_set_is_hilbert_space
+proveit.linear_algebra.inner_products.hilbert_space_is_inner_prod_space
+proveit.linear_algebra.inner_products.hilbert_space_is_vec_space
 proveit.linear_algebra.inner_products.inner_prod_space_is_vec_space
 proveit.linear_algebra.inner_products.rational_set_is_inner_prod_space
 proveit.linear_algebra.inner_products.real_set_is_inner_prod_space
@@ -63,7 +67,6 @@ proveit.numbers.number_sets.integers.nat_within_int
 proveit.numbers.number_sets.integers.neg_int_within_int
 proveit.numbers.number_sets.integers.neg_int_within_nonpos_int
 proveit.numbers.number_sets.integers.neg_int_within_nonzero_int
-proveit.numbers.number_sets.integers.nonneg_int_is_natural
 proveit.numbers.number_sets.integers.nonpos_if_in_nonpos_int
 proveit.numbers.number_sets.integers.nonpos_int_within_int
 proveit.numbers.number_sets.integers.nonzero_if_in_nonzero_int
@@ -169,10 +172,6 @@ proveit.numbers.ordering.not_less_from_less_eq
 proveit.numbers.ordering.relax_less
 proveit.physics.quantum.QFT.invFT_is_unitary
 proveit.physics.quantum.QPE._psi_t_ket_is_normalized_vec
-proveit.physics.quantum.algebra.complex_set_is_hilbert_space
-proveit.physics.quantum.algebra.complex_vec_set_is_hilbert_space
-proveit.physics.quantum.algebra.hilbert_space_is_inner_prod_space
-proveit.physics.quantum.algebra.hilbert_space_is_vec_space
 proveit.physics.quantum.algebra.ket_one_in_qubit_space
 proveit.physics.quantum.algebra.ket_one_norm
 proveit.physics.quantum.algebra.ket_zero_and_one_are_orthogonal

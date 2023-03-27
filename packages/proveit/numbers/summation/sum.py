@@ -3,7 +3,8 @@ from proveit import (Expression, Literal, Lambda, Function, Operation,
                      Judgment, free_vars, maybe_fenced, USE_DEFAULTS,
                      ProofFailure, defaults,
                      prover, relation_prover, equality_prover,
-                     UnsatisfiedPrerequisites)
+                     auto_prover, auto_relation_prover, auto_equality_prover,
+                     SimplificationDirectives, UnsatisfiedPrerequisites)
 from proveit import a, b, c, f, i, j, k, l, m, x, Q, S
 from proveit.logic import Forall, InSet
 from proveit.numbers import one, Add, Neg, subtract
@@ -22,6 +23,9 @@ class Sum(OperationOverInstances):
         theory=__file__)
     _init_argname_mapping_ = {'index_or_indices': 'instance_param_or_params',
                               'summand': 'instance_expr'}
+
+    _simplification_directives_ = SimplificationDirectives(
+            pull_out_index_indep_factors=True)
 
     def __init__(self, index_or_indices, summand, *,
                  domain=None, domains=None, condition=None,
@@ -59,6 +63,40 @@ class Sum(OperationOverInstances):
         elif self.domain == Natural:
             self.domain = Interval(zero,infinity)
         """
+
+    def _build_canonical_form(self):
+        '''
+        Returns a canonical form of this Sum with any 
+        index-independent factors pulled out in front.
+        '''
+        from proveit.numbers import Mult
+        canonical_summand = self.summand.canonical_form()
+        if isinstance(canonical_summand, Mult):
+            # Pull any index-independent scalar factors in front.
+            index_indep_factors = []
+            index_dep_factors = []
+            for factor in canonical_summand.factors:
+                if free_vars(factor).isdisjoint(self.indices):
+                    index_indep_factors.append(factor)
+                else:
+                    index_dep_factors.append(factor)
+            if len(index_indep_factors) > 0:
+                # Pulling out some index-independent scalar factors.
+                if len(index_dep_factors) > 0:
+                    # Keeping some index-dependent scalar factors
+                    # within the VecSum.
+                    canonical_summand = Mult(
+                            *index_dep_factors).canonical_form()
+                else:
+                    canonical_summand = one
+                # Build/return the Mult with the Sum.
+                _sum = Sum(self.indices, canonical_summand,
+                      conditions=self.conditions.canonical_form())
+                return Mult(
+                        Mult(*index_indep_factors), _sum).canonical_form()
+        # Build the canonical VecSum.
+        return Sum(self.indices, canonical_summand,
+                   conditions=self.conditions.canonical_form())
 
     @relation_prover
     def deduce_in_number_set(self, number_set, **defaults_config):
@@ -147,27 +185,40 @@ class Sum(OperationOverInstances):
         for the simplification.
         NEEDS UPDATING
         '''
-        from proveit.logic import TRUE, SimplificationError
+        from proveit.logic import TRUE, Equals
+        from proveit.numbers import Mult
         from . import sum_single, trivial_sum
+        summand = self.summand
         if (isinstance(self.domain,Interval) and
             self.domain.lower_bound == self.domain.upper_bound):
             if hasattr(self, 'index'):
                 return sum_single.instantiate(
-                    {Function(f, self.index): self.summand,
+                    {Function(f, self.index): summand,
                      a: self.domain.lower_bound})
         if (isinstance(self.domain,Interval) and
-                self.instance_param not in free_vars(self.summand)
+                self.instance_param not in free_vars(summand)
                 and self.non_domain_condition()==TRUE):
             # Trivial sum: summand independent of parameter.
             _a = self.domain.lower_bound
             _b = self.domain.upper_bound
-            _x = self.summand
+            _x = summand
             return trivial_sum.instantiate(
                     {a:_a, b:_b, x:_x})
-        raise SimplificationError(
-            "Sum simplification only implemented for a summation over an "
-            "integer Interval of one instance variable where the upper "
-            "and lower bounds are the same.")
+        if Sum._simplification_directives_.pull_out_index_indep_factors:
+            if isinstance(summand, Mult):
+                index_indep_factors = []
+                for factor in summand.factors:
+                    if free_vars(factor).isdisjoint(self.indices):
+                        index_indep_factors.append(factor)
+                if len(index_indep_factors) > 0:
+                    return self.factorization(
+                        index_indep_factors, pull='left',
+                        group_factors=False)
+        return Equals(self, self).conclude_via_reflexivity()
+        #raise SimplificationError(
+        #    "Sum simplification only implemented for a summation over an "
+        #    "integer Interval of one instance variable where the upper "
+        #    "and lower bounds are the same.")
 
     @equality_prover('geom_sum_reduced', 'geom_sum_reduce')
     def geom_sum_reduction(self, **defaults_config):
@@ -278,6 +329,31 @@ class Sum(OperationOverInstances):
         return index_shift.instantiate(
             {f_op: f_op_sub, x: _x, a: _a, b: _b, c: _c})
 
+    @equality_prover('negated_index', 'negate_index')
+    def index_negation(self, **defaults_config):
+        from . import index_negate
+        _x = self.index
+        _a = self.domain.lower_bound
+        _b = self.domain.upper_bound
+
+        # We could make this more general eventually
+        # (to handle multiple indices or domains other than Intervals),
+        # but we only have a simple version implemented for now.
+        if not hasattr(self, 'index'):
+            raise NotImplementedError(
+                "Sum.index_negation() only implemented for summations with a single "
+                "index over an Interval. The sum {} has indices {}."
+                .format(self, self.indices))
+        if not isinstance(self.domain, Interval):
+            raise NotImplementedError(
+                "Sum.shifting() only implemented for summations with a single "
+                "index over an Interval. The sum {} has domain {}."
+                .format(self, self.domain))
+         
+        f_op, f_op_sub = Function(f, self.index), self.summand
+        return index_negate.instantiate(
+            {f_op: f_op_sub, x: _x, a: _a, b: _b})
+    
     @prover
     def joining(self, second_summation, **defaults_config):
         '''
@@ -580,7 +656,7 @@ class Sum(OperationOverInstances):
                 "index or indices {} and domain {}."
                 .format(self, self.indices, self.domain))
 
-    @equality_prover('factorized', 'factor')
+    @auto_equality_prover('factorized', 'factor')
     def factorization(self, the_factors, pull="left", group_factors=True,
                       group_remainder=None, **defaults_config):
         '''
@@ -617,8 +693,8 @@ class Sum(OperationOverInstances):
         if summand_factorization.lhs != summand_factorization.rhs:
             gen_summand_factorization = summand_factorization.generalize(
                     self.instance_params, conditions=self.conditions)
-            expr = eq.update(expr.instance_substitution(gen_summand_factorization,
-                                                        preserve_all=True))
+            expr = eq.update(expr.instance_substitution(
+                gen_summand_factorization))
         if not group_factors and isinstance(the_factors, Mult):
             factors = the_factors.factors
         else:
@@ -641,11 +717,9 @@ class Sum(OperationOverInstances):
         _f = Lambda(expr.instance_params, summand_remainder)
         _Q = Lambda(expr.instance_params, expr.condition)
         _impl = distribute_through_summation.instantiate(
-                {i: _i, j: _j, k: _k, f:_f, Q:_Q, b:_b},
-                preserve_all=True)
-        quantified_eq = _impl.derive_consequent(preserve_all=True)
-        eq.update(quantified_eq.instantiate(
-                {a: _a, c: _c}, preserve_all=True))
+                {i: _i, j: _j, k: _k, f:_f, Q:_Q, b:_b})
+        quantified_eq = _impl.derive_consequent()
+        eq.update(quantified_eq.instantiate({a: _a, c: _c}))
 
         return eq.relation
 
@@ -704,3 +778,34 @@ class Sum(OperationOverInstances):
         if summand_lambda == greater_lambda:
             return sum_relation.with_direction_reversed()
         return sum_relation
+
+    @relation_prover
+    def upper_bound_as_integral(self, **defaults_config):
+        '''
+        If the summand is a monotonically decreasing function over the
+        continuous [a-1, b] interval, when can bound the sum from a to b
+        by the integra from a-1 to b.
+        '''
+        from proveit.numbers import IntervalCC, deduce_as_mon_dec_func
+        from . import integral_upper_bound_of_sum
+        
+        # We could make this more general eventually
+        # (at least to handle multiple indices),
+        # but we only have a simple version implemented for now.
+        if not hasattr(self, 'index'):
+            raise NotImplementedError(
+                "Sum.upper_bound_as_integral() only implemented for summations with a single "
+                "index over an Interval. The sum {} has indices {}."
+                .format(self, self.indices))
+        if not isinstance(self.domain, Interval):
+            raise NotImplementedError(
+                "Sum.upper_bound_as_integral() only implemented for summations with a single "
+                "index over an Interval. The sum {} has domain {}."
+                .format(self, self.domain))
+           
+        _a = self.domain.lower_bound
+        _b = self.domain.upper_bound
+        _f = Lambda(self.index, self.summand)
+        membership = deduce_as_mon_dec_func(_f, domain=IntervalCC(subtract(_a, one), _b))
+        _S = membership.domain.domain
+        return integral_upper_bound_of_sum.instantiate({a:_a, b:_b, f:_f, S:_S})

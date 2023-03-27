@@ -3,7 +3,8 @@ from proveit import (Judgment, Expression, Literal, Operation,
                      maybe_fenced_latex, defaults,
                      Function, ExprTuple, InnerExpr, USE_DEFAULTS,
                      UnsatisfiedPrerequisites, relation_prover,
-                     equality_prover, SimplificationDirectives)
+                     equality_prover, auto_relation_prover,
+                     auto_equality_prover, SimplificationDirectives)
 from proveit import TransRelUpdater
 from proveit import a, b, c, m, n, w, x, y, z
 from proveit.logic import Equals, NotEquals, InSet
@@ -11,7 +12,8 @@ from proveit.numbers import (zero, NumberOperation,
                              is_numeric_int, is_numeric_rational, 
                              numeric_rational_ints,
                              simplified_numeric_rational,
-                             deduce_number_set, readily_provable_number_set)
+                             deduce_number_set, readily_factorable,
+                             readily_provable_number_set)
 from proveit.numbers.number_sets import (
     ZeroSet, Natural, NaturalPos,
     Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
@@ -27,12 +29,19 @@ class Div(NumberOperation):
         latex_format=r'\div',
         theory=__file__)
 
+    # The following _simplification_directives are used as flags
+    # to control automatic simplification of Div (or frac) exprs,
+    # with:
+    #   cancel_factors: controls canceling of common factors in
+    #                   numerator and denominator
+    #
     _simplification_directives_ = SimplificationDirectives(
             factor_negation = True, 
             reduce_zero_numerator = True,
             reduce_to_multiplication = False,
             reduce_rational = True,
-            distribute = False)
+            distribute = False,
+            cancel_factors = True)
 
     def __init__(self, numerator, denominator, *, styles=None):
         r'''
@@ -134,10 +143,11 @@ class Div(NumberOperation):
         eq = TransRelUpdater(expr)
 
         # perform cancelations where possible
-        expr = eq.update(expr.cancelations(preserve_all=True))
-        if not isinstance(expr, Div):
-            # complete cancelation.
-            return eq.relation
+        if Div._simplification_directives_.cancel_factors:
+            expr = eq.update(expr.cancelations(preserve_all=True))
+            if not isinstance(expr, Div):
+                # complete cancelation.
+                return eq.relation
 
         if must_evaluate:
             if not all(is_irreducible_value(operand) for operand 
@@ -231,7 +241,7 @@ class Div(NumberOperation):
         rational form.  For example:
             ((4/3) x) / ((2/3) y) = (2 x) / y
         '''
-        from proveit.numbers import Mult, num, one, compose_factors
+        from proveit.numbers import Mult, num, one, compose_product
         from proveit.numbers.division import frac_cancel_left
 
         numerator, denominator = self.numerator, self.denominator
@@ -326,14 +336,14 @@ class Div(NumberOperation):
         if numer_int != numer_rational or denom_int != denom_rational:
             # A simplification should be performed.
             if numer_int == 1:
-                numer = compose_factors(*numer_remainder_factors)
+                numer = compose_product(*numer_remainder_factors)
             else:
-                numer = compose_factors(num(numer_int), 
+                numer = compose_product(num(numer_int), 
                                         *numer_remainder_factors)
             if denom_int == 1:
-                denom = compose_factors(*denom_remainder_factors)
+                denom = compose_product(*denom_remainder_factors)
             else:
-                denom = compose_factors(num(denom_int), 
+                denom = compose_product(num(denom_int), 
                                         *denom_remainder_factors)
             if denom == one:
                 rhs = numer
@@ -521,6 +531,88 @@ class Div(NumberOperation):
                  replacements=replacements, preserve_expr=expr))
             return eq.relation
 
+    @equality_prover('top_and_bottom_multiplied',
+                          'top_and_bottom_multiply')
+    def top_and_bottom_multiplication(
+            self, multiplier, numerator_mult="left",
+            denominator_mult="left", **defaults_config):
+        '''
+        Deduce and return an equality between self and a form in which
+        the given multiplier now appears as a multiplicand in both the
+        numerator and denominator. This is essentially the inverse
+        method for the Div.cancelation() method defined above.
+        For example,[(a*b)/(b*c)].cancelation(b) would return
+            (a*b)/(b*c) = a / c,
+        whereas [a/c].top_and_bottom_multiplication(b) would return
+            a/c = ba/(bc).
+        Assumptions or previous work might be required to establish
+        that the multiplier and original denominator are non-zero.
+        Although technically it shouldn't matter if the original Div
+        had a zero in the denom (multiplying top and bottom by
+        something non-zero will give an undefined term equal to
+        another undefined term), we go ahead and maintain the
+        requirement that the original Div expression has a non-zero
+        denom.
+        The method initially only allows multiplication "on the left"
+        for the introduced multipler in both the numerator and
+        denominator (i.e. a/c can be taken to ba/bc but not directly
+        to ab/(bc) nor ba/(cb) nor ab/(cb)).
+        '''
+        from proveit.numbers import Mult
+
+        expr = self
+
+        # A convenience to allow successive updates to the equation
+        # via transitivities (starting with self=self).
+        eq = TransRelUpdater(expr)
+
+        replacements = list(defaults.replacements)
+
+        # We want to avoid automatically canceling the multiplier
+        # we're introducing in the numerator and denominator, so
+        # we modify the cancel_factors directive, and we do so within
+        # a 'with' construct in case the process fails (keeping us 
+        # from inadvertently getting stuck with the changed directive).
+        with Div.temporary_simplification_directives() as tmp_directives:
+            tmp_directives.cancel_factors = False
+            _y_sub = self.numerator
+            _z_sub = self.denominator
+            # expr = eq.update(frac_cancel_left.instantiate(
+            #         {x: multiplier, y: _y_sub, z: _z_sub},
+            #          replacements=replacements, preserve_expr=expr))
+            if numerator_mult=="left":
+                from . import frac_cancel_left
+                expr = eq.update(frac_cancel_left.instantiate(
+                        {x: multiplier, y: _y_sub, z: _z_sub},
+                        replacements=replacements, preserve_expr=expr))
+                if (denominator_mult=="right" and
+                   isinstance(expr.denominator, Mult)):
+                    # commute multiplicands in denominator;
+                    # skip this if denom has already been simplified
+                    # to be an Exp
+                    _init_idx = 0
+                    _final_idx = len(expr.denominator.operands) - 1
+                    expr = eq.update(
+                            expr.inner_expr().denominator.
+                            commutation(_init_idx, _final_idx))
+            if numerator_mult=="right":
+                from . import frac_cancel_right
+                expr = eq.update(frac_cancel_right.instantiate(
+                        {x: multiplier, y: _y_sub, z: _z_sub},
+                        replacements=replacements, preserve_expr=expr))
+                if (denominator_mult=="left" and
+                    isinstance(expr.denominator, Mult)):
+                    # commute multiplicands in denominator;
+                    # skip this if denom has already been simplified
+                    # to be an Exp
+                    _init_idx = 0
+                    _final_idx = len(expr.denominator.operands)-1
+                    expr = eq.update(
+                            expr.inner_expr().denominator.
+                            commutation(_init_idx, _final_idx))
+
+        return eq.relation
+
     @equality_prover('deep_eliminated_ones', 'deep_eliminate_ones')
     def deep_one_eliminations(self, **defaults_config):
         '''
@@ -552,9 +644,22 @@ class Div(NumberOperation):
                              "if the denominator is precisely one.")
         return frac_one_denom.instantiate({x: self.numerator})
 
-    @equality_prover('factorized', 'factor')
+    def readily_factorable(self, factor):
+        '''
+        Return True iff 'factor' is factorable from 'self' in an
+        obvious manner.  For this Div, it is readily factorable if
+        it is readily factorable from the correxponding Mult:
+            x/y = x*(y^{-1})
+        '''
+        cf = self.canonical_form()
+        if cf != self:
+            return readily_factorable(self.canonical_form(), factor)
+        else:
+            return False
+
+    @auto_equality_prover('factorized', 'factor')
     def factorization(self, the_factors, pull="left",
-                      group_factors=True, group_remainder=True,
+                      group_factors=True, group_remainder=False,
                       **defaults_config):
         '''
         Return the proven factorization (equality with the factored
@@ -563,8 +668,10 @@ class Div(NumberOperation):
         occurrence is used.
         If group_factors is True, the factors are
         grouped together as a sub-product.
-        The group_remainder parameter is not relevant here but kept
-        for consistency with other factorization methods.
+        The group_remainder parameter ensures that the remainder is
+        grouped together as a sub-product (which is only relevant
+        if this division needed to be converted into a product in
+        order to perform this factoring).
 
         Examples:
 
@@ -579,7 +686,7 @@ class Div(NumberOperation):
             [(a*b)/d].factorization((a/d), pull='right')
             proves (a*b)/d = b*(a/d)
         '''
-        from proveit.numbers import one, Mult
+        from proveit.numbers import one, Mult, Neg, Exp, readily_factorable
         from . import mult_frac_left, mult_frac_right, prod_of_fracs
         expr = self
         eq = TransRelUpdater(expr)
@@ -599,8 +706,7 @@ class Div(NumberOperation):
             if the_factor_numer not in (one, expr.numerator):
                 expr = eq.update(expr.inner_expr().numerator.factorization(
                         the_factors.numerator, pull=pull,
-                        group_factors=True, group_remainder=True,
-                        preserve_all=True))
+                        group_factors=True, group_remainder=True))
             if pull == 'left':
                 # factor (x*y)/z into (x/z)*y
                 thm = mult_frac_left
@@ -608,8 +714,7 @@ class Div(NumberOperation):
                     # factor y/z into (1/z)*y
                     _x = one
                     _y = expr.numerator
-                    replacements.append(Mult(_x, _y).one_elimination(
-                            0, preserve_all=True))
+                    replacements.append(Mult(_x, _y).one_elimination(0))
             else:
                 # factor (x*y)/z into x*(y/z)
                 thm = mult_frac_right
@@ -617,22 +722,24 @@ class Div(NumberOperation):
                     # factor x/z into x*(1/z)
                     _x = expr.numerator
                     _y = one
-                    replacements.append(Mult(_x, _y).one_elimination(
-                            1, preserve_all=True))
+                    replacements.append(Mult(_x, _y).one_elimination(1))
             if the_factor_numer != one:
                 assert expr.numerator.operands.num_entries() == 2
                 _x = expr.numerator.operands.entries[0]
                 _y = expr.numerator.operands.entries[1]
             _z = expr.denominator
             eq.update(thm.instantiate({x:_x, y:_y, z:_z},
+                                      preserve_expr=expr,
                                       replacements=replacements))
-        else:
+        elif (readily_factorable(expr.numerator, the_factor_numer) and
+              (the_factor_denom == one or
+               readily_factorable(expr.denominator, the_factor_denom))):
             # Factor (x*y)/(z*w) into (x/z)*(y/w).
             thm = prod_of_fracs
             if the_factor_denom not in (one, expr.denominator):
                 expr = eq.update(expr.inner_expr().denominator.factorization(
                         the_factor_denom, pull=pull,
-                        group_factors=True, preserve_all=True))
+                        group_factors=True))
                 assert expr.denominator.operands.num_entries() == 2
                 _z = expr.denominator.operands.entries[0]
                 _w = expr.denominator.operands.entries[1]
@@ -640,20 +747,17 @@ class Div(NumberOperation):
                 # Factor (x*y)/w into x*(y/w).
                 _z = one
                 _w = expr.denominator
-                replacements.append(Mult(_z, _w).one_elimination(
-                        0, preserve_all=True))
+                replacements.append(Mult(_z, _w).one_elimination(0))
             else:
                 # Factor (x*y)/z into (x/z)*y.
                 _z = expr.denominator
                 _w = one
-                replacements.append(Mult(_z, _w).one_elimination(
-                        1, preserve_all=True))
+                replacements.append(Mult(_z, _w).one_elimination(1))
             # Factor the numerator parts unless there is a 1 numerator.
             if the_factor_numer not in (one, expr.numerator):
                 expr = eq.update(expr.inner_expr().numerator.factorization(
                         the_factor_numer, pull=pull,
-                        group_factors=True, group_remainder=True,
-                        preserve_all=True))
+                        group_factors=True, group_remainder=True))
                 assert expr.numerator.operands.num_entries() == 2
                 # Factor (x*y)/(z*w) into (x/z)*(y/w)
                 _x = expr.numerator.operands.entries[0]
@@ -662,27 +766,35 @@ class Div(NumberOperation):
                 # Factor y/(z*w) into (1/z)*(y/w)
                 _x = one
                 _y = expr.numerator
-                replacements.append(Mult(_x, _y).one_elimination(
-                        0, preserve_all=True))
+                replacements.append(Mult(_x, _y).one_elimination(0))
             else:
                 # Factor x/(y*z) into (x/y)*(1/z)
                 _x = expr.numerator
                 _y = one
-                replacements.append(Mult(_x, _y).one_elimination(
-                        1, preserve_all=True))
+                replacements.append(Mult(_x, _y).one_elimination(1))
             # create POSSIBLE replacements for inadvertently generated
             # fractions of the form _x/1 (i.e. _z = 1)
             # or _y/1 (i.e. _w = 1):
             if _z == one:
-                replacements.append(frac(_x, _z).divide_by_one_elimination(
-                        preserve_all=True))
+                replacements.append(frac(_x, _z).divide_by_one_elimination())
             if _w == one:
-                replacements.append(frac(_y, _w).divide_by_one_elimination(
-                        preserve_all=True))
-
+                replacements.append(frac(_y, _w).divide_by_one_elimination())
             eq.update(thm.instantiate({x:_x, y:_y, z:_z, w:_w},
-                    replacements=replacements,
-                    preserve_expr=expr))
+                    preserve_expr=expr, replacements=replacements))
+        else:
+            # As a last resort, convert this division to a 
+            # multiplication and factor that.
+            if isinstance(expr.denominator, Mult):
+                replacements = [Exp(expr.denominator, Neg(one)).distribution()]
+            expr = eq.update(expr.reduction_to_mult(replacements=replacements))
+            if isinstance(expr.operands[1], Mult):
+                expr = eq.update(expr.disassociation(1))
+            if isinstance(expr.operands[0], Mult):
+                expr = eq.update(expr.disassociation(0))
+            expr = eq.update(expr.factorization(
+                    the_factors, pull=pull,
+                    group_factors=group_factors, 
+                    group_remainder=group_remainder))
 
         return eq.relation
 
@@ -849,8 +961,7 @@ class Div(NumberOperation):
         # -- then re-call the exp_extraction() method
         if neg_loc == 'denominator_factor':
             intermed_equality = (
-                    self.inner_expr().denominator.neg_simplifications(
-                        preserve_all=True))
+                    self.inner_expr().denominator.neg_simplifications())
             return intermed_equality.inner_expr().rhs.neg_extract()
 
         # Other cases here?
@@ -1272,3 +1383,29 @@ class Div(NumberOperation):
 
 def frac(numer, denom):
     return Div(numer, denom)
+
+def compose_fraction(numerator, denominator):
+    '''
+    Return the expression representing a fraction making obvious 
+    simplifications if the denominator is one or if either/both the
+    numerator/denominator are fractions.
+    '''
+    from proveit.numbers import one, compose_product, negated, Neg
+    if isinstance(denominator, Neg):
+        denominator = denominator.operand
+        numerator = negated(numerator)
+    if denominator == one:
+        return numerator
+    if isinstance(numerator, Div) and isinstance(denominator, Div):
+        numerator, denominator = (
+                compose_product(numerator.numerator, denominator.denominator),
+                compose_product(numerator.denominator, denominator.numerator))
+    elif isinstance(numerator, Div):
+        denominator = compose_product(numerator.denominator, denominator)
+        numerator = numerator.numerator
+    elif isinstance(denominator, Div):
+        numerator = compose_product(numerator, denominator.denominator)
+        denominator = denominator.numerator
+    if isinstance(numerator, Neg):
+        return Neg(Div(numerator.operand, denominator))
+    return Div(numerator, denominator)

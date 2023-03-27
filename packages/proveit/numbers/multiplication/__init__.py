@@ -1,4 +1,4 @@
-from .mult import Mult, compose_factors
+from .mult import Mult, compose_product, remove_common_factors
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

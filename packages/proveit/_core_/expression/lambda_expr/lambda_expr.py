@@ -316,6 +316,11 @@ class Lambda(Expression):
         This override Expression._build_canonical_form to leave
         parameters unchanged.
         '''
+        canonically_labeled = self.canonically_labeled()
+        if canonically_labeled != self:
+            # We need to use canonical labels to ensure
+            # consistency of cnaonical forms.
+            return canonically_labeled._build_canonical_form()
         # Leave the parameters unchanged:
         canonical_sub_exprs = [self.parameters]
         has_distinct_canonical_form = False

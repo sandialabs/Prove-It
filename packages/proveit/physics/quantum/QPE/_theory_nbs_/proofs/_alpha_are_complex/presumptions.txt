@@ -1,7 +1,11 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
 proveit.linear_algebra.complex_set_is_vec_space
 proveit.linear_algebra.complex_vec_set_is_vec_space
+proveit.linear_algebra.inner_products.complex_set_is_hilbert_space
 proveit.linear_algebra.inner_products.complex_set_is_inner_prod_space
+proveit.linear_algebra.inner_products.complex_vec_set_is_hilbert_space
+proveit.linear_algebra.inner_products.hilbert_space_is_inner_prod_space
+proveit.linear_algebra.inner_products.hilbert_space_is_vec_space
 proveit.linear_algebra.inner_products.inner_prod_space_is_vec_space
 proveit.linear_algebra.inner_products.rational_set_is_inner_prod_space
 proveit.linear_algebra.inner_products.real_set_is_inner_prod_space
@@ -71,7 +75,6 @@ proveit.numbers.number_sets.integers.nat_within_int
 proveit.numbers.number_sets.integers.neg_int_within_int
 proveit.numbers.number_sets.integers.neg_int_within_nonpos_int
 proveit.numbers.number_sets.integers.neg_int_within_nonzero_int
-proveit.numbers.number_sets.integers.nonneg_int_is_natural
 proveit.numbers.number_sets.integers.nonpos_if_in_nonpos_int
 proveit.numbers.number_sets.integers.nonpos_int_within_int
 proveit.numbers.number_sets.integers.nonzero_if_in_nonzero_int
@@ -179,24 +182,16 @@ proveit.numbers.ordering.less_is_not_eq
 proveit.numbers.ordering.not_less_eq_from_less
 proveit.numbers.ordering.not_less_from_less_eq
 proveit.numbers.ordering.relax_less
-proveit.numbers.ordering.symmetric_less_eq
-proveit.numbers.ordering.transitivity_less_eq_less
-proveit.numbers.ordering.transitivity_less_eq_less_eq
-proveit.numbers.ordering.transitivity_less_less_eq
 proveit.physics.quantum.QPE._Psi_ket_is_normalized_vec
 proveit.physics.quantum.QPE._two_pow_t_is_nat_pos
-proveit.physics.quantum.QPE._two_pow_t_less_one_is_nat_pos
 proveit.physics.quantum.algebra.bra_in_QmultCodomain
 proveit.physics.quantum.algebra.bra_is_linmap
 proveit.physics.quantum.algebra.complex_in_QmultCodomain
-proveit.physics.quantum.algebra.complex_set_is_hilbert_space
-proveit.physics.quantum.algebra.complex_vec_set_is_hilbert_space
-proveit.physics.quantum.algebra.hilbert_space_is_inner_prod_space
-proveit.physics.quantum.algebra.hilbert_space_is_vec_space
 proveit.physics.quantum.algebra.ket_in_QmultCodomain
 proveit.physics.quantum.algebra.ket_one_in_qubit_space
 proveit.physics.quantum.algebra.ket_one_norm
 proveit.physics.quantum.algebra.ket_zero_and_one_are_orthogonal
+proveit.physics.quantum.algebra.ket_zero_and_one_have_zero_inner_prod
 proveit.physics.quantum.algebra.ket_zero_in_qubit_space
 proveit.physics.quantum.algebra.ket_zero_norm
 proveit.physics.quantum.algebra.num_bra_is_lin_map

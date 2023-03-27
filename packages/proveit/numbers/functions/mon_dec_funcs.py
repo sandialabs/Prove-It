@@ -1,7 +1,7 @@
 from proveit import (defaults, ExprRange, Function, Literal, Judgment,
                      UnsatisfiedPrerequisites, prover)
 from proveit import n
-from proveit.logic import InClass, ClassMembership, InSet, SetMembership
+from proveit.logic import InClass, ClassMembership, InSet, SubsetEq, SetMembership
 from proveit.numbers import Interval, Real
 
 class MonDecFuncs(Function):
@@ -60,6 +60,7 @@ class MonDecFuncs(Function):
         return False
 
 
+    """
     # keeping this temporarily while we evaluate its usefulness for
     # this MonDecFuncs context
     @staticmethod
@@ -144,90 +145,7 @@ class MonDecFuncs(Function):
             judgments = MonDecFuncs.known_mon_dec_funcs_memberships[mon_dec_fxn]
             for judgment in judgments:
                 yield judgment.expr.domain.domain
-
-
-    # @staticmethod
-    # def known_vec_space(vec, *, field=None):
-    #     '''
-    #     Return the known vector space of the given vec under the
-    #     specified field (or the default field).
-    #     '''
-    #     field = VecSpaces.get_field(field, may_be_none=True)
-    #     try:
-    #         return next(VecSpaces.yield_known_vec_spaces(vec, field=field))
-    #     except StopIteration:
-    #         # We may not know that 'vec' is in a vector space,
-    #         # but we may be able to deduce it in a straightforward
-    #         # manner provided it has a 'deduce_in_vec_space' method.
-    #         try:
-    #             return containing_vec_space(vec, field=field)
-    #         except NotImplementedError:
-    #             over_field_msg = "" if field is None else " over %s"%field
-    #             raise UnsatisfiedPrerequisites(
-    #                     "%s is not known to be in a vector space%s"
-    #                     %(vec, over_field_msg))
-
-    # @staticmethod
-    # def known_vec_spaces(vecs, *, field=None):
-    #     '''
-    #     Return the known vector spaces of the given vecs under the
-    #     specified field (or the default field).
-    #     '''
-    #     # Effort to appropriately handle an ExprRange operand added
-    #     # here by wdc and ww on 1/3/2022.
-    #     vec_spaces = []
-    #     for vec in vecs:
-    #         if isinstance(vec, ExprRange):
-    #             # create our expr range
-    #             with defaults.temporary() as tmp_defaults:
-    #                 assumption = InSet(vec.parameter,
-    #                         Interval(vec.true_start_index, vec.true_end_index))
-    #                 tmp_defaults.assumptions = (
-    #                         defaults.assumptions + (assumption ,))
-    #                 body = VecSpaces.known_vec_space(vec.body, field=field)
-    #             vec_spaces.append(
-    #                 ExprRange(vec.parameter, body,
-    #                           vec.true_start_index, vec.true_end_index))
-    #         else:
-    #             vec_spaces.append(VecSpaces.known_vec_space(vec, field=field))
-
-    #     return vec_spaces
-    
-    # @staticmethod
-    # def known_field(vec_space):
-    #     '''
-    #     Given a vector space, return any known field.
-    #     '''
-    #     try:
-    #         return next(VecSpaces.yield_known_fields(vec_space))
-    #     except StopIteration:
-    #         raise UnsatisfiedPrerequisites("%s is not a known vector space"
-    #                                        %vec_space)
-
-    
-# class VecSpacesMembership(ClassMembership):
-#     def __init__(self, element, domain):
-#         ClassMembership.__init__(self, element, domain)
-#         if not isinstance(domain, VecSpaces):
-#             raise TypeError("domain expected to be VecSpaces, not %s"
-#                             %domain.__class__)
-#         self.field = domain.field
-    
-#     def side_effects(self, judgment):
-#         '''
-#         Remember known VecSpaces memberships.
-#         '''
-#         VecSpaces.known_vec_spaces_memberships.setdefault(
-#                 self.element, set()).add(judgment)
-#         return # generator yielding nothing
-#         yield
-    
-#     def conclude(self):
-#         '''
-#         Attempt to conclude this membership in a class of vector
-#         spaces.
-#         '''
-#         return deduce_as_vec_space(self.element, field=self.field)
+    """
 
 
 class MonDecFuncsMembership(SetMembership):
@@ -379,16 +297,30 @@ def containing_mon_dec_func(fxn, *, domain):
 
 
 @prover
-def deduce_as_mon_dec_func(fxn, *, domain=None, **defaults_config):
+def deduce_as_mon_dec_func(fxn, *, domain=None, 
+                           strict=False, **defaults_config):
     '''
     Prove that the Lambda-map specified by fxn is contained in the
     set of monotonically-decreasing functions defined over the domain.
+    Unless strict is True, the returned proven membership may be
+    over a broader domain (that is, a stronger statement than required).
+    
     For example, we might have fxn = Lambda(x, 1/x^2) and
     domain = RealPos, in which case we try to prove that
     Lambda(x, 1/x^2) is in the set of MonDecFuncs(RealPos).
     '''
     membership = None
-
+    
+    # This current implementation cheats to handle a specific case of
+    # intrest.  We can make this more general at a later date.
+    from proveit import x
+    from proveit.numbers.functions import one_over_x_sqrd_in_mon_dec_fxns
+    from proveit.numbers import RealPos
+    if fxn == one_over_x_sqrd_in_mon_dec_fxns.element:
+        if domain is not None:
+            SubsetEq(domain, RealPos).prove()
+        return one_over_x_sqrd_in_mon_dec_fxns.instantiate({x:fxn.parameter})
+    
     if domain is not None and InSet(fxn, MonDecFuncs(domain)).proven():
         # fxn already known to be a monotonically-decreasing function.
         return InSet(fxn, MonDecFuncs(domain)).prove()
@@ -433,48 +365,3 @@ def deduce_as_mon_dec_func(fxn, *, domain=None, **defaults_config):
     raise NotImplementedError(
             "'deduce_as_mon_dec_func' is not implemented for this case")
 
-
-def including_vec_space(subset, *, field):
-    '''
-    Return a vector space over the given field which includes
-    the 'subset'.  Handles the following CartExpr cases:
-        C^n contains R^n and Q^n as well as C^n
-        R^n contains Q^n as well as R^n
-        Q^n only contains Q^n
-    Otherwise, call the 'including_vec_space' class method on
-    'subset' if there is one.  Raise a NotImplementedError if all else
-    fails.
-    '''
-    from proveit.logic import SubsetEq, CartExp
-    from proveit.numbers import Rational, Real, Complex
-    vec_space = None
-    if isinstance(subset, CartExp):
-        if field is None or field==subset.base:
-            vec_space = subset
-        elif ((field == Complex and subset.base in (Rational, Real))
-              or (field == Real and subset.base == Rational)):
-            vec_space = CartExp(field, subset.exponent)
-    if ((field==Complex and (subset in (Rational, Real))) or
-            (field==Real and subset==Rational)):
-        vec_space = field
-    if vec_space is None and hasattr(subset, 'including_vec_space'):
-        vec_space = subset.including_vec_space(field=field)
-    if vec_space is None:
-        raise NotImplementedError(
-                "'including_vec_space' is not implemented "
-                "to handle %s over field %s and %s has no "
-                "'including_vec_space' method"
-                %(subset, field, subset))
-    # Make sure it is a vector space
-    deduce_as_vec_space(vec_space)
-    # Make sure the field is a match.
-    if field is not None:
-        if VecSpaces.known_field(vec_space) != field:
-            raise ValueError(
-                    "%s is NOT a vector space over %s as requested."
-                    %(vec_space, field))
-    if subset != vec_space:
-        # Make sure this new domain contains the
-        # old domain.
-        SubsetEq(subset, vec_space).prove()
-    return vec_space

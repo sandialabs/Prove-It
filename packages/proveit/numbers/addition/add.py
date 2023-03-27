@@ -5,6 +5,7 @@ from collections import deque, Counter
 from proveit import (Expression, Judgment, Literal, Operation, ExprTuple,
                      ExprRange, defaults, StyleOptions, 
                      prover, relation_prover, equality_prover,
+                     auto_prover, auto_relation_prover, auto_equality_prover,
                      maybe_fenced_latex, ProofFailure, InnerExpr,
                      UnsatisfiedPrerequisites,
                      SimplificationDirectives, TransRelUpdater)
@@ -49,6 +50,7 @@ class Add(NumberOperation):
     _simplification_directives_ = SimplificationDirectives(
             ungroup = True,
             combine_like_terms = True,
+            combine_like_denoms = False,
             order_key_fn = lambda term : 0)
 
     def __init__(self, *operands, styles=None):
@@ -584,7 +586,7 @@ class Add(NumberOperation):
         cancel common terms that are subtracted, combine like terms,
         convert repeated addition to multiplication, etc.
         '''
-        from proveit.numbers import (one, Add, Neg, Mult, 
+        from proveit.numbers import (one, Add, Div, Neg, Mult, 
                                      is_numeric_int,
                                      is_numeric_rational)
         from proveit.numbers.multiplication.mult import (
@@ -702,6 +704,13 @@ class Add(NumberOperation):
             # apart from literal, rational coefficients.
             likeness_key_fn = lambda term : (
                     coefficient_and_remainder(term)[1])
+            if Add._simplification_directives_.combine_like_denoms:
+                # likeness_key_fn = lambda term : (
+                #     Div(one, term.denominator) if isinstance(term, Div)
+                #     else likeness_key_fn(term))
+                likeness_key_fn = lambda term : (
+                    Div(one, term.denominator) if isinstance(term, Div)
+                    else coefficient_and_remainder(term)[1])
             # Sort and combine like operands.
             expr = eq.update(sorting_and_combining_like_operands(
                     expr, order_key_fn=order_key_fn, 
@@ -1551,8 +1560,7 @@ class Add(NumberOperation):
                 "for a subtraction, got %s" %
                 self)
         thm = difference_is_nat_pos
-        return thm.instantiate({a: self.terms[0], b: self.terms[1].operand},
-                               assumptions=assumptions)
+        return thm.instantiate({a: self.terms[0], b: self.terms[1].operand})
 
     def index(self, the_term, also_return_num=False):
         '''
@@ -1585,7 +1593,21 @@ class Add(NumberOperation):
                 raise ValueError("Term is absent!")
         return (idx, num) if also_return_num else idx
 
-    @equality_prover('factorized', 'factor')
+    def readily_factorable(self, factor):
+        '''
+        Return True iff 'factor' is factorable from 'self' in an
+        obvious manner.  For this Add, it is readily factorable if
+        it is readily factorable from all terms.
+        '''
+        from proveit.numbers import readily_factorable
+        if self == factor:
+            return True
+        for term in self.terms:
+            if not readily_factorable(term, factor):
+                return False
+        return True
+
+    @auto_equality_prover('factorized', 'factor')
     def factorization(self, the_factors, pull="left", 
                       group_factors=True, group_remainder=True,
                       **defaults_config):
@@ -1594,7 +1616,9 @@ class Add(NumberOperation):
         the "left" or "right".
         If group_factors is True, the factors are grouped
         together as a sub-product.
-        Returns the equality that equates self to this new version.
+        In the Add case, the remainder will always be grouped (we
+        have 'group_remainder' as a parameter just for recursion
+        compatibility).
         '''
         from proveit.numbers.multiplication import distribute_through_sum
         from proveit.numbers import one, Mult
@@ -1626,7 +1650,7 @@ class Add(NumberOperation):
                         (the_factors, _i, self))
                 term_factorization = term.factorization(
                     the_factors, pull, group_factors=group_factors,
-                    group_remainder=True, preserve_all=True)
+                    group_remainder=True)
                 if not isinstance(term_factorization.rhs, Mult):
                     raise ValueError(
                         "Expecting right hand side of each factorization "
@@ -1641,7 +1665,7 @@ class Add(NumberOperation):
                     _b.append(term_factorization.rhs.operands[0])
                 # substitute in the factorized term
                 expr = eq.update(term_factorization.substitution(
-                    expr.inner_expr().terms[_i], preserve_all=True))
+                    expr.inner_expr().terms[_i]))
         if not group_factors and isinstance(the_factors, Mult):
             factor_sub = the_factors.operands
         else:
@@ -1652,10 +1676,6 @@ class Add(NumberOperation):
         else:
             _a = ExprTuple()
             _c = factor_sub
-        if defaults.auto_simplify:
-            # Simplify the remainder of the factorization if
-            # auto-simplify is enabled.
-            replacements.append(Add(*_b).simplification())
         _b = ExprTuple(*_b)
         _i = _a.num_elements()
         _j = _b.num_elements()
@@ -1669,17 +1689,45 @@ class Add(NumberOperation):
     @equality_prover('combined_terms', 'combine_terms')
     def combining_terms(self, **defaults_config):
         '''
-        Combine terms, adding their literal, rational coeffiicents.
+        Combine terms, adding their literal, rational coefficients.
         Alias for `combining_operands`.
         '''
-        from proveit.numbers import one
+        from proveit.numbers import one, Div
         from proveit.numbers.multiplication.mult import (
                 coefficient_and_remainder)
         # Obtain the common term "remainder" (sans coefficient),
         # raising a ValueError if the terms are not all like terms.
         likeness_key_fn = lambda term : (
                 coefficient_and_remainder(term)[1])
-        key = common_likeness_key(self, likeness_key_fn=likeness_key_fn)
+        try:
+            key = common_likeness_key(self, likeness_key_fn=likeness_key_fn)
+            if isinstance(key, ExprRange):
+                raise ValueError
+        except ValueError as _e:
+            if any( not(
+                    isinstance(term, Div) or
+                    (isinstance(term, ExprRange) and isinstance(term.body, Div)))
+                    for term in self.terms):
+                return _e
+            denominator = common_likeness_key(
+                    self,
+                    likeness_key_fn = (
+                        lambda term: term.denominator if isinstance(term, Div)
+                                else term.body.denominator))
+            # the following handles both a set of fracs and an
+            # ExprRange of fracs and any combination of the two
+            numerator_terms = self.terms.map_elements(
+                    lambda term: term.numerator)
+            # create our desired combination of like fractions
+            combined = Div(Add(*numerator_terms), denominator)
+            replacements = list(defaults.replacements)
+            if defaults.auto_simplify:
+                combined_simp = combined.simplification()
+                if combined_simp.lhs != combined_simp.rhs:
+                    replacements.append(combined_simp)
+            return (combined.distribution(preserve_all=True).
+                    derive_reversed(replacements=replacements))
+
         if key != one:
             # Factor out the common part from the coefficients.
             return self.factorization(key, pull="right")

@@ -35,7 +35,7 @@ class BooleanSet(Literal):
                Boolean), "May only apply forall_evaluation method of BOOLEAN to a forall " \
                          "statement with the BOOLEAN domain"
         with defaults.temporary() as temp_defaults:
-            temp_defaults.preserved_exprs = defaults.preserved_exprs.union([forall_stmt.inner_expr])
+            temp_defaults.preserved_exprs = defaults.preserved_exprs.union([forall_stmt.instance_expr])
             instance_list = list(forall_stmt.instance_param_lists())
             instance_var = instance_list[0][0]
             instance_expr = forall_stmt.instance_expr

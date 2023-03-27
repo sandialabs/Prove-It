@@ -15,7 +15,10 @@ proveit.core_expr_types.tuples.shift_equivalence_both
 proveit.core_expr_types.tuples.tuple_eq_via_elem_eq
 proveit.core_expr_types.tuples.tuple_len_0_typical_eq
 proveit.core_expr_types.tuples.tuple_neq_via_any_elem_neq
+proveit.linear_algebra.inner_products.complex_set_is_hilbert_space
 proveit.linear_algebra.inner_products.complex_set_is_inner_prod_space
+proveit.linear_algebra.inner_products.hilbert_space_is_inner_prod_space
+proveit.linear_algebra.inner_products.hilbert_space_is_vec_space
 proveit.linear_algebra.inner_products.inner_prod_space_is_vec_space
 proveit.linear_algebra.inner_products.rational_set_is_inner_prod_space
 proveit.linear_algebra.inner_products.real_set_is_inner_prod_space
@@ -25,8 +28,6 @@ proveit.logic.booleans.conjunction.each_is_bool
 proveit.logic.booleans.conjunction.from_unary_and
 proveit.logic.booleans.conjunction.left_from_and
 proveit.logic.booleans.conjunction.quantification_from_conjunction
-proveit.logic.booleans.conjunction.redundant_conjunction
-proveit.logic.booleans.conjunction.redundant_conjunction_general
 proveit.logic.booleans.conjunction.right_from_and
 proveit.logic.booleans.conjunction.true_and_true
 proveit.logic.booleans.disjunction.any_if_all
@@ -154,7 +155,6 @@ proveit.numbers.number_sets.integers.interval_upper_bound
 proveit.numbers.number_sets.integers.nat_pos_within_int
 proveit.numbers.number_sets.integers.nat_pos_within_nonzero_int
 proveit.numbers.number_sets.integers.nat_within_int
-proveit.numbers.number_sets.integers.neg_int_is_int_neg
 proveit.numbers.number_sets.integers.neg_int_within_int
 proveit.numbers.number_sets.integers.neg_int_within_nonpos_int
 proveit.numbers.number_sets.integers.neg_int_within_nonzero_int
@@ -164,7 +164,6 @@ proveit.numbers.number_sets.integers.nonpos_if_in_nonpos_int
 proveit.numbers.number_sets.integers.nonpos_int_within_int
 proveit.numbers.number_sets.integers.nonzero_if_in_nonzero_int
 proveit.numbers.number_sets.integers.nonzero_int_within_int
-proveit.numbers.number_sets.integers.nonzero_nat_is_natural_pos
 proveit.numbers.number_sets.integers.pos_int_is_natural_pos
 proveit.numbers.number_sets.integers.zero_is_int
 proveit.numbers.number_sets.integers.zero_is_nonpos_int
@@ -291,9 +290,6 @@ proveit.numbers.ordering.symmetric_less_eq
 proveit.numbers.ordering.transitivity_less_eq_less
 proveit.numbers.ordering.transitivity_less_eq_less_eq
 proveit.numbers.ordering.transitivity_less_less_eq
-proveit.physics.quantum.algebra.complex_set_is_hilbert_space
-proveit.physics.quantum.algebra.hilbert_space_is_inner_prod_space
-proveit.physics.quantum.algebra.hilbert_space_is_vec_space
 proveit.physics.quantum.algebra.ket_one_in_qubit_space
 proveit.physics.quantum.algebra.ket_one_norm
 proveit.physics.quantum.algebra.ket_zero_and_one_are_orthogonal
@@ -301,9 +297,7 @@ proveit.physics.quantum.algebra.ket_zero_in_qubit_space
 proveit.physics.quantum.algebra.ket_zero_norm
 proveit.physics.quantum.algebra.num_ket_neq
 proveit.physics.quantum.circuits.qcircuit_eq
-proveit.physics.quantum.circuits.qcircuit_input_eq
 proveit.physics.quantum.circuits.qcircuit_input_part_neq
 proveit.physics.quantum.circuits.qcircuit_neq
-proveit.physics.quantum.circuits.qcircuit_output_eq
 proveit.physics.quantum.circuits.qcircuit_output_part_neq
 # THEOREMS AND THEORIES TO EXCLUDE:

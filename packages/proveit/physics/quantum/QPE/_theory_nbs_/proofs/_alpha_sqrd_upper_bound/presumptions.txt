@@ -3,7 +3,10 @@ proveit.core_expr_types.operations.operands_substitution_via_tuple
 proveit.core_expr_types.tuples.range_from1_len
 proveit.core_expr_types.tuples.range_from1_len_typical_eq
 proveit.core_expr_types.tuples.tuple_len_0_typical_eq
+proveit.linear_algebra.inner_products.complex_set_is_hilbert_space
 proveit.linear_algebra.inner_products.complex_set_is_inner_prod_space
+proveit.linear_algebra.inner_products.hilbert_space_is_inner_prod_space
+proveit.linear_algebra.inner_products.hilbert_space_is_vec_space
 proveit.linear_algebra.inner_products.inner_prod_space_is_vec_space
 proveit.linear_algebra.inner_products.rational_set_is_inner_prod_space
 proveit.linear_algebra.inner_products.real_set_is_inner_prod_space
@@ -130,6 +133,7 @@ proveit.numbers.exponentiation.posnat_power_of_product
 proveit.numbers.exponentiation.posnat_power_of_quotient
 proveit.numbers.exponentiation.product_of_real_powers
 proveit.numbers.exponentiation.real_power_of_product
+proveit.numbers.exponentiation.real_power_of_products
 proveit.numbers.exponentiation.real_power_of_real_power
 proveit.numbers.exponentiation.square_abs_rational_simp
 proveit.numbers.exponentiation.square_abs_real_simp
@@ -175,6 +179,7 @@ proveit.numbers.negation.int_nonzero_closure
 proveit.numbers.negation.negated_zero
 proveit.numbers.negation.rational_nonzero_closure
 proveit.numbers.negation.real_closure
+proveit.numbers.negation.real_nonpos_closure
 proveit.numbers.number_sets.complex_numbers.complex_nonzero_within_complex
 proveit.numbers.number_sets.complex_numbers.complex_polar_negation
 proveit.numbers.number_sets.complex_numbers.complex_polar_radius_negation
@@ -237,7 +242,6 @@ proveit.numbers.number_sets.rational_numbers.nonpos_int_within_rational_nonpos
 proveit.numbers.number_sets.rational_numbers.nonzero_if_in_rational_nonzero
 proveit.numbers.number_sets.rational_numbers.nonzero_int_within_rational_nonzero
 proveit.numbers.number_sets.rational_numbers.nonzero_rational_is_rational_nonzero
-proveit.numbers.number_sets.rational_numbers.pos_rational_is_rational_pos
 proveit.numbers.number_sets.rational_numbers.positive_if_in_rational_pos
 proveit.numbers.number_sets.rational_numbers.rational_neg_within_rational
 proveit.numbers.number_sets.rational_numbers.rational_neg_within_rational_nonpos
@@ -369,12 +373,10 @@ proveit.physics.quantum.QPE._scaled_delta_b_floor_in_interval
 proveit.physics.quantum.QPE._scaled_delta_b_not_eq_nonzeroInt
 proveit.physics.quantum.QPE._two_pow_t_is_nat_pos
 proveit.physics.quantum.QPE._two_pow_t_minus_one_is_nat_pos
-proveit.physics.quantum.algebra.complex_set_is_hilbert_space
-proveit.physics.quantum.algebra.hilbert_space_is_inner_prod_space
-proveit.physics.quantum.algebra.hilbert_space_is_vec_space
 proveit.physics.quantum.algebra.ket_one_in_qubit_space
 proveit.physics.quantum.algebra.ket_one_norm
 proveit.physics.quantum.algebra.ket_zero_and_one_are_orthogonal
+proveit.physics.quantum.algebra.ket_zero_and_one_have_zero_inner_prod
 proveit.physics.quantum.algebra.ket_zero_in_qubit_space
 proveit.physics.quantum.algebra.ket_zero_norm
 proveit.trigonometry.complex_circle_chord_length

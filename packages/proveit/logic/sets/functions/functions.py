@@ -21,7 +21,7 @@ class Functions(Operation):
         domain_str = self.domain.latex(fence=True)
         codomain_str = self.codomain.latex(fence=True)
         return (r'\left[' + domain_str + r' \rightarrow '
-                        + codomain_str + r'\right])')
+                        + codomain_str + r'\right]')
 
     def string(self, **kwargs):
         domain_str = self.domain.string(fence=True)

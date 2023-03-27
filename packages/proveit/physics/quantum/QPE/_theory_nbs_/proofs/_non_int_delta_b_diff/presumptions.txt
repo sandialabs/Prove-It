@@ -1,7 +1,10 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
 proveit.core_expr_types.operations.operands_substitution_via_tuple
 proveit.core_expr_types.tuples.tuple_len_0_typical_eq
+proveit.linear_algebra.inner_products.complex_set_is_hilbert_space
 proveit.linear_algebra.inner_products.complex_set_is_inner_prod_space
+proveit.linear_algebra.inner_products.hilbert_space_is_inner_prod_space
+proveit.linear_algebra.inner_products.hilbert_space_is_vec_space
 proveit.linear_algebra.inner_products.inner_prod_space_is_vec_space
 proveit.linear_algebra.inner_products.rational_set_is_inner_prod_space
 proveit.linear_algebra.inner_products.real_set_is_inner_prod_space
@@ -41,13 +44,8 @@ proveit.logic.sets.enumeration.fold_singleton
 proveit.logic.sets.enumeration.in_enumerated_set
 proveit.logic.sets.enumeration.unfold
 proveit.logic.sets.enumeration.unfold_singleton
-proveit.logic.sets.equivalence.set_equiv_is_bool
 proveit.logic.sets.inclusion.relax_proper_subset
-proveit.logic.sets.inclusion.subset_eq_via_equality
 proveit.logic.sets.inclusion.superset_membership_from_proper_subset
-proveit.logic.sets.inclusion.transitivity_subset_eq_subset
-proveit.logic.sets.inclusion.transitivity_subset_eq_subset_eq
-proveit.logic.sets.inclusion.transitivity_subset_subset_eq
 proveit.logic.sets.inclusion.unfold_subset_eq
 proveit.logic.sets.membership.unfold_not_in_set
 proveit.numbers.addition.add_complex_closure_bin
@@ -75,7 +73,6 @@ proveit.numbers.addition.subtraction.add_cancel_triple_23
 proveit.numbers.addition.subtraction.add_cancel_triple_31
 proveit.numbers.addition.subtraction.add_cancel_triple_32
 proveit.numbers.addition.subtraction.negated_add
-proveit.numbers.addition.subtraction.nonneg_difference
 proveit.numbers.addition.subtraction.nonzero_difference_if_different
 proveit.numbers.addition.subtraction.sub_one_is_nat
 proveit.numbers.addition.subtraction.subtract_from_add
@@ -100,7 +97,6 @@ proveit.numbers.division.strong_div_from_numer_bound__pos_denom
 proveit.numbers.division.weak_div_from_numer_bound__neg_denom
 proveit.numbers.division.weak_div_from_numer_bound__pos_denom
 proveit.numbers.exponentiation.complex_x_to_first_power_is_x
-proveit.numbers.exponentiation.exp_int_closure
 proveit.numbers.exponentiation.exp_nat_pos_expansion
 proveit.numbers.exponentiation.exp_zero_eq_one
 proveit.numbers.exponentiation.exponentiated_one
@@ -126,7 +122,6 @@ proveit.numbers.negation.distribute_neg_through_subtract
 proveit.numbers.negation.distribute_neg_through_sum
 proveit.numbers.negation.double_negation
 proveit.numbers.negation.int_closure
-proveit.numbers.negation.int_neg_closure
 proveit.numbers.negation.negated_weak_bound
 proveit.numbers.negation.negated_zero
 proveit.numbers.negation.real_closure
@@ -161,8 +156,6 @@ proveit.numbers.number_sets.integers.nat_within_int
 proveit.numbers.number_sets.integers.neg_int_within_int
 proveit.numbers.number_sets.integers.neg_int_within_nonpos_int
 proveit.numbers.number_sets.integers.neg_int_within_nonzero_int
-proveit.numbers.number_sets.integers.negative_if_in_neg_int
-proveit.numbers.number_sets.integers.nonneg_int_is_natural
 proveit.numbers.number_sets.integers.nonpos_if_in_nonpos_int
 proveit.numbers.number_sets.integers.nonpos_int_within_int
 proveit.numbers.number_sets.integers.nonzero_if_in_nonzero_int
@@ -182,7 +175,6 @@ proveit.numbers.number_sets.rational_numbers.nat_pos_within_rational_pos
 proveit.numbers.number_sets.rational_numbers.nat_within_rational
 proveit.numbers.number_sets.rational_numbers.nat_within_rational_nonneg
 proveit.numbers.number_sets.rational_numbers.neg_int_within_rational_neg
-proveit.numbers.number_sets.rational_numbers.negative_if_in_rational_neg
 proveit.numbers.number_sets.rational_numbers.nonneg_if_in_rational_nonneg
 proveit.numbers.number_sets.rational_numbers.nonpos_if_in_rational_nonpos
 proveit.numbers.number_sets.rational_numbers.nonpos_int_within_rational_nonpos
@@ -295,6 +287,10 @@ proveit.numbers.numerals.decimals.tuple_len_2_typical_eq
 proveit.numbers.ordering.less_eq_from_not_less
 proveit.numbers.ordering.less_from_not_less_eq
 proveit.numbers.ordering.less_is_not_eq
+proveit.numbers.ordering.less_than_an_increase
+proveit.numbers.ordering.less_than_an_left_increase
+proveit.numbers.ordering.less_than_left_successor
+proveit.numbers.ordering.less_than_successor
 proveit.numbers.ordering.not_less_eq_from_less
 proveit.numbers.ordering.not_less_from_less_eq
 proveit.numbers.ordering.relax_less
@@ -309,12 +305,10 @@ proveit.physics.quantum.QPE._delta_b_is_real
 proveit.physics.quantum.QPE._delta_b_not_eq_scaledNonzeroInt
 proveit.physics.quantum.QPE._two_pow_t_is_nat_pos
 proveit.physics.quantum.QPE._two_pow_t_minus_one_is_nat_pos
-proveit.physics.quantum.algebra.complex_set_is_hilbert_space
-proveit.physics.quantum.algebra.hilbert_space_is_inner_prod_space
-proveit.physics.quantum.algebra.hilbert_space_is_vec_space
 proveit.physics.quantum.algebra.ket_one_in_qubit_space
 proveit.physics.quantum.algebra.ket_one_norm
 proveit.physics.quantum.algebra.ket_zero_and_one_are_orthogonal
+proveit.physics.quantum.algebra.ket_zero_and_one_have_zero_inner_prod
 proveit.physics.quantum.algebra.ket_zero_in_qubit_space
 proveit.physics.quantum.algebra.ket_zero_norm
 # THEOREMS AND THEORIES TO EXCLUDE:

@@ -1,6 +1,7 @@
 from proveit import ( defaults,
         Lambda, Literal, maybe_fenced, OperationOverInstances,
         relation_prover)
+from proveit import a, b
 from proveit.numbers import (
         zero, one, infinity, Interval, IntervalCC, IntervalCO, IntervalOC,
         IntervalOO, Neg, NumberOperation, Real, RealNeg, RealNonNeg,
@@ -95,6 +96,49 @@ class Integrate(OperationOverInstances):
         # if number_set == Complex:
         #    return complex.theorems.integration_closure
 
+
+    def _formatted(self, format_type, **kwargs):
+        # ACTUALLY, notice that the open-interval versions
+        # probably lead to incorrect upper/lower bounds on the
+        # formatted integrals. For example, an integral over the
+        # open half-open interval (0, 1] would need to be formatted
+        # or expressed as a limit as 'a' approaches 0 from the right
+        # of the integral from 0 to 1.
+        fence = kwargs['fence'] if 'fence' in kwargs else False
+        if (isinstance(self.domain,IntervalCC) or
+            isinstance(self.domain,IntervalCO) or
+            isinstance(self.domain,IntervalOC) or
+            isinstance(self.domain,IntervalOO)):
+
+            lower = self.domain.lower_bound.formatted(format_type)
+            upper = self.domain.upper_bound.formatted(format_type)
+            formatted_inner = (
+                    self.operator.formatted(format_type) +
+                    r'_{' + lower + r'}' + r'^{' + upper + r'} ')
+            explicit_ivars = list(self.explicit_instance_vars())
+            has_explicit_ivars = (len(explicit_ivars) > 0)
+            explicit_conds = list(self.explicit_conditions())
+            has_explicit_conds = (len(explicit_conds) > 0)
+            if has_explicit_conds:
+                if has_explicit_ivars:
+                    formatted_inner += " | "
+                formatted_inner += ', '.join(condition.formatted(format_type)
+                                             for condition in explicit_conds)
+            formatted_inner += (
+                    self.integrand.formatted(format_type, fence=fence) +
+                    r'\,d' + self.index.formatted(format_type))
+
+            # old/previous
+            # return (self.operator.formatted(format_type) +
+            #         r'_{' + lower + r'}' + r'^{' + upper + r'}' +
+            #         self.integrand.formatted(format_type, fence=fence) +
+            #         'd' + self.index.formatted(format_type))
+            
+            return maybe_fenced(format_type, formatted_inner, fence=fence)
+        else:
+            return OperationOverInstances._formatted(self, format_type,
+                                                     fence=fence)
+    
     # borrowed from / based on / Sum.deduce_in_number_set()
     # delete this comment after testing
     @relation_prover
@@ -138,59 +182,35 @@ class Integrate(OperationOverInstances):
         #     antecedent.conclude_via_generalization()
         return impl.derive_consequent()
 
-#     def formatted(self, format_type, fence=False):
-#         # if isinstance(self.domain,IntervalOO) or
-#         # isinstance(self.domain,IntervalOC) or
-#         # isinstance(self.domain,IntervalCO) or
-#         # isinstance(self.domain,IntervalOO):
-#         if isinstance(self.domain, IntervalCC):
-#             lower = self.domain.lower_bound.formatted(format_type)
-#             upper = self.domain.upper_bound.formatted(format_type)
-#             return self.operator.formatted(format_type) + r'_{' + lower + r'}' + r'^{' + upper + r'}' + self.integrand.formatted(
-#                 format_type, fence=fence) + 'd' + self.index.formatted(format_type)
-# #        elif self.domain
+    @relation_prover
+    def bound_via_upper_limit_bound(self, upper_limit_bound=None, 
+                                    **defaults_config):
+        '''
+        Return a bound of this integration based upon a bound on its
+        upper limit.  The upper limit should appear on the left side
+        of the operand_bound which should be a number ordering 
+        relation (<, <=, >, or >=).  If an upper_limit_bound is not
+        provided, take it to be an upper bound of infinity on the
+        upper limit.  The returned, proven bound will have this 
+        expression on the left-hand side.
 
-#         return self.operator.formatted(format_type) + r'_{' + self.domain.formatted(
-#             format_type) + r'}' + self.integrand.formatted(format_type, fence=fence) + 'd' + self.index.formatted(format_type)
+        Also see NumberOperation.deduce_bound.
+        '''
 
-    def _formatted(self, format_type, **kwargs):
-        # ACTUALLY, notice that the open-interval versions
-        # probably lead to incorrect upper/lower bounds on the
-        # formatted integrals. For example, an integral over the
-        # open half-open interval (0, 1] would need to be formatted
-        # or expressed as a limit as 'a' approaches 0 from the right
-        # of the integral from 0 to 1.
-        fence = kwargs['fence'] if 'fence' in kwargs else False
-        if (isinstance(self.domain,IntervalCC) or
-            isinstance(self.domain,IntervalCO) or
-            isinstance(self.domain,IntervalOC) or
-            isinstance(self.domain,IntervalOO)):
-
-            lower = self.domain.lower_bound.formatted(format_type)
-            upper = self.domain.upper_bound.formatted(format_type)
-            formatted_inner = (
-                    self.operator.formatted(format_type) +
-                    r'_{' + lower + r'}' + r'^{' + upper + r'} ')
-            explicit_ivars = list(self.explicit_instance_vars())
-            has_explicit_ivars = (len(explicit_ivars) > 0)
-            explicit_conds = list(self.explicit_conditions())
-            has_explicit_conds = (len(explicit_conds) > 0)
-            if has_explicit_conds:
-                if has_explicit_ivars:
-                    formatted_inner += " | "
-                formatted_inner += ', '.join(condition.formatted(format_type)
-                                             for condition in explicit_conds)
-            formatted_inner += (
-                    self.integrand.formatted(format_type, fence=fence) +
-                    r'\,d' + self.index.formatted(format_type))
-
-            # old/previous
-            # return (self.operator.formatted(format_type) +
-            #         r'_{' + lower + r'}' + r'^{' + upper + r'}' +
-            #         self.integrand.formatted(format_type, fence=fence) +
-            #         'd' + self.index.formatted(format_type))
+        if hasattr(self, 'index'):
+            _f = Lambda(self.index, self.integrand)
+        
+            # Currently cheating with an implementation of a specific
+            # desired case.  This can be generalized at a later date.
+            if upper_limit_bound is None:
+                from . import boundedInvSqrdIntegral
+                if isinstance(self.domain, IntervalCC):
+                    special_integral = boundedInvSqrdIntegral.instance_expr.lhs
+                    special_integrand = special_integral.integrand
+                    if _f == Lambda(special_integral.index, 
+                                    special_integrand):
+                        _a = self.domain.lower_bound
+                        _b = self.domain.upper_bound
+                        return boundedInvSqrdIntegral.instantiate(
+                            {a:_a, b:_b})
             
-            return maybe_fenced(format_type, formatted_inner, fence=fence)
-        else:
-            return OperationOverInstances._formatted(self, format_type,
-                                                     fence=fence)

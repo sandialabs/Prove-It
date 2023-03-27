@@ -492,10 +492,11 @@ class Expression(metaclass=ExprType):
             raise TypeError("Expecting a proven Judgment to be returned "
                             "by '_deduce_canonically_equal")
         equality = Equals(lhs, rhs)
-        if proven_eq.expr != equality:
+        if not defaults.auto_simplify and len(defaults.replacements)==0 and (
+                proven_eq.expr != equality):
             raise ValueError("Expecting '_deduce_canonically_equal' to "
-                             "return the proven 'equality': %s vs %s"%(
-                                     proven_eq.expr, equality))
+                             "return %s but got %s"%(
+                                     equality, proven_eq.expr))
         return proven_eq
                                                
     def _deduce_canonically_equal(self, rhs):
@@ -1635,6 +1636,10 @@ class Expression(metaclass=ExprType):
             return None
         try:
             markers, marked_expr = markers_and_marked_expr
+            if marked_expr in markers:
+                # This entire sub-expression is marked, so we
+                # all simplifications are fair game here.
+                return None
             marked_expr = sub_expr_fn(marked_expr)
             assert isinstance(marked_expr, Expression)
             return (markers, marked_expr)

@@ -1,5 +1,4 @@
 # THEOREMS AND THEORIES THAT MAY BE PRESUMED:
-proveit.core_expr_types.operations.operands_substitution_via_tuple
 proveit.core_expr_types.tuples.negated_shift_equivalence
 proveit.core_expr_types.tuples.negated_shift_equivalence_both
 proveit.core_expr_types.tuples.range_from1_len
@@ -12,8 +11,11 @@ proveit.linear_algebra.addition.binary_closure
 proveit.linear_algebra.addition.closure
 proveit.linear_algebra.addition.norm_of_sum_of_orthogonal_pair
 proveit.linear_algebra.complex_vec_set_is_vec_space
+proveit.linear_algebra.inner_products.complex_set_is_hilbert_space
 proveit.linear_algebra.inner_products.complex_set_is_inner_prod_space
 proveit.linear_algebra.inner_products.complex_vec_set_is_inner_prod_space
+proveit.linear_algebra.inner_products.hilbert_space_is_inner_prod_space
+proveit.linear_algebra.inner_products.hilbert_space_is_vec_space
 proveit.linear_algebra.inner_products.inner_prod_scalar_mult_left
 proveit.linear_algebra.inner_products.inner_prod_scalar_mult_right
 proveit.linear_algebra.inner_products.inner_prod_space_is_vec_space
@@ -31,6 +33,7 @@ proveit.linear_algebra.tensors.norm_of_tensor_prod
 proveit.linear_algebra.tensors.norm_preserving_tensor_prod
 proveit.linear_algebra.tensors.tensor_prod_is_in_tensor_prod_space
 proveit.linear_algebra.tensors.tensor_prod_of_cart_exps_within_cart_exp
+proveit.linear_algebra.tensors.tensor_prod_of_vec_spaces_is_vec_space
 proveit.logic.booleans.conjunction.and_if_both
 proveit.logic.booleans.conjunction.any_from_and
 proveit.logic.booleans.conjunction.conjunction_from_quantification
@@ -210,7 +213,6 @@ proveit.numbers.number_sets.rational_numbers.nonpos_if_in_rational_nonpos
 proveit.numbers.number_sets.rational_numbers.nonpos_int_within_rational_nonpos
 proveit.numbers.number_sets.rational_numbers.nonzero_if_in_rational_nonzero
 proveit.numbers.number_sets.rational_numbers.nonzero_int_within_rational_nonzero
-proveit.numbers.number_sets.rational_numbers.nonzero_rational_is_rational_nonzero
 proveit.numbers.number_sets.rational_numbers.positive_if_in_rational_pos
 proveit.numbers.number_sets.rational_numbers.rational_neg_within_rational
 proveit.numbers.number_sets.rational_numbers.rational_neg_within_rational_nonpos
@@ -241,7 +243,6 @@ proveit.numbers.number_sets.real_numbers.nonpos_int_within_real_nonpos
 proveit.numbers.number_sets.real_numbers.nonzero_if_in_real_nonzero
 proveit.numbers.number_sets.real_numbers.nonzero_int_within_real_nonzero
 proveit.numbers.number_sets.real_numbers.pi_is_real_pos
-proveit.numbers.number_sets.real_numbers.pos_real_is_real_pos
 proveit.numbers.number_sets.real_numbers.positive_if_in_real_pos
 proveit.numbers.number_sets.real_numbers.rational_neg_within_real_neg
 proveit.numbers.number_sets.real_numbers.rational_nonneg_within_real_nonneg
@@ -310,12 +311,10 @@ proveit.numbers.ordering.transitivity_less_eq_less
 proveit.numbers.ordering.transitivity_less_eq_less_eq
 proveit.numbers.ordering.transitivity_less_less_eq
 proveit.physics.quantum.QPE._phase_is_real
-proveit.physics.quantum.algebra.complex_set_is_hilbert_space
-proveit.physics.quantum.algebra.hilbert_space_is_inner_prod_space
-proveit.physics.quantum.algebra.hilbert_space_is_vec_space
 proveit.physics.quantum.algebra.ket_one_in_qubit_space
 proveit.physics.quantum.algebra.ket_one_norm
 proveit.physics.quantum.algebra.ket_zero_and_one_are_orthogonal
+proveit.physics.quantum.algebra.ket_zero_and_one_have_zero_inner_prod
 proveit.physics.quantum.algebra.ket_zero_in_qubit_space
 proveit.physics.quantum.algebra.ket_zero_norm
 # THEOREMS AND THEORIES TO EXCLUDE:

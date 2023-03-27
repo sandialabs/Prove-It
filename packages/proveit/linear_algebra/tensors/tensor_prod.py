@@ -1,5 +1,6 @@
 from proveit import (Judgment, defaults, ExprRange, relation_prover, 
-                     equality_prover, Literal, Operation, Lambda, 
+                     equality_prover, auto_equality_prover,
+                     Literal, Operation, Lambda, 
                      UnsatisfiedPrerequisites,
                      prover, TransRelUpdater, SimplificationDirectives)
 from proveit import a, b, c, d, e, f, i, j, k, A, K, Q, U, V, W, alpha
@@ -7,13 +8,14 @@ from proveit.logic import Equals, InClass, SetMembership, SubsetEq
 from proveit.numbers import one
 from proveit.abstract_algebra.generic_methods import (
         apply_association_thm, apply_disassociation_thm)
-from proveit.linear_algebra import (VecSpaces, ScalarMult, VecAdd, VecSum,
-                                    deduce_as_vec_space)
+from proveit.linear_algebra import (
+        VecSpaces, ScalarMult, VecOperation, VecAdd, VecSum,
+        deduce_as_vec_space, deduce_canonically_equal)
 
 pkg = __package__
 
 
-class TensorProd(Operation):
+class TensorProd(VecOperation):
     r'''
     Class to represent the tensor product of any number of operands.
     Example usage: TensorProd(x, y, z) represents the tensor product
@@ -37,6 +39,28 @@ class TensorProd(Operation):
         # itself be an element of a TensorProd
         from .tensor_prod_membership import TensorProdMembership
         return TensorProdMembership(element, self)
+
+    def _build_canonical_form(self):
+        '''
+        Returns the canonical form of this TensorProd, pulling out
+        and combining all scalars.
+        '''
+        from proveit.numbers import Mult
+        scalars = []
+        canonical_factors = []
+        for factor in self.factors:
+            factor = factor.canonical_form()
+            if isinstance(factor, ScalarMult):
+                scalars.append(factor.scalar)
+                factor = factor.scaled
+            if isinstance(factor, TensorProd):
+                canonical_factors.extend(factor.factors)
+            else:
+                canonical_factors.append(factor)
+        if len(scalars) == 0:
+            return TensorProd(*canonical_factors)
+        return ScalarMult(Mult(*scalars), 
+                          TensorProd(*canonical_factors)).canonical_form()
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
@@ -87,16 +111,7 @@ class TensorProd(Operation):
                 # known to be in vector spaces (e.g., maybe the operands
                 # are vectors spaces themselves).
                 return eq.relation
-            for _k, operand in enumerate(expr.operands):
-                if isinstance(operand, ScalarMult):
-                    # Just pull out the first one we see and let
-                    # recursive simplifications take care of any more.
-                    # To make sure this happens we turn auto_simplify
-                    # on, and those simpiflications should all be fair
-                    # game as part of shallow_simplification.
-                    expr = eq.update(expr.scalar_factorization(
-                        _k, auto_simplify=True))
-                    break
+            expr = eq.update(expr.scalars_factorization())
         
         # Future processing possible here.
         return eq.relation
@@ -183,11 +198,17 @@ class TensorProd(Operation):
 
         if not TensorProd.all_ops_are_cart_exp(self):
             from . import tensor_prod_association
-            _V = VecSpaces.known_vec_space(self, field=field)
-            _K = VecSpaces.known_field(_V)
+            _vspace = VecSpaces.known_vec_space(self, field=field)
+            _K = VecSpaces.known_field(_vspace)
+            _U = VecSpaces.known_vec_spaces(self.factors[:start_idx], 
+                                            field=_K)
+            _V = VecSpaces.known_vec_spaces(
+                self.factors[start_idx:start_idx+length], field=_K)
+            _W = VecSpaces.known_vec_spaces(
+                self.factors[start_idx+length:], field=_K)
             eq = apply_association_thm(
                 self, start_idx, length, tensor_prod_association,
-                repl_map_extras={K:_K, V:_V}).derive_consequent()
+                repl_map_extras={K:_K, U:_U, V:_V, W:_W})
             return eq.with_wrapping_at()
         else:
             from . import tensor_prod_vec_space_association
@@ -233,11 +254,22 @@ class TensorProd(Operation):
 
         if not TensorProd.all_ops_are_cart_exp(self):
             from . import tensor_prod_disassociation
-            _V = VecSpaces.known_vec_space(self, field=field)
-            _K = VecSpaces.known_field(_V)
+            _vspace = VecSpaces.known_vec_space(self, field=field)
+            _K = VecSpaces.known_field(_vspace)
+            _U = VecSpaces.known_vec_spaces(self.factors[:idx], 
+                                            field=_K)
+            nested_group = self.operands[idx]
+            if not isinstance(nested_group, TensorProd):
+                raise ValueError(
+                    "Cannot disassociate index %d from %s."
+                    %(idx, self))
+            _V = VecSpaces.known_vec_spaces(
+                nested_group.factors, field=_K)
+            _W = VecSpaces.known_vec_spaces(
+                self.factors[idx+1:], field=_K)
             eq = apply_disassociation_thm(
                     self, idx, tensor_prod_disassociation,
-                    repl_map_extras={K:_K, V:_V}).derive_consequent()
+                    repl_map_extras={K:_K, U:_U, V:_V, W:_W})
             return eq.with_wrapping_at()
         else:
             from . import tensor_prod_vec_space_disassociation
@@ -300,7 +332,32 @@ class TensorProd(Operation):
                 "Don't know how to distribute tensor product over " +
                 str(sum_factor.__class__) + " factor")
 
-    @equality_prover('scalar_factorized', 'factor_scalar')
+    @auto_equality_prover('scalars_factorized', 'factor_scalars')
+    def scalars_factorization(self, *, field=None, **defaults_config):
+        '''
+        Equate this TensorProd with a form that has all of the
+        scalar factors pulled out in front.
+        '''
+        expr = self
+        eq = TransRelUpdater(expr)
+        
+        scalar_mult_indices = []        
+        for _k, operand in enumerate(expr.operands):
+            if isinstance(operand, ScalarMult):
+                scalar_mult_indices.append(_k)
+
+        if len(scalar_mult_indices) == 0:
+            return eq.relation # no scalars to factor out.
+        
+        last_scalar_mult_idx = scalar_mult_indices[-1]
+        for _k in scalar_mult_indices:
+            if isinstance(expr, ScalarMult):
+                expr = expr.inner_expr().scaled
+            expr = eq.update(expr.scalar_factorization(_k, field=field))
+        
+        return eq.relation
+        
+    @auto_equality_prover('scalar_factorized', 'factor_scalar')
     def scalar_factorization(self, idx=None, *, field=None,
                              **defaults_config):
         '''
@@ -334,17 +391,182 @@ class TensorProd(Operation):
         if not isinstance(self.operands[idx], ScalarMult):
             raise TypeError("Expected the 'operand' and 'operand_idx' to be "
                             "a ScalarMult")            
-        _V = VecSpaces.known_vec_space(self, field=field)
-        _K = VecSpaces.known_field(_V)
+        _vspace = VecSpaces.known_vec_space(self, field=field)
+        _K = VecSpaces.known_field(_vspace)
         _alpha = self.operands[idx].scalar
         _a = self.operands[:idx]
         _b = self.operands[idx].scaled
         _c = self.operands[idx+1:]
         _i = _a.num_elements()
         _k = _c.num_elements()
-        impl = factor_scalar_from_tensor_prod.instantiate(
-                {K:_K, alpha:_alpha, i:_i, k:_k, V:_V, a:_a, b:_b, c:_c})
-        return impl.derive_consequent().with_wrapping_at()
+        _U = VecSpaces.known_vec_spaces(_a, field=_K)
+        _V = VecSpaces.known_vec_space(_b, field=_K)
+        _W = VecSpaces.known_vec_spaces(_c, field=_K)
+        inst = factor_scalar_from_tensor_prod.instantiate(
+            {K:_K, alpha:_alpha, i:_i, k:_k, U:_U, V:_V, W:_W,
+             a:_a, b:_b, c:_c})
+        return inst.with_wrapping_at()
+    
+    def readily_factorable(self, factor, *, pull):
+        '''
+        Return True if 'factor' may be easily factored from this
+        VecAdd, pulling either to the 'left' or the 'right'.
+        If pulling to the 'left', the factor must be at the front
+        of any tensor product of vectors.  If pulling to the 'right', 
+        the factor must be at the back of any tensor product of vectors.
+        '''
+        from proveit.linear_algebra import readily_factorable
+
+        # Put the 'self' and the candidate factor in canonical form 
+        # which will put scalars in the front.
+        canonical_self = self.canonical_form()
+        if canonical_self.factors.num_entries()==0:
+            return False # Empty tensor product cannot be factored.
+        canonical_factor = factor.canonical_form()
+        if isinstance(canonical_factor, ScalarMult):
+            if not isinstance(canonical_self, ScalarMult):
+                # Nothing to factor the scalar from.
+                return False
+            if not readily_factorable(canonical_self.scalar,
+                                      canonical_factor.scalar):
+                # Can't factor the scalar part.
+                return False
+            canonical_factor = canonical_factor.scaled
+        if isinstance(canonical_self, ScalarMult):
+            # We've addressed any scalar part.
+            canonical_self = canonical_self.scaled
+        if isinstance(canonical_factor, TensorProd):
+            num_factors = canonical_factor.factors.num_entries()            
+            if pull == 'left':
+                # Try to match the first factors.
+                factors_to_match = canonical_self.factors[:num_factors]
+            else:
+                # Try to match the last factors.
+                factors_to_match = canonical_self.factors[-num_factors:]
+            return factors_to_match == canonical_factor.factors
+        elif pull == 'left':
+            # Try to match the first factor.
+            return canonical_self.factors[0] == canonical_factor
+        elif pull == 'right':
+            # Try to match the last factor.
+            return canonical_self.factors[-1] == canonical_factor
+        else:
+            raise ValueError("'pull' must be 'left' or 'right', not %s"
+                             %pull)
+
+    @auto_equality_prover('factorized', 'factor')
+    def factorization(self, the_factor, *, pull,
+            group_factors=True, group_remainder=False,
+            field=None, **defaults_config):
+        '''
+        Factor 'the_factor' from the left of this TensorProd if 
+        pull='left' or from the right of the TensorProd if pull='right'.
+        The tensor product cannot commute but scalar factors can
+        and will shift as necessary.  If group_factors is True,
+        'factor' will be grouped (associated).  If group_remainder is
+        True, the remainder will be grouped (associated).
+        '''
+        from proveit.numbers import (
+                one, remove_common_factors, compose_product, compose_fraction)
+        from proveit.linear_algebra.scalar_multiplication.scalar_mult import (
+                extract_scalar_and_scaled)
+
+        # Put the factor in its canonical form and separate out any
+        # of its scalar factors.
+        factor_scalar, factor_scaled = extract_scalar_and_scaled(the_factor)
+        self_cf = self.canonical_form()
+
+        if self_cf == the_factor.canonical_form():
+            # Trivial case of factoring the entire ScalarMult.
+            return deduce_canonically_equal(self, the_factor, field=field)
+
+        canonical_tensor_prod = (
+                self_cf.scaled if isinstance(self_cf, ScalarMult) else
+                self_cf)
+        assert isinstance(canonical_tensor_prod, TensorProd)
+        num_tensor_entries = canonical_tensor_prod.factors.num_entries()
+        
+        def raise_not_factorable():
+            raise ValueError("Unable to factor %s from %s"%(the_factor, self))
+        canonical_factor_scaled = factor_scaled.canonical_form()
+        if isinstance(canonical_factor_scaled, TensorProd):
+            num_to_factor = fanonical_factor_scaled.factors.num_entries()
+            if num_to_factor > num_tensor_entries:
+                raise_not_factorable() 
+            canonical_factors = canonical_factor_scaled.factors.entries
+        else:
+            num_to_factor = 1
+            canonical_factors = (canonical_factor_scaled,)
+                
+        if pull=='left':
+            if (canonical_tensor_prod.factors[:num_to_factor].entries
+                    != canonical_factors):
+                raise_not_factorable()
+            pull_side_factors = self.factors[:num_to_factor]
+            far_side_factors = self.factors[num_to_factor:]
+        elif pull=='right':
+            if (canonical_tensor_prod.factors[num_to_factor:].entries
+                    != canonical_factors):
+                raise_not_factorable()
+            pull_side_factors = reversed(self.factors[num_to_factor:])
+            far_side_factors = reversed(self.factors[:num_to_factor])
+        else:
+            raise ValueError("'pull' must either be 'left' or 'right'.")
+                    
+        # Find the scalar factors that need to be moved.
+        leftover_scalars = []
+        for factor in pull_side_factors:
+            if isinstance(factor, ScalarMult):
+                leftover_scalar = remove_common_factors(factor.scalar, 
+                                                        factor_scalar)
+                if leftover_scalar != one:
+                    leftover_scalars.append(leftover_scalar)
+                factor_scalar = remove_common_factors(
+                        factor_scalar, factor.scalar)
+        # Determine 'remainder' factors.
+        remainder_factors = []
+        for factor in far_side_factors:
+            if isinstance(factor, ScalarMult):
+                scalar = remove_common_factors(factor.scalar, 
+                                               factor_scalar)
+                if scalar == one:
+                    remainder_factors.append(factor.scaled)
+                else:
+                    remainder_factors.append(
+                            ScalarMult(scalar, factor.scaled))
+                factor_scalar = remove_common_factors(
+                        factor_scalar, factor.scalar)
+            else:
+                remainder_factors.append(factor)
+        leftover_scalar = compose_product(*leftover_scalars)
+        if factor_scalar != one:
+            leftover_scalar = compose_fraction(leftover_scalar, 
+                                               factor_scalar)
+        assert len(remainder_factors) > 0, (
+                "Otherwise, the canonical forms would be equal")
+        if leftover_scalar != one:
+            if len(remainder_factors)==0:
+                raise ValueError(
+                        "Vectors must be pulled to the 'right' "
+                        "unless it is a portion of a TensorProd")
+            the_factors = [the_factor]
+            if len(remainder_factors) > 1:
+                remainder_factors = [ScalarMult(
+                        leftover_scalar, TensorProd(*remainder_factors))]
+            elif len(remainder_factors) == 1:
+                remainder_factors = [ScalarMult(leftover_scalar,
+                                                remainder_factors[0])]
+        else:
+            the_factors = [the_factor]
+            if not group_factors and isinstance(the_factor, TensorProd):
+                the_factors = the_factors.factors
+            if group_remainder and len(remainder_factors)>1:
+                remainder_factors = [TensorProd(*remainder_factors)]
+        if pull=='left':
+            desired = TensorProd(*the_factors, *remainder_factors)
+        else:
+            desired = TensorProd(*remainder_factors, *the_factors)
+        return deduce_canonically_equal(self, desired, field=field)
 
     @staticmethod
     def _check_tensor_equality(tensor_equality, allow_unary=False):

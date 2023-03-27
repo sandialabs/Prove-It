@@ -3,6 +3,7 @@ from proveit import (
         defaults, Expression, Literal, ExprTuple, ExprRange, 
         Judgment, ProofFailure, UnsatisfiedPrerequisites,
         prover, relation_prover, equality_prover,
+        auto_prover, auto_relation_prover, auto_equality_prover,
         SimplificationDirectives, TransRelUpdater, free_vars)
 from proveit import a, b, c, d, e, i, j, k, m, n, w, x, y, z
 from proveit.logic import (
@@ -40,6 +41,7 @@ class Mult(NumberOperation):
             combine_numeric_rational_exponents=True,
             combine_all_exponents=True,
             distribute_numeric_rational=False,
+            distribute_fractions=False,
             # By default, sort such that numeric, rationals come first 
             # but otherwise maintain the original order.
             order_key_fn = lambda factor : (
@@ -388,6 +390,8 @@ class Mult(NumberOperation):
         factors = self.factors
         if factors.num_entries() == 0:
             return NaturalPos # [*]() = 1
+        elif factors.is_single():
+            return readily_provable_number_set(factors[0])
 
         major_number_sets = []
         # If we stay Real, this will keep track of the relation to zero:
@@ -521,7 +525,7 @@ class Mult(NumberOperation):
         non-constant factor that is an Add expression, distribute any
         constant factor through the addition.
         '''
-        from proveit.numbers import Neg, Div, Exp, is_numeric_rational
+        from proveit.numbers import Exp, Div, is_numeric_rational
         from . import mult_zero_left, mult_zero_right, mult_zero_any
         from . import empty_mult
 
@@ -586,7 +590,8 @@ class Mult(NumberOperation):
         # eliminate factors of one.
         # Since this is supposed to be a shallow simplification,
         # turn off auto-simplification for these cancelations.
-        expr = eq.update(expr.cancelations(auto_simplify=False))
+        if Div._simplification_directives_.cancel_factors:
+            expr = eq.update(expr.cancelations(auto_simplify=False))
 
         if is_irreducible_value(expr):
             return eq.relation  # done
@@ -682,7 +687,12 @@ class Mult(NumberOperation):
         # See if we should reorder the factors.
         expr = eq.update(sorting_operands(expr, order_key_fn=order_key_fn))
         
-        if Mult._simplification_directives_.distribute_numeric_rational:
+        if Mult._simplification_directives_.distribute_fractions and (
+                expr.operands.is_double() and 
+                (isinstance(expr.operands[0], Div) or
+                 isinstance(expr.operands[1], Div))):
+            expr = eq.update(expr.distribution())
+        elif Mult._simplification_directives_.distribute_numeric_rational:
             # If there are exactly two factors and one is an Add and
             # the other is a numeric literal, distribute over the Add.
             if expr.operands.is_double():
@@ -1274,6 +1284,10 @@ class Mult(NumberOperation):
             a (b - c) d = a b d - a c d
             a (\sum_x f(x)) c = \sum_x a f(x) c
             (a/b)*(c/d) = (a*b)/(c*d)
+        Example for a distribute_all_sums:
+            recursively looks for first add or sum to distribute through
+            (a+b)(c+d)ef = a(c+d)ef + b(c+d)ef
+                         = acef + adef + bcef + bdef
         
         For more flexibility, 'left_factors' and 'right_factors'
         may be specified to indicate subsets of the factors to
@@ -1441,7 +1455,33 @@ class Mult(NumberOperation):
                 "Unsupported operand type to distribute over: " +
                 str(operand.__class__))
 
-    @equality_prover('factorized', 'factor')
+    def readily_factorable(self, factor):
+        '''
+        Return True iff 'factor' is factorable from 'self' in an
+        obvious manner.  For this Mult, it is readily factorable if
+        it is readily factorable from any factor of the Mult.
+        '''
+        from proveit.numbers import one, Div, Neg, Exp, readily_factorable
+        if self == factor:
+            return True
+        # First check to see if there is a direct factor.
+        for _factor in self.factors:
+            if readily_factorable(_factor, factor):
+                return True
+        '''
+        # Check to see if factors are distributed throughout.
+        candidate_factors = (factor,)
+        if isinstance(factor, Mult):
+            candidate_factors = factor
+        elif isinstance(factor, Div):
+            candidate_factors = (factor.numerator, 
+                                 Exp(factor.denominator, Neg(one)))
+        '''
+        # Return true if all factors of 'factor' are common factors
+        # of self.
+        return remove_common_factors(factor, self)==one
+
+    @auto_equality_prover('factorized', 'factor')
     def factorization(self, the_factors_or_index, pull="left",
                       group_factors=True, group_remainder=False,
                       **defaults_config):
@@ -1457,10 +1497,22 @@ class Mult(NumberOperation):
         If group_remainder is True and there are multiple remaining
         operands, then these remaining
         '''
+        from proveit.numbers import Div, readily_factorable
         expr = self
         eq = TransRelUpdater(expr)
         if the_factors_or_index == self:
             return eq.relation  # self = self
+
+        if isinstance(the_factors_or_index, Div):
+            reduction = the_factors_or_index.reduction_to_mult(
+                auto_simplify=True)
+            factor = reduction.rhs
+            replacements = list(defaults.replacements)
+            replacements.append(reduction.derive_reversed())
+            return self.factorization(
+                    factor, pull=pull, group_factors=group_factors,
+                    group_remainder=group_remainder,
+                    replacements=replacements)
 
         if isinstance(the_factors_or_index, Expression):
             try:
@@ -1477,95 +1529,160 @@ class Mult(NumberOperation):
                     the_factors_or_index = [the_factors_or_index]
         if isinstance(the_factors_or_index, int):
             idx = the_factors_or_index
-            num = 1
+            num_factored = 1
             the_factor = self.operands[idx]
             expr = eq.update(expr.commutation(
-                    idx, 0 if pull=='left' else -num,
-                    preserve_expr=the_factor))    
+                    idx, 0 if pull=='left' else -num_factored))
             all_factors = [the_factor]
         else:
             # Look for one or more factors, pull them out,
             # grouping where possible.
-            factors_iter = iter(the_factors_or_index)
+            the_factors = list(the_factors_or_index)
+            the_factors_idx = 0
             all_factors = []
             my_factors = self.operands.entries
-            the_slice = None
-            num = 0
-            try:
-                # Handle all but the last, always looking ahead one
-                # to see if consecutive factors can move together.
-                while True:
-                    next_factor = next(factors_iter)
-                    all_factors.append(next_factor)
-                    try:
-                        next_idx = my_factors.index(next_factor)
-                    except ValueError:
-                        raise ValueError(
-                            "%s not found as a direct factor of %s"
-                            %(next_factor, self))
-                    if the_slice is None:
-                        # We want to look ahead one if possible.
-                        the_slice = slice(next_idx, next_idx+1)
-                        continue
-                    if next_idx == the_slice.stop:
-                        # Extend the slice then look at the next one.
-                        the_slice = slice(the_slice.start, next_idx+1)
-                        continue
-                    # Go ahead and move 'the_slice'
-                    idx = the_slice.start
-                    length = the_slice.stop - idx
-                    # Preserve all until the last one.
-                    expr = eq.update(expr.group_commutation(
-                        idx, num if pull == 'left' else -num-length, 
-                        length=length,
-                        preserve_all=True))
-                    num += length
-                    the_slice = slice(next_idx, next_idx+1)
-            except StopIteration:
-                # Handle the last slice.
-                preserved_exprs = (
-                        defaults.preserved_exprs.union(all_factors))
-                disassociate = (len(all_factors) > 1 or
-                                not group_factors)
+            num_factored = 0
+            shift = 0
+                        
+            def move_slice(expr, the_slice, shift, num_factored, **kwargs):
                 idx = the_slice.start
                 length = the_slice.stop - idx
-                # Don't simplify if our goal is to group the factors
-                # or remainder.  Simplification could defeat this 
-                # purpose.
-                preserve_all=(group_factors or group_remainder)
-                expr = eq.update(expr.group_commutation(
-                    idx, num if pull == 'left' else -num-length, 
-                    length=length, disassociate=disassociate,
-                    preserved_exprs=preserved_exprs,
-                    preserve_all=preserve_all))
-                num += length
-        
+                idx += shift
+                _num_factors = expr.factors.num_entries()
+                if not ((pull=='left' and idx==num_factored) or
+                        (pull=='right' and 
+                         idx==_num_factors-length)):
+                    # Preserve-all until the last step.
+                    expr = eq.update(expr.group_commutation(
+                        idx, (num_factored if pull == 'left' 
+                              else -length), 
+                        length=length, **kwargs))
+                    if kwargs.get('disassociate', False):
+                        length=1
+                return expr, length
+            
+            while the_factors_idx < len(the_factors):
+                # Find the next factor.
+                next_factor = the_factors[the_factors_idx]
+                all_factors.append(next_factor)
+                try:
+                    next_idx = my_factors.index(next_factor)
+                    nested_factor = None
+                except ValueError:
+                    next_idx = None
+                    for idx, factor in enumerate(my_factors):
+                        if readily_factorable(factor, next_factor):
+                            # Factor 'next_factor' out of one of
+                            # the factors of 'self'.
+                            nested_factor = next_factor
+                            next_idx = idx
+                    if next_idx is None:
+                        raise ValueError(
+                            "%s not found as a factor of %s"
+                            %(next_factor, self))
+                the_factors_idx += 1
+                
+                # Join with any other factors that appear consecutively.
+                num_expr_factors = expr.factors.num_entries()
+                the_slice = slice(next_idx, next_idx+1)
+                if pull=='right' or (nested_factor is None):
+                    while the_factors_idx < len(the_factors):
+                        _factor = the_factors[the_factors_idx]
+                        stop = the_slice.stop
+                        if stop == len(my_factors):
+                            break
+                        if my_factors[stop]==_factor:
+                            the_slice = slice(the_slice.start,
+                                              the_slice.stop + 1)
+                            all_factors.append(_factor)
+                            the_factors_idx += 1
+                            continue
+                        if (pull=='left' and readily_factorable(
+                                my_factors[stop], _factor)):
+                            nested_factor = _factor
+                            the_slice = slice(the_slice.start,
+                                              the_slice.stop + 1)
+                            all_factors.append(_factor)
+                            the_factors_idx += 1
+                            break
+                        break # end of consecutive factors
+                
+                if nested_factor is not None:
+                    prev_num_expr_factors = num_expr_factors
+                    _idx = (shift+the_slice.stop-1 if pull=='left' else
+                            shift+the_slice.start)
+                    if (expr.factors[_idx].canonical_form() == 
+                            nested_factor.canonical_form()):
+                        # Not really a nested factor -- just
+                        # a different expression with the same
+                        # canonical form.
+                        expr = eq.update(
+                                expr.inner_expr().factors[_idx]
+                                .deduce_canonically_equal(
+                                        nested_factor))
+                    else:
+                        expr = eq.update(
+                                expr.inner_expr().factors[_idx]
+                                .factorization(nested_factor, pull=pull,
+                                               group_factors=True,
+                                               group_remainder=False))
+                        expr = eq.update(
+                                expr.inner_expr().disassociation(_idx))
+                        if pull=='right':
+                            # Shift the slice to account for the
+                            # factorization.
+                            extra_shift = (expr.factors.num_entries() -
+                                           prev_num_expr_factors)
+                            the_slice = slice(the_slice.start+extra_shift,
+                                              the_slice.stop+extra_shift)
+
+                # Go ahead and move 'the_slice'
+                if the_factors_idx < len(the_factors):
+                    # Move this slice with more factors to find.
+                    expr, length = move_slice(
+                            expr, the_slice, shift, num_factored)
+                else:
+                    # Last one to move. Possibly simplify and/or keep
+                    # associated.
+                    disassociate = (num_factored > 0 or not group_factors)
+                    expr, length = move_slice(
+                            expr, the_slice, shift, num_factored, 
+                            disassociate=disassociate)
+                    
+                num_factored += length
+                if pull == 'left':
+                    shift += length
+                    my_factors = expr.factors.entries[num_factored:]
+                else:
+                    my_factors = expr.factors.entries[:-num_factored]
+                    
+        group_factors = group_factors and num_factored > 1
+        group_remainder = group_remainder and (
+            expr.operands.num_entries() - num_factored > 1)
         # Group the factors if needed.
-        if group_factors and len(all_factors) > 1:
-            # use 0:num type of convention like standard python
+        if group_factors:
+            # use 0:num_factored type of convention like standard python
             if pull == 'left':
                 expr = eq.update(expr.association(
-                        0, num, preserve_all=True))
+                        0, num_factored))
             elif pull == 'right':
                 expr = eq.update(expr.association(
-                        -num, num, preserve_all=True))
-        num_factor_operands = 1 if group_factors else num
-        if (group_remainder and 
-                expr.operands.num_entries() - num_factor_operands > 1):
+                        -num_factored, num_factored))
+        num_factor_operands = 1 if group_factors else num_factored
+        if group_remainder:
             # if the factor has been group, effectively there is just 1
             # factor operand now
             num_remainder_operands = (expr.operands.num_entries() -
                                       num_factor_operands)
             if pull == 'left':
                 expr = eq.update(expr.association(
-                        num_factor_operands, num_remainder_operands,
-                        preserve_all=True))
+                        num_factor_operands, num_remainder_operands))
             elif pull == 'right':
                 expr = eq.update(expr.association(
-                        0, num_remainder_operands, preserve_all=True))
+                        0, num_remainder_operands))
         return eq.relation
 
-    @equality_prover('combined_exponents', 'combine_exponents')
+    @auto_equality_prover('combined_exponents', 'combine_exponents')
     def combining_exponents(self, start_idx=None, end_idx=None,
                              **defaults_config):
         '''
@@ -1609,8 +1726,7 @@ class Mult(NumberOperation):
 
             # associate the factors intended for combination
             # warning: 2nd arg of association() fxn is length not index
-            grouped = self.association(start_idx, assoc_length,
-                                       preserve_all=True)
+            grouped = self.association(start_idx, assoc_length)
             # isolate the targeted factors and combine them as desired
             # using call to this same method
             inner_combination = (
@@ -1642,8 +1758,7 @@ class Mult(NumberOperation):
             replacements = list(defaults.replacements)
             if factor_range.start_index != one:
                 # Transform from as ExprRange that start at 1.
-                replacements.append(factor_range.reduction().derive_reversed(
-                        preserve_all=True))
+                replacements.append(factor_range.reduction().derive_reversed())
             inst = exp_pkg.exp_nat_pos_rev.instantiate(
                     {n:_n, x:_x}, replacements=replacements)
             return inst
@@ -1675,9 +1790,8 @@ class Mult(NumberOperation):
                     temp_factors.append(factor)
                 else:
                     # x^n = x * x * ..(n-3)x.. * x
-                    replacements.append(Mult(factor).combining_exponents(
-                            preserve_all=True).derive_reversed(
-                                    preserve_all=True))
+                    replacements.append(Mult(factor).combining_exponents()
+                            .derive_reversed())
                     temp_factors.append(replacements[-1].rhs)
                     disassoc_indices.append(idx)
                     # exponent = factor.num_elements()
@@ -1705,7 +1819,7 @@ class Mult(NumberOperation):
         if temp_factors != factors:
             replacements.append(
                     multi_disassociation(Mult(*temp_factors),
-                            *disassoc_indices, preserve_all=True))
+                            *disassoc_indices))
         minimal_exponent_ns = union_number_set(*exponent_number_sets)
         assert len(factor_bases)==1
         _a = next(iter(factor_bases))
@@ -1739,7 +1853,7 @@ class Mult(NumberOperation):
                 return exp_pkg.products_of_complex_powers.instantiate(
                         {m:_m, a:_a, b:_b}, replacements=replacements)
 
-    @equality_prover('combined_operands', 'combine_operands')
+    @auto_equality_prover('combined_operands', 'combine_operands')
     def combining_operands(self, **defaults_config):
         '''
         Combine factors, adding their literal, rational exponents.
@@ -1747,7 +1861,7 @@ class Mult(NumberOperation):
         '''
         return self.combining_exponents()    
 
-    @equality_prover('common_power_extracted', 'common_power_extract')
+    @auto_equality_prover('common_power_extracted', 'common_power_extract')
     def common_power_extraction(self, start_idx=None, end_idx=None,
                                 exp_factor=None,
                                 **defaults_config):
@@ -1802,8 +1916,7 @@ class Mult(NumberOperation):
                 # without specifying the indices
                 return self.common_power_extraction(exp_factor=exp_factor)
             else:
-                grouped = self.association(start_idx, assoc_length,
-                                           preserve_all=True)
+                grouped = self.association(start_idx, assoc_length,)
             # isolate the targeted factors and combine them as desired
             # using call to this same method
             inner_combination = (
@@ -1872,7 +1985,7 @@ class Mult(NumberOperation):
                 if temp_expr.operands[idx].exponent != exp_factor:
                     temp_expr = eq.update(
                             temp_expr.inner_expr().operands[idx]
-                            .exp_factorization(exp_factor, preserve_all=True))
+                            .exp_factorization(exp_factor))
             # eq.relation now has each factor with the specified the_factor
             # extracted to produce something along the lines of
             # |- a^{f j} b^{j, k} = (a^f)^j (b^k)^j
@@ -1953,8 +2066,6 @@ class Mult(NumberOperation):
             (a * b ... * (l * ... * m) * ... * y * z)
         '''
         from . import association
-        # print("In Mult.association():")
-        # print("  preserved_exprs = {}".format(defaults.preserved_exprs))
         return apply_association_thm(
             self, start_idx, length, association)
 
@@ -2075,22 +2186,54 @@ class Mult(NumberOperation):
         InSet(self, RealPos).prove()
         return greater(self, zero).prove()
 
-def compose_factors(*factors):
+def compose_product(*factors):
     '''
-    Return the Mult of the factors if there are multiple factors,
-    or a single factor as appropriate.
+    Return an expression representing the product of the given
+    factors using obvious simplifications: return 'one' if there
+    are no factors, return the single factor if there is only 1,
+    return 'zero' if there are any zeros, and combine fractions.
     '''
+    from proveit.numbers import zero, one, Neg, Div, compose_fraction
     if len(factors) == 0:
         return one
     elif len(factors) == 1:
         return factors[0]
-    return Mult(*factors)
+    numerators = []
+    denominators = []
+    sign = 1
+    for factor in factors:
+        if isinstance(factor, Neg):
+            factor = factor.operand
+            sign *= -1
+        if isinstance(factor, Div):
+            if factor.numerator == zero:
+                return zero
+            elif factor.numerator != one:
+                numerators.append(factor.numerator)
+            denominators.append(factor.denominator)
+        elif factor == zero:
+            return zero
+        elif factor != one:
+            numerators.append(factor)
+    if len(denominators) > 0:
+        numerator = compose_product(*numerators)
+        if sign==-1: numerator = Neg(numerator)
+        return compose_fraction(numerator,
+                                compose_product(*denominators))
+    if len(numerators) == 0:
+        result = one
+    elif len(numerators) == 1:
+        result = numerators[0]
+    else:
+        result = Mult(*numerators)
+    if sign==-1: return Neg(result)
+    return result
 
 def coefficient_and_remainder(expr):
     '''
     Returns the coefficient and remainder of the given expression.
     '''
-    from proveit.numbers import Neg, Div, is_numeric_rational
+    from proveit.numbers import Neg, is_numeric_rational
     if isinstance(expr, Neg):
         # Put the negation in the coefficient.
         coef, remainder = coefficient_and_remainder(expr.operand)
@@ -2118,3 +2261,142 @@ def coefficient_and_remainder(expr):
         coef = one
         remainder = expr
     return coef, remainder
+
+def _add_canonical_factors(expr, exponent,
+                           canonical_factor_exponents):
+    '''
+    Add factors of the given expr, raised to the given exponent
+    and put into canonical form, to 'canonical_factor_exponents'
+    which maps canonical factors to their exponents.
+    When exponents are added, they are 'quick simplified' but otherwise
+    left in their original form.
+    '''
+    from proveit.numbers import negated, Mult, Div, Exp
+    if isinstance(expr, Mult):
+        for factor in expr.factors:
+            _add_canonical_factors(factor, exponent, canonical_factor_exponents)
+    elif isinstance(expr, Div):
+        _add_canonical_factors(expr.numerator, exponent, 
+                               canonical_factor_exponents)
+        _add_canonical_factors(expr.denominator, negated(exponent), 
+                               canonical_factor_exponents)
+    elif isinstance(expr, Exp):
+        internal_exponent = compose_product(exponent, expr.exponent)
+        _add_canonical_factors(expr.base, internal_exponent, 
+                               canonical_factor_exponents)
+    else:
+        prev_exponent = canonical_factor_exponents.get(expr, zero)
+        new_exponent = Add(prev_exponent, exponent).quick_simplified()
+        canonical_factor_exponents[expr] = new_exponent
+
+def remove_common_factors(expr_A, expr_B):
+    '''
+    Return the portion of expr_A that remains after removing the
+    factors that are in common with expr_B.  Canonical forms are used
+    to determine which factors are in common, but the returned portion
+    of expr_A will be kept in its original form.
+    '''
+    # Get the factors of expr_B in canonical form and their 
+    # net exponents.
+    canonical_factor_exponents = dict()
+    _add_canonical_factors(expr_B, one, canonical_factor_exponents)
+    # Iterate through factors of expr_A to see if they match with
+    # any of the expr_B factors in canonical form.
+    return _remove_common_factors(expr_A, canonical_factor_exponents)
+    
+def _remove_common_factors(expr, canonical_factor_exponents):
+    '''
+    Return this expression after removing factors that appear in
+    'canonical_factor_exponents' and remove those from
+    'canonical_factor_exponents' as well.  Called recursively.
+    '''
+    from proveit.numbers import (one, Add, Neg, subtract, Div, Exp,
+                                 readily_factorable, compose_fraction)
+    expr_cf = expr.canonical_form()
+    if expr_cf in canonical_factor_exponents.keys():
+        expr = Exp(expr, one) # handle this below in the Exp case
+    if isinstance(expr, Mult):
+        remaining_factors = []
+        for factor in expr.factors:
+            # Recursively remove common factors from this
+            # 'factor' of self.
+            factor = _remove_common_factors(
+                            factor, canonical_factor_exponents)
+            if factor != one:
+                remaining_factors.append(factor)
+        # Return a new product of the remaining factors.
+        return compose_product(*remaining_factors)
+    elif isinstance(expr, Div):
+        # Recursively remove common factors from the numerator.
+        remaining_numerator = _remove_common_factors(
+                expr.numerator, canonical_factor_exponents)
+        canonical_factor_negated_exponents = {
+                factor: Add(Neg(exponent)).quick_simplified()
+                for factor, exponent in canonical_factor_exponents.items()}
+        # Recursively remove common factors, with negated exponents,
+        # from the denominator.
+        remaining_denominator = _remove_common_factors(
+                expr.denominator, canonical_factor_negated_exponents)
+        canonical_factor_exponents.clear()
+        canonical_factor_exponents.update(
+                {factor: Add(Neg(exponent)).quick_simplified()
+                for factor, exponent 
+                in canonical_factor_negated_exponents.items()})
+        if remaining_denominator == one:
+            # trivial deonominator
+            return remaining_numerator
+        # Return a new fraction.
+        return Div(remaining_numerator, remaining_denominator)
+    elif isinstance(expr, Exp):
+        # e.g., expr = a^b
+        base, exponent = expr.base, expr.exponent
+        base_cf = base.canonical_form()
+        if base_cf in canonical_factor_exponents:
+            factor_exponent = canonical_factor_exponents[base_cf]
+            if factor_exponent.canonical_form() == exponent.canonical_form():
+                canonical_factor_exponents.pop(base_cf)
+                return one
+            canonical_factor = Exp(base_cf, factor_exponent)
+            if expr.readily_factorable(canonical_factor):
+                # Remove all of some a^c from a^b to leave
+                # a^{b - c}
+                new_exponent = subtract(exponent,
+                                        factor_exponent).quick_simplified()
+                canonical_factor_exponents.pop(base_cf)
+                if new_exponent == zero:
+                    return one
+                elif new_exponent == one:
+                    return base
+                else:
+                    return Exp(base, new_exponent)
+            elif readily_factorable(canonical_factor, expr):
+                # Use the a^b part of some a^c to eliminate a^b and
+                # leave a^{c - b} to possibly remove other factors.
+                new_exponent = subtract(factor_exponent,
+                                        exponent).quick_simplified()
+                if new_exponent == zero:
+                    canonical_factor_exponents.pop(base_cf)
+                else:
+                    canonical_factor_exponents[base_cf] = new_exponent
+                return one
+        if expr_cf in canonical_factor_exponents.keys():
+            # Avoid infinite recursion.  Unable to factor.
+            assert expr.exponent == one
+            return expr.base
+        # Recursively remove common factors, with altered exponents,
+        # within the base.
+        canonical_factor_adjusted_exponents = {
+                factor: compose_fraction(_exponent, exponent)
+                for factor, _exponent in canonical_factor_exponents.items()}
+        remaining_base = _remove_common_factors(
+                base, canonical_factor_adjusted_exponents)
+        canonical_factor_exponents.clear()
+        canonical_factor_exponents.update(
+                {factor: compose_product(_exponent, exponent)
+                for factor, _exponent 
+                in canonical_factor_adjusted_exponents.items()})
+        if remaining_base == one:
+            return one
+        return Exp(remaining_base, exponent)
+    else:
+        return expr

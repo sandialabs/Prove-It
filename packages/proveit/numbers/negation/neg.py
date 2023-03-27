@@ -2,6 +2,7 @@ from proveit import (Expression, Literal, Operation, ExprRange,
                      maybe_fenced_string, maybe_fenced_latex, 
                      InnerExpr, defaults, USE_DEFAULTS, 
                      ProofFailure, relation_prover, equality_prover,
+                     auto_relation_prover, auto_equality_prover,
                      SimplificationDirectives)
 from proveit.logic import is_irreducible_value
 from proveit.numbers.number_sets import (
@@ -335,7 +336,18 @@ class Neg(NumberOperation):
                 "Only negation distribution through a sum, subtract, or "
                 "fraction (Div) is implemented.")
 
-    @equality_prover('factorized', 'factor')
+    def readily_factorable(self, factor):
+        # Return True iff 'factor' is factorable from 'self' in an
+        # obvious manner.  For this Neg, it is readily factorable if
+        # it is readily factorable from its operand.  If 'factor' is
+        # a Neg, just use its operand.
+        if self == factor:
+            return True
+        if isinstance(factor, Neg):
+            factor = factor.operand
+        return self.operand.readily_factorable(factor)
+
+    @auto_equality_prover('factorized', 'factor')
     def factorization(self, the_factors, pull="left", group_factors=None,
                       group_remainder=None, **defaults_config):
         '''
@@ -371,14 +383,12 @@ class Neg(NumberOperation):
                 {x: self.operand}, auto_simplify=False).derive_reversed()
         elif hasattr(self.operand, 'factorization'):
             operand_factor_eqn = self.operand.factorization(
-                the_factors, pull, group_factors=True, group_remainder=True,
-                preserve_all=True)
+                the_factors, pull, group_factors=True, group_remainder=True)
             eqn1 = operand_factor_eqn.substitution(self.inner_expr().operand)
             new_operand = operand_factor_eqn.rhs
-            eqn2 = thm.instantiate(
-                {x: new_operand.operands[0], y: new_operand.operands[1]},
-                auto_simplify=False, preserve_expr=eqn1.rhs
-                ).derive_reversed()
+            _x = new_operand.operands[0]
+            _y = new_operand.operands[1]
+            eqn2 = thm.instantiate({x:_x, y: _y}).derive_reversed()
             return eqn1.apply_transitivity(eqn2)
         else:
             raise ValueError("%s is not a factor in %s!" 

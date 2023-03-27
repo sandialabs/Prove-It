@@ -10,7 +10,7 @@ from .real_numbers import (
     RealInterval, IntervalOO, IntervalCC, IntervalCO, IntervalOC,
     e, pi)
 from .complex_numbers import (
-        Complex, ComplexNonZero, i,
+        Complex, ComplexNonZero, i, Conjugate,
         complex_polar_coordinates, 
         unit_length_complex_polar_angle)
 

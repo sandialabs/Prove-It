@@ -1,4 +1,5 @@
-from .fourier_transform_ops import InverseFourierTransform
+from .fourier_transform_ops import (FourierTransform,
+                                    InverseFourierTransform)
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

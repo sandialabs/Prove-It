@@ -288,6 +288,12 @@ class Defaults:
         elif attr == 'automation':
             # Turn "side-effect" and "conclude" automation on/off.
             self.sideeffect_automation = self.conclude_automation = value
+        if attr == 'preserved_exprs':
+            for expr in value:
+                from .expression.expr import Expression
+                if not isinstance(expr, Expression):
+                    raise TypeError("'preserved_exprs' should be Expression "
+                                    "objects, not of type %s"%type(expr))
         self.__dict__[attr] = value
 
 class TemporarySetter(object):
