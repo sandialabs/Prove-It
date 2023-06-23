@@ -2637,6 +2637,58 @@ class StoredTheorem(StoredSpecialStmt):
         return self.theory._storage.get_all_presumed_theorem_names(self.name)
     """
 
+    def get_allowed_and_disallowed_presumptions(self):
+        '''
+        Return the set of theorems and theories that are explicitly
+        allowed/disallowed to be presumed in a proof of this theory.
+        '''
+        proof_path = os.path.join(self.theory.get_path(), '_theory_nbs_',
+                                  'proofs', self.name)
+        allowances_filename = os.path.join(proof_path, 
+                                           'allowed_presumptions.txt')
+        disallowances_filename = os.path.join(proof_path, 
+                                              'disallowed_presumptions.txt')
+        allowances = set()
+        disallowances = set()
+        for presumptions, filename in (
+                (allowances, allowances_filename),
+                (disallowances, disallowances_filename)):
+            if not os.path.isfile(filename):
+                with open(filename, 'w') as f:
+                    pass
+            with open(filename, 'r') as f:
+                for line in f.readlines():
+                    presumptions.add(line.strip())
+        return allowances, disallowances
+
+    def allow_presumption(self, presumption):
+        proof_path = os.path.join(self.theory.get_path(), '_theory_nbs_',
+                                  'proofs', self.name)
+        filename = os.path.join(proof_path, 'allowed_presumptions.txt')
+        with open(filename, 'a') as f:
+            f.write(presumption + '\n')
+
+    def disallow_presumption(self, presumption):
+        proof_path = os.path.join(self.theory.get_path(), '_theory_nbs_',
+                                  'proofs', self.name)
+        filename = os.path.join(proof_path, 'disallowed_presumptions.txt')
+        with open(filename, 'a') as f:
+            f.write(presumption + '\n')
+    
+    def clear_presumption_info(self):
+        '''
+        Clear the allowances and disallowances for this theorem.
+        '''
+        proof_path = os.path.join(self.theory.get_path(), '_theory_nbs_',
+                                  'proofs', self.name)
+        filename = os.path.join(proof_path, 'allowed_presumptions.txt')
+        with open(filename, 'w'):
+            pass
+        filename = os.path.join(proof_path, 'disallowed_presumptions.txt')
+        with open(filename, 'w'):
+            pass
+
+    """
     def get_presumptions_and_exclusions(self, presumptions=None,
                                         exclusions=None):
         '''
@@ -2675,6 +2727,7 @@ class StoredTheorem(StoredSpecialStmt):
                 elif line[0] != '#':
                     active.add(line)
         return presumptions, exclusions
+    """
 
     def _recordProof(self, proof):
         '''
@@ -2792,7 +2845,8 @@ class StoredTheorem(StoredSpecialStmt):
                 #if theorem.is_usable():
                 f.write(str(theorem) + '\n')
         '''
-
+        '''
+        # NO NEED TO REWRITE presumptions.txt ANY MORE.
         from proveit._core_.proof import Theorem
         with open(os.path.join(proof_path, 'presumptions.txt'), 'w') as f:
             f.write(StoredTheorem.PRESUMPTIONS_HEADER + '\n')
@@ -2802,6 +2856,7 @@ class StoredTheorem(StoredSpecialStmt):
             for theorem in sorted(used_theorem_names):
                 f.write(str(theorem) + '\n')
             f.write(StoredTheorem.PRESUMPTION_EXCLUSION_HEADER + '\n')
+        '''
 
     def has_proof(self):
         '''
@@ -3129,11 +3184,13 @@ class StoredTheorem(StoredSpecialStmt):
                 else:
                     stored_theorem = Theory.get_stored_theorem(next_theorem_name)
             except (KeyError, TheoryException):
-                # If it no longer exists, skip it.
+                # If it no longer exists (or is a theory rather than a
+                # theorem), skip it.
                 continue
             names.add(next_theorem_name)            
             if not stored_theorem.has_proof():
-                new_to_process, _ = stored_theorem.get_presumptions_and_exclusions()
+                new_to_process, _ = (
+                        stored_theorem.get_allowed_and_disallowed_presumptions())
             else:
                 new_to_process = stored_theorem.read_used_theorems()
             to_process.update(set(new_to_process) - names)

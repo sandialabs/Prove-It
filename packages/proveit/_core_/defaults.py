@@ -106,6 +106,9 @@ class Defaults:
         # set to the appropriate file to send information about failed
         # imports of other common expressions.
         self.import_failure_filename = None
+        
+        # Set to true when processing notebooks using build.py.
+        self._executing_auto_build = False
 
     @property
     def running_theory_notebook(self):
