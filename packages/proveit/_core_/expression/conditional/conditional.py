@@ -212,11 +212,11 @@ class Conditional(Expression):
         # subsequent conditions.
         if isinstance(self.condition, And):
             conditions = self.condition.operands.entries
-            build_get_cond_fn = lambda _k : (
-                    lambda _expr : _expr.condition.operands[_k]) 
         else:
             conditions = [self.condition]
-            build_get_cond_fn = lambda _k : (lambda _expr : _expr.condition) 
+        build_get_cond_fn = lambda _k : (lambda _expr : 
+                                         _expr.condition.operands[_k] if isinstance(_expr.condition, And)
+                                         else _expr.condition)
         
         # For each condition, we'll assume the previous substituted
         # conditions.
