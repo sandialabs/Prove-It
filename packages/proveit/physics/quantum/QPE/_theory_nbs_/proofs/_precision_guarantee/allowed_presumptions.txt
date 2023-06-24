@@ -1,0 +1,12 @@
+proveit.physics.quantum.QPE._e_value_in_e_domain
+proveit.physics.quantum.QPE._success_complements_failure
+proveit.physics.quantum.QPE._failure_upper_bound
+proveit.physics.quantum.QPE._pfail_in_real
+proveit.core_expr_types
+proveit.logic
+proveit.numbers
+proveit.physics.quantum.QPE._precision_guarantee_lemma_01
+proveit.physics.quantum.QPE._precision_guarantee_lemma_02
+proveit.physics.quantum.QPE._Omega_is_sample_space
+proveit.statistics
+proveit.physics.quantum.QPE._sample_space_bijection

@@ -1,5 +1,0 @@
-# THEOREMS AND THEORIES THAT MAY BE PRESUMED:
-proveit.logic.booleans.disjunction.false_or_false_negated
-proveit.logic.booleans.negation.negation_intro
-proveit.logic.equality.sub_left_side_into
-# THEOREMS AND THEORIES TO EXCLUDE:

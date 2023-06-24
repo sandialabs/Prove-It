@@ -1,3 +1,0 @@
-# THEOREMS AND THEORIES THAT MAY BE PRESUMED:
-proveit.logic.booleans.implication.false_implies_true
-# THEOREMS AND THEORIES TO EXCLUDE:

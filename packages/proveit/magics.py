@@ -1014,6 +1014,13 @@ class ProveItMagic(Magics, ProveItMagicCommands):
                             beginning_proof=True)
 
     @line_magic
+    def clear_presumption_info(self, line):
+        if Judgment.theorem_being_proven is None:
+            raise Exception("Cannot use the %clear_presumption_info"
+                            "magic command without a theorem being proven")
+        Judgment.stored_theorem_being_proven.clear_presumption_info()
+
+    @line_magic
     def qed(self, line):
         return ProveItMagicCommands.qed(self)
 
@@ -1149,7 +1156,7 @@ def assignment_html(name, right_side, beginning_proof=False):
         lhs_html = ('<a class="ProveItLink" href="%s">%s</a> (%s):<br>'
                     % (proof_notebook_relurl, name, status))
     if beginning_proof:
-        html = 'Under these <a href="presumptions.txt">presumptions</a>, we begin our proof of<br>'
+        html = 'With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br>'
     else:
         html = ''
     html += '<strong id="%s">%s</strong> %s<br>' % (

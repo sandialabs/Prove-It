@@ -1,0 +1,6 @@
+proveit.logic
+proveit.physics.quantum.QPE._Omega_is_sample_space
+proveit.core_expr_types
+proveit.numbers
+proveit.statistics
+proveit.physics.quantum.QPE._sample_space_bijection

@@ -1,0 +1,2 @@
+proveit.core_expr_types.operations.operands_substitution_via_tuple
+proveit.logic.equality.rhs_via_equality

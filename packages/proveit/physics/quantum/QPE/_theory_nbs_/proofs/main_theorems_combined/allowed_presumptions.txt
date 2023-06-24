@@ -1,0 +1,5 @@
+proveit.logic
+proveit.numbers
+proveit.physics.quantum.QPE.qpe_best_guarantee
+proveit.physics.quantum.QPE.qpe_exact
+proveit.physics.quantum.QPE.qpe_precision_guarantee

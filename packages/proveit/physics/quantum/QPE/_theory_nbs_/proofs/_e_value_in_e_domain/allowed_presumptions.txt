@@ -1,0 +1,4 @@
+proveit.core_expr_types
+proveit.logic
+proveit.numbers
+proveit.physics.quantum.QPE._e_value_ge_two

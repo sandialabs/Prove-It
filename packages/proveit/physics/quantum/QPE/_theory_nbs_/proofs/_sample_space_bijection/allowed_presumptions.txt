@@ -1,0 +1,5 @@
+proveit.logic
+proveit.core_expr_types
+proveit.numbers
+proveit.physics.quantum.algebra
+proveit.physics.quantum.circuits

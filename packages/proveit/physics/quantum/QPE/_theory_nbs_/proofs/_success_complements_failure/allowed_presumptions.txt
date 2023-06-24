@@ -1,0 +1,8 @@
+proveit.logic
+proveit.numbers
+proveit.physics.quantum.QPE._Omega_is_sample_space
+proveit.physics.quantum.QPE._best_floor_is_int
+proveit.physics.quantum.QPE._sample_space_bijection
+proveit.physics.quantum.QPE._two_pow_t_is_nat_pos
+proveit.physics.quantum.QPE._two_pow_t_minus_one_is_nat_pos
+proveit.statistics

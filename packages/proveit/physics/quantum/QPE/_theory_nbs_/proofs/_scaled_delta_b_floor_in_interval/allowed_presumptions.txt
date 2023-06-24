@@ -1,0 +1,5 @@
+proveit.physics.quantum.QPE._best_floor_is_in_m_domain
+proveit.logic
+proveit.numbers
+proveit.core_expr_types
+proveit.physics.quantum.QPE._phase_is_real

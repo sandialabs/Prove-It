@@ -1,0 +1,6 @@
+proveit.physics.quantum.QPE._outcome_prob
+proveit.physics.quantum.QPE._best_guarantee
+proveit.logic
+proveit.numbers
+proveit.physics.quantum.QPE._phase_is_real
+proveit.physics.quantum.QPE._two_pow_t_is_nat_pos

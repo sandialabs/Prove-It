@@ -1,0 +1,6 @@
+proveit.statistics
+proveit.physics.quantum.QPE._outcome_prob
+proveit.logic
+proveit.physics.quantum.circuits
+proveit.physics.quantum.QPE._Psi_ket_is_normalized_vec
+proveit.physics.quantum.QPE._sample_space_bijection

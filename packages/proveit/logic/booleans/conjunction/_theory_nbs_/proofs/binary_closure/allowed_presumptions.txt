@@ -1,0 +1,5 @@
+proveit.logic.booleans.forall_over_bool_by_cases
+proveit.logic.booleans.in_bool_if_true
+proveit.logic.booleans.negation.negation_intro
+proveit.logic.booleans.quantification.universality.bundle
+proveit.numbers.numerals.decimals.posnat1

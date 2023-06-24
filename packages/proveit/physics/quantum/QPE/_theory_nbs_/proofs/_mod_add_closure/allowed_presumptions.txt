@@ -1,0 +1,3 @@
+proveit.numbers
+proveit.physics.quantum.QPE._two_pow_t_is_nat_pos
+proveit.logic

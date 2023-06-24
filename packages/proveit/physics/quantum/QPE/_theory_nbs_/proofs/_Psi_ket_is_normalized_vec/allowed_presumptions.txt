@@ -1,0 +1,5 @@
+proveit.physics.quantum.QPE._psi_t_ket_is_normalized_vec
+proveit.physics.quantum.QFT
+proveit.logic
+proveit.numbers
+proveit.physics.quantum.algebra

@@ -1,0 +1,12 @@
+proveit.numbers
+proveit.logic
+proveit.physics.quantum.QPE._best_floor_is_int
+proveit.physics.quantum.QPE._two_pow_t_minus_one_is_nat_pos
+proveit.core_expr_types
+proveit.physics.quantum.QPE._Omega_is_sample_space
+proveit.statistics
+proveit.physics.quantum.QPE._modabs_in_full_domain_simp
+proveit.physics.quantum.QPE._sample_space_bijection
+proveit.physics.quantum.QPE._mod_add_closure
+proveit.physics.quantum.QPE._outcome_prob
+proveit.physics.quantum.QPE._fail_sum_prob_conds_equiv_lemma
