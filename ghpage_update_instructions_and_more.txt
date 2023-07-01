@@ -4,7 +4,7 @@
 cd doc
 make html
 cd ..
-find . -name "*.html" -o -name "*.ipynb" -o -name "presumptions.txt" -o -name "__pv_it" -o -name "*.png"  -o -name "notebook.css" -o -name ".nojekyll" | tar -czf pv_it_web.tar.gz -T -
+find . -name "*.html" -o -name "*.ipynb" -o -name "*presumptions.txt" -o -name "__pv_it" -o -name "*.png"  -o -name "notebook.css" -o -name ".nojekyll" | tar -czf pv_it_web.tar.gz -T -
 
 
 <<in a location where the gh-pages branch is checkout out>>
