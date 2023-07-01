@@ -9,6 +9,7 @@ Proof objects form a DAG.
 
 from collections import OrderedDict, deque
 import re
+import sys
 from proveit._core_.judgment import Judgment
 from proveit._core_._unique_data import meaning_data, style_data
 from .defaults import defaults, USE_DEFAULTS
@@ -33,7 +34,6 @@ class Proof:
         Assumption.all_assumptions.clear()
         Assumption.considered_assumption_sets.clear()
         Theorem.all_theorems.clear()
-        Theorem.all_used_theorems.clear()
         Instantiation.instantiations.clear()
         Instantiation.unsatisfied_condition = None
         Instantiation.condition_assumptions = None
@@ -85,6 +85,7 @@ class Proof:
             # Proof.disable().
             # When unusable, this will point to the unusable theorem
             self._meaning_data._unusable_proof = None
+            self._meaning_data._non_allowances = None
             # being applied directly or indirectly.
 
         # The style data is shared among Proofs with the same structure and
@@ -198,10 +199,17 @@ class Proof:
 
         requiring_unusable_proof = False
         for required_proof in self.required_proofs:
-            if required_proof.is_usable():
-                # Required proof is a theorem being used.
-                if isinstance(required_proof, Theorem):
-                    Theorem.all_used_theorems.add(required_proof)
+            if required_proof.is_possibly_usable():
+                # Record any required theorems that are not explicitly
+                # allowed.  We'll wait until displaying a Judgement 
+                # whose Proof isn't explicitly allowed to query the
+                # user about whether to allow or disallow
+                # these.
+                if not required_proof.explicitly_allowed():
+                    if self._meaning_data._non_allowances is None:
+                        self._meaning_data._non_allowances = set()
+                    self._meaning_data._non_allowances.update(
+                            required_proof._meaning_data._non_allowances)
             else:
                 # Mark proofs as unusable when using an "unusable" theorem
                 # directly or indirectly.  Theorems are marked as unusable
@@ -214,7 +222,7 @@ class Proof:
                 break  # it only take one
 
         # if it is a Theorem, set its "usability", avoiding circular logic
-        if self.is_usable():
+        if self.is_possibly_usable():
             self._mark_usability()
         # This new proof may be the first proof, make an old one 
         # obselete, or be born obsolete itself.
@@ -286,7 +294,7 @@ class Proof:
             return # Side-effect automation is off, so don't do it.
         proven_truth = self.proven_truth
         
-        if proven_truth.proof() == self and self.is_usable(): 
+        if proven_truth.proof() == self and self.is_possibly_usable(): 
             key = (proven_truth.expr, defaults.sorted_assumptions,
                    defaults.conclude_automation)
             if key in Proof.sideeffect_processed:
@@ -327,13 +335,33 @@ class Proof:
                     %(dependent.proven_truth, oldproof.proven_truth))
             newproof._dependents.add(dependent)
             dependent._mark_num_steps_as_unknown()
-            if all(required_proof.is_usable()
+            if dependent._meaning_data._non_allowances is not None or (
+                    newproof._meaning_data._non_allowances is not None):
+                # The "non-allowances" must be updated.
+                dependent._update_non_allowances()
+            if all(required_proof.is_possibly_usable()
                    for required_proof in dependent.required_proofs):
                 dependent._meaning_data._unusable_proof = None  # it is usable again
                 dependent.proven_truth._add_proof(
                     dependent)  # add it back as an option
         # Nothing should depend upon the old proof any longer.
-        oldproof._dependents.clear()        
+        oldproof._dependents.clear()      
+    
+    def _update_non_allowances(self):
+        '''
+        Update the set of directly or indirectly required proofs that
+        are neither allowed nor disallowed.
+        '''
+        revised_non_allowance = set()
+        for required_proof in self.required_proofs:
+            if required_proof._meaning_data._non_allowances is not None:
+                revised_non_allowance.update(
+                        required_proof._meaning_data._non_allowances)
+        if len(revised_non_allowance) == 0:
+            self._meaning_data._non_allowances = None
+        else:
+            self._meaning_data._non_allowances = (
+                    revised_non_allowance)
 
     def _mark_usability(self, set_to_disable=None):
         pass  # overloaded for the Theorem type Proof
@@ -433,14 +461,41 @@ class Proof:
             return _ShowProof.show_proof_by_id[proof_id]
         return _ShowProof(theory, folder, proof_id, step_info, groups)
 
-    def is_usable(self):
+    def is_possibly_usable(self):
         '''
-        Returns True iff this Proof is usable.  A Proof may be unusable
-        because it was manually disabled or because it is not being presumed
-        while trying to prove a Theorem (other Theorems must be explicitly
-        presumed in order to avoid circular logic).
+        Returns True iff this Proof is possibly usable (not manually 
+        disabled or explicitly disallowed as a presumption while trying
+        to prove a Theorem).
         '''
         return self._meaning_data._unusable_proof is None
+    
+    def explicitly_allowed(self):
+        '''
+        Returns True iff this Proof is explicitly allowed.
+        '''
+        return (self._meaning_data._unusable_proof is None and
+                self._meaning_data._non_allowances is None)
+    
+    def _query_allowance(self):
+        '''
+        If the proof is neither explicitly allowed nor disallowed,
+        force the user to make a choice.
+        '''
+        if self._meaning_data._unusable_proof is not None:
+            return False # explicitly disallowed
+        if self._meaning_data._non_allowances is None:
+            return True # explicitly allowed
+        name_to_thm = {str(proof):proof for proof in
+                       self._meaning_data._non_allowances}
+        for thm_name in sorted(name_to_thm.keys()):
+            # We must make a choice for each of these (or cancel and
+            # return False).
+            thm = name_to_thm[thm_name]
+            if not thm._query_allowance():
+                return False
+        # These are now all allowed.
+        self._meaning_data._non_allowances = None
+        return True
 
     def disable(self):
         '''
@@ -469,7 +524,7 @@ class Proof:
             dep_id_to_dep_and_source[id(proof)] = (proof, proof)
         dependents_by_nsteps = [(proof.num_steps(), id(proof)) 
                                 for proof in to_disable
-                                if proof.is_usable()]
+                                if proof.is_possibly_usable()]
 
         # In the first pass, disable the 'to_disable' set and
         # their direct/indirect dependence in a monotonic order
@@ -495,7 +550,7 @@ class Proof:
                 continue
             # Push sub-dependents onto the heap.
             for _dependent in dependent._dependents:
-                if _dependent.is_usable():
+                if _dependent.is_possibly_usable():
                     dep_id_to_dep_and_source[id(_dependent)] = (
                         _dependent, source)
                     heapq.heappush(dependents_by_nsteps,
@@ -510,7 +565,7 @@ class Proof:
         while len(dependents_by_nsteps) > 0:
             _n, dependent_id = heapq.heappop(dependents_by_nsteps)
             dependent, _ = dep_id_to_dep_and_source[dependent_id]
-            if dependent.is_usable():
+            if dependent.is_possibly_usable():
                 # Already enabled, so we can skip it.
                 continue
             is_defunct = (dependent.proven_truth.proof() == dependent)
@@ -796,7 +851,7 @@ class Proof:
                 ', '.join(req_ref(proof, k) for k
                           in range(len(proof.required_proofs)))
             out_str += proof.step_type() + '\t' + required_proof_refs + '\t'
-            out_str += proof.proven_truth.string(perform_usability_check=False)
+            out_str += proof.proven_truth.string()
             out_str += '\n'
             if proof.step_type() == 'instantiation':
                 out_str += '\t' + proof._mapping('str') + '\n'
@@ -976,7 +1031,6 @@ class Axiom(Proof):
 
 class Theorem(Proof):
     all_theorems = []
-    all_used_theorems = set()
 
     def __init__(self, expr, theory, name, *,
                  _proven_truth=None, _requirements=None,
@@ -1089,14 +1143,12 @@ class Theorem(Proof):
         return self._stored_theorem().get_all_presumed_theorem_names()
     """
 
-    def get_presumptions_and_exclusions(self):
+    def get_allowed_and_disallowed_presumptions(self):
         '''
-        Return the set of theorems and theories that are explicitly
-        presumed by this theorem, and a set of exclusions (e.g.,
-        you could presume the proveit.logic theory but exclude
-        proveit.logic.equality).
+        Return the set of theorems and theory packages that are 
+        allowed/disallowed to be presumed in the proof of this theorem.
         '''
-        return self._stored_theorem().get_presumptions_and_exclusions()
+        return self._stored_theorem().get_allowed_and_disallowed_presumptions()
 
     def _recordProof(self, proof):
         '''
@@ -1181,18 +1233,20 @@ class Theorem(Proof):
 
     def _mark_usability(self, set_to_disable=None):
         '''
-        Determine whether or not we need to disable the
-        theorem -- if some theorem is being proven and this
-        theorem is not presumed or is an alternate proof for the
-        same theorem.  Also, if it is presumed, ensure the logic
-        is not circular.  Generally, this is preventing circular
-        logic.  This applies when a proof has begun
-        (see Judgment.begin_proof in judgment.py).
-        When Judgment.theorem_being_proven is None, all Theorems are 
-        allowed.  Otherwise only Theorems named in the 
-        Judgment.presuming_theorem_names set
-        or contained within any of the Judgment.presuming_theories
-        (i.e., theory) are allowed.
+        If this theorem is disallowed while proven the "theorem
+        being proven" then it will be marked as unusable and set to
+        disable.  If this theorem is allowed, we will ensure there is
+        not a circular dependence among explicitly allowed or used
+        theorems that brings us back to the "theorem being proven";
+        this strikes a balance between being proactive about checking 
+        for circularity and not burdening the system too much with 
+        checking all theorems of an allowed package.  If this theorem
+        is neither explicitly allowed nor disallowed, we will mark
+        it as such in its _meaning_data._non_allowances which will
+        be propagated through dependencies.  We will query the user
+        whether to allow or disallow each theorem in such a limbo
+        when displaying any Judgment whose Proof depends upon these 
+        theorems.
         
         If set_to_disable is provided, instead of actively disabling
         proofs, collect them in a set to be disabled more efficiently.
@@ -1202,63 +1256,140 @@ class Theorem(Proof):
             # Nothing being proven, so all Theorems are usable
             self._meaning_data._unusable_proof = None
             return
-        legitimately_presumed = False
-        stored_theorem = self._stored_theorem()
         theorem_being_proven_str = Judgment.theorem_being_proven_str
-        presumed_theorems_and_dependencies = \
-            Judgment.presumed_theorems_and_dependencies
         if self.proven_truth == Judgment.theorem_being_proven.proven_truth:
-            # Note that two differently-named theorems for the same thing may exists in
-            # order to show an alternate proof.  In that case, we want to disable
-            # the other alternates as well so we will be sure to generate the
-            # new proof.
+            # Note that two differently-named theorems for the same 
+            # thing may exists in order to show an alternate proof.  
+            # In that case, we want to disable the other alternates as 
+            # well so we will be sure to generate the new proof.
             if set_to_disable is None:
                 self.disable()
             else:
                 set_to_disable.add(self)
             return
-        else:
-            name_and_containing_theories = list(
-                self.theorem_name_and_containing_theories())
-            specifically_presumed = (str(self) in 
-                                     Judgment.presumed_theorems_and_theories)
-            if specifically_presumed:
-                presumed = True
-            else:
-                exclusions = Judgment.presuming_theorem_and_theory_exclusions
-                if exclusions.isdisjoint(name_and_containing_theories):
-                    presumptions = Judgment.presumed_theorems_and_theories
-                    presumed = not presumptions.isdisjoint(
-                        name_and_containing_theories)
-                else:
-                    presumed = False
-            if presumed:
-                # This Theorem is being presumed specifically, or a theory
-                # in which it is contained is presumed.  We'll check its
-                # dependencies to avoid circuit logic.  If there is a
-                # circular dependence, we'll either raise a CircularLogic
-                # exception if the theorm was presumed specifically or
-                # simply disregard it if it was presumed as part of a
-                # theory.
-                stored_theorem.all_used_or_presumed_theorem_names(
-                    presumed_theorems_and_dependencies)
-                if theorem_being_proven_str in presumed_theorems_and_dependencies:
-                    # Theorem-specific presumption or dependency is
-                    # mutual.  Raise a CircularLogic error.
-                    raise CircularLogic(
-                        Judgment.theorem_being_proven, self,
-                        implicitly_presumed = not specifically_presumed)
-                else:
-                    legitimately_presumed = True
-        if not legitimately_presumed:
-            # This Theorem is not usable during the proof (if it is needed, it must be
-            # presumed or fully proven).  Propagate this fact to all
-            # dependents.
+        
+        name_and_containing_theories = list(
+            self.theorem_name_and_containing_theories())
+        
+        # First let's check if this theorem or a containing theory
+        # is explicitly disallowed.
+        if not Judgment.disallowed_theorems_and_theories.isdisjoint(
+                        name_and_containing_theories):
+            # This Theorem is explicitly disallowed and therefore not 
+            # usable while proving the "theorem being proven".  
+            # Propagate this fact to all dependents.
             if set_to_disable is None:
                 self.disable()
             else:
                 set_to_disable.add(self)
+            return
+            
+        # Next check to see if this theorem or a containing theory
+        # is explicitly allowed.
+        stored_theorem = self._stored_theorem()
+        allowed_theorems_and_theories = (
+                Judgment.allowed_theorems_and_theories)
+        presumed_theorems_and_dependencies = (
+                Judgment.presumed_theorems_and_dependencies)
+        if not allowed_theorems_and_theories.isdisjoint(
+                        name_and_containing_theories):
+            # This theorem is explicitly allowed.  Let's recurse 
+            # through explicitly allowed presumptions and used theorems
+            # to see if anything leads back to the theorem being proven
+            # and prevent the potential for circular logic.
+            stored_theorem.all_used_or_presumed_theorem_names(
+                presumed_theorems_and_dependencies)
+            if theorem_being_proven_str in presumed_theorems_and_dependencies:
+                # Theorem-specific presumption or dependency is
+                # mutual.  Raise a CircularLogic error.
+                specifically_presumed = (str(self) in 
+                                     allowed_theorems_and_theories)
+                raise CircularLogic(
+                    Judgment.theorem_being_proven, self,
+                    implicitly_presumed = not specifically_presumed)
+        else:
+            # It is neither allowed nor disallowed.  Record this
+            # in the 'non_allowances'.
+            self._meaning_data._non_allowances = {self}
+            # Propagate to dependents.
+            to_process = set(self._meaning_data._dependents)
+            processed = {self}
+            while len(to_process) > 1:
+                dep_proof = to_process.pop()
+                if dep_proof in processed: continue
+                if dep_proof._meaning_data._non_allowances is None:
+                    dep_proof._meaning_data._non_allowances = {self}
+                else:
+                    dep_proof._meaning_data._non_allowances.add(self)
+                processed.add(dep_proof)
+                to_process.update(dep_proof._meaning_data._dependents)
 
+    def _query_allowance(self):
+        '''
+        If the Theorem is neither explicitly allowed nor disallowed,
+        force the user to make a choice.
+        '''
+        name_and_containing_theories = list(
+            self.theorem_name_and_containing_theories())
+        if self._meaning_data._unusable_proof is not None or (
+                not Judgment.disallowed_theorems_and_theories.isdisjoint(
+                    name_and_containing_theories)):
+            return False # explicitly disallowed
+        if self._meaning_data._non_allowances is None or (
+                not Judgment.allowed_theorems_and_theories.isdisjoint(
+                        name_and_containing_theories)):
+            return True # explicitly allowed
+        assert (len(self._meaning_data._non_allowances)==1 and
+                self in self._meaning_data._non_allowances)
+        
+        hint = ''
+        used_theorem_names = self.all_used_or_presumed_theorem_names()
+        if Judgment.theorem_being_proven_str in used_theorem_names:   
+            hint = ("\nHint: %s based upon current proofs, this must be"
+                    "\nDISALLOWED to prevent circular logic."%str(self))
+        elif self.is_fully_proven():
+            hint = ("\nHint: %s is fully proven and based upon current "
+                    "proofs, \nit is safe to ALLOW."%str(self))
+        
+        # If running build.py, just raise an exception since there
+        # is no user interactivity.
+        if defaults._executing_auto_build:
+            raise Exception(
+                    "Attempting to use %s which has neither been allowed "
+                    "nor disallowed for use in the proof of %s."
+                    %(str(self), Judgment.theorem_being_proven_str))
+        
+        cur_level = str(self)
+        print("Attempting to use %s which has neither been\n allowed nor "
+              "disallowed for use in this proof.%s"%(str(self), hint))
+        sys.stdout.flush()
+        while True:
+            # Query whether to allow, disallow, go up a level, 
+            # or cancel.
+            r = input("Do you wish to (a)llow, (d)isallow, go (u)p a level, "
+                  "or (c)ancel? ")
+            if r[0].lower() == 'a':
+                # Add to allowances and return True.
+                Judgment.stored_theorem_being_proven.allow_presumption(
+                        cur_level)
+                Judgment.allowed_theorems_and_theories.add(cur_level)
+                self._meaning_data._non_allowances = None
+                self._mark_usability()
+                return True
+            elif r[0].lower() == 'd':
+                # Add to disallowances and return False.
+                Judgment.stored_theorem_being_proven.disallow_presumption(
+                        cur_level)
+                Judgment.disallowed_theorems_and_theories.add(cur_level)
+                self._mark_usability()
+                return False
+            elif r[0].lower() == 'u':
+                # go up a level
+                cur_level = '.'.join(cur_level.split('.')[:-1])
+                print("Now considering entire %s theory package"%cur_level)
+            elif r[0].lower() == 'c':
+                # cancel
+                raise UnusableProof(Judgment.theorem_being_proven, self)
 
 def _checkImplication(implication_expr, antecedent_expr, consequent_expr):
     '''
@@ -2498,7 +2629,7 @@ class _ShowProof:
     def enumerated_proof_steps(self):
         return Proof.enumerated_proof_steps(self)
 
-    def is_usable(self):
+    def is_possibly_usable(self):
         return True
 
 

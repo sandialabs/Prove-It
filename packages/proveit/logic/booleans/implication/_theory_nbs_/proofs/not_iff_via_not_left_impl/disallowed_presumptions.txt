@@ -1,0 +1,2 @@
+proveit.logic.booleans.conjunction.nand_if_left_but_not_right
+proveit.logic.booleans.negation.not_false

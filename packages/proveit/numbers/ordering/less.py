@@ -207,9 +207,24 @@ class Less(NumberOrderingRelation):
         '''
         Derive a ≠ b from a < b.
         '''
-        from proveit.numbers.ordering import less_is_not_eq
+        from proveit.numbers import (readily_provable_number_set,
+                                     Natural, Integer, Rational, Real)
         _a, _b = self.lower, self.upper
-        return less_is_not_eq.instantiate({a: _a, b: _b})
+        a_ns = readily_provable_number_set(_a, default=Real)
+        b_ns = readily_provable_number_set(_b, default=Real)
+        if Natural.readily_includes(a_ns) and Natural.readily_includes(b_ns):
+            from proveit.numbers.ordering import less_is_not_eq_nat
+            thm = less_is_not_eq_nat
+        elif Integer.readily_includes(a_ns) and Integer.readily_includes(b_ns):
+            from proveit.numbers.ordering import less_is_not_eq_int
+            thm = less_is_not_eq_int
+        elif Rational.readily_includes(a_ns) and Rational.readily_includes(b_ns):
+            from proveit.numbers.ordering import less_is_not_eq_rational
+            thm = less_is_not_eq_rational
+        else:
+            from proveit.numbers.ordering import less_is_not_eq
+            thm = less_is_not_eq
+        return thm.instantiate({a: _a, b: _b})
 
     @prover
     def apply_transitivity(self, other, **defaults_config):

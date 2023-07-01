@@ -474,12 +474,12 @@ def deduce_not_equal_numeric_rationals(lhs, rhs, **defaults_config):
     Assuming a and b are numeric rationals, prove and return that
     a ≠ b.
     '''
-    from proveit.numbers.ordering import less_is_not_eq
+    from proveit.numbers.ordering import less_is_not_eq_rational
     if less_numeric_rationals(lhs.canonical_form(), rhs.canonical_form()):
         _a, _b = lhs, rhs
     else:
         _a, _b = rhs, lhs
-    not_eq_stmt = less_is_not_eq.instantiate({a: _a, b: _b})
+    not_eq_stmt = less_is_not_eq_rational.instantiate({a: _a, b: _b})
     if not_eq_stmt.lhs != lhs:
         # We need to reverse the statement.
         return not_eq_stmt.derive_reversed()

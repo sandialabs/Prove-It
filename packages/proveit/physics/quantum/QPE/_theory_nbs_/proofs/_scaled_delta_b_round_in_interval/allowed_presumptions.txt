@@ -1,0 +1,6 @@
+proveit.physics.quantum.QPE._best_round_is_int
+proveit.numbers
+proveit.logic
+proveit.physics.quantum.QPE._phase_is_real
+proveit.physics.quantum.QPE._two_pow_t_is_nat_pos
+proveit.core_expr_types

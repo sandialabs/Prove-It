@@ -1,0 +1,8 @@
+proveit.logic
+proveit.physics.quantum.circuits
+proveit.physics.quantum.QPE._Psi_ket_is_normalized_vec
+proveit.core_expr_types
+proveit.numbers
+proveit.physics.quantum.algebra
+proveit.physics.quantum.QPE._Psi_output
+proveit.linear_algebra

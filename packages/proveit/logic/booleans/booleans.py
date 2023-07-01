@@ -176,7 +176,7 @@ class BooleanMembership(SetMembership):
                 yield side_effect
         # don't automatically do unfold_is_bool_explicit if unfold_is_bool is
         # unusable -- avoids infinite recursion
-        if unfold_is_bool.is_usable():
+        if unfold_is_bool.is_possibly_usable():
             yield self.unfold
 
     def _readily_provable(self):
@@ -227,7 +227,7 @@ class BooleanMembership(SetMembership):
         [(element=TRUE) or (element=FALSE)].
         '''
         from . import unfold_is_bool, unfold_is_bool_explicit
-        if unfold_is_bool.is_usable():
+        if unfold_is_bool.is_possibly_usable():
             #  [element or not(element)] assuming in_bool(element)
             return unfold_is_bool.instantiate(
                 {A: self.element})

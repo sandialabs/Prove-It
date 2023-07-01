@@ -1,0 +1,2 @@
+proveit.logic.booleans.implication.self_implication
+proveit.logic.equality.sub_left_side_into

@@ -1,0 +1,2 @@
+proveit.logic.equality.substitute_in_true
+proveit.logic.equality.rhs_via_equality

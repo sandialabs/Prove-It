@@ -1,0 +1,10 @@
+proveit.physics.quantum.QPE._two_pow_t_is_nat_pos
+proveit.physics.quantum.QPE._two_pow_t_minus_one_is_nat_pos
+proveit.physics.quantum.QPE._best_floor_is_int
+proveit.physics.quantum.QPE._alpha_m_mod_as_geometric_sum
+proveit.logic
+proveit.numbers
+proveit.physics.quantum.QPE._phase_from_best_with_delta_b
+proveit.physics.quantum.QPE._delta_b_is_real
+proveit.core_expr_types
+proveit.physics.quantum.QPE._non_int_delta_b_diff

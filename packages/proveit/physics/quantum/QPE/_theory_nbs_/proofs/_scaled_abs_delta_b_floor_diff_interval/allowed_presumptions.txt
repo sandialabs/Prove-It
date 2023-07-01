@@ -1,0 +1,6 @@
+proveit.physics.quantum.QPE._two_pow_t_minus_one_is_nat_pos
+proveit.logic
+proveit.numbers
+proveit.physics.quantum.QPE._delta_b_floor_diff_in_interval
+proveit.core_expr_types
+proveit.physics.quantum.QPE._delta_b_not_eq_scaledNonzeroInt

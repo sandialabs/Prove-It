@@ -45,7 +45,7 @@ class _ExprProofs:
         from .proof import Proof
         assert isinstance(oldproof, Proof)
         assert oldproof.proven_truth.expr == self._expr
-        assert not oldproof.is_usable(), (
+        assert not oldproof.is_possibly_usable(), (
                 "Should only remove unusable proofs")
         self._proofs.discard(oldproof)
 
@@ -60,12 +60,11 @@ class _ExprProofs:
         for proof in self._proofs:
             if proof.proven_truth.assumptions.issubset(
                     judgment.assumptions):
-                assert proof.is_usable(), (
-                        'unusable proofs should have been removed')
-                cur_goodness = proof._goodness()
-                if goodness is None or cur_goodness > goodness:
-                    goodness = cur_goodness
-                    best_unusable_proof = proof
+                if proof.is_possibly_usable():
+                    cur_goodness = proof._goodness()
+                    if goodness is None or cur_goodness > goodness:
+                        goodness = cur_goodness
+                        best_unusable_proof = proof
         # the proof with the fewest steps that is applicable
         return best_unusable_proof  
 
@@ -82,21 +81,19 @@ class Judgment:
     # Call the begin_proof method to begin a proof of a Theorem.
     theorem_being_proven = None  # Theorem being proven.
     theorem_being_proven_str = None # in string form.
+    stored_theorem_being_proven = None # as a 'stored' theorem.
     # Have we already reported that the theorem is readily provable?
     theorem_readily_provable = None  
     # Goes from None to False (after beginning a proof and disabling 
     # Theorems that cannot be used) to True (when there is a legitimate
     # proof).
 
-    # Set of theorems/packages that are presumed to be True for the
-    # purposes of the proof being proven and exclusions thereof:
-    presumed_theorems_and_theories = None
-    presuming_theorem_and_theory_exclusions = None
-    
-    # Set of theorems that have been presumed or their dependencies
-    # (direct or indirect).
+    # Set of theorems/theories that may (allowed) or may not
+    # (disallowed) by presumed while proving the 'theorem_being_proven'.
+    allowed_theorems_and_theories = None
+    disallowed_theorems_and_theories = None
     presumed_theorems_and_dependencies = None
-
+    
     qed_in_progress = False  # set to true when "%qed" is in progress
 
     # Judgments for which derive_side_effects is in progress, tracked to 
@@ -114,9 +111,10 @@ class Judgment:
         Judgment.canonical_form_to_proven_exprs.clear()
         Judgment.theorem_being_proven = None
         Judgment.theorem_being_proven_str = None
+        Judgment.stored_theorem_being_proven = None
         Judgment.theorem_readily_provable = None
-        Judgment.presumed_theorems_and_theories = None
-        Judgment.presuming_theorem_and_theory_exclusions = None
+        Judgment.allowed_theorems_and_theories = None
+        Judgment.disallowed_theorems_and_theories = None
         Judgment.presumed_theorems_and_dependencies = None
         Judgment.qed_in_progress = False
         _ExprProofs.all_expr_proofs.clear()
@@ -287,13 +285,12 @@ class Judgment:
 
     def begin_proof(self, theorem):
         '''
-        Begin a proof for a theorem.  Only use other theorems that are 
-        in the presuming list of theorems/packages or theorems that are 
-        required, directly or indirectly, in proofs of theorems that are
-        explicitly listed (these are implicitly presumed).  If there 
-        exists any presumed theorem that has a direct or indirect 
-        dependence upon this theorem then a CircularLogic exception is
-        raised.
+        Begin a proof for a theorem.  Only use other theorems that
+        are explicitly allowed as presumptions for this theorem.
+        Query the user when attempting to use a theorem that is neither
+        allowed or disallowed.  If there exists any allowed presumed 
+        theorem that has a direct or indirect dependence upon this 
+        theorem then a CircularLogic exception is raised.
         '''
         from .proof import Theorem
         if Judgment.theorem_being_proven is not None:
@@ -306,21 +303,25 @@ class Judgment:
             raise ValueError(
                 'Inconsistent theorem for the Judgment in begin_proof call')
 
-        # The full list of presumed theorems includes all previous 
-        # theoremsof the theory and all indirectly presumed theorems 
-        # via transitivity (a presumption of a presumption is a
-        # presumption).
-        presumptions, exclusions = theorem.get_presumptions_and_exclusions()
+        # The lists of theorems/theories that are allowed/disallowed
+        # to be presumed while proving this theorem.
+        allowed, disallowed = theorem.get_allowed_and_disallowed_presumptions()
 
-        if str(self) in presumptions:
+        self_str = str(self)
+        if self_str in allowed:
             # A theorem may not presume itself!
             from .proof import CircularLogic
             raise CircularLogic(theorem, theorem)
+        if self_str not in disallowed:
+            # It goes without saying that we cannot presume the
+            # theorem we are trying to prove.
+            disallowed.add(self_str)
 
         Judgment.theorem_being_proven = theorem
         Judgment.theorem_being_proven_str = str(theorem)
-        Judgment.presumed_theorems_and_theories = presumptions
-        Judgment.presuming_theorem_and_theory_exclusions = exclusions
+        Judgment.stored_theorem_being_proven = theorem._stored_theorem()
+        Judgment.allowed_theorems_and_theories = allowed
+        Judgment.disallowed_theorems_and_theories = disallowed
         Judgment.presumed_theorems_and_dependencies = set()
         Theorem.update_usability()
 
@@ -347,14 +348,15 @@ class Judgment:
                 'qed proof should not have any remaining assumptions')
         Judgment.qed_in_progress = True
         try:
-            proof = self.expr.prove(assumptions=[]).proof()
-            if not proof.is_usable():
-                proof.proven_truth.raise_unusable_proof()
+            proven_truth = self.expr.prove(assumptions=[])
+            if not proven_truth.is_usable():
+                defaults._proven_truth = proven_truth
+                proven_truth.raise_unusable_proof()
             print("{} has been proven.".format(Judgment.theorem_being_proven))
-            Judgment.theorem_being_proven._recordProof(proof)
+            Judgment.theorem_being_proven._recordProof(proven_truth.proof())
         finally:
             Judgment.qed_in_progress = False
-        return proof
+        return proven_truth.proof()
 
     def proof(self):
         '''
@@ -362,14 +364,35 @@ class Judgment:
         '''
         return self._meaning_data._proof
 
-    def is_usable(self):
+    def is_possibly_usable(self):
         '''
-        Returns True iff this Judgment has a "usable" proof.  Proofs
-        may be unusable when proving a theorem that is restricted with
-        respect to which theorems may be used (to avoid circular logic).
+        Returns True iff this Judgment has a proof that is "possibly
+        usable" (not explicitly disallowed as a means to avoid circular
+        dependencies).
         '''
         proof = self.proof()
-        return proof is not None and proof.is_usable()
+        return proof is not None and proof.is_possibly_usable()
+    
+    def is_usable(self):
+        '''
+        Returns True iff this Judgment has a proof that is allowable
+        as a presumption (there is either no "theorem being proven"
+        or the theorem being proven explicitly allows all theorems
+        used in the proof).  If the proof is neither explicitly allowed
+        nor disallowed, the user will be queried to make the choice.
+        '''
+        proof = self.proof()
+        if proof is None or not proof.is_possibly_usable(): 
+            return False
+        if proof.explicitly_allowed():
+            return True
+        # Neither explicitly allowed nor disallowed.  Query the
+        # user to make a choice.
+        while not proof._query_allowance():
+            if self.proof() == proof:
+                return False
+            proof = self.proof() # proof was updated, so try again.
+        return True
 
     def is_applicable(self, assumptions=USE_DEFAULTS):
         '''
@@ -380,7 +403,7 @@ class Judgment:
         '''
         if assumptions is USE_DEFAULTS:
             assumptions = defaults.assumptions
-        applicable = (self.is_usable() and 
+        applicable = (self.is_possibly_usable() and 
                 self.assumptions.issubset(assumptions))
         if applicable:
             # Make sure the side-effects are derived if sideeffect
@@ -464,7 +487,7 @@ class Judgment:
         if self._meaning_data._proof == newproof:
             return # Not a new proof.
 
-        if not newproof.is_usable():
+        if not newproof.is_possibly_usable():
             # Don't bother with a disabled proof unless it is the only
             # proof.  in that case, we record it so we can generate a 
             # useful error message via raise_unusable_proof(..).
@@ -495,7 +518,7 @@ class Judgment:
                 if isinstance(preexisting_proof, _ShowProof):
                     continue
                 if (preexisting_proof is None or
-                        not preexisting_proof.is_usable() or
+                        not preexisting_proof.is_possibly_usable() or
                         (newproof._goodness() > 
                          preexisting_proof._goodness())):
                     # replace an old proof
@@ -509,82 +532,6 @@ class Judgment:
         '''
         return self._update_proof(self._expr_proofs.best_proof(self))
 
-    """
-    def _recordBestProof(self, new_proof):
-        '''
-        After a Proof is finished being constructed, check to see if
-        any proofs for this Judgment are obsolete; the new proof
-        might make a previous one obsolete, or it may be born
-        obsolete itself.  A proof is obsolete if there exists a Judgment
-        with a subset of the assumptions required for that proof, or with
-        the same set of assumptions but fewer steps.  A tie goes to the
-        new proof, but note that the step number comparison will prevent
-        anything cyclic (since a proof for a Judgment that requires that
-        same Judgment as a dependent will necessarily include the
-        number of steps of the original proof plus more).
-        '''
-        self._update_proof(self._expr_proofs.best_proof(self))
-
-
-        from proof import Theorem
-        if not self.expr in Judgment.expr_to_judgments:
-            # the first Judgment for this Expression
-            self._proof = new_proof
-            Judgment.expr_to_judgments[self.expr] = [self]
-            return
-        if not new_proof.is_usable():
-            # if it is not usable, we're done.
-            if self._proof is None:
-                # but first set _proof to the new_proof if there
-                # is not another one.
-                self._proof = new_proof
-            return
-        kept_truths = []
-        born_obsolete = False
-        for other in Judgment.expr_to_judgments[self.expr]:
-            if self.assumptions == other.assumptions:
-                if not other._proof.is_usable():
-                    # use the new proof since the old one is unusable.
-                    other._update_proof(new_proof)
-                elif new_proof.num_steps <= other._proof.num_steps:
-                    if new_proof.required_proofs != other._proof.required_proofs:
-                        # use the new (different) proof that does the job as well or better
-                        if isinstance(new_proof, Theorem):
-                            # newer proof is a theorem; record the existing proof as a possible proof for that theorem
-                            new_proof._possibleProofs.append(other._proof)
-                        other._update_proof(new_proof)
-                else:
-                    # the new proof was born obsolete, taking more steps than an existing one
-                    if isinstance(other._proof, Theorem):
-                        # the older proof is a theorem, record the new proof as a possible proof for that theorem
-                        other._proof._possibleProofs.append(new_proof)
-                    self._proof = other._proof # use an old proof that does the job better
-                    kept_truths.append(other)
-                    born_obsolete = True
-            elif self.assumptions.issubset(other.assumptions):
-                # use the new proof that does the job better
-                other._update_proof(new_proof)
-            elif self.assumptions.issuperset(other.assumptions) and other._proof.is_usable():
-                # the new proof was born obsolete, requiring more assumptions than an existing one
-                self._proof = other._proof # use an old proof that does the job better
-                kept_truths.append(other)
-                born_obsolete = True
-            else:
-                # 'other' uses a different, non-redundant set of assumptions or
-                # uses a subset of the assumptions but is unusable
-                kept_truths.append(other)
-        if not born_obsolete:
-            if Judgment.theorem_being_proven is not None:
-                if not Judgment.qed_in_progress and len(self.assumptions)==0 and self.expr == Judgment.theorem_being_proven.proven_truth.expr:
-                    if not Judgment.has_been_proven:
-                        Judgment.has_been_proven = True
-                        print '%s has been proven. '%self.as_theorem_or_axiom().name, r'Now simply execute "%qed".'
-            self._proof = new_proof
-            kept_truths.append(self)
-        # Remove the obsolete Judgments from the expr_to_judgments -- SHOULD ACTUALLY KEEP OLD PROOFS IN CASE ONE IS DISABLED -- TODO
-        Judgment.expr_to_judgments[self.expr] = kept_truths
-    """
-
     def _update_proof(self, new_proof):
         '''
         Update the proof of this Judgment.  Return True iff the proof 
@@ -597,11 +544,11 @@ class Judgment:
             # no need to update dependencies because that would have 
             # already been done when the proof was disabled.
             if meaning_data._proof is not None:
-                assert not meaning_data._proof.is_usable(), (
+                assert not meaning_data._proof.is_possibly_usable(), (
                         "should not update to an unusable new proof "
                         "if the old one was usable")
             return False  # did not change to something usable
-        assert new_proof.is_usable(), (
+        assert new_proof.is_possibly_usable(), (
                 "Should not update with an unusable proof")
 
         if meaning_data._proof is None:
@@ -627,35 +574,17 @@ class Judgment:
             if not Judgment.theorem_readily_provable:
                 Judgment.theorem_readily_provable = True
                 if theorem_expr.proven():
-                    print(
-                        '%s has been proven. ' %
-                        theorem_being_proven.name,
-                        r'Now simply execute "%qed".')
+                    proven_truth = theorem_expr.prove(automation=False)
+                    if proven_truth.is_usable():
+                        print(
+                            '%s has been proven. ' %
+                            theorem_being_proven.name,
+                            r'Now simply execute "%qed".')
                 else:
                     print(
                         '%s may now be readily provable (assuming required '
                         'theorems are usable). '%theorem_being_proven.name,
                         r'Simply execute "%qed".')
-                
-    '''
-    def _checkIfReadyForQED(self, proof):
-        if proof.is_usable() and proof.proven_truth == self:
-            if Judgment.has_been_proven is not None:
-                # check if we have a usable proof for the theorem being
-                # proven
-                if (not Judgment.qed_in_progress and 
-                        len(self.assumptions) == 0 and 
-                        (self.expr == 
-                         Judgment.theorem_being_proven.proven_truth.expr)):
-                    if not Judgment.has_been_proven:
-                        Judgment.has_been_proven = True
-                        print(
-                            '%s has been proven. ' %
-                            self.as_theorem_or_axiom().name,
-                            r'Now simply execute "%qed".')
-                        return True
-        return False
-    '''
 
     def __setattr__(self, attr, value):
         '''
@@ -798,7 +727,7 @@ class Judgment:
         suitable_truths = []
         for truth in truths:
             proof = truth.proof()
-            if (proof is not None and proof.is_usable() and
+            if (proof is not None and proof.is_possibly_usable() and
                     truth.assumptions.issubset(assumptions)):
                 suitable_truths.append(truth)
         if len(suitable_truths) == 0:
@@ -835,7 +764,7 @@ class Judgment:
 
     def _checkedTruth(self, proof):
         proven_truth = proof.proven_truth
-        if not proven_truth.is_usable():
+        if not proven_truth.is_possibly_usable():
             proven_truth.raise_unusable_proof()
         return proven_truth
 
@@ -910,7 +839,7 @@ class Judgment:
         from proveit.logic import Forall
         from .proof import Theorem, Instantiation, ProofFailure
         
-        if not self.is_usable():
+        if not self.is_possibly_usable():
             # If this Judgment is not usable, see if there is an alternate
             # under the set of assumptions that is usable.
             try:
@@ -919,8 +848,6 @@ class Judgment:
                 self.raise_unusable_proof()
             return alternate.instantiate(repl_map)
         _proof = self.proof()
-        if isinstance(_proof, Theorem):
-            Theorem.all_used_theorems.add(_proof)
 
         # If no repl_map is provided, instantiate the 
         # "explicit_instance_vars" of the Forall with default mappings
@@ -1365,20 +1292,15 @@ class Judgment:
             raise UnusableProof(Judgment.theorem_being_proven, unusuable_proof)
         else:
             raise UnusableProof(
-                Judgment.theorem_being_proven,
-                unusuable_proof,
-                'required to prove' +
-                self.string(
-                    perform_usability_check=False))
+                Judgment.theorem_being_proven, unusuable_proof,
+                'required to prove' + self.string())
 
-    def string(self, perform_usability_check=True):
+    def string(self):
         '''
         Display the turnstile notation to show that the judgment
         on the right derives from the set of assumptions on the left.
         '''
         from proveit import ExprTuple
-        if perform_usability_check and not self.is_usable():
-            self.raise_unusable_proof()
         if len(self.assumptions) > 0:
             assumptions_str = ExprTuple(
                 *
@@ -1388,14 +1310,12 @@ class Judgment:
             return r'{' + assumptions_str + r'} |- ' + self.expr.string()
         return r'|- ' + self.expr.string()
 
-    def latex(self, perform_usability_check=True):
+    def latex(self):
         '''
         Display the turnstile notation to show that the judgment
         on the right derives from the set of assumptions on the left.
         '''
         from proveit import ExprTuple
-        if perform_usability_check and not self.is_usable():
-            self.raise_unusable_proof()
         if len(self.assumptions) > 0:
             assumptions_latex = ExprTuple(
                 *
@@ -1415,7 +1335,7 @@ class Judgment:
         '''
         Return a string representation of the Judgment.
         '''
-        if not self.is_usable():
+        if not self.is_possibly_usable():
             self.raise_unusable_proof()
         return self.string()
 

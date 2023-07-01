@@ -1,0 +1,8 @@
+proveit.physics.quantum.QPE._failure_upper_bound_lemma
+proveit.physics.quantum.QPE._scaled_delta_b_floor_in_interval
+proveit.physics.quantum.QPE._best_floor_is_int
+proveit.physics.quantum.QPE._delta_b_is_real
+proveit.logic
+proveit.numbers
+proveit.core_expr_types
+proveit.physics.quantum.QPE._two_pow_t_minus_one_is_nat_pos

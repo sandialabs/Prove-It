@@ -1,0 +1,10 @@
+proveit.logic.sets.inclusion.superset_membership_from_proper_subset
+proveit.numbers.number_sets.rational_numbers.nat_pos_within_rational_pos
+proveit.numbers.number_sets.natural_numbers.natural_pos_lower_bound
+proveit.numbers.numerals.decimals.less_0_1
+proveit.numbers.ordering.transitivity_less_less_eq
+proveit.logic.equality.not_equals_symmetry
+proveit.logic.sets.inclusion.relax_proper_subset
+proveit.logic.sets.inclusion.unfold_subset_eq
+proveit.numbers.number_sets.natural_numbers.nat_pos_within_nat
+proveit.numbers.ordering.less_is_not_eq_nat

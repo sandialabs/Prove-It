@@ -1,0 +1,6 @@
+proveit.physics.quantum.QPE._alpha_m_mod_evaluation
+proveit.physics.quantum.QPE._phase_is_real
+proveit.physics.quantum.QPE._two_pow_t_is_nat_pos
+proveit.numbers
+proveit.core_expr_types
+proveit.logic

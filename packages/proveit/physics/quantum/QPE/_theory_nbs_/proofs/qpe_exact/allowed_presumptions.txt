@@ -1,0 +1,5 @@
+proveit.physics.quantum.QPE._outcome_prob
+proveit.physics.quantum.QPE._alpha_ideal_case
+proveit.logic
+proveit.numbers
+proveit.core_expr_types

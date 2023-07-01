@@ -1,0 +1,1 @@
+proveit.logic.booleans.conjunction.nand_if_neither

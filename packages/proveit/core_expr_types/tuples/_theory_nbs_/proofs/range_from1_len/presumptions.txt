@@ -1,6 +1,0 @@
-# THEOREMS AND THEORIES THAT MAY BE PRESUMED:
-proveit
-# THEOREMS AND THEORIES TO EXCLUDE:
-proveit.logic.booleans.true_is_bool
-proveit.logic.booleans.false_is_bool
-proveit.numbers.number_sets.integers.zero_is_int
