@@ -32,6 +32,7 @@ from .proof import (Proof, Assumption, Axiom, Theorem, ModusPonens,
 from .proof import (UnusableProof, ProofFailure, ModusPonensFailure,
                     InstantiationFailure, GeneralizationFailure,
                     UnsatisfiedPrerequisites)
+from .database import Database
 #import _theory_storage
 from ._theory_storage import (relurl, TheoryStorage, StoredSpecialStmt,
                               StoredAxiom, StoredTheorem)

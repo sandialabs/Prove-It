@@ -29,7 +29,8 @@ from ._core_ import (
     UnusableProof, ProofFailure,
     ModusPonensFailure, InstantiationFailure, GeneralizationFailure,
     UnsatisfiedPrerequisites,
-    StyleOptions, maybe_fenced_string, maybe_fenced_latex, maybe_fenced)
+    StyleOptions, maybe_fenced_string, maybe_fenced_latex, maybe_fenced,
+    Database)
 
 # @prover and @equality_prover are useful decorators for many
 # Expression class methods:
