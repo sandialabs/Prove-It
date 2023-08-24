@@ -109,6 +109,11 @@ class TheoryStorage:
             for k, line in enumerate(f.readlines()):
                 self.sub_theory_names.append(line.strip())
 
+        # The set of literals defined for this package, either as
+        # Operation operators or as common expressions (at least as
+        # they have been loaded in).
+        self._literals = set()
+
         # Map (kind, name) pair to the corresponding special
         # object (Axiom, Theorem, or Expression of a common
         # expression).
@@ -122,18 +127,22 @@ class TheoryStorage:
         # 'theorem') to a dictionary mapping names to storage
         # identifiers:
         self._special_hash_ids = {'common': None, 'axiom': None,
+                                  'defining_property': None, 
                                   'theorem': None}
 
         # Names of axioms, theorems, and common expressions that have been read in
         # and not in need of an update.
         self._axiom_names = None  # store upon request for future reference
         self._theorem_names = None  # store upon request for future reference
+        self._defining_property_names = None  # store upon request for future reference
         self._common_expr_names = None  # store upon request for future reference
 
         # store special expressions that have been loaded so they are
         # readily available on the next request.
         self._loadedCommonExprs = dict()
         self._loadedAxioms = dict()
+        self._loadedDefiningProperties = dict()
+        self._loadedDefinitionExistences = dict()
         self._loadedTheorems = dict()
 
         # Reflects the contents of the 'theorem_dependency_order.txt' file
@@ -291,6 +300,8 @@ class TheoryStorage:
     def _kind_to_folder(kind):
         if kind in ('axiom', 'theorem'):
             return kind + 's'
+        elif kind == 'defining_property' or kind == 'def_existence':
+            return 'defining_properties'
         elif kind == 'common':
             return kind
         else:
@@ -300,11 +311,14 @@ class TheoryStorage:
     def _folder_to_kind(folder):
         if folder in ('axioms', 'theorems'):
             return folder[:-1]
+        elif folder == 'defining_properties':
+            return 'defining_property'
         elif folder == 'common':
             return folder
         else:
-            raise ValueError("Expecting 'axioms', 'theorems' or 'common', "
-                             "not %s." % folder)
+            raise ValueError(
+                    "Expecting 'axioms', 'defining_properties', 'theorems' "
+                    "or 'common', not %s." % folder)
 
     def set_common_expressions(self, definitions):
         '''
@@ -316,7 +330,7 @@ class TheoryStorage:
         '''
         Set the common expressions, axioms, or theorems of the theory.
         '''
-        from proveit._core_.proof import Axiom, Theorem
+        from proveit._core_.proof import Axiom, Theorem, DefiningProperty
         if kind == 'common':
             self._common_expr_names = None  # force a reload
         elif kind == 'axiom' or kind == 'theorem':
@@ -325,6 +339,9 @@ class TheoryStorage:
                 # Convert definitions from expressions to Axiom Proofs.
                 definitions = {name: Axiom(expr, self.theory, name)
                                for name, expr in definitions.items()}
+            elif kind == 'defining_property':
+                for definition in definitions:
+                    assert isinstance(definition, DefiningProperty)
             elif kind == 'theorem':
                 self._theorem_names = None  # force a reload
                 # Convert definitions from expressions to Theorem
@@ -333,7 +350,8 @@ class TheoryStorage:
                                for name, expr in definitions.items()}
             # "Retrieve" the proofs to make sure they are stored
             # for future needs.
-            self.theory_folder_storage(kind + 's')
+            folder = TheoryStorage._kind_to_folder(kind)
+            self.theory_folder_storage(folder)
         self._set_special_objects(definitions, kind)
 
     def _set_special_objects(self, definitions, kind):
@@ -386,7 +404,7 @@ class TheoryStorage:
             theory_folder_storage._objhash_to_names.setdefault(
                 hash_id, []).append(name)
             if folder != 'common':
-                kind = folder[:-1]
+                kind = TheoryStorage._folder_to_kind(folder)
                 if name not in old_name_to_hash:
                     # added special statement
                     print('Adding %s %s to %s theory' %
@@ -415,7 +433,7 @@ class TheoryStorage:
                 if hash_id not in modified_hash_ids:
                     print("Removing %s %s from %s theory" %
                           (kind, name, theory_name))
-                if folder == 'theorems':
+                if folder == 'theorems' or folder == 'definitions':
                     # Remove the proof of the removed theorem:
                     StoredTheorem(self.theory, name).remove_proof()
                 # Remove proofs that depended upon the removed theorem.
@@ -458,6 +476,14 @@ class TheoryStorage:
             self._update_name_to_kind(self._axiom_names, 'axiom')
         return self._axiom_names
 
+    def get_defining_property_names(self):
+        if self._defining_property_names is None:
+            self._defining_property_names = list(
+                    self._loadSpecialStatementNames('defining_property'))
+            self._update_name_to_kind(self._defining_property_names, 
+                                      'defining_property')
+        return self._defining_property_names
+
     def get_theorem_names(self):
         if self._theorem_names is None:
             self._theorem_names = list(
@@ -471,17 +497,17 @@ class TheoryStorage:
             self._update_name_to_kind(self._common_expr_names, 'common')
         return self._common_expr_names
 
-    def get_expression_axiom_and_theorem_names(self):
+    def get_theory_expression_names(self):
         return (self.get_common_expression_names() + self.get_axiom_names()
-                + self.get_theorem_names())        
+                + self.get_defining_property_names() + self.get_theorem_names())        
 
-    def get_expression_axiom_or_theorem_kind(self, name):
+    def get_expression_kind(self, name):
         '''
         Return 'common', 'axiom', or 'theorem' if the given name
         is the name of a common expression, axiom, or theorem of this
         Theory respectively.
         '''
-        self.get_expression_axiom_and_theorem_names()
+        self.get_theory_expression_names()
         return self._name_to_kind[name]        
 
     def load_special_names(self):
@@ -489,7 +515,7 @@ class TheoryStorage:
         Load all of the common expresisons, axioms, and theorems,
         stored for this theory.
         '''
-        for kind in ('common', 'axiom', 'theorem'):
+        for kind in ('common', 'axiom', 'defining_property', 'theorem'):
             special_hash_ids = self._special_hash_ids[kind]
             if special_hash_ids is None:
                 # while the names are read in, the expr id map will
@@ -504,7 +530,8 @@ class TheoryStorage:
 
     def _load_special_names(self, kind):
         '''
-        Yield names of axioms/theorems or common expressions
+        Yield names of axioms/theorems, common expressions, or
+        conservative definitions.
         '''
         folder = TheoryStorage._kind_to_folder(kind)
         theory_folder_storage = self.theory_folder_storage(folder)
@@ -516,14 +543,15 @@ class TheoryStorage:
                 for line in f.readlines():
                     name, hash_id = line.split()
                     special_hash_ids[name] = hash_id
+                    self._kindname_to_objhash[(kind, name)] = hash_id
 
                     if kind == 'common':
                         expr_id = hash_id
                     else:
-                        # For an axiom or theorem, we must read in the
-                        # unique_rep.pv_it file to get the judgment_id
-                        # and then read its uniequ_rep.pv_it to get the
-                        # expr_id.
+                        # For an axiom, defining property, or theorem, 
+                        # we must read in the unique_rep.pv_it file to 
+                        # get the judgment_id and then read its 
+                        # unique_rep.pv_it to get the expr_id.
                         storage_id = self.name + '.' + folder + '.' + hash_id
                         for _ in range(2):
                             _theory_folder_storage, hash_folder = \
@@ -538,7 +566,6 @@ class TheoryStorage:
                                 _extractReferencedStorageIds(rep)
                             storage_id = storage_ids[0]
                         expr_id = storage_id
-                    self._kindname_to_objhash[(kind, name)] = hash_id
                     theory_folder_storage._objhash_to_names.setdefault(
                         expr_id, []).append(name)
                     theory_folder_storage._objhash_to_names.setdefault(
@@ -556,6 +583,20 @@ class TheoryStorage:
             return self._special_hash_ids['axiom'][name]
         except KeyError:
             raise KeyError("%s not found as an axiom in %s"
+                           % (name, self.theory.name))
+
+    def get_defining_property_hash(self, name):
+        '''
+        Return the hash folder where information about a defining
+        property of the given name is stored (stored on the 
+        'defining_properties' theory storage folder).
+        '''
+        list(self._load_special_names('defining_property'))
+        try:
+            return self._special_hash_ids['defining_property'][name]
+        except KeyError:
+            raise KeyError("%s not found as a defining property of a "
+                           "conservative definition in %s"
                            % (name, self.theory.name))
 
     def get_theorem_hash(self, name):
@@ -590,6 +631,28 @@ class TheoryStorage:
         self._loadedAxioms[name] = axiom
         return axiom
 
+    def get_defining_property(self, name):
+        '''
+        Return the DefiningProperty of the given name in this theory.
+        '''
+        if name in self._loadedDefiningProperties:
+            return self._loadedDefiningProperties[name]
+        defining_property = self._getSpecialObject('defining_property', 
+                                                   name)
+        self._loadedDefiningProperties[name] = defining_property
+        return defining_property
+
+    def get_definition_existence(self, name):
+        '''
+        Return the DefinitionExistence associated with the defining
+        property of the given name in this theory.
+        '''
+        if name in self._loadedDefinitionExistences:
+            return self._loadedDefinitionExistences[name]
+        definition_existence = self._getSpecialObject('def_existence', name)
+        self._loadedDefinitionExistences[name] = definition_existence
+        return definition_existence
+
     def get_theorem(self, name):
         '''
         Return the Theorem of the given name in this theory.
@@ -601,17 +664,19 @@ class TheoryStorage:
         return thm
 
     def _getSpecialObject(self, kind, name):
-        from proveit._core_.proof import Axiom, Theorem
+        from proveit._core_.proof import (Axiom, Theorem, DefiningProperty,
+                                          DefinitionExistence)
         from .theory import Theory
         folder = TheoryStorage._kind_to_folder(kind)
-        special_hash_ids = self._special_hash_ids[kind]
+        folder_kind = TheoryStorage._folder_to_kind(folder)
+        special_hash_ids = self._special_hash_ids[folder_kind]
         if special_hash_ids is None:
             # while the names are read in, the hash id map will
             # be generated
-            list(self._load_special_names(kind))
-            special_hash_ids = self._special_hash_ids[kind]
+            list(self._load_special_names(folder_kind))
+            special_hash_ids = self._special_hash_ids[folder_kind]
         if special_hash_ids is None:
-            raise KeyError("%s of name '%s' not found" % (kind, name))
+            raise KeyError("%s of name '%s' not found" % (folder_kind, name))
 
         # set the default Theory in case there is a Literal
         prev_theory_default = Theory.default
@@ -623,7 +688,7 @@ class TheoryStorage:
                 # Don't allow anything to be imported from the folder
                 # that is currently being generated.
                 raise KeyError("Self importing is not allowed")
-            obj_id = self._kindname_to_objhash[(kind, name)]
+            obj_id = self._kindname_to_objhash[(folder_kind, name)]
             # make and return expression, axiom, or theorem
             if kind == 'common':
                 obj = theory_folder_storage.make_expression(obj_id)
@@ -633,6 +698,16 @@ class TheoryStorage:
                     raise TypeError("Expecting Axiom, not %s" % obj.__class__)
                 assert obj.name == name, "%s not %s as expected" % (
                     obj.name, name)
+            elif kind == 'defining_property':
+                obj = theory_folder_storage.make_judgment_or_proof(obj_id)
+                if not isinstance(obj, DefiningProperty):
+                    raise TypeError("Expecting DefiningProperty, not %s" 
+                                    % obj.__class__)
+                assert obj.name == name, "%s not %s as expected" % (
+                    obj.name, name)
+            elif kind == 'def_existence':
+                obj = theory_folder_storage.make_judgment_or_proof(obj_id)
+                obj = obj.required_proofs[0]
             elif kind == 'theorem':
                 obj = theory_folder_storage.make_judgment_or_proof(obj_id)
                 if not isinstance(obj, Theorem):
@@ -698,7 +773,8 @@ class TheoryStorage:
                 theory._storage._allPresumedTheoremNames(theorem_name, presumed_theorem_names, presumption_chain+[presumption_name])
     """
 
-    def thm_proof_notebook(self, theorem_name, expr, num_duplicates=0):
+    def thm_proof_notebook(self, theorem_name, expr, num_duplicates=0,
+                           definition_existence_proof=False):
         '''
         Return the relative url to the proof notebook,
         creating it if it does not already exist.
@@ -706,13 +782,20 @@ class TheoryStorage:
         of the expression that we have encountered.
         '''
         from proveit._core_.theory import Theory
-        proofs_path = os.path.join(self.directory, '_theory_nbs_', 'proofs')
+        subfolder = 'proofs'
+        if definition_existence_proof:
+            subfolder = 'def_existence_proofs'
+        proofs_path = os.path.join(self.directory, '_theory_nbs_', 
+                                   subfolder)
         proof_path = os.path.join(proofs_path, theorem_name)
         # Let's first check if the same expression existed
         # in the previous version -- then we can simply
         # move the proof.
+        folder = 'theorems'
+        if definition_existence_proof:
+            folder = 'definitions'
         theory_folder_storage = \
-            self.theory._theory_folder_storage('theorems')
+            self.theory._theory_folder_storage(folder)
         expr_id = theory_folder_storage._prove_it_storage_id(expr)
         expr_id = theory_folder_storage._relative_to_explicit_prefix(expr_id)
         if expr_id in theory_folder_storage._prev_objhash_to_names:
@@ -726,7 +809,9 @@ class TheoryStorage:
         # Create the generic version; we'll want to make sure the
         # title of the current version (if it exists) matches that of the
         # generic version.
-        generic_nb_str = self._generateGenericThmProofNotebook(theorem_name)
+        generic_nb_str = self._generateGenericThmProofNotebook(
+                theorem_name,
+                definition_existence_proof=definition_existence_proof)
         filename = os.path.join(proof_path, 'thm_proof.ipynb')
         if os.path.isfile(filename):
             # Update the title of the existing notebook if needed.
@@ -766,22 +851,28 @@ class TheoryStorage:
             proof_notebook.write(generic_nb_str)
         return relurl(filename)  # return the new proof file
 
-    def _generateGenericThmProofNotebook(self, theorem_name):
+    def _generateGenericThmProofNotebook(self, theorem_name,
+                                         definition_existence_proof):
         '''
         Given a theorem name and hash directory, generate the generic
         startof a proof notebook using the template.
         '''
         import proveit
         proveit_path = os.path.split(proveit.__file__)[0]
+        subfolder = 'proofs'
+        if definition_existence_proof:
+            subfolder = 'def_existence_proofs'
         # read the template and change the theories as appropriate
-        with open(os.path.join(proveit_path, '..',
-                               '_theorem_proof_template_.ipynb'),
+        template_name = '_theorem_proof_template_.ipynb'
+        if definition_existence_proof:
+            template_name = '_definition_existence_template_.ipynb'
+        with open(os.path.join(proveit_path, '..', template_name),
                   'r') as template:
             nb = template.read()
             nb = nb.replace('#THEOREM_NAME#', theorem_name)
             theory_links = self.theory.links(
                 os.path.join(self.directory, '_theory_nbs_', 
-                             'proofs', theorem_name))
+                             subfolder, theorem_name))
             nb = nb.replace('#THEORY#', theory_links)
         return nb
 
@@ -798,15 +889,19 @@ class TheoryStorage:
                 return None
             return match.groups()[0]
 
-    def stash_extraneous_thm_proof_notebooks(self, theorem_names):
+    def stash_extraneous_thm_proof_notebooks(
+            self, theorem_names, *,
+            definition_existence_proofs=False):
         '''
         For any proof notebooks for theorem names not included in the
         given theorem_names, stash them or remove them if they are
         generic notebooks.
         '''
         import shutil
-        proofs_path = os.path.join(self.directory, '_theory_nbs_',
-                                   'proofs')
+        subfolder = 'proofs'
+        if definition_existence_proofs:
+            subfolder = 'def_existence_proofs'
+        proofs_path = os.path.join(self.directory, '_theory_nbs_', subfolder)
         if not os.path.isdir(proofs_path):
             return  # nothing to stash
         for proof_folder in os.listdir(proofs_path):
@@ -830,7 +925,8 @@ class TheoryStorage:
                 theorem_name = self._proof_notebookTheoremName(filename)
                 if theorem_name is not None:
                     generic_version = self._generateGenericThmProofNotebook(
-                        theorem_name)
+                        theorem_name,
+                        definition_existence_proof=definition_existence_proofs)
                     with open(filename, 'r') as notebook:
                         if generic_version == notebook.read():
                             # just remove it, it is generic
@@ -899,8 +995,8 @@ class TheoryFolderStorage:
                 # maybe another processor beat us to it.
                 pass
 
-        # For 'common', 'axioms', 'theorems' folders, we map
-        # the object hash folder names to the name(s) of the
+        # For 'common', 'axioms', 'definitions', 'theorems' folders, 
+        # we map the object hash folder names to the name(s) of the
         # axiom, theorem, or common expression(s).
         self._objhash_to_names = dict()
         # When regenerating common expression, axioms, or
@@ -981,6 +1077,10 @@ class TheoryFolderStorage:
         if folder == 'axioms':
             self.theory_storage._axiom_names = None
             self.theory_storage._loadedAxioms = dict()
+        if folder == 'definitions':
+            self.theory_storage._defining_property_names = None
+            self.theory_storage._loadedDefiningProperties = dict()
+            self.theory_storage._loadedDefinitionExistences = dict()
         if folder == 'theorems':
             self.theory_storage._theorem_names = None
             self.theory_storage._loadedTheorems = dict()
@@ -1267,7 +1367,8 @@ class TheoryFolderStorage:
         folder.
         '''
         directory = self.theory._storage.directory
-        if self.folder in ('common', 'axioms', 'theorems', 'demonstrations'):
+        if self.folder in ('common', 'axioms', 'definitions', 
+                           'theorems', 'demonstrations'):
             return os.path.join(directory, '_theory_nbs_', self.folder + '.ipynb')
         thm_proof_prefix = '_proof_'
         if self.folder[:len(thm_proof_prefix)] == '_proof_':
@@ -1359,6 +1460,11 @@ class TheoryFolderStorage:
         if kind == 'axiom':
             # Store this "special" notebook with the hash for the Axiom.
             obj = Axiom(expr, theory_folder_storage.theory, name)
+        elif kind == 'definition':
+            # Store this "special" notebook with the hash for the
+            # defining property
+            # TODO: Fix
+            obj = DefiningProperty(expr, theory_folder_storage.theory, name)            
         elif kind == 'theorem':
             # Store this "special" notebook with the hash for the
             # Theorem.
@@ -1387,6 +1493,8 @@ class TheoryFolderStorage:
         filename = 'expr.ipynb'
         if kind == 'axiom':
             filename = 'axiom_expr.ipynb'
+        elif kind == 'defining_property':
+            filename = 'defining_property_expr.ipynb'
         elif kind == 'theorem':
             filename = 'theorem_expr.ipynb'
         elif kind == 'common':
@@ -1761,7 +1869,8 @@ class TheoryFolderStorage:
         is_active_theory_folder = \
             (theory_folder_storage ==
              TheoryFolderStorage.active_theory_folder_storage)
-        if (theory_folder_storage.folder in ('axioms', 'theorems', 'common')
+        if (theory_folder_storage.folder in (
+                'axioms', 'definitions' 'theorems', 'common')
                 and (can_self_import or not is_active_theory_folder)):
             # expr may be a special expression from a theory.
             if obj._style_id in proveit_obj_to_storage:
@@ -2095,7 +2204,8 @@ class TheoryFolderStorage:
         Return the Judgment or Proof object that is represented
         in storage by the given storage_id.
         '''
-        from proveit import Proof, Axiom, Theorem
+        from proveit import (Proof, Axiom, Theorem, DefiningProperty,
+                             DefinitionExistence)
         from proveit._core_.judgment import Judgment
         theory_folder_storage, hash_folder = self._split(storage_id)
         if theory_folder_storage != self:
@@ -2113,15 +2223,29 @@ class TheoryFolderStorage:
             kind, full_name = Proof._extractKindAndName(unique_rep)
             theory_name, name = full_name.rsplit('.', 1)
             assert theory_name == self.theory.name
-            assert len(subids) == 1, (
-                "Expected to extract one storage id from %s"
-                % unique_rep)
+            if kind == 'defining property':
+                assert len(subids) == 2, (
+                    "Expected to extract two storage id from %s"
+                    % unique_rep)
+            else:
+                assert len(subids) == 1, (
+                    "Expected to extract one storage id from %s"
+                    % unique_rep)
             judgment_id = subids[0]
+            if kind in ('axiom', 'defining property', 
+                        'definition existence', 'theorem'):
+                judgment = self.make_judgment_or_proof(judgment_id)                
             if kind == 'axiom':
-                judgment = self.make_judgment_or_proof(judgment_id)
                 obj = Axiom(judgment.expr, theory, name)
+            elif kind == 'defining property':
+                theorems_storage = TheoryFolderStorage(
+                        self.theory_storage, 'theorems')
+                existence = theorems_storage.make_judgment_or_proof(subids[1])
+                obj = DefiningProperty(judgment.expr, theory, name,
+                                       def_existence=existence)
+            elif kind == 'definition existence':
+                obj = DefinitionExistence(judgment.expr, theory, name)                
             elif kind == 'theorem':
-                judgment = self.make_judgment_or_proof(judgment_id)
                 obj = Theorem(judgment.expr, theory, name)
         elif unique_rep[:9] == 'Judgment:':
             truth_expr_id = self.make_expression(subids[0])
@@ -2221,10 +2345,10 @@ class TheoryFolderStorage:
         def unable_to_remove_warning(name):
             print("Unable to remove %s.\n  Skipping clean step "
                   "(don't worry, it's not critical)" % name)
-        if self.folder in ('axioms', 'theorems'):
-            # When 'cleaning' the axioms or theorems folder, we will also
-            # remove any obsolete 'used_by' folders or 'complete'
-            # files.
+        if self.folder in ('axioms', 'definitions', 'theorems'):
+            # When 'cleaning' the axioms, defintions, or theorems 
+            # folder, we will also remove any obsolete 'used_by' 
+            # folders or 'complete' files.
             for hash_subfolder in os.listdir(self.path):
                 if hash_subfolder not in self._objhash_to_names:
                     used_by_path = os.path.join(self.path, hash_subfolder,
@@ -2283,23 +2407,26 @@ class TheoryFolderStorage:
 
 
 class StoredSpecialStmt:
-    def __init__(self, theory, name, kind):
+    def __init__(self, theory, name, kind, hash_id=None):
         '''
         Base class of StoredAxiom and StoredTheorem initialization.
         '''
         self.theory = theory
         self.name = name
         self.kind = kind
-        if kind == 'axiom':
-            self.theory_folder_storage = \
-                self.theory._theory_folder_storage('axioms')
+        if hash_id is not None:
+            hash_dir = hash_id
+        elif kind == 'axiom':
             hash_dir = self.theory._storage.get_axiom_hash(name)
+        elif kind == 'defining_property':
+            hash_dir = self.theory._storage.get_defining_property_hash(name)
         elif kind == 'theorem':
-            self.theory_folder_storage = \
-                self.theory._theory_folder_storage('theorems')
             hash_dir = self.theory._storage.get_theorem_hash(name)
         else:
             raise ValueError("kind must be 'axiom' or 'theorem'")
+        folder = TheoryStorage._kind_to_folder(kind)
+        self.theory_folder_storage = \
+            self.theory._theory_folder_storage(folder)
         self.path = os.path.join(self.theory_folder_storage.path, hash_dir)
 
     def __str__(self):
@@ -2314,8 +2441,12 @@ class StoredSpecialStmt:
         elif kind == 'theorem':
             theory_folder_storage = \
                 theory._theory_folder_storage('theorems')
+        elif kind == 'defining_property':
+            theory_folder_storage = \
+                theory._theory_folder_storage('definitions')
         else:
-            raise ValueError("kind must be 'axiom' or 'theorem'")
+            raise ValueError("kind must be 'axiom' or 'theorem' or "
+                             "'defining_property'")
         path = os.path.join(theory_folder_storage.path, hash_folder)
         # remove invalidated proofs that use this axiom/theorem
         dependent_theorems = StoredSpecialStmt._read_dependent_theorems(path)
@@ -2337,7 +2468,7 @@ class StoredSpecialStmt:
     def read_dependent_theorems(self):
         '''
         Return the collection of theorems (as strings) that use this
-        theorem/axiom directly.
+        special statement directly.
         '''
         return StoredSpecialStmt._read_dependent_theorems(self.path)
 
@@ -2436,7 +2567,7 @@ class StoredSpecialStmt:
 class StoredAxiom(StoredSpecialStmt):
     def __init__(self, theory, name):
         '''
-        Creates a StoredAxioms object for managing an axioms's
+        Creates a StoredAxiom object for managing an axioms'
         __pv_it database entries.
         '''
         StoredSpecialStmt.__init__(self, theory, name, 'axiom')
@@ -2449,6 +2580,25 @@ class StoredAxiom(StoredSpecialStmt):
                                                    '_theory_nbs_',
                                                    'axioms.ipynb'))
         return axioms_notebook_link + '#' + self.name
+
+
+class StoredDefiningProperty(StoredSpecialStmt):
+    def __init__(self, theory, name):
+        '''
+        Creates a StoredDefiningProperty object for managing a
+        defining properties' __pv_it database entries.
+        '''
+        StoredSpecialStmt.__init__(self, theory, name, 'defining_property')
+
+    def get_def_link(self):
+        '''
+        Return the link to this defining property in the 
+        _definitions_ notebook.
+        '''
+        definitions_notebook_link = relurl(
+                os.path.join(self.theory.get_path(), '_theory_nbs_',
+                             'definintions.ipynb'))
+        return definitions_notebook_link + '#' + self.name
 
 
 def remove_if_exists(path):
@@ -2467,12 +2617,13 @@ class StoredTheorem(StoredSpecialStmt):
     PRESUMPTIONS_HEADER = '# THEOREMS AND THEORIES THAT MAY BE PRESUMED:'
     PRESUMPTION_EXCLUSION_HEADER = '# THEOREMS AND THEORIES TO EXCLUDE:'
 
-    def __init__(self, theory, name):
+    def __init__(self, theory, name, hash_id=None):
         '''
         Creates a StoredTheorem object for managing a theorem's
         __pv_it database entries.
         '''
-        StoredSpecialStmt.__init__(self, theory, name, 'theorem')
+        StoredSpecialStmt.__init__(self, theory, name, kind='theorem',
+                                   hash_id=hash_id)
 
     def get_proof_link(self):
         '''
@@ -2642,8 +2793,9 @@ class StoredTheorem(StoredSpecialStmt):
         Return the set of theorems and theories that are explicitly
         allowed/disallowed to be presumed in a proof of this theory.
         '''
+        from proveit import Judgment
         proof_path = os.path.join(self.theory.get_path(), '_theory_nbs_',
-                                  'proofs', self.name)
+                                  Judgment.proofs_subfolder, self.name)
         allowances_filename = os.path.join(proof_path, 
                                            'allowed_presumptions.txt')
         disallowances_filename = os.path.join(proof_path, 
@@ -2662,15 +2814,17 @@ class StoredTheorem(StoredSpecialStmt):
         return allowances, disallowances
 
     def allow_presumption(self, presumption):
+        from proveit import Judgment
         proof_path = os.path.join(self.theory.get_path(), '_theory_nbs_',
-                                  'proofs', self.name)
+                                   Judgment.proofs_subfolder, self.name)
         filename = os.path.join(proof_path, 'allowed_presumptions.txt')
         with open(filename, 'a') as f:
             f.write(presumption + '\n')
 
     def disallow_presumption(self, presumption):
+        from proveit import Judgment
         proof_path = os.path.join(self.theory.get_path(), '_theory_nbs_',
-                                  'proofs', self.name)
+                                  Judgment.proofs_subfolder, self.name)
         filename = os.path.join(proof_path, 'disallowed_presumptions.txt')
         with open(filename, 'a') as f:
             f.write(presumption + '\n')
@@ -2679,8 +2833,9 @@ class StoredTheorem(StoredSpecialStmt):
         '''
         Clear the allowances and disallowances for this theorem.
         '''
+        from proveit import Judgment
         proof_path = os.path.join(self.theory.get_path(), '_theory_nbs_',
-                                  'proofs', self.name)
+                                   Judgment.proofs_subfolder, self.name)
         filename = os.path.join(proof_path, 'allowed_presumptions.txt')
         with open(filename, 'w'):
             pass
@@ -3213,3 +3368,17 @@ class StoredTheorem(StoredSpecialStmt):
             for dependent in dependent_theorems:
                 stored_thm = Theory.get_stored_theorem(dependent)
                 stored_thm._undoDependentCompletion()
+
+class StoredDefinitionExistence(StoredTheorem):
+    def __init__(self, theory, name):
+        '''
+        Creates a StoredDefinitionExistence object for managing the
+        existence for a set of defining properties' __pv_it database
+        entries.
+        '''
+        def_existence = theory.get_definition_existence(name)
+        obj_id = def_existence._style_id
+        _, hash_id = TheoryFolderStorage.proveit_object_to_storage[obj_id]
+        StoredTheorem.__init__(self, theory, name, hash_id=hash_id)
+
+

@@ -55,6 +55,7 @@ class Theory:
     special_expr_kind_to_module_name = {
         'common': '_common_',
         'axiom': '_axioms_',
+        'defining_property': '_definitions_',
         'theorem': '_theorems_'}
 
     @staticmethod
@@ -82,6 +83,10 @@ class Theory:
             raise TheoryException(
                 "%s is not a valid path; unable to create Theory." %
                 path)
+        
+        # We'll note the Literals of the Theory (definined as a common
+        # expression or as an _operator_ of an Operation.)
+        self._literals = set()
 
         path = os.path.abspath(path)
         # If in a __pv_it_ directory, go to the containing theory
@@ -251,6 +256,13 @@ class Theory:
         self._storage.set_special_expressions(axiom_definitions,
                                               'axiom')
 
+    def _set_defining_properties(self, definitions_for_properties):
+        if not isinstance(definitions_for_properties, OrderedDict):
+            raise TypeError("'definitions_for_properties' must be "
+                            "an OrderedDict")
+        self._storage.set_special_expressions(definitions_for_properties,
+                                              'defining_property')
+
     def _set_theorems(self, theorem_definitions):
         if not isinstance(theorem_definitions, OrderedDict):
             raise TypeError("'theorem_definitions' must be an OrderedDict")
@@ -271,11 +283,22 @@ class Theory:
             raise TypeError("'expr_definitions' must be an OrderedDict")
         self._storage.set_common_expressions(expr_definitions)
 
+    @property
+    def literals(self):
+        return self._storage._literals
+
     def get_axiom_names(self):
         '''
         Return the names of the axioms in this Theory.
         '''
         return self._storage.get_axiom_names()
+
+    def get_defining_property_names(self):
+        '''
+        Return the names of the defining properties of Literal
+        definitions in this Theory.
+        '''
+        return self._storage.get_defining_property_names()
 
     def get_theorem_names(self):
         '''
@@ -289,20 +312,20 @@ class Theory:
         '''        
         return self._storage.get_common_expression_names()
 
-    def get_expression_axiom_and_theorem_names(self):
+    def get_theory_expression_names(self):
         '''
         Return the names of the common expressions, axioms, theorems 
         in this Theory.
         '''        
-        return  self._storage.get_expression_axiom_and_theorem_names()
+        return  self._storage.get_theory_expression_names()
 
-    def get_expression_axiom_or_theorem_kind(self, name):
+    def get_expression_kind(self, name):
         '''
         Return 'common', 'axiom', or 'theorem' if the given name
         is the name of a common expression, axiom, or theorem of this
         Theory respectively.
         '''
-        return  self._storage.get_expression_axiom_or_theorem_kind(name)
+        return  self._storage.get_expression_kind(name)
 
     def stored_common_expr_dependencies(self):
         '''
@@ -333,6 +356,19 @@ class Theory:
         Return the Theorem of the given name in this theory.
         '''
         return self._storage.get_theorem(name)
+
+    def get_defining_property(self, name):
+        '''
+        Return the DefiningProperty of the given name in this theory.
+        '''
+        return self._storage.get_defining_property(name)
+
+    def get_definition_existence(self, name):
+        '''
+        Return the DefinitionExistence associated with the defining
+        property of the given name in this theory.
+        '''
+        return self._storage.get_definition_existence(name)
 
     def generate_local_axioms(self):
         '''
@@ -474,23 +510,36 @@ class Theory:
             TheoryFolderStorage.active_theory_folder_storage
         return theory_folder_storage.proof_notebook(proof)
 
-    def thm_proof_notebook(self, theorem_name, expr, num_duplicates=0):
+    def thm_proof_notebook(self, theorem_name, expr, num_duplicates=0,
+                           definition_existence_proof=False):
         '''
         Return the path of the proof notebook for a theorem with the
         given name and expression, creating it if it does not already
         exist.  num_duplicates is the number of previous instances
         of the expression that we have encountered.
         '''
-        return self._storage.thm_proof_notebook(theorem_name, expr,
-                                                num_duplicates)
+        return self._storage.thm_proof_notebook(
+                theorem_name, expr, num_duplicates, 
+                definition_existence_proof)
 
-    def stash_extraneous_thm_proof_notebooks(self):
+    def stash_extraneous_thm_proof_notebooks(
+            self, *, definition_existence_proofs=False):
         '''
         For any proof notebooks for theorem names not included in the
         theory, stash them or remove them if they are generic notebooks.
         '''
+        if definition_existence_proofs:
+            # This is good enough for now.  Technically, only the
+            # last of a defining property collection (in a cell of
+            # a definitions notebook) will have an associated proof,
+            # so this way may keep things around that become obsolete.
+            # But it is better to err on the side of stashing too little
+            # than too much.
+            thm_names = self.get_defining_property_names()
+        else:
+            thm_names = self.get_theorem_names()
         self._storage.stash_extraneous_thm_proof_notebooks(
-            self.get_theorem_names())
+            thm_names, definition_existence_proofs=definition_existence_proofs)
 
     @staticmethod
     def expression_notebook(expr, name_kind_theory=None,
@@ -512,18 +561,32 @@ class Theory:
         return Theory.get_stored_stmt(fullname, 'axiom')
 
     @staticmethod
+    def get_stored_defining_property(fullname):
+        return Theory.get_stored_stmt(fullname, 'defining_property')
+
+    @staticmethod
+    def get_stored_definition_existence(fullname):
+        return Theory.get_stored_stmt(fullname, 'definition_existence')
+
+    @staticmethod
     def get_stored_theorem(fullname):
         return Theory.get_stored_stmt(fullname, 'theorem')
 
     @staticmethod
     def get_stored_stmt(fullname, kind):
-        from ._theory_storage import StoredAxiom, StoredTheorem
+        from ._theory_storage import (StoredAxiom, StoredTheorem,
+                                      StoredDefiningProperty,
+                                      StoredDefinitionExistence)
         split_name = fullname.split('.')
         theory_name = '.'.join(split_name[:-1])
         stmt_name = split_name[-1]
         theory = Theory.get_theory(theory_name)
         if kind == 'axiom':
             return StoredAxiom(theory, stmt_name)
+        elif kind == 'defining_property':
+            return StoredDefiningProperty(theory, stmt_name)
+        elif kind == 'definition_existence':
+            return StoredDefinitionExistence(theory, stmt_name)
         elif kind == 'theorem':
             return StoredTheorem(theory, stmt_name)
         else:
@@ -623,23 +686,24 @@ class TheoryPackage(ModuleType):
     
     def __dir__(self):
         expression_axiom_and_theorems_names = \
-            self._theory.get_expression_axiom_and_theorem_names()
+            self._theory.get_theory_expression_names()
         return sorted(list(self.__dict__.keys()) + 
                       list(expression_axiom_and_theorems_names))
     
     def __getattr__(self, name):
         '''
-        Allow common expressions, axioms, and theorems to be imported
-        from the theory package.  If the name is not found, and a
-        common expression notebook is currently runninng, assume
-        the missing name is a common expression that hasn't been
-        defined yet and return an UnsetCommonExpressionPlaceholder.
+        Allow common expressions, axioms, defining propreties, and 
+        theorems to be imported from the theory package.  If the name 
+        is not found, and a common expression notebook is currently 
+        runninng, assume the missing name is a common expression that 
+        hasn't been defined yet and return an 
+        UnsetCommonExpressionPlaceholder.
         '''
         if name[0:2]=='__': 
             # don't handle internal Python attributes
             raise AttributeError 
         try:
-            kind = self._theory.get_expression_axiom_or_theorem_kind(name)
+            kind = self._theory.get_expression_kind(name)
         except KeyError:
             # By default, we'll assume it is a common expression
             # so we can deal with unset common expressions 
@@ -650,6 +714,8 @@ class TheoryPackage(ModuleType):
             return self._theory.get_axiom(name).proven_truth
         elif kind == 'theorem':
             return self._theory.get_theorem(name).proven_truth
+        elif kind == 'defining_property':
+            return self._theory.get_defining_property(name).proven_truth
         try:
             return self._theory.get_common_expr(name)
         except (KeyError, OSError, TheoryException):

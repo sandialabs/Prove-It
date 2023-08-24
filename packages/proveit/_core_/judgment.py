@@ -94,6 +94,8 @@ class Judgment:
     disallowed_theorems_and_theories = None
     presumed_theorems_and_dependencies = None
     
+    proofs_subfolder = 'proofs' # may change to 'def_existence_proofs'
+    
     qed_in_progress = False  # set to true when "%qed" is in progress
 
     # Judgments for which derive_side_effects is in progress, tracked to 
@@ -283,7 +285,7 @@ class Judgment:
     def __hash__(self):
         return self._meaning_id
 
-    def begin_proof(self, theorem):
+    def begin_proof(self, theorem, definition_existence_proof=False):
         '''
         Begin a proof for a theorem.  Only use other theorems that
         are explicitly allowed as presumptions for this theorem.
@@ -302,6 +304,9 @@ class Judgment:
         if theorem.proven_truth != self:
             raise ValueError(
                 'Inconsistent theorem for the Judgment in begin_proof call')
+        Judgment.proofs_subfolder = 'proofs'
+        if definition_existence_proof:
+            Judgment.proofs_subfolder = 'def_existence_proofs'
 
         # The lists of theorems/theories that are allowed/disallowed
         # to be presumed while proving this theorem.

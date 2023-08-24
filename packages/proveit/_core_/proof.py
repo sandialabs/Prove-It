@@ -978,9 +978,9 @@ class Axiom(Proof):
                  _proven_truth=None, _requirements=None,
                  _marked_req_indices=None):
         if not isinstance(theory, Theory):
-            raise ValueError("An axiom 'theory' must be a Theory object")
+            raise TypeError("An axiom 'theory' must be a Theory object")
         if not isinstance(name, str):
-            raise ValueError("An axiom 'name' must be a string")
+            raise TypeError("An axiom 'name' must be a string")
         self.theory = theory
         self.name = name
         if _proven_truth is not None:
@@ -1028,7 +1028,6 @@ class Axiom(Proof):
     def __str__(self):
         return self.theory.name + '.' + self.name
 
-
 class Theorem(Proof):
     all_theorems = []
 
@@ -1036,9 +1035,9 @@ class Theorem(Proof):
                  _proven_truth=None, _requirements=None,
                  _marked_req_indices=None):
         if not isinstance(theory, Theory):
-            raise ValueError("A theorem 'package' must be a Theory object")
+            raise TypeError("A theorem 'package' must be a Theory object")
         if not isinstance(name, str):
-            raise ValueError("A theorem 'name' must be a string")
+            raise TypeError("A theorem 'name' must be a string")
         self.theory = theory
         self.name = name
         # keep track of proofs that may be used to prove the theorem
@@ -1391,6 +1390,96 @@ class Theorem(Proof):
                 # cancel
                 raise UnusableProof(Judgment.theorem_being_proven, self)
 
+class DefinitionExistence(Theorem):
+    '''
+    For conservative definitions, the unique existence of the 
+    Literal(s) with corresponding defining properties must be
+    proven effectively as a Theorem.
+    '''
+
+    def __init__(self, expr, theory, name, *,
+                 _proven_truth=None, _requirements=None,
+                 _marked_req_indices=None):
+        Theorem.__init__(self, expr, theory, name, 
+                         _proven_truth=_proven_truth,
+                         _requirements=_requirements, 
+                         _marked_req_indices=_marked_req_indices)
+
+    def _regenerate_proof_object(self, proven_truth, requirements,
+                                 marked_req_indices):
+        return DefiningProperty(
+                None, self.theory, self.name,
+                _proven_truth=proven_truth, _requirements=requirements,
+                _marked_req_indices=marked_req_indices)
+
+    def step_type(self):
+        if self.is_conjecture():
+            return 'conjectured existence'
+        return 'definition existence'
+
+    def _generate_step_info(self, object_rep_fn):
+        # For these purposes, we should use 'definition existence' even 
+        # if the status is 'conjectured existence'.
+        return 'definition existence_' + str(self) + ':'
+
+    def _stored_theorem(self):
+        from ._theory_storage import StoredDefinitionExistence
+        return StoredDefinitionExistence(self.theory, self.name)
+
+class DefiningProperty(Proof):
+    '''
+    The proof for a defining property of conservative definition(s)
+    is a direct consequence of the DefinitionExistence.
+    '''
+    def __init__(self, expr, theory, name, *, def_existence,
+                 _proven_truth=None, _requirements=None,
+                 _marked_req_indices=None):
+        if not isinstance(theory, Theory):
+            raise TypeError("A DefiningProperty 'theory' must be a "
+                             "Theory object")
+        if not isinstance(name, str):
+            raise TypeError("A DefiningProperty 'name' must be a string")
+        if not isinstance(def_existence, DefinitionExistence):
+            raise TypeError("A DefiningProperty 'def_existence' must be "
+                            "a DefinitionExistence")
+
+        self.theory = theory
+        self.name = name
+        if _proven_truth is not None:
+            # Via _regenerate_proof_object:
+            Proof.__init__(self, _proven_truth, _requirements,
+                           _marked_req_indices)
+            return
+        else:
+            Proof.__init__(self, Judgment(expr, frozenset()), 
+                           [def_existence.proven_truth])
+
+    def _regenerate_proof_object(self, proven_truth, requirements,
+                                 marked_req_indices):
+        return DefiningProperty(
+                None, self.theory, self.name,
+                _proven_truth=proven_truth, _requirements=requirements,
+                _marked_req_indices=marked_req_indices)
+
+    def step_type(self):
+        return 'defining property'
+
+    def _generate_step_info(self, object_rep_fn):
+        return self.step_type() + '_' + str(self) + ':'
+
+    def _storedDefiningProperty(self):
+        from ._theory_storage import StoredDefiningProperty
+        return StoredDefiningProperty(self.theory, self.name)
+
+    def get_link(self):
+        '''
+        Return the HTML link to the property definition.
+        '''
+        return self._storedDefiningProperty().get_def_link()
+
+    def __str__(self):
+        return self.theory.name + '.' + self.name
+    
 def _checkImplication(implication_expr, antecedent_expr, consequent_expr):
     '''
     Make sure the implication_expr is a proper implication with

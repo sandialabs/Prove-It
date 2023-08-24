@@ -62,6 +62,7 @@ class Literal(Label):
             tuple(extra_core_info) + (theory.name,), styles=styles,
             fence_when_forced=fence_when_forced)
         self.theory = theory
+        theory._storage._literals.add(self)
         Literal.var_to_lits.setdefault(self.as_variable(), set()).add(self)
         # if self._core_info in Literal.instances:
         #    raise DuplicateLiteralError("Only allowed to create one Literal with the same theory and string/latex formats")
