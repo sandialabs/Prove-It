@@ -377,21 +377,13 @@ class OperationOverInstances(Operation):
                              "operands with a single lambda_map entry.")
 
         implicit_operator = cls._implicit_operator()
-        if implicit_operator is None:
-            raise OperationError(
-                "Expecting a '_operator_' attribute for class "
-                "%s for the default OperationOverInstances._make "
-                "method" %
-                str(cls))
-
         operator = sub_expressions[0]
-        if not (operator == implicit_operator):
-            raise OperationError("An implicit operator may not be changed")
-
         operands = sub_expressions[1]
+        
         if (not isinstance(operands, ExprTuple) or 
                 not len(operands.entries) == 1):
             raise ValueError("Expecting operands to have a single entry.")
+
         if isinstance(operands[0], Variable) and hasattr(cls, '_operator_'):
             # If the operand is not a Variable, make an
             # Operation instead.  This can come up when creating
@@ -405,6 +397,14 @@ class OperationOverInstances(Operation):
             # and create a gerneric function-style operation.
             return Operation._make(core_info, sub_expressions,
                                    styles=styles)
+        
+        if implicit_operator is None or operator != implicit_operator:
+            # If there is no implicit operator for the class or
+            # the operator is no longer that implicit operator, make
+            # a generic OperationOverInstance.
+            return OperationOverInstances(
+                    operator, None, None, 
+                    styles=styles, _lambda_map=lambda_map)
         
         sig = inspect.signature(cls.__init__)
         Parameter = inspect.Parameter
