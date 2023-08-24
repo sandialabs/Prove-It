@@ -472,7 +472,8 @@ class Theory:
         return nb_str
 
     @staticmethod
-    def update_proving_name_if_needed(filename, theorem_name):
+    def update_proving_name_if_needed(filename, theorem_name, *,
+                                      definition_existence_proof):
         '''
         Check if the notebook stored in 'filename' has the
         correct name following %proving.  If not, fix it.
@@ -482,7 +483,10 @@ class Theory:
         '''
         with open(filename, 'r', encoding='utf8') as _f:
             nb_str = _f.read()
-        proving_str = '"%proving '
+        if definition_existence_proof:
+            proving_str = '"%existence_proving '
+        else:
+            proving_str = '"%proving '
         proving_str_idx = nb_str.find(proving_str)
         if proving_str_idx == -1:
             return None

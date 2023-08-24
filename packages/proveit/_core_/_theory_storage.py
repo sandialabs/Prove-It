@@ -460,13 +460,14 @@ class TheoryStorage:
     
     def _update_name_to_kind(self, names, kind):
         kind_to_str = {'axiom':'an axiom', 'theorem':'a theorem',
-                       'common':'a common expression'}
+                       'common':'a common expression',
+                       'defining_property':'a defining property'}
         for name in names:
             if name in self._name_to_kind:
                 if self._name_to_kind[name] != kind:
                     raise ValueError("'%s' is an overused name, as %s and %s."
                                      %(name, kind_to_str[kind], 
-                                       self._name_to_kind[name]))
+                                       kind_to_str[self._name_to_kind[name]]))
             else:
                 self._name_to_kind[name] = kind
 
@@ -818,7 +819,8 @@ class TheoryStorage:
             nb_str = Theory.update_title_if_needed(filename, generic_nb_str)
             if nb_str is not None:
                 nb_str = Theory.update_proving_name_if_needed(
-                    filename, theorem_name)
+                    filename, theorem_name,
+                    definition_existence_proof=definition_existence_proof)
             if nb_str is None:
                 # The format is not correct; stash this one and
                 # generate a new one.
