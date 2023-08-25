@@ -1,0 +1,5 @@
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{A} & \qw 
+} \end{array} \neq \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{B} & \qw 
+} \end{array}

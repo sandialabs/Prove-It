@@ -1,0 +1,1 @@
+\forall_{x \in \mathbb{R}}~\left(\left\lfloor \left\lfloor x\right\rfloor\right\rfloor = \left\lfloor x\right\rfloor\right)

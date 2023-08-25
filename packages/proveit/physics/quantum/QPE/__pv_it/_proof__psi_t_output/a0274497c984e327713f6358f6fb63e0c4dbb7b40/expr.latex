@@ -1,0 +1,10 @@
+\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \control{} \qw \qwx[1] & \qw & \gate{\cdots} \qwx[1] & \qw & \qw \\
+& \qw \qwx[1] & \control{} \qw \qwx[1] & \gate{\cdots} \qwx[1] & \qw & \qw \\
+& \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\ddots} \qwx[1] & \gate{\vdots} & \qw \\
+& \qw \qwx[1] & \qw \qwx[1] & \gate{\cdots} \qwx[1] & \control{} \qw \qwx[1] & \qw \\
+& \gate{U^{2^{t - 1}}} & \gate{U^{2^{t - 2}}} & \gate{\cdots} & \gate{U^{2^{0}}} & { /^{s} } \qw
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \multigate{1}{\textrm{QPE}_1\left(U, t\right)} & { /^{t} } \qw \\
+& \ghost{\textrm{QPE}_1\left(U, t\right)} & { /^{s} } \qw
+} \end{array}\right)

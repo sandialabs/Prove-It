@@ -1,0 +1,1 @@
+\left\{\forall_{A, B~|~A \subseteq B, B \subseteq \Omega}~\left(\textrm{Pr}\left(A\right) \leq \textrm{Pr}\left(B\right)\right) \textrm{ if } \Omega \underset{{\scriptscriptstyle c}}{\in} \textrm{SampleSpaces}\right..

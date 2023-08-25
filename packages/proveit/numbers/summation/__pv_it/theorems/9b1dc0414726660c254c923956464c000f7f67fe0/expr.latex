@@ -1,0 +1,1 @@
+\left(f, Q\right) \mapsto \left(\left[\forall_{x~|~Q\left(x\right)}~\left(f\left(x\right) \in \mathbb{C}\right)\right] \Rightarrow \left(\left[\sum_{x~|~Q\left(x\right)}~f\left(x\right)\right] \in \mathbb{C}\right)\right)

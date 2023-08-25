@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.sets.enumeration.unfold_singleton theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.sets.enumeration.unfold_singleton-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">sets</a>.<a class="ProveItLink" href="../../theory.html">enumeration</a>.<a class="ProveItLink" href="../../theorems.html#unfold_singleton">unfold_singleton</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.sets.enumeration.unfold_singleton-theorem">&#182;</a></h1><p><strong><em> see <a href="../__pv_it/388ccdf8814b17c34471b9f6668be0ca49d21e5f0/dependencies.html" class="ProveItLink">dependencies</a> </em></strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="o">%</span><span class="k">proving</span> unfold_singleton
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="unfold_singleton">unfold_singleton:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/e6edad3e8ac153f58be174b3ab784074cbecb5e90/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALAAAAAXBAMAAABZgNg7AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACbElEQVQ4y6WVT2jTUBzHv2mStknnVvC0DaSw
+sdMGQWSyyzYYuqF0ePKiQpgH/xwk3twoI/O64jZhSD1IDuJBZXQTBl4kR1GUeRh4qaRaEYeUgYeJ
+J3+vaZLmT8OIgZf3e+/73oe8358XIPGTSSQd4/naXRItIM+MoQTcVDVG/AacY/2NBOBncWLawApz
+yXoC8EycyE8zNnKFBGAzVn0HXqEPT+JiNVa+Dnyo1d4nAAsUO7k5sLoTmN+agUwJsQ3MAY9Du0I+
+e2X3qxfc8ChsWd0qskGxxp5PzKyOgj8ExoG7yOSDHCk4UXaMbcc4QXE5iynjpH9htlAER7kwShAj
+dykO/KB/ExhxRq7RQ5t0nA/ulPERPVQeaxQFKxy7DrAw5+P5wCBKqOj+Yk0HrpKpTtKrOdvQaLYO
+zgP3NpZnWQ3ZPFsb6XQFxCM8D/hYUPGLujFqO7eJofWnaeVWn1H2wD+49QXZrp1xR7vmHsqCvMmZ
+CBa2lMcGdRPUShQ7Hk+yZC6N4acHViRLF5VWSG46WvqgDcjlkfrz1BSDtSXkxd/UXaTG6WziqDU9
+iFMdPu7TwN+qVB5iZcDRUnec8O9BnreGT4eiN9hgqH03TczWHbqPtx3gMrSsfdS6o5VcwudupZOj
+mszstQelnCrgBa0WD11wxtzFdLt4WMxamhs8nInG7uIleUdQHM98f3OAcgHDE6r3xfNXmgYWdQfc
+0jywpEWCv5DLgEX/ZEHWJCWQx/Lril0gtuaB5ei7dqjBEvyRP7cNzrocXdKUZbbmgbHc/Ybq9Z+G
+hzhZjQanLVvLLvzXbzLiL3vf7u4dG/EP3ueORzNJClkAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/529252921d2631e3b6c68de2f857839357cda7420/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,1 @@
+\forall_{r, \theta \in \mathbb{R}~|~\frac{\theta}{2 \cdot \pi} \in \mathbb{Z}}~\left(\left(r \cdot \mathsf{e}^{\mathsf{i} \cdot \theta}\right) = r\right)

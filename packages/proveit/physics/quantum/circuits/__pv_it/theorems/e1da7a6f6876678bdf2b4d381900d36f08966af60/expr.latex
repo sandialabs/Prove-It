@@ -1,0 +1,5 @@
+\forall_{A, B, S~|~A = B}~\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{A~\mbox{part}~k~\mbox{on}~S} 
+} \end{array} = \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{B~\mbox{part}~k~\mbox{on}~S} 
+} \end{array}\right)

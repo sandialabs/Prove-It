@@ -1,0 +1,1 @@
+\forall_{a, b, c \in \mathbb{R}~|~c \neq 0}~\left(\left|\left(\left(b + a\right) ~\textup{mod}~ c\right) - b\right|_{\textup{mod}\thinspace c} \leq \left|a\right|\right)

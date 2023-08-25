@@ -1,0 +1,46 @@
+\begin{array}{cccc} 
+ \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{CONTROL~\mbox{on}~\left\{t + 1\right\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} & \cdots & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{CONTROL~\mbox{on}~\left\{t + 1\right\}} & \qw 
+} \end{array} & \cdots & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} \\
+\vdots & \vdots & \ddots & \vdots \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} & \cdots & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{CONTROL~\mbox{on}~\left\{t + 1\right\}} & \qw 
+} \end{array} \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{U^{2^{t - 1}}~\mbox{part}~1~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{U^{2^{t - 2}}~\mbox{part}~1~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} & \cdots & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{U^{2^{0}}~\mbox{part}~1~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{U^{2^{t - 1}}~\mbox{part}~2~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{U^{2^{t - 2}}~\mbox{part}~2~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} & \cdots & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{U^{2^{0}}~\mbox{part}~2~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} \\
+\vdots & \vdots & \ddots & \vdots \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{U^{2^{t - 1}}~\mbox{part}~s~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{U^{2^{t - 2}}~\mbox{part}~s~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} & \cdots & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{U^{2^{0}}~\mbox{part}~s~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} \\
+\end{array}

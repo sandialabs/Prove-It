@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Common expressions for the theory of proveit.statistics</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../index.html"><img src="../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Common-expressions-for-the-theory-of-proveit.statistics">Common expressions for the theory of <a class="ProveItLink" href="theory.html">proveit.statistics</a><a class="anchor-link" href="#Common-expressions-for-the-theory-of-proveit.statistics">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the common expressions of a theory:</span>
+<span class="o">%</span><span class="k">common_expressions_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">IntervalCC</span>
+<span class="kn">from</span> <span class="nn">proveit.statistics.sample_spaces</span> <span class="k">import</span> <span class="n">SampleSpacesClass</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> common
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining common sub-expressions for theory &#39;proveit.statistics&#39;
+Subsequent end-of-cell assignments will define common sub-expressions
+%end_common will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">SampleSpaces</span> <span class="o">=</span> <span class="n">SampleSpacesClass</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="SampleSpaces">SampleSpaces:</strong> <a class="ProveItLink" href="../__pv_it/common/b8cb4b48bfd38c392abbbe6b1d73ed28fe3180d20/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAAASBAMAAACEDMyZAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEJlU3TLNiWa77yJE
+dqs3h7YHAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAB7UlEQVQ4y62TTUgbQRiG3zHJxtiNySG0vbnk
+0oIoC+1JC4Ee6kXqQsGDRSMeLATRIIKCPyyeRCrNuVRbD1JIQljSm6fFgt4kpdSetgS8iApKIIh/
+xJn5YsG6iT34wf4w7/MwM9/sgkWjugaX6s3RsyZAFTHwfNA1Gb0LkDUONLrHK3cBst7xK1XPrw3I
++mgBZj2/NiArdmLze6MzGfYlWp1l1fmEza/z7ab08781AtTEVHSPMLAnk7pM+pd2gGClMgJ0WA2D
+8O4i/h6LQNpmL4Xvy2CnCjRlEdEIW9fVNZGwFLx86sf7FZMH6jkCXxBKIW6Izsds7ns1hHQClCI8
+F4QNw5MRyYtVBOUW+o75KW9xP4VQUvhDQIvG/Tj3kgQoGlhJYuyEj8ikZ5lao16AtT8jv1D1+UJW
+EHu6sGAQwH2cSsx3Kbomkkc9JTqaMjps302f5tdxDdD8AhPLkMmDMD4Y6OYvxyhBPX/71xf7N7jf
+VARsAsT+y4QNAx6RfC+g2cQrHQ9NHgTLnQr5NhIW65L9z8JvEaBkEEkStm5iWiTfVhGwUNyYOwQG
+fv6Y+HWUe/M55x/rwujSHxsD6QPk26argLLnVLECizqWSNRZZ8b9mxq6PaTU+QXv3X99e8hb/H99
+++zg3yH1KGe5slcyRL7lzA6YAQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">prob_domain</span> <span class="o">=</span> <span class="n">IntervalCC</span><span class="p">(</span><span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="prob_domain">prob_domain:</strong> <a class="ProveItLink" href="../__pv_it/common/125651165533d749230fc5a2954cf95b83d188f70/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACUAAAAVBAMAAAAzyjqdAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAdt0yiUSZIs1UEGa7
+q++VedyHAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAoElEQVQY02MQUmZAAYxKBgyuDGiAJQAkxuKY
+DuUza8HEOhkWFYCF1mb8gopxKzCwHIAaBhPjucDA+QtNjD+Bgfknmth6oNhvNLF6Bwbmj1jEvqDr
+dWBg/YhpBye6HTwHGLjR3cL9gIGtgWEBihiDJsM6A64fYP9/h4ktc7zMwKAEVMh778dtqBgYcC5A
+CSsIkwFTbCEWMQEkMSf0+NALAABNMjWcMh4/TgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> common
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These common expressions may now be imported from the theory package: proveit.statistics
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

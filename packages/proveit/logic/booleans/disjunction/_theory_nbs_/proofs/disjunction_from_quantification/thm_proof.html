@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.booleans.disjunction.disjunction_from_quantification theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.booleans.disjunction.disjunction_from_quantification-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">booleans</a>.<a class="ProveItLink" href="../../theory.html">disjunction</a>.<a class="ProveItLink" href="../../theorems.html#disjunction_from_quantification">disjunction_from_quantification</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.booleans.disjunction.disjunction_from_quantification-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> disjunction_from_quantification
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="disjunction_from_quantification">disjunction_from_quantification:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/f8aa0ffdbe9ed8b09a5a17e8aa978a7059ed237b0/expr.html"><img src="data:image/png;base64,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
+vf8AiY1vGMpx0EsAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/3016e6718f54c03096d27d625e1b5ad334e590d70/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>disjunction_from_quantification may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

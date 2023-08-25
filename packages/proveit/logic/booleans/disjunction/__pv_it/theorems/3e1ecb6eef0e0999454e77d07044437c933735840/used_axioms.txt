@@ -1,0 +1,4 @@
+proveit.core_expr_types.tuples.range_extension_def
+proveit.logic.booleans.disjunction.multi_disjunction_def
+proveit.logic.equality.equals_transitivity
+proveit.numbers.number_sets.natural_numbers.zero_in_nats

@@ -1,0 +1,2 @@
+\left\{\forall_{n \in \mathbb{N}^+}~\left[\begin{array}{l}\forall_{x_{1}, x_{2}, \ldots, x_{n}~|~\left\{\lvert x_{1} \rangle, \lvert x_{2} \rangle, \ldots, \lvert x_{n} \rangle\right\} \in \textrm{O.N.Bases}\left(\mathcal{H}\right)}~\\
+\left(\left(\sum_{i=1}^{n} \left(\lvert x_{i} \rangle \thinspace \langle x_{i} \rvert\right)\right) = I_{\mathcal{H}}\right)\end{array}\right] \textrm{ if } \mathcal{H} \underset{{\scriptscriptstyle c}}{\in} \textrm{HilbertSpaces}\right..

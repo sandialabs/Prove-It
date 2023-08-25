@@ -1,0 +1,1 @@
+m \mapsto \left\{\forall_{n_{1}, n_{2}, \ldots, n_{m} \in \mathbb{N}^+}~\left(\left(K^{n_{1}} {\otimes}  K^{n_{2}} {\otimes}  \ldots {\otimes}  K^{n_{m}}\right) \subseteq K^{n_{1} \cdot  n_{2} \cdot  \ldots \cdot  n_{m}}\right) \textrm{ if } m \in \mathbb{N}^+\right..

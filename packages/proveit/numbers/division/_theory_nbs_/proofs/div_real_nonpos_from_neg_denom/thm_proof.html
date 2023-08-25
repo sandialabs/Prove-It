@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.division.div_real_nonpos_from_neg_denom theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.division.div_real_nonpos_from_neg_denom-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">division</a>.<a class="ProveItLink" href="../../theorems.html#div_real_nonpos_from_neg_denom">div_real_nonpos_from_neg_denom</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.division.div_real_nonpos_from_neg_denom-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> div_real_nonpos_from_neg_denom
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="div_real_nonpos_from_neg_denom">div_real_nonpos_from_neg_denom:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/62df0407ee7edd5fdeb1007e6b4045c42fe1bf920/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANwAAAAmBAMAAABdfejNAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAD+ElEQVRYw61YW0gUURj+3Ytz2XVWFIQMYsGn
+HrIFwQcJW2vLyqCtKNACjQLRIkaISApTiHqIclCsVksm8CW67JClKRRmkVEEPnQva0OxCBKx7ArV
+f87szdnbsLMHdvfM7L/nm/P93/+dcxbAaFulM45vhAw0Sy4As/hjIHXkKTkDcKX42ilyv1NHmnON
+o7GPkKZ7YBnXEdthHC5bQT5nIUfREXvFOJvLcQi7BH5v4hDTWbDdUYJpNtje4MsfgJVJ0HoByqEa
+e8wPw6kjEvE7ocAkJhJIJ749BAf5vscoXJaEb1zA9NSSIEAg+mB+g92JnyuMwjlcpICX3Gr6pJnT
+Pt/3tzgvdjTIQQ4JPOoEmr6idOHaE3HIMbnW/G6ApcMqnJ34QI4b1pAv69OFSygRjlFAasNO9TAl
+00HItNQBucVI6cIVJIOrzCa9tsqwVIRZyMbCsTnThbsbI40LE8/DcBy91VQIM7CZ1sRPMGMOs9OW
+yh/NtXW/HJld4UW1L2KZb6CSmQN4MjHxOG24r5rrg3KETLZDKwkew9cBdKeLxsxpbtRHcvfg/bsY
+j/yL1AIT42V8FYlsKRZTmYoWri4C11+GF6wP29lo7jnZFu2vywYq9uNj30CkRvXXx4O6Nb3ZU6BZ
+Ra3z5P0fabMUHjMz8SpIZndJzON9w1ECYaWwH3xewQaDaN/8lJcfgUfUqIibn17UBQHFdjj57Hgp
+qhCOcXIcOKgrD115WlHJApSROTDPmHF4Se7a8a4FMwyBgPlaCjLHo+AsJ6Q4uYPrZM9yuXwQBOJr
+CPfZjQNVyTi7MWpUM4UwCRRO6IMDHo8nTD6jVeZMFBwvTcYT8hFUCv+C/QGXaJ3amF4XWPNp3mnu
+vshTKkkBpVkzAP9Xu7g7w3BuKOG8cYScRchysyOwlcJZeiTg80i3pYgqsxNKrS4Kt35I+7j3tZJe
+VBNaEX6J3BkN1+x8sGP3CrlQiqJ1CoJty8Kgh1BhbvD5OpDMm1q3a1BBzodzZh1STSz+wh7ar/lF
+rkw+SWcnWHfIDCZoTShoFkZZRc3dtmHNABuDHLp1uYIt9FR2sX2rTIWLhTAc9WNegddmSfUdLIQ+
+7QKkat2hz+O5kJ9YVxf3A3MOe9unlb61UXSPwjGUW3Mrsd+9vKdu4QB+FadW35aOrv2Rdtnni9nA
+mdRJDvm64j6vSsRtfRZbK6YMqUm+ER+hH7tm8vTADaQOcSU/1lBp899lv6gDbtTwtnYgKHC7jiOQ
+MGIYjhgq2fI4dBwS7E7DcGYiVTyQ1OoYajoD57vdatltSl0KzFgG4K6iRhyteMRLHenMAByDy1eW
+i9PhYp2ZOJvDISyExat1/BVAHOQ/pEcKFJdt2wQAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/1fcb10acf1c017ac6abf742f6d707097e6180ae00/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>div_real_nonpos_from_neg_denom may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

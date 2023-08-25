@@ -1,0 +1,1 @@
+\left|\left(r \cdot \mathsf{e}^{\mathsf{i} \cdot a} \cdot c\right) - \left(r \cdot c \cdot \mathsf{e}^{\mathsf{i} \cdot b}\right)\right| = \left(2 \cdot r \cdot c \cdot \sin{\frac{\left|a - b\right|}{2}}\right)

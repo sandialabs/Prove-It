@@ -1,0 +1,5 @@
+\left(\left(A, B\right) \mapsto \left\{\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{A} 
+} \end{array} = \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{B} 
+} \end{array} \textrm{ if } A = B\right..\right)

@@ -1,0 +1,1 @@
+\forall_{A, B~|~A \subseteq B}~\left[\forall_{x~|~x \notin B}~\left(x \notin A\right)\right]

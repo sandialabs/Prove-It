@@ -1,0 +1,1 @@
+\forall_{x, y \in \mathbb{R}}~\left(\left\lceil x + y\right\rceil \leq \left(\left\lceil x\right\rceil + \left\lceil y\right\rceil\right)\right)

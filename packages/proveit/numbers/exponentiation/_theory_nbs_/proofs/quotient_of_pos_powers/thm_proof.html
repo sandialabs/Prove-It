@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.exponentiation.quotient_of_pos_powers theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.exponentiation.quotient_of_pos_powers-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">exponentiation</a>.<a class="ProveItLink" href="../../theorems.html#quotient_of_pos_powers">quotient_of_pos_powers</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.exponentiation.quotient_of_pos_powers-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> quotient_of_pos_powers
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="quotient_of_pos_powers">quotient_of_pos_powers:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/29628f13950841bd34576409477372b5d8ae75080/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAATcAAAAzCAMAAADFGr+iAAAAOVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACXHtMAAAAEnRSTlMAq1Rm
+mUTNIjK7EInv3Xbt5cmRiLwgAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEe0lEQVRo3u1biZKcIBDl
+vukk/P/HBvBW1FFxK0OFrU3VOp0RHn28fiJCbQ8lNPo/TodW6yvY1vt2o02bsGG6ueRUTe/1TQJX
+8C0VAHC9xRLfIGxUbK9B9BBg9e5hcXOwSScLCY+W8bw9PG0NNw+Fiym9sZo+QlxjKY660tWQsCM1
+7yNYW7i5eVGQ2IJM/hfTG63L4HiQLcEGYRY/PKU6na4oBlD5TqKp0uBnqzEuJW/2EmcgoaEMp8KM
+37KQkbTv3MoEaAc3PK8KTufl8beauYbIr8Nrh6DhLSWAtlMZVKBz3BLxwAKRW+s7VQJMaIb7wsIF
+NKROkqF7TOtcCXDNVFS9IL0Gg1USg7rnuiUlwAKFRYKboCNf7H2uHrctKgGeIzVtjY2pk41VR3xv
+tjOhXvNTUgJY3BajZoUhwjg4nPxiQVlVpFS9EqD0MKI7Ob69nehj2ZLvxY2EepMvKQEr4pHdm/Zp
+TXwvbDFw6qnhJSVAJH+b0ZOQgtT5NJz9YtzgORMdFZSSEiAZpTCrsSEBy/JeffWjGvt5q838bOCC
+gvJRDhQZ6eGfKkt4ZH1YFvcXxZ5KFBcVFO8HV7MHTTBohjsfLrVvxFvBsIBPVr423lgf1fRuitbC
+dmtweLjbFxUUn7kcgVJVUIC15ulhK44uTLRdt2+DASSvsdIe4lY2voJbFxGJtXN9jFsojE948+cK
+SodbBI1uUiFjfYmyJn9G7ap9Gw0g/iBq4Ai3HeMruGE53n1TBdjD/HZVQeniNFK3gcQZS8GmWcHQ
+dBmqul2Qy/ZtNOigABMhsIwxH3/5uq8rGZesF7iNc+kSd943mQHaPGixD+vpVQXFdeEphwbfeBmB
+kSk4x4wkl9/Vt2+TQQ49qQdoWKGv2zU+8rdxLiyz9l/xl8YLCbfNM0x4yt8uKigDXniMPdT1r3yc
+GTXUFNq3ySBCwbTVxUzf93W7xke4jXPp/h/tvT37G9TmvRcVlHU7nPowSFhS0fVmBCnFVaF9mwxy
+6FlOSkj0fd2u8RFu41zyuvoPujjddFXkNU18J6zt6u9E/qgxSE0f9HVhYE99+zYzSFBwbk2BkfVp
+Z9d4w990YS4pTn//0TlOd+qC+lkFdiMjuJRSeArMqX2Qlsmc4GOinrVvk0FHLczKdbLx0NedGRf9
+bZwLmkQblHogjk8DZ09xfElG4IwSsDSrSmpCIIZZ4hEq1bGhfRsNuABhkWFsSQGz8dDXnRmXcJvm
+smgCI+9lW9Lhd1WJpeL4fjtsbIqMVdogZwa3jQ/5Gzl1GLwHzUpxrDOutifcvGV8jNu5xEX3iK97
+o2BcVeXpa8aHuJHztatVxhlVoTcedcp/74H97VUuH81NqtBacayjkrZzIom5siq0VhyrpLeGzjnw
+OfN991wNaulcDfLstip0OUxbOqk6W82zczXnO9TWkfLpwdLDczWnGaGpc6pzh3t2ruaMKrX2BoOw
+N1Whi+7W2qtGyv1EAHmCWhvwAydcGnzPqO47kztRKlCLQ7wcREo0+gKqVm9+u5lg+wuLVisU/qXX
+PAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/d6b21df7bf613f715479be1659c62a5af701dec60/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>quotient_of_pos_powers may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,1 @@
+\left(a, b\right) \mapsto \left\{\left|a ~\textup{mod}~ b\right|_{\textup{mod}\thinspace b} = \left|a\right|_{\textup{mod}\thinspace b} \textrm{ if } a \in \mathbb{R} ,  b \in \mathbb{R}^+\right..

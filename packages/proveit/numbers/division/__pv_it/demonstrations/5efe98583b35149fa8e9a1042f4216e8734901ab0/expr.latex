@@ -1,0 +1,1 @@
+\left[\forall_{x \in \{y~\ldotp \ldotp~z\}}~\left(P\left(x\right) \in \mathbb{C}\right)\right] \Rightarrow \left[\forall_{d \in \mathbb{C}~|~d \neq 0}~\left(\frac{\sum_{x = y}^{z} P\left(x\right)}{d} = \left(\sum_{x = y}^{z} \frac{P\left(x\right)}{d}\right)\right)\right]

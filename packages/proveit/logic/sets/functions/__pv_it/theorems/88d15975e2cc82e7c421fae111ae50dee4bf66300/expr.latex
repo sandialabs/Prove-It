@@ -1,0 +1,1 @@
+\forall_{A, B}~\left[\forall_{f~|~\forall_{x \in A}~\left(f\left(x\right) \in B\right)}~\left(f \in \left[A \rightarrow B\right]\right)\right]

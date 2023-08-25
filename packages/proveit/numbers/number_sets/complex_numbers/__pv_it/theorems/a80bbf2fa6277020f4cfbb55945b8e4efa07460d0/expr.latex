@@ -1,0 +1,1 @@
+\left\{\mathsf{e}^{\frac{-\left(2 \cdot \pi \cdot \mathsf{i} \cdot \left(x ~\textup{mod}~ r\right)\right)}{r}} = \mathsf{e}^{\frac{-\left(2 \cdot \pi \cdot \mathsf{i} \cdot x\right)}{r}} \textrm{ if } x \in \mathbb{R} ,  r \in \mathbb{R}\right..

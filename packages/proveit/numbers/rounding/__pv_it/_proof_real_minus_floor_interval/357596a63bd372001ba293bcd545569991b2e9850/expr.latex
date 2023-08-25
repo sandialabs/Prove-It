@@ -1,0 +1,1 @@
+\left(0 \leq \left(x - \left\lfloor x\right\rfloor\right)\right) \land \left(\left(x - \left\lfloor x\right\rfloor\right) < 1\right)

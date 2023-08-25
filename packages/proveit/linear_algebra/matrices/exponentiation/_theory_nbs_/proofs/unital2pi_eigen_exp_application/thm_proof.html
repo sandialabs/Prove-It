@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.linear_algebra.matrices.exponentiation.unital2pi_eigen_exp_application theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.linear_algebra.matrices.exponentiation.unital2pi_eigen_exp_application-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">linear_algebra</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">matrices</a>.<a class="ProveItLink" href="../../theory.html">exponentiation</a>.<a class="ProveItLink" href="../../theorems.html#unital2pi_eigen_exp_application">unital2pi_eigen_exp_application</a> theorem<a class="anchor-link" href="#Proof-of-proveit.linear_algebra.matrices.exponentiation.unital2pi_eigen_exp_application-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> unital2pi_eigen_exp_application
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="unital2pi_eigen_exp_application">unital2pi_eigen_exp_application:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/f26599426647e321e4847468d7f54446fc0f36730/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/8dee1bfd5d1657d0feabd1a4544d21304ed67f250/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>unital2pi_eigen_exp_application may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

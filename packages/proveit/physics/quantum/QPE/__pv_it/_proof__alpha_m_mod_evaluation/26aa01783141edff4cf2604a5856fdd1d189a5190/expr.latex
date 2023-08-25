@@ -1,0 +1,1 @@
+\frac{-\left(2 \cdot \pi \cdot \mathsf{i} \cdot \left(m ~\textup{mod}~ 2^{t}\right)\right)}{2^{t}} = \left(-\frac{2 \cdot \pi \cdot \mathsf{i} \cdot \left(m ~\textup{mod}~ 2^{t}\right)}{2^{t}}\right)

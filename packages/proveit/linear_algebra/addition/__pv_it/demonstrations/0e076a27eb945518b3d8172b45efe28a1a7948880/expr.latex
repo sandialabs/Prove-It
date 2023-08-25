@@ -1,0 +1,1 @@
+\left(\sum_{k=0}^{N} \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot k} \cdot v\left(k\right)\right)\right) = \left(v\left(0\right) + \left(\sum_{k=1}^{N} \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot k} \cdot v\left(k\right)\right)\right)\right)

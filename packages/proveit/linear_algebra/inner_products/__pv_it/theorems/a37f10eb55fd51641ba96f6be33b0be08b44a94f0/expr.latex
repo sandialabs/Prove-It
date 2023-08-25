@@ -1,0 +1,1 @@
+\forall_{\mathcal{H} \underset{{\scriptscriptstyle c}}{\in} \textrm{HilbertSpaces}}~\left[\forall_{X~|~X \subseteq \mathcal{H}}~\left[\forall_{P~|~P = \textrm{OrthoProj}\left(\mathcal{H}, X\right)}~\left(P^{\dagger} = P\right)\right]\right]

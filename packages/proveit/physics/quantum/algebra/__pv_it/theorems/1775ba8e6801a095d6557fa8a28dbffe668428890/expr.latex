@@ -1,0 +1,1 @@
+\left(\left(A, B\right) \mapsto \left\{\forall_{\lvert \psi \rangle \in A, \lvert \varphi \rangle \in B}~\left(\left(\lvert \psi \rangle \thinspace \lvert \varphi \rangle\right) \in \left(A {\otimes} B\right)\right) \textrm{ if } A \underset{{\scriptscriptstyle c}}{\in} \textrm{HilbertSpaces} ,  B \underset{{\scriptscriptstyle c}}{\in} \textrm{HilbertSpaces}\right..\right)

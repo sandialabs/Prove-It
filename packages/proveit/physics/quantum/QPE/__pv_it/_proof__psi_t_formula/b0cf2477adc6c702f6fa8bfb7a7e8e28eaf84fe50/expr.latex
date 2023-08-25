@@ -1,0 +1,1 @@
+k \mapsto \left\{\left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \varphi \cdot k} \cdot \left(\lvert 1 \rangle {\otimes} \lvert k \rangle_{t}\right)\right) \in \left(\mathbb{C}^{2} {\otimes} \mathbb{C}^{2^{t}}\right) \textrm{ if } k \in \{0~\ldotp \ldotp~2^{t} - 1\}\right..

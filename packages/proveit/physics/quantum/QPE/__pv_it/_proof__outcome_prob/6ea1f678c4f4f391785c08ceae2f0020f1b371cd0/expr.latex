@@ -1,0 +1,37 @@
+\textrm{Pr}\left(QCIRCUIT\left(VertExprArray\left(\begin{array}{c} \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert \Psi \rangle {\otimes} \lvert u \rangle~\mbox{part}~1~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert \Psi \rangle {\otimes} \lvert u \rangle~\mbox{part}~2~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array}, \ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert \Psi \rangle {\otimes} \lvert u \rangle~\mbox{part}~t + s~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array}\right),  \\ \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \meter 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \meter 
+} \end{array}, ..\left(t - 3\right) \times.., \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \meter 
+} \end{array},\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array}, ..\left(s - 3\right) \times.., \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array}\right),  \\ \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert m \rangle_{t}~\mbox{part}~1~\mbox{on}~\{1~\ldotp \ldotp~t\}} 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert m \rangle_{t}~\mbox{part}~2~\mbox{on}~\{1~\ldotp \ldotp~t\}} 
+} \end{array}, \ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert m \rangle_{t}~\mbox{part}~t~\mbox{on}~\{1~\ldotp \ldotp~t\}} 
+} \end{array},\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert u \rangle~\mbox{part}~1~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert u \rangle~\mbox{part}~2~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} 
+} \end{array}, \ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert u \rangle~\mbox{part}~s~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} 
+} \end{array}\right) \end{array}\right)\right)\right) = \textrm{Pr}\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\multiqin{4}{\lvert \Psi \rangle {\otimes} \lvert u \rangle} & \meter & \multiqout{3}{\lvert m \rangle_{t}} \\
+\ghostqin{\lvert \Psi \rangle {\otimes} \lvert u \rangle} & \meter & \ghostqout{\lvert m \rangle_{t}} \\
+\ghostqin{\lvert \Psi \rangle {\otimes} \lvert u \rangle} & \measure{\begin{array}{c}:\\ \left(t - 3\right) \times \\:\end{array}} \qw & \ghostqout{\lvert m \rangle_{t}} \\
+\ghostqin{\lvert \Psi \rangle {\otimes} \lvert u \rangle} & \meter & \ghostqout{\lvert m \rangle_{t}} \\
+\ghostqin{\lvert \Psi \rangle {\otimes} \lvert u \rangle} & { /^{s} } \qw & \qout{\lvert u \rangle}
+} \end{array}\right)

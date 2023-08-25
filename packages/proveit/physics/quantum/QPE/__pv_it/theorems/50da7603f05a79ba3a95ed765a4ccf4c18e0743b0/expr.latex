@@ -1,0 +1,1 @@
+\left(1 - \frac{1}{2 \cdot \left(2^{t - n} - 1\right)} - \frac{1}{4 \cdot \left(2^{t - n} - 1\right)^{2}}\right) > \left(1 - \epsilon\right)

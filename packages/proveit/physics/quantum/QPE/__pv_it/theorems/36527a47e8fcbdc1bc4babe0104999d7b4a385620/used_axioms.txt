@@ -1,0 +1,2 @@
+proveit.physics.quantum.QPE._alpha_m_def
+proveit.physics.quantum.QPE._t_in_natural_pos

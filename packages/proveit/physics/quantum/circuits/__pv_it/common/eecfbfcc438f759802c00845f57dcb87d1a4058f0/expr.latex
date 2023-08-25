@@ -1,0 +1,6 @@
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \gate{B_{1, 1}~\mbox{on}~S_{1, 1}} \qwx[1] & \gate{B_{2, 1}~\mbox{on}~S_{2, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{B_{m, 1}~\mbox{on}~S_{m, 1}} \qwx[1] & \qw \\
+& \gate{B_{1, 2}~\mbox{on}~S_{1, 2}} \qwx[1] & \gate{B_{2, 2}~\mbox{on}~S_{2, 2}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{B_{m, 2}~\mbox{on}~S_{m, 2}} \qwx[1] & \qw \\
+& \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\ddots} \qwx[1] & \gate{\vdots} \qwx[1] & \qw \\
+& \gate{B_{1, k}~\mbox{on}~S_{1, k}} & \gate{B_{2, k}~\mbox{on}~S_{2, k}} & \gate{\cdots} & \gate{B_{m, k}~\mbox{on}~S_{m, k}} & \qw
+} \end{array}

@@ -1,0 +1,1 @@
+\forall_{x \in \mathbb{C}}~\left[\forall_{n \in \mathbb{N}}~\left(x^{2 \cdot n} = \left(-x\right)^{2 \cdot n}\right)\right]

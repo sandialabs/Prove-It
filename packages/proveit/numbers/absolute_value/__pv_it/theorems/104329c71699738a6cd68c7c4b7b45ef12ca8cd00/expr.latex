@@ -1,0 +1,1 @@
+\left(x_{1}, x_{2}, \ldots, x_{n}\right) \mapsto \left\{\left|x_{1} \cdot  x_{2} \cdot  \ldots \cdot  x_{n}\right| = \left(\left|x_{1}\right| \cdot  \left|x_{2}\right| \cdot  \ldots \cdot  \left|x_{n}\right|\right) \textrm{ if } \left(x_{1} \in \mathbb{C}\right) \land  \left(x_{2} \in \mathbb{C}\right) \land  \ldots \land  \left(x_{n} \in \mathbb{C}\right)\right..

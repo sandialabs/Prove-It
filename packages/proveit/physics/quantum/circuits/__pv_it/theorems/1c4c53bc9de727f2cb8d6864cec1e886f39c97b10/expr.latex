@@ -1,0 +1,11 @@
+\left(m, \lvert \psi \rangle\right) \mapsto \left\{\begin{array}{c} \begin{array}{l} \left[n \mapsto \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\multiqin{3}{\lvert \psi \rangle} & \meter & \multiqout{3}{\lvert n \rangle_{m}} \\
+\ghostqin{\lvert \psi \rangle} & \meter & \ghostqout{\lvert n \rangle_{m}} \\
+\ghostqin{\lvert \psi \rangle} & \measure{\begin{array}{c}:\\ \left(m - 3\right) \times \\:\end{array}} \qw & \ghostqout{\lvert n \rangle_{m}} \\
+\ghostqin{\lvert \psi \rangle} & \meter & \ghostqout{\lvert n \rangle_{m}}
+} \end{array}\right)\right] \in  \\ \left[\{0~\ldotp \ldotp~2^{m} - 1\} \xrightarrow[\text{onto}]{\text{1-to-1}} \left\{\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\multiqin{3}{\lvert \psi \rangle} & \meter & \multiqout{3}{\lvert n \rangle_{m}} \\
+\ghostqin{\lvert \psi \rangle} & \meter & \ghostqout{\lvert n \rangle_{m}} \\
+\ghostqin{\lvert \psi \rangle} & \measure{\begin{array}{c}:\\ \left(m - 3\right) \times \\:\end{array}} \qw & \ghostqout{\lvert n \rangle_{m}} \\
+\ghostqin{\lvert \psi \rangle} & \meter & \ghostqout{\lvert n \rangle_{m}}
+} \end{array}\right\}_{n \in \{0~\ldotp \ldotp~2^{m} - 1\}}\right] \end{array} \end{array} \textrm{ if } m \in \mathbb{N}^+ ,  \lvert \psi \rangle \in \mathbb{C}^{2^{m}} ,  \left \|\lvert \psi \rangle\right \| = 1\right..

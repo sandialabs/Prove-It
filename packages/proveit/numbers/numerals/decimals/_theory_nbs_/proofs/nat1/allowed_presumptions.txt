@@ -1,0 +1,2 @@
+proveit.logic.sets.inclusion.superset_membership_from_proper_subset
+proveit.logic.equality.equals_reversal

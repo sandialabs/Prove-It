@@ -1,0 +1,1 @@
+\forall_{\theta \in \mathbb{R}~|~\frac{\theta}{2 \cdot \pi} \in \mathbb{Z}}~\left(\mathsf{e}^{\mathsf{i} \cdot \theta} = 1\right)

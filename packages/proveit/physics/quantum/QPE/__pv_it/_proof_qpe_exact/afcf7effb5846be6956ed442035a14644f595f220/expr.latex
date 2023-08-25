@@ -1,0 +1,7 @@
+\left(\left(s, t\right) \mapsto \left\{\forall_{U \in \textrm{U}\left(2^{s}\right)}~\left[\forall_{\lvert u \rangle \in \mathbb{C}^{2^{s}}~|~\left \|\lvert u \rangle\right \| = 1}~\left[\forall_{\varphi \in \mathbb{R}~|~\left(2^{t} \cdot \varphi\right) \in \{0~\ldotp \ldotp~2^{t} - 1\}, \left(U \thinspace \lvert u \rangle\right) = \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \varphi} \cdot \lvert u \rangle\right)}~\left(\textrm{Pr}\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{\lvert + \rangle} & \multigate{4}{\textrm{QPE}\left(U, t\right)} & \meter & \multiqout{3}{\lvert 2^{t} \cdot \varphi \rangle_{t}} \\
+\qin{\lvert + \rangle} & \ghost{\textrm{QPE}\left(U, t\right)} & \meter & \ghostqout{\lvert 2^{t} \cdot \varphi \rangle_{t}} \\
+\qin{\begin{array}{c}:\\ \left(t - 3\right) \times \\:\end{array}} & \ghost{\textrm{QPE}\left(U, t\right)} & \measure{\begin{array}{c}:\\ \left(t - 3\right) \times \\:\end{array}} \qw & \ghostqout{\lvert 2^{t} \cdot \varphi \rangle_{t}} \\
+\qin{\lvert + \rangle} & \ghost{\textrm{QPE}\left(U, t\right)} & \meter & \ghostqout{\lvert 2^{t} \cdot \varphi \rangle_{t}} \\
+\qin{\lvert u \rangle} & \ghost{\textrm{QPE}\left(U, t\right)} & { /^{s} } \qw & \qout{\lvert u \rangle}
+} \end{array}\right) = 1\right)\right]\right] \textrm{ if } s \in \mathbb{N}^+ ,  t \in \mathbb{N}^+\right..\right)

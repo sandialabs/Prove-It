@@ -1,0 +1,1 @@
+\left\{\forall_{\alpha}~\left(\left(\sum_{k = a}^{c} \alpha_{k}\right) = \left(\left(\sum_{k = a}^{b} \alpha_{k}\right) + \left(\sum_{k = b + 1}^{c} \alpha_{k}\right)\right)\right) \textrm{ if } a \in \mathbb{Z} ,  b \in \mathbb{Z} ,  c \in \mathbb{Z} ,  a \leq b \leq c\right..

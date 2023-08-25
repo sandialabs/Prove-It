@@ -1,0 +1,1 @@
+\left(\left(b_{1}, b_{2}, \ldots, b_{i}\right) \mapsto \left\{f\left(b_{1}, b_{2}, \ldots, b_{i}\right) \textrm{ if } Q\left(b_{1}, b_{2}, \ldots, b_{i}\right)\right.., \left(c_{1}, c_{2}, \ldots, c_{i}\right) \mapsto \left\{g\left(c_{1}, c_{2}, \ldots, c_{i}\right) \textrm{ if } Q\left(c_{1}, c_{2}, \ldots, c_{i}\right)\right..\right)

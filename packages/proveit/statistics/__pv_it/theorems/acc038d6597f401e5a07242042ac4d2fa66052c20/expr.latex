@@ -1,0 +1,1 @@
+\forall_{Q}~\left(\begin{array}{c} \begin{array}{l} \left[\textrm{Prob}_{x \in X~|~Q\left(x\right)}~f\left(x\right)\right] =  \\ \left[\sum_{x \in X~|~Q\left(x\right)}~\textrm{Pr}\left(f\left(x\right)\right)\right] \end{array} \end{array}\right)

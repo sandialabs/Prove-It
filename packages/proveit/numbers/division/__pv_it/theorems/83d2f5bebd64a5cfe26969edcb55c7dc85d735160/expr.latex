@@ -1,0 +1,1 @@
+\left(n \mapsto \left\{\forall_{x_{1}, x_{2}, \ldots, x_{n}, y \in \mathbb{C}~|~y \neq 0}~\left(\frac{x_{1} +  x_{2} +  \ldots +  x_{n}}{y} = \left(\frac{x_{1}}{y} +  \frac{x_{2}}{y} +  \ldots +  \frac{x_{n}}{y}\right)\right) \textrm{ if } n \in \mathbb{N}^+\right..\right)

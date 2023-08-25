@@ -1,0 +1,1 @@
+\forall_{n \in \mathbb{N}}~\left[\forall_{a, b_{1}, b_{2}, \ldots, b_{n} \in \mathbb{N}^{\leq 9}~|~a > 0}~\left(\texttt{\#}(a ~ b_{1}, b_{2}, \ldots, b_{n}) \in \mathbb{N}^+\right)\right]

@@ -1,0 +1,1 @@
+\left(\left(a, b\right) \mapsto \left\{\left(\left(a ~\textup{mod}~ b\right) ~\textup{mod}~ b\right) = \left(a ~\textup{mod}~ b\right) \textrm{ if } a \in \mathbb{R} ,  b \in \mathbb{R}^+\right..\right)

@@ -1,0 +1,4 @@
+\left\{ \begin{array}{l}
+{\rm state}: \lvert round\left(2^{t} \cdot \varphi\right) ~\textup{mod}~ 2^{t} \rangle_{t}\\
+{\rm part}: {_{-}a}\\
+\end{array} \right\}

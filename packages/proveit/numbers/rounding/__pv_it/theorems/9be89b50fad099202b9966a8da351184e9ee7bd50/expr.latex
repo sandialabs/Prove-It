@@ -1,0 +1,1 @@
+\forall_{x \in \mathbb{R}}~\left[\forall_{n \in \mathbb{Z}}~\left(\left\lfloor x + n\right\rfloor = \left(\left\lfloor x\right\rfloor + n\right)\right)\right]

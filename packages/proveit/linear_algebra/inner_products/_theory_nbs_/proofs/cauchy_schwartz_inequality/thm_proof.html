@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.linear_algebra.inner_products.cauchy_schwartz_inequality theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.linear_algebra.inner_products.cauchy_schwartz_inequality-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">linear_algebra</a>.<a class="ProveItLink" href="../../theory.html">inner_products</a>.<a class="ProveItLink" href="../../theorems.html#cauchy_schwartz_inequality">cauchy_schwartz_inequality</a> theorem<a class="anchor-link" href="#Proof-of-proveit.linear_algebra.inner_products.cauchy_schwartz_inequality-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> cauchy_schwartz_inequality
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="cauchy_schwartz_inequality">cauchy_schwartz_inequality:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/916b70728ac9e1e4d01b3e130160e4dcc49259730/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/e94eb89ceaa1cd88229095e4235826f5a997788b0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

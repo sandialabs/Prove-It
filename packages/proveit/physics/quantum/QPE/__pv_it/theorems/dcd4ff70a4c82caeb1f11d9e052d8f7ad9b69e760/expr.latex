@@ -1,0 +1,7 @@
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \meter 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \meter 
+} \end{array}, ..\left(t - 3\right) \times.., \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \meter 
+} \end{array}

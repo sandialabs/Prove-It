@@ -1,0 +1,1 @@
+\left(x, y\right) \mapsto \left(\left(x \neq y\right) = (\lnot \left(x = y\right))\right)

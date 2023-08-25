@@ -1,0 +1,5 @@
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \control{} \qw \qwx[1] & \targ{} \qwx[1] & \qw \\
+& \targ{} & \targ{} \qwx[1] & \qw \\
+& \qw & \control{} \qw & \qw
+} \end{array}

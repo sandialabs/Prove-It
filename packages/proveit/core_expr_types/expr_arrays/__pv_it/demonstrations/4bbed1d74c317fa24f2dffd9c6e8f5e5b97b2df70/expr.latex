@@ -1,0 +1,8 @@
+\begin{array}{cccc} 
+ A_{1, j} & B_{1, j} & C_{1, j} & D_{1, j} \\
+A_{2, j} & B_{2, j} & C_{2, j} & D_{2, j} \\
+\begin{array}{c}:\\ A_{{_{-}a}, j} \\:\end{array} & \begin{array}{c}:\\ B_{{_{-}a}, j} \\:\end{array} & \begin{array}{c}:\\ C_{{_{-}a}, j} \\:\end{array} & \begin{array}{c}:\\ D_{{_{-}a}, j} \\:\end{array} \\
+A_{m, j} & B_{m, j} & C_{m, j} & D_{m, j} \\
+\multicolumn{4}{c}{\begin{array}{lcr} \leftarrow & X & \rightarrow \end{array}} \\
+D & C & B & A \\
+\end{array}

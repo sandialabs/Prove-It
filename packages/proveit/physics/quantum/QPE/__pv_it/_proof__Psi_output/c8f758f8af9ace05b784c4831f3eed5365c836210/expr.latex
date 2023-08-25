@@ -1,0 +1,6 @@
+\left\{ \begin{array}{l}
+{\rm element}: \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{{\mathrm {FT}}^{\dag}_{t} \thinspace \lvert \psi_{t} \rangle~\mbox{part}~{_{-}a}} 
+} \end{array}\\
+{\rm targets}: \{1~\ldotp \ldotp~t\}\\
+\end{array} \right\}

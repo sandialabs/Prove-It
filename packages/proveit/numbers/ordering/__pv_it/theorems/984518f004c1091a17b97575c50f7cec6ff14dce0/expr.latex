@@ -1,0 +1,1 @@
+\forall_{a, x \in \mathbb{R}~|~x \neq a}~\left(\left(x < a\right) \lor \left(x > a\right)\right)

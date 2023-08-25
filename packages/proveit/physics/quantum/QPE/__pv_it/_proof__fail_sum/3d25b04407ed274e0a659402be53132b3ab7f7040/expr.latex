@@ -1,0 +1,1 @@
+\left[l \mapsto \left(\left(b_{\textit{f}} + l\right) ~\textup{mod}~ 2^{t}\right)\right] \in \left[\{-2^{t - 1} + 1~\ldotp \ldotp~2^{t - 1}\} \xrightarrow[\text{onto}]{\text{1-to-1}} \{0~\ldotp \ldotp~2^{t} - 1\}\right]

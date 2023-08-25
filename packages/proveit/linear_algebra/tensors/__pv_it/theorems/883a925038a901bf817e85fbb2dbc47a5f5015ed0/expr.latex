@@ -1,0 +1,4 @@
+\left\{\begin{array}{l}\forall_{V_{1}, V_{2}, \ldots, V_{n}, W_{1}, W_{2}, \ldots, W_{n} \underset{{\scriptscriptstyle c}}{\in} \textrm{VecSpaces}\left(K\right)}~\\
+\left[\begin{array}{l}\forall_{\left(A_{1} \in \mathcal{L}\left(V_{1}, W_{1}\right)\right), \left(A_{2} \in \mathcal{L}\left(V_{2}, W_{2}\right)\right), \ldots, \left(A_{n} \in \mathcal{L}\left(V_{n}, W_{n}\right)\right)}~\\
+\left[\begin{array}{l}\forall_{\left(v_{1} \in V_{1}\right), \left(v_{2} \in V_{2}\right), \ldots, \left(v_{n} \in V_{n}\right)}~\\
+\left(\left(A_{1} {\otimes}  A_{2} {\otimes}  \ldots {\otimes}  A_{n}\right)\left(v_{1} {\otimes}  v_{2} {\otimes}  \ldots {\otimes}  v_{n}\right) = \left(A_{1}\left(v_{1}\right) {\otimes}  A_{2}\left(v_{2}\right) {\otimes}  \ldots {\otimes}  A_{n}\left(v_{n}\right)\right)\right)\end{array}\right]\end{array}\right]\end{array} \textrm{ if } n \in \mathbb{N}^+\right..

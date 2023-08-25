@@ -1,0 +1,1 @@
+\left(\left(i, j\right) \mapsto \left(\delta_{i, j} = \left\{\begin{array}{ccc}1 \textrm{ if } i = j \\ 0 \textrm{ if } i \neq j\end{array}\right..\right)\right)

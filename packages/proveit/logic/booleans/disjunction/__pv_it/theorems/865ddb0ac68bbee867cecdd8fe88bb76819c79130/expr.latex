@@ -1,0 +1,1 @@
+\left\{\forall_{A_{1}, A_{2}, \ldots, A_{m} \in \mathbb{B}~|~A_{1} \lor  A_{2} \lor  \ldots \lor  A_{m}}~\left[\forall_{C~|~\left(A_{1} \Rightarrow C\right), \left(A_{2} \Rightarrow C\right), \ldots, \left(A_{m} \Rightarrow C\right)}~C\right] \textrm{ if } m \in \mathbb{N}\right..

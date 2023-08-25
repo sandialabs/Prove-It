@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.sets.unification.nonmembership_folding theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.sets.unification.nonmembership_folding-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">sets</a>.<a class="ProveItLink" href="../../theory.html">unification</a>.<a class="ProveItLink" href="../../theorems.html#nonmembership_folding">nonmembership_folding</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.sets.unification.nonmembership_folding-theorem">&#182;</a></h1><p><strong><em> see <a href="../__pv_it/9fe5b885d7e25e9a607d2316d4088e17b5b145040/dependencies.html" class="ProveItLink">dependencies</a> </em></strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="o">%</span><span class="k">proving</span> nonmembership_folding
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="nonmembership_folding">nonmembership_folding:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/889bcb707572d53e71a52bfc61a9a42ed134e3de0/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/c3a35bf674f8e5fc13bb37ed1e2c5ae15988002a0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>nonmembership_folding may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.exponentiation.negated_real_power_of_negated_real_power theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.exponentiation.negated_real_power_of_negated_real_power-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">exponentiation</a>.<a class="ProveItLink" href="../../theorems.html#negated_real_power_of_negated_real_power">negated_real_power_of_negated_real_power</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.exponentiation.negated_real_power_of_negated_real_power-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> negated_real_power_of_negated_real_power
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="negated_real_power_of_negated_real_power">negated_real_power_of_negated_real_power:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/f57f67b1790d97034a9ddcb1f144b52dd204dca50/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAATwAAAAaCAMAAAAdWRCrAAAAOVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACXHtMAAAAEnRSTlMAq1Rm
+mUTNIjK7EInv3Xbt5cmRiLwgAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAD0ElEQVRo3t1ZiXLkKAw1
+lwHJMLP+/49dc4MPTHfSm3idSirlFgKezqeepv/jo2b9S5X99MPEvQzBb9zwRBl/KHZ05OCL+sYd
+T5TJZzojzPkCnUhbrSVwLYOW2fGwTcrqpS+s/0WPZvEfS6+FrIHJOg8Vp3c0YlLL8I5ZWbPUODhJ
+iQf2AOxkujTFG4SZd1F7cim+xRyol8y1KQNslloHHM/pd5YPAI/jPnpTcOn0yJCleHCLGY6fipe2
+jMrU0iyFdVOsyKNy4BpPz7thsro7h7Bmx/qyvuYllbJ66cyyabZMSJ/QwK3xtP2UtSUklnxhgf2n
+szPAeC9TK6uWugieWLTh/ATHsyZmvP5pFbe28ZA2b3LGLIwbrFJWLbXefotxz4JPAI/MbeqbJEEr
+u20DkjdL041m4YOA++qh4T9FodvpXh9F69adhMvieu2dnd2EFDfVU4C+1axW5SFOf65iRXOSjXBg
+etTgzMncsdGZRK86oS8KiPYYDHM8pgkJGhbmr99lJMs7xr3XLEPtck6Hh/KtLNF6ewuabDagGvdM
+LwlYl0FRnoR9R0L34mWKLbw4SJnosbFl4Kt/if0a81Zk3GqGAB61J+WC89hGIniXYbhjelnAbj8T
+g6Pr9SQ64BGZtzk0FcnzIniLLre4zE1ved69ZrmqWGgTVQNkFmXdmQNToqaSiemV1t1DY4HvqWNP
+ogEvbxoui+FoULVXF2ELq6eZfdei5o2cN6BZRcsijc0eGBleQr4clVSeML0i4INS6ooHBf7Xk2jA
+y5tyTwH+bL8sNnRm32aQuE7bcEUaKjDttL3sneZ/QLOIxUQuJAXaFHivyKdmwOCE6RWBDRquUR+o
+Y0eiBS9vOlVkNIC37HOBXZr+w2FItzzIBwjdi/OHW80sHZmokko842VzYIJ0UkqoE6ZXBHxQoigB
+FvNRR6IFL2/qTa5TRnHgrfTC3CrEIhCLShLbY/lGvAPevWZO9s7qehsGMKlirlgwUvMVmV4l4KAR
+AmFHHTsSDXhlUxe2f//RPmwvCkZm5mZ0KiLNhzrVA3NZXPYRLk5LzyyRS18EwlAmMb0iEBoRXw68
+ROJ/pxJnnpc3rcYUk6NEglwGIRsdhPMPDdrg0D8LzqhF5mcsqhTDLQBd16Fc8UtMLwuI2c44Aedz
+lEj871TiBLyyacNztiaZH/v7nBz12GjkY7Mi1mN9gC5+dvmC3gkMSPT6PHo/3Ca0TY53if9TQ0rz
+qmIBX5fogjcw2clTUDnyLYL9FHavf4fBvkGiBx4dKYz0N4x/fnZy/AWPYOLnwQvZ+F9AiSQs5g7d
+PwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/6996a39106bd8027aaf04e1c4124372cd15e6ff30/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>negated_real_power_of_negated_real_power may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,1 @@
+\left(\left(f, g\right) \mapsto \left[\forall_{i, j \in \mathbb{Z}}~\left(\left[\forall_{k \in \{i~\ldotp \ldotp~j\}}~\left(f\left(k\right) = g\left(k\right)\right)\right] \Rightarrow \left(\left(f\left(i\right), f\left(i + 1\right), \ldots, f\left(j\right)\right) = \left(g\left(i\right), g\left(i + 1\right), \ldots, g\left(j\right)\right)\right)\right)\right]\right)

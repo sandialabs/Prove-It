@@ -1,0 +1,1 @@
+\forall_{a, b, x \in \mathbb{Z}~|~x \notin \{a~\ldotp \ldotp~b\}}~\left(\left(x < a\right) \lor \left(b < x\right)\right)

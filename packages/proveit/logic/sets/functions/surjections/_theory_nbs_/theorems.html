@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theorems (or conjectures) for the theory of proveit.logic.sets.functions.surjections</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theorems-(or-conjectures)-for-the-theory-of-proveit.logic.sets.functions.surjections">Theorems (or conjectures) for the theory of <a class="ProveItLink" href="theory.html">proveit.logic.sets.functions.surjections</a><a class="anchor-link" href="#Theorems-(or-conjectures)-for-the-theory-of-proveit.logic.sets.functions.surjections">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the theorems of a theory:</span>
+<span class="o">%</span><span class="k">theorems_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">fa</span><span class="p">,</span> <span class="n">fb</span><span class="p">,</span> <span class="n">fx</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">Lambda</span><span class="p">,</span> <span class="n">Conditional</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">And</span><span class="p">,</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">NotEquals</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">Surjections</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining theorems for theory &#39;proveit.logic.sets.functions.surjections&#39;
+Subsequent end-of-cell assignments will define theorems
+&#39;%end theorems&#39; will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">elim_domain_condition</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> <span class="n">Forall</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">Surjections</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)),</span>
+                   <span class="n">condition</span><span class="o">=</span><span class="n">InSet</span><span class="p">(</span><span class="n">Lambda</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Conditional</span><span class="p">(</span><span class="n">fx</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">A</span><span class="p">))),</span>
+                                   <span class="n">Surjections</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">))))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="elim_domain_condition"><a class="ProveItLink" href="proofs/elim_domain_condition/thm_proof.html">elim_domain_condition</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/086b80dfcf5b9343bc9bc14402c46f7d42e091760/theorem_expr.html"><img src="data:image/png;base64,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
+JgcAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These theorems may now be imported from the theory package: proveit.logic.sets.functions.surjections
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

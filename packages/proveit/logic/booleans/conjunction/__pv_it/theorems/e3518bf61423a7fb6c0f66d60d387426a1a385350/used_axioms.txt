@@ -1,0 +1,6 @@
+proveit.logic.booleans.conjunction.and_f_f
+proveit.logic.booleans.conjunction.and_f_t
+proveit.logic.booleans.conjunction.and_t_f
+proveit.logic.booleans.conjunction.and_t_t
+proveit.logic.booleans.eq_true_elim
+proveit.logic.booleans.negation.operand_is_bool

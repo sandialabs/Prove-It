@@ -1,0 +1,3 @@
+proveit.logic.equality.fold_not_equals
+proveit.logic.equality.sub_left_side_into
+proveit.logic.equality.unfold_not_equals

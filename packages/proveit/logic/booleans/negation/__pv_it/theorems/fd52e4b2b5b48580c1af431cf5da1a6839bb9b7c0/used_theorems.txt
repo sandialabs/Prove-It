@@ -1,0 +1,2 @@
+proveit.logic.booleans.in_bool_if_true
+proveit.logic.booleans.negation.double_negation_elim_lemma

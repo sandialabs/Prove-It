@@ -1,0 +1,1 @@
+\Omega \mapsto \left\{\forall_{x \in \Omega}~\left(\textrm{Pr}\left(x\right) \in \left[0,1\right]\right) \textrm{ if } \Omega \underset{{\scriptscriptstyle c}}{\in} \textrm{SampleSpaces}\right..

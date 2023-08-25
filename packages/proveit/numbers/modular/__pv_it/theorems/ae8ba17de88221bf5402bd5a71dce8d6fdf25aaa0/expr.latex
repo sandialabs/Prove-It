@@ -1,0 +1,1 @@
+\forall_{L \in \mathbb{R}}~\left[\forall_{S~|~S \subseteq \mathbb{R}}~\left[\forall_{c \in \mathbb{R}}~\left(|\left\{\left(c + x\right) ~\textup{mod}~ L\right\}_{x \in S}| = |\left\{x ~\textup{mod}~ L\right\}_{x \in S}|\right)\right]\right]

@@ -1,0 +1,4 @@
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \multigate{1}{\textrm{QPE}\left(U, t\right)} & { /^{t} } \qw \\
+& \ghost{\textrm{QPE}\left(U, t\right)} & { /^{s} } \qw
+} \end{array}

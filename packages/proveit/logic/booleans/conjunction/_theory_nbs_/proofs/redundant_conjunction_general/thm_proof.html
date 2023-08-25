@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.booleans.conjunction.redundant_conjunction_general theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.booleans.conjunction.redundant_conjunction_general-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">booleans</a>.<a class="ProveItLink" href="../../theory.html">conjunction</a>.<a class="ProveItLink" href="../../theorems.html#redundant_conjunction_general">redundant_conjunction_general</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.booleans.conjunction.redundant_conjunction_general-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> redundant_conjunction_general
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="redundant_conjunction_general">redundant_conjunction_general:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/f95b4702e801d9c04f9c78a0c8f6f8b100ac1add0/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/b087913120219811b5ed728b3f1811c77b3bffaf0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>redundant_conjunction_general may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

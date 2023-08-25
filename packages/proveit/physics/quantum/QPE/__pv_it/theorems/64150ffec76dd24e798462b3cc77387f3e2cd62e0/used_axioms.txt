@@ -1,0 +1,9 @@
+proveit.logic.equality.equals_reflexivity
+proveit.logic.equality.equals_transitivity
+proveit.logic.equality.substitution
+proveit.numbers.number_sets.natural_numbers.zero_in_nats
+proveit.numbers.rounding.floor_is_an_int
+proveit.physics.quantum.QPE._best_floor_def
+proveit.physics.quantum.QPE._n_in_natural_pos
+proveit.physics.quantum.QPE._phase_in_interval
+proveit.physics.quantum.QPE._t_in_natural_pos

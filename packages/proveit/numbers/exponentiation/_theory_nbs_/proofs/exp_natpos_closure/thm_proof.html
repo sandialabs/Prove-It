@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.exponentiation.exp_natpos_closure theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.exponentiation.exp_natpos_closure-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">exponentiation</a>.<a class="ProveItLink" href="../../theorems.html#exp_natpos_closure">exp_natpos_closure</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.exponentiation.exp_natpos_closure-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> exp_natpos_closure
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="exp_natpos_closure">exp_natpos_closure:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/c6b2906656deb094c57a1a1d1d504dc08d415e850/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJsAAAAaBAMAAABSozPCAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACpElEQVRIx62VTYjTQBTHX5u0SbNtLXuwrKIE
+RMSDkouCIqWigquowT0IXqzuYdGDxIsnP6KIHlRaFMQRP7IXQapY3IO4iNSTigg9iOJKIXsTVmUR
+RJRl8U0yM0kqTXNwYDIvmclv3rw3/xmA5EU9Cv+lbGDt8r4jZFaTlHSVGa/7DslhVRrJcPf5Yhdn
+nRgcVJLhrrO2OFOsRjoe/b7hwPMFk+EKOFmJGqviaEqbu2BItWjXtUwJtHnuXRFZO6gxEYeTW8zI
+23Ip2rXCmgJowyi5TYgB2h+AcwODuMTkBuT1aNdwI2tBh3sH4wBZXPCQHoer8/gXnE0siHe6Hzyj
+XFFqIdwogGQgMjYT38Q23ut6beY4n6CcsudCuK9Y33W7b2NxS+njxIsz4sNJsV3K0MiZAe4QduwE
+uBWLI9ShV3BPQILEleGCNtMRiqjbOC8opX9UeXq3Kb1k9mGsDw3YIyC1EE7S17bF61m6A50hU3yg
+qlRniZkuTcMu9u091n0An8WcGJ7uJ4aDZakA9xhBaTeUCarK7ehyuiJDK+TdG9B+8jFaI+QdTGqd
+wDub+k611qw8ZaosGlT15w+4IZy2CNK8+KsTxqluQK9b+HhyDMd/VH8xVT7wDhF7ejXHjWD3D0jV
+1vC/vov/b2L9EuBoZuEUZkKuqm2myjEfJxf5MLqb7sK6qpB/Vuz6IzSpQWa20EcKV5w3qX49VW4k
+hOhpW2vVQnNOzl1aaYvgjRz0jYsLOKUW4LaKnFi5zY6vysu+d7Df5co3e3di5hkTWU8Z50beqo85
+TU+VORoAyfSOm+iJMqjQE4XNt239FFzRqSoVGt+rE+wkpOluJ8RJPceXH+ImIdHlDSfEFaxoSJz4
+u2JQ6bkrpH43WbLgJb3JxD0bX2Rc3F/bkZ2AZUUu3QAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/fe1193367b5e5b6cb27d7b957f884baa433022fd0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>exp_natpos_closure may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

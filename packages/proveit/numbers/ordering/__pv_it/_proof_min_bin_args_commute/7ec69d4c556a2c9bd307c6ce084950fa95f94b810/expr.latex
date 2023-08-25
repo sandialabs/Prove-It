@@ -1,0 +1,1 @@
+\left\{\begin{array}{ccc}y \textrm{ if } y \leq x \\ x \textrm{ if } x < y\end{array}\right.. = \left\{\begin{array}{ccc}y \textrm{ if } \bot \\ x\end{array}\right..

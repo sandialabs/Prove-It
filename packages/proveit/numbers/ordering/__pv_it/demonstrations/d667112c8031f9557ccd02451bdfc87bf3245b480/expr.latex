@@ -1,0 +1,1 @@
+\left({\rm Max}\left(a, b\right), \left\{\begin{array}{ccc}a \textrm{ if } a \geq b \\ b \textrm{ if } b > a\end{array}\right..\right)

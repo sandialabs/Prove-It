@@ -1,0 +1,6 @@
+\left\{ \begin{array}{l}
+{\rm element}: \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{A_{1} {\otimes}  A_{2} {\otimes}  \ldots {\otimes}  A_{m}~\mbox{part}~{_{-}b}} & \qw 
+} \end{array}\\
+{\rm targets}: \{1~\ldotp \ldotp~N_{m}\}\\
+\end{array} \right\}

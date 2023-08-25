@@ -1,0 +1,1 @@
+\left(\left(a, b, c, d\right) \mapsto \left\{\left(a + c\right) < \left(b + d\right) \textrm{ if } a \in \mathbb{R} ,  b \in \mathbb{R} ,  c \in \mathbb{R} ,  d \in \mathbb{R} ,  a < b ,  c \leq d\right..\right)

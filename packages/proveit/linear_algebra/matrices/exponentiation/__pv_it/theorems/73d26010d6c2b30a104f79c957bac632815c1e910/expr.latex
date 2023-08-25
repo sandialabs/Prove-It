@@ -1,0 +1,1 @@
+\left(b \mapsto \left\{\forall_{A, x~|~\left(A \thinspace x\right) = \left(b \cdot x\right)}~\left(\left(A^{m} \thinspace x\right) = \left(b^{m} \thinspace x\right)\right) \textrm{ if } b \in \mathbb{C}\right..\right)

@@ -1,0 +1,30 @@
+\begin{array}{l}\forall_{N_{0}, N_{1}, \ldots, N_{m} \in \mathbb{N}~|~\left(N_{0} = 0\right)\land \left(N_{1} = \left(N_{1 - 1} + n_{1}\right)\right) \land  \left(N_{2} = \left(N_{2 - 1} + n_{2}\right)\right) \land  \ldots \land  \left(N_{m} = \left(N_{m - 1} + n_{m}\right)\right)}~\\
+\left(\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{A_{1}~\mbox{part}~1~\mbox{on}~\{N_{1 - 1} + 1~\ldotp \ldotp~N_{1}\}} & \qw \\
+\qin{A_{1}~\mbox{part}~2~\mbox{on}~\{N_{1 - 1} + 1~\ldotp \ldotp~N_{1}\}} & \qw \\
+\qin{\vdots} & \qw \\
+\qin{A_{1}~\mbox{part}~n_{1}~\mbox{on}~\{N_{1 - 1} + 1~\ldotp \ldotp~N_{1}\}} & \qw \\
+\qin{A_{2}~\mbox{part}~1~\mbox{on}~\{N_{2 - 1} + 1~\ldotp \ldotp~N_{2}\}} & \qw \\
+\qin{A_{2}~\mbox{part}~2~\mbox{on}~\{N_{2 - 1} + 1~\ldotp \ldotp~N_{2}\}} & \qw \\
+\qin{\vdots} & \qw \\
+\qin{A_{2}~\mbox{part}~n_{2}~\mbox{on}~\{N_{2 - 1} + 1~\ldotp \ldotp~N_{2}\}} & \qw \\
+\qin{\begin{array}{c}\vdots\\ \vdots\end{array}} & \qw \\
+\qin{A_{m}~\mbox{part}~1~\mbox{on}~\{N_{m - 1} + 1~\ldotp \ldotp~N_{m}\}} & \qw \\
+\qin{A_{m}~\mbox{part}~2~\mbox{on}~\{N_{m - 1} + 1~\ldotp \ldotp~N_{m}\}} & \qw \\
+\qin{\vdots} & \qw \\
+\qin{A_{m}~\mbox{part}~n_{m}~\mbox{on}~\{N_{m - 1} + 1~\ldotp \ldotp~N_{m}\}} & \qw
+} \end{array}\right) \cong \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{A_{1} {\otimes}  A_{2} {\otimes}  \ldots {\otimes}  A_{m}~\mbox{part}~N_{1 - 1} + 1~\mbox{on}~\{1~\ldotp \ldotp~N_{m}\}} & \qw \\
+\qin{A_{1} {\otimes}  A_{2} {\otimes}  \ldots {\otimes}  A_{m}~\mbox{part}~N_{1 - 1} + 2~\mbox{on}~\{1~\ldotp \ldotp~N_{m}\}} & \qw \\
+\qin{\vdots} & \qw \\
+\qin{A_{1} {\otimes}  A_{2} {\otimes}  \ldots {\otimes}  A_{m}~\mbox{part}~N_{1}~\mbox{on}~\{1~\ldotp \ldotp~N_{m}\}} & \qw \\
+\qin{A_{1} {\otimes}  A_{2} {\otimes}  \ldots {\otimes}  A_{m}~\mbox{part}~N_{2 - 1} + 1~\mbox{on}~\{1~\ldotp \ldotp~N_{m}\}} & \qw \\
+\qin{A_{1} {\otimes}  A_{2} {\otimes}  \ldots {\otimes}  A_{m}~\mbox{part}~N_{2 - 1} + 2~\mbox{on}~\{1~\ldotp \ldotp~N_{m}\}} & \qw \\
+\qin{\vdots} & \qw \\
+\qin{A_{1} {\otimes}  A_{2} {\otimes}  \ldots {\otimes}  A_{m}~\mbox{part}~N_{2}~\mbox{on}~\{1~\ldotp \ldotp~N_{m}\}} & \qw \\
+\qin{\begin{array}{c}\vdots\\ \vdots\end{array}} & \qw \\
+\qin{A_{1} {\otimes}  A_{2} {\otimes}  \ldots {\otimes}  A_{m}~\mbox{part}~N_{m - 1} + 1~\mbox{on}~\{1~\ldotp \ldotp~N_{m}\}} & \qw \\
+\qin{A_{1} {\otimes}  A_{2} {\otimes}  \ldots {\otimes}  A_{m}~\mbox{part}~N_{m - 1} + 2~\mbox{on}~\{1~\ldotp \ldotp~N_{m}\}} & \qw \\
+\qin{\vdots} & \qw \\
+\qin{A_{1} {\otimes}  A_{2} {\otimes}  \ldots {\otimes}  A_{m}~\mbox{part}~N_{m}~\mbox{on}~\{1~\ldotp \ldotp~N_{m}\}} & \qw
+} \end{array}\right)\right)\end{array}

@@ -1,0 +1,1 @@
+\left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \varphi \cdot 2^{t}}, \sum_{k=0}^{2^{t} - 1} \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \varphi \cdot k} \cdot \left(\lvert 1 \rangle {\otimes} \lvert k \rangle_{t}\right)\right)\right)

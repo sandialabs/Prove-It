@@ -1,0 +1,1 @@
+\forall_{A, B, C \in \mathbb{B}~|~A \lor B, A \Rightarrow C, B \Rightarrow C}~C

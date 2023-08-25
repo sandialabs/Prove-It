@@ -1,0 +1,1 @@
+\left(a_{1}, a_{2}, \ldots, a_{n}\right) \mapsto \left\{M = \left(\sum_{i=1}^{n} \left(a_{i} \cdot \textrm{OrthoProj}\left(\mathcal{H}, \textrm{Span}\left(\left\{x_{i}\right\}\right)\right)\right)\right) \textrm{ if } \left(a_{1} \in \mathbb{C}\right) \land  \left(a_{2} \in \mathbb{C}\right) \land  \ldots \land  \left(a_{n} \in \mathbb{C}\right)\right..

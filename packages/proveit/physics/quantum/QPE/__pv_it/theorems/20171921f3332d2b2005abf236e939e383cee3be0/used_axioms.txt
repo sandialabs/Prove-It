@@ -1,0 +1,10 @@
+proveit.core_expr_types.lambda_maps.lambda_substitution
+proveit.core_expr_types.operations.operands_substitution
+proveit.linear_algebra.addition.vec_sum_single
+proveit.linear_algebra.scalar_multiplication.scalar_mult_extends_number_mult
+proveit.linear_algebra.tensors.unary_tensor_prod_def
+proveit.logic.equality.equals_reflexivity
+proveit.logic.equality.equals_transitivity
+proveit.logic.equality.substitution
+proveit.numbers.number_sets.natural_numbers.zero_in_nats
+proveit.physics.quantum.QPE._psi_t_def

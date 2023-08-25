@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.division.div_real_pos_from_double_neg theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.division.div_real_pos_from_double_neg-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">division</a>.<a class="ProveItLink" href="../../theorems.html#div_real_pos_from_double_neg">div_real_pos_from_double_neg</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.division.div_real_pos_from_double_neg-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> div_real_pos_from_double_neg
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="div_real_pos_from_double_neg">div_real_pos_from_double_neg:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/86692813ea880abac9bc73e22cfc9987e69c8f5e0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKoAAAAmBAMAAACmKh0SAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADLklEQVRIx5WXX0gUQRzHf+fduX/unDt6CEKI
+haCerIVAUEK3PMOg8krooR686CEKtBMiiqSup4gKlyJq1XSjCEzDo0ApKOwPmEXQU1FxcL74YCBi
+fzG6mtk9b/eGbmdnYGd3dn/z2d/85vub2QXgKNt82MhHga+E4rjqeXrG2+qyyUetx0d4Goa9uwXj
+XFDxNa7GVNjFsLvCRa3O4qod4DPDbowrBJuI9QzI3/2E33chPsoFCC5W5lm18JMnrMuEugSB1IZK
+JpJ9GuCgBnRSD0GdpjGoWzioMZXUt76cX5uhBDcz3DWjuqhnFbBCu84HtS9d6YneA3saTIdao0Er
+OR/2QW2u+EQ/DZIYhx3GoGEQn0MpOEdmTfdBXe1FDaVTjq9oEaqx6xHFB/UZfQPdzL13qLpDrfoF
+QexztZ/Z+k21w92m42vgXtyhiksAb3O5N36oX6n2CdMVgQvr0w5VxqZtAP0+oMISdcOZYb2368+8
+k1sABbxgguAncUWamnLN1ua7dLAkM5IsdT1SvKib2NpNhdFaVGJ/SbFMceRyH4tU6bbqtv2GZyzv
+mqxaYj9rJFEEJrOevsq6y1dR66eokGpy2q/wkcAZiRA05oVEItFaMQLv3HptO+V+hOMKD8j+Ndo0
+SboWZk1EBoOp8+WLiEBrYMFNHUEqJZdePFnyB5GsiugT0kYshUeEIbV8xAV6ayiljn4cq/4aJZcA
+HnFIE6eI4NRgqsOihgboLH5Jb9Fr9pfWrOtgHHPyU1zZLaJJROQVzYTi9YZhKAhF9lIUWx7yYCme
+4UfFjKVL1XLxYjwtNeJciUFUuWj5isIHqE1tZ3HgGlPakZUXR9N9HeYo1JgNWL9WXOEx1b3ZfkuM
+vRJJK1kVbtn4EC4p4u48CDdwe99c9s72cttxG9dp+tw1SsXuN2oYyf95YPv+hJ3cnWW7RtjTjeCU
+dTq4sIpFnSjv5/2xZ+lF/mGOpxnU5zxfGRNF1UTz3nZoiocazdg7XSzLsFN4qEGyotZkoZPRa47v
++/WQLdd2b20J03zU+3iaYhn5BcNK4aMKeMkMqBIjZa9y/hfASays2hbG3wbJoH+oycTirAxdBwAA
+AABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/74ef6555e65780703d7793a1cccdc0c64e77e5ba0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>div_real_pos_from_double_neg may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

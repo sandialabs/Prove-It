@@ -1,0 +1,2 @@
+\begin{array}{l}\forall_{x_{1}, x_{2}, \ldots, x_{n} \in V}~\\
+\left(\begin{array}{c} \begin{array}{l} \textrm{Span}\left(\left\{x_{1}, x_{2}, \ldots, x_{n}\right\}\right) =  \\ \left\{\left(a_{1} \cdot x_{1}\right) +  \left(a_{2} \cdot x_{2}\right) +  \ldots +  \left(a_{n} \cdot x_{n}\right)\right\}_{a_{1}, a_{2}, \ldots, a_{n} \in K} \end{array} \end{array}\right)\end{array}

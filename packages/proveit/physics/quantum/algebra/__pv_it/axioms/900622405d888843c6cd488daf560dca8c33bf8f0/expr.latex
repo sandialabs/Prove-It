@@ -1,0 +1,1 @@
+\forall_{k \in \mathbb{N}^+}~\left[\forall_{a_{1}, a_{2}, \ldots, a_{k} \in \mathbb{N}^{\leq 1}}~\left(\lvert \texttt{\#}\texttt{b}(a_{1}, a_{2}, \ldots, a_{k}) \rangle_{k} = \left(\lvert a_{1} \rangle {\otimes}  \lvert a_{2} \rangle {\otimes}  \ldots {\otimes}  \lvert a_{k} \rangle\right)\right)\right]

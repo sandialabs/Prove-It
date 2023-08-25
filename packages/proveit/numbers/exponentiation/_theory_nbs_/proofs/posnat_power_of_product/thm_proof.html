@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.exponentiation.posnat_power_of_product theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.exponentiation.posnat_power_of_product-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">exponentiation</a>.<a class="ProveItLink" href="../../theorems.html#posnat_power_of_product">posnat_power_of_product</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.exponentiation.posnat_power_of_product-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> posnat_power_of_product
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="posnat_power_of_product">posnat_power_of_product:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/7a30a082bb6036650adc7b34880723666f0bd7a40/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAToAAAAZBAMAAABTI/9DAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEG0lEQVRIx81XXWgUVxT+srOTmZ3ZJItCSyuE
+FWndYmv3QYNNi13ZWIVSusWX0gaNKBR9GvvWP7tKLYWqsW1Ex5Yymqdli7tW+wtKUERRlFBiWyqB
+CZWqlIbgQy364v2b2dybuym4ih742N0z55v57rnnnjML3HdbsmyygIfVnKWncOYBa/AEZrqtwwO4
+pSfoEmsUd1/hV617Jq4zy6HaWoK20BzRErSJHe7Ppz3GM0MgQ10LWlW3SGD6jn41SkTkgXQ5WSjr
+CFATW7kAvPsXugLGw5/ASup+q9XaGuCQrJ1u2WbgQ3RsL2sIzOTEbiToRj/noT3ANrqCPS2qS+Y5
+JOuim7cEeA2dR3UEZnJibxCcRZ/NeDAKVCDcbIvq0gKSrQuoN2hKYCYl1iSbbE3h95zgnYNBVtHe
+atk9KSDZcba9+aYEZlJiXVKpZgZ/5wVvA3BhfPx8q+peFrDmXQ1j5/rJOeSBmaYEKZhXavdEtIuM
+dwRYDRy4K0lu4+sGgX4vFZ9A59+g5sFonJXkOLMMNMHcapudm1Hbo7weYAuszN0dhcbXXzicU0iO
+Rr7ELaRDJEa0XDWY27MBLkZsynsaSAVuSeqTQ91bycfH8Tm+vkLeAWvsO7yQkdSd5khOoaPO0kbF
+D6CrDntKq25asEgbzdVLwG3xm/EGicowPhT2hF9yPvMSX9JGRJm7H9uLyqN4qnEX6pnvBslApy69
+BzW20jEC8uh1WZgjzdTFwcw6aHO8DPNGdHwpjza+geVRSB852+5h4HnWiMjzSU3i5xBGrI55FoQF
+F27fK30rlZ2thXhxert7NUBiVFt3anDU7pJRJTLeMwTf0r5cXf4DHx/DO/j8HZx8nI4SOMtKbCjz
+6Uw9yD2x1ZXr7muOWhaPJKJ3ga4yqSwY+kavBnP7D99EDYjxniN4n6zG+c2+iQp1L1zIL/8TXHFo
+ROJtrzGdmQc599CbsrojHKkwMRZ72/IpslvJuladGsxtLobiRNdF32mje1iwR7CGunt7+eUv0GPS
+hRjDvNuz6cw8yKFwXVa3i8Pp/nHLtbijzCvSeipp1anB3A4ei3s3412KJkupM4Me3/ezn7zOPWex
+wtjk+5/bO8SgodOZeYi6arvc7zrKHDPtA3030gcrPCuq2ZqX6g0+ZT2WnAqHfE7hpM12hZwKBGI6
+c08O5mL5XmReM8y0ov7hxv+9yxelVwVvcE2QoiKsYx5OOHX8QeqSzZD3VsENq2I6M89SYEK52T4B
+1Zq+/eybXRzjvRO/HRQXH4W1n36tbhoq2yfx0SS5TPPvfO+vxs4sn87UY//qoU25W0VAtZTX5PGV
+2dUxnrKCqu+LIk7wwv7J3ysuiek8zSOvNeRQ7WrT5ISzqqO8zmYrwxvKbzN4mP7mqW9lxoORcQc6
+cSWgPjo8PwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/6cf774ef96d965050b133387fbd779362647afe10/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>posnat_power_of_product may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

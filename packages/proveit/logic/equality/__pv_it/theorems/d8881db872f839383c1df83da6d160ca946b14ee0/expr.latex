@@ -1,0 +1,1 @@
+\left(x_{1}, x_{2}, \ldots, x_{n + 1}\right) \mapsto \left\{x_{1} = x_{n + 1} \textrm{ if } \left(x_{1} = x_{1 + 1}\right) \land  \left(x_{2} = x_{2 + 1}\right) \land  \ldots \land  \left(x_{n} = x_{n + 1}\right)\right..

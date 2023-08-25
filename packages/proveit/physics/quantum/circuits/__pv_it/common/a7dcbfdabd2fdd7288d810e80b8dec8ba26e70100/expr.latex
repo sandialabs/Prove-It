@@ -1,0 +1,19 @@
+\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{A_{p\left(1\right), 1}~\mbox{on}~p^{\leftarrow}\left(R_{p\left(1\right), 1}\right)} & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{A_{p\left(1\right), 2}~\mbox{on}~p^{\leftarrow}\left(R_{p\left(1\right), 2}\right)} & \qw 
+} \end{array}, \ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{A_{p\left(1\right), k}~\mbox{on}~p^{\leftarrow}\left(R_{p\left(1\right), k}\right)} & \qw 
+} \end{array}\right), \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{A_{p\left(2\right), 1}~\mbox{on}~p^{\leftarrow}\left(R_{p\left(2\right), 1}\right)} & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{A_{p\left(2\right), 2}~\mbox{on}~p^{\leftarrow}\left(R_{p\left(2\right), 2}\right)} & \qw 
+} \end{array}, \ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{A_{p\left(2\right), k}~\mbox{on}~p^{\leftarrow}\left(R_{p\left(2\right), k}\right)} & \qw 
+} \end{array}\right), \ldots, \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{A_{p\left(m\right), 1}~\mbox{on}~p^{\leftarrow}\left(R_{p\left(m\right), 1}\right)} & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{A_{p\left(m\right), 2}~\mbox{on}~p^{\leftarrow}\left(R_{p\left(m\right), 2}\right)} & \qw 
+} \end{array}, \ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{A_{p\left(m\right), k}~\mbox{on}~p^{\leftarrow}\left(R_{p\left(m\right), k}\right)} & \qw 
+} \end{array}\right)

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.ordering.less_is_not_eq theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.ordering.less_is_not_eq-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">ordering</a>.<a class="ProveItLink" href="../../theorems.html#less_is_not_eq">less_is_not_eq</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.ordering.less_is_not_eq-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> less_is_not_eq
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="less_is_not_eq">less_is_not_eq:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/69b5550628a93ed4e5cd8e25409c482182111a630/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALAAAAAXCAMAAACccDU6AAAAPFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAo1xBWAAAAE3RSTlMA
+q1RmmUTNIjK7EInv3Xbn9enzK1aD6QAAAAlwSFlzAAAOxAAADsQBlSsOGwAAApNJREFUSMfFV4uS
+pCAMFAivALm79f//9XgqoKNzs1cuU2XpSJKm04S4LD809CMm/28Qv34PePxPUrqy7ZmL5/Byd/3e
+2P0erQ91lQkhyPZCPUc5qpsJ1vRPCtpN5N00irV9jmC4SaZhw+Pa9COgok7D8ecA+zuCh2TLdRO0
+j3eirlY9qOCbWHIk2IVdHAmsD2l496AiWizNHGk6vJ92k2JErOTfpaVAFrjFz2J/YqRqUqWPyOye
+cMjUhV+/03VjGdeoWlzzIoTKy2yXWfpq2oc8OAVM9ZTc7tSDkzhCoQt9LlPhhmCeV+RzVO4buU6e
+BGMtdYaYtXEGLfEfp92bgHFw0u25EgzWjH5+L6esQVb8mqeZbMLpxZbztRoC1BuKv0UgvQVYA8PO
+yRGwtznh8prgsiJZSpv0tUCIigGdINcMzBrFjvWA2QETwjng0Zgx3Ts5SgLXFFSsHZdJu3++ipLZ
+UIWhKJ2HWoJrMcagY4QWkwIuBPFo3DuAKAltSZwC7o2lBT04GcssFcAJCVMLHyhV8+5fTZN7XF6J
+pz1ruY+UbFXdirwtpegAg3WDCrqH3Vhah5OTsbCyDTcPMFYafqg7LHqwMBZEZnZxEeslDCyGs3nw
+Igkn+Tngzdh4Pu4DmEqQKYlFRs5oRuaS4DjNbUd5GAWfi50VWG2SumJs45Zew1I6PAPcGaOzG+Tq
+ZBKx+ayN03MJ9EmFUsQ6neyi+rJm9jOllLUXm24zzjNtJaU5GYZ4ed4o/KemSYLg5ETNqgGi0sdV
+QqQi5RYEUGeAN+MKqkBuTq66m24l1wRfVX0+1KukYXnaV125sC87bHxhF/D9Jm7i+s3W4tMm+qTl
+yfm4/Ky6+sJ493Ppwa7/xz5+vzf+Ap9pFH0QnSRUAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/97be5388c05f867a4edc43d3e5c55b084f5efedc0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,1 @@
+\left(j, k\right) \mapsto \left\{\forall_{V \underset{{\scriptscriptstyle c}}{\in} \textrm{VecSpaces}\left(K\right)}~\left[\forall_{v \in V}~\left(\left(\sum_{i=j}^{k} v\right) = \left(\left(\left(k - j\right) + 1\right) \cdot v\right)\right)\right] \textrm{ if } j \in \mathbb{Z} ,  k \in \mathbb{Z} ,  j \leq k\right..

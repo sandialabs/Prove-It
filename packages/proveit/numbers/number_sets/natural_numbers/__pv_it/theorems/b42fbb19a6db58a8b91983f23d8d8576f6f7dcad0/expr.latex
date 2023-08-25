@@ -1,0 +1,1 @@
+P \mapsto \left(\left(P\left(1\right) \land \left[\forall_{m \in \mathbb{N}^+~|~P\left(m\right)}~P\left(m + 1\right)\right]\right) \Rightarrow \left[\forall_{n \in \mathbb{N}^+}~P\left(n\right)\right]\right)

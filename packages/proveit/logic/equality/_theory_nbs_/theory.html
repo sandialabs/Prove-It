@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theory of proveit.logic.equality</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theory-of-proveit.logic.equality">Theory of <a class="ProveItLink" href="../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../_theory_nbs_/theory.html">logic</a>.equality<a class="anchor-link" href="#Theory-of-proveit.logic.equality">&#182;</a></h1><p>This theory deals with equals, not equals, and various forms of substitution.  The basic idea is that all well-defined expressions evaluate to mathemetical objects and any two mathematical objects are either exactly equal to each other or not.  Expressions are said to be equal when they evaluate to the same mathematical object.  Any expression is equal to itself even if it is ill-defined.  It is, however, not general possible to prove equality relations involving an ill-defined expression; there is generally no way to know whether or not an ill-defined expression is ill-defined (versus requiring an axiom that has not yet been invoked).</p>
+<p>Equality is transitive (if $x=y$ and $y=z$ then $x=z$) and symmetric (if $x=y$ then $y=x$), as inherent properties of <em>sameness</em>.  Furthermore, substitution is fundamental to the concept of equality.  If two expressions are equal, then one may be substituted for the other in any theory without changing the meaning of the original expression.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="o">%</span><span class="k">theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<h3>Local content of this theory</h3>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<table><tr>
+<th><a class="ProveItLink" href="common.html">common expressions</a></th>
+<th><a class="ProveItLink" href="axioms.html">axioms</a></th>
+<th><a class="ProveItLink" href="theorems.html">theorems</a></th>
+<th><a class="ProveItLink" href="demonstrations.html">demonstrations</a></th>
+</tr></table>
+<h3>Sub-theories</h3>
+
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<h3>All axioms contained within this theory</h3>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="axioms.html#equality_in_bool">proveit.logic.equality.equality_in_bool</a></dt><dd><a class="ProveItLink" href="../__pv_it/axioms/80c61ed0a9ea703286def3ed4e81641a1e239b430/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKYAAAAWBAMAAAC4bPoxAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACZklEQVQ4y6VVTWgTQRh9+5dkd9vYi0hQSkDx
+osXgQShCrEhVVDAo9OBfFzwIpeh6EZQeqkepuJ4EwboFDxYhpCKKCCEIglWUVqjoIbClVVBo8KYI
+gvO3m2R3BxQfvLDzdubN7Pd98wWQwhVMR/YfdYZ8kVMCI4gJa/MXxhcrTO+j480pi7YJyrASF7wz
+2bH1TB+mw3PJJZbDKUXGj3sex1OT6VdpDLzkEr3EKYU2lPTcqTCdbmenhK1HUI7XIu53mx8izwzT
+NXKWTMqKrYJynOW5Ou+3z7lhN9ffNptvUlYcFqwuP3ge+wxrtYQZYI4NLvntHFUXa2D6QeCO5BSU
+Q/l+fYHGt8lAy8RWG9gD7EJ3er3T478PgekXke1L8XzPqbnaLyWWqmtkkwKwnQ2czhytjPhMN327
+kuL5kjMHPVFQfk+Ad8BN+pwjoWt+Cj1No8Z0NUhLUehJkh8k3o36uZ/AKRZbr/OcJjyuO2Xy0zqw
+Su62sQyl+9uJgWv53fHEfuQbwACbt9Dt6XD90RgpMreQIdmtrvOnxIxpztnKJtjxc96CSbwH2XOr
+y1MNuD5B3muYzpHHKwP4KmbMce64fgTH4p57MVrilUZqOyo07yTqj0UFKpNU+cH0jegXM25w3m+p
++xK3bKZ+lARqiRdr4QQXv8zfo30p1Gn+GqzxLeGVEHonOdPxhDQJEUnjmbibYQMNIzxhOzoeAh+N
+7x0tItEmOGzHeiFvMJGuf65/w1QRWwajarwtmERvoJAyvCz5hJhetFwz2n1WMAm1PCzdL64bvhKM
+tOMScMr+Wty/0jUY5Rr+H38A4JajDXZHxnUAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="axioms.html#equals_transitivity">proveit.logic.equality.equals_transitivity</a></dt><dd><a class="ProveItLink" href="../__pv_it/axioms/b5b3cf1e74e7e4fc2d5f197f08b661e6992950090/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANEAAAAXBAMAAABnpbd1AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACg0lEQVRIx61VTWgTQRT+Nrub/clPA55UKAF7
+8CIEEUSQWijaIrQEioIWNPRS8CDxoIdaSzz0UIwSKAp6kEVFwYLEIkI9yOKhCKLEg5JLYCuVooXQ
+W8WTb2Z3s3HbXRqYB7vf23mz8715780bQJxo0aYyhMqPaNMlenJMOSSCKFGPtmULwGmmTItgeh5n
+vALcZgGuiWAajjMeA5IWkMqLYLLjjGkLMkUwKSRNpThrkmg+t1qfRDApVBBm+8Cd5bDhblMrIEWV
+Nwo8ivq5FybmtYI1Z4x9jLWYfGWqeXXlNSDTjq9By0X8bPTClKFkH8cpa1/4PFt4R7GlLBpWqiiC
+KU2rVHBmF8sSFZ2+RWxOZEH0zAR82aVJOfRSWWWWBunVHlmn3qSuQeJJnD4XMGXX50b8ppLjPcUD
+Jvr368UgelC38TKUJ0zApP00SFum85st70/SzFd9VpUZRyeHAqYNqTalPCRZNJ2/OvnGwR2BMv/G
+D4AD875kI9yTEnnmvcyawyz5J+OxTurMEfzi5ptd0SsYTsWLw5NGttYBb8xfmeo48eeZrYa7wMLK
+ZtM9A5D4Ott8+CD6eUyc7jz1dXq+VJecALjc8xW9AXPcGTgaTlM9sUrxzXSqTrf57fINH93QznQx
+VVH2YpUppplbDLwRtUBV7Eozrl5u+cpsqqRgiWarWwTa1Hytw6TZbzHkn5nKZZh1Dp7cOHyhq4nu
+of0qP9//RjWPgRMlAuXpajnY0/hk23c7MfwA+gcOnpw92blxjJiLNXxb5M2yQT0lH3meXmCR6FzY
+IWbM3RPyQrUk5zyDSKZ+ldrXRRd2ylw008b/nzLUwTqDSKaJTVb1LggVTeRi/wCTbqEcktiIwgAA
+AABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="axioms.html#equals_reflexivity">proveit.logic.equality.equals_reflexivity</a></dt><dd><a class="ProveItLink" href="../__pv_it/axioms/864f59d0e02493d4a93bdd8b5654226c327952290/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGIAAAAVBAMAAABPrCZEAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABTklEQVQ4y2NgwAQFDDgBO1ZRPgXcOlgfMDAI
+gBjKyKLaDHjAYwYGVxCdjiTGlYBPB9sChkaQ6yYgibEY4NPB7ADSxMCN7HIeBrzgFAMz0Eg2ZCE1
+/DqSGRjO3r17GlnIG4jXPVyxGz3EoGIbGRg8GBhmoRnC4MAnx3IB5Ke7YAAOT6iYGQNDIQO7ALKO
+S0DvFTD/YkQLAJiYDgMD5wLuAGSpowwMHAwsGEEME+tnYGB6gOJxkA5ggD3A9DNELAaIE+yAxDv3
+JwVwVzEwxBdwLUDzB1RMF8jalAVMSwWSbNDAmcfAsDJAhoEbzQaYmCUQ1wCNYGaYxwGVAgaffpcP
+QxCaDpgYKPAZG0Ai32FSvQwMS94xOaNHB0zsKjwoDsCSPm8DvihnvwBl1HAnsCDSGh4AT6csT/e9
+gglOx6ejEpvgSnw6sBrH/gC3Br4CBgBNaE7Uk29NoAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="axioms.html#equals_symmetry">proveit.logic.equality.equals_symmetry</a></dt><dd><a class="ProveItLink" href="../__pv_it/axioms/789c834568adff331f7b46a8f81cd1f96d48c8060/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAN0AAAAWBAMAAAC2xYReAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACf0lEQVRIx7VVTWgTQRR++5fuTxoDnqogCxYv
+IgQRxEuqhKog1Z482gUPgqd4lSrRayvUgwgeyhZEaAsl9tBjWQRBECUKgpfAViqih+KtPTpvZnab
+fTuTiOAHX5J93/fezM68zABo0ZYcIlOM/XM1gFooqMMtRezbcDuyjg8nFYbTktr5NEohszvcjpzG
+hztl3Y8E9bhbirwaZWd8hMu+VJbthqAe50qR1ig7YyUGCBTbVJXUoxrTSDLKzmixd6go5FOSelTo
+25vRKDvyQ7//XiFfE/R3G7BCt3bv2MImW5U63YJurhXsogTakVcBXijGuy0YmAlM4fNMH/GJ14Wd
+dAbAikgcZy81sHm4j1OSJdCOvAdjdcV4nwUf2z2YINJ5mIqPsuWj2zUe5togZAm0I704mFWM91Yw
+rqbwkUgduIxf7m/aEbO5NghZAu1IM1W1SzYezMXuQUnkM3ASxXhQml1WAu08JWqyj70ru+x0c3bA
+KK4nm24tIfsEzj6ssYn2SBzXU2qD+ydLoJ2nbLJ/fa09UWHujSPxohxvWfIpeGR7/WdGAqwVLXpK
+eGmuFSBKoJ2nzOMDLLvs5/0z8FOaXktegjnyPzMPXiZOKNq/ANbtmVaAKIF2nmJ0MLjPpeNwQpqe
+SK5s3yDXiH89nTyLy0fbzO3lWgGiBNoPU9yE311f4F3W3B1BgC3NgfGgFPmqO1u2pD1PmQ8iG9ZZ
+hpM1uXWRM4j8N5oirb84wfkyixKtwRT7+/YvWAxh8kJ+Bj7nHE8NzaWmuFQ85QUuSqCdpoR+28ub
+Y5XTbE5rXk9R3F9SGUUJtJMUJzbSm4fzTwV1+KGIPRxuJykWOM0u/F/8AftFwtP6vVzMAAAAAElF
+TkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="axioms.html#not_equals_def">proveit.logic.equality.not_equals_def</a></dt><dd><a class="ProveItLink" href="../__pv_it/axioms/460c0757688de5036b09e198e4b33898716c95990/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAP8AAAAWCAMAAAA4nbqyAAAAPFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAo1xBWAAAAE3RSTlMA
+q1RmmUTNIjK7EInv3Xbn9enzK1aD6QAAAAlwSFlzAAAOxAAADsQBlSsOGwAAAsNJREFUWMPVWNmy
+pCAMlUXZM4v//68DKt2CiURnXiZ1q0/VjeYAWUicpjdiOnz18vsHzT9Z9DsrRUC2SIn22H9neMbC
+V9xL5W1RfPRSMQ3J0CIl1hHrV09Y+IrhgSoE9VzVCzMg/NIiKc4SisXzWfiKsVTeM9oaAMYxrWjV
+Iul+QWmU5rPwFWOpvA3WwwjcrIodku6n4yl6NgtfwVm6v6I6zpMbVnJpkSw34iYQFZeFr2AlgEIw
+piKRW1V0aNEDCG/DJXzacuJhi1u/H0oQXBZSQdH21QLlbVBvZcr5l2eYcwgETDrVBW7HmX78LL+f
+fYZJlsBV6554Xycej+8ixhFC0RKGcN4Gjag/LEmyQWWKdT8Jded+K/eVir3IyshkOW1Ks2j7Gozz
+tlhcH2Z2DZkbLMGjrzk5tyU+M8TSbsS997Arl+XbvQkO7SX8cd4WJfCr32X/09c67f5yIGu5bNe9
+JZjj3+6foEXKMMbb4TKpwxSANvmvNoiiaRDR+N8o8gven/Pw1+8+oTdnQY27NMr/JIn9U7SUIZS3
+wyCPJgBMyZRFHqVzymdne1c5OKN38yTiVmjuOzwn6k/J3mGv5XrfGs2gxQxhvB2aWPWb/aNtNb4c
+D/RLbe8QuVqv80Lmxl/y2uBpUTymBrfbhYVQ4LTofYnx9ii+nfp6SlyR1aJ3hE1n9Bogb1fJUYPv
+RQBdjadhtbXpVoHTohUQ4+3xZD6eBuOijpchJtkW+RNaOKqsSYxr1j5V3ARTx9vjJ8fi9mgOXh8O
+qnkdThGs+a7Y9VHyRxjSOmd4GvCSE5yGOQCUC2N7JQeYW+jBhhpwFOL+BHs68SdNcnxyTz7cYLw9
+4jGczy0TOcRV3rV44URaaang86WBtwHKOq1At4Hwjvy3Xa5+K30z2hcZaLGvIYPPMEz/GXiq4PH2
+iMdwOQMFbz81/TfyB1l9Gx7F99IvAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="axioms.html#substitution">proveit.logic.equality.substitution</a></dt><dd><a class="ProveItLink" href="../__pv_it/axioms/b3647e5bced6c805148d96be1aa0946871a946d20/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO8AAAAXBAMAAAARnwX+AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAC/UlEQVRIx7VWTWgTURCeJLtpkk3SHDxYLCXi
+z0VLV1Chl1pp/aOCwYMnMYseBE/rUalYPUrFigexh7IFDxah1B48KJYgCKJUglDwEkixInoovVV6
+EOfN+9vsS1sT6MDMfvvmy5t5+97MC0Db4pu44z/4fuSnLUu+aGK7vj3/itACe9nXRuBDZEfeaIzy
+vRmzkZN3uZ5iL9dbj5vxmHV2v1eYSTIwmVHODa732NZMtB7YcpnNHphUmEli0GRGOUe5shydYuuB
+s2TLgcYkn0xmlJMNSBOYSbKNLT5I9l0Ik1wzmVFO0uW6WKt9biPwCDNHFndJPLv84i1+uFcGUXMy
+Ky5M4/ctcD0LMLnZ7IObB+ZL+6vwYL7HqgIcp/2vkRSgkePEK3ACz4HH9SZ0MEZm2DVn3+LQfaWG
+8UfihJ/YiOEMhw2i5tzHzLoAMDxpOnBK6EgfG2sp8Adm4msSp8CienlkEDUnyNbhC1LXuMbrdLY6
+m1TgtoGdqsZZ6lqXzTLWnHKQwuXbFa7gDbC8uueZe/XMCvZRexliocB8kFqidIhPnS5oXPYzmHuv
+scchzmnIs89c5QrzrJVAP7UzvyuJR3O2MxjXgWnw3DMUVzkApvQqGZ4pdYMjp2kseMWBx5RFYoIr
+jFJKw9R4YCqFj9u98EsHFoMQdoi6uVuSuO/Bebgoq6xBNAdOQhnPnzXHFWJ0qp5w2jrZPdAT3uN1
+NYt0ADxkpk/h56vxIdb/lozAmgPTCxdwz3IlrkI+kk1V6EpdEq8TapB/auXAn47REjTmtVM1Ajdw
+XqPeESoumw2AlzDqeBY+4Ju9pgPToBDpoOsgXrgavRqsaDMIcxwvw+6pIaEgVgUwXrR+LPzGB+zv
+93RgGhQiHShPITfpKSzkVnS9YU6uHpvjV2HoOqSkxSVVzPhpt2kdKwfKDCRklSGOZqDmDXHiA+zy
+T/tcuaT34hbYvIfYQax+qXkDUQ62naG/ORLnt/gzJTk/hYr2skp1w5MEe2CueWDl2Gnxd27qf2UN
+1FvBvR7LAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

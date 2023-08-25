@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.sets.inclusion.refined_nonmembership theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.sets.inclusion.refined_nonmembership-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">sets</a>.<a class="ProveItLink" href="../../theory.html">inclusion</a>.<a class="ProveItLink" href="../../theorems.html#refined_nonmembership">refined_nonmembership</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.sets.inclusion.refined_nonmembership-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> refined_nonmembership
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="refined_nonmembership">refined_nonmembership:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/19a5c108a9dfd16330688022111406f4f02243990/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOgAAAAXCAMAAAA2s/OGAAAAS1BMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AADXrLZzAAAAGHRSTlMAq1RmmUTNIjK7EInv3XbP4duh6fPj951y2Qx9AAAACXBIWXMAAA7EAAAO
+xAGVKw4bAAADHElEQVRYw9VY63KmIAyVm0DAtLvtdnn/J12CoqCC9vuxY52OXwdDyOXkBBiGH/Po
+V7/q4Uc9yLufRzjxcEw/CunN1mEunuwnd93Php05H5YYkWdSrcNPTjGM/e+bG0VsQijSvYZC2ycn
+VF7AbTqbw8KSOyELcDv+ZEd9r3rt9PE5HVLutAsmT49OiiVW46MrtG2dGhEGZo5MhAOGnLyRnPQT
+Pd49GrmLdYDIwLgCfZoQeVbBkoo0A95RgcoUDVvQM3zPiANxvOKKMN3mIda1kOEgt5JMFCrwmOgY
+CxNy9gRFQrP8yob6YlFjg3RO2rYdexJbpzubHn1Lje0uN80pFFGXCBGpGzWNjSZK4dche8V9TqYr
+6NmFkpdEih76244u08FWjN9TY5C9vauenJ+/kvuygqmhwvvzFV92R1BSRtbNgyY1Go4VFSnjSySw
+BE0R7jqap9u6LXfUyFg8DLpyfgtaZVwM52nDgFkoZIgrv6S/BDkOY7nN8KQFphUsiFLHv6ajy3S9
+I7e9mk0P7VuANeVK6JLJ1BsBqgY6tXhjysDg09JCC5BjjQ4dUAi50Tfqgdlh5C1H83ReR3mvZtOT
+coKqJbesgbkaGNleBBFxUAc6VKLeAw5iNlJ7ViCvrpBUM8BWXSKtalrQXaerOid7NZueJGibckV7
+iO3CgPQzo25sxA9h0dl+m7dGuT0VopHzHAuwqy0dCmYJul2j63RgJyVaqVn0iNHat1/W8qYckUmC
+HsiYPy5FBRZgXwrqsg0hIZTTP7OH02ErjPM6pq6tWBmmILr6iGfPp9cMcVST9ZhoykpFZ3Kzpe32
+Jv46G1m3t7PTUwPc1CDAzUZDIgcKNI1EVLix3iTY0+mUXFOU6KZmr8fClv1KrvJGfuskenUkkKlY
+QYZRxYBzwlVw1L/5nIL4I1E5RDh1tJxObru8YajU7PVo+9usG5hSri6Q1iHyxqnrSoTfGDnZMNzZ
+o9dN753ioS4OpK1lbpy6bP+kreB65DVHd3ruXW1oPB9n15cwFzcK4sZIx1FmbbHX7elhL50CnnY7
+d+ea5H9Y+Q+kiRwA0DmKmwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/de83126afc1a9525eeabc9cefca884d1d2dd3aca0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>refined_nonmembership may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

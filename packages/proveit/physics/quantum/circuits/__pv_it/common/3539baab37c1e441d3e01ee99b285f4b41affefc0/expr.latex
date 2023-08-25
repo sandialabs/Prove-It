@@ -1,0 +1,13 @@
+\left\{\begin{array}{ccc}\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{CONTROL~\mbox{on}~\left\{t + 1\right\}} & \qw 
+} \end{array} \textrm{ if } {_{-}b} = 1 \\ \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} \textrm{ if } {_{-}b} \neq 1\end{array}\right.., \left\{\begin{array}{ccc}\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{CONTROL~\mbox{on}~\left\{t + 1\right\}} & \qw 
+} \end{array} \textrm{ if } {_{-}b} = 2 \\ \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} \textrm{ if } {_{-}b} \neq 2\end{array}\right.., \ldots, \left\{\begin{array}{ccc}\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{CONTROL~\mbox{on}~\left\{t + 1\right\}} & \qw 
+} \end{array} \textrm{ if } {_{-}b} = t \\ \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} \textrm{ if } {_{-}b} \neq t\end{array}\right..

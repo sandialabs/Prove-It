@@ -1,0 +1,1 @@
+\left(\frac{1}{2^{t}}, \sum_{k = 0}^{2^{t} - 1} (\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \left(\frac{b_{\textit{f}}}{2^{t}} + \delta_{b_{\textit{f}}} - {_{-}a}\right)})^{k}\right)

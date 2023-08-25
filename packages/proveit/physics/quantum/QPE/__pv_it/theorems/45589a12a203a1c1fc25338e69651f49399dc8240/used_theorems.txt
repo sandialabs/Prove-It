@@ -1,0 +1,14 @@
+proveit.logic.booleans.conjunction.and_if_both
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.equality.equals_reversal
+proveit.logic.sets.inclusion.superset_membership_from_proper_subset
+proveit.numbers.exponentiation.exp_natpos_closure
+proveit.numbers.number_sets.natural_numbers.nat_pos_within_nat
+proveit.numbers.number_sets.rational_numbers.nat_within_rational_nonneg
+proveit.numbers.number_sets.real_numbers.rational_nonneg_within_real_nonneg
+proveit.numbers.numerals.decimals.nat1
+proveit.numbers.numerals.decimals.nat2
+proveit.physics.quantum.QFT.invFT_is_unitary
+proveit.physics.quantum.QPE._psi_t_ket_is_normalized_vec
+proveit.physics.quantum.algebra.normalization_preservation
+proveit.physics.quantum.algebra.state_space_preservation

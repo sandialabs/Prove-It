@@ -1,0 +1,5 @@
+\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\frac{1}{\sqrt{2}} \cdot \left(\lvert 0 \rangle + \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot 2^{-\left(-t + 1\right)} \cdot \varphi} \cdot \lvert 1 \rangle\right)\right)~\mbox{part}~1~\mbox{on}~\{0 + 1~\ldotp \ldotp~1\}} 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\frac{1}{\sqrt{2}} \cdot \left(\lvert 0 \rangle + \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot 2^{-\left(-t + 1\right)} \cdot \varphi} \cdot \lvert 1 \rangle\right)\right)} 
+} \end{array}\right)

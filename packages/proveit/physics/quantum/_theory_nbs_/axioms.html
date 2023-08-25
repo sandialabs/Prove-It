@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Axioms for the theory of proveit.physics.quantum</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Axioms-for-the-theory-of-proveit.physics.quantum">Axioms for the theory of <a class="ProveItLink" href="theory.html">proveit.physics.quantum</a><a class="anchor-link" href="#Axioms-for-the-theory-of-proveit.physics.quantum">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the axioms of a theory:</span>
+<span class="o">%</span><span class="k">axioms_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="p">(</span><span class="n">Operation</span><span class="p">,</span> <span class="n">Function</span><span class="p">,</span> <span class="n">Lambda</span><span class="p">,</span> <span class="n">Conditional</span><span class="p">,</span>
+                     <span class="n">ExprArray</span><span class="p">,</span> <span class="n">ExprTuple</span><span class="p">,</span> <span class="n">Composition</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> 
+                     <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">fy</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.core_expr_types</span> <span class="k">import</span> <span class="n">A_1_to_m</span><span class="p">,</span> <span class="n">B_1_to_m</span>
+<span class="kn">from</span> <span class="nn">proveit.linear_algebra</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">LinMap</span><span class="p">,</span> <span class="n">VecSpaces</span><span class="p">,</span> <span class="n">MatrixSpace</span><span class="p">,</span> <span class="n">MatrixMult</span><span class="p">,</span> <span class="n">TensorProd</span><span class="p">,</span> <span class="n">ScalarMult</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="p">(</span><span class="n">Iff</span><span class="p">,</span> <span class="n">And</span><span class="p">,</span> <span class="n">Or</span><span class="p">,</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Exists</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> 
+                           <span class="n">InSet</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">SetOfAll</span><span class="p">,</span> <span class="n">InClass</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">,</span> <span class="n">frac</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">Natural</span><span class="p">,</span> <span class="n">NaturalPos</span><span class="p">,</span> <span class="n">Complex</span><span class="p">,</span> <span class="n">Exp</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Add</span><span class="p">,</span> <span class="n">Exp</span><span class="p">,</span> <span class="n">Mult</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">subtract</span><span class="p">,</span> <span class="n">greater</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers.number_sets</span> <span class="k">import</span> <span class="n">Interval</span>
+<span class="kn">from</span> <span class="nn">proveit.physics.quantum</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">Ket</span><span class="p">,</span> <span class="n">NumKet</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.physics.quantum.circuits</span> <span class="k">import</span> <span class="p">(</span><span class="n">Gate</span><span class="p">,</span> <span class="n">QcircuitEquiv</span><span class="p">,</span> <span class="n">Qcircuit</span><span class="p">,</span>
+                                              <span class="n">Input</span><span class="p">,</span> <span class="n">Output</span><span class="p">)</span>
+<span class="c1"># from proveit.physics.quantum import Bra, Ket, RegisterBra, Meas, MultiWire, Circuit</span>
+<span class="kn">from</span> <span class="nn">proveit.physics.quantum</span> <span class="k">import</span> <span class="n">ket0</span><span class="p">,</span> <span class="n">ket1</span><span class="p">,</span> <span class="n">ket_plus</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">QubitSpace</span><span class="p">,</span> <span class="n">RegisterSU</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">CONTROL</span>
+<span class="c1"># from proveit.physics.quantum import I, X, Y, Z, RegisterSU</span>
+<span class="kn">from</span> <span class="nn">proveit.physics.quantum</span> <span class="k">import</span> <span class="n">QubitRegisterSpace</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining axioms for theory &#39;proveit.physics.quantum&#39;
+Subsequent end-of-cell assignments will define axioms
+%end_axioms will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># scalar_id_for_ket = Forall(k,</span>
+<span class="c1">#                            Equals(Mult(one, Ket(k)), Ket(k)),</span>
+<span class="c1">#                            domain=Natural)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">hadamard_on_zero</span> <span class="o">=</span> <span class="n">Equals</span><span class="p">(</span><span class="n">MatrixMult</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">ket0</span><span class="p">),</span> <span class="n">ket_plus</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="hadamard_on_zero">hadamard_on_zero:</strong> <a class="ProveItLink" href="../__pv_it/axioms/2c6f8a2cfe29cb78a1272ca294f48fc07bc8258e0/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHQAAAAVBAMAAABlHNfrAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABv0lEQVQ4y31UPU9CQRAceAgIivwAEiltVAoi
+0YpoaYx0RqMRY2MnJnY2VFaa2NhgIQmVGn+AlWhP8A+o1CZGI6Im4sfs3Sngw7vksrdvZm73du8e
+gCjahnEinB64RosqBHgT7eC0Nn01IBx3Sad/V0JAknP4q4Ldw0pGgb7JDTg5fh2ySIXQk5XVC2fB
+gKtYiKLItT/zv1QIgbxk/syjvWowWISvjCmug7mu0rAohNAr1vdOYl2DfVdwGoiJs99V6qgakDAm
+1v/Igzc0OJBDpA6/FHPNIiVhU+xAmeGLGlym9A1Oms6MRUqC2vn89Pr6NqfBwTQiT6oM2JYvgWM1
+rv5ISSiJmWWXRhMtKau2RWfcEpWEAzHrnNWMSTiNMKPe03lwS5nDUUHlcK+lTdNaUyanrm/KmS1q
+UiUsUSRJ3Zwygiz2Cp0J21lXcClt/eRVfjfS4B4CWXhYc+xYopIgDQhJWx9/wBLma/BJ0TYtUhLu
+gKXqRzxQbcYNODd5w93EObFISQjVul7wlORUtEhTrjv+I72AeRn/Xf8LM11S9RRjlveqCIvdQG/e
+tWmnVBE8Hf+REW36BY26pCO/KxK+AbTadIU/jKMKAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">substitution</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">QcircuitEquiv</span><span class="p">(</span><span class="n">fx</span><span class="p">,</span> <span class="n">fy</span><span class="p">),</span> <span class="n">conditions</span><span class="o">=</span><span class="n">QcircuitEquiv</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="substitution">substitution:</strong> <a class="ProveItLink" href="../__pv_it/axioms/182d4fd191141053eca6287b18858dab9e7a48730/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO8AAAAXBAMAAAARnwX+AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADWElEQVRIx7VWTUhUURQ+M/Pe/DvOIkJJZCRr
+U+IEJcxmGtGyMGhoEQTVPGoRtHotC0OrXRgpLSIDeYJJEsjookWiiFBEoVggFGGMZEQtxE0YLqpz
+z/15b3w6NQMe+O49c8/37jn33HvuHYCKxXTrgf/gm5s+LVtiCbeuF/7NvygQZz/2VuD4ALXapKV0
+lC+8G5pjXmQUnS/AwYklOY6xH1fK9xs2qBvvTSgdxW9R9/nOJ7kmgEjNLDg5Vzlusa3pK9+xlqRu
+9pyldBRfRixqJA7BDB+L7hsAJ+cwB4sxkijfcZRv6oatk7xhjQexu+eCOEI5q5gTtQg+jMRfwRbv
+52lcsHWSyzTKVv3npRiagmKOP8kxt7T0tgLHnZTZuncZoY8tP53ExI3bh0D0h+Z2CX54JQlDGFac
+4wTAwHazZ7Z3TEuD6oLUM7F6DZff4mb+lvyIdwaOYrQGxzUIsOMXbk+6vylx6N5T290jdJ/p2/Dg
+DAfp4C2R8FMd+CX5tzGyWgB0TwhZkSwaQkd6SjmOvMI8OkPjO9gs9SBoVC/3XXN41yTHihZgHqlr
+HN4Cna1qC0o5bnzyGCDvcjxl61HK+nnXHPz8ESdnBXH5+gwHGGkWV90EM692rGAR6MtUEdIxG8yA
+VjOcVQaZ6n5bz5lhjL3J5TgUV5zjEGNpXuCACXaVQIoq36z1Y0rHqq1e2zENYpZb5m0DwCC181If
+zdZRFaVce8wzQfx+isLXxwFdRGin8oDBIHY3muC77ZgGTz5CSSqDqJvAT6k33z0FZ2SVFUl3VvFb
+IYcL0PIc4KFT9YDT1qndA/XOPV5Xs0gDwD3HwUF9eNXbxu6/RZfjZps/NH0aN7IqyyHkNbXBGXpS
+F8XPPueg04CfsnC1uK3z2llwOW518OE54qaAuGfw0n0GXRFDww4+6Gu2YxrkqVYG/hw0+BOOpwGK
+ngJZTPFLih8xwuydahMAsSqA3oT2dfoHdtCYMmzHNCirKqVet4cAH0dsncv1zeutGjAUp6rgyfOn
+0PEcUtDikUqEzVByy5tLGVBGAdIdtr4pAjXviqk43jR7/EMmhyi2BtwCnd8huuUpnN36ylQGtp2O
+vzlSj5X4MyU53wTE9bJKdcODBD2d39qxMuy0mDs39V/GaeT5yy4pDAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>And then we have several axioms involving the Circuit class, which class itself still needs updating<br/>(in particular, the Circuit class needs an appropriate substitute for the ExpressionTensor class -- perhaps ExprArray).</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># circuit_gate_application = Forall(</span>
+<span class="c1">#     U, </span>
+<span class="c1">#     Forall((x, y),</span>
+<span class="c1">#            Iff(Circuit(ExprArray(ExprTuple(Input(x), Gate(U), Output(y)))),</span>
+<span class="c1">#                Equals(y, MatrixMult(U, x))),</span>
+<span class="c1">#            domain=QubitSpace),</span>
+<span class="c1">#     domain=SU(two))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># circuit_multi_gate_application = Forall(</span>
+<span class="c1">#     n,</span>
+<span class="c1">#     Forall(U,</span>
+<span class="c1">#            Forall((x, y),</span>
+<span class="c1">#                   Iff(Circuit(ExprArray(ExprTuple(Input(x), MultiWire(n), Gate(U), Output(y)))),</span>
+<span class="c1">#                       Equals(y, MatrixMult(U, x))),</span>
+<span class="c1">#                   domain=QubitRegisterSpace(n)),</span>
+<span class="c1">#            domain=RegisterSU(n)),</span>
+<span class="c1">#     domain=NaturalPos)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># zero_controlled_ngate = Forall(</span>
+<span class="c1">#     n,</span>
+<span class="c1">#     Forall(U,</span>
+<span class="c1">#            Forall(x,</span>
+<span class="c1">#                   Forall(alpha,</span>
+<span class="c1">#                          Circuit(ExprArray(ExprTuple(Input(ScalarMult(alpha, ket0)),</span>
+<span class="c1">#                                    I,</span>
+<span class="c1">#                                    MultiQubitGate(CONTROL, Set(one, two)),</span>
+<span class="c1">#                                    Output(ScalarMult(alpha, ket0))),</span>
+<span class="c1">#                                   ExprTuple(Input(x), MultiWire(n), MultiQubitGate(U, Set(one, two)), Output(x)))),</span>
+<span class="c1">#                          domain=Complex),</span>
+<span class="c1">#                   domain=QubitRegisterSpace(n)),</span>
+<span class="c1">#            domain=SU(Exp(two, n))),</span>
+<span class="c1">#     domain=NaturalPos)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># one_controlled_ngate = Forall(</span>
+<span class="c1">#     n,</span>
+<span class="c1">#     Forall(U,</span>
+<span class="c1">#            Forall(x,</span>
+<span class="c1">#                   Forall(alpha,</span>
+<span class="c1">#                          Circuit(ExprArray(ExprTuple(Input(ScalarMult(alpha, ket1)),</span>
+<span class="c1">#                                    I,</span>
+<span class="c1">#                                    MultiQubitGate(CONTROL, Set(one, two)),</span>
+<span class="c1">#                                    Output(ScalarMult(alpha, ket1))),</span>
+<span class="c1">#                                   ExprTuple(Input(x), MultiWire(n), MultiQubitGate(U, Set(one, two)), Output(MatrixMult(U, x))))),</span>
+<span class="c1">#                          domain=Complex),</span>
+<span class="c1">#                   domain=QubitRegisterSpace(n)),</span>
+<span class="c1">#            domain=SU(Exp(two, n))),</span>
+<span class="c1">#     domain=NaturalPos)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These axioms may now be imported from the theory package: proveit.physics.quantum
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

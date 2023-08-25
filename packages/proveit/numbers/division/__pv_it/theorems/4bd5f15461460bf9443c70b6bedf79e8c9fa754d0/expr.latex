@@ -1,0 +1,1 @@
+\forall_{a \in \mathbb{R}^{\le 0}}~\left[\forall_{x, y \in \mathbb{R}^+~|~x \leq y}~\left(\frac{a}{x} \leq \frac{a}{y}\right)\right]

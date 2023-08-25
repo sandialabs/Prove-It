@@ -1,0 +1,1 @@
+a \mapsto \left(a \land \left[\exists_{a}~\left(a \lor a\right)\right]\right)

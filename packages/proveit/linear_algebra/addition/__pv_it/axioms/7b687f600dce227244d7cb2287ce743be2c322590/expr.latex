@@ -1,0 +1,1 @@
+\left\{\left(\sum_{i=a}^{b} v\left(i\right)\right) = \left(\left(\sum_{i=a}^{b - 1} v\left(i\right)\right) + v\left(b\right)\right) \textrm{ if } a \in \mathbb{Z} ,  b \in \mathbb{Z} ,  a < b\right..

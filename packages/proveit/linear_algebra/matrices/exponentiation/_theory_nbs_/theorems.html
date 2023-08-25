@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theorems (or conjectures) for the theory of proveit.linear_algebra.matrices.exponentiation</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theorems-(or-conjectures)-for-the-theory-of-proveit.linear_algebra.matrices.exponentiation">Theorems (or conjectures) for the theory of <a class="ProveItLink" href="theory.html">proveit.linear_algebra.matrices.exponentiation</a><a class="anchor-link" href="#Theorems-(or-conjectures)-for-the-theory-of-proveit.linear_algebra.matrices.exponentiation">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the theorems of a theory:</span>
+<span class="o">%</span><span class="k">theorems_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">b</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">rho</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">InSet</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">NaturalPos</span><span class="p">,</span> <span class="n">Real</span><span class="p">,</span> <span class="n">Complex</span><span class="p">,</span> <span class="n">Mult</span><span class="p">,</span> <span class="n">Exp</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">exp</span><span class="p">,</span> <span class="n">exp2pi_i</span>
+<span class="kn">from</span> <span class="nn">proveit.linear_algebra</span> <span class="k">import</span> <span class="n">MatrixMult</span><span class="p">,</span> <span class="n">ScalarMult</span><span class="p">,</span> <span class="n">MatrixExp</span><span class="p">,</span> <span class="n">Unitary</span><span class="p">,</span> <span class="n">SpecialUnitary</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining theorems for theory &#39;proveit.linear_algebra.matrices.exponentiation&#39;
+Subsequent end-of-cell assignments will define theorems
+&#39;%end theorems&#39; will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">U_closure</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">Forall</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">MatrixExp</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">m</span><span class="p">),</span> <span class="n">Unitary</span><span class="p">(</span><span class="n">n</span><span class="p">)),</span>
+                                  <span class="n">domain</span><span class="o">=</span><span class="n">Unitary</span><span class="p">(</span><span class="n">n</span><span class="p">)),</span>
+                   <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="U_closure"><a class="ProveItLink" href="proofs/U_closure/thm_proof.html">U_closure</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/6a320dcb16e854288ff43af0a07e363e0f452ec70/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAS4AAAAZBAMAAAB9Zt7RAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEYklEQVRIx72XXYgbVRTH/zsfmckkTfNUuhWX
+iFhXhDaYViyIZtmIBfswxTdbS8CHRUXNvghtdTfio2tJhVJH0I4fCMuqpMU+tPtgSlEKWlxkKa00
+kLVSXcWStli7FdFz7p1MMpnsOilsL5zMncyZc3/3nHPPvQP00+6ul3AHWqr+Q38vFHGHWm41uQy/
+t+WRK+lL7y6vWeq4llad6ydJV4S19TROYWH5uGW8zh5PiCvNl3sjcw3wRclGUVaq4hJrwviiiJt4
+KvDUXPfdXYh/P8/9B33ArBTieoLvxyJzaTYPFSn7P5WXzU1goGHW0JXL5hL9fM49qx2GFzzJ4Q12
+dSUyl8n+3RtJeVReRv4CkuVUxWiWg9l3lX6E+7W2+7d4kkPMBRKZ6PnFszkWSbkmfhP7bwKT5DG1
+kpexer9+LsiVbL+TdKXkoBJsrI+8z0VNf0VqTaSuATsp9MaQy/f6y263vza2X4plpdAoZ+v1b/vg
+StbrF6tRdDWplVeuB/5+1Q3FkRfEng37Fxvk3bQU4toOvLfiANUAl1ZGXJi2utTul1EKTJ3ckzH/
+DqiNhfPrOR7kYMOiRFSLUohrHEZ6Ra58gIuUx0X/My+NZ86exI71UO0u7TUiaTU5fo8S2Oaiharb
+F2BQIio1KcQVdxN273I9fxyPpru5yLnHRf8rGtdccGwc5NHxoaeyy09hYXWxMLIUqA6UNvULQa6v
+yfnWn1Bu0eOmFOJSGr3S/sDgIdyTcDU3xLVJTlmfonQosM+IKwFZBzl8bieXRUr/dNq1/JJkLXVw
+QWligOzqNSlidT3WI2m38y7QyCfwZWG+YHdyxdSGSKRYWpZmj2sO6uiBnztqjogjORIXA5bn/N43
+JG96cWSotVkXCj1mYa5jVJLI5kJqG89eWr/E+sP3TSRC+YXERuGRhlbENHwu2gU/3p1NlqC01OOM
+/zTJKwGuK37vcRpuA3c+YO9WsdmtQiV3sjDXa5RDbDOd4vwX1qW3hxMf7QpzGadEGMupmhjV49Ir
+2HcZa13uyMbL3eDaeiSwa8X8Gq79CE3cHCWZLOOyWhbFhYW5BoibbZZFxRHWdRGgYeQXw1xYL4zO
+Hr2Fhx3HyWCQuRSiGMJuytoWlzkH68gNFw/8+2IgwQafaXV3jghTeJvkWVo5D1HwbSn+OWcIU97K
+Zuvq847zDnHNxEL1y2sNXtZvie4fzMU4Z1Aw23HE+d5lRz8h96F2W9PeOF/3xOc6g0VMmrJXMM2q
+9Je+aZnzFzv0mldgaTq/cj4bTZwfRqrRuQdHamo+sNePdnCRzSFs0zDjWRc7wFZ0n+V8rh1pfHLD
+NsQR1JqdpQkfhp7G71nE/WyKR/4WOOyXzIp3uGlxkc0xjP+GqYy0vpdGMs+VZH1Z/rw64zh2Vz2d
+7lGq/q9Nd05FTCd0jvZWi3XCOdTfOVrzvPNk+6+JyB8Crdj/4kmIS3dv+3x/UuaKvSrfQ+rK6i+t
+8P1oodcp4za/H0//B/58GqASftR2AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">SU_closure</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">Forall</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">MatrixExp</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">m</span><span class="p">),</span> <span class="n">SpecialUnitary</span><span class="p">(</span><span class="n">n</span><span class="p">)),</span>
+                                   <span class="n">domain</span><span class="o">=</span><span class="n">SpecialUnitary</span><span class="p">(</span><span class="n">n</span><span class="p">)),</span>
+                    <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="SU_closure"><a class="ProveItLink" href="proofs/SU_closure/thm_proof.html">SU_closure</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/16248ed8eb025a6a7e1c4a59db8a4b2cd255f2350/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUMAAAAZBAMAAABZf1ERAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEvElEQVRIx72Xf2gcRRTHv3e3e7u3l2wPxNJW
+OU7EGNE2B9rSgOgFr1iof1xR/zH546BI0YIm/whRaU78s7EeQoknalcrSojapLRgjdgEUYqtGEKM
+v3J4oSLEYogt1qRF43szu7e7uUu7V2kG3s3c7puZz755780M0EgJlb/H2pY/yqnGOkSx5iWSvuGI
+3dXWfdvnE+deD6iv2bIGiKZcJy0PY+sXGMdsMH2oFSmMmOAHtwdGDHEVDv5ld9sdF6B9nMcidvlf
+G9lsKqOvP3sLYt9OefSBc7YQ4g7+vzcwopLjqjsooZGXddsCxVpFH8Ok//1HBWzOQ1/iplef5rCk
+EOJLvAzFwIg6W703sBEV294dfwNNBbOoLRR8748TQx7an5wtvPr0OGNLWpDGU8F98WmqjgVGbJJV
+/IVFoI/sGClmpMu9VZ7meh9J0YPY5Hb9WgohcsREGwiXe6nKB0ZskdV+8wKwmxxES1oiGJ6x5Is3
+yWXSHsQWt+seKcz3Tbl8pgHEpnJ5Zjgwoh0dmfBF3+PnbEK0XWHfdhFJX5394PO3qTkihRF3Am9c
+dZphH6JSQExMYNTTvVMuo88UNGtKv+JTq4anubz8pBeR9OOxJI6ScbdBCCP2QEtcFTHjQyTlHtH+
+0HH8+fMHjM9+tpTxAiK5FV1kACsSwi2upxy5ddm70KT/eHMRfTT2PRDCiDErnquLpk2dwP2JlYhk
+8hOifYpiTJ8t5cisHYhJvXdsvU6nw5fidy7bseQdWSfnKv9o/+lf8CCSvnU0hzZap1chhBHDlXrR
+cnDjIdwWtxSrBnGLtIHaT7k/WxBBGBKI5BA7PEnNRTRI8x9ftqwmOZpf/QvGkgcRbcB6qrqkiA0w
+/0CdfLaT95xKJo7j2alszosYjVSEF0UTMLl7dBNtpjbiBCIPHfzVk8Um5ToDM77hJ5wGs1I++oqq
+lx194rtIjr4ZQgTiMUp1NPKs2c7eJefgrQetd+yP1/gi4i3CRBUlj0HhD79M5WxE2omPdKWbuhF2
++nBo4lGSZ32I807jO+pPG8+DNPMmR/8Mwpdp3nYIEYgv0vA8csLksBFzyJVojb/bWYuojYt1Lphj
+Ym52yH9tRLWI53/DOosbsnDm0Mbo57Bvz4w6Vp5O4X1iUH6CkrL1tUWY+e0yX+2yEUP0CTxyQeH0
+IuZQxT7UisxcLSI2iMUbHbmMbaVSKWWwV4eKjBgm0CQ7kO4gvkKOd/iShbuW9/mcceMTspF4bORm
+rnd3bHD01QkYN6WEgVncw1gS/WhOyVYXIk+VSq8R4lC0Ji/apcJfewDSzZthTrAek51GVncXurlQ
+P5GpJ+UGuLK4+tqEFBfxNObQp8tWVteHpRXVLaucF9nMF2QOX5fjRDkJs8BhQJ71QyvMiucw0NAZ
+O+M9gLBUEWnkJNoVDNlziP1mK1aeQKuIjyTw3qWcxmdopXOUPmho9BNqD0BN4HwasarnDTR4BK7q
+99pSRaSR96Lnd/Sn5By9ZBJ9ulsmq9VP3UOlki/tOyl7sPpksEHEQS/rQN2LgR1qxsnSoeu4GCi2
+9R52t6hKY4iOvtktpRZRtf7f3eVT6VG5G3gDjFzjMHate7SBVQ9B13mPnkn/B0B8MOw0A+SjAAAA
+AElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">eigen_exp_application</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">m</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="n">b</span><span class="p">,</span> <span class="n">Forall</span><span class="p">((</span><span class="n">A</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">MatrixMult</span><span class="p">(</span><span class="n">MatrixExp</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">m</span><span class="p">),</span> <span class="n">x</span><span class="p">),</span> <span class="n">MatrixMult</span><span class="p">(</span><span class="n">Exp</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">m</span><span class="p">),</span> <span class="n">x</span><span class="p">)),</span>
+                  <span class="n">condition</span><span class="o">=</span><span class="n">Equals</span><span class="p">(</span><span class="n">MatrixMult</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">ScalarMult</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">x</span><span class="p">))),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="eigen_exp_application"><a class="ProveItLink" href="proofs/eigen_exp_application/thm_proof.html">eigen_exp_application</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/d32d8665acd2c48b5dfc48af04af5fc120a78fe20/theorem_expr.html"><img src="data:image/png;base64,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
+RTCap/8DjbSRqtmTkFYAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">unital_eigen_exp_application</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">m</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="n">theta</span><span class="p">,</span> <span class="n">Forall</span><span class="p">((</span><span class="n">A</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">MatrixMult</span><span class="p">(</span><span class="n">MatrixExp</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">m</span><span class="p">),</span> <span class="n">x</span><span class="p">),</span> <span class="n">ScalarMult</span><span class="p">(</span><span class="n">exp</span><span class="p">(</span><span class="n">Mult</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">Mult</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">theta</span><span class="p">))),</span> <span class="n">x</span><span class="p">)),</span>
+                  <span class="n">condition</span><span class="o">=</span><span class="n">Equals</span><span class="p">(</span><span class="n">MatrixMult</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">ScalarMult</span><span class="p">(</span><span class="n">exp</span><span class="p">(</span><span class="n">Mult</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">theta</span><span class="p">)),</span> <span class="n">x</span><span class="p">))),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="unital_eigen_exp_application"><a class="ProveItLink" href="proofs/unital_eigen_exp_application/thm_proof.html">unital_eigen_exp_application</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/ba89eac04854e6947a3cec26d1023a74e1cb07db0/theorem_expr.html"><img src="data:image/png;base64,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
+aZtcyQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">unital2pi_eigen_exp_application</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">m</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="n">rho</span><span class="p">,</span> <span class="n">Forall</span><span class="p">((</span><span class="n">A</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">MatrixMult</span><span class="p">(</span><span class="n">MatrixExp</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">m</span><span class="p">),</span> <span class="n">x</span><span class="p">),</span> <span class="n">ScalarMult</span><span class="p">(</span><span class="n">exp2pi_i</span><span class="p">(</span><span class="n">Mult</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">rho</span><span class="p">)),</span> <span class="n">x</span><span class="p">)),</span>
+                  <span class="n">condition</span><span class="o">=</span><span class="n">Equals</span><span class="p">(</span><span class="n">MatrixMult</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">ScalarMult</span><span class="p">(</span><span class="n">exp2pi_i</span><span class="p">(</span><span class="n">rho</span><span class="p">),</span> <span class="n">x</span><span class="p">))),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="unital2pi_eigen_exp_application"><a class="ProveItLink" href="proofs/unital2pi_eigen_exp_application/thm_proof.html">unital2pi_eigen_exp_application</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/8dee1bfd5d1657d0feabd1a4544d21304ed67f250/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These theorems may now be imported from the theory package: proveit.linear_algebra.matrices.exponentiation
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

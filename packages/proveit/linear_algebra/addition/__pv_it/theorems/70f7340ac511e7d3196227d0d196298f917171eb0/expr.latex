@@ -1,0 +1,1 @@
+\left(\left(a, b, c\right) \mapsto \left\{\left(\sum_{i=a}^{c} v\left(i\right)\right) = \left(\left(\sum_{i=a}^{b - 1} v\left(i\right)\right) + \left(\sum_{i=b}^{c} v\left(i\right)\right)\right) \textrm{ if } a \in \mathbb{Z} ,  b \in \mathbb{Z} ,  c \in \mathbb{Z} ,  a < b ,  b \leq c\right..\right)

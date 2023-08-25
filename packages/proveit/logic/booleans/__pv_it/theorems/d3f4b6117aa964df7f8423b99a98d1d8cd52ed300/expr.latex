@@ -1,0 +1,1 @@
+\left(P \mapsto \left\{\left[\forall_{A \in \mathbb{B}}~P\left(A\right)\right] = \top \textrm{ if } P\left(\top\right) = \top ,  P\left(\bot\right) = \top\right..\right)

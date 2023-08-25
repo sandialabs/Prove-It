@@ -1,0 +1,1 @@
+\left(\left(A, B, S\right) \mapsto \left\{\forall_{f \in \left[A \rightarrow B\right]}~\left(f^{\rightarrow}(S) \subseteq B\right) \textrm{ if } S \subseteq A\right..\right)

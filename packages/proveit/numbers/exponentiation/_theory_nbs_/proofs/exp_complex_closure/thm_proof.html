@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.exponentiation.exp_complex_closure theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.exponentiation.exp_complex_closure-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">exponentiation</a>.<a class="ProveItLink" href="../../theorems.html#exp_complex_closure">exp_complex_closure</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.exponentiation.exp_complex_closure-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> exp_complex_closure
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="exp_complex_closure">exp_complex_closure:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/0d66d8cd09fbd10bfb7aa3243e32d3923ab2f7310/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAI4AAAAaBAMAAACTJHluAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACjElEQVQ4y6VVTWgTQRR+yf5vkjUH8WClLCj0
+IEq8FIxQI/5UFGKkIEI9BA9KPW3Bi1BEQUVIoBGjuNXCSE8ScEUFPUlRhIIIHoRCYCEBoSpYehFF
+UHyzmRl3bbKJOLA7782b+d7/DMA/jGs1+K8hlTpz4lF3eWFAnG1sTl/qLr8wGIxZZsTs6ubu9rYG
+wjFyjPhCPvwlasyfWakANAGylN0aizPDiZswGpVYW3LmsTpAG+Ag5c/G4hzlxBLsi0qKk+gU4ngE
+LiOrxefzKyfW4GVEoBfm8L8RQM2BSgBSdhyM/oNTTYkp/OT7NPYJQvkFALkGEgZRjTXHesepK6ud
++cRnlgCNVY61CPDW99/E4iSoam1oRSRXO8eIaZ0VpoImHwaYi087Nf6UYwj3VIcRFYVVhP4dQUHL
+ilBMCWfqwxf5MRSbr0AW7okwnFeYjRqmwiCpktA9RMHabsm84STvsrUMBkFeg4xorqqPoxbEh62Z
+iJNshcK8hN8B7KLUQ4A9IXvSNfCEtgfCY8Lyp6FfUB6jBT72jJryq00s6vPCVRSGcLwW7BXKMpxQ
+gvpR8Nw3nB9j+M3lgLSaViHQNjISyhcq9WzYlOThtUTmisfxd6iTL5hBfXJBXww6UipP0A35fKh+
+UGK0ku9lsXJaiG6PmzswfBI9nMB4pEtWNrhg5Oyo67r29ZN/cKgyc/j59Eexcv8W4f1+7+c4TjLP
+uOcYeZRtgLRdoTyNs8mPvV5XUpPzfjnMq/xmSTuzE6QBGbIbk0AT8NSBF+v6vefwuH3K/p1PoGrr
+xRZodwKDp+riEq32xdkVZTtt33DdUrTB7H44yxFOIX3u557vSfR+lnrt294HZ8D3QrxfvcYRgN+/
+l5RbTU4AugAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/1c66acb54ed1794a27f62365a6d0148cdc9175f90/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>exp_complex_closure may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

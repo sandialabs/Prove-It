@@ -1,0 +1,1 @@
+\forall_{A_{1}, A_{2}, \ldots, A_{m}, B}~\left(\begin{array}{c} \begin{array}{l} \textrm{disjoint}\left(A_{1}, A_{2}, \ldots, A_{m}, B\right) \Leftrightarrow  \\ \left(\textrm{disjoint}\left(A_{1}, A_{2}, \ldots, A_{m}\right) \land \left[\forall_{X \in \left\{A_{1}, A_{2}, \ldots, A_{m}\right\}}~\textrm{disjoint}\left(X, B\right)\right]\right) \end{array} \end{array}\right)

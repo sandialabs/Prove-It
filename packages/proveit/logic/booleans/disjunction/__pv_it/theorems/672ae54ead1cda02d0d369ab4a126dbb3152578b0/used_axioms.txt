@@ -1,0 +1,2 @@
+proveit.logic.booleans.disjunction.or_f_t
+proveit.logic.booleans.eq_true_elim

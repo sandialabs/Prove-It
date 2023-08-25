@@ -1,0 +1,1 @@
+\left(\left(V, W\right) \mapsto \left[\forall_{P \in \mathcal{L}\left(V, W\right)}~\left[\forall_{x \in V}~\left(P\left(x\right) \in W\right)\right]\right]\right)

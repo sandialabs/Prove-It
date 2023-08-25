@@ -1,0 +1,9 @@
+\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qout{\frac{1}{\sqrt{2}} \cdot \left(\lvert 0 \rangle + \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot 2^{t - 1} \cdot \varphi} \cdot \lvert 1 \rangle\right)\right)} \\
+& \qout{\frac{1}{\sqrt{2}} \cdot \left(\lvert 0 \rangle + \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot 2^{t - 2} \cdot \varphi} \cdot \lvert 1 \rangle\right)\right)} \\
+& \qout{\vdots} \\
+& \qout{\frac{1}{\sqrt{2}} \cdot \left(\lvert 0 \rangle + \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot 2^{0} \cdot \varphi} \cdot \lvert 1 \rangle\right)\right)} \\
+& \qout{\lvert u \rangle}
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \gate{\begin{array}{c} \uparrow \\{_{-}b} \\ \downarrow\end{array}} & \qw
+} \end{array}\right)

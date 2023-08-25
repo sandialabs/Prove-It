@@ -1,0 +1,1 @@
+\forall_{\Omega \underset{{\scriptscriptstyle c}}{\in} \textrm{SampleSpaces}}~\left[\forall_{x \in \Omega}~\left(\textrm{Pr}\left(x\right) \in \left[0,1\right]\right)\right]

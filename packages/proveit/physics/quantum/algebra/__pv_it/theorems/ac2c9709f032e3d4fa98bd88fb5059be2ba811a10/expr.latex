@@ -1,0 +1,1 @@
+\left\{f\left(\sum_{i=1}^{n} \left(a_{i} \cdot \left(\lvert v_{i} \rangle \thinspace \langle v_{i} \rvert\right)\right)\right) = \left(\sum_{i=1}^{n} \left(f\left(a_{i}\right) \cdot \left(\lvert v_{i} \rangle \thinspace \langle v_{i} \rvert\right)\right)\right) \textrm{ if } f \in \left[\mathbb{C} \rightarrow \mathbb{C}\right]\right..

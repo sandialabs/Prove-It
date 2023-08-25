@@ -1,0 +1,2 @@
+\begin{array}{l}\forall_{A, B, C, X, Q~|~C \subseteq X, C = \left(A \cup B\right), \textrm{disjoint}\left(A, B\right)}~\\
+\left[\forall_{f \in \left[X \xrightarrow[]{\text{1-to-1}} \Omega\right]}~\left(\left[\textrm{Prob}_{x \in C~|~Q\left(x\right)}~f\left(x\right)\right] = \left(\left[\textrm{Prob}_{x \in A~|~Q\left(x\right)}~f\left(x\right)\right] + \left[\textrm{Prob}_{x \in B~|~Q\left(x\right)}~f\left(x\right)\right]\right)\right)\right]\end{array}

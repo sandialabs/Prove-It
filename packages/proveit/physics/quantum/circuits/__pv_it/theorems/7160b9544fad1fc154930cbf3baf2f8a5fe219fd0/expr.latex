@@ -1,0 +1,19 @@
+\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{1, 1}~\mbox{on}~R_{1, 1}} \qwx[1] & \gate{A_{2, 1}~\mbox{on}~R_{2, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{m, 1}~\mbox{on}~R_{m, 1}} \qwx[1] & \qw \\
+& \gate{A_{1, 2}~\mbox{on}~R_{1, 2}} \qwx[1] & \gate{A_{2, 2}~\mbox{on}~R_{2, 2}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{m, 2}~\mbox{on}~R_{m, 2}} \qwx[1] & \qw \\
+& \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\ddots} \qwx[1] & \gate{\vdots} \qwx[1] & \qw \\
+& \gate{A_{1, k}~\mbox{on}~R_{1, k}} \qwx[1] & \gate{A_{2, k}~\mbox{on}~R_{2, k}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{m, k}~\mbox{on}~R_{m, k}} \qwx[1] & \qw \\
+& \gate{C_{1, 1}~\mbox{on}~T_{1, 1}} \qwx[1] & \gate{C_{2, 1}~\mbox{on}~T_{2, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{C_{m, 1}~\mbox{on}~T_{m, 1}} \qwx[1] & \qw \\
+& \gate{C_{1, 2}~\mbox{on}~T_{1, 2}} \qwx[1] & \gate{C_{2, 2}~\mbox{on}~T_{2, 2}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{C_{m, 2}~\mbox{on}~T_{m, 2}} \qwx[1] & \qw \\
+& \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\ddots} \qwx[1] & \gate{\vdots} \qwx[1] & \qw \\
+& \gate{C_{1, l}~\mbox{on}~T_{1, l}} & \gate{C_{2, l}~\mbox{on}~T_{2, l}} & \gate{\cdots} & \gate{C_{m, l}~\mbox{on}~T_{m, l}} & \qw
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \gate{B_{1, 1}~\mbox{on}~S_{1, 1}} \qwx[1] & \gate{B_{2, 1}~\mbox{on}~S_{2, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{B_{m, 1}~\mbox{on}~S_{m, 1}} \qwx[1] & \qw \\
+& \gate{B_{1, 2}~\mbox{on}~S_{1, 2}} \qwx[1] & \gate{B_{2, 2}~\mbox{on}~S_{2, 2}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{B_{m, 2}~\mbox{on}~S_{m, 2}} \qwx[1] & \qw \\
+& \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\ddots} \qwx[1] & \gate{\vdots} \qwx[1] & \qw \\
+& \gate{B_{1, k}~\mbox{on}~S_{1, k}} \qwx[1] & \gate{B_{2, k}~\mbox{on}~S_{2, k}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{B_{m, k}~\mbox{on}~S_{m, k}} \qwx[1] & \qw \\
+& \gate{C_{1, 1}~\mbox{on}~T_{1, 1}} \qwx[1] & \gate{C_{2, 1}~\mbox{on}~T_{2, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{C_{m, 1}~\mbox{on}~T_{m, 1}} \qwx[1] & \qw \\
+& \gate{C_{1, 2}~\mbox{on}~T_{1, 2}} \qwx[1] & \gate{C_{2, 2}~\mbox{on}~T_{2, 2}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{C_{m, 2}~\mbox{on}~T_{m, 2}} \qwx[1] & \qw \\
+& \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\ddots} \qwx[1] & \gate{\vdots} \qwx[1] & \qw \\
+& \gate{C_{1, l}~\mbox{on}~T_{1, l}} & \gate{C_{2, l}~\mbox{on}~T_{2, l}} & \gate{\cdots} & \gate{C_{m, l}~\mbox{on}~T_{m, l}} & \qw
+} \end{array}\right)

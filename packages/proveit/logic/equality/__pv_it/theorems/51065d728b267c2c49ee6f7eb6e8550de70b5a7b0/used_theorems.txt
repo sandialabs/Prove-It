@@ -1,0 +1,2 @@
+proveit.logic.equality.equals_reversal
+proveit.logic.equality.sub_left_side_into

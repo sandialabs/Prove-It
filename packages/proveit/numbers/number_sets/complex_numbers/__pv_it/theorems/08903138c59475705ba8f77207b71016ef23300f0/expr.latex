@@ -1,0 +1,1 @@
+\left(r, \theta\right) \mapsto \left\{\left(\left(-r\right) \cdot \mathsf{e}^{\mathsf{i} \cdot \left(\theta + \pi\right)}\right) = \left(r \cdot \mathsf{e}^{\mathsf{i} \cdot \theta}\right) \textrm{ if } r \in \mathbb{R} ,  \theta \in \mathbb{R}\right..

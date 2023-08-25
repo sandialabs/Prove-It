@@ -1,0 +1,1 @@
+\left(n \mapsto \left\{\forall_{j, k \in \{0~\ldotp \ldotp~2^{n} - 1\}}~\left(\left({_{n}}\langle k \rvert \thinspace {\mathrm {FT}}_{n} \thinspace \lvert j \rangle_{n}\right) = \left(\frac{1}{2^{\frac{n}{2}}} \thinspace \mathsf{e}^{\frac{2 \cdot \pi \cdot \mathsf{i} \cdot j \cdot k}{2^{n}}}\right)\right) \textrm{ if } n \in \mathbb{N}^+\right..\right)

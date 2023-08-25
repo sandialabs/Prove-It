@@ -1,0 +1,1 @@
+\forall_{a, b \in \mathbb{Z}}~\left[\forall_{x \in \mathbb{C}}~\left(\left(\sum_{i = a}^{b} x\right) = \left(\left(b - a + 1\right) \cdot x\right)\right)\right]

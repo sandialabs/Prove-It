@@ -1,0 +1,1 @@
+\left(m \mapsto \left\{\forall_{A, B~|~A \subset B}~\left(A^{m} \subset B^{m}\right) \textrm{ if } m \in \mathbb{N}^+\right..\right)

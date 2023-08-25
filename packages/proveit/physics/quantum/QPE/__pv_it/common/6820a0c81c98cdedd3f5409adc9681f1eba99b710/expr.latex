@@ -1,0 +1,5 @@
+\left\{\begin{array}{ccc}\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{CONTROL~\mbox{on}~\left\{t + 1\right\}} & \qw 
+} \end{array} \textrm{ if } \left({_{-}b} + t\right) = {_{-}a} \\ \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} \textrm{ if } \left({_{-}b} + t\right) \neq {_{-}a}\end{array}\right..

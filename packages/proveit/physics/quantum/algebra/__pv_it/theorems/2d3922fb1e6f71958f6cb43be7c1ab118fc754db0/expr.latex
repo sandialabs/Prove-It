@@ -1,0 +1,1 @@
+\left\{\textrm{OrthoProj}\left(\mathcal{H}, X\right) = \left(\sum_{i=1}^{n} \left(\lvert x_{i} \rangle \thinspace \langle x_{i} \rvert\right)\right) \textrm{ if } \left\{\lvert x_{1} \rangle, \lvert x_{2} \rangle, \ldots, \lvert x_{n} \rangle\right\} \in \textrm{O.N.Bases}\left(\mathcal{H}\right)\right..

@@ -1,0 +1,1 @@
+\left(K \mapsto \left[\forall_{W \underset{{\scriptscriptstyle c}}{\in} \textrm{VecSpaces}\left(K\right)}~\left[\forall_{A, B~|~\left(A {\otimes} B\right) \in W}~\left[\exists_{U, V \underset{{\scriptscriptstyle c}}{\in} \textrm{VecSpaces}\left(K\right)}~\left(\left(A \in U\right) \land \left(B \in V\right)\right)\right]\right]\right]\right)

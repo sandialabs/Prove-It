@@ -1,0 +1,1 @@
+\forall_{K}~\left[\forall_{V, W \underset{{\scriptscriptstyle c}}{\in} \textrm{VecSpaces}\left(K\right)}~\left(\mathcal{L}\left(V, W\right) \underset{{\scriptscriptstyle c}}{\in} \textrm{VecSpaces}\left(K\right)\right)\right]

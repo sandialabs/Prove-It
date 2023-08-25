@@ -1,0 +1,1 @@
+\left(f \mapsto \left\{\left(f \in \left[A \xrightarrow[]{\text{1-to-1}} B\right]\right) \land \left(f \in \left[A \xrightarrow[\text{onto}]{} B\right]\right) \textrm{ if } f \in \left[A \xrightarrow[\text{onto}]{\text{1-to-1}} B\right]\right..\right)

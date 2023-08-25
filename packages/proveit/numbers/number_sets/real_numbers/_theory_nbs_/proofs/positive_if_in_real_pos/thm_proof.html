@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.number_sets.real_numbers.positive_if_in_real_pos theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.number_sets.real_numbers.positive_if_in_real_pos-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">number_sets</a>.<a class="ProveItLink" href="../../theory.html">real_numbers</a>.<a class="ProveItLink" href="../../theorems.html#positive_if_in_real_pos">positive_if_in_real_pos</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.number_sets.real_numbers.positive_if_in_real_pos-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">x</span><span class="p">,</span> <span class="n">defaults</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">zero</span><span class="p">,</span> <span class="n">greater</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers.number_sets.real_numbers</span> <span class="k">import</span> <span class="n">real_pos_def</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> positive_if_in_real_pos
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="positive_if_in_real_pos">positive_if_in_real_pos:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/fa0861a4dbbaf1c4d7fc59487e892e46cb79ff190/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIEAAAAVBAMAAACTeZA2AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACFklEQVQ4y52UT0gUURzHv+6MO+M89+FNComB
+wIuIe4gOkbXi6oYWLAZeglrwIHSQ6W5g10Syk47BMgeJljA2D0qK4kUQIggvnoRZ0ARB6RAIdfH3
+xp0/b5sdooHH+8177/eZ3+/7+70B/uGx/mNHerjZdOspjQ5h3Ewk9MQvbx5Z4FlgSLxMJgGMUuxy
+2jQOgOfAK3rR5pMIajZ2uR/4AtwilAMwM4nQHrHfh7S3QJ+DdgcKraUTZeiOZrTl+uYv4I2JNLl/
+Ozz8mkgYpfGp9mHzKtCzjTpLELJgVIkHwNLfbiw0J2jk+A31ez3/EW/S/hDBhUIyv4DWESNfaO4D
+iqX8bvEl6C4EhCpSO0Cbw4oR1961gSmZsAvoUCMlHb8usiDCMxf6TyDlBkLqNbvIGdarjQQqiBsh
+LNWV7DPRSjGgdM/fys9QC3PccVn+UX4okgV9zjIcP4tOb7KB+w5SQp1V6iucF44s0aKCcJqTYigD
+lWJXoG1/4Wq+CwyTQqIZp0lIbl1LmxXvGjGtnJUInync1w8xBqmayJjGHp2jjNFCsSso63jsEdR3
+87KSc8DyeWrQawfjLNDDGK2RYyaswgVw27Ztk3M2JvdDZia0VxrvyMvA0nc0zHox8NYnjnRIySU0
+7KBvTLOSSp3h6YCNBpeF5oDwVqvH26fQFkWxf1SXh+VjleaEtobf3EfbLsZ9yG1KOAEuAflLcZUP
+5D9IAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/0aae74ecc43d5c7c4bb3e9d36d3dfebc860a94c90/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>positive_if_in_real_pos may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>$\mathbb{R}^{+} = \{r | r &gt; 0\}_{\mathbb{R}}$</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">defaults</span><span class="o">.</span><span class="n">assumptions</span> <span class="o">=</span> <span class="n">positive_if_in_real_pos</span><span class="o">.</span><span class="n">conditions</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="defaults.assumptions">defaults.assumptions:</strong> <a class="ProveItLink" href="../../../__pv_it/_proof_positive_if_in_real_pos/2ac237d84bbbc019b491365dc3c3c8186096501a0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAAAZBAMAAABUaLQ6AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAZkRUmRDNuyLviTJ2
+3asqG0tJAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABdUlEQVQ4y2NgYBBiwAdYQIQDiGB2wKuQHUS0
+g4gwBsIKGQ8AiUJs0mLT63OnC8AVMlxlYOCYgNWggj4GPfEAuMJzQMcuwK6wi4Gd+wGDe3lleTnQ
+5PgABn4FXApZGhLgJrIJMOwPQJbnqb17DaGwAK6QpYDhLLI6ppwAhIl8oQ/gCnkmMDwDUqxnnu5a
+DOK3BSBZvd2sAa6Q6StDOTj0zx3wBfEzEG7szP17FB4zDNy/GfKAlASDfMBDED8ByTOCyDHB8Ynh
+CpDawOAG0Tf37t2716EK2QMFEApZP4FNZGCYA+EWIJnI7VCKZCLEagamHwyhIPoCcjh6tyMUcv9g
+eA40qIhvAgM4gs4gKwznQdgN9PVJYEL7HTKByQAcAQZwhS0MjAJFcIWMExj0AxhYfQ6YCEMc+VwV
+nnoqGMrz4fpYHjBwosQ103JoFKIBYFzjSD1oAJh6uCcQo1AOiB8To/AG4TzDAM8zzEQ4EhL0QoQV
+ujIwAAAAr1p9FvojNwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">proveit.numbers.number_sets.real_numbers</span> <span class="k">import</span> <span class="n">real_pos_def</span>
+<span class="n">real_pos_def</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../../axioms.html#real_pos_def" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../__pv_it/axioms/988052b728edd5e8d053df0f4486c5f7407797eb0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALkAAAAZBAMAAACfn5KBAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAZs3vu90iq0QQiTKZ
+VHZ+Ip2vAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACUklEQVRIx2NggAMeBloCFvqbPqMBwU7Ap5vt
+GjZRIRN/VRMBXKbzaUxAcFbgddx2T2yiDukM7SITcJh+H8lw3KZzrTsGJN2xmp7FwMJdwHDExdnF
+RQBdcikDMabrMkxNQFOLZDpPggIOtxNlOmMAA5cDPtMdSDadUxGRHAoYeH/iNp19ZgHpbp8VB2Px
+H2Dg/ovb9C2XEvCYvsshZyHCdO4lbKcg0cMXBY3y+UDTP+IyPVn160ukvMoTCgYFYM4hIF7gs2Ax
+wnQullNcBtDwjoEYn7+AgfsfA8Nj7G4XnIQzixgCsYAqwymE6YlMATwLoNK8Ogkw038BqQtYTWeZ
+KIDD8CJgTuWe8BE53HfyIynmUAe5fv4CBg6g2zmLLmAznfuAJw637wFJcPxEidV+pAzGoTIBEqu8
+wFjl0sAeq6dTkPgo4Q7KfzwBKKYfRSjlVQeHDIsDA+NPtHx9ddFxPajpU/hwBA04HbAuQDE9CpGL
+YiDlGqMBAw8wOy6GiXM/d2ng42JYBtLnkMPAKOCBx/T8BmTT2X7ASzhYimSIZZi8ASlFngFy+PgY
+JB+Ay0g3Bhf9C7hNb0XJTRywcJoHz00Mc9ZVQ9XeufgmARwQQNNfHiBU5uMpCQKxqZUwZLowBewx
+LjY/AfJNx6qWO1GBm6ERbDqPlwPB+uoxCaaD8jU7KKxdXFwu8PFx9RI0HSX/4TedE5ivGZiBKWAX
+2O18HF0TCJnOdhzJ+Nd4VS4HqcwHJf8J4HBnWEkwVkkF20H2eAOJpkcL5hyiSeNilosLNIsAAIhN
+noo3qHX6AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">x_in_real_pos</span> <span class="o">=</span> <span class="n">defaults</span><span class="o">.</span><span class="n">assumptions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="x_in_real_pos">x_in_real_pos:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/7697fc34c81296f04a039eeb9dd22e91165d63b70/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAATBAMAAADSXRa0AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEHarMolUmd1mIs3v
+RLtmgJDEAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA3UlEQVQoz2NgwAcKGAiAB+Qp4Nzz7nfPS3wm
+8HEZ8Fo+xKsggOGBMwP7u3fn3r3EpaCKG4sJeh0dG+AK+DAV3FZEMsFQGK5ASFkkNAFIc21EsoLl
+2S64ggImI/YGIM29AKHgdH+TACwkORdwfmSeAFKA5MjIiRvgPBYGdgjHpwMIHkCteDgTyXE8CmBK
+Dtmb7nwCCAX3FzCCeBzICti94D6Uu2DDwApiMCkgKWB8oAnj5TvWMFwDs7YhFBQwzOS7AOWJK7FV
+JoBZwm8FYLH5bwHf62+YcXD1RccGDEEANpdAkzJdUSAAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">x_in_real_pos_assumption</span> <span class="o">=</span> <span class="n">x_in_real_pos</span><span class="o">.</span><span class="n">prove</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="x_in_real_pos_assumption">x_in_real_pos_assumption:</strong> <span style="font-size:20px;"><a class="ProveItLink" href="../../../__pv_it/theorems/7697fc34c81296f04a039eeb9dd22e91165d63b70/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAATBAMAAADSXRa0AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEHarMolUmd1mIs3v
+RLtmgJDEAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA3UlEQVQoz2NgwAcKGAiAB+Qp4Nzz7nfPS3wm
+8HEZ8Fo+xKsggOGBMwP7u3fn3r3EpaCKG4sJeh0dG+AK+DAV3FZEMsFQGK5ASFkkNAFIc21EsoLl
+2S64ggImI/YGIM29AKHgdH+TACwkORdwfmSeAFKA5MjIiRvgPBYGdgjHpwMIHkCteDgTyXE8CmBK
+Dtmb7nwCCAX3FzCCeBzICti94D6Uu2DDwApiMCkgKWB8oAnj5TvWMFwDs7YhFBQwzOS7AOWJK7FV
+JoBZwm8FYLH5bwHf62+YcXD1RccGDEEANpdAkzJdUSAAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a> <a class="ProveItLink" href="../../../__pv_it/_proof_positive_if_in_real_pos/8f27db10fb8cea2c1999fa0b8ffeacc0836660860/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../__pv_it/theorems/7697fc34c81296f04a039eeb9dd22e91165d63b70/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAATBAMAAADSXRa0AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEHarMolUmd1mIs3v
+RLtmgJDEAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA3UlEQVQoz2NgwAcKGAiAB+Qp4Nzz7nfPS3wm
+8HEZ8Fo+xKsggOGBMwP7u3fn3r3EpaCKG4sJeh0dG+AK+DAV3FZEMsFQGK5ASFkkNAFIc21EsoLl
+2S64ggImI/YGIM29AKHgdH+TACwkORdwfmSeAFKA5MjIiRvgPBYGdgjHpwMIHkCteDgTyXE8CmBK
+Dtmb7nwCCAX3FzCCeBzICti94D6Uu2DDwApiMCkgKWB8oAnj5TvWMFwDs7YhFBQwzOS7AOWJK7FV
+JoBZwm8FYLH5bwHf62+YcXD1RccGDEEANpdAkzJdUSAAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">x_in_real_pos_assumption</span><span class="o">.</span><span class="n">inner_expr</span><span class="p">()</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">substitute</span><span class="p">(</span><span class="n">real_pos_def</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"><a class="ProveItLink" href="../../../__pv_it/theorems/7697fc34c81296f04a039eeb9dd22e91165d63b70/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAATBAMAAADSXRa0AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEHarMolUmd1mIs3v
+RLtmgJDEAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA3UlEQVQoz2NgwAcKGAiAB+Qp4Nzz7nfPS3wm
+8HEZ8Fo+xKsggOGBMwP7u3fn3r3EpaCKG4sJeh0dG+AK+DAV3FZEMsFQGK5ASFkkNAFIc21EsoLl
+2S64ggImI/YGIM29AKHgdH+TACwkORdwfmSeAFKA5MjIiRvgPBYGdgjHpwMIHkCteDgTyXE8CmBK
+Dtmb7nwCCAX3FzCCeBzICti94D6Uu2DDwApiMCkgKWB8oAnj5TvWMFwDs7YhFBQwzOS7AOWJK7FV
+JoBZwm8FYLH5bwHf62+YcXD1RccGDEEANpdAkzJdUSAAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a> <a class="ProveItLink" href="../../../__pv_it/_proof_positive_if_in_real_pos/a18ccc296535f4bdcebfa76ddca2957dcd3aa9340/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../__pv_it/_proof_positive_if_in_real_pos/b44d84aaa9793cbe3df8810b9aabbaca9c7e63cd0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKUAAAAXBAMAAACYB5KXAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEHarMolUmd1mIs3v
+RLtmgJDEAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACMUlEQVQ4y2NgwAYY7yLYCxjwAK4sBmKB9kUE
+OxavSueHRBrJ9pGBCDNZg6qA5GMizWRtIMbMbQwSwHCJoKaZnA0MrA8ImqnX0bGBgJmMO+FMPgNw
+GOE387YiEe4UbYKx+AsYWL7hMFNIWSQ0AZQsNqL43fXB8kgkM+FcplYBiCJ5oJk/cZhZwGTEDnIX
+NyIhsgODIOB5QAySmXAuA2c7xND1AQwsnxgYdLAF9QLOj8wTQGYixNZMYOCasIOhFGEmggtMadsX
+wMz8CqQSMM1kAbsKCHw6gOABiLV4L1BY4CdyeCK4QMC7GeRS+QAGXqA7Ga2xGMrAowCm5BDW1AH1
+8H5EiSNepGzAu08AEkdswDhi3YstQO8vYASp4WBATiYM7A0oZrIjkgLbZrDf+R4wcAItyhdAMioj
+ungTyHkXbBhYwRGqgBLvHAEoZsK5wDiCRCbnAXCoxcB9p/zuAhMrQxRQYb5jDcM1aF5DNnP9BRQz
+4Vx4WmJoY5BxQEpL5UAOExPDRKDTxJXYKiGhLPxWAMnMG6hpHsYVgqd5BvEgEwaImemZ6guYQGkH
+aKZiAUrAXn1BOG92oscGyMy5J7kTwFHMxMr1aAIl5RLcTJaVG1gYboLNZH/6AIc6pgPEm1kNxMzA
+MJz97t27BCYm1mu4aoRvRJvJeBKUwoER6Ap2DBPvVQEcKpebIdgqeOujYFD8rgclVwFweDIEFjBQ
+BTiDTH8CKi61A8SrGagHRN+9g6ZhALWei0RTaETWAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># %qed</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

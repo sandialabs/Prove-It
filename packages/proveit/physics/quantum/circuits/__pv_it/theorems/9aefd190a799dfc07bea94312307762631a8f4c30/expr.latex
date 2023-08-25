@@ -1,0 +1,12 @@
+\left(A_{1, 1}, A_{1, 2}, \ldots, A_{1, l}, A_{2, 1}, A_{2, 2}, \ldots, A_{2, l}, \ldots\ldots, A_{k, 1}, A_{k, 2}, \ldots, A_{k, l}\right) \mapsto \left(\begin{array}{c} \begin{array}{l} \textrm{Pr}\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\multiqin{3}{\lvert u \rangle} & \gate{A_{1, 1}} \qwx[1] & \gate{A_{2, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{k, 1}} \qwx[1] & \multiqout{3}{\lvert v \rangle} \\
+\ghostqin{\lvert u \rangle} & \gate{A_{1, 2}} \qwx[1] & \gate{A_{2, 2}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{k, 2}} \qwx[1] & \ghostqout{\lvert v \rangle} \\
+\ghostqin{\lvert u \rangle} & \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\ddots} \qwx[1] & \gate{\vdots} \qwx[1] & \ghostqout{\lvert v \rangle} \\
+\ghostqin{\lvert u \rangle} & \gate{A_{1, l}} & \gate{A_{2, l}} & \gate{\cdots} & \gate{A_{k, l}} & \ghostqout{\lvert v \rangle}
+} \end{array}\right) =  \\ \textrm{Pr}\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{\lvert \psi \rangle} & { /^{m} } \qw & { /^{m} } \qw & \gate{\cdots} & { /^{m} } \qw & \qout{\lvert \psi \rangle} \\
+\multiqin{3}{\lvert u \rangle} & \gate{A_{1, 1}} \qwx[1] & \gate{A_{2, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{k, 1}} \qwx[1] & \multiqout{3}{\lvert v \rangle} \\
+\ghostqin{\lvert u \rangle} & \gate{A_{1, 2}} \qwx[1] & \gate{A_{2, 2}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{k, 2}} \qwx[1] & \ghostqout{\lvert v \rangle} \\
+\ghostqin{\lvert u \rangle} & \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\ddots} \qwx[1] & \gate{\vdots} \qwx[1] & \ghostqout{\lvert v \rangle} \\
+\ghostqin{\lvert u \rangle} & \gate{A_{1, l}} & \gate{A_{2, l}} & \gate{\cdots} & \gate{A_{k, l}} & \ghostqout{\lvert v \rangle}
+} \end{array}\right) \end{array} \end{array}\right)

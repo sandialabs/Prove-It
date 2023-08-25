@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.exponentiation.nat_pos_to_nat_pos_lower_bound theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.exponentiation.nat_pos_to_nat_pos_lower_bound-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">exponentiation</a>.<a class="ProveItLink" href="../../theorems.html#nat_pos_to_nat_pos_lower_bound">nat_pos_to_nat_pos_lower_bound</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.exponentiation.nat_pos_to_nat_pos_lower_bound-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> nat_pos_to_nat_pos_lower_bound
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="nat_pos_to_nat_pos_lower_bound">nat_pos_to_nat_pos_lower_bound:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/f3009caf2762e8033d1e3fddeb5d2cf1106aae040/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJgAAAAaBAMAAAC5lIjBAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACbklEQVQ4y2NgIBm0TWCgHDAHQGjGDVilHUgy
+TAVK8zRgla4kxSyuBCij/50UVoc/IMEwTgMo4+2CJ1gV3GJgEADRykQYVgNjTGYww6rgIQODK4hO
+J8IwbxjjBIMjiFpmgKZg/QKGRiDFTkxkf4UxPjAcAofhXrRAYjNgYFvAwMCtQNgsjl/wsGGG2v12
+F4oKlgkMzEDXshHhML4LMFbLOxjLFsU0vgMMDGfv3j1NhGGMoJTBLv0cxW9q7mAKIswKdLsHA8Ms
+XCZwI6UMkN9iCjh/oSgIAyc5iDDHDwaGQgZ2AVyGsSAFL1AR12EGlguohoHcARVmB0YR5wLuAHgo
+Z0IZtd4BzAdRDOMF5j2WDwy8KBlTTRxsJUSYC2gY0wOk8JcGmfhwZgCTwC4GLwyX8UxgWB+AZJat
+FySzQoTZgd5kSLBDSJ8AYhdgRmayY2HYwO3i6+KKbNj6Bwz2SGbBkgZUmOM7kNiUBSRW220H8f89
+XMAHStlMTeEPNqC4jBEYAesVGMSYCmAZH55oocKg2GSoAQXtdbC5fLf4HFaC5JkadqmiGgZKRZwP
+mK7AhRDZCSrMfABkJ9BbLA4cB8AlA3NCMMQwFr4JKIaB7OWS21H4AkvhBBFmgSUKngA+AXC5xyJg
+NnPmTAWmBq4NCSjpjOEooWTNBnPq+gJOK2Am5WfgUeiGuIwh6AGOUgMXAJYaUJcV9AcvWM3Au8AS
+mO4g5T0fWlLuQdO79i4I3EAIGMJDxFlvM0OPAoffAwb2GUB+bzq02ESKTkJFy3VULkT56pkzA/DV
+AbgqL9RgYV2AV7U2fsPQaidm4upNHACYtQDYSpZj1fRLCgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/aa538510c29760fceb9267c521d2f36c3dfb92c70/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

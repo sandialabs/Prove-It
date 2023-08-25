@@ -1,0 +1,1 @@
+\left(m \mapsto \left\{\forall_{x, A_{1}, A_{2}, \ldots, A_{m}~|~\left(x \notin A_{1}\right), \left(x \notin A_{2}\right), \ldots, \left(x \notin A_{m}\right)}~\left(x \notin \left(A_{1} \cup  A_{2} \cup  \ldots \cup  A_{m}\right)\right) \textrm{ if } m \in \mathbb{N}^+\right..\right)

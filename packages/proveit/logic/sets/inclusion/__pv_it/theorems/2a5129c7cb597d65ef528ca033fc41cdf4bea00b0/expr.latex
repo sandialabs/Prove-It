@@ -1,0 +1,1 @@
+\left(\left(A, B\right) \mapsto \left\{A \subseteq B \textrm{ if } \forall_{x \in A}~\left(x \in B\right)\right..\right)

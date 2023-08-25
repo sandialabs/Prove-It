@@ -1,0 +1,1 @@
+\begin{array}{c} \begin{array}{l} \left(d \in \left(\left\{a, b, c\right\} \cup \left\{2, 1 + 3, 5\right\}\right)\right) =  \\ \left(\left(d \in \left\{a, b, c\right\}\right) \lor \left(d \in \left\{2, 1 + 3, 5\right\}\right)\right) \end{array} \end{array}

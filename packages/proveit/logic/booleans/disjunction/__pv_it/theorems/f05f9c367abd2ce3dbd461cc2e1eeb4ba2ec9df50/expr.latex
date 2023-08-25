@@ -1,0 +1,1 @@
+\left(A \in \mathbb{B}\right) \land \left(B \in \mathbb{B}\right) \land \left(C \in \mathbb{B}\right) \land \left(D \in \mathbb{B}\right) \land \left((\lnot C) \lor (\lnot D)\right) \land \left(A \Rightarrow C\right) \land \left(B \Rightarrow D\right)

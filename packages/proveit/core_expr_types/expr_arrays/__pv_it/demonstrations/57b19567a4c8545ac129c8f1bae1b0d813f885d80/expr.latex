@@ -1,0 +1,1 @@
+ExprArray\left(\begin{array}{c} \left(C_{i}, C_{i + 1}, \ldots, C_{j},B_{j}, B_{j + 1}, \ldots, B_{i}\right),  \\ \left(A_{i}, A_{i + 1}, \ldots, A_{j},B_{i}, B_{i + 1}, \ldots, B_{j}\right) \end{array}\right)

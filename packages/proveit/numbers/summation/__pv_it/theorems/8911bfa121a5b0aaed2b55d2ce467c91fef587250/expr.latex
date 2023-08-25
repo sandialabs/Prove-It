@@ -1,0 +1,1 @@
+\left(j, k\right) \mapsto \left\{\left(\sum_{i = j}^{k} x^{i}\right) = \frac{x^{j} - x^{k + 1}}{1 - x} \textrm{ if } j \in \mathbb{Z} ,  k \in \mathbb{Z} ,  j \leq k\right..

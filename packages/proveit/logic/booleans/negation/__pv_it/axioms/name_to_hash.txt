@@ -1,0 +1,4 @@
+not_t ee04f0fb924d7a3fe760ca7abdbfa49c164365350
+not_f acd5309aee54270f53dc70f78c5ccd7efa446ce10
+negation_elim 9e1710d9225ce360ff312bab277098008a81198a0
+operand_is_bool d01c5ce54fd7bec728b2519568de50fb4c01fa7e0

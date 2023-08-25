@@ -1,0 +1,1 @@
+\left(x, S\right) \mapsto \left\{|S \cup \left\{x\right\}| = \left(|S| + 1\right) \textrm{ if } |S| \in \mathbb{N} ,  x \notin S\right..

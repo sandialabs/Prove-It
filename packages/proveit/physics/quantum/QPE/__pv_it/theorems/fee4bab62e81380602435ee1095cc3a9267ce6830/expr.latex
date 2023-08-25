@@ -1,0 +1,1 @@
+\left(m \in \{0~\ldotp \ldotp~2^{t} - 1\}\right) \land \left(\left|\frac{m}{2^{t}} - \varphi\right|_{\textup{mod}\thinspace 1} \leq 2^{-n}\right)

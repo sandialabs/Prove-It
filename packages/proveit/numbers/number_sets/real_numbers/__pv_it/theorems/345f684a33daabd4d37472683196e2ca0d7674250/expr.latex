@@ -1,0 +1,1 @@
+\left\{\forall_{x \in \mathbb{Z}}~\left(\left(\left(x - a,x + b\right) \cap \mathbb{Z}\right) = \left\{x\right\}\right) \textrm{ if } a \in \mathbb{R}^+ ,  b \in \mathbb{R}^+ ,  a \leq 1 ,  b \leq 1\right..

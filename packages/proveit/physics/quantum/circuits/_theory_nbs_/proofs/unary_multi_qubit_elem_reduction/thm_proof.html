@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.physics.quantum.circuits.unary_multi_qubit_elem_reduction theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.physics.quantum.circuits.unary_multi_qubit_elem_reduction-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">physics</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">quantum</a>.<a class="ProveItLink" href="../../theory.html">circuits</a>.<a class="ProveItLink" href="../../theorems.html#unary_multi_qubit_elem_reduction">unary_multi_qubit_elem_reduction</a> theorem<a class="anchor-link" href="#Proof-of-proveit.physics.quantum.circuits.unary_multi_qubit_elem_reduction-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> unary_multi_qubit_elem_reduction
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="unary_multi_qubit_elem_reduction">unary_multi_qubit_elem_reduction:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/5c02237f76c09ac1910c8bf2804ba1aac307e4f30/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQoAAAAmBAMAAADO/MgDAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAC/ElEQVRYw72Yz2sTQRTHv91dk022aXtRighZ
+8NRTPYkF0SAUC3roHyAY7EGaQ02hBwWxyUXwUFL0EPwBrtCLYE0Q8dAK/goYFG3Eg6AEI1WPtqQt
+bWNt3d1kd9ahk50QnHcaZmZ3Pt837828XYBhJyDGwokmg0qPIApMGeyxw6IgILP1qm+aPLfDZ7wY
+15kjgXyTx5a5Xt7NS/GAuSX9hjgKdgh+gTiK4DorLGoCKXCb0d8xLZLiKOsNh9qjSLVEManDDo2D
+VH8m2Q6FdKTEQTGw8x6zW+fMViSGQavnPDXjONqgULMzPTy+iOqQsnaSxJG2opQOg33+FEQKbRFD
+KfJQZKYxYTe6lhEwTwZNpya84PCFK4W2PkQGeCgC6+H6SSFtQDYDMUBP+M1B4Uqh7RQuTfJQyKv3
+GltYBd6Vy2/pCSscFK4U2j5iMZfkyZGF/Y3L3VxuCLhFn2ZVDgpXCm2vkMgN70qhlG1z4J9VGo1t
+YBxBs1u6m8WBXhAX+eeIIwWY+TWIq4Ur3+pvraLUrfP4IloiARAyNJMcnTGcdIb3rO1ykJEre5mS
+on5CqIIPulq/EKpS3qbwu+OVcWeZVdMLFTs4u2qae4/y+cKVEslD3cAdJ5xWlGHGjvxrQ+omoUD8
+mN0szKElCiIlo1tOvWnvrxUXEUxyxIWWwtekGxd4VK8/l1IkOnlyhEjpN9fcJBRjaWQMf1/8MI/o
+PEnJy3W2pzFSF2/7U3ikWL5YJRSPF3HG/7y4bxJ010hKdthO0B56aoqCP4VHihnYZjy7FFMJzPtS
+XFsoQr3wx1aukmSY8y496kvhkQK1aNWpow6FUgp/bulml1z9ioElUmue9qPwSgEm5vcivdXbt2Xv
+rTz23WiJQnOSbaZshKMj5GY32rjZtWSLtVaIUf7mdJEVH6uyC8VEUpxlVHbyc5EUT1gf0msiKV62
+ivc/KLqYju9Mifta7mSmghwX9ucAP9lDI8Iggq/ZY7NJURSzTc6mYEIUxY1mgxdF/V2zys2/C6FI
+LBujdWEAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/abf8178e5b69d2a1b8cc4e1adef03600224d2ee30/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

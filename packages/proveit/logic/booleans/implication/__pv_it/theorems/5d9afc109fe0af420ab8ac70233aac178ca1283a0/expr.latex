@@ -1,0 +1,1 @@
+\forall_{A, B~|~(\lnot B) \Rightarrow (\lnot A), B \in \mathbb{B}}~\left(A \Rightarrow B\right)

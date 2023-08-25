@@ -1,0 +1,1 @@
+\left\{\forall_{f, x_{1}, x_{2}, \ldots, x_{n}, y_{1}, y_{2}, \ldots, y_{n}~|~\left(x_{1}, x_{2}, \ldots, x_{n}\right) = \left(y_{1}, y_{2}, \ldots, y_{n}\right)}~\left(\begin{array}{c} \begin{array}{l} f\left(x_{1}, x_{2}, \ldots, x_{n}\right) =  \\ f\left(y_{1}, y_{2}, \ldots, y_{n}\right) \end{array} \end{array}\right) \textrm{ if } n \in \mathbb{N}\right..

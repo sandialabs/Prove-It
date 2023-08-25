@@ -1,0 +1,1 @@
+\left\{\forall_{a \in K}~\left[\forall_{x, y \in H}~\left(\left \langle a \cdot x, y\right \rangle = \left(a \cdot \left \langle x, y\right \rangle\right)\right)\right] \textrm{ if } H \underset{{\scriptscriptstyle c}}{\in} \textrm{InnerProdSpaces}\left(K\right)\right..

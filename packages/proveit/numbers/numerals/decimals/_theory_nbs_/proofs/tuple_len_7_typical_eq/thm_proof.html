@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.numerals.decimals.tuple_len_7_typical_eq theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.numerals.decimals.tuple_len_7_typical_eq-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numerals</a>.<a class="ProveItLink" href="../../theory.html">decimals</a>.<a class="ProveItLink" href="../../theorems.html#tuple_len_7_typical_eq">tuple_len_7_typical_eq</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.numerals.decimals.tuple_len_7_typical_eq-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> tuple_len_7_typical_eq
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="tuple_len_7_typical_eq">tuple_len_7_typical_eq:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/06278e8dc731cd89b11008159f618afd521f83180/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/8bcbf85274f428551a55906a6afee84ab8d821c00/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

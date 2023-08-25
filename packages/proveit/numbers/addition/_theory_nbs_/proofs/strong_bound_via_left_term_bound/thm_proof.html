@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.addition.strong_bound_via_left_term_bound theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.addition.strong_bound_via_left_term_bound-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">addition</a>.<a class="ProveItLink" href="../../theorems.html#strong_bound_via_left_term_bound">strong_bound_via_left_term_bound</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.addition.strong_bound_via_left_term_bound-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> strong_bound_via_left_term_bound
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="strong_bound_via_left_term_bound">strong_bound_via_left_term_bound:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/5b832fc2ff9f945d2807a753c90e3c22309ad14f0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAS0AAAAXBAMAAACsWwSiAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAD90lEQVRIx81WX2gcRRj/3d5d9t/d9p4qtXIs
+KPVBU/dBAi0Yr8S2osYeDRRKxRz2QfBBNuCLUkvqi6CRnhaMpxA3UtBw0l4VUokYjopYW5UoFoX2
+YIPRaEpDEKSSB/GbnbnbndxutZyIH/x2/ux8M7+Z788M8G+IKxArapLGzU91k2LZHPGS9eM14uVx
+gQJr3N4br7sEEuTHeI2EPTocu1njyZ5oGRWOJOnz4jSS5CmOY8wDqj3xyjgcERmJNtKlOI2IoaXW
+vRxsM6bdE6+cQES2S60LYXWbi67RiuSAOS9Amsj29eZe2wQSeR3u1O57qKORxKvP4fiq1brYG6+H
+BU4tvvexLfMamz9K3zPtkdfmOhrGkoNpmZe6dZlqZoHjQeDNf+BDN/h3WKBkFTMLEq/s53ibzDIg
+vP0TP9QwlSbul3k95urr5I0VjjGohcQl+2d3PR1U9Bvw+pYj7abXU47E630Hw1TczY9j2IlovEBb
+2CLxMj4F2xbxDaB7Zjl2OW2xVrZMnG3E8JIi/zMODRke/sOt1pet1jdU2wdcpuJ40L3Zjmp4OR9f
+M0O0WlfIlehoMmvI01raGofiJ7j9A+OU4Szs9Lt5PXNrDC8KI3+D338B43dmoBheGPW0P6TzylVx
+mk4o2+RAZZA+9cGz7N/q3iUK5OwiUkHSZbxWSiEva+noXiqO3UJ3RQEF2Y60lGt4UV7Gn0ivMW+I
+sSP2wGpKvE77gcMpCxz4gLKr8b12na3rbumjXZ3a5E1gJiBiqlNOyGs5VX0COEjcDH9dE9NiimOm
+fBtM6byM35Cq3Ans2Oj3TONV6AWZl43Nios0JXkGHGG2LQWrpDGlUfFcP37lKdvKvFWN+L2j++M4
+yIJdfWfBat8SZzjueekR7JftOIX+UoknkYDYtZVQYxdGHYmX7ivfUdhnGhxIkR/lyhYnfz34bkUR
+A7VazbYsc380Hje50M4FtVQj1d79KxwnV5UhW+Y1ffXFIs1+Kcyrcx2N6fl9rhyPxY/GfgHyZQ5+
+hq6+k7mG1gxeS5dwHi8H52VlD3kRXhP0Nqq/xmr5cm5cKOfHOZLyvboQ1gfctgYwG5vvnxfgseAe
+H/HqOGJWMqgDP2TXKH8E/oW50O/V5iyoZZ0Iph6N3ssb7uaR5FtaaJgV41zsvT0kwH8Nbf8QE3bm
+p/kVKnDHjgrUN6j/wM+Nk3vC83r00CpjmyZiytDrnakmBRLk2e6uSeT9VCP2dVvtft8I77ANV6ct
+1Gu1MOHK+UuZxLs40WnOCCRIDOUZKIO7YwfrLkf0HeSJIuUf6Bq+saOYDd92qs+R8AKNea4nj14W
+iFq9XWQHG3/La+Qq/g+i/sfr/QWihQP43xiRNwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/27046f5f9e946e059537817105a3782ad06e1a660/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>strong_bound_via_left_term_bound may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

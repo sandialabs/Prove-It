@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theorem Dependencies</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theorem-Dependencies">Theorem Dependencies<a class="anchor-link" href="#Theorem-Dependencies">&#182;</a></h1><h2 id="proveit.numbers.exponentiation.complex_x_to_first_power_is_x"><a class="ProveItLink" href="../../../_theory_nbs_/theory.html">proveit.numbers.exponentiation</a>.<a class="ProveItLink" href="../../../_theorems_.html#complex_x_to_first_power_is_x">complex_x_to_first_power_is_x</a><a class="anchor-link" href="#proveit.numbers.exponentiation.complex_x_to_first_power_is_x">&#182;</a></h2><p><strong><em>see <a class="ProveItLink" href="../../../_theory_nbs_/proofs/complex_x_to_first_power_is_x/thm_proof.html">proof</a></em></strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Automation is not needed when querying dependencies:</span>
+<span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">automation</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># This will speed things up.</span>
+<span class="n">proveit</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">inline_pngs</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># Makes files smaller.</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers.exponentiation</span> <span class="k">import</span> <span class="n">complex_x_to_first_power_is_x</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">dependencies</span> complex_x_to_first_power_is_x
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<h3>Unproven conjectures required (directly or indirectly) to prove complex_x_to_first_power_is_x</h3>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dl>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../_theory_nbs_/proofs/complex_x_to_first_power_is_x/thm_proof.html">proveit.numbers.exponentiation.complex_x_to_first_power_is_x</a></dt><dd><a class="ProveItLink" href="../0745069ee9c9256bc3bd81a115a89dec186eecf40/expr.html"><img src="../0745069ee9c9256bc3bd81a115a89dec186eecf40/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+</dl>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<h3>Theorems/conjectures that depend directly on complex_x_to_first_power_is_x</h3>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dl>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../summation/_theory_nbs_/proofs/finite_geom_sum/thm_proof.html">proveit.numbers.summation.finite_geom_sum</a></dt><dd><a class="ProveItLink" href="../../../../summation/__pv_it/theorems/5ec8e414dc010a6105e0fb7d15458d4343bd67d20/expr.html"><img src="../../../../summation/__pv_it/theorems/5ec8e414dc010a6105e0fb7d15458d4343bd67d20/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../summation/_theory_nbs_/proofs/sum_first_n_int/thm_proof.html">proveit.numbers.summation.sum_first_n_int</a></dt><dd><a class="ProveItLink" href="../../../../summation/__pv_it/theorems/79a1a8060c93d7c25c9eb2cdc281ea188455db2a0/expr.html"><img src="../../../../summation/__pv_it/theorems/79a1a8060c93d7c25c9eb2cdc281ea188455db2a0/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../physics/quantum/QPE/_theory_nbs_/proofs/_alpha_m_evaluation/thm_proof.html">proveit.physics.quantum.QPE._alpha_m_evaluation</a></dt><dd><a class="ProveItLink" href="../../../../../physics/quantum/QPE/__pv_it/theorems/1973ff1b37f0d1edf492e28b66d82bc0f5a63a3e0/expr.html"><img src="../../../../../physics/quantum/QPE/__pv_it/theorems/1973ff1b37f0d1edf492e28b66d82bc0f5a63a3e0/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../physics/quantum/QPE/_theory_nbs_/proofs/_alpha_sqrd_upper_bound/thm_proof.html">proveit.physics.quantum.QPE._alpha_sqrd_upper_bound</a></dt><dd><a class="ProveItLink" href="../../../../../physics/quantum/QPE/__pv_it/theorems/0b3eba5ca847f08e50140ba829579012a6dbee220/expr.html"><img src="../../../../../physics/quantum/QPE/__pv_it/theorems/0b3eba5ca847f08e50140ba829579012a6dbee220/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../physics/quantum/QPE/_theory_nbs_/proofs/_alpha_summed/thm_proof.html">proveit.physics.quantum.QPE._alpha_summed</a></dt><dd><a class="ProveItLink" href="../../../../../physics/quantum/QPE/__pv_it/theorems/7d134881f42087dd52137badeaffef966a9ba5320/expr.html"><img src="../../../../../physics/quantum/QPE/__pv_it/theorems/7d134881f42087dd52137badeaffef966a9ba5320/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../physics/quantum/QPE/_theory_nbs_/proofs/_best_guarantee_delta_nonzero/thm_proof.html">proveit.physics.quantum.QPE._best_guarantee_delta_nonzero</a></dt><dd><a class="ProveItLink" href="../../../../../physics/quantum/QPE/__pv_it/theorems/71aa283d054a9028fe068383446a7aec129884730/expr.html"><img src="../../../../../physics/quantum/QPE/__pv_it/theorems/71aa283d054a9028fe068383446a7aec129884730/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../physics/quantum/QPE/_theory_nbs_/proofs/_delta_b_floor_diff_in_interval/thm_proof.html">proveit.physics.quantum.QPE._delta_b_floor_diff_in_interval</a></dt><dd><a class="ProveItLink" href="../../../../../physics/quantum/QPE/__pv_it/theorems/677e792593b37ab24ecd06f87d2df52cf4c74c420/expr.html"><img src="../../../../../physics/quantum/QPE/__pv_it/theorems/677e792593b37ab24ecd06f87d2df52cf4c74c420/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../physics/quantum/QPE/_theory_nbs_/proofs/_delta_b_in_interval/thm_proof.html">proveit.physics.quantum.QPE._delta_b_in_interval</a></dt><dd><a class="ProveItLink" href="../../../../../physics/quantum/QPE/__pv_it/theorems/fbf3ffd30715d38955c37465432f0b407b16a84f0/expr.html"><img src="../../../../../physics/quantum/QPE/__pv_it/theorems/fbf3ffd30715d38955c37465432f0b407b16a84f0/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../physics/quantum/QPE/_theory_nbs_/proofs/_e_value_in_e_domain/thm_proof.html">proveit.physics.quantum.QPE._e_value_in_e_domain</a></dt><dd><a class="ProveItLink" href="../../../../../physics/quantum/QPE/__pv_it/theorems/49db90fec0aa3a848ce1be0ddb300cf33a6495e90/expr.html"><img src="../../../../../physics/quantum/QPE/__pv_it/theorems/49db90fec0aa3a848ce1be0ddb300cf33a6495e90/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../physics/quantum/QPE/_theory_nbs_/proofs/_fail_sum/thm_proof.html">proveit.physics.quantum.QPE._fail_sum</a></dt><dd><a class="ProveItLink" href="../../../../../physics/quantum/QPE/__pv_it/theorems/efda8f561f3e9cc875e5c0e28271ead4dd9247f40/expr.html"><img src="../../../../../physics/quantum/QPE/__pv_it/theorems/efda8f561f3e9cc875e5c0e28271ead4dd9247f40/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../physics/quantum/QPE/_theory_nbs_/proofs/_fail_sum_prob_conds_equiv_lemma/thm_proof.html">proveit.physics.quantum.QPE._fail_sum_prob_conds_equiv_lemma</a></dt><dd><a class="ProveItLink" href="../../../../../physics/quantum/QPE/__pv_it/theorems/0a562497775decef0684b103fc6e5c149a6f3c490/expr.html"><img src="../../../../../physics/quantum/QPE/__pv_it/theorems/0a562497775decef0684b103fc6e5c149a6f3c490/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../physics/quantum/QPE/_theory_nbs_/proofs/_failure_upper_bound/thm_proof.html">proveit.physics.quantum.QPE._failure_upper_bound</a></dt><dd><a class="ProveItLink" href="../../../../../physics/quantum/QPE/__pv_it/theorems/a6157de4c5444c5a5dbbab9b2fcdbe64e328db540/expr.html"><img src="../../../../../physics/quantum/QPE/__pv_it/theorems/a6157de4c5444c5a5dbbab9b2fcdbe64e328db540/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../physics/quantum/QPE/_theory_nbs_/proofs/_failure_upper_bound_lemma/thm_proof.html">proveit.physics.quantum.QPE._failure_upper_bound_lemma</a></dt><dd><a class="ProveItLink" href="../../../../../physics/quantum/QPE/__pv_it/theorems/deaded043dfbcaa1fdfb156f013d0f6926d302040/expr.html"><img src="../../../../../physics/quantum/QPE/__pv_it/theorems/deaded043dfbcaa1fdfb156f013d0f6926d302040/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../physics/quantum/QPE/_theory_nbs_/proofs/_modabs_in_full_domain_simp/thm_proof.html">proveit.physics.quantum.QPE._modabs_in_full_domain_simp</a></dt><dd><a class="ProveItLink" href="../../../../../physics/quantum/QPE/__pv_it/theorems/0fb99394f15210ee297c213071cd6210cf67fb1a0/expr.html"><img src="../../../../../physics/quantum/QPE/__pv_it/theorems/0fb99394f15210ee297c213071cd6210cf67fb1a0/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../physics/quantum/QPE/_theory_nbs_/proofs/_non_int_delta_b_diff/thm_proof.html">proveit.physics.quantum.QPE._non_int_delta_b_diff</a></dt><dd><a class="ProveItLink" href="../../../../../physics/quantum/QPE/__pv_it/theorems/e071bc293a5f27954f9d2713c99a47a7e73843a90/expr.html"><img src="../../../../../physics/quantum/QPE/__pv_it/theorems/e071bc293a5f27954f9d2713c99a47a7e73843a90/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../physics/quantum/QPE/_theory_nbs_/proofs/_precision_guarantee_lemma_01/thm_proof.html">proveit.physics.quantum.QPE._precision_guarantee_lemma_01</a></dt><dd><a class="ProveItLink" href="../../../../../physics/quantum/QPE/__pv_it/theorems/50da7603f05a79ba3a95ed765a4ccf4c18e0743b0/expr.html"><img src="../../../../../physics/quantum/QPE/__pv_it/theorems/50da7603f05a79ba3a95ed765a4ccf4c18e0743b0/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../physics/quantum/QPE/_theory_nbs_/proofs/_precision_guarantee_lemma_02/thm_proof.html">proveit.physics.quantum.QPE._precision_guarantee_lemma_02</a></dt><dd><a class="ProveItLink" href="../../../../../physics/quantum/QPE/__pv_it/theorems/86fe93f886b08cd35fddcfe70a26bebd6bd69afc0/expr.html"><img src="../../../../../physics/quantum/QPE/__pv_it/theorems/86fe93f886b08cd35fddcfe70a26bebd6bd69afc0/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../physics/quantum/QPE/_theory_nbs_/proofs/_psi_t_formula/thm_proof.html">proveit.physics.quantum.QPE._psi_t_formula</a></dt><dd><a class="ProveItLink" href="../../../../../physics/quantum/QPE/__pv_it/theorems/a88ec0c8744e13505b853b6e58491d95dad52e200/expr.html"><img src="../../../../../physics/quantum/QPE/__pv_it/theorems/a88ec0c8744e13505b853b6e58491d95dad52e200/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="../../../../../physics/quantum/QPE/_theory_nbs_/proofs/_psi_t_output/thm_proof.html">proveit.physics.quantum.QPE._psi_t_output</a></dt><dd><a class="ProveItLink" href="../../../../../physics/quantum/QPE/__pv_it/theorems/9b181729ed3394d57688549d190362cf6d9b29160/expr.html"><img src="../../../../../physics/quantum/QPE/__pv_it/theorems/9b181729ed3394d57688549d190362cf6d9b29160/expr.png" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+</dl>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

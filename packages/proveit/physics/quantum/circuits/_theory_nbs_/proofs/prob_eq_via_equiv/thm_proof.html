@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.physics.quantum.circuits.prob_eq_via_equiv theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.physics.quantum.circuits.prob_eq_via_equiv-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">physics</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">quantum</a>.<a class="ProveItLink" href="../../theory.html">circuits</a>.<a class="ProveItLink" href="../../theorems.html#prob_eq_via_equiv">prob_eq_via_equiv</a> theorem<a class="anchor-link" href="#Proof-of-proveit.physics.quantum.circuits.prob_eq_via_equiv-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> prob_eq_via_equiv
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="prob_eq_via_equiv">prob_eq_via_equiv:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/44671c7334019a1984822ff4fe422f0ccbdc4a2b0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQ0AAAAXBAMAAADjBgdyAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADtUlEQVRIx71WXUgUURQ+7u4466y77UaIEeJA
+UYQP7YMIPZRrfyQWbQQhEbVREVng+pzp9hgUSj6EFboPFgQVaw+9LORfWRHJFj4EtTTYQwRSuomZ
+pnbOvTOzd8fVxQ08cO7MfOe7c7977rl3BiBvk5cHwrn6hjPuwvA/NpYdkEMAp3J09ajm7SndvfSw
+OQ8Ztphctujb2CEA7FI4geP4LeSmL5O+zjRYgb5z0ee7GGFU8v2EX8hDxwMA5yRAc0gAyHagDmiw
+stu8IA8bDwrr8wagYIZT0a9RKtvz0LEX+6EO+5wAkNX8xqbSym7FvFfH9AcHZUZeAJCmOBW9MArg
+UvPQ0c91OOcFAM11BecIxdEsOtoS+kMxNXbk2Rc4Fd2O2grzKY8Q1yFNCwBaiydFReLPouO0sYRb
+qSnA9St8xank75LJt3nocMS4DldKujz2LMwBtIDtF2XFm0VHn3p8pIJKsY4lpR2Usginkh8EuMOo
+llQ6zKrKqoOmgDqUcT8U72n1GymQVCcVjJ1N/XCS7L2u48kQwIttpPIsq9yuHyV+nUreBDITr7xm
+778+Fa+N0E2RMeKjiDm4GQRwY03J8/HneHEnFB0g9ZQksPVb8/EpTsdLks32AyE/w2Ab0qnkRVFX
+kBVYinWwJ8DTn6GjTwXXMA7iF4KYVuwk/+Gp8RoAwPd9NQQ6J6w6+JY8w9qX1NyjV0c4ldym8TKt
+H2GXggDYJ0Qd0g0Ntty/CxATgpk6AqYORQOgDST1Z9dxLq2D0latcSqjh3azoMa1Fqvw2C/q8OB0
+A+Ao7QkKQX1ddB0xA2BF9ZmSnbDWB9dxibW0Lk4qlPIgpzL6U3b4eeAAF/61shREHZojREtSNSIG
+MaxZdBAAx9AbaXXbs+eD6+ii8fC4c07rVEZvZstbD+OMswuUDaIOKYIV4ehE6xCCfKs5+dnhDhiA
+TPntTm9i4VznZ8coa3tJPFJPNugHAKMXsB1QFy9nGxfHaQ0KOhzx3lnzbWYQNSRALlncRErLB1QO
+KN3TUdi+iJN2By3fucZJGuro3/X0dBMH7Z70ldxiswiKdA+OwPQM4rkn7lsN5BnzdWYQ7aP1RBGB
+qyuege6IhZqm48KuU5UYyLOgjArrImFppIx1SQezfcoqMz+CK5g9YKGadMcAKEfOOwehai5eqwo6
+DnmhZ9rIWjpIcetflADk+oDfhgzqErpNfG2OD4zSvjxQlONP72Gm+iX0E6vQAS3LA99y/dpqGdQl
+dP9qdKyRyWs62j+9RQs1IGZzkgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/87c4aa7919d7e71b7581a9adcec2276374165d2a0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,1 @@
+\left(n \mapsto \left\{\forall_{A \in \mathbb{C}^{n \times n}}~\left[\exists_{D \in \textrm{D}\left(n\right)}~\left[\exists_{U, V \in \textrm{U}\left(n\right)}~\left(A = \left(U \thinspace D \thinspace V\right)\right)\right]\right] \textrm{ if } n \in \mathbb{N}^+\right..\right)

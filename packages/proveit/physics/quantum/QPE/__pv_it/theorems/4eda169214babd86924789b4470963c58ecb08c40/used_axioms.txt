@@ -1,0 +1,6 @@
+proveit.logic.equality.equals_transitivity
+proveit.logic.equality.substitution
+proveit.numbers.number_sets.natural_numbers.zero_in_nats
+proveit.physics.quantum.QPE._best_floor_def
+proveit.physics.quantum.QPE._delta_b_def
+proveit.physics.quantum.QPE._t_in_natural_pos

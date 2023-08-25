@@ -1,0 +1,2 @@
+\left\{\begin{array}{l}\forall_{v_{1}, v_{2}, \ldots, v_{n}~|~\left\{\left\{\lvert v_{1} \rangle, \lvert v_{2} \rangle, \ldots, \lvert v_{n} \rangle\right\}\right\} \in \textrm{O.N.Bases}\left(\mathbb{C}^{n}\right)}~\\
+\left(\left[\forall_{i, j \in \{1~\ldotp \ldotp~n\}}~\left(\left(\langle v_{i} \rvert \thinspace U^{\dagger} \thinspace U \thinspace \lvert v_{j} \rangle\right) = \delta_{i, j}\right)\right] \Rightarrow \left(U \in \textrm{U}\left(n\right)\right)\right)\end{array} \textrm{ if } U \in \mathbb{C}^{n \times n}\right..

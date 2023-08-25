@@ -1,0 +1,3 @@
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{a} & \gate{\begin{array}{c} \uparrow \\U_{1} \\ \downarrow\end{array}} & \gate{\begin{array}{c} \uparrow \\U_{2} \\ \downarrow\end{array}} & \gate{\begin{array}{c} \uparrow \\\cdots \\ \downarrow\end{array}} & \gate{\begin{array}{c} \uparrow \\U_{m} \\ \downarrow\end{array}} & \qout{b}
+} \end{array}

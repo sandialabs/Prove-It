@@ -1,0 +1,1 @@
+k \mapsto \left\{\frac{1}{2^{\frac{t}{2}}} \cdot \mathsf{e}^{-\frac{2 \cdot \pi \cdot \mathsf{i} \cdot k \cdot m}{2^{t}}} \textrm{ if } k \in \{0~\ldotp \ldotp~2^{t} - 1\}\right..

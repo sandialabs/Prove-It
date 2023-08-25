@@ -1,0 +1,1 @@
+v \mapsto \left[\forall_{a, b, c \in \mathbb{Z}~|~a < b, b \leq c}~\left(\left(\sum_{i=a}^{c} v\left(i\right)\right) = \left(\left(\sum_{i=a}^{b - 1} v\left(i\right)\right) + \left(\sum_{i=b}^{c} v\left(i\right)\right)\right)\right)\right]

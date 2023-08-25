@@ -1,0 +1,1 @@
+\left(\left(B \land A\right) \lor D \lor C \lor A\right) = \left(D \lor C \lor \left(A \land B\right) \lor A\right)

@@ -1,0 +1,2 @@
+\forall_{A, B, Q}~\left[\begin{array}{l}\forall_{f \in \left[A \xrightarrow[]{\text{1-to-1}} \Omega\right], g \in \left[B \xrightarrow[\text{onto}]{\text{1-to-1}} A\right]}~\\
+\left(\left[\textrm{Prob}_{x \in A~|~Q\left(x\right)}~f\left(x\right)\right] = \left[\textrm{Prob}_{y \in B~|~Q\left(g\left(y\right)\right)}~f\left(g\left(y\right)\right)\right]\right)\end{array}\right]

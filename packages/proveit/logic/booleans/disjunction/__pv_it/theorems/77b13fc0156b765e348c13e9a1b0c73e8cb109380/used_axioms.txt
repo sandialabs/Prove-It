@@ -1,0 +1,2 @@
+proveit.logic.booleans.negation.operand_is_bool
+proveit.logic.booleans.true_axiom

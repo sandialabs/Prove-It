@@ -1,0 +1,3 @@
+\textrm{Pr}\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{\lvert \psi \rangle} & \meter & \qout{\lvert b \rangle}
+} \end{array}\right) = \left|\langle b \rvert \thinspace \lvert \psi \rangle\right|^{2}

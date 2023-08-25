@@ -1,0 +1,4 @@
+\left(\varphi \mapsto \left\{\textrm{Pr}\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{\lvert + \rangle} & \control{} \qw \qwx[1] & \qout{\frac{1}{\sqrt{2}} \cdot \left(\lvert 0 \rangle + \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \varphi} \cdot \lvert 1 \rangle\right)\right)} \\
+\qin{\lvert u \rangle} & \gate{U} & \qout{\lvert u \rangle}
+} \end{array}\right) = 1 \textrm{ if } \left(U \thinspace \lvert u \rangle\right) = \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \varphi} \cdot \lvert u \rangle\right)\right..\right)

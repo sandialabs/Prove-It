@@ -1,0 +1,6 @@
+\left\{ \begin{array}{l}
+{\rm element}: \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{B~\mbox{part}~k} 
+} \end{array}\\
+{\rm targets}: S\\
+\end{array} \right\}

@@ -1,0 +1,37 @@
+\left(\textrm{Pr}\left(QCIRCUIT\left(VertExprArray\left(\begin{array}{c} \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert + \rangle} & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert + \rangle} & \qw 
+} \end{array}, ..\left(t - 3\right) \times.., \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert + \rangle} & \qw 
+} \end{array},\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert u \rangle~\mbox{part}~1~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert u \rangle~\mbox{part}~2~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array}, \ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert u \rangle~\mbox{part}~s~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array}\right),  \\ \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{\textrm{QPE}_1\left(U, t\right)~\mbox{part}~1~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{\textrm{QPE}_1\left(U, t\right)~\mbox{part}~2~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array}, \ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{\textrm{QPE}_1\left(U, t\right)~\mbox{part}~t~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array},\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{\textrm{QPE}_1\left(U, t\right)~\mbox{part}~t + 1~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{\textrm{QPE}_1\left(U, t\right)~\mbox{part}~t + 2~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array}, \ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{\textrm{QPE}_1\left(U, t\right)~\mbox{part}~t + s~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array}\right),  \\ \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle~\mbox{part}~1~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle~\mbox{part}~2~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} 
+} \end{array}, \ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle~\mbox{part}~t + s~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} 
+} \end{array}\right) \end{array}\right)\right)\right), \textrm{Pr}\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{\lvert + \rangle} & \multigate{4}{\textrm{QPE}_1\left(U, t\right)} & \multiqout{4}{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle} \\
+\qin{\lvert + \rangle} & \ghost{\textrm{QPE}_1\left(U, t\right)} & \ghostqout{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle} \\
+\qin{\begin{array}{c}:\\ \left(t - 3\right) \times \\:\end{array}} & \ghost{\textrm{QPE}_1\left(U, t\right)} & \ghostqout{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle} \\
+\qin{\lvert + \rangle} & \ghost{\textrm{QPE}_1\left(U, t\right)} & \ghostqout{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle} \\
+\qin{\lvert u \rangle} & \ghost{\textrm{QPE}_1\left(U, t\right)} & \ghostqout{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle}
+} \end{array}\right)\right)

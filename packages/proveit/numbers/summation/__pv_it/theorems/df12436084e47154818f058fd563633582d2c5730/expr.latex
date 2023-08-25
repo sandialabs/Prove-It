@@ -1,0 +1,1 @@
+\left(a, b, S\right) \mapsto \left\{\left[\forall_{k \in S}~\left(a\left(k\right) < b\left(k\right)\right)\right] \Rightarrow \left(\left[\sum_{l \in S}~a\left(l\right)\right] < \left[\sum_{l \in S}~b\left(l\right)\right]\right) \textrm{ if } |S| > 0\right..

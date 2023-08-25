@@ -1,0 +1,1 @@
+\begin{array}{c} \begin{array}{l} \left[\forall_{A \in \mathbb{B}}~\left[\forall_{B \in \mathbb{B}~|~A \Leftrightarrow B}~\left(A = B\right)\right]\right] \\  \Rightarrow \left[\forall_{A, B \in \mathbb{B}~|~A \Leftrightarrow B}~\left(A = B\right)\right] \end{array} \end{array}

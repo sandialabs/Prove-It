@@ -1,0 +1,1 @@
+\forall_{a, b, x \in \mathbb{R}~|~x \notin \left(a,b\right)}~\left(\left(x \leq a\right) \lor \left(b \leq x\right)\right)

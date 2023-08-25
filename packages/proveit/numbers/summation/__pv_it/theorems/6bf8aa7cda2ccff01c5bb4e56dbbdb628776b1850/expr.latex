@@ -1,0 +1,1 @@
+x \mapsto \left\{\forall_{j, k \in \mathbb{Z}~|~j \leq k}~\left(\left(\sum_{i = j}^{k} x^{i}\right) = \frac{x^{j} - x^{k + 1}}{1 - x}\right) \textrm{ if } x \in \mathbb{C} ,  x \neq 1\right..

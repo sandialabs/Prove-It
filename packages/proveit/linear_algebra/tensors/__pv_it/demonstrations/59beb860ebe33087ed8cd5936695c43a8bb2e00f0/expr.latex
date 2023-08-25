@@ -1,0 +1,1 @@
+\begin{array}{c} \begin{array}{l} \left(u {\otimes} v {\otimes} w {\otimes} x {\otimes} \left(\sum_{i=1}^{5} f\left(i\right)\right) {\otimes} z\right) \\  = \left(\sum_{i=1}^{5} \left(u {\otimes} v {\otimes} w {\otimes} x {\otimes} f\left(i\right) {\otimes} z\right)\right) \end{array} \end{array}

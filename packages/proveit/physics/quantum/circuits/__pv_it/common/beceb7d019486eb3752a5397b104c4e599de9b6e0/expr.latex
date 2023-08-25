@@ -1,0 +1,7 @@
+\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array}, ..\left(m - 3\right) \times.., \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array},A_{{_{-}b}, 1}, A_{{_{-}b}, 2}, \ldots, A_{{_{-}b}, l}\right)

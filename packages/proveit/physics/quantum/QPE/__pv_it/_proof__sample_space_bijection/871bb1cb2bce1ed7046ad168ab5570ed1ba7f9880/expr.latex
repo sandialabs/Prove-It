@@ -1,0 +1,129 @@
+\left(\left(\begin{array}{cccc} 
+ \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert + \rangle} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{\textrm{QPE}\left(U, t\right)~\mbox{part}~1~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \meter 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert m \rangle_{t}~\mbox{part}~1~\mbox{on}~\{1~\ldotp \ldotp~t\}} 
+} \end{array} \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert + \rangle} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{\textrm{QPE}\left(U, t\right)~\mbox{part}~2~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \meter 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert m \rangle_{t}~\mbox{part}~2~\mbox{on}~\{1~\ldotp \ldotp~t\}} 
+} \end{array} \\
+\begin{array}{c}:\\ \left(t - 3\right) \times \\:\end{array} & \vdots & \begin{array}{c}:\\ \left(t - 3\right) \times \\:\end{array} & \vdots \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert + \rangle} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{\textrm{QPE}\left(U, t\right)~\mbox{part}~t~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \meter 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert m \rangle_{t}~\mbox{part}~t~\mbox{on}~\{1~\ldotp \ldotp~t\}} 
+} \end{array} \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert u \rangle~\mbox{part}~1~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{\textrm{QPE}\left(U, t\right)~\mbox{part}~t + 1~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert u \rangle~\mbox{part}~1~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} 
+} \end{array} \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert u \rangle~\mbox{part}~2~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{\textrm{QPE}\left(U, t\right)~\mbox{part}~t + 2~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert u \rangle~\mbox{part}~2~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} 
+} \end{array} \\
+\vdots & \vdots & \begin{array}{c}:\\ \left(s - 3\right) \times \\:\end{array} & \vdots \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert u \rangle~\mbox{part}~s~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{\textrm{QPE}\left(U, t\right)~\mbox{part}~t + s~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert u \rangle~\mbox{part}~s~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} 
+} \end{array} \\
+\end{array}
+\right) \neq \left(\begin{array}{cccc} 
+ \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert + \rangle} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{\textrm{QPE}\left(U, t\right)~\mbox{part}~1~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \meter 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert n \rangle_{t}~\mbox{part}~1~\mbox{on}~\{1~\ldotp \ldotp~t\}} 
+} \end{array} \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert + \rangle} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{\textrm{QPE}\left(U, t\right)~\mbox{part}~2~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \meter 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert n \rangle_{t}~\mbox{part}~2~\mbox{on}~\{1~\ldotp \ldotp~t\}} 
+} \end{array} \\
+\begin{array}{c}:\\ \left(t - 3\right) \times \\:\end{array} & \vdots & \begin{array}{c}:\\ \left(t - 3\right) \times \\:\end{array} & \vdots \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert + \rangle} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{\textrm{QPE}\left(U, t\right)~\mbox{part}~t~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \meter 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert n \rangle_{t}~\mbox{part}~t~\mbox{on}~\{1~\ldotp \ldotp~t\}} 
+} \end{array} \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert u \rangle~\mbox{part}~1~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{\textrm{QPE}\left(U, t\right)~\mbox{part}~t + 1~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert u \rangle~\mbox{part}~1~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} 
+} \end{array} \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert u \rangle~\mbox{part}~2~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{\textrm{QPE}\left(U, t\right)~\mbox{part}~t + 2~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert u \rangle~\mbox{part}~2~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} 
+} \end{array} \\
+\vdots & \vdots & \begin{array}{c}:\\ \left(s - 3\right) \times \\:\end{array} & \vdots \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert u \rangle~\mbox{part}~s~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{\textrm{QPE}\left(U, t\right)~\mbox{part}~t + s~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert u \rangle~\mbox{part}~s~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} 
+} \end{array} \\
+\end{array}
+\right), \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{\lvert + \rangle} & \multigate{4}{\textrm{QPE}\left(U, t\right)} & \meter & \multiqout{3}{\lvert m \rangle_{t}} \\
+\qin{\lvert + \rangle} & \ghost{\textrm{QPE}\left(U, t\right)} & \meter & \ghostqout{\lvert m \rangle_{t}} \\
+\qin{\begin{array}{c}:\\ \left(t - 3\right) \times \\:\end{array}} & \ghost{\textrm{QPE}\left(U, t\right)} & \measure{\begin{array}{c}:\\ \left(t - 3\right) \times \\:\end{array}} \qw & \ghostqout{\lvert m \rangle_{t}} \\
+\qin{\lvert + \rangle} & \ghost{\textrm{QPE}\left(U, t\right)} & \meter & \ghostqout{\lvert m \rangle_{t}} \\
+\qin{\lvert u \rangle} & \ghost{\textrm{QPE}\left(U, t\right)} & { /^{s} } \qw & \qout{\lvert u \rangle}
+} \end{array}\right) \neq \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{\lvert + \rangle} & \multigate{4}{\textrm{QPE}\left(U, t\right)} & \meter & \multiqout{3}{\lvert n \rangle_{t}} \\
+\qin{\lvert + \rangle} & \ghost{\textrm{QPE}\left(U, t\right)} & \meter & \ghostqout{\lvert n \rangle_{t}} \\
+\qin{\begin{array}{c}:\\ \left(t - 3\right) \times \\:\end{array}} & \ghost{\textrm{QPE}\left(U, t\right)} & \measure{\begin{array}{c}:\\ \left(t - 3\right) \times \\:\end{array}} \qw & \ghostqout{\lvert n \rangle_{t}} \\
+\qin{\lvert + \rangle} & \ghost{\textrm{QPE}\left(U, t\right)} & \meter & \ghostqout{\lvert n \rangle_{t}} \\
+\qin{\lvert u \rangle} & \ghost{\textrm{QPE}\left(U, t\right)} & { /^{s} } \qw & \qout{\lvert u \rangle}
+} \end{array}\right)\right)

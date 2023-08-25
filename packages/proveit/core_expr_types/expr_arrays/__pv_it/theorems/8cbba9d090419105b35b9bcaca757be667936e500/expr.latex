@@ -1,0 +1,13 @@
+\left\{\left(\begin{array}{c} 
+ \multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & a_{1} & \rightarrow \end{array}} \\
+\multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & a_{2} & \rightarrow \end{array}} \\
+\multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & \vdots & \rightarrow \end{array}} \\
+\multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & a_{i} & \rightarrow \end{array}} \\
+\end{array}
+\right) \neq \left(\begin{array}{c} 
+ \multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & b_{1} & \rightarrow \end{array}} \\
+\multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & b_{2} & \rightarrow \end{array}} \\
+\multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & \vdots & \rightarrow \end{array}} \\
+\multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & b_{i} & \rightarrow \end{array}} \\
+\end{array}
+\right) \textrm{ if } \left(a_{1} \neq b_{1}\right) \lor  \left(a_{2} \neq b_{2}\right) \lor  \ldots \lor  \left(a_{i} \neq b_{i}\right)\right..

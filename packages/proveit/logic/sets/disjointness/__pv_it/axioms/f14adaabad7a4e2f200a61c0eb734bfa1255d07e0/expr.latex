@@ -1,0 +1,1 @@
+\forall_{A, B}~\left(\textrm{disjoint}\left(A, B\right) \Leftrightarrow \left(\left(A \cap B\right) = \emptyset\right)\right)

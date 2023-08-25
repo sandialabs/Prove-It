@@ -1,0 +1,1 @@
+\left(n, x\right) \mapsto \left\{\left(x, x, ..\left(n - 3\right) \times.., x\right) = \left(x,x, x, ..\left(n - 4\right) \times.., x\right) \textrm{ if } n \in \mathbb{N}^+\right..

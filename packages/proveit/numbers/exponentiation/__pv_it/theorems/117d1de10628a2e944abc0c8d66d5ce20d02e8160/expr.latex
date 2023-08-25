@@ -1,0 +1,1 @@
+\left(a, b, n\right) \mapsto \left\{\left(a \cdot b\right)^{n} = \left(a^{n} \cdot b^{n}\right) \textrm{ if } a \in \mathbb{C} ,  b \in \mathbb{C} ,  n \in \mathbb{N}^+\right..

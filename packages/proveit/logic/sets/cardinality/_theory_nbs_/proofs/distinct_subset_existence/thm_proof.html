@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.sets.cardinality.distinct_subset_existence theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.sets.cardinality.distinct_subset_existence-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">sets</a>.<a class="ProveItLink" href="../../theory.html">cardinality</a>.<a class="ProveItLink" href="../../theorems.html#distinct_subset_existence">distinct_subset_existence</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.sets.cardinality.distinct_subset_existence-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> distinct_subset_existence
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="distinct_subset_existence">distinct_subset_existence:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/2ce9eff5a9ee58ddea0e55fd00df026984c118930/expr.html"><img src="data:image/png;base64,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
+AABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/4ee8186af64ece65a1b038a685f2b4362d81d0260/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

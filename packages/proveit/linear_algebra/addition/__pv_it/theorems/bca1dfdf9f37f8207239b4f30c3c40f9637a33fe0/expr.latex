@@ -1,0 +1,1 @@
+\left(v \mapsto \left[\forall_{a, b, c \in \mathbb{Z}}~\left(\left(\sum_{i=a}^{b} v\left(i\right)\right) = \left(\sum_{i=a + c}^{b + c} v\left(i - c\right)\right)\right)\right]\right)

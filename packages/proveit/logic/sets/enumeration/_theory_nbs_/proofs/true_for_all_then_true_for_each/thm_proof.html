@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.sets.enumeration.true_for_all_then_true_for_each theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.sets.enumeration.true_for_all_then_true_for_each-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">sets</a>.<a class="ProveItLink" href="../../theory.html">enumeration</a>.<a class="ProveItLink" href="../../theorems.html#true_for_all_then_true_for_each">true_for_all_then_true_for_each</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.sets.enumeration.true_for_all_then_true_for_each-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> true_for_all_then_true_for_each
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="true_for_all_then_true_for_each">true_for_all_then_true_for_each:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/e1f2520a2f0eac2ff8d6f955efdbefbcdb5929640/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/2fe1306d525d40f88e4fe5fdfbfa1e294de880c90/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

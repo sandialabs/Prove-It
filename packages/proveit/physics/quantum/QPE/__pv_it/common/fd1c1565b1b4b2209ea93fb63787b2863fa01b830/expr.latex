@@ -1,0 +1,3 @@
+{_{-}a} \mapsto \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{{\mathrm {FT}}^{\dag}_{t}~\mbox{part}~{_{-}a}~\mbox{on}~\{1~\ldotp \ldotp~t\}} & \qw 
+} \end{array}

@@ -1,0 +1,1592 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Chapter 2.a.i. Lambda with a fixed number of parameters</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../index.html"><img src="../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Chapter-2.a.i.-Lambda-with-a-fixed-number-of-parameters">Chapter 2.a.i. Lambda with a fixed number of parameters<a class="anchor-link" href="#Chapter-2.a.i.-Lambda-with-a-fixed-number-of-parameters">&#182;</a></h1><p><strong>Lambda</strong> expressions and their reductions are critical components of the core deriviation system of <strong>Prove-It</strong>. A <strong>Lambda</strong> expression defines a function by mapping one or more parameters to an expression involving those parameters. For example $(x,y,z) \mapsto (x+y) \cdot z$ defines a function that operates on three parameters by adding the first two then multiplying that sum by the third. In lambda calculus terminology, this way of defining an function is called an <em>abstraction</em>.</p>
+<p>In this chapter, we discuss <strong>Lambda</strong> expressions with a fixed number of parameters. We will discuss creation of Lambda expressions (abstraction), <em>relabeling</em> its parameters while retaining its meaning (alpha conversion), and <em>applying</em> the <strong>Lambda</strong> function to operators (beta reduction). The latter reduction rule plays an important role in proof deriviations in <strong>Prove-It</strong>. Specifically, the <strong>instantiation</strong> derivation rule is implemented via <em>lambda application</em>.</p>
+<p>In the next chapter, we will discuss <strong>Lambda</strong> expressions with an indeterminate number of parameters.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="o">%</span><span class="k">begin</span> lambda_reductions
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Creating-Lambda-expressions-(abstraction)">Creating Lambda expressions (abstraction)<a class="anchor-link" href="#Creating-Lambda-expressions-(abstraction)">&#182;</a></h2><p>Let's create our example expression after importing some necessary classes and objects.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">Lambda</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Add</span><span class="p">,</span> <span class="n">Mult</span>
+<span class="n">sum_then_mult</span> <span class="o">=</span> <span class="n">Lambda</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">),</span> <span class="n">Mult</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">z</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="sum_then_mult">sum_then_mult:</strong> <a class="ProveItLink" href="__pv_it/lambda_reductions/0da04121c0720bb5c20e66a0e8c0f26f6b28d6ed0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMoAAAAVCAMAAAAw04FgAAAANlBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABHL6OuAAAAEXRSTlMAInZUiRDN
+mWbv3US7qzLz6SJmQj4AAAAJcEhZcwAADsQAAA7EAZUrDhsAAAJzSURBVFjDtZfblqQgDEUx3K8z
+/v/PjqCUCQVo02t4aFbRB3YSEkDGjraxlbYtqbf/AfoogC+54uEH4spYYT2DqoILttbAvJZWxhrr
+GXQqpGKrTcmXwspYZT2DikKbZVeMfimsjBnLm9+AisKy9WYH0YKmUm3Td3MQFkBEwdUvXFF3JAmL
+0yhWxpQ1dUWZF6boqxAlQJRJCHzCSCgZISOZlJxLbCtri/s/jmjor8qYsVpXKFvEnvnIkqyo/h5x
+hAhMYyME4zklzE5LGES4ljZqYDwPvZjOWK0rlG1U9zC5LckKd4bGbHmaZBHtZOInLRK7tpxK4swn
+bgeuMAgo4y7GjNW60rB5r8qwJVlh/Tk1B6tx/RDZvL5ts1jW+enerz9/HWn77u+S9KRvWbpMsLZ0
+scu+QXJXPUuywiLiV+H5I3aHKDXR+Oj8cFe88mzkSp/Vlj1hY5DuWZIVjt9zj42X5CQqsQPbuQCu
+BHMDVxK51JoE67NaVwibu+FVJD+KUFaQwbNoS7XhgzXE+uce48Weq+zDwBVFLpYAuKesoSuITUBo
+BrIkK84TgO9J6mN5z0k66pgDaPBYCiKAcImcrjlCk3ulnjId1mRXPmwKunceW5IVqYRTaoDDAHOu
+7ty1BzIK0PuGx0Q+LGohON+/r0Rqzn/cU9bQFcTug4glReFSZ+tQFgv1PVarzr18FVRGjzW77Sv7
+GVQUvaeauFeSlpOx3ivx9btz9ixsnpOE/Qw6FeHrK01eAXJHHwUdw5EIrx9rlRFef0Ri9jPoUsgv
+YbWaG9C+GevY9+aDJbABa5hviP0MqortJ1+245f8PGywznoGFcU/SbcTYSOiENcAAAAASUVORK5C
+YII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>A <strong>Lambda</strong> expression has <code>parameter(s)</code> and a <code>body</code>:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">sum_then_mult</span><span class="o">.</span><span class="n">parameters</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="__pv_it/lambda_reductions/ad051f8530138a126c248572b29596b23c427da30/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAAAVBAMAAAAEBPWpAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABSklEQVQoz32Rv0tCURTHP/q8Pc2M9wc0SATW
+ELwhIltyqCaFhwQRSEhTo4ODNTU1NQW1tEhtBSK01FS2BxIubS4tEliD0di5775XS74v3HO+97zv
+O78u4DAWMW3i7nhBOitmiQjMg6pGCSY87KMoQbJGikicsRwt2Kcutry4u25mKTdQXfNp0IpJ9ZJI
+oBZ/sZt+tJAn+eEztVcsiTvmSjpxkqOM3+u0e0jm0ezIY0NcngsJYwezKk5JZYPyW56YoRbwF0yP
+GPaDNfuxe10CHhzl+VFJtRBo7yQfrPIElfYrCdCSqS7PhlkuGXEnMgdrbwfcor50hm7627D34lxL
+XJ0BbM9aDVnDtfyoerlPwwrWeVsEN0z2w6VZfhuJasj8Tpv6OQJIG2yy4xpmoJ+yE17Kci7pBcxg
+Rk4lvOi5V3LtgBl0fhfyP+IOP9gEP1+9JNgRAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">sum_then_mult</span><span class="o">.</span><span class="n">body</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="__pv_it/lambda_reductions/5d5b509a006bcf617783ad86939c7abd79fdc3e30/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFcAAAAVBAMAAADBdm84AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABWklEQVQoz2NgYBBgwAEYMYWYDHAp5lbAEDJh
+wAk00AVYE3ArZgtAE2BvQLEZhcdRgKaYE4XHjOrMqWiKzfApzkBTXALEQbpxLgYoioMqGFgvMDD4
+ItS9WsfYANZcwHSJfQGKYgdLBo4PDAxtiHBI8gHqXAz0hwDHV94GZMV8BlUMvAcYGCwRERTA4MrA
+MBsoxcAODj/2VatWzlq1Cmg9K8MkBk6gvvcg4XhI4IYEgBUzgCVQnMH9leH9AwaGnSA2FzgAGUEy
+i0Gs/QKsASiKgVZpAikrhAd3AK1jOMTAELPhJgMLqsk8FxjOAqkeRJgaMPCCQ8f+aSXDZlTF7Be4
+f0DDFQLe+KisA4YfA0O4EnOFAapi1ivqH4HUarhiB+ZpG4DOf4A9BlmAYcC4AC0GURMLLCG5MUQa
+oCcyEDiILXEuYrgCJGUwxGOwKbZQ34DVHEYFXGmfCT13AgBOtEHVExxwmAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>If there is a single parameter, just use <code>parameter</code>:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">single_param_lambda</span> <span class="o">=</span> <span class="n">Lambda</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Mult</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="single_param_lambda">single_param_lambda:</strong> <a class="ProveItLink" href="__pv_it/lambda_reductions/7c80d6dbfc9a927424f576c315e366ce06a7f3050/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGEAAAAVCAMAAABha3BGAAAANlBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABHL6OuAAAAEXRSTlMAEHarMolU
+md1mIs3vRLvz6fgHHdMAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAEqSURBVEjHtVXbsoMgDCThXgo9
+/P/PNmqLBPGMcaY8Ccm6mwtBKfF6/MCTLXSXXTPeIXBWoibKCSCJ3BOIGbxMVfQXAuXlegoVPadB
+sEPHVLgkZEhLzICowVjbeiQwH7bznzofMJ0+ZrJ6QVEqNCof5gyujJJmmE4EM0UKOlKiYwWl45xB
+YdnTFjZlR8xeW25yVDiz8LL0vv4CW7XmVrjt64CB+t0NJlM/QDzNPN3MlNXAMMH0DdGZ8tZ8uVJo
+AHMG09+a0Eo7YJikzuSCgpKVXojsSQypvxBlVTfBtHQNpliUqwY8HeW98fL5fVibb4Zp7oOJ2hs8
+Iv0mnk1Ma1jK1vj+wYymkKVzKRjZWxLEk+/KKLs/KLdaSx6uR7nxAkH5lZxd1/WncZ38b92dCHsX
+1Sl8AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">single_param_lambda</span><span class="o">.</span><span class="n">parameter</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="../packages/proveit/__pv_it/common/a0d9d672aa5e272d907247690c152cc2c6daafb70/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAJBAMAAAAWSsseAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEHarMolUmd1mIs3v
+RLtmgJDEAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAQklEQVQI12NgEFIWCU1gYChgMmJvYOBcwPmR
+eQIDCwP7BgYQ4FEAU/cXMAowyF2wYWBlYMh3rGG4xsAgrsRWmcAAAFEjCyBvD0T9AAAAAElFTkSu
+QmCC
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The body may be any type of expression. The parameter(s) must each be a variable, indexed variable, or range over indexed variables. We will discuss the latter possibilities later in this chapter.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="n">Lambda</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">Add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)),</span> <span class="n">Mult</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">z</span><span class="p">))</span>
+    <span class="k">assert</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;Expected a TypeError to be raised&quot;</span>
+<span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Expected Error:&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Expected Error: Parameter must be a Variable, Indexed variable, or range (ExprRange) over Indexed variables.  x + y fails to meet this requirement.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Also note that parameter variables must be unique.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">ParameterCollisionError</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">Lambda</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">Mult</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">z</span><span class="p">))</span>
+    <span class="k">assert</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;Expected a ParameterCollisionError to be raised&quot;</span>
+<span class="k">except</span> <span class="n">ParameterCollisionError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Expected Error:&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Expected Error: Parameter variables must be unique.  (x, x) does not satisfy this criterion.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Relabeling-(alpha-conversion)">Relabeling (alpha conversion)<a class="anchor-link" href="#Relabeling-(alpha-conversion)">&#182;</a></h2><p>The name of the parameters is irrelevant. The following is equivalent to the previous example: $(a,b,c) \mapsto (a+b)/c$. It uses different parameter labels but defines the same mapping. In <strong>Prove-It</strong>, we call this relabeling and these two <strong>Lambda</strong> expressions would be equal. In lambda calculus terminology, this is known as <em>alpha</em> conversion.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">sum_then_mult</span> <span class="c1"># recall our earlier example</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="__pv_it/lambda_reductions/0da04121c0720bb5c20e66a0e8c0f26f6b28d6ed0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMoAAAAVCAMAAAAw04FgAAAANlBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABHL6OuAAAAEXRSTlMAInZUiRDN
+mWbv3US7qzLz6SJmQj4AAAAJcEhZcwAADsQAAA7EAZUrDhsAAAJzSURBVFjDtZfblqQgDEUx3K8z
+/v/PjqCUCQVo02t4aFbRB3YSEkDGjraxlbYtqbf/AfoogC+54uEH4spYYT2DqoILttbAvJZWxhrr
+GXQqpGKrTcmXwspYZT2DikKbZVeMfimsjBnLm9+AisKy9WYH0YKmUm3Td3MQFkBEwdUvXFF3JAmL
+0yhWxpQ1dUWZF6boqxAlQJRJCHzCSCgZISOZlJxLbCtri/s/jmjor8qYsVpXKFvEnvnIkqyo/h5x
+hAhMYyME4zklzE5LGES4ljZqYDwPvZjOWK0rlG1U9zC5LckKd4bGbHmaZBHtZOInLRK7tpxK4swn
+bgeuMAgo4y7GjNW60rB5r8qwJVlh/Tk1B6tx/RDZvL5ts1jW+enerz9/HWn77u+S9KRvWbpMsLZ0
+scu+QXJXPUuywiLiV+H5I3aHKDXR+Oj8cFe88mzkSp/Vlj1hY5DuWZIVjt9zj42X5CQqsQPbuQCu
+BHMDVxK51JoE67NaVwibu+FVJD+KUFaQwbNoS7XhgzXE+uce48Weq+zDwBVFLpYAuKesoSuITUBo
+BrIkK84TgO9J6mN5z0k66pgDaPBYCiKAcImcrjlCk3ulnjId1mRXPmwKunceW5IVqYRTaoDDAHOu
+7ty1BzIK0PuGx0Q+LGohON+/r0Rqzn/cU9bQFcTug4glReFSZ+tQFgv1PVarzr18FVRGjzW77Sv7
+GVQUvaeauFeSlpOx3ivx9btz9ixsnpOE/Qw6FeHrK01eAXJHHwUdw5EIrx9rlRFef0Ri9jPoUsgv
+YbWaG9C+GevY9+aDJbABa5hviP0MqortJ1+245f8PGywznoGFcU/SbcTYSOiENcAAAAASUVORK5C
+YII=
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">sum_then_mult_relabeled</span> <span class="o">=</span> <span class="n">sum_then_mult</span><span class="o">.</span><span class="n">relabeled</span><span class="p">({</span><span class="n">x</span><span class="p">:</span><span class="n">a</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span><span class="n">b</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span><span class="n">c</span><span class="p">})</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="sum_then_mult_relabeled">sum_then_mult_relabeled:</strong> <a class="ProveItLink" href="__pv_it/lambda_reductions/3061879a0c9b2781ca99c2951ac80186157983500/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMEAAAAVCAMAAADIM3qXAAAANlBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABHL6OuAAAAEXRSTlMAInZUiRDN
+mWbv3US7qzLz6SJmQj4AAAAJcEhZcwAADsQAAA7EAZUrDhsAAAJQSURBVEjHrZfbmq0gCIDzlMfa
+2/d/2SnNAhO1+aYbW+DiBwG1ZTketnx92K9msz+m3HouPkfg+YfJxf5nzohS9EISE1SwjvTKTPtR
+7JMcmjuiZL1a6RmrplVq1p8VjzPPzR1Rkl534ox03o2e9KbY73G8IbgjStLbjuHYWQJL6HjVf7Ya
+m4XGKa4dJOHQi05ypesl8Fk3RBF42Yr9HqeOAHDXQSccel36i22SM2xp3TjfqkKSnJs9vWy3DAeK
+fxX7PU4dAeACCuVFCdLbI/sBlY2KR6OoCKuCucOwDqkEV8JnEVqp6nDqCCDXtFKHvXA5VmVPgka+
+iMSx0LqTt0RYIoKFB+DfZb/HqSOAXNFqH+yF9TnJ8VY9BZDij0Cmwdrt8X7999+hJ0b/tJpHY83R
+6Q/WpmF7cx/KkZm2F5dlG9Ik/wrVwx3VggLxZA78CsxUEbQ4dQ4gF1J024ucXRVPGya+d2UYcJ5V
+qI6IYEfHEK6iJqeOAHLFezusvQg8S89/besi2LM5xr3U7S3J7ZhW0AQighUdCIHDEXHICG4uojx6
+7MW1XZ0AceRJg4LbjplBwxLM/S93tD1etojzoGyHbw4Zwc3FlKcbsRd7XkC1cbmzjZ9i59Qlk9dV
+oEgWKY3h+d154hjccU05NEIOuZveXIJSeeH29xGpxhLmJu9FxX6DQ51o85Skb1ye5IREz16vi/3e
+Jc2bwbWwf20M9aeQeq3IW8LC9FW52A+/+BQMU3pVT3unlJNuTX2wLG3OfPAjPeOfTfMv61nsf+aM
+KEn/A8k4E1FaOIZYAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">assert</span> <span class="n">sum_then_mult_relabeled</span> <span class="o">==</span> <span class="n">sum_then_mult</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We still have the original expression in its different form</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">sum_then_mult</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="__pv_it/lambda_reductions/0da04121c0720bb5c20e66a0e8c0f26f6b28d6ed0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMoAAAAVCAMAAAAw04FgAAAANlBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABHL6OuAAAAEXRSTlMAInZUiRDN
+mWbv3US7qzLz6SJmQj4AAAAJcEhZcwAADsQAAA7EAZUrDhsAAAJzSURBVFjDtZfblqQgDEUx3K8z
+/v/PjqCUCQVo02t4aFbRB3YSEkDGjraxlbYtqbf/AfoogC+54uEH4spYYT2DqoILttbAvJZWxhrr
+GXQqpGKrTcmXwspYZT2DikKbZVeMfimsjBnLm9+AisKy9WYH0YKmUm3Td3MQFkBEwdUvXFF3JAmL
+0yhWxpQ1dUWZF6boqxAlQJRJCHzCSCgZISOZlJxLbCtri/s/jmjor8qYsVpXKFvEnvnIkqyo/h5x
+hAhMYyME4zklzE5LGES4ljZqYDwPvZjOWK0rlG1U9zC5LckKd4bGbHmaZBHtZOInLRK7tpxK4swn
+bgeuMAgo4y7GjNW60rB5r8qwJVlh/Tk1B6tx/RDZvL5ts1jW+enerz9/HWn77u+S9KRvWbpMsLZ0
+scu+QXJXPUuywiLiV+H5I3aHKDXR+Oj8cFe88mzkSp/Vlj1hY5DuWZIVjt9zj42X5CQqsQPbuQCu
+BHMDVxK51JoE67NaVwibu+FVJD+KUFaQwbNoS7XhgzXE+uce48Weq+zDwBVFLpYAuKesoSuITUBo
+BrIkK84TgO9J6mN5z0k66pgDaPBYCiKAcImcrjlCk3ulnjId1mRXPmwKunceW5IVqYRTaoDDAHOu
+7ty1BzIK0PuGx0Q+LGohON+/r0Rqzn/cU9bQFcTug4glReFSZ+tQFgv1PVarzr18FVRGjzW77Sv7
+GVQUvaeauFeSlpOx3ivx9btz9ixsnpOE/Qw6FeHrK01eAXJHHwUdw5EIrx9rlRFef0Ri9jPoUsgv
+YbWaG9C+GevY9+aDJbABa5hviP0MqortJ1+245f8PGywznoGFcU/SbcTYSOiENcAAAAASUVORK5C
+YII=
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>Prove-It</strong> has overloaded <code>Expression.__eq__</code> to regard these two objects as effectively equal and therefore interchangeable for the purposes of proof derivations. It does this by internally relabeling into a canonical form by choosing labels in a specific order according to the number of nested lambda expressions (similar, but different, to de Bruijn indices which labels variable occurrences according to the number of intervening lambda bindings):</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">sum_then_mult</span><span class="o">.</span><span class="n">canonically_labeled</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="__pv_it/lambda_reductions/5a381077c0b6d2f737b011addd8701308cbb452e0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARUAAAAVCAMAAABfR4pkAAAANlBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABHL6OuAAAAEXRSTlMAInZUiRDN
+mWbv3US7qzLz6SJmQj4AAAAJcEhZcwAADsQAAA7EAZUrDhsAAAJ5SURBVFjDxZjZdoQgDIZlk1Vb
+3v9liwsOWEKCnTnlxjNDMB8/IQSnKTU2fa6xR9bsn/wX9lx8UBXPB4wzyRuJhvwX9kIOu1LBOvJM
+Dfm1meQBEUw44L+wV/MTr7OmmyrqTOb6+bd2EZL9l/baPPEZ6TFuqAJmEiqRNyRCo8emttvbR7s1
+DiyABWz5LRPa2xPdcJxGaAeDJdmLR+Eq3UhIvta04hP1ImYSMlFXlYJwHtwNyV4DmU1yblZ44ML5
+0ttEbJGcndRyuf6uxax/ZRIyUVeVgrDwT+VtC8lceqEOYF6MKSWpCNcC3qa+cAaxmQEdRGiFFJmo
+p0pJaPDgu/O65oq7bb0s6FXs4+F+ZbeZ6VMDYQFVJh6KLZVJyEQ9VUpCgSaqX7zWt04DJJnqXf0I
+lhU6XhNJbY1Xx9e3q1qML/eZhECk98HW7o8FI3z5TxFE420y2NDXdh/v4dN5H6/yjD0YK34uvHdV
+aRH1YqUkLP1rGm8rXlXkhGoFDqhjvMlLJBygyloVWL0d1CTqqVISCuzA/M0bWq+OR8Lzt6P01b/m
+vajaXjamZZ7Eke0CoMpcpetMghARVbkIK/+QKnfe5rF15Hq5QhtxSe6ChjfqNjGRolXfj1rfqVcy
+SZ+IqMpF2DnqO7zrsXxryG2XS0pj+BYHzqlGv1rkWZZD/VyubOHHJJwHCpC6HjpJMCJIFYiw7R/j
+dWu/gETKZYGW04xaB2cShIhWxT3wX9ojlycs+vBLP/n6mUmo1zlPe/Ho9fewD73PVQpZD4WuFwtk
+nkwS3vlxcMB/aa96w7BJc/JUSZ+KJpxotI1KnO0Znz7X+AhUJnkjEWcP7H8AqW0WM+POMMUAAAAA
+SUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The variables used for the canonical relabeling have preceeding underscores to distinguish them from user-specified variables.  We call these "dummy" variables.</p>
+<p>These objects, the original expression and the canonical version, are not the same in all aspects. They have different representations. Having flexibility in ones choice of representation is important. In <strong>Prove-It</strong>, we call this <em>style</em>. One is free to manipulate the <em>style</em> of an expression while its <em>meaning</em> remains the same. Expressions with the same <em>meaning</em> will be equal via <code>==</code> and therefore interchangeable for the purposes of proof derivations. We will discuss more about <em>style</em> in a later chapter.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Lambda-application-(beta-reduction)">Lambda application (beta reduction)<a class="anchor-link" href="#Lambda-application-(beta-reduction)">&#182;</a></h2><p>Applying the lambda function largely amounts to replacing the parameters as they appear in the lambda body with the provided operands:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">sum_then_mult</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="__pv_it/lambda_reductions/0da04121c0720bb5c20e66a0e8c0f26f6b28d6ed0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMoAAAAVCAMAAAAw04FgAAAANlBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABHL6OuAAAAEXRSTlMAInZUiRDN
+mWbv3US7qzLz6SJmQj4AAAAJcEhZcwAADsQAAA7EAZUrDhsAAAJzSURBVFjDtZfblqQgDEUx3K8z
+/v/PjqCUCQVo02t4aFbRB3YSEkDGjraxlbYtqbf/AfoogC+54uEH4spYYT2DqoILttbAvJZWxhrr
+GXQqpGKrTcmXwspYZT2DikKbZVeMfimsjBnLm9+AisKy9WYH0YKmUm3Td3MQFkBEwdUvXFF3JAmL
+0yhWxpQ1dUWZF6boqxAlQJRJCHzCSCgZISOZlJxLbCtri/s/jmjor8qYsVpXKFvEnvnIkqyo/h5x
+hAhMYyME4zklzE5LGES4ljZqYDwPvZjOWK0rlG1U9zC5LckKd4bGbHmaZBHtZOInLRK7tpxK4swn
+bgeuMAgo4y7GjNW60rB5r8qwJVlh/Tk1B6tx/RDZvL5ts1jW+enerz9/HWn77u+S9KRvWbpMsLZ0
+scu+QXJXPUuywiLiV+H5I3aHKDXR+Oj8cFe88mzkSp/Vlj1hY5DuWZIVjt9zj42X5CQqsQPbuQCu
+BHMDVxK51JoE67NaVwibu+FVJD+KUFaQwbNoS7XhgzXE+uce48Weq+zDwBVFLpYAuKesoSuITUBo
+BrIkK84TgO9J6mN5z0k66pgDaPBYCiKAcImcrjlCk3ulnjId1mRXPmwKunceW5IVqYRTaoDDAHOu
+7ty1BzIK0PuGx0Q+LGohON+/r0Rqzn/cU9bQFcTug4glReFSZ+tQFgv1PVarzr18FVRGjzW77Sv7
+GVQUvaeauFeSlpOx3ivx9btz9ixsnpOE/Qw6FeHrK01eAXJHHwUdw5EIrx9rlRFef0Ri9jPoUsgv
+YbWaG9C+GevY9+aDJbABa5hviP0MqortJ1+245f8PGywznoGFcU/SbcTYSOiENcAAAAASUVORK5C
+YII=
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">operands</span> <span class="o">=</span> <span class="p">[</span><span class="n">Add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">Mult</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">Add</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="operands">operands:</strong> <a class="ProveItLink" href="__pv_it/lambda_reductions/5ee97ad8e30798a8af37d4cedc4cff848ee2f5eb0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMQAAAAVBAMAAADr6lzSAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACM0lEQVRIx7VVPWtTURh+kpvTm89yf4DC1SV1
+qIQiYl0aROpUuWSRQmO6iI4ZRGpLMTg4CZaK4MdSVCjcUgi4tFOqi1MhhFAUHAri4tKWGnEqvsf7
+ffJeo0POcLjnec/7POfjOe8FYGCILSG7ZGmYEjmTugt/nzP38t9Rro0BYn7AnNv/gTJtxILeCANb
+/XOO2czj+Iwokq4jEwEm+g+zxx5xLz5DQZ7h4gCJ1BonEaADJe7grnRW94wZDVfGb151nDbSGfct
+V1mAaCuomyGKDVRZjhkSAbaNfC8aric7urPQ2i1x5EmUJ5E+VFA3I6Wt4AnL8QhvaAXP4fJ54bSR
+7hUcH0xZWHVzRkuLKOwoqJvxlRi+sByTeAXoh8iWCVy07Re2vSnJoHtevgf8kMumsSDajBlGgwyL
+Aqssx4GUyOyg1lSuyqUC3iInDZqtOz462A+joYyWNXrCcmzLg6qZ3jEG4ZYhLPcB6L5BaVnnoKAT
+/m6TKyzHZXwgiRL2NCMcnmt+Rop2T58nmPUfZ76NXRX1CHdllOHAY/IU8qa2rkfCU9/u4x3ET/r8
+hI++xfV27peKehLLaDUYDtCr+E7X2Ll++nwkfOOstkCWtmnB1WtBhRHd4pGKehLVKw8MjgMbyO7H
+v0zN6nvV8yoaZEyzHIk1WaZiS1hKEZjGbElFtzxt8ZTlkGX2fXwhrijj1+gy6J+WNQtlluOUvPl4
+CVMZXyo2GdQ504dLPIfcQcIc5o81aeA33mua3DSGWLYAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">sum_then_mult</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="o">*</span><span class="n">operands</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="__pv_it/lambda_reductions/4f1dc1d569b0cd2fb91916b7aa2065ce5422ff7b0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQoAAAAVBAMAAABMEr0AAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAC5ElEQVRIx42WTWgTQRTHXz62m8+y9FxhtYfU
+QyUUKaaXBpF6qoQelEJichFz7KGUWCkGD+2lYKgU/LgEFYQUS8BLe0r04qkQQhAFD4J48dKWGvBU
+fLsz+/Fmd5IMvP14/Ob93+zMm1kA0ICZbwuM7AoMgwZKBNPM/Ftc97im/ClKTo2ehdnxOjdJmxYd
+oSzkX/lR08OgARJKiZmsjeUEx120h36Um/SFBkioVTDNaYcEiawK7grauRjIoGxShA49uh6JKN6i
+xDlLe+wJ7hrOZN8Td89FitCsh/ZIzOF1bhBSpu4Qzl647olbdpEiNDSLMqzh1bBA77JOkeWZ+7ew
+dpZoTzWLE9mdsYtquQJKh1FLdlgK8Z5KqgoFiYQ1iCMt0afIarCr4ni2aBZjuIaKD5QzSzCbgcgp
+o7ac9UYg3jMcqsEzicRbfEFTXoBaJ0hEi/STGC1Ds4hh7gs52OXe8fQGJNuMythZUIj3/IUCPyQS
+r/ENTT2FGH5G2Gg0XjYaH4z4oJoFfALEHW0CrAP8xceiUeQoFdUZZZKG0w05PXPI7UokeBbRNhSb
+wtKJmgvliH4LQ+AdxI0yjBmliaVw8pNRJmk6XZArYCs3fiGR4DNS1K05c5CWpuBGNO+dkXNQ7TLE
+0VwFRs2TGXEgK+A6BGsSic/4jFZMw9eQ5kbyze8QxvsOzSKB2V/Air3PJTpwzKkdOwsKWZrHBuwv
+wUssoYfeqwRZ+P0IPvIydq90DPQNvjhF2Yn/49Sa7aSQlcUmtKoSiT94RVO6dy5dI8i9K6GKUfD7
+NNY4VlLhtrPlK73UGaf2bSeFrCwKN59oEokYLi3DZBtboC64D8SNMFxiVMC1ox74B1yUSYjnkHjU
+2Ced5d6mOSzCSho8Z+K2T8BwSXkulfgEzCRtUnQk6H/ZG+hxalIOscLRk1mpRJ6bpHkSVNrk9Uaq
+Cd6hCBA74p4+lksEdGb+Legd1IQ/RcmJ0f/4sON/PmPTWFLCxFAAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The replacement is not always direct as it is in the above example. The reduction rules discussed in later chapters may be applied in the process.</p>
+<p>Note that there is no type-checking in this process. The way <strong>Prove-It</strong> effects type-checking is via <strong>Conditional</strong> expressions discussed in a later chapter and via universal quantifier conditions when performing the <strong>Instantiation</strong> derivation rule. In these basic examples, anything goes. We can mix logical and numerical operations without any complaint:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">And</span><span class="p">,</span> <span class="n">Or</span>
+<span class="n">operands</span> <span class="o">=</span> <span class="p">[</span><span class="n">Or</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">And</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">Or</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="operands">operands:</strong> <a class="ProveItLink" href="__pv_it/lambda_reductions/bfc5d69116615b2e86a2f2d3d39c3b370c83fee60/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMUAAAAVBAMAAAAEKDfsAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACkElEQVRIx7WVP4gTQRTGv2R3s0k2OVJdIQh7
+aU6LSArxzsqAopUSAnLcEU2uOLQMKhKvilpYyQUr0Sb4F6yCVlZGGwtRQsjJiSBBtBHFBI1YHb6Z
+2d3MJJsFiwzMzu73m7w3b+a9CYAUZtm49XB2pj6essfBwCnFO/9PlBauAUbZ+0zm6TFnq3POOaM+
+Ea4g2+zxWZLHhQ3ArHlfUWY+0VMt/XLGtfK4D0Guscc7SR4XbgAxCTeoz6uGrKHzsu8jfEmcekj2
+Py7E8jgk4aPUL6qW9Ibr/zt8CdtDU97HcSFSwyXmtrvAT2HeiQWFzNljYlqkk+EvWi7Cs7BQhdGW
+CVtyXCaeYKS3v9Cq9TbO09fzVIIHnuwhzJ1Vwh1TLLO0YQy4xZRWYWPuMKJ9hXwC0gpxBRMZe5NO
+uYz75PA2hMW5NuIst6Kp6DApcuFIHrfY+AN4yGZkN5FsBRNHwFVs5XdoB+q4Sw77iOf479axxH3B
+dA/tMvBbWpxBdmO2QpwIR8QNucemkLE+8xFrodSEqMd1JxncKnkAi+Uoq6I1J5t+9mTinZRHXAEi
+TqvO9qpkY8vJuzmxD3iRMvJOEZhDOVkowP2QiZdxI+KmoDXAaXLZwCvykcV7TdxdN3k8xeYH6ADz
+sovVmpz0iTbeKsSrHEFGgvEmWQcdQbSFk0Rt7bHJqfFIHOfXK3gG4w+97uC1Urxm2/qrEO8G4EQS
+tN2VusXCz+EbWe6c2ntAYFGBK2mtSvQJLffMiZpyCRndxYFCvIITZCQYF+yl62wLmoj3pl6ZWt5P
+1ctBZLLtoe2qTPWh+2jHsZoNIpOtSv3lVB8FH+0euoFkooVYphan+rB9tOXFZiCZaAmWsCF7pv+1
+C8A/UN2zExyC8KEAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">sum_then_mult</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="o">*</span><span class="n">operands</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="__pv_it/lambda_reductions/724c1c4336b047ee3d00cdcba58c3818901c0b900/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQwAAAAVBAMAAABBDM1HAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADkklEQVRIx41WTWhTQRCe5OXlJa8vafDQk0Ks
+h+qhEqRU20uDioJQCT0oLa1JD2IvhYClxIo09FAvFUul4M+l+AspSsCLPSV6EQ+VUKMoigTFiyht
+qRFPxdmf1919P9CF2Z/JtzPfzszuCwAkgIlXC+xKZasdP/kZ9bQYTDHxbC1Jl+qAP1JF+xr1dNLF
+xbsddCq0NAzf9UMq6C7Q3yztigdu03NMeItlsIuLU4Uzji3nUC7xeUg+L0HKaGI0nCez96T7JkGd
+CtxmFIEKbxHCwGqIdZ5PXvCxgLLF50M5yTZB7qCBGW2lPGdI91aCOhW4LYpDVIKQMLZJ60U+HuHj
+POayaQfzMziQi2JJjFZodExShjJjl2IRurHvljQnUC5L6zGVhoa7Q3bGl36BAzkmlsTomZ3cGXL+
+XIoxmMCeSKC+n1ZEG48IDHReOInQfpWGkcZUrnWmWLWG6Z0cKIBeY8h+YZoYHW9/xw9u0nLpKMKI
+rBBO7DOsJCwa61gDgpRPPrhmIJ9ZlUYYM569qG/SeUKjtZDugcgGQ84qwdH/ZrKE6FeAdhoFbR5u
+gqQQTh7gAkW/DQYNQrwGJsloJBFpxtBnj0rDRO59GVgg898Aj8iO1BTEqgzZI2igUa0J0aQAwnd0
+8UXaKTm5hysUYwPMNN0+CkcpHTBoEa2TbqpUulMqPSWFVwaYBPgjnUlHUsTbuo3O0o3EaA5a01LY
+MghbkOMonHAa0Spky/zVGeWlTnOzokaD0HgILVv8YRiir2AT1hsMSdFmntPAg1VSUhHhzYlvy1Ul
+nPCkZJMsa7g3XmWTSkLH7PS6k7IFRlOudzzRIWDIXiUp+GxMZ+QrNQnBefWO2U5e4Rwlm4IPGmUY
+vEGjMlz+BCEc51QaFrLfhsGifPutGqxy5JyggUZbG1hy8gOzSrCSQjjh18xKak8M9gg/pkPfjyvw
+nN87iUYIzXyE18pbaNRa/nHkhKCBRmNFK688t9egUpQVwslP7FH0tbP7DjMse7zOt2sFEvFllUYc
+r9PI6aLyZdDrHZscuSxoEKP1An9t+Fs1cnw6ISuEExOLy2z4/xdYcjzmz7xQoRxDBqQvqrfRUz5O
+nF8kR9v56tmftutepgdT4PxGehkN5fRbfk5eAhPvttepsNz/qe5DnSMVtNuomYyl/ZwMc/FuLlt6
+1YU51lEGj+O4jWozV32dBJJMPFvQffY9/kgV7WvUY+t/lwrkePKwwiUAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Automatic-relabeling-to-avoid-collisions">Automatic relabeling to avoid collisions<a class="anchor-link" href="#Automatic-relabeling-to-avoid-collisions">&#182;</a></h3><p>A lambda sub-expression defines a new scope for its parameters. This is clear from the fact that alpha conversion may be used to change its parameters arbitrarily without anything external to that sub-expression. Consider the following example</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">nested_lambda</span> <span class="o">=</span> <span class="n">Lambda</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Lambda</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">Add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="nested_lambda">nested_lambda:</strong> <a class="ProveItLink" href="__pv_it/lambda_reductions/d2649ab8e96bfb20459c64936eb2ec91dfbb04160/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKIAAAAVCAMAAADy48XkAAAANlBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABHL6OuAAAAEXRSTlMAEHarMolU
+md1mIs3vRLvz6fgHHdMAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAHASURBVEjHvZfpkoMgEISZ4T53
+ff+XXSQeoKgjqVp+JFZM99ecjoy9amiMYG+bY8OSAZ6M73Go3msiDhMHIirJBhra/4sIng01D/8W
+Udu7+by+aTWZiO5lxFbAwu0iwOt7AW6I0Ljo54g3AuVHI3q7EwGRg5By23im+as5RQQsswecINDL
+ZjlBehEbY8l3Yu41cmTa9IkqHSNKpubpsxNBsIzFGdKL2BhbvxGtm38Exm2fyDBBE1GoD4kngsB8
+hu0M6URsjVXYiXMfmxXz82uaNk2xjpj5YbYOSBCEz9UJossfQyhffFvSlbGYmtUf8HIx5ZPBx8N2
+iXk8soUgCEJ1iY/bpTaOoY4YpzwPAH2i8HDc0WU8MDCCwKgd30C6EWtjZVYipMh4KGu1T/TudOgk
+vn48ClIJ0YF0I9bGNq1ENQnQWR334yA+nYuaz4NiSYLC60D6o1gZL8fVPIoaMdvaq3JEinNE4BL1
+5CgCUUb4CnKMWBub+O0zWhLLg9t6r/d0WYyd+aaMmE0gEKtAq+llRG28lh9jEU3uOydXgYledFfG
+Ln1VLyqLmi6ERK9+d+OtY+8jDry7OBwout367hLiH0WMEEE0C8+TAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>This defines a function that produces a function which produces the sum of the respective parameters. First, let's apply <code>nested_lambda</code> to something with no collissions with $y$:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">nested_lambda</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Mult</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="__pv_it/lambda_reductions/49e3a62557bad79cb6b1f105e72c3f1d72e683b00/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJEAAAAVCAMAAABxJ/zfAAAANlBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABHL6OuAAAAEXRSTlMAEHaZZquJ
+VO8y3btEzSLz6T2OwCoAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAHwSURBVEjHrVbZlqwgDJR9dy7/
+/7MDUZCgIN4zeejqpZoqkhjYts+xd7jG/mtuE1RhfAlP15f+wr1CSYyDIE7b0zn/sFv+3RAJGMcR
+WHlD1pf/wj2DcYzjiKWqnHW1mfy15z7lses23eG4J2LdrsYbV7Nu0U9JQt8pbFoFjOOQ9ioFX3eU
+uYRCBYgoX1pEwZ+YxLjtQtL9SSIISsVROClmjrB+5spN5RLw+OxBuX4LLXqdquriPdUkpiYlEWrO
+w8wR1k9cozaWPQj37GijrtGzCiHR2RmzD0MCXGoQV3riqNNPXHL+T1fezz+LIkZ/NZ5HyGBjVl6J
+qeWFdxF+MSX9DNbTGkDUrm31gQtPhYlmkCMf/DZypB34qARbnwNw6Y8J4PW0s5E+cGE7VA962aCh
+hatGIkUd2E8jdjSYslNHSB+4TpSXJ0cBDSRHWySgK8Kmbmdk3vLRZcmymzpC+sBlImfumhl+Mo/K
+g3xiNqZSqe6TVqT1HOtGxSBHrT5wSRopLA5uAtLgGlqERFBpdkHN/ekXsh401k8dIf3Kla8zuKxu
+MK7cerpH5WlmF33g5g9Eq8Xly1G4cCT2h/PgpEX6wLXJspDL67sd43uK3EvWG/2Dqzhl/sMFyWFc
+3sLwCtjou/+615ZzdV+7gtIPIsD9BXZ2Dtv8ZxrTAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We produced a lambda function in terms of the $y$ parameter. But what happens if we apply this <code>nested_lambda</code> to something that happens to be a function of $y$?</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[21]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">applied_nested_lambda</span> <span class="o">=</span> <span class="n">nested_lambda</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Mult</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="applied_nested_lambda">applied_nested_lambda:</strong> <a class="ProveItLink" href="__pv_it/lambda_reductions/19a2f88df39f124236ca22f6dae7be041442f2910/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAK4AAAAVCAMAAADo3yVqAAAANlBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABHL6OuAAAAEXRSTlMAMrsiq4l2
+RO8QZpndVM3z6UwP0jwAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAHUSURBVEjHpVfbtqsgDOR+h334
+/589gqImokXMQ2dVnWRIYpoS8s04wtHn5yN9MRUh/jStZkPNM3eLEuLIAd10atxHtTZBHLJkZ8PN
+M1fzDuKQOY+K7GaZP8uB2t0gHDMDkxTVLLNXb+AZHi8miKM1dbNy07UQXEjFDw8B3ITfvISIuceZ
+VW0XK+o3Kd7IPftEzNJJZik4y7YvMLLeYRti7m6SxNIvLq8tmF7IBT4dLqM1JbQPN/kkip3EhAjw
+wm1G43pVrIeNZlwu9BnxS+JrAsIxRv/+BWA566PzNUDEtTkd/W+KJrMKo7kFqx6NqSD6swf43Jm7
+AlYD6bvs6qTJnVzMDceLqUs1aaZbfcezC30i5nJDHT3WkUvBpIbNcOWeklQSrbZgMQzLRT4Rc7ld
+IotEIu/KTWDwMnXGK/f0pGgfJTp7IRf4RMw1clyquNdRP8zdNlc2vHBP2RWlIRyaewPNAH0uTMqa
+8ToalaRcKNolS3iZBoAPXLsMT5+3rAf9JPdJD2K+tUAhPprcBgVHDTj+q8bDtxWn7Ry/do+i1JrY
+34fGVxz/dYNkHOJdFZYEiq1jOZv+O8E+qiWWQbzb4p3ymgydbCA3X/6qKYivd9CX2+t/R68QRs14
+PdkAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The system automatically relabeled the $y$ of the nested lambda expression to a new variable to avoid the collision. It uses ${_{-}a}$ as the first available dummy variable, which has no relation to $a$ as a variable. (Note, if you happen to use the full alphabet, it will go on to ${_{-}aa}$, ${_{-}ab}$, etc. so it will never run out of options).</p>
+<p>To understand that this is a correct and valid thing to do, consider that you could have relabeled $y$ to ${_{-}a}$ in the nested lambda expression first before calling <code>apply</code>. To relabel a lambda sub-expression, one can call <code>inner_expr()</code> to create an <code>InnerExpr</code> object. We will discuss this capability in more detail in Chapter 2.a.vi. but here is a quick prelude, relabeling the inner lambda expression.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[22]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">relabeled_nested_lambda</span> <span class="o">=</span> \
+    <span class="n">nested_lambda</span><span class="o">.</span><span class="n">inner_expr</span><span class="p">()</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">relabeled</span><span class="p">({</span><span class="n">y</span><span class="p">:</span><span class="n">b</span><span class="p">})</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="relabeled_nested_lambda">relabeled_nested_lambda:</strong> <a class="ProveItLink" href="__pv_it/lambda_reductions/c6f661d8a9a3345c085d9272c668ca3bc0a0f4260/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJ4AAAAVCAMAAACALKdSAAAANlBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABHL6OuAAAAEXRSTlMAEHarMolU
+md1mIs3vRLvz6fgHHdMAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAHCSURBVEjHvZZZdsMgDEWRmM3Q
+sv/NFs9gwAbnNPzEScR71yCBCBkaqBQbm0EmQt7NeOHF3agXimE8h2/dlgngreqdIHi39imL+hM8
+QozstTQj6oesgY/wQu+OSX23idc/D1kte/FwKvFcgL5wYm83Hi+4p6yFNl7mLWSJx1VnuDAjeIms
+0WemI1JgnB8blue9KvEMjVN6wuVWGIVFFS+R5fRwi++LFIlUdT/hi8oNMXUhTM/hZsuuwqKGl8pq
+s7vp+F3HXae6jkfQQ44nlhyx+Byu1rUoLWp4qaywu9t8MsssR35+VTZCcBneGh34c7hdnwoLuQRa
+u3zQ/cdEloW0NCw20ycWlHH56im+lJl4DrfJIz6VRirrbILn5g0HqOMxA5fcWxTkcQrchCtxHhqZ
+RQ0vlRVqcwPvCJ1ZeWP1zHQtjRA3C6zuCPe43laFRRUvkdV+cxOBgYxz3Vn07uHcmzPcy65wuuZ8
+YVHDS2XXE2lePYkYRXXrmuKsbAkob15WeThbVrZlcT1YElnlPrlzu8dtxyaw2fEp8hU8LUdagmsn
+8e94xI83y3HxPPkSHvgXePs7jeMN9/8TDtNtTRkq6/4A8dkQYdnBbnIAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>And now there is clearly no conflict and we obtain the same result (but with a different lambda parameter):</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[23]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">applied_nested_lambda2</span> <span class="o">=</span> <span class="n">relabeled_nested_lambda</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Mult</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="applied_nested_lambda2">applied_nested_lambda2:</strong> <a class="ProveItLink" href="__pv_it/lambda_reductions/0319c7aaecbb7dc729df069e1b4508609f28c5380/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAI8AAAAVCAMAAABIQE2EAAAANlBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABHL6OuAAAAEXRSTlMAELvv3c2Z
+VESJq3YiMmbz6Q5VJBAAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAHpSURBVEjHrVZZluMgDGQXIGCG
++1+2Dd4QjTF+r/WRcpIyKqEFGPtoocNV/l8yG0Og+GoW2TcmF1ItywFHcSWCNP//9n8ytVldm2uK
+S6b5G8FQZl7de2YSxSVLXbi2f/nyvzNtfgwAuxqTHa6ZpOtDV1GN/8p0pHzIu0BDA01xNWFpqqfx
+X5naI/orZbS26TfjKLLgHYZBA3GsGeV+d+inehr/hcnzVkY8h6ECEKNAT7Rye0sM0u0YlJSmvJeF
+nulp/Rcm1PUkDvUwFI03BQS5LLrM72kRYf/V79GAnOlp/RemqerzmYJ//xWxnO1dmJagqeErdwd6
+12Bd/wgy5jPfdUUpK5xJbP0XZl3PXj3XRWu1ZU96pKgqLoIytGdijkdaZ/vT+i/M+mSuIqB6Ihlm
+NF88410j/aAqQeOhA9RMT+u/MEsQeyUM9GgygAS2yOtKXjP4fRIKf34UyWKqp/FfmH57FM1OT+bP
+2bgHFlmwJWlw3BhfcpC68TDU0/ovTO7d4/h3kWZPEeQeXQwe42AAbYPJnDNE2Wm/N/475qupSHFq
+7mi30LUIPN5Agvom5zoak3mXwiWMD1+b3o7rdROB4tM+blvgj6oJYvmCKL7K2S5PFJ+ubQmNZUvS
+B8F+uj4jxffr4bKTyvwBXiMO/141+U0AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>These are equal expressions since they are the same up to alpha conversion.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[24]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">applied_nested_lambda</span> <span class="o">==</span> <span class="n">applied_nested_lambda2</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+
+<div class="output_text output_subarea ">
+<pre>True</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Lambda expressions are used implicitly in other types of expressions. They are used in <code>ExprRange</code> and <code>OperationOverInstances</code> type expressions. Examples of the later are $\forall, \exists, \sum, \prod$ operations. Automatic relabeling will happen in these cases as well, of course.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[25]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Exists</span><span class="p">,</span> <span class="n">Equals</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">zero</span>
+<span class="n">exists_fn</span> <span class="o">=</span> <span class="n">Lambda</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Exists</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">zero</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="exists_fn">exists_fn:</strong> <a class="ProveItLink" href="__pv_it/lambda_reductions/41083d77fc85f8ba041bec8962675a763219dff40/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMwAAAAWCAMAAAC7WYOJAAAANlBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABHL6OuAAAAEXRSTlMAEHarMolU
+md1mIs3vRLvz6fgHHdMAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAJ4SURBVFjDzVfr1qUgCBW8m/qN
+7/+y46VOaZbZd2at4RdrRbI3ICAhU4JKsUeG5qQ8F/PG+jGyXbh7SFq0yoQ4fGX9FFtNRqoi9vJv
+wVtlLv/6CRSO0hyt35Eho6jD0iqTssDYJDoHZQ7W/4iM1K3SK4+bb1qOgGiV4fiD9ZgMmhdk7Enp
+leLdzbCj1HiazwiwW3fJVOcIOU9GLK0yTWYZ3ZqQcbEgduuMDRApMM43aKr6S82TkbxRWg89MoC5
+JoEWP/SeC2xk9G5dmlOERTH2qC584afJfMK6Ka2HHhlORCpKHcqV2HO69c4sG0cTeCGDu3XCpk06
+AgjVXTIEPTRkxNaaL8goUSsnDx0yTBSutMRO2MGk3Mjw3TphS3NTHov754+qJAQ3l5nP/FmV1kOJ
+tbXHWMeA2cTOFoosjMoss3AlM8V6w2bx8pYQtzjyOzInD90G4FJnYqHsJM4+agCiNABnD9hciIUA
+0CXDqgF2IuMwhZbeltnJQ5dMzh2uJIS6vzPElwlTWnOxjtjAO0JtvoFdMou5awCAJJ7H6jh6rJSz
+hy6ZPDn8ilb70dC0ZC/eYh2xicBAxi9uj+LEnDGQooK1609f5etkaz30M0NTAnXT3S8lZR0sO1in
+zEjECFlf1D9ng0WTxoNojYupSrnw0JIBGjfHsNaBGq4mIDlSdrT+3W72Ocg2L4nPy+LuidHbAPja
+84yaetEo8i0yLBbH1Z54tzA2i2biAdvkknoG1Gr9BTKxfvxpBfOmVYaisJRsDrWfSownXyIDEa0/
+xRF8qwxFaJRuOgRH63ky7Us73n3X2Y0NtsrMQ9O8sMabh+/jF7hGTv4X+QujAhVEpH6XhAAAAABJ
+RU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[26]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">exists_fn</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Mult</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="__pv_it/lambda_reductions/4187ccd88f3261e4703aaf3174cfdf8fb05190d40/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANYAAAAVBAMAAADIsQ0HAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAmd3vRHZUIhCJZjKr
+u82ULvv+AAAACXBIWXMAAA7EAAAOxAGVKw4bAAACVklEQVRIx5VVP2hTQRz+XhNfXpu+mmQRuxgf
+KogdCq1WBCHi5vSKoEQdQooITs+hW4vaUHAQ85YsKhIXcVEDDk6SLB2CIFmkIIqZHDp1aNLo5L3w
+fndn7nKQD77c5fs4vrvf/XnAGKQk6jyYBk445obEUSR9w8AxZiTnPM9bVi07FFRxy7Qw1ZyuHeOy
+Zu7PJKqYe2TIUs3f2ApI1mTNS1Qxk4k710wmF/KY7pCsyVqUqMHFuL1rMgluC/aAZDXL7grqsGfK
+2hv5fzSDdJ9kNcsKBbFRW+fG9jycFvBSn5Vq3/SFSaiyrL8kq1lzdcHkCn7x7Q7XMLMPvNdnXQ3c
+QWxa3hBsXngYIt2L5DITLihZUyXBSh050tOlHGY7wJo2y7kEKy9MQpT1h2R1XYmC4Ang7LAUbO8c
+nEeClakZCexqLnneglT5fUyFsSnXMESyR7I56zKcg+Fao0ObHKDZYMXSrivRQbUgTOls2H2SKct5
+XgyUGjq94Q7R1Lu4zpqyNqvq4wOZ0n657HINaAxlbQXNOMv1OZ0+Zrv3pLvygzXv9FklfLUDbvK7
+vBhNMZYpK4uP9IK1BL+hnOFPgdVKsuOL49os17dPWsLkOINKI5Llt3cZd+i85QWfFj/tNPhRa68e
+subU/1mffzIEcHZebNwWJsfj2heMyM4hvj+J++ckjjzarBypvOHd4KZRXkkfvI27ryXKeIUKOzJW
+3fD2cnOM/CCbzRZw5U2RBDcQlHEabfa7afp+bU4kR/XsCMq4v8ouEHZNWbsTyRHWJY7iSGCIGmMy
++R92fpuqwPeV6gAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Masking-parameters">Masking parameters<a class="anchor-link" href="#Masking-parameters">&#182;</a></h3><p>For clarity reasons, it is generally best to avoid using the same parameter variable for a lambda expression within lambda expression. It is not disallowed, however. Importantly, scoping rules are obeyed such that the inner lambda expression masks any external uses of its parameter. For example, consider</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[27]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">masking_lambda</span> <span class="o">=</span> <span class="n">Lambda</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">And</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">Exists</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">Or</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">a</span><span class="p">))))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="masking_lambda">masking_lambda:</strong> <a class="ProveItLink" href="__pv_it/lambda_reductions/0c0b42ef225272707b5731afff75b17b660b27300/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMQAAAAVCAMAAAAuGrHTAAAANlBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABHL6OuAAAAEXRSTlMAIquJdkTv
+uxBmmd1UzTLz6WsWsi8AAAAJcEhZcwAADsQAAA7EAZUrDhsAAAI6SURBVFjDrVeJksMgCPUWr+zm
+/392Y4wtKnZjdp3pTGnh4QNBYWx18VtaKoTtP/EG/csBZ0+WirfUpP5fvPfSCrt4SSsrSnafhA9l
+Gf1nPEzb4ThVaWFBmm87TjMxjzaJJ6B+28g4J8AuEqyS8FPeENIDEiSee23dknXlPHZxSZ9S1xWO
++ZBkoddJ0Hih1vAk7wawC0OkovkptjTj/DQFttllEhO8ejL9xC457KJIXEjFVR8GSvK1DFuTq0AT
+XyUxwasZwM6xhhTYxSlpczi3O5DbjnYMwWDCCgGctnskZnjirAWFotRouIRdZAmMO7shHXumLNpq
+KLvpTY42csYmQEsi1hY7IzHDG+BajWgwiSz5/TR49euv79CsfX8H9Wr4vQkRunuZmOL1iW01th27
+yJLJBwbeO+0yoZMenPYmtd1DeEZiwBtKrNXQTSYOCfYcPrdPSnlr7pKS/sGEaCcjCZBOSU4dpxGv
+b3adRgzNcQrH/xlIJBY5RSI1bq0qkJ0J0dgHEhD4kfiOxAyvv3Y6DWebwrYFKAbP6gnUH+6J0tsG
+E+KKHUj4Q3nr77YJ3vgAaDVKZ64usgRCyY0LRd7wsv11KyHvTYjHzvAAzB8lOvgJ3njRtRpBYxLh
+7oP5dVRvDgnDUxzySbIO4CFeM1EE7IKHVfvfX1uzecLkktAOHuIRr8bLhV9/i1v+kIT2LirpnuLh
+RFjsgtv1KIB9SOKPeATv4sI+GVD5vXlQ3p2x+ep8eU0HqsyLp/QDwVkVEjC1AWQAAAAASUVORK5C
+YII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>If we apply this <code>masking_lambda</code> function onto a general expression, the $a$ within the inner lambda expression (of the $\exists$ operation) will be left alone.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[28]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">masking_lambda</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Or</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="__pv_it/lambda_reductions/1512d620f49383b2003f2ef96b8f1c42c47bae960/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALoAAAAVBAMAAAADaun5AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACf0lEQVQ4y4VVTWgTQRT+8jPd/O2y9OBJIWig
+WihEKGpyaVERYSmEgkqllvTWY6ABYy4WxHqpYCue4iGoeEihBDxITzY9eRFD6cVbPHjQS6ylIPTi
+m83sZqbubBd2Z+eb93375r23bwDYCL4iJ+bRVu90Ixkf3yJSXmOQzqrzeDvA6EIY2QEmobsu/qde
+b7VaDRmLTYeRHbCyD5glelhDj0dKg/GG4rvi7d1QsgNjxQcSfC0zDG6i4g7svV69Fkp2kJRsm3Sf
+keavBtl83taqvwglO7giATwEy9J8yX2mrB2deqwcSnZQpZfZiYWbefFp7gJma2BdYMY1m8SiTt3g
+ST13fRQyWQAzXJ37V4nuGXzB7CHq5mW6gMRvYNU1XsRVnfoIJS29jq8lmSyAVa7+lhJgJ45Mnlyr
+i5Sb+nwdJoWjAAnk6kWqyJeSeop2PLeCumIngAJXp/K1YIj4CTcZNpAkP/qQfQrwPUnQY+CdskcB
+9IU6XCk5xOkj9Km4tkVJs2aI+muwY4UsgG0RGeCTzUpyedBeLtFQVGrBV2e3c7YfGfbHTdGQ7AFF
+rr4LzLe/Ia6UdqaLLzSsKXXsq9+3+0I9kwU7hFm+LJE9YI2rU+FM/XiED8pvaXTTf2moKv+gr/4Q
+P73WQ2W7i2KlIpMFUOXqv4B752M10SjF78D2xw5o2FT6h9/FGpgQ6hZt7EHu+15PJgtgk6uneoEt
+Lk5VFGkGdmB2gM93BLalbbCc7HitSr1uYY42IzU4pb+vW8dPxeszrTonU3/vBCy9wT49z2pOj49P
+ct53M7qDzSWT+nzA0rUxrtQ5/WxiOzr1zkA9ktWsR0/4FQ86V0dDyOONf/IZqrBE7g7EAAAAAElF
+TkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The <code>apply</code> method does have an optional <code>allow_relabeling</code> flag. When this is <code>True</code>, if it is valid to relabel an inner parameter with the same name as an external variable, it will do so. This is just a convenient way to perform alpha conversion in one step. It's purpose will be more apparent when we discuss <strong>instantiation</strong>. For example, turning <code>allow_relabeling</code> on, we get</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[29]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">masking_lambda</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">allow_relabeling</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="__pv_it/lambda_reductions/c678257a17d5c4e8a588d6b3b05b222157d8b7af0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIEAAAAVBAMAAACTeZA2AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAELvv3c2ZVESJq3Yi
+MmZ3LnoBAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABuUlEQVQ4y32Uu0/CUBTGTx+0Qmm5MXGWxFEH
+RxcNhhonE3Q0xLAZY4Ismrh1d4CBROPEZtgYnNSBQfYO/gGNg4OTDk4u3te5trSXk0D4Tj5+nFcB
+mI/Hg1wKplAUNOuFcT5/l095vULCDX2VIzDWGvMEJwzDZpRKXedcXHsJJ0CpI7O36RrSP2u00FUh
+9M2fgNSHglCTXmNPR3ASdAXsyyZrnesPQegT2exnpCFYoFyslxmgtggnDKXP9usawiUoF+v0FFCX
+Ek44fn6Q42prCGegXDNZh9DlEd/FD1nl627DlYZwAspVicFjsxA6aDGC+w0Wy/kjsIkguGybPf8I
+CfuQcwntbjKC04LaIEX/r2GMhC1QLqxUaP+LEewB9FnFK7S0RoawnSKgC6cl9BKvgS72gqSnjAT/
+94moLtCFGxPabXBCbOxkNo0Eb9eT17oOyoVXI3RQZ4RKYnYy14YEM6Gj5nEP6FKXK7Qz4Nscd7MX
+j0+WFTsjQXgDdGGnUtsRvyjd010DS96EHUNxvMJCgk3e5aegoyF0FxP88wmmNooB1fpiQiqWiwnm
+tJgwzP9PVieFhBe6smb0B39VhA/BTbx/AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>compared with the default of <code>allow_relabeling=False</code></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[30]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">masking_lambda</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="__pv_it/lambda_reductions/ac56b6c46c462de533f4c53d98ab4291a1323ecd0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAAAVBAMAAACeZ+BxAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAELvv3c2ZVESJq3Yi
+MmZ3LnoBAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAB3UlEQVQ4y32UMUjDQBSGX5M0aZsmDYKDUwqO
+OnR0kkKjLgp1lSLdxKV2URCXgKNgOxQUUekiUlw6uFkhg12cOrgbFwcdbAc3B+8uL+21zfXgwrs/
+d9+9e+/dAUy2xy2Ybh5EN6LrTm9av4yYq1cFkDPSky7EFvOTENVxnILLa8cCBug+g0C8jMIF78nY
+3rHi0ExZ5GO0h+PtAJLB6bE1IUT1h6ZJ10ujKHwGkJqFnn25IojM2fTwXe6XxSANHCpGVgQ55Gx6
+6L3RMO4zyM7TPQavJILsk55udVgkuugNCskmy86vZbMqKMGRCLJL+qknDVhke6AzWiCYRQrRBiBT
+0WiCYgUQjaaYh2yQsK+CyhwI56Gg5ShELUKmzu8Q4ckKSVAflDpwHqNg9CmEWDW6YJ7A82KInAXb
+5WOHQoJ5QsrkwOKjPoQsfF+PjmO34WcsiyhoeQbpkdPx+Q8hsU3jDyFLZE0V7jSPqycUzCyFpHyp
+PFaJIUQtGzmEXJFfbW1d5SsbBbXOUtyqjN+J8ALKrt5EyBtZ+nDz+hyMglJDQXFZsYmeAtuTPvBG
+KD3RLYYXmAmRvfdzhJhlIaQyG5KonNyG2rKIkc7OhvBtTgSRvGhII+KNTbcFkA7JY8H9B2SwhR6Z
+nbj6AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>But note that no relabeling occurs if it is not valid to do so.  Because relabeling is not allowed in the following example, <code>allow_relabeling=True</code> gives the same result as we had above with the <code>allow_relabeling=False</code> default:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[31]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">masking_lambda</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Or</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">allow_relabeling</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="__pv_it/lambda_reductions/1512d620f49383b2003f2ef96b8f1c42c47bae960/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALoAAAAVBAMAAAADaun5AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACf0lEQVQ4y4VVTWgTQRT+8jPd/O2y9OBJIWig
+WihEKGpyaVERYSmEgkqllvTWY6ABYy4WxHqpYCue4iGoeEihBDxITzY9eRFD6cVbPHjQS6ylIPTi
+m83sZqbubBd2Z+eb93375r23bwDYCL4iJ+bRVu90Ixkf3yJSXmOQzqrzeDvA6EIY2QEmobsu/qde
+b7VaDRmLTYeRHbCyD5glelhDj0dKg/GG4rvi7d1QsgNjxQcSfC0zDG6i4g7svV69Fkp2kJRsm3Sf
+keavBtl83taqvwglO7giATwEy9J8yX2mrB2deqwcSnZQpZfZiYWbefFp7gJma2BdYMY1m8SiTt3g
+ST13fRQyWQAzXJ37V4nuGXzB7CHq5mW6gMRvYNU1XsRVnfoIJS29jq8lmSyAVa7+lhJgJ45Mnlyr
+i5Sb+nwdJoWjAAnk6kWqyJeSeop2PLeCumIngAJXp/K1YIj4CTcZNpAkP/qQfQrwPUnQY+CdskcB
+9IU6XCk5xOkj9Km4tkVJs2aI+muwY4UsgG0RGeCTzUpyedBeLtFQVGrBV2e3c7YfGfbHTdGQ7AFF
+rr4LzLe/Ia6UdqaLLzSsKXXsq9+3+0I9kwU7hFm+LJE9YI2rU+FM/XiED8pvaXTTf2moKv+gr/4Q
+P73WQ2W7i2KlIpMFUOXqv4B752M10SjF78D2xw5o2FT6h9/FGpgQ6hZt7EHu+15PJgtgk6uneoEt
+Lk5VFGkGdmB2gM93BLalbbCc7HitSr1uYY42IzU4pb+vW8dPxeszrTonU3/vBCy9wT49z2pOj49P
+ct53M7qDzSWT+nzA0rUxrtQ5/WxiOzr1zkA9ktWsR0/4FQ86V0dDyOONf/IZqrBE7g7EAAAAAElF
+TkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[32]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> lambda_reductions
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Next-chapter:-ToDo">Next chapter: <a href="tutorial04_relabeling.ipynb">ToDo</a><a class="anchor-link" href="#Next-chapter:-ToDo">&#182;</a></h1><h2 id="Table-of-Contents"><a href="tutorial00_introduction.ipynb#contents">Table of Contents</a><a class="anchor-link" href="#Table-of-Contents">&#182;</a></h2>
+</div>
+</div>
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

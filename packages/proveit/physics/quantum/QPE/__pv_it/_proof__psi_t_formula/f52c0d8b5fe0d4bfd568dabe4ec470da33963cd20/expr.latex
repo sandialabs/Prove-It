@@ -1,0 +1,1 @@
+\left(k \mapsto \left\{\lvert k \rangle_{t + 1} = \left(\lvert 0 \rangle {\otimes} \lvert k \rangle_{t}\right) \textrm{ if } k \in \{0~\ldotp \ldotp~2^{t} - 1\}\right..\right)

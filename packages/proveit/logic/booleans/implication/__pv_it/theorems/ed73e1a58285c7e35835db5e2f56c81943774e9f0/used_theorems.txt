@@ -1,0 +1,5 @@
+proveit.logic.booleans.conjunction.true_and_false_negated
+proveit.logic.booleans.implication.negated_reflex
+proveit.logic.equality.sub_left_side_into
+proveit.logic.equality.substitute_falsehood
+proveit.logic.equality.substitute_truth

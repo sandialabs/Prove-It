@@ -1,0 +1,7 @@
+\left(\begin{array}{ccccc} 
+ \multirow{1}{*}{$\begin{array}{c} \uparrow \\ a_{1} \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ a_{2} \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ \cdots \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ a_{i} \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ b \\ \downarrow \end{array}$} \\
+\end{array}
+\right) = \left(\begin{array}{ccccc} 
+ \multirow{1}{*}{$\begin{array}{c} \uparrow \\ c_{1} \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ c_{2} \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ \cdots \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ c_{i} \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ d \\ \downarrow \end{array}$} \\
+\end{array}
+\right)

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.exponentiation.sqrt_times_itself theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.exponentiation.sqrt_times_itself-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">exponentiation</a>.<a class="ProveItLink" href="../../theorems.html#sqrt_times_itself">sqrt_times_itself</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.exponentiation.sqrt_times_itself-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> sqrt_times_itself
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="sqrt_times_itself">sqrt_times_itself:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/14ce42e2443fdbeba1f11ed71c30e93a65989e7c0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPwAAAAZBAMAAADnDF5lAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADEUlEQVRIx61WTWgTQRR++d3NbrqJPwj1FLBX
+MQoqeKgp2FYKrVFBkB6sXgSREi9CoWg8V2hQiq5C2EMRNIihQkUPJTcFURSEghBIoCqUGvSgDTmo
+M5PMzM5mdsMG3+Hb5Xtv3zcz++bNAPRnhxn0tIxvR08LZigQW/yL7YcjqMPOuSWZ61v+EQNi96VB
+HTZUc0ni6uhpdxlgUwuyGMZ+dsuCHEn83OdTXalQIBbIyoIYW3dLgxyj+HnZp3y4TIHYdWkQY59Z
+LmmQ4xaeR8GnfCJLgdioNIix0bRLGuSIoqHpKZ/yixYFbNqMLIazYbfZIUcIDS3qt/K+MyBZpKPn
+rFFxSYMd76rVt37l9zDA9hRNtbF3YUWM4Wyk1bUy3HES4IF09B7yJgNsz3FwvTYpxnBWbRJisort
+Yzs3c1wDJWn7av/qyCx5ifENvEQe+hor9YsUgrj8PgAchePWLt4TRVb55Ry+zRGzdFrCat3MGjq8
+KIvyULqDcRjOU+IThS1UXwZqXnkYa6/qb+hmtS55myNYY5V3Io8+M+BYzSEPBm5wbyCRc8xeLaHl
+GyDUez4wJ6s0u38fd8wMI2iMb+QMvD+R/GaGyxsbN8Zxey6C0oJ4yrn42k+8Ksgi2/CEV5bIqtvO
+f293rFxBKrnBaOox0dOVYprLfwsULpHj4bXaggHaPwYZnMrhzq0tBSpQ5nMT2a7KFxzzqPJCUFTh
+LJEPPyzYSi8dq+XxBy+zSD5Oj6gtBjczQZQn2FyuRGy7X2RDzn0vOAI4P6B1OGKaZsow9DP2yif/
+WxnJ48VPUIULFoVYC7dNbao2dMiWX2TDSefsuxxqRYEFMnsjMm3Z5G9DDpQdebH04lkKkT9Dkr4g
+sl49v23z+kwYbUHy7+EVLz2lsgoZbTeRbcBpyYl3VXpaCqzXidfJ92VtExR8PTn3tbw8xmc/Nd2w
+NKvTdib4WlGAA0lZYoE96NY8HY6SafKLQ8yr6e9kEM1Jl9XOrrtlWfdQiPm463laf3c9W89HO8K8
+J26dMoXe1t9NV/lf9/wJD8c/mOH5BJBMWFsAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/e0556c616bcc490bc3658205868a3c9e18a17d940/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>sqrt_times_itself may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

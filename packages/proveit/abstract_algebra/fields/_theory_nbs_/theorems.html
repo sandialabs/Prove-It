@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theorems (or conjectures) for the theory of proveit.abstract_algebra.fields</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theorems-(or-conjectures)-for-the-theory-of-proveit.abstract_algebra.fields">Theorems (or conjectures) for the theory of <a class="ProveItLink" href="theory.html">proveit.abstract_algebra.fields</a><a class="anchor-link" href="#Theorems-(or-conjectures)-for-the-theory-of-proveit.abstract_algebra.fields">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the theorems of a theory:</span>
+<span class="o">%</span><span class="k">theorems_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">InClass</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Rational</span><span class="p">,</span> <span class="n">Real</span><span class="p">,</span> <span class="n">Complex</span><span class="p">,</span> <span class="n">Add</span><span class="p">,</span> <span class="n">Mult</span>
+<span class="kn">from</span> <span class="nn">proveit.abstract_algebra</span> <span class="k">import</span> <span class="n">Fields</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining theorems for theory &#39;proveit.abstract_algebra.fields&#39;
+Subsequent end-of-cell assignments will define theorems
+&#39;%end theorems&#39; will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">rational_field</span> <span class="o">=</span> <span class="n">InClass</span><span class="p">(</span><span class="n">Rational</span><span class="p">,</span> <span class="n">Fields</span><span class="p">(</span><span class="n">Add</span><span class="o">.</span><span class="n">_operator_</span><span class="p">,</span> <span class="n">Mult</span><span class="o">.</span><span class="n">_operator_</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="rational_field"><a class="ProveItLink" href="proofs/rational_field/thm_proof.html">rational_field</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/4325765c538c08d5739ff5e4a1dda0b5b260e4d70/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJAAAAAdBAMAAAC3RviNAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEIm7mSJ2q+8y3WZE
+zVRISQrpAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACh0lEQVRIx+WUTWgTURDH/5vNpm4+ltX4cZLm
+oBXsJVCKKApRVKhe4gcintaKLTUiCyKpimDx0AhFgpfmIm1BqC4eAnqRYAlRtCDi6kVBsPWiVY8R
+rDatzr632Ww+iiTk5oOdZObt/HZm3swDWlhSY8O6np4DzYEu1BqCGgnfcFqajlTZ5Sup5MV7IziZ
+ZeqdUUueGytvK5E6dIKe7m7g2dOaLxTpuYnXMa6+Y+GXyrub62MMqZAjJiAGtOqcf5KYgWCrO5h0
+QIeZfOl2CMQgrtUBT9pk+hnDMB3QRue1GtB1Jj9XfXoEYZmCUeb7LO3V6UpEkupbBaSYDUAfcDtI
+FQ1mZyz3N67UAnFI73VIB7cwkKdrqAQ5MUAQb6QBaBueB+bpmLTvVsXiLtApUkI6MnGfSSDhFjwl
+hIFJsmYbgJ7gqMIiOm+BKsVeTM4RSNRxF1ghkGhapzargurgn28AWoDIa7SXlIxBK2pH5GUgeQl4
+S6BODUIJ/uJZ2lyTBw4ZRsowphlDWCYxAXGDc2ph9/ErDKT8yOUeE2iCgYTtf2IcVBURRY1ZBHkf
+WeH6q/uIRbTCT41HdASBX6uk9o3aizr7Betsn1YHAk1HkEChqFUj8r1KVq0CKrcsHlJa1qzxWfjo
+DFuRg6LI5LGVQNIYOpawoKKXHPQKqNO0PfbRc3x5ro9rm3arnHNtMZmmn+FRVdrfHx9PXcL6rqHf
+emGgn+ojT1ZA/ikb9MASl51JK+wyzH/fIvddNfpk14LBO7TBr/kmrqNHrqG1bxQvb9Ive25kmwCJ
+zgRAsHM51spFCyHq/C0Pdm9LIJyoNfji+G+WnIi0BzSOaHtAO9uV2hTU9oAKuWyrrn8BsQ+uIBLR
+DGEAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">real_field</span> <span class="o">=</span> <span class="n">InClass</span><span class="p">(</span><span class="n">Real</span><span class="p">,</span> <span class="n">Fields</span><span class="p">(</span><span class="n">Add</span><span class="o">.</span><span class="n">_operator_</span><span class="p">,</span> <span class="n">Mult</span><span class="o">.</span><span class="n">_operator_</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="real_field"><a class="ProveItLink" href="proofs/real_field/thm_proof.html">real_field</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/229e15d47421fe0b728f2d860dbb01d093f12aab0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAI8AAAAdBAMAAABh4yLoAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAZs3vu90iq0QQiTKZ
+VHZ+Ip2vAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACZ0lEQVRIx+WUTWjUUBDHJ9vkbbLZLLviyc+I
+FGlBKrTSLiK8g9Z6qULJTWmgFqH0EPxaj8WL4EGjFEQRq5fWgyyLq3ir61VFpEdPi6igBbG2xT20
+4Lz3kk2ymyKGvflgh30zL7/8581MABIsO86xbeBU90D+nzi5D62em8zQ83B9uxvx65f7S5fGijAh
+XvBskNkvQ374YzuaHaRTIOtONKCu4e8I3KqJ7QFmSMMLama7yB4BytotMfIbzW7QvO0Jbn1QlutU
+I9exywdRsf9sWWYT9LB5LArq4taoh0FdLgel74nUrn0LFBE3twVoKQaUynPQ8yVeUNITSk2ygex3
+gLx/ykGZ8nIDFvd8wuCbGFAGldCJ7nWhJGWHQJO4STlQtXMmgrSjkGloFBQM7osBSSZTVLjj6Qsu
+e7XUhyDZgTMAmwiSTayaWgSW7tkYkHGIgeTbogJVCxf1FGU5SF8B6EXQXB20BoyPMs3YT1nLGjts
+WeJm51CN/pOB9NpJ7pkNl9/gIGOjUNiJoFccdH98Q4AiihTsNpUrgrfnhCfaR1zRpqgaV0Rc2FvZ
+IrXTHDTLWxxy9TYQ4HSoCEpRvCN8No0HR0Mgf7QkvBE6DVJ+hG8PNodtTYAoVGdgHkFkCNIrRhFk
+THghAGm//G5/xKZ/GI718YG+OyLeoF9YLWEO+sVBl7z7br/svwIPysvrV8s/nmD0RUiR5UlSZqIz
+duO4Zf71K6JUApDhgSaTfNakWjC0Gc/3OgkIhoO/3mATmggU9Bt4dZbtRCBSb/V8hf9nLe7oDEd3
+5M6A5EqHMlNcrTMg9XEh8bN/AMRomvk+H+ZjAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">complex_field</span> <span class="o">=</span> <span class="n">InClass</span><span class="p">(</span><span class="n">Complex</span><span class="p">,</span> <span class="n">Fields</span><span class="p">(</span><span class="n">Add</span><span class="o">.</span><span class="n">_operator_</span><span class="p">,</span> <span class="n">Mult</span><span class="o">.</span><span class="n">_operator_</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="complex_field"><a class="ProveItLink" href="proofs/complex_field/thm_proof.html">complex_field</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/0571e98a8458f3ea74a58425a5399c69687d202c0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAI8AAAAdBAMAAABh4yLoAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEIm73c12IjKr72aZ
+RFTgyeMAAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACZ0lEQVRIx+WUTWgTURDH/5vd5G2a7LJEEESh
+niKiwgptpaLgYU9F7FbwoILGz/a4h14UD6HUgrm4oCIpCg14MIVK8CBCRINge1CwFBQ8KaJ3ofVg
+25TOvt3sR5MiLrn5YIc3M+/93sybeQvEGFZnQ67vzOjEv3BS37ZaPnPzdE34eCxil+/Plu8NVXCz
+xtXbVUdenWu5v7ejnYXzS0AmCoKyTN9TfG246llHsKbnFMz2IEfo9MZhmjyK2tkfEq8heOogly1Q
+lsep1MIbXgFpTafJble/YhimD9rpL4uCerhUC2FQjwaRNXz106UgIqaltgH97ABK1nBD3usnNBJK
+LWOBnbPB5g9yUCI/1sTUi2vkfNsBlLAxESSbtEKgcVKSNkpWyiSQ8AyJpqBDIuf5DqCMiVuKb0kG
+l71avkgg0cZJYINAoklVUypw0j3VAaTO0B35qZUMGroXUZaD5DXgNIF6CxCaGB5wYqZ+yhrG0BPD
+sPm2XqqP/AsirxofO8LlVzlIXa/XXxLoLgflhtddUCQiiaqlzEDhfaRwS7SPeEQbbtV4REzDm+I2
+qZ2gzv5Ck3e80QttIFSdQwaR1OmOaG+aKjMQAmmty6a0Uv0Lwg+3ly74j23ZBekoLWIfgdgc0mtq
+BSIlvD8ACb9b3e5cdO7oyoKr7jruniA/WC1TDvJ0VWMfLlt3Zh9iT35s5XH++iHyToYiMryQpMXo
+G1vqM8y//kWkYgBSPdB4nN9aphE82oRnex8HhCPB1HvYTI8FCvoNXp1FKxaIFbZaRvH/jKnn3eHI
+ttgdkFjsUmaSJnQHpByox967CTW1kAD6i29BAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These theorems may now be imported from the theory package: proveit.abstract_algebra.fields
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

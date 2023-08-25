@@ -1,0 +1,1 @@
+\forall_{n \in \mathbb{Z}}~\left(\left\lfloor n\right\rfloor = \left\lceil n\right\rceil\right)

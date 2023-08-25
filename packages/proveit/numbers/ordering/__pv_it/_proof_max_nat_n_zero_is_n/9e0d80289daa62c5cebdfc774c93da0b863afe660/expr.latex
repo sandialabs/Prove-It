@@ -1,0 +1,1 @@
+\left\{\begin{array}{ccc}n \textrm{ if } n \geq 0 \\ 0 \textrm{ if } 0 > n\end{array}\right.. = \left\{\begin{array}{ccc}n \\ 0 \textrm{ if } \bot\end{array}\right..

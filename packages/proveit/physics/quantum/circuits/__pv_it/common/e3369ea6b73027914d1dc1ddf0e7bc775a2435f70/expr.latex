@@ -1,0 +1,46 @@
+\begin{array}{cccc} 
+ \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{B_{1, 1}~\mbox{on}~S_{1, 1}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{B_{2, 1}~\mbox{on}~S_{2, 1}} & \qw 
+} \end{array} & \cdots & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{B_{m, 1}~\mbox{on}~S_{m, 1}} & \qw 
+} \end{array} \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{B_{1, 2}~\mbox{on}~S_{1, 2}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{B_{2, 2}~\mbox{on}~S_{2, 2}} & \qw 
+} \end{array} & \cdots & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{B_{m, 2}~\mbox{on}~S_{m, 2}} & \qw 
+} \end{array} \\
+\vdots & \vdots & \ddots & \vdots \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{B_{1, k}~\mbox{on}~S_{1, k}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{B_{2, k}~\mbox{on}~S_{2, k}} & \qw 
+} \end{array} & \cdots & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{B_{m, k}~\mbox{on}~S_{m, k}} & \qw 
+} \end{array} \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{C_{1, 1}~\mbox{on}~T_{1, 1}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{C_{2, 1}~\mbox{on}~T_{2, 1}} & \qw 
+} \end{array} & \cdots & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{C_{m, 1}~\mbox{on}~T_{m, 1}} & \qw 
+} \end{array} \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{C_{1, 2}~\mbox{on}~T_{1, 2}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{C_{2, 2}~\mbox{on}~T_{2, 2}} & \qw 
+} \end{array} & \cdots & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{C_{m, 2}~\mbox{on}~T_{m, 2}} & \qw 
+} \end{array} \\
+\vdots & \vdots & \ddots & \vdots \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{C_{1, l}~\mbox{on}~T_{1, l}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{C_{2, l}~\mbox{on}~T_{2, l}} & \qw 
+} \end{array} & \cdots & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{C_{m, l}~\mbox{on}~T_{m, l}} & \qw 
+} \end{array} \\
+\end{array}

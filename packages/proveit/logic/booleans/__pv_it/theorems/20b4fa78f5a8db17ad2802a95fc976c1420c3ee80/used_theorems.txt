@@ -1,0 +1,4 @@
+proveit.logic.equality.sub_left_side_into
+proveit.logic.sets.enumeration.fold
+proveit.numbers.numerals.decimals.nat2
+proveit.numbers.numerals.decimals.tuple_len_2_typical_eq

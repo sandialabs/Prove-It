@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.number_sets.rational_numbers.nonneg_rational_is_rational_nonneg theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.number_sets.rational_numbers.nonneg_rational_is_rational_nonneg-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">number_sets</a>.<a class="ProveItLink" href="../../theory.html">rational_numbers</a>.<a class="ProveItLink" href="../../theorems.html#nonneg_rational_is_rational_nonneg">nonneg_rational_is_rational_nonneg</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.number_sets.rational_numbers.nonneg_rational_is_rational_nonneg-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> nonneg_rational_is_rational_nonneg
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="nonneg_rational_is_rational_nonneg">nonneg_rational_is_rational_nonneg:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/4eab50ba2f688389aabbec0366f4d91cf02bf3cc0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAAAaBAMAAAATV059AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADGklEQVRIx61WS2gTURS96fySSToEUWwRSlB3
+bmKpiiixfqqiiwYqbkQoLhRFcAouLFY6Ci6KJR3UKCkoKV2pSGK78FOFoBQVUQQXBWVgNAp+NkGU
+im68b15m5r10Wk30Lt68z8w993veAPx3GUo7j6kv/6JESM9/pt5NkDdsyYTOhgFWLnj6KQkQM2AW
++hvVr/YufL7ehsE8PEQ3GgSIJINjk7uo0+lGfSQPrwBeA8TJekWdAAOBu2+fwKllzuxGFhDgBW4B
+dJGNQ3UC7A7ajG5IgtRl4ux4C5AQfQUo5OE0bihmnQDfgzbPyTiYKYA+1E+TDHIS5DxiJ+rTH/7J
+1YxlOTkfHcPhjgxjO8hKsyWMvmiCgPmS63RAe8ks9n6uptjM4LhcNK7T9dR7NF0rATy3rGd1AoSI
+xUrbvY/kccR1q9iDY4/ARUNCX3eic4Fq5m/DCMnZfj1UwYesu7rsdhwzTVwFh39gSkCJc8W8eSmd
+mfOSi4wfqI+oI154lSIp9h4tPZRDqcIqWA6RfNQllkxrFk4WYTLBAzDkQqUZnRMr0FzE+bCF4hxU
+c5Dneg8BmmzXCBGjBbcTML6OB2DIxfcgZsIgMeya99JoH60iVhQMEfSmSO+l1kCZBO2MDprmA6iT
+5TRDLj5AwYZNjjeesn1OH7TzBU1smsA6UGfCsyrRKIwDB3BTH9FZcqFVhEeFBFyi9e4qE0knL+F7
+llQRDJCG6AyXJJJ/olyL+gDbYJgjF9oHWN0RW/jlLA542m4hFy2uuTdKxB4DI5rW4sLhXO68VBOi
+acJXDLl4dqlt7yhhjGXdtCrdB78ZPIDoFmhBj9hhUhQ1SVZn4SpHLlSmHesq1dhfsarXQ8hI1XSM
+7HZFTB8xaL9l4jCR9D14jK3CkgvDpqG5t06btugst1FwvZO2dgP0E//UB9tbmEbb01EBllyoOHmJ
+FecANLUevcBtrPana50bKYvUeiLJdrIQdDuGsPOix978mbVmgu6QLR0fGACx2MCd7BWRfydHn+pe
+c5QNBuD+ZWDJpSqr/g5g4b8KvcH/IkZ2AfwGvIjcz7rbioUAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/f408c1ed0c38e0a9bd39d61c4b9ea072a332b6e50/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>nonneg_rational_is_rational_nonneg may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

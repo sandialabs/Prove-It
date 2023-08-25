@@ -1,0 +1,3 @@
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\frac{1}{\sqrt{2}} \cdot \left(\lvert 0 \rangle + \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot 2^{-{_{-}a}} \cdot \varphi} \cdot \lvert 1 \rangle\right)\right)~\mbox{part}~1~\mbox{on}~\{\left({_{-}a} - 1 + t\right) + 1~\ldotp \ldotp~{_{-}a} + t\}} 
+} \end{array}

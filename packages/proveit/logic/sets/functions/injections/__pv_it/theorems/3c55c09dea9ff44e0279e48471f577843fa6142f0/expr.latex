@@ -1,0 +1,1 @@
+\left(f \in \left[A \rightarrow B\right]\right) \land \left[\forall_{a, b \in A~|~a \neq b}~\left(f\left(a\right) \neq f\left(b\right)\right)\right]

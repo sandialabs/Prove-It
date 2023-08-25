@@ -1,0 +1,9 @@
+proveit.core_expr_types.operations.operands_substitution
+proveit.core_expr_types.tuples.empty_range_def
+proveit.core_expr_types.tuples.range_extension_def
+proveit.core_expr_types.tuples.tuple_eq_def
+proveit.logic.booleans.eq_true_intro
+proveit.logic.booleans.true_axiom
+proveit.logic.equality.equals_reflexivity
+proveit.logic.equality.equals_transitivity
+proveit.numbers.number_sets.natural_numbers.zero_in_nats

@@ -1,0 +1,8 @@
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \multiqout{2}{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle} \\
+& \ghostqout{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle} \\
+& \ghostqout{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle} \\
+& \qout{\vdots} \qwx[1] \\
+& \qout{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle~\mbox{part}~0 + t~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} \qwx[1] \\
+& \qout{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle~\mbox{part}~t + 1~\mbox{on}~\{1~\ldotp \ldotp~t + s\}}
+} \end{array}

@@ -1,0 +1,1 @@
+n \mapsto \left\{\forall_{a_{1}, a_{2}, \ldots, a_{n} \in \mathbb{C}~|~\left(a_{1} = 0\right) \lor  \left(a_{2} = 0\right) \lor  \ldots \lor  \left(a_{n} = 0\right)}~\left(\left(a_{1} \cdot  a_{2} \cdot  \ldots \cdot  a_{n}\right) \in \left\{0\right\}\right) \textrm{ if } n \in \mathbb{N}\right..

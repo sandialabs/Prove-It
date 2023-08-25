@@ -1,0 +1,1 @@
+\forall_{a, b \in \mathbb{Z}~|~b \neq 0}~\left(\left|a\right|_{\textup{mod}\thinspace b} \in \{0~\ldotp \ldotp~\left|b\right| - 1\}\right)

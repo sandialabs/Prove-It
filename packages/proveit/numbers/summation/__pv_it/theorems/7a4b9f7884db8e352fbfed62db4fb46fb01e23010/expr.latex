@@ -1,0 +1,1 @@
+\left[\forall_{a \in R}~\left(f\left(a\right) \in \mathbb{C}\right)\right] \Rightarrow \left(\left[\sum_{x \in R}~f\left(x\right)\right] = \left[\sum_{y \in S}~f\left(g\left(y\right)\right)\right]\right)

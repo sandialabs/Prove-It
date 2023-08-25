@@ -1,0 +1,1 @@
+\left(\left(f, i, j\right) \mapsto \left\{|\left(f\left(i\right), f\left(i + 1\right), \ldots, f\left(j\right)\right)| = \left(j - i + 1\right) \textrm{ if } \left(j - i + 1\right) \in \mathbb{N}\right..\right)

@@ -1,0 +1,1 @@
+\left(s, t\right) \mapsto \left\{\forall_{U \in \textrm{U}\left(2^{s}\right)}~\left[\forall_{\lvert u \rangle \in \mathbb{C}^{2^{s}}~|~\left \|\lvert u \rangle\right \| = 1}~\left[\forall_{\varphi}~{_{-}b}\left(s, t, U, \lvert u \rangle, \varphi\right)\right]\right] \textrm{ if } s \in \mathbb{N}^+ ,  t \in \mathbb{N}^+\right..

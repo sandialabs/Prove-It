@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.negation.negated_positive_is_negative theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.negation.negated_positive_is_negative-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">negation</a>.<a class="ProveItLink" href="../../theorems.html#negated_positive_is_negative">negated_positive_is_negative</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.negation.negated_positive_is_negative-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> negated_positive_is_negative
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="negated_positive_is_negative">negated_positive_is_negative:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/99d74eef377cfc0b9723562042bb99c622d375540/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMUAAAAXBAMAAABJ4JbnAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACwUlEQVRIx61VTWjTYBh+16bLX5vVixdBAoIX
+0RURD0W7js2h7hKdCKLo0MNAUDLwqFDPKq1T0CiUHLzMoa0OnD8gBRkbiDB0sIN0pCBWHMgOyqBe
+/P6S5ovpIGUvPPDmyfd9T/I+75sAdBUmQ4DqsLKr0HQKf5wPX4rpNE52RdTYw8DpZv5b9u6bSegj
++GIimoQyTsHH5SDRqysrhL6JLsRSNA0hQ8HHgSBxGOANoXttAFWPppFkCLC2l8ZIYe4C9NuYjqPn
+6Y1ox26GQGm8N4svE7nfAEWd0J/q9Y8RNUYZ3BB3NB1UjbTr/lcioWCNDKGPAjwKLXpnjUsMbpwz
+5RZ6etYFM6tM+S/ScAg9CWLat37vq8GrJJGDJ6vvqyz7zOC22QcQlpAJNXJ17Qv4NKqElm3VYKzU
+sAxNhbkqr6FQM3NwhhHzFMqVOo6CsA4ptEVax/d6LnrbkMYFh9Axx7N8uICKqUHW4TXE++SDsAh9
+JqfhNVQJKugxEzVeA3ver1N6PIeLmJujk4o0fubbGsrsmgnSNnS42IKkHlqrigMDuGGX+FqBBTBg
+U/olmkRlRdqAadIUqljOtDWemUV8/mABpBakWHeWGVwNHbbHTIiXeM/hEMAIUPo6slzISzUYIxrC
+45LP82G4TV7nmIE0kg7d/IKBhezEllEXCm5LPF+lBqZ0ZZHRPciFpKGl4aBlWbqmqSd9GvPQoGO1
+gGrVx2p1h8E1d+fryR/oSMObQTYgo42Cj66Ycta+Rd5DS5y1PQ1lA+49xbUu+z1PFSj4uNFO4xMh
+dNIsjtmyTfyAtz7PF6Q/WbQHT9wvOOEekafgYyh8YD06MbRvFsSHKDv9vfpkpK1xav9aBrQpOoPH
+3eUPGPzR4eMdpGcsy2g76WXSVHDjNIM/5PC/qrzZz1be5J7oUPijGb60CV1qbFWIW3bSP1/jsJ3r
+TPdEAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/0f99bee06dfb063beb7d2db0e05ff788837959320/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>negated_positive_is_negative may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

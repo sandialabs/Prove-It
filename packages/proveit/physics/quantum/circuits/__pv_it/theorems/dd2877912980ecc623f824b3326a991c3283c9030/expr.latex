@@ -1,0 +1,11 @@
+\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{1, 1}} \qwx[1] & \gate{A_{2, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{k, 1}} \qwx[1] & \qw \\
+& \gate{A_{1, 2}} \qwx[1] & \gate{A_{2, 2}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{k, 2}} \qwx[1] & \qw \\
+& \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\ddots} \qwx[1] & \gate{\vdots} \qwx[1] & \qw \\
+& \gate{A_{1, l}} & \gate{A_{2, l}} & \gate{\cdots} & \gate{A_{k, l}} & \qw
+} \end{array}\right) \neq \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \gate{B_{1, 1}} \qwx[1] & \gate{B_{2, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{B_{k, 1}} \qwx[1] & \qw \\
+& \gate{B_{1, 2}} \qwx[1] & \gate{B_{2, 2}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{B_{k, 2}} \qwx[1] & \qw \\
+& \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\ddots} \qwx[1] & \gate{\vdots} \qwx[1] & \qw \\
+& \gate{B_{1, l}} & \gate{B_{2, l}} & \gate{\cdots} & \gate{B_{k, l}} & \qw
+} \end{array}\right)

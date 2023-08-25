@@ -1,0 +1,1 @@
+\left(P, Q\right) \mapsto \left(\left[\exists_{y_{1}, y_{2}, \ldots, y_{n}~|~Q\left(y_{1}, y_{2}, \ldots, y_{n}\right)}~P\left(y_{1}, y_{2}, \ldots, y_{n}\right)\right] \in \mathbb{B}\right)

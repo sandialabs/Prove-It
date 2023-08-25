@@ -1,0 +1,3 @@
+not_in_class_is_bool 320991ed97cdb1a6afafa1805270004d8ee04a510
+unfold_not_in_class 0da29acdfd29f0f35854db294fca92b45e569b120
+fold_not_in_class 37e7bebbb6c1c210f3620014c82c8f295bb8c88e0

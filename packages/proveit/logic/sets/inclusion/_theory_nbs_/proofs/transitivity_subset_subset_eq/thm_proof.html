@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.sets.inclusion.transitivity_subset_subset_eq theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.sets.inclusion.transitivity_subset_subset_eq-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">sets</a>.<a class="ProveItLink" href="../../theory.html">inclusion</a>.<a class="ProveItLink" href="../../theorems.html#transitivity_subset_subset_eq">transitivity_subset_subset_eq</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.sets.inclusion.transitivity_subset_subset_eq-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;..&#39;</span><span class="p">)</span> <span class="c1"># allows access to modules in parent theory</span>
+<span class="kn">import</span> <span class="nn">proveit</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> transitivity_subset_subset_eq
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="transitivity_subset_subset_eq">transitivity_subset_subset_eq:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/67652320ca5f65ee43fe037b8f4733c3dfd382090/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPcAAAAXBAMAAAAl5sTiAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADYklEQVRIx71WXUgUURT+nN1xdmd1UtqgHqKh
+egmChKQ3ayWLZAsXfJHsxx4ksEB9ttw1Igh8qF5so3AEicQEFaFyIUsKoqiWCvKhpa0IUSLKykzp
+5/7snbnsrqzF2oWZOffec+937jnfOXeA5WpajvkWLGN7y01oWGz+EHlKqLAh/9jKIPsUfsqc0qdK
+V2qDRhmwi3aP5h/8Kv9syQL+YRrKvjI0AR3UN+fyD76Tfyq/Z8z0TZBXTQvKiV8swGfmH/wOe/va
+5lL9qUQiMcGk4wQRB4AiCy7i+sJlCDknWrsxw/tnbogZHxs5TVAJ8uNE4lH+wd2cbwHlC+fYS3sm
+HKfva8QKwvU9wCU2ai22j83SvwCnxwJU07PAugUhe2YsmRJcxDmt0Fi66Q/Y0NmvseoIkwx/rJ8a
+5BXLrkeE5OkOjlyU1W9Fo12k9yY4Oso1ik1ut/aZ2+KY9VpUF4XQwmv5Qk4s4IrDYGRRnwGXIYOP
+kQ09Q9EoWV1BEkZS7+MHO2jCy4mGIjYyVVX5g3U7HPCnws0ekoVKkptV94Q7KAAXy83NZH6jDK52
+EocF+en9wA5JvYsf5SF5AhK4Thb8ZN1W6eRMlWyjUjsbtrPB5BG+ysQAjZdGHXFKBjcKS+ykHIf+
+3FHXOLvC1DOm5HbKlle864DXULf7qAGUecNNbGvs5ju8K1/NjhQX2gI86W5AT+rS+LW1MuKoKxxx
+rUQ4L6VVLXmaOWnLHLbTGcoMFy1tJxjf6lJBrIDuZ0cKpIGrERLcWohI9wQcdZVvfU8Cp3mkUb92
+c341OhWAJF+9JbKxgJ0hGFtnpaIZpvEqogaaErg7NjSP9RCR1r7BVteZ+aCkUUQ+xKF3z1rY9PsY
+r6mr7EzuPe9nbCy2088gm0R4NHGYCgVkQ6NFAk9Cm0MbRKTVOTjqw0wuJc+k2HAiLfHrr4jyKtpJ
+WyL+XGHqg9Dmob8A+qHfB95LbqeunYGXOzFsYSAAR919k9WBEAz7NOVLvXrI6rvQaxo949i2EKsm
+zu400Rv8aEnge0vQOxvSWWlxNcdGLhDX2uqop0VGr7o97TAu159KxlWq2JJ0z3llDV+UFZl09Sx/
+DLmu6Qzr9gtBtRYBz66erbXnAJ9MH7Cz0YWlgNvqa6K8tv//39B/b38AG3TW8PkhWOIAAAAASUVO
+RK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/ce9d5b4dabf026712f3ff4178df06170b0aa1f380/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>transitivity_subset_subset_eq may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

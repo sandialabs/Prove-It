@@ -1,0 +1,5 @@
+{_{-}a} \mapsto \left\{\begin{array}{ccc}\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{CONTROL~\mbox{on}~\left\{t + 1\right\}} & \qw 
+} \end{array} \textrm{ if } {_{-}b} = {_{-}a} \\ \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} \textrm{ if } {_{-}b} \neq {_{-}a}\end{array}\right..

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.core_expr_types.tuples.tuple_neq_via_any_elem_neq theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.core_expr_types.tuples.tuple_neq_via_any_elem_neq-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">core_expr_types</a>.<a class="ProveItLink" href="../../theory.html">tuples</a>.<a class="ProveItLink" href="../../theorems.html#tuple_neq_via_any_elem_neq">tuple_neq_via_any_elem_neq</a> theorem<a class="anchor-link" href="#Proof-of-proveit.core_expr_types.tuples.tuple_neq_via_any_elem_neq-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> tuple_neq_via_any_elem_neq
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="tuple_neq_via_any_elem_neq">tuple_neq_via_any_elem_neq:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/18388f93bc8d8a8dd901c2d386713a2301408ece0/expr.html"><img src="data:image/png;base64,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
+rkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/d99c60a5576dc9f682ce6e12e8ea3dd9aa217c800/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>tuple_neq_via_any_elem_neq may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

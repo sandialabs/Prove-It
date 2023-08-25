@@ -1,0 +1,1 @@
+\left(V, W\right) \mapsto \left[\forall_{S, T \in \mathcal{L}\left(V, W\right)}~\left[\forall_{v \in V}~\left(\left(S + T\right)\left(v\right) = \left(S\left(v\right) + T\left(v\right)\right)\right)\right]\right]

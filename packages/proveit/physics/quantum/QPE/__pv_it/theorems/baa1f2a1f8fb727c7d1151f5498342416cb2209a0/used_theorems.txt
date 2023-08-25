@@ -1,0 +1,9 @@
+proveit.logic.equality.sub_left_side_into
+proveit.logic.sets.inclusion.relax_proper_subset
+proveit.logic.sets.inclusion.unfold_subset_eq
+proveit.numbers.modular.mod_natpos_in_interval
+proveit.numbers.multiplication.mult_real_closure_bin
+proveit.numbers.number_sets.real_numbers.nat_pos_within_real
+proveit.physics.quantum.QPE._best_guarantee
+proveit.physics.quantum.QPE._outcome_prob
+proveit.physics.quantum.QPE._two_pow_t_is_nat_pos

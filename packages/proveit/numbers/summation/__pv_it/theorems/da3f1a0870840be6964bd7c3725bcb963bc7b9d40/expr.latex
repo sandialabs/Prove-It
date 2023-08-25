@@ -1,0 +1,1 @@
+\forall_{a, b \in \mathbb{Z}~|~a < b}~\left(\left(\sum_{x = a}^{b} f\left(x\right)\right) = \left(f\left(a\right) + \left(\sum_{x = a + 1}^{b} f\left(x\right)\right)\right)\right)

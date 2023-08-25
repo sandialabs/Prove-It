@@ -1,0 +1,1 @@
+\sum_{i=1}^{n} \left(a_{i} \cdot \textrm{OrthoProj}\left(\mathcal{H}, \textrm{Span}\left(\left\{x_{i}\right\}\right)\right)\right)

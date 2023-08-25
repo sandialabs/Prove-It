@@ -1,0 +1,2 @@
+\begin{array}{l}\forall_{H \underset{{\scriptscriptstyle c}}{\in} \textrm{InnerProdSpaces}\left(K\right)~|~\textrm{Dim}\left(H\right) = n}~\\
+\left[\exists_{x_{1}, x_{2}, \ldots, x_{n}}~\left(\left\{x_{1}, x_{2}, \ldots, x_{n}\right\} \in \textrm{O.N.Bases}\left(H\right)\right)\right]\end{array}

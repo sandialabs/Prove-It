@@ -1,0 +1,1 @@
+\forall_{H \underset{{\scriptscriptstyle c}}{\in} \textrm{InnerProdSpaces}\left(K\right)}~\left[\forall_{x \in H~|~x \neq \vec{0}\left(H\right)}~\left(\left \langle x, x\right \rangle > 0\right)\right]

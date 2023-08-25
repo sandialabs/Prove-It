@@ -1,0 +1,1 @@
+\begin{array}{c} \begin{array}{l} \left(\left(n + \left\lceil \textrm{log}_2\left(2 + \left(\frac{1}{2} \cdot \epsilon^{-1}\right)\right)\right\rceil\right) - n\right) =  \\ \left(n + \left\lceil \textrm{log}_2\left(2 + \left(\frac{1}{2} \cdot \epsilon^{-1}\right)\right)\right\rceil - n\right) \end{array} \end{array}

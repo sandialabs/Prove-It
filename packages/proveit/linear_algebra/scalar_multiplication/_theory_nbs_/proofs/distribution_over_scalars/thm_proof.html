@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.linear_algebra.scalar_multiplication.distribution_over_scalars theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.linear_algebra.scalar_multiplication.distribution_over_scalars-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">linear_algebra</a>.<a class="ProveItLink" href="../../theory.html">scalar_multiplication</a>.<a class="ProveItLink" href="../../theorems.html#distribution_over_scalars">distribution_over_scalars</a> theorem<a class="anchor-link" href="#Proof-of-proveit.linear_algebra.scalar_multiplication.distribution_over_scalars-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> distribution_over_scalars
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="distribution_over_scalars">distribution_over_scalars:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/52bd9ab8e4bf0283cbf3752b7b142beed936f06a0/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/bc3c95592c82b5d09cef1df0198ac1b44c6561530/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

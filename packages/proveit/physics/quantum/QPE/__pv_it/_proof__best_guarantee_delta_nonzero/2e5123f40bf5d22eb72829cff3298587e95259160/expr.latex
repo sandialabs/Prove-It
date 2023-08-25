@@ -1,0 +1,1 @@
+\left|\frac{1 - \mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \delta_{b_{\textit{r}}} \cdot 2^{t}}}{1 - \mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \delta_{b_{\textit{r}}}}}\right| = \frac{\sin{\left(2^{t} \cdot \pi \cdot \left|\delta_{b_{\textit{r}}}\right|\right)}}{\sin{\left(\pi \cdot \left|\delta_{b_{\textit{r}}}\right|\right)}}

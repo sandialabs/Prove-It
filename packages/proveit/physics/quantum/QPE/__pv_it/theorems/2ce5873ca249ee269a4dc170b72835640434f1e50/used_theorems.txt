@@ -1,0 +1,11 @@
+proveit.logic.sets.inclusion.superset_membership_from_proper_subset
+proveit.numbers.addition.add_int_closure_bin
+proveit.numbers.addition.subtraction.nonneg_difference
+proveit.numbers.exponentiation.exp_natpos_closure
+proveit.numbers.negation.int_neg_closure
+proveit.numbers.number_sets.integers.nat_pos_within_int
+proveit.numbers.number_sets.integers.neg_int_within_int
+proveit.numbers.number_sets.integers.nonneg_int_is_natural
+proveit.numbers.number_sets.natural_numbers.natural_pos_lower_bound
+proveit.numbers.numerals.decimals.nat2
+proveit.numbers.numerals.decimals.posnat1

@@ -1,0 +1,5 @@
+\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert m \rangle_{t}~\mbox{part}~{_{-}a}~\mbox{on}~\{1~\ldotp \ldotp~t\}} 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert n \rangle_{t}~\mbox{part}~{_{-}a}~\mbox{on}~\{1~\ldotp \ldotp~t\}} 
+} \end{array}\right)

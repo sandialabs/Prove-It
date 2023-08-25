@@ -1,0 +1,5 @@
+\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{A} 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{B} 
+} \end{array}\right)

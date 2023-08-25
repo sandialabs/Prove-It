@@ -1,0 +1,1 @@
+\left(\left(a, b, c\right) \mapsto \left\{\left[x \mapsto \left(\left(x + c\right) ~\textup{mod}~ N\right)\right] \in \left[\{a~\ldotp \ldotp~b\} \xrightarrow[\text{onto}]{\text{1-to-1}} \{0~\ldotp \ldotp~N - 1\}\right] \textrm{ if } a \in \mathbb{Z} ,  b \in \mathbb{Z} ,  c \in \mathbb{Z}\right..\right)

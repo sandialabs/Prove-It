@@ -1,0 +1,5 @@
+proveit.logic.booleans.true_eq_true
+proveit.logic.booleans.conjunction.and_if_all
+proveit.logic.booleans.conjunction.closure
+proveit.logic.booleans.false_eq_false
+proveit.logic.booleans.conjunction.nand_if_not_one

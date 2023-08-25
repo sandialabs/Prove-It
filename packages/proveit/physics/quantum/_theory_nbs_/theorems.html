@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theorems (or conjectures) for the theory of proveit.physics.quantum</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theorems-(or-conjectures)-for-the-theory-of-proveit.physics.quantum">Theorems (or conjectures) for the theory of <a class="ProveItLink" href="theory.html">proveit.physics.quantum</a><a class="anchor-link" href="#Theorems-(or-conjectures)-for-the-theory-of-proveit.physics.quantum">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the theorems of a theory:</span>
+<span class="o">%</span><span class="k">theorems_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="p">(</span><span class="n">Operation</span><span class="p">,</span> <span class="n">Function</span><span class="p">,</span> <span class="n">IndexedVar</span><span class="p">,</span> 
+                     <span class="n">ExprTuple</span><span class="p">,</span> <span class="n">ExprRange</span><span class="p">,</span> <span class="n">var_range</span><span class="p">,</span> <span class="n">ExprArray</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> 
+                     <span class="n">t</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> 
+                     <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">G</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> 
+                     <span class="n">Psi</span><span class="p">,</span> <span class="n">Px</span><span class="p">,</span> <span class="n">Py</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.core_expr_types</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">x_1_to_n</span><span class="p">,</span> <span class="n">b_1_to_j</span><span class="p">,</span> <span class="n">A_1_to_l</span><span class="p">,</span> <span class="n">A_1_to_m</span><span class="p">,</span> <span class="n">B_1_to_i</span><span class="p">,</span> 
+    <span class="n">B_1_to_m</span><span class="p">,</span> <span class="n">C_1_to_n</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.core_expr_types.expr_arrays</span> <span class="k">import</span> <span class="n">Aij</span><span class="p">,</span> <span class="n">Bij</span><span class="p">,</span> <span class="n">Cij</span><span class="p">,</span> <span class="n">Dij</span><span class="p">,</span> <span class="n">Eij</span><span class="p">,</span> <span class="n">Pij</span><span class="p">,</span> <span class="n">Qij</span><span class="p">,</span> <span class="n">Rij</span><span class="p">,</span> <span class="n">Sij</span><span class="p">,</span> <span class="n">B11_to_Bmn</span><span class="p">,</span> <span class="n">D11_to_Dmn</span><span class="p">,</span> <span class="n">S11_to_Smn</span>
+<span class="kn">from</span> <span class="nn">proveit.linear_algebra</span> <span class="k">import</span> <span class="n">VecAdd</span><span class="p">,</span> <span class="n">VecSum</span><span class="p">,</span> <span class="n">LinMap</span><span class="p">,</span> <span class="n">TensorProd</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="p">(</span><span class="n">Implies</span><span class="p">,</span> <span class="n">Iff</span><span class="p">,</span> <span class="n">And</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">Forall</span><span class="p">,</span> 
+                           <span class="n">Set</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">InClass</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="p">(</span><span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">,</span> <span class="n">three</span><span class="p">,</span> <span class="n">subtract</span><span class="p">,</span> 
+                             <span class="n">Abs</span><span class="p">,</span> <span class="n">Add</span><span class="p">,</span> <span class="n">Complex</span><span class="p">,</span> <span class="n">Exp</span><span class="p">,</span> <span class="n">Mult</span><span class="p">,</span> 
+                             <span class="n">Natural</span><span class="p">,</span> <span class="n">NaturalPos</span><span class="p">,</span> <span class="n">Sum</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers.number_sets</span> <span class="k">import</span> <span class="n">Interval</span> 
+<span class="kn">from</span> <span class="nn">proveit.physics.quantum</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">Ket</span><span class="p">,</span> <span class="n">Meas</span><span class="p">,</span> <span class="n">QubitRegisterSpace</span><span class="p">,</span> 
+    <span class="n">NumKet</span><span class="p">,</span> <span class="n">NumBra</span><span class="p">,</span> <span class="n">Qmult</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.physics.quantum</span> <span class="k">import</span> <span class="p">(</span>
+        <span class="n">H</span><span class="p">,</span> <span class="n">inv_root2</span><span class="p">,</span> <span class="n">ket0</span><span class="p">,</span> <span class="n">ket1</span><span class="p">,</span> <span class="n">ket_plus</span><span class="p">,</span> <span class="n">QubitSpace</span><span class="p">,</span> <span class="n">SPACE</span><span class="p">,</span> <span class="n">CONTROL</span><span class="p">,</span> <span class="n">I</span><span class="p">)</span><span class="c1">#, pregated_controlled_ngate, </span>
+        <span class="c1">#pregated_controlled_ngate_with_merge)</span>
+<span class="kn">from</span> <span class="nn">proveit.statistics</span> <span class="k">import</span> <span class="n">Prob</span>
+
+<span class="c1"># from proveit.physics.quantum.common import I, H, Hgate, CTRL_DN, WIRE_DN, WIRE_LINK, PASS, \</span>
+<span class="c1">#     , QubitRegisterSpace, RegisterSU </span>
+<span class="kn">from</span> <span class="nn">proveit.linear_algebra</span> <span class="k">import</span> <span class="n">MatrixMult</span><span class="p">,</span> <span class="n">ScalarMult</span><span class="p">,</span> <span class="n">Unitary</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining theorems for theory &#39;proveit.physics.quantum&#39;
+Subsequent end-of-cell assignments will define theorems
+&#39;%end theorems&#39; will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="The-following-3-cells-require-updates-to-Circuit-class-before-they-can-proceed.These-then-affect-a-handful-of-theorems/expressions-below-that-refer-to-the-Circuits."><em>The following 3 cells require updates to Circuit class before they can proceed.<br />These then affect a handful of theorems/expressions below that refer to the Circuits.</em><a class="anchor-link" href="#The-following-3-cells-require-updates-to-Circuit-class-before-they-can-proceed.These-then-affect-a-handful-of-theorems/expressions-below-that-refer-to-the-Circuits.">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">controlled_ngate</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Circuit</span><span class="p">(</span><span class="n">ExprArray</span><span class="p">(</span><span class="n">ExprTuple</span><span class="p">(</span><span class="n">Input</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">I</span><span class="p">,</span> <span class="n">MultiQubitGate</span><span class="p">(</span><span class="n">CONTROL</span><span class="p">,</span> <span class="n">Set</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">)),</span> <span class="n">Output</span><span class="p">(</span><span class="n">b</span><span class="p">)),</span>
+                    <span class="n">ExprTuple</span><span class="p">(</span><span class="n">Input</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">MultiWire</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">MultiQubitGate</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">Set</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">)),</span> <span class="n">Output</span><span class="p">(</span><span class="n">y</span><span class="p">))))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ket_plus_distributed</span> <span class="o">=</span> <span class="n">Equals</span><span class="p">(</span>
+    <span class="n">ket_plus</span><span class="p">,</span> <span class="n">Add</span><span class="p">(</span><span class="n">ScalarMult</span><span class="p">(</span><span class="n">inv_root2</span><span class="p">,</span> <span class="n">ket0</span><span class="p">),</span> 
+                  <span class="n">ScalarMult</span><span class="p">(</span><span class="n">inv_root2</span><span class="p">,</span> <span class="n">ket1</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="ket_plus_distributed"><a class="ProveItLink" href="proofs/ket_plus_distributed/thm_proof.html">ket_plus_distributed</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/159a68c0440e713dc6d9d7deda5ebe6b0048db330/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAATgAAAAyBAMAAAA6vdqLAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIolEdjJmVJnd76u7
+zRDVRUmUAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEv0lEQVRYw6VZS0hUURj+5+XMpE6zLQyloBYG
+umrrbIqowNlWyLhoUxAO0qKdUhuNxIIWjZFa0CLNshaBbrSFizJibFNExNAuInrZA9SxM/f8d+ae
+1z2PzqK/Ofd+n98993+dcwG0Y4Walrz+Vsi8Ul6ywofwMKO5n9qnRnefrKiu2OHVPMx4gho7/InE
+ZMjdyWuqZ7TDK3mY0VSm9rw/8XmsGnZ/p2LeFt9pIm531jORO/WZeCh5ul86bY1X8LDjBt6bMyRP
+PpT/TVu8god9q9PUngNDcngrnbXHv9WL24F+fNeYvCcrm7XHy3mY0VsRCDXkrfOSSQe8lIcdt9Bl
+5o3Jk7LLDvhkVact8YvaQt6YPLMumXTAS3nY1InxsAjG5PBcMueCf66NB3wdsxbkAxJPdsEP6CKi
+QFNh4rcF+VcxfTrhiW3IS8iClV6Ofw/MRb/z2R9tnl3toB4XPLH7QnuaF3hpOuCGi1tcgxHtZnsr
+sWY74YltiEsOi+Ie4EMsh72HGvneo1m4iD+/ia6rxddaFQ5PbEMciE+c+Yuvf1hD3lrMXIc0Vryf
+ohvp8F6rwuGJ9cTFPB88IDoy5ppCTkN+FuAgRIsMCOBQPa50eC9KODyxnrikB24Ts/UfaoeKGvJV
+ck8lsswsN8AF/z9avCeOwxMbENcqJJYmLBADeQ054SsUYY3+3hDEafE0v3D4jaC4ZIcqBfRmw8lr
+D0tS4iD9vSmI0+FRHIffDIqjETFaqg1a8KOYL7sq4eSRH55foUfPCeJ0eBTH4ecYcZd5WArFjZuI
+64AUTVglQdy4mTgOXyLiUqXSxP1SieTl00Ldx5SzRM02M7wcUaavlYjryUGC5vYJwDcw478BHR7F
+MfiaDa7coEacpE8brgcEiUh02glh5bR4Ko7Ds+LWeJ8zfa3wkkRkxQ9359fK4UtBcRGhyPg1uksX
+bWT/MlZPlJKAMIvWtpCAiAqpMo55rpfNU4W6z/jk6WLmXr3EzIqpRIeny8DhZ4Pi0mCYhFeEJ89c
+Op6vF+e/uiQs4mmrwuGZCnFRLF9Yg4e6mYq7LG95sK2phS5fvlzwxAYK/zNlB1tgmtvmbjl5S1ZZ
++F3wfuGnSsuir+IK72Ranj0QGXmfF8m/sN1CYDjhiW2Ii0uOTm5jOmJ0XyZhFf0pkh+R9OT/gSf2
+cGO11Vu65ulgB1qGxwAzgZjGVZhnM7dkh2mFl/Bw2zSaPZuCG6ZUER5VYEmZuiQ9uRM+vLcHr0nz
+fDPoRp8AFkhFUrZo7WLb64Rvzzlsqvd7/045b6pN8dpNdQqd5QoGULff9SXUJxkLkjkX/ILuOCKG
+QdVDA+oYibp4jj824obsz7rgtQc5cDPQ2kDi4y+/yF1Vn4VWVa2RHb5JewTGhWuG7D3OeL/VDy5d
+Ewd8Wn94yB27jmdhkralkazLsasF3uDY1V9cXMH2Ya9bTXRAXNU/roa9AQv8qv7AGl7jCS1dwZZq
+a41018jIqCqE5K5ijY9VDcSdwlaBfuSIrXt91dT29pbKZeSbe2t8umggLo5F5AQ179Y096s+C9ni
+jT4vcR/mhjQxFCurTpft8Eoezltwfd+A/DyFHX3KfZYdvq9iJM7uY/AH5SUrPLX/ABrN3DkTrh2s
+AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">scaled_qubit_state_in_qubit_space</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="n">x</span><span class="p">,</span>
+        <span class="n">Forall</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span>
+               <span class="n">InSet</span><span class="p">(</span><span class="n">ScalarMult</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">QubitSpace</span><span class="p">),</span>
+               <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">QubitSpace</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="scaled_qubit_state_in_qubit_space"><a class="ProveItLink" href="proofs/scaled_qubit_state_in_qubit_space/thm_proof.html">scaled_qubit_state_in_qubit_space</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/2db250f46f7e1f57f159f42e3a0408acddc115160/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAAaBAMAAACqZp8cAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEBUlEQVRIx8VXa0gUURQ+uzPuvNbNfpVRslAk
+UdmGIWkQG2aJRS3Vj4gooSQMkjGiEk02KIieFkqNUSwZkQS52gN8YEZEUFQSZg9aWHsQGoh/TBPC
+zr0zszuTO7NWQgMzd+45d+Z+c853vnsH4D8cYvv00ORHz4nI9gOYwJ8CYIHtBj/eeCKvko8uTjZg
+3h9HYFqAG4UKepv97wBEMoBL6OKsYhZCAEx0igAIPrx8TOhKiU5A29pbdjgMIHUDvFcBpJFmri0A
+B2mcPgt/FXGGE/s+/W7oewTXf2D2zyAJ+1QABaTZYwuAJSxzWVFxHZ43LHyu38jOfkGkuX7g6rHT
+FKIAjpJc1dgC4EmUKqz8w3jmWyXbb+4fE3BShx8OwCFE56MACEjJa8+Bvdi0WLj5Mbx0WT38VG08
+VyK9pJ0lEB74uEsnijAcNRQAgzhcSUiYbcNFD9LJaUnUXSoZy7RU1BygjXt8fAif7FKr4Hkk8iwJ
+AHck8sGCZuBAP0ud7c3BuPl23812jGsz7RzU5ufSThlrZEwFUAhQP6F+sgqMANggCFbaKdRo2TwS
+EJ9wsVz6PRmodpADRo7z4c3G5I2qAMoRmCmmtRnVbmgyAsAB5eZp+1d91WrchQ+nknlfANR6dJiM
+zIw5ENYik5Rw/h1GmRpWAQghSRdzvk8JiOdl52UOTpuEqB7uxfpn0+ugcQYs0HKSikR34wtYzOoa
+iXDsO3kTsHTWc/S1mOXIO8qBSqMoaQCc0RgHV2MSpdsAKwDqTACy4hxkMWXQFgUmHI8AAeDGVHS0
+EUuPSjQaoe10pliV1wvGCGgpgOKVeBlc+1n2kFQ2HCcazgZNAFxUuO98gxAVN3E5ziibU9CEIx4Y
+ynmnLGI+FtP7bt24hVJJCzg/ogFowTL3yOkubyMxZ2aSa5vHBECajw+mBh3RMP0a5/64LDrQIODk
+0/DsiFkbA7OB5COX9gbjSohw2WJzFUAVGhm4ygOlaF4e+azxnyYA3EO8rAKmJJBCosQ0xGuCVLOU
+RmWF2cjr1iUn18MmTafxdbHI9O+Wr/XoRNV0ABw03BiPHEVRvCe2JloNZ+L5GFKeAVOqKBf440FT
+NfMkxu3ZA2ynbr0+6Mwns75W6Za+LbYavuzRo8emGZdjvosDqhKEhGLC5XiEyC5PuYckBD0Ij/F8
+ayESnJb9lFZVis0rlc8AoEoqZlWx4e7K0JkQQAlIQyFVtCrXghQ1rIbLrPZePhuJ1VZDnR2dA8Bd
+Ire3SmuDCQGUf/Rt8EIFcYr3lULdTBRDsFirK+w0funEHdEtRQkk2xGJrUqdeTHwGivdfFy0A/Bm
+KveE1YlXSrv99JTtCWHh3/0cTHpXvG/q/wvoUUT/Cx79AhuM/jkP0v4lAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">transformed_qubit_state_in_qubit_space</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="n">x</span><span class="p">,</span>
+        <span class="n">Forall</span><span class="p">(</span><span class="n">U</span><span class="p">,</span>
+               <span class="n">InSet</span><span class="p">(</span><span class="n">Qmult</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">QubitSpace</span><span class="p">),</span>
+               <span class="n">domain</span><span class="o">=</span><span class="n">Unitary</span><span class="p">(</span><span class="n">two</span><span class="p">)),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">QubitSpace</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="transformed_qubit_state_in_qubit_space"><a class="ProveItLink" href="proofs/transformed_qubit_state_in_qubit_space/thm_proof.html">transformed_qubit_state_in_qubit_space</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/f4620ff69692bdf6831757a2f0550829e352990d0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAREAAAAaBAMAAABiCnXKAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEdUlEQVRIx8VXa4gbVRQ+SSaZRzZpREFbRSIW
++0PoxjdW0Ij2QYsS8IFSlKUIUn9oFoq6WEsEhUqrROmCs1IZtQi60B2KgttKN6X4S9S1lLZoB7M+
+kBYs9UfttqDrd86dmUx20mwiKw7cedy598x3z/nOd+4Q/Z+HdeAyp/fRCe94H7ZTlX6QaKRNUxk3
+v3vFhUdn+lrl8r5GL6noszQiKygtMhJrCCc91l29lAcdIEk1/wskJhv8Kdb9ZBzy5LFnX3SJstNE
+3yskBe6/viuSBF+SpV6QbOWRLg3/+F2RrvmzGXTnY5NnDtOeC2DIG2DsjEKymvuf7opEYxZmqr0g
+2YD2EdoUpuTdVv8z86n6K17eWSZ9DA8TjiB5hQNb74rEYL+N9BSdc2j3oT3HX4sk6K3zxr1q4mWi
+TFvoBXyhJEgy6MoWu/OEV7SvFyDGRZwaaBc4/SMvBnxUpzyPOU3LTOZKSX9n+3pArgsSJm1mAcbe
+gstQL0jy4F8SI9N/42E8akQR5dHT/nN9iwI4N3cWsxoqd772vK8WQDLgeSfdnlQQKDTOiFk83CY5
+cmbZDrgzK4mhB3TRCzsis9IXFZJ1RGPzLaZXro4i0WpkdlTlpNA430riulp+jiNUVio603wAHxKX
+hqw33IeiMZ1VSIaBsM3Du67dNkATUSQYMAyW/VHSdyvXWF/84GiHali2VI5yOBaWciDdBFsUq3fQ
+Pc7lgNxokya9HFUY/ZxCYjrZoFYYM3bFequafFennW3KNkafwRpC+gge3lw6SmaB12wVVOXYGIzN
+AdMArA3Cri5qUqM1Yvksn3d6OCRP6y9FVc5HkmyGUO+vIaJ7ie4iGm1DspIJq6HBuraOwwAkLguN
+VI6ME/EJI5liQ34ovpFwi08+Do2OmVGf+NGhobtxOrP2l6oo4YevceEAM6JIMlwbci5/nX6mEEnO
+rxyhCgTRmWolcfo8fYLlTovLQqMPC+/8WBjnfST7wOh8dWmmKJBXrODz/nwbkuwNmDhRYZ9Y9RaS
+5/kWlSMZECWBlyZAD2L4leL40USD4adkVr7Z0tiCcnI0d2grOlP0nkHC51Wr+Otzf7Uh0Q/hNIg5
+NUqXWkge51tUjnSg0awMnLCZMg2LV5OzexrpokptHJtCq6eeqn5wNKjIvp5QQubAQ7fbtl3c/lin
+WnwV2hrJ19Rm235bFu/SdQwSEmDUI8pgcCAmr1DLtx5sLr+Z46IC8f6oE9bib48GOa0VorsCo6GT
+qA0z1uq4K7iXaC9LQSCmLr2OO64cYXToS7QTHYTnZf+6cbcXF2u/7vjVPDukKfXSP63SwY5IniDL
+pUAGj1C+xgyUytGK/4YO1Y78qnjJw6/FAYMOnoZVvh3fvKvWEUnyakmbEXk7fuBzsKWqKocZ7hhY
+hsz4/qFrsaeb4nu2cduuLLhnsybtQGzSfjFq6UQC7LTinzW7bm6OL8LucW3bJdjHbouN+63r78Bi
+7GOzzvw/ixv7/+npfW/f7X9HkFj/+n9HjvX8v3Oy9A/3iRFQyp9DgwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># See prepend_num_ket_with_one_ket in quantum.algebra</span>
+<span class="c1"># multi_tensor_prod_induct_1 = Forall(t,</span>
+<span class="c1">#        Forall(k,</span>
+<span class="c1">#               Equals(TensorProd(Ket(one), NumKet(k, t)),</span>
+<span class="c1">#                      NumKet(Add(Exp(two, t), k), Add(t, one))),</span>
+<span class="c1">#               domain=Interval(zero, subtract(Exp(two, t), one))),</span>
+<span class="c1">#        domain=NaturalPos)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># See prepend_num_ket_with_zero_ket in quantum.algebra</span>
+<span class="c1"># multi_tensor_prod_induct_0 = Forall(t,</span>
+<span class="c1">#        Forall(k,</span>
+<span class="c1">#               Equals(TensorProd(Ket(zero), NumKet(k, t)),</span>
+<span class="c1">#                      NumKet(k, Add(t, one))),</span>
+<span class="c1">#               domain=Interval(zero, subtract(Exp(two, t), one))),</span>
+<span class="c1">#        domain=NaturalPos)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># single_time_equiv = Forall ((h, k, m), Forall((var_range(A, [one, one], [m, k]), var_range(B, one, m), </span>
+<span class="c1">#                                                 var_range(C, [one, one], [m, h]), var_range(D, one, m), </span>
+<span class="c1">#                                                 var_range(S, one, m), var_range(R, [one, one], [m, k]), </span>
+<span class="c1">#                                                 var_range(Q, [one, one], [m, h])), </span>
+<span class="c1">#         Implies(</span>
+<span class="c1">#             CircuitEquiv(</span>
+<span class="c1">#                         Circuit(ExprArray(ExprRange(i, ExprTuple(MultiQubitGate(IndexedVar(B, i), IndexedVar(S, i))), one, m))),</span>
+<span class="c1">#                         Circuit(ExprArray(ExprRange(i, ExprTuple(MultiQubitGate(IndexedVar(D, i), IndexedVar(S, i))), one, m)))</span>
+<span class="c1">#             ),</span>
+<span class="c1">#             CircuitEquiv(</span>
+<span class="c1">#                         Circuit(ExprArray(ExprRange(i, ExprTuple(ExprRange(j, MultiQubitGate(Aij, Rij), one, k), </span>
+<span class="c1">#                                             MultiQubitGate(IndexedVar(B, i), IndexedVar(S, i)),</span>
+<span class="c1">#                                             ExprRange(j, MultiQubitGate(Cij, Qij), one, h)), </span>
+<span class="c1">#                                     one, m))),</span>
+<span class="c1">#                         Circuit(ExprArray(ExprRange(i, ExprTuple(ExprRange(j, MultiQubitGate(Aij, Rij), one, k), </span>
+<span class="c1">#                                             MultiQubitGate(IndexedVar(D, i), IndexedVar(S, i)),</span>
+<span class="c1">#                                             ExprRange(j, MultiQubitGate(Cij, Qij), one, h)), </span>
+<span class="c1">#                                     one, m)))</span>
+<span class="c1">#             )</span>
+<span class="c1">#         ).with_wrapping_at(2)</span>
+<span class="c1">#     ).wrap_params(), domain=NaturalPos)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># single_time_equiv_judgement = Forall ((h, k, m), Forall((var_range(A, [one, one], [m, k]), var_range(B, one, m), </span>
+<span class="c1">#                                                 var_range(C, [one, one], [m, h]), var_range(D, one, m), </span>
+<span class="c1">#                                                 var_range(S, one, m), var_range(R, [one, one], [m, k]), </span>
+<span class="c1">#                                                 var_range(Q, [one, one], [m, h])), </span>
+<span class="c1">#         Implies(And(</span>
+<span class="c1">#             CircuitEquiv(</span>
+<span class="c1">#                         Circuit(ExprArray(ExprRange(i, ExprTuple(MultiQubitGate(IndexedVar(B, i), IndexedVar(S, i))), one, m))),</span>
+<span class="c1">#                         Circuit(ExprArray(ExprRange(i, ExprTuple(MultiQubitGate(IndexedVar(D, i), IndexedVar(S, i))), one, m)))</span>
+<span class="c1">#             ), Circuit(ExprArray( ExprRange(i, ExprTuple(ExprRange(j, MultiQubitGate(Aij, Rij), one, k), </span>
+<span class="c1">#                                             MultiQubitGate(IndexedVar(B, i), IndexedVar(S, i)),</span>
+<span class="c1">#                                             ExprRange(j, MultiQubitGate(Cij, Qij), one, h)), </span>
+<span class="c1">#                                     one, m)))),</span>
+            
+<span class="c1">#                         Circuit(ExprArray(ExprRange(i, ExprTuple(ExprRange(j, MultiQubitGate(Aij, Rij), one, k), </span>
+<span class="c1">#                                             MultiQubitGate(IndexedVar(D, i), IndexedVar(S, i)),</span>
+<span class="c1">#                                             ExprRange(j, MultiQubitGate(Cij, Qij), one, h)), </span>
+<span class="c1">#                                     one, m))</span>
+<span class="c1">#             )</span>
+<span class="c1">#         ).with_wrapping_at(2)</span>
+<span class="c1">#     ).wrap_params(), domain=NaturalPos)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># temporal_circuit_substitution = Forall ((g, h, k, m, n), </span>
+<span class="c1">#                                         Forall((var_range(A, [one, one], [m, g]), var_range(B, [one, one], [m, h]), </span>
+<span class="c1">#                                                 var_range(C, [one, one], [m, k]), D11_to_Dmn,</span>
+                                                                 
+<span class="c1">#                                                 var_range(P, [one, one], [m, g]), var_range(Q, [one, one], [m, h]), </span>
+<span class="c1">#                                                 var_range(R, [one, one], [m, k]), S11_to_Smn), </span>
+<span class="c1">#         Implies(</span>
+<span class="c1">#             And(CircuitEquiv(</span>
+<span class="c1">#                         Circuit(ExprArray(ExprRange(i, ExprTuple(ExprRange(j, MultiQubitGate(Bij, Qij), one, h)), one, m))),</span>
+<span class="c1">#                         Circuit(ExprArray(ExprRange(i, ExprTuple(ExprRange(j, MultiQubitGate(Dij, Sij), one, n)), one, m)))</span>
+<span class="c1">#                             ),</span>
+<span class="c1">#                 Circuit(ExprArray(ExprRange(i, ExprTuple(ExprRange(j, MultiQubitGate(Aij, Pij), one, g), </span>
+<span class="c1">#                                   ExprRange(j, MultiQubitGate(Bij, Qij), one, h),</span>
+<span class="c1">#                                   ExprRange(j, MultiQubitGate(Cij, Rij), one, k)), </span>
+<span class="c1">#                                             one, m)))),</span>
+        
+<span class="c1">#             Circuit(ExprArray(ExprRange(i, ExprTuple(ExprRange(j, MultiQubitGate(Aij, Pij), one, g), </span>
+<span class="c1">#                                 ExprRange(j, MultiQubitGate(Dij, Sij), one, n),</span>
+<span class="c1">#                                 ExprRange(j, MultiQubitGate(Cij, Rij), one, k)), </span>
+<span class="c1">#                         one, m)))</span>
+            
+<span class="c1">#         ).with_wrapping_at(2)</span>
+<span class="c1">#     ).wrap_params(), domain=NaturalPos)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># temporal_circuit_equiv = Forall ((h, k, m, n), Forall((var_range(A, [one, one], [m, k]), B11_to_Bmn, </span>
+<span class="c1">#                                                 var_range(C, [one, one], [m, h]), D11_to_Dmn, </span>
+<span class="c1">#                                                 S11_to_Smn, var_range(R, [one, one], [m, k]), </span>
+<span class="c1">#                                                 var_range(Q, [one, one], [m, h])), </span>
+<span class="c1">#         Implies(</span>
+<span class="c1">#             CircuitEquiv(</span>
+<span class="c1">#                         Circuit(ExprArray(ExprRange(i, ExprTuple(ExprRange(j, MultiQubitGate(Bij, Sij), one, n)), one, m))),</span>
+<span class="c1">#                         Circuit(ExprArray(ExprRange(i, ExprTuple(ExprRange(j, MultiQubitGate(Dij, Sij), one, n)), one, m)))</span>
+<span class="c1">#             ),</span>
+<span class="c1">#             CircuitEquiv(</span>
+<span class="c1">#                         Circuit(ExprArray(ExprRange(i, ExprTuple(ExprRange(j, MultiQubitGate(Aij, Rij), one, k), </span>
+<span class="c1">#                                             ExprRange(j, MultiQubitGate(Bij, Sij), one, n),</span>
+<span class="c1">#                                             ExprRange(j, MultiQubitGate(Cij, Qij), one, h)), </span>
+<span class="c1">#                                     one, m))),</span>
+<span class="c1">#                         Circuit(ExprArray(ExprRange(i, ExprTuple(ExprRange(j, MultiQubitGate(Aij, Rij), one, k), </span>
+<span class="c1">#                                             ExprRange(j, MultiQubitGate(Dij, Sij), one, n),</span>
+<span class="c1">#                                             ExprRange(j, MultiQubitGate(Cij, Qij), one, h)), </span>
+<span class="c1">#                                     one, m)))</span>
+<span class="c1">#             )</span>
+<span class="c1">#         ).with_wrapping_at(2)</span>
+<span class="c1">#     ).wrap_params(), domain=NaturalPos)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># single_space_equiv = Forall((k, m, n), Forall((var_range(A, [one, one], [m, n]), var_range(B, one, n),</span>
+<span class="c1">#                                               var_range(C, [one, one], [k, n]), var_range(D, one, n),</span>
+<span class="c1">#                                               S11_to_Smn, var_range(Q, one, n), </span>
+<span class="c1">#                                               var_range(R, [one, one], [k, n])),</span>
+<span class="c1">#         Implies(</span>
+<span class="c1">#             CircuitEquiv(</span>
+<span class="c1">#                     Circuit(ExprArray(ExprTuple(ExprRange(j, Gate(IndexedVar(B, j)), one, n)))),</span>
+<span class="c1">#                     Circuit(ExprArray(ExprTuple(ExprRange(j, Gate(IndexedVar(D, j)), one, n))))</span>
+<span class="c1">#             ),</span>
+<span class="c1">#             CircuitEquiv(</span>
+<span class="c1">#                     Circuit(ExprArray(ExprRange(i, ExprTuple(ExprRange(j, MultiQubitGate(Aij, Sij), one, n)), one, m),</span>
+<span class="c1">#                             ExprTuple(ExprRange(j, Gate(IndexedVar(B, j)), one, n)),</span>
+<span class="c1">#                             ExprRange(i, ExprTuple(ExprRange(j, MultiQubitGate(Cij, Rij), one, n)), one, k))),</span>
+<span class="c1">#                     Circuit(ExprArray(ExprRange(i, ExprTuple(ExprRange(j, MultiQubitGate(Aij, Sij), one, n)), one, m),</span>
+<span class="c1">#                             ExprTuple(ExprRange(j, Gate(IndexedVar(D, j)), one, n)),</span>
+<span class="c1">#                             ExprRange(i, ExprTuple(ExprRange(j, MultiQubitGate(Cij, Rij), one, n)), one, k)))</span>
+<span class="c1">#             )</span>
+<span class="c1">#         ).with_wrapping_at(2)</span>
+<span class="c1">#     ).wrap_params(), domain=NaturalPos)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># double_space_equiv = Forall((h, k, m, n), Forall((var_range(A, [one, one], [m, n]), var_range(B, one, n),</span>
+<span class="c1">#                                               var_range(C, [one, one], [k, n]), var_range(D, one, n), </span>
+<span class="c1">#                                               var_range(E, [one, one], [h, n]), var_range(F, one, n), </span>
+<span class="c1">#                                               var_range(G, one, n), </span>
+<span class="c1">#                                               S11_to_Smn, var_range(Q, [one, one], [h, n]), </span>
+<span class="c1">#                                               var_range(R, [one, one], [k, n])),</span>
+<span class="c1">#         Implies(</span>
+<span class="c1">#             CircuitEquiv(</span>
+<span class="c1">#                     Circuit(ExprArray(ExprTuple(ExprRange(j, MultiQubitGate(IndexedVar(B, j), Set(Add(m, one), Add(m, k, two))), one, n)),</span>
+<span class="c1">#                             ExprTuple(ExprRange(j, MultiQubitGate(IndexedVar(D, j), Set(Add(m, one), Add(m, k, two))), one, n)))),</span>
+<span class="c1">#                     Circuit(ExprArray(ExprTuple(ExprRange(j, MultiQubitGate(IndexedVar(F, j), Set(Add(m, one), Add(m, k, two))), one, n)),</span>
+<span class="c1">#                             ExprTuple(ExprRange(j, MultiQubitGate(IndexedVar(G, j), Set(Add(m, one), Add(m, k, two))), one, n))))</span>
+<span class="c1">#             ),</span>
+<span class="c1">#             CircuitEquiv(</span>
+<span class="c1">#                     Circuit(ExprArray(ExprRange(i, ExprTuple(ExprRange(j, MultiQubitGate(Aij, Sij), one, n)), one, m),</span>
+<span class="c1">#                             ExprTuple(ExprRange(j, MultiQubitGate(IndexedVar(B, j), Set(Add(m, one), Add(m, k, two))), one, n)),</span>
+<span class="c1">#                             ExprRange(i, ExprTuple(ExprRange(j, MultiQubitGate(Cij, Rij), one, n)), one, k),</span>
+<span class="c1">#                             ExprTuple(ExprRange(j, MultiQubitGate(IndexedVar(D, j), Set(Add(m, one), Add(m, k, two))), one, n)),</span>
+<span class="c1">#                             ExprRange(i, ExprTuple(ExprRange(j, MultiQubitGate(Eij, Qij), one, n)), one, h))),</span>
+<span class="c1">#                     Circuit(ExprArray(ExprRange(i, ExprTuple(ExprRange(j, MultiQubitGate(Aij, Sij), one, n)), one, m),</span>
+<span class="c1">#                             ExprTuple(ExprRange(j, MultiQubitGate(IndexedVar(F, j), Set(Add(m, one), Add(m, k, two))), one, n)),</span>
+<span class="c1">#                             ExprRange(i, ExprTuple(ExprRange(j, MultiQubitGate(Cij, Rij), one, n)), one, k),</span>
+<span class="c1">#                             ExprTuple(ExprRange(j, MultiQubitGate(IndexedVar(G, j), Set(Add(m, one), Add(m, k, two))), one, n)),</span>
+<span class="c1">#                             ExprRange(i, ExprTuple(ExprRange(j, MultiQubitGate(Eij, Qij), one, n)), one, h))))</span>
+<span class="c1">#             ).with_wrapping_at(2)</span>
+<span class="c1">#     ).wrap_params(), domain=NaturalPos)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># # need to form an Iter to replace x_etc here</span>
+<span class="c1"># # summed_qubit_state_in_qubit_space = Forall(x_etc, InSet(Add(x_etc), QubitSpace), domain=QubitSpace)</span>
+<span class="c1"># summed_qubit_state_in_qubit_space = Forall(</span>
+<span class="c1">#     n,</span>
+<span class="c1">#     Forall(</span>
+<span class="c1">#         x_1_to_n,</span>
+<span class="c1">#         InSet(Add(x_1_to_n), QubitSpace),</span>
+<span class="c1">#         domain=QubitSpace),</span>
+<span class="c1">#     domain=NaturalPos)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># scaled_qubit_register_state_in_qubit_register_space = Forall(</span>
+<span class="c1">#         n,</span>
+<span class="c1">#         Forall(x,</span>
+<span class="c1">#                Forall(alpha, InSet(ScalarMult(alpha, x), QubitRegisterSpace(n)),</span>
+<span class="c1">#                       domain=Complex),</span>
+<span class="c1">#                domain=QubitRegisterSpace(n)),</span>
+<span class="c1">#         domain=NaturalPos)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># register_ket_in_qubit_register_space = Forall(</span>
+<span class="c1">#         n,</span>
+<span class="c1">#         Forall(k, InSet(NumKet(k, n), QubitRegisterSpace(n)),</span>
+<span class="c1">#                domain = Interval(zero, subtract(Exp(two, n), one))),</span>
+<span class="c1">#         domain=NaturalPos)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># register_qubit_complex_amplitude = Forall(</span>
+<span class="c1">#        n,</span>
+<span class="c1">#        Forall(k,</span>
+<span class="c1">#               Forall(Psi,</span>
+<span class="c1">#                      InSet(Qmult(NumBra(k, n), Ket(Psi)), Complex),</span>
+<span class="c1">#                      conditions = [InSet(Ket(Psi), QubitRegisterSpace(n))]),</span>
+<span class="c1">#               domain=Interval(zero, subtract(Exp(two, n),one))),</span>
+<span class="c1">#        domain=NaturalPos)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># register_qubit_born_rule = Forall(</span>
+<span class="c1">#        n,</span>
+<span class="c1">#        Forall(k,</span>
+<span class="c1">#               Forall((Psi, m),</span>
+<span class="c1">#                      Equals(Prob(Equals(m, k), m),</span>
+<span class="c1">#                             Exp(Abs(Qmult(NumBra(k, n), Ket(Psi))), two)),</span>
+<span class="c1">#                      conditions = [InSet(Ket(Psi), QubitRegisterSpace(n)), Equals(m, Meas(Ket(Psi)))]),</span>
+<span class="c1">#               domain=Interval(zero, subtract(Exp(two, n), one))),</span>
+<span class="c1">#         domain=NaturalPos)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># register_qubit_all_probs = Forall(</span>
+<span class="c1">#         n,</span>
+<span class="c1">#         Forall((Psi, m),</span>
+<span class="c1">#                Equals(Sum(k, Prob(Equals(m, k), m),</span>
+<span class="c1">#                                 domain=Interval(zero, subtract(Exp(two, n), one))),</span>
+<span class="c1">#                       one),</span>
+<span class="c1">#                conditions = [InSet(Ket(Psi), QubitRegisterSpace(n)), Equals(m, Meas(Ket(Psi)))]),</span>
+<span class="c1">#         domain=NaturalPos)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[21]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># ## This one requires pregated_controlled_ngate, defined at the top of this page,</span>
+<span class="c1"># ## but that pregated_controlled_ngate requires the Circuit class</span>
+<span class="c1"># pregated_controlled_ngate_equiv = Forall(</span>
+<span class="c1">#         n,</span>
+<span class="c1">#         Forall(U,</span>
+<span class="c1">#                Forall(u,</span>
+<span class="c1">#                       Forall((a, b),</span>
+<span class="c1">#                              Forall((x, y),</span>
+<span class="c1">#                                     Equals(pregated_controlled_ngate,</span>
+<span class="c1">#                                            controlled_ngate(</span>
+<span class="c1">#                                                Qmult(u, a), b, x, y)),</span>
+<span class="c1">#                                     domain=QubitRegisterSpace(n)),</span>
+<span class="c1">#                              domain=QubitSpace),</span>
+<span class="c1">#                       domain=SU(two)),</span>
+<span class="c1">#                domain=RegisterSU(n)),</span>
+<span class="c1">#         domain=NaturalPos)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[22]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># ## This one requires controlled_ngate, defined at the top of this page,</span>
+<span class="c1"># ## but that controlled_ngate requires the Circuit class</span>
+<span class="c1"># controlled_ngate_equiv = Forall(</span>
+<span class="c1">#         n,</span>
+<span class="c1">#         Forall(U,</span>
+<span class="c1">#                Forall((a, b, c),</span>
+<span class="c1">#                       Forall((x, y, z),</span>
+<span class="c1">#                              Iff(Equals(controlled_ngate(a, b, x, y),</span>
+<span class="c1">#                                         controlled_ngate(a, c, x, z)),</span>
+<span class="c1">#                                  Equals(TensorProd(b, y), TensorProd(c, z))),</span>
+<span class="c1">#                              domain=QubitRegisterSpace(n)),</span>
+<span class="c1">#                       domain=QubitSpace),</span>
+<span class="c1">#                domain=RegisterSU(n)),</span>
+<span class="c1">#         domain=NaturalPos)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[23]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># ## This one requires controlled_ngate, defined at the top of this page,</span>
+<span class="c1"># ## but that controlled_ngate requires the Circuit class</span>
+<span class="c1"># superposition_controlled_ngate = Forall(</span>
+<span class="c1">#         n,</span>
+<span class="c1">#         Forall(U,</span>
+<span class="c1">#                Forall((a, b, c, d),</span>
+<span class="c1">#                       Forall((x, y),</span>
+<span class="c1">#                              Implies(And(controlled_ngate(a, c, x, y),</span>
+<span class="c1">#                                          controlled_ngate(b, d, x, y)),</span>
+<span class="c1">#                                      controlled_ngate(Add(a, b), Add(c, d), x, y)),</span>
+<span class="c1">#                              domain=QubitRegisterSpace(n)),</span>
+<span class="c1">#                       domain=QubitSpace),</span>
+<span class="c1">#                domain=RegisterSU(n)),</span>
+<span class="c1">#         domain=NaturalPos)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[24]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># ## This one requires pregated_controlled_ngate, defined at the top of this page,</span>
+<span class="c1"># ## but that pregated_controlled_ngate requires the Circuit class</span>
+<span class="c1"># pregated_controlled_ngate_merger = Forall(</span>
+<span class="c1">#     (n, k),</span>
+<span class="c1">#     Forall(U,</span>
+<span class="c1">#            Forall(u,</span>
+<span class="c1">#                   Forall((a, b),</span>
+<span class="c1">#                          Forall(c,</span>
+<span class="c1">#                                 Forall(d,</span>
+<span class="c1">#                                        Forall((x, y),</span>
+<span class="c1">#                                               Implies(pregated_controlled_ngate,</span>
+<span class="c1">#                                                       Implies(pregated_controlled_ngate_with_merge,</span>
+<span class="c1">#                                                               Equals(d, TensorProd(c, b)))),</span>
+<span class="c1">#                                               domain=QubitRegisterSpace(n)),</span>
+<span class="c1">#                                        domain=QubitRegisterSpace(Add(k, one))),</span>
+<span class="c1">#                                 domain=QubitRegisterSpace(k)),</span>
+<span class="c1">#                          domain=QubitSpace),</span>
+<span class="c1">#                   domain=SU(two)),</span>
+<span class="c1">#            domain=RegisterSU(n)),</span>
+<span class="c1">#     domain=NaturalPos)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[25]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># TOOK REALLY LONG TO RUN... MORE TESTING NEEDED</span>
+<span class="c1">#register_bra_over_summed_ket = Forall(</span>
+ <span class="c1">#   n,</span>
+  <span class="c1">#  Forall(U,</span>
+   <span class="c1">#        Forall(l,</span>
+    <span class="c1">#              Forall(f,</span>
+     <span class="c1">#                    Equals(MatrixProd(RegisterBra(l, n),</span>
+      <span class="c1">#                                     MatrixProd(U, Sum(k, ScalarProd(Operation(f, k), RegisterKet(k, n)),</span>
+       <span class="c1">#                                                      domain=Interval(zero, subtract(Exp(two, n), one))))),</span>
+        <span class="c1">#                        Sum(k, Mult(Operation(f, k),</span>
+         <span class="c1">#                                   MatrixProd(RegisterBra(l, n), U, RegisterKet(k, n))),</span>
+          <span class="c1">#                          domain=Interval(zero, subtract(Exp(two, n), one))))),</span>
+           <span class="c1">#       domain=Interval(zero, subtract(Exp(two, n), one))),</span>
+           <span class="c1">#domain=SU(Exp(two, n))),</span>
+    <span class="c1">#domain=NaturalPos)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[26]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These theorems may now be imported from the theory package: proveit.physics.quantum
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

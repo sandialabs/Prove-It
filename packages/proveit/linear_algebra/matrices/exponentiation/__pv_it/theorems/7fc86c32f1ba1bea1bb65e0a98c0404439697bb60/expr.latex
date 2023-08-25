@@ -1,0 +1,1 @@
+\left(m \mapsto \left\{\forall_{\theta \in \mathbb{R}}~\left[\forall_{A, x~|~\left(A \thinspace x\right) = \left(\mathsf{e}^{\mathsf{i} \cdot \theta} \cdot x\right)}~\left(\left(A^{m} \thinspace x\right) = \left(\mathsf{e}^{\mathsf{i} \cdot \left(m \cdot \theta\right)} \cdot x\right)\right)\right] \textrm{ if } m \in \mathbb{N}^+\right..\right)

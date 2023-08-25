@@ -1,0 +1,19 @@
+\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array}, ..\left(m - 3\right) \times.., \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array},A_{1, 1}, A_{1, 2}, \ldots, A_{1, l}\right), \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array}, ..\left(m - 3\right) \times.., \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array},A_{2, 1}, A_{2, 2}, \ldots, A_{2, l}\right), \ldots, \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array}, ..\left(m - 3\right) \times.., \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array},A_{k, 1}, A_{k, 2}, \ldots, A_{k, l}\right)

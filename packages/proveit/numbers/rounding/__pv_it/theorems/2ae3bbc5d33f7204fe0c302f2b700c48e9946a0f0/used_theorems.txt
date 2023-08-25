@@ -1,0 +1,12 @@
+proveit.logic.booleans.conjunction.and_if_both
+proveit.logic.sets.inclusion.superset_membership_from_proper_subset
+proveit.numbers.addition.add_real_closure_bin
+proveit.numbers.negation.real_closure
+proveit.numbers.number_sets.integers.nat_within_int
+proveit.numbers.number_sets.rational_numbers.int_within_rational
+proveit.numbers.number_sets.real_numbers.in_IntervalCO
+proveit.numbers.number_sets.real_numbers.rational_within_real
+proveit.numbers.number_sets.real_numbers.zero_is_real
+proveit.numbers.numerals.decimals.nat1
+proveit.numbers.rounding.real_minus_floor_lower_bound
+proveit.numbers.rounding.real_minus_floor_upper_bound

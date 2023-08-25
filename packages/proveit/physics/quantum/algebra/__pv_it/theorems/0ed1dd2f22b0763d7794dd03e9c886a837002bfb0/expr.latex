@@ -1,0 +1,1 @@
+\forall_{n \in \mathbb{N}^+}~\left[\forall_{k \in \{0~\ldotp \ldotp~2^{n} - 1\}}~\left({_{n}}\langle k \rvert \in \mathcal{L}\left(\mathbb{C}^{2^{n}}, \mathbb{C}\right)\right)\right]

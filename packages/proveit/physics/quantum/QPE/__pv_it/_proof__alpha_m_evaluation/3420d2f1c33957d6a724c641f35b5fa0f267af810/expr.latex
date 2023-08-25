@@ -1,0 +1,1 @@
+\left(k \mapsto \left\{a_{1} \cdot \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \varphi \cdot k} \cdot \mathsf{e}^{-\frac{2 \cdot \pi \cdot \mathsf{i} \cdot k \cdot m}{2^{t}}}\right)\cdot c_{1} \cdot  c_{2} \cdot  \ldots \cdot  c_{0} \textrm{ if } k \in \{0~\ldotp \ldotp~2^{t} - 1\}\right..\right)

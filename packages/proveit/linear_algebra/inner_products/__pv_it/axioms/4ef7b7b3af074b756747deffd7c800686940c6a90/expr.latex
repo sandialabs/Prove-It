@@ -1,0 +1,1 @@
+\left(\left\{x_{1}, x_{2}, \ldots, x_{n}\right\} \in \textrm{Bases}\left(H\right)\right) \land \left[\forall_{v, w \in \left\{x_{1}, x_{2}, \ldots, x_{n}\right\}}~\left(\left \langle v, w\right \rangle = \delta_{v, w}\right)\right]

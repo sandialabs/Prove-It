@@ -1,0 +1,1 @@
+\left(H \mapsto \left\{\forall_{v, w \in H}~\left(\left \|\left \langle v, w\right \rangle\right \|^{2} \leq \left(\left \langle v, v\right \rangle \cdot \left \langle w, w\right \rangle\right)\right) \textrm{ if } H \underset{{\scriptscriptstyle c}}{\in} \textrm{InnerProdSpaces}\left(\mathbb{C}\right)\right..\right)

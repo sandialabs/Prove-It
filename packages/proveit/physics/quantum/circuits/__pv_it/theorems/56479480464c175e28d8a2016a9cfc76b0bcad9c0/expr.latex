@@ -1,0 +1,5 @@
+\left(A, B\right) \mapsto \left\{\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{A} & \qw 
+} \end{array} \neq \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{B} & \qw 
+} \end{array} \textrm{ if } A \neq B\right..

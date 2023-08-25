@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.ordering.max_real_closure theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.ordering.max_real_closure-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">ordering</a>.<a class="ProveItLink" href="../../theorems.html#max_real_closure">max_real_closure</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.ordering.max_real_closure-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> max_real_closure
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="max_real_closure">max_real_closure:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/6e5baf853d8a2c92fbb800eba61fdfd22683e3ab0/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/d7eb97acf82730e6f00c82a880c0b8894d098d020/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

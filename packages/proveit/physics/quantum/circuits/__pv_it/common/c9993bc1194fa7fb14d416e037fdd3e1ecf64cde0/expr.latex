@@ -1,0 +1,6 @@
+\left\{ \begin{array}{l}
+{\rm element}: \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{b~\mbox{part}~{_{-}a}} & \qw 
+} \end{array}\\
+{\rm targets}: \{1~\ldotp \ldotp~k\}\\
+\end{array} \right\}

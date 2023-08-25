@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.number_sets.integers.nonzero_nat_is_natural_pos theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.number_sets.integers.nonzero_nat_is_natural_pos-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">number_sets</a>.<a class="ProveItLink" href="../../theory.html">integers</a>.<a class="ProveItLink" href="../../theorems.html#nonzero_nat_is_natural_pos">nonzero_nat_is_natural_pos</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.number_sets.integers.nonzero_nat_is_natural_pos-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> nonzero_nat_is_natural_pos
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="nonzero_nat_is_natural_pos">nonzero_nat_is_natural_pos:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/f449ffd0b9a8a39a642d67474f9160b8577306360/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALgAAAAZCAMAAAC1rRS+AAAAOVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACXHtMAAAAEnRSTlMAq1Rm
+mUTNIjK7EInv3Xbt5cmRiLwgAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACzElEQVRYw71Y6bqjMAiF
+7Pud8f0fdkLiEhU73m750fZTMQc4B0gBvrqkft5WHb6/ucQrm/r52/qv4w4G3gAcZPk2cC/vepgn
+702ov2Kakj4Ah0x3cMuj/DBum37howDdoIXpFHEodEetcjH2w8BVvP8sZguxRZK8Vb6uRB+yO1ND
+7vBrnJ9+UVJQ+DmU+RxxMIS/UYnYJD6M203h8l7xua5Bu2irBK25AK7ot5ypbT4d8JKv7mhTjj6h
+BXRQIg+8NLUkcjan+GnguITGYix2KGnWnFNRgRNSr1nguiVPuXY5/L6HsZXsulDMO+tEoAbecFWB
+gDtV62LIzK5uci0Aywdbw7KKVVQyIdMKzis2AcZYzgk0/Q0hETfVwBuOpAQcpADhuRpqu84p2PGk
+eFfQ10yBQIj1ARXuAO/+U2vTp4dyD5lqhTlvjrnO1br8AThgAOSAhw5cFMZr1RlEfalQliLcAd73
+S2Q6WT7iyW87dxT+8kUBIWQ24m7O1dL+Q5Qlkk1Z26hwQlcpXQBfDTp9Y38tZScJFniYaCs5jam4
+BF7TzkbJzVGJYtZ1qP2qXRyiIFylitA88NWg9Tb/03pbL9j5OEGg78BFrzBidbcwQ5Of810cB1zP
+0raL8pQiytEdOQKvVCmeBb4a9F3k0GnSEU4vvuDrdVH5PhQJc+596yXFSVcuW+LsHw1ibYKRpkWw
+jjoNeIg7EWzAV4ORrJ0qk+DDFLBEZ7G4gW/o9a6MOjMl/2AUVngUK1VYGQK4uIs4aFE44JsBUeXP
+33kM4sUJ6XpW0dHvW/7jZY40TMRYLcPYj/ppqyAf8dVgGNcaaTW+NB0+HtdPU49WUpQ2TdpFHS73
+xsYD3wx2vbc2IHVuoS69CbjER15Fyrt+fIjanSf/f6DCNw2g+dmTAwv8BkHDeybQ58+cHHBx55Qg
+3sHyF048z5/xXvlfZdV4U88/r4gVhpG4xxgAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/57676d170f101577f5f6591f18bc8fd3df9d1a550/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>nonzero_nat_is_natural_pos may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

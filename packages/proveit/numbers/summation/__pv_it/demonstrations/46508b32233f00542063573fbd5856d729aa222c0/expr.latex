@@ -1,0 +1,1 @@
+\left[\forall_{k \in \{m~\ldotp \ldotp~n\}}~\left(a\left(k\right) < b\left(k\right)\right)\right] \Rightarrow \left(\left(\sum_{l = m}^{n} a\left(l\right)\right) < \left(\sum_{l = m}^{n} b\left(l\right)\right)\right)

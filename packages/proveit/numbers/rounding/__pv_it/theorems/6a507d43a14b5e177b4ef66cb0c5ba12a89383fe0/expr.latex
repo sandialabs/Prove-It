@@ -1,0 +1,1 @@
+\forall_{x, y \in \mathbb{R}~|~x < y}~\left(\left\lfloor x\right\rfloor \leq \left\lfloor y\right\rfloor\right)

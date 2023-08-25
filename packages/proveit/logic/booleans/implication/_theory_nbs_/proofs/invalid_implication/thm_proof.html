@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.booleans.implication.invalid_implication theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.booleans.implication.invalid_implication-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">booleans</a>.<a class="ProveItLink" href="../../theory.html">implication</a>.<a class="ProveItLink" href="../../theorems.html#invalid_implication">invalid_implication</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.booleans.implication.invalid_implication-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> invalid_implication
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="invalid_implication">invalid_implication:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/f07b924d83b05f3ee2131b3010a4591ede8235680/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAN8AAAAXBAMAAAB5bIfGAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAC90lEQVRIx71WS2hTQRQ9zcv35WMKUtxIAoIb
+F2ZRBBdqwQ+WKgbdFBGNiohx0RbElZq4FCoNImhF2yykUPzQunGRRWNFVEQppYibwkMXbsSmtbSl
+gnVm7vvclNc2PNCBk5m5d+aemfuZF8BzC/FJ94bLuxtatV77ysaJtOqurrP8tImknGzzwOcbYZMd
+1HW5Ldy90tx8qYhEBgoHpeyiB8IhNtZzdIYV15XvgaYlIA+FmzIaJQ+E+9nYn6Eu5Rak0B8gMA+0
+QiFYBqJpD4RVNo5R93Ks6MgeWANN3E4TpLGygiYOF/QSwhybbKerGDPs5LesQVNNMLwVyBA+Tk9/
+8EDo5znTQSLszDgyzVoQK0HfKq4eTRIOW7cvr7JoZ4QrYZDZxnn1exx9isQ/rdq8qewb+NkiF2s5
+Qg9CqjT0d+SJ+Uq7ikTEsvaUBcbWIi68d1TanRKTSSVqQyHJnX6O+plu+F7LeZUQKUezUh6dI09M
+IFGtIxxjgbG1iGVNUY/AG1X8dw+k6tJ9SInxUNoQpwzXCD6DcqbzE4W4DVqNEwZ6DceGrXUhfA5s
+muDlcJmKZFZgn7ARqBKQ26vkxlkylMazDCdMBJmfbK1yqU04SR5FvMpi+Jn4wr/ET0oczzdBwIu8
+sotDSl/41roFnNDwswKwtYhY974iMCA9IbO+5iwNmO5NLArSBRmOEgHX1A068UPp90DfzAkDRRW0
+aH9//yOmVQlut1FpRu5ZdGTWQx4U20/lzUJSxdSk0q6jklJ1IewVsozQXxldtgLItAjzcN0Ghlfy
+8A0uONV539w0ONvcckcFIUswLy4sKeJx4AwvCwOhJYfQ1gJfGGG86P79q2vXTVA7IVIsrY8gtAx9
+irlURmYOT8ynwNHSW2xXS1uDr7394vtfQT92ITyOXb8r7WlGeCSJxwvZXjMlHa3Q8yvca+APQsnl
+s+Rj4whXuHxOdL55eGNCecDIaj+fXIMwUHaxcIMf39iQ8LuJupZZg1DDf2ihf2P2L81HvoJBamXn
+AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/4fb1a0bc6c7c542f0be9d5549c547f612f7edf7e0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>invalid_implication may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,1 @@
+\forall_{x, y, z~|~x \rvert y, x \rvert z}~\left(x \rvert \left(y - z\right)\right)

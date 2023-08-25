@@ -1,0 +1,1 @@
+\forall_{a, b \in \mathbb{Z}}~\left(\left(a \oplus b\right) = \left(\left(a + b\right) ~\textup{mod}~ 2^{t}\right)\right)

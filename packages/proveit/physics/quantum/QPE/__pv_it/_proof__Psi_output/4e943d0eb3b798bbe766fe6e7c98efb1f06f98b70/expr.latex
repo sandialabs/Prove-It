@@ -1,0 +1,5 @@
+|\left({_{-}a} \mapsto \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert \Psi \rangle~\mbox{part}~{_{-}a}~\mbox{on}~\{1~\ldotp \ldotp~t\}} 
+} \end{array}, {_{-}a} \mapsto \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert u \rangle~\mbox{part}~{_{-}a}~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} 
+} \end{array}\right)|

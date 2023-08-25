@@ -1,0 +1,12 @@
+proveit.core_expr_types.conditionals.conditional_substitution
+proveit.core_expr_types.lambda_maps.lambda_substitution
+proveit.core_expr_types.operations.operands_substitution
+proveit.linear_algebra.addition.scalar_sum_extends_number_sum
+proveit.linear_algebra.scalar_multiplication.scalar_mult_extends_number_mult
+proveit.logic.equality.equals_transitivity
+proveit.logic.equality.substitution
+proveit.numbers.number_sets.natural_numbers.zero_in_nats
+proveit.physics.quantum.QPE._Psi_def
+proveit.physics.quantum.QPE._alpha_m_def
+proveit.physics.quantum.QPE._t_in_natural_pos
+proveit.physics.quantum.algebra.multi_qmult_def

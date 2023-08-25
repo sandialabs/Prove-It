@@ -1,0 +1,12 @@
+proveit.core_expr_types.conditionals.dissatisfied_condition_reduction
+proveit.core_expr_types.conditionals.satisfied_condition_reduction
+proveit.core_expr_types.tuples.tuple_len_0_typical_eq
+proveit.logic.booleans.disjunction.singular_constructive_dilemma
+proveit.logic.booleans.in_bool_if_true
+proveit.logic.equality.equals_reversal
+proveit.logic.equality.rhs_via_equality
+proveit.logic.equality.sub_right_side_into
+proveit.numbers.numerals.decimals.nat1
+proveit.numbers.ordering.not_less_eq_from_less
+proveit.numbers.ordering.not_less_from_less_eq
+proveit.numbers.ordering.relax_equal_to_less_eq

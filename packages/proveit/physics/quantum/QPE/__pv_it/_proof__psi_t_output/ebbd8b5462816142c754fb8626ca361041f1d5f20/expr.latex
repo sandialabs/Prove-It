@@ -1,0 +1,5 @@
+\left(|\left({_{-}b} \mapsto \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle~\mbox{part}~1~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} 
+} \end{array}, {_{-}a} \mapsto \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle~\mbox{part}~{_{-}a} + t~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} 
+} \end{array}\right)|, |\left(1, \ldots, 2\right)|\right)

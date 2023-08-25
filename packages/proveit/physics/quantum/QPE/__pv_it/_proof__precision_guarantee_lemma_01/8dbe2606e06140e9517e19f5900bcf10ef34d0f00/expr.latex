@@ -1,0 +1,1 @@
+\left(\left\lceil \textrm{log}_2\left(2 + \frac{1}{2 \cdot \epsilon}\right)\right\rceil, \left\lceil \textrm{log}_2\left(2 + \left(\frac{1}{2} \cdot \epsilon^{-1}\right)\right)\right\rceil\right)

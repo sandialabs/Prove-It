@@ -1,0 +1,1 @@
+\left(a, b\right) \mapsto \left\{\forall_{x}~\left(\left(x \notin \{a~\ldotp \ldotp~b\}\right) \in \mathbb{B}\right) \textrm{ if } a \in \mathbb{Z} ,  b \in \mathbb{Z}\right..

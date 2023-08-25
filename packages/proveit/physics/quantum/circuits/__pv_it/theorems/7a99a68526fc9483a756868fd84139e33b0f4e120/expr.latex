@@ -1,0 +1,5 @@
+k \mapsto \left\{\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{A~\mbox{part}~1~\mbox{on}~\{k~\ldotp \ldotp~k\}} & \qw 
+} \end{array} = \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{A} & \qw 
+} \end{array} \textrm{ if } k \in \mathbb{N}^+\right..

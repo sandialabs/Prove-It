@@ -1,0 +1,5 @@
+\left(A, B\right) \mapsto \left(\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{A} & \qw 
+} \end{array} = \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{B} & \qw 
+} \end{array}\right) = \left(A = B\right)\right)

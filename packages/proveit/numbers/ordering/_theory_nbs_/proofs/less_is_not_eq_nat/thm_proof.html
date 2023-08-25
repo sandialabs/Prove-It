@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.ordering.less_is_not_eq_nat theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.ordering.less_is_not_eq_nat-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">ordering</a>.<a class="ProveItLink" href="../../theorems.html#less_is_not_eq_nat">less_is_not_eq_nat</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.ordering.less_is_not_eq_nat-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> less_is_not_eq_nat
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="less_is_not_eq_nat">less_is_not_eq_nat:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/25e75496c071b11af4ee9c174d64f8cbe1acb4a60/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALAAAAAXCAMAAACccDU6AAAAPFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAo1xBWAAAAE3RSTlMA
+q1RmmUTNIjK7EInv3Xbn9enzK1aD6QAAAAlwSFlzAAAOxAAADsQBlSsOGwAAApVJREFUSMfFV+22
+nCAMFAgCAdL2+v7vWj4V0MXt3h4vPzzrQpJhMoS4LD801CMm/28Qn88Dnv+TFJ9sf+fiObzczue1
+OX6jcb7sMiIEWSfW5yjH9WaB0e3bCvVH4F1XipV5jmC4SaZm3etW9SOgoI7D8ucAuzuCu2TLbRe0
+C79E2e36oIJvYsmeYOsPcUSwzsfh7IOKqLEUs6ToND+cppURsZx/G7cCSeAGP4v9idFakipdQGaO
+hEOizv/6HZ87y7gF1eKWNiHWtM36GKW/DudQebChqAh3LL49qScnYfhMF7pUpvwNwTztyKVEcFfJ
+tfIiGKup08SMCSs4Wyx2VX0KGDsnzZnLwWBL6Md5OWQNkuK3tEwnE04vjpwr1RBA17uFogiaEBPA
+Chg2Ts6AnUkJl3OC845kLm3SlQIhivLRCrLVQG9B7FgumAxYcxkOyQvAvTFjqnVylgRuMajYGi6j
+dv98ZSWzrgpDVjr3pQSXYoxehQg1JnlcCMLVeMhJB0lweQ24NZYGVOekL7OUAUckbF14R+k6nv5N
+V7mH7eV4qp4iCJ71XtWNSMdSihZwkASZS8CHsTQWByd9YWU7bu6hrzT8VHdY8GCgL4hMH+Ii1koY
+WAhn0uAZMNpW8KZXZjLWjvfnAIYSpHNikZHVipGeEhyW2f0q973gU7EzAotNVFeIrW3H8CI5XQFu
+jNGaHXJxMohYf9bGqbEEuqhCKTDSGNxi1sxxp4i0QWLXDFfjtMYUUqqTboiX982K/9Q0SRCcrChZ
+1UCU+zhdU5lLzjXg3biAypCrk1l30+xkTvCs6vOuXkUNy8u+aubCvOyw8YWdx/ebuIHrN1uLT5vo
+i5Yn5WP6WTX7wnj3c+nBrv/HPn6/N/4CLysT3soT8+EAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/90556df5b665b5ff7d8773a921af8e1936b306100/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

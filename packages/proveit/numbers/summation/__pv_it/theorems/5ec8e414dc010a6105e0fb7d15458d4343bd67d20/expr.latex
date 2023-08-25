@@ -1,0 +1,1 @@
+\forall_{x \in \mathbb{C}, n \in \mathbb{N}~|~x \neq 1}~\left(\left(\sum_{i = 0}^{n} x^{i}\right) = \frac{1 - x^{n + 1}}{1 - x}\right)

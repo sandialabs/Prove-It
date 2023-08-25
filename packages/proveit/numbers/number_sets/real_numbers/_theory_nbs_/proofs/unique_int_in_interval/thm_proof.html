@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.number_sets.real_numbers.unique_int_in_interval theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.number_sets.real_numbers.unique_int_in_interval-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">number_sets</a>.<a class="ProveItLink" href="../../theory.html">real_numbers</a>.<a class="ProveItLink" href="../../theorems.html#unique_int_in_interval">unique_int_in_interval</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.number_sets.real_numbers.unique_int_in_interval-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> unique_int_in_interval
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="unique_int_in_interval">unique_int_in_interval:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/5280a60446db0a8aa0548941db147e127308445f0/expr.html"><img src="data:image/png;base64,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
+AElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/1309f70cae99354e03d37c4226e671819411863a0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

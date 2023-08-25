@@ -1,0 +1,2 @@
+proveit.linear_algebra.scalar_multiplication.distribution_over_vectors
+proveit.logic.equality.equals_reversal

@@ -1,0 +1,3 @@
+proveit.logic.sets.inclusion.superset_membership_from_proper_subset
+proveit.numbers.number_sets.rational_numbers.int_within_rational
+proveit.numbers.number_sets.real_numbers.rational_within_real

@@ -1,0 +1,12 @@
+\begin{array}{cc} 
+ \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{Y} & \qw 
+} \end{array} \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{X} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{H} & \qw 
+} \end{array} \\
+\end{array}

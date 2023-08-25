@@ -1,0 +1,1 @@
+K \mapsto \left[\forall_{m, n \in \mathbb{N}^+}~\left[\forall_{V \underset{{\scriptscriptstyle c}}{\in} \textrm{VecSpaces}\left(K\right)}~\left((V^{m})^{\otimes n} \subseteq V^{m \cdot n}\right)\right]\right]

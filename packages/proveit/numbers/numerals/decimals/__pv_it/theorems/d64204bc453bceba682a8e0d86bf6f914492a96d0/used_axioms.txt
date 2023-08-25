@@ -1,0 +1,1 @@
+proveit.numbers.number_sets.natural_numbers.successor_in_nats

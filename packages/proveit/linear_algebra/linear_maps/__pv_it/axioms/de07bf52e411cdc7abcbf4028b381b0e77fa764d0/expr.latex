@@ -1,0 +1,1 @@
+\forall_{K}~\left[\forall_{V, W \underset{{\scriptscriptstyle c}}{\in} \textrm{VecSpaces}\left(K\right)}~\left[\forall_{c \in K}~\left[\forall_{P \in \mathcal{L}\left(V, W\right)}~\left(\left(c \cdot P\right) = \left[x \mapsto \left\{c \cdot P\left(x\right) \textrm{ if } x \in V\right..\right]\right)\right]\right]\right]

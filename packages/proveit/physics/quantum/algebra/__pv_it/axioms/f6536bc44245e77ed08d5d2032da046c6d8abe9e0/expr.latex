@@ -1,0 +1,1 @@
+\forall_{A, B~|~\left[A\right] \in \mathcal{L}\left(X, Y\right), \left[B\right] \in \mathcal{L}\left(\mathcal{H}, X\right)}~\left(\left(A \thinspace B\right) = \left(\left[A\right] \circ \left[B\right]\right)\right)

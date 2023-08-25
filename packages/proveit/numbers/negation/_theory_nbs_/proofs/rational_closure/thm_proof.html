@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.negation.rational_closure theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.negation.rational_closure-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">negation</a>.<a class="ProveItLink" href="../../theorems.html#rational_closure">rational_closure</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.negation.rational_closure-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> rational_closure
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="rational_closure">rational_closure:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/ef66c9127aff011ef27c1df4227dacb36d18c7f00/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJkAAAAWBAMAAAAhlCOEAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACrklEQVQ4y51UTWgTURD+ms1mk902RNFDEUow
+oAethFqKVgiBWhBEG8hFVCQiKBSRxIMg2BIRUSimAQu6Bev2UigVTPVQiyC9iH8IRfypSGCrBw+C
+iCjexJn9y+5mk4MPdnZn9vHNm++beUDbVaRH8oakdnvbrniSzGdvTNT9u+RldYqgTtBngv1UC7Qd
+9IRqvuAX/6715xjbQqnTwDD7Z4LB5AKZOX80onl9ZV8a4nAVGAUuMxXVYLQwZcOQPypkvf5EhEw1
+A/SbmZRkMFonm5Wm8EuL1Dv19/yeniXziCA7NQiUP9KCtm1MW6EpfMpU45xZsVytkN0aLiNCUK/r
+9Vct0A5ytW4RSk/GyS4a3xcs+qK1PNm8kIRCih6gs7ZA40NwQqc5nuEuYQzArZyo95GthNIQqIwS
+pIQbYmFqg92Hb+jpcnF6L41D9NppODYDUo37Kx/PIUQUxzQlZ/2Irqs56TGUPst/ykrQz7k6rzWM
+AJ8oNGnsJYbqH/nL4k1D9AfRrDsi7C+Tvuch7y560ez1AvJveh03ybej0yVLU5HlL2S4vsyS0cy4
+vh3Q9cBK5b8QKD16DW/VDh8z+o3qCXHoAfWw/CH6B/P8bzDdQJuhJ9YYS/knOgqUbK/hfXd6nGdh
+Mx1V4ONeIhHC2egKWGkDSbe6gltBcUk0g95s1mwcEts59CLN6Sa7mTrKzE48gQFVVZNHXJXeYLZX
+G2iz36710OZ35km7j9qqjpz+VWZSbIrvF2OD2oQxwy4VunjPmr8LJQtfXDYni8/D1GPMmcjiZF6L
+aUaXQEm557s/8C7wrp74xquu+0Ec2vUQ0m2je9+eLNvhWyyD/0692Dw0oe6zN5tuogVVpdKXrjiB
+eU9juVIErVjgVR5OHbbplFiOcd/t3ur+/xocruzBf65/n5af+D/Sf8QAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/7539f9f205bbc746114b3d43d0ff9c7adf1a804b0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>rational_closure may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,1 @@
+\forall_{x, y \in \mathbb{R}~|~\lnot \left(x < y\right)}~\left(y \leq x\right)

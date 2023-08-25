@@ -1,0 +1,1 @@
+\forall_{n \in \mathbb{N}^+}~\left[\forall_{P, Q}~\left(\left[\forall_{x_{1}, x_{2}, \ldots, x_{n}~|~Q\left(x_{1}, x_{2}, \ldots, x_{n}\right)}~P\left(x_{1}, x_{2}, \ldots, x_{n}\right)\right] \in \mathbb{B}\right)\right]

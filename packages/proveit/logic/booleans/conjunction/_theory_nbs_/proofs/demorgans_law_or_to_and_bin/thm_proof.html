@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.booleans.conjunction.demorgans_law_or_to_and_bin theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.booleans.conjunction.demorgans_law_or_to_and_bin-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">booleans</a>.<a class="ProveItLink" href="../../theory.html">conjunction</a>.<a class="ProveItLink" href="../../theorems.html#demorgans_law_or_to_and_bin">demorgans_law_or_to_and_bin</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.booleans.conjunction.demorgans_law_or_to_and_bin-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> demorgans_law_or_to_and_bin
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="demorgans_law_or_to_and_bin">demorgans_law_or_to_and_bin:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/354aea129ead4b4c3b7ddd5d987fae7fa7bae3280/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPsAAAAXBAMAAAA/2iRsAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADYUlEQVRIx7VWTWgTQRT+svnfNGkKInpKxKIH
+BVNovWkX/2rxYNBLa0FbRMRSsF48KYnHHqQ5CLUF7fYi9KDEXkR7sBYURZRSRLwUIh68SK2i1h+w
+vnkzuzvZtjmoeUx2Zt68N9/M+5sAdaXBv178H5TKcndx7dWT9EuLwdY6we+Q3XkfOzj+qWnjdaRy
+wEExP1sfdLOXO2NFzaechYYSkCmiH7hCs2ipPvChnOwy0svma2ehUAFOWWgFIjaQyNYHvkF29x4W
+ZSS05NVCOzHaK2iwEaQTRurk+m38jVY+yuslY46VM/QbGESEsF8sLDyvE/wRaXvsyqlAdGLsGTDx
+hqxOcX8YGGOe7XOcPtlOAeSlqY2UOzaqs7fCTdFp/h7DcBkywJslP/Zj8a1YC1JoXkCUk898yktD
+X6Y72VVxPVPIaW1eQJOk5UxctlQM6eee56+FAgPE0kjKK6aWgZ1kEWOGYOwER0Tis0SaQ2rGDz9B
+mGl3JiR7GCWgsaViuCyaoseMde1Ahn0eKCIlLRMngMR3OtASHaEiI6/rJXcBC8ElPzwVh1DenQnJ
+iG3k+BAuWyn2c9Pg7wCNc2Jwi+7AAzTSmYO/gbC4Z+9e6bU+mSxZ3M754Ukrqfm3j3O1JILGYyvF
+Ka26zEvbIznjFJ19zB8mucBXurk4zRSfNoVDsiK8a90EH3y0V6/bLGlYVKnJzB5bKTbDCTDgJv3C
+IrGX1B2U+EcK12HaMyiccond14UPvLQH5gYN/v7o6OhcmMS61VhJEitOYSPYCWLfcBW7uUm6K3YX
+Wy2L2BB+j3NUD5D+E4rCUFmGhMjR6QyHJW1RyFffPm3QAbeosZKkChLM9bjsgKs4xE3SVWBypR/G
++DfCCYjtY+IMm1eams6JSpTMexZFgY8xS9XYl3hpUa2GHHgpScZH75jLDriKuvGTxdpl6bI7Ok7x
+mDXLiP6E+crne0sLPUtKcgq1lF12yFVc5KZy0aoNv98tcY9gHj0Tm8XuX9OdWX/oYYSmg7okT8Vr
+5bBdxRFunl4NWvXQGtpYhycne8WEaVL1PjbMkmh+qbUp7v+3dWId+BAJdlRJdqwauJIhb9dopRb8
+ez8jtw48HlB+2b5HQFXg6peqTX8c/oWiVTb1vYgmtOdPJ3vVy1mT/gBS+MrsgZ2ZzQAAAABJRU5E
+rkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/db5b6af49c23b6bf160e699ef3ce0558fcef09680/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

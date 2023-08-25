@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.addition.subtraction.sub_one_is_nat theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.addition.subtraction.sub_one_is_nat-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">addition</a>.<a class="ProveItLink" href="../../theory.html">subtraction</a>.<a class="ProveItLink" href="../../theorems.html#sub_one_is_nat">sub_one_is_nat</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.addition.subtraction.sub_one_is_nat-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> sub_one_is_nat
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="sub_one_is_nat">sub_one_is_nat:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/f9723099a5cd5fe5f6c2f5b68731116a04087ac40/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALcAAAAVBAMAAAD2lGJJAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACoElEQVQ4y42VTYjTUBDHp0naJmkbqohFRQmI
+gvjBHmRBD3VhuyAuQnAPgixS3cOCB81eBEEhiniRssGDGkGJF2FZpF33oC6CFfGiiEX8hkLEwy4I
+2psoe3Be3mvapC9hB/4wnTS/N29m3gvAGsxk4lk26aU1mKZTcS3tRQIP/9504dmqcRL9IglsT4Tv
+Zhq0mgvwIxq8kS6C2gFtCGCM/J5OYqtVqsEHG84hPONGwlvNRYAmwBmAy6RudhJcGqLi2G8EiyOR
+4Ho7Y0ILYD9dOKcnwfNMMXB4zTpzt/3Jd0rlbJXA8y6ImFMmseQ7meLgU7SxZ7vlKaWsnwSeQfLb
+dvtNInycKbtl2ePBF3z3fFD6EtiKgfAczsphgDuDxFzPnWKaNJV/PPgwhGeiBFfVbwgXcQhmIFvk
+dLHnvqdSX4LU4sH3+G61Dy7qu3BaBJTi5oy+/18aN8QXIfgrKqkDhQa6D9rEvvTgs8STsbrtrwwO
+m1MIlju4gBf0U/7uGEJxCY7w4Hkb6gYv80l/5u2+zOG+intMN8mGyt1wxcK1yhI0cpWjlbFIWeoe
+HOJOy17fbfXDZQ/XEkjoER4lmC8/9g8sCFeOe41Q5veo6jpsFEwO/IDv/gqCt1ErCBfJZi5iP9XP
+8h+YI48Ea2lHGL5ApXjCBymS+XOTjSlOdXAQT5N5wP5KpEMpLIY0IjdhgsIlzQ7Ba1TqticzK2H2
+unencLMf6UWz6QQNXlu16V1U6HYob2hFGHYcRxcstVENzXnBooq70Fm100/Z8Q/mruvUTeWge51m
+DsfCB5HcTAO3U/he49pocDmZsxOuQtojGqBFDtUtJr5diNtRMJzp0X2LkCV9rk2zD0jP5pj4Fres
+EpmseccxeDl4VPxvYNy3chngP5kEr46oTpn7AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/6bd931ee252d1d40f70d9e8f1096bbb39afa242a0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>sub_one_is_nat may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

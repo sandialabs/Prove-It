@@ -1,0 +1,5 @@
+|\left({_{-}a} \mapsto \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \meter 
+} \end{array}, {_{-}a} \mapsto \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array}\right)| = |\left(1, \ldots, 2\right)|

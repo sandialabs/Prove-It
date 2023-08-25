@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.trigonometry.sine_linear_bound_by_arg theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.trigonometry.sine_linear_bound_by_arg-theorem">Proof of <a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../theory.html">trigonometry</a>.<a class="ProveItLink" href="../../theorems.html#sine_linear_bound_by_arg">sine_linear_bound_by_arg</a> theorem<a class="anchor-link" href="#Proof-of-proveit.trigonometry.sine_linear_bound_by_arg-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> sine_linear_bound_by_arg
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="sine_linear_bound_by_arg">sine_linear_bound_by_arg:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/5200f588b3fed50b275ae682509856bb9791490d0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKcAAAAVBAMAAADROuOhAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACrklEQVQ4y52Vz2sTQRTHv/mxSXaa7KY9FAS1
+AaEnDzl4tS1WqQqWXLzaIoKoRddjscrqH9CGlh6ioHsookhtFAKmRUmuFSEHDwUJXayoILb1R7CK
+iG9md9PsZqzQOWTCe5PP7vf73rwAO614MGAE9raDRluqbb0NBkqB3VsduWbiDH2m+dcDcma4KLaJ
+rA+qLZly6Kdn/IBGp4/x2Hk59L6zjQz4oDOs1grtNVyomp0XBy4CN7kjeTl00NmYT35HHlst0MMn
+vTctQxcSDgExi0IZObQCiadTOXzdhn5e9OQnGtAzPJG0ECELYv+wdFQG3Qf2zYOy53bT01ANC1me
+iBHxVb3+Ug6NUp0m+97Hx9KJsaH1/Q6U/YHScKHsVHa7UAs2RnLCH6r9ceC2HEqPZHmkEEsj1YUp
+Q0C1LWg/HCjrzrRUf8PEhsETERJ4FXFCx4cdIeE357pdSUhloCxDg5qGWoGeFdDYl86eivumPuiV
+zs7fwp8wlUK1eOkeWtQJk3tmYRc7rrknkxRfvWsIaB66LaB6ngt1oPFW+T+5MzyR2CSwzes0g2lE
+yQnYduRxC/TR6nc/lIj9lqRQRIz8ElCFN81oHz1zE2exBgHV5rblxy30m35oDq8haSnWQGrAkV+j
+wFMSHqWOZuIK2MXxNfcHqk0yEMr65efCy5A1fwMHLZGIcM4E1Sl158mmIgyyT5Sb7qdBANUgYqwJ
+DWXmTd9A6TUdaBdbcRqZdyJCFNWN6EDkQqEwTfJLXk0TNSgv1kuJvdUHPdVb96pOnw4PyafU3Dun
+55DyJpaOpJEoOp6eXvSOrmAXow/Xm31uHXHvALWUVyg+GnYBHfSCyhJpHicflMuX2FHvzqvGjlBW
+F8v0QwMjj5ULs/5Afhdvqv7v/+RGMPAxsHtLM5uJD8Bf2hXgzjkLfJoAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/515ee62b4323c834ab5b9ecc85be5a6f9768b98d0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

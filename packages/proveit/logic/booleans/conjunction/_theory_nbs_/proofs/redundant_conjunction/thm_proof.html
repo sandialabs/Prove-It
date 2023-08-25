@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.booleans.conjunction.redundant_conjunction theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.booleans.conjunction.redundant_conjunction-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">booleans</a>.<a class="ProveItLink" href="../../theory.html">conjunction</a>.<a class="ProveItLink" href="../../theorems.html#redundant_conjunction">redundant_conjunction</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.booleans.conjunction.redundant_conjunction-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> redundant_conjunction
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="redundant_conjunction">redundant_conjunction:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/626ce1fc37191caf60edb104c6471168ce682eb30/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYAAAAAZBAMAAADK9+SzAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEW0lEQVRYw81YXWgcVRT+dvZndmezm/ggaB/M
+lqJEBLOY+FZkS6JU+uDSvhRMS0REjBTXF0HbTde3+mCNYtH40ExVhCKVbaGU0gdTRAiIGqRoLF3Y
+ttISFBsjplWReM69c2dn7vy4K3nIIWT2nnPuufc7f/fOAHGUaP2AzUzF1nfxChlsdhrZEAC1ntc1
+N8BWbcMAFEvi8UrIPicjplyLNLa/OwdMOpojGODHtmgAsXJJD8nHSyHzV8JnGM3QXV14sopiuRsA
+bFhojuBxHj8fDSBWLsiSbjbWnXG+5IqGVwIsQZ+EGvoYxiowFbmQbnhKAHidoc9EA4iVC0pJn6UG
+nfQ91cmbHbcDLEFjoYZulaw1YDRyId3wqACQsYMO8gKIlQvqk49znzfkj+t3uy47eEdnSZoPNTRR
+BQHos6MW0g2z5giS5ZhaJUGsXNADMoHbtxyYi28oyXRxVWfJbIuqbeN3WkwENFELBl43zJrUhb5u
+tb6K60JxckG7ZAZhuOwUaEa1wgpvyM+SulTD+7ccXG7rpvaRibxoG+YSUG9ola8ZZk0CsBP4IA6A
+K7edjTrkRvpZ8X833pKtJVMzKlKQLmX/1liOWdpn8+22dVtb7uhdtOWkDE+9wRh8s3TDrEkAXoY5
+4O1ll85i+4AHgJJbC4KVU71nQc2Qp3kFh+UsqvrLjqNh/qaxJBVKSFd/hHknkEKUGYYsEHNJC0DQ
+MGsSgJydr7ouuPcYtubtlO0BoOT5VR8AZ0j0pTjM3h0flCl7D/CrFCyP7/hTYzllX4Vl/QHjL3bE
+gRaTs9lvbWSd1lvXAhA0zJoEwGi7NZrayYdWu5L3ppCS7/3GB8AZKgCfAf2L6lQ4JWNEKf6Pn9UB
+AGMFCa2WjwBzFJv5cABBw2kZAUw+Ruk0dvQn6lMsHrp/2gdAyInaz/gAOEOVQpSdhXl12qRKqlqu
++FmdFOLd95f9HXPdZgDGYngKBQ2zJgM4QyfaRxPlvpolcmAo/+HTPgBnxNlYxBNeAGpIdJydUVb3
+hoJ7BdqjrhcF/VaUIxf2NTFs+28UF0UKJWfCizhomDUZwCEqvtduoN9Oiz44hMqyD8AhUZx78YsX
+gBoSnWYdloimIsL1Pi/GAZmreVl00PJZK/rf4QZuJBva1Zi7Y6rpa6NqTohh1mQACda7DxNIvjA7
++w4B+DTjAyDk2HVh0PYAUEOiN4GT61Mw5tZ46S2iGdDCc2s2Hlx/0cMCLok/ZCn2+4ATj/izPD1O
+lzkUqmpR6W9nTohh1nSv0wsYz2abMgLph4PX6aLwmQvAHXJsGz2/DizFyOpdW6l73gfMFSwNyQPr
+UeBqEADlXX+pA8AdcipWegYwGiMb69rKmAdAegA/l/Eq+TL7fQ2JAIDURVhPPecC6AyZ3usZQC76
+vSv+5hvQ9L+RWednj/3XG1kuyDrZMwBr5v9gC9Ps/ZUyBIDZ7hnBdKTkZtc2bmKjAGzmrxLB70Lm
+5vou9MW/a7kob/GBon8AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/899561cfddd3b045c017397691a27c7a5c3980a10/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>redundant_conjunction may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

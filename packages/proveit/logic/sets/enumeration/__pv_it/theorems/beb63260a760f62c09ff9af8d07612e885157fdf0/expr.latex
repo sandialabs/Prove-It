@@ -1,0 +1,1 @@
+\left(n \mapsto \left\{\forall_{a_{1}, a_{2}, \ldots, a_{n}}~\left[\forall_{P~|~P\left(a_{1}\right), P\left(a_{2}\right), \ldots, P\left(a_{n}\right)}~\left[\forall_{x \in \left\{a_{1}, a_{2}, \ldots, a_{n}\right\}}~P\left(x\right)\right]\right] \textrm{ if } n \in \mathbb{N}\right..\right)

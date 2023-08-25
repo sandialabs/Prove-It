@@ -1,0 +1,1 @@
+(\lnot \left((\lnot \bot) \land (\lnot \bot)\right)) \Rightarrow \left(\bot \lor \bot\right)

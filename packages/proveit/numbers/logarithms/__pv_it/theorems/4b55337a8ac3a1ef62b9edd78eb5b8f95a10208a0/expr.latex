@@ -1,0 +1,1 @@
+\forall_{a, x, y \in \mathbb{R}^+~|~x \leq y, a > 1}~\left(\textrm{log}_a\left(x\right) \leq \textrm{log}_a\left(y\right)\right)

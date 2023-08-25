@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.physics.quantum.algebra.qmult_disassociation theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.physics.quantum.algebra.qmult_disassociation-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">physics</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">quantum</a>.<a class="ProveItLink" href="../../theory.html">algebra</a>.<a class="ProveItLink" href="../../theorems.html#qmult_disassociation">qmult_disassociation</a> theorem<a class="anchor-link" href="#Proof-of-proveit.physics.quantum.algebra.qmult_disassociation-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> qmult_disassociation
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="qmult_disassociation">qmult_disassociation:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/65cdb794b61298921b988a8165db0ec85f592c260/expr.html"><img src="data:image/png;base64,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
+Ad8HtQS6q3FXAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/a6ceb59b164826f2d2ad1b58ac6f52b0ab241d450/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

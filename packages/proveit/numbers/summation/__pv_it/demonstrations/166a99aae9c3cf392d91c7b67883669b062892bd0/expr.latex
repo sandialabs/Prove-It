@@ -1,0 +1,1 @@
+\left(l \mapsto \left\{a \cdot b \cdot \left(l + 1\right) \textrm{ if } l \in \mathbb{Z}\right.., l \mapsto \left\{\left(l + 1\right) \cdot \left(a \cdot b\right) \textrm{ if } l \in \mathbb{Z}\right..\right)

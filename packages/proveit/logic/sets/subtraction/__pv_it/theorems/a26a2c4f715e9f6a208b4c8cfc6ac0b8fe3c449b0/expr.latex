@@ -1,0 +1,1 @@
+\left(\left(x, A, B\right) \mapsto \left(\left(x \notin \left(A - B\right)\right) = \left(\left(x \notin A\right) \lor \left(x \in B\right)\right)\right)\right)

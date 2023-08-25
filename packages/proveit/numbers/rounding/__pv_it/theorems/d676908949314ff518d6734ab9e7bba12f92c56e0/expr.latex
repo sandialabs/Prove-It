@@ -1,0 +1,1 @@
+\forall_{x \in \mathbb{Z}, y \in \mathbb{R}~|~x < y}~\left(\left(x + 1\right) \leq \left\lceil y\right\rceil\right)

@@ -1,0 +1,1 @@
+\left(a, b, c, d\right) \mapsto \left\{\left(\frac{a}{b} + \frac{c}{d}\right) = \frac{\left(a \cdot d\right) + \left(b \cdot c\right)}{b \cdot d} \textrm{ if } a \in \mathbb{Z} ,  b \in \mathbb{Z} ,  c \in \mathbb{Z} ,  d \in \mathbb{Z}\right..

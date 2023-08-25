@@ -1,0 +1,1 @@
+\forall_{A, B~|~\lnot \left((\lnot A) \lor (\lnot B)\right)}~\left(A \land B\right)

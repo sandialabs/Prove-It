@@ -1,0 +1,3 @@
+proveit.numbers.number_sets.natural_numbers.zero_in_nats
+proveit.physics.quantum.QPE._success_def
+proveit.physics.quantum.QPE._t_in_natural_pos

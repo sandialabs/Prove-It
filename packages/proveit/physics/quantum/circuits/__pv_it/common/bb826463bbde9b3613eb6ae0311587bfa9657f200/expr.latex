@@ -1,0 +1,7 @@
+\begin{array}{l} \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{A_{k}~\mbox{part}~1~\mbox{on}~\{N_{k - 1} + 1~\ldotp \ldotp~N_{k}\}} & \qw 
+} \end{array},  \\ \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{A_{k}~\mbox{part}~2~\mbox{on}~\{N_{k - 1} + 1~\ldotp \ldotp~N_{k}\}} & \qw 
+} \end{array}, \ldots,  \\ \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{A_{k}~\mbox{part}~n_{k}~\mbox{on}~\{N_{k - 1} + 1~\ldotp \ldotp~N_{k}\}} & \qw 
+} \end{array} \end{array}

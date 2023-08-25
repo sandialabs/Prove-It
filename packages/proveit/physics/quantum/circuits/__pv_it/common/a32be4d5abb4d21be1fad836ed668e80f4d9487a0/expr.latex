@@ -1,0 +1,4 @@
+\left\{ \begin{array}{l}
+{\rm state}: \left(A_{1} {\otimes}  A_{2} {\otimes}  \ldots {\otimes}  A_{m}\right)\\
+{\rm part}: {_{-}b}\\
+\end{array} \right\}

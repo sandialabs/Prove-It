@@ -1,0 +1,1 @@
+\rho \mapsto \left\{\forall_{A, x~|~\left(A \thinspace x\right) = \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \rho} \cdot x\right)}~\left(\left(A^{m} \thinspace x\right) = \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \left(m \cdot \rho\right)} \cdot x\right)\right) \textrm{ if } \rho \in \mathbb{R}\right..

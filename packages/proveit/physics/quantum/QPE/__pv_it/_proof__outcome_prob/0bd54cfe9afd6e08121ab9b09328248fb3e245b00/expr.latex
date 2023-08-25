@@ -1,0 +1,4 @@
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{\lvert \Psi \rangle} & { /^{t} } \qw \\
+\qin{\lvert u \rangle} & { /^{s} } \qw
+} \end{array}

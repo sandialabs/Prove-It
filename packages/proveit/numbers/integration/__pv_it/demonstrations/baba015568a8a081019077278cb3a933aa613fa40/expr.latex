@@ -1,0 +1,1 @@
+\left[\forall_{x \in \left[a,b\right]}~\left(f\left(x\right) \in \mathbb{R}\right)\right] \Rightarrow \left(\left(\int_{a}^{b} f\left(x\right)\,dx\right) \in \mathbb{R}\right)

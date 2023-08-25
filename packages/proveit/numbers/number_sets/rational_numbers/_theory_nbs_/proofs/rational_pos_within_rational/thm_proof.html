@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.number_sets.rational_numbers.rational_pos_within_rational theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.number_sets.rational_numbers.rational_pos_within_rational-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">number_sets</a>.<a class="ProveItLink" href="../../theory.html">rational_numbers</a>.<a class="ProveItLink" href="../../theorems.html#rational_pos_within_rational">rational_pos_within_rational</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.number_sets.rational_numbers.rational_pos_within_rational-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">Lambda</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">k</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">Py</span><span class="p">,</span> <span class="n">Qy</span>
+<span class="c1"># SOME STUFF COMMENTED OUT TEMPORARILY TO ALLOW COMPILATION AFTER MASTER MERGED</span>
+<span class="c1"># INTO THE CRAFT_EDITS_CONTAINMENT_DEMOS BRANCH WHICH ALSO REMOVED THE</span>
+<span class="c1"># COMPREHENSION THEOREMS</span>
+<span class="c1"># from proveit.logic import iter_q1k</span>
+<span class="kn">from</span> <span class="nn">proveit.logic.sets.inclusion</span>  <span class="k">import</span> <span class="n">proper_subset_def</span><span class="p">,</span> <span class="n">subset_eq_def</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">one</span><span class="p">,</span> <span class="n">zero</span><span class="p">,</span> <span class="n">Less</span><span class="p">,</span> <span class="n">greater</span><span class="p">,</span> <span class="n">Rational</span><span class="p">,</span> <span class="n">RationalPos</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers.number_sets.rational_numbers</span>  <span class="k">import</span> <span class="n">rationals_def</span><span class="p">,</span> <span class="n">rationals_pos_def</span>
+<span class="c1"># from proveit.logic.sets.comprehension import comprehension_is_subset</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> rational_pos_within_rational
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="rational_pos_within_rational">rational_pos_within_rational:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/072c9013fa541c652f14072983fa20c0574a295c0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEkAAAAVBAMAAAD4Ed5jAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEIm7mSJ2q+8y3WZE
+zVRISQrpAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABTElEQVQoz2NgQAAHBmKAAeWqhIyNXXGpYlQ2
+NgkAMdgqJrAuV8ChKr2TIaoIxNDWZmA4cpiBxdi42dgaTRHTpg0MPD5A3ZwKFxgYmLkTsJo1iRck
+vA2oQLAAqGfCBWRVbFarVq2aAGQYigMJTaBSYU6gMXwPPJFUcV4KgLrdYBqQfMcygWESzwYGBp4N
++5BUSQXAlCucBpKnuR8wHANiBs6E10hhXwOzmScBpHka3waGID6wWTlIbr4AY7AqgDSfZjvAwAxx
+lyNCEWcBIjYg7hJgYBaF+xFmAkKVYTjUjzyQ8HqAZOMCOOsQOLxAjvMGhv3xw8hh6Q1nsYDCvgbk
+dyZQPKIkLd4DcKY6MB5LwKyQv/c9UROC+UG4G/3vfpkAYVaCYxEJ8ChDY4iBgX3CNqgge0L6ywO4
+Ul8ZW90cCOu5bfMGXKr4im9YMwAAGlVSE12A9F4AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/4c548939eb2c49550bf1974de129f2094fcfe07d0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>rational_pos_within_rational may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">proper_subset_def</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../../../../../../logic/sets/inclusion/_theory_nbs_/axioms.html#proper_subset_def" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../../../../logic/sets/inclusion/__pv_it/axioms/62d68349fdc6e5e10115b34eb80d97b83bd304d20/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAWsAAAAWBAMAAAD0o6DgAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAECUlEQVRIx9VXS2hTQRS9Sdp8XkzaghV1k4Ai
+iBWzKAURteIHSxcWBREVjYqItWDdCKL240Jwoe1CUERt3AhdVFI3XXRhLFT8G/xgFYPRLqQgbf3V
+H1rvfN6beTPvJaV044WTl7w7Z96dM3fuuwEoaM0cBSwwY7wATC2YIhMDROMMaEfdxpTmZ4r3vtAi
+kwC7QKCc3FzgMngJB9phzenr+lQx5yLA8AzxvGnhkwWm5h9HIRIC68nNA85RG0kGMuek7p7VCRBr
+A39qKryRXC435MgLs22B65JP0pjZMgwbGgXaibfTOeySBAP5GtMzqhW3eXct+GqnwDv9wZXXw2Nb
+K/nQtk7kIdRmZtKa7/hRLUDWbK5Xk5MDre9Wm6baary1Gue9X5xnvJTcCm+4kl0zsg+Cz05dblho
+cEHDx3+QOVMWfKiK3yW1F3HgfuTH2NJO9wl3DNGEYu4rzvM0gCsve4alU1L2gacZSl8NLuW8luhn
+kuAJgUe53AOXsOs5cK9hWUJT7R7ANSJ8b3GeTRg7z5v20zwqScs+iBLWk72cUuv9QjQvF9gIcIm6
+tJNF5WCSbIaOtKpa8OfoO+qtoU/NUSt35rWDGw/8zV6ay0RC4bMXz9J48DepQUmBIxCgzzLu0hFn
+vvbXmSf5KQeuFlrLVdWieEqqyLOq1OXqvCPuPFzRa3KNxGUftUrrjEPgE9mYjEAoFaYShj+zqpqF
+aIaPHuSA6Pl1sU5VtRAOC5OT0qGGrfMi7ry5AKP0HDfIPqqxVeBG1q35SfZiXMCbZxJue0wvHqxM
+4+rjbwCUZVXVylBH31/8stM1bItXknDjkfreY4Vt+UjSvTWTzsDS8oesIyMAyVV0tvweVrzi0JNQ
+NxuTL5JRVevAYZ5v+GWpmts6D/a78UjxLYmbSWL5iK0QOQLwhiRJVgBuNrKTu4G9C4ar55rDr3KU
+Jtjb1a7aGBaADlK1lqtq6zy4Vply5kXMl2EoL/toZTQZW3iT4OsUgBNUoW3wkQ5ZCcZsc3gvxwky
+63dVtSaM607KqnWSOfBgxxXzNWXn0a2+yKub8JEbpkQBsmFdzaxGmgAPLRz1/TE6HGNuNavcWYbu
+yUbwdk3QStZtqTZvsqLiIH2XvFDDduAJU3jzycc5ct6ysg+T7iFPOqNrIgWLJw/hzjQI8KqE0dLw
+B7AnMAtgpI1BNqGa1e9k1bCdeA69qMIbUvyVGuOkBCt9yuJGGgK/wHhutZi14NAoOTVOSms6LV61
+/WdQ7+/WSmBT3AZj0/7gANT87q8TjdUFjoJ2TL+l8VidGSrIC9l7zJC2XaRRNWHv1JXf3RwFzWFd
+0+IZ9miCGoGsy4TNtqvryzMU/OPm8NdueryWIuv8IMFmCfhP7B+IqWtlplTDXAAAAABJRU5ErkJg
+gg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">subset_def_spec</span> <span class="o">=</span> <span class="n">proper_subset_def</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="n">RationalPos</span><span class="p">,</span> <span class="n">B</span><span class="p">:</span><span class="n">Rational</span><span class="p">})</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="subset_def_spec">subset_def_spec:</strong> <span style="font-size:20px;"> <a class="ProveItLink" href="../../../__pv_it/_proof_rational_pos_within_rational/f5d64336f203c11f9562d952af5144d56518cb690/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../__pv_it/_proof_rational_pos_within_rational/d81768c1a73aec1212995ca8e9bde2cf6954915f0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAVYAAAAZBAMAAACY+Bu9AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAZkRUmRDNuyLviTJ2
+3asqG0tJAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADrUlEQVRYw6WYTWgTQRTHX766sbtJQz0pUnJQ
+exGN0FNFqYgoLUouVhGkES8iounF4EHJQSx6aeileDLFg9cFT3pJ8NZDS4T6cdkaWmgRwUOhRfDi
+zOzszsy+mXbbPMiE7H9//5l9O58BgEEQMQamSGuvDobFQQwSRdgrxgKSGadk+6oRyuokxh7cYGTP
+pjI/Rs7QX5MQqyo4prk22ZNBphKvrYxMtEkxTT63a7Wrxqq4mCtjaRp6MbAKMqlDuB8jv5IENwCc
+X252tWmoKhCdLn6tDejF4BXIpB91BeF+jFwmHZdcWlgAOD4M6VptvjYdrYqLkNnGw6UJRgPnmed5
+rtbgHf8el8Tg6StynYEfI6fKMFAEu0nusFiHwGkR4l2kDRT9QmNgP6ybDDLfuLIliwAnd9pguW0F
+4X6U7CtAqwzWDZLjfrcitzVMixCvoLa2yn6hMbhTD3tl1MAZ8qcqe1sWwf7y4WlxJFNVEO5HyXQV
+lgBu2uQJUqUJOS0PgrqEuIjausQLjcFaeBMyyNn+TU5HIfN1SH6fO18EjR8lnQZsAHxKkgGZLBzW
+pkWIZ9BEsMELjYGYjpDBKNxn3/mKQjr0Pb+9pyLcj5LJbagBnEqUSCbbZ6VlR6RFiC02Uq55NFaZ
+VuMFNrC7RgPSUn8NsKoKSeNlFOF+lLT/wSOA1yn2GJ+ljIm0CHEWrYiPeIENsl2jAXkMf6bt6yJy
+LYrwoGR2C1bIA/rd47I0+EVVQpxCbV3hBTaAjtEg74LDxn1uLEomq1GEByUzWzQt1q1w2OG0CHHW
+NeUVG8BFowFZkjOdIK8Smfa8n6R3dUHjR8ks6wNJfzoradMixFY92l+DtmoM+oomA7oSXAraqpJH
+ERJMjoS0/8ImTQJZJk4PgzYtQsTzwGZQYIPMnxMGg04whvLVKNlBCA8+D9Cpq58uv8rOU6RFiEfQ
+/LoYFNgAku+DNVY1YKuR5foTpkr2F1CdPCiZaPgP+2Ln8YS6XXsepiUUr6O2MlZvIIdikKe307FD
+EyWTae+Nx/sr8qNkuguHWAZ/+0uyLi2hiPcDjDUYyGEwmAOVXMMID74fYHslyLeXzxkPFL642z7r
+YAbjoJB2FSHBW+b7LLvBfl54Ml8w5oWJCbx/ZazewJ8u3F0NPoJCWi6qMziXUXKIfNYhXuTq+No6
+9GKQL6lPvjv5I3pcgl7PW/sxiHPeAuW8lWrGul9/jm32ZDAK8ckZiB7vzZEux/p/YF8GMf4fCEmy
+OfgPPIWZSIMNX48AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">subset_eq_def</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../../../../../../logic/sets/inclusion/_theory_nbs_/axioms.html#subset_eq_def" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../../../../logic/sets/inclusion/__pv_it/axioms/0a73f44893619de306ad70c8de110c34b161d8b90/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAATUAAAAWBAMAAABTfhYbAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAERElEQVRIx81XXWgUSRCu/d+dzU426In6sgEP
+X/xbNCg+nAno+YM/F04QUdHVI4hBMHkRAmrWF0GMZpELGuHODYiQ45REiHIEcQ0o3omyiKIPLkxO
+ISgaf1ATFYzV1d2zO9MzE3yzobZmqnu+/rqqu7oWwLO1CPFoEdX08tE3f2KdEgEmmRVAr+WCbb/b
+mJChmAYmgf3fq3M7R2AqyR5nuYybIwTbPqUzcPZNzbTTAE9Ubj7260+7oPr7HM0CT08TN6Z+Zubd
+ziBahgvDmxC2Z6VSSYSsKgeQykI4r3ALNuJv2C0s513sAq+Zex7VYRb/nPPgYJoLe0zxmY6MlLvb
+MZo7GiDQoHCLsmi0uUVtuYtd4NVxbqjYquO1LgsRgu3KtSx58mFFdz2a6hHvP3W/sbVfcuNWsLxh
+IDIWvKo8cUMVQL+EXUBmC0HPGq+Iv6+xojuFshfd+ZvKbRH+Zty2m6Vj03M7XjhN3Ji6UyrddkFZ
+KwRDCgsotpZV/AvQw7Zev8qtqlR63OeCGsQObXTmMfJrpFnBiyeJG1OrAc5Ql7KlySHcKb9CJ011
+uKI3+nF0mHoX04wlaknOLZiFmA1Pkw/MIUEYNtaD9cBIvECGuDHVChEC1G7RiKPvBtdkxeh7QgAa
+oJ0GtVYmvzGAucybc1W/IWSrzfi3RE3g7lgC9fkptkBIPH+BuDEVy8dpE8Xf8ixTBF1u1htCQP99
+RYrOcqJishgOi4/jQ6dD7j1TTsAnZnQxdU0euCqcLgsr+UsHc3bOghd9TQhM+Q3OffNdUj5MCq/t
+3C4CVBdlVpGtGj0Z+IIP2xy4zTePQnA1vz46jApuAHw26FXxQtxvTEFmGXUZO/mXtXAhbY8pZrAE
+d2ZTGasTh/ne48M8db9BOIBU9KeHVslrQw8nK2IKoTH4yxYIiecv8pgyZ1yio6ILL7c/qZsuR/8p
+JMTyDHdmzw/mFn+F27iTeWepg9/is3HciC+3SxN53QhKR8YM0Lp8BaDDpZdvY4kXyPGzwD48QAva
+DC9oxE+gTZWj+4UcYIhj3Lb1D3ln7UXSN/NmmrFyi1xHnY4Z2RAPQihr7mJMDv7xc4UQ33+7zK8k
+HssxA1yBjw7Q2sEUeQSJtcsEe5xL70Qz+M9+sOWrGRM1NXsI/4FTHULOr26BwJ7u7pM402D/J5kr
+iqBtMH5cyN96uvI2vEQjISTMNK8jJeI4hHeaedqzXCapxoquNVIHtET5kgyIjEurtbrDQFhvkIMc
+4aBp2IiLrNX6IPIJtPtm1dIADje5U0XgyC1SuIyniBI7i+xb2V3njbecI5gVQfA6aL80RYdg8efB
+NeWb/5SQMg86jNaFt7nWlhu2juahjTl+XRLOfZBBinnWtFQUDai1kd/23mvNQM7tlHfdq/3T3WW7
+vXJecMR8QF3AFvsaDC6edbvqhauT/F845NXJCsSXN2DEbk/D99S+AiaFO+dj7lWNAAAAAElFTkSu
+QmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">subset_eq_def_spec</span> <span class="o">=</span> <span class="n">subset_eq_def</span><span class="o">.</span><span class="n">instantiate</span><span class="p">({</span><span class="n">A</span><span class="p">:</span><span class="n">RationalPos</span><span class="p">,</span> <span class="n">B</span><span class="p">:</span><span class="n">Rational</span><span class="p">})</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="subset_eq_def_spec">subset_eq_def_spec:</strong> <span style="font-size:20px;"> <a class="ProveItLink" href="../../../__pv_it/_proof_rational_pos_within_rational/0521294de9e267462fb8175a73b874e79c55d0530/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../__pv_it/_proof_rational_pos_within_rational/7444721c1da38c6e2bee8f7661c7883d8c52849d0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQsAAAAZBAMAAADUEhZFAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAZkRUmRDNuyLviTJ2
+3asqG0tJAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADlklEQVRIx62XXUgUURTHz86uu+OM2pb0RUEb
+JBJFrRDRB4WFlfgR85AZQrT7EPQgplGNkMJAUdhDLkEIUbBiUETE9mofO0k9BCpSYvUwYkVJBL4V
+Qi/de2fm3ju7d4bNurDuzD3jf3/33HPOPQMAK4CNevAbEcFclfUB/sOYsJIAYf6nu32flQWmKPyf
+EYoDHIeSMGD9kjGMAJvsYvSg7w5db/TFcIyV2hIxKpLCaVtWMm0MOYMe/J6TZ7M+GK6xYk6EQSbr
+AjH2iOEc2Zc2RgRdDg8DbKqFiK4P6T3OU/2WZeXwlWOEsp8ijIP4+0wQRVlKOO3KRjWCsSwBahY9
+GQuZnDfUTndDmTEtwnjhE71cisVFs1Q2VE8w8hrE2pBrlVyKwzhJw4oZj4gw8GKUZBBGuXcv+q0Z
+r+wtgjEB0K6itYaTzRzGZ/p/zPhGhIGDPDhSd/I3UqdWKJsmIt8ARiWkJcWrOQy2n8y4XRNlyl3L
+uh2I0YTjY/zr6Ai+uaoVyT4mGDrA1hDyqmrWsSqqsqxgxjyJ2FYLj1mKgdZzQfDjWXqVJiV40mz1
+BDOTXUUwugCuhwnZGFdUGAYzDiZE3rjBPyw6Fd6hzxrYoH3yeJnJ7iYY0yhc7H06xKlM0StmPCXE
+iGmKZ77j/ILhwbiJPjk4bHsZbaH13iubd70RO0EzxR0HGAY1DuZEGGGTRqg6qSfkh6BUF2EA3LFr
+SHex7GYXQ7JzmE+7KF0hM+YNUWxAih42DYhTuQxly417DdMNCW5TQFqENo+Xmew+gjGP144q2rZa
+T+lbqKGOcY3iTIGR0+jPeOMrowLXqae7AEyT90YfUjtXlbGDdhyKZFcTDFwNFFzfva2GdN8t5tS4
+Vny0DSDvVhjz0WQ7vlsZL8RACRn+fSwjEWdHqcupbBPBIGu88utss2/iu8ajYowqBBuCPhU24juM
+YGZ5jOfIGy3mjmrby/M1hbJvCUY52cMf5ETxGY4xHXTQL6ICoOt6couzKaxuVOYKvDzjkZWn6AmL
+lmRO7k34YdhG8QnrJklGhlHiaxKintaqPlAWn3wIQ82Quf0Xh/iT0M4Hdx3EGJrzxxhQUhFUQUjS
+glLQfvT6LY/IXnO6ry8lNoyVhj9GZOzRa5AvkfI13VVQX9oDZXtFvSj8Sy+K2jq0sQ+eFLabZlCH
+aDgY4WxJFCV35pG6lsQSOnPPe0pAE6UJMITvKc/W/e17ysf4HyOjEXLP7unXAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">rationals_pos_def</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../../axioms.html#rationals_pos_def" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../../../__pv_it/axioms/21c91a6ba1803ea3b86e2bd6ce4e8493c1471fc80/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALoAAAAbBAMAAAA5YIiJAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEIm7mSJ2q+8y3WZE
+zVRISQrpAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACu0lEQVRIx72WT2gTQRTGv90km6QbQ6xoxSLZ
+WrwYKpUFPdhKWilSSjXEQvWii4jFtkqkWOyhWsxJvCweerRSCIKnPahIUROpKIhiwKvYvYmIJBb1
+ILU4s5v9k2aypBCdywzz3v72zXvvm13AGUn8y9H93+ncW2cd8Hz6TIq53SrLA3Xpl144a77gRQ9P
+xRi7wjU1cF+qQ49+RyP0PedJ4L4Mw5JIAC+X4ZflrHx4o5G/1wh9i87lNvhaB5KK5LWiwo69MfoS
+0Mmm+7aSA/FqcdP03Zq9PASUYkz6tjAJO6oPbprO7VOs5Q9gQWfS70RIDBHtuQc9MN1x0UUfPbdD
+NRbjHZX3ULrGpL8SdZJ85aujVf8DYxgd4KcZe5MKlh16JIcbVr77TB2sEroCYa6Wno4asU+y63WK
+GLnbCBYd+k4Ns5b524BNlxBYZ1TVzHsfEz76kcZfRovk0E8Ai7bDuys0M4T+nlDaPtXSt9s9w2jX
+o0R/oW6cLTj0LAJrDv1Apaolkt+u2o6NmP2uOzvuvFP9xRXknZ7hfkEs25m5akwykI9V6xpc5zFq
+HCJafb1cRye0D+I6el30dfisgy6Z9xOeAMPEbFd1fqoHaQkJEjJP75mkB92niKuufj+IvISqjkSL
+zt1yacNPxbNXR/sjMo/8WRmEB52bvrzmorddKBkzN26riesfUyv01sdPMUErdjcFQaDGGVHxosNK
+tKVVswq7NFYkufBPjqpSbEeFHlTGvhS86Ga72/TZ+r7+ZHiOit8gC7yx/7k3q7GfMPUXkqroN9m+
+VNehgpARP8jykYidGY9h6I9fWXTTu35LTF8iYsRTPiVsmK2qeo6R666DqF6eaeoZSi2oMBQ2n8F+
+rckf/sgQuShOqsYFPTzT/B+LZ1Smcg/J42mt+fR+e3X84WSz4XzW/q0JT6h/AWsGvS3IsUWkAAAA
+AElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">rationals_pos_def_r_h_s</span> <span class="o">=</span> <span class="n">rationals_pos_def</span><span class="o">.</span><span class="n">rhs</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="rationals_pos_def_r_h_s">rationals_pos_def_r_h_s:</strong> <a class="ProveItLink" href="../../../__pv_it/axioms/ade664d1a02fe90d40c511eee97ba98c6a2b57370/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH8AAAAZBAMAAADqPuxnAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEER2zVSJ3Zki72ar
+MruaaVGaAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACCElEQVQ4y2NgYGBUYoCDCQx4AGckdnETRQQ7
+CZ8BDHceYhNl/chAhAFsyZ1A8g1WqQJiDHBlEAd6L51sA7gLGNgekGwAozecyXcA7FVSXSBWDGPx
+NzDwfsVnwBwz4QtIBsC4zGUCEAF5oAG/cRjA4cDAwFTJcB7JBXAuA3cFxIT5CQy8nxkYrLAZMGsD
+A4PUBoYjSAbAucBI9pgAM+AbkArA1D/HCUj0MzCUIRkA54Jc4wNyg3wCAxPQBYxHME3g7QMqWMfA
++QnJADgXZICfACQQWYGByOaExQvAGGL8zMD9AWEAggv0gg/YC3wPGLiB0RgvgBJJL85MgMQC41cG
+PgckA+BcYCBCshf3AnBgZ8HdbfNOgTONgW0rNBofM+xPQPICnAuPRoZSBqkLSNHYAeSwTWVg3D0B
+YoCMcbwCkgEwrjA8ITFIJJ9lgBjAmG2twAyMOYa7wNxtYABLiftRUyKYy1iNHl4gA8Qn3J8gB+Js
+3IBswBFUA45gz1MgAzoYbjFogzggzQZArzIvAPGWoRqwDLsBLUC8iMGGYcu7d+8CdKFe4ATGL0PK
+d+RAhHPRAONqIP4JDONr4EwEDUSGGUcRSmzxlok5oHS4kvcvA58AOCoZ2KIZSAcaOz4wcL4FJ6QK
+nwtkGMDADUxRYu/eASM68zY5+hk44OHDEd2sQIYBWS/hzMt7GQDHe4m02vBEdQAAAABJRU5ErkJg
+gg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># comprehension_is_subset</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># comprehension_is_subset_spec = comprehension_is_subset.instantiate(</span>
+<span class="c1">#         {k:one, S:Rational, QQ:[Lambda(q, greater(q, zero))]}, relabel_map={y:q})</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># rationals_pos_def.sub_left_side_into(comprehension_is_subset_spec)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># %qed</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

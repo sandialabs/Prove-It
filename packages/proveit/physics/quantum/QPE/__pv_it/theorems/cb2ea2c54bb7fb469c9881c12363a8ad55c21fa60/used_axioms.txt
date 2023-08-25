@@ -1,0 +1,10 @@
+proveit.logic.equality.equality_in_bool
+proveit.logic.equality.equals_reflexivity
+proveit.logic.equality.equals_transitivity
+proveit.logic.equality.not_equals_def
+proveit.logic.equality.substitution
+proveit.numbers.number_sets.natural_numbers.zero_in_nats
+proveit.numbers.ordering.transitivity_less_less
+proveit.physics.quantum.QPE._best_round_def
+proveit.physics.quantum.QPE._delta_b_def
+proveit.physics.quantum.QPE._phase_in_interval

@@ -1,0 +1,5 @@
+\left(|\left({_{-}a} \mapsto \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{\textrm{QPE}\left(U, t\right)~\mbox{part}~{_{-}a}~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array}, {_{-}a} \mapsto \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{\textrm{QPE}\left(U, t\right)~\mbox{part}~{_{-}a}~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array}\right)|, |\left(1, \ldots, 2\right)|\right)

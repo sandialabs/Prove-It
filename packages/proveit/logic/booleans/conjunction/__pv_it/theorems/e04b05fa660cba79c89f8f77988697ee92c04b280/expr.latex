@@ -1,0 +1,1 @@
+\left(n \mapsto \left\{\forall_{A~|~A}~\left(A \land  A \land  ..\left(n - 3\right) \times.. \land  A\right) \textrm{ if } n \in \mathbb{N}\right..\right)

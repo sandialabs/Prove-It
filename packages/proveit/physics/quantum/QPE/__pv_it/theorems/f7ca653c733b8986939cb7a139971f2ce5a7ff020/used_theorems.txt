@@ -1,0 +1,10 @@
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.equality.equals_reversal
+proveit.physics.quantum.QPE._Psi_ket_is_normalized_vec
+proveit.physics.quantum.QPE._outcome_prob
+proveit.physics.quantum.QPE._sample_space_bijection
+proveit.physics.quantum.circuits.born_rule_on_register
+proveit.physics.quantum.circuits.register_meas_bijection
+proveit.physics.quantum.circuits.register_meas_sample_space
+proveit.statistics.sample_space_via_bijections

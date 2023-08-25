@@ -1,0 +1,1 @@
+\begin{array}{c} \left(\left\{x_{1}, x_{2}, \ldots, x_{n}\right\} \in \textrm{SpanningSets}\left(V\right)\right) \land  \\ \left(\left\{x_{1}, x_{2}, \ldots, x_{n}\right\} \notin \textrm{LinDepSets}\left(V\right)\right) \end{array}

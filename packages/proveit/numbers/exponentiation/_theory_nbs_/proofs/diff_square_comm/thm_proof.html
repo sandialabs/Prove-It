@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.exponentiation.diff_square_comm theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.exponentiation.diff_square_comm-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">exponentiation</a>.<a class="ProveItLink" href="../../theorems.html#diff_square_comm">diff_square_comm</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.exponentiation.diff_square_comm-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> diff_square_comm
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="diff_square_comm">diff_square_comm:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/5f535f84537e0dd4753cb9bf7f5a22e8f654dfb20/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAAmBAMAAADZ3ljKAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAD7UlEQVRYw7VYXUgUURQ+7o+zOzu7GoEPCctA
+oA9q7ZOghQ79EZm14EsPQgsKoRCsEJQQukGRUKGVUGtgEz2J2mZJBZHYj9gP9iNFYAgrQQW9iLUo
+BW733t2Z7uz87N1oDnhd55xz57vnnO+cuwIwyQ6wQfhOZlNXqR0A4ILMallry/vByXouz8t8FqMT
+mwoM/8MN6PiXGK2Lb+ezkKC5MAAucL0FGGPMwda8dinojRUEoCTMrbHX1qe8FvWFAnDKGAC3ylYC
+vxiMHhVagT6UArjGZFo0QH5FTdQcAbmgV1g6ZDi4nS1fIbwGRBO1O4mWbn2ZWDtwQ/hjrwikDDZb
+AugnR6kyUo3MoeUz2k7idOetyqr1ghzgGBxHq1+C3fjJEUsAjYS4EUNdO2apDN19p3NDQBzajWkt
+A3e1bx9mYwRO4XAMWAIoI8QNGepWcEVL8Cad1jE9lFUbUEACIZ1exmlaxmjAJ1oCeIwXwTidhCCG
+jVJQ1XpRHRxr4ERAi62L8DdeKsy5BG1GqgpVrRfVwYNCNLe4+MoawA+8NOFUlX9N5mQzuISiN2Hk
+1aSqaema6gHKgUd77wUYsnw/t6KAbo16c2Ka6ORX6WHZvIjlneKQUdMpm4XrMu2wjjABp3ZkT4dK
+4sFgDxUmgHkE9ymZIDlT4jVAtRHueVVNyViITK1qOr1e2RdW/y7HL1yKh/mLUYfSJt0pvM6gul4G
+P56L/FFyTtz895At+o0AzKhqyv5gZrD8dfiJCjFJ1eBz9LMLWfpuAWzTRADtJwxAIpw7ptxI22oG
+IKOm5AXw+DitNACINOAbRcN9/K71JTmA+XvzjNKyqRQkkpmepGkDLlQVNUY1MK+qqea0Dk5M/xq6
+BuAOuhvyHz24WgILAWkEP6+spIqQsGAYARChzKHtuGs4q1BnFIFhVU0BWIGiSCXtgPc+iWrQJXmm
+0UdvyBlpIfO9XgM7wxxv0vHepX3LRhjMMk4nE6pag6pGkigHwrAilHMhHMBUEGKu0tp4PC72HaK8
+npHpiZAEH3R90254YxKf8IPhlVdV0/bfzwZjlIMnpfA56q1H/CwBQTxHOhwqQl6xItz0m994OMN+
+x+TgUEpEiPa3yKPgl+sQLbHJZBSmFKv92QFiesEMmUyc/A5qr3bv3HIXzoueA0k0KMk9u2NQPUEj
+mbRXTPfrNn7M4uDV3kozfXs0HteyPUGej5juZ/ImFocSTfDcJrdvLwkmlzTZLmBy92NxOKzxdZpd
+oafBLrnH9jUqZRuAJ/8T5z9IgDG2QswmAILI+D0qYhOAL6yGbfa8n5tltRyP2gJgXGSG2mkLgMvs
+pids+ScVbrh/AGndCP3G8NhuAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/fb5e9e10be3edb9cee778bc49ee28d08b32d313b0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>diff_square_comm may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

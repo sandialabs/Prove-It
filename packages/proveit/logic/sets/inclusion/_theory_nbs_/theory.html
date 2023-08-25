@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theory of proveit.logic.sets.inclusion</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theory-of-proveit.logic.sets.inclusion">Theory of <a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../_theory_nbs_/theory.html">sets</a>.inclusion<a class="anchor-link" href="#Theory-of-proveit.logic.sets.inclusion">&#182;</a></h1><p>Containment deals with subset and superset relationships.  If $A \subseteq B$, then $A$ is a subset of $B$ meaning that all elements of $A$ are also members of $B$.  If $A \subset B$, then $A$ is a proper subset of $B$ which is a subset such that $A \neq B$.  The reversal of these relationships are superset, $B \supseteq A$, and proper superset, $B \supset A$, respectively.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="o">%</span><span class="k">theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<h3>Local content of this theory</h3>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<table><tr>
+<th><a class="ProveItLink" href="common.html">common expressions</a></th>
+<th><a class="ProveItLink" href="axioms.html">axioms</a></th>
+<th><a class="ProveItLink" href="theorems.html">theorems</a></th>
+<th><a class="ProveItLink" href="demonstrations.html">demonstrations</a></th>
+</tr></table>
+<h3>Sub-theories</h3>
+
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<h3>All axioms contained within this theory</h3>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="axioms.html#subset_eq_def">proveit.logic.sets.inclusion.subset_eq_def</a></dt><dd><a class="ProveItLink" href="../__pv_it/axioms/0a73f44893619de306ad70c8de110c34b161d8b90/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAATUAAAAWBAMAAABTfhYbAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAERElEQVRIx81XXWgUSRCu/d+dzU426In6sgEP
+X/xbNCg+nAno+YM/F04QUdHVI4hBMHkRAmrWF0GMZpELGuHODYiQ45REiHIEcQ0o3omyiKIPLkxO
+ISgaf1ATFYzV1d2zO9MzE3yzobZmqnu+/rqqu7oWwLO1CPFoEdX08tE3f2KdEgEmmRVAr+WCbb/b
+mJChmAYmgf3fq3M7R2AqyR5nuYybIwTbPqUzcPZNzbTTAE9Ubj7260+7oPr7HM0CT08TN6Z+Zubd
+ziBahgvDmxC2Z6VSSYSsKgeQykI4r3ALNuJv2C0s513sAq+Zex7VYRb/nPPgYJoLe0zxmY6MlLvb
+MZo7GiDQoHCLsmi0uUVtuYtd4NVxbqjYquO1LgsRgu3KtSx58mFFdz2a6hHvP3W/sbVfcuNWsLxh
+IDIWvKo8cUMVQL+EXUBmC0HPGq+Iv6+xojuFshfd+ZvKbRH+Zty2m6Vj03M7XjhN3Ji6UyrddkFZ
+KwRDCgsotpZV/AvQw7Zev8qtqlR63OeCGsQObXTmMfJrpFnBiyeJG1OrAc5Ql7KlySHcKb9CJ011
+uKI3+nF0mHoX04wlaknOLZiFmA1Pkw/MIUEYNtaD9cBIvECGuDHVChEC1G7RiKPvBtdkxeh7QgAa
+oJ0GtVYmvzGAucybc1W/IWSrzfi3RE3g7lgC9fkptkBIPH+BuDEVy8dpE8Xf8ixTBF1u1htCQP99
+RYrOcqJishgOi4/jQ6dD7j1TTsAnZnQxdU0euCqcLgsr+UsHc3bOghd9TQhM+Q3OffNdUj5MCq/t
+3C4CVBdlVpGtGj0Z+IIP2xy4zTePQnA1vz46jApuAHw26FXxQtxvTEFmGXUZO/mXtXAhbY8pZrAE
+d2ZTGasTh/ne48M8db9BOIBU9KeHVslrQw8nK2IKoTH4yxYIiecv8pgyZ1yio6ILL7c/qZsuR/8p
+JMTyDHdmzw/mFn+F27iTeWepg9/is3HciC+3SxN53QhKR8YM0Lp8BaDDpZdvY4kXyPGzwD48QAva
+DC9oxE+gTZWj+4UcYIhj3Lb1D3ln7UXSN/NmmrFyi1xHnY4Z2RAPQihr7mJMDv7xc4UQ33+7zK8k
+HssxA1yBjw7Q2sEUeQSJtcsEe5xL70Qz+M9+sOWrGRM1NXsI/4FTHULOr26BwJ7u7pM402D/J5kr
+iqBtMH5cyN96uvI2vEQjISTMNK8jJeI4hHeaedqzXCapxoquNVIHtET5kgyIjEurtbrDQFhvkIMc
+4aBp2IiLrNX6IPIJtPtm1dIADje5U0XgyC1SuIyniBI7i+xb2V3njbecI5gVQfA6aL80RYdg8efB
+NeWb/5SQMg86jNaFt7nWlhu2juahjTl+XRLOfZBBinnWtFQUDai1kd/23mvNQM7tlHfdq/3T3WW7
+vXJecMR8QF3AFvsaDC6edbvqhauT/F845NXJCsSXN2DEbk/D99S+AiaFO+dj7lWNAAAAAElFTkSu
+QmCC
+" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="axioms.html#not_subset_eq_def">proveit.logic.sets.inclusion.not_subset_eq_def</a></dt><dd><a class="ProveItLink" href="../__pv_it/axioms/fa6d2eeca38ae0bae56c100793dd172eed9163fb0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARkAAAAYBAMAAAA8FZQ1AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAD/UlEQVRIx81WS2hTQRS9SZpPX9o0BRVdSAKC
+ICrNoggiaosfLCIW3UgRrYiI8Vc3glht3QguSoIIimgbNwUXSnUj0oW14h8lFMUifRh1IYJo/dXW
+ovXOne97eTG4EL1w8l5m7p137m9mAP5cIvCPpE3AIdWOf+FSdr9V8PhGWzkysSQHykE9usyhEyx4
+2yl5xTm1lvrIFgNxNjCnhOJ8AZT9evQ5fwR6PtbOOAPw2ttOir+PHqHRIq3FU7W1uzohlgKFVWx8
+pzcZq5WDrTklxt7aI4+G+WtVFiDRCaGcl52SXv6oE2xi523b7uTv9wF84wBpUDjGopj1ZlOR4mCv
+CZ7W42/AJ9aCDszR1gYINHjZKVnBH43feAfs0+UR/ol5/gJQDwrMs2jSm02VAMq1G8TBeqacBViO
+Q8uR0QMvOyUD9Bs9PE7PS0atBnAogIyqcgoB9CNUomzmCqAbhQ/E2NcMcFVOJxB7cPXtXnaqbHjW
+jsY+0XO6MeXD5IXuIlIaj2z7YQk2awUw9lBH0We883Ia036BldAVLzuVNV7EDf7P9DQrCuvOmo3x
+jcY11gCcpcmiYiSnueMbIEOrYpUF+uQmOPH+Jc0uoq/aJHEAZ7BC5EUwGZkkm7gxlel+P4PNBlo1
+DkCYVKx7pHLiS3+TLNMhAXQNOkjpAOgWimFdLmCrLXB7MSTJYX1XJ3lswx8p4yabD23gv8WSOaBR
+mYs2U53xxAbyEBsQ6rcFIHZqZSIrtuFjcrFKVIuy2sy42dyWTYPfrqLF365snKChvKF2DsGaIzKq
+4S/wIt70mJcWtuyom81lgBpapyIJM+ViNXHeErC5LBsLO++H2e8kLFqsJ4MDGtDKd/rCNl5aSbiU
+cmeKRZwCZj3VO1sG1Xxf8WWhu26GDDaUqQrECC+jZn34srpO4H9/XgOupikZsJpvaa/rlffdAsGU
+2tl7p6WMtEOGcVvsjk23ZINeVLJjbKM6WqzaFjDqLjLGiiOrAe3kzyZ4RzpLwZom9a8ItLMq4Xsp
+bN1r2/xk2IM07+RcDa3spLC2DbO49vB9L3hdngwhHN2cFpuAhNjp1/YnqFmQSoeMZhfHxak0+HvG
++pwH4ix25lHDPHWz6TIvQ3mwesZyMG9qt1PJxw7dk9QazRoibEiCWA2i+7LDqzs5TCk+YMP5oguQ
+aTNc9hJ1xAAXzGxN0uqD8HewnqiDpAHcZ2IkC789I5WdkvqybFYY4CveBGv9jsggLJrsb9Jn6GkB
+/eUXrHGc7h4qXt+0qXTc6dZR5znizW4QEg7xu/5fFCh1Cy36tGGnLjvZMqFhdCUc0uIuiQKHliXF
+t06P+6zD5mgZNm8MOCRVNsdp+J+k7a+u/gtJyha8EVNJ2gAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="axioms.html#proper_subset_def">proveit.logic.sets.inclusion.proper_subset_def</a></dt><dd><a class="ProveItLink" href="../__pv_it/axioms/62d68349fdc6e5e10115b34eb80d97b83bd304d20/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAWsAAAAWBAMAAAD0o6DgAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAECUlEQVRIx9VXS2hTQRS9Sdp8XkzaghV1k4Ai
+iBWzKAURteIHSxcWBREVjYqItWDdCKL240Jwoe1CUERt3AhdVFI3XXRhLFT8G/xgFYPRLqQgbf3V
+H1rvfN6beTPvJaV044WTl7w7Z96dM3fuuwEoaM0cBSwwY7wATC2YIhMDROMMaEfdxpTmZ4r3vtAi
+kwC7QKCc3FzgMngJB9phzenr+lQx5yLA8AzxvGnhkwWm5h9HIRIC68nNA85RG0kGMuek7p7VCRBr
+A39qKryRXC435MgLs22B65JP0pjZMgwbGgXaibfTOeySBAP5GtMzqhW3eXct+GqnwDv9wZXXw2Nb
+K/nQtk7kIdRmZtKa7/hRLUDWbK5Xk5MDre9Wm6baary1Gue9X5xnvJTcCm+4kl0zsg+Cz05dblho
+cEHDx3+QOVMWfKiK3yW1F3HgfuTH2NJO9wl3DNGEYu4rzvM0gCsve4alU1L2gacZSl8NLuW8luhn
+kuAJgUe53AOXsOs5cK9hWUJT7R7ANSJ8b3GeTRg7z5v20zwqScs+iBLWk72cUuv9QjQvF9gIcIm6
+tJNF5WCSbIaOtKpa8OfoO+qtoU/NUSt35rWDGw/8zV6ay0RC4bMXz9J48DepQUmBIxCgzzLu0hFn
+vvbXmSf5KQeuFlrLVdWieEqqyLOq1OXqvCPuPFzRa3KNxGUftUrrjEPgE9mYjEAoFaYShj+zqpqF
+aIaPHuSA6Pl1sU5VtRAOC5OT0qGGrfMi7ry5AKP0HDfIPqqxVeBG1q35SfZiXMCbZxJue0wvHqxM
+4+rjbwCUZVXVylBH31/8stM1bItXknDjkfreY4Vt+UjSvTWTzsDS8oesIyMAyVV0tvweVrzi0JNQ
+NxuTL5JRVevAYZ5v+GWpmts6D/a78UjxLYmbSWL5iK0QOQLwhiRJVgBuNrKTu4G9C4ar55rDr3KU
+Jtjb1a7aGBaADlK1lqtq6zy4Vply5kXMl2EoL/toZTQZW3iT4OsUgBNUoW3wkQ5ZCcZsc3gvxwky
+63dVtSaM607KqnWSOfBgxxXzNWXn0a2+yKub8JEbpkQBsmFdzaxGmgAPLRz1/TE6HGNuNavcWYbu
+yUbwdk3QStZtqTZvsqLiIH2XvFDDduAJU3jzycc5ct6ysg+T7iFPOqNrIgWLJw/hzjQI8KqE0dLw
+B7AnMAtgpI1BNqGa1e9k1bCdeA69qMIbUvyVGuOkBCt9yuJGGgK/wHhutZi14NAoOTVOSms6LV61
+/WdQ7+/WSmBT3AZj0/7gANT87q8TjdUFjoJ2TL+l8VidGSrIC9l7zJC2XaRRNWHv1JXf3RwFzWFd
+0+IZ9miCGoGsy4TNtqvryzMU/OPm8NdueryWIuv8IMFmCfhP7B+IqWtlplTDXAAAAABJRU5ErkJg
+gg==
+" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="axioms.html#not_proper_subset_def">proveit.logic.sets.inclusion.not_proper_subset_def</a></dt><dd><a class="ProveItLink" href="../__pv_it/axioms/7d2ab8ca139d19ea56c6739c6bcb2fc80d1d3ffc0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARkAAAAWCAMAAADD7xhEAAAAPFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAo1xBWAAAAE3RSTlMA
+q1RmmUTNIjK7EInv3Xb341Cp3V2mrwAAAAlwSFlzAAAOxAAADsQBlSsOGwAAAzZJREFUWMPlWMmC
+2yAMNavZpy3//6+1wSQIkMFNbtVhXjLY6KGdbNsHsjf44Tb//uCXCHzpPNsWKMS8qxw+yw2+jwjP
+9N0vIATupBCASF7rlD3bj1qIWWQcPas0+Mp0jOQQqVU6GXuib7IwJtAIQgAgF68tnwWRkRAvlnFI
+LBOoxGVTkZgWpFnXN1lACHQyJlCjKkGz62chwxnE6xuJAwMr0mZ2zIErIk8u5Ov6JgtjAn1pGRMA
+WMxk6TPLuAbzJruNMDyC9t7//PIe/JtdT7GLoDPL+u4XEAKnLBGokV0mf1i4qISYPRG2EGsLK2kP
+D4o2ZI4gvpS67GDJVvXdLyAEesEIAHTJos4+TCYLMX8587w6pPH7uILlLDekONKSVX33CwgBrMz0
+BADytKireF6oh52RU9Ie3lKxYkpSee9DRkUdQiDvd9nb8dxXQjp9KJEbAoPChxEAuJPypxjGqbrf
+Rm4t75qLpxAvjx2lrdpJIk0v5CpJXWFG3cwTl57KbnyZwGACwghAPMPFVsa1IFOZT1u11J2AmGod
+50dr0E1LEn3j0a5oUsWH0wLcer/4ck5gNEVgBCDSAIwrlKuHUpLbWpxaxuS3om/ID+ak4tbSGTbh
+vmAZjMBAUAINyo1VtgibrDd0NFUyNs2mEt3VIU+OlA+ynJUOcR2L+lmd8RSxzJTAsMxgBBq0tBpC
+DxtxCUYixjhRXTwGiJtg/XR+DmGD+fbK8oOgfE3rs5jR7eVq54sE8DIzINDg7kiVS7CopDJjSOf4
+ts3t5R1dz6BSDELmGCKuiH1ZjU9nBrSvzwgM+xlKoMUqJI5GZEk0TZnZY6tB+RrNcUNLWuj54X1M
+o93vNmbI6zb3ThAvZpZR/nYBJ0DEEwIt1kUm2UHBMnNcL7p0KjOSV7ej6x+rB8N5mxl+PkChG9wT
+2MQTAi1W2+S8PNu2sdlIJhXgPifaSxgyh61MjfhtcaBvfeGD63FHiKeCY3g80lOd0cJktOecN7pt
+6h3ikPXSnWPtmo/q0R//BlcItIhmwuQHEw1xGOnmozMP9a0vLEvr5AkhMTvVHiCOyuPSr5iLPkf1
+7OEzwxQCLaKZsP3X8hf5WiEujFvRCQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

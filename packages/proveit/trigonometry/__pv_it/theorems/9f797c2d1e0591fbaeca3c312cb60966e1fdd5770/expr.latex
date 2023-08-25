@@ -1,0 +1,1 @@
+\forall_{\theta \in \mathbb{R}^{\le 0}~|~\left(-\theta\right) \leq \frac{\pi}{2}}~\left(\sin{\theta} \leq \frac{2 \cdot \theta}{\pi}\right)

@@ -1,0 +1,1 @@
+\left(m \mapsto \left\{\forall_{x, S~|~x \in S^{m}}~\left(x \in \left(S \times  S \times  ..\left(m - 3\right) \times.. \times  S\right)\right) \textrm{ if } m \in \mathbb{N}^+\right..\right)

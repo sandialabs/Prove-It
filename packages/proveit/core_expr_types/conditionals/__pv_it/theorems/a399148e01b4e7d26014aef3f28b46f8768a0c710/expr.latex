@@ -1,0 +1,1 @@
+\left(a, Q_{1}, Q_{2}, \ldots, Q_{m}, R_{1}, R_{2}, \ldots, R_{n}\right) \mapsto \left(\begin{array}{c} \begin{array}{l} \left\{a \textrm{ if } Q_{1} ,  Q_{2} ,  \ldots ,  Q_{m} ,  \top, R_{1} ,  R_{2} ,  \ldots ,  R_{n}\right.. \\  = \left\{a \textrm{ if } Q_{1} ,  Q_{2} ,  \ldots ,  Q_{m}, R_{1} ,  R_{2} ,  \ldots ,  R_{n}\right.. \end{array} \end{array}\right)

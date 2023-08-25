@@ -1,0 +1,1 @@
+\forall_{a, b \in \mathbb{Z}~|~a \leq b}~\left(|\{a~\ldotp \ldotp~b\}| = \left(b - a + 1\right)\right)

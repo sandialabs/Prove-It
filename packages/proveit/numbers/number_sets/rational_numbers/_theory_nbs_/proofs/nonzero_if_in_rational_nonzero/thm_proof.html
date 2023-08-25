@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.number_sets.rational_numbers.nonzero_if_in_rational_nonzero theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.number_sets.rational_numbers.nonzero_if_in_rational_nonzero-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">number_sets</a>.<a class="ProveItLink" href="../../theory.html">rational_numbers</a>.<a class="ProveItLink" href="../../theorems.html#nonzero_if_in_rational_nonzero">nonzero_if_in_rational_nonzero</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.number_sets.rational_numbers.nonzero_if_in_rational_nonzero-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> nonzero_if_in_rational_nonzero
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="nonzero_if_in_rational_nonzero">nonzero_if_in_rational_nonzero:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/eba00205850ae2f5d48855a16c3b39c4b1538ae00/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAAAXCAMAAAAWX6x7AAAASFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACC
+gUnDAAAAF3RSTlMAq1RmmUTNIjK7EInv3Xah18O15/Xp87zmPDoAAAAJcEhZcwAADsQAAA7EAZUr
+DhsAAAJOSURBVEjHvVZZstwgDDRI7KCX3fe/aZAw3sNMysnjgynwIJpWq2Ga/m1zn7LkZSM9/Izx
+ZtIQ92oda3gMQ6fhZx/2o5QIhQvijdH0efuYoGjH34PfDWylLhbZ01aafCfEhcd04JhRr3YDKMKJ
+bAq4gJEp/RhHfkHHnvAgoPQsu+faw3II+1wd4xBmT8c0o1A0y+ktY8iFW07P09JDOEUpkj99Pugv
+dhzCQmKIKAtCfIzDLswaVp+aV3hyzvL9B/erGufUcEjRghX0vXuvKDiAI02X8ipNYTEzHmVHdGw4
+5EfnTkUyf943oFJbEOyVdlFDbjFQmCinPBs8Rm0ATOPDyxJNN0E9qRBqYJd4QYJeTWDkyIvI73Dk
+IOc1Izq6TnXTqclLqQCdNYeLzJLjf0YANyVE/PiC1fkcF3/xt3mJckSYp4M+fv5qKlnTH5pztLrV
+ZbGObiIxAfGJqTuS97p570RbVhY+zgIJ1HAwnHAi2J7JA6EA29+geajLC0z2WT+7Ka7eCrEhYhyV
+j6/fkPmQNF5SmdQKB+ajPDROd6qO2R8qXvmejcpABWpWg+48VBSMs4er9QKXevGN3aiI9Eke9uoK
+ERP1fYu5Ko0U13OQpidzyAuOTWZTzE4eb9zDrpwg1pQIrX5bt9Npq5VBg5X9k3vY+Hf3Y2Z5+IO7
+euanKvmtx8l6kx1vCXhBx+WmNwjNhdz2VIipoFX+Pa9tEZOdDzZW4vv38IrddhcN4mOSGv/uU83R
+7cNj/JZ0w0tzP6cByUyf2VK+Y8kT+P+772/FfRJdq6yprQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/1f5635aa544e6b3c1d6757b01647f4f29b98b96b0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

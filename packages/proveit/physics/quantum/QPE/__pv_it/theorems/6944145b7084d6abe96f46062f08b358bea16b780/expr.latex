@@ -1,0 +1,6 @@
+\left\{ \begin{array}{l}
+{\rm element}: \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert u \rangle~\mbox{part}~{_{-}a}} 
+} \end{array}\\
+{\rm targets}: \{t + 1~\ldotp \ldotp~t + s\}\\
+\end{array} \right\}

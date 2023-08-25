@@ -1,0 +1,4 @@
+\left(U \mapsto \left\{\forall_{\lvert u \rangle \in \mathbb{C}^{2^{m}}~|~\left \|\lvert u \rangle\right \| = 1}~\left[\forall_{\varphi~|~\left(U \thinspace \lvert u \rangle\right) = \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \varphi} \cdot \lvert u \rangle\right)}~\left(\textrm{Pr}\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{\lvert + \rangle} & \control{} \qw \qwx[1] & \qout{\frac{1}{\sqrt{2}} \cdot \left(\lvert 0 \rangle + \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \varphi} \cdot \lvert 1 \rangle\right)\right)} \\
+\qin{\lvert u \rangle} & \gate{U} & \qout{\lvert u \rangle}
+} \end{array}\right) = 1\right)\right] \textrm{ if } U \in \textrm{U}\left(2^{m}\right)\right..\right)

@@ -1,0 +1,1 @@
+\left(a_{1}, a_{2}, \ldots, a_{n}, b_{1}, b_{2}, \ldots, b_{n}\right) \mapsto \left(\left(a_{1} \cdot b_{1}\right) +  \left(a_{2} \cdot b_{2}\right) +  \ldots +  \left(a_{n} \cdot b_{n}\right)\right)

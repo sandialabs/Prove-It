@@ -1,0 +1,1 @@
+proveit.logic.booleans.disjunction.binary_or_contradiction

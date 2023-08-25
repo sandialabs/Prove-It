@@ -1,0 +1,6 @@
+\left\{ \begin{array}{l}
+{\rm element}: \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{U^{2^{-{_{-}b}}}~\mbox{part}~{_{-}a}} & \qw 
+} \end{array}\\
+{\rm targets}: \{t + 1~\ldotp \ldotp~t + s\}\\
+\end{array} \right\}

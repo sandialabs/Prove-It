@@ -1,0 +1,1 @@
+\left(\mathcal{H} \mapsto \left\{\forall_{\varphi~|~\lvert \varphi \rangle \in \mathcal{H}}~\left(\left[\langle \varphi \rvert\right] \in \mathcal{L}\left(\mathcal{H}, \mathbb{C}\right)\right) \textrm{ if } \mathcal{H} \underset{{\scriptscriptstyle c}}{\in} \textrm{HilbertSpaces}\right..\right)

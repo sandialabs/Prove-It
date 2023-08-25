@@ -1,0 +1,1 @@
+\forall_{f, i, j~|~\left(j - i + 1\right) \in \mathbb{N}}~\left(|\left(f\left(i\right), f\left(i + 1\right), \ldots, f\left(j\right)\right)| \in \mathbb{N}\right)

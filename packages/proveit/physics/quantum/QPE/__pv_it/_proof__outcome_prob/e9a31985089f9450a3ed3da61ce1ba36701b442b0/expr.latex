@@ -1,0 +1,7 @@
+\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qout{\lvert \Psi \rangle} \\
+& \qout{\lvert u \rangle}
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \multiqout{1}{\lvert \Psi \rangle {\otimes} \lvert u \rangle} \\
+& \ghostqout{\lvert \Psi \rangle {\otimes} \lvert u \rangle}
+} \end{array}\right)

@@ -1,0 +1,1 @@
+\left(\sum_{l = e + 1}^{2^{t - 1}} \frac{1}{\left(l - \left(2^{t} \cdot \delta_{b_{\textit{f}}}\right)\right)^{2}}, \sum_{l = e + 1}^{2^{t - 1}} \frac{1}{\left(l - 1\right)^{2}}\right)

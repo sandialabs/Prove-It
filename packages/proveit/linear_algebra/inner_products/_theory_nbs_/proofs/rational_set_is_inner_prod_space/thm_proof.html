@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.linear_algebra.inner_products.rational_set_is_inner_prod_space theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.linear_algebra.inner_products.rational_set_is_inner_prod_space-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">linear_algebra</a>.<a class="ProveItLink" href="../../theory.html">inner_products</a>.<a class="ProveItLink" href="../../theorems.html#rational_set_is_inner_prod_space">rational_set_is_inner_prod_space</a> theorem<a class="anchor-link" href="#Proof-of-proveit.linear_algebra.inner_products.rational_set_is_inner_prod_space-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> rational_set_is_inner_prod_space
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="rational_set_is_inner_prod_space">rational_set_is_inner_prod_space:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/4a5c7299c9cfae635a3ca88476b6fe1b439174a10/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOMAAAAdBAMAAACqOMYWAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEIm7mSJ2q+8y3WZE
+zVRISQrpAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAECElEQVRIx+2Wa2wUVRTH/7O7s+3szs6uUMMX
+TVeQEh7qkKpRiclIsIZUcTTlIQlh09hW5NVQ5KVgozSgNjDhAzRG3YrEhk2aTExTYzaYsRAgaUhX
+RGli1ElIeITEGkGpZdvlnJml3SXskojsJ2/SO2fuvXt/93/PYwqUoonjlu70k6qrn7/HyHWAMK36
+ceId51f/FkPsiuatkLfv3njbw27LbG6Zlz/2ZjtQsWCRrxhRoe2bPsDyDUQz6X32bODY0fw10pXb
+/1a6BixL5R8jDeEwlO5iyAcBz1cm5BdV4HvaJUpbeIOx/H2uFfAJjQf/zB9Lw6MBR4oha4F9IXqq
+vUAP0e5rpjMY7tH9zyS674SURm5FhujevMWQrcDcKfScSdzyCCZLJFCxFzo+/ClyZ5Xy6K1Ibxtp
+L+bKFAR1Pxm/+wyETOyTyaGy+S3PrYhMbP3pziVNsWyPunpNHlz3iM5Iz5hjCjWvW/RStSoNJTOH
+fnPqvZ4XaKve+oconqY+CrHmYUirG+n6fFFyXz8t6Q/a8DTjOD0gxS4z6cdcNV229Fe2l9qwFuWL
+Vpo0LrxhOubHOp6EsAeeNLA+M0r43ZZwCEobXoK4ByeNDt2fmgx0goXJMda0XzERTOFVxVG5hkmp
+XORTwPVsH9AQtgOdAsSRqVV0QjYPAnHDm+KIhfD1Xlp6FhiyCDmgh1K4qB8Cxk5GQHcUsCFGWVO/
+34LSCq/ry+c4BT5MJBJf3ERWA39n+7hJIRKiMBPd5CFTGgPC0coYhLSTPXuBM0Alxe4Dj+mVFE8S
+HeJ04EoDTZbTFWR9GYH0B7z3j0esoOaqzEEO1SaTRkibQGpQiBRW4w6SQ2fAYmRYRcWOIT3OKq4m
+k98IszKai5y7NBuxcitkNy9t3qqzADLOs5wKN5FRV6XmquQECRuuSqUdcZ3F8gK8guA/zsWiz8lL
+cqhCkFqqPifc6tNYAFlOF2HlI7GTlYVU9mWAVKx0fWmENQy8toJU2LtI0XngbRJEon1cfd6hawzS
+n4drrOZuZecUvB8cpNNL7fDoAT66m5Nsdhg4DbEdZRRdv0L4GRjUhYOkHOs/W/wRre+wMP1iBE+A
+8wKYQTWWC7ePy3nd6G8LXZLQ8p1b1rcNbzwwvPXccLPbo65muvzuLlvcntnA02RCnD+DxFVUrRpp
+LpPnbyb7bG+TBWnT+UlfoqKmAeKCer2vsZ4mJHaY+PIvVw0+rsWEreMVVp6W6P7XX6gzBWcOc1dm
+9PJjuTNSFmu6ZN39R7EwssfpN/l3fOKUeG4Xnn3fvHtkV8EZr/O/gNIyOA+i+h9++U8Mv1VoaiLh
+s/QStCXjVgP+b6Vp0upoqZEHoJYa+XTpL/ZzREqN7Eua9x5yA7p7RbdGPjgwAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/d9b3b002195c9774ad4875a2b6d92cbefdc057b10/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

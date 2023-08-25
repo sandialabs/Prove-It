@@ -1,0 +1,1 @@
+\left(f, A, B\right) \mapsto \left(\left(f \in \left[A \rightarrow B\right]\right) = \left[\forall_{x \in A}~\left(f\left(x\right) \in B\right)\right]\right)

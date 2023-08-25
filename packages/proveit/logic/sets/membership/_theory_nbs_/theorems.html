@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theorems (or conjectures) for the theory of proveit.logic.sets.membership</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theorems-(or-conjectures)-for-the-theory-of-proveit.logic.sets.membership">Theorems (or conjectures) for the theory of <a class="ProveItLink" href="theory.html">proveit.logic.sets.membership</a><a class="anchor-link" href="#Theorems-(or-conjectures)-for-the-theory-of-proveit.logic.sets.membership">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the theorems of a theory:</span>
+<span class="o">%</span><span class="k">theorems_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">ExprTuple</span><span class="p">,</span> <span class="n">IndexedVar</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Not</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">NotInSet</span><span class="p">,</span> <span class="n">EmptySet</span><span class="p">,</span> <span class="n">in_bool</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">i</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">S</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">zero</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">Natural</span><span class="p">,</span> <span class="n">Exp</span><span class="p">,</span> <span class="n">Interval</span>
+<span class="o">%</span><span class="k">begin</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining theorems for theory &#39;proveit.logic.sets.membership&#39;
+Subsequent end-of-cell assignments will define theorems
+&#39;%end theorems&#39; will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>exp_set_0 = Forall(S, InSet(ExprTuple(), Exp(S, zero)))def nvars(n):
+    return [proveit._common_.__getattr__(chr(ord('a')+k)) for k in range(n)]
+exp_set_1, exp_set_2, exp_set_3, exp_set_4, exp_set_5, exp_set_6, exp_set_7, exp_set_8, exp_set_9 = \
+    [Forall(S, Forall(nvars(n), InSet(ExprTuple(*nvars(n)), Exp(S, num(n))), domain=S)) for n in range(1, 10)]mem_exp_set_length = Forall(
+    m,
+    Forall(S,
+           Forall(x,
+                  Equals(Len(x), m),
+                  domain = Exp(S, m))),
+    domain = Natural)mem_exp_set_item_set = Forall(
+    m,
+    Forall(S, Forall(x, Forall(i, InSet(IndexedVar(x,i),S),
+                               domain = Interval(num(1),m)),
+                     domain = Exp(S, m))),
+    domain = Natural)
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Proven. Used by the NotInSet class&#39;s deduce_in_bool() method</span>
+<span class="n">not_in_set_is_bool</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">S</span><span class="p">),</span> <span class="n">in_bool</span><span class="p">(</span><span class="n">NotInSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">S</span><span class="p">)),</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">in_bool</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">S</span><span class="p">))]</span> <span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="not_in_set_is_bool"><a class="ProveItLink" href="proofs/not_in_set_is_bool/thm_proof.html">not_in_set_is_bool</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/265b5c6a403d82b7d4fb8a5f0077fd83fb92d2300/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAP0AAAAXCAMAAAD3NLkqAAAARVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAeYafp
+AAAAFnRSTlMAq1RmmUTNIjK7EInv3Xbp8+P355HBoPSVsQAAAAlwSFlzAAAOxAAADsQBlSsOGwAA
+A4hJREFUWMPdWAmu3CAMZV+Du3P/oxbIZgNJZqRWUxVV9Sg8J35e4TP27yzbyXvUq8//DPyvLxBU
+XiwT5s81PLw+Ld5ksySuTzg/toX8KHkRqbxYjndqSsXIZGEET/b7StmasNJvcKUPp340GYKh8mqd
+9q6MagiDz3dZgdgXxtGWHzv88KX1Hw29klRerUS1VBOyuUyqV9hLseV7g+8ei+Kj7JdOzirXp/Tl
+K8mN7HDNL2HAp2RG9tujCpebs81nq95QOelqBoq13JFneTXerU+NHPBj7LmVW2dp8KV6KC3xs4kf
+qQwAPLh4JqRtOdp1hZBzRO6IqCPasQvUrhcg8Yjhqun78JKRNGDPfRJeZL+HbZflQ8CBqUR7suze
+J3NZfDdDIt9Menhhn8ySkwoIbvn+3yTdIoAEh16AP60vyZx6qs/waFRSQ49JgkhpK7PA+JHLZj7s
+A/ic914hUNMwV10PpN7essJr2OOUiaiudplN2YfeYQ6497rT05FuAovMCuH6pqeJbH7DBFyrz2/f
+UxpHk8qbMrJ0xdflO/ZVRASvtpqbRszn7LvJW6aPm+mtjj42K3sWg7hn337iLA9+MpfkXv3bY710
++FnsKweP4eaoJwBly79joMjuSOyHyXto4KMW1msWn5st9jKG+8xv/bzoh0C+Rof9nnw2byiRrs4F
+HXuD4VFslQCWcc/MYQHk7CV9AWqqRIM4G+sJRSJROplaFjdYBliGUiO8RuYcRFA2dNd0E50TTCIb
+AK7ZC8Bwu/AjlcrnkWlBqMzn7LUnGpp4CelVHNqssXcK+jazD6tViuyCKuw1yvTiYTrsy0CIdM4p
+PLWNmLCvVQdRUTh6bUZ5HtYMnLMXnGhI49sSvZ7zZHOte9afLlzCMqgSOqGkIHnuf4Ru/GquOD9B
+SVO8xngwi/fnHa+Hb73yrPPV8+T8j347TzTcyYfq1cxHmxv7IS+To3Kyfv7y5OQ6XNlTP3Zv8T3c
+LiyaNqJDNVe16HLLrrveqYGOS1SvFeC5ubJ3A/v9inJzVXm6w6n3rugDvNRjOabUm98i6iGw3p3t
+Rddj3mKNEus9alSvwY5NYcBE7yd2ekvlGKuHS+ibl9RbuLi4JOLE6o5dsZZ2X0tbu59vToDTSf3S
+JdS/9/eJO7gOj+yZeuVz6mWbLFDZL/5wo3iP/C1csmf2LD7fjKRm/8/qHPbMPvzTdH4DX5sewaAm
+9xgAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">unfold_not_in_set</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">S</span><span class="p">),</span> <span class="n">Not</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">S</span><span class="p">)),</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">NotInSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">S</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="unfold_not_in_set"><a class="ProveItLink" href="proofs/unfold_not_in_set/thm_proof.html">unfold_not_in_set</a> (established theorem):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/698ac32a88558710a20dc514951e97c4ca050a9b0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAAAXCAMAAABuzGCfAAAAPFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAo1xBWAAAAE3RSTlMA
+q1RmmUTNIjK7EInv3XbPqdvtPAm6/gAAAAlwSFlzAAAOxAAADsQBlSsOGwAAApxJREFUWMPVV4uS
+nSAM5RFeQdi2/P+/FgQUFPTajtsps7PZ9SSYkxdIyHcs9Rj4bD9Fvmt59hS4WcK3km7PGX+JAbNP
+gZk+gLWEi8i9+LpKEFVBvpQWlE+ByTIp5mjC6iwWp6PUNQ3KvJQE4E+BiTqsgq/Eef4ny8rHspco
+LI+BVCHGxdWlKei2D5bidpK8xEK+1QnyKRDdlB5Pz0J2VGcmsrqd5JL4usW+VUf2BkDvKWrbVIGS
+OOicEKze/7W0kbACBj/yZw5xPX4uZxVfgbinp56AI9eDhYe4aIW4bKSi9dcgo9Z77nfnLlrejC2I
+y9EFty3oAK6Sd0joTnVSYehNCLWB2NLKlAArhuWaWkcHckNBe2q+fowtyHLcuUarAIktdE7rpZI9
+vw5C2a6+I8v0WnkxM+gNBUilSHFscUth/dN30R69hdeOKC0jlk5Kwsse3oOKP9sc44ebSLP5prqe
+kEgnFrVezhR2QIRogHszukERFSMVihpznbSsjACvCDVEbnv7EAwfFHyrmmPmxcQin6kdBWgBNILQ
+FEnbRudc0u4w37jppFrolq24cdOLyCDQIYVNVfAOOFps0++0MsCCRogURJsseTpmwdl+s8qlSrp7
+HZoiwJxlMumFrMqlMebrp2FjC6LdhEIGEGLMGXDWl40ReJjmggKlu5YTvWynwV7JOTDd3cmcVXUK
+Q2nmgUV8yeTAmAPrbDbHC0Zfja6X2/OFWLmeNZj8gjVrVI0o7KppJtdmG1jsN7LzkIG/vzuerorg
+08mU7q8LS8d2up+rcTtvqjHoup78A4tkNLvFmz++3tdEX16v2dURfBh49ldsBzH/YDBPgftPB3Uf
+BIGfU7j93lP+KXD3Jat6Oa5T8oACRfL/rDHrf8vgNxUyFOiy7tStAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">fold_not_in_set</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">S</span><span class="p">),</span> <span class="n">NotInSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">S</span><span class="p">),</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Not</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">S</span><span class="p">))])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="fold_not_in_set"><a class="ProveItLink" href="proofs/fold_not_in_set/thm_proof.html">fold_not_in_set</a> (established theorem):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/9150c63d36d5380bd6073fe1318aa179e576dc510/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALwAAAAXCAMAAACGTNW0AAAAP1BMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADFBd4eAAAAFHRS
+TlMAq1RmmUTNIjK7EInv3Xbp8+P3nXbhrUQAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAKiSURBVFjD
+zVeJjtwgDOU+DLjtlv//1kISEiBAZqtqpmiV1RDbPF8Ph5APL/13bzX5Dxay5WsFkxcS85Oevxl/
+P3bmlq8N7eWFcI5wmbzOaIU8vXx/KkCt31/g9mVzvMHGkpTTOW3fH3jxkOzQiYvtH99c5qIqK8fe
+D96vusGGHz9Dk5poqnonPgHnh/fqAxU/P1MqBEJNuxd3qGbfVvmXD3l594GqKWcCIgXjruTrXA99
+R0CMrnLH5YIX24aFV06bxvCFZsc7EfLLLlIkIjTkwXsNHtOi5ait9DUtj0H2HCLH091ZT3M5x3yZ
+uLkejkhznYGlMjn7V41JHtDGWBqF+RJ0NzyeZd9NJA/g4ea5QWqt7EzIvjL9cejmWV0jJpfyr6/0
+uJ8oYtGKxb5asAF9At/TceI0MzLRh9JXer6uEbAD+uOl8o996Y8klfJCFDr9ndzE2znCLun4VMaK
+vmsTPZzAKiZJIgC1xTBOr46HFAuH0SMmqAm1RJ02MUZb3yNj8Fq1ylCL1SaYGFyYOc6S0BzGq6wQ
+ieyED6wXRfH9GO3pmZlksKIjYCLSIXhn95VMStsqy+berEzIznm377NoQCTwskqMYh3JJypylU7l
+RSUYK9KDPaHLyCdbjLbKXO1+sd6E6fTNHkwQKdBMcNYUyZeEjqYlFZReQuHGMcZfNb5Hop55xuBP
+TIeyudLfmujLhgQzZVj+29nENvM7WHc9oT1xauNjyOeLLaJUL8GL0lqXcnXhtSbwduuI70/y06FO
+YL5S8qzpWb568/SsHxuWWN0op0iXiLYmrB5rjuL6NOMuBYYzpp1dov2ttbVzX5NwV4cZhMcZ1y4G
+EgnfAE/ES98xIymNY1n6NCitThx/JUxT5V4Y61YD0Gc/9V8AD/8czh+fBRQIyHz8GAAAAABJRU5E
+rkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">double_negated_membership</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">S</span><span class="p">),</span> <span class="n">Not</span><span class="p">(</span><span class="n">NotInSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">S</span><span class="p">)),</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">S</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="double_negated_membership"><a class="ProveItLink" href="proofs/double_negated_membership/thm_proof.html">double_negated_membership</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/940dd61f3f675692191bc125dfe493f6266b9af50/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMIAAAAXCAMAAABuzGCfAAAAP1BMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADFBd4eAAAAFHRS
+TlMAq1RmmUTNIjK7EInv3Xbp8+P3nXbhrUQAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAKoSURBVFjD
+zVeJctwgDOUQl7Bpm/L/31owhwHj9TLTzUSTiRJLwnq6kAn5DlLLgvfMFPkucmxVkEjijUC4ltP6
+nPEPIWB2VZBI01EfwFrCRcCefT04iIr5Q2lBuSrIdLqWyMSYo/FtgiKvUJX5UBKArwoy7YM6HIwf
+wHn6J/GCx7IPQdiWBbFCzP7r996lyeu2D7bsduQ8x0J+qhPkqiC4KR0SqvtnPjmq02NZ3I582yNt
+9lN1ZB8E6BxFbZsqULEyxk5B720DytKGwyEw+JY/6xAkfxCEMx11BM7SPwYLd4M+94FomTlcNlzR
+8muSUescdyf4x5YfDUJTpujCXgk6AVfRu1A3J1Q5vxTQGe9LA7Gt5TEBVkzLNUZCe/IAQTtqjJga
+hDodTy7RyoIIF7qi0bG0/3yFX9fXgc/HlZckHt8rX8wM+gABQN8aPEM4/uyKBs1kQPLSEfm52Dou
+a+E5Byr81DnGh02kgVBVXVPsF4NaL1cIp0D4YIHYXQjDpYDZSPmsxvaOW5YLzylCDZH1bOe96brx
+hFBVsc3MxSDfqR0EaAUYKpDGSNo2OkQMg6N4XOcbNx1XG63ZCgc3zYgMPJ1CqKqic3k0OKffhZKA
+eY0QIIg2WZINl0KYBrY/rGApvDHwTRVgyjK56YWkyqU5iE0NQr/td1vcIUAIMWfAWV82XwKHaS4o
+UHpq7aLn7TQ4SzkFptudzFVVnxUwMYgv0Xc7kL6dzfyvNWEi3d/fau95fb4RK4+7BqNfcGSNqhmE
+U7W5FCcGzUZ29RPWvxTGFfGyKoKLV1PcXzcWr+24n6t5O1fVEPUSzYnBYXS3xd8KHrfmovBScb63
+Ti3Qxl4Q9x8MZlXwuDUX8ObFN47A9yE8fzq7RQF9+pJVPZ/XKfmPEH4UqR/o0z/FuhVKs6XdVQAA
+AABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Might be useful to have an additional theorem here along the lines of:
+$(x\in S \Rightarrow \bot) \Rightarrow (x\notin S)$
+(a form of “deny_via_contradiction” or some similar name)</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These theorems may now be imported from the theory package: proveit.logic.sets.membership
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

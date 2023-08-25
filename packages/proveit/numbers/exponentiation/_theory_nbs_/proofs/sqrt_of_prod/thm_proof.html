@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.exponentiation.sqrt_of_prod theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.exponentiation.sqrt_of_prod-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">exponentiation</a>.<a class="ProveItLink" href="../../theorems.html#sqrt_of_prod">sqrt_of_prod</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.exponentiation.sqrt_of_prod-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> sqrt_of_prod
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="sqrt_of_prod">sqrt_of_prod:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/a373ce21d9f42786ed720f4102b4985d63ef7b740/expr.html"><img src="data:image/png;base64,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
+rkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/1c4bc084bc4b976d3e83427a60419813f7157cc70/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>sqrt_of_prod may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

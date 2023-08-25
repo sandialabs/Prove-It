@@ -1,0 +1,2 @@
+\begin{array}{l}\exists_{\lambda_{1}, \lambda_{2}, \ldots, \lambda_{{\rm Min}\left(m, n\right)} \in \mathbb{R}^{\ge 0}}~\\
+\left(v = \left(\sum_{i=1}^{{\rm Min}\left(m, n\right)} \left(\lambda_{i} \cdot \left(a_{i} {\otimes} b_{i}\right)\right)\right)\right)\end{array}

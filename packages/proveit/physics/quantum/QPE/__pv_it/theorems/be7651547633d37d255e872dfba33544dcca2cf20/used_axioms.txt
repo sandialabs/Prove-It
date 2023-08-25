@@ -1,0 +1,7 @@
+proveit.logic.booleans.eq_true_intro
+proveit.logic.booleans.true_axiom
+proveit.logic.equality.equals_reflexivity
+proveit.logic.equality.equals_transitivity
+proveit.logic.equality.substitution
+proveit.physics.quantum.QPE._fail_def
+proveit.physics.quantum.QPE._success_def

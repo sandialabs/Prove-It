@@ -1,0 +1,1 @@
+\left(\left(a_{1}, a_{2}, \ldots, a_{i}\right) \mapsto \left\{\left(a_{1} +  a_{2} +  \ldots +  a_{i}\right) \in \left\{0\right\} \textrm{ if } \left(a_{1} \in \left\{0\right\}\right) \land  \left(a_{2} \in \left\{0\right\}\right) \land  \ldots \land  \left(a_{i} \in \left\{0\right\}\right)\right..\right)

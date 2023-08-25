@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.addition.add_rational_nonpos_closure_bin theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.addition.add_rational_nonpos_closure_bin-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">addition</a>.<a class="ProveItLink" href="../../theorems.html#add_rational_nonpos_closure_bin">add_rational_nonpos_closure_bin</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.addition.add_rational_nonpos_closure_bin-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> add_rational_nonpos_closure_bin
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="add_rational_nonpos_closure_bin">add_rational_nonpos_closure_bin:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/0012ce096b60fae1a4e0346d1be8c5ab3c0550e90/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOMAAAAaBAMAAAC3PfauAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAD3klEQVRIx71WW0gUURj+3dl1Zmd2V+upGzFR
+UBHJZtFFIjY07EK6UQ/Zg630EPVQa0QvpY4UFBQZFZnRZXopSkHJICoSKSKjAoPoysIoRA+FSJCB
+D9F3zuxOe8bZWi06MDNnzu073/dfziH6P8XXSlpP10RmSvEJIl4mWkU15B//1DkTQ5TO4NVHRUn5
+1Hinqgm85Fy9yVwdkdNs2iiFdFAdZwlG8RrM1Vs7pqW9ra2SSHnI6soohaMUNomK2e/sPCEPMbN4
+OYF6sR9kom52Mwz5JYbPv2dDhiyKAG8N69uZJ+QGPNc8ewpjeO12NXZ3E22pQaXmHhe2SCd1lKiZ
+yZyvUb/hKRdaNqe/WI1oiTha6YLpg5KFanOl7T5EO7A9iKvp+SFCG6Jeoakk/d2OZShk2npeSr3m
+lr8JFTWDuRzVT6Mh2oTKOvgvDFCYJ8kIDOZLeEI+4OpyYwb22Mh0QwFBn7427c5az3p8v+B5kUo9
+yxOyAHB+5j31PY0uyLqhyWDEffFAGpGOB7CFQLRUWIPJgU1c+A2MmR0jp2wmgSd0xRQg1RGzM0lS
+QvDFWgkGUywxHFoM7Jjk4tyIiwx58JPjlhgYxjIdUdoosvTxCPBxOzvKH/Rxlh+VNpTWdGMTUmbQ
+1JzEqexygvjsJLiXetuAfzmmDiMSQhhcTfSB/W9MpZ6nUi9R8yeoqIuUYbYGLJV6x0Wxbble4NCJ
++T4ry3umszkDbXH5PmmlJG8AbEfGEW2WDPIpqd9EluEu2q5TgLFUnYgLXv/lsU5pMpgQWXmvD08F
+GrV9pC5ONjD6DRQ2RGHVHyQNi5AIy2qTfP2s3p9ZLGDHpRiBLSwT32JJo33VHUbwx4DJ09axuUSW
+RYvinGUmXxeAQNAi9St8d64IaaiPEHCc4JCzfDmyz6YaGuOxdAh7V98o31ngvY/EbrCOsiiHpFlR
+BK0jfKTXDoTLtDAWEyALosFYOoCo0KGlsRwbEyFX8uHQzR9TevlJISV4CmNwFlvgSFweXOYoheyj
+QLern4/ONMQgmc7yYJj7oTp1W2bC/pG9a10hsDpTCcVZiqeQ4S9eCo/Wt9rCustjPG89sw8vDemd
+3bUTHsoUyb3IDsd1k8EyiFyEU/Q4l4S7z/6Kioq4+yRZ4pnWbduNzVfWwDxhBXaSpFkmWzab7ThA
+VyBOeaCQ5nGInmDi5zz8vQ6kWeeeCqeo5KSdQHlJN53QlSqL5PM8FbyqMzySrJ4dd2PuDMk/p+mw
+a4yeuT1AizuHc919GnMt9ymPk8F19wlkp3D/7CqPC+SCv7zOurWXhL+Ty//hPdYhAlY/AQy86cyH
+ggJ9AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/c6177140dad06e9ea592f0c0281bae04f4689dfb0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>add_rational_nonpos_closure_bin may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

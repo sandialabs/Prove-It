@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theorems (or conjectures) for the theory of proveit.linear_algebra.matrices</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theorems-(or-conjectures)-for-the-theory-of-proveit.linear_algebra.matrices">Theorems (or conjectures) for the theory of <a class="ProveItLink" href="theory.html">proveit.linear_algebra.matrices</a><a class="anchor-link" href="#Theorems-(or-conjectures)-for-the-theory-of-proveit.linear_algebra.matrices">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the theorems of a theory:</span>
+<span class="o">%</span><span class="k">theorems_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">b_of_j</span><span class="p">,</span> <span class="n">b_of_k</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span>
+                     <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">fj</span><span class="p">,</span> <span class="n">gj</span><span class="p">,</span> <span class="n">fy</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">Function</span><span class="p">,</span> <span class="n">ExprRange</span><span class="p">,</span> <span class="n">IndexedVar</span>
+<span class="kn">from</span> <span class="nn">proveit.core_expr_types</span> <span class="k">import</span> <span class="p">(</span><span class="n">bj</span><span class="p">,</span> <span class="n">a_1_to_m</span><span class="p">,</span> <span class="n">x_1_to_i</span><span class="p">,</span> <span class="n">x_1_to_m</span><span class="p">,</span>
+                                     <span class="n">y_1_to_j</span><span class="p">,</span> <span class="n">z_1_to_k</span><span class="p">,</span> <span class="n">z_1_to_n</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.core_expr_types</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">a_1_to_i</span><span class="p">,</span> <span class="n">b_1_to_j</span><span class="p">,</span> <span class="n">c_1_to_j</span><span class="p">,</span> <span class="n">c_1_to_k</span><span class="p">,</span> <span class="n">d_1_to_k</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Implies</span><span class="p">,</span> <span class="n">Iff</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">InClass</span><span class="p">,</span> <span class="n">SubsetEq</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Add</span><span class="p">,</span> <span class="n">Mult</span><span class="p">,</span> <span class="n">Exp</span><span class="p">,</span> <span class="n">Sum</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">one</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">Interval</span><span class="p">,</span> <span class="n">Natural</span><span class="p">,</span> <span class="n">NaturalPos</span><span class="p">,</span>
+                             <span class="n">Rational</span><span class="p">,</span> <span class="n">Real</span><span class="p">,</span> <span class="n">Complex</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.linear_algebra</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">VecSpaces</span><span class="p">,</span> <span class="n">LinMap</span><span class="p">,</span> <span class="n">ScalarMult</span><span class="p">,</span> <span class="n">MatrixSpace</span><span class="p">,</span>
+    <span class="n">TensorProd</span><span class="p">,</span> <span class="n">MatrixMult</span><span class="p">,</span> <span class="n">Unitary</span><span class="p">,</span> <span class="n">SpecialUnitary</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining theorems for theory &#39;proveit.linear_algebra.matrices&#39;
+Subsequent end-of-cell assignments will define theorems
+&#39;%end theorems&#39; will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Matrix-spaces-on-number-fields-are-vector-spaces">Matrix spaces on number fields are vector spaces<a class="anchor-link" href="#Matrix-spaces-on-number-fields-are-vector-spaces">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">rational_matrix_space_is_vec_space</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">InClass</span><span class="p">(</span><span class="n">MatrixSpace</span><span class="p">(</span><span class="n">Rational</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span>
+                    <span class="n">VecSpaces</span><span class="p">(</span><span class="n">Rational</span><span class="p">)),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="rational_matrix_space_is_vec_space"><a class="ProveItLink" href="proofs/rational_matrix_space_is_vec_space/thm_proof.html">rational_matrix_space_is_vec_space</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/2aaf813d53885a545d0e26825697f03612f471990/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">real_matrix_space_is_vec_space</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">InClass</span><span class="p">(</span><span class="n">MatrixSpace</span><span class="p">(</span><span class="n">Real</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span>
+                    <span class="n">VecSpaces</span><span class="p">(</span><span class="n">Real</span><span class="p">)),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="real_matrix_space_is_vec_space"><a class="ProveItLink" href="proofs/real_matrix_space_is_vec_space/thm_proof.html">real_matrix_space_is_vec_space</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/da79bfc216e96a1caadd86222013182d66dbfcc70/theorem_expr.html"><img src="data:image/png;base64,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
+dyDnLrdWAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">complex_matrix_space_is_vec_space</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">InClass</span><span class="p">(</span><span class="n">MatrixSpace</span><span class="p">(</span><span class="n">Complex</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span>
+                    <span class="n">VecSpaces</span><span class="p">(</span><span class="n">Complex</span><span class="p">)),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="complex_matrix_space_is_vec_space"><a class="ProveItLink" href="proofs/complex_matrix_space_is_vec_space/thm_proof.html">complex_matrix_space_is_vec_space</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/35769edcb1c2bd03a124a541258c12c34cadf1300/theorem_expr.html"><img src="data:image/png;base64,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
+p5T/AdcIZnVP9ohAAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">eigen_pow</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">(</span><span class="n">k</span><span class="p">,</span>
+    <span class="n">Forall</span><span class="p">(</span><span class="n">b</span><span class="p">,</span>
+    <span class="n">Forall</span><span class="p">((</span><span class="n">A</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> 
+        <span class="n">Implies</span><span class="p">(</span><span class="n">Equals</span><span class="p">(</span><span class="n">MatrixMult</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">ScalarMult</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">x</span><span class="p">)),</span> 
+                <span class="n">Equals</span><span class="p">(</span><span class="n">MatrixMult</span><span class="p">(</span><span class="n">Exp</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">k</span><span class="p">),</span> <span class="n">x</span><span class="p">),</span> <span class="n">ScalarMult</span><span class="p">(</span><span class="n">Exp</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">k</span><span class="p">),</span> <span class="n">x</span><span class="p">)))),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="eigen_pow"><a class="ProveItLink" href="proofs/eigen_pow/thm_proof.html">eigen_pow</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/98c78f9ddef8f3b4a7d445cd39ded59e596fc9990/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAjQAAAAaBAMAAABSnNtfAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAHFUlEQVRYw91ZfYhUVRQ/8+brzZuPHRQis9aB
+TCEhx7IPrWxj1zK/GvSP+icdMxA3omd/CIG6UxBUruxERq2FTSTSprijGIGSjshSEMomkWFOzEgh
+VG6x+LFskN1z373v3ffufW9MWoku3Dvv3fs799x77rnnnXMG4P9THm5cGy7847/FMVQ/HTR8W90M
+WkZhAmVxr5tBSuDVEbSYIe9AxCbB5kI9B5n6qWtYQCx4uBg4On0CJaN1uBn0CGMvBywm/od3IF7m
+JLQJ50lzzwSLxqCjJquuotK1uKLP9MEC7LYZWGVe/FdHQRp+iyFj5S1Vz9ACTmI1N0I0CWSSyVmV
+lI3O0CoF/Jyib5UPFuBtzoBN3P7SXkeGZ3wWgxbi/J1feobSFU5yxhFNFt9vbyGaIFARQlS786rB
+TdjMYpWUF52hjEygVWHghLcTcRnV5PEaZ8AmPpnTndGmcjHGB8PEJp2DkpdJlpM0HdEsxPd1LUQT
+BCpCBK1bTKn0S5geM13Wrgpj3cob8pzU263EEttZZQzYxPGLi4TRwYpyMTFin3q6StJdG+ck2DDR
+vMKtUJBogkBF0LN+dg8u4RbyVsXHaYIA50roTlJHpd65SixAW4ExYBOHy88ItiqWVy6mjVzsedFh
+6RzXchJsmGhiRErJXAvRBIGK1pkeUI3peBgpVkn5/KhwXinpXMkNiY5LkyBOwO7gD30VxoBNHGps
+Swo6VVYuZjUhateHvWYYnuAk2DDR4E+slRkOAhUtY660xhlys2EGq0TxGr/nAs5VI3Mkh2X+eRf2
+Df5wgTNgEyfM0AMC65pyMV+Q+i5Mlm7Ub5wEG/6FOlGvf93yCxUAIvtJ1etnq0pvsciu+BLmWc1G
+psbILVuJkiWzCuMRa2/a0hNwAjbMOd3EGdgTi1Sy+lHsmpFJ7t59zU8O5yxtoiTYcNEsEnTUKUm3
+aNQgLppICRJU4w3v57LMrvFa+roC+qp0I83GMrIAuq1ldSzfcPUY7DauOD6qjaPYCIXWL7Lhfs7A
+nlik0sfAIcnyxRiXK4NuO9ORaY8QdeorMRJsuGg2QDyrMP9u0VCQvt7Wze3tWwTRkLEN9HmvR1Fj
+OPMpVtEL78GO++GRymRyf7wqnyanN7sCJ/m7gBOx2rPW7xrOwJ5YpIpfkrSfQLRxSLmcwbAZHg8R
+SfQUGAk2XDSJSrIghGablxTCxyTRWKCpKNVmf8F4y9TeF12+HfAZfT7qMdXpDhaxDFkC7ZqGp1yC
+x6hZ9PrrGAORkT/xcMGNc2F3WzHQt5yBPTEIVIYkGsRGitDG9WsQV65jF74UGIkhiEZrxHhohtvW
+sodgsSQaC/QVqegTJPcBPCiK5i7LCkd7GwqtsUVDqNoss0kVI1pTiOYHiI6ybYs4ERt/3vRojTOx
+QxUfU2lNugqrc+K5AdOinhIjiQsXCooLeGiG29YWRKCa7FrWtdAVKCBI/6tZoX7px68J4Q4KJWaF
+LBlrpSOP/2SqLhRZSppuMXoFPiWchj22Bi/UKEQc++ngKJYZju9M74WyJxao9CteW4NY4tY86fEZ
+VpsG6ekzGQk2tmgOdLPQjG5be/WpRlXSGgrKnMl0DODLzJmeGCo5g/JrUOXMmFNi7GRCqOY7WY3i
+R5hcDOOdUA2qGOV5jTaR7xjs5d8aESdgo/xxCmfAJ3ZRKb5QBNtWMo67OgcKt9JPjvILBZuyLDSj
+29ZKh+5QiAZBiXy4uBJf5s/3iCZ+jC66RD2DMOzURediP6sY7iTImWhju2rRHHP0XV9FwmMybLfN
+rYATsBslV4RP7KIKy34N6QnlE+5Mzuw3l5LvG8BDwEjCgl8DoRILzVZaoolkyrJoEJQqRbL39ff3
+515/2ht530y19/B+66jszy89h21WHbjaDdqHl6tgLG9MvxvvjzfLpZNb89FBx0ERcAL2PfsmsIO2
+J3ZRRaTPLmKNqZ3uzl0jWieq+KOcBBtXUoKGZnTbWsmoFiW/xgpaIJXbSo93n+DCOG5wg9k+vWYb
+IjS/6ZJVvWWz1PO90nHa7MaarqTekK+jKsdQQwF+rSqG4tkdEppttbQGVjTU+Zp0ZZ7l2sUPmnBE
+Eg1e+VHYA5uSxYgY7IY7rKoKJuVAUo3rbBF5y8Un8vZLuakib2aiMDSj2w4XrOSFQjT6cqIXVJ/3
+rN9ekkSzNAu7Lhd6c5Gfj/zC+3qBxixWVSQdPXZYmfkr+0T9eo0zUJU5cldvQAo7y0nmeLN8NDSj
+2962jmWufLJ8e/r7C4FZPpfXF8K3AVZbysFQSQBxSpnBJM5AVRSp/pB/giFtcpLT6gSotO3rSIBG
+K1I6Nt6wqrucV8y1RdF33gcr54ZdahCQG1aUG5IbDrtfZ03kPwpVfwbKzJrvYq77H4Xg/6Fe+M/8
+DyWWxf9oMZEKJ8Hmwtk8ZOrH/waUmhzIhavWUgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">unitaries_are_matrices</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">n</span><span class="p">,</span> <span class="n">SubsetEq</span><span class="p">(</span><span class="n">Unitary</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">MatrixSpace</span><span class="p">(</span><span class="n">Complex</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">)),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="unitaries_are_matrices"><a class="ProveItLink" href="proofs/unitaries_are_matrices/thm_proof.html">unitaries_are_matrices</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/18b063fb399b24f38946a57bd9ccf7708b0d299c0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANAAAAAZBAMAAACybb07AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADSElEQVRIx6VWa0hUQRT+9nG969113V6WFWJE
+sVDmBhkGURtaSpGtP/qTQkZQ1I/YoD9G5FY/JZXSYiXjklCE2Gov8I8I0YMsktgeCAsrRRFWFBGp
+EHRm7mPvdR9ecmBn58ycme/MOd85dwArrQLza0GLevbgfxzuGgBq1HGzxT03zWJY+ROz6m+q/E6m
+TcIZgKOq7SPgSFoDumySvKXKv5Bhd1/Pkc+tUsUjPCW95DDQ2xjwkGHjgI+tr86JI47AVfRiBfJf
+xZm4Tpv/kKbpXRmQ9nWKd5owQ9JDsuT0JxTKwASwkykczQnkJG+7pmnQzySpSZvPk9XjexKJRISN
+6hrITZ2wJYURFQglaKQ+JuMcM7kjJ1BhiFR+0sDGYQPavEPhiOtEWIt/sJv6xfBEnMEIvANVJD1D
+tYtsCnCz3KU5gdplI5AntfCc9/0aDmwys7gXLSg4H1HIIP7Aez9Z1wEHGZiXmwvfYARam1o4zPsl
+upwvKnesh/cep/dSCD5MEoKXXPkykRjNDVRkAtpDfJu4NXydhoN8WY8ZTrLDMzaByFELdGdYMmyJ
+moDoGu78EsTIYZt5YHy6YqsQyJa9U2QGRF/uqnHIBPQa2F/QgRai2XpO/tTuU0K2xBR/k2Nld8g4
+FX+ArT4TUNwE9BiQYyGUE0Pa+fKYIUbZXCcRkD2Z4kJbcRdWuWWnnHYjadoAhHIlcI18uSoFJGfL
+E3GKBXObnpm1rEokg27cr45Xh4xAeEK/C6rrGMovCShT8lZXFHgeCZli9Ie6u8eh1j5eU/xrzrrN
+MSpm3XaKyXI2YHQbhX2GlLYobllwQNOsq6duVxbW4YxPrX0Sv7jffaPBDPSV33YcTp7Xg9wR3qZK
+znR+ypBWgrxXaqSyTN8UBytJtoha+xRy+hH8YgY6yGta/Y5lXLpIJ49BWkSob9Kr97W/NRnLpU5N
+Vvscx6LRSwTUl2fOI4+RlSiI6BEes/wVzNMTjNU+Ja/9EDakV2+DF/S7OgOWgWKyZhyvfd3q+2Bi
+FmVGTOJVmD/QexMJLUZZ20adFbz2NZO2621YyRdDW2iSbqchzt3ezcrfoWjX3G8GUa0z3rBlHKtv
+BvvAPJ9bVl9B837X7Qb+AU7wx9KVFNmOAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">special_unitaries_are_matrices</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">n</span><span class="p">,</span> <span class="n">SubsetEq</span><span class="p">(</span><span class="n">SpecialUnitary</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">MatrixSpace</span><span class="p">(</span><span class="n">Complex</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">)),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="special_unitaries_are_matrices"><a class="ProveItLink" href="proofs/special_unitaries_are_matrices/thm_proof.html">special_unitaries_are_matrices</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/64acc506bc2906463464baee99b9029937d7b9990/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANsAAAAZBAMAAABKjUbMAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADkUlEQVRIx61WbUhTURh+tt193N1tKn1A/RCj
+DwZ9uCBDQeKmBoYEi+qXUiOLKEIm9CNLmkb0x3IjkFAqlgkRQa4Pf/QniogiCSXM/DOYlIUYFkhh
+Qth77tnu3cfdvJQH7u7ZPe85z3ue9z3PewADzeLHMjTBqOGGf8foIpgg79ojxqY4AzofU2vkp6S2
++zPgiaEW2FE5KwO7jMGJvtxvnjL+tiZ03Hs63nI2dqfJ5yKfZqUEnBUv8RpwR4FiZrC+IFw7PQN1
+NQI6T7+I4cYfchSbU4Ofcu0nX2Lgt3zuC4pofamFKHgQwAK5SFh7mMGJgnAN5PAEzONAmOh3jmbw
+a4smO9PxeHxCSYmpGFAloxRN4HAwJazPaRJBdi4dxJ80iXa0EwgxLtgjqPxaZP6+/DX15ZJIHphk
+vEGdA5hhpq4OQe4Amrl3UlkhNAc5ZSOHxTQ4lzb8lsfro/phrcj+++w/MOFNpkoI7osEt5e8I3Bb
+wc15iD2RIm1Jg9ukDTcrvybtaEbO8CQqxoyPHQRTEPvheUyfvtHzLh4fLghnojiZF4dYV4WjcFon
+7z67Rd2HPISqub24K99KR4jJeqBPZyimnQMW2e+Lv/xpcLQlSSzFYFAJKXgKJLmPHcgHFyZCW8kf
+nSFZ7dnYsHP7yFwa3HvgkDuCEM3fohi1aruTD+eDC5HHYlRKl0T72BCqi9Ph3LzrGEmDewVEB/0o
+J3bC3EhbIXI+HxzNgDmh8d69pgfrpKgQzd6dhTHvx2BEg0M5sJpeTVx/NeXpE/PujshAQNUyoZ4p
+TEKW8KRurM6fBsdWKOqAi7LG4eNkMqw5J7CVWx1XFz3Izh30ikiYCe2jUyk9VQTJu/GClBE7E23J
+zfKEzObpL1uMpeQwzAtkWcWtbq9KyYswRf4JgTyZiXYaVfTUqYiLV+pvzIDzkP64j8LJDti+KGrA
+s98+D0+gUjkTSmu8mRQxTB8L9o/pkVmteE+MKnpqVfj3Qp7OgLOSqpisDSWMHuvKEsY/rlJ3FM4V
+JEcfdCrCyFhQD2632mN6ajnZ23uN4O7bMs6dkhdZzd2hZvKo8VrbrPaYnjpifHfWbTkVIad2qpsX
+fIbRWEVI+qjoqaIuFVSwMs2u6Ey9nuq0JVHj8VQByl/fVTnhetpGFDnGgzBliaZOwbiXg7t0cwez
+Y9zbY/CuYk9eGjxB43AG7yraTeG/mtGb2HLdM+mQ/wUSG9ZuZQJIYwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These theorems may now be imported from the theory package: proveit.linear_algebra.matrices
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

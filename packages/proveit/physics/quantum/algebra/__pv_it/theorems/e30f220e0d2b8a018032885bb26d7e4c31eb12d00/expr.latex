@@ -1,0 +1,1 @@
+\lvert \psi \rangle \mapsto \left\{\forall_{\varphi~|~\lvert \varphi \rangle \in X}~\left(\left(\lvert \psi \rangle \thinspace \langle \varphi \rvert\right) \in \mathcal{L}\left(X, \mathcal{H}\right)\right) \textrm{ if } \lvert \psi \rangle \in \mathcal{H}\right..

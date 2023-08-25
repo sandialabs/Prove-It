@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.multiplication.mult_rational_closure_bin theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.multiplication.mult_rational_closure_bin-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">multiplication</a>.<a class="ProveItLink" href="../../theorems.html#mult_rational_closure_bin">mult_rational_closure_bin</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.multiplication.mult_rational_closure_bin-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> mult_rational_closure_bin
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="mult_rational_closure_bin">mult_rational_closure_bin:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/d5012511c3e4d46c637001649e3b6374eb45cd7c0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAK0AAAAWBAMAAABAjAHGAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAC+0lEQVQ4y6VVXUgUURT+3NnZn9l1sr8HEWTJ
+B1+yFhNJA1kwI4h0YV+iIjaKIolYewiClI2IAkMXEmqFanwJxMC1ApMgessKwwf7lYXZeughCJHK
+KJDOmTszzuzqInTgO3vv4e65937nO3eAdZjfxCrhVS2F9dlnE0Um68URZSo7REmP0bCK53Vl03py
+Ak4bnSH3pXhlYRq9NYAaBTp4frps3vsmXHaS4NPcsdCeKOSODNANXGaiMmXztptw2SJBirlj/T5y
+mTagSewZipTN+9yEi9s/7F+JiXon/45/h0fIPaHkYQ0SceErT29SwH3lWfYnxB7nBB9KZoD8Nm8a
+Pko6k8+/LpvXmxNAz7M+O+irLdAlJ4zxBZPmQC5BPiFFECI17Kfzl83LmzPkF7hnF2q8W1kCmuGs
+uqw3kh/wRCHR9Xrgr7JWB85Yo7GhjZa6KyMCD6I4aG+2U8MbYLsxtjjy51ivCTUOD5UjqIXi9vIa
+Tl7Ixv1PEWo0Y+G4QBcwzyz+4uA+4C8waByGmMx/5JHJr4bAApVEd5RtmrA3TWU5D2VXyp33JZSf
+PJ9jNw+ZlHZUlMv693CPqQeZ5ZNs43u3TfLWywWNmwXX6wFdd/GgLENacMjXS0prMMazVvCIoV+6
+p4dDD6k7lPeBJRbiJzU2yitaoyt5g7oBZREVyXorxW+mGy3G+LutHO63rXR8ia9wicrmjQX46MGo
+lGStGDl180lg0TDuoiFmN9hmDJE/IARjt9UEvQ9bTGmiIs38qSyKcNpb1ZzNZiOHHDwEZgVGvl2r
+TVsZRh4zXW9FP1QfthTRdeoHL6m0lDCeCraSNjcgHOk3zuioGz6YKH2ATWblKdHHfEYuFnqtFeHU
+YEIbQ6XWQroztIaQ/Xg2mSjtxGhJqFbddNXxSsntOx7hRiTQqcN/2+iLueP2nYMpgRK7uMpjUn32
+Zsn7KPgfy2aJnskrK1+BjFOkDru1RucXHUJ2PtPeuk67DftMFJm61nfsq3squWYDu/Ef9g/zfLkY
+n4i89gAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/f676743fe2b513baef34c290fb6ad124098696b40/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>mult_rational_closure_bin may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,19 @@
+\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{B_{1, 1}~\mbox{on}~S_{1, 1}} & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{B_{1, 2}~\mbox{on}~S_{1, 2}} & \qw 
+} \end{array}, \ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{B_{1, k}~\mbox{on}~S_{1, k}} & \qw 
+} \end{array}\right), \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{B_{2, 1}~\mbox{on}~S_{2, 1}} & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{B_{2, 2}~\mbox{on}~S_{2, 2}} & \qw 
+} \end{array}, \ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{B_{2, k}~\mbox{on}~S_{2, k}} & \qw 
+} \end{array}\right), \ldots, \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{B_{m, 1}~\mbox{on}~S_{m, 1}} & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{B_{m, 2}~\mbox{on}~S_{m, 2}} & \qw 
+} \end{array}, \ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{B_{m, k}~\mbox{on}~S_{m, k}} & \qw 
+} \end{array}\right)

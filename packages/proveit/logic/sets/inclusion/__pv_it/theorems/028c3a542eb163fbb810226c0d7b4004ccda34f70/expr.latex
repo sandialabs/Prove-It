@@ -1,0 +1,1 @@
+\forall_{A, B~|~A \subset B}~\left(\left(A \subseteq B\right) \land \left(B \ncong A\right)\right)

@@ -1,0 +1,5 @@
+proveit.numbers.ordering.not_less_from_less_eq
+proveit.numbers.ordering.relax_equal_to_less_eq
+proveit.core_expr_types
+proveit.logic
+proveit.numbers.numerals.decimals.nat1

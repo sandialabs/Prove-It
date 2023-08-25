@@ -1,0 +1,1 @@
+\left(n \mapsto \left\{\forall_{a_{1}, a_{2}, \ldots, a_{n} \in \mathbb{N}^{\leq 9}}~\left(\texttt{\#}(a_{1}, a_{2}, \ldots, a_{n}) \in \mathbb{N}\right) \textrm{ if } n \in \mathbb{N}^+\right..\right)

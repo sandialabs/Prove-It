@@ -1,0 +1,1 @@
+\left(\left(A, B\right) \mapsto \left\{\forall_{x~|~x \notin B}~\left(x \notin A\right) \textrm{ if } A \subseteq B\right..\right)

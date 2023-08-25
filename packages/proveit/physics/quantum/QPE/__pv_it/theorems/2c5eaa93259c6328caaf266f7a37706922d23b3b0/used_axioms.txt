@@ -1,0 +1,13 @@
+proveit.core_expr_types.operations.operands_substitution
+proveit.logic.equality.equals_reflexivity
+proveit.logic.equality.equals_transitivity
+proveit.logic.equality.substitution
+proveit.numbers.number_sets.natural_numbers.zero_in_nats
+proveit.physics.quantum.QPE.QPE1_def
+proveit.physics.quantum.QPE._eigen_uu
+proveit.physics.quantum.QPE._normalized_ket_u
+proveit.physics.quantum.QPE._phase_in_interval
+proveit.physics.quantum.QPE._psi_t_def
+proveit.physics.quantum.QPE._s_in_nat_pos
+proveit.physics.quantum.QPE._u_ket_register
+proveit.physics.quantum.QPE._unitary_U

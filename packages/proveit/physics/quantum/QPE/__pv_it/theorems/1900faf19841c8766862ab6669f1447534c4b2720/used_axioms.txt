@@ -1,0 +1,12 @@
+proveit.core_expr_types.operations.operands_substitution
+proveit.logic.booleans.eq_true_intro
+proveit.logic.booleans.true_axiom
+proveit.logic.equality.equals_reflexivity
+proveit.logic.equality.equals_transitivity
+proveit.logic.equality.not_equals_def
+proveit.logic.equality.substitution
+proveit.logic.sets.functions.images.set_image_def
+proveit.numbers.number_sets.natural_numbers.zero_in_nats
+proveit.physics.quantum.QPE._s_in_nat_pos
+proveit.physics.quantum.QPE._sample_space_def
+proveit.physics.quantum.QPE._t_in_natural_pos

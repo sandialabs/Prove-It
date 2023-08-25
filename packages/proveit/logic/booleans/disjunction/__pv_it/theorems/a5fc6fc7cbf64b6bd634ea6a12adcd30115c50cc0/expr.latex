@@ -1,0 +1,1 @@
+\left(\left(A, B\right) \mapsto \left\{\forall_{C~|~A \Rightarrow C, B \Rightarrow C}~C \textrm{ if } A \in \mathbb{B} ,  B \in \mathbb{B} ,  A \lor B\right..\right)

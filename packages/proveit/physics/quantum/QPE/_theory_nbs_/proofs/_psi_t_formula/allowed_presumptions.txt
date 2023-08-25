@@ -1,0 +1,6 @@
+proveit.numbers
+proveit.logic
+proveit.physics.quantum.algebra
+proveit.core_expr_types
+proveit.linear_algebra
+proveit.physics.quantum.QPE._phase_is_real

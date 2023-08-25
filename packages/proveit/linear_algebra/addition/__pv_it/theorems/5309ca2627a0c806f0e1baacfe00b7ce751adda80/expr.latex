@@ -1,0 +1,2 @@
+K \mapsto \left[\forall_{V \underset{{\scriptscriptstyle c}}{\in} \textrm{VecSpaces}\left(K\right)}~\left[\forall_{n \in \mathbb{N}^+}~\left[\begin{array}{l}\forall_{x_{1}, x_{2}, \ldots, x_{n}, y \in V}~\\
+\left(\left(x_{1} +  x_{2} +  \ldots +  x_{n} + y\right) = \left(\left(x_{1} +  x_{2} +  \ldots +  x_{n}\right) + y\right)\right)\end{array}\right]\right]\right]

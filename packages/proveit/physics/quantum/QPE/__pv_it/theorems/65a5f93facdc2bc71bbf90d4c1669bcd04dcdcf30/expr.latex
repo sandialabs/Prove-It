@@ -1,0 +1,1 @@
+\left\{\alpha_{m ~\textup{mod}~ 2^{t}} = \left(\frac{1}{2^{t}} \cdot \left(\sum_{k = 0}^{2^{t} - 1} (\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \left(\varphi - \frac{m}{2^{t}}\right)})^{k}\right)\right) \textrm{ if } m \in \mathbb{Z}\right..

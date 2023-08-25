@@ -1,0 +1,8 @@
+proveit.logic.booleans.disjunction.left_in_bool
+proveit.logic.booleans.disjunction.right_in_bool
+proveit.logic.equality.equals_reflexivity
+proveit.logic.equality.equals_transitivity
+proveit.logic.equality.substitution
+proveit.numbers.number_sets.natural_numbers.zero_in_nats
+proveit.numbers.ordering.transitivity_less_less
+proveit.physics.quantum.QPE._t_in_natural_pos

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Axioms for the theory of proveit.logic.sets.functions</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Axioms-for-the-theory-of-proveit.logic.sets.functions">Axioms for the theory of <a class="ProveItLink" href="theory.html">proveit.logic.sets.functions</a><a class="anchor-link" href="#Axioms-for-the-theory-of-proveit.logic.sets.functions">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the axioms of a theory:</span>
+<span class="o">%</span><span class="k">axioms_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">fx</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">InSet</span>
+<span class="kn">from</span> <span class="nn">proveit.logic.sets</span> <span class="k">import</span> <span class="n">Functions</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining axioms for theory &#39;proveit.logic.sets.functions&#39;
+Subsequent end-of-cell assignments will define axioms
+%end_axioms will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>A function from a domain $A$ to codomain $B$ must map any element in $A$ to an element in $B$.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">functions_def</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">Functions</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)),</span>
+                      <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">fx</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">A</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="functions_def">functions_def:</strong> <a class="ProveItLink" href="../__pv_it/axioms/d3cd9a40d7883f6a265be1d241164e322365a6aa0/axiom_expr.html"><img src="data:image/png;base64,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
+B5EIApTT3wAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These axioms may now be imported from the theory package: proveit.logic.sets.functions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

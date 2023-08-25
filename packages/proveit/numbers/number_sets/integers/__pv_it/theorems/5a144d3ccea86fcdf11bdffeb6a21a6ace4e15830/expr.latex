@@ -1,0 +1,1 @@
+\forall_{a, b, c, d \in \mathbb{Z}~|~a \leq b \leq c \leq d}~\left(\{b~\ldotp \ldotp~c\} \subseteq \{a~\ldotp \ldotp~d\}\right)

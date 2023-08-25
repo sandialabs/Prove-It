@@ -1,0 +1,2 @@
+proveit.logic.booleans.implication.iff_t_f
+proveit.logic.booleans.negation.negation_intro

@@ -1,0 +1,1 @@
+\left(\left(f, x_{1}, x_{2}, \ldots, x_{n}, y_{1}, y_{2}, \ldots, y_{n}\right) \mapsto \left\{\begin{array}{c} \begin{array}{l} f\left(x_{1}, x_{2}, \ldots, x_{n}\right) =  \\ f\left(y_{1}, y_{2}, \ldots, y_{n}\right) \end{array} \end{array} \textrm{ if } \left(x_{1}, x_{2}, \ldots, x_{n}\right) = \left(y_{1}, y_{2}, \ldots, y_{n}\right)\right..\right)

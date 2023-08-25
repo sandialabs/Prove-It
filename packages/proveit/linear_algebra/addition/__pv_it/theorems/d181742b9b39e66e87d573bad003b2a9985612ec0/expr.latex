@@ -1,0 +1,1 @@
+V \mapsto \left\{\forall_{v \in V}~\left(\left(\sum_{i=j}^{k} v\right) = \left(\left(\left(k - j\right) + 1\right) \cdot v\right)\right) \textrm{ if } V \underset{{\scriptscriptstyle c}}{\in} \textrm{VecSpaces}\left(K\right)\right..

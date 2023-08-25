@@ -1,0 +1,1 @@
+\forall_{A~|~\left[A\right] \in \mathcal{L}\left(\mathcal{H}, X\right)}~\left[\forall_{\lvert \psi \rangle \in \mathcal{H}}~\left(\left(A \thinspace \lvert \psi \rangle\right) = \left[A\right]\left(\lvert \psi \rangle\right)\right)\right]

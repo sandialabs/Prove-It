@@ -1,0 +1,1 @@
+\left\{\begin{array}{ccc}a_{1} \textrm{ if } \bot \\ a_{2} \textrm{ if } \bot \\  \vdots \\ a_{m} \textrm{ if } \bot \\ b \\ c_{1} \textrm{ if } \bot \\ c_{2} \textrm{ if } \bot \\  \vdots \\ c_{n} \textrm{ if } \bot\end{array}\right.. = b

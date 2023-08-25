@@ -1,0 +1,1 @@
+\left(\left(f, g\right) \mapsto \left[\forall_{x \in \mathbb{C}}~\left[\forall_{c, d \in \mathbb{Z}}~\left(\left(\sum_{j = c}^{d} \left(\left(x \cdot g\left(j\right)\right) \cdot f\left(j\right)\right)\right) = \left(x \cdot \left(\sum_{j = c}^{d} \left(g\left(j\right) \cdot f\left(j\right)\right)\right)\right)\right)\right]\right]\right)

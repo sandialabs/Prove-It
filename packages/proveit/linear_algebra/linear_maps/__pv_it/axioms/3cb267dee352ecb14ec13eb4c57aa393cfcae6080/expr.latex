@@ -1,0 +1,1 @@
+\left(V \mapsto \left\{\forall_{A, B \in V}~\left(\left[A, B\right] = \left(\left(A \circ B\right) + \left(-\left(B \circ A\right)\right)\right)\right) \textrm{ if } V \underset{{\scriptscriptstyle c}}{\in} \textrm{VecSpaces}\left(K\right)\right..\right)

@@ -1,0 +1,6 @@
+\begin{array}{c} 
+ \multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & b_{1} & \rightarrow \end{array}} \\
+\multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & b_{2} & \rightarrow \end{array}} \\
+\multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & \vdots & \rightarrow \end{array}} \\
+\multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & b_{i} & \rightarrow \end{array}} \\
+\end{array}

@@ -1,0 +1,6 @@
+\begin{array}{ccccccccccccc} 
+ \multirow{1}{*}{$\begin{array}{c} \uparrow \\ A_{1, 1} \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ A_{1, 2} \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ \cdots \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ A_{1, n} \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ A_{2, 1} \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ A_{2, 2} \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ \cdots \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ A_{2, n} \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ \cdot \cdot \cdot \cdot \begin{array}{cccc} 
+ A_{{_{-}b}, 1} & A_{{_{-}b}, 2} & \cdots & A_{{_{-}b}, n} \\
+\end{array}
+ \cdot \cdot \cdot \cdot \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ A_{m, 1} \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ A_{m, 2} \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ \cdots \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ A_{m, n} \\ \downarrow \end{array}$} \\
+\end{array}

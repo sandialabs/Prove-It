@@ -1,0 +1,1 @@
+\forall_{f, x}~\left[\forall_{i \in \mathbb{N}}~\left(|\left(f\left(1\right), f\left(2\right), \ldots, f\left(i\right), x\right)| = |\left(1, 2, \ldots, \left(i + 1\right)\right)|\right)\right]

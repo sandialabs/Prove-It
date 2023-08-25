@@ -1,0 +1,1 @@
+\left(x \mapsto \left\{round\left(x\right) = \left\lceil x - \frac{1}{2}\right\rceil \textrm{ if } x \in \mathbb{R}\right..\right)

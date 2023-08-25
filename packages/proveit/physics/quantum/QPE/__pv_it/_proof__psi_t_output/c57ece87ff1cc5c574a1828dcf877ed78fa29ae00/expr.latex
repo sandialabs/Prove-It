@@ -1,0 +1,13 @@
+\begin{array}{c} \begin{array}{l} \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{\lvert + \rangle} & \multigate{4}{\textrm{QPE}_1\left(U, t\right)} & \qout{\frac{1}{\sqrt{2}} \cdot \left(\lvert 0 \rangle + \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot 2^{t - 1} \cdot \varphi} \cdot \lvert 1 \rangle\right)\right)} \\
+\qin{\lvert + \rangle} & \ghost{\textrm{QPE}_1\left(U, t\right)} & \qout{\frac{1}{\sqrt{2}} \cdot \left(\lvert 0 \rangle + \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot 2^{t - 2} \cdot \varphi} \cdot \lvert 1 \rangle\right)\right)} \\
+\qin{\begin{array}{c}:\\ \left(t - 3\right) \times \\:\end{array}} & \ghost{\textrm{QPE}_1\left(U, t\right)} & \qout{\vdots} \\
+\qin{\lvert + \rangle} & \ghost{\textrm{QPE}_1\left(U, t\right)} & \qout{\frac{1}{\sqrt{2}} \cdot \left(\lvert 0 \rangle + \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot 2^{0} \cdot \varphi} \cdot \lvert 1 \rangle\right)\right)} \\
+\qin{\lvert u \rangle} & \ghost{\textrm{QPE}_1\left(U, t\right)} & \qout{\lvert u \rangle}
+} \end{array}\right) \\  \cong \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{\lvert + \rangle} & \multigate{4}{\textrm{QPE}_1\left(U, t\right)} & \multiqout{4}{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle} \\
+\qin{\lvert + \rangle} & \ghost{\textrm{QPE}_1\left(U, t\right)} & \ghostqout{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle} \\
+\qin{\begin{array}{c}:\\ \left(t - 3\right) \times \\:\end{array}} & \ghost{\textrm{QPE}_1\left(U, t\right)} & \ghostqout{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle} \\
+\qin{\lvert + \rangle} & \ghost{\textrm{QPE}_1\left(U, t\right)} & \ghostqout{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle} \\
+\qin{\lvert u \rangle} & \ghost{\textrm{QPE}_1\left(U, t\right)} & \ghostqout{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle}
+} \end{array}\right) \end{array} \end{array}

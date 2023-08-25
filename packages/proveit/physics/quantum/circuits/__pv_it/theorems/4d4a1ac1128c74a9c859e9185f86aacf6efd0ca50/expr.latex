@@ -1,0 +1,19 @@
+\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{A_{1}~\mbox{part}~1~\mbox{on}~\{N_{1 - 1} + 1~\ldotp \ldotp~N_{1}\}} & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{A_{1}~\mbox{part}~2~\mbox{on}~\{N_{1 - 1} + 1~\ldotp \ldotp~N_{1}\}} & \qw 
+} \end{array}, \ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{A_{1}~\mbox{part}~n_{1}~\mbox{on}~\{N_{1 - 1} + 1~\ldotp \ldotp~N_{1}\}} & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{A_{2}~\mbox{part}~1~\mbox{on}~\{N_{2 - 1} + 1~\ldotp \ldotp~N_{2}\}} & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{A_{2}~\mbox{part}~2~\mbox{on}~\{N_{2 - 1} + 1~\ldotp \ldotp~N_{2}\}} & \qw 
+} \end{array}, \ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{A_{2}~\mbox{part}~n_{2}~\mbox{on}~\{N_{2 - 1} + 1~\ldotp \ldotp~N_{2}\}} & \qw 
+} \end{array}, \ldots\ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{A_{m}~\mbox{part}~1~\mbox{on}~\{N_{m - 1} + 1~\ldotp \ldotp~N_{m}\}} & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{A_{m}~\mbox{part}~2~\mbox{on}~\{N_{m - 1} + 1~\ldotp \ldotp~N_{m}\}} & \qw 
+} \end{array}, \ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{A_{m}~\mbox{part}~n_{m}~\mbox{on}~\{N_{m - 1} + 1~\ldotp \ldotp~N_{m}\}} & \qw 
+} \end{array}\right)

@@ -1,0 +1,1 @@
+\forall_{H \underset{{\scriptscriptstyle c}}{\in} \textrm{InnerProdSpaces}\left(K\right)}~\left[\forall_{x, y \in H}~\left(\left \|x + y\right \| \leq \left(\left \|x\right \| + \left \|y\right \|\right)\right)\right]

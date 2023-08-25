@@ -1,0 +1,1 @@
+\left({\rm Max}\left(\left|-2^{t - 1} + 1\right|, \left|2^{t - 1}\right|\right), {\rm Max}\left(2^{t - 1} - 1, 2^{t - 1}\right)\right)

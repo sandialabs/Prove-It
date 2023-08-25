@@ -1,0 +1,1 @@
+i \mapsto \left\{\forall_{a_{1}, a_{2}, \ldots, a_{i}, b_{1}, b_{2}, \ldots, b_{i}~|~\left(a_{1} = b_{1}\right), \left(a_{2} = b_{2}\right), \ldots, \left(a_{i} = b_{i}\right)}~\left(\left(a_{1}, a_{2}, \ldots, a_{i}\right) = \left(b_{1}, b_{2}, \ldots, b_{i}\right)\right) \textrm{ if } i \in \mathbb{N}^+\right..

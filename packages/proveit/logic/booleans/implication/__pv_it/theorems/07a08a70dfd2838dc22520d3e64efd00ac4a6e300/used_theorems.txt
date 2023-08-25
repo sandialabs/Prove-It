@@ -1,0 +1,7 @@
+proveit.core_expr_types.conditionals.condition_prepend_reduction
+proveit.logic.booleans.forall_over_bool_by_cases
+proveit.logic.booleans.quantification.universality.bundle
+proveit.logic.equality.equals_reversal
+proveit.numbers.numerals.decimals.nat3
+proveit.numbers.numerals.decimals.posnat1
+proveit.numbers.numerals.decimals.tuple_len_3_typical_eq

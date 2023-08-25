@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Demonstrations for the theory of proveit.numbers.numerals.decimals</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Demonstrations-for-the-theory-of-proveit.numbers.numerals.decimals">Demonstrations for the theory of <a class="ProveItLink" href="theory.html">proveit.numbers.numerals.decimals</a><a class="anchor-link" href="#Demonstrations-for-the-theory-of-proveit.numbers.numerals.decimals">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">ExprRange</span><span class="p">,</span> <span class="n">ExprTuple</span><span class="p">,</span> <span class="n">var_range</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">InSet</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">,</span> <span class="n">three</span><span class="p">,</span> <span class="n">four</span><span class="p">,</span> <span class="n">five</span><span class="p">,</span> <span class="n">six</span><span class="p">,</span> <span class="n">seven</span><span class="p">,</span> <span class="n">eight</span><span class="p">,</span> <span class="n">nine</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="n">Add</span><span class="p">,</span> 
+                            <span class="n">Natural</span><span class="p">,</span> <span class="n">NaturalPos</span><span class="p">,</span> <span class="n">subtract</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers.numerals.decimals</span> <span class="k">import</span> <span class="n">DecimalSequence</span>
+<span class="kn">from</span> <span class="nn">proveit.core_expr_types</span> <span class="k">import</span> <span class="n">Len</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">A</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">x</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers.numerals.decimals</span> <span class="k">import</span> <span class="n">Digits</span>
+<span class="o">%</span><span class="k">begin</span> demonstrations
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Decimals are defined as numbers within the base-10 number system.  That is, they use the numbers <code>0</code> through <code>9</code> for each digit.  At the moment, only whole numbers are defined within Prove-It.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The digits <code>0</code> through <code>9</code> are individually defined literals that can be imported from <code>proveit.numbers</code>.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># each digit literal is defined as its linguistic counterpart. e.g. 1 is defined as &quot;one&quot; </span>
+<span class="n">zero</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="../../__pv_it/common/dd4e19e8b134dfb293470ea55fe3589b0ab9f8040/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAOBAMAAADkjZCYAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAiXaZIs1UEN1mu6sy
+RO+L2jdBAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAV0lEQVQI12NgYBQyYWBgCGOocGDgbGBgXMDA
+tYGB7TsDvwEDzzeGeiD5k8FfgIHnE5j8yFAvwMD7CSTL9o2BawED53cGzgcMzAEMDG0MdQcYGIqF
+9jAAAMPIEplEfAWeAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In order to create numbers larger than a single digit, create a DecimalSequence() object, or use the num() method.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># DecimalSequence() takes each digit as an argument</span>
+<span class="n">deci_sequence</span> <span class="o">=</span> <span class="n">DecimalSequence</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="deci_sequence">deci_sequence:</strong> <a class="ProveItLink" href="../__pv_it/demonstrations/dda52a34391667c5c49c14d562670c5503397c590/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAOBAMAAADOPWE3AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAMt0Qq5nNdoki72ZU
+u0S9iLk1AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAdElEQVQI12NgYFRmYGDoKJ3AAGaZhH1mYGA7
+wKwJYTGwA4lNDAy9EBaYuMLAcN4Awf3KwCB/AM5lBnE3wLmcP4DcAlRuA0IxkPu+AMWo8wijGO4y
+MOxHsmgXA0MY1BkcPxkYmA4wL4SwWLy+eTMwR5QIgFkAzskyRvtVP68AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># the num() method takes in a python integer as an argument</span>
+<span class="n">num_def</span> <span class="o">=</span> <span class="n">num</span><span class="p">(</span><span class="mi">101</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="num_def">num_def:</strong> <a class="ProveItLink" href="../__pv_it/demonstrations/dda52a34391667c5c49c14d562670c5503397c590/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAOBAMAAADOPWE3AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAMt0Qq5nNdoki72ZU
+u0S9iLk1AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAdElEQVQI12NgYFRmYGDoKJ3AAGaZhH1mYGA7
+wKwJYTGwA4lNDAy9EBaYuMLAcN4Awf3KwCB/AM5lBnE3wLmcP4DcAlRuA0IxkPu+AMWo8wijGO4y
+MOxHsmgXA0MY1BkcPxkYmA4wL4SwWLy+eTMwR5QIgFkAzskyRvtVP68AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Equals</span><span class="p">(</span><span class="n">deci_sequence</span><span class="p">,</span> <span class="n">num_def</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../__pv_it/demonstrations/6cb5e33f5bd167a1616bb445f648eb50ce277ed00/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../__pv_it/demonstrations/7e590f59e01efb0831ff0e611f7e48451c0dcf200/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFcAAAAOBAMAAACoZ51gAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAMt0Qq5nNdoki72ZU
+u0S9iLk1AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA8UlEQVQoz2NgYFRmYGDoKJ3AAGGhASEDBgaO
+9kgoyyTsMwMD2wFmTQgLFTC75gOV5DAYTYCwGNiBSjYxMPRCWOig3oCBW4GB4wKYBVFyhYHhvAEu
+xbwODDyfkRR/ZWCQP4BLMX8AA+MfhGJmkOINuBTbAxX/Rijm/AFUXABTzKoEBg4wxfMbGBi/oylu
+wGUySPEPJGcA2e8LcDqjgYHvO6oHz+PzIA+SBxnuMjDsN8DlZt4LDNzIQbeLgSEMd6QsYGBNgCrm
++MnAwHSAeSGEhQ76gWlGh8FKAMJi8frmzcAcUSIAYaEBl/UpGxhM2x0hLAClel22DxazjgAAAABJ
+RU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The set <code>Digits</code> is defined as the natural numbers from 0 to 9.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">proveit.numbers.numerals.decimals</span> <span class="k">import</span> <span class="n">N_leq_9_enumSet</span>
+<span class="n">N_leq_9_enumSet</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"> <a class="ProveItLink" href="proofs/N_leq_9_enumSet/thm_proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../__pv_it/theorems/ace0ec6844d4626ccd240170c311a5fd30b1234d0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQ8AAAAYBAMAAAAWpWWaAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEN27zYnvRFSrImZ2
+MpmnAiL6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAD5klEQVRIx8WWX2gURxzHv5vLent/NlmkFMWS
+u/ggLQhu/IcixYMW0r5tlQi2KieI2vqQU0TxySvBFxEuStVEW10qCEVJDnyMtAft+aY9sBWkKtGI
+YAunxhjFVNaZ+c1Mwl68nIJk4Ha/N/P7zXz29/vN7AJTWo+Pchmz33pKiHlW76xzXCoCrRXjyWxz
+/J5nl0Efz2tGjP3vd+X4YX6d+3S5gw3juRucA3Ny9kSN4R+732H2Cgw/1HXBeYPtzQ5+XRXthfEY
+1gpuFu1Y8CJsZvFkmZv+lX/tdvUg1c8qUnWN5JT1HXnv/nyhXNfs2kyiEARBlmLctUU6tFSPsutq
+Lo/53wBsPCpI5lVehkHMNLt8gbn0gPPvqyI6B1OmsQ2Wxv9E3heNfiUpO3GM1Ppq9V6elgf6iGgx
+brB513Hd5zb74GvZZ3zYTjQ9HUgiDdOlv0kFcgrYTurPvDEmO5MKRG++5hKWkfKAAVJDwAdCxLKI
+uBLk1OV4RoAg3u9Eis2V6UAivZShqSDdDs5SlPbloED++TIMUtCVkde9GxVIawbmEwUSq5QJBHFE
+hzZjOpDWYdgvQiAs4GcVtaVK3KsBWTl1Kmlf6MB/QqRcJJ8rELiRXLpO/XOQFAOZCIGwtkSJPUU5
+6CuQ0+WfSGz7+5qu5HPyHguu5XVEJjTIHaM9DHJvIW+U75YMO1882P/XgKgu3OqXj3oBCqQDg7T+
+WBE7lcNJJR6N+rpG2CRXCCSR78ni+jLW/Okicr5IIM9qQJp0/NWu8TQIqyvxdEYAPJBlEs8q86/X
+koOxAzeZGsxT8R+NZd+cmV86eS49RGsjMjJp1S3WSvhTQFrEQWCMAr/J3JgZOfQrrHGCaysfecWM
+fsgLkPlGnRqxRxxRrFa4WJFQAbkNrBU5vwgFEsmg5RWlhoHICmqSJwC2yiAIOjaf2UkRsUtunRph
+W5dv9kR4++IQ4pTLwJEgB/r7x4+LrjlpxB4LtXQyIilJzg5yxIoqg67c4p+y31V3hl2TyPKadRSI
+IULlIekI9S1PjUHWTHMzk7G4QhVYjZADDg5L1+/Y+j5X1lakWJ1vgDi8aWPUBcHH+LBCx6fJUp/i
+9j+zE5vUED9HUjTHUwiz+DCuOEJFPGOnHCx40nWvg8tCJduxBrR9/xpn0TBmBGnbxI4F/hqLnRg7
+jSb+4lsSBGOkolX20hMKI8GPwgwDD++SA7Y8rMjB8yx/QtlnqtKhq5qTIDM3U1eypU/r71FHTZo1
+6PDWIKbu8+qpSbMGHRoESepD5iP9zVaqp7RZow6439iXnP7W0J5J1FMlvKWDsauxr76Bvvf8zbqR
+FfFrtC0XIh6s2sMAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">InSet</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">Digits</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../__pv_it/demonstrations/369545a8567e66d7b10fc487951186e64e91f3e40/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../__pv_it/demonstrations/2f243fa8ba81bfc88e4b96def2c7aaf58dfd7e950/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEcAAAAUBAMAAAAthD11AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAMt0Qq5nNdoki72a7
+RFSRpcO+AAAACXBIWXMAAA7EAAAOxAGVKw4bAAABH0lEQVQoz2NgwAf4TjKwtzcw4FdznIHBg+EJ
+XjXcp4HERwZ7Azxq2M8BCc6fDPwXMOWY9c8kM3CsX8u4DsxdyyC/gYGBURlNFc+DKwwM9gwMb5pB
+vDvG+x8wmIR9RlPEosmxgYELJA9SxfyQfwLQagxFbxgyGZhALJFIBgZhhksMSIpqlJQSwIpmF0yD
+KGKY4sxwmiERSdG1YphJExzZGyCKGCYw3N4hgFDEmQy3bgIPw1kmtOCAKGKbgFDEGGBkhF0RwuET
+GPbxnWJgPAMEJ1EVSSkBwQGoIhYDL6wm2SCbxOyA3TomZEUM4jxYFbEXwKMF6Gd2GVRFHD8hdB5M
+gO0BkAhDjQSvb95ghslZSLphzF8DJM1wpJ8bhyDRggkA3FhHS+1JwGcAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Prove-It is also able to perform basic arithmetic involving decimal sequences.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Add</span><span class="p">(</span><span class="n">num</span><span class="p">(</span><span class="mi">11</span><span class="p">),</span> <span class="n">one</span><span class="p">)</span><span class="o">.</span><span class="n">evaluation</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../__pv_it/demonstrations/91be6dabb197f4f07006665eba8238873584c4340/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../__pv_it/demonstrations/bfb4d95c6e7c721c95fdcec26446ff878271ae590/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHYAAAAVBAMAAABh6QfWAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABM0lEQVQ4y2NgYBBgwAMY8UkyMBngk+VWwCdr
+AsSvAmAECgCJaGDqAAmLl51jYGBNYGC9nh8AIVAARIQN3USwMOMBBv8NDOwNQL5+AIwAu7MBygCJ
+cBRg2AsU5hVg4JzAwMmAoZdZAUkvw1Rsejm/MvB+ZDAjpDcDq70LGHj/MZQQ0uuLTS8QcH2AGItP
+bxuYWbUKBNYi6X2vwLCYkF5LHPYCzZmNppd91aqVs1atugAXfo9dL/sBTL0Y9u7ErrcXiAm62Qqr
+f5kdGAQZDhHS24PV3icMDKqQKPAXgBEoesEiJRh6gcKMy8vLFzC8AnLuzs9tgBAoeiEiq9G1goS5
+/v//n8DA9QDDXGbkfMe4AHcWxJLW4XkBHGcNePLvQbwlA4MMPskY/HrxGs2It1RhwlOaAQBAYV+C
+Itvw2QAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Add</span><span class="p">(</span><span class="n">num</span><span class="p">(</span><span class="mi">999</span><span class="p">),</span> <span class="n">one</span><span class="p">)</span><span class="o">.</span><span class="n">evaluation</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../__pv_it/demonstrations/90c10bc2df151c586851698ef97772f9604e3b7c0/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../__pv_it/demonstrations/9e18c777762dac838fa5851adcddefe4bc48e20a0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJQAAAAVBAMAAABS/tqaAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABlElEQVQ4y62UsUsCURzHv53aWZreHxDU0NBW
+SAQ1ibRGblIEHrS0RAaC0OTU1ODiEA5J0nISNNZmTY0u0VS4JkSgCUIQvXeH/N55v/AN/YYPx4/f
++9y737v3A2BhUkxBL4zViSWxRT3VGmCWnlX4o5sFloPLZDqcOVERsRG5wrtF8K2IvByLNdPZMZGX
+PsCepcAsY66CeIvgFd+NVq2INdFCYFciHa0j3CJgBkjaCA8IXmlKVaHKqeJthAYErAP5FoxvAqc6
+5FTJAhJ9AoreroYETrXNqfJCMCTI98kO9Qic6kw+mY4b7VF6IY1Ej4CGOI4aPvoETrXB7UoKvgio
+iXRuKfWjADh1nAvHuSHVJ/uBacR6BFcF79wIgV3d/9H2UJ8gP1CE+zcRAqpNrleiNDog4BEIVZHv
+EDjVOfuLVmDaBHnMxjWeFIypduRNKgZUMt3AbkdBV6S3SrcqfKrXy6My0Bw3uelc5g0KZjv8wEj5
+BlZdZ8YwN9V/nd2Gl7Xm1YNGzbze6Nv/p9fJPkyetoalI/oFX/i10FoeSpcAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Add</span><span class="p">(</span><span class="n">num</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">one</span><span class="p">)</span><span class="o">.</span><span class="n">evaluation</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../__pv_it/demonstrations/65cb5b4b738982b4c5c9e25fdf673adc79b9ffc80/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../__pv_it/demonstrations/096acdc387e67f10bd92f28300fd7cc0f179e08b0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHUAAAAVBAMAAACK3rzVAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABP0lEQVQ4y2NgYBBgwAMY8UkyMBngk+VWwCdr
+AsSvAhgYWJwK0aVAwhqYOkDCYII1gYH1ej6QkcwQhep6iDBbAJpOsDBEjr0ByNcPYOBYwMByAOrO
+BqgyoDADRwGGvSBhMMEJ5fFcYGD+CpFjVkBWNBW3XjMoj7+Age8zNr0ZuPWWQHnxQL0/sOn1xa03
+A8qTd2Dg+4RNbxuYWbUKBNai6l2MpPcLNr2WuO2dDXOzAwM3yF72VatWzlq16gJc0XvCeoFhxYw1
+rHbi1gtzM88BBg6scWSF27+HoDyOCQzsCdj09uC2FxwF/gIgB0Q+QNMLEoZEIgoAC4OIV0D67vzc
+BoZwp3sMqHrBwgyr0bWChcEE1wMMc5mR8x3jAtxZEEtah+cFEGBvwJN/D+ItGRhk8EnG4NeL12hG
+vKUKE57SDADvUmD+bShnHwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Len</span><span class="p">(</span><span class="n">ExprTuple</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">m</span><span class="p">))</span><span class="o">.</span><span class="n">evaluation</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../__pv_it/demonstrations/1166f32290222ce6b4244444ccdd81983168082a0/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../__pv_it/demonstrations/bc269fa920898c3bb55cf5982c46ff5d5ace7cdc0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASQAAAAVBAMAAAAdho5jAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIolEdjJUEM2ZZu/d
+u6v6CvZmAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADl0lEQVRIx71WT0gUURj/dnZ3nrN/h/BUYotu
+UJSxhwgiY0fRwiKYOnTp4NoliMg5dDAC1yAICWSDohDBOXTRixZRIARLEBGoLBEdCmwRSUmCFf+s
+eOp7f2Z21lmdPfkOb3/7vd/3vd/73vfNDKhAhw8Obnju2Mrmiwco6QybpdT+kuSEw0J+5d204NOc
+y6a0GNUGp2fPnsECZm1JwS9iYpIGqtYacjWkxzMu0+mbu20Oz097B3tSU9Lgq7KYmKRRr90B0obL
+9P6C4a27hmmidpYCZTExSdNeuwOccln85Xp01zCFDW9J8pDH7jiGXRYpX4duOOk2NZjekhRa3c3J
+RrE20vVHoORlnXfsYveWKNdkjzh2aHVelImc7DCF7jttvMVJj2kFg1sveaMtH7qqXW9DJVLRWxKV
+7X8Dv/lmZNvI8sBNGaXAwHk1Km6pXQ9a3RnXBDgORwrCU40VeQb9ohbIjtw3w1BiQSM7KRntoSFb
+0tgsHfNuSREswYcmjIlDlyGsia7hgMyAwu/WtwMB63hHdZsv1MmbEOPibgg+yGtng49Y5aXmwLcB
+oRLapr2zFMblcbtvMVqcZUKx6lcpQYTnJrrR1WqF6LeqtQi9quUpeIY4FCgzQjgh61Q8lRos1Sfp
+I6APGxg1zTo3XLA2LUCWR4gX3bXcm4ErtqeVun5RcZHhF4Iml6ieMEr215ElvDjCcyqeJOMsYNYq
+FgRTu+oHx4L4nVItiLqtBhshwpRJC5ExlsK0aoCc966lqAZkC336gEqJ61g7NGIcqz5FWFxYkVXC
+8wAZ4Bl4Ry+ISsIathC8DTEeWZdYCJgyshmNLWJ+UPKKz4RQwTtLtCu/w91cjmzT45jRHGTxzrHd
+JJ2CqCZ/VZgJm+WByljgW6ctRgWrsTJH/wA2JcYLlg6zX1iBrJ5gi3ilKPmbJJ45bknSmpiopCBm
+crDz2pIOs3gesojvlwh9B7ZMXmKALB1r7uamzkm8OsqitcGRf+lEnqOfuK5x3l+T//6AwHODLbaz
+V/G5DoydqiUptrr9l0+sgT5bdtl+/N92gQpiLKVo8+mrteJp8yqectVbpamej5MJO3m2PeECFURZ
+9xoyHAWXoVd3etq8iqdUteVoPZKiqvh33/700XYDB6KsuQGBYh/IY6enzavwHYu0CAv1SCLWE8iO
+EnABB6Ks188EwlJKOT1tXoXvWLTPv4+kbjY3HuCHbgcXrO+1/h9WRwfdZdQCpgAAAABJRU5ErkJg
+gg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Equals</span><span class="p">(</span><span class="n">Len</span><span class="p">(</span><span class="n">ExprTuple</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">m</span><span class="p">)),</span> 
+       <span class="n">Len</span><span class="p">(</span><span class="n">var_range</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">num</span><span class="p">(</span><span class="mi">11</span><span class="p">)))</span>
+      <span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../__pv_it/demonstrations/d313521ae11e20d43ec7af274784d9401bd1e2ae0/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../__pv_it/demonstrations/0ac90b711413e6e77fc3b5765abaa1642c3dd1220/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAa4AAAAVBAMAAADsoRerAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIolEdjJUEM2ZZu/d
+u6v6CvZmAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAE1ElEQVRYw71YXWhcRRQ+d3/u5O5udtfSF7XW
+kKxg0YZ9EEFayU0xSuoPV1FfLGTbF0WDuQ99qEi7EYSSCnUtSqUU3Acf2oIk/mAhKCyKLYW2rFIV
+FeoigYaKsm2apuSlzpw5c/8niguZh9xzz3znzPnmnDl3NlAGMQxYv6FZsRx6/N9hKC9D+Hx8HXk9
+hH9T1YhaBpKp9eY8bZMzdGcOBKb2f5WAz77TiOmsQTesYL+1PHk8rqKRaa7Ba0+vu7YzyGtfaGom
+CV+Kb+TwS1Fdn0/+m7hKjYN6Xmy6V159boDXsdDUzST8iBtTffmo++/kE1Qn9bysZq+8co0Ar7lQ
+ia4k4R+Ml/LKfyGfoMq7Wl753o/vaZ+XGcp+qpUEjxdnAi5OHh5IKJWmltcrvfM65POyRNvYXNlI
+yy48o2qnstOR3fOPMSpOVhmnBOT+vEhHx6yMUvnMvLpV9mk2rgrqMOw5KtvglQ1P289t5XRSHS2v
+I7jYqB3Qe3FpW3sYP+zzEhuY/hR+lxHXD7JrErKpZrVR2Fbup6Lb7mRV7ywpb/fD3RLGbpWLHZnL
+NJU2WzV3z6M0cNlmq1WT63PTHq/j58W46PE6FFoMq92LSzfCeDjh8yrw/LzZhONyYsqFL1RPy2Ps
+bB4sWarGKmTURt/rULpWFEVzGYqS4YuEB/Paw9m3ML7qBTBuQK7LdXPafJ2Ri7WAnSA1xsUG/9Zy
+8/HS5jWfV56v8ZHXmj8EuC6/T2obrC4UZJb6bzw2pBxOqTbQgQlZfZwM4dw8JdOaJ/aMLYkdEHyz
+XS2vz9Vizz9FaozLEqFrho+XNhNhXl8DX5iylJaHKd9WkbehLsModeJNYqIGT0qJ+1dJnKL9Lcx8
+QDCzK0jlOe/03Fq8aLFJUmNcpaqxrOMVwKPNtlAdMlki8vNFiaqrA8SF2ciZ4uMyPWfLSuT+Vfs7
+zEhVGyGmRUzmSNkFs6U9X2e8xYiXjCvn6nkF8Ggz6fPqt4Hd5AvvBrHLy6KmhVDi7aTKMDhYNMtM
+ZgRqIHMhDqGQZnlzUBJ8lkMcW0oBMpt16zUbJ3mmOO9Fowm5tjZfl9RiGB43o7jwoxI/Yi6E8Ejp
+E5+XaLyXYLLRYLf421X4BVDgzTDl1KcFb/OcBULireyNMk6CsQQSVi8XV6T0F9+UFOKy3bvwCYtQ
+dwZwklco5/1Dij4rybyG1WIiRjTDuAB2ubTYNEQEHy95HfF5ZflmHNjx7IID5/kOHNjC8yQEGDz1
+BBTOcvuF+zaPoQQ7Ttk0aYqyFVJ6YUtLSr/yeVvirjbl8yfIvO/i5Ha8Cz8yypNe1fLapRbDGDEa
+jMv4mV4L4pt5DkgQmgAeeX0buEd9p5ybblSAlyEm4aTV8WDibusbeDjf0gyV0Cb9/bDgqNfJkNmd
+cEfUS8Sv4mW0ArxOenejmAADcUlMvt5Xk1L2Ckw4QQMP51umQtEc0/PKNYJxembGjy8cjXqJ+FW8
+5M2ZePWrX6l7ISowOy6JyQv7SCqeZm8HDTycjw9MiiDba/z++p7eNrxbCZjlb9/uRrxE/Ao82twT
+/P3F1JfKC8UTMhCXxOTH75HEj1c1aODhfDwE72+0iRpe+4MqO4ywY7ziGtqYIRjD58Z1/D/AqGTt
+RNQyEMPuzXlGVt7YPye1W65PKM0kAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Equals</span><span class="p">(</span><span class="n">Len</span><span class="p">(</span><span class="n">ExprTuple</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">m</span><span class="p">)),</span> <span class="n">num</span><span class="p">(</span><span class="mi">11</span><span class="p">))</span><span class="o">.</span><span class="n">prove</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../__pv_it/demonstrations/1166f32290222ce6b4244444ccdd81983168082a0/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../__pv_it/demonstrations/bc269fa920898c3bb55cf5982c46ff5d5ace7cdc0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASQAAAAVBAMAAAAdho5jAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIolEdjJUEM2ZZu/d
+u6v6CvZmAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADl0lEQVRIx71WT0gUURj/dnZ3nrN/h/BUYotu
+UJSxhwgiY0fRwiKYOnTp4NoliMg5dDAC1yAICWSDohDBOXTRixZRIARLEBGoLBEdCmwRSUmCFf+s
+eOp7f2Z21lmdPfkOb3/7vd/3vd/73vfNDKhAhw8Obnju2Mrmiwco6QybpdT+kuSEw0J+5d204NOc
+y6a0GNUGp2fPnsECZm1JwS9iYpIGqtYacjWkxzMu0+mbu20Oz097B3tSU9Lgq7KYmKRRr90B0obL
+9P6C4a27hmmidpYCZTExSdNeuwOccln85Xp01zCFDW9J8pDH7jiGXRYpX4duOOk2NZjekhRa3c3J
+RrE20vVHoORlnXfsYveWKNdkjzh2aHVelImc7DCF7jttvMVJj2kFg1sveaMtH7qqXW9DJVLRWxKV
+7X8Dv/lmZNvI8sBNGaXAwHk1Km6pXQ9a3RnXBDgORwrCU40VeQb9ohbIjtw3w1BiQSM7KRntoSFb
+0tgsHfNuSREswYcmjIlDlyGsia7hgMyAwu/WtwMB63hHdZsv1MmbEOPibgg+yGtng49Y5aXmwLcB
+oRLapr2zFMblcbtvMVqcZUKx6lcpQYTnJrrR1WqF6LeqtQi9quUpeIY4FCgzQjgh61Q8lRos1Sfp
+I6APGxg1zTo3XLA2LUCWR4gX3bXcm4ErtqeVun5RcZHhF4Iml6ieMEr215ElvDjCcyqeJOMsYNYq
+FgRTu+oHx4L4nVItiLqtBhshwpRJC5ExlsK0aoCc966lqAZkC336gEqJ61g7NGIcqz5FWFxYkVXC
+8wAZ4Bl4Ry+ISsIathC8DTEeWZdYCJgyshmNLWJ+UPKKz4RQwTtLtCu/w91cjmzT45jRHGTxzrHd
+JJ2CqCZ/VZgJm+WByljgW6ctRgWrsTJH/wA2JcYLlg6zX1iBrJ5gi3ilKPmbJJ45bknSmpiopCBm
+crDz2pIOs3gesojvlwh9B7ZMXmKALB1r7uamzkm8OsqitcGRf+lEnqOfuK5x3l+T//6AwHODLbaz
+V/G5DoydqiUptrr9l0+sgT5bdtl+/N92gQpiLKVo8+mrteJp8yqectVbpamej5MJO3m2PeECFURZ
+9xoyHAWXoVd3etq8iqdUteVoPZKiqvh33/700XYDB6KsuQGBYh/IY6enzavwHYu0CAv1SCLWE8iO
+EnABB6Ks188EwlJKOT1tXoXvWLTPv4+kbjY3HuCHbgcXrO+1/h9WRwfdZdQCpgAAAABJRU5ErkJg
+gg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Equals</span><span class="p">(</span><span class="n">Len</span><span class="p">(</span><span class="n">ExprTuple</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">)),</span> <span class="n">num</span><span class="p">(</span><span class="mi">12</span><span class="p">))</span><span class="o">.</span><span class="n">prove</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../__pv_it/demonstrations/82d205935642c2b2d4fa4c2ea298fdafcaa8d6660/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../__pv_it/demonstrations/2b3cb344136ee7214a487d0ae7cdb6a20f2904340/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAToAAAAVBAMAAAAk4T84AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIolEdjJUEM2ZZu/d
+u6v6CvZmAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEAElEQVRIx8VWXWgcVRT+9m8m+zc7lr5Yi13S
+CBb7s1DxpZVMpLFGUQcffFHI6otQwYzgQ33pRChIKcQIFdsiuKAI7YMJQRTy4iKIFNqw4M+DQllC
+sK2ibIhpSl/iuffcOzPb2dndt1zYne+ec+653zn3nLkDG2KksCNj4Ob75f+zO8PuSfmfrvVnZ1Qj
+EvOPZtwsd34+JsuPet2C6MqpPs6CkW30Zvc6OX744q+K3eku3ch8D0eVekx0+LUHZZGVP/RzFowP
+e7Ez73zkIdXCkRqzuzyICDDuxUTfPu0NDqGns2Bc6Z27lz1YNoqLzG5xEBHgYEyS2RomhJ7OglH0
+ktgVt2CtS3bG7AAiNM7FJOnmECHgib5tMdJIzF0T1qZklxdNkVqdcFg3d+JPZTX2vMs9vzp5V9XE
+2JRKRuHvFVVSxthEQ4Vw6hC/JMwpJcEc3vyUU/3Su2O/5EZ/Vt16a9eLtF26ncSORqkj2ckIjtll
+PirznufzHnvr+ZYEgQ7H3Zzu74oKBo/jkZZaaVttzmtGFYt533hjmUXlNfhf4G2WV2865jqFOBuw
+++y6GCsRdtOOZFeiyjWXkeejMrZQdFTfMRA6PvzUfWR1pPtcaHtF1NiExTxfVfYw1p/KfSDR0VIL
++xwscCJrN5DaJPVin9yt8BulSOp8ByXOCjmuSJTXZR/qyv+d2K9dzOjKbmPa1iuVnafiQ35ZxQDP
+r2HGw0VOqbkhokKuk8xOnJtmV2zBZyvaYFy+BootvX+gq7TjLTBdxwvQK3VCZ1R1ls59EomGqC2p
+nHZgUXozfXL3tborxMn6OuniDfW59O3rworonNDFTfVcsDWkEHSLzplKVB/XybstSiWzzgqiVml4
+MJqJdUf310OSXdkRbnDbsMXSikt1JgE1S81EVCcOrg7OyzfiuAQ7Kn2NsFSQduZGWrrAgufXHV6w
+RFJitUfOilVKbxWFVmLuXgFOSnair8uOcS0Pn7JtNcrzEtDBp10BQh312Pu2eU82yIZoUsHdtrYY
+/QNspqVdrrNHPilhvluVSmqCQgflKs+oAp4ruPwui7M7YiN17dKlpmSXo/yaa489OonST4RW6WIT
+AKNXT7Ik0OGZq5Tn6x5XDqPM2oEmo99J77DdXw1+/obsBY/NmsjOI3PBlrPjwJmvaJtaL3b/fj/X
+KG1vb8/yTfZjoHgrGYTIkC3V1kje9IYXswtXGl3XWWS2d5gvqCvBtJoMQpSm3zsjdUa5W5h2WfaA
+Xbgy3X0FhvDyMOzKtv54cRJBBL1HvxunFbK+M88qWbddaB9Rds9SrWHYmfrNlkUiiCCx7ZcfK0Rl
+V1OybrvQPqLsnnFW+rCblP+7d+bLfYLDcJP0/wMXmhZ5ZpeoHAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">nines</span> <span class="o">=</span> <span class="n">num</span><span class="p">(</span><span class="mi">999999999</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="nines">nines:</strong> <a class="ProveItLink" href="../__pv_it/demonstrations/c8c431e93cc0dd13fcad65ae5fb100b38ad1760e0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFwAAAAOBAMAAABQh2aXAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAmasQ3XYy7yK7zYlE
+ZlRwlz41AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAz0lEQVQoz2XQoQrCUBTG8U8vG4yBMsFmMxi9
+gmBcEPuCzbBhsQoWg8FHWDWIvoJZ0IEvsEewiA8gDhQV7wZ6z85u+JU/HM49QMlpggOnJim6iAEm
+Swa6njknkFKewgoZaAErAinVLewbA0/gKDWkuCGMF0M8AP/0J9Ilm/5mZNNjDSnpSndGuvHG05Ai
+Fhh/GOhFZvusIQWd0SXhiPrBDzSkqKc+XEDdIwcp6pwF1LVz/EplBjdg4CpFQiDF6GPNwVBaMYEU
+7J2ogL1rUHT5AmAkqHlBZx+FAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Add</span><span class="p">(</span><span class="n">nines</span><span class="p">,</span> <span class="n">one</span><span class="p">)</span><span class="o">.</span><span class="n">evaluation</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../__pv_it/demonstrations/36a3aa399f953498e44ee4a6aef160da331388e30/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../__pv_it/demonstrations/7032435f9e00e60234aed91c34180ba2b561d55e0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARIAAAAVBAMAAAB4a3wcAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACbUlEQVRIx62WQWgTQRSG/yS7zbZJtzl7cQuK
+IEgXEcFTYxW8KO6ttCgJiOCxSmlEEfZSxF4aD14sSFV6MCAEwbPRkwfFXAR70VwVRE2aWlCKMy/t
+zuz0eenuO3yE+Zl5f968mR0AJSSN5CtQZP3ES7xIx8kJIF/7qAO1O4EOU46Fuyb+TAhuGGePlHRY
+U9d3wCp2FfYTfC0pYNZz72sw5VhcXugLXjWN0PCQbz/WgCuYLQ3AKvkQo3UUWwpYB95pMGWKwm4Z
+stLJ3b17LoaXgPManFVYLQKrYBgYq8LqK2ATuBgomDJFztOdDAeck/fAZKBQbCPXJ7AKTgKVFrJ/
+FOy/wMTLCE1D5pwMhZyT38APX2FsDm6PwCqYH9RkS4FqEiqYMuPEajNObJllMUJYEfm2CKyCa6BG
+6CrI7vjgKZgy48Spyp+3GjKe7w5nNkSW8QjewTLcLoFV8FQcnxV87ylgpul+8RVMmXGSqzM1oXyn
+I5Rlvg0Cq2BFTJs+dHxbg33jzERHwZTFtdJoPHvYaLQjJ+5PbndElleHI3iVMgpdAquQEwyOhII4
+MTGYslmTQv0/HTvpK4i+zPUIrCJ3RwRdEwriFonBlPfszirTJ3LqcqAgpjp9AqvgjVjnASodBZwK
+7G0Npsx1bIuryT1gQYNTR75KYBVcELPW8FYDjgbFUIMpx51Yv2TjlE0ncnjEtx9pEOWf6QzAKt/k
+96jW1GGdu63DlGNORtc3P4mcTcMIDdvzxzoaMD31eQesMtLZ1xc8qgnFgTQeBc7cvqYVYvf7zVTe
+J6+TL5FppeLkUvIliuk8HzNe4iXG0/DxD/dYtz20YXuwAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Add</span><span class="p">(</span><span class="n">num</span><span class="p">(</span><span class="mi">99999</span><span class="p">),</span> <span class="n">one</span><span class="p">)</span><span class="o">.</span><span class="n">evaluation</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../__pv_it/demonstrations/976d2c6f619d2574e5ef62309bd0f30cce84db9e0/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../__pv_it/demonstrations/c483fa89953160ced71415c9d579b71da5225be70/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAL4AAAAVBAMAAAAKgUmDAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAB5klEQVQ4y5WVPUsDQRCG3yR35mJiTG1jAoqV
+cIjYGsVSIZ0oSgIiWCqIilUaEW1MY2NA/MDCA0H8A55WFgppBG0krYKoiVFBEHfn9HJJRmSneAjD
+7MMwuzcBEINCKBVT+E2V6hNlfy8QXLzmURvRA9FNFlwaQ10xL7TBuR/oGeh7uI9xqPVMLlQEp+v1
+lG4y9V0PMIXxmINgFi05RGwOjiD827Jf+lcbByzS68CwB8YONJuAENCagVbh4JwPxL3+UIrzXwH9
+qSoiBQQqBPQBaRv+Tw6cvynL+d+BJ7OK1llEywTMO/1/cOD8WoHx69K64iKbFuoPAmZA8y9x4PxG
+Rv5ctmQc/aZ9r8KacBFvTyJaImBfPKE8HsscOH8gx/RP/gEXSal+JSAvKkY7er5YiM/Asg63LKvg
++qPP3HyE9bTTRTydRLhEID+ct8Khof9w7o/77TerEFcbKBPkfETQW+fQOJ8dZv64BDZSVYijRoWA
+c3FkE+kiB/Z+ba7/NWDBAyOHYIaAEVFwgAsWdX7tRV5Ist4v082mvu2BmMpY0cGDXE6Lxzxq/C23
+bzfCdFynp7Q+3130AKODdz9oLv63YN3+KdoU17Mx+19FuGYjLKnu/zOlap+t6p9Qqo4o/0H64irV
+CUX7NwBDFRgglw4kAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">number</span> <span class="o">=</span> <span class="n">num</span><span class="p">(</span><span class="mi">9999993</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="number">number:</strong> <a class="ProveItLink" href="../__pv_it/demonstrations/8ca6069e4514a482da44c953b87634f3c78f9fa40/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAAAOBAMAAAB+wkcFAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAmasQ3XYy7yK7zYlE
+ZlRwlz41AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA8UlEQVQoz03Qv0sCcRjH8bd9uZNDyy5waxAE
+G70gaLwhGgOJtgaPllbBxcHB3cU1MPJfcA7qon/g/gSXaHQ4Egw7/H5v6HmW1/Dw8Pz4QCVsoyA8
+iTTT5RzMNY8TgYueP1KYY9YrDgYEM4EzeFJ4BfGCxoJaLvAL75FQH7uOeIa3E8wW+p//pPbIdVZO
++hPKSZkA9RvKm34Ed8lLT8C/7djvxjwUApep310Jbp3l/P5rozDNt34i2KZqbnE/aexPgp8QFK5o
+09HYdIRG7pqOhsSJwHdkNopqy63zrnhWcBcFmeIwcznxGqaa2vJUw0c4Zw8014XJNwENEQAAAABJ
+RU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Len</span><span class="p">(</span><span class="n">DecimalSequence</span><span class="p">(</span><span class="n">three</span><span class="p">,</span> <span class="n">eight</span><span class="p">,</span> <span class="n">six</span><span class="p">,</span> <span class="n">seven</span><span class="p">,</span> <span class="n">four</span><span class="p">,</span> <span class="n">ExprRange</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">nine</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">four</span><span class="p">),</span> <span class="n">five</span><span class="p">,</span> <span class="n">seven</span><span class="p">,</span> <span class="n">two</span><span class="p">)</span><span class="o">.</span><span class="n">digits</span><span class="p">)</span><span class="o">.</span><span class="n">computation</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../__pv_it/demonstrations/d83ee8f76165e80a7cf1db5c16eac4a4c76b1efc0/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../__pv_it/demonstrations/91066644984d65494f22262b21626f1d57af9af30/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAWMAAAAVBAMAAABh4JK6AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIolEdjJUEM2ZZu/d
+u6v6CvZmAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAD2klEQVRIx81WPWgUQRT+7nK3693lLltYRD0x
+xt80eoWFoEgUFEQhK2ihWAQbCwu3SKFETApFEYyCgm5I4hWCJFVstBDMNRrEmASbYCFGUSEqSfxN
+NInn/O7ezu1urrDII9x8mfne22/evnmzMEAtgiVjiwtax373hYeJ3Pv/0kzohl/wbew3mltEslaH
+SH23YOn1DZJfX2+yUSsWi3PS46gY7R6rDHE7bgU/z+EOXB6ylOAR+6qJWN5fcnxQELjkM8BZaL/4
+WgL4yFFtLlPge35l20+l7zAfzjXG76uIb3niWrBkl/t8fhOU4KsR/Q5c8pV8/vaMJDDJnUBTsz7L
+F/vYFqhdQHqURyUbvC58Y0LyZ+C1ioQ1BUt2ueNyyg3+FngE9PpnOTYjCUxyP7AjByF5i5SszUi6
+BmQkPtbBR8Leailocckud7w8+ICFKQMpK1AyJ1DJWjtz/cPXTo/RrBNL95d4bJCgjkvWF4i0nBcp
+kt+yd+2xEu54efAvwJSJZflAyZxAJSfq6NzOPF/LFPc3M5C6uP6G0zNGpadRkuW8grySsyYiT3yy
+zLmf9nwoCw6MELXjgZI5gUpm+zo8aYrFO/O8+9RcQapZzGVkiJXocKryTaOCvJKJ3qxZXsuCO4Y1
+OTU44j+AZLsjuWuI2nCJZEqgkquZMNkxtLVvOGqbRuKhiLXKqQspuTUXn2pWkFLL2UNqkj3cdEEN
+jmqSYa0/JMuUQCWncrL6qfVCm2OorYDkd+GwWYxJQ0rWb25sMhWkSI4MqUn2cBNfleBAN03kdIjk
+briSj5A3xrdPEruGoZp2JMWRxAsxLoeUjNI+4d8xfCQ73HQ7Ej+V4EjSMq4KyTIjyMIoWkKyTjaZ
+yYsXJ7Os/xWOuyYn597JKG439u/LPoXhcFMFZKaV4DiBiAGtEFzLjEAlp8mBeEwLQ6dr5HZKGxRp
+pJb7wR5f9Zv8CCGPOTpl6T/BHFwUfvw8XuQCSY0qweN1iFlIjgZmmROoZNpW+mhfbqOHdbuFuxy9
+RKu4E7VvJBniqlng6KCVznOag8g8W9pqeJscn/d6kQvvgKUEz9p2l2i55ZKjXyWBSo6TV1Flk8+i
+6kH634QtUNQmrZN9vEQeQCB0F98zFG0gTZvTHPSM/U0OdLDCon23lj2Oz3u9VvTcUoOPFItEeXXO
+T3Lm8+wnQWAXtlNyJ1GGNCsM+TgEmo+XX8hsRR+fvW7XLUNRhCEfh0CLVha8syLJaUOcXecSc1EL
+QpCfQ6C1VBSc396LStbFJR9zz6eDGsOQn0OgNVYUnKcvTPJeeUMsFdvNd2UGEv4BWpFZKPppN+kA
+AAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> demonstrations
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

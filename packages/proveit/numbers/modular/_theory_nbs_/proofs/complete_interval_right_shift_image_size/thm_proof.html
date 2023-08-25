@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.modular.complete_interval_right_shift_image_size theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.modular.complete_interval_right_shift_image_size-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">modular</a>.<a class="ProveItLink" href="../../theorems.html#complete_interval_right_shift_image_size">complete_interval_right_shift_image_size</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.modular.complete_interval_right_shift_image_size-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> complete_interval_right_shift_image_size
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="complete_interval_right_shift_image_size">complete_interval_right_shift_image_size:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/9a531f1d7343d227aafb0a2ec85c56ead1b1e4970/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/c7be1dba885a3b17770c9a947433bfd360038e3c0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

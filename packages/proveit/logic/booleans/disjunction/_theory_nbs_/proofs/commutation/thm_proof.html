@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.booleans.disjunction.commutation theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.booleans.disjunction.commutation-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">booleans</a>.<a class="ProveItLink" href="../../theory.html">disjunction</a>.<a class="ProveItLink" href="../../theorems.html#commutation">commutation</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.booleans.disjunction.commutation-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> commutation
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="commutation">commutation:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/6d4c758289c9edc32ac3d0bf4a627026e254cf060/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQMAAAAWBAMAAAA2k+RkAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAD10lEQVRIx8WWW0gUURjHv51dd9ZZd1UoySB2
+IYgiw32QoIdSySLxIamXiOhCRbhKbQVBVLpBLz7kihS5Ebr1EPhgbL1E+ZAZ3S8sUSCRsCURQZia
+2Y207zK7NuO441sDM3PmnPOb+Z/vdgZgnkcETzXXBHUuKicRgXkf/iBe3gu523JGXnoOyvo4JsRO
+bBbR81JbCSvxVJLcdI8ah5zdY8UlnQDD1tSa6eLihuisoUPAhD8EsIGeD9gp0GjlV6VdzhIW06WN
+OwraAQJRcCcsKXgM4PhhJHA507QYJMIAp8m07XYSXCgW1ku7+jtd19Glkzta0KC7qsBZZUmpU2jy
+CSOBQwGMAiIqRIk3aCehgC793PSeoCWBbyYqKtHMlSjjiSXlxOnOKSMBcPMO+QaJggQ4UanbNhSW
+ke0Eb/aPsxKU7RLpATybcFF7rShwoN/cD40EqOkv1ELCjd9/PjT01FZCHdlOorFK+ZrJC58MorMv
+D+L9uhVFkaItiRoJcEF5SAgv5sMmgIvcncghgRZIetGtQc9v7loEMMINz8+Rd2yA1fzyIT6KMhTE
+ukZKQkYCYAvEkkI4UdhhUHm+9ogHWyf6aiWFlMZ9rzJB8pJ8GRT96hh3YRy/keTH8Cyjj5SZhRMF
+XyKg3DMSaEpoKRJCwQjLT3jr2bnjkuUp8GNvW+l5SCePLNeR+2RRnvappvqnlIeIIimQj9O9FKIx
+swSi4BKeHHszBPjP1QTahfBgqChpicZtL/jmwOwaBRe6ByV4r5glaBj5f8RISbdU18IiPeR3WEog
+m1WmDQRcQyolRB7l2W5OWEjvkUQKQm9IKl06efS22REuPN9KX6pV7jF0guMbNlaZY4EoDwVvoN5A
+oB/A1y+EQlJuhNk2sFHqzHDFItC4VqVrnmUKaxcZnJayVa+tVF4Xyh2dDTFK2DVmK3TpkeKZNBJ5
+Ib3MI+GkT51kxdvgMw+vBW0BzyErnPmgv4zyjdJHJe3dYs5evcw04TsfJDI5+O9BlBuJHWEwECdp
+Qd+F4FR38FLr+gKclQvQEPXOhni8g2LBq7/sLJk0BVr3ZAJWTDdKbku6lNI2xM3XZglIOWgP68hU
+AyF6psOgdE8mmfDVZ7dV/DJLGcB6H/UkxQpevz7so7HB3OVLTZl7fFF74lT2CX1cGNSSoP4C7ZVe
+rFBCZmPjLahiHluZcRuvsifWZx/ugrZ5v2cAVv/uq0VzHUf9ysHGePatF8h9uX9xjs/uugB2xKxN
+Wsnu9Lfi5w0jPdSZe0+3+F4P2BGzlrV9brdRRjbn/LWLzEHlJD6aO0PwH46/24gD0GV3ZAsAAAAA
+SUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/5cb66972365ba8a9b1650021436738a85a5a50d20/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>commutation may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

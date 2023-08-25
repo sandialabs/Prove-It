@@ -1,0 +1,1 @@
+\forall_{a, b \in \mathbb{Z}}~\left[\forall_{x \in \mathbb{C}~|~x \notin \mathbb{Z}}~\left(x \notin \{a~\ldotp \ldotp~b\}\right)\right]

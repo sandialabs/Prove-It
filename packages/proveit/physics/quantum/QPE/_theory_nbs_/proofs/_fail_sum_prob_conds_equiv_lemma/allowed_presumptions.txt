@@ -1,0 +1,5 @@
+proveit.core_expr_types
+proveit.logic
+proveit.numbers
+proveit.physics.quantum.QPE._two_pow_t_minus_one_is_nat_pos
+proveit.physics.quantum.QPE._modabs_in_full_domain_simp

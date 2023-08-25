@@ -1,0 +1,7 @@
+\begin{array}{cc} 
+ \multicolumn{2}{c}{\begin{array}{lcr} \leftarrow & E & \rightarrow \end{array}} \\
+\multicolumn{2}{c}{\begin{array}{lcr} \leftarrow & F & \rightarrow \end{array}} \\
+A & B \\
+\multicolumn{2}{c}{\begin{array}{lcr} \leftarrow & C & \rightarrow \end{array}} \\
+\multicolumn{2}{c}{\begin{array}{lcr} \leftarrow & D & \rightarrow \end{array}} \\
+\end{array}

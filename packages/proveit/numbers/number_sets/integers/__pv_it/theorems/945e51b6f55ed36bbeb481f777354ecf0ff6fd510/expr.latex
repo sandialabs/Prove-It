@@ -1,0 +1,1 @@
+\left(a \in \mathbb{Z}\right) \land \left(b \in \mathbb{Z}\right) \land \left(x \in \mathbb{Z}\right) \land \left(\left(x < a\right) \lor \left(b < x\right)\right)

@@ -1,0 +1,7 @@
+\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{A~\mbox{part}~1~\mbox{on}~\{1~\ldotp \ldotp~m\}} 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{A~\mbox{part}~2~\mbox{on}~\{1~\ldotp \ldotp~m\}} 
+} \end{array}, \ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{A~\mbox{part}~m~\mbox{on}~\{1~\ldotp \ldotp~m\}} 
+} \end{array}\right)

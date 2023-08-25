@@ -1,0 +1,1 @@
+\left(i, j\right) \mapsto \left\{\left(\langle v_{i} \rvert \thinspace U^{\dagger} \thinspace U \thinspace \lvert v_{j} \rangle\right) = \delta_{i, j} \textrm{ if } i \in \{1~\ldotp \ldotp~n\} ,  j \in \{1~\ldotp \ldotp~n\}\right..

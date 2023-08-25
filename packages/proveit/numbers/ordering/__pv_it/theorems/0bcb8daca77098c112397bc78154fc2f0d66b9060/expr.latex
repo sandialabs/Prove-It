@@ -1,0 +1,1 @@
+\left(\left(a, b, c\right) \mapsto \left\{\left(a + c\right) \leq b \textrm{ if } a \in \mathbb{Z} ,  b \in \mathbb{Z} ,  c \in \mathbb{Z} ,  a < b ,  c \leq 1\right..\right)

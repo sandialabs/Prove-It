@@ -1,0 +1,2 @@
+proveit.logic.booleans.forall_over_bool_by_cases
+proveit.logic.booleans.negation.double_negation_intro

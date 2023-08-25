@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Axioms for the theory of proveit.linear_algebra</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../index.html"><img src="../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Axioms-for-the-theory-of-proveit.linear_algebra">Axioms for the theory of <a class="ProveItLink" href="theory.html">proveit.linear_algebra</a><a class="anchor-link" href="#Axioms-for-the-theory-of-proveit.linear_algebra">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the axioms of a theory:</span>
+<span class="o">%</span><span class="k">axioms_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">Function</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">T</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">W</span>
+<span class="kn">from</span> <span class="nn">proveit.core_expr_types</span> <span class="k">import</span> <span class="n">a_i</span><span class="p">,</span> <span class="n">v_i</span><span class="p">,</span> <span class="n">a_1_to_n</span><span class="p">,</span> <span class="n">x_1_to_n</span><span class="p">,</span> <span class="n">A_1_to_m</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="p">(</span><span class="n">And</span><span class="p">,</span> <span class="n">Iff</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Exists</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span>
+                           <span class="n">InSet</span><span class="p">,</span> <span class="n">NotInSet</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">one</span><span class="p">,</span> <span class="n">Add</span><span class="p">,</span> <span class="n">NaturalPos</span><span class="p">,</span> <span class="n">Interval</span>
+<span class="kn">from</span> <span class="nn">proveit.linear_algebra</span> <span class="k">import</span> <span class="n">lin_comb_axn</span><span class="p">,</span> <span class="n">some_nonzero_a</span>
+<span class="kn">from</span> <span class="nn">proveit.linear_algebra</span> <span class="k">import</span> <span class="p">(</span><span class="n">LinMap</span><span class="p">,</span> <span class="n">LinMapAdd</span><span class="p">,</span> 
+                                    <span class="n">VecAdd</span><span class="p">,</span> <span class="n">ScalarMult</span><span class="p">,</span>
+                                    <span class="n">VecSpaces</span><span class="p">,</span> <span class="n">SpanningSets</span><span class="p">,</span> <span class="n">Bases</span><span class="p">,</span>
+                                    <span class="n">VecZero</span><span class="p">,</span> <span class="n">LinDepSets</span><span class="p">,</span>
+                                    <span class="n">TensorProd</span><span class="p">,</span> <span class="n">TensorExp</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining axioms for theory &#39;proveit.linear_algebra&#39;
+Subsequent end-of-cell assignments will define axioms
+%end_axioms will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>TODO: We need axioms to define vectors spaces (over fields and for specific vector addition and scalar multiplication operators to be fully abstract; alternatively, we could use the normal addition and multiplication operators and use literal generalization to be more general).  We then define a LinMap according to its properties (see lin_map_domains and lin_map_linearity in the theorems).</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Define the addition of linear maps.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">linear_map_unary_addition</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">W</span><span class="p">),</span> <span class="n">Forall</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">LinMapAdd</span><span class="p">(</span><span class="n">S</span><span class="p">),</span> <span class="n">S</span><span class="p">),</span>
+                   <span class="n">domain</span><span class="o">=</span><span class="n">LinMap</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">W</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="linear_map_unary_addition">linear_map_unary_addition:</strong> <a class="ProveItLink" href="../__pv_it/axioms/8976bedaa2867dc21d088f7634732fb6c6a64b170/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASQAAAAZBAMAAABqRE4YAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEFElEQVRIx72XXWgUVxTH/5mZ7OxHsln6UH0R
+FhSV1o+FLVbEj9WNrSDBafqmEFN8KAjCSp9Kq44PgqCSvOmK6ApSCFLdWnywqSVt8UGikvpQRLK4
+tQ+KKEZNUKOo59zJzNyZm1ldwVx279eZe+9vzj333DNAwzSnVsKMpnTt+lue6MWMp/yHQirhwQ23
+PlUzfVnkoA+IlM7ivN9yqrfdZk/UqB4HKcPF3GikFi60XJNIn0JB0qqcdQ7qVnqa2XxBHuu549to
+JMOiItakkSd7VaSfODuO5AlguzrCF+Sxl3e5Pxopzmr8vkklGbkpjtach1Tk/gKwDPhMHeAL8ohV
+gFS2gS0x+bkmkdq83ap7SEP077CFwbRVwgMkQR46vUeskXnn38PK56tIGs+xlRbbT+spxiQJaL2r
+tdpwI6S2Wm202iTSRhXJ4DnOvrC5ncqEB0gCQtoAHG2EZNhIVKYRLVBPvlfbpiIJzeivX8/iQmi9
+q8bpHzFAEhDSTpgZ6KQI7bKNlcNYPIyBYQmJpDvZUP/4/663L9dotIVV9NiiI9CvVLXRavJYFQX3
+gesqUruw1zMnXnLvkPI6voCQEpUUnfPfaW1SbaIfLb3QbdlVHhVTLkF8DPH/yvSs8UkNOElqpgl+
+IFEZ+BhYDmxxh10SHAZtOZlFRoxvsxzRJippJjW5gjy/CFv30gpSvOO9+HkIZwLee4nIafkMOgXr
+IBaC/Zk2CbCFfIHkKJKkj1glgBTQEiPpbDWkrdawlmSBOE6rKdtj4XM2hyH8OoZ6ACmmc/sJXUGO
+2zUnOR+hygR09qH3kVojDMlzJhEbd5IXImxtJGRLsoCRzrHn6aibvJ42pu2bjFsBpNR8fvmHz3MY
+EH0pdqwmS17hO+5YioVbK/t4dMHzxQpSgmqLpw6jHnbNsoCRfuQjGcvwviH+NG0+SwevXfNPcUfM
+e4SvHT/I7K086zdi39BXqu+x624np19UJD7fXVXn/BthpyILGKmFDcQYuScWnqjj8YpQJDCbBeTO
+sKxcLmfRx0rTeIautDCesz3omMu1uIt0SEWK054Uvlr7EbfbrRCSLPCCE33CsYPxLMZz0wQn3XzR
+HRDVTvrbYvU13c5tsA4dRcgb126rF8oNf9ZdUW5wlxwvxcdJE6S2y8C/08VLa4FZjss0nxfthMXm
+jT5COE072Y928WDaPRd6Qb12pbu2GIVUDIRwNwnrL16XfyrShs7BEswjVDvVfeEWlYdZGYR4MIuW
+Ev/YhL0Y5rAanPjCyMBDCIJRpfa2qPJ0ueyagecWpShiQK6FkZIeSCIq+hKCINLmJgJdY2reVun+
++9J/3zou+rH3JVHsdtt3oua8o8beuWZi7998x+takDUTXyg7or/jku/Q8z7fcX+/AQxPKZNhHyws
+AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">linear_map_binary_addition</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">W</span><span class="p">),</span> <span class="n">Forall</span><span class="p">((</span><span class="n">S</span><span class="p">,</span> <span class="n">T</span><span class="p">),</span> 
+                   <span class="n">Forall</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Function</span><span class="p">(</span><span class="n">LinMapAdd</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">T</span><span class="p">),</span> <span class="n">v</span><span class="p">),</span>
+                                    <span class="n">Add</span><span class="p">(</span><span class="n">Function</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">v</span><span class="p">),</span>
+                                        <span class="n">Function</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">v</span><span class="p">))),</span>
+                          <span class="n">domain</span><span class="o">=</span><span class="n">V</span><span class="p">),</span>
+                   <span class="n">domain</span><span class="o">=</span><span class="n">LinMap</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">W</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="linear_map_binary_addition">linear_map_binary_addition:</strong> <a class="ProveItLink" href="../__pv_it/axioms/2c1ccfebf9893b19ca4f7ce99da69a1e2d5248790/axiom_expr.html"><img src="data:image/png;base64,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
+vzeb6eWI7IsVAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">linear_map_multi_addition</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">m</span><span class="p">,</span> <span class="n">Forall</span><span class="p">((</span><span class="n">A_1_to_m</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> 
+              <span class="n">Equals</span><span class="p">(</span><span class="n">LinMapAdd</span><span class="p">(</span><span class="n">A_1_to_m</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> 
+                     <span class="n">LinMapAdd</span><span class="p">(</span><span class="n">LinMapAdd</span><span class="p">(</span><span class="n">A_1_to_m</span><span class="p">),</span> <span class="n">B</span><span class="p">))</span><span class="o">.</span><span class="n">with_wrap_after_operator</span><span class="p">()),</span>
+           <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="linear_map_multi_addition">linear_map_multi_addition:</strong> <a class="ProveItLink" href="../__pv_it/axioms/356653078a0e256c8c0c10fe9c85069b6986e7080/axiom_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">tensor_exp_one</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">TensorExp</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">one</span><span class="p">),</span> <span class="n">x</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="tensor_exp_one">tensor_exp_one:</strong> <a class="ProveItLink" href="../__pv_it/axioms/f26f1e3ceb731a3e5bfc3405892e8486cbed14fe0/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHsAAAAaBAMAAABlQT6zAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAByUlEQVQ4y2NgIAi4zBhIA6Ywja93P2Bg6HuL
+XRULDt1MDlBGN1BNAwODLnZl7BOwiy+DWb6lgKF6A07tDHbYhSdDaT6G7ewbFuPWzruAgUEAxFBG
+cdQBuHZubSCBUzsfUK8riJGOEiQb4No50vFp5/rFwNCIEQj8AXDtfdwFeLQzJDMwsAE9wK2ALNi/
+AMpgjXjAsF0Dj3ZPBgZmA6ARKIKIaN4NNPkBQ3X+Phza3wDx2bt3T6MIigHxuocrdisw8FlwPMaq
+DyLNEA90pwcDwywUuZlA7MAnx3KBgWHp0wWIEL0LBuCYgkr3A9NUIQO7AIr2RKCPCph/MRrgTNQw
+6XpgIHMu4A5AkbzCwMDBwJKAJ0/ApNcDNTI9QA05kO0MDDwP8GYqiHQ90PEMCaC0+879SQGy9vgC
+rgVoGQzJ71DpfpCWTVnAFFIgyQaLfEkGhpUBMgzcuO2GSYNCnqEGaCAzwzwOpNjU7/JhCMKtHSZt
+A+IwgnzA8B0uCTRzyTsmZwXc2mHSjojAPMAOD5YAYkulZBijhjuBBSPHESwEf8G1PN33CuEQIrUz
+C2AVFiJSO28B3rKOEMBR1jER53lcJS28nMcPWICJBgCmnW0r9VUnAQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These axioms may now be imported from the theory package: proveit.linear_algebra
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,1 @@
+\left(i, j\right) \mapsto \left\{\forall_{A~|~A, i \leq \left(j + 1\right)}~\left(A \land  A \land  ..\left(j - i - 2\right) \times.. \land  A\right) \textrm{ if } i \in \mathbb{Z} ,  j \in \mathbb{Z}\right..

@@ -1,0 +1,1 @@
+N \mapsto \left\{\forall_{a, b \in \mathbb{Z}~|~|\{a~\ldotp \ldotp~b\}| \leq N}~\left(|\left\{x ~\textup{mod}~ N\right\}_{x \in \{a~\ldotp \ldotp~b\}}| = |\{a~\ldotp \ldotp~b\}|\right) \textrm{ if } N \in \mathbb{N}^+\right..

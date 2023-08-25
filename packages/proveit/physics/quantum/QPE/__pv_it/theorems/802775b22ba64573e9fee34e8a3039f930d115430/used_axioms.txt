@@ -1,0 +1,5 @@
+proveit.logic.booleans.true_axiom
+proveit.numbers.number_sets.natural_numbers.zero_in_nats
+proveit.physics.quantum.QPE._fail_def
+proveit.physics.quantum.QPE._sample_space_def
+proveit.statistics.prob_of_all_def

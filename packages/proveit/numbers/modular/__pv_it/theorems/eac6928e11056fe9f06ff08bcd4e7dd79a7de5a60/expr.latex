@@ -1,0 +1,1 @@
+\forall_{L \in \mathbb{N}^+}~\left[\forall_{x \in \{0~\ldotp \ldotp~L - 1\}}~\left(\left(x ~\textup{mod}~ L\right) = x\right)\right]

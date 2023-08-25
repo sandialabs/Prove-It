@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.exponentiation.add_one_left_in_exp_poss_zero_base theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.exponentiation.add_one_left_in_exp_poss_zero_base-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">exponentiation</a>.<a class="ProveItLink" href="../../theorems.html#add_one_left_in_exp_poss_zero_base">add_one_left_in_exp_poss_zero_base</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.exponentiation.add_one_left_in_exp_poss_zero_base-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> add_one_left_in_exp_poss_zero_base
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="add_one_left_in_exp_poss_zero_base">add_one_left_in_exp_poss_zero_base:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/85bba6b0f0742770d2fc1fe3fb2d9a6b32f658410/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUEAAAAaCAMAAAAe7h6DAAAAOVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACXHtMAAAAEnRSTlMAq1Rm
+mUTNIjK7EInv3Xbt5cmRiLwgAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADrElEQVRo3uVZ2xajKBCU
+OzTI7Pr/HzuCiAQa0cSH5AwPSSe0FS2KvpBp+heGlubNK4HJB9G+ZTDRWoNBbHzjt6n3fs4f+Kdo
+3zIob63RcDq+qfvioQeD5nO0rxggW2sopcV7AkG0/gEGP0D7imFYa42Gn2HyUbAzfM5ghUYOX/YL
+BCrXWpdY31KCJ58zWKHxHIyl+gUGuW2tS2GQR+5ggXcY5GYdLrywBk3vi/IjcXERrTW+KLBIN52w
+jzVYo8m0KJb+RGWXNaRvqGmNVyw9PzcfM1ijsbQo8ickeJRnRaE25p37PW16d+fnlJWL9XUurtHc
+HIazP8EgkY2liPUKrSuwGXFFujgkot4Njcf60MBbT3RS0w4BkwPtZTCMFWNqS7j1eoPxgs7oRRd3
+PxeDnF+IPuuGpsj+cqH/84aTcnlM193GQG+tt6cOWGe2N6PILUtSWeBYpAJZIHRGjRNQH7IV64YW
+5GdFv5sM7SExZvUAQ9bVocaiyib2ZSNMqWoX5sRhAtJvRkUbWWZeWXyJH7InLPvurmf2+SGD+IU4
+2Rsa9Z08kvq/ifNkWIjqYziDTpd0qvzVovoORT2KJEAJQw06U9GSOW5mkmr0sHo015gu0GTu8MAy
+b1XV/3mWd5feYBW6i/d28ZCPirEk1U6Yw/rAZyVEW2HVDMIS7pwtmDzQGb2oQRzsQ2JxUKUbTYsN
+syp+IvV/kFmiqon6pmk+Y/lu/sTyfavZZtZ1mJQ8Y7A9fCHm1YKFbnm5ubPOzDgX9yF7uTh0mGTf
+riutruomRa7iGTDoM3i0i1m2G4POdx2KIIkx2M4e5VyyjA/uHMk6+Awb14N9yPaockcjKTY4Ufbe
+qf9jMorG0ElrofsMHu1ilu22ixfadZjo9lmbfaiSQW16i54tIN5qRXwb3fAZPj5a6EO2SYfU+g11
+EAN46f/0kTdSJilKPdM0n2GT/vd/0YTnTII5aHNvF8dFrq07Qz56AtWguRAGxbpVwRb931FsK8sD
+GxatB492MZ9WTKH9EWR6xSsdzjOJ98+czZQigQcJbNEEZ9TbII2QP/f+T5msZ7DrluYa3cVHu1j0
+N2tFzaHCe3Ew6qQZRSaPMK3dG8/MyJMSPEUr6wiwYc+hmwbbhNQP8EoHcaIkwNAJba3rY370EPQM
+TVwUO/aMcoT34sD7d4FOvfM/ySGaR//ZOEW7Gm8RBqkY4FUOtrdYnf8yqW2tq4dVj54iP4P2xKaA
+m9+/8X/xLuon00hC+wte6CRRLRi+CgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/847f4f70a3ea6db9d76c8f97806abed2afa39a220/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>add_one_left_in_exp_poss_zero_base may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,2 @@
+proveit.logic.equality.sub_left_side_into
+proveit.numbers.number_sets.integers.int_membership_is_bool

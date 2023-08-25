@@ -1,0 +1,3 @@
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{C_{{_{-}b}, {_{-}a}}~\mbox{on}~T_{{_{-}b}, {_{-}a}}} & \qw 
+} \end{array}

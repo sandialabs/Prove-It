@@ -1,0 +1,5 @@
+\lvert \psi \rangle \mapsto \left\{\begin{array}{c} \begin{array}{l} \left[b \mapsto \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{\lvert \psi \rangle} & \meter & \qout{\lvert b \rangle}
+} \end{array}\right)\right] \in  \\ \left[\left\{0, 1\right\} \xrightarrow[\text{onto}]{\text{1-to-1}} \left\{\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{\lvert \psi \rangle} & \meter & \qout{\lvert b \rangle}
+} \end{array}\right\}_{b \in \left\{0, 1\right\}}\right] \end{array} \end{array} \textrm{ if } \lvert \psi \rangle \in \mathbb{C}^{2} ,  \left \|\lvert \psi \rangle\right \| = 1\right..

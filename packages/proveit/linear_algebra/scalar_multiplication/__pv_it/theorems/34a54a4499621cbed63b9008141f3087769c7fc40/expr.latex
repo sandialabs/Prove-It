@@ -1,0 +1,1 @@
+\left\{\forall_{a, b \in K}~\left[\forall_{x, y \in V}~\left(\left(\left(a \cdot x\right) + \left(b \cdot y\right)\right) \in V\right)\right] \textrm{ if } V \underset{{\scriptscriptstyle c}}{\in} \textrm{VecSpaces}\left(K\right)\right..

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Common expressions for the theory of proveit.linear_algebra.addition</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Common-expressions-for-the-theory-of-proveit.linear_algebra.addition">Common expressions for the theory of <a class="ProveItLink" href="theory.html">proveit.linear_algebra.addition</a><a class="anchor-link" href="#Common-expressions-for-the-theory-of-proveit.linear_algebra.addition">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the common expressions of a theory:</span>
+<span class="o">%</span><span class="k">common_expressions_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">Function</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">f</span><span class="p">,</span> <span class="n">Q</span>
+<span class="kn">from</span> <span class="nn">proveit.core_expr_types</span> <span class="k">import</span> <span class="n">b_1_to_j</span><span class="p">,</span> <span class="n">f__b_1_to_j</span><span class="p">,</span> <span class="n">Q__b_1_to_j</span>
+<span class="kn">from</span> <span class="nn">proveit.linear_algebra</span> <span class="k">import</span> <span class="n">VecSum</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> common
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining common sub-expressions for theory &#39;proveit.linear_algebra.addition&#39;
+Subsequent end-of-cell assignments will define common sub-expressions
+%end_common will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">vec_summation_b1toj_fQ</span> <span class="o">=</span> <span class="n">VecSum</span><span class="p">(</span><span class="n">b_1_to_j</span><span class="p">,</span> <span class="n">f__b_1_to_j</span><span class="p">,</span> 
+                                <span class="n">condition</span><span class="o">=</span><span class="n">Q__b_1_to_j</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="vec_summation_b1toj_fQ">vec_summation_b1toj_fQ:</strong> <a class="ProveItLink" href="../__pv_it/common/650c8aee4a66c5562ddfeae7da1cb7b6e9c3cc200/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAVkAAAAyBAMAAAAEmLXFAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAzXZUMhAiRKvv3WaZ
+u4mNgo6tAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEc0lEQVRo3u1Za2jTUBQ+fWRd27SdyERQWRGR
+KftR8YciokP9s4EYBUF/6CrCBBmu+PinrKigqMzhY8IEV9AhiGhFRAUfVVQE0Ym4gaBYFEFFdHMP
+fIDx3pubm2TJttw0loK70OTk3vPlfDm595xzGwDbrUrW2nco9bZUriVnYUt158+SZ1suZ1QxfDlR
+8nQv/2Ci+Lzk2a6Ss0x+5Pw2yeLgvPIwk8OOyXqdTqLtnPpvfxX0bp59wMclILzK6Ho3dIyNYtre
+LJ+59XKuALLR/cex8QoAj+E208fBMe1KPnsBeaAAtsEFPXh9Ig/FDJNhvHsy7VucBr/9lJyzbSHY
+IJNUFwzZwmEop3GPXOGc7WdynMckdYJkbOGwdc6JK3T+cUz2RscRstTQb+rMfToP7K0eO0ow7Wja
+YfZ10pTaYhp65n6pQQueDZXC8JgeUrSR3TDvixXlk07Jlg2S01kA3xAE48IV1QESHBO+Hhx1ThJt
+gHNIauPOvo6rL18fOZ1Cj1wBsfyyubT/HsAfEcRRZy/RJpK/j9dmc8YpW7qaENtQHloSsIj2X4LA
+QCxFPW/RFG0SPbh9O8dplodIWp0JKIB2S4ztAIhDYWl0tkRbqEGEfbyeCgw6Tw5xcnqB7NcKp4Gw
+xZN1ENZnFc+bpy7uIdqiD62wMG/ht8p5XducIqePqFDORnKErdCPOg7Da3Ssl5SrhgoYIRDttVGE
+EPOc8fZYAVsP5VSP7tL6BBTfXkDOW/cFubash16FcFFwEaiAexRtnBlCKc5cVkBV85guGjVgY7Y+
+9eU3QaPuSosjrCeG1stWTotvHHP1pSfTwjinYxtVY/HLFQ+1K10cYVId+j3hzA1dmnVOtqEeNRH1
+KqdtVe8A1qgrUJb7tCutaT3V6JE4F9lNLXxd5WQbrlGxG3S9cYNO3ITSelDCjiSdhi/+JKhl4Dg/
+xrMT2ZvNGYNY+BK6C9lE8Dexhruu1sLX5qMFlGJFap7+SaRd6JTlX6VOFrp1/4P9hok20Sba/94M
+CcFnMw3G3eXgn2GWrEYBaFHhfYdT/nWbQNFll7VaSFajlG1gCpS1g5C2CQzk3WV7wkKyGqVscVn6
+FMSUXWCluzPhe7U0UrIapWzJ3vQuhGwD37vK1tvlzY2UrEYp23JcVH+CTbaBi11lG8mqfy9pktUo
+ZRvE83Aq7LEN3OMq22CtmCY7TiLtqEmZRkGUdGzR3tM/DAttA1e6yjYGwcTyLlVqE/pMowbfRnIB
+KZTFHGwC3Z0JIek2ADK6kUhJfxsIeXRBDkpf+JZ+lbVfm4X2SCEr4EYdlAFnuhsT7seJ0boEkSIp
+8B+HuqS/HR2UvsbV+gjWtPeglMQ7OjMQSe0UqgF73U+q+IUqL+6BYfet9N0x5DLYLcRZ0DcCE2ag
+8PyfsA2QpRSVkJt2sU2usrwOGNk2H5LYt0gDMCCZgWLSdbLLziTox8Uq/OWZfYygHxwzRrae84Sd
+Gah9n9SA14tcennn09Bv9JJkDygVma3vSLGBo7e/RR9TMhH3h0IAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> common
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These common expressions may now be imported from the theory package: proveit.linear_algebra.addition
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

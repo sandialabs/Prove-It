@@ -1,0 +1,1 @@
+\left(\left(f, x, a, c\right) \mapsto \left(\left(x = a\right) \Rightarrow \left(\left(f\left(a\right) = c\right) \Rightarrow \left(f\left(x\right) = c\right)\right)\right)\right)

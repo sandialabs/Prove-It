@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.sets.enumeration.nonmembership_equiv theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.sets.enumeration.nonmembership_equiv-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">sets</a>.<a class="ProveItLink" href="../../theory.html">enumeration</a>.<a class="ProveItLink" href="../../theorems.html#nonmembership_equiv">nonmembership_equiv</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.sets.enumeration.nonmembership_equiv-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> nonmembership_equiv
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="nonmembership_equiv">nonmembership_equiv:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/441fa408f38b85ec639f7581caaf895aba60098a0/expr.html"><img src="data:image/png;base64,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
+NKNUcqNQY7AAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/a9845e1a8c84543c03fd1c189d1383f3703d3ec80/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>nonmembership_equiv may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

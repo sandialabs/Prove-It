@@ -1,0 +1,7 @@
+{_{-}b} \mapsto \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{C_{{_{-}b}, 1}~\mbox{on}~T_{{_{-}b}, 1}} & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{C_{{_{-}b}, 2}~\mbox{on}~T_{{_{-}b}, 2}} & \qw 
+} \end{array}, \ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{C_{{_{-}b}, k}~\mbox{on}~T_{{_{-}b}, k}} & \qw 
+} \end{array}\right)

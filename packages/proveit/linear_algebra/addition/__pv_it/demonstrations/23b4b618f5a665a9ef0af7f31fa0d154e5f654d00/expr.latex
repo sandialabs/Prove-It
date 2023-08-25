@@ -1,0 +1,1 @@
+\left(\sum_{k=0}^{2^{t}} v\left(k\right), \left(\sum_{k=0}^{2^{t} - 1} v\left(k\right)\right) + v\left(2^{t}\right)\right)

@@ -1,0 +1,1 @@
+\left(\forall_{y \in S}~\left(P\left(y\right) \in \mathbb{C}\right), \forall_{z \in \mathbb{C}~|~z \neq 0}~\left(\frac{\sum_{y \in S}~P\left(y\right)}{z} = \left[\sum_{y \in S}~\frac{P\left(y\right)}{z}\right]\right)\right)

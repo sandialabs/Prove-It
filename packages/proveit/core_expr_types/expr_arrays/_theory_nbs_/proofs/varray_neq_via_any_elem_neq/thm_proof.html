@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.core_expr_types.expr_arrays.varray_neq_via_any_elem_neq theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.core_expr_types.expr_arrays.varray_neq_via_any_elem_neq-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">core_expr_types</a>.<a class="ProveItLink" href="../../theory.html">expr_arrays</a>.<a class="ProveItLink" href="../../theorems.html#varray_neq_via_any_elem_neq">varray_neq_via_any_elem_neq</a> theorem<a class="anchor-link" href="#Proof-of-proveit.core_expr_types.expr_arrays.varray_neq_via_any_elem_neq-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> varray_neq_via_any_elem_neq
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="varray_neq_via_any_elem_neq">varray_neq_via_any_elem_neq:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/2d8a252e24a5a7c37b6692155a0472d3a302c5ff0/expr.html"><img src="data:image/png;base64,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
+D6YAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/bc067da921020cc31b9d27d98cc186d740a48c790/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>varray_neq_via_any_elem_neq may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

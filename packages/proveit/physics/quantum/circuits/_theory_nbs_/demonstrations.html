@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Demonstrations for the theory of proveit.physics.quantum.circuits</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Demonstrations-for-the-theory-of-proveit.physics.quantum.circuits">Demonstrations for the theory of <a class="ProveItLink" href="theory.html">proveit.physics.quantum.circuits</a><a class="anchor-link" href="#Demonstrations-for-the-theory-of-proveit.physics.quantum.circuits">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">Function</span><span class="p">,</span> <span class="n">IndexedVar</span><span class="p">,</span> <span class="n">ExprRange</span><span class="p">,</span> <span class="n">ExprTuple</span><span class="p">,</span> <span class="n">VertExprArray</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">S</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Set</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">,</span> <span class="n">three</span>
+<span class="kn">from</span> <span class="nn">proveit.core_expr_types</span> <span class="k">import</span> <span class="n">a_i</span><span class="p">,</span> <span class="n">b_i</span><span class="p">,</span> <span class="n">c_i</span>
+<span class="kn">from</span> <span class="nn">proveit.core_expr_types.expr_arrays</span> <span class="k">import</span> <span class="n">Aij</span><span class="p">,</span> <span class="n">Bij</span><span class="p">,</span> <span class="n">Cij</span><span class="p">,</span> <span class="n">Dij</span><span class="p">,</span> <span class="n">Eij</span><span class="p">,</span> <span class="n">Pij</span><span class="p">,</span> <span class="n">Qij</span><span class="p">,</span> <span class="n">Rij</span><span class="p">,</span> <span class="n">Sij</span><span class="p">,</span> <span class="n">Tij</span><span class="p">,</span> <span class="n">Uij</span><span class="p">,</span> <span class="n">Vij</span><span class="p">,</span> <span class="n">B11_to_Bmn</span><span class="p">,</span> <span class="n">D11_to_Dmn</span><span class="p">,</span> <span class="n">S11_to_Smn</span>
+<span class="kn">from</span> <span class="nn">proveit.physics.quantum</span> <span class="k">import</span> <span class="n">I</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">CONTROL</span>
+<span class="kn">from</span> <span class="nn">proveit.physics.quantum.circuits</span> <span class="k">import</span> <span class="n">Qcircuit</span><span class="p">,</span> <span class="n">Input</span><span class="p">,</span> <span class="n">Output</span><span class="p">,</span> <span class="n">MultiQubitElem</span><span class="p">,</span> <span class="n">Gate</span><span class="p">,</span> <span class="n">target</span>
+<span class="o">%</span><span class="k">begin</span> demonstrations
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Qcircuit</span><span class="p">(</span><span class="n">VertExprArray</span><span class="p">([</span><span class="n">Gate</span><span class="p">(</span><span class="n">I</span><span class="p">),</span> <span class="n">Gate</span><span class="p">(</span><span class="n">X</span><span class="p">)],</span> <span class="p">[</span><span class="n">Gate</span><span class="p">(</span><span class="n">Y</span><span class="p">),</span> <span class="n">Gate</span><span class="p">(</span><span class="n">H</span><span class="p">)]))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="../__pv_it/demonstrations/e6a7c15b15a0b3d6104d92c832c1e45b17b71cdd0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH0AAABFBAMAAACVh/TWAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEKvd7yJUdkTNu2aJ
+mTIv55t8AAAACXBIWXMAAA7EAAAOxAGVKw4bAAABcklEQVRYw2NgIAb8RwUMpIIPKDz+Uf301y9k
+7xTAwObvTrb9/ROAxGry3c/8lYGBvYF8/ex/GBjSKAg/xi8MHAWUhP/6hhiK4i9f8QIW/f+JAWD9
+LJ9g8Y8mQaT9XB8pS38sEyjTH3+AMv37GyjTv56y/Hfrv/po+TNE9VNaf42CUTAKCAB+bJUWARl8
+2foDETKj+qmsn3v9lwJGe88ETP3s+r8UuFV+KRKwn+kbA0NWADb7+YHtBxYDQu7n+8XAegGr+98D
+2w/xFwj6f36AEHb/nwe2H/YnENS//6ICdv3zQW0IAYL6WT4JYNf/C4idCccfz3fs8cfxWUlJ6S+G
+foxqjekzdhmef8A4/IYm8wHT/qv6DVjt5/wAb0Licz/vg/cLsOrnXwBJAgT0nwN3FLDo7y+AJAH8
++oE9DO4/WPWff8DAUN9AQD/jGlDwCGDTb49oQuLUz7fkywOGl/9tMfUzagGbj7f+Lx8tfwavfnLq
+LwCNPEMof88qLQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Qcircuit</span><span class="p">(</span><span class="n">VertExprArray</span><span class="p">([</span><span class="n">MultiQubitElem</span><span class="p">(</span><span class="n">CONTROL</span><span class="p">,</span> <span class="n">Set</span><span class="p">(</span><span class="n">two</span><span class="p">)),</span> <span class="n">target</span><span class="p">],</span> <span class="p">[</span><span class="n">Gate</span><span class="p">(</span><span class="n">Y</span><span class="p">),</span> <span class="n">Gate</span><span class="p">(</span><span class="n">H</span><span class="p">)]))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="../__pv_it/demonstrations/34b5a49db2e0322fc5d69893ff446e367bcfd9680/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAG8AAABFBAMAAAC23KUDAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAmd3vuyIyic0Qq1R2
+RGZOcM1YAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABfklEQVRIx+3WTUrDQBQA4FcjtMXU10UPUPAA
+AZci6EZXYt25rDfQG7Q30LUrQTcNgu5d2BuYG/QIHTUqrYvxxaCS+c/QTSVDWwjNx/y9eW8AjI0X
+Gzg3VnjCCi4KXkZbR7C2s12+x8mQfg49hrryBhAmZljb2JNh+AHwYJljxPmJBJuv0BqbYZ3CsSuv
+ai85tqxqg+BMho+jtgJyY/uGwfxnH4U/bENdnVkDQLk4EAytsBbtK0Kuf2YPOVTF6jTxhD3wgx1+
+69kjQAUXCp1LQImsUsEK/guIqorgAhmYn5cSCtN3hSjmFVfIs6Ey8cXwLr1av05Heoj5h4k9IBXW
+oGvokeWLI8FTKqz9th2iCAdUWKf3eoiggedZcb3wgCl9N8EBsiJsvcRx/CxB+/2o/k5b8im8zByG
+2mC/d6Ryc8TdfCtLb8dknG+lFXIBDuiW9pSYIKojJ/q7I+kgyyAvjqF5Q/ejDj8wHyuGxRPpfJBR
+SGTuGQB8U8fyQq4vAV9zujXsSdrM5gAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Qcircuit</span><span class="p">(</span><span class="n">VertExprArray</span><span class="p">([</span><span class="n">MultiQubitElem</span><span class="p">(</span><span class="n">CONTROL</span><span class="p">,</span> <span class="n">Set</span><span class="p">(</span><span class="n">two</span><span class="p">)),</span> <span class="n">target</span><span class="p">,</span> <span class="n">Gate</span><span class="p">(</span><span class="n">I</span><span class="p">)],</span> 
+         <span class="p">[</span><span class="n">target</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">MultiQubitElem</span><span class="p">(</span><span class="n">CONTROL</span><span class="p">,</span> <span class="n">Set</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">))]))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="../__pv_it/demonstrations/5001f64e8863ae78744d3a0352cf8344569c86890/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABGBAMAAADBQ4wgAAAAIVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAADdcGRXAAAACnRSTlMAmd3vuyIyic0QYU9vrgAAAAlwSFlzAAAOxAAA
+DsQBlSsOGwAAAPVJREFUSMftlj0OwjAMhVMWkMeeAImNmSvAzBE4B0dg4ggWICTeKQmgVkrS/Dy1
+wBKrHerki+3EdmNMRgRqGIGqMISdrEYIQN8Pyg18mLiJZrUdBKJRrIGD51H/DskcwDIHgBTHwsIq
+HpO7NCpo01x33Lb6S2UPLrCdTQ1lk0/Z9Fa2gLRIVYEK/B8Q2zU0VKXWV78cB1ROyavnAl7f0ZLT
+oEWIprqGhF0r3WbiQGSnuhGUtspuRL72fyi0MAJAOIokQJ8DfdJ8LtHZytdDaRFWoAI/Adrbnpo/
+A+4UcAQuFHCyBXR2m8uYm/EULtFBm3bj3JXNE4Zd5i3IMKe2AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> demonstrations
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

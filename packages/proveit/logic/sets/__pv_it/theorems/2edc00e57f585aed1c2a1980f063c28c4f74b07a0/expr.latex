@@ -1,0 +1,1 @@
+\left(\left(A, B\right) \mapsto \left\{A \subseteq \left(A \cup B\right) \textrm{ if } \forall_{x}~\left(\left(x \in B\right) \in \mathbb{B}\right)\right..\right)

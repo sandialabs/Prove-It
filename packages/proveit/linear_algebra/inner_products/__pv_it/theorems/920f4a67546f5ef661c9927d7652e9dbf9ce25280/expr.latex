@@ -1,0 +1,1 @@
+H \mapsto \left\{\forall_{x, y, z \in H}~\left(\left \langle x + y, z\right \rangle = \left(\left \langle x, z\right \rangle + \left \langle x, z\right \rangle\right)\right) \textrm{ if } H \underset{{\scriptscriptstyle c}}{\in} \textrm{InnerProdSpaces}\left(K\right)\right..

@@ -1,0 +1,3 @@
+\begin{array}{cccccccc} 
+ \multirow{1}{*}{$\begin{array}{c} \uparrow \\ U_{1} \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ U_{2} \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ \cdots \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ U_{i} \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ V_{1} \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ V_{2} \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ \cdots \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ V_{j} \\ \downarrow \end{array}$} \\
+\end{array}

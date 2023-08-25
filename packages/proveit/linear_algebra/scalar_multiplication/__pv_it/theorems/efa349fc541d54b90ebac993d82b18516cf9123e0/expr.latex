@@ -1,0 +1,1 @@
+V \mapsto \left\{\forall_{a \in K}~\left[\forall_{x \in V}~\left(\left(a \cdot x\right) \in V\right)\right] \textrm{ if } V \underset{{\scriptscriptstyle c}}{\in} \textrm{VecSpaces}\left(K\right)\right..

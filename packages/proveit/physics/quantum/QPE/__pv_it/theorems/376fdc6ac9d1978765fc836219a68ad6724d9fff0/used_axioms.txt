@@ -1,0 +1,9 @@
+proveit.core_expr_types.operations.operands_substitution
+proveit.logic.equality.equals_reflexivity
+proveit.logic.equality.equals_transitivity
+proveit.logic.equality.substitution
+proveit.numbers.number_sets.natural_numbers.zero_in_nats
+proveit.physics.quantum.QPE._alpha_m_def
+proveit.physics.quantum.QPE._s_in_nat_pos
+proveit.physics.quantum.QPE._t_in_natural_pos
+proveit.physics.quantum.QPE._u_ket_register

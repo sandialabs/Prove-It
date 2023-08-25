@@ -1,0 +1,2 @@
+empty_card d0c105e8635ed059de9e836dcdaf522387ae371d0
+card_induction e3e3fe3d9e7c1c1d8146b2a969ca0f4f801022780

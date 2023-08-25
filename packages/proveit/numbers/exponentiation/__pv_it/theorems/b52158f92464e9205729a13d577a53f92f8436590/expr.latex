@@ -1,0 +1,1 @@
+\forall_{a, x, y \in \mathbb{R}~|~x \leq y < 0, a = 2}~\left(y^{a} \leq x^{a}\right)

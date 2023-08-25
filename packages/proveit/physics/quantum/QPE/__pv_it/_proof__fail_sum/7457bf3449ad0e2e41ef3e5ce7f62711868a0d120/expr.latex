@@ -1,0 +1,13 @@
+l \mapsto \left(\left\{\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{\lvert + \rangle} & \multigate{4}{\textrm{QPE}\left(U, t\right)} & \meter & \multiqout{3}{\lvert b_{\textit{f}} \oplus l \rangle_{t}} \\
+\qin{\lvert + \rangle} & \ghost{\textrm{QPE}\left(U, t\right)} & \meter & \ghostqout{\lvert b_{\textit{f}} \oplus l \rangle_{t}} \\
+\qin{\begin{array}{c}:\\ \left(t - 3\right) \times \\:\end{array}} & \ghost{\textrm{QPE}\left(U, t\right)} & \measure{\begin{array}{c}:\\ \left(t - 3\right) \times \\:\end{array}} \qw & \ghostqout{\lvert b_{\textit{f}} \oplus l \rangle_{t}} \\
+\qin{\lvert + \rangle} & \ghost{\textrm{QPE}\left(U, t\right)} & \meter & \ghostqout{\lvert b_{\textit{f}} \oplus l \rangle_{t}} \\
+\qin{\lvert u \rangle} & \ghost{\textrm{QPE}\left(U, t\right)} & { /^{s} } \qw & \qout{\lvert u \rangle}
+} \end{array} \textrm{ if } l \in \left(\{-2^{t - 1} + 1~\ldotp \ldotp~-\left(e + 1\right)\} \cup \{e + 1~\ldotp \ldotp~2^{t - 1}\}\right) ,  \left|l\right|_{\textup{mod}\thinspace 2^{t}} > e\right.. = \left\{\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{\lvert + \rangle} & \multigate{4}{\textrm{QPE}\left(U, t\right)} & \meter & \multiqout{3}{\lvert b_{\textit{f}} \oplus l \rangle_{t}} \\
+\qin{\lvert + \rangle} & \ghost{\textrm{QPE}\left(U, t\right)} & \meter & \ghostqout{\lvert b_{\textit{f}} \oplus l \rangle_{t}} \\
+\qin{\begin{array}{c}:\\ \left(t - 3\right) \times \\:\end{array}} & \ghost{\textrm{QPE}\left(U, t\right)} & \measure{\begin{array}{c}:\\ \left(t - 3\right) \times \\:\end{array}} \qw & \ghostqout{\lvert b_{\textit{f}} \oplus l \rangle_{t}} \\
+\qin{\lvert + \rangle} & \ghost{\textrm{QPE}\left(U, t\right)} & \meter & \ghostqout{\lvert b_{\textit{f}} \oplus l \rangle_{t}} \\
+\qin{\lvert u \rangle} & \ghost{\textrm{QPE}\left(U, t\right)} & { /^{s} } \qw & \qout{\lvert u \rangle}
+} \end{array} \textrm{ if } l \in \{-2^{t - 1} + 1~\ldotp \ldotp~2^{t - 1}\} ,  \left|l\right|_{\textup{mod}\thinspace 2^{t}} > e\right..\right)

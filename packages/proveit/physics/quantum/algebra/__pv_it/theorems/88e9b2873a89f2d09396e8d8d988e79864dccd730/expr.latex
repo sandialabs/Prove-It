@@ -1,0 +1,2 @@
+\left(v_{1}, v_{2}, \ldots, v_{n}\right) \mapsto \left\{\begin{array}{l}\exists_{a_{1}, a_{2}, \ldots, a_{n} \in \mathbb{C}}~\\
+\left(M = \left(\sum_{i=1}^{n} \left(a_{i} \cdot \left(\lvert v_{i} \rangle \thinspace \langle v_{i} \rvert\right)\right)\right)\right)\end{array} \textrm{ if } \left\{\left\{\lvert v_{1} \rangle, \lvert v_{2} \rangle, \ldots, \lvert v_{n} \rangle\right\}\right\} \in \textrm{O.N.Bases}\left(\mathcal{H}\right)\right..

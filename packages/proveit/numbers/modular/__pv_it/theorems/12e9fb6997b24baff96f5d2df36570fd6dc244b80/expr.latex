@@ -1,0 +1,1 @@
+\left(a, b, N\right) \mapsto \left\{\left|a - b\right|_{\textup{mod}\thinspace N} = \left|b - a\right|_{\textup{mod}\thinspace N} \textrm{ if } a \in \mathbb{R} ,  b \in \mathbb{R} ,  N \in \mathbb{R}^+\right..

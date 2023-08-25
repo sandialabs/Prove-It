@@ -1,0 +1,1 @@
+\left(\frac{1}{2^{\frac{t + 1}{2}}} \cdot \left(\sum_{k=0}^{\left(2 \cdot 2^{t}\right) - 1} \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \varphi \cdot k} \cdot \lvert k \rangle_{t + 1}\right)\right), {_{-}b}\right)

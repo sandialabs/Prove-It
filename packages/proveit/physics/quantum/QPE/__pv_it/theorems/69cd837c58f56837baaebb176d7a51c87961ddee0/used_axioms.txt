@@ -1,0 +1,11 @@
+proveit.core_expr_types.conditionals.condition_replacement
+proveit.core_expr_types.lambda_maps.lambda_substitution
+proveit.logic.booleans.eq_true_intro
+proveit.logic.equality.equals_reflexivity
+proveit.logic.equality.equals_transitivity
+proveit.logic.equality.substitution
+proveit.numbers.number_sets.natural_numbers.zero_in_nats
+proveit.numbers.ordering.transitivity_less_less
+proveit.physics.quantum.QPE._fail_def
+proveit.physics.quantum.QPE._mod_add_def
+proveit.physics.quantum.QPE._t_in_natural_pos

@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Axioms for the theory of proveit.physics.quantum.algebra</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Axioms-for-the-theory-of-proveit.physics.quantum.algebra">Axioms for the theory of <a class="ProveItLink" href="theory.html">proveit.physics.quantum.algebra</a><a class="anchor-link" href="#Axioms-for-the-theory-of-proveit.physics.quantum.algebra">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the axioms of a theory:</span>
+<span class="o">%</span><span class="k">axioms_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="p">(</span><span class="n">Function</span><span class="p">,</span> <span class="n">Lambda</span><span class="p">,</span> <span class="n">Conditional</span><span class="p">,</span> <span class="n">Composition</span><span class="p">,</span>
+                     <span class="n">ExprTuple</span><span class="p">,</span> <span class="n">ExprRange</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Px</span><span class="p">,</span> <span class="n">Py</span>
+<span class="kn">from</span> <span class="nn">proveit.core_expr_types</span> <span class="k">import</span> <span class="n">a_i</span><span class="p">,</span> <span class="n">a_1_to_k</span><span class="p">,</span> <span class="n">A_1_to_m</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="p">(</span><span class="n">And</span><span class="p">,</span> <span class="n">Or</span><span class="p">,</span> <span class="n">Iff</span><span class="p">,</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Exists</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> 
+                           <span class="n">Set</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">NotInSet</span><span class="p">,</span> <span class="n">SubsetEq</span><span class="p">,</span> <span class="n">CartExp</span><span class="p">,</span> <span class="n">InClass</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">NaturalPos</span><span class="p">,</span> <span class="n">Complex</span><span class="p">,</span> <span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">two</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Neg</span><span class="p">,</span> <span class="n">Mult</span><span class="p">,</span> <span class="n">frac</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">Bit</span><span class="p">,</span> <span class="n">BinarySequence</span>
+<span class="kn">from</span> <span class="nn">proveit.linear_algebra</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">LinMap</span><span class="p">,</span> <span class="n">VecAdd</span><span class="p">,</span> <span class="n">VecNeg</span><span class="p">,</span> <span class="n">VecZero</span><span class="p">,</span> <span class="n">MatrixSpace</span><span class="p">,</span> <span class="n">MatrixMult</span><span class="p">,</span> <span class="n">ScalarMult</span><span class="p">,</span> 
+    <span class="n">HilbertSpaces</span><span class="p">,</span> <span class="n">Hspace</span><span class="p">,</span> <span class="n">InnerProd</span><span class="p">,</span> <span class="n">TensorProd</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.physics.quantum</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">Bra</span><span class="p">,</span> <span class="n">Ket</span><span class="p">,</span> <span class="n">ket0</span><span class="p">,</span> <span class="n">ket1</span><span class="p">,</span> <span class="n">ket_plus</span><span class="p">,</span> <span class="n">ket_minus</span><span class="p">,</span> <span class="n">Qmult</span><span class="p">,</span> 
+    <span class="n">psi</span><span class="p">,</span> <span class="n">varphi</span><span class="p">,</span> <span class="n">ket_psi</span><span class="p">,</span> <span class="n">ket_varphi</span><span class="p">,</span> <span class="n">bra_varphi</span><span class="p">,</span> 
+    <span class="n">var_ket_psi</span><span class="p">,</span> <span class="n">var_ket_varphi</span><span class="p">,</span> <span class="n">var_ket_v</span><span class="p">,</span> <span class="n">NumBra</span><span class="p">,</span> <span class="n">NumKet</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.physics.quantum.algebra</span> <span class="k">import</span> <span class="n">QmultCodomain</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining axioms for theory &#39;proveit.physics.quantum.algebra&#39;
+Subsequent end-of-cell assignments will define axioms
+%end_axioms will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Define-basis-kets">Define basis kets<a class="anchor-link" href="#Define-basis-kets">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ket_zero_def</span> <span class="o">=</span> <span class="n">Equals</span><span class="p">(</span><span class="n">ket0</span><span class="p">,</span> <span class="n">ExprTuple</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">zero</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="ket_zero_def">ket_zero_def:</strong> <a class="ProveItLink" href="../__pv_it/axioms/2485f50f590e27b4702b2207717c70c189a3bbf80/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAF0AAAAVBAMAAADWVP/xAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIolEdjKZzVQQ3Wa7
+q+/tGue1AAAACXBIWXMAAA7EAAAOxAGVKw4bAAABmElEQVQoz3XTMUjDQBQG4L9p0yZNrJlFMGgH
+B0UHd+Ogm9i5INY6OLjUTRExOOjYDOIgRetWOmVycNAIjgpddBMK4qyIaIuL75pcCXf1QZq7x9eX
+u9wLLPRCxYCwBswnwqFZkHnKFRJzoVfy69BKsj+kq+hFk/ElCym/53dwZqEucb0C/fkg8hlXvwR2
+mTfqUAJMSj5N1bAS+WtgCrhi3mxB62JU8jnE/CNQ9ZDzyA+XoHaQEV8GjuP+G1hzkfHJX5D/hWaL
+vhzzOvM+lBb5MRvqF8INp5u9aLHxXswnPsk7MCqRp+mGWL8hehtam63HRpLqr4r+Nb4e8vMO1I9w
+v1onPJ1/Pdtv1UWS1TcDGF1gW1x/fD14AG49aHV2Xm2kK0gEYv177tlfboBNwAhYPzRwXoAiNhem
+2c+MBf2H7llXf6PH28yf5p8oIZ1vka6X930fTXqAXl6mDs7O8n7GkeSzvMU13qMY6fc/7iRv8BZX
++qmtvqfmlYKXOOEJ9k4izz4FMWrR3eEJk3pyMRwODfh8E46QWAD+ACZBZgCqtNF4AAAAAElFTkSu
+QmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ket_one_def</span> <span class="o">=</span> <span class="n">Equals</span><span class="p">(</span><span class="n">ket1</span><span class="p">,</span> <span class="n">ExprTuple</span><span class="p">(</span><span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="ket_one_def">ket_one_def:</strong> <a class="ProveItLink" href="../__pv_it/axioms/01f5de510b1f18ea011b7933853ad05d2f9ffddc0/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAF0AAAAVBAMAAADWVP/xAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIolEdjLdEKuZze9m
+u1Q7ZGlWAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABdklEQVQoz23TMUvDQBQH8H9T0zZtenZyEwN2
+cFIHP0AdnO1UHDvVTTKIKCJ2ERQdqm7iUCcdihb8AGZ1i+AHkG46qQiFIuK7JHc57nLQ9O7x4929
+ywtqiIaNjFHLWM/H02rT5FNvWmAl8S0frGf6EWDVz5OFvUkJAu6LJw8+0DZ4sQ/cYyc+1O7VmJ63
+cf518ouGdwK4bVhhcjjun1M/a/gKVdUFGyu+4ktf1i8DH8B0D/af4suB9MzT/QVwSP5X8VZX+rhg
+pxONLp8PgDkP9o/i3X7qL/X8W7H/Vjwbpn5D9490Hg95Nb/9mfpRhqd6mVpvXsl/o5+fzlMN4ar3
+ydrS50I9/yvVN4TTh5/WG0Z+ie7e0psLC9Ee+83ihK+sL769x/3x012AgvF+W/Tbqx8BHdqgdDo5
+AwrLop/xbviCaHHmi9CM7H+8GN4VLW7J0LX0vHn1IVJsiwC/k8TzT0EfB8l/QwSqdC9r8bSU8fnm
+GlpgFfgHwR9cODOdQZgAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ket_plus_def</span> <span class="o">=</span> <span class="n">Equals</span><span class="p">(</span>
+    <span class="n">ket_plus</span><span class="p">,</span> <span class="n">ScalarMult</span><span class="p">(</span><span class="n">frac</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">two</span><span class="p">)),</span>
+                         <span class="n">VecAdd</span><span class="p">(</span><span class="n">ket0</span><span class="p">,</span> <span class="n">ket1</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="ket_plus_def">ket_plus_def:</strong> <a class="ProveItLink" href="../__pv_it/axioms/7ac0ae040438e9b64888bd823bd57caa929189330/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANsAAAAyBAMAAAAn5rM5AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIolEdjJmVJnd76u7
+zRDVRUmUAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADzklEQVRYw7WYz0/TUBzAv+3abpNt7KoxcQkk
+HjjAyYOJgYM/ju6KGtkfoGFBD0himHgQEg9LNOIkCoknEWRqTPxxYEv0oBeHBzxgcEc1EETHj4QA
+tt/Xta99pX10tYet7fd936fv+76/WgDP4wMEcSxV+cY1ZQLByY/4xr0wzrqrjfCucY1SKvpJ4vX3
+hnBikWfUoaRxerYhHNzjGXQXgsINcKgrE4Hh4jnvMQdSgeFCq95jaESDOFjwHjIGweEGPfXltQBx
+K12eKWUiQFws7+kpxQBxiqev9GQCxCXWAcykITs5ZpK6aE8y8mRdX3YQGQJBv/UUoMU0bZrFfaLO
+380s2IuDlK3rs8qUIKT7yEcaF3aI+il38/Shvth6w0G5hdQQFJzWzUPjgHWcxKb7ZlRQ/yv8TLLK
+LXoN0QRxsuu9HQQXQisdZcOu5oqLZLRZlTyIJVP5GLU6zbk0gULW3tNFcGE07mFmvvCGe5jgrLEi
+hHdM5as2HAqekTjP0bg443nKmivuOs7anAN5w1S241Awj7eaizQunLLPJ7kH5hDOqj6zvG4q23Eo
+aCO4Eo0j2x0p4IHpRNxxxc3jrEdSuMf5PXAouEyMX7HgbjK+4I4bNXB/TGUGpwkG8FY0r95Vl/Pg
+CS7nPJOhfxMj7NKHdi+xrd1/TIyZglBNVx4pFCYLhTELThP0ENyEZXV9e+AcjvsmTnUVzYP79lqd
+JjjuhJuz7x2XMWMlUHZ0ZSfcnNFkojENnFBiekN3z3yPs6rdU6RiKttxKLjk4CpilgkEa9zJ7bh5
+xnUbmXUUfqVNZRqn1RAUDNWrJ4WLgkeY29N+N5n1R+srSpnCYQ1BwR3icpas0s8msb+Wyws2cTRt
+pvh+pyRWFwgkKFUfplJ0mU3R65bLl/bF58xZy04pui6IZCwp2ign9sNSgATVIYa/0QYtG7OyyrRA
+z9+DWQonObzIPbTkmA5VT6Ttu2TMyirTgrLRipwyY9rB1d/SF8sAzwEm6fV21fVZZUog6dVi1qt5
+6qWbr1sAM1WYTfpuxaY8Gz8qFBOqe71RHzHtlybU9tPWimR7xv9jWxvRm/YrRhaQa75xTZ5Ne4j4
+oTSt/pwkoV30jWv2fCUhhQYutqfr5fq2/6a9t8o7ZKUICj6b4n9xlndF95flyCpEq6QCC34Dgedl
+WSEFVtgk1VpOgeT3PSjGY5gv5O9zdVH7Ozg8POLXlp08z3mO2K7zDPbd47u7235xozyDJNIUxKf9
+5679fKTSP8GFtxr95HeC82NP1uzSGvnAuMg5MJjPp8voKP8AMJcWcsglbEIAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ket_minus_def</span> <span class="o">=</span> <span class="n">Equals</span><span class="p">(</span>
+    <span class="n">ket_minus</span><span class="p">,</span> <span class="n">ScalarMult</span><span class="p">(</span><span class="n">frac</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">two</span><span class="p">)),</span>
+                          <span class="n">VecAdd</span><span class="p">(</span><span class="n">ket0</span><span class="p">,</span> <span class="n">VecNeg</span><span class="p">(</span><span class="n">ket1</span><span class="p">))))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="ket_minus_def">ket_minus_def:</strong> <a class="ProveItLink" href="../__pv_it/axioms/15e27044c8294454ec6dc063882ea000d9c359610/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPsAAAAyBAMAAABou7DpAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIolEdjIQzd27VJmr
+Zu9JOMHMAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEEklEQVRYw71ZTWgTURCezX+TbLsei6ABexKh
+vXnS5qAeBDF4EAWxuWkRNPUgIhYDikpVSEDBk4YasFDQqAdFL0HxpGhvIggtFCwF8beNUC36/rJv
+dt+6+8Rdh067m/fNfNm382bmvQIEyjWIQkbLerj8TCT0yfN6uKf21b5ymPxTWiizIi5SL86ESh9r
+66DWWfbl7lDp4YoO6BxERX9Hw505Fxl9uhWM6S1ERh//EozBlCHTw+lgyGWIjv5uoL/kcoT0x4qB
+KW8uQvqeamDktSOkNwNjb2QmQvrUKoBMakmvwLfQzaCljFtdey9jy31FQYZQKh8ANshXUVI93EDX
+Lz+ddhe/RKNr72FMBruCQPEiVyrXMX3WIwst+k/fJLOPDdzzMp4EBz2plwy0SyidTkwPaiCmfvi/
+vAqzPwWHLdU4VcH0vF5SULrMlcjsEKbfqC77JV/63Az1bFYhVpPGW9AgfnoauBRktrjSwC5i+n7F
+f3bFf1kyzz1tyHakcRMNuukZ6L1QkndamD6tRLa57Et/m3nua0FyRRo30aCbnoHGhQL0tTF9tqAE
+r39iuM88k2dIrkrjJhp00zPQJqGEvobpefg8ukiFl5pYx5d+nHleX2AxUnXRj3vQM9AboeT9VBz0
+D5TY8qefsOm/SuMmGlToKeiOUIBMla6Jk+x5SUo4oFScz3ySfmGhn6W+08/n+eQXIL4kjMnUfRRT
+RwZtzzY9BY0IJfRzjqef/AO9h1yS9CT06AqZdD39vNfTU9BWoQr9mPvda01+Tw3MjjAOmvwx0eBP
+ycm3xagpvbh/5F9lnkk3mqtI4yYadNMz0Fuh7tCLNZSF51z3Sfvdc9nEPU/A0ZI0bqJBTE/rJQPd
+t1dlr2PdZyAg7bjL2j7u+cjAc2TcRIOIntVLBjorFGjUIPppNel+c9zudw1nSrJkTbvpMyVwF1wG
+MqpcadItYPq6WnJWHbfP3JPTkp7r7pJjtlT6uihFohw5Sg6ukF1xFFyjAmsfOnb7dduzh3FdoWeg
+flnc7jYQfcJjI3/BkQOHSOQODuEzAtuzh/GoQs9AdfnNSCu3XeYYj6X1Ct8cgrwFvbj1Nopdew9j
+Q7bxCJSwuFJ5HdSMzuLm9jH0diCvsTPTlcXARhulglQV8uRnOTR2Y+lvthkx9nozn//jNiMn3vQt
+OyuNFEOjzwdusuI87yQWyK9typb3H6Uv+ElYYYW9gyXRzuRq4dHPlnUhx9pgsu/6LsQ9nsZEisOV
+3BfIlHk3uuZ/Hq6YvOEwfvBuZg/AjtC29zoHe8f5n5vlE/RbXHrypBoW/bDOfv0gT5DDO2kBy5Bu
+oxIW/YQOKMFDPb1ghXu2oHmoKo6Usz9DZofNmoePDdkFhyjJE5rAaP6dcIgF3m/XRRif4nokkQAA
+AABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">num_ket_def</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">k</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span><span class="n">a_1_to_k</span><span class="p">,</span> 
+              <span class="n">Equals</span><span class="p">(</span><span class="n">NumKet</span><span class="p">(</span><span class="n">BinarySequence</span><span class="p">(</span><span class="n">a_1_to_k</span><span class="p">),</span> <span class="n">k</span><span class="p">),</span> 
+                     <span class="n">TensorProd</span><span class="p">(</span><span class="n">ExprRange</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">Ket</span><span class="p">(</span><span class="n">a_i</span><span class="p">),</span> <span class="n">one</span><span class="p">,</span> <span class="n">k</span><span class="p">))),</span>
+              <span class="n">domain</span><span class="o">=</span><span class="n">Bit</span><span class="p">),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="num_ket_def">num_ket_def:</strong> <a class="ProveItLink" href="../__pv_it/axioms/b9dc41583aa9a96874f4f405af91d9e541a8b5c00/axiom_expr.html"><img src="data:image/png;base64,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
+4PDlrCcAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Define-the-bra-notation-from-the-corresponding-ket">Define the bra notation from the corresponding ket<a class="anchor-link" href="#Define-the-bra-notation-from-the-corresponding-ket">&#182;</a></h3><p>A 'bra', such as $\langle \psi \rvert$, defines a linear map from a Hilbert space to a complex scalar via the inner product of the Hilbert space.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">bra_def</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>    
+    <span class="n">Hspace</span><span class="p">,</span>    
+        <span class="n">Forall</span><span class="p">(</span>
+            <span class="n">varphi</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span>
+                <span class="n">bra_varphi</span><span class="p">,</span> 
+                <span class="n">Lambda</span><span class="p">(</span><span class="n">var_ket_psi</span><span class="p">,</span>
+                       <span class="n">Conditional</span><span class="p">(</span><span class="n">InnerProd</span><span class="p">(</span><span class="n">ket_varphi</span><span class="p">,</span> <span class="n">var_ket_psi</span><span class="p">),</span>
+                                   <span class="n">InSet</span><span class="p">(</span><span class="n">var_ket_psi</span><span class="p">,</span> <span class="n">Hspace</span><span class="p">)))),</span>
+            <span class="n">condition</span><span class="o">=</span><span class="n">InSet</span><span class="p">(</span><span class="n">ket_varphi</span><span class="p">,</span> <span class="n">Hspace</span><span class="p">)),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">HilbertSpaces</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="bra_def">bra_def:</strong> <a class="ProveItLink" href="../__pv_it/axioms/ddacc1dc8398ca75fa451b1ced5d3b03627320210/axiom_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Qmult-and-QmultCodomain">Qmult and QmultCodomain<a class="anchor-link" href="#Qmult-and-QmultCodomain">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>A Qmult Operation can string together a sequences of quantum operators and/or kets.  Properly defined, a ket is a vector in a Hilbert space and a quantum operator acts (under Qmult) as a linear map from a Hilbert space to a Hilbert space or a complex number.  The latter is called a bra.</p>
+<p>The result of a Qmult Operation, if and only if it is well-formed (in a valid sequence), will be in the QmultCodomain class which includes all vectors in any vector space over complex numbers or linear maps between vectors of vector spaces over complex numbers:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">InClass</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">QmultCodomain</span><span class="p">),</span>
+                 <span class="n">Or</span><span class="p">(</span><span class="n">Exists</span><span class="p">(</span><span class="n">Hspace</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Hspace</span><span class="p">),</span>
+                           <span class="n">domain</span><span class="o">=</span><span class="n">HilbertSpaces</span><span class="p">),</span>
+                    <span class="n">Exists</span><span class="p">((</span><span class="n">Hspace</span><span class="p">,</span> <span class="n">X</span><span class="p">),</span> <span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">LinMap</span><span class="p">(</span><span class="n">Hspace</span><span class="p">,</span> <span class="n">X</span><span class="p">)),</span>
+                           <span class="n">domain</span><span class="o">=</span><span class="n">HilbertSpaces</span><span class="p">))</span>
+                <span class="o">.</span><span class="n">with_wrap_after_operator</span><span class="p">()))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="../__pv_it/axioms/7c17e07e223e7ac43db6c47cc3824b963d879ebd0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAi0AAABNBAMAAACYrEkyAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAANxklEQVR42t1ce3BcVRn/9n337iMZUKEVzVKQ
+cUDMSgBlKs1CSinlkSh/YAVNBkYdKpCtw6CVR8I4INDCBpGhq0AvUpHaabNQBmmL7UphRCgkCvgo
+hmwfoFJMUgimJGnXc86959xzk3PO3c7dtAl3eje7d+9+95zf+R6/77vfLcDh3/zlcvqwXrC5PFo1
+Wd+ZOhH+2sO+FC+5fB/ZQd/dbChPDHofu1TENMQFnqBvYurBfcHwPBapiOmIS5xZ9jbVafo2z0OR
+i5iOuIRG6LvWrOI0X5vnochFTEdcYBYbd5firFyL56HIRUxLXDpS1AW/rzjru96HIhcxLXGJ9tJ3
+DykYxofeScqHhw2XiPuX7rhoB5mil6QnhXs9D1Yhotq47FI61FJluMCDTHOKct9Q8u5eSkpcLu7r
+63uhSvS5INSTBfvQ6w0G7K4Ql3rqYPxyB1Pnnb0oRFB92VUdXB4THp1/Ww96/RRSXIPiMhu/3CMT
+U8Pi5/+k1OMj7+xFIaLKuDQJ3WgGrkV/PgAIZCgu8/DLSimv2M+WtFNySuB9z4NViagyLg53kHyo
+76/47/EAf0JXGrUwIbgksHlJWVVojDG7gixmeU8/VSKqi4ufn2noOma++pjFLa+iuMSQBwmmpILG
+mUXJHG+393CkElFdXIJodfWB2cufBNPPMogQUagpWSkhwQXrSkIuaBU1n+h+yRmNBc+jVYmoLi5h
+lPEFYWfpYvzhe5xFDaEYg3OdM1k8OhZgQC5okA45OSaLJd6zAJUIjMupKE4/h4LpiwCnmEfXvrIp
+1v5MoFdfBcs4ZUNec2DvcsWVEsgyvgyNxtH4g21T2nEf5fPbSV7PcLkVYIeCWdAfa7KA1ON9FVUi
+bH2ZqyP3/AYayc58C9wL8B5oJegAjcOlF4KdcI6qQoBWoBMWmDN6BcH9D/MijUfNmTNM5stwCWf9
+GbmgGuYSy2KOoR/wHqYPVIKLVtJHQENebj42bYILdk08LskixJH/dMEF4FXzslwujGxI+wC/uYLh
+4i+EFUWEMMtc2sXK7re5x7mupMpwE6H0L9oQBDOQJEUhgsuaIYzLtoFFEJtXuuHK+V8b2xSejZKc
+Za/tXQQ3nt4CyS3HwIYBSJ6wgbMjXD75raldbEOULkCKKqfafLf3TpUDZxlSs5irB5nfca9majtc
+RKhxCXRBogXWmHns5s0PQoTgMgInwZXQFHruRqRNkf7XW/Chd+DT8Ed4Ci4Mp4Lpy+EWGj1KoN/v
+KwLxmpxbRbMMDuE3Z9m47P6kinKxtWwUl2DCjJOd6W4xX3IRocRFbx/fjjzRpcD0RSe4FKHmG0Ow
+WBslVqbtPEgOtfwQ7kOG9+MchLpy51JFjdWCf//qYogQkzCjJ5jShYs6MtALbVzWqcptGiMwOTGB
+idP4rVWQbkVTShEueWNNFmN/Zj6fTzlxiTdsazgD/UX/dOw68aF0cstbIaQCX21oaAmtot4AOSP9
+ktKJp5kOZtY36bi68CjuzhK/TnFRsDr02zIjX0NqxxyugMfoL6l9u7rO8C2ATwAsF+sLnrJWfNSH
+2RjRl9fg4d+MmgHmLluX/+5g8xvNPACiCJHggUWIzfVWlk+jMESJXY14VTsoXPWVpNXnKEW44DIf
+4Do0B2MCLiPIKdwH67GyDN1R0wJLAZnUf/RReKv0S1gfTeulEyFKZZzuwofTleLST7UpIfYC9dSr
+v1mJtI6sSoQLLojWveozIjjJXbt9U7L9mUeG9eZMZPe8AsS2lJaOZeGpQvDyzQUUcr+YgT0Nt5fQ
+Ydg8ACfu/h2z5KxyfMugUlzaaRgKHxQTYss7aRWlj9GCQoQLLhE0ks8cgzDJ510otiYvouldyl8+
+UDEudXQmPnE03WpdyNflIuh6Et6KChFVq2NqCsO8RfXDZLZiXJrpuIL7xLhZ39e43F3//OokSO4r
+1NVWGZelY574d0W4bKVKHkMJEhnjCc6E20oicnLDPb7n+0hdNh6F378uytkzVcbF41YZLtQpxlAW
+c96E9Bz7H2tSjVIJi//9k542CC14F39YIHJhMxGXQeoRkuMk94aI0xv0F1iGIbFZdP66g7B37e1E
+nCjkFQ4JF213YRrg0kh9WKBslstjThrYYw3yDxPQsEqnABsxgUK6ttSMyZ2CMsOh4XIrdE03XALI
+uYYnTMqK405XZ5dOQ6NWhcW8l5cTkOue0iHhsnJa2FE9xcWPM4JX+vpenjApKw6R6oWgdBonytDO
+sglB2OpJHxIuO8CYdrgsBPjFhDzBnJQZgAWl03rCwa5luRDRjWAf2WodIiS4TOqvu7xhShvuKuyv
+a6W4hDAuSyEyYf3KpmFoBBdB6XQrid/PM1wEvqScgpm35Sh6Gi5kRo3YBA7eYCp1iGTygtIpqWlr
+LOesEcTkBmMG4vIoVVq9AWt1KTxxsVs4fRGUTgexfkUzKlzKLUq7mSZbsOyocDv1BdrwfduB8/dk
+hXYkKJ12D2eXZ88GpX9JHVkeV+kWV+Dy5BKcXc2yS4DWpCI4HolKp1r/+KLQEhuXtIt/mTG4DDFc
+8OtNaNgBeFibGGR1XIUQlU4BRdU9XAEm5RKnZwouzngEPsJXRyZPCkccUekUbrv0HM5/iBoMPw64
+WHUfu0ut35rU1U4ZrHSaKJeRZa2gIkXVzv6PCS43xdqCdjJskfiLZNJ+UFc++qes+//3ony6NANx
+qaf5tJ/dMQm+veVdu3hiEbVGOQk5vv/PLHzdK6q/FGYgLo005AbEd5HrLELSXRlp/UAhYopxUVe8
+5Q2sWfpbBy6sKJ0UNzTQOmc0U8nYQiMKEVOLS9Jl4aQNNt+2dicurCgdE99dp98LK9qTtlibQgTD
+pYp9qfZ2iuyLxdtxjMQNrNe3o4tHKNk6q/wqrBu/kjQKkGYBBy7NVA+Cw+L6jDVTvaKu73hKIcKh
+L7uqDIveJuP357bjdXkMvVt4xRD/CEddCvz4xskSa3fgsooGi6j4/lEr1ZOnKxnde0oRU4lLUJZ1
+3QutGJcmgJ+TvnObkee6zJs7p1u7A5d2usKSrgN2EzXe6Th+z1zR2c8pRUwlLnGns2Fl1uQo3Ijn
+W8RXjnfxDCs8otdSv0J3m4zS6Uq6DmqoJw04FFWrjYp8X5tSxFTicpLD/dsdqnHTT5gNrN0FvoAf
+GH7ExCdt7g5cWHIt6TpIML9yFX842ik6+aasWsQU4oIbW9bvfHwzUX+uQ3XQTEyChEO1tpAWIaYT
+s81gUWvuPC4RxuY6xAHHxxjJOn7SCUMX+L6/uIiYQlzwqmWSnw0SOsbdAvsnMJ0gd3H8nPJuLTFL
+wDuPS4ixllaxQ0+yMBVZwmvqhobJ50bTLiJA3JfqX/UAHHesCe2zbxpPj3WeDWuGIvwzURm3DlW0
+JIFsYNRHhmBPJWJdmzTe3dqTzz/ILX+dyWn9RXPncbHbdgfFd3ls4OBHbmv2a3ATIepLNZ3A+diX
+z7oforW47fIe3Ft3N/cz1w5VxIc0CJqAcGXWpGXDpFHzhH1z5tTb/DS41PwStwHgncfF9z4XzYW8
+oOydWpRFuLC+VBI0YgbmF1jnCC6Ae4I4XNw7VAlPjJuGwZVZw0UOF2xDOVunF2omlQ0VzZ3HJcG8
+bb8kMezPegaGFzGpL9Ws7mxCL+ShKYKLvgrjsmLeHsPZoRp5aN5TRmTDeQB7d2Zxh+quuWnbjvBj
+vbphahfzmvh73bIjTOka2VhindbA/L3mzuPSTc1NH5dMaqv3MjUvYlJfqmnEnXSVo29u3liEDoxL
+Louiq7NDNZdNtvkK8WwsEyyEU8EzChFKSx8GWNNyHMTIB7vMetHnDNBeIA2sZvG52cQJbW/TBxfQ
+OMjO41JP0zj/PsmkWr0neryISX2pZHsW6U0ozfQFuom+AHyoOTtU8aFINpruzkaMHIRWDp9M5T6B
+5nLXRfB1cJRZQ+PlA00npa3/UQBTumvgcejGbmhNgXITHMPxzuPCvIpP1mQbH/LORYeEeaPZl0pU
+ej0aYODqfP5nE3DZFnB2qOJDsPe/pVYwO1QXs3swyBmtHvA3pZxl1mXZX108jiMd6abPY85yx98g
+sQPgzp4XQWs/gO0YKy3eeVx6XKcf3O89d9kvrDOYfal424TLx1pBrC98hyo+lEhH3+0wSIeqZjAW
+nugUllnZhhtYcZLY/Dr66cmOr262dg4XjVlPTmYuoTHPuPAiJvWlrkW4GTBoWHfGOVxyWWT1zg7V
+nJHs6jYSA9GCXoqm9V0Z1hMScKkPORpYnZSkydo5XJLMegalZZ3t3snodiEuZl/qitTqPkOvQ3x1
+GXa+z75svDN2V11m9TDc0rAXJnSo5k7bA8mmr1yHu1PR7r9kLgsvD6iHwDew6iVHIa/LaobicAkz
+9neNVOKg9wezOBGT+1LZgugb8/e7CFoh/2qNC4niimPJSYgR1DhcclSjNLm11HgPSJyISXXMkHEI
+gnKK+m1J/VNpA+u/rJ3HhT3w7ZM3hcS8PxDLiZiES+AQ5ETqprL1zsZFZ263W64UunfHy4mYEfdJ
+kizpHlSw/UHDu4MxZhQucRbcnlecn/CuvLYIFS7i2ugRwIUtY1L5iNCI50vaIhS4iGujRwAXnRXS
+upXJ4QXer3lBBbiIa6NHABf7GZFZaivwnlIzEQpchLXRI4HLFfRNSN3Sqr3k+ZpMhKK/TlgbPWwb
+11/3BlspF0p7mffLXgYzZtMZGlZh9v/6AHy9cVf8IQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>One <strong>important note</strong> is that we assume, here, that the complex numbers are, as a trivial special case, a Hilbert space: $\mathbb{C} \underset{{\scriptscriptstyle c}}{\in} \textrm{HilbertSpaces}$.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>When a Qmult has a single ket operand (or complex number, as a special case), it simply represents that ket.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">qmult_of_ket</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">Hspace</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span><span class="n">var_ket_psi</span><span class="p">,</span> 
+                   <span class="n">Equals</span><span class="p">(</span><span class="n">Qmult</span><span class="p">(</span><span class="n">var_ket_psi</span><span class="p">),</span> <span class="n">var_ket_psi</span><span class="p">),</span>
+                   <span class="n">domain</span><span class="o">=</span><span class="n">Hspace</span><span class="p">),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">HilbertSpaces</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="qmult_of_ket">qmult_of_ket:</strong> <a class="ProveItLink" href="../__pv_it/axioms/81745af6ce8e4641bddb1dfe7ea43d811274845f0/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAVgAAAAfBAMAAABQaMgTAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEmUlEQVRYw9WYX4gbVRTGv2SSzGSSHfOqPmyg
+iz4oMpC2/l+C28ViKQR8EqVGBUXxYSoFWWrbqQ8+1G0ytBQbxXZQKS7CbnTRukRLYJE+tEraIi7U
+lClbK3btGtClsIvouXf+ZGY72UZJaXPYZZh8M19+c+65594J0LuINH/CzQulebaXdgnc3MjdGlgN
+V+dE70xnadNXXRKQ6YZbBqtk8SVSBff0MP23z5wIytts2Aw7rOsVbHdu96ENawFDa8A6sqJy2FH2
+0Su9gu3KTS76YKvAwBqwjozXOOxeVh9Gr2C7coupbViZUpfKdoR1ZaznsAnTOe0JbFduabRho7r9
+dB1gXRlpk8EKas96Dtl05XaPDzbl1E0HWFdGQuXd4Ptm81TvukE3bltc2MkRornKJ1wYrE9GKsNh
+NwPv9w7Wdss7xRl+3UsubPV+fIw/TDaFbNitTRZnHFifDKHIYbdDJOodr+uIVu3J+s1586sV/XFM
+tMQPfdOCGsji19UbwNpufIqpELzq9dkDZx1YKbsVD7IKjhXCMuuXEa1z2KRJFwrVqSwG6MPSnYeQ
+zECpowSxhf3tuwdY2mKZG8ByNxvWso/SxUrBs+fxnQMr4wdqTZQEKRMG65chtThs1KIvKWFKwzg9
+xGb2hRyWUhyA/R2oO11/DVjuxiFFSuuTdNykt+2DsIguE80kWM7DatYnI25nFsVhJpbJFpiHCysf
+ZbDjw5dMTC+KLw+NDtbMF0xoY+cWnsLO9eS9cFFLDVvKuunAcsvdDGzLCOYcdjhrj2sfLAPEivRE
+V+hGLbRmfTKiDRv2C7Y64GHgR8h8/JLnazN17GGwZS1aTGRj6nP3Vikxu/4ehXQNl3E3TiKVj1Vf
+xMiz2B2A5W6GbC0rOIAkMGFr3N6JIx6sIZhxohwL7wY+GYJhw77FhvbYP6dPtxBXvcxiimcWWCoj
+bpRNPoqlQUuq447CmzhIAyt+2sIz5SfMACx3M8SPGgoeQlTF01yy7Z343IWNn0xhA3vAcFifjFjV
+ho3w3dk11h2EVyuVA6tgZx/L5Qp0pD+T6pxg06py4gKep8edzW2IH10KwHI3AxHrDSo4qYqNlUol
+69g7sd9bFPbOLLLNX6PDotCW+ez0tojxBiJ5Zh6WWe4/LquUtAbP7DkcMfeYfIruw8brt4gGmT8i
+qohpeNdn7/YV3VvB3uZrar7TCubJ2OXfz8bySFjO8uCDLWuCkVRli6CnJH2Jmqi0jN/kZVywklXZ
+OojJIVaY18NGLGsnL9ik6bO3Q8h7sFf492mdYD0ZI37YtI60dRfGdLYonDIvr+wbzH/yF3bnFoDa
+ojh4HKktGK3VIP35QB6Xcu9Y9DFSJ6yh+eNhsPKmD6j+f6EOdthn78R7HiwfyWMdt4iezDczHixN
+6cgZDfJM5dDaa6pU7+JNwbDbLO+3n1UqBdfeiQkPlmd7viOsJ/Ps/vfXGqnVHaxAwx+3wi8ULXw7
+p3hvXTQVlJ9XwwZk/Pr/3sG2r3QHq7DOYN7Gb7fe7wbOgMu9/d1gFv0cpUf7h1XKJPsHNqn3URUM
+mHL/wManc7cx3b9KxokoFB0UEgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>When a Qmult has a single quantum operator or bra operand, it represents the corresponding linear mapping of the operand and we format it as the operand wrapped in square brackets.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The corresponding linear map for the matrix performs the matrix multiplication:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">qmult_of_matrix</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">Forall</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Qmult</span><span class="p">(</span><span class="n">M</span><span class="p">),</span> 
+                             <span class="n">Lambda</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Conditional</span><span class="p">(</span>
+                                 <span class="n">MatrixMult</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span>
+                                 <span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">CartExp</span><span class="p">(</span><span class="n">Complex</span><span class="p">,</span> <span class="n">n</span><span class="p">))))),</span>
+                   <span class="n">domain</span><span class="o">=</span><span class="n">MatrixSpace</span><span class="p">(</span><span class="n">Complex</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">)),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="qmult_of_matrix">qmult_of_matrix:</strong> <a class="ProveItLink" href="../__pv_it/axioms/178715d1178d9732b7285b4c637cf6352408e1b50/axiom_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The corresponding linear map for a linear map is the linear map itself:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">qmult_of_linmap</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">Hspace</span><span class="p">,</span> <span class="n">X</span><span class="p">),</span> <span class="n">Forall</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Qmult</span><span class="p">(</span><span class="n">A</span><span class="p">),</span> <span class="n">A</span><span class="p">),</span>
+                        <span class="n">domain</span><span class="o">=</span><span class="n">LinMap</span><span class="p">(</span><span class="n">Hspace</span><span class="p">,</span> <span class="n">X</span><span class="p">)),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">HilbertSpaces</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="qmult_of_linmap">qmult_of_linmap:</strong> <a class="ProveItLink" href="../__pv_it/axioms/2ceed440a8fe284feb3035625b79ed5666fa81b20/axiom_expr.html"><img src="data:image/png;base64,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
+8uEapwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>A Qmult of a bra or operator applied to a ket is the application of the corresponding mapping (from Hilbert space to a c-number or Hilbert space to Hilbert space):</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">qmult_op_ket</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">Hspace</span><span class="p">,</span> <span class="n">X</span><span class="p">),</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="n">A</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span><span class="n">var_ket_psi</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Qmult</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">var_ket_psi</span><span class="p">),</span>
+                              <span class="n">Function</span><span class="p">(</span><span class="n">Qmult</span><span class="p">(</span><span class="n">A</span><span class="p">),</span> <span class="n">var_ket_psi</span><span class="p">)),</span>
+                  <span class="n">domain</span><span class="o">=</span><span class="n">Hspace</span><span class="p">),</span>
+        <span class="n">condition</span><span class="o">=</span><span class="n">InSet</span><span class="p">(</span><span class="n">Qmult</span><span class="p">(</span><span class="n">A</span><span class="p">),</span>
+                        <span class="n">LinMap</span><span class="p">(</span><span class="n">Hspace</span><span class="p">,</span> <span class="n">X</span><span class="p">))),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">HilbertSpaces</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="qmult_op_ket">qmult_op_ket:</strong> <a class="ProveItLink" href="../__pv_it/axioms/752d923c5c7f182b55163a3ae75007cdc4c621850/axiom_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We define the Qmult of two operators as the composition of the operators:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">qmult_op_op</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">Hspace</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">),</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Qmult</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span>
+                       <span class="n">Composition</span><span class="p">(</span><span class="n">Qmult</span><span class="p">(</span><span class="n">A</span><span class="p">),</span>
+                                   <span class="n">Qmult</span><span class="p">(</span><span class="n">B</span><span class="p">))),</span>
+        <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">InSet</span><span class="p">(</span><span class="n">Qmult</span><span class="p">(</span><span class="n">A</span><span class="p">),</span> <span class="n">LinMap</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">)),</span>
+                    <span class="n">InSet</span><span class="p">(</span><span class="n">Qmult</span><span class="p">(</span><span class="n">B</span><span class="p">),</span> <span class="n">LinMap</span><span class="p">(</span><span class="n">Hspace</span><span class="p">,</span> <span class="n">X</span><span class="p">))]),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">HilbertSpaces</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="qmult_op_op">qmult_op_op:</strong> <a class="ProveItLink" href="../__pv_it/axioms/567802b63358f0ca18cd464d0079617f2a185d3e0/axiom_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We define the Qmult of two kets as the tensor product of the kets.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">qmult_ket_ket</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">Hspace</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">var_ket_psi</span><span class="p">,</span> <span class="n">var_ket_varphi</span><span class="p">),</span>
+        <span class="n">Equals</span><span class="p">(</span>
+            <span class="n">Qmult</span><span class="p">(</span><span class="n">var_ket_psi</span><span class="p">,</span> <span class="n">var_ket_varphi</span><span class="p">),</span>
+            <span class="n">TensorProd</span><span class="p">(</span><span class="n">var_ket_psi</span><span class="p">,</span> <span class="n">var_ket_varphi</span><span class="p">)),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">Hspace</span><span class="p">),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">HilbertSpaces</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="qmult_ket_ket">qmult_ket_ket:</strong> <a class="ProveItLink" href="../__pv_it/axioms/df19b0175070b109c70db90f8a74e210c7be208a0/axiom_expr.html"><img src="data:image/png;base64,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
+AAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We define the Qmult of a ket followed by a bra as the outer product mapping which is consistent with Qmult associativity:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">qmult_ket_bra</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">Hspace</span><span class="p">,</span> <span class="n">X</span><span class="p">),</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="n">var_ket_psi</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span>
+            <span class="n">varphi</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span>
+                <span class="n">Qmult</span><span class="p">(</span><span class="n">var_ket_psi</span><span class="p">,</span> <span class="n">bra_varphi</span><span class="p">),</span>
+                <span class="n">Lambda</span><span class="p">(</span><span class="n">var_ket_v</span><span class="p">,</span> <span class="n">Conditional</span><span class="p">(</span>
+                    <span class="n">ScalarMult</span><span class="p">(</span><span class="n">Qmult</span><span class="p">(</span><span class="n">bra_varphi</span><span class="p">,</span> <span class="n">var_ket_v</span><span class="p">),</span> 
+                               <span class="n">var_ket_psi</span><span class="p">),</span>
+                    <span class="n">InSet</span><span class="p">(</span><span class="n">var_ket_v</span><span class="p">,</span> <span class="n">Hspace</span><span class="p">)))),</span>
+            <span class="n">condition</span><span class="o">=</span><span class="n">InSet</span><span class="p">(</span><span class="n">Ket</span><span class="p">(</span><span class="n">varphi</span><span class="p">),</span> <span class="n">Hspace</span><span class="p">)),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">X</span><span class="p">),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">HilbertSpaces</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="qmult_ket_bra">qmult_ket_bra:</strong> <a class="ProveItLink" href="../__pv_it/axioms/82729a85503935413b8aaaad6fc40f176ba644680/axiom_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We define the Qmult of a c-number with anything, with the c-number on either side, as the scalar multiplication of the c number with the other operand:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">qmult_complex_complex</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Qmult</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span>
+                      <span class="n">Mult</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)),</span>
+       <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="qmult_complex_complex">qmult_complex_complex:</strong> <a class="ProveItLink" href="../__pv_it/axioms/670910a75fd57d8b09130c94eb680614e5842e9c0/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMYAAAAWBAMAAABpi/5BAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADFUlEQVRIx7VVXUgUURT+nJ11d8b9o6AXYVkI
+8qGsfRBBA1uwIghT8KUHyY2C0KfxMajYHqKgQgPBtqJGgkA2WiuhXhIhoj+MLYwkEUZ7MAhChDQM
+pHPmb2d2x7GXDnx355777T3nnnPuucDWEuJBcWqUzVjVqhD+SRYJsZRTc2ITVoUENQMJnuz0MyGM
+07Dbmsl3SmQx7c1yyNg0Dd8MHGLFGT8bD3jnrD2tzdDQ78lyyWnmqjoucsyG/Gy0E8Sy43GOWpMn
+yyUrhEBGB5uqS/nZmCJEytNeleeqF8uVi3Ue3+kIkIe1vungMO0qz1/oAUt7sZxSV+LxlIHp+fn3
+fjZETuZRjmj9EtUITv7cRjskvFgDkxfKaUsuUHQeQ8cR4JafDd1l9qdHkej88qpaVBDQ3e6YZ/lo
+sYKvcc+OYbFfXgOaoWMAIdupcJ/1FRtOmj5FOVmfaPOXEOn8wjoiGoTK8DPrYRodtmKfig/AHuiQ
+1Loue6WeDS3ku+QbinDbUEV49RVFYxlRCoiYRXwc4eUKG8zqBOa4zldZcRj4AwxCh6A5Uv6GcDBH
+8X4E7HfbiAyhSJ9kpzeF4JSHjbeQf/H3DA9zCFL19sBAto2GQtszPsLGgqrf4fuX7E5jxaqo4YBx
+PTpVCKWKfBBL3kBg2XE9RMpeIww8oUsrfwmvcRa+xjJjzGhosMkSF9NdspHCDkFBPEeJQaDy1hJL
+XkFN1v7fb04PWmDgHKVczIT59FI6kO1mRmtrudATRv1JmjAjAjVpKWOWqus6JNiRxkzGUmzHsFnz
+jJochzPGW0VyYqI5n8+nrhy3/x3msFynoyafD3ynn3ruGtGuChvMGv1xOZmzFKMTHPPPJvRqVqRW
+Ku04IqmruluUc9lcm+U9c+4tz1ddo1nPl6dkwCgLZbBbLSCqtlAt8+KEgklzrclsbr4d0KNLmq3U
+bqfB9r1PcS0VPqYhdJMVhb5hy3WJX70Rt3/VjVryehvPmnCI0X4L+bwr2jJvOLbVhrLX+zBS5V1Q
+9e5Y3FRCmlOztAmrQmKKAYcE8H/kLyTSwcA+DvrsAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">qmult_complex_left</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">c</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Qmult</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">X</span><span class="p">),</span> <span class="n">ScalarMult</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">X</span><span class="p">)),</span>
+                 <span class="n">domain</span><span class="o">=</span><span class="n">QmultCodomain</span><span class="p">),</span>
+       <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="qmult_complex_left">qmult_complex_left:</strong> <a class="ProveItLink" href="../__pv_it/axioms/2aea457ec147b62274f7401b61deb784c20bd30b0/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASEAAAAlBAMAAAD/1UKKAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAD10lEQVRYw+1YXUhUQRQ+7q7ueu/681gRuVHk
+Qw8JSpSBCRYZQS30Ehgi9RD60gq+BCrrQ6FEtZWi18C2HwKRbLOgsjAfDIpIRQr6YWlrKamHjH6M
+7MfmzMy9zp179wZRZuSBb2dnzjd3vjtz5szsAjjYqun3MKvmmZ6OOhKWwqybf17RvKJ5Rf+UIi+H
+2UI2zJD9A0K663cpes5htkorMTtg/4BKnU4U5WK5LKUiJ7dhrhgDt7XTw3D+6y7ILrAwV0p1kUrp
+RNFGdOxJqcjJbdg5Dt3yAuBqJ2WNTFSq5BaRWsMUNWEIRFIqcnIbVsah25EI1GFZZDm3LLMmUouY
+ogwSSmogpSInt2GDHLplfFJybcPUb+kqUjncRHZG6sh2chthVMVgmPvDKTacPCUrLH1FKgJV3YvH
+7zrsNQe3sRYxBlDfrGEtI4tooeZKzC34MZAMC00CFYGKygE6HRQ5uI2Z5+/nHYPNrOVmgk0ATpwn
+To2K203QEPCIcSlQEaioFrziq2S3LmkUFTG362Q7LF5gkF5+KxW6ZAU4YjDMd9AoW85BSfsYwRPw
+J8TNNkNFoKLMqBpkTt8zLagcDblOiIq4218Km0hxeGEb+awIuyeJdj1u/UGGbXqDp/Yje+BbSdEt
+4ptieWDSSkWgIldCj9wNZH3VXoB1oiLuzp5SCddTrifE9WHXQIuk6I7er9z3mZbpg1ZFfr5k963U
+dD5HUFWCkZVM0Jx5Zr9wQtFThLoBhvrJR5J+PUCQUwA7O82rpnzndTUMT+kh5RqV4ois2gVxycxU
+BFXUh7nygW+wGz35+fK51scy7wSZQIW9XxfOS8C1VZ+jzAQD+ZmQjvUXZArpmeKWU2sXfRUIGg0m
+KoIqqifyPRElvB09xcWyonoW9zdILKez/PIO5yg6E0f6ziUb7SqpdpMhcqb0tGCyizgSTgw3MxVB
+FaWFWRis1jQt0LxDVpRG+6u9pKO7WtOOAXyRrgW+UQb1Ugl5XsvIbfDtpZsxKygpOkRwvfC1XpWo
+CCPN55DFPMhGJotjcxvphyEyLHvnvOLT5kP0IYdsDXJDVjhVTmvgMBRlBCGWiRXv5RAMWBV5ojAR
+1XOl59GVOtPNq8juVJVOX5YHS392WBuKvGUlUW8Hfuupbg1bFJ2NR5U8knD3UZfSvDwB4iGaGWKQ
+b5bWO0N7qktohNPNh3OPpgWd75DKNa0Nl3845BaDFvegYh3eRmR3CkXGO/3irdb7auS4qaGRw2zj
+Nj0T9k8c1+nzv47+C0W+ZGyOKWqCyBxT1DHnVu0xRP+qIuv/kBWFBX/6f8gf1HwniHEnBwwAAAAA
+SUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">qmult_complex_right</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">c</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Qmult</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">c</span><span class="p">),</span> <span class="n">ScalarMult</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">X</span><span class="p">)),</span>
+                 <span class="n">domain</span><span class="o">=</span><span class="n">QmultCodomain</span><span class="p">),</span>
+       <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="qmult_complex_right">qmult_complex_right:</strong> <a class="ProveItLink" href="../__pv_it/axioms/b532331d8d4bd8fb14e50b23dcb7dc0b7c77c55e0/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASEAAAAlBAMAAAD/1UKKAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAD+0lEQVRYw+1YW2gTQRS93d3msUnTfKqIiSiK
++GHBIlhBC1UsChLwR6iUoB+iP67gj2Bl/VAqosYX7aro+kAoxRqLoFap+VARRFuKgg+C0aCiP2p9
+Ya3GeW52Z5MVxEfFXDiZ7Jy7u2fm3rkzCYCHzSq8gz9qSqFgejpMhj9u4YqiiqKKon9KkZ/BaVoJ
+T630AzRO/SpFTxmc1up2jMRLP6CVuyNFUdxOKavIi7ZMSlPIx0Zz6uMb/K2ROpfnTOF6buEOnBld
+RVyJO1K0CBNryiryoi07zQBVwwAzioFZJzqqSbEnFgepg7muo4q24hRIlVXkRVvWxACBz+BvLPbX
+u/Yt16ztScFG7lpPFflQKoXiZRV50ZZlGADWa8e9Fk7Ydavvkxrlrgwyku0rn9letJVGSQpkC5ZE
+7a8Tp2Sa6175/XHLFQOrup3N3vJYax60FYs0BR7qWz4t/XkdQlHBcylnijYwgTTYFQMragY45KHI
+g7ZPBZuO0DfW1xZXUiDjiVOyxIi41Zwp2tUcnaskBVa0Afz2oUQOTNpiV0Rp6VgHTBxnOT3/astf
+qIlT4MX2lfU9gnAOpIygfYgztsU2SCOfocCKgmYoQcnAEyOh7tWkw3ZFjA43wmLU7B5/EH226PJH
+pJ0HKJygQLY4RltlhDzwjaDoOmdA/cgivuEDcFcMrEjK8cxdiOIb6gGYZ1fE6MhICPkqzbwgLtCl
+/h0uRYq+h0YkTJrqjFtRmIXsLm2aUcHgrtVsjiA5HydAPkdq5sltth2K7CKEBrjWhz7y5Ot2hNo6
+WHnIFbWLUPOJdJ0lgZEGhTwa4gy3kA6PNe6KQRT14lp5L5Dpwsz06eK+1ksr72s0gSod31E8CXFp
+GZ+jYI4CIgmQv5AuJBjQhVhaj3KG2zM022SVYlcMomgzkq+kVH05ZhoaREWbad5fQblcTRfUMH6l
+WcwjvnJVnID0xwRaTmj4rCQU7RxnmHUhh9oRewUhiqp0mgZzDMOIt68QFVWR+0M96EZ5rWHsA/gi
+HAsCgwSBI6M6bC/QBLk8+xUKZUJQtIsz1HYM3ITAerJusSuGVeZrUTB30jejsZY4jfTBNfRaOuZY
+wwnnJnqfQbQ2saNGL1fT2hgsRb4EpIP4wn9eg363IsWE1yavlcqDCxsdJ6/6Ursq330de0bjjzZr
+S5G/ab7p78Tfutce0F2KTmVNNYYK7iZCqe1Tc2DfRIMahXiydJ8ZOsodQlPM3bk5dxtGwvsMqV4y
+DuLw39Fke9LiNai6X19CZFcZRdaYfvJU6385sN/RsYXBaS9K3Jkr/cQX3L3y6+i/UBTIp8eYoq2Q
+GmOKOsdc1B6C+VcVuf+HbJld97v/h/wOTeko8MJmc5wAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>By the following axiom, we can know that a Qmult only results in an element of its codomain if it is well-formed (the operands are in a  valid sequence of op-ket, ket-bra, op-op, complex-any, or any-complex):</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">qmult_in_codomain_only_if_valid</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> <span class="n">Exists</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">Hspace</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">),</span>
+            <span class="n">InSet</span><span class="p">(</span><span class="n">ExprTuple</span><span class="p">(</span><span class="n">Qmult</span><span class="p">(</span><span class="n">A</span><span class="p">),</span> <span class="n">Qmult</span><span class="p">(</span><span class="n">B</span><span class="p">)),</span>
+                  <span class="n">Set</span><span class="p">(</span><span class="n">ExprTuple</span><span class="p">(</span><span class="n">LinMap</span><span class="p">(</span><span class="n">Hspace</span><span class="p">,</span> <span class="n">X</span><span class="p">),</span> <span class="n">Hspace</span><span class="p">),</span>
+                      <span class="n">ExprTuple</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">LinMap</span><span class="p">(</span><span class="n">Hspace</span><span class="p">,</span> <span class="n">Complex</span><span class="p">)),</span>
+                      <span class="n">ExprTuple</span><span class="p">(</span><span class="n">LinMap</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">),</span> <span class="n">LinMap</span><span class="p">(</span><span class="n">Hspace</span><span class="p">,</span> <span class="n">X</span><span class="p">)),</span>
+                      <span class="n">ExprTuple</span><span class="p">(</span><span class="n">Complex</span><span class="p">,</span> <span class="n">QmultCodomain</span><span class="p">),</span>
+                      <span class="n">ExprTuple</span><span class="p">(</span><span class="n">QmultCodomain</span><span class="p">,</span> <span class="n">Complex</span><span class="p">))),</span>
+            <span class="n">domain</span><span class="o">=</span><span class="n">HilbertSpaces</span><span class="p">),</span>
+        <span class="n">condition</span><span class="o">=</span><span class="n">InClass</span><span class="p">(</span><span class="n">Qmult</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span>
+                          <span class="n">QmultCodomain</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="qmult_in_codomain_only_if_valid">qmult_in_codomain_only_if_valid:</strong> <a class="ProveItLink" href="../__pv_it/axioms/b0d3659dd518945691ccda4e980d5279d9c58ad40/axiom_expr.html"><img src="data:image/png;base64,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
+AElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>A <code>Qmult</code> of multiple operands is defined as the binary expansion:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[21]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">multi_qmult_def</span> <span class="o">=</span> \
+    <span class="n">Forall</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">Forall</span><span class="p">((</span><span class="n">A_1_to_m</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> 
+                     <span class="n">Equals</span><span class="p">(</span><span class="n">Qmult</span><span class="p">(</span><span class="n">A_1_to_m</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> 
+                            <span class="n">Qmult</span><span class="p">(</span><span class="n">Qmult</span><span class="p">(</span><span class="n">A_1_to_m</span><span class="p">),</span> <span class="n">B</span><span class="p">))</span>
+                     <span class="o">.</span><span class="n">with_wrap_after_operator</span><span class="p">()),</span>
+           <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="multi_qmult_def">multi_qmult_def:</strong> <a class="ProveItLink" href="../__pv_it/axioms/f35df5097e0f1096a519a7652e13529b46805c6f0/axiom_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[22]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These axioms may now be imported from the theory package: proveit.physics.quantum.algebra
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

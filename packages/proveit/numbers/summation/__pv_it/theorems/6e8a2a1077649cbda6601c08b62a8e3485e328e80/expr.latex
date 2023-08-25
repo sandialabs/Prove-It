@@ -1,0 +1,1 @@
+\left\{\forall_{a, b \in \mathbb{Z}~|~a \leq b, \left[a,b\right] \subseteq S}~\left(\left(\sum_{x = a}^{b} f\left(x\right)\right) \leq \left(f\left(a\right) + \left(\int_{a}^{b} f\left(x\right)\,dx\right)\right)\right) \textrm{ if } f \in \textrm{MonDecFuncs}\left(S\right) ,  S \subseteq \mathbb{R}\right..

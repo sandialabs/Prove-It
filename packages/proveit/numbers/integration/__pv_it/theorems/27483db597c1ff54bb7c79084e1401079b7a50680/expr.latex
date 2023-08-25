@@ -1,0 +1,1 @@
+\left(\left(f, S\right) \mapsto \left(\left[\forall_{x_{1}, x_{2}, \ldots, x_{n} \in S}~\left(f\left(x_{1}, x_{2}, \ldots, x_{n}\right) \in \mathbb{R}^{\le 0}\right)\right] \Rightarrow \left(\left[\int_{x_{1}, x_{2}, \ldots, x_{n} \in S}~f\left(x_{1}, x_{2}, \ldots, x_{n}\right)\right] \in \mathbb{R}^{\le 0}\right)\right)\right)

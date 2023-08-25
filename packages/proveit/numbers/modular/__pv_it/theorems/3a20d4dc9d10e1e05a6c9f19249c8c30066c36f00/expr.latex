@@ -1,0 +1,1 @@
+\left(x \mapsto \left(\left(x + c\right) ~\textup{mod}~ N\right), \left[\{a~\ldotp \ldotp~b\} \xrightarrow[\text{onto}]{\text{1-to-1}} \{0~\ldotp \ldotp~N - 1\}\right]\right)

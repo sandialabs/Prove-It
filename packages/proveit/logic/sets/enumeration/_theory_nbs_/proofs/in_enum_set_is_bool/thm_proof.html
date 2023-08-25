@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.sets.enumeration.in_enum_set_is_bool theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.sets.enumeration.in_enum_set_is_bool-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">sets</a>.<a class="ProveItLink" href="../../theory.html">enumeration</a>.<a class="ProveItLink" href="../../theorems.html#in_enum_set_is_bool">in_enum_set_is_bool</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.sets.enumeration.in_enum_set_is_bool-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> in_enum_set_is_bool
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="in_enum_set_is_bool">in_enum_set_is_bool:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/1afc53e2015d55c4dcd6fdf0a65bd3a92f3743d30/expr.html"><img src="data:image/png;base64,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
+RK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/ecd7cc2415231f008a632213eece225a316fbd4b0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>in_enum_set_is_bool may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

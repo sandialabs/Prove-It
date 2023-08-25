@@ -1,0 +1,15 @@
+\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qout{\frac{1}{\sqrt{2}} \cdot \left(\lvert 0 \rangle + \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot 2^{-\left(-t + 1\right)} \cdot \varphi} \cdot \lvert 1 \rangle\right)\right)} \\
+& \qout{\frac{1}{\sqrt{2}} \cdot \left(\lvert 0 \rangle + \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot 2^{t - 2} \cdot \varphi} \cdot \lvert 1 \rangle\right)\right)} \\
+& \qout{\frac{1}{\sqrt{2}} \cdot \left(\lvert 0 \rangle + \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot 2^{t - 3} \cdot \varphi} \cdot \lvert 1 \rangle\right)\right)} \\
+& \qout{\vdots} \\
+& \qout{\frac{1}{\sqrt{2}} \cdot \left(\lvert 0 \rangle + \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot 2^{0} \cdot \varphi} \cdot \lvert 1 \rangle\right)\right)} \\
+& \qout{\lvert u \rangle}
+} \end{array}\right) \cong \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \multiqout{2}{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle} \\
+& \ghostqout{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle} \\
+& \ghostqout{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle} \\
+& \qout{\vdots} \qwx[1] \\
+& \qout{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle~\mbox{part}~0 + t~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} \qwx[1] \\
+& \qout{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle~\mbox{part}~t + 1~\mbox{on}~\{1~\ldotp \ldotp~t + s\}}
+} \end{array}\right)

@@ -1,0 +1,13 @@
+\left(\textrm{Pr}\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{\lvert + \rangle} & \multigate{4}{\textrm{QPE}_1\left(U, t\right)} & \multiqout{4}{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle} \\
+\qin{\lvert + \rangle} & \ghost{\textrm{QPE}_1\left(U, t\right)} & \ghostqout{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle} \\
+\qin{\begin{array}{c}:\\ \left(t - 3\right) \times \\:\end{array}} & \ghost{\textrm{QPE}_1\left(U, t\right)} & \ghostqout{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle} \\
+\qin{\lvert + \rangle} & \ghost{\textrm{QPE}_1\left(U, t\right)} & \ghostqout{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle} \\
+\qin{\lvert u \rangle} & \ghost{\textrm{QPE}_1\left(U, t\right)} & \ghostqout{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle}
+} \end{array}\right), \textrm{Pr}\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{\lvert + \rangle} & \multigate{4}{\textrm{QPE}_1\left(U, t\right)} & \multiqout{3}{\lvert \psi_{t} \rangle} \\
+\qin{\lvert + \rangle} & \ghost{\textrm{QPE}_1\left(U, t\right)} & \ghostqout{\lvert \psi_{t} \rangle} \\
+\qin{\begin{array}{c}:\\ \left(t - 3\right) \times \\:\end{array}} & \ghost{\textrm{QPE}_1\left(U, t\right)} & \ghostqout{\lvert \psi_{t} \rangle} \\
+\qin{\lvert + \rangle} & \ghost{\textrm{QPE}_1\left(U, t\right)} & \ghostqout{\lvert \psi_{t} \rangle} \\
+\qin{\lvert u \rangle} & \ghost{\textrm{QPE}_1\left(U, t\right)} & \qout{\lvert u \rangle}
+} \end{array}\right)\right)

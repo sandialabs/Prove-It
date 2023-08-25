@@ -1,0 +1,1 @@
+\forall_{x \in \mathbb{R}}~\left(\left\lceil \left\lceil x\right\rceil\right\rceil = \left\lceil x\right\rceil\right)

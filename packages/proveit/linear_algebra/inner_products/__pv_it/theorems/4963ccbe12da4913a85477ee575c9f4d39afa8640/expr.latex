@@ -1,0 +1,1 @@
+\left(\left(v, w\right) \mapsto \left\{\left \|\left \langle v, w\right \rangle\right \|^{2} \leq \left(\left \langle v, v\right \rangle \cdot \left \langle w, w\right \rangle\right) \textrm{ if } v \in H ,  w \in H\right..\right)

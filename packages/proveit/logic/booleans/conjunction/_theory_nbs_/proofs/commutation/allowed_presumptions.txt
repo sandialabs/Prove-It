@@ -1,0 +1,5 @@
+proveit.logic.booleans.conjunction.and_if_both
+proveit.logic.booleans.conjunction.binary_closure
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.booleans.implication.eq_from_mutual_impl

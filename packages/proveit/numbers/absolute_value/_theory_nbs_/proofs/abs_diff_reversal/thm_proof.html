@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.absolute_value.abs_diff_reversal theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.absolute_value.abs_diff_reversal-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">absolute_value</a>.<a class="ProveItLink" href="../../theorems.html#abs_diff_reversal">abs_diff_reversal</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.absolute_value.abs_diff_reversal-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> abs_diff_reversal
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="abs_diff_reversal">abs_diff_reversal:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/b390d1a8aa6a7e66d95127c5f57edfc076d85fba0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAN0AAAAWBAMAAAC2xYReAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACt0lEQVRIx7WWTWgTQRTHX7Kbj91sPvDgJRAW
+BHMQJQcRjFAXqiBIbaAXD2IjHqSCsLlrWQ+ioGKFgq5KXRGEEjH1C720CCIqIqgIihLYnloQJAgq
+9FB8bzYfnXRmEYkTEpb/vH2/efv+MxuAvxg2fiQjsT72H7LwI2PCY9lcqtInSCNx5jD+5uhyUyhv
+iziLfuOdkMd0IS9TAthLl8fCcHpVsuq4Ja6PdCEPjgOcpiZMhfHUkoSXNcU80sW87bgYD28yw3iG
+rCvjnphHuphneKDg6uOh7dss481L/DIv8wvEEfa22XwTytsfxCbySz4/ceT7BiGPdH7UFibZTArd
+uQ/gWijvaJDlkK2t8D765TXsgDfSpPG+7U/SucjYS7jpUQ4FrVeDRK4zkZzo7rnpwmT78kOQ5Tmo
+vM+jK2D4gvqYzml3SzDC1hx9BqB5a+7JE3TRreiX7ej1tvaCZVFbkJ7DqzuslM/k2ypk5wQ8pmP5
+J1ikg9oowFfGS7aQ6a+xyyv87sGQ1D2AXRzPmIIGnxvx46aAx3ROew36T8aLYX1QHcKf+tATKm11
+0aNDAG6f6R2NwfNs+LB73fYb9QT9YzrX6FVQWsHzpI48wF2vf0r+pq59yVizFFIs9sJnAp4JG6Oc
+DbIO9lRQH9M53g+IVIvML3SwnES7qFaSStVKSnWMQsrlXvh9lkXzox9VLk2kpFkiHtO5MQNbLYt4
+Kjkggv0yKhkyqeGouR2u65rnDvaiLwb+LDytLfPLzg+Lz2vSuXHr29mCQ7x0J7pha2V85lkwzPPs
+NYN+0Tu+cGBA7yM41T0j7UtjXh3S3k7cH3SCP7JhoT2nWAPjdQuPDW97CBfM5AEfEldJqE9MO53J
+K4Pi9b+Hgl1Td10+yeygeFrfMedJ/qP4sCz9r+H0CdJInFniBQX+//gDstDTWY/u8VMAAAAASUVO
+RK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/69ae5f21f1d5ab8cc8fa9daa24a613dce1b826580/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>abs_diff_reversal may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

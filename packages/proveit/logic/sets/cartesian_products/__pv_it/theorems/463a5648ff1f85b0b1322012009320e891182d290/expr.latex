@@ -1,0 +1,1 @@
+\forall_{m \in \mathbb{N}^+}~\left[\forall_{A, B~|~A \subseteq B}~\left(A^{m} \subseteq B^{m}\right)\right]

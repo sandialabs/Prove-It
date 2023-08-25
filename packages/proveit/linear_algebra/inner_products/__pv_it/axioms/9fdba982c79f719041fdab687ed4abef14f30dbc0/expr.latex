@@ -1,0 +1,1 @@
+K \mapsto \left[\forall_{H \underset{{\scriptscriptstyle c}}{\in} \textrm{InnerProdSpaces}\left(K\right)}~\left[\forall_{x \in H}~\left(\left \|x\right \| = \sqrt{\left \langle x, x\right \rangle}\right)\right]\right]

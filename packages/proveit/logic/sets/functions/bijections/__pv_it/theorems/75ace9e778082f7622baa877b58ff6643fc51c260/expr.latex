@@ -1,0 +1,1 @@
+\forall_{f, A}~\left(\left[\forall_{x, y \in A~|~x \neq y}~\left(f\left(x\right) \neq f\left(y\right)\right)\right] \Rightarrow \left(f \in \left[A \xrightarrow[\text{onto}]{\text{1-to-1}} f^{\rightarrow}(A)\right]\right)\right)

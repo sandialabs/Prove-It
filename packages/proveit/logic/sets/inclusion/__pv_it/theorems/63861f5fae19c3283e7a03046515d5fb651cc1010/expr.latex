@@ -1,0 +1,1 @@
+\left(\left(A, B, x\right) \mapsto \left\{x \notin A \textrm{ if } A \subseteq B ,  x \notin B\right..\right)

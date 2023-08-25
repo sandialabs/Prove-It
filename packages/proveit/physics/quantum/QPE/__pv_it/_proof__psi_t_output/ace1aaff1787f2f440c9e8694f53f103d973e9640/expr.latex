@@ -1,0 +1,5 @@
+\left({_{-}b} \mapsto \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\frac{1}{\sqrt{2}} \cdot \left(\lvert 0 \rangle + \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot 2^{-\left(-t + 1\right)} \cdot \varphi} \cdot \lvert 1 \rangle\right)\right)} 
+} \end{array}, {_{-}a} \mapsto \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\frac{1}{\sqrt{2}} \cdot \left(\lvert 0 \rangle + \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot 2^{-{_{-}a}} \cdot \varphi} \cdot \lvert 1 \rangle\right)\right)} 
+} \end{array}\right)

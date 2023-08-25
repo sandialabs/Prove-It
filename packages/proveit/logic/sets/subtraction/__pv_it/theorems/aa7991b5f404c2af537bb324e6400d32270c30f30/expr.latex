@@ -1,0 +1,1 @@
+x \mapsto \left\{\left(x \notin S\right) \lor \left(x = y\right) \textrm{ if } x \notin \left(S - \left\{y\right\}\right)\right..

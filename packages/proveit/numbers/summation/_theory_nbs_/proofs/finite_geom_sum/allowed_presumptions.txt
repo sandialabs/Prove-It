@@ -1,0 +1,10 @@
+proveit.numbers.number_sets
+proveit.core_expr_types
+proveit.logic
+proveit.numbers.addition
+proveit.numbers.division
+proveit.numbers.exponentiation
+proveit.numbers.negation
+proveit.numbers.numerals
+proveit.numbers.ordering
+proveit.numbers.multiplication

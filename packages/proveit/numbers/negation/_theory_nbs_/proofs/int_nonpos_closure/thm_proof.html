@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.negation.int_nonpos_closure theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.negation.int_nonpos_closure-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">negation</a>.<a class="ProveItLink" href="../../theorems.html#int_nonpos_closure">int_nonpos_closure</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.negation.int_nonpos_closure-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> int_nonpos_closure
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="int_nonpos_closure">int_nonpos_closure:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/aab211947d075230e2cc53510ffd179ec890ac5a0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAK8AAAAaBAMAAAAzuxGAAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADC0lEQVRIx61WTWgTQRT+8tPsZvPTvflzkAUV
+kVrZgxQUKZEq1hYxWkEqBQM5FIvI9iIItU1F8KBSrWBM0RovhVDBWBExh1IF0ShiL2pFAlGPSimC
+CEXENzub7e6my7biwMzOezPz5s37vjezwP8s/iwi08WVzAwkV2V3HGhFN4LeUzetxm7gOjUv0agJ
+V72mSilqBLtOcJscH2Wji4gq5LZHCavUfLHrGqrOAJz6fbJySxWfMUFcRExFLA/ITNzoYniArXOC
+8dXp6bUMUiFga4kbjlYRJ6v72Fivi+FOqhNOZShvl4MJxNUp6nSX9FA0KpAWgWEWGLdg/6TaVodR
+wi77NBQk3cLwfg4ekOb7R5Tl7dK5gJk69SsjBLcr73WEgXZfRlf1r8c8DlPnAO1P+ITccJ6lEKfq
+1GkO4mkzJKJ8wehplCAd9P1O9U2l8trFsI+MBq3Y9U8PUvtA759ZCnU4P+ZYeYIG24ExN7ZR5EKq
+hWkvcIdWtMABeFPAScERCk0/BNmiOteZDDyt4U8DMUv876k4SJ9tumAJESMbxByVrKEZSrJzRGoX
+gvg5l/TLJXQYcozwj9LgRIWVORwCPjF39LkUwspHDoXyCLBz8D6t8ldN7PbSAfytQRQtHkct11AZ
+EiNgj86FJYoWGF3X2AwPMZakWGZPtj4mmrNEO3+sWlw+FNIfBBbo26xLs6Z+LTFZWrDHmLiMqT5a
+80H8hYKe+ZnS5pphH3kSXsJF+kE82QLs1KV5k2yJozR1to4VGJBZWooz6OKGg/HaKeOUHBELsuNo
+TiR4otNxFJNsfRBG7cm7W/crwyJJ90YLwar4M1KxBngDZZ5oceXut4sbaPI77v+641zbc6Oce1u2
+X1V7TBS18K78Je4xjpinf051zsluwdiq4QlP6eVKutaJaiNd+XCeP0Zx2Xq77XAuCqqebwm73Yzd
+27Y/hHCTeld6jTualcsshJpj1dkVPFKyXZ7M5eyPp0+xEZaXrLfhmLaSN2/QceVp3oY93zw0/dPv
+hfcrvcr/ChNeYsFfcVuwffTXAjMAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/f00651731b831caac8ef0300c069b223042cd7ba0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>int_nonpos_closure may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

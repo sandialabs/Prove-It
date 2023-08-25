@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.sets.cartesian_products.cart_exp_fold_explicit theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.sets.cartesian_products.cart_exp_fold_explicit-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">sets</a>.<a class="ProveItLink" href="../../theory.html">cartesian_products</a>.<a class="ProveItLink" href="../../theorems.html#cart_exp_fold_explicit">cart_exp_fold_explicit</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.sets.cartesian_products.cart_exp_fold_explicit-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> cart_exp_fold_explicit
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="cart_exp_fold_explicit">cart_exp_fold_explicit:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/240b722e77e56f6df659c98bcdeefd2e1754a5aa0/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/c45ca1def4add9d5461e29a80cb5fa3e24e3ab940/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

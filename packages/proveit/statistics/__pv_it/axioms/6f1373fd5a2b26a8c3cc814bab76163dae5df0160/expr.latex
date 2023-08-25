@@ -1,0 +1,1 @@
+Q \mapsto \left(\begin{array}{c} \begin{array}{l} \left[\textrm{Prob}_{x \in X~|~Q\left(x\right)}~f\left(x\right)\right] =  \\ \textrm{Pr}\left(\left\{f\left(x\right)~|~Q\left(x\right)\right\}_{x \in X}\right) \end{array} \end{array}\right)

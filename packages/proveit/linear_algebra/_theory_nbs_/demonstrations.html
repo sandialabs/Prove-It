@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Demonstrations for the theory of proveit.linear_algebra</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../index.html"><img src="../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Demonstrations-for-the-theory-of-proveit.linear_algebra">Demonstrations for the theory of <a class="ProveItLink" href="theory.html">proveit.linear_algebra</a><a class="anchor-link" href="#Demonstrations-for-the-theory-of-proveit.linear_algebra">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">defaults</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Z</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">InClass</span><span class="p">,</span> <span class="n">CartExp</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Real</span><span class="p">,</span> <span class="n">three</span>
+<span class="kn">from</span> <span class="nn">proveit.linear_algebra</span> <span class="k">import</span> <span class="n">VecSpaces</span><span class="p">,</span> <span class="n">VecAdd</span><span class="p">,</span> <span class="n">ScalarMult</span>
+<span class="o">%</span><span class="k">begin</span> demonstrations
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Vector-space-closure-proofs-under-addition-and-scalar-multiplication">Vector space closure proofs under addition and scalar multiplication<a class="anchor-link" href="#Vector-space-closure-proofs-under-addition-and-scalar-multiplication">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">R3</span> <span class="o">=</span> <span class="n">CartExp</span><span class="p">(</span><span class="n">Real</span><span class="p">,</span> <span class="n">three</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="R3">R3:</strong> <a class="ProveItLink" href="../__pv_it/demonstrations/b09d232dc6c8bd1b305d141dd063505555f74fe50/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABcAAAATBAMAAACJlYuFAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAZs3vu90iq0QQiTKZ
+VHZ+Ip2vAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAk0lEQVQI12NggILEe9UMcFDF8BjB2c2wlAEJ
+BDIwCJn4q5oIANmPHgAJh3SGdpEJDAycfiBOFgMLdwGQsX8DmMOToMBpzZAvAOU4MEQyCE8Ac9hn
+FjDselcG0bPlUgLUeIdk1a8vYXY5ZAlOYkBwWCYKIDjcBzwRHIbTKUicKXwwdQ45DIwCHhA20NVu
+DC76F0BsAJSlJFWuLv4NAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">defaults</span><span class="o">.</span><span class="n">assumptions</span> <span class="o">=</span> <span class="p">[</span><span class="n">InSet</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">Real</span><span class="p">),</span> <span class="n">InSet</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">Real</span><span class="p">),</span> <span class="n">InSet</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">Real</span><span class="p">),</span>
+                        <span class="n">InSet</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">R3</span><span class="p">),</span> <span class="n">InSet</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">R3</span><span class="p">),</span> <span class="n">InSet</span><span class="p">(</span><span class="n">Z</span><span class="p">,</span> <span class="n">R3</span><span class="p">)]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="defaults.assumptions">defaults.assumptions:</strong> <a class="ProveItLink" href="../__pv_it/demonstrations/c358fe7d65e6c06f0cd31bae36fc3e413ed08c420/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZoAAAAaBAMAAAB874c8AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAZkRUmRDNuyLviTJ2
+3asqG0tJAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEl0lEQVRYw91YX2hbVRj/5c9t0t6kTRUdvmh8
+0AcfXEAUH5TlxT8wZNcHDYMtDdTCCpu7m87uYaMRhmVDu764DrbZCIIgFfMgbirYTKjimCWCcyqG
+Zkg30WJdO7dutdZzzj3n3pt7z4mXGgj4QXvPub9ffuf7zp/vOwnQNnv1sd9axYrfPlPmzdvaFM2v
++KpVrO5SYgxZ2opk2xTNp3i/VSy93FXFCG0937699k3rWMkUQhXy3CPBQoND13/Yo/hgUxB3jg/v
+Gk81G9hmfFH5ryzblcRO8u8COUBjMlosXg9f2me1c6eagH4zR/HgBoN3NqydxPab/XKGdsDq52ff
+KiIycbI5C5g49vvlVYUrORLzDBAtyaMpwfyMd15oBvqjOYKYXhe9hQwi+1WMKZ6INhYke8THCl8F
+tr+pcEVfAfoM9KRV0TzdwTtLzUBZNNFiQfSmTBySM7QTOMp3ZHKZ7JX0v7GiGWCwKHVlazlOQu1I
+Ycpwo1/WagWbFeNz8icHEwdr33lB2wRoeWGK1x3LWt0rzhkXcBcfO3ELeEih47C6ycgrcj+TRogs
+WtTE126X7p92xTyXt9ok+VlR7TT8oDAbpF50P2dHELqW94lzxifnf+EvtJsIVxQ6DksHtqTlfuqT
+M2TRSM25TF+OTr7OSuqAawX1l3bw6Z2fydDna4YEBCbPlt0g9eL0I86GmJgT9XpAwSA2nD7CW0od
+Nq9XvVINrpBNNEQfxzFMVTqKDuvY7E9cuG9AW6bPHTIQb2SiphuEeXjX6rTjwQciwTriHgaxTXOi
+hCt1qN1T8Uo1uEIywYvksTWFZxjLdbrevkOc5E0GWPIsyED8iM6KGyRz2usuyAtVEY2KQazzb9Eq
+NGFFrvmkGlyJL+Jb8thCnSL2cY2YyVdwXy8nPQncopGfIuBFLxi1UoQDEi9izzrVMzq6yFuOeCOD
+KYpEo9RhibxOz47ST2iLbG3GaYOWIHfm+zBmiNkP0xytmTKw03rrgMQLPeuU1s36Dd7KKRhMRcyv
+UodGSpSiUPuJONtp2l8I/cHyvpsVPWOKcmMtQFUG9vGtXHXXic0j9rktY5Zv8qScweyoXcKratZh
+EvK9UPsJfRlXSDRL6C48SnN9xcXSzLMADXuFniti52VgD4HSbpB6kUukoLHO5+Tock8dcc6wFsM6
+3nbp9OkwoyNpNYNdxaR+ipxGvz0cwONZllT6HVYWvbG0dp20L+Fl6+xlJCBJaF1lNwjzEEKpveij
+mydHIukRZ6Lfw7DWlu2xYTsGnw4LmY7UcRz4yPRIcVd4bRvDRhJx/tyZeXYZyu81xN30RjH2yhLo
+fOTfsWZIu3KfH8R7vdNukN5992NodyZJpvH0xAnou1d59hXigmFtGjrbT63N2yfZq8M6dKSFi0OD
+a6lGKdsVK+PU0dlwP3rgYK3QkBTd957wu/zSEQTEw74bnFdcSvPp+EZSSpF7mvwObZ/idYMoBfvG
+FojWFUiK3KH1sWaEbesGtUogD4LRtgXSupv8/dyMUFk3mAi2NMFowWbm+/b+LtBaY78LREr/k2hG
+2vp7WqvtCeAfpXrF0aYZi8EAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">InSet</span><span class="p">(</span><span class="n">ScalarMult</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">X</span><span class="p">),</span> <span class="n">R3</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"><a class="ProveItLink" href="../../numbers/ordering/__pv_it/theorems/4aa8d696b1f407d6126de9f51a052e8d90e0848c0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADMAAAAQBAMAAABJt1qBAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIquJdkTvuxBmmd1U
+zTKBpmoTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAzElEQVQY02NgwABz0+tvp09gwAoKhBiCpjdg
+lxJmYOdTwCXFJXABRch99+4LcKkCZJlYD4Qupg6QgYzKjg4gAcYbSAY+PysAZIQJsP8ACfAKwKXE
+bv8GmcCRycC1ASyF5IyZvSCa6wMDtwGI8Ww3EBRApNg7QV5mK2DoDwAJtCPp4ltQAaT7HRjmgwW4
+kf21ThwkdYBBlwfkAhYHJKl2FqCJ7A48u7jAInfgUlIMnBNKgS5UsRPyA4s0lTbAQr6Qofz+AeTg
+CK7ejRxyAISENKeL/c93AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a>, <a class="ProveItLink" href="../__pv_it/demonstrations/35b7d5ffd6c70530348c726f949f4fc11dcba3530/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEQAAAAUBAMAAADGs4Z2AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAZrvvdhDdzVSrIjKZ
+iUQw4UTKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABHUlEQVQoz2NgwAu4JDw34FfBwHmBxYCAEu4N
+vAkMhACbAA4JxmKl78mKQAZLCYgr9N+EIexzBaoaJq4JfBNVgYwgBxB3fgMDhxYDupILDAo7Qa75
+DeLuV2BYw4BFySl2huANXB9BXPZfrBNgUk5paQVwJUwMbAGMpmC3/YmEqXjuimTK1EgG7iueC8B8
++6mwwCxFsohbowph8X0HKIN9AUKJeX5KAELJfFgIsiM596JoAUIFz8p/UNbmNCBQgFqkKohQcpr7
+E5QVhOzpPUxwi3g3MORD3cCGrIRnlwKM58fAIH8BwmRxQFLCquAIMxwozf8VyqlAKDnAIMj0AMze
+ZG/NwF3/7QBEJlIvABbTnxYwqf/AlgreqqUVoAkBAAuDRVOWiPkRAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a> <a class="ProveItLink" href="../__pv_it/demonstrations/09ad266ca99d5424ca9b3bd8e039603b8dbf5c370/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../__pv_it/demonstrations/53ad7fbcc8eedc00250580b1386dc64851f67a1f0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGwAAAAYBAMAAADt+wUpAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAB2UlEQVQ4y2NgIBkwNus+IF0XA68D0wQytPE9
+YFkApARwSAvg1MjVwMDAZIBDchManyPzzLeVJ4AMpiQgYYKuvOf/JIaon8kMTA1oEjyMF7hvHAUy
+YhQYWBMwrLlvwMB8EEinYmhzYDjwFuS7fwzsDRja3h9gEAfR7Vi0FbIxRD5g/MHAiekpto+sF0A0
+ZwCEr7NqVQJcGw8DVwDHVAYzTG0c32Mh2iEO2aaKZNvVWAY+J10BhhJQvF9RVEDWN/8qmGIB28mY
+iuRIvsOJEHYGEO8U4PmKrM0fYggH2GlsAght09Yvgjp8MQMD6wwG9gUoQQnhMYPTEBtSkHi0wsJ9
+NgMD+wcGLgcgk/UbRIhd9jckFX0AkS9XAcEBqCOPdiC0cR5giN8AYi+HCNXx/QHT3GDbYpAj4DkP
+wpHxCgz9SE5kecCwHuwfZrBbuZC1sT88AGEfAmozYLjGjEi42gwM/Q7gIAErYVJA0sZ6QAPC9gVy
+FZiXs8N1xQC18IMDlh2smSEZoa2AoYMH7B2GV8CguOQnqweTezN/HgNf/q8CkPMgKmJPB8BywB8B
+nmOfIXkHdwaXgtJbTq3CSO8cBTi1VeDL4wdxFjUH8GmLwSXBI4C3/FLAIaGIRxMAgxttnny0D2QA
+AAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">InSet</span><span class="p">(</span><span class="n">VecAdd</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Z</span><span class="p">),</span> <span class="n">R3</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"><a class="ProveItLink" href="../__pv_it/demonstrations/35b7d5ffd6c70530348c726f949f4fc11dcba3530/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEQAAAAUBAMAAADGs4Z2AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAZrvvdhDdzVSrIjKZ
+iUQw4UTKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABHUlEQVQoz2NgwAu4JDw34FfBwHmBxYCAEu4N
+vAkMhACbAA4JxmKl78mKQAZLCYgr9N+EIexzBaoaJq4JfBNVgYwgBxB3fgMDhxYDupILDAo7Qa75
+DeLuV2BYw4BFySl2huANXB9BXPZfrBNgUk5paQVwJUwMbAGMpmC3/YmEqXjuimTK1EgG7iueC8B8
++6mwwCxFsohbowph8X0HKIN9AUKJeX5KAELJfFgIsiM596JoAUIFz8p/UNbmNCBQgFqkKohQcpr7
+E5QVhOzpPUxwi3g3MORD3cCGrIRnlwKM58fAIH8BwmRxQFLCquAIMxwozf8VyqlAKDnAIMj0AMze
+ZG/NwF3/7QBEJlIvABbTnxYwqf/AlgreqqUVoAkBAAuDRVOWiPkRAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a>, <a class="ProveItLink" href="../__pv_it/demonstrations/1d85263d876f534df2e38765e55810567e0d8ed50/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEEAAAAUBAMAAAAgmk0yAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEKvd7yJUdkTNu2aJ
+mTIv55t8AAAACXBIWXMAAA7EAAAOxAGVKw4bAAABEUlEQVQoz2NgwAei0/UY8AMdhhICKt4xHGYg
+BKxxiO/0Wj/ZawOQUVnAwCBk7xTAwObvjqpkQRBD0y4BBgbG5UBO/wQgsRrNkAUxDFx8CkDG+wcM
+DMxfGRjYGzBV8AZMYPRjiAfaxf6HgSENKsG+2NgSoWIBgyHDFpBVXxg4CiAKOKYLIMxgElRgeFOu
+CuKtb4iBikcKINnyKjMAxstXvABlTUW4I2Ty50I4j+UTjDUByaW7JRHu5voIZfA5GxsbW0FVcElv
+QJgB08q4AMkMvgsL4bz4AzCWAXJ43IuC8/bDg6scWYUUO9ya9XBxzgS4ilgG7g0roJxb/9Vh4oxa
+jfC4Xcqwan4CZqxznIKGOhIAAFOBRq56l8PMAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a>, <a class="ProveItLink" href="../__pv_it/demonstrations/881ab1ed3d9a74fa2a30022b0f45eaeecea77c5c0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAD8AAAAUBAMAAADIGvgZAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMA782r3URmEJlUIrsy
+iXbFnxI6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAABHklEQVQoz2NgwAOWzbNhwAtsGR7iV3CG4QoD
+AeCGXThJer+KdAKQ8egBiCsvZGz0BVXFhsUMwdkFDAzs+4Ac1m8MDCXiaArWMnDzGAAZ5w8wMHBM
+YGBQXIChgGOBArsMw3qgRcwMDNx/IOJ8W1ycEAo2MLgzJALt4WFg6A8AC7PqFSBMYC43YDj7zgrM
+5f0GEV5UgGTF6UkIa/MfQGgthBsWqnx5Dudx/oAyFJAcmVaEcHK8AcgdQMeIuLi4eEMVcJclwOR5
+fgO9CmKwb0AygadhO4yzEGhyGJjlgBwOPauhbHYXoNvdwcx3yAqq+aB2MEkxMByCGM40Aa5gBQNb
+wlYI2957t+J/iGJ263B4bO5i2K0/ASOaWW9DgxoJAAAcJEzwM/7MHQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a> <a class="ProveItLink" href="../__pv_it/demonstrations/809ce45ece379f9d24014f4479a70c237da5c06e0/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../__pv_it/demonstrations/d41d2554a61095d34fa18ecde24b0c60a633c67f0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKQAAAAYBAMAAACGk0t8AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACX0lEQVQ4y2NgoCpgbNZ9QF0TGXgdmCZQ2Ui+
+BywLgJQAOR7EKcPVwMDAZECGkdwKqHyOzDPfVp4AMpiSgIQJEPf8n8QQ9TMZRVXs+rkCDMzzJ6EZ
+xvkz927+AgYNNGEexgvcN44CGTEKDKwJIJH7BgzMB9FU7QfJnEB33/4GBtaVAQxsAehGOjAceAsK
+zX8M7A0gkfcHGMRhsjtgofIR6I8NaIIMxQwMbBOBPi3ANLKQjSHyAeMPBk6wCNtH1gswWSMozfSF
+gcEYXZABqOw8KOlNhSo6tWoZ3EgeBq4AjqkMZpDg/R7LgK6b9SdSLMCNfMDA/htEZ0CiKSkA4cqr
+sQx8TroCDCUQoflXMYxkOL9BBFOQgcEfHFS+YLZYAMLjfIcTIewMqDoFTN32VwuwGMnxCUy1gclE
+RFhOW78Iav5iCHV/AaZuzr8MWIy0h9hjCSYTEEZ6tMI4s8Eku+xvCLdq1aqZq1athSj7yoApyP0X
+FJ7ANALOf7NWrVq1Burxox0oRtbx/cHiygQsrgQmNwaQO3eCY/AAUiJ6zoPscZYHDOsFMHTLO2Aa
+yTgN6FBQ/FiBuQuQjGR/CLXgEIjQZmDod8Awsn8DppFRS4F5AOSaHjBXCclI1gPQXApKDDFA4/i/
+YiYiBkwjMwUY+HJADEjiYzOAG1nA0MEDccMrBoY38+cx8OX/KkDTXfP/EoaRvL/OHJv/A8RaDckO
+d7bCSqI/AjzHPkNyMkbBboStNEMXZISGIrcPJEOilHQF6CI7sBmJLggpbXCAg2TVCDL4JGPIMhKv
+QxgVyDCRCU+FBQDvwppLoUY0tgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">lin_comb</span> <span class="o">=</span> <span class="n">VecAdd</span><span class="p">(</span><span class="n">ScalarMult</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">X</span><span class="p">),</span> <span class="n">ScalarMult</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">Y</span><span class="p">),</span> <span class="n">ScalarMult</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">Z</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="lin_comb">lin_comb:</strong> <a class="ProveItLink" href="../__pv_it/demonstrations/cdd2980a958c7aab6aa7028838018bf7986292240/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANwAAAAVBAMAAADfk53OAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACzElEQVRIx42WTWgTQRTHXz43m6TJHgShWEwF
+oSBI0CLopUE8CdqcS0sCIihYGtBDkaJ7Ug+F1IKiiCagEoxIgyd7SupBFISU2noT9yyCrRg1raW+
+Nzv7ObuwA+3LzPzy/8+8eTMEABTwbCGPMW9UCQgyxXDe2y6VE4Z80NcBQaY46h6d31uEif4FGBH4
+UYh9qJu9qaXHCkRqixBWRdDZ5P70l5k6KcbKgurXPERWAOJF1zih8YrVb9NX3+PfRQ/Q0doqxF4U
+SVESlgY/OrAfQ8JQfsMjoVlbmpJbmLYWfrjtATraVVznXaYoizmOb8VWKd7j/WNGSmidti2HfwEc
+ZxNFEXQ0lOtqTPGEaJf4M8XiJZcdoWftOevzeoqrIuhoGkg7uuI1qtD1YUcZ1jZYOOeyI3T60CeL
+67b2sRhdFUE4PaLZJMdVXZG2sKyke3a7cd38lssO0djvYsm6U2Mb+vEmygIIg3mpY0vYT674FDUe
+gFR3lKbeO+myQzTSA9lKhLyrx8iCAMIzOwhjFa74CAtpE5IF7JT4IqWhHb1C6d/1ZvNhs/mKPhJa
+hmyBNskAIyeZTRHUpziY2qXzI0WckjtQonpO8sq/kfnH4rJrd4jistp0FRr67vj6UgsCKPNMNoyr
+BRWmiBsv5aBqS2VUgyV2PqfEZOK1u2ldhYMFnsy6AJbstRe6j0tSmeJbnMrD54hVAEcAqkxn3mWH
+aFbDgzZbtcULoSOCqN4yuInnmJciU8RqT+ciDcnUmESrbM+sZ5sKogNq2vaKdY1XpCCAWJZR8yJc
+ViBzRVf8hue5dn7oqDH1vfYEMjPbJPrSZUfo+qzlNre3xl+zlgDCmTuHDW5g++O72l9gikkNfFqo
+7rLzRQcDgqiYqPjZmQ+t8fL6orMBQVJc8bM7IIz4oKFOQJAUJ/3sxO/4oGklIEiKoZz3XFj8veGD
+DgcEUfE/Qqe2UviI/zkAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">InSet</span><span class="p">(</span><span class="n">lin_comb</span><span class="p">,</span> <span class="n">R3</span><span class="p">)</span><span class="o">.</span><span class="n">prove</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"><a class="ProveItLink" href="../../numbers/ordering/__pv_it/theorems/4aa8d696b1f407d6126de9f51a052e8d90e0848c0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADMAAAAQBAMAAABJt1qBAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIquJdkTvuxBmmd1U
+zTKBpmoTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAzElEQVQY02NgwABz0+tvp09gwAoKhBiCpjdg
+lxJmYOdTwCXFJXABRch99+4LcKkCZJlYD4Qupg6QgYzKjg4gAcYbSAY+PysAZIQJsP8ACfAKwKXE
+bv8GmcCRycC1ASyF5IyZvSCa6wMDtwGI8Ww3EBRApNg7QV5mK2DoDwAJtCPp4ltQAaT7HRjmgwW4
+kf21ThwkdYBBlwfkAhYHJKl2FqCJ7A48u7jAInfgUlIMnBNKgS5UsRPyA4s0lTbAQr6Qofz+AeTg
+CK7ejRxyAISENKeL/c93AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a>, <a class="ProveItLink" href="../../numbers/ordering/__pv_it/theorems/6e5cad5b2984ed0d75bd47bd0c542ec447a4f3570/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADEAAAAQBAMAAABNQoq8AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAELvv3c2ZVESJq3Yi
+MmZ3LnoBAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA1ElEQVQY02NgQAdPjfRDjB4AGYzKDmhSCqcY
+uh4JABmsCegyJxmYeBcAGfwFmDJsBwKAjH4BqMgmF5cAuIwCkDEFKtG6EaGHSxBkWtTu5SA+TyCS
+aZdKDwDd9lVA/gDIIQfgModDvoD0s39kYN4AkkFywTtREM0WwMA/AUhfdgECBYgMkxzIpywTGPpB
+7hZC0sOboAjxTj7I3SzI/sk9BJK5wGgH4nNvQJIR4gYax/WACRI84XCZYwx8DzSArl6ZBxGQ0hCA
+hbUOg1I8cph1qkBCBwoAxe43BugJR6MAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a>, <a class="ProveItLink" href="../__pv_it/demonstrations/d550e8309ef79ca46e4c9fb5617a392ea678789b0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADEAAAAQBAMAAABNQoq8AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAiXZmMiLdVJm77xBE
+zatgdeJyAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAvUlEQVQY02NgQAe2K+dfW2nAgA1MiGM4Z7kB
+q0wgAyfLAxwyHAEXkEU009IuwGUmIEmc1Ubo4dsNNk1I2QFIst5GMs2zNgDICCvgAGnlDYDLRF37
+BtafyMClAJJBcoHxXhDN8RvC90oDggkQGc7NIJ9yQV2xE0kPS8NsIL1fAcJnQ/ZPSySQ5gdqPACk
+mRSQZHYyAUWBDmMEuZrhOlwmgoHZYA6QIWgM8eK+ORtgYT2VYeb9AqRAODgtDTm0ALktNaaWdOV1
+AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a>, <a class="ProveItLink" href="../__pv_it/demonstrations/35b7d5ffd6c70530348c726f949f4fc11dcba3530/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEQAAAAUBAMAAADGs4Z2AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAZrvvdhDdzVSrIjKZ
+iUQw4UTKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABHUlEQVQoz2NgwAu4JDw34FfBwHmBxYCAEu4N
+vAkMhACbAA4JxmKl78mKQAZLCYgr9N+EIexzBaoaJq4JfBNVgYwgBxB3fgMDhxYDupILDAo7Qa75
+DeLuV2BYw4BFySl2huANXB9BXPZfrBNgUk5paQVwJUwMbAGMpmC3/YmEqXjuimTK1EgG7iueC8B8
++6mwwCxFsohbowph8X0HKIN9AUKJeX5KAELJfFgIsiM596JoAUIFz8p/UNbmNCBQgFqkKohQcpr7
+E5QVhOzpPUxwi3g3MORD3cCGrIRnlwKM58fAIH8BwmRxQFLCquAIMxwozf8VyqlAKDnAIMj0AMze
+ZG/NwF3/7QBEJlIvABbTnxYwqf/AlgreqqUVoAkBAAuDRVOWiPkRAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a>, <a class="ProveItLink" href="../__pv_it/demonstrations/1d85263d876f534df2e38765e55810567e0d8ed50/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEEAAAAUBAMAAAAgmk0yAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEKvd7yJUdkTNu2aJ
+mTIv55t8AAAACXBIWXMAAA7EAAAOxAGVKw4bAAABEUlEQVQoz2NgwAei0/UY8AMdhhICKt4xHGYg
+BKxxiO/0Wj/ZawOQUVnAwCBk7xTAwObvjqpkQRBD0y4BBgbG5UBO/wQgsRrNkAUxDFx8CkDG+wcM
+DMxfGRjYGzBV8AZMYPRjiAfaxf6HgSENKsG+2NgSoWIBgyHDFpBVXxg4CiAKOKYLIMxgElRgeFOu
+CuKtb4iBikcKINnyKjMAxstXvABlTUW4I2Ty50I4j+UTjDUByaW7JRHu5voIZfA5GxsbW0FVcElv
+QJgB08q4AMkMvgsL4bz4AzCWAXJ43IuC8/bDg6scWYUUO9ya9XBxzgS4ilgG7g0roJxb/9Vh4oxa
+jfC4Xcqwan4CZqxznIKGOhIAAFOBRq56l8PMAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a>, <a class="ProveItLink" href="../__pv_it/demonstrations/881ab1ed3d9a74fa2a30022b0f45eaeecea77c5c0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAD8AAAAUBAMAAADIGvgZAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMA782r3URmEJlUIrsy
+iXbFnxI6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAABHklEQVQoz2NgwAOWzbNhwAtsGR7iV3CG4QoD
+AeCGXThJer+KdAKQ8egBiCsvZGz0BVXFhsUMwdkFDAzs+4Ac1m8MDCXiaArWMnDzGAAZ5w8wMHBM
+YGBQXIChgGOBArsMw3qgRcwMDNx/IOJ8W1ycEAo2MLgzJALt4WFg6A8AC7PqFSBMYC43YDj7zgrM
+5f0GEV5UgGTF6UkIa/MfQGgthBsWqnx5Dudx/oAyFJAcmVaEcHK8AcgdQMeIuLi4eEMVcJclwOR5
+fgO9CmKwb0AygadhO4yzEGhyGJjlgBwOPauhbHYXoNvdwcx3yAqq+aB2MEkxMByCGM40Aa5gBQNb
+wlYI2957t+J/iGJ263B4bO5i2K0/ASOaWW9DgxoJAAAcJEzwM/7MHQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a> <a class="ProveItLink" href="../__pv_it/demonstrations/163a7c6325f05615aec1cd0dcf18aedce8c9fc820/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../__pv_it/demonstrations/5752559ce72a03180a98b2bfce8219065c9ddbf20/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAR4AAAAYBAMAAADeyY9MAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADpElEQVRIx81WXUgUURQ++zPO7jruzkMUSNIq
+BEIUS4lQLy7SQ0TlvibKrkaQkLiRDxJRC1H5IGiC0g+1S3/iVrgEQT65FoqFoJhGD0XbUxBFWmn+
+ZvfOPbMzd2cmNnzxwLf33plv7vnuPefcuwCbx2yXdmc2kRwoCtq7NpMeb8aZII2MMDM5r0f/QbQh
+zM0TA7AHGEztqeGJBTVfYqGfQW+upvGF/jH6SSP5qUBw1rHeDbVLJ8Aey31TAcKrRHZUP3BbBke8
+25TIm3up+UNLAspJtzznlWSbLHw3Qjp1fhAioCDHPgbAMUzakznPKbUgqo2H6KdjFkTOhmIg9Ieg
+IAQKeD1BSH+jGfQHRLIw0bA4+J6GbbS9iuPn2FKqTxcJzxzZ5pQFkbOzRMc1EpwoQ66eMwVwPGNb
+BDfdSmOcC+aESWWXcSl71V2nK9Utz/4LYJ8VkTMy3QQ9XnoQ9OPXyYdZPRJ4Qq4eqCTjSqMe1+96
+pivGu6HUw/qwLGF6mhE5y4C4QttTCJLXjSFtf2bqwVu9W4ZWMqawTZdyaR+fURrnJO+GUpvL3mi8
+idQWSyJUl+sP3BpF8lEEwNaQFi/vywbWV+UOytK8Xk8NU+eK8G4IVVgIhbWzpWomakWE4oCY1m35
+D6W5ggBo0PKnd+AuirvHIFwHMcEVGBs5ung3hOqYB7e2le41sCLCfT0Rqpjw/QiAiKbn0GV1cItB
+nAVPkHTD+FwsWWFn+Cz5OZdM3kgmnyBdjIAvSLeJzYW7akZkr5BYuEZziFQuArw3k8nkY4zXSDuv
+x52GMC1bD5biBe8qmyVn2YRKdA/Riu9j+4MLMCG6MVh96gkCdPJBBAhpXb1/lvh4hf3QqYuWMwMD
+So44EoYwkOPnolbxO4IYLyMxrC8QWy/RTBP6AAIgodMjfkJ1LxjCAXjr0LJ0F0Cn4siV5t0Qqi9D
+ki1rnSnMVhMicZ9SebUPyM7SZXQgAMp0eoQ0XiJYfpLf0SdmndQRLT4l+mKQd0OoRTFJd75OqOex
+kUiKy5mt9yYZvKfVg6CVnW2BrJ4otEtM+hcGYepYyR7126/xO+BtWaZePSneDaVOt2lyzq9P4cVh
+JMLB9p3Z/1rL46PxRdp7hCATvX+m3u+rsjT6k82TYbCwYuDdWFLzJdoSDEoNHGH3BXcxmNxvOmvL
+uSYtqfkSLe5vzYYR5qtJm9E3QtyOsLQ6hKlJshl9I8R/Ll9ZmZ/B1EpN6Rsg2mUGK/sL85v9Js2K
+Q2wAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<div style="background:darkgreen; color:white; padding:5px 5px 5px 10px">BEGIN Testing: working on a generalization of the VecAdd.factorization() method.</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">IndexedVar</span>
+<span class="kn">from</span> <span class="nn">proveit.linear_algebra</span> <span class="k">import</span> <span class="n">ScalarMult</span><span class="p">,</span> <span class="n">TensorProd</span><span class="p">,</span> <span class="n">VecAdd</span><span class="p">,</span> <span class="n">VecSum</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">one</span><span class="p">,</span> <span class="n">nine</span><span class="p">,</span> <span class="n">Interval</span><span class="p">,</span> <span class="n">Mult</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">defaults</span><span class="o">.</span><span class="n">assumptions</span> <span class="o">=</span> <span class="p">[</span><span class="n">InSet</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">Real</span><span class="p">),</span> <span class="n">InSet</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">Real</span><span class="p">),</span> <span class="n">InSet</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">Real</span><span class="p">),</span>
+                        <span class="n">InSet</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">R3</span><span class="p">),</span> <span class="n">InSet</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">R3</span><span class="p">),</span> <span class="n">InSet</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">R3</span><span class="p">),</span>
+                        <span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">R3</span><span class="p">),</span> <span class="n">InSet</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">R3</span><span class="p">),</span> <span class="n">InSet</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">R3</span><span class="p">)]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="defaults.assumptions">defaults.assumptions:</strong> <a class="ProveItLink" href="../__pv_it/demonstrations/6b1e9e959c68749b80c4916cb5b91a85363389be0/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Some work below on a possible function to check for a factor in a vector expression, the issue being that we might have a vector expression with heterogeneous components such as a VecAdd of a ScalarMult and a VecSum, etc.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">has_factor</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">factor</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">vec</span> <span class="o">==</span> <span class="n">factor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">ScalarMult</span><span class="p">):</span>
+        <span class="n">vec_simplified</span> <span class="o">=</span> <span class="n">vec</span><span class="o">.</span><span class="n">shallow_simplified</span><span class="p">()</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">vec_simplified</span><span class="o">.</span><span class="n">scalar</span> <span class="o">==</span> <span class="n">factor</span> <span class="ow">or</span>
+          <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">vec_simplified</span><span class="o">.</span><span class="n">scalar</span><span class="p">,</span> <span class="n">Mult</span><span class="p">)</span> <span class="ow">and</span>
+           <span class="n">factor</span> <span class="ow">in</span> <span class="n">vec_simplified</span><span class="o">.</span><span class="n">scalar</span><span class="o">.</span><span class="n">operands</span><span class="p">)):</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">has_factor</span><span class="p">(</span><span class="n">vec_simplified</span><span class="o">.</span><span class="n">scaled</span><span class="p">,</span> <span class="n">factor</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">TensorProd</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;We have a TensorProd: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">vec</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">any</span><span class="p">([</span><span class="n">has_factor</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">factor</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vec</span><span class="o">.</span><span class="n">operands</span><span class="p">])</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">VecSum</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;We have a VecSum: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">vec</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">has_factor</span><span class="p">(</span><span class="n">vec</span><span class="o">.</span><span class="n">summand</span><span class="p">,</span> <span class="n">factor</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">VecAdd</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">([</span><span class="n">has_factor</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">factor</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vec</span><span class="o">.</span><span class="n">operands</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">example_01</span> <span class="o">=</span> <span class="n">VecAdd</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="example_01">example_01:</strong> <a class="ProveItLink" href="../__pv_it/demonstrations/744fc8e1e52eb75d2253bdcb10fc0eb10539cc7e0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFMAAAAQBAMAAACYUF7xAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEHarMolUmd1mIs3v
+RLtmgJDEAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA50lEQVQoz2NgQADeCQxoAFMECtgUCIsQq1RI
+WSQ0AUVCqJKB0QBVqUcLF9AtBUxG7A0oEgE5DJwfUEQYN8UFMzBwLuD8yDwBWYIloYKB+QGKUi4B
+hkCgBAP7BhCPvaOj50RHB9BiRoZDDDwKyCJAICoAInkU0DzB+5HB3wHVrVwQxv0FjAIoEkBrdNBC
+4CbQLga5CzYMrKgSfAYMj1FF2BIYmBkY8h1rGK6hSrAb8P5EFfGLU21hYBBXYqtMQJVgNFX/hSoS
+wHb6Ao64Yd1AIGJhiSOaQSaBQHKBgSYGUwYiQab6BWzCAFUfLyJXTnEIAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">example_02</span> <span class="o">=</span> <span class="n">VecAdd</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ScalarMult</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">TensorProd</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="example_02">example_02:</strong> <a class="ProveItLink" href="../__pv_it/demonstrations/46a10a5540de54ba80c68b0626f85a20a12470a10/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKkAAAAVBAMAAADP89MSAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEHarMolUmd1mIs3v
+RLtmgJDEAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACUklEQVQ4y42UT2jTUBzHv2nSZqlJiZvag6OG
+zjkYDupgB8FDHCiyi3VSD3qJB/EvGBShRcEhKj146MmBF8tE8FiP3spOIkyC4K6WeRuIm4jgQPC9
+pH3pe32BvENov98Pv/x+37z3ANnKy8R2KilBpOuYTPwyomS8dFy0clWZmmmJyjWk46J1WC6/F/4r
+nTScNXhJQ06vCpw+1NR0bdkWuf7gTv9HV17VtHnOjK1FG8qcyPF0LmGyfS2eu80cbZs8SsEQNz51
+oOZxtE4/1pvltTjA8okzl4Bsha/6gFl6tg3Fv4DxBpRKyPmZeX2Fo+m7rE/4yQbRMeXUAaPDV/3A
+rFlcRhEHUb0DY4dyRtvYVVscPUZan2yhznp9hdf2SeJ3+arPmUX6W/Khal4dao9yGvSwBb3ZfPGx
+2aRDmiSgx8AzKh+hpouHYXo7PLfBLBLZfZKQgnWYTsSZjvC1aNXPUP6FffuhtB7uKKHXDWb5yNdc
+koa1i/NuxH1rK7aYgPKLBhTv5D3sJ/7KaAKR5eMt5khVMvbxkCsFp5Dl6YID5Q/Uzq3BFvihdumQ
+Ro/ntph1VqsiE2yiUMH3kLt7+hE2eZrujC3c8P1BMr+LXcvr77gh7iKzMl/plVSFXrH+hlyxnGt4
+PK2RSSeml+bdQa/3nOsvaTIBz52LLXoKJsj5WpjZiznhxD6Vn613AjfmMss4isVwe2Y7MSfcLqvy
+qg2BM/zYO1S+Sp5XMOklXk4F6XWe74nKtig8wYKM6wfZS/eukijcnAmSeiJrTSbOjnbvJHD/ARmd
+jEVOHIXlAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">example_vec_sum_01</span> <span class="o">=</span> <span class="n">VecSum</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">TensorProd</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">IndexedVar</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">i</span><span class="p">)),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">nine</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="example_vec_sum_01">example_vec_sum_01:</strong> <a class="ProveItLink" href="../__pv_it/demonstrations/e32ee2519d7a4ef6ba8f8947292588c454a90c8a0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFwAAAA9BAMAAADSaROUAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAdomrVDIQIkTvZrvd
+zZlR4kicAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACnUlEQVRIx+1VPWhTURT+8vNuXhPzfEmVtg4l
+rX9T8dHBwcVMQsWfVATHRq2WVqxRHASHpuLili5dk6EgKmpBsEIH46A4CM0siFEHoVZqq21sqFzv
+T3w/hfByce0ZLufd+917v3PPd84DhCWTULBQKmwpwHdmyLoCfCKH3wrwtrxWV4Drz8d+qcQ6nKkp
+oLWsXlaAx0rxjAr3h/uxbf9nH6ljK/7w01QmiNxqL260UBnUTn90Ie2PX/hpu8asP3yIlmz/qxgj
+TZBiPkAd7UbFuKuZskw+vtz0zoZTzYjs4cMorXomrzblHc/yO6i38BYdN9nbk3WtRMW5hzbccyjY
+3mAWpNO9NC3uoBU3dftDm2PDlbxr7b1IaHHVNWWwSEni8Jl9MII5kOoBnF8EkU1ur0cIMh6WBgPt
+5hI6cBDjuIDUAKI/MMLWHssD6bQD38GUcB9Ps0dgIXiuipCWXkJoFj1sbaAhhBV3RwMy+M48xuoL
+ECSYQpspFdDokWUvHAwBVBHpzTBi+jqGJNt7EtKV85KBXsNlBr+BTgY3KujCJA/2hBTDmrtFmSAv
+QgVG5ayWQiB/FzELz4jJO/ojScmt86CF8Np4QU8jcIfrLQXD0uuRYc73s3j3KU+/LIN8Mk/NMJen
+6SLLbH93jV8KvBUv7ZXYa0cjuzEoiiFYwbVLTPDiRea9unvi6uOJY2zsw2gaJw2WH77XeOPoRcSa
+26LbV+hnpDqA2/zrgbM8I0LZWrHHuxsym/O+Ylhq93qT6gjwcyfsVyTLVd9G4LzizaPU/xcS//NB
+2LsipZv+bWbZ1SPr278Mj42owXv+OWMVlW1aoqx0TbgV+KSlAucl/m2eWakluCzx1snETCU4K3EF
+MqLEFU7nJS6j6Fs1/cB/ARkLue6vFiEoAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">example_03</span> <span class="o">=</span> <span class="n">VecAdd</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ScalarMult</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">TensorProd</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">example_vec_sum_01</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="example_03">example_03:</strong> <a class="ProveItLink" href="../__pv_it/demonstrations/137529d7e406faf502829168a5d2cc0b509da0490/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUEAAAA/BAMAAACMf2cHAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEHarMolUmd1mIs3v
+RLtmgJDEAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFrElEQVRo3r1ZS2wbRRj+17G99sZ23AcJhChe
+pYWKQIkpygFRKW4lEOISkxIO9BBDQYASKREoUiKqxgIEPhTqCw+BRCwQN0SChAQVEkl6QOWlWJGo
+iFQRC05UQJI2TUIILLOvmdn1TBnvYebgXc/+/zff7PzzP2YBZDVVt6+hgbyYgvIpyG13OtdeOCWo
+cbdcgskd52YDMmkxlVReKsOOsn3VdqClKrjMX0tl+KJ78wP0lwV1RtISCYY33Luf90wXBJViYxIZ
+Nmfx2j3VUhFUiu5IZDiKWR2Dn4S1vpLI8A189xt8Jj6vnDwz3MS3y2+KD5uQZ4hNa8Hi0Jo0hplg
+LyP5lzSG0wEN6jtpDFcD6k1VZDH8N6iTKksimLweUHEmKys3/MeKKwbVdDF3My8r5q1bQcxwgnP7
+0lFDbOjUuiSGLUXr0reNe97ZFFIMbUpiOFOzcxWDmNUZsdxhi/eEtck1oS5m56jtsMMG8cBqhQtA
+9Yd5TiDEyuCS9cZ9O4jJ9ThdPQaZepkLQGEo2xyBp5m9d9StQV5MDqacGaeMoggAhWFwCoRZ9o70
+J+W3gpgcrDpBT1ncEgGgMM55sZZdG2F78rgT/pPu40ny7LbBgbRfDuPBnLu4K4bHfjgAFMacd0c8
+6fpJzsQWnLVxDY34tONpUA775TAeLLqDR4wFGpAHQDBWq0yGwxyG570Mo9gYwlfQT2fVJ0cYEmua
++5s2Qx4AwehD73zvgf2DBS/iuLnfe7vJnnRkTngZqsjOla57HngM1EgFlLFHYO8kKFksx2LYYVCb
+gwsAGMNkOBY6oha9iCb/yxUq4jgy73kZNiN7VOGAPgHd8Di0wU2QH4H4GpZjMcSR70YA7YAxpsoQ
+r8TXm8pexFfR1L4BFXsGV2bEyzCG5vcuTKfvgyxEHh6DpnBhAppqWA7jKZTPmNolG4IHMAAYAzEM
+g2pbw0Sp9H2p9LJ9LGBWCDFzPTLmQ1em31yZUunsxVLJXIoEspucdZiAJF9A20CBC5DQbTkaT9ml
+qnQqq+ECOGOhNmT+S+j+nYIYJmqQqZKy35a57H2HCcuyL5hWANpgDi1Ych36c1iOvEOKoUZFCS4A
+GctiuFJR0nWrnNFhmtpZtsyz9atsnmntQQN8BIfRAOhV3wVYjskw9C14VpkBsJQlGIhhZ/UoRHyI
+vyCGBbg/6npLV+Z9L8OUDsofTfNoiR4M5yFUvQSpLPxK5Fg7BVaomooNoOjrBAPZ4eix03DJh3jC
+VI6+puLUxJEZ9zKMZCG60TafLEDoRzMLyIOaterHcT7DMJ3wsQG01iLBQAzbuqKTBR/iQ2hhjjz6
+4UEXyZV53cswXATlef2Zt9Ct6XD3obDQe2iHyDH9IZ34cABSOsHoKzBjSoxd3WpFX9R7hYTRg3Dc
+clmRWSJHRT0s+LkHkQ2Q2U8wfAyX/aHfVw+VfZnD2+RZa9cT6PckdBSoxANnDjhDSdU8iGyAYZVg
+rHKOAq4wez+pq3P8qfhL0MuSI+NMEHdd4ALs6yYY5zglfacYb6Xm63juUJU5vyknJ4gTVxMv8AEo
+jEVemcCqZkP10/kAxOR6ynWuZoQPQGPsyjpYshMajbiati0hRW1bEsOVrNfVaKfoFOdGxynXZB0f
+2snJ3JdW++KsYfhKKl6LX5XEMGadpar0uY3YoZa6IYmhGvSzQ7OsY+J40NPelqIkhtpWQMV+aR8f
+LwbU68nJYjgU8Bvi77IIwoztCdsbVFOuSWPYbDvEAff/LbNiO2xDGsO4192Eu8T2aHNRGkPF9zEg
+Kjb0TFkaQzht/ixlG2Q4JI+gWd2CWcSd+RO1siBD5apEhqF55Ldbi429Q7UokSHK78Eu4hpgOFOV
+yXAFZc2oiGtole+VSdAqU4fVht5hfEEqQ/OoxSzi7Ezi5HX9/zU+zslleHPD452XSxC0Rhkq9j75
+D3NdrTfbIyLMAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">has_factor</span><span class="p">(</span><span class="n">example_03</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>We have a TensorProd: x otimes y
+We have a VecSum: Sum_{i=1}^{9} (x otimes y_{i})
+We have a TensorProd: x otimes y_{i}
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+
+<div class="output_text output_subarea ">
+<pre>True</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># containing a nested ScalarMult</span>
+<span class="n">example_04</span> <span class="o">=</span> <span class="n">VecAdd</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ScalarMult</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">ScalarMult</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">x</span><span class="p">)),</span> <span class="n">TensorProd</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">example_vec_sum_01</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="example_04">example_04:</strong> <a class="ProveItLink" href="../__pv_it/demonstrations/cf976e5ea5f4e9577fd9af3711c2fb934f1e91020/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">has_factor</span><span class="p">(</span><span class="n">example_04</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>We have a TensorProd: x otimes y
+We have a VecSum: Sum_{i=1}^{9} (x otimes y_{i})
+We have a TensorProd: x otimes y_{i}
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+
+<div class="output_text output_subarea ">
+<pre>True</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<div style="background:darkgreen; color:white; padding: 5px 5px 5px 10px">END Testing</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> demonstrations
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

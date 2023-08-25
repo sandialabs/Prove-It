@@ -1,0 +1,1 @@
+\left(\left(a, b\right) \mapsto \left\{\forall_{x}~\left(\left(x \notin \left[a,b\right]\right) \in \mathbb{B}\right) \textrm{ if } a \in \mathbb{R} ,  b \in \mathbb{R}\right..\right)

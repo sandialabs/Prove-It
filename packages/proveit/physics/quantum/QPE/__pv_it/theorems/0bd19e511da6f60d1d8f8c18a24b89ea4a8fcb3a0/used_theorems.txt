@@ -1,0 +1,8 @@
+proveit.logic.equality.sub_left_side_into
+proveit.logic.sets.inclusion.superset_membership_from_proper_subset
+proveit.numbers.multiplication.mult_real_closure_bin
+proveit.numbers.number_sets.integers.nat_pos_within_int
+proveit.numbers.number_sets.rational_numbers.int_within_rational
+proveit.numbers.number_sets.real_numbers.rational_within_real
+proveit.physics.quantum.QPE._phase_is_real
+proveit.physics.quantum.QPE._two_pow_t_is_nat_pos

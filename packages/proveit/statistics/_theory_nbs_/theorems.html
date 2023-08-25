@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theorems (or conjectures) for the theory of proveit.statistics</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../index.html"><img src="../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theorems-(or-conjectures)-for-the-theory-of-proveit.statistics">Theorems (or conjectures) for the theory of <a class="ProveItLink" href="theory.html">proveit.statistics</a><a class="anchor-link" href="#Theorems-(or-conjectures)-for-the-theory-of-proveit.statistics">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the theorems of a theory:</span>
+<span class="o">%</span><span class="k">theorems_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">fy</span><span class="p">,</span> <span class="n">gx</span><span class="p">,</span> <span class="n">gy</span><span class="p">,</span>
+                     <span class="n">Qx</span><span class="p">,</span> <span class="n">Rx</span><span class="p">,</span> <span class="n">Ry</span><span class="p">,</span> <span class="n">Omega</span><span class="p">,</span> <span class="n">Function</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.relation</span> <span class="k">import</span> <span class="n">total_ordering</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="p">(</span><span class="n">Not</span><span class="p">,</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Implies</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">InClass</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span>
+                           <span class="n">SubsetEq</span><span class="p">,</span> <span class="n">SetOfAll</span><span class="p">,</span> <span class="n">Difference</span><span class="p">,</span> <span class="n">Disjoint</span><span class="p">,</span> 
+                           <span class="n">Functions</span><span class="p">,</span> <span class="n">Injections</span><span class="p">,</span> <span class="n">Bijections</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">Add</span><span class="p">,</span> <span class="n">subtract</span><span class="p">,</span> <span class="n">LessEq</span><span class="p">,</span> <span class="n">greater_eq</span><span class="p">,</span> 
+                             <span class="n">Real</span><span class="p">,</span> <span class="n">Sum</span><span class="p">,</span> <span class="n">Natural</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.statistics</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">Prob</span><span class="p">,</span> <span class="n">SampleSpaces</span><span class="p">,</span> <span class="n">prob_domain</span><span class="p">,</span> <span class="n">ProbOfAll</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining theorems for theory &#39;proveit.statistics&#39;
+Subsequent end-of-cell assignments will define theorems
+&#39;%end theorems&#39; will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>If $X$ is a sample from a sample space, then its probability must be between zero and one, inclusively.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">prob_in_interval</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">Omega</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">Prob</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">prob_domain</span><span class="p">),</span>
+                                        <span class="n">domain</span><span class="o">=</span><span class="n">Omega</span><span class="p">),</span>
+                          <span class="n">domain</span><span class="o">=</span><span class="n">SampleSpaces</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="prob_in_interval"><a class="ProveItLink" href="proofs/prob_in_interval/thm_proof.html">prob_in_interval</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/e8371bafacbf5b0fdeab5c7bcb5a87db2b4dde480/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAVwAAAAdBAMAAAAUS8liAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEyUlEQVRYw+1Xb2gbZRh/klzuLnfNtUMRuyEN
+6CdROJfOP2zUaNUpYjkQhFHROBFxiF4/ybCazA9+aTXBUmyEjhOLMP+s5+oEKYuRIoKiBv+ACJnX
+riK2NtY5na5s8Xnf9y53uTSXCflgxQeSJ8/vufzu9773vM/7HkDHbO3b4LzQCtDbMiEgXMQd/pEd
+b5NfagU80J7pOEQt6npIdGVn5AZyhU3hitq23gkPYP9Q1Ga5cnGvE71gUOQUTdxOkEc7IzeQ63UA
+8VeA0bQHsO1As9z98DarEenSJ5lcnrpDpIjynZEbyDWIOZQb2fAAtvU3MUXKIDtEvzC5kRRxRLSc
+6IzcQK4Skyue9wC2dRnM/1SppBlTrAfC5xrlwid0HFg4fIeWWhBXOM3kRv/wALbxrHjvW6kzdadA
+PO2T+zB1n1Uqn3aqMwRwcSaTK5+OPr70ns4Aqbp97BhidI0KB1ymWZT7m0/uO9TdCfBKp+QGcJEZ
+RLnSzyp03ZpRGcDBonUPliWdaF53mTImiBd8cq+nbgQEHJwy1++0k+rqmP9eR9ZbZRrlMi7XPKxx
+rGnh/HwRXbws2cANcLNxCdYFLWMeGuVu+OReQ13MkDWQFgDuQujF3kkuC7c07T9U7maZRrmUi5m4
+WNAcVrqcMCH8xSa6xwGycAe9ltKPV9DydjGYEPXPbo66sIXDiuHj6LaAw6fZBRDyK5Eo32aZRrmU
+i9lt2Tprk9yUAwB8Tr6idHaPeJhwqYX9S+1+5tID+F9kiOfpzsFvx/356X5Nmn5u8bXrNGF64F0D
+5coDFsnQUJjDDWF1UYe5KiztVj1bJ+GC6t5lne5UNqtbDLZc0wEgehbewFGWKeCRG8tDxN/IrmXu
+GK5ITEO3KRFq4fuvNdgBH0MmweeRKKcraZS7HwZphoQhs0uXU5zJJ7hdpmB55BIuRe/lE3SqGCvL
+xiyfXASkyVAJMIjQISmWpyWWgEuD0SD3JuZGsZTC+LRzelRlVXcBnoIJyBgxUyzBOMDv0jqW1z6a
+IaGgx9RZXTByEJ06c7X3YEK4InBYhHtpa6WsLEualch6bjxlA+E/Z0rRBOtpQDZel+lLeCsrscs/
+0Bn33cyFsMoA1+cQRB4rFF6SSFErxZOQgZDF5C5I65GF5C6aISGsrlkP4p/2JJPavprmkUu54Cx2
+nUKhkGCs9tIrg3BZbQcpgL4PEwyQhqyrdhL9jOLVSaPONFO8HKBC4m1fPKRS7m/co5qA5418ViSj
+DJEq+goOG65cNrssQ8K4GlvJGHStikYk7T/2iSUBxlxWG206q7rAM7YfnnY2YXvjMzzzLZTdhKzo
+4axJe3y3BiPSOThpZbC8UG7OUPJYuxNwlGRoOGvEqzFTsmKqtJSCvE/uqJzmsKW5rJufYzzAYIvz
+ruxFONVN8DVNqZlwEKeCG543YTn5/Epfas8jIxuQ27kMM2fwAGrRDAmVwRufgPkq4Cc8tFv33YT7
+obgCwpTLaq81/0tDHWg6xDlMR73IweZzu/R+YdI/CeOBYct3gDcLBa2R2y+qDjQNxGGyvMjLF/HC
+wjaTgNBjJ9q8ST3bCvixLdPaR9geqWtnQp8ZEP5v/10TT22pR30I8ltJ7tTWKobvwNhKcoeT6r9b
+4N/SRbVvNWQq1AAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The sum of probabilities of samples over all of the samples in a sample space must equal to 1 by the definition of a sample space.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">prob_sum_is_one</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">Omega</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Prob</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Omega</span><span class="p">),</span>
+                                       <span class="n">one</span><span class="p">),</span>
+                         <span class="n">domain</span><span class="o">=</span><span class="n">SampleSpaces</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="prob_sum_is_one"><a class="ProveItLink" href="proofs/prob_sum_is_one/thm_proof.html">prob_sum_is_one</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/197debbf301ffebc8d460a8e33d0198d88701f2b0/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The probability of an event (a set of samples) must be between 0 and 1.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">event_prob_in_interval</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">Omega</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">Prob</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">prob_domain</span><span class="p">),</span>
+                                              <span class="n">condition</span><span class="o">=</span><span class="n">SubsetEq</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Omega</span><span class="p">)),</span>
+                                <span class="n">domain</span><span class="o">=</span><span class="n">SampleSpaces</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="event_prob_in_interval"><a class="ProveItLink" href="proofs/event_prob_in_interval/thm_proof.html">event_prob_in_interval</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/a65ca11acd75f213b348c4656044bccc311cde6c0/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We can prove that something is a sample space via bijections.  One bijection maps onto a known sample space and the other maps to something with equal probabilities as the first.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">sample_space_via_bijections</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">Omega</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">),</span> <span class="n">Forall</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">),</span>
+            <span class="n">Implies</span><span class="p">(</span><span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Prob</span><span class="p">(</span><span class="n">fx</span><span class="p">),</span> <span class="n">Prob</span><span class="p">(</span><span class="n">gx</span><span class="p">)),</span>
+                           <span class="n">domain</span><span class="o">=</span><span class="n">X</span><span class="p">),</span>
+                    <span class="n">InClass</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">SampleSpaces</span><span class="p">))</span>
+            <span class="o">.</span><span class="n">with_wrap_before_operator</span><span class="p">(),</span>
+            <span class="n">domains</span><span class="o">=</span><span class="p">(</span><span class="n">Bijections</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Omega</span><span class="p">),</span> <span class="n">Bijections</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">)))),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">SampleSpaces</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="sample_space_via_bijections"><a class="ProveItLink" href="proofs/sample_space_via_bijections/thm_proof.html">sample_space_via_bijections</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/b8756424a59918af6ae92a3ef304e80752c273d20/theorem_expr.html"><img src="data:image/png;base64,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
+VQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We can bound an event probability via a subset event probability.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">subset_event_prob_bound</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">Omega</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">Prob</span><span class="p">(</span><span class="n">A</span><span class="p">),</span> <span class="n">Prob</span><span class="p">(</span><span class="n">B</span><span class="p">)),</span>
+        <span class="n">condition</span><span class="o">=</span><span class="n">total_ordering</span><span class="p">(</span><span class="n">SubsetEq</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> 
+                                 <span class="n">SubsetEq</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">Omega</span><span class="p">))),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">SampleSpaces</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="subset_event_prob_bound"><a class="ProveItLink" href="proofs/subset_event_prob_bound/thm_proof.html">subset_event_prob_bound</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/06b0f87a3e1952056bcee941f004a52db0d1eda80/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAcgAAAAfBAMAAACRw0D6AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAGd0lEQVRYw+WYf2xTRRzAv+vr63u9tm+d4gQJ
+rtEEo0Rs0mo0iBRxRphCjYliNDiixoA/6P4yyI89/zExQdZACBTMVhKjIQorDA3YOAooaIxkEf8g
+keLLMBIE5jbGwCHU7/fudX19Yx26Js5xyV3ffe/b+97n7nvfu/cAypemZGMw9pKW/bGc3dXD2Eyh
+MQmpDC8Y0VdiRU+xsQvZeW2BggYWjeScgcHHRWZGSD/93FkmyAr6cQRH2Y8jpUzJVU1abxHwH1c3
+Qtg7b/ilpypREE7D/FCuqmqJzlW5eghqqem1MkE6ozSW0YafjwHUHoCV9RYBpfsQEpYW9KZyQ01+
+UA7lRYz/5zuAiktCdSmHfJf8IF4mSJX8Yvlo+5mDI0JI6bJFQGn2RSzCg2oz5/GfRrQ5K2XKnLRy
+ylUAuU+ohjmkKwngCZRrT9LE7RptPxkBqV6xCDB5VuDqgDdpCs99CYOQTR2m0EuFhHrSVaFKOQQS
+srvKFnhCZYg/jnoBKfdbBJhWa720GcT+Y18ZUIB8KW9zKhUV6Nauw0KVMg7qh2z2+7JBerPZ46lR
+duNMCUhPr/xG5xcxIcAUcZyn9eSRkj01GGsIcl/g2SPTKLDU8eWMA5uiC1XKCPkEwOayQTp1cHN/
+Yra2SP4hOWI3NPkIyc4GwftoYzC/eHJApU0q0aKx6sIGQ8gdBwG+voum4GUeipq7qoOmqiTcqwEU
+pNXawvm50br22BeDtQzXYoPErhr482c6lWpL3e5NvJ4PbexbLPYmEhsB3u9Lz6X5TiQSMat9HwIo
+V9Lt+OPrYKYA548vLzj4BrVC/pymYzTLp4/f4P6IgeOgqUoZId1JTxQYCueifO2kDbi0Tr99/I28
+vFaL7TKwGT7nz/vEKGYCnC2C9OC+2hblj1IHaBlgGzi7aZ97GzYrf4pF9ecFAKcfm01CtZvfCyzu
+KrpezMtvqPiQ7OtClTJCOgyMO24cYKUBzidELBuC0pqPciNBThdxR14j4sIEDO9FkAuPAGwUjxUR
+kLrBzQ870/4QyMggJMNWCrdyxh54RNevFCBpwWcZQlXOmNHwEewHe/PF4SSfkyTElLZa2HZs+m2h
+W2D50TPzCLKti7fw6opwFLT2W0nWOSNohXRJ3Lgm1gAOADtaBGksBsV0eW8AtgdhhXgW9gvuakKm
+8gL0VoDj5IMd9iNE/O11XpK7qrQ5a6JClTJB7sLDzY2alSnG9VddqYWKlDem9MISuBfUi/AbQroC
+ziC18OpkOAy7oQ5l96cUwwrpmcoji+HkC6pcDc3WrZAaPA4Ocz81ngxPBLiDPwv7Qu42bJAkgGcw
+LyMnj9svA1bIZrKBdwa131SlTJArcdId6LpNMVksytoaQ4m5g8oAbIE1oGagMtoKTSDHqYVX34b1
+7CK8g7JNffcUuauyn3urrmXMbbc1YoVciFvUtIL7lU0Qg8/bN7et3xwkrmEkL1Cov5bCecIPRT5/
+TeKM/ImXO2lmUPXFpeZZRJkgK0j3ZoD5IC1JJNZhlMLdeuacoXTD7QLSG2yFh0OhKLXwqtZ+QsZh
+kez5XLToLWQij4TpnQPmtlMuWCHr0jVJZu5rJGyMwlZR4fZFUjtAqc5Nprmq2R8QAtbSn4S7c7hc
+vqjtgr6sh7Cf/usmqn2ANlt6qqrX8SmKipx/1VLwDhzXVT5LOIYOX9D9ewFSrKRo4dWj0PwJUqBM
+TUr1Q1+1DFAumdtOvmSB1JBLz9/7DuBNRTevlMK++e9j9ohmFawqecb6dJvqKsv7pEeLOfSUuBVc
+wNOuNenrQshmghyA07gn3UFmUAtV2QCcMLbADpR1RgZjSgGSHLIXPkWiJGy3uiv6ZmUAnHs41wAw
+8rE6vWBfpLB96OHi23uJJEVsqnMskK5cVMulYDkZrE2nQZvz4Ftb+6RDz9Wk1PPTI2xBBNJdvIWq
+8GvoPcPTbqDMMX9GbAjkk374qD+6JiAtS+9eBwVI535gC14FeIEuAw9cTs+lVZTxahAz7ZuRx/6u
+ZhGIFyaW5UkfSrkRilS5uu3LANub2GD/m5opVS31ZcD6bvNPXuZYfHiBe4SX1W3FU8PVr+Pzh7hi
+DFctASkn/yUkrB5ecGqkz0NGkeqp6/zG03C5VLUEpATDQE5K8Luree9J8Lvr/+Zr3Zslvrv+d19k
+texBuAHT2hnjn1H1u8c/pFu/AbzVl2TjH1JuC41HrL8BsJLv8wwbfZkAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">prob_of_all_as_sum</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">Omega</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="n">X</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span>
+            <span class="n">f</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span>
+                <span class="n">Q</span><span class="p">,</span> 
+                <span class="n">Equals</span><span class="p">(</span><span class="n">ProbOfAll</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">Qx</span><span class="p">),</span>
+                       <span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Prob</span><span class="p">(</span><span class="n">fx</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">Qx</span><span class="p">))</span>
+                <span class="o">.</span><span class="n">with_wrap_after_operator</span><span class="p">()),</span>
+            <span class="n">domain</span><span class="o">=</span><span class="n">Injections</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Omega</span><span class="p">))),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">SampleSpaces</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="prob_of_all_as_sum"><a class="ProveItLink" href="proofs/prob_of_all_as_sum/thm_proof.html">prob_of_all_as_sum</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/b2da88aa30d56b861f4f3410f730944aa2682bdc0/theorem_expr.html"><img src="data:image/png;base64,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
+RU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">constrained_event_prob_bound</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">Omega</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="n">X</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span>
+            <span class="n">f</span><span class="p">,</span> 
+            <span class="n">Forall</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">R</span><span class="p">),</span> 
+                <span class="n">Implies</span><span class="p">(</span>
+                    <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Rx</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">Qx</span><span class="p">),</span>
+                    <span class="n">LessEq</span><span class="p">(</span><span class="n">ProbOfAll</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">X</span><span class="p">,</span>
+                                     <span class="n">condition</span><span class="o">=</span><span class="n">Qx</span><span class="p">),</span>
+                           <span class="n">ProbOfAll</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">X</span><span class="p">,</span>
+                                     <span class="n">condition</span><span class="o">=</span><span class="n">Rx</span><span class="p">))</span>
+                    <span class="o">.</span><span class="n">with_wrap_after_operator</span><span class="p">()</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">with_wrap_after_operator</span><span class="p">()),</span>
+            <span class="n">domain</span><span class="o">=</span><span class="n">Functions</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Omega</span><span class="p">))</span><span class="o">.</span><span class="n">with_wrapping</span><span class="p">()),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">SampleSpaces</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="constrained_event_prob_bound"><a class="ProveItLink" href="proofs/constrained_event_prob_bound/thm_proof.html">constrained_event_prob_bound</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/e67dcaeea4ba9951b8a86a0f213f9a76eca1f3100/theorem_expr.html"><img src="data:image/png;base64,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
+TkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">prob_of_all_events_transformation</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">Omega</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">Q</span><span class="p">),</span> <span class="n">Forall</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">),</span> 
+            <span class="n">Equals</span><span class="p">(</span><span class="n">ProbOfAll</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">A</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">Qx</span><span class="p">),</span>
+                   <span class="n">ProbOfAll</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">gy</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">B</span><span class="p">,</span>
+                            <span class="n">condition</span><span class="o">=</span><span class="n">Function</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">gy</span><span class="p">))),</span>
+            <span class="n">domains</span><span class="o">=</span><span class="p">[</span><span class="n">Injections</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">Omega</span><span class="p">),</span> <span class="n">Bijections</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">A</span><span class="p">)])</span>
+        <span class="o">.</span><span class="n">with_wrapping</span><span class="p">()),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">SampleSpaces</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="prob_of_all_events_transformation"><a class="ProveItLink" href="proofs/prob_of_all_events_transformation/thm_proof.html">prob_of_all_events_transformation</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/566749bdab7abcb64a6e3154a1c871d785f16a4c0/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>If events are disjoint, the probability of the union event is the sum of the distinct events.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">prob_of_disjoint_events_is_prob_sum</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">Omega</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Q</span><span class="p">),</span> <span class="n">Forall</span><span class="p">(</span>
+            <span class="n">f</span><span class="p">,</span> 
+            <span class="n">Equals</span><span class="p">(</span><span class="n">ProbOfAll</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">C</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">Qx</span><span class="p">),</span>
+                   <span class="n">Add</span><span class="p">(</span><span class="n">ProbOfAll</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">A</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">Qx</span><span class="p">),</span>
+                       <span class="n">ProbOfAll</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">B</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">Qx</span><span class="p">))),</span>
+            <span class="n">domain</span><span class="o">=</span><span class="n">Injections</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Omega</span><span class="p">)),</span>
+        <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">SubsetEq</span><span class="p">(</span><span class="n">C</span><span class="p">,</span> <span class="n">X</span><span class="p">),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">C</span><span class="p">,</span> <span class="n">Union</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)),</span> <span class="n">Disjoint</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)])</span>
+        <span class="o">.</span><span class="n">with_wrapping</span><span class="p">(),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">SampleSpaces</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="prob_of_disjoint_events_is_prob_sum"><a class="ProveItLink" href="proofs/prob_of_disjoint_events_is_prob_sum/thm_proof.html">prob_of_disjoint_events_is_prob_sum</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/dc771f7d27696f75c024ab4de57b35d13f1f3c690/theorem_expr.html"><img src="data:image/png;base64,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
+/g+iVc+exVMImgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The probability of the complement of an event $E$ is 1 - $Prob(E)$.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">complementary_event_prob</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">Omega</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Prob</span><span class="p">(</span><span class="n">Difference</span><span class="p">(</span><span class="n">Omega</span><span class="p">,</span> <span class="n">S</span><span class="p">)),</span> 
+                                                          <span class="n">subtract</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">Prob</span><span class="p">(</span><span class="n">S</span><span class="p">))),</span>
+                                                <span class="n">condition</span><span class="o">=</span><span class="n">SubsetEq</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">Omega</span><span class="p">)),</span>
+                                  <span class="n">domain</span><span class="o">=</span><span class="n">SampleSpaces</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="complementary_event_prob"><a class="ProveItLink" href="proofs/complementary_event_prob/thm_proof.html">complementary_event_prob</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/e41d707bae551b3eaa8692906ba19d4f9ed8b1320/theorem_expr.html"><img src="data:image/png;base64,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
+RK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">complementary_event_prob_of_all</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">Omega</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="n">X</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span>
+            <span class="n">f</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">R</span><span class="p">),</span>
+                <span class="n">Implies</span><span class="p">(</span><span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Qx</span><span class="p">,</span> <span class="n">Not</span><span class="p">(</span><span class="n">Rx</span><span class="p">)),</span> <span class="n">domain</span><span class="o">=</span><span class="n">X</span><span class="p">),</span>
+                        <span class="n">Equals</span><span class="p">(</span><span class="n">ProbOfAll</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">Qx</span><span class="p">),</span> 
+                               <span class="n">subtract</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">ProbOfAll</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">fy</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">Ry</span><span class="p">)))</span>
+                        <span class="o">.</span><span class="n">with_wrap_after_operator</span><span class="p">())</span>
+                <span class="o">.</span><span class="n">with_wrap_after_operator</span><span class="p">()),</span>
+            <span class="n">domain</span><span class="o">=</span><span class="n">Bijections</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Omega</span><span class="p">))),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">SampleSpaces</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="complementary_event_prob_of_all"><a class="ProveItLink" href="proofs/complementary_event_prob_of_all/thm_proof.html">complementary_event_prob_of_all</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/ca19b5953480c64b45f99548e150de3d6df58db80/theorem_expr.html"><img src="data:image/png;base64,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
+rkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These theorems may now be imported from the theory package: proveit.statistics
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

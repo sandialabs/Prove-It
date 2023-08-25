@@ -1,0 +1,1 @@
+C \mapsto \left[\forall_{A \in \mathbb{B}~|~A \Rightarrow C, (\lnot A) \Rightarrow C}~C\right]

@@ -1,0 +1,1 @@
+\left(m \mapsto \left\{\forall_{x, S~|~\forall_{y}~\left(\left(y \in S\right) \in \mathbb{B}\right)}~\left(\left(x \in S^{m}\right) \in \mathbb{B}\right) \textrm{ if } m \in \mathbb{N}^+\right..\right)

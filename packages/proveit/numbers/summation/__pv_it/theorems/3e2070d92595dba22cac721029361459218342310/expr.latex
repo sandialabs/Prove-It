@@ -1,0 +1,1 @@
+\left(\sum_{x = a}^{b} f\left(x\right)\right) \leq \left(\int_{a - 1}^{b} f\left(x\right)\,dx\right)

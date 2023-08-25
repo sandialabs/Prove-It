@@ -1,0 +1,1 @@
+\forall_{f~|~\left[x \mapsto \left\{f\left(x\right) \textrm{ if } x \in A\right..\right] \in \left[A \xrightarrow[\text{onto}]{\text{1-to-1}} B\right]}~\left(f \in \left[A \xrightarrow[\text{onto}]{\text{1-to-1}} B\right]\right)

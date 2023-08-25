@@ -1,0 +1,1 @@
+n \mapsto \left\{\forall_{f, g, x_{1}, x_{2}, \ldots, x_{n}~|~f = g}~\left(f\left(x_{1}, x_{2}, \ldots, x_{n}\right) = g\left(x_{1}, x_{2}, \ldots, x_{n}\right)\right) \textrm{ if } n \in \mathbb{N}\right..

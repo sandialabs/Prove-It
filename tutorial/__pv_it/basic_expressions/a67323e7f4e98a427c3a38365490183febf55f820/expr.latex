@@ -1,0 +1,1 @@
+\left(a_{i}, a_{i + 1}, \ldots, a_{j}, b\right) \mapsto \left(\left(a_{i} \cdot b\right) +  \left(a_{i + 1} \cdot b\right) +  \ldots +  \left(a_{j} \cdot b\right)\right)

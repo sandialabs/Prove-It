@@ -1,0 +1,1 @@
+\left(\alpha_{b_{\textit{f}} \oplus l}, \frac{1}{2^{t}} \cdot \frac{1 - \mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \left(\left(\delta_{b_{\textit{f}}} \cdot 2^{t}\right) - l\right)}}{1 - \mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \left(\delta_{b_{\textit{f}}} - \frac{l}{2^{t}}\right)}}\right)

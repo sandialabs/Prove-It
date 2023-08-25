@@ -1,0 +1,1 @@
+\left(\left(A_{1}, A_{2}, \ldots, A_{m}, B\right) \mapsto \left(\begin{array}{c} \begin{array}{l} \left(A_{1} \circ  A_{2} \circ  \ldots \circ  A_{m} \circ B\right) =  \\ \left(\left(A_{1} \circ  A_{2} \circ  \ldots \circ  A_{m}\right) \circ B\right) \end{array} \end{array}\right)\right)

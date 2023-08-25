@@ -1,0 +1,1 @@
+\left(\left(a, x, y\right) \mapsto \left\{\left(x \cdot a\right) \neq \left(y \cdot a\right) \textrm{ if } a \in \mathbb{N} ,  x \in \mathbb{N} ,  y \in \mathbb{N} ,  x \neq y ,  a \neq 0\right..\right)

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.divisibility.euclids_lemma theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.divisibility.euclids_lemma-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">divisibility</a>.<a class="ProveItLink" href="../../theorems.html#euclids_lemma">euclids_lemma</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.divisibility.euclids_lemma-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> euclids_lemma
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="euclids_lemma">euclids_lemma:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/1383c0db9fb9ba504ecf98232ea971f42efe86410/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARYAAAAXBAMAAAA8SH1tAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAD1UlEQVRIx8WWS2gTURSG/ySTZjLTpHEpSokP
+0IWPAV+IUgJFalUkKAr1GRUpupARH1CVGhEXStSqqNSCDCo+EDTWB6hYi6CIInSjdVMYtb4qBHdK
+3XjOnZlkJpPShRAvZObMvf+9+e45554Z4D+1iGPoZc//oX10jPvWLWwCCTYmVR0lmC9jwSdgEd9b
+q85yFeUsNQYOcaw6qs7S6GMJpRgHarLqLL0+FrxCSCP3VD9dMn6WLcCbgYHXVWeROHVvfbj+OMks
+8kB2F3AHWAxcGH1yym0FdfeQWWHbowlqNF4pXi/1McvVH110nOcCOxFJjIgwvqv5njBK2U3WHO8e
+y+Y8zY4ouOyEJkYZGtJDwwGNWfZBpaydBkQNNV2R48TYs+jHoyEfi+JlD+e98w6OKJALfbZVS38p
+Q8rY+aI8ostJ8qdZOXUlCh40eYrmY5HK2Ld7H7+PLAi6Wehq2izt/LSOfpkGuhSaBinG4Q8IMP+7
+PWmug0wkocQSH2xvIitWFOJ46yqgW5SHAi3T04CbDTtYIKTAhgQX9m4fS0xUkY26YjBLWAPFaDr1
+dBN2XB9bQ8O36owcAxy5B8XyxLypLpavgY7NZO0tCrF4LaXyZLYGcQqxdE7pl3+zQEihmMNyLwua
+O6lpJZYoeeRGejxU4ZeJ4lU0n/oP0D2EizKZ+6aTh7kQ55mVA2nmXSxa1MyS1WILb1LXfvq18Ixh
+qg/NuC6l5J/cIaSIXOqLd1gCr19U+s+Zx5ZhBbPIXRefkHgp9QeyPPpLaMahXqQt0W3r7DwNVTXI
+jcV8qdPZmmALczpkjvhRDlGGVnjOiRC3BHXiWAfyAdMSeFlkMq4Ugo1JZlExbSv1vXVUcq/4gHiL
+l5z4WsSQhUNWHBbHzWHJ0ddGh1jaEmIlnUcRIzVFwaD93NajQ8ZRW0p5ka7NVooR3vvqbsQZO6Bm
+JPb5+/BPJY+9U1vsAphPYX0xRpHeB1TpRO6ykHs2H6GBAs0MJgIJbIVaq588bMQsKa0Uy27kg+Hz
+C2b7WCTNMT73DCGXxOT5GfkZliykj4g22lBoTP3DTaV8Wb62YJAVpR2TkKddfkH2eZ65/IuJ3bOG
+wo0z7rKApbRSsPEcWGBv/cEfpwZH9XKWNm8dSCp6lBxpPSgPO8/CXW2LFtUuIbQbnziKe23WV9yC
+uIYzcI6kp5X6HJbz3vpoBMzVwJpKlc/zDmiCEDo+1WnmcXxxqZus2xrUhzNC4G/tjvHNusW9ohDC
+DbQjbVQW1RBCu83hmW0LlrjUVr7TSit/oPz19e9N91iGe8ioIB9VUKn9Bc5xEl0duzg1AAAAAElF
+TkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/0dec8e13122a7357ebcdfe739825c3034ebe0a890/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

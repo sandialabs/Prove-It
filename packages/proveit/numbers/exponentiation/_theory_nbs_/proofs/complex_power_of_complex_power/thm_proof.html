@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.exponentiation.complex_power_of_complex_power theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.exponentiation.complex_power_of_complex_power-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">exponentiation</a>.<a class="ProveItLink" href="../../theorems.html#complex_power_of_complex_power">complex_power_of_complex_power</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.exponentiation.complex_power_of_complex_power-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> complex_power_of_complex_power
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="complex_power_of_complex_power">complex_power_of_complex_power:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/6f0a1d4ede9b8f7b46635d1463876f19fbcbb66f0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAP0AAAAaBAMAAACOWkf1AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAD1klEQVRIx61WUWgUVxQ97uxmd2c2Y+hHigph
+oR9BaGTBNtQo6YbEGilpFwNSaqARKSV+yKT0R1o0BbWFiomaUKcBOyWlNKyYqYq2fgRJKVqlkI+I
+YglMmqJt2kgQRPBDvPftzOzM9jVZ3V3YlzcvZ+e8++659zyg2p9E3/L/PzKE6n9eDczXLQ9dZXuz
+aNXoI9nAw7XlsakBbxav2kl8J17nnv+TOUtMtXlHhh28v5b/TLYCrdXiP8nDH4W5fkfPxpj5ZuKK
+DLto/Uljbe4oDRZQx2svVUYfZ6KIm9dkRunFPGV3SB2Q77VZtbEd39NWiXwrr31QGX/U9nIg8hut
+Q42FVE4Ovoa2xFX8wlP1MfBpFYSwmqnavQek0lCyWG3IwUuYovGRmO8B7xRaujL+QXoHvGTXWpto
+vI6aHGwZ+I7C0b4PjcbtgJKhPVQov0VOf6/Xf95yRGTx9lZLBj50n8ePNi7Q+C99f5udvVEhf72n
+gf7JA+7SD1KdrrsXLsn3aIedwFf/hWrPwm/St4bOMXYVX7sxN/vanBUfUWY9RvJxOHFUIf2I10kk
+/Sz8uzntpKEzGXS5Sy9LYOrPiE6HVg6ScJOWFqyUpott+4r8RbP4uy18dvpwg3fWmOGyo5e8Dfzu
+RSYr0yXUhiU5QT+KOL78EnNmTtdwyfb5hVkcWzOC8Rex3g7A1ONGZDQYP/P/CvWhu9Qj6/xDgjAY
+P3eoXr8Nd9CjrqPF0Tq6OrZ6ZhElheCyA8UOwLSzwOaS81efQFnyjlGS/wkHr5cULveIc3tpyLde
+gp6B4F/I+vGzWcxz6l6jjRsFUxGwscO+4QBruO06UB9gVW9jYWmTJP6JNOojRqn+8QntTb2VeIRx
+kVctfjrj85NZqCyByIfu78hUBKyxMfAaLmON3nIaTVnXid+U8CedyExY11tEjvmMs2RW3YI/OjpU
+1B+ZRYzDVcYKdcWmImAtLSVhJEjZ3/zzWYPrOTdl+m/4sf+v0EqbL40ceVGzaZppXdd2FOufzELp
+M80TicMDLg4F2OfvBIXFqrod6jTTZRXuHj81RrLF+kLEr8d2WUGzSAjZkf5Ay2wqAsb6U0P+90qo
+1DLl0Kt+N0oZg91W0hL5x2U3h2TTbBaiO368DZqTF6YiYPELBib9umXvSQaVtb+s8BW/8cXaN5xH
+/BTNdt61v33Dfe2UMIv9fPTqRbMTR9NsKgKGfN9w8XrxAiOCJv5lWfy1JRadN81Qf4gUjuEnc8Rd
+SEth7t3jQKA5GmXxr3T/e7fkOWb93/3Xfq5r20rXnlIRKWXd/8u/tlE4TwF0Q/ba7BbVcAAAAABJ
+RU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/0c0e461177c6aa42f008693f288e6b2d818e23c60/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>complex_power_of_complex_power may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

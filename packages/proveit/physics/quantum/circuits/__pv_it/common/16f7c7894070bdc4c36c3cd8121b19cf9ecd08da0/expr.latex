@@ -1,0 +1,3 @@
+{_{-}a} \mapsto \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{B_{p\left({_{-}b}\right), {_{-}a}}~\mbox{on}~p^{\leftarrow}\left(S_{p\left({_{-}b}\right), {_{-}a}}\right)} & \qw 
+} \end{array}

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.core_expr_types.tuples.tuple_portion_substitution theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.core_expr_types.tuples.tuple_portion_substitution-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">core_expr_types</a>.<a class="ProveItLink" href="../../theory.html">tuples</a>.<a class="ProveItLink" href="../../theorems.html#tuple_portion_substitution">tuple_portion_substitution</a> theorem<a class="anchor-link" href="#Proof-of-proveit.core_expr_types.tuples.tuple_portion_substitution-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> tuple_portion_substitution
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="tuple_portion_substitution">tuple_portion_substitution:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/410ebfa119355c29c123e8f69b521e45064d1c200/expr.html"><img src="data:image/png;base64,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
+ulf4Vn8JTsUAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/a5ea664e3c6be367e7cb27beb0bd8f2e1e6a71590/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>tuple_portion_substitution may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

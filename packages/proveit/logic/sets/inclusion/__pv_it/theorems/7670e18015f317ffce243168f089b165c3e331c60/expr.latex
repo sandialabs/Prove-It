@@ -1,0 +1,1 @@
+\forall_{A, B, P~|~A \supseteq B}~\left(\left[\forall_{x \in A}~P\left(x\right)\right] \Rightarrow \left[\forall_{y \in B}~P\left(y\right)\right]\right)

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.division.numerator_frac_reduction theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.division.numerator_frac_reduction-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">division</a>.<a class="ProveItLink" href="../../theorems.html#numerator_frac_reduction">numerator_frac_reduction</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.division.numerator_frac_reduction-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> numerator_frac_reduction
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="numerator_frac_reduction">numerator_frac_reduction:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/dbfdc1e9f76b2d0ed18127d755d7eac75d1660290/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARcAAAA1CAMAAABcHl9vAAAAOVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACXHtMAAAAEnRSTlMAq1Rm
+mUTNIjK7EInv3Xbt5cmRiLwgAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEeUlEQVRo3u1biZKrKhBl
+3+n7Hv//sRcxLiAYMletUDXUTCqmsNG2l3OaFqFxBwCT8Q/9jlwtEmGNBPnVRD4oQhqQ+lXEPPRO
+E+FaJzLaDKsWTLfvyiF0qWaUH1Ux2C7fpENWIMQuFU/8oDFFbN8ZcAtw8QO2eES1SHd7VvZ0QL14
+uH0J4sYLMdTtDsI6rl1EsOH04uxF+RgAG2VtFRLyMBqChnCRiUeLAAyI1ZOPGC30+osumEaDoFHH
+uB5iSRgrwqhwEeafxDDR9rIAQ+kFuytD1cm967HAnSvciMP0w898KwVX0/AXOlTkVYEWSQXFQKA+
+NyKj+Wx7tulII2E7KJ6iNBOZAf05cgvKsKgXTnot87vrC67GIfHnMdIwAEQYJacBZlMN+W7rcQfL
+8Dz+ekddykYIzfiKZ7462phwwOdexfh5C98IHKnFYKT+anNRR1QRfUGL29YSr2xlv7uATEJ5fSba
+t6a32SZ9iRZfrZZo22UkiSGX33TRYXIi56dxFVd9Kk3HPEvhrmsOU0xh6UF8eyncdrE55nfj5yjE
+TXYo8fJxDYU/8dv3nt0W/CTL9X4xFct/Zt2aYZC7THGW1OY1rG2b/8kMHB40Tp8wJIEPo64CrCPJ
+iEwDR6cn2nbpZTZJGhfj+vMZuV5CPt7Gi55x0EtUCv0ETjP2Sg3WpNNon15wCpwJoDYI69kM9mR8
+mf0oQpcFxGQtAgWRV15IHq0EFsxgqJq9T1b1UpzOk/Zkuj1HCpntGVvcfRCOu9l95EIgsxaBksgz
+xS2bnGeFWpIcrlVX6gBMT+NP/KcRSk53vW7SvGSezNjy9IM79Is+8GvNrEXgSOSlTbBhhVqGmrZe
+itNfVjbf9a5aJlcnbM1o4bobx5GLZY5dEHk1RxORHq4mSCmu2nrJT1+sbPaSDdMr2MpF9RkrD+CP
+qcWEQz7MWgRyIj8ZioyesZ3zirt71KErdYDJS/77XycvKaLqS+bJjFa57kmOurUIGLsn8ulICqJS
++tyQsbQpRNsGftnVAVbWHiN71AYuZdZmvLftxzjq2iKgUj5YiHw6Yoa6VKKRW2eOsdGpmGr40a4O
+sGMZEbUxU8qszShz53PEFk5yH8mIfKY/YyeLr7u7rtYBCNRX2B28BVCXbpO8WaoNFLnZE3nezU10
+tQ4gGits470x0OcIkmujU5oR+f6Qp2t1AMIbK2zmwjuCYZmilI8RTHZdmwE2zTM1CHwQI2/YcLwR
+lJa7F0aA1Z39TRYRl2yuorKDmLH21RArAow0CSp0JV4yNy/gioMcxeCx9mH5EdmZPrVMACsB6BVF
+myDaYgbbt0e+RDASPlCqyToi9rIKMXSwPo/DBSem1nkPqa8Dqqm+FOOHa8nMa/Mk5afOm9B4+TjA
+qELMeH1kucEobTVY38myGZ7uuJLTD2L0gB28wu5Tb8y9opdkGxzJRc0SSjE8DNgKr/6pr9n2MCw/
+5Hs7oH+uEuM6bnnMPvj9exOfpXjoO5ULNOj42ftphALrCEVKjPsCkr6vzms2tfwFnOAp/J5GGf0A
+AAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/df2619047577d32569fa40084e6ef8e35dd81be20/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>numerator_frac_reduction may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,1 @@
+\left(\left(A, B\right) \mapsto \left\{\left(A \land B\right) = \left(B \land A\right) \textrm{ if } A \in \mathbb{B} ,  B \in \mathbb{B}\right..\right)

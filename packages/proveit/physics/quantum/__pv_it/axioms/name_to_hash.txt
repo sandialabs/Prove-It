@@ -1,0 +1,2 @@
+hadamard_on_zero 2c6f8a2cfe29cb78a1272ca294f48fc07bc8258e0
+substitution 182d4fd191141053eca6287b18858dab9e7a48730

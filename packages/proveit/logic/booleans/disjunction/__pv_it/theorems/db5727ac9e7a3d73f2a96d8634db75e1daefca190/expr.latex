@@ -1,0 +1,1 @@
+\forall_{i, j \in \mathbb{Z}}~\left[\forall_{P}~\left(\left(P\left(i\right) \lor  P\left(i + 1\right) \lor  \ldots \lor  P\left(j\right)\right) \Rightarrow \left[\exists_{k \in \{i~\ldotp \ldotp~j\}}~P\left(k\right)\right]\right)\right]

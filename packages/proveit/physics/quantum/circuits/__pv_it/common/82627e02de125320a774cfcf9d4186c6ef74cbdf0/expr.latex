@@ -1,0 +1,6 @@
+\left\{ \begin{array}{l}
+{\rm element}: \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert \psi \rangle~\mbox{part}~{_{-}a}} 
+} \end{array}\\
+{\rm targets}: \{l + 1~\ldotp \ldotp~l + m\}\\
+\end{array} \right\}

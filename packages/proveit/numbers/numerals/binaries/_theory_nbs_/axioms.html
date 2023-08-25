@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Axioms for the theory of proveit.numbers.numerals.binaries</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Axioms-for-the-theory-of-proveit.numbers.numerals.binaries">Axioms for the theory of <a class="ProveItLink" href="theory.html">proveit.numbers.numerals.binaries</a><a class="anchor-link" href="#Axioms-for-the-theory-of-proveit.numbers.numerals.binaries">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+
+<span class="c1"># Prepare this notebook for defining the axioms of a theory:</span>
+<span class="o">%</span><span class="k">axioms_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">b</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Equals</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Bit</span><span class="p">,</span> <span class="n">BinarySequence</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining axioms for theory &#39;proveit.numbers.numerals.binaries&#39;
+Subsequent end-of-cell assignments will define axioms
+%end_axioms will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">single_bit_reduction</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">BinarySequence</span><span class="p">(</span><span class="n">b</span><span class="p">),</span> <span class="n">b</span><span class="p">),</span> 
+                              <span class="n">domain</span><span class="o">=</span><span class="n">Bit</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="single_bit_reduction">single_bit_reduction:</strong> <a class="ProveItLink" href="../__pv_it/axioms/bda45d6162d946d4aead3754d5db34b1ce29d32b0/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKkAAAAVBAMAAADP89MSAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAC5ElEQVQ4y41VQUgUYRT+nBmd2dndmUUJIlEW
+pC4V7UEED9mAa0RCDXXoErlRIAmBQZcgYxI6ReUhqImo6RKIwk4hBEK0IVFkxhIIYQmzdehm5sHC
+yu39s+vqP05NP7x/5w3v/977v/3eG+D/1iDnyRv2iNB/LS3NuZ/8vd4LjT1BlmIPbVGoOzlPcDE6
+Q7+fg2Hq3SJVkAF6mNcfAarmAKUoeVLZr/kh2WmyBicY2GDQNgBcZgSNRKBKlF5bTBpqX4a53WRL
+ZKIRDNRZ1vZKvng6AjXBkAu6B91HLRCnK+zhdTCwj1WfcCBSXEMUrTuorr1TXxsrqALxES+y96eC
+gU99GihoZn5+Ogq1F8iXy+Vf0CfebIPk0snWEl3wUTDw5EIjZSQFHADuhP1BGx1Wk+7tc6Avt310
+WC35AfU70OGTPu8vJiZ12ckPQqS7nIOc2gwqboW8nuwdWT79jKBzGDeSVOUeB2+BXYFTwgoSHgTi
+PebETShnqu+Hek3xOTBGNxieq0W/ILthtbCCES8kTGA/8JPeBbWSg+5CWSR8j/1ZzWRKyTaF1CQO
+4vwTFsOhVnnNQFhkqB9QT9o6HkBNuuhLo55qRa6LtldkWYtydElw5VnwqMSAeH9h+ROrRCswBpYg
+kbZ2B3gluR52IDB9PKZeUFZLjuarZviY50LcwqPeI2vBKh0rImHEqP9/YJzCO4NNYKlTVABrqouU
+RZvTjFGfb2tyOwlHaOJQmYJsma6sf7ty1mHKacLNiuK4VZeJUbsx5aGOLh7LiLmjFVRJY6mUHlyf
+rrXcNbJW9SURV/pt0EQAHkywm80G5djMmjlprrWkJaU6bNtOC5bq5jbpLGlx7vu1MVsM7ZmhGiFI
+pK9WasURT85msz2cevkx0r5h6ISs7loxTicJl503oYU0xS3Oi1XH/YVQ0PUJqBzyIN9mDPZXBzm/
+Rnn6RsJyBXNW15htm38ZLzL/MblU+eyEf6G+AH8A2T68SjF2THcAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These axioms may now be imported from the theory package: proveit.numbers.numerals.binaries
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

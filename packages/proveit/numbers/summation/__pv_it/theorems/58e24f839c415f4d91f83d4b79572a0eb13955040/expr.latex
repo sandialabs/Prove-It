@@ -1,0 +1,1 @@
+\left(\left(a, b, c\right) \mapsto \left\{\left(\sum_{x = a}^{c} f\left(x\right)\right) = \left(\left(\sum_{x = a}^{b} f\left(x\right)\right) + \left(\sum_{x = b + 1}^{c} f\left(x\right)\right)\right) \textrm{ if } a \in \mathbb{Z} ,  b \in \mathbb{Z} ,  c \in \mathbb{Z} ,  a \leq b \leq c\right..\right)

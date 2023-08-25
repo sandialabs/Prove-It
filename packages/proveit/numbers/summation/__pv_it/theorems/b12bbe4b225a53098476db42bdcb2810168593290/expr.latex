@@ -1,0 +1,1 @@
+\left(\left(f, g, R, S\right) \mapsto \left\{\left[\forall_{a \in R}~\left(f\left(a\right) \in \mathbb{C}\right)\right] \Rightarrow \left(\left[\sum_{x \in R}~f\left(x\right)\right] = \left[\sum_{y \in S}~f\left(g\left(y\right)\right)\right]\right) \textrm{ if } \left\{g\left(y\right)\right\}_{y \in S} = R ,  |S| = n ,  |R| = n\right..\right)

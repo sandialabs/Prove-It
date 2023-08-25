@@ -1,0 +1,1 @@
+\left(H \mapsto \left\{\forall_{\alpha \in K, x \in H}~\left(\left \|\alpha \cdot x\right \| = \left(\left|\alpha\right| \cdot \left \|x\right \|\right)\right) \textrm{ if } H \underset{{\scriptscriptstyle c}}{\in} \textrm{InnerProdSpaces}\left(K\right)\right..\right)

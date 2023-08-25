@@ -1,0 +1,1 @@
+\left(\left(A, B, P\right) \mapsto \left\{\left[\forall_{x \in A}~P\left(x\right)\right] \Rightarrow \left[\forall_{y \in B}~P\left(y\right)\right] \textrm{ if } A \supseteq B\right..\right)

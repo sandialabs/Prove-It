@@ -1,0 +1,1 @@
+\left(x_{1}, x_{2}, \ldots, x_{n}\right) \mapsto \left(\begin{array}{c} \left(v \in \left\{x_{1}, x_{2}, \ldots, x_{n}\right\}\right) \land  \\ \left(\left\{x_{1}, x_{2}, \ldots, x_{n}\right\} \in \textrm{O.N.Bases}\left(H\right)\right) \end{array}\right)

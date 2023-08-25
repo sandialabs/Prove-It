@@ -1,0 +1,5 @@
+\left\{ \begin{array}{l}
+{\rm field}: \mathbb{C}\\
+{\rm rows}: 2^{t}\\
+{\rm columns}: 2^{t}\\
+\end{array} \right\}

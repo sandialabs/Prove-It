@@ -1,0 +1,1 @@
+\left(a, b\right) \mapsto \left\{\left(a ~\textup{mod}~ b\right) \in \mathbb{R} \textrm{ if } a \in \mathbb{R} ,  b \in \mathbb{R} ,  b \neq 0\right..

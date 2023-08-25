@@ -1,0 +1,7 @@
+\forall_{k, m \in \mathbb{N}^+}~\left[\forall_{a, b, U_{1}, U_{2}, \ldots, U_{m}}~\left(\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{a} & \gate{\begin{array}{c} \uparrow \\U_{1} \\ \downarrow\end{array}} & \gate{\begin{array}{c} \uparrow \\U_{2} \\ \downarrow\end{array}} & \gate{\begin{array}{c} \uparrow \\\cdots \\ \downarrow\end{array}} & \gate{\begin{array}{c} \uparrow \\U_{m} \\ \downarrow\end{array}} & \qout{b}
+} \end{array}\right) \Rightarrow \left(\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{a} & \gate{\begin{array}{c} \uparrow \\U_{1} \\ \downarrow\end{array}} & \gate{\begin{array}{c} \uparrow \\U_{2} \\ \downarrow\end{array}} & \gate{\begin{array}{c} \uparrow \\\cdots \\ \downarrow\end{array}} & \gate{\begin{array}{c} \uparrow \\U_{m} \\ \downarrow\end{array}} & { /^{k} } \qw
+} \end{array}\right) \cong \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{b} & { /^{k} } \qw
+} \end{array}\right)\right)\right)\right]

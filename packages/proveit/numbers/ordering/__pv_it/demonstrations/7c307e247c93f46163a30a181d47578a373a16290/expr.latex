@@ -1,0 +1,1 @@
+\left(\left\{\begin{array}{ccc}b \textrm{ if } b \leq c \\ c \textrm{ if } c < b\end{array}\right.., \left\{\begin{array}{ccc}b \\ c \textrm{ if } \bot\end{array}\right..\right)

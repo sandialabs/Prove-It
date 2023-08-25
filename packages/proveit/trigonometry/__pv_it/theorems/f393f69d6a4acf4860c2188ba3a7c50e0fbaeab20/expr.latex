@@ -1,0 +1,1 @@
+\forall_{a, b \in \mathbb{R}}~\left(\left|\mathsf{e}^{\mathsf{i} \cdot a} - \mathsf{e}^{\mathsf{i} \cdot b}\right| = \left(2 \cdot \sin{\frac{\left|a - b\right|}{2}}\right)\right)

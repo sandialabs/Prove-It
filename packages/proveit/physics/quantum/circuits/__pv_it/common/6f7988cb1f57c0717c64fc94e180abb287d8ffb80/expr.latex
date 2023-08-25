@@ -1,0 +1,9 @@
+\begin{array}{ccc} 
+ \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert \psi \rangle} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \meter 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert b \rangle} 
+} \end{array} \\
+\end{array}

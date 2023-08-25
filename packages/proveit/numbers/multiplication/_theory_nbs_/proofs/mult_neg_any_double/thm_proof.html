@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.multiplication.mult_neg_any_double theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.multiplication.mult_neg_any_double-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">multiplication</a>.<a class="ProveItLink" href="../../theorems.html#mult_neg_any_double">mult_neg_any_double</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.multiplication.mult_neg_any_double-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> mult_neg_any_double
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="mult_neg_any_double">mult_neg_any_double:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/212bad0f0a375192d3a9295df25e544526b5fe870/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/dce9c36eb19ca21cc02980a0af21c293adcc6dc60/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>mult_neg_any_double may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

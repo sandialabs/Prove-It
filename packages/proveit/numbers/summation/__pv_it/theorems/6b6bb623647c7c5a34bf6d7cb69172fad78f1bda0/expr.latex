@@ -1,0 +1,1 @@
+\left(\left(a, b, S\right) \mapsto \left(\left[\forall_{k \in S}~\left(a\left(k\right) \leq b\left(k\right)\right)\right] \Rightarrow \left(\left[\sum_{l \in S}~a\left(l\right)\right] \leq \left[\sum_{l \in S}~b\left(l\right)\right]\right)\right)\right)

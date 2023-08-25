@@ -1,0 +1,1 @@
+\left(\left(a, b\right) \mapsto \left\{\exists_{q \in \mathbb{Z}}~\left(a = \left(\left(q \cdot b\right) + \left(a ~\textup{mod}~ b\right)\right)\right) \textrm{ if } a \in \mathbb{R} ,  b \in \mathbb{R}^+\right..\right)

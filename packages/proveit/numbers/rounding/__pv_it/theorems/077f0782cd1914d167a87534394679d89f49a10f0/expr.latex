@@ -1,0 +1,1 @@
+\left(x \mapsto \left\{\forall_{n \in \mathbb{Z}}~\left(\left\lceil x + n\right\rceil = \left(\left\lceil x\right\rceil + n\right)\right) \textrm{ if } x \in \mathbb{R}\right..\right)

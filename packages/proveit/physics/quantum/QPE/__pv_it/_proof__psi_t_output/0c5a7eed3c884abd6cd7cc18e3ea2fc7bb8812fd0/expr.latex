@@ -1,0 +1,1 @@
+\left(\forall_{{_{-}a} \in \{1~\ldotp \ldotp~t\}}~\left(\left(\left({_{-}a} + \left(-t + 1\right)\right) - 1 + t\right) = {_{-}a}\right), \left(\left(\left(1 + \left(-t + 1\right)\right) - 1 + t\right), \left(\left(2 + \left(-t + 1\right)\right) - 1 + t\right), \ldots, \left(\left(t + \left(-t + 1\right)\right) - 1 + t\right)\right) = \left(1, 2, \ldots, t\right)\right)

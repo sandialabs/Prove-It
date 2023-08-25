@@ -1,0 +1,1 @@
+\forall_{f, i, j~|~|\left(f\left(i\right), f\left(i + 1\right), \ldots, f\left(j\right)\right)| \in \mathbb{N}}~\left(\begin{array}{c} \begin{array}{l} \left(f\left(i\right), f\left(i + 1\right), \ldots, f\left(j + 1\right)\right) =  \\ \left(f\left(i\right), f\left(i + 1\right), \ldots, f\left(j\right), f\left(j + 1\right)\right) \end{array} \end{array}\right)

@@ -1,0 +1,9 @@
+proveit.core_expr_types.operations.operands_substitution
+proveit.logic.booleans.eq_true_intro
+proveit.logic.booleans.true_axiom
+proveit.logic.equality.equals_reflexivity
+proveit.logic.equality.equals_transitivity
+proveit.logic.equality.substitution
+proveit.numbers.number_sets.natural_numbers.zero_in_nats
+proveit.numbers.summation.sum_single
+proveit.numbers.summation.sum_split_last

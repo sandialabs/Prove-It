@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Axioms for the theory of proveit.logic.sets.cardinality</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Axioms-for-the-theory-of-proveit.logic.sets.cardinality">Axioms for the theory of <a class="ProveItLink" href="theory.html">proveit.logic.sets.cardinality</a><a class="anchor-link" href="#Axioms-for-the-theory-of-proveit.logic.sets.cardinality">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the axioms of a theory:</span>
+<span class="o">%</span><span class="k">axioms_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Card</span><span class="p">,</span> <span class="n">EmptySet</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">NotInSet</span><span class="p">,</span> <span class="n">Forall</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">num</span><span class="p">,</span> <span class="n">Add</span><span class="p">,</span> <span class="n">Natural</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">x</span><span class="p">,</span> <span class="n">S</span>
+<span class="o">%</span><span class="k">begin</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining axioms for theory &#39;proveit.logic.sets.cardinality&#39;
+Subsequent end-of-cell assignments will define axioms
+%end_axioms will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>The cardinality of the empty set, $\emptyset$, is zero (the base case of an induction for the cardinality of finite sets):</strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">empty_card</span> <span class="o">=</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Card</span><span class="p">(</span><span class="n">EmptySet</span><span class="p">),</span> <span class="n">num</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="empty_card">empty_card:</strong> <a class="ProveItLink" href="../__pv_it/axioms/d0c105e8635ed059de9e836dcdaf522387ae371d0/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADkAAAAWBAMAAACIzClVAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIolEdjJUZt27EJmr
+782vM/RyAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA4UlEQVQoz2NgAAFWBhxAAIjTIyA0JlBmYIiU
+2gOmsct2MewNwJRV8hYAybJNYGifgCHLl8DVCJLlVmCc+AFDtoKBQRMky1HAUvURQ3YOA0P+AqAo
+bwHfqs8Ysr8ZGOITgKL8CRwM39BluUCyBWDZJJjsjg4Q6AGyGD8BZR1AsgWbuTBMBssqgO1tYMSQ
+5QLK2oP08rkeYP2FzVX5IFcxbSlgvoBuL8NMBoZ6kI9Y+xYwKWDorWVg2AcO5x0MKxZgyHIkcF0F
+y9a57MKMI65NPgFgUUVoXGGPQQbayLqi0SgAAHw4PCSS1A3HAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>When a new element is added to a finite set, its cardinality increases by one (the induction rule for the cardinality of finite sets):</strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">card_induction</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">S</span><span class="p">),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Card</span><span class="p">(</span><span class="n">Union</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">Set</span><span class="p">(</span><span class="n">x</span><span class="p">))),</span> 
+                                      <span class="n">Add</span><span class="p">(</span><span class="n">Card</span><span class="p">(</span><span class="n">S</span><span class="p">),</span> <span class="n">num</span><span class="p">(</span><span class="mi">1</span><span class="p">))),</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">InSet</span><span class="p">(</span><span class="n">Card</span><span class="p">(</span><span class="n">S</span><span class="p">),</span> <span class="n">Natural</span><span class="p">),</span> <span class="n">NotInSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">S</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="card_induction">card_induction:</strong> <a class="ProveItLink" href="../__pv_it/axioms/e3e3fe3d9e7c1c1d8146b2a969ca0f4f801022780/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAV4AAAAXCAMAAAB01dc4AAAAPFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAo1xBWAAAAE3RSTlMA
+q1RmmUTNIjK7EInv3XbPqdvtPAm6/gAAAAlwSFlzAAAOxAAADsQBlSsOGwAABAxJREFUWMPtWYmO
+3CAMxdxX6MH//2sDBAKEMGG0bUdq0e7KSYwfPIyxWYQ+tInjd6FpxjobWPQm38YVC+Ne6vBXmsP7
+H8OWunCmu1cSVPXqiblb3KdjYa4RoHzA5HPYxaadEqbUGERmU8ReD94qWGLoHvdlZ7klfJdpjAIt
+3fjnuLPmLR8qeIJW/ng69WhF3jayVL99Te8Ed95ZA+V5eXle5iDIvLxCfY7zUtJMkyYWSZo8OhkT
+8LX0TnC7zuyy1V2ml+Q1j0Im2+DPode2fHjZhLXfR+8Et+uM3S29yNYCOdaBf1Dk5c00mU9DlPI3
+0zvDXaCXk1qwW2jWfFBsMM00tfdGVp/n9GrnQEtzbMYleme4C/QaqAUaTSj9aOJDcfj8ohF5/y0v
+f54S8XsDMaeX8jIOBw7RpOXsiF66VQ0e4S7Qm8+IJMQx1gOtI7hxjriTier4U51GezKKjYYBEQs3
+FKoxQOIPd3xop7y3U3qFTdwQEWjRCNKj8Pi5985wF+jFthGC446hoxHp0T29p8bxSTpQajeGAZnd
+Lh1siqDy7fsYIB0JbMAH9eyeXgH8+CorR04pE8dP6Z3hlnfJ863tPL+it8wnCWGOfHKSwoTeU0Md
+uYzMRYoL+3QQ0aMK6DHAYJrHjtXFD7eqKisSraKbrVzLcIbeo7fFXfBeZluBI3JoO0fF/pO7pKNT
+TOg9NVRTsiAsMRPupLdYjioabgCumzSrijJ8VfSJG9VnzO8KWl9quZexd4a7Ehy2VjD4SH6dQKBQ
+2U17F6/IIGKe4qmhYoFz4ss9OGCW6S2Wk4pjNwBnsZSnlAdLy0qxjCK47jMHvQcmCE6TkwC7kDnM
+cFeONtUKIh9AJEJUB43G1MOM3lNDtbXMTu8eHFxBypaTiroDaDKbOCW6mSbbiflpcABNNnnJcLGX
+mu6UMvxG3jvDfUmv8aLL74oA5zh9tVN12moTeisNFTMRFRtO9GpTx/RkOap8+6HwGOC4HamniRhQ
+gKamFIZvnDt9LSA0dQ5hSvA7ZcUM9wW9ANbzI1vZyhl8AZT2DIXJA5q7iI7eWiP8kabx3v276y1H
+leNgGwAc45JLl4BfVhRPcF96b5WT9kLJHfeDNibmOpBA474AcU9vraHa4iRdHjpItk7LQSWfGgOA
+5lbkj9M7wX15pdPfC1VC+eJCmh/u0SwO5Vy47RSTo63WUMkTZd5n6X4Tsq1sOajkUnMA0CQHS/TW
+9dm1lnto7h738VjKZpxeQeJZrdWJ1bM2IfaymS1tfl5V+vtTtUxvXZ+ddixZYuge9/FYStqoJvfn
+TL9H7xNbT/4tIkJsc3LlFkNQ6AgWpnnzxNwt7tOxONELwyiEvo7e3hZo9L+NF3coDp8nO/Df4esX
+JUMprPG62NsAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>The cardinality of inifite sets should be defined via 1-to-1 and onto mappings between them.</strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These axioms may now be imported from the theory package: proveit.logic.sets.cardinality
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

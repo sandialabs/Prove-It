@@ -1,0 +1,1 @@
+\left(x, y\right) \mapsto \left\{\left\lceil x\right\rceil \leq \left\lceil y\right\rceil \textrm{ if } x \in \mathbb{R} ,  y \in \mathbb{R} ,  x < y\right..

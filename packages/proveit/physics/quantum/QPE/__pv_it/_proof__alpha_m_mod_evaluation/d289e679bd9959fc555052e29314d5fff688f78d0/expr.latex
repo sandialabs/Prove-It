@@ -1,0 +1,1 @@
+\begin{array}{c} \begin{array}{l} \left(k \cdot 2 \cdot \pi \cdot \mathsf{i} \cdot \left(m ~\textup{mod}~ 2^{t}\right)\right) =  \\ \left(k \cdot \left(2 \cdot \pi \cdot \mathsf{i} \cdot \left(m ~\textup{mod}~ 2^{t}\right)\right)\right) \end{array} \end{array}

@@ -1,0 +1,11 @@
+proveit.core_expr_types.conditionals.dissatisfied_condition_reduction
+proveit.core_expr_types.conditionals.satisfied_condition_reduction
+proveit.core_expr_types.tuples.tuple_len_0_typical_eq
+proveit.logic.equality.sub_right_side_into
+proveit.logic.sets.inclusion.relax_proper_subset
+proveit.logic.sets.inclusion.unfold_subset_eq
+proveit.numbers.number_sets.natural_numbers.natural_lower_bound
+proveit.numbers.number_sets.real_numbers.nat_within_real
+proveit.numbers.number_sets.real_numbers.zero_is_real
+proveit.numbers.numerals.decimals.nat1
+proveit.numbers.ordering.not_less_from_less_eq

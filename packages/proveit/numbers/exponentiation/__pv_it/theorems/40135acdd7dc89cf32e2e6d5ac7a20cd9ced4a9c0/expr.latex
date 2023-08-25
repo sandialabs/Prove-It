@@ -1,0 +1,1 @@
+\left(a, k_{1}, k_{2}, \ldots, k_{m}\right) \mapsto \left\{\left(a^{k_{1}} \cdot  a^{k_{2}} \cdot  \ldots \cdot  a^{k_{m}}\right) = a^{k_{1} +  k_{2} +  \ldots +  k_{m}} \textrm{ if } a \in \mathbb{C}, \left(k_{1} \in \mathbb{N}^+\right) ,  \left(k_{2} \in \mathbb{N}^+\right) ,  \ldots ,  \left(k_{m} \in \mathbb{N}^+\right)\right..

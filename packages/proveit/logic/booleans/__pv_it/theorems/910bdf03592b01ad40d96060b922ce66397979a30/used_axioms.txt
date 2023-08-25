@@ -1,0 +1,1 @@
+proveit.logic.equality.equality_in_bool

@@ -1,0 +1,17 @@
+proveit.core_expr_types.tuples.tuple_len_0_typical_eq
+proveit.logic.equality.equals_reversal
+proveit.logic.sets.inclusion.superset_membership_from_proper_subset
+proveit.numbers.addition.disassociation
+proveit.numbers.addition.subtraction.add_cancel_triple_13
+proveit.numbers.division.div_complex_closure
+proveit.numbers.negation.complex_closure
+proveit.numbers.number_sets.complex_numbers.real_within_complex
+proveit.numbers.number_sets.integers.nat_pos_within_int
+proveit.numbers.number_sets.natural_numbers.nonzero_if_is_nat_pos
+proveit.numbers.number_sets.rational_numbers.int_within_rational
+proveit.numbers.number_sets.real_numbers.rational_within_real
+proveit.numbers.numerals.decimals.nat1
+proveit.numbers.numerals.decimals.nat2
+proveit.numbers.numerals.decimals.tuple_len_2_typical_eq
+proveit.physics.quantum.QPE._phase_is_real
+proveit.physics.quantum.QPE._two_pow_t_is_nat_pos

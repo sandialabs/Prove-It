@@ -1,0 +1,1 @@
+\left(0 \leq \left(1 + \frac{1}{2 \cdot \epsilon}\right)\right) \land \left(\left(1 + \frac{1}{2 \cdot \epsilon}\right) \leq \left(2^{t - n} - 1\right)\right)

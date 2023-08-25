@@ -1,0 +1,8 @@
+proveit.core_expr_types.conditionals.true_case_reduction
+proveit.logic.booleans.disjunction.left_in_bool
+proveit.logic.booleans.disjunction.right_in_bool
+proveit.logic.equality.equals_transitivity
+proveit.logic.equality.substitution
+proveit.numbers.number_sets.natural_numbers.zero_in_nats
+proveit.numbers.ordering.less_eq_def
+proveit.numbers.ordering.min_def_bin

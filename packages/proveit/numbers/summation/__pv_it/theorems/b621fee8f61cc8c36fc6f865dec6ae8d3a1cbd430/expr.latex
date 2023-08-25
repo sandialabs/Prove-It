@@ -1,0 +1,1 @@
+\left(\left(a, b, c\right) \mapsto \left\{\left(\sum_{x = a}^{b} f\left(x\right)\right) = \left(\sum_{x = a + c}^{b + c} f\left(x - c\right)\right) \textrm{ if } a \in \mathbb{Z} ,  b \in \mathbb{Z} ,  c \in \mathbb{Z}\right..\right)

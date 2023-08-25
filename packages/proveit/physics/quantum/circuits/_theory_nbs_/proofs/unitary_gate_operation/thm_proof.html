@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.physics.quantum.circuits.unitary_gate_operation theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.physics.quantum.circuits.unitary_gate_operation-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">physics</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">quantum</a>.<a class="ProveItLink" href="../../theory.html">circuits</a>.<a class="ProveItLink" href="../../theorems.html#unitary_gate_operation">unitary_gate_operation</a> theorem<a class="anchor-link" href="#Proof-of-proveit.physics.quantum.circuits.unitary_gate_operation-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> unitary_gate_operation
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="unitary_gate_operation">unitary_gate_operation:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/331c374f66175a5b20978f1d97bd38b42d2827bf0/expr.html"><img src="data:image/png;base64,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
+gg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/f628798af2826f7f020e4424383e99919e1801750/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

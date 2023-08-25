@@ -1,0 +1,1 @@
+{\rm Min}\left(x, x\right) = \left\{\begin{array}{ccc}x \textrm{ if } x \leq x \\ x \textrm{ if } x < x\end{array}\right..

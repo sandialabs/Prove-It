@@ -1,0 +1,7 @@
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{\lvert + \rangle} & \control{} \qw \qwx[1] & \qw & \gate{\cdots} \qwx[1] & \qw & \qout{\frac{1}{\sqrt{2}} \cdot \left(\lvert 0 \rangle + \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \varphi_{1}} \cdot \lvert 1 \rangle\right)\right)} \\
+\qin{\lvert + \rangle} & \qw \qwx[1] & \control{} \qw \qwx[1] & \gate{\cdots} \qwx[1] & \qw & \qout{\frac{1}{\sqrt{2}} \cdot \left(\lvert 0 \rangle + \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \varphi_{2}} \cdot \lvert 1 \rangle\right)\right)} \\
+\qin{\begin{array}{c}:\\ \left(t - 3\right) \times \\:\end{array}} & \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\ddots} \qwx[1] & \gate{\vdots} & \qout{\vdots} \\
+\qin{\lvert + \rangle} & \qw \qwx[1] & \qw \qwx[1] & \gate{\cdots} \qwx[1] & \control{} \qw \qwx[1] & \qout{\frac{1}{\sqrt{2}} \cdot \left(\lvert 0 \rangle + \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \varphi_{t}} \cdot \lvert 1 \rangle\right)\right)} \\
+\qin{\lvert u \rangle} & \gate{U_{1}} & \gate{U_{2}} & \gate{\cdots} & \gate{U_{t}} & \qout{\lvert u \rangle}
+} \end{array}

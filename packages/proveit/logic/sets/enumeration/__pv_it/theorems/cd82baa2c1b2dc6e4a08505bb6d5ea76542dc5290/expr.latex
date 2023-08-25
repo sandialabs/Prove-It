@@ -1,0 +1,1 @@
+\forall_{a_{1}, a_{2}, \ldots, a_{n}}~\left[\forall_{P}~\left(\left(\left(P\left(a_{1}\right) = \bot\right) \lor  \left(P\left(a_{2}\right) = \bot\right) \lor  \ldots \lor  \left(P\left(a_{n}\right) = \bot\right)\right) = \left(\left[\forall_{x \in \left\{a_{1}, a_{2}, \ldots, a_{n}\right\}}~P\left(x\right)\right] = \bot\right)\right)\right]

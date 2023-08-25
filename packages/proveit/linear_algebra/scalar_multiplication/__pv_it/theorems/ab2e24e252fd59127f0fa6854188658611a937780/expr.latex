@@ -1,0 +1,1 @@
+\forall_{V \underset{{\scriptscriptstyle c}}{\in} \textrm{VecSpaces}\left(K\right)}~\left[\forall_{x \in V}~\left[\forall_{\alpha, \beta \in K}~\left(\left(\alpha \cdot \left(\beta \cdot x\right)\right) = \left(\left(\alpha \cdot \beta\right) \cdot x\right)\right)\right]\right]

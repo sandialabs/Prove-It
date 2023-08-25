@@ -1,0 +1,4404 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Common expressions for the theory of proveit</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../index.html"><img src="../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Common-expressions-for-the-theory-of-proveit">Common expressions for the theory of <a class="ProveItLink" href="theory.html">proveit</a><a class="anchor-link" href="#Common-expressions-for-the-theory-of-proveit">&#182;</a></h1><p>These are generic common expressions based upon single-symbol Variable names.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the common expressions of a theory:</span>
+<span class="o">%</span><span class="k">common_expressions_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">Variable</span><span class="p">,</span> <span class="n">Function</span>
+<span class="c1">#%begin common</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> common
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining common sub-expressions for theory &#39;proveit&#39;
+Subsequent end-of-cell assignments will define common sub-expressions
+%end_common will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">a</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="a">a:</strong> <a class="ProveItLink" href="../__pv_it/common/c06c606ec12678c58933ac85412ecadc2ae28be60/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAJBAMAAAAWSsseAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIquJdkTvuxBmmd1U
+zTKBpmoTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAARUlEQVQI12NgYFR2dGBgYAgTYP/BwMCRycC1
+gYGB6wMDtwEDA1sBQ38AA0O/A8N8oIr+Awy6PAIM7A48u7iAKlXshPwYAE2lCqdX0eXEAAAAAElF
+TkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">b</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;b&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="b">b:</strong> <a class="ProveItLink" href="../__pv_it/common/195236b98c6c564a75b5dbada74b173bc52d5c3e0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAOBAMAAAAPuiubAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAELvv3c2ZVESJq3Yi
+MmZ3LnoBAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAT0lEQVQI12NgVHZgAALWBBDJXwAi+wVA5BQQ
+wRC1ezkDA+NXAfkDDOwfGZg3MLAFMPBPYGCZwNBfAFKeL8DAf4HRjoGB6wET0AjGlXkMDAAVqA7Q
+GyenWgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">c</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;c&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="c">c:</strong> <a class="ProveItLink" href="../__pv_it/common/ceef4280a2f1cc604b455b54e735507244cc62cd0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJBAMAAAASvxsjAAAAKlBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADmU0mKAAAADXRSTlMAiXZmMiLdVJm77xBEs3/oGgAA
+AAlwSFlzAAAOxAAADsQBlSsOGwAAADZJREFUCNdjYGAQUnZgYAgr4JjAwJDIwKXAwHGbAQi4JoDI
+vQogkteAgeEAA1ABI1CloLE2AwDCNQb+PNXqTgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">d</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;d&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="d">d:</strong> <a class="ProveItLink" href="../__pv_it/common/4f5c524ffda87296de1c79b96880123fe2efedd50/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOBAMAAAALT/umAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAMs3vmVREEIndIqt2
+u2aBbGR5AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAWklEQVQI12NgYGBgVHZgAAH+ADCVXwCmOsEk
+gwoQc+04+BVIJS/g/c7AwG7HwKLAwMDygYGzgYGB+QJDfQIDQ/0BhvdAFfUBDJtYFzDwHmCdwgJU
+uadx9UEGAKwhEtVeQlhQAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">e</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;e&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="e">e:</strong> <a class="ProveItLink" href="../__pv_it/common/f3b2e5223a46d6d30e0676b70270e0fb96f45ce80/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJBAMAAAASvxsjAAAALVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAOrOgAAAADnRSTlMAEIl2mUTdMiJmu6tUzZF4
+WEUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAA7SURBVAjXY2BgVDYRYGAIK2BXYOB4ycAcwMD12FiV
+gYFvAwMQ8BmASDYFBoYDDJwXGEQaGBiMZhowAADQsAgpWHl0HwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">f</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;f&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="f">f:</strong> <a class="ProveItLink" href="../__pv_it/common/01b6dbb444a31fc38af4c2379badef6c75b363710/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAASBAMAAAB/WzlGAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAmYkQqzLvVES73WZ2
+Is1wFLxSAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAUklEQVQI12NgYGBgVDIAkgwqYQUgKr0TxOP4
+DGIzMC0AkdxuSwRANP8BsOD9ADBVDyYZtCDUFAiVAyZ5f4Ap9g9gitEBRJbwgY1faQcW2yMLIgFk
+aQ2WW4Dm+QAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">g</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;g&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="g">g:</strong> <a class="ProveItLink" href="../__pv_it/common/96ac097ea7ee432328a5e933062d0ef407701bf40/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAANBAMAAABiGeI2AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAVIl2ImbN77sQqzJE
+md23+iBgAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAVElEQVQI12NgYBAydmVgYEpgqWBgkJ/A8JmB
+oYqB+wsD90cG5gIG1i8MHAsYWD8wzA9g4PzCsH4CA8Mpo3sMIJDLwLBrAvdvBoblE6YZgITvMDAA
+ALhGFCDgVTGpAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">h</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;h&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="h">h:</strong> <a class="ProveItLink" href="../__pv_it/common/f13b5f19f59b59184c9a6a576c072499648aa8a80/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOBAMAAAALT/umAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAELvv3c2ZVESJZiKr
+MnbRl/71AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAWElEQVQI12NgVHZgAAHWBDDFXwCm+gXA1BQw
+yRBWNWkDAwPj1w08BxgY2P8y8CgwMLAFMLBMYADh/RcYGOQbGCYDFa5nYLDk2sBwiIHhLycDgxYD
+w8sHDACy/hHM3VaUvgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">i</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="i">i:</strong> <a class="ProveItLink" href="../__pv_it/common/ae955345c83abf786c3aff8681cd5465beae262d0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAOBAMAAAARcxsoAAAALVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAOrOgAAAADnRSTlMAdpndiRBmRO8yVM2rIuws
+s0IAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAA6SURBVAjXY2BgEGIAAhMGdMAqlMDAwMLewMAwi2kD
+A0MAhwBQcF0AkNjDCpR9zsLAwPngGpB7LIEBALAvCJF4nqyTAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">j</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;j&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="j">j:</strong> <a class="ProveItLink" href="../__pv_it/common/1ed21df18baca2f42b561a7ffbf30a2743d594650/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAASBAMAAACQmVJ4AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAMrsQds2rme9mIlTd
+iUQmv6lAAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAATElEQVQI12NgYGBgVAYSDCwBDNiAiRuILOCY
+AFSxgH8DAwMzw34DkFANWPosiOD6ByI5P4BINgUQyeEAZG2YD1Qov+E0kM/u/oCBAQDY7wxV/Qz6
+SAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">k</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;k&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="k">k:</strong> <a class="ProveItLink" href="../__pv_it/common/63b7c64bf9ec7a04ecc396c7a1670f3f12fb59490/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAOBAMAAADkjZCYAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAELvv3c2ZVESJq2Yi
+MnY6gD36AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAATklEQVQI12NgVHZgAALWBBDJXwAi+wVA5GQQ
+wRDFUJnIwPibvcaagf1PO28MA5v1BaAwS1gukJQv6Ady9gvIFzxgWMogf2ECgzoDX54AABZPEDeN
+/qkHAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">l</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;l&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="l">l:</strong> <a class="ProveItLink" href="../__pv_it/common/27cc275d44b4f4499fb9ccfb3fab1a98165d2fa60/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAOBAMAAAD+sXAWAAAALVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAOrOgAAAADnRSTlMAid0yZpnNdiKru+8QRPX7
+c7YAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAA/SURBVAjXY2AQeszAwPKAgYE1gYGBqYCBoc+AgcGP
+gYFhFhBvZ2BgfsHAwL6BgYFrwgEGPgcBBr47BQwsgQwADSgKF43iUt8AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="m">m:</strong> <a class="ProveItLink" href="../__pv_it/common/674a03b9c3ca221b3aabd5636837b31528ff33830/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAAJBAMAAADN8WE8AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMARHarECKJuzJmVO/d
+mc2qKiq2AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAXklEQVQI12NgVHZNKuJIK2RgYGM3YvCfyLCa
+gUGQp4AhXoFhPgODg78Aw3oHhnsMDAzrGUDUNiDLjoHhGAPjVxYQj+UjA/ODSAbWHwycHxjYExIY
+GA8wMF1gYLwUAABMtRSZFIjjRwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">n</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;n&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="n">n:</strong> <a class="ProveItLink" href="../__pv_it/common/8968bb04eb3f7dfa02353397ce929b025bbd79c20/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAJBAMAAAD0ltBnAAAALVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAOrOgAAAADnRSTlMARHarECKJu90yVM1m74AT
+aC0AAAAJcEhZcwAADsQAAA7EAZUrDhsAAABESURBVAjXY2BUdk0qYmBgYzdi8AtgEOQoYIibwODg
+J8CwzoGBYR0DgzUDGL9hYWC4xsD1hI2B9SUD04aTDIwNDCw2CwBlUgzGkPW4hwAAAABJRU5ErkJg
+gg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">o</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;o&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="o">o:</strong> <a class="ProveItLink" href="../__pv_it/common/5f58f2889c6bd74457c81f6b50dc3a365769dfdf0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAJBAMAAAD5iKAgAAAAJ1BMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAilU6eAAAADHRSTlMAiXarRCLdme+7EGZA3MLDAAAACXBI
+WXMAAA7EAAAOxAGVKw4bAAAAP0lEQVQI12NgYBBSdmBgCHNgPcrAkMTAkMjAfoCBoZmBYwID6yGG
+NQoMjEcZeDYwcAgwsBswTGdgYBBUd2AAAPVdCO6UuFqQAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">p</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;p&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="p">p:</strong> <a class="ProveItLink" href="../__pv_it/common/bbfd8ec921873eb340439a30c11dc66622cd75e90/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAANBAMAAABvB5JxAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAMnarEInNVLtmRO/d
+mSJ9aoHvAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAV0lEQVQI12NgEDIRCnZgYAgwK2BtYGAsSGbg
+/MDAwvCdgekLAwPXFwaODQwMrAcY+C8wMLBdYJgNVOnfwHeQgYGhXkj1AZC6xgAGR8Eky3cwVfZt
+ApAEAHYzEvYrLOO7AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">q</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;q&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="q">q:</strong> <a class="ProveItLink" href="../__pv_it/common/e94b28ab65b49707a4f3bf26580dfe7bba3eebd90/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAANBAMAAABiGeI2AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIqt2iRAyRN3vZs2Z
+u1SUszogAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAT0lEQVQI12NgYFR2NWNgqBBg+sDAOouBaQMD
+zwcGDgcGzgsM8gUM8QYM6xkY4h8w3GZg4DXg+sLAwKps950BCLg+gEigciDgdAASLPtbGABvAw9D
+3RwB5wAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">r</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="r">r:</strong> <a class="ProveItLink" href="../__pv_it/common/c3df45f28d41d286d2eebe2be9be7af76c74d56b0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAJBAMAAAD5iKAgAAAAJ1BMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAilU6eAAAADHRSTlMAMom7Iplm783dEETQmXsdAAAACXBI
+WXMAAA7EAAAOxAGVKw4bAAAAMklEQVQI12NgVGYJSmBgYg5iKmBw45jAqsAgxZPAAAR7FoDISBDB
+MAlEsJwGkdwTgAQAx0IG3sbhZKQAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[21]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">s</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="s">s:</strong> <a class="ProveItLink" href="../__pv_it/common/811706e3598661dd7051509b3af45e1ece9837d80/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAJBAMAAAD9fXAdAAAAKlBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADmU0mKAAAADXRSTlMAiXaZELsyRCJm3c1UhSksHQAA
+AAlwSFlzAAAOxAAADsQBlSsOGwAAADRJREFUCNdjYGBUMmFgCGMoZuC4wBDJwHF1BgMDg+xdASBZ
+eoVBioHhCsMmBh4DhqRJmgwAu88JE3/XMLUAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[22]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">t</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="t">t:</strong> <a class="ProveItLink" href="../__pv_it/common/36861eae73a44b53d5b3b017ac6a3a9dae53bfba0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAANBAMAAACX52mGAAAALVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAOrOgAAAADnRSTlMAEN0iVJmJRKu7ds0yZqK7
+ZTIAAAAJcEhZcwAADsQAAA7EAZUrDhsAAABASURBVAjXY2BgVGZgYGB5CCRYFYAEUwIDQ8W8GQsY
+GPyAPIZoEKEGxIzPQcoeMAgwsG5gOcDA0SDFwMA89wIDABLQChX+XlxKAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[23]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">u</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;u&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="u">u:</strong> <a class="ProveItLink" href="../__pv_it/common/0d656bb6691dcf7801631ede213504e1b012f3d50/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAJBAMAAAD0ltBnAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEHaZZquJVO8y3c1E
+Irudu/YqAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAARUlEQVQI12NgVHZgYBVgYGNvYPBnYJjOvIAh
+moFBgEOBoYmBgeG8AO9PIGXFwPQBSD1l4HvgyMBgyjAjIYGBQTSpNmgCADyJDC3IslSOAAAAAElF
+TkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[24]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">v</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;v&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="v">v:</strong> <a class="ProveItLink" href="../__pv_it/common/a4b9661da9b52dcebf59c5559fec8901f4df10750/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAJBAMAAAD5iKAgAAAALVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAOrOgAAAADnRSTlMAEHaJZt1U76symc27IudV
+iXkAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAA/SURBVAjXY2BUdmAIY2BmK2CoYJjGtYEhmUGAXYFh
+GgNDngCDAgPDUgYGAwaGEwxsFxgYrBkuMTAwcLU4MAAA718JGFdsIZkAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[25]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">w</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="w">w:</strong> <a class="ProveItLink" href="../__pv_it/common/d365663894822dede40e6e04c77860068334d0820/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAJBAMAAAAfoWtkAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEHaJZjKZVN3vq7tE
+zSL5cm/iAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAVUlEQVQI12NgVHZgCGOoEGBgZp/AsJrh/AGG
+cLYGhkkMvA8YBDgVWL8ysDEwMNQLME1gYAIychm4FzDEABm7GDgMGAyADGuGkwt4DgAZbMmKy0wY
+GAB9Kg85GMaWxgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[26]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="x">x:</strong> <a class="ProveItLink" href="../__pv_it/common/a0d9d672aa5e272d907247690c152cc2c6daafb70/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAJBAMAAAAWSsseAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEHarMolUmd1mIs3v
+RLtmgJDEAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAQklEQVQI12NgEFIWCU1gYChgMmJvYOBcwPmR
+eQIDCwP7BgYQ4FEAU/cXMAowyF2wYWBlYMh3rGG4xsAgrsRWmcAAAFEjCyBvD0T9AAAAAElFTkSu
+QmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[27]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">y</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="y">y:</strong> <a class="ProveItLink" href="../__pv_it/common/ff7dba4ef0bbe791ab573bf2d9c220a304399ac80/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAANBAMAAACN24kIAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEHaZZquJVO8y3btE
+zSKD2s2pAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAVklEQVQI12NgVHZgEGVgYGNvYPBnYJjOvIAh
+moFBgEOBoYmBgeG8AOdPIGXLwNQApLYycAcAKVOG8w5ASjTJ/gEDCOQCMdsFxnYgxaXAmgCk2J1s
+gCQAaFoNDtFIIdEAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[28]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">z</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="z">z:</strong> <a class="ProveItLink" href="../__pv_it/common/95a8f6b9b9f29b83f192ad7fd05708d6be097a3f0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAJBAMAAAD5iKAgAAAALVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAOrOgAAAADnRSTlMAMt0iZhDNdom7q0RU75I/
+FSIAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAA6SURBVAjXY2BgVBIwYWAIq5ixgIHBlIEjgIGBgbUV
+SDCYgwhuBwagyBkGhgUMjDOmNwkwcDCczWYAAM4bCMVQ6vlKAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[29]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">A</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;A&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="A">A:</strong> <a class="ProveItLink" href="../__pv_it/common/09585084922504426caf1db2ff588a23a0932a960/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPBAMAAADJ+Ih5AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIs1UmauJMnZmRLsQ
+3e++988cAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAXklEQVQI12NgAAEhBijQh9LM/6EMlngBCCMx
+vwBMMzb0G0BkGOwngBmLGeoTwAwHBvkAEM2xxSV+A4hxgoGB/wJEhoH3AZDmAupg+gBkyAEx90cG
+htP/dRiY939KAABt3hLO6mcEjQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[30]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">B</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;B&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="B">B:</strong> <a class="ProveItLink" href="../__pv_it/common/a9162d1c3cc0470c02e5daf414500903a7a419230/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAOBAMAAADUAYG5AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAZrurzTLvInZEmRDd
+VIkafcLnAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAb0lEQVQI12NgYBD6b2zsFMAABEkMDMxfgTT7
+DwYGzl9ABiOQxwjkMDB/YGBgSQcy2BQYuG1AiuM1OkwEQJr6Cxh4E0EMNSB+D5L6DMTyDQwMrB+B
+DPsJDAwc34GcL0AOSwIDwzRvoHH6n41NdBkYAF/iFeJ4bEa2AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[31]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">C</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;C&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="C">C:</strong> <a class="ProveItLink" href="../__pv_it/common/9fba9f29e823606ff4fdf2f1c6d5d08d906e850a0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAOBAMAAAACpFvcAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEHa7q2Yiie9Umd0y
+zUTye3nKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAZElEQVQI12NgYGBUdnFlK2BgYNBQZOBcHcDA
+ILwHyFmfwMBwQwDIeMHAwP4TSDOcYmDI3wBiyDAw1CswQMD+BCijH0wCNewH0ZwHICYwsANxPkhx
+IUj0KwPDc5CZDFImXg+AFACuvBKMxZNU9AAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[32]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">D</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;D&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="D">D:</strong> <a class="ProveItLink" href="../__pv_it/common/8d36d28f3636cdaa66f8b7d56eb3bbf0b50f70200/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAAOBAMAAAA7w+qHAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAdrurIs1mVDKZ70SJ
+EN02Mxp8AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAZ0lEQVQI12NgYBD6r2yk7MAAAl8ZGNi+gxgc
+H4HELBCL8QeQ2J8AJJg+AAn/A0CCXwFI9BuACAEgkQ8Sk28AEvYbgIQ+SNsvEPEJiNm+wYy7pQAz
+ThUkyQo0bt8EIINZ/7Ox0hQgAwCCORgrtLsP4AAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[33]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">E</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;E&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="E">E:</strong> <a class="ProveItLink" href="../__pv_it/common/bab67c83c02ef7fff18e38de447cea6afc251f350/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAOBAMAAADUAYG5AAAALVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAOrOgAAAADnRSTlMAdrvvq93NRIkQmTJmIrxg
+88YAAAAJcEhZcwAADsQAAA7EAZUrDhsAAABrSURBVAjXY2BgEDJWcVE1YgCCZ0AsBMTsL4DELCDm
+eA4kJgIx2wMGRgZuIINPgaEGpJShLsTpLZjRt4E3AMzIY2BoYJgAZDxiYLjAKQA05iGQwwgU4XgN
+ZFwBYtYHQFFzBoYpeU9cnOwSGACAeRT03/gSFQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[34]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">F</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;F&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="F">F:</strong> <a class="ProveItLink" href="../__pv_it/common/9d1ffc79180dc7de30ad10ed4b26b62e9dcb5b670/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAOBAMAAADUAYG5AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAdrvvq2bNMolEVCLd
+EJnHu19WAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAXUlEQVQI12NgYBAyVnFRNmUAgm9AnArE7D+A
+RCQQM/4EEquBmOkDAzvDAiCDP4GhFKSUob6BOxvM6FfxMQAz8i8wPGCAGMMLUsrA+YMBAji+Qxls
+HyD0Ff0v3iAaAKvvE3mgQaazAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[35]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">G</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;G&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="G">G:</strong> <a class="ProveItLink" href="../__pv_it/common/cd2bbe4a07ced9e6cf68e9cc62da3ac2ecc7137e0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAOBAMAAAACpFvcAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEHa7q2Yiie9Umd1E
+Ms2lR6veAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAbElEQVQI12NgYGBUNnFlK2BgYNBQZOBcHcDA
+wLwNyFmfwMBgLwBknGBgYP8KpBluMTDkbwAxZBkY6hUYIOD9BSijH4i1Vi1nYNgP4q0HGuMPNIHB
+HojzgYrZPgMZnEBzrmwCyUuZlAckMjAAANpXFOhVHxbXAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[36]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">H</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;H&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="H">H:</strong> <a class="ProveItLink" href="../__pv_it/common/db1921da064725c141f453bae2d02f0bb2333a8a0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAOBAMAAAA/Njq6AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAdqu7Zu8Qzd0yiSKZ
+RFTI+uAaAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAdUlEQVQI12NgYBD6b8TgFG+UwAAE34E4AsRg
+4PzFwMD9B8zk+svAwPIPzGT/wMDA/A3M5DdgYGBtADPvNykp6R8AM9dPYGCQfwBm1gOxPdhUhs9Q
+oxkYeD9CjAYZ+5OBgfEvmMkBMvYDiJVk/0mAx/6zAAMDAPA5G0WJzUceAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[37]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">I</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;I&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="I">I:</strong> <a class="ProveItLink" href="../__pv_it/common/343861aa4b100ac072c90b5db5a254070d7bb9190/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOBAMAAAALT/umAAAAIVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAADdcGRXAAAACnRSTlMAiburEN0ydkTNfktKrgAAAAlwSFlzAAAOxAAA
+DsQBlSsOGwAAAEJJREFUCNdjYGAQWqXswAAES0EEA9tCMMW+AkwxLQBTXBPAVFcBmJJKAFOzwCTD
+IjDJsRxMMS4DU6xgbc5aiwUYGADydQoiew/uIgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[38]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">J</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;J&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="J">J:</strong> <a class="ProveItLink" href="../__pv_it/common/9f16d7088a8a61eb23ba4b3fa39c88978b11e98f0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAAOBAMAAAAGUYvhAAAALVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAOrOgAAAADnRSTlMAiavdMs3vRGaZECJ2VPOK
+AxUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAABHSURBVAjXY2BgYBCyM2IAAzkHCB0GoRgeQSj2FxCa
+8xWEZjaA0OsmQOi+AgitByK2CTCkguhzB3ifg+gahmUCIJrjjDqIAgA1KgxyT+JzEwAAAABJRU5E
+rkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[39]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">K</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;K&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="K">K:</strong> <a class="ProveItLink" href="../__pv_it/common/1f2ffac7a1dc7c1a4f1fc7348356ae64ea992c790/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAOBAMAAAA/Njq6AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAdqu77zLdVBCJZkQi
+zZm4b83uAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAc0lEQVQI12NgYBD6b8TAoO8cwAAE34C4qAHE
+Yv3JwMBVAGIxMP5m4JgDZjHwfmCIhLAY+C9wPYAy90+QT4Ay50vyfYcy7y/g+QtlfmZgsAebz8D9
+EahcAczk/MrAwPYDzGT7ALTlJ4jVZP9JgGHKfxsGBgCRzxsTSB6ELQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[40]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">L</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;L&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="L">L:</strong> <a class="ProveItLink" href="../__pv_it/common/a14e64e007515ca145bc975c6db7e9098f3b12fd0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOBAMAAADtZjDiAAAAJFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAADHJj5lAAAAC3RSTlMAdqvNZt0yiUQQIghaDycAAAAJcEhZcwAA
+DsQAAA7EAZUrDhsAAABQSURBVAjXY2BgENpt5MAAAlvBJAPbdgjNuANCM2+A0NwGELq7AEJXN0Bo
+ayDmBOLNQOzFwMCxEUgrMDCwbwMaATSYFai9egLDJOtNStabGAB7TA21BAVhoQAAAABJRU5ErkJg
+gg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[41]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">M</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;M&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="M">M:</strong> <a class="ProveItLink" href="../__pv_it/common/ce50a10c2eddfa57687148849d3b804ff497c1cf0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAOBAMAAADZH/H+AAAALVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAOrOgAAAADnRSTlMAZrtUdu+rMkQimc0Q3dux
+78cAAAAJcEhZcwAADsQAAA7EAZUrDhsAAACOSURBVAjXY2BgEHpnwMDAwPI0GUgy5DkAibIXICan
+6AIgKfYAxGacvQFIHFUAsbm4AhgYZsxzALNZgNIOcgUg9kTmlwzMB/JATAZJ9scMhxmCwOwFDE8Y
+HDifQNlRzBMYn4OY7AIMmw4zsAWA2CwTGFIdGFgTQGxeBga/CQx1AkAm272NDC0MbfeuHWAAALpg
+H/3NCEEGAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[42]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">N</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;N&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="N">N:</strong> <a class="ProveItLink" href="../__pv_it/common/ec2f9d003f907f9688d46f19f6df289e52cc63ce0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAOBAMAAAA/Njq6AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAdrsyRM3vEKvdVCKJ
+mWY5NCfAAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAdElEQVQI12NgYBD6b8DAEp9UwAAE+g0MDJxg
+Fsui3wwMPCAWA0/JHwYGLzCTl2EaA8NxKPP9A4YLYKYXA/8EhgNg5nEG3i8sDmDmBQbuTzxgs0By
++nvBLJYFDAz+dyDGAuU4v4CZlUDM9wHEqsiPApIKQAwAwg4Y8lVL+C4AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[43]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">O</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;O&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="O">O:</strong> <a class="ProveItLink" href="../__pv_it/common/2bbb17283019488d58a9b862d837c9ec12ec4a920/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAOBAMAAAACpFvcAAAALVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAOrOgAAAADnRSTlMAEHaZiatmzTK7791EItTw
+6Y4AAAAJcEhZcwAADsQAAA7EAZUrDhsAAABkSURBVAjXY2BgYFR2CWMAAfcGBtYCIC0+AUgsAeJq
+kGgcAwPLGxDDr4HhHkiawe4Ag58CiLHvAggBTXjFwPAOJMD0BCgIYkgtAGoUAOluYGDoS4AawbSC
+gXE6SANDq4nxASAFACZWFtJIJUeyAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[44]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">P</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;P&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="P">P:</strong> <a class="ProveItLink" href="../__pv_it/common/de55da274ba0f49c86925fbf3828021c04d27faf0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAOBAMAAADUAYG5AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAdrurzZkQ7zJUiSLd
+ZkQEbk8lAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAWklEQVQI12NgYBD6r2zkmsAABF8YGJjKgDTH
+RwYGTiBmYPwBxL+ADKYPQAzkMPArMDD0CzCAiV0nQZrkrVbdA9EM+gxQ8AVKc/yCMhj/QRksHyA0
+q/4nkBkMAGrBE2oHiyZAAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[45]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Q</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;Q&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="Q">Q:</strong> <a class="ProveItLink" href="../__pv_it/common/d72bb8b07403efe79afab564c36a28e21330e5f90/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAASBAMAAAB2sJk8AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIomZq2bNMhC7791E
+VHYkqjbgAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAgklEQVQI12NgYGBUVnJlAAG1AgaWBCDdNgFI
+LAbibJCoPwMD83cQQ7+AQR4kw2B/gMH+AoiRL8CwvwFIc/xiYPgFEmD9ysCwG8ToSgBp5LnAYCXA
+wFB/IVyUaSFQlG/hAyYXkAaGkknaBxgKwLZyHuATgDAcroFpBub/3yEM9l1AawBt/xzBtQnGvwAA
+AABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[46]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">R</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;R&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="R">R:</strong> <a class="ProveItLink" href="../__pv_it/common/647ca33d6b96e29d5aa85a15d2241c7ebd0c6e4b0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAOBAMAAADUAYG5AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAdrurVCIyzd1EiZkQ
+72ZdbUU/AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAcElEQVQI12NgYBD6r6ykwgACnxgY4g2ANNtH
+Bgamr0AG4zcGBnYQg/0DA0O+ApDBr8DA2gxSO19RyjoBxFgfwGN0AMSoBcouADE+MzCcBxnD+Y+B
+wX8DkMH9B6hMgI2BIRbIeC8whYFr1aoHDNyFDwCHbBoCwDACPwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[47]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">S</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;S&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="S">S:</strong> <a class="ProveItLink" href="../__pv_it/common/38f47c5670ea8c5b56253448e95d8afb56bc09b40/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAAOBAMAAAAGUYvhAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAVJmJZkS7dhDNMqsi
+791pxlESAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAX0lEQVQI12NgYGBUMmYJYGBgSGfgyAdSTAoM
+DJ5Amn8BA0M4kI53YGBYBaT7PwMFgIDl//89YEZ7/l8GCNAHamcBKRFgYOgG0ucbGBjkgLQyEOsZ
+MDBvANIK0dobgRQAj4AQu33LPq4AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[48]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">T</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;T&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="T">T:</strong> <a class="ProveItLink" href="../__pv_it/common/69c70dfa5f18cd09af12f2dcafa9764efe6f8cbd0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAOBAMAAAACpFvcAAAALVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAOrOgAAAADnRSTlMAEN27q81272YimVREiemR
+V3wAAAAJcEhZcwAADsQAAA7EAZUrDhsAAABbSURBVAjXY2BUMnFSdglKYGBzZGBXYGBpYGBhYJi3
+gIH7AMMMBoa+DQxsAgwHGBj8BBh4GECgiAECOF9BGRyvoQyWh1AG0BgIABoDAUBjICBOAEzxOr8z
+SQDSAElYD+ghKmf2AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[49]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">U</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;U&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="U">U:</strong> <a class="ProveItLink" href="../__pv_it/common/2586cdae2fd2785a5bcbf61f99f7aaf8229d775e0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAOBAMAAAACpFvcAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIqvdVO/NdolEmRC7
+MmaVuGqYAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAZUlEQVQI12MQsjdyYFD9VsDA0D+BgYG9gYGB
+IR+IuTYAiT9AzATEnN+BxA4g5vgLJF4CMXMAkFgAxPsVgAQI+z9gYGAEmsLQfwGoTgDEgOpm8Aea
+pQhisC1gELoAYjD0aIGUMgAALSwTKsmNdREAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[50]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">V</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;V&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="V">V:</strong> <a class="ProveItLink" href="../__pv_it/common/6d80eb1398b2335bf9ec427954b851b7094dced50/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAOBAMAAAACpFvcAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAds27VDLdmRBEq+8i
+iWYU/rnEAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAWUlEQVQI12MQ+m/CwBD2rYCB4xMDAwPnAiCx
+G4i5gJhBH4hFQYz1Bxh4LoAY9ydAZBjeP2B4CWbMvwCRYeg3gMgw8CdAZBjYfkBkGJg/Q2gG9p9Q
+Bl8BmAIA0MMU2FG+6lYAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[51]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">W</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;W&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="W">W:</strong> <a class="ProveItLink" href="../__pv_it/common/be2a62cde606eb0642ab6f06c6e4aa2c50ff45540/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABUAAAAOBAMAAAAyKEr9AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAic3vu0Sr3RBUZiKZ
+djLVooVUAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAh0lEQVQI12MQ+uzKkPw9g2H65wUMrB8ZGBi/
+MjCwJjAwcP+BsBkZGBg4vjEwMP1iYAgFshk+MTDc+svAIABimzNwz/vIwLUBxC5mYATq6QUxGfQZ
+5nF8gShh8G+4wPCJNQDMPr+3gcGcEcxkkF8J1LMCwr7vANSzAMJeDzTNHcJkCARiUTALAHJrICFY
+oHqUAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[52]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">X</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;X&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="X">X:</strong> <a class="ProveItLink" href="../__pv_it/common/f1ca094affb79f5011ff4d63eb4e121bfbde7f330/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAAOBAMAAADQ9FGEAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAZrvvdhDdzVSrIjKZ
+iUQw4UTKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAYklEQVQI12NgYBD6b8IQ9rmCAQjmNzBwaIEY
+DPsVGNaAGQzsv1gnQFiMfyIZoMB+Kox13wHGmp8AZfCs/Adlneb+BGHwbmDIXwBm+TEwyF8AMYKA
+JP9XIGOTvTUDd/23AwwAIdkX15Iso/wAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[53]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Y</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;Y&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="Y">Y:</strong> <a class="ProveItLink" href="../__pv_it/common/72295dc899ebc16ab63a19612b428270c18ac53b0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAOBAMAAADUAYG5AAAALVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAOrOgAAAADnRSTlMAEKvd7yJUdkTNu2aJmYeN
+iygAAAAJcEhZcwAADsQAAA7EAZUrDhsAAABYSURBVAjXYxCycwpgYPNzZ2Dom8DAwLAaiJmfMjCw
+NwAZ7G8YGNKANAPjEwaOAhCDYV1DDJhmyFO8AGGwPILQDFwPoQyWCVBG3AEoY18DlLEOSt96pw6i
+AK7BEbPyHx5DAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[54]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Z</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;Z&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="Z">Z:</strong> <a class="ProveItLink" href="../__pv_it/common/aa55a17e9cd859874d9c4acf27d65631617e4fc60/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOBAMAAADtZjDiAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMA782r3URmEJlUIrsy
+iXbFnxI6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAaElEQVQI12NgYJAXMjb6wsDA+o2BoUScgYFj
+AgOD4gIGBmYGBu4/DAwMPAwM/QEMIMD7DUwx5D8AU5w/INx4A5AaBp7fQL1AeqECA0MYAwO7SwED
+gzsDA5MUA8OhDQwM9t67Ff8nMAAAp+MRyCYl7toAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[55]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">a_star</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;a_star&#39;</span><span class="p">,</span> <span class="s2">&quot;a^*&quot;</span><span class="p">,</span> <span class="n">fence_when_forced</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="a_star">a_star:</strong> <a class="ProveItLink" href="../__pv_it/common/e921074385baddd0a5d6e570771aec4936332e1a0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQBAMAAAAG6llRAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIquJdkTvuxBmmd1U
+zTKBpmoTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAY0lEQVQI12NggAApBhg418UCY0qZ68CYrGs9
+YEzn5rdwxUJwFgMjmFB2dIDywwTYf0BYHJkMXBsgTK4PDNwGECZbAUN/AITZ78AwH6qr/wCDLo8A
+mMnuwLOLC2qCip2QH5gFAKy6D1qW6ZdeAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[56]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">b_star</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;b_star&#39;</span><span class="p">,</span> <span class="s2">&quot;b^*&quot;</span><span class="p">,</span> <span class="n">fence_when_forced</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="b_star">b_star:</strong> <a class="ProveItLink" href="../__pv_it/common/524f5bfa0dd8ee2f185db8839c0246a0a05d816f0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAAQBAMAAAACH4lsAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAELvv3c2ZVESJq3Yi
+MmZ3LnoBAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAcUlEQVQI12NgAINjDFBQK8bNwMCo7AAUmrQc
+yGdNYGDgSN0IZPEXMDDslLwKZPULAIlTINVTQAQPiIjavRxiAONXAfkDYBb7RwbmDWAWWwAD/wQw
+i2UCQ38BmAU0Ll8AwrrAaAfRy/WAKQFqyso8CAMACMkVzkHEHkMAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[57]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">c_star</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;c_star&#39;</span><span class="p">,</span> <span class="s2">&quot;c^*&quot;</span><span class="p">,</span> <span class="n">fence_when_forced</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="c_star">c_star:</strong> <a class="ProveItLink" href="../__pv_it/common/45cf38972474ac0b02d58e637b7120a47706d73f0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAAQBAMAAAACH4lsAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAiXZmMiLdVJm77xBE
+q833A+o+AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAVUlEQVQI12NgAIMIBigo2cEEZUVIXoeyePq0
+oSzFjX4whbEwBgMrmBRSdoBwwwo4JkBYiQxcCmAGx2+YWq4JMNZ+BRiL34CB4QBE3QQGRqgpgsYQ
+OwHl2Aw3fk9Y+AAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[58]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">d_star</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;d_star&#39;</span><span class="p">,</span> <span class="s2">&quot;d^*&quot;</span><span class="p">,</span> <span class="n">fence_when_forced</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="d_star">d_star:</strong> <a class="ProveItLink" href="../__pv_it/common/7b726b46d7e58b3dd459257f56ef7658158a115f0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAAQBAMAAAAG6llRAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAMs3vmVREEIndIqt2
+u2aBbGR5AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAcklEQVQI12NggIAlDDAQWMIDphmVHZb0boWI
+8QewOR2HMPMLTlQIQZidDAyroZpUGBi4QDTXjoNfoULJC3i/Q1jsdgwsChAmywcGzgYIk/kCQ30C
+hFl/gOE9VFd9AMMm1gVgJu8B1iksUBP2NK4+CGYBAN2wGUZ6pVPiAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[59]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Am</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">m</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="Am">Am:</strong> <a class="ProveItLink" href="../__pv_it/common/0c7e7950f7edd578791c0f74d6b06301e43978820/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADMAAAAVBAMAAAAZessyAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIs1UmauJMnZmRLsQ
+3e++988cAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABLUlEQVQoz2NgQAKMCKYAjCEEoZoRUitgDH0w
+yZyAkOKYAKGZ/4OpQ8iG60Aolniw0Z7IUlMgVGJ+AYh6gCzFdwDssIZ+A5CxCshSTGDLWBjsQTQL
+0BUrYsS6G8qyFzAwsAWApBYz1CdA1SVsbeD5uYAZaDQn2AwHBnmQEl4DBq4FtxkYfzBwfgAaD7KZ
+Y4tL/AaQxQsYeHh+MTD/YWAB6mAHSjOcYGDgvwCRYmD+ABLnA5rP9QBsHgPvA4iBDKwKDLwJDOsF
+DjAwA1VzAW1nAunmbmAAqT+/gCGIcQIDJ9AOOZDoRwaIc+ULGOYzMGxjA3vl9H8dBub9n4CmswON
+WMvA0MLAsKQRaPwC5AC4jsyRZcASohCAEtYM3AJIEb4BRYpnA3ZlICCBYAIdAgBNmj+pPVRwGQAA
+AABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[60]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">b_of_j</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="b_of_j">b_of_j:</strong> <a class="ProveItLink" href="../__pv_it/common/b2eb53caae09b44c23921759afb8e0a23b943e240/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAVBAMAAADcCFGjAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAELvv3c2ZVESJq3Yi
+MmZ3LnoBAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA+klEQVQY02NggIEDYJKHAQG4C8AUxwYGBkZl
+BzC7EkRcEmDYB6RYE0AcxgAQuRXIFWBg4AfrYHsANYAPqKJfAMRihhtqyMAwBcwohQvFMTBE7V4O
+ZGSCzNu9AEjOYmD8KiB/ACzHwMZgBySfMrB/ZGAGusUdyNnD8B1IFjOwBTDwT2BgsAByBIDSDAz3
+GVgmMPQXQIQY2ECubgY5K18AohEkzcBQwsB/gRFkqDZI6HwDkHjEwPWAKQFsNRC8ZwA7h3FlHohx
+BUQsAhEeMDezXAAS1qAAc2BA+HY530dk/zMw6PB+ZwGFySFEqAoxZGeApRBCPBsg4X2AAQDWajB/
+zuJM7QAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[61]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">b_of_k</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="b_of_k">b_of_k:</strong> <a class="ProveItLink" href="../__pv_it/common/05b2068f19cf101f841ff850a15872bab852b8540/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACYAAAAVBAMAAADY/YGeAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAELvv3c2ZVESJq3Yi
+MmZ3LnoBAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABDUlEQVQY02NggIEDEIqHAQG4CyA0xwYGBkZl
+BzC7koFByATE2AfErAkgFmMAkAgDsVgFGBj4wZrYHgCJ7yAWH1BNvwCIxQwy6iPYFEMGhilgRikQ
+cxqAmXEMDFG7lwMZmSCTFrBPA2qaxcD4VUD+AFiSQf5B+WGgsU8Z2D8yMAOd5A4Uqz9RcBUoXczA
+FsDAP4GBwQIolvwWbN59BpYJDP0FEDHXtAsgsWaQ8/IFwHoZv3P8BYmVMPBfYLQDMrSBjv3I+J0b
+yHzEwPWACeS5WQwMXAGMfznBzmJcmQfScIWBgamAYdtGINMDFlQsF2AsHgcYiy8BxgKHBgTowBiH
+EOEshCEJNGYDNA4OMAAAaXE3Jyyu4R4AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[62]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Bm</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">B</span><span class="p">,</span><span class="n">m</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="Bm">Bm:</strong> <a class="ProveItLink" href="../__pv_it/common/152ff594246d33cd6d708313f3fe3a27dd19db020/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADUAAAAVBAMAAAAUZLt1AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAZrurzTLvInZEmRDd
+VIkafcLnAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABPklEQVQoz21Ru0oDQRQ9k83uuplMWCzTZEEQ
+Gx+w2ykYbG3yBb4a2y0tRBcbRRCnkiCC5A9S2EcEez9h8QdMiGLUQu+dIDsrXpiZM3PmnnNnLmCH
+X8AUf+KigF0zz37H8UaHkcoLbiY0yx7gvDG4szU2jckECD4Z9WyuyZOgHDFhtGNzXp8mZwhU99mu
+bXNVNvQiyDWupUaldFePTrKtZw00Vuhoe+EsCX9v5nOZHGlF6oJVLlOoXebqTwj0A9cmyIZ5zNN4
+YU1PQ8oPqC/UKMclHmMarWzKQQ2Z8Mg5oDx3RMfreqoJp416jtu0D3VPn/NO/Cv7VSiZMgYaiR9C
+RFQd5V6ZD+KqjztoAUsN8yJneRwni+a1LqncAOfA9Sk56FKLHu3NYbl9TXvTK3MVq9l+VOZk9P89
+EwcFpGp+AG2zQmFueF+eAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[63]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Cn</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">C</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="Cn">Cn:</strong> <a class="ProveItLink" href="../__pv_it/common/65ceb41563d7e9159b5e9ee81c0a489299f07c5b0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACwAAAAVBAMAAADP3xFXAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEHa7q2Yiie9Umd0y
+zUTye3nKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABEUlEQVQY02NgQAIJEIqNAQUwTYDQfAogklHZ
+xZWtAMiYDpNXBREaigycqwOA0hdgwrwCDAzCe4CM9UBjuQJgwqwLGBhuAKUYXgAxB8KWRgb2nyD6
+FBDPRQhfZcjfAKJlgHg50A0qYkVGQGYJQ70CQgkDO7MTgzzQmliG/Qkw4Z0MDO+4DRjyDzAwzGDo
+BwuBrO0DUvIPGOYD2ecZ9oNEOQ9AhBnmMzD4gh0GcjEDO9QQkNhXRgaG2Qz5ICsLQcIgJ7QzcH4E
+qglm4PzKwPAcZDTQVQxsfxiYLsSA3Spl4vUAbO1poLs3MDC6AsNxH1K4ch+Asdg2IAmDAggCEIEG
+AmYwRjJK7AhjyEOMhAYPUwIDAEbWNHaFWJWHAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[64]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">PofA</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="PofA">PofA:</strong> <a class="ProveItLink" href="../__pv_it/common/179eec53aec5f67dcadb70a64bbe503739c53abe0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAVBAMAAAD2uKAMAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAdrurzZkQ7zJUiSLd
+ZkQEbk8lAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABHUlEQVQoz2NgQAYbYAxuBlTAOAFMbWFg4BMA
+MYT+Kxu5JoBYsyAK/IFYFsz6wsDAVAak2RzAXM7/QIIFpJTjI5AHxAysF8AyrPZA63gDQKb/AOJf
+QAY7xLDV6xuAJMgQpg9ADJRlmAJxloA8yCG+QMyvwMDQD3JLFMQwhvkgUxczgEV3nWSAKmNgeMnQ
+vwBIXQFieatV98BiYGmGAIb9BkBqOhDrwzxaB/ataqi9AsgkiHeQZBKBFh8A0s+B3vkFkzkJMYyB
+pwBIzwFq/weTUQRiPqC7WIDeYLgEpcEA5NDtIA/+BnuBVf+TAFSmh4Eh6b8bA6f+F6CzzyFHAk8D
+gs19AFkGHIpQAA1dGNBGMDehxmkSVkWQYIbH+wYGAAUzPGBwqko8AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[65]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">PofB</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">B</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="PofB">PofB:</strong> <a class="ProveItLink" href="../__pv_it/common/659ee98e18fe8cf68d21bf5ccc69f7d39f4a9e800/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADMAAAAVBAMAAAAZessyAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAdrurzZkQ7zJUiSLd
+ZkQEbk8lAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABNklEQVQoz2NgQAYbsLAggHECnPkQTAr9VzZy
+TQCxZgHxpf/Gxk4NDIwXwHJfGBiYyoA0mwOIV8TAwPyDgcENxOb4yMDACcQMrCCV3EAW31cGhqtg
+G4BqGH8BGewgHi+QxwuUZgdZwfQBiIECDFNAUsxAHks1EIOM4FdgYOgXADKiQFLsCgxsNg0MDFwG
+DGDhXSdBor4gol9R0ASkgRfkJnmrVffALgXLy29g4KwF0pwFQEIf5s06EKEOxOuBBnJ8gHgLSeoz
+EN8H2swH1MXxCyYFMpDjL5CwfwA08ADQS/9gUoogT/4GSoPM4QW6m+UDTGoxELMAzXkOCiTWBQys
++p8EoFI9QA/rfzY20QRxeB4gxwlPAxJnD0p08QYgcWJRo1IbweRWQJVKQjCZ0FIAtwCcKc3AAACD
+7UFe0ralugAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[66]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Pk</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="Pk">Pk:</strong> <a class="ProveItLink" href="../__pv_it/common/10f6db3d92f2a6872bea0c3d23d18e515274bbde0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC0AAAAVBAMAAAAgHXppAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAdrurzZkQ7zJUiSLd
+ZkQEbk8lAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABG0lEQVQY02NgQAYbUCg4YJwAoR+CSaH/ykau
+CSDWLAaGpBqQ/AWwxBcGBqYyIM3mACRcQSJuIILjIwMDJxAzsIKU/QQJXQWb+gOIfwEZ7EDM9w0k
+xA4ylukDEAPlGKYAMVcBSJwFpJNfgYGhXwDIiAKJGHAuTWDgMmAAi+06CVLlC8T5F2Zuv8DAC3KB
+vNWqe2B3gSTn75vQsoGBE2SaPsxbdUAcfgPsxA8Q5yPEj4Q2gFwFVM/xCyYONIftJx/IZZwHgE7/
+BxNXZGDg/cb2kxFIAZ3I8gEmvpiBgdmB7QcX0OcLGFj1PwlAxXuA/pvAICrGwMDzADmYeRpgrD0o
+wc8bAGPFosaLNpTmVkAVT4LSTGgRyQ11gTQDAwBocD0Lhjke+AAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[67]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Px</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="Px">Px:</strong> <a class="ProveItLink" href="../__pv_it/common/32fc7f13c9e7e89074583aa5bfc208d125f839970/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC4AAAAVBAMAAADLKsFqAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAdrurzZkQ7zJUiSLd
+ZkQEbk8lAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABBUlEQVQY02NgQAYbIBQ3AypgnACh+QRApNB/
+ZSPXBBBrFkyBLJj8wsDAVAak2Rxg4iwgZRwfGRg4gZiB9QJMnDcAZOoPIP4FZLAjbAJpZ/oAxEA5
+hikIcV8g5ldgYOgHuSAKiBOFM1YBXbWYASy26yRMUQCjIesBBoYrQKa81ap7YM1ASd4NvN+YgdZP
+B3L1YYbWAd3GwAp2bD/E+XBxoKPAfn0OVPILJg625P0GNqCn5gCd/g8mrsjAkPTAnIELyLwE9PMH
+mDjQcfPbwhlegp3Mqv9JACrew8CQKsgZCwrUc8jBzNMAY3EfQBYHhxYYIEIQDLRhjE2o8ZWEoQBq
+LNQFjBsYAPX/NdAdv2WaAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[68]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Py</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="Py">Py:</strong> <a class="ProveItLink" href="../__pv_it/common/da54d8e4a8a27a02e3008e3dbdbc9c2042ade4470/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC0AAAAVBAMAAAAgHXppAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAdrurzZkQ7zJUiSLd
+ZkQEbk8lAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABHklEQVQY02NgQAYbUCg4YJwAoR+CSaH/ykau
+CSDWLJj8BTD1hYGBqQxIsznANLqBCI6PDAycQMzAegEmfhWs6wcQ/wIy2OEWsYOMZfoAxEA5hilw
+cRaQTn4FBoZ+ASAjCmiF6AWGZAYGLgMGsNiukyBVvkABzgKG+wwMvCAXyFutugfWDZTsZD3AYAR0
+RgGQqw8ztY6BIYFdgKEQ6MQPEOfDxRneJ3AAncAHVM/xCyYOsiSEgREoxnkA6PR/MHFFIFZmYAK6
+hRfoRJYPMPHFQBzM8B7odtYFDKz6nwSg4j1AnLwwHhjKPA+Qg5mnAUQuAeI9KMHPG8DA5cBWCWTF
+osaLNgOPAPMCBgZuBVTxJAbOi3GgkESLSG6oC6QZGAAcTjjh8GQ43gAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[69]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Pxy</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="Pxy">Pxy:</strong> <a class="ProveItLink" href="../__pv_it/common/4e61be9aa333d2df63a3be6228e145aa7632e0400/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEIAAAAVBAMAAAAA8SWUAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAdrurzZkQ7zJUiSLd
+ZkQEbk8lAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABa0lEQVQoz21RPUjDUBD+kpq0aZv6RxEHsdDR
+obGLkMnFUegmiIVGFB11cXZyTbcuigWdOkVHp7opiBTRVbqJk1WkSMWf772mJW0auLsv9767+949
+IPAlMPwNZ2ZDjNSE8FN/2fxKicCohhiYk/4TUA8Yt8IEjInS2DvLaSiOYJgFOuWL1iHYG8GAaK62
+aGQZy6MYq7TxDOBSsyaEOtO7tbI8corQLeAM8vTqVohq0BWURa0uGdUKTHZ/JJy3a88ilWSt6Znt
+iGAiVt5AhN0rxDl/YrTJPDRfjY59RDnb7a6jz4DMdtfZhnsIvLCs46eSUuGbp5fkL5vNMBxzFb8+
+Q2X1ZnMJcUBwVAtZhgdeoeUz4rzb6dEaXqGLwZqV+mFYh5b78CfHeMvtSaPIYXdsotvpb2bvg+u7
+6SNDSonzWol6kPHUR5SCc+ywm9YIMlSvhxzaNWz6y4FH0jM9JJSdpMV+Fgbf8SL0soqHfy+/SSb0
+EJAAAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[70]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Pxyz</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="Pxyz">Pxyz:</strong> <a class="ProveItLink" href="../__pv_it/common/74e067b301a98c748fdb20c784c9162fac1e28d00/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFUAAAAVBAMAAADFg78FAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAdrurzZkQ7zJUiSLd
+ZkQEbk8lAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABpElEQVQoz32TP0gCURzHv6feeed5ZoUENWQ4
+NmgtgZMNtQVuQSSoEEVTQTSGNDQJOgRBEIlFg5NzNNRm0ODSGtfYEF0REkZ/fu+9e6WC/uB37/Pe
+73vv/X6/dwd0Wh19rTeklPtrH/lz5Cc2u5BldNxfCqXJh3fAs0ujlhqgxSJ76K+AQQ61OUh7z3f/
+IG8T+AdJ4Wdpehxy0uNwoNbHTh2KAqUwwQp5bnSjJrqRy0BLCFmxYTYRYBPSXd6ypSXytDKjXnNB
+5QiWw0mbr54BFqt8Mll74Gv0glW3Wl5eol5ehTfK180sLqj8LcK4zGiPFFDdxmnYhj/sRjapLt0R
+7f3T4j8eaqFUEGiytRDtq7ellif9Utf4HbIDxtzAM50Cg8pQvqV2CsjbcwgAvJUJxAQZZXipFEre
+50gtFXt6sIwnaCwtNRH6ErRfHW/QvAI1/iYzLAJrw0aG2ntH22nJyKegirFjA0G782aCBUkGTzmQ
+ksTsqusWrbQkShnnWC8LEpbpvvJpCTnyGyRdEn2LdmvzElgFJxHbJW6enp/IDPf/zCaAX0UsVy7w
+m8spAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[71]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Pq</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="Pq">Pq:</strong> <a class="ProveItLink" href="../__pv_it/common/693ef0d7e025a2a270a2a06d55808e81d24556050/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACwAAAAVBAMAAADP3xFXAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAdrurzZkQ7zJUiSLd
+ZkQEbk8lAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABEklEQVQY02NgQALcKBQcSEIoPgEQKfRf2cg1
+AcjgXACVlgWTXxgYmMqAdApMFwtIEcdHoEIgZoiFCfMGAAnGH0D8C8gogFsC0sv0AYiBUpwOcGFf
+IOZXYGDoB1rOCrKR23CZBAPDYgaw0K6TIIsuAIk3G5iBmq8AWfJWq+6BdPJMYGBgq2VgBpo1HcjV
+hxrI/gBo0AcGHqBZ/RBnw4XZFRj2A6nnQGf/ggqDDMkXYLgPZM4BOvkfVJgJ6Jr8CQwqQOYloAM+
+QIW5DEBSvCDNUQys+p8EIMIcB4AuMZQEaT6HHK4nwOEB1Mx9AFn4KogAOZv1ArIw0waQM4HO3oQS
+OWzAwOHyP8XAoI0aaRshFOMGBgAKtzkkdkjoYwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[72]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">QofA</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">A</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="QofA">QofA:</strong> <a class="ProveItLink" href="../__pv_it/common/a3b5f30b31e2e6c8d4ff71eeb41c35c44be51cd10/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADEAAAAVBAMAAAAdjxsPAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIomZq2bNMhC7791E
+VHYkqjbgAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABRklEQVQoz11RMUvDQBT+0liT1DYEwUmoouDi
+oGBdXNpBZwsdXIOT4GAGdzM5OAX/QFP8A92EOpilq2QSnKyjg1BFLSpS33dHY/Tg3vvefe++e+8e
+kFtGhjz8XU+a94EbjZaXdhSoLCo3PQTcJtFKgCmf4FTfvBcGB4wjMRc82tRM7VlMS/Yho12aWBGF
+2ZHYUgiTHmuBPKMkUXW/+VgTCxRDPQFMXcB65Y03G6inDI88lSarnFov4oo+rkPx9qeYGZVjwnhl
+BzF4hiIFSgnh40btQ5w1xBXDM3/C2APgi6Kx1FtOseVN1EzZPap1cZLuzRU6vOhIOvosh/oR3M6g
+sB1CFwqD3bY93cLx+WqCgI92YbffQ9yN90ValeMkrprHZW4g88o6jVvlWzlG/645HumM30ka6s9g
+9VT3sKOMcf6Nu5qhB+AHo5JHTWUkwN0AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[73]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Qx</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="Qx">Qx:</strong> <a class="ProveItLink" href="../__pv_it/common/fce49534291e406d3d43684e225f1a2779a61f030/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC0AAAAVBAMAAAAgHXppAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIomZq2bNMhC7791E
+VHYkqjbgAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABM0lEQVQY02NgQAKMUFqAARW8hdLnIKqUlVzB
+DF4FqDhfAIhUK2BgSQAx2uAaM0C8CUBiMYhnChcPBuJsEMMfRCyAi3M1MDB/BzH0C4DGJ8DF2QIY
+5EHGMNgfYGBgBlrL8c6jSJeBgcmBwf4CSDxfAKyIgZnhyQNrBgbWBIb9DUBhjl9AghuoIpAhvgHo
+aN4FDCARBtavIMuAZhUwmIH47B8YdoPorgSoOAPDOhDBswDoQp4LDFYCUHMYeD4ydADN2cBQfyFc
+lGkhSBHnAwaOOSwLGIDOYp3AwLfwAZMLyG6Q43i/Ny8Aagc7uWSS9gGgfUDLNjBw2D24HAsyEmwV
+5wE+cIhvh/tXGkxyOlyDhxYEQEKQ+f93iDwsnhjBYcPAvgscFgwcE6DinGgRKQelHzIwAACPCz/5
+c4ZXDAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[74]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Qy</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="Qy">Qy:</strong> <a class="ProveItLink" href="../__pv_it/common/5941bdda6544fc36bf4c4fbcb7f152f93ac5c5ab0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACwAAAAVBAMAAADP3xFXAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIomZq2bNMhC7791E
+VHYkqjbgAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABPElEQVQY01WRMUsDQRCFv+QS7y6eIY2FjQYV
+GwtFSKNFjqC1AUGxu8bKwhT2Z2WRQqL4Aww2VpJOUNGrra7RIjaBYCMIWoiSRmf2TDBbzLx5y5s3
+Owv/TmooDc5bkryOuZyZXjPlWPHv+kXDXI1MoOCwrxo5kKIh4FyrUp/OLsKugnUNZwOTC6wvzQs1
+aR0M6B2mtAflCCxxPCrh+DBLOVZ6ryBGVSi2yb7DJvfiitOTMBpjxytkRN6mZ6w/JeQiHC7JyWNC
+bpSuBwmN900o7g8ymhezXEiaYAW8CnwmjLfG002VuKJ2fU4FbpNvdtKraktaJrN8T22WYP9kPkL6
+YbdkpEr3Q+CtUUd57c2V0Yh7qmVo/8k8eUO2SV2Nq1paP2YvuAXuqAiYMKV9bRaA0+CxK8NzPPxp
+k0kSp1+adkRggPyzgAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[75]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Qz</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="Qz">Qz:</strong> <a class="ProveItLink" href="../__pv_it/common/12e031e181a11cc28796e3734ec9b9c408f199aa0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACwAAAAVBAMAAADP3xFXAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIomZq2bNMhC7791E
+VHYkqjbgAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABJ0lEQVQY02NgQAKMKBQcvIVQPA/AkspKrmAu
+rwJU+imIUCtgYEkAMdpgutgagJwJQMZiEM8UJsxqwMCQDWL4g4gFcEtWMDB/B9H6BUCjE+DCqQzy
+IDMY7A8wMDCDbKzezhjAwKDCYH8BJJwvALQIyOfI01QBcsMY9gNtZeD4BSS4gQoYGxg0gMxbDL/A
+Vn8FElwHQMwmkLJ6ht0gdlcCTJgR7MNTQKfxXGCwEoAawnCUgQNI3maovxAuyrQQpIQTqJD3AgML
+kBnJwLfwAZMLyDwGJgcGhkrNR9uBTCMGhpJJ2gcYgL5hYN/AwKDAuwxkwx6w7gN8ILMZtsPDfQNY
+2OEamBcME2YOAJP/weHCwCkAFZYEk+y7wAHAwDEBKjwRNdLkIBTQJgBFeTuVS7XTWgAAAABJRU5E
+rkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[76]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Rx</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="Rx">Rx:</strong> <a class="ProveItLink" href="../__pv_it/common/2a336e2cf123a511b5db96282fa835d6efb007c90/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC0AAAAVBAMAAAAgHXppAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAdrurVCIyzd1EiZkQ
+72ZdbUU/AAAACXBIWXMAAA7EAAAOxAGVKw4bAAABIklEQVQY011RLU8DQRQc2t4d19uW5cugjg9T
+12AhpB5BcTWEagzgIWlCgi4JHkRVDaBANXUISDj+QQWoivKRVhFg3mbZ9HjizcvkvZm5PWCsPItV
+pGvO4pnpMz/LSysy5C4tP9Ez8AHslon37vBImv8OZIYcOo7vm6sREAifOL7QZQvegP2Y8geOD8Rg
+KoZ3Qoxoq6bX91pAXuwuFhfW6nYpwqy+A4pyelVVq6I3WQFeMehuUFKsjiklyQtNoI5bE5GW+ASe
+ypYHnqWF3A+/ga1rq4NwiEfqNGj1RQvt89s0VCmbgJpFxt4hP9DnJlxu9JCEFRM53273EB0yo9+A
+utGbLyLZHH/mUzfVUs/fd1MnxWf+/pMXp3gV/1+wtW1xHvgFKvY/GGxcyYMAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[77]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Ry</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="Ry">Ry:</strong> <a class="ProveItLink" href="../__pv_it/common/85097678e92ec4038a2f5595a83450528519e5fc0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC0AAAAVBAMAAAAgHXppAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAdrurVCIyzd1EiZkQ
+72ZdbUU/AAAACXBIWXMAAA7EAAAOxAGVKw4bAAABMklEQVQY012RO0vDUBiG38bcmlsPgosuqdW9
+dHVxE7rY0UV0cHCz7ioF/QEK7qk4CF0sOEgdNNgfoIKLW5wd6gWdRH3PaRMaD3yXPCff9QDjp5Ez
+2SksDu2R0pO/ldk55dXT+0SZd2CtSus108Adqcw3QPuk4yYpf1FRX4AluZ8V8mMq6xXYCuksZdyS
+kaUQxr78umKJmQR9wJHlovL0wrrkewT6PQZAIDs4b3g1mQ8HwIbbQg3gLbDLVG3Jn4DYF3hgiyyJ
+D+CuOuKIYpPtFfl/8QdY7o7y4BIFMr3Fab5ZQphkZUoFGmMDtr1KPhDHZKeUC0Ts3W3D6XQSuNty
+kE1K/+SGW7YPx9dsqynOKCu59QddOE3vkd51/l3mYYsJjmKEeX4L/blHq/17SEMM7RTwB9/TQ0S7
+mmsrAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[78]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Rz</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="Rz">Rz:</strong> <a class="ProveItLink" href="../__pv_it/common/4c988f9d4850adaa938ef75e237d34ee75b692670/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACwAAAAVBAMAAADP3xFXAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAdrurVCIyzd1EiZkQ
+72ZdbUU/AAAACXBIWXMAAA7EAAAOxAGVKw4bAAABGUlEQVQY02NgQAKsKBQciEAoTgEQKfRfWUkF
+xGBZAJWWA5OfGBjiDYD0cZgu9gNAgu0jAwPTVyBjH0yYbwOQYPwGlAcJX4Bbcgek5QMDQ74C0OgC
+uHAdEPMrMLA2A2lukI0ZbawPGBgWA1nzFaWsE0C6gHyewkUgoedAvD6AxwhkNYcD0CcHGNYAmb5A
+XAs0B6SfdwLI2FMgFflA/JmB4bwBTJgV7MO5QK/+Y2Dw3wA1hGEeAw+Q9AA64A/QeAE2oJeAClkc
+GJiBwo8YGGKBwu8FpjAwcAFNSlok1QYU3sXAtWrVAwbuQqDj2BoYGBawXAfZ0Ikcrm3wcG9AFn4N
+Y3A/QBZmCoAyglAih0cBylBFjbRACMUYwAAAPNU53jHKDQMAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[79]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">fa</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="fa">fa:</strong> <a class="ProveItLink" href="../__pv_it/common/87a201cf64512173f031b6f78a7cd5ef415a99ec0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAVBAMAAADGNLEtAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAmYkQqzLvVES73WZ2
+Is1wFLxSAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABA0lEQVQY02NggANeFAoKjkMojgNgilHJAEiy
+K0AlT4NJlbACIGkH08EHUsKQ3gmipGGC3AIgQz6D2Qlww5OBmGkBiMX+AC74GqjabQlIPSPInis6
+d0B2ADE/2A18G4AG5TLMBxq/D8i9HwAS5AK6wGwDgxSQWQbE9WCD2BoYGOQZGBYBmfFArAUXzGRg
+/gFktgHxFAaoduY/DNwfgMwqIM4BC3IeYGD+zsDyoJaBYScwVH6ABZkcGBjmMFQJAJ0nBHT1B7Ag
+K9ALJodifYBOWQF0tQPEH0vh4bqAoYSvAMLeCBNk3MCwEhZknBegjJsMDHtkoWzmCVDGXOTouAOh
+eC4wAAC3OjE+2272cgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[80]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">fb</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="fb">fb:</strong> <a class="ProveItLink" href="../__pv_it/common/f7c42e5722975eba184a89eadc6ac91c8e9658490/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACYAAAAVBAMAAADY/YGeAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAmYkQqzLvVES73WZ2
+Is1wFLxSAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABBUlEQVQY02NggANeJBIGjoNJjgNgilHJAEiy
+KzBYZgHp02AxlbACIGkHxA+BmA+kgCG9E0RJA/F3IOYWAJnwGaw6AcZKBmKmBSAW+wMY6zVQrdsS
+kGpGBaBRPkeAJqsAefxg2/k2MDDYP2b+y8CwD8i7HwAS4wKqqDdgyGFgKAPy6sFWsDUwMMgxMHxi
+YIgH8rTgYosYOICuaQPypjDA9H5nYAS6pgrIywGLcQJt+spgBrRpJzAgfoDFmBwYGLwZJgJZQkDH
+fgCLsQLda6IIVMawAuhYB0hQLYUF4wKGEr4CCHsjVIxxA8NKOyib8wKEvsnAsEcWKsY8AULPRQ77
+O2CS5wIDADq2NLoLgl7kAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[81]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">fab</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="fab">fab:</strong> <a class="ProveItLink" href="../__pv_it/common/e1663c210c4dd72ccee533a2a3ae087f9cc778300/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADoAAAAVBAMAAADlb+D4AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAmYkQqzLvVES73WZ2
+Is1wFLxSAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABVUlEQVQoz2NggANeBlSAyj+OJstxAEwxKhkA
+SXYFJBnLLCBxGsxUCSsAknYoGh8CMR9IE0N6J4iSRpH9DsTcAiDzP4P5CSh2gsWSgZhpAYjF/gBZ
+FiL2GqjfbQnIBEaQo67o3IHI8vkcAbpFBcjiB7ucbwPQvFyG+WCXMNg/Zv7LwLAPyLofAOJzAdWa
+bWCQguitN2DIYWAoA7HAfLYGBgZ5BoZFEFk5BoZPDAzxQJYWXDaTgfkHRHYRAwfQT21A1hQGqMnM
+fxi4P8C8ywj0UxWQlQPmcx5gYP7OwPKglgHkrq8gNzDsBEYFxDAmBwaGOQxVAgLM/4A8b4aJQFII
+GAwQw1iB/jc5FOsTwLAKqNlEEaiVYQUwGBwgVi2FhRO7ASyCFzCU8BVA2BvhoQhjMG5gWAmLOc4L
+UIYNTPYmA8MeWSibeQKUcQAmOxc5Xu6gpRyeCwwAhC1FufHyxp4AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[82]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">fi</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="fi">fi:</strong> <a class="ProveItLink" href="../__pv_it/common/68d279ba17eb875d9f466a293b0b7fcc3ad8621e0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAVBAMAAADcCFGjAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAmYkQqzLvVES73WZ2
+Is1wFLxSAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA9ElEQVQY02NggANeOAEHx0EExwEwm1HJAEiy
+KzAw8AgwnAYLqYQVAEk7IOZSYOADSTOkd4IoaYh2bgGQ9s9gdgLUyGQgZloAYrE/gAq9Bqp0WwJS
+ywg03QakWQWI+cH28m1gYFBoAzL2AfH9AJAQVwEDa4EckFEGxPVgI9gaGJgZcoCMeCDWggkxsIPs
+BmmewgDVyMDnAHRgFZCTAxbiBFpi3wC0difQ7z/AQkwOQGN4gdYKAQ34ABZiBTqYZTeQsQLoRgeI
+q5dCQ20BQwlfAYS9EUIxbmBYaQf1G+cFMHWTgWGPLFSIeQKYmosc0HdABM8FBgA8Qin27XpzDAAA
+AABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[83]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">fj</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="fj">fj:</strong> <a class="ProveItLink" href="../__pv_it/common/a5fa35f0c18d1407c62034497b51177599a4126c0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACYAAAAVBAMAAADY/YGeAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAmYkQqzLvVES73WZ2
+Is1wFLxSAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABAUlEQVQY02NggANeJBIGjoNJjgNgilHJAEiy
+KwAJ1skMp8FiKmEFQNIOxOR5wMAHUsCQ3gmipKFGcAuATPgMZifAzE0GYqYFIBb7A5jYa6BatyUg
+1YwgK2yOgIwHYn6w7XwbgIQAG5DcB2TcDwCJcQHt5rnADyTLgLx6sClsDQwMzAz1QBfEA3lacDEG
+BikgbgPiKQwwvQwMi4C4CohzwGKcIJt4fwCJnVAa6EoHkB8+AAkhoGM/gMVYQS5nmQAkVgAd6wBx
+/lKQRUADeBcwlPAVQMQ2MrAU7Ac6hXEDw0o7qDc5L8QXLAfSNxkY9shCxZgnMB4EuXEuctjfAZM8
+FxgAn/sxBzYsKKMAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[84]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">fij</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="fij">fij:</strong> <a class="ProveItLink" href="../__pv_it/common/76c757e2c33cbcd922d44f9ca4cbccdc8c73f8030/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADcAAAAVBAMAAAAQkWtIAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAmYkQqzLvVES73WZ2
+Is1wFLxSAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABO0lEQVQoz11RPUsDQRB95+VuTe4jqRXlECur
+/IAjXmVtZWs6G4st7HOVIFgc6A8QUUSrWCuoIFgFUotgIH/gII2VOLM7p94N7Owsb9+bN7vAb0So
+xbR2equDp3ZzNvqUVQKEPUG8M4RjU23uacoDWp1EwHAGzE11cMLMVTTintPywtTDJugzZemCSzVr
+gjE1DXau2IZD7dJKOn1lUkap+1zdS44F7PnMYq3PXT53NDy9Ll6nXfKv2MXIts/h4tCCLkZkxiup
+3KpAqEVlZoWnYOY5RBZx1hfwkv3zFFarTba28wQGjr4oBYUU1vh+NHa/+RCUMpwq7VOTSOsBuGNq
+q+BG5MLJbJtruykGfR79HTiK9b93Jnni6Sf5iduBGGzbr0+ptb5hUyT9uCagW5iNBJ2X/O+yxEf9
+UybAD4f/PFMRm8itAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[85]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">fx</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="fx">fx:</strong> <a class="ProveItLink" href="../__pv_it/common/6774f61458aed4cc9eb250f92b3634f1d09b19a40/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACkAAAAVBAMAAAAp9toTAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAmYkQqzLvVES73WZ2
+Is1wFLxSAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA/0lEQVQY02NggANeKH2BARkch9I9EIpRyQBI
+sitARXk2gCmVsAIgaQfX9BhMpneC1ErDRTeCCI7PYHYCXJQNpIhpAYjJ/gAuygc0mNttiQDISqBl
+zGecg9SByhyAfP4DMAWMDEcOSAHVgbTdDwCJcgHdsZdhv4E30DCQFfUQKxoYGAIY5EBM1g9AQgsu
+ysCQA3YUSO0UBpgJDBx/GYyBJiyAyTNwHmBgnsGSwAB0CvcEYFD9AIsCncP+1TCBowDiSPYPYFHW
+BQzMMgcKt4MMA1rB6ADx0VK4324xMJTwFSCFCRgAw2klLAQ5YXHAC7RsjyyUwzwBXRoM7kDpswwM
+AGRaMXIQBtPcAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[86]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">fy</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="fy">fy:</strong> <a class="ProveItLink" href="../__pv_it/common/06ea2446fcc086288e80a0ce3d5eebc763658e570/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAVBAMAAADGNLEtAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAmYkQqzLvVES73WZ2
+Is1wFLxSAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABEUlEQVQY02NggANeFAoKjkMojgNgilHJAEiy
+K0AlT4NJlbACIGkH08EHUsKQ3gmipGGC3AIgQz6D2Qlww5OBmGkBiMX+AC74GqjabQlIPSPQHhtp
+BmYHoB1ALj/YDXwbGBgUyhi4PzAw7ANy7weABLkKGFgLpBhYJjAwlAG59WCD2BoYmBlyGNiA2uKB
+XC2YIMgd8UBtbUDuFAaodgbGBwzHgMwqIM4BC3IC9XE6gFXsBIbKD7AgE9AtjA4cv4FMIaCrP4AF
+WYFeYHY6+BfIXAGShvhjKVg90F+8CxhK+AogghsZGPQYzEDWbWBYCQsyzgsMaxicgIybDAx7ZKGC
+zBMYqg8CHcswFzk67kAongsMADCPM9e2aZHgAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[87]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">fz</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="fz">fz:</strong> <a class="ProveItLink" href="../__pv_it/common/dbd9581b8ae6825001ed197d82004e902bad28e70/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAVBAMAAADGNLEtAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAmYkQqzLvVES73WZ2
+Is1wFLxSAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA9klEQVQY02NggANeFAoKjkMojgNgilHJAEiy
+K0AlT4NJlbACIGkH08EHUsKQ3gmipGGC3AIgQz6D2Qlww5OBmGkBiMX+AC74GqjabQlIPSPInqil
+vBuAdgBZ/GA38AF5zG80QQL7gPh+AEiQC+gCXgMGZSCzDIjrwQaxNYBII5A74oFYCyHICzapDYin
+MMC0M3QzMAPJKiDOAQtyAhWxFzCwAJk7gVp+gAWZHBgYIjUPLQUyhYDSH8CCrEAvKLDngUxeAXS1
+A8QfS+HhuoChhK8Awt4IE2TcwLASFmScF6CMmwwMe2ShbOYJUMZc5Oi4A6F4LjAAABqqLA3Jp898
+AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[88]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">fxy</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="fxy">fxy:</strong> <a class="ProveItLink" href="../__pv_it/common/ad3dcd95e6e424f73ff4024ae6a59974d431b2150/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAD0AAAAVBAMAAAAHs/uBAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAmYkQqzLvVES73WZ2
+Is1wFLxSAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABXUlEQVQoz2NggANeBnRwAYV3HEO+B0IxKhkA
+SXYFDHmeDWBKJawASNoxYILHYDK9E6RfGov8RhDB8RnMTsAizwbSyLQAxGR/gEWeD+gAbrclAiBH
+Ap3HfMY5SB0swXxwA4MJUKsDkM1/AKaUkeHIASmwPBN7AsN+oF6QofcDQCJcQD/sZdhv4A2WD2dc
+wOAJtBTkqHqIUxoYGAIY5KAWG7AdYMhhYGD9AGRrweUZQGIQ0G/A+hXoNZD+KQww8xk4/jIYQ+Tl
+GHiAcuwL4Ho4DzAwz2BJYFBgYGYAa+IEup17AjDafkBc7MDA/tUwgaOAwR7kaBGG/g0QT7N/AMuz
+LmBgljlQuB1o02Ig10RHHhi7XEBHMTpAbFwKD7ViMKkHxLcYGEr4CpDiAgyAhjI9YE6HxNlKWLxy
+wlILMzA8uQ6wAFXxAp23RxYmPAGWKkCxtUcCWQsY3MGIvrMMDADglUMbVYLhZQAAAABJRU5ErkJg
+gg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[89]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">gj</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="gj">gj:</strong> <a class="ProveItLink" href="../__pv_it/common/706707d09fc9799396b51ad5e61b2e161c08bf190/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACYAAAAVBAMAAADY/YGeAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAVIl2ImbN77sQqzJE
+md23+iBgAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA+UlEQVQY02NggAMHMMnCgASYBcAUjwGSmBCI
+2DGBwRQhxJkAIs0YGNgmwMV4A6AM1gtwMXY4qxLOEoOzUkGGG7sCyUsgM40XAEktBgamBJYKqCwv
+QymQDGNgkJ/A8BnIegjEJgwfgaQ4A0MVA/cXIKsGiCcw/gSS+xm4PzIwF0DFGHgfAInjDKxfGDgW
+QPUy8CkACTkG1g8M80HObQaJ+R8AEhEMnF8Y1k+AuICBIZ4B4qpTRvdArH0gYgWIeAMicsFGbQAS
+xaAAfMCwawL3b6jXF7L+hATG8gnTIKHYwv2RDxSsHiDj7kC8PoPhMpjVghTOLBDlzA4MAPGHNJ1a
+IOnSAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[90]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">gx</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="gx">gx:</strong> <a class="ProveItLink" href="../__pv_it/common/1d2b81c6e4903ee4506b066df3feec8a729a56a80/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAVBAMAAADGNLEtAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAVIl2ImbN77sQqzJE
+md23+iBgAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA/0lEQVQY02NggAMHCMXCgASYBSA0jwGSoBCM
+YYoQ40yAsdgmwAV5A2As1gtwQXaEpko4SwwhmAqywdgVSF4C4slWs5WAbtBiYGBKYKmASl9gXsz7
+gIEhjIFBfgLDZ6DAQ6ANDqw/uYD2iTMwVDFwfwEK1jAwcDPwgt21n4H7IwNzAUQQ6ASwb44zsH5h
+4FgA0c7AcN6BE+hyOQbWDwzzQe5uZmCYcWA5AxOQGcHA+YVhPchfQHfI77zOcBDiulNG90A69zEw
+zDVmvAoKqjcgfi6I4NsA8xDLA4ZdE7h/owYDMGiWT5gGCdUWmKAHyMg7EPYMmGALUsizQKOB2YEB
+ADh6NR6+4G6CAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[91]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">gy</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="gy">gy:</strong> <a class="ProveItLink" href="../__pv_it/common/514d0ecf28cd917923cd997139a3840e1dea92bb0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACcAAAAVBAMAAAA3P+qgAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAVIl2ImbN77sQqzJE
+md23+iBgAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABEUlEQVQY02NggAMHFAoCmAUg9GFkQSGYZABC
+jDMBxspECPLCFcQiBNkRrAlwphicxQbSI2TsCiQvAY21DWCYxcDAtACIE1gqgIKpQBZjAUM8AwMr
+0Er5CQyfgYIPGRg28j5gWMHAAJRiqGLg/gIUrGFgmMBuwFDMwMD9gYH7IwNzAUSQ4fwE7t8MDDwF
+DKxfGDgWQLQzXAPLMz5gYP3AMB/khmYg7gLLszYwcH5hWA9yrRYQ32I4D5TnVWBgOGV0D+TkfUA8
+S/k+MOD4DoD4uSCCbwOIVANiPwaGXWAbgSZdAHqDsxDIusrAsHzCNAOwl1sY+Ay4gMaxNICMvAMJ
+hxkMjMEgJgdyfLBANDCYMDAAAFYfOPQU+yprAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[92]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">gz</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="gz">gz:</strong> <a class="ProveItLink" href="../__pv_it/common/73b388d8b1eda99ceacb52637179323a18d436f40/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACcAAAAVBAMAAAA3P+qgAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAVIl2ImbN77sQqzJE
+md23+iBgAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA+ElEQVQY02NggAMHFAoCmAUg9GFkQSGYZABC
+jDMBxspECPLCFcQiBNkRrAlwphicxQbSI2TsCiQvATH3uw1AJtMCIE5gqQAKpALxNKMmoAAr0Er5
+CQyfgQIPgdiTgQloHmMBA0MVA/cXoEAN2F2aIEM+MHB/ZGAugAk6gwieAgbWLwwcC6DaeQIYQNof
+MLB+YJgPckMzEAsyMIAsamDg/MKwHuRaLaBhTc16G4B+U2BgOGV0D2TSPqDjGMRzgCy+AyB+Lojg
+2wDzkR8Dw64J3L9BTNYLMMGrDAzLJ0wzALNboGIsDSAj70A4M6CCHMjxwQLRwGDCwAAAwzQxW3yy
+Y6QAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[93]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">pi</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="pi">pi:</strong> <a class="ProveItLink" href="../__pv_it/common/6806788b6ef11447fdb2e9632fde6f44654688cf0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAVBAMAAADcCFGjAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAMnarEInNVLtmRO/d
+mSJ9aoHvAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA+ElEQVQY02NggAM+OAEH6iCCSwFJhD2AgYHp
+AoMmkpAbEPMEMLA5IIRuQijOCwihDVB6C8KoBCgjk4FByEQoGKifF2i6E0hzMANDgFkBawMDA9sE
+IHM1UGgaA2NBMgPnB6BlBUDmNaBQNQMLw3cGpi8MDNwLgMxNQCF5oHu/MHBsAAsxsAOlGICaWQ8w
+8F8Aa2RgMwDaUwOkLzDMBrI4gJ7zXwC0dgaQbuA7CFTPagA0hg9o7VUGhnoh1QdAIcYDDAzMM4GM
+UwwM16CuPggNNaDUUajQXAjFO4GB5TtUiOMBmHrBwFD2bQJEiKUBTPUhB/QjEMH0gAEAgOAyTqMe
+ZKwAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[94]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">pj</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="pj">pj:</strong> <a class="ProveItLink" href="../__pv_it/common/a5610dd34ff09050d0406358097789ad67d6a48f0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACcAAAAVBAMAAAA3P+qgAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAMnarEInNVLtmRO/d
+mSJ9aoHvAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABAklEQVQY02NggAM+CPWAARmoQ6hFyGLsAUCC
+sYWBaQKSoBuIYEpgYEhBErwJY8xFEtwAY3A7IIxMgLHYgIYKmQgFA+V4QfY4KQMJVgMGhgCzAtYG
+iDzDBW4gyZnAwFiQzMD5gYGBpwBo9wN+IMm+gYGF4TsD0xeg8QsYgOx6oEGMQCVcXxg4NkAEGRju
+ADEXkMd6gIH/AkQ7A8NRkDsOAG24wDAbqIlDARQmv4AEJ9Ba/wa+g1CHgG0EO65eSBUUWoxATQzM
+QEUMPEDTr0E9AlLODTLjDdRsSDgwF8x3gIQMy3eoIMcD+YLjIMuARpR9gwYqSwOv7gKwJHLQP4JQ
+egwMABR1Nyjd5g8uAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[95]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">pk</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="pk">pk:</strong> <a class="ProveItLink" href="../__pv_it/common/caa70ab63db91e1f3ee15f620311f7fee0ce54650/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAVBAMAAADGNLEtAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAMnarEInNVLtmRO/d
+mSJ9aoHvAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABFklEQVQY02NggAM+FAoK1CEUlwKSGHsAA0v3
+ASBDE0nQDYjZLoAIB4TgTSDmLwASnBcQghuAeD1Y0RaEkQlAIhrMzGRgEDIRCgYq4A0AcpMZSq8w
+MAQzMASYFbA2AI2fwMDA8pO9bicDwzQGxoJkBs4PDAw8QDvY/y1nzGNgqGZgYfjOwPSFgYF7AdCI
+nQIgM+WBPvjCwLEBIsiTexEkuJqBgfUAA/8FiHb/gvUgpTVgX8wG2s4B9PJ8B/8CIDUDKN3AdxAo
+zWrAwGDG4C8AdNlVBoZ6IdUHQEFGYFi0MzBdAmo6xcBwDeqlg/BwBUofhbLnwgR5JzCwfIeyOR5A
+GS8YGMq+TYCwWRqggn3I0fEIQjE9YAAALL860A24QaoAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[96]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">va</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="va">va:</strong> <a class="ProveItLink" href="../__pv_it/common/0c6443cf8bf0dd80730a8b234949dc23ad10b9500/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACcAAAAVBAMAAAA3P+qgAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEHaJZt1U76symc27
+IkSKjfYVAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA9klEQVQY02NggIMLKBQEMCVA6EfIgskwSQeE
+GOMGGGsjQpALrsALIciOYAnAmdlwFrcDA6OyA0MYkLkYiHmbdRUYGJgbGJjZChgqgAJbgPj5BZ6P
+DAwsGximcW0AuwaomrGEgSuAgQGoSoBdgWEaULAO6IAPDKwGDAycHxgY8gUYFCCC7AcY5B8wMPAV
+MDAsZWAwgGiXV2DwB7LYgEacYGADhcEhoGACQzeQzXKAgcGa4RLIdRYMDDwKbFFcQKOBGrlawB6c
+CrS9yfKGJgMD6wO4P1gnwFhXEX5nWQBjLUEKz7NQmvcAkqAMlOZBjg9eBQity8AAAO6rKwtCO0b7
+AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[97]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">vb</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="vb">vb:</strong> <a class="ProveItLink" href="../__pv_it/common/13e8cceaa9c68c27f0dbeabe8976df3c93c218510/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACUAAAAVBAMAAAAzyjqdAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEHaJZt1U76symc27
+IkSKjfYVAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA/UlEQVQY002QMUvDQBiGn9gk1bS19wMEg85C
+FkFwyezUybnQsYMdHJykUHHuYueCdTaCg2Nx0UUoBXfxD1RnF99LQnIHX943z93Hfe9BtVbOt1xb
+/Vy+XTbAe+tpK62Rl0FrLvNUs0j7Xdt+VrOmamOsMRUbqo6taaV4hynnsveql4NbaIxphCOu9P+s
+a/7M/go/YxZlGgN7NvylGaMzRjITu9bVGd2EnR+4MMQFCxI2fXZH8ABJ0avxHg2hwrwT2tyvYlPv
+EvwlnLK2Y53AdtpWuEhd0U2e+k6zTBYywVeVI5iW5rPO689Ls3De76OQztJhe4W03cfvxLkcwT9T
+rS2vqfpLRwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[98]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">vi</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="vi">vi:</strong> <a class="ProveItLink" href="../__pv_it/common/f63b93109c631afbf6471ab6c2dc0807d57b8b890/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACMAAAAVBAMAAAA+1EraAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEHaJZt1U76symc27
+IkSKjfYVAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA3UlEQVQY02NggIMLcAIGmBJA5CNkoWQg1mJg
+ckCIMG4AEsEMDBsRQlxQaS+EEDuMFoALZUNpbgcGRmUHhjAgczHQOC2gZuYGBma2AoYKoNAWII+v
+gIGBZQPDNK4NYPuBKkFMBqAKAXYFhmlAoToGMJOB8wMDQ74AgwJECMRkAGleysBgANHIsIMRqDGA
+geEEAxvIr4eANv5jBhp/gIHBmuESyD0WIGOuAH0B1MLVAvbKVCAGsVgfwF3POgFCX0X4kWUBhF6C
+FF5nwSTvASQhGTDJgxzSvCAHM+gyMAAAXYUmsHD8Bm8AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[99]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">vk</span> <span class="o">=</span> <span class="n">Function</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="vk">vk:</strong> <a class="ProveItLink" href="../__pv_it/common/a6c8cdfc20753355349e3546933532a8b12e10850/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAVBAMAAADGNLEtAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEHaJZt1U76symc27
+IkSKjfYVAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA+0lEQVQY02NggIMLEIqXAQkwJUBoPgUkwWQG
+BplSEEMFIca4AUjsArG4BeCCXA5A4huIxbIALsgOMu4jmFkIF8wGYuYCMHMLA6OyA0MYkLUYZFoD
+mxXQQAsGZrYChgqwNAODvEPadaDR3gzTuDaAXANWnX8vYTbQC+kMAuwKDNOAAnVAvNwTbOZ8oLQA
+gwJUMHrVBJDgcwaGpQwMBhDtjN/4foIEUxkYTjCwgYLiENDVHxm/MQGZPgwM1gyXQNIWDAwcGxh/
+MkNcx9UC8iDDVAYGngQGLUUgMw7uI9YJMBZvAFwQEQzgoIGCszDGHaRAlsGQBRkFjQamCwwAs9ou
+3pqIA/4AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[100]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">alpha</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;alpha&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;\alpha&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="alpha">alpha:</strong> <a class="ProveItLink" href="../__pv_it/common/9705ebf23debd1198c43ec3d0c30ebe152d069440/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAAJBAMAAAAbVLtZAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAiasyIt1EEO9UdruZ
+zWZ7xlX5AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAS0lEQVQI12NgYBAUMmAAAtcE9haWCQwMXQwM
+e7gKGHg+MDCcZWRg4NjAwCAhzsBQv4CBQR4ozQ+kJYDKeTYw8J1nBjIE3y3nkWIAAKtXDIZRy46v
+AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[101]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">beta</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;beta&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;\beta&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="beta">beta:</strong> <a class="ProveItLink" href="../__pv_it/common/c713a5db2586f854a5051c95110df24af02bd7260/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAATBAMAAABW2/GaAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIol2mRAyZqtE3VS7
+ze8XF9CTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAaUlEQVQI12NggAMhE1cgyWbAUAGkghgYZgEp
+AwYGDzDFvZSBgTPxxN0ABgYmhvJZCSCKgf0AA0MwUPwDA8M0BgbmBwwMCgwMPA0MDBcYGPIEGFjd
+GThXMjBwZxorM4DVMyCoYAg1DUwCADnTD436Tk6oAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[102]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">gamma</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;gamma&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;\gamma&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="gamma">gamma:</strong> <a class="ProveItLink" href="../__pv_it/common/d3b5a05ce48f7e4b8f946549743adda31d51d0e80/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAOBAMAAADpk+DfAAAALVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAOrOgAAAADnRSTlMAVN27EERm75mJq3YiMrky
+WnoAAAAJcEhZcwAADsQAAA7EAZUrDhsAAABDSURBVAjXY2AQeuzAEMLAVjFpAcMGhsMMDLa8Fxi2
+MDB4czOAAOdBCLUBQk2AUBfAFAeYZOCCUJEQaiqEMoBQBxgYAP16C7Yss+DeAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[103]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">delta</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;delta&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;\delta&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="delta">delta:</strong> <a class="ProveItLink" href="../__pv_it/common/0743d8a4f4ff93fd50a3189c2a5134398a7bd9d60/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAPBAMAAAAv0UM9AAAALVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAOrOgAAAADnRSTlMAIpnN77uJRKsQdlRmMt/D
+HBYAAAAJcEhZcwAADsQAAA7EAZUrDhsAAABUSURBVAjXY2BgEDIJZGBgSGDvBJIgzMCwAkzO2wAi
+WV8CCe7up0DyMEPfBAbGhwz7LjBwBDDcu8DAd4DhHlDdBaAMA98FBmsGBrYF3A1AlVnLGBgAEXgT
+/si7w8sAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[104]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">lambda_</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;lambda&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;\lambda&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="lambda_">lambda_:</strong> <a class="ProveItLink" href="../__pv_it/common/32939ecfac671575754b298a0f24751901f187ae0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOBAMAAAALT/umAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEKuJ70RUuyJ23TLN
+mWb8I+xeAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAR0lEQVQI12NgEFJgAAHGz2CKQQVCxSeAKZYC
+MMX8EUxx/IQo/QWmxOdvAIkdlL8ApHZtYHJgYOB2ZWD9BtG8nIGhDiie3wAAHM4OVjOHl4oAAAAA
+SUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[105]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">theta</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;theta&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;\theta&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="theta">theta:</strong> <a class="ProveItLink" href="../__pv_it/common/b011a4fec64a1c824cf176959ebc716edbf098a10/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAOBAMAAADkjZCYAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAdokyu2YQ3URUqyLN
+75mYuQMGAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAWklEQVQI12NgYGBUMmBgYHBlK2BgYHJg+MzA
+YN/A8JOBYTkD21cGto8MHD8YGD8zMP5m4Pm1av0FBn4HhnwBEIpPYMhvYKhjYOBv4LzGwMA1IR1o
+DNvD1wwMAB2NFJ4TRe8NAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[106]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">eps</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;eps&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;\epsilon&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="eps">eps:</strong> <a class="ProveItLink" href="../__pv_it/common/e5d4d625b3ac29c5d40d223bc332325a360907440/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAJBAMAAAD9fXAdAAAAJ1BMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAilU6eAAAADHRSTlMAIpmrZu8yVHaJuxCnVZmVAAAACXBI
+WXMAAA7EAAAOxAGVKw4bAAAAMUlEQVQI12NgYFQ2YWBwTWBgYDvOwMDAfNi4gYHVAMjimQAkuBSA
+BFs0w24GhqSWbgCFKAbM5hXqAgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[107]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">vareps</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;vareps&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;\varepsilon&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="vareps">vareps:</strong> <a class="ProveItLink" href="../__pv_it/common/fbe339d6612b84cf8401e9e899dea574faa30b7a0/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAKBAMAAACUK2mNAAAALVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAOrOgAAAADnRSTlMARLvviSJmmTJUq3YQzV2O
+xMsAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAA1SURBVAjXY2BgVDYSYGBwCWArYOCYwAAEjA0gkkHJ
+C0gz7twGZJ4GC6SCyagGnmlA8ctATQDrCgiouTFrvgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[108]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">rho</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;rho&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;\rho&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="rho">rho:</strong> <a class="ProveItLink" href="../__pv_it/common/9528518515ad3a418953b148d1d0eb3372f91f130/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOBAMAAAALT/umAAAALVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAOrOgAAAADnRSTlMARJmJqyLvVN0QZjJ2zTGB
+5rgAAAAJcEhZcwAADsQAAA7EAZUrDhsAAABWSURBVAjXY2BgYFR2ZQACIwYxIMnewDBPgIGBbQHD
+vgIGBrkJDOcCGBh0GRhuAOWaGLhfMzBwPmGYsQCo8OkZbaAY0wWQXgYOAzA1rwBMAbWBwEQwCQAP
+qA9jMbFOGgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[109]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Psi</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;Psi&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;\Psi&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="Psi">Psi:</strong> <a class="ProveItLink" href="../__pv_it/common/3b8334337a92ebd373a1de57b1f56b05daa246770/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOBAMAAADtZjDiAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAVKu774ky3SJmzRCZ
+dkTmpjIrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAXUlEQVQI12NgYFR2MRJgAAEXECGawFDOwBHJ
+wOUApNmrGVi/Aen9Bxg4PwLp/AsMjD+B9PsJDNx/gPT9BAYGEyBdBdS460A5azXIhEtfdMHGAcUh
+4AuYZNT6D7QHAO9cFy3GfV/RAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[110]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Upsilon</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;Upsilon&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;\Upsilon&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="Upsilon">Upsilon:</strong> <a class="ProveItLink" href="../__pv_it/common/07d75db563e32b14d1d7555c005166eb2dd107350/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOBAMAAADtZjDiAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAdu+J3Waru5nNIkQQ
+MlRR06xmAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAARElEQVQI12NgVDJgYHQyYIhP/8FgP02RoYph
+/66vDCcZLjBwJBcw8DIwMHB/ecAABv8PQGh9BlTanwANUceX/n9aAAMAkgkQpXmBmRkAAAAASUVO
+RK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[111]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Omega</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s1">&#39;Omega&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;\Omega&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="Omega">Omega:</strong> <a class="ProveItLink" href="../__pv_it/common/53406c163510d898bbe57aa9c808cb4fce1aa1e40/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAOBAMAAAACpFvcAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAVJl2q0QizbsQ3e9m
+iTL5N35BAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAcklEQVQI12NgYBAyNglgAIL0TgbO8glAxmog
+Mb+AgYH5E5DD8oeBgQOIGZi/MDCwgxk/GBh4/wIZTJ8ZGNi+AxlcP4HEfaCufAMQ7wADgzmQ5uQD
+mrGMDaiYwZOBTYEXaNbBewysFw8BRf5/ZOD5/5kBACXTGwIkfCtaAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[112]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">a_prime</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s2">&quot;a&#39;&quot;</span><span class="p">,</span> <span class="n">fence_when_forced</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="a_prime">a_prime:</strong> <a class="ProveItLink" href="../__pv_it/common/09378e094f7d56f9487e24ea8d7d17534569e4930/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAARBAMAAAAmgTH3AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIquJdkTvuxBmmd1U
+zTKBpmoTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAYElEQVQI12NgAAO+RAjNwPUDymBbAGW8F4Ay
+jKA0wz4ozVgAE2kA8ZQdHcCcMAF2sCEcmQxcG8BmfmDgNgCbWcDQHwBi9DswzAer7T/AoMsDsoDd
+gWcXF1iXip2QH5AGAPqOD54+aciXAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[113]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">b_prime</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="s2">&quot;b&#39;&quot;</span><span class="p">,</span> <span class="n">fence_when_forced</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Expression notebook is being updated for b&#39;
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="b_prime">b_prime:</strong> <a class="ProveItLink" href="../__pv_it/common/80ba634d9ed4f452337d92ea8ecc55109370e7240/common_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAARBAMAAAAf5oCsAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAELvv3c2ZVESJq3Yi
+MmZ3LnoBAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAbUlEQVQI12NgAAFeGzDFwPYRQjMnMDAqOzAw
+3D/AwMCawMAwCyjGX8DA4Auk+wUYeBSA9BQgFgDiqN3LQVoYvwrIA1UzsH9kYN4AMiqAgX8CkGaZ
+wNBfANGeD1LOf4HRDqSe6wFTAljfyjwQBQCvnxM1NNi96gAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[114]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> common
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>gj expression notebook is being updated
+Omega expression notebook is being updated
+These common expressions may now be imported from the theory package: proveit
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,1 @@
+\alpha \mapsto \left(\left(\sum_{k = a}^{c} \alpha_{k}\right) = \left(\left(\sum_{k = a}^{b} \alpha_{k}\right) + \left(\sum_{k = b + 1}^{c} \alpha_{k}\right)\right)\right)

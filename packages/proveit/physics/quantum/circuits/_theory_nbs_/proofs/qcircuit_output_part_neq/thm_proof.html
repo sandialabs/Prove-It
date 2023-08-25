@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.physics.quantum.circuits.qcircuit_output_part_neq theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.physics.quantum.circuits.qcircuit_output_part_neq-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">physics</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">quantum</a>.<a class="ProveItLink" href="../../theory.html">circuits</a>.<a class="ProveItLink" href="../../theorems.html#qcircuit_output_part_neq">qcircuit_output_part_neq</a> theorem<a class="anchor-link" href="#Proof-of-proveit.physics.quantum.circuits.qcircuit_output_part_neq-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> qcircuit_output_part_neq
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="qcircuit_output_part_neq">qcircuit_output_part_neq:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/ef266fb7a3e103e6b2b42696d24dd48f9f06bc510/expr.html"><img src="data:image/png;base64,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
+AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/882397ee5aebc392e6787a107769597dc38480f90/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>qcircuit_output_part_neq may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,1 @@
+\left(k \mapsto \left\{\forall_{x, y_{1}, y_{2}, \ldots, y_{k}}~\left(\begin{array}{c} \begin{array}{l} \left(x \in \left\{y_{1}, y_{2}, \ldots, y_{k}\right\}\right) =  \\ \left(\left(x = y_{1}\right) \lor  \left(x = y_{2}\right) \lor  \ldots \lor  \left(x = y_{k}\right)\right) \end{array} \end{array}\right) \textrm{ if } k \in \mathbb{N}\right..\right)

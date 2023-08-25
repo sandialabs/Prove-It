@@ -1,0 +1,1 @@
+\left\lceil x - y + 2\right\rceil = \left(\left\lceil x\right\rceil + \left(-y + 2\right)\right)

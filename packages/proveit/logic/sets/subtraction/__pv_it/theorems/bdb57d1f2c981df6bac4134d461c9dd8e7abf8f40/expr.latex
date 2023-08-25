@@ -1,0 +1,1 @@
+\left(\left(S, y\right) \mapsto \left[\forall_{x~|~\left(x \notin S\right) \lor \left(x = y\right)}~\left(x \notin \left(S - \left\{y\right\}\right)\right)\right]\right)

@@ -1,0 +1,1 @@
+\forall_{\Omega \underset{{\scriptscriptstyle c}}{\in} \textrm{SampleSpaces}}~\left(\left[\sum_{x \in \Omega}~\textrm{Pr}\left(x\right)\right] = 1\right)

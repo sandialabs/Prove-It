@@ -1,0 +1,4 @@
+proveit.logic.equality.sub_left_side_into
+proveit.numbers.addition.add_int_closure_bin
+proveit.numbers.modular.mod_natpos_in_interval
+proveit.physics.quantum.QPE._two_pow_t_is_nat_pos

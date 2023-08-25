@@ -1,0 +1,1 @@
+\begin{array}{c} \begin{array}{l} \left(\left(2^{t} \cdot \varphi\right) + \frac{1}{2} - \left\lfloor \left(2^{t} \cdot \varphi\right) + \frac{1}{2}\right\rfloor - \frac{1}{2}\right) =  \\ \left(\left(\left(2^{t} \cdot \varphi\right) + \frac{1}{2} - \left\lfloor \left(2^{t} \cdot \varphi\right) + \frac{1}{2}\right\rfloor\right) - \frac{1}{2}\right) \end{array} \end{array}

@@ -1,0 +1,6 @@
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{B_{1}} & \qw \\
+\qin{B_{2}} & \qw \\
+\qin{\vdots} & \qw \\
+\qin{B_{m}} & \qw
+} \end{array}

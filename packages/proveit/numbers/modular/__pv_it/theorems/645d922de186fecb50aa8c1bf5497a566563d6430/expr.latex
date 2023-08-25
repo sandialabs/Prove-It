@@ -1,0 +1,1 @@
+\left(\left(a, b, c\right) \mapsto \left\{\left|\left(\left(b + a\right) ~\textup{mod}~ c\right) - b\right|_{\textup{mod}\thinspace c} \leq \left|a\right| \textrm{ if } a \in \mathbb{R} ,  b \in \mathbb{R} ,  c \in \mathbb{R} ,  c \neq 0\right..\right)

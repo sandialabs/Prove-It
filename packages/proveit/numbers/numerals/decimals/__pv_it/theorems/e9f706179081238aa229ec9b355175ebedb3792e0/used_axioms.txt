@@ -1,0 +1,3 @@
+proveit.numbers.number_sets.natural_numbers.successor_in_nats
+proveit.numbers.number_sets.natural_numbers.zero_in_nats
+proveit.numbers.numerals.decimals.one_def

@@ -1,0 +1,7 @@
+\left(l \mapsto \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{\lvert + \rangle} & \multigate{4}{\textrm{QPE}\left(U, t\right)} & \meter & \multiqout{3}{\lvert b_{\textit{f}} \oplus l \rangle_{t}} \\
+\qin{\lvert + \rangle} & \ghost{\textrm{QPE}\left(U, t\right)} & \meter & \ghostqout{\lvert b_{\textit{f}} \oplus l \rangle_{t}} \\
+\qin{\begin{array}{c}:\\ \left(t - 3\right) \times \\:\end{array}} & \ghost{\textrm{QPE}\left(U, t\right)} & \measure{\begin{array}{c}:\\ \left(t - 3\right) \times \\:\end{array}} \qw & \ghostqout{\lvert b_{\textit{f}} \oplus l \rangle_{t}} \\
+\qin{\lvert + \rangle} & \ghost{\textrm{QPE}\left(U, t\right)} & \meter & \ghostqout{\lvert b_{\textit{f}} \oplus l \rangle_{t}} \\
+\qin{\lvert u \rangle} & \ghost{\textrm{QPE}\left(U, t\right)} & { /^{s} } \qw & \qout{\lvert u \rangle}
+} \end{array}\right), \left[\{-2^{t - 1} + 1~\ldotp \ldotp~2^{t - 1}\} \xrightarrow[\text{onto}]{\text{1-to-1}} \Omega\right]\right)

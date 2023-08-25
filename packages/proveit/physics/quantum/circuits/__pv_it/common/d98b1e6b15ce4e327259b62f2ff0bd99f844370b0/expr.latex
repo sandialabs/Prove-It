@@ -1,0 +1,6 @@
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qout{B_{1}} \\
+& \qout{B_{2}} \\
+& \qout{\vdots} \\
+& \qout{B_{m}}
+} \end{array}

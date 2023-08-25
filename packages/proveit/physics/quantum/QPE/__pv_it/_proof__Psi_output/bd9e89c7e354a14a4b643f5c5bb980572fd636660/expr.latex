@@ -1,0 +1,22 @@
+\begin{array}{c} 
+ \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert \psi_{t} \rangle~\mbox{part}~1~\mbox{on}~\{1~\ldotp \ldotp~t\}} 
+} \end{array} \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert \psi_{t} \rangle~\mbox{part}~2~\mbox{on}~\{1~\ldotp \ldotp~t\}} 
+} \end{array} \\
+\vdots \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert \psi_{t} \rangle~\mbox{part}~t~\mbox{on}~\{1~\ldotp \ldotp~t\}} 
+} \end{array} \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert u \rangle~\mbox{part}~1~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} 
+} \end{array} \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert u \rangle~\mbox{part}~2~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} 
+} \end{array} \\
+\vdots \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert u \rangle~\mbox{part}~s~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} 
+} \end{array} \\
+\end{array}

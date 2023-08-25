@@ -1,0 +1,1 @@
+\forall_{x, r \in \mathbb{R}}~\left(\mathsf{e}^{\frac{2 \cdot \pi \cdot \mathsf{i} \cdot \left(x ~\textup{mod}~ r\right)}{r}} = \mathsf{e}^{\frac{2 \cdot \pi \cdot \mathsf{i} \cdot x}{r}}\right)

@@ -1,0 +1,1 @@
+\left(\left(a, b\right) \mapsto \left\{\left|\mathsf{e}^{\mathsf{i} \cdot a} - \mathsf{e}^{\mathsf{i} \cdot b}\right| = \left(2 \cdot \sin{\frac{\left|a - b\right|}{2}}\right) \textrm{ if } a \in \mathbb{R} ,  b \in \mathbb{R}\right..\right)

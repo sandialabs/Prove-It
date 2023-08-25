@@ -1,0 +1,3 @@
+proveit.logic.equality.sub_left_side_into
+proveit.numbers.division.frac_zero_numer
+proveit.numbers.number_sets.integers.zero_is_int

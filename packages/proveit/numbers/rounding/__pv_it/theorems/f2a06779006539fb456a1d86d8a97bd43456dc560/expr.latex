@@ -1,0 +1,1 @@
+\left(\left(x, y\right) \mapsto \left\{\left\lceil x + y\right\rceil \geq \left(\left(\left\lceil x\right\rceil + \left\lceil y\right\rceil\right) - 1\right) \textrm{ if } x \in \mathbb{R} ,  y \in \mathbb{R}\right..\right)

@@ -1,0 +1,1 @@
+\forall_{a, b \in V~|~\left \langle a, b\right \rangle = 0}~\left(\left \|a + b\right \| = \sqrt{\left(\left \|a\right \|^{2} + \left \|b\right \|^{2}\right)}\right)

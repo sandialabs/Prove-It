@@ -1,0 +1,1 @@
+\forall_{c \in \mathbb{R}}~\left(|\left\{\left(x + c\right) ~\textup{mod}~ L\right\}_{x \in S}| = |\left\{x ~\textup{mod}~ L\right\}_{x \in S}|\right)

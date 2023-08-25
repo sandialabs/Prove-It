@@ -1,0 +1,1 @@
+\forall_{P, S}~\left(\left[\forall_{x_{1}, x_{2}, \ldots, x_{n} \in S}~\left(P\left(x_{1}, x_{2}, \ldots, x_{n}\right) \in \mathbb{R}\right)\right] \Rightarrow \left(\left[\int_{x_{1}, x_{2}, \ldots, x_{n} \in S}~P\left(x_{1}, x_{2}, \ldots, x_{n}\right)\right] \in \mathbb{R}\right)\right)

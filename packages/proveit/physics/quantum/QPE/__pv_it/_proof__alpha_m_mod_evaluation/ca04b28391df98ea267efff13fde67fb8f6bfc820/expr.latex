@@ -1,0 +1,1 @@
+\left(\frac{1}{2^{t}}, \sum_{k = 0}^{2^{t} - 1} \left(\mathsf{e}^{-\frac{2 \cdot \pi \cdot \mathsf{i} \cdot k \cdot \left(m ~\textup{mod}~ 2^{t}\right)}{2^{t}}} \cdot \mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \varphi \cdot k}\right)\right)

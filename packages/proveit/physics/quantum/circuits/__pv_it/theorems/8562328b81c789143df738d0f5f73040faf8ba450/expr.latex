@@ -1,0 +1,1 @@
+\left(\left(N_{0} \in \mathbb{N}\right), \left(N_{1} \in \mathbb{N}\right), \ldots, \left(N_{m} \in \mathbb{N}\right), \left(N_{0} = 0\right)\land \left(N_{1} = \left(N_{1 - 1} + n_{1}\right)\right) \land  \left(N_{2} = \left(N_{2 - 1} + n_{2}\right)\right) \land  \ldots \land  \left(N_{m} = \left(N_{m - 1} + n_{m}\right)\right)\right)

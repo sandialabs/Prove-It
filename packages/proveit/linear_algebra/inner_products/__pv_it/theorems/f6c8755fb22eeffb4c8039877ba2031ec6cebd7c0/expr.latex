@@ -1,0 +1,1 @@
+\left(x, y, z\right) \mapsto \left\{\left \langle \left(a \cdot x\right) + \left(b \cdot y\right), z\right \rangle = \left(\left(a \cdot \left \langle x, z\right \rangle\right) + \left(b \cdot \left \langle y, z\right \rangle\right)\right) \textrm{ if } x \in H ,  y \in H ,  z \in H\right..

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.sets.subtraction.membership_unfolding theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.sets.subtraction.membership_unfolding-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">sets</a>.<a class="ProveItLink" href="../../theory.html">subtraction</a>.<a class="ProveItLink" href="../../theorems.html#membership_unfolding">membership_unfolding</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.sets.subtraction.membership_unfolding-theorem">&#182;</a></h1><p><strong><em> see <a href="../__pv_it/9bceb393aee24cba97a1db82cc1f39fc094c33800/dependencies.html" class="ProveItLink">dependencies</a> </em></strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="o">%</span><span class="k">proving</span> membership_unfolding
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="membership_unfolding">membership_unfolding:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/3602f64cf082407d95590efb07a10d7cb60a79a10/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAU8AAAAXCAMAAAC8uT3uAAAAP1BMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADFBd4eAAAAFHRS
+TlMAq1RmmUTNIjK7EInv3Xbp8+P3nXbhrUQAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAQdSURBVFjD
+5ViJktUgEAz3jbry/98qR0gYjiTvWVrPkrJ2djE00Mz0DGzbv9BEZ98d//434s8t7u83j6F9gUie
+DfOP51g0rpf/VcGLRUc/Jh9KJzbQvtB42NkiD+dYNInav4gKAcXGlWzBs6XsmPtDHVZzaF85iRAW
+/mXwdI5VO1kqzapsUJAteLIH80J9qHtSAu0rQ1HYnYRQyJ/j0zlWzXUyEkqMs0Bb8GwruQZ/KJ+2
+s1P1Uy623smMMMWB0mjgoJ4gNptjgf3tO8QmOyzZea3gyZL9aPiH0ok5tLOMwP0sXQi/+VC9hBPo
+b1JN5lhhIwk70S4j3AoAnq1NR+us+dRwN9Bq75GWpgknsUi+NAlopdGgLvu06eIGe1DXIp8aOQnB
+s6W5Uy0LAn234VsPE4+xJnUNOPsynUd+o6ekLRIpi6zIUN2EtJykEZiOcyywSbcsGZSPzJ8uX8Gz
+Faj+mNNpG2eXKlBjqGr9/y6PETbHmmKOh+MwsEQk2YoheMYvX5+zCHVf2PbVj9P9HCvs3v99yXLY
+kg682OSahq3oMKFNVCQfnbe3fEqPlGI5KlZYM0w2yI5lwCbWKWBQFsGKTcE0QmnM7+rwqUb+Stno
++zkW2D++Omxl63YkBC8W+4tsxKRtvR2VAiHc8UmpHEu3DmuKOWhhx2f+FaDo6QJ0+SbU0GW2Lza1
+G+aYYw+VT3X6mt4P8N3yQyG8pyL+A4rGWymwOK+EzPk8hjf3EbfEmmIOi+/iPVd9cQatV8UhUHVX
+acRuqOUp7ueYY/f4siY5FBgE363Bu1d4sSG1cQwSRBsBsZAlhMLy4eTzGN64jOArrDkm7hVU+dbq
+qCEocWTaU5yEFYEXznhHHPg/l3aJzfoV7fIZeeUd+G6FrQ6coWUb7VAss9RpROd8HsPZ6Z5MrbDm
+mKyPXlCLxAJIampL8j6TxqDKos6j6gWJHiSd2fpIq5fYffEZq849uA9t6mu6ZkgQsPgzBgXdSZ0I
+bKWfZTjhKre4MIwGLKlqEyOm7PmUrrWaRo/BlAAGNVJMA9ULIe8Vp1/KHt2xZKTPnLk9wP4C2DEC
+62PI+V0Fd0NWl7Z9yPNlpxJKXRSZVb20D5emqYZWWHPMId63WjQ7ua7JmFGT+2brsO76fr7GJj/v
+sA/wfpIYJYZnKdemEaFU5JQOkV1Vu3m8n8Pb24EDgjYWTB3mKIbgteF3H1VWpNF3Xj5vX2yoZ8an
+u7BMTkOzrGoaOCsdhAeTKm/IiRqHb+Ks+EtQt1hwJx2mGi87tUu9/6B4+3i2xH7w7FY/ufwU33Zc
+1p/aJH1k0wr98rFTrfv0+y+Kt0exxH7w7PbkvJm+63h836SvuNX0Y+Ghfbn5+yWssNFj8MtJyG3H
+Yz43ox9vnLDtv2/3Z/+cT/2vk/ELnWIl+7AEJiEAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/88d724e37dff4750638115a7bfb1f39bbfd5f11c0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

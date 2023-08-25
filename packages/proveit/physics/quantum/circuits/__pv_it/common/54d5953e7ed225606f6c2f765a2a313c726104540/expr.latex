@@ -1,0 +1,7 @@
+\begin{array}{l} \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{A_{1} {\otimes}  A_{2} {\otimes}  \ldots {\otimes}  A_{m}~\mbox{part}~N_{k - 1} + 1~\mbox{on}~\{1~\ldotp \ldotp~N_{m}\}} & \qw 
+} \end{array},  \\ \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{A_{1} {\otimes}  A_{2} {\otimes}  \ldots {\otimes}  A_{m}~\mbox{part}~N_{k - 1} + 2~\mbox{on}~\{1~\ldotp \ldotp~N_{m}\}} & \qw 
+} \end{array}, \ldots,  \\ \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{A_{1} {\otimes}  A_{2} {\otimes}  \ldots {\otimes}  A_{m}~\mbox{part}~N_{k}~\mbox{on}~\{1~\ldotp \ldotp~N_{m}\}} & \qw 
+} \end{array} \end{array}

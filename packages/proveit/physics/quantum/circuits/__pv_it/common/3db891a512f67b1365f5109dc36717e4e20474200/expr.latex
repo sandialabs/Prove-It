@@ -1,0 +1,12 @@
+\begin{array}{c} 
+ \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{B_{1}} 
+} \end{array} \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{B_{2}} 
+} \end{array} \\
+\vdots \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{B_{m}} 
+} \end{array} \\
+\end{array}

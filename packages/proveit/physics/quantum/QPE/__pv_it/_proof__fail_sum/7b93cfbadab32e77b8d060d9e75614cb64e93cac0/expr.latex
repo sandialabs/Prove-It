@@ -1,0 +1,1 @@
+\lvert \left(b_{\textit{f}} + l\right) ~\textup{mod}~ 2^{t} \rangle_{t} = \lvert b_{\textit{f}} \oplus l \rangle_{t}

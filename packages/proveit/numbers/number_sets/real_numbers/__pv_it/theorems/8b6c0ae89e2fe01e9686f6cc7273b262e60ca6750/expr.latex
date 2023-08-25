@@ -1,0 +1,1 @@
+\left(a \in \mathbb{R}\right) \land \left(b \in \mathbb{R}\right) \land \left(x \in \mathbb{R}\right) \land \left(\left(x \leq a\right) \lor \left(b < x\right)\right)

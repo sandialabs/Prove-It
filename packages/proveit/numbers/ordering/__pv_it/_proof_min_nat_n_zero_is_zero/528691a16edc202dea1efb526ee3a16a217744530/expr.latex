@@ -1,0 +1,1 @@
+\left({\rm Min}\left(n, 0\right), \left\{\begin{array}{ccc}n \textrm{ if } n \leq 0 \\ 0 \textrm{ if } 0 < n\end{array}\right..\right)

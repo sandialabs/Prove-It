@@ -1,0 +1,7 @@
+\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{\lvert + \rangle} & \multigate{4}{\textrm{QPE}\left(U, t\right)} & \multiqout{3}{\lvert \Psi \rangle} \\
+\qin{\lvert + \rangle} & \ghost{\textrm{QPE}\left(U, t\right)} & \ghostqout{\lvert \Psi \rangle} \\
+\qin{\begin{array}{c}:\\ \left(t - 3\right) \times \\:\end{array}} & \ghost{\textrm{QPE}\left(U, t\right)} & \ghostqout{\lvert \Psi \rangle} \\
+\qin{\lvert + \rangle} & \ghost{\textrm{QPE}\left(U, t\right)} & \ghostqout{\lvert \Psi \rangle} \\
+\qin{\lvert u \rangle} & \ghost{\textrm{QPE}\left(U, t\right)} & \qout{\lvert u \rangle}
+} \end{array}\right)

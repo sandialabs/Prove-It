@@ -1,0 +1,12 @@
+\begin{array}{ccccc} 
+ \multirow{4}{*}{$\begin{array}{c} \uparrow \\ U_{1} \\ \downarrow \end{array}$} & \multirow{4}{*}{$\begin{array}{c} \uparrow \\ U_{2} \\ \downarrow \end{array}$} & \multirow{4}{*}{$\begin{array}{c} \uparrow \\ \cdots \\ \downarrow \end{array}$} & \multirow{4}{*}{$\begin{array}{c} \uparrow \\ U_{m} \\ \downarrow \end{array}$} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{a~\mbox{part}~1~\mbox{on}~\{1~\ldotp \ldotp~k\}} 
+} \end{array} \\
+ &  &  &  & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{a~\mbox{part}~2~\mbox{on}~\{1~\ldotp \ldotp~k\}} 
+} \end{array} \\
+ &  &  &  & \vdots \\
+ &  &  &  & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{a~\mbox{part}~k~\mbox{on}~\{1~\ldotp \ldotp~k\}} 
+} \end{array} \\
+\end{array}

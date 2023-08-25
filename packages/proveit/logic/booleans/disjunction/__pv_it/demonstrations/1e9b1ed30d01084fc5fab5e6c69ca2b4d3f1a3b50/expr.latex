@@ -1,0 +1,1 @@
+\begin{array}{c} \begin{array}{l} \left(\left(B \land A\right) \lor D \lor C \lor A\right) =  \\ \left(D \lor \left(B \land A\right) \lor C \lor A\right) \end{array} \end{array}

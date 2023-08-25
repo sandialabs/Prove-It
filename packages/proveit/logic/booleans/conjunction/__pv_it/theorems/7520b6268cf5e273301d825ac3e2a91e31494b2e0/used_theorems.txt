@@ -1,0 +1,2 @@
+proveit.logic.booleans.conjunction.true_and_true
+proveit.logic.equality.substitute_truth

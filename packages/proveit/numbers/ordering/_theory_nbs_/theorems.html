@@ -1,0 +1,3127 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theorems (or conjectures) for the theory of proveit.numbers.ordering</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theorems-(or-conjectures)-for-the-theory-of-proveit.numbers.ordering">Theorems (or conjectures) for the theory of <a class="ProveItLink" href="theory.html">proveit.numbers.ordering</a><a class="anchor-link" href="#Theorems-(or-conjectures)-for-the-theory-of-proveit.numbers.ordering">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the theorems of a theory:</span>
+<span class="o">%</span><span class="k">theorems_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="p">(</span><span class="n">Forall</span><span class="p">,</span> <span class="n">Not</span><span class="p">,</span> <span class="n">Or</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">NotEquals</span><span class="p">,</span> <span class="n">Iff</span><span class="p">,</span> <span class="n">Implies</span><span class="p">,</span>
+                           <span class="n">InSet</span><span class="p">,</span> <span class="n">Boolean</span><span class="p">,</span> <span class="n">SubsetEq</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="p">(</span>
+        <span class="n">Integer</span><span class="p">,</span> <span class="n">IntegerNeg</span><span class="p">,</span> <span class="n">IntegerNonZero</span><span class="p">,</span> <span class="n">Natural</span><span class="p">,</span> <span class="n">NaturalPos</span><span class="p">,</span>
+        <span class="n">Rational</span><span class="p">,</span>
+        <span class="n">Real</span><span class="p">,</span> <span class="n">RealPos</span><span class="p">,</span> <span class="n">RealNonNeg</span><span class="p">,</span> <span class="n">RealNeg</span><span class="p">,</span> <span class="n">RealNonPos</span><span class="p">,</span> <span class="n">RealNonZero</span><span class="p">,</span>
+        <span class="n">Add</span><span class="p">,</span> <span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Neg</span><span class="p">,</span> <span class="n">Less</span><span class="p">,</span> <span class="n">LessEq</span><span class="p">,</span> <span class="n">greater</span><span class="p">,</span> <span class="n">greater_eq</span><span class="p">,</span> <span class="n">Min</span><span class="p">,</span> <span class="n">Max</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">S</span>
+<span class="kn">from</span> <span class="nn">proveit.core_expr_types</span> <span class="k">import</span> <span class="n">a_1_to_n</span>
+
+<span class="o">%</span><span class="k">begin</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining theorems for theory &#39;proveit.numbers.ordering&#39;
+Subsequent end-of-cell assignments will define theorems
+&#39;%end theorems&#39; will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_than_is_bool</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">InSet</span><span class="p">(</span><span class="n">Less</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">Boolean</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_than_is_bool"><a class="ProveItLink" href="proofs/less_than_is_bool/thm_proof.html">less_than_is_bool</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/454c5539223856fd424bae7d7af67c90d870f7d20/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALwAAAAWBAMAAACI4OsQAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAC1ElEQVRIx61VW0gUURj+Zmdmb2PTvkSIIQNG
+LylFD4IFsmE3usCS4EN2WfJBELENIih8sNcy3J5qi7Z58CExljVCqUB6CbIotDKK2GUWTUhqEXoI
+hKAz55xZ98w6g0E/fLvzfzPznXP+2wAbsRTH+hb6R95tusHgYarlIn7OXOifS1A+ZvtN/vI7Obxs
+wU2kz4b6tlD+oO32+qpHkwyeFjTd8p2YilD+mh2ktK+8spvB0+R4rfweifL2yprhK1/HIVig+sSv
+eY7uFz5V5IOUl8m2gv6h38EhbPhjdUB6WIoHzLXdb93H+LeFwht/+WMcudLD5/yc+lemlOtAlBTH
+BHUum2upzc3lQfkjwF1/+R6OuN6ozFJmvMhv5ZshrwCtEAskfab/z1FQ/iJCsVrJlsn9A871ewY5
+Ja9KNMOXPvA7YeMEJFIXzdRLVqd2ocukfMTUEqJ0uJRJ6Bqm8tx/yRCGwgSk85WSxTvUkeYZoa+R
+MBe+OPIRNU/5gOXO7IEhElwdey1RHlRJkIe6ihHy9Gm6Vrp69xGkGZ9sJz/lw4tkqKglSNDtABD5
+5bgYHOBcKmoKwbHP88MOJXVmRfkk4x/3EbVUfZAURW6zOYwxWhpaKOt0UpZhLLENGsTURmK4Rf7a
+qFMW5AMW4wdJZmVkw+Tyagu+o5PKK/cqZ51g2HX9OE5yKldkRajE1F+8bEn7VLoz3Y3pJ5yXhmzm
+N+Ub0IjWTCZj6LrmSOEmw2g50FERkFnhRxsW7RfnWaLrT7GbSzMP7Inp8HbaX9DpPI9XuEF3r6vd
+TpdsGmIQ25ZXuUZCHOJRV5/yoeAMfCcbg1pSwTjwWV0hlUpjj2fxqolVM7WYTeKR4T3vKrzybXoZ
+wwa2tyURukOIrqX86CHnsdsctVYk4QSueLS7izeiqQhZcDyTERttjKPWmhYTnku7edWUrK51P5oW
+g9e3MrUhXobansd/tb/Btb06a4+pdAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_than_equals_is_bool</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">InSet</span><span class="p">(</span><span class="n">LessEq</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">Boolean</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_than_equals_is_bool"><a class="ProveItLink" href="proofs/less_than_equals_is_bool/thm_proof.html">less_than_equals_is_bool</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/c4ea339c30f0e90c713c3fbbdc518d0ca76935ef0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALwAAAAWBAMAAACI4OsQAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAC20lEQVRIx61VW0gUURj+Zmdnb2PTvkSIIQNG
+LylFD4IFsmE3usCS4EN2WfKhELENIih8sNcy3J5qi2wCHxJrWSOUCqSXIItCK0OJlV00ISkRegiE
+oHOb3Tmz7mDQD9/OOd+c850z/22B9VhSYG0L/iPvNsPkqGBa3kX8nLjQNRVnfJTO67zltwtUsnk3
+kTod7NzE+P10es5TPZLgkMzn2BOw3PKtGAsz/hp1UspT3r+Tw2nqZ4ekGiuX36Uwnp6sm57yVQLO
+aHyVLvxWsPdzX4ryAcar5FoBb9dvEyjZ8Jy8ooOHuNsq3X7zHs6/z+XeecsfEcgUHr1k3zn4yX6V
+aUGEJMcIm1y2SqHNTGXB+EPAXW/5DoGYUeufJM+HZ4uvsvVQV4BGyAmSOtX15zAYfxHBaLlkw+je
+bnv8kUNNqqsKjbBSlA+Zx6CQvKhns4QztPNtFuPDlh6XpUOFdNzQMZYV89ccIfiFwCXbORF8QBUp
+nn62jbg5N2vLh7Us4315d2T39ZIkMLA7L8uDKcmh1VbRT1afZGelnLcPI8X5RDP5WT64QJqKVoAC
+gzqAyC/FZOcAZ5IRS05M8j0/qCvZZFKWT3D+aSdZnqwOkKTIbLT6MMT268EBu5IGOIbiW6C7yioc
+xS3yaGLcsiTvy3O+h0RWxUCIDK824Dtambz/XvFbRzh2XD+K46WmcJ7dPqr9EmlLyqdYnal2jD8T
+vNJLmd+Mr0EtGtPptGkYelHqJsfgsq/FXd6RmgW6cZpPqk9wdnHiAe2YNk/D/op152m8wQ12e0Nr
+t6tkQy/HmqYTFweF17XnoinYDd+ORo+e8GMYmNFWSKYy3+NFzNGxyroWt1E8Nsv7nbMX8sG38SX0
+mdjalEDwDiHaFrODB+xltwWEPclRm6HDOeJO4EqFL3PxZiQZJgcOp9NyoQ0JlFvdQlw+WjKZ1ywl
+37bmn2aeo9J/ZXJdvAqtOYv/an8BSdvDNqN4OJ0AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">relax_less</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Less</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="relax_less"><a class="ProveItLink" href="proofs/relax_less/thm_proof.html">relax_less</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/c40ed6adadbaa57a41f1c177c714f3e309e065da0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKEAAAAXBAMAAACR7DLtAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACOElEQVQ4y52UT2jUQBTGv2ST3eyku1YKQhVk
+wVLwIAQRpAe3LdIqQtWTR5ub4ClepUrr1R4U9KIgU5AeKsjSg6BgCZ4EUfYieFlIpSIVLL21R99L
+3GSSTZTsg4R578v8dt+fGaC81YolD0PZ92LpJj2jvDhVBqh3irWmA8zx4lYZ4no2MKnkehtY4cI8
+KkO8mPEvXFGcc0BVAnarDNFPu7/fqd6IRIUyr5Yqo6t64n2QUquE+9zrfSpDNKgxYu/4w80QuOD0
+0TsO1ihd6vRl4NnAtpliIv8LA9vBAmOOxfWydR/TQIUyuIPa6MC2f7SqQZDzmJZj7CTEB0YX41QT
+qnJd2tf/QxSp2tPXy5j/e3zirOVIgC+AtU/UIKcxKWJtVmaI4M2ZzixK6xAweRLcNr32Lu3QnJrb
+0BRiFLSOeokQZQ3zABuZ6ZlHk2h6l5abNOdNb7xKX74+IlcTYhQ0n3iKQFUKIJ5qPjqZCX+MOvWj
+wjuXeIEXFi3vnsFuQgyD5nOpCuF86IcvfTM5FZPL/J7FohPNFrQwcBCKJ3BSrSMFV1spgYrQhbga
+TJzNln5t6xol04i7bPnhrfcVHxUiB8XbliqQfSuaqzf03Os7S7Zr4BV9be4nxDAI7PKA9IXoMsgx
+2xUf1GvE+LH1ixOcmHITYhgkmyJkX+DWJJeX6IXGZWsEWmfwFmsJr+7kTPhpLxYYk3ug9PZc+tfY
+TKkFN/JPYSyw3S8+oj/TbgVmu5NPjIWhzRt+6x9nW4y+fv6K2gAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">relax_equal_to_less_eq</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span>
+    <span class="n">LessEq</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span>
+    <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Equals</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="relax_equal_to_less_eq"><a class="ProveItLink" href="proofs/relax_equal_to_less_eq/thm_proof.html">relax_equal_to_less_eq</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/5036c37b9b62ede54e02e5d39eceb41de4510f9f0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALYAAAAXBAMAAABUnqh8AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACp0lEQVRIx62VTWgTQRTH/5tkm2STpguCUAsl
+0B5bCCJKL7UQtYq0FEQvioYq+AWygpdoKfFssNUSJR5klaBgNawFC/UgOYqiBLQglJSpjYgfhIKH
+Sk++2ewmu5umLVsHdmfevJnfvnkfs8B2mt+Vamvta3OVyACZD7rcoT3aBspl4CDvz7tjP2n4mAXU
+ouIm982kO3bcIXs/qxZhgOMRirpjF+xiZEG1iu/gjZH5Lt2dsInTi3b1WeBDqfTeHdtHoZQqu27N
+6FLukzmfj0OiFHkJHAYebARormqJcfUSG+LCo9HavNYD7wqwF7gKv9x43IVzO5k+CjZnt1KY9mG/
+uoMLQo0diA5BoOzooc1qaMS+53Z7BkwL3diMHaZ9KRwypGumTyR8RJgMmyATmSOUPvISGPPmt8IG
+gZyxFNcwkQJO0TDRT6/KYFmh2SUIvKA4O5KzsCPl8UFj52kZct0nEFfxzJGDvgR+U9dLz8wlmlba
+W2hlvk1NS3ohMS25bGF/FyZHfVlqUxJbCxh5HWSQMkIBmqN2gjLuUNdHzxiZ4cXDAA2v9+KHGNPZ
+R+ZgYceCLGXcb4+LEaOMQzI8f3MFsV55ngu63bL4h7qjPML6rlVd2YFO78Vs9i755FXU6u82xdwv
+aAIzEqIIaZh173bGQeooc9p8LXEK+oU7j7cBrerv46+t7DSUqk/QOhI2joAvzaIcoor1Fw1hLJTw
+YZpWiyvVSqIctMTSX5jFgJnVqTMmYs/65Fk8pzP7YmbefXvzE+kouvsSSJJZ4pXL0oFE3e7hkxXz
+HvLE75mQoFIHvijxpp9kkVwLJO0fjEpKMAZpLpupzzXk91NM1Ry7/t3cVeaJf9/+G1IFdsK5sIHd
+Kdavv/HmhRVR7Fc7xH5tU/axX/hfbRv/638/I6mUrcvA3wAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Transitivity-Theorems">Transitivity Theorems<a class="anchor-link" href="#Transitivity-Theorems">&#182;</a></h3><h4 id="Notice-that-transitivity_less_less-is-an-axiom,-not-a-theorem.-The-other-transitivity-theorems-can-be-derived-from-that-axiom.">Notice that transitivity_less_less is an axiom, not a theorem. The other transitivity theorems can be derived from that axiom.<a class="anchor-link" href="#Notice-that-transitivity_less_less-is-an-axiom,-not-a-theorem.-The-other-transitivity-theorems-can-be-derived-from-that-axiom.">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># proven</span>
+<span class="n">transitivity_less_eq_less</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">),</span> <span class="n">Less</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">),</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">LessEq</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">),</span> <span class="n">Less</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="transitivity_less_eq_less"><a class="ProveItLink" href="proofs/transitivity_less_eq_less/thm_proof.html">transitivity_less_eq_less</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/b7711babf5538bc0420cd9132c105ee1677756790/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANEAAAAXBAMAAABnpbd1AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACy0lEQVRIx61VTWgTQRT+dpPNbjY/DXgQI5SA
+PehBCCKIIFUomiJYCkUhFjTkUvAgKVQPtZbk0IMYJSha9FAWFQUDJRYRmoMED0UQJeAPBWnZSqVo
+IfRW8eSb2Wx23XVDhR1Ivpl5s/O9+d6bN4B/TfY2FeBr++ZtukC/BOvs84NIrHnb4mngJOuM+cH0
+tJvxElBiAlf8YBroZjwMhDQgkvKDqeGS0yZVVEOAFAz5EqacYyLwSbMGIaJ5v7Lyzg+mICWE2kre
+XDCT4Gub6NaynEaEMm8QeOj18f8wMa+DWNPPGMPqantevbz4gg5IJx6HnPD4OPy3PLNdmWIU7CM4
+ru3io4mPnfusoU4fUxTDWmR4J0zinHuBLRCI0i5FnDIGQt5mqdIyZYt20D0Tws4UuOu2TyQdTMAH
+N5Os05/EMjPXT3+tzDrVJmkNAg/i2FmLKb4+nUH8Di8qCV5T2lDaTb5+uTJsqQdpG88d6mEEKp2n
+Sb0Fur/xwp4QrZzv0crMODh6wmLaECp55Q0Prv5baXQgm2FJM/PSFECHek9ooObICDHFvA+w4jBF
+/gUwp1B38iB+cPM1m3rpsF7EgTrT4VEzXjEhWze0Masd5bH460lDMqvA/KoRxRuLm8vGHYBQZBPb
+fHovehkouj1OPazm842FmqC3wTglcNsUSWlCHdL7DlmRNS5UTVwifWOdrFMa/HX5jLeGtJM2pjJ/
+XkoZtj7K3OJQ5ZGT0rKZgMvOhAnYqtF1szMVyQVRpdXSFoGcn6l0mOTGK/CojScRK16EWuNAsWXZ
+eHV/1lZEd1B+g99f/0Q5hb6jOYLg46WCdaah0ZbWfjjFgfsg2Ri0E//0sY7j4S4Pq/O1SKmFMNWU
+1L9rBLVnoM1FA1xVQ+3y9ji8kDRBP8fAk6lXovJ13gB3m/Zm2nBEEFJ/jYGbSXlAbRYjmyzrDfC1
+yX5u9gcWIql6NlI93QAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># proven</span>
+<span class="n">transitivity_less_less_eq</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">),</span> <span class="n">Less</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">),</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Less</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">),</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="transitivity_less_less_eq"><a class="ProveItLink" href="proofs/transitivity_less_less_eq/thm_proof.html">transitivity_less_less_eq</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/a9d9e1badf965d9eaed1582bdd5dda60a395e68d0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANEAAAAXBAMAAABnpbd1AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACyklEQVRIx71WTWgTQRT+NslmN5ufBjyIEUrA
+HvQgBBFEkCoUbREsgaIQCxp6KXiQFFoPtZbk0IMYJSha9FAWFQUDZS0iNAdZPBRBlIA/BKRlK5Wi
+hdBbxZNv9ie7btzYwuKD7DczbzbfzPfevFnAPxO8XQX4al+9XRfol2SNfX4QBRRvXyIDnGSNUT+Y
+nnRyXgJKTOCKH0x9nZyHgbAMRNN+MKltcjqkiskIkoJhX8KUdw0EP8p2J0w075aX3/rBFKKEkJqp
+GwtWEnwxiW42hAyilHkDwAOvl3fCxFYdwqp2xuhWV8xx6fLic9og7XgMQtLj5ci/BJt1dOIU7CM4
+Lu/Se+MfWudZRo2mUhQjcjS7PSbZTTTn7MXoX4o4ZXS4EYenSi+KmzRf80yIP5nGU66I34GbCXjf
+ziRo9OBZZuZ76dHsX6PaxK+C04M4etZmSqxN9xOUdlNRSeo1RYfEbeYUP09kbfXAb+GZSz0MQaL9
+1Km1QOc3UdgTppnzXXKZOQeGT9hM61yFVpgjNkn7JaomiK+NpJl5YQmgQbrLqVBcGRFIs9UHWXGY
+omUGMSdSc/Igvuvuqw71MhGtiFyN6fCwnqhYcKBmaGNVO8rjwM/HKm9VgfkVI67XFzcaxhkAV2QD
+W/rwXnTrmmjOOHUVYO6AUzitBTo5blkiiXVIg1rPITuOxoFSAkukb7yVdaKq3y6f8MaQdtLBVKbr
+papHJZ6NFW0okaB8RrBSsuFOqKCjGl2zGlPRfAhVms1vEggjM5UWk6C+BEUtwTItXrwISdGB2VgK
+V/bnHEV0G+U39O3VD5TT6DmaJwg9WirYexocbspmUgf67jEhGZhX6eljrYVHOlys7tsiLRUiVFPS
+fz9PVBGegtEZ0GZSh7vHtQpe5rRzDDyrUTdP5eu8Ae027c207oog+F6FgSfT0AbLeh3E+2Sz/+Fj
+Z+f2G+Z5qXqsIhMMAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">transitivity_less_eq_less_eq</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">),</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">z</span><span class="p">),</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">LessEq</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">),</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="transitivity_less_eq_less_eq"><a class="ProveItLink" href="proofs/transitivity_less_eq_less_eq/thm_proof.html">transitivity_less_eq_less_eq</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/35efeecb8df0e82550d7ccc2b45f6f7c61162ce30/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANEAAAAXBAMAAABnpbd1AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACzUlEQVRIx7VWTWgTURCe3exmf5KmAU9WKAF7
+0IMQRBBBqlA0RbAUikItaMil4kFSUA+1lvTQgxglKFr0UFYtChZlLSK0B1k8FEGUQFUCEtlKpWgh
+9Fbx5Mzb3exm1y0trAN582bm7fvem5k3E4DoSAo3FSFS+h5uOou/NE12RwHE6+G2VBbgGE2Go0B6
+EoD2bHsBYIIcXIkCqccnxz5prnAAII5iIhMFkuFz2FcPECQ1iKEH45GEKd8izn5rEeMI86Fefx8F
+koAJoTY6bswxaWapabhZk7KQwMzrBXgQ9vF2kOjUAiybJ0l4WGjq1YvzLzFoeOMRkNIhHyut7pkK
+OMyracNgH4Qj2g4SOBdJ0mABl2IUFS3RvxUkfjoA1KJJ4i4lOG5Ll5Y8IcPUkNdxvRmaEF6k2B2/
+1adJsvN+DGaEZOIgUmbmu3Fo5FawNonLwLEgDp9ykVIr4zlI3WZFJc1qCmOWRv5yud/1Hogb8Myf
+5QOg4n2qOJvD95sq7ozjyhftWpmMvUNHXaRVrlKQ37Lgmn9kw2aWBoTJV44DTFDvcgbovpfLZ+j0
+MSoOY3jMGEzLOB3dBz/Zqqse72UVswR7F8gPj6qpisOYBgVnZ8xj/veMIbpVgD9P4/X5tZr1BoAr
+kWKDGXdBJ/OJ6Y1TO9X8QdqY0zmzyZgGbjn7ylVQ+8yu/f5w6vwi+retmXWywbrLZ3hnuXbUg1Rm
+7WUiR+uTdCybkUbMSk7RqW322q45k7FEXoBZXC2uI5MKk5UmkmS8Bha1kQ5oK50DVWfM1lzZM+gp
+olsov8KPN7+gnIGuQ3lkwuPFonunvqGGZjdOvuceYCoQszUnDjdbg+JprM/rRO4t/d0ioxYVrCmZ
+f9cIpKeAb4i3WIDUTXqP0treRY0zTxMLReoUsXydsViQxsORVn2PHsRunVgQSb6PNAUDa5T1jNma
+//9nZ/v0F2jZsht3j4QAAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">symmetric_less_eq</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">LessEq</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">),</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="symmetric_less_eq"><a class="ProveItLink" href="proofs/symmetric_less_eq/thm_proof.html">symmetric_less_eq</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/ff83459a5ad389effc70e59d0989358838d8431c0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMUAAAAXBAMAAABJ4JbnAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACV0lEQVRIx61WPWgUQRT+dm/3bm/37oxoEwUJ
+mCaFsIggaS6KRG38qSzNdoLV2kqUaCdJoYWFCjIBsVCQI4VlWKwEMVwj2BxsJCKxCOmS0vdm57L/
+C7L3YHdmv2/efLvz3rxZYBLWKqd8TMh+lVN36Zriztl6EvqgnOu5wCJ37tXTeF9F3gee8HI+r6dx
+pYq8ADQF4MzU0wiqyI5Ag9arWTMcXhXbJIHvo9G3ehoGhdzeO7W6kYbtHRfrtEiUVdeB1zm3S/+j
+wW9qYDu8wXojaZytjh5gAWjQVz5Aayrnlk6CudxGSiFdCudFLIgT6TFPjSGmaSUpWm3h3K7WmAtz
+EimkQ/4ruJodJDohtgBrn3TCgpAnNebdLJtBOvIdt3KTLAnrEDA567w+3fau7dDnm9vQEhoS3OXE
+VkTUSER5jNcK5gE+pONBX9aj+fUhdTdoJ/b86SaN/HRMrMUaElyTEypCNhGiPNjaIeyXWoBsRXmB
+Nmk1eK5l7uCtRd2H57Aba0hQfyNiQjYRojzYKDv1w3eBmd3Jl7HkRpkNbYWBAwmfxplkPBg05ZSK
+kE2EKA8yawj7Zjh7PhuP9c1btJrdo4yyAnkG/MDXhEYEWif9IyJqJKI82H6W7ZzPdD0aPyw7noGP
+NNrcjzUkyCXzuJBEzBMyJlXZKzDHs78kC6bxe/MvB3N23os1JKiOOSYSfCsmOeiFh1031Ab5mj5j
++223YJ9T7ZFEzGfYwrNB7y/m9U2hhXdQqCGJBJ+xx+XF7E/6sQGzP8hqPHtF5ktC8RFS/ydgYn8T
+bP8Am8GsbKGRpQ0AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">positive_if_real_pos</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">greater</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">zero</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">RealPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="positive_if_real_pos"><a class="ProveItLink" href="proofs/positive_if_real_pos/thm_proof.html">positive_if_real_pos</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/f862d9992208f1b0ea6eb0ee11d649d0845c79f50/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIEAAAAVBAMAAACTeZA2AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACG0lEQVQ4y52UT0gUURzHv83O7uzM7A57KlCI
+gaCLpHuIDpK64qqRBEuCF6MED0KHGO8Fdg5xO+lssLyDCCKyW0GWEQgRBBGECHtamIVoRRA8CEJd
++r1pZ2bfOjuEA4/3e39+n/d+3/f7DfAfn3WBFeEzzK5LD6lluHEtktAXPv3xpwUjC4zzwUIUQJsL
+nU6YWg14DDyngVKMIsjZ0Okh4ANwk1AM0M0oQqrN3ghoL4EBhhRDjOYSkTJcb4/ok+OZp8CKiQS5
+f6/Xv0USpnicvc2W6/Fui8UJWej0EneA0nk3PTDnqT2w1N9e/HfdTvlDBAcxknkRSiZEvsDcpwM/
+Q/7hRzXpE6qQ9gCV6YU21xvvRp+IhC80OkG66k/M9PAoiPDIQfIEkBxfyGTDLhg6dqqdhFQRleCY
+mVJLyQETcboD5oa9pfwSpbCBQUfP38uPt0VRcTASvM0Vt7OBEQaJB/eG8gpbwztuinLCUU64Q5kI
+Ji5LrSoamvzX3wYmgBhPxqckpFZLnmHTLSNdKWcFwmvSypEOZPE1kTa1r7SPy3OJ7i7nknuYdgny
+q6Ko5DIdcPX94qGbBcd+RmlTDXJMe/KkCkYGt2zbNg1Dvy/mQ3opsLc7a+SZZ1QsdZC9cO9gxGeZ
+sCmWi0jYMb96rJVppjJXB+x2uKx2BwRVHR/rfwtljT/2r+r6hLhtsztB7fjNbdl2IewgpyuhCfwF
+bzF1J0/aRGoAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">negative_if_real_neg</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">Less</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">zero</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">RealNeg</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="negative_if_real_neg"><a class="ProveItLink" href="proofs/negative_if_real_neg/thm_proof.html">negative_if_real_neg</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/9def80ac868942d53cb7cc4621c1b09da26c0a960/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIEAAAAVBAMAAACTeZA2AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACD0lEQVQ4y52UMUgcQRSGf/f2bm9375ar0ghh
+IWAj6hWSQqJeuFMEm0UhjcGIFgELWcEyAVOHoKl0E5ApbA4hdyrERBtBhIAIQQWLoKwgMaSyEAKx
+8c3oXW6Wu0EysOy8NzvfvPe/NwvcY/j/sSINx224NEpPhk8eKQmt9d1b5z6cLNDHjZcqgDVW151w
+rWNgEnhDhjGvIujZuu5u4CvQSSgG2K6KkIo6NBHye6CDIcUQoxMSShlaInbsiPHXFTDnIkHb909O
+9pSEQZ5n80VYqcwPAbA4IQubKjEAfFASJuh57pt/b62V09u3cU2EEDGSeRpGRkk4oAN3oH8Xxswh
+aghlaNuAyWyv5vu2z0+nZMIuleMS6TKfN41Xa0yEFyGSl6RsWBUyeRZ4jo2NcpSQmkfJkwlcyQ4X
+cYoBYz0VZ2GWhHLQFRqFQqGvJotSiF7IWSAAehk0ntzaJBeoZ0O0KCf8zkkxLBHBxQPNl5TEE6Cf
+Ssub8RUJaR0n/6AoimUbS3ITrpJWoXak35mfTkU1kXatb6QQz7iJYtdzyW0MC4L+MdLj7+iAh1+m
+f1U76q4hBs9oY7pShZTnZPA4CALXcewhmZCejTZlzUV8XZmUfLOLvRUxOPERJm/IKZolX709/tww
+M5nQAZuRLQuNAf9udTzfvg5jkWbPfpaX++XPio0JZuQ3txIEXr2DwoaEC+AGSzV3O7scEqcAAAAA
+SUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">non_neg_if_real_non_neg</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">greater_eq</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">zero</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">RealNonNeg</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="non_neg_if_real_non_neg"><a class="ProveItLink" href="proofs/non_neg_if_real_non_neg/thm_proof.html">non_neg_if_real_non_neg</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/1f9bc40d4fed8d27d9ff3f204734219c4136668d0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAAAVBAMAAACeZ+BxAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACOklEQVQ4y42UT2jUQBTGv+5uNslkNyx6EDxI
+oKCntjkUD8XWSLdVLOJioRdB9yZ4kPSuS3vy4KH1ZirUEUSQKi4qFivK3uofhF6kBVlIpSgoQhHF
+gyC+CTtJdteYHQi8mXn55c33vgzQ21ATd1z0PD4m7pyjpySC/jRGpv7P5ec7LkwbmBCTC2mQu7HQ
+DsO8xTaBi8C8OPBiGmQ8CtkLX4ajwDNgmGgcMKw0SCM++bbWCq4DQxwFjixVl0+VpNo2HW1RfgAL
+FvJEeNdsvk2D5ISusy9rcn7weHAwAbFhUG9OAEtpEPExZR23uFyY2S+k/E0QH1kqcxZqqfMlNiXS
+a4PSSEUS7b6NU2HCzJKE1JEhwXRuVGLvDzw9don2n7iid1KKAmWcBj6Ex9kXfIog531ouySaH+qq
+bXsV08AqKcB2KqyBNzHIa7CfUtiTobBDFhTRuuqYhJTnANPEiDCC+l7dwFZ0HPYH2d2OFnvAUY7M
+BoWPyHJYGVsNDCwgXxwqaopTJeutbN0H+46+6qF2sx0BJoGssOpl0pVtar9wT2yYhrpsQ9krSgw1
+EV1cxoDjtNu+aLFXrf730SFyjtbAdADJ3VwE2yPCWr/sjkYV3/569cBcZxO3aaVYCZUzSzjseZ5l
+msaZbqNs/cdEV2Tw0NVH+LWgElM5y9VyuTwRTxzu5ecsuAvTXOeBJlhzuhL16P560BQjKi26ApTx
+wcdQbwgvfqrfmeyCsOTLQu+4H1c8r5KQWkuEfAb+Av/YiEWJ0iNyAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">non_pos_if_real_non_pos</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">zero</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">RealNonPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="non_pos_if_real_non_pos"><a class="ProveItLink" href="proofs/non_pos_if_real_non_pos/thm_proof.html">non_pos_if_real_non_pos</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/78e66f2c6cb9ce3976ecaf7b7588b329d4e6d2f00/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAAAVBAMAAACeZ+BxAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACOUlEQVQ4y42UTWgTURDH/8km2a90CUjBkyz0
+4KltDsVD0XalSSmIGCx4ETR4UXqQFHrU0J48eKjeXIV2C0UorRgUDCpIbvUDoaDSQolsRRT0UkTx
+IIgzz+xm87HdPFh25u17v535z7wH9Dbk0C8l9Dw+hX65QE+GjYEoRrzSdfr55xKMLJBn53IU5H47
+VOxImdo2MAMscMK3oiATra703uHXCeApMEI0cnUzClJr8YxdwcBtYNhB2oFEKaUiJSkGvfWPDeMn
+sGgiRYS39fqbKEiCdZ19URbO6rvGrMaQLHSqzRRwt9tGLWDzz5KbWOYsVi75vfOHIC4kCnMWcqYL
+QzqM8pDXSH0k2kYWp9mOtUIqiJNgqqMXApsHn5y8ynlPce08KdK04gywK5w5Px2CXHSh7JNorq+r
+smcXDB3VCuaqtKaG1wHIK2i/OoUdNpHk0hXHPEhunspnYNSVP3C0W9hppqP9hbTfVmIbGHcQ3yLz
+0QzTx6qigRnyzYLULyLZbOxSXWg/ECsebW2248AkOdyq10hXbVv5jTXxF11eIlj8EIXoa8JVXMKg
+ZfmNc+V/gNrLRv1jlETCUmqYFpDEPXEIlDzKA151FIp45fuNI/NtXXBqj2b6Cr5yRgbHbNs2DUM/
+21nwnQM68bpnPCypo85NEYmRPO/IuVwuH1w40svhTJcWpx3VEZrgmdWxUG3eXw/qPJqhNa+A5MTQ
+Y8h3yDr3pbI62XkGwi8Lte1+XLftQsjScijkK/AP/5GItuSmN3MAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_than_successor</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">Less</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">Add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">one</span><span class="p">)),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_than_successor"><a class="ProveItLink" href="proofs/less_than_successor/thm_proof.html">less_than_successor</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/f8ef3216f1cc39d0ed1642723161805806fdf2200/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKkAAAAVBAMAAADP89MSAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACKUlEQVQ4y2NgwAsKSBKGSBQwEAB8CqQIA0Ec
+FAuAOMo4FGmTIsxxC2ifAQS7ggTSsevmSiBBeKHbLyCZBcGNQIp9AnZTWQyIEGaF8fhApppAMNsC
+BgZuHOHEgy7AlI4pzPQA2VSeBWDMDLSKDUewqqHxma8swBRGNZXNAILP3r17Goep3qDQkX4O13Z7
+ARZhVFO5BSDYg4FhFg5Tk4E4poDzF4S3+h5WYVRTmRMguJCBXQDJJN1tjnkw9iVgfB9mYLkA5pRc
+xiqMZirTAQjmXMAdAEtxD2cG8HEzbN8A5R8FxvcHBl4wlzEJbjGSMMvdu3eAQSgAN5XjAwQzPYBH
+lksDUI6PweoBQjvPBIb1AZimwoXR3cp6AIIZEuxAgWa3HZwpQKa+ckB4df0DBnsGzBBACKOHwAUI
+ZtgEzAtc1zm+M6wEy3Gzz4Ol63lA7QoMYkwFqLGFKowWWxMgmKEGGCosDhwHGILBciyz4TltIzDU
+HzBdYYFy191bgEUYbir3d1BAb4BgBkZgaPIE8AkwmM2cOVOBj487CGZqL9ATcjsKX8BzASTBogrD
+TGWU+SbMwMAbAMFgsL6A02pBN9itfKzRC6CivA3omSsdUxjuVjCohWJIji/oD17AuQAcrgy7YLHF
+7IA1c6AKs6KUNc5QDJFy1tvMwD4DyAp7tmGJG0x4OvY8Nx1nMQ8q/dBLwNUzZwagCKzErnclTlM5
+CyAYL2B/QIowEDyHYAD/VaO/ZPaAYAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_than_left_successor</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">Less</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">Add</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">a</span><span class="p">)),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_than_left_successor"><a class="ProveItLink" href="proofs/less_than_left_successor/thm_proof.html">less_than_left_successor</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/189b87b3672bd923af271dc822a3a93d5cb1eb3b0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKkAAAAVBAMAAADP89MSAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACNklEQVQ4y5VUQWgTQRT93d1ks9lkSUG8CBIQ
+vIglB/HQQ02pFUGExYIXRaIeAh50Cx4V6llKe6urEObQSyjYqGDFiwHpScWqBQ+yZb1Y8WJvgif/
+7p+ZZJKd2nx47P43f97M/D9/APa1YCSaBgL4j3nVUWi0axyVxDmmCTqhpxdZ5no1wmziNLNnFxs6
+unjoTqYq3CI8wI+9nK1q1fT0b6E6p4ydIuRx1NXkqTRIGE1JS9UJdQpLYeLCeU1ajw/45jaTtEY1
+XyN8iKJ3GtULSXaO7MaiFN+YpIdVKdCtEM4DPNao3kRcDZy/5K3t9NHDqhRoNgjzYFf6lE6+nL4t
+/j9jvd+CtZU6d7/00cOqPNDoEhzm+jyg8D30PRc2OtzfxHrvQTl1x27IhTd7qhej6H0UfQIZWNgj
+GLEs1tkFTJ4Hk3FvemkZ1n29am+vPDDXJUBjKkna1EbaFInqr3rvqOsxnIGDZIAHGlsEeI69UPxa
++APttNCu3RKXv4XBVThsBGq1WpmqFGhiQyWAe1gsq17oUpd41hPZac8w67GxbXH36Q4TNMCbQFXl
+gVaHAGOYzZLvVeB0GIZVz3MvCdVFPMTRV/M/ZRfQhUUaxj9er6l3gALLPoH2HziT7GG6Vy93RRyu
+vDDYXM1hWu2t+xxUwWBpjjkszSu8FtUy65nNodLq6zLDkVpuZuIF2I/w7/KPzuo5Qa9k99yK9plP
+Xr/BF3AtDH2FaGfPbWtVnYCwr9nxKDTaLuEfzMihwVXzQ0UAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_than_an_increase</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">Less</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">Add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)),</span> 
+                            <span class="n">domains</span><span class="o">=</span><span class="p">(</span><span class="n">Real</span><span class="p">,</span> <span class="n">RealPos</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_than_an_increase"><a class="ProveItLink" href="proofs/less_than_an_increase/thm_proof.html">less_than_an_increase</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/49394061a59152e7a41a60e7b35ad057c07c0eaa0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANUAAAAXBAMAAABuThcPAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADJ0lEQVRIx71VX0gUQRj/bnfPu927W48ehBLk
+IKiHMO5BfBCyE6/oD+KR1ENFXhREBXI+SiUXRD1EeRRRa2EbSCBGt/01BUOMqIhAQiiygy0jw1CO
+oAIfom9m1tO5ZsMTauC3M/Pd3Pxmft+fAVhG87nYU3+xp2B57aPYrEdc1u9zECaT1SVRSZbYvk5g
+066N4SGiDJuI5VBJXDfFZi0pspbF8HOE4STRP1MSV6PYrEQXz7zOrJwIW8NQZgIEIiVxjRQb1lDH
+B3mhbda3muQnk0JG/rLS3FWs1YZtjFHINUyFjDK8yuVelsSlkNBof9w5P58ZYv124o3KKZvn2j+7
+AoULM2wB6F4Cw0LskQN6n8F1k0XEsLMpHEDsTalzHJf2w8ymQEYpCNrBF14CV6wwCqF3b0WhiaV1
+UyEiXuPOT0AZ47ikOQjaIKGLCVQzkFi0Z/XDhjbSn3ZiU5o4WGFzXEFc3gwwQScVC2H1FOXNQ4gI
+oORy79E3eAclCeUW+PNAIdmF0PB/MBJ6AAbIcg/5nF95CWwrcOwPrhegfRdwBTOQTXD3QurWCHjx
+TgSQrJ9fHU9jfutQR5YFcaygL8G25dtwPz4eTyxoqP0COS/QMGvDRj4OMb2aTZBQWAK4S7K6v36A
+lhHCNU3u0DW7CiaBcum93L1UG7Rv4EmuLYqNHuSKQIWU4rjS6EOQMwxwHGXV3vh/Qh8toAFfD+Gc
+MT9p1GW21THJcZHg7YHqmGPRZqbZ4A45hjSucPfyRNUYSxOaKh6iVsw/Ai2US7lKKS5CLSsz9tZB
+Pg79KMaNr2eq0oVcZgl2DnmrHrV/4WO+klS0UILB8bcehlrDMCK6HthBLM+hQT5sGBdQwwcRLr/g
+bXE+1FLZQmlR3aDthAPasim1zjxL76V795AszcOo32L+2jnEb10jzkA5Jqq9hWpdqNjBVFeLqZrU
+XzAU0yx4h77sZv4K9PKbqi5v7GXXdzyz+C3xNq6/B74rONr12erd7B+FU7MAHaiKt+2oFuerreby
+BPW5cZHDFR+w3zDmM5FtOmhcEv230+X4tgvXlANx2w3/r0X/xaa/AS6B1UuNcrNCAAAAAElFTkSu
+QmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_than_an_left_increase</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">Less</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">Add</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">)),</span> 
+                                    <span class="n">domains</span><span class="o">=</span><span class="p">(</span><span class="n">Real</span><span class="p">,</span> <span class="n">RealPos</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_than_an_left_increase"><a class="ProveItLink" href="proofs/less_than_an_left_increase/thm_proof.html">less_than_an_left_increase</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/cd01ef1256d9ccdd4d1f4fcd5eda271fd61247060/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANUAAAAXBAMAAABuThcPAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADJElEQVRIx71VXUgUURQ+zszuzp/j0oNQgiwE
+9RDGPogPQrayW/SDuCT1UJEbBVGBrI9SyQZRD1FKETUWNoEEYuT0awrGYkRFBBJCkS1MGRmGsgQV
++BCdO3dW524z4Qo18O3ce+bu/c79zs8FWMYT8rGn/2JPw/Kej95mLeKzfp+DMJmsLomKM73t60C+
+Nu7pRJRiE5kcKonrprdZTgEEY56fjlCcJPp3l8QV9zYL6HlFQcZA1P2pliJoACiRkriyxYY1duBV
+RKtR0NlyL1ANGzw6ECwtXKkiw4ZtlBExCp5cwSjFq1zuZUlcAkmN9sedhfnsCH1vR+yfW8Fyhaqm
+caSEKbYA9CyBwWScDDyD61QuebRwggM4+WEMphmuvWlpHoBPUbRDKLwErsUEK8fo3opCE/W7aSEJ
+XiPDPKiWm0t+AgKWAZelkAwl6dqz5mFjG3mfdnKTmzxYaTFcKi5vBpi0J5WLafUU5U1BBQog5HLv
+MTR4BCEP5WgQ8xSctZAa4gc9qSkwRPQqIz/nV14Cy1SO/cH1AuTvHly4b2vEfS61GwZxeSBLAamG
+wupEButbg3qyTsWxgLEEy+Jvw/3ERCK5qKH8C/i8h4ZYXs2Gm2vQgo1kNk4Bd0lVDzQM2W2EcM2Q
+M3TNrYIpsLm0PuZckgXyNyhLrS3KjV7kymCAGK4IVHJp4DEgBHAcdZXfiD+h3+5dSqiXcM4an2Q7
+ZJbZMcVwkeTthZqYY5FnZ+jgDgoflWIMl2RxEwItE7tUyohaMTELLTaXcNWmuAh1tM9YW4fZPBRR
+jBtfz1RnFmqZFtg55K2Ks7UsVz9q/4KyJymceGthqNN1PaJpyg5ieQ6N/GFdv4AaPogw9QVvi+uh
+zq6p8oy7uTB944QDqmtaqjfO2ufSAntIePMwJpo0XjtH2K1rvSuQd/d4tvfG3R1bTXe1GJJhxwtG
+YrIJ7zCWPTReSh+7qeRzx172vce73XdJIL7+HoSu4GjXZ7NvszgGp+YAOlCVQNtROcF2W9nnCur3
+4yLOFTs4oOtOADm66bB+yeu/nT7uWz5c0w68n93w/57ov9j0N0cg1Ut8GelTAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_eq_shift_add_right</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">],</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">c</span><span class="p">),</span> <span class="n">Add</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">)),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">LessEq</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_eq_shift_add_right"><a class="ProveItLink" href="proofs/less_eq_shift_add_right/thm_proof.html">less_eq_shift_add_right</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/26461229f300c5869c21c4d3f5c160fc5ebfb7440/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASEAAAAXBAMAAAC2Z+QsAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADy0lEQVRIx71XX4gNURj/9v6be2fuzl2SF6Vb
+aiV/mrJtKNvVRf609kZ5Ia48iAfNPiq28SQh942L1igprXJRaLXakvwXWyJMDVuEbBuhPMj3nTP3
+zjmzM9Re+eo7nTvn+835ne/fnAvQtJioSsSaEgWIeGzCPxA9j8PbiMWkGwEIkS2ettGPWU0wmosa
+q0WtjoYB1FNPwo5mcF1BP3ZMnpBaxuFc5HLK9uftZh2QKoTZ7uK6n6JdmTyjBJ4KilKkDOFH3N97
+6ZoGIFcP3AYR2MGVDqHlJ88oS8Ow+CQm5c79+uTzoA/YWvfcAulVNtM4Uk41kUbtxKEczWi7F9wh
+VwAMQRijlMH1keM8aILRWgoEJXbvzb4AI21sEcAlTqjbEAHbxqYGGN0ctUDDKiNdBXDir/sWIle2
+e4dL3oHTtsRIGYHVAJ2M0PS8CFC/2xdNidG+fKICcXQ1aS8obXXr9E5pt/lXl+3mMzn155i+4Qhq
+K+53wYBu2UetNXgMMI/NBUYIiP2ErCsxekUPYpiOpBlbKzXMZzRm6TfVkq7BtdpERnNcwfA2pSS+
+oIdeiwF0nNeYB3TGHuayo9xfftQQkChDDt/b7TgPHecpoX6yLce5xlwhse82Zsst7Fc6LHEnMFps
+iIZ1RvdA/Sb76B4bNwcz+zbz3ta86KMse39ymCuUu3AY6LpGLH+9oYNpoy41T2L0sSAwYkYf8r6h
+HzX1F8THJUb4hEU+WP0jrB1xB9YZXWSQ2BOucBn7pPo8/YMovNSJwbP08HnW1zWl3/AZMaPD7HCe
+IUo/asYF9Qu0lGdLPvqKJ0aPBjskAnKWekuqtRzuUoI47kIKezHoiUKa3JUxKNcTFdVizVRPnKwI
+mc2MYifthiEJVTeVbD/MLxQkRlho13mx1zuR5QFajExBYoSFplmsibBG0mJRJuiUjFkr0cbTorNa
+reZ1XVsvMOJGSaLEDUmOUAzR1Wc+HZhpSYy0K11o+SzYLhCgzigGOuSNhR8x+CWuPJBmZgnCc5DF
+oOSwVxxiPtKTm2yfkWeUnmZ6hqzGicaLyJ6tTPjKt1rCD6ln7/OUJ7t5dIM9AK32YhiAVAlqGZvl
+EQwKmc2MaJcpNhkKn9KOyC9twggyiovdVvrSFsVvdrK44AombXqdi6NS7LKV4/h047va2ZU+I2bE
+b4Zk6MkxSqvIu98eXncOE6sBCL1vVibeQvLCOFCt+o0T/nBdoapUI9ePhQPChI4VOFrS9seA/IGR
+Qt7qi7rymhGAEHnvqRhhYYxkdBCLsPpPLujN/9/4T/IbAn0CPfQnnzoAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_eq_shift_add_left</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">],</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">a</span><span class="p">),</span> <span class="n">Add</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">b</span><span class="p">)),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">LessEq</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_eq_shift_add_left"><a class="ProveItLink" href="proofs/less_eq_shift_add_left/thm_proof.html">less_eq_shift_add_left</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/1e3b971c2266cfcdc9d1279f1111794b0379c9320/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASEAAAAXBAMAAAC2Z+QsAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAD1ElEQVRIx71XXWgTQRCe5qeX3CWXKOJLQQKC
+ItpyYCm2YIhExR+qQcEXRSN9EH2Q66OgJT6JqJg3jUo9QQSp0GjBiqIIIlr/qEJR1IOrBcWKpSgq
++CDO7F5ye5dchaY4MHub3Zndb3e+nd0ANCw6quTTJ/k5+DTrMAeiprD44NMZtnwc6shuW5P0Y3ED
+iJajBsp+vRP1HTwiXxhFpBrXddSyb/aA5DwWV3y7mw2nvkSvOtSYZbA4wPUoRbs4e0QhXBVkxUBp
+YncwU62u3uQ4VGS7/U1QJNu50iKU1OwRxai4LzQE3NR5Uql8vS04VKTN/u6hrYwZTIMIubkBGi0h
+EHl/RD12cO9agkMNorssdBrX56b5tAFEmykQRGxlapUbUe+9Piyvc0DdmugA9yYKLkR7p+bjCEmu
+GwDO/XPejG9Pj7046RVsdCEKP4KLGIYOBmhhyuVwJBUqiojkn8agDkHcatJekJIV68h+12ytN9cc
+5DU39ZfpjuEr1DjOFy/DCxeiaxp042cF+yEgIod3ELNERIHf1BBAOpJGDSVXNW+p1iLjpZyqwHC5
+FtEySzB8SJTEAbayYx4yzfdIA1riVpoY4DTP3U7U0CH0m9W6TfOZab4ktzwkyhCZBqYBSyD242pt
+LQZaVaHLqkHUqYmGFUQjXmaPgPwDP7u8zEaHWNHDbNzgPSkI4/6QQj6NxUB6mDbmzzgtVZmwKHkS
+osmMgIgZfU45hk7U5D8eRNgQnKbIe08/OgxaHkSYjnCPA5i4SeEG5kn5deQXQXirEoKxyP2r7AZS
+pH7NQcSMTjJG2IYo/ahRnOE7rs+F6Bs05ZfijnozJDokcNCcC1FBfoCsLnKFwxj1UCZC2xXViOuh
+olxgyVQNnS8KzGZGgfNG1RDs001HFg/aLVfU+qE1k7EPu52JCrYDHjTFdfqbtGiGJxGWSJoKxASV
+2BgrhJKcFh2lUimlqso2ARE3ChMkbkhyimKIW60MpQ0Xoktfji3Ckce86YIc7qycdEVNbqF7KJ7j
+ymRQj3bhgAmIYVASeCOeYHukhncaDiLbKLJAtw0ZKWmxb3xztjTqRRQv1MnZTI7Yyi8b/fR2YwDi
+RicMQHMOylGD8QhuC8xmRjTLPIMMhau03femdd2r3rvXuWmZZMU7O5xtG0LSRrZYWErZtCGdxdYd
+H8uX1zuImBF/GZKhLWeIVr5vv0M8KiaTQtWh7nuzWPsKSQnlQKnkJE6Y4blCp1L27T9T36Ge0LI8
+SwsbTumRGRBJtFt9fk9e3cehjnyyVYywUPoiOo6HsDQnD/TG/2/8J/kLh2UCPXhMXdMAAAAASUVO
+RK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_shift_add_right</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">],</span> <span class="n">Less</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">c</span><span class="p">),</span> <span class="n">Add</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">)),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Less</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_shift_add_right"><a class="ProveItLink" href="proofs/less_shift_add_right/thm_proof.html">less_shift_add_right</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/92c32eea125c1f00207190d493c7b7415c85e38e0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASEAAAAXBAMAAAC2Z+QsAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADwUlEQVRIx8VWTWgTQRR+zd8mu+mmevAiSEBQ
+RFsWLMUKlkhU/KEaLHhRNOJB9CDrUdASTx5UzEHQqNQVRJAKjRb8qVgKIv6LFoqiBqIFxYoiigo9
+iO/NZLMz2x2VVvTBG3ZnvjfzzXtv3gzAlMVG1RRjmspA0W3DXxAzjc1rxWC0qjAIkM01baKf2VNg
+NB81VFaNjgYZ6KceB23N4rqcfrZPnpCex+accjjmBBnEMkHYnVz3U7SLk2cUwV1BVoqUJfyEM0EG
+KTdwXeJIK1fahJGePKMkNUNiT0jKnXve5xzbNdjieq5FmsphGkbKsSmk0RzikFcz2lb/WrK6bnAD
+ghjFLK4PK5X7U2C0hgJBib17sNvHyPi4COCiC/ww4Bls/Tjdx2hwtAAGnjLSlQAnfrtuRjmyrba5
+6G047UiMtGFYBdBWy+cbVc9A/+b02RKjfelIEcLoatLdoDW508d3SKs1X166i3/5U98DDqM2Yh5e
+sKBT9lFjGR4BLODsOi3BIDQOyarE6AV1hDAdSROOkauvNNNb81UpZxpwpRzASBeAtyglcYJ1NC0G
+sFJ5iXlAe1zHXHaEoWZ4ZwcNInlI4bydlcqDSuUJWY2zJT9xDVWFxL5T/1pWwHplwuLqREbaUscD
+uozugv5V9tFd1m4KYITe25IWfZRk80eHuEK+A5vejivE8scr2pgxWqXiSYzGMgKjGmia7QK9qOk/
+IPxJYoQ9LPIBUcNyxB3oMupjJqHHXOES1kn9afw7UXhuEoOR+NB5VtcNrcfyGHFQ9KhdB6L0oCaq
+oH+GhvxcyUdfEAvQ7s9sNEgV9JvSWUvhKjkI4yqksBeDHsnEyV0Ji3I9UtQLrJiakZNFIbMZKHrS
+qQNJ6HTTke2B5kxGYoQH7So/7IzSh7G6QYOVyEiM8KAZBVZEWCFpKFAmmJSMyUKkiadFW6lUSpum
+sV5gxECHWAJwIMlhiiO6+sz7A7MKEiOjvwPJj3gVcsA10GdmfRXy+kLk25jjygNpJxajeQqSuGAK
+w3KQ+ciMbnQ8RgykXyNKHMjOONF4pqzZmnDLt9l1g8Cava+mPNntI11OLzQ67dALsRyUEw7LIxgQ
+MpuBAN5h0AkoXKWtyps2YvlLqnT3SjdtVryzo9mWfgxIfG0VWy3b4WjHsXfDm/LZFR4jBkJpt4CA
+NTlGaaV8++2Z2HVM9d4sTnyFpIW2t1TyCqevQs4TCdCp1JXPmYDlzyugtC3f1qKO1/rkFw8ojbzV
+rXry2gqDAHlbUzHCQvvnjP6T2P9uqZ9HCfmckWc34QAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[21]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_shift_add_left</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">],</span> <span class="n">Less</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">a</span><span class="p">),</span> <span class="n">Add</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">b</span><span class="p">)),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Less</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_shift_add_left"><a class="ProveItLink" href="proofs/less_shift_add_left/thm_proof.html">less_shift_add_left</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/cfc343d4e0ff548c862a696b66710e63447a2a5c0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASEAAAAXBAMAAAC2Z+QsAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADyUlEQVRIx8VWXUgUURQ+rrvO7sw6az30IsRC
+YEQ/DCSSQrJiRT+YS0IvRW70EPUQ42OQsj31UOE+BLYZNkEEYuCWkGUoQkTZHxZEUS1sCUWGIkUF
+Pkjn3JmduTM7t0KjDpw7d+49597v3vPdcy/AkkVHlQR9kshB0KzDXxA1jsV7QWeoIHDwkQOWVtHP
+qiUgWosayIl6p/wdPCJfnESkmqlbqeXw4gHJKSyuCrsrDF+HErMEFkdNPUnRziweURBXBc18oDS+
+uzzh61CUNusbo0jWmkqLUOKLRxSlYpxrCLip89Cp1ui2Q1E2WN922sqowbQcIVcsgUY1BCIlRnTI
+rm3eaTuUIBplodNMfZLPP1oCol0UCCK2MrvJjahjrAvL60XDmRHHAcam0i5EB2eX4whVpm4HuPDb
+eRPCnkPW4qTnsMOFKHQfLmEY6iw+jxY4h854MMMjkr8bgzqU41aTdoBUVRw+fMQ12/qbTcfMmpf6
+juFz1ErkYWUOnroQXdOgBT/rzEzZovEObyBa4BEF5qkhgHQkjRhK0p6p2pnzXTapKjCc80Ekc4b3
+iJI4QCs75sF8/i3SgJbYShMDdDOrFc7ZQYfgPKu15POP8/ln5JaCWA7Cc8A0UOCI/cCubcFAqyo0
+FEoRSU2GY1hENOFl9gTI3/Cz3wdRNONhNm5wexxCuD+kkGrEYqBxmDZm4R0tVZkqUPIkRNMJDpFl
+tEwvGjpRkxc8iLChfI4i7xO1wYIHEaYj3OMAJm5SuIF5Un4Z/kEQXquE4EV4vJ/dQIrUpzmITKPQ
+Od02ROlDjeAMX7HHhegLlKVWA9R7mY0OMRw06UKUlu8iqzOmwgmMejARpu2KaMT1YEZOs2SqBnsz
+HLOZUajXsA3BOt10ZPGg3XJFrQ/WJxLWYSdIM9O2Ax40xXX6y7RIwkwiLJGUpYkJKrExmg5WmbSo
+y2azcVVV9nCImNEZxgjTkOQsxRG3WhlqNFyILn8+tRJHfuFkyBHb4c7GaVfU5Gq6hyqTpjIZ1CMN
+OGAMojhhDMNymu2RGtpnOIiYkXybIJmGjJS02FfCnC1NOvU63Xbw5mwmnZaat5Pe3WYMQKVRDwNQ
+kYRcxGA8ghGO2cwI4BOygAy5q7RWeNO67tXSu7eN72nm7+xQ84YhDEh4dwFLqbnRkM5j694PuSvb
+HETMCKVeAzK0pIdoJXz7HS9t6hG9NzOlr5A4Vw5ks07i9GTINTwAOpWy8DnjM32/wJSW5VlayHBK
+j/ziASXRbnWJnry6wMFHPlrKR5gr/xzRfxL93031E8vx+Zy/B/EsAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[22]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_add_both</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">],</span> <span class="n">Less</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">c</span><span class="p">),</span> <span class="n">Add</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">d</span><span class="p">)),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Less</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_add_both"><a class="ProveItLink" href="proofs/less_add_both/thm_proof.html">less_add_both</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/724eebbe2789318593d6e814c2268391180a55400/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAVIAAAAXBAMAAACrGdq3AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAER0lEQVRIx81XXWhcRRQ+2bu/925vAj4IEcpC
+H6Rg6qKl0DyELaltRWqXVgR/kOAPwT6UDeRFaOuGij4Y2IsR0lVIRxBpu2q3rViIEINY2qqViBal
+ccuNKRUTLGGhGCwUz5mZ+zO7cyHClvbAd++dmXNmvj1zzplZgLslKQmtlCIM/vdEnZA/JLTyUoSB
+ThKuQA81NnSeaKwuoBc7rzM4cbld8+1vYRFfiCeoOdx5pp9IRMh+rcGrGs0mJBkQxigKnM4zHZQI
+ZF+4sVlr0PQ2PHB54l8wCkAgwlau80xnJQLZFG5kWbDtw54BspJdrj9qzQF8BwQD6SfvQpgOCUQx
+TfpeM35hngGxamWaRIe+AhyXG43vO880XheAkZnDrUxnFstg9Xi5Nc98g+T6hZzKdGSmgj2ngWMX
+wAdrXX7tTMlnhMQFOMZUpodycQcM6e/atZDBqf3mPwpTab0FOEYg5f0+SL+uLPd1mb/6vtx2gH9k
+2kpIOBVjkxRWq6KxLifwaR52t/h0HrIuxEQMj/7sWZPyowx+VJii9Q58PSKQYVbRX+0hhcibyH2h
+WrQtOFfXMGXQFSqYsSl+oKzIjCkK7CFmKLsbjR8ajZ9oY3japLle18tBiqEysrqNCo3G7xiS5D5p
+XRGIuaGEuqhQ+QtgO7rVtqHfbWc62gvZst8yJkTYOSrTS2DeUn2a5RqJWQ3TeUg0FZ9K6xclhgYo
+XgbO0S+9s0BBZS26vOuAOEuQ6VIhYGqeXaZje+xB/KE3e3mKDID9nhi64Sq7b94BY0VleoprxOY0
+u9+UDveYetZ9EmfwvDB/TVMs21dtonQlPcu7VuEE95OVmsoHTD8rVZDpczvx8292nRYpjqe/8Yak
+lzMuh9mErqGHFabdOFURDKclo8hglQIzzFRabwWBgxgR8QKRg0yecjLumGXetSLOFTv+oRPKqO0w
+jkSn6XOCp+WTcBw2TouhilewewSmoK9QUJhi4ltlUcFIPr/GfIMH4H21nkrrp0Cgq0xRYlMEZ8vx
+HhEyvMuBLdVqNWfb1t4Q0/OwANKHF2Eb7wBJ/TyFtqgicwIfLb+zvqzm/lePL9E++AEuCipX/iKv
+MpXWV0CAB08p048G3ZDFcOkuya4l9i73qZ14gflMseRNnIQaj8sVIMaiBo7tpKGpk3LG3yQizqhD
+wacx7BtA+xlF9WROQGReqbKP1WAd2wo1SBahXqOuIyzDeJzCdCijLqRv9WMn5fpVwzHr8BpY/Dzp
+xaHV/tAVZHP0DWWw7awIKyeUS2E8LyCGBjedhfFc+mkXn6nBATae412pozj47I36xzsCps88tpyX
+ZemtmxQHo7Sd/CIvh7huSSDiHt9+e4tWfkMiJLm2J9Sq1eBcUOspP5PwpZ/edAT0oqEVrTwpEfI5
+a322zq+b5/mI+Q9LaOXPCAPt/4OSQEiMtudamPLtTmONqE7CfSOpe7n4f30BOZQcp0siAAAAAElF
+TkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[23]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_add_right</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">],</span> <span class="n">Less</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">Add</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">)),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Less</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">zero</span><span class="p">,</span> <span class="n">c</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_add_right"><a class="ProveItLink" href="proofs/less_add_right/thm_proof.html">less_add_right</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/86aea9267385e1e335dd45dae317205d766fa1400/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARAAAAAXBAMAAAAxVg0qAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADlElEQVRIx71WW0gUURj+3Ytz2521CAOFGAiE
+6MLSg6TQtqLdjGrLCCxBo4eohxihl6CHFSKIDJd8sM2QeejFltgtIUVQwpBuFCFJIC2MGF0UFyFK
+8EH6zzmzc9kLtbB14D975ps5//+d/3YWoPxDLQnmDCn/kJVSYPDqTKrIw9ZyEtleDBbvvy/0YoHJ
+frK+UEYeYldRuDJc6E2lRqWHhChWRiKeYFE4kI2O1/6NO0yF8JGUMhLx5QJ1ahbu1AzIpds/eE3F
+jeQqy5kidTnPe1tNeAIKEjnP5G06/aacRI6QWNd+zZpaHrfgc5mNOUSkzB6Ax0DlEMC9P8a9BCLk
+fB2qsMZSdEK3YPGXllQdRLgZOAxQD1S6gavKKuEvOnTufNp0mS6EXGs3aHpLkyn6tM3eq2bQ4nPw
+0ErljgZtsGsNfLqDiD8F7wB2ABVBkyKmllpzxc/HI7IEo6kCRDSooHAI2ikPR8Sn0YErxASOasUB
+d0EAYU86/QnzgZz+OM3ePiYu3ZarL81VSxSboQyNej6RKzXgi7KvA+iLBme9okVfDJKRfCJIrlNx
+eOQVnTsM6QrhlAiNEjeszxOO0oIuE+1IZDFsERFHlkgMejbjATI16Hh0tQLfqW7cYsUgqcM+yA8N
+thHmgiwRcZ1lgCFPLiH0kV8lludkYniWfzZMrweJGwpaRB6pfUik/SCpBe0z0l4Df7CXnRG3GBaH
+kIgC1S7VmawIB6KYPA6P/MDehi4FJtcwWp4wVSQE3diJPTEx2kaJeAZjtmRtgV7kQcuxn6Q5T5LP
+NUgOSbYYFrEQBd31wSg0cXnRhCuCQthJBEtmjFU2kQpU4YvIJHl8UU8VecByisfjiixLJ21EpmEe
++Ckjl5poaNDbXsLEZ+X7bbS+Zaz7m9nQxk24tjmnoUkjIdw8C0zISKpCI0IBEnSagbeoR2TvWc0k
+Iq5C/0NI3CHrFZgyk5XfpNJfY/ijOaVer+bBjs7KvWfCLgi1r01LgF9rgARURiAlaDRHYNyWrC/4
+n40I9uNyzh0TU5CBE1TTBo1ssd1hBYYDdlx65Do0b0pv864R6FX4YzrOXHNI4+4ievpL6sEBi8ip
+3UvkezcyuZ4hQZImW40/WWRLVvFA4Y47UKwVXzXENhTbnIjHrbg7+4iL6XQVUTxcEswYOll6NWt2
+DqGQgjNFFHN6KTDIKhN7GG3zXxBhYb2J5RVX4T8N7t+b+A0LK/Ce57QZ/QAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[24]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_add_left</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">],</span> <span class="n">Less</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">c</span><span class="p">),</span> <span class="n">b</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Less</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">zero</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_add_left"><a class="ProveItLink" href="proofs/less_add_left/thm_proof.html">less_add_left</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/e20181e706b08a9f94848edead24d96dbd54e6400/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARAAAAAXBAMAAAAxVg0qAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADw0lEQVRIx71Wa2gUVxT+sjO7O7szOwkIFSLI
+QqFQWu1ii2B+rJH4akvLtpaCVYr4oNQfZQP5I1TYgPjHSBYjpFshTKE/mm7b3dZSSwohtEiLL+IL
+wbAyIaUWxRAEiUQQz7l3nptZbGH1wHc5987cud+c8517L9B+Kzpo9Wy5JfEszMxKRNrHkaNxG+hi
+58V2EnnFQTTLXPPI+EVq5oAt3PmkjTzSeyRa2MFlI/sJCQuDnKJyG4moOQnfdgQ7byybcJ+g9DIX
+6Nk2EjEc+LY29Njy3JhIRHyJ23NQiHyinRJ5yUELIgkvWMo1wUmf5nYfcLHRON9OIm87SK66bTcR
+mZwrQe9yZTsjY5NYPUsJ+RHYDnz51Lz/DyL7HOwuppbCRA5n1TIUR8fVW85o7WB6EVgP9CPpkoT2
+aeiba37Z9JlwUs2rHQ3KOzYKfbLu9q5IpP+AOh0mMgPDRmxK+ANX3fdfs3AJeJUWsfSC981VnqfN
+VgqmjjP1CCIWOuoBHmNAHjvd7lkJdQEZfumdRuNCo3GZwyoCpC1w27HXm74VeAQM03fsgFb/8rzN
+JUqjiR57OZGBbhglr6eMiHmdxTARo4xaIRQRQ0QxPtVEZAZxKuDd5O3Jc8ryZ5ju41lWkD5nix2Q
+iNzp9YmkT9/l1QZX0g/Mdwv15WGeYGEuwciGU1OzsTFcNTXxT7HpptTcF6FaQ95PtNmlb2iLvPJN
+kxe+rk2NC2HrybGcT+T74jAR2bmN3HvW39RmCkPa7yLeS8i4ZTkmUcvihVgxSKST3ihAKTeJ9SG+
+owcbyPuctKr2ahyyVI5FrZbTJbEbmuqpckCsmzFEPCbYHWGZ4018g5cnJBHDqVUuREbKjl1TQxGh
+ktFLUF11/XBLlu8KnHQKvoPybRRMLh2jpHZxh8qpUqlkTVN/P0DkLGYhI0Ca2OTIQTCj1HS6qTku
+kV79a/+/4ar57fU7HEVPXHIj+epnjuV1t5iLqR4a7hSpZt0dExEx47ssjwiV+8i3qLImsAAmtCjm
+Dm4LiTVTkmixsx72XcU/a5PT7glQHN5hVZGxNqCKRAH1lCU0gomAWP/UHvTQIFfJTaWcruMAdB7v
+78Y83vM+3yvR4tDra3lSyptJ39rTGMpq79rUJvvyVvILGv3wn/rXW30iH6y7m3Pq9cg8J2mAYy2u
+XfrkW95HRx1E38WiD/pD4W420FYrFX+fC+8jMblMrMVa4w4iLRV9VwwTj1t+2zQ9avJHrX7aloi0
+29H3tjA9JdD+ByIirRpVV2UUz8uSz36JJ7bH758jiL7JAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[25]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_add_right_weak</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">],</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">Add</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">)),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Less</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">zero</span><span class="p">,</span> <span class="n">c</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_add_right_weak"><a class="ProveItLink" href="proofs/less_add_right_weak/thm_proof.html">less_add_right_weak</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/1304e29b43b3fba263192420c1abb7ab30b1888b0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARAAAAAXBAMAAAAxVg0qAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADmUlEQVRIx71WW2gTQRS9zaP7SjZVRKEFWRAK
+4oPgh9iCMaX1jRofCD6gFT9EP2QL/gh+pCCCWGmwHxorsh/+aJBECyqCIkrxhSLFIoiBLRVfxVAQ
+LfRDvHdmk91ZUzQQvXCnsyczd87c1xSg/mLWBEuO1l90oxYYwjbXJvpYVE8iS2aD1Uuvqv0wwXUt
+zQ/VkYfa4wNazTLcmKy2odFi2kchytSRSCgufq/eVIFj5eiEvWuCSabERzPqSCQifn6968LdlgMG
+bO+SZ0yDSK6xninSKsTpnu2B70FVIge5vigWn9eTyGaKdctHdpS6Je6FD5Tm+ohopVUAN4DpBoCL
+f4x7DUTofvtNZYZ4zDe8sPrDypsCEWkUNgKsBKa9IDWVV8uHBZvLbnUcZRPFf9oplt7a/QL7Wuzt
+VaN44iMIsUr1EEE4MAMRWyASLcBLgKXAVLG0VGV5S2Umj2dTuga3C1WIWNDA4ATsYTyEiI+gA6fo
+CLqxGxqCeyCGcKhYfIf5QLffxrJ3gGvA9uTqk8qsK43NUId2+3cix5ohkuarY+iLNrFe8cRIBvIp
+X7KOsPt3G4JHnrJxv6M9CRxyidvkhp/jxFGbsHWyjkS+JF0i6vAkxaBvAV6g1Iz3RVcb8JnZxi1u
+DPI2rPGX7yhrI9wFZSLqT54Bjt48gtAbeZpOfqvTwWPyg6vsedCky3GXyHVzAInsWU/mrfdIewai
+8X5+R9zinHwZiRgwP2CKDQ3hWBqTR/DIN+xt6FLgegKjFUoyQ0o8iJ04lFHTOxmR0FDGk6xd0I88
+2A0HKc1lSr7AEF2StjgHYyEqduC1W2itaQduiCtJkQiWzB1e2aQNuDCS0il5IulQE31gOWWzWUPX
+tR0eIiMwDvJDJ5c6WGjQ22FiEnHz/Sz6d+Gd3k++OiO4pdPX0LThBG4eA64keVNpRyhGQWcZeIZ5
+RA/vsypE1GkYvAa5czSfgoeVZJXnmeyvI9F01fYiwEJnlV5x5S+BObDTykHUaoMcNKagoFgsR+Cu
+J1kfy9/bERzE6dtgRi1ACbYzS3Ms2uJ5w6qIAAuPHj2HlZcy3Ll8GPoNeauNo9SZsKQLiO7+ULiy
+ziWya8UkrQ8ik5MlCpJ2f5PzTxZtKRs+7740RSZpH+yT4456xPCMuWzWjbvYRwLcZmAWw1drgjlD
+kWXYckdRlGoG9s5iWLJrgUE3uXrD6Bn/gggP62ksr6wJ/0mkf3/EL/RZ9bkOmLkwAAAAAElFTkSu
+QmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[26]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_add_left_weak</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">],</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">c</span><span class="p">),</span> <span class="n">b</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Less</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">zero</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_add_left_weak"><a class="ProveItLink" href="proofs/less_add_left_weak/thm_proof.html">less_add_left_weak</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/962df2a3d610101f668b083523696bd883086a410/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARAAAAAXBAMAAAAxVg0qAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADx0lEQVRIx71WXWgUVxT+Mjubnd2ZnQQKFSLI
+glCQNnZpS8E8rBviXy0tay0FrUhQS2seygbyIihsQPrSSBYjxFUIE8hD063s+oOWFEKoiNJWSTWi
+JGyZEKlFaQiBEtmCeM+9s/PnLCpsPPDdPffMnb3fnPOdOwM03rIW6l173iJYDdMTAoG2PzAaNoFW
+ctY3ksjbFoJZJv2R8ZtsWAC20uTrBvKIdQvUsR7HlcS2hxiaDfRTifINJCInBRzb7Z58YHuhGYP/
+LpOfJi5QEw0kollwbKPnslEr0pzwwlUaf0OIkW9upETeslCHSLOVrOJfVkCdpvEgcLNS+b2RRD62
+EFn70PQRmVzIQeXdgbE7NrN186wg54EdwJkX1v0ViBy0sC8brXqJHEvIeYS4jkcP2OtLPbEV4EOg
+F5HWWlA57PnP9sud33In6t/tO7e8pWGok+Xa7LZA7CrkaS+ROWgmpClymxwi7xq4BbzDNjHUjB1d
+a3vKfCGjq7hSDiBioKns4jECpLCnNr0mIC8hTos+qVT+qFT+pLTyBClLfFWfXZptwP/AIPsf06XV
+G7a3JceEraPDfJ5IXxu0nNOFQ/y+lqyXiJZHKePJiMazGJ7yiXUOYdbA+5jXnaJ46grRfTpPPaUu
+mPwEZEQepR0isYuPabf+NewBFtu4+lLQT5Iwq9AS3tKUTGz2dk2JP5M07WvfZZ6qduZdYIdd7J6y
+Qhdnddr4rjI1zteqkZGkQ+RcdpAR2bOduf8aD9gYzwwov/J8VxGvnWEjAqUE3pSybiItbEUGobzv
+QHuCn9iFTcw7yrQqpxVKWTRJopbzsRw/DXX5bN4l1i0YYDwmyB0imeMj/IANE4KIZvUqNSIhakoz
+sicjrGXUHGRHXdI3NL6BU1bDN7F6axmdWkfLya00Ye1UKBQSuq5+5iJyDfMQGWCa6LTkwJmx0rTU
+SnNCILbu595/vF3zy/uPKIu+Bhy9RLm8W2vmbLSDJaqFl5p09z3PiB7+0rCJsHYf+hFF0gSWQIRW
++L392z1ijecE6pysx4I/SGrK0bKDu40i4sYmFNGcQTlqcI1gwiXW68p/HSxIXTIbysfK+AoqxXvb
+sIhddunTAnVeel1135TizdO18SIGEsqnJhsjXSkjcppFv/i7PLbNIfL5e4+TVr8eX6Qi9VGu+WeX
+OrnT/tNhC8GPLkR3rkJ23w4f8a5KuMZioeBU03uOSGIbqc5e4xYCLRr8reglHjac0Xd70M176z20
+KRBoD4O/27z0Qq7xJYjwsiqsuwrDeF0WWf0tngEVRPWb3ImLQwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[27]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_add_right_weak_int</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">],</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">Add</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">)),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Integer</span><span class="p">,</span> 
+                                 <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Less</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">Neg</span><span class="p">(</span><span class="n">one</span><span class="p">),</span> <span class="n">c</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_add_right_weak_int"><a class="ProveItLink" href="proofs/less_add_right_weak_int/thm_proof.html">less_add_right_weak_int</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/4294e548c90865be91bfdbeeb00ebc3b9cc7ef240/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASkAAAAXBAMAAAClsKTYAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEAklEQVRIx71XXUgUURQ+7p87s7OuRhQkxEZh
+RSTbLxQkGxpGYS7Yiz3URg9RL60VvZQxRRTRj0tCthU1vQS2lZsGgaGIERYVWBCFsbBmECWJBCb4
+EJ1z7zhzZ5ytILYL5+7cM/fe+c75zjn3LkBhW3EefSK/OgEFbx+d1SVhZ/1OXUppsLBQoFwZZ/0y
+kK8POqGNcNlEg72FQnXbrqhg/MhxAF/UacF+LieI/GShUFXbxhu2sB8PuiM0TWKDOGE1F58GEAgX
+ClWfdfitm/8qKLs0XVkpzlA0Jm6E7StYWMXFkdyTm+YRpQecUPkiXF5lsy8KhcpDwd7Ue5yDqotM
+67ei7B6bZUPVO6JCALOPZDPA1T/uns8XYm3JzXxPVnsH4CaRJc8x42QPDn9oHQkLquawJwlu9C5J
+ExSXTs/277NsWvT84TWWKZL9c6d5fqwxyFlrQF8qIA0ikLsRqGMDAdUbNGgKlJwF1QdSuDASSSQt
+EDOmlxtP/uFULJgI3NccUGlQxOqQbJhz8Rs6hemWii5TcOd6+h4r8yaDT9GGOIRwQV02+zKbfU18
+TLHPjnNx5YRgf2Y81ajoSjh5CGaiOjwPFJURa5qzXK816yJgQ/Uc5Al7tCOqYAZ2hUVfKcz93j4u
+EK/CLl31iJD+HCbfBEZyJXz3aFRAJXeNEjsn5gK0jM0jgsCCqhPgC/sQrjcYlH+Ce9xeGd6wclWv
+iag62BrXIBfoRBvld/5JKvhDJQTjrb+vnc10H1QFVPcSLYiqsZa21z5hf8SKahGc59bjeq6VciB/
+h6L4YlsVvYGoVPmJJQdD6IcYuNFjJHAMo8MTZRtJEYp/T1JWecG9HwABVQ2cR1DM3FbA8IZGK6pG
+cF0j82k911KO34DlUfNwqWBvHmAmRaSoBRUmYEBltYTVkyKVAqCEIldRPaU8GtamUqkwZLrhjonq
+KQyDv1+Pv43YL0DOcV6qjaM6iyFBsBQj3PzIxa3RM/NVWwpfQHbKq21V9PGqr8h5jAsnNSGtx/1C
+oCAHIeTpHAu9JRHoNlDJk9B6B9KX6Hkc+jkMK4OIY3aCrdfbe+c6FxRhWmp7sy48ARItDVoagto6
+SIMvBhmJRb0HvIOmrwb8E+sx9lrxccidlDP2aB9j+V+m0XrhsHVobvG+0GA/zo0j3Vtd2YWx6t+W
+w764ukorvoLaFWWjl0tNVNtXjlJmuhHWqTHiUjKccvRAL0Cbfvuk9brenAFyljXupbZ8V9fkzBtM
+WOjTqZRZjaz1ysX3dOl10/isw31IznNHas+DiqyQrFdkr2b2tslOO+wAqLUclk4X7uN5fJJz1n/W
+RWRb6P8CFbIZEC3AQ/EsZeR/+Dfw+38qoOV5/sf2C/f4+JR7sAewAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[28]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_add_left_weak_int</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">],</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">c</span><span class="p">),</span> <span class="n">b</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Integer</span><span class="p">,</span> 
+                                <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Less</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">one</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_add_left_weak_int"><a class="ProveItLink" href="proofs/less_add_left_weak_int/thm_proof.html">less_add_left_weak_int</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/c550b7201b650e1895c22a793a3a2384cbefe6c80/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQ8AAAAXBAMAAADn89dPAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADj0lEQVRIx71WTUhUURT+5v/NndGxFgUKMRD0
+s0imEiEhmRjDCswB29QibRFRm8ZyV8ozohZJDgnZVNhrE+WUDhkEhiJFqFRgiyiMgTGDoEGRwAQX
+0v15837GN2Q0deDcd+/HvHu/e853zhug6OZR3dJif4D+rX1R3dKOF0TL2GRzEXnYU8KtrTSUB5C7
+UwLdz1anikjkgeoF7Iw+3cIz4g4LtJNlNF5EIhHVdWsyLqq02d5D/BEICtStAL5gEYmMqa5bpXHh
+V9TJ3LB4NisCddD0uIspkRbhhYi4hUjISEYFRnLou3T6TRGJOFPC0TrakU9kdFaGj1cHadBEe2J+
+PTh6ALj9293XToTdjblrHPcUM5H2oDMOB4sW2aCJgfxUBmMcbYWnLIdKp02b2iaf3WGahjf/uCtG
+edt7Qapzi5Kg8MchNORF5DP8Gdi5fnQi9uUc6lV8UW3PCm0mzSSiJTHfgGJBRIHN0CjsfcD1OU2M
+UeGN7GBqDen023T6PQvrMt93gXdfLTXOFgRSHLVnDFqd0GZ1MuDApfNYTaStHH5ZWzl62Lgjn8gk
+yKI5In4eRdeYWawlKTQHBdpSS4dk7XNGd2WGRcA3m1E7YDhsIEKGsqwFdW4EuufLufpqUXoDJiJq
+asgKHAtmIoP8aPuUuXxpG2lUBPqUtjXyUVpiDXi6lJ38QRp7JG57TjYQeRLrpkSO1rNdlK/s0GiX
+9BJmIt4Md/IDtpatJiIBercoHHFzQwvI5BUEepFq1RmWWHC8ISZfZ5zIohsO+GAgUocuyoNfpAdM
+nQfxENuHzURYITLvww41nDkitGR8sihttcWzW9pC3rBa8DaZZbWUlY5fdpaJFFcnEokgUsPo14m8
+xgzUCExgHweQY6YRkaaE389e3SSbq+bF7u8sinkfvYoIDOhgzFtD1RGAn6Y4QBNwjQtrWwjDGhGy
+hJ5+JLkmFsAILfF3O+uNRPBJ9QKdtd2y+2ioP9bdpCRRouxBEu4oUl4uWidcU3pExqXFGqojViXT
+jjhJ4SR46lrLjUSqTF+2VR+9SMEvJTdXpHIIXUHpcIaOnkit4rlF0Z3rsjfLdCJHdmVDar1enmdJ
+amOx5n+wLpwd1dQaE17g7xvXKklzk82obkHDmEwk9Gya+wjtpPxhfRSJC7c2a4p5qEvRx7wfWr19
+rMBZHapb2re1oA7DuAYivOVJtLoSvfhf5vn3R/wCCC7mxkH/eBAAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[29]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_eq_add_both</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">],</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">c</span><span class="p">),</span> <span class="n">Add</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">d</span><span class="p">)),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">LessEq</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_eq_add_both"><a class="ProveItLink" href="proofs/less_eq_add_both/thm_proof.html">less_eq_add_both</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/f7060279114b57904c6ba8739bbfa030e25c94e00/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAVIAAAAXBAMAAACrGdq3AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAERUlEQVRIx81XXWgUVxQ+2d/ZmThZ6JsFWfCh
+FBpdqgjmIawktRaxXaoU/KGEVrH6IBPwpaB2xWIfGtihKdhVSEeQUt2KayMKEdIgSvqjEqlSMZ0y
+aYrShEpYkIYK0nPuvTt77+wMWFipB76ZOXfOufPtueecexfgWUlaIFSsCIf/PFE75HeBUHk3wiFM
+kh5HlpTl7Scaq3GEi5kPczh9o9Xy6FWYxRviNVJ3t5/pVwIRsleiuNt32BliWYeUA4TDlAV2+5n2
+CTRls6ys9p/itx3fod5Y8GbIk/9AvAAEImzk2s90QqApK2Sl02nkwbTjOyArEWbPNzSmAH4EQhzp
+p55Bmg5wRDFNiahVf5MciFWQaQoD+j4w3HDdn9rPNFHjgMHxQ0Gm47MlMFglw6mfZYfUspmcynRw
+vIwj54FhA8Dxp/380zOlmBGSk/ClozI9mEvYEGfxPvme4nBur/63wlR4rwGGQUhnG+baHuVz35XY
+rfviun3sIaMu8DE4aqs6LuAiV5bkOL7Jw6ZATKeh04MYy+GOJlMyXunATYUpeq/H2yscGcco+vYv
+Klw+Qu4zlaJpwKVaC9PYCH6ppurYRhZExRQ53iJmKJtc97rr3qKFYWWjcbv9/uqTMbJ6jAau+yum
+JIVPeJc5Yp5UUN8rTP8E6Mewmib0eEGm8WGavqTqaGurTH8A/ZEa005mkZwIVBQZT0OyrsRUeO8Q
+GOglj95L9EufzFBSGbMeG9rH9xJkOldoMtVH5y0wP6PH8sOlrER6ha6P3veU1defQHxBZXqOWcSm
+Al2KHOoi4A2mDe9ugW9xv9B/0SiXzXsmUbqjTbChRTjNJjPSI/km07NW2dKusMe/nD/oI8UhoeMr
+EeWMx6DXoWPgJYVpF05VhLgd6PzksEiJKTMV3muB4wBmRKJA5CCTp5pM2HqJDS3wfcVMnLCliuqH
+IYCXx+hxmJXlG/C10PtZSrGGneUYge5CQWGKhW+UeAcTCf5Bw+EF+Fztp8J7I3B0lChLzCzLu0SW
+pwwbsmFNpVLJmabxtsT0GszgdesYS+t1bKChX6PU5l1kiuPk/CfLSmrtX141R+sQaGvM+EJeZSq8
+7wAHSx4r04OL0AWdmC5dlhiacz5lMTWT2x2fKba84TN4P/w6wALQqvMeiDq+GjkjZrwrELFHHWzp
+wLKxtEdRP5ni4JVnlTc7VVjirIUqpIpQq9LQESfjsDyFMamiJrVHPWz/WAr34rZeg11gCH1SW+yR
+jiCro08ofS1MZeOkcihM5Dn4q74VozCU09708Jru63WGcmwo/QW+fOd+7dT6JtMtr87nxcH944eA
+tbSflpPp/iu0tTgizvE88c+6JHd9h3D5UECSXMsVqpVKM6MyoWeR8Ol1myNcQmhFGx8TkGLuBK/B
++cPm2RYx/yGBUHkQ4RD6/8DikLedlmskUw17QoX/znxAfy4k/X9+/F8PrEI1JgvTOAAAAABJRU5E
+rkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[30]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_eq_add_right</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">],</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">Add</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">)),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">LessEq</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">zero</span><span class="p">,</span> <span class="n">c</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_eq_add_right"><a class="ProveItLink" href="proofs/less_eq_add_right/thm_proof.html">less_eq_add_right</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/13810ea945f67813988dd2233869e6cc2aa197bb0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARAAAAAXBAMAAAAxVg0qAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADnklEQVRIx71WW0gUURj+nd11buvsFuGDQgwE
+QnRh6SFSaFvRbka1ZQSWoNFD1EOMj0EPK0QQGS75YJsh89CLSeyWkCIoYUg3CpEkkBZGjG7SIkQJ
+Pkj/OWd2Z860EgtbP/xnZr495z/f+W9nAcovRkmwaGv5RdNLgSFgMQ2Tjy3lJLJtPVi5N1Psh0Wm
++8n7hTLyUDo9QJ2RhytjxRZUmlS7SYiSZSTij/Dfe1sKcCgfnYB7ji9GlfBR9TISCfKf38cduMO0
+QcFyT3lF1YfkKsuZInVcnCYsFzwBRYmcZ/omm31dTiJHSKxrP9OtlKMRN3wut9FDRM3tAXgEVA8B
+3P1r3EsgQs7XbsirhEe17oaVX2ba4IiIs3AYYDdQ7QIxnJ8tXeRs7njSeJm+yBws9MN1mt7qZIYC
+W929ahZ3fAZ+WqkuIggLqxC0OCJVGXgLsB2oyqYaL0yvLbxJC6m4psJo5g8iwiBABYWj0EZ5cBGf
+Rgcuky3IiZ3QELgTQgj7s9kPmA/k9Mdp9vYyFSxXrr4ovDUnsBlq0GB5ifj6SA0k2OwQ+qKer1fc
+MZiEdNyTrNP0/B0655GXdGy3tTOKw3B0lLhhbYFwVBctjVhHIt9iDhFlZMkA7TY9RK4Gz4uu1uEr
+tY1LnBikLdjnLd9Z2kaYC/JElDWWAbY+voTQe2mF7DyvkY3npKdD9HpQxcGIQ+Sh0WtIU8y8+RFp
+r0JVpIedEZfYO2Pg0jpUCwbf0BAOJTB5OI/8wN6GLgWmVzFa/hg1JEd82In9SSXRSon4B5KuZG2G
+HkwIesI+kuYSST5hgBySLLE3xkKULeGdU2h1CRuuiMgxngiWzBirbKIVODEY18I09P4w+cBySqVS
+uqapJ11EpmEBx7Zxmh2NNDTo7QBhEnTy/Rb6d/NY1xdPVRO4tsnT0NSRKC6eA6ZE0obcgFCIBJ1m
+4E3qES1w1iwQUVag7wE+uw8CLMNUIVmlTQZ92lKVKNpeOJjrrOIMU3YTGL2t5jBUmfUwDJVxyMgm
+zREYdyXrc+lnA3l21cC8L6lkIAcnqKUNJlniusOKCAdzlx65Dgs3ZaBp5wj06NIxC0exKWqKdxA9
+/Slz/4BD5NSupYj9X+taDjBt1ckW+08WWZI33O/cNFkqCQ/skSu2ukR3jcOplBN3uZgBYR3DQyXB
+jCHPMmA6Iy9FiZxZx7BolQKDZjB1h9E1rkdEwmpKMf4sTDcIYMB/EvHfb/EbCmr4XvDN6oQAAAAA
+SUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[31]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_eq_add_left</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">],</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">c</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">LessEq</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">zero</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_eq_add_left"><a class="ProveItLink" href="proofs/less_eq_add_left/thm_proof.html">less_eq_add_left</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/a1f982b72a1ab2522cd90897aecb03596858043f0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARAAAAAXBAMAAAAxVg0qAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADvElEQVRIx71WX2gURxj/ZW+T2z+XvdAHHwyU
+A0EQqxytiObhjERtVdSzSsE21NQgVR9kA74ICieIL0ZyNA96rYQVfFCD3GmgSqAhtEjtHyX+oyVy
+ssGiovQISBvIg/jNzN7uzt0eIpx+8JuZb3Z25jff95vZBZpvtodGz+otjndhVkog0r6O7G11gQ7W
+WNRMIks91JpxdooYpiPfeQysZ/W3TeRh9AnUW1s3FQcCXwmWbXNwjKUo30QialogsB1enWT5WuF3
+x+47QbubcYGZaiKRhIfAlnv1brZworq69dAJjfkdMSLf1kyJLPZQT+QnngQvWKOPpDH9wK1y+Y9m
+EtnsId751JWJfFP5gKLPTwfO3/NfMCurgCvAZ8D3b8z7WxDp99Br6/MSEeN/p2gjxnV8bk9wh9zF
+RmAlMIB4R7VT2y/NuezHtQd5Q5e6ldM4kZd9c6JU9e4KGL9AnZKIKPNIuFAmWbslINJewm3gI1rE
+MbN+b6ff0mYKWcvEtVIdEWWEJirJfga7qu4NAXWWLQFsKZf/LJfvsLD2IVmCNstHHfJTs41rdojm
+cUNavem31uVI2Ba63FoisWGm/Zzs30TSlokk8ihmpYgQr90ptE7WiPU3XvYS+jKsP3ONheHVDONn
+Pnb5DUhEnncHRIyxFzas7/gGKgtZNZERfpyinpJTU3SxRj41dI3Q7pUp+fgar4QKCFfpsjP+0ubY
+w2mLLfxAm7zIx5rxkXRA5LI9ZGs/8+a/zj9sj9lB4WvzaK/eYSMCxRQWKLZEJEe6QSxfc6G9pE8N
+sJpaR0irarfGQqanmajVvJHjt6Gl/pAPiXUdBoEl46w5zGROar8gfI3rUNgVAd1V7qtSRFrSOu1S
+DdSl7AOfBNfFgW+hfCeyVgdPvdrBHDpOhUIhZVnm5yEiNzBD5a5xrom1nhy4T6lJVlNzSsD48PrA
+M/n4dvbwKNYcd3MsQ5F54HlFW+8iN8lTzXR3kkfEav3K8YkYcxi+RPWxT4FZsJTM8XeZHxJre06g
+/mbldjT6h6SqnIQ9tMMZRbuzGqNoy6KkO1wjGA+J9Vftvy5WDyzEdCxvlLAXpudXsD30/eKo/+hx
+62n4pRR/Jj3LxzCY0ra6VMZ7Mk78DPV+8aR0fkNAZOfHL9Leb9bxCkimhz557vnmxCZ/0tMeorcu
+RHe5zOxvv/uwPCoVKkcLhSCbetScSoO1LnqIND36X1Em3uoEZc3rUS9/2WjTrkCkPY3+u5TpxUJl
+IyIanaaC4J+u8d+Hxd/9Eq8BqHbzkO8Q0uAAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[32]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_eq_add_right_strong</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">],</span> <span class="n">Less</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">Add</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">)),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span> 
+                                 <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">LessEq</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">Less</span><span class="p">(</span><span class="n">zero</span><span class="p">,</span> <span class="n">c</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_eq_add_right_strong"><a class="ProveItLink" href="proofs/less_eq_add_right_strong/thm_proof.html">less_eq_add_right_strong</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/8e8bff69f8da0bc78cab9eaa657f92d2750c3c250/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARAAAAAXBAMAAAAxVg0qAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADm0lEQVRIx71WW0gUURj+3YtzW2etBx8UYiAQ
+pAtDD5JC24p2p9oyAkvQ6CHqIcbHoIcVopcMlwxsM2QeerEldktIW1DCkG4UIkkgCSNGF8VFiBJ8
+kP5zzuxc9kIsbB34zsx8M+f/v3P+/z9nAMrftJJozkT5m6yUQoPfYKgmD9vLKWRHMVp8MFPoxRLD
+AXJ/qYw6xO6idGW40JtKnaKXhChWRiE+tSgdzEbH7/zGG6YgeiSljEICuUS9lqW7dJPyGM4P3lJ4
+UVxlOVOkPud531GLnoCCQi4yvF9YeFdOIcdIrOu+ZV2tpm36QmZrjhApsxfgCVAcBrj/17iXIITM
+r1MTNliKThg2Lf7Wk5pLCDcLRwAagaIHuOqsEf6yy+auZy1X6Y3goj2DcJOmtzSZyhcyix5fgo9W
+KndcddCeDQgYLiFVKfgAsBMoBF2KWFbqrDt+MR6RJRhL5QnxDANUUDoEHWzeztfTuIBrxAW2GsVF
+d0MQad/CwmfMBzL7kzR7+xk8hiNXX1t3bVHcDGVoNnKFeAdIDUTZ10Gy1FyL7hYSiEEyki8ExXUp
+rhV5Q/tOE90h7BKhMbIMm4vEprRkyGRNUchy2BYijq5oIN+hk8jUogBcajTMb9HoEDsGSQP2Q35o
+cBthS5AVIm6yDDDx9ApSn/h14nleJo7n+Bcj9HiQuGHVFvJY69f4KVYL+hdUsAFVKvjvamyI6RED
+l1SgxqO5kxXpYBSTx7UiP3FvA2gChusYLV+YGhJUL+7EvpgYbadCfEMxR7K2QR9AAy3HAZLmPEk+
+/xCZJBliesRCFAzPR7PQxNVli65QhbBbCJbMOKtsggo0EYjI1TT0vmrygOUUj8cVWZZOO4RMwyL2
+HWmaHS00NEGlj0Y9YOf7bfS+bbznu7WhpS26rjVnQ5NGQziNOWAgLakJzUgFadBJBt6iKyL7z+uW
+EHEdBh7htfcQwBpMmckqPidKgvbPRlU0p54btTzatbNyMwzsgND62/UEVOlNkIDKCKQEneYIpB3J
++or/1UyuPbUw742JKcjAKXz8QQ4JHOI4wwo0F+069MhxaJ2U/tbdo9Cn8CcM7LnWkM7dQ/bs19TD
+g7aQM3tWVPNf60YGMG2lSXqONKlAhmQNDxbecQeLbcXXTDia4ugT8bgdd6GQAY911+D6Cxwp7G+k
+mJDBPJV+3e7draCQc0UMc0YpNMgagzOMjr6YEB6rKc70q/D/G/fvXfwBmQbvzPYHM+4AAAAASUVO
+RK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[33]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_eq_add_left_strong</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">],</span> <span class="n">Less</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">c</span><span class="p">),</span> <span class="n">b</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span> 
+                                 <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">LessEq</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">Less</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">zero</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_eq_add_left_strong"><a class="ProveItLink" href="proofs/less_eq_add_left_strong/thm_proof.html">less_eq_add_left_strong</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/9e88081cb4a2b571d3c1ceb2fda95a1c4eb91c650/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARAAAAAXBAMAAAAxVg0qAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADw0lEQVRIx71WXYgTVxT+NplkJplkdkFQWEEC
+glD8aVAR3Id1ZdX6Q0tai7AqRaoi+iCzsC8FhQjiSy0bXEFjYRnBBzXWpLVUsbAsiij+sVpFcInM
+sqKiuCyCWFYoPefemclMdoII0QPfzbl35t775Zzv3LlA88100OjZdFPxKczISITaD6GjMRtoY2du
+M4nMdxDOMls/cuYONePAau7saiKP5DaJBrZn2sgOQtzCAU5RoYlElKxEzTb6O0unTXhDiHYxF+iZ
+JhJJOajZosBjy3MjIhGxKW5vIkrk482UyDwHDYjEvWBFHwhO+gi324E71eqtZhLZ4ECd/dyuIzI0
+nofe5sp2VMYmPmeMEvI7sBY48cG8fwSR7Q62mompIJH9GaWAqKPj0hNntLwn+Q5YBvRCdUlC2x1Y
+c+FfK/cKJxEYjhzDoTp560MV170vkbwKZSRIZBQpG5Fh4ff9477/pYW7wALaxNJz3oKzPU8bK+YM
+HRcr04hEBoGWin/EQid63M41CWUSaX7p62r1drV6j8MqAqRNctvyozd5DfAe6Kd1bZ9Wb3jeqjyl
+0UCHXU8kOsDaz/tG+tppXqsZJJIqoJwLRCQlohgbriMyihgV8FbytnVyyjovMt3/xlhB+rgtTkAi
+8rKrRiR54ZUJ4wi7/RPtQn089cAsqFNIZYKpKdtYEayasvhPkZG61LwRoVpI3h902CUfae9458cG
+b/xQGz4jhK2rg9kakd/MflO7ItzX1lNq07nDQM9X9AemkHbLclCinMHMiOkn0kpv5BAt1In1X5yj
+B8vJ20daVbo0Dlkiy6JWCsm8OA0N5deCT6yrQPt+cZndAZY51uE0erhPRFJOrXIhMhJ25IESiAiV
+jJ6H4qrr/BNZvjNw1Cn4Fsp3Kme0idQrbdyhcioWixnD0L/zEbmGMWrFzjewUkpBRohS0+qm5heJ
+5JxLvS+CVfP3kpccRU9s8iA5+SfH8qFbzGaig4ZbRapZdz+LiBixLZZHhMp94CxrgnIxCSbA2Swd
+kSL3xJrOSzQ4Wff7ZF/71qoj7hfA7N9olZC2lqOEeA6VhCU0gss+sV7X3nbwb287HkcLyQp2QqeX
+uIom8K23fJdEg49ed8MvpbyZdC+6gMMZ7RubWrW701KP0+imZ5VTa2pEvl/8Kutcsw5OcFL6ONai
+nvWh9d6ixxyE38XCP/Q/BbsZX1sqFmvnXCJscsR30gZuOg5CLRF+VwyuELNqbd30sMmbG/1pWyLU
+noff24L0or62ERGNqqko+Wfx+U399Fv8D+EX75/8jdUeAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[34]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_is_not_eq_nat</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">],</span> <span class="n">NotEquals</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Natural</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Less</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_is_not_eq_nat"><a class="ProveItLink" href="proofs/less_is_not_eq_nat/thm_proof.html">less_is_not_eq_nat</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/90556df5b665b5ff7d8773a921af8e1936b306100/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALAAAAAXCAMAAACccDU6AAAAPFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAo1xBWAAAAE3RSTlMA
+q1RmmUTNIjK7EInv3Xbn9enzK1aD6QAAAAlwSFlzAAAOxAAADsQBlSsOGwAAApVJREFUSMfFV+22
+nCAMFAgCAdL2+v7vWj4V0MXt3h4vPzzrQpJhMoS4LD801CMm/28Qn88Dnv+TFJ9sf+fiObzczue1
+OX6jcb7sMiIEWSfW5yjH9WaB0e3bCvVH4F1XipV5jmC4SaZm3etW9SOgoI7D8ucAuzuCu2TLbRe0
+C79E2e36oIJvYsmeYOsPcUSwzsfh7IOKqLEUs6ToND+cppURsZx/G7cCSeAGP4v9idFakipdQGaO
+hEOizv/6HZ87y7gF1eKWNiHWtM36GKW/DudQebChqAh3LL49qScnYfhMF7pUpvwNwTztyKVEcFfJ
+tfIiGKup08SMCSs4Wyx2VX0KGDsnzZnLwWBL6Md5OWQNkuK3tEwnE04vjpwr1RBA17uFogiaEBPA
+Chg2Ts6AnUkJl3OC845kLm3SlQIhivLRCrLVQG9B7FgumAxYcxkOyQvAvTFjqnVylgRuMajYGi6j
+dv98ZSWzrgpDVjr3pQSXYoxehQg1JnlcCMLVeMhJB0lweQ24NZYGVOekL7OUAUckbF14R+k6nv5N
+V7mH7eV4qp4iCJ71XtWNSMdSihZwkASZS8CHsTQWByd9YWU7bu6hrzT8VHdY8GCgL4hMH+Ii1koY
+WAhn0uAZMNpW8KZXZjLWjvfnAIYSpHNikZHVipGeEhyW2f0q973gU7EzAotNVFeIrW3H8CI5XQFu
+jNGaHXJxMohYf9bGqbEEuqhCKTDSGNxi1sxxp4i0QWLXDFfjtMYUUqqTboiX982K/9Q0SRCcrChZ
+1UCU+zhdU5lLzjXg3biAypCrk1l30+xkTvCs6vOuXkUNy8u+aubCvOyw8YWdx/ebuIHrN1uLT5vo
+i5Yn5WP6WTX7wnj3c+nBrv/HPn6/N/4CLysT3soT8+EAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[35]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_is_not_eq_int</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">],</span> <span class="n">NotEquals</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Integer</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Less</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_is_not_eq_int"><a class="ProveItLink" href="proofs/less_is_not_eq_int/thm_proof.html">less_is_not_eq_int</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/18611bda59e6c2b853f168584bb88c4b52f721e90/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAK8AAAAXCAMAAABK1e9fAAAAPFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAo1xBWAAAAE3RSTlMA
+q1RmmUTNIjK7EInv3Xbn9enzK1aD6QAAAAlwSFlzAAAOxAAADsQBlSsOGwAAApFJREFUSMfFV4my
+pCAMNNyEY3cf//+vy6mADs7O2/JRU5aOJGk6TYjb9jNDPmLy34Yn6/cMz/9xn66wPxP6GFxi1u+V
+Pu5RW1cXmQAy3l6IxwhHcTNBq/5JsHYTWVeNYKkfo5fdZFLB8BiaeCiroNMw5DG89o7eIdM87GK2
+8Y7WxYrn1HsTio/0GncoI2G1Lg1rnpNDCyXBeOlP76eNJMB7KMk3aSUsi1vjZ7E/sBE1o9xGYPrI
+NsvEuV+/03XnGENULIa8BiryKttllr2YtyBYbVj8dVK7A3d2srlCFtpcn9wNvSQvyOY0ENuoNfwi
+FrTEKQ9axxkuujLo8U28ODg5tluJxUIGP7/mU8pYVnvI01Q2If7FbrO1DDJWbyIhisi+Gi3wSgbY
+OTnhtTpnm6/pLQvipaZxW0sDrapHQ71pBipEoWM9Vw7BDuvv8Y7GALJ3ctIDhhSThs510u2fr6Ji
+GKovKyonrpbeWoQxJlyFFtI73DyLB2IXi0qiXuDtjblmcnAy2PiCNwEBsZGBUDHv+6Ca1GP0Ek5a
+aImPhOzVXNO8I3lHL/pt1FuH9zDm2uDkZCiosMMmbsoXORUciA40GyshqENZHnr5MojRdB6JDrMl
+JIhXeHdjZcm4B9hYfFTJKoI3SoJXS3rjNLOf324Ue65ymjY4SVoxtDoY5UQlU3OFtzNGo3fE1cko
+YPVZ4ybn2meTAjmN9TnZReVlwRxHicnJ4+5SD7txlq2unDQn/aAvTxmB/9QncUaJN7SmVDHvS+fW
+yhlAzKEWcIl3N66TC+LmZNHQdAtZ07sq9mQoVEm//LKVWrl4BWssOb1Q8P22bWL6zXbiw6b5osvJ
+yVh+Q62+J979Nnquyf+x79xvjb/pIhPYSvR8ZgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[36]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_is_not_eq_rational</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">],</span> <span class="n">NotEquals</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Rational</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Less</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_is_not_eq_rational"><a class="ProveItLink" href="proofs/less_is_not_eq_rational/thm_proof.html">less_is_not_eq_rational</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/e44b7477e164ae3531a8e492a410022837f025890/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALAAAAAXCAMAAACccDU6AAAAPFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAo1xBWAAAAE3RSTlMA
+q1RmmUTNIjK7EInv3Xbn9enzK1aD6QAAAAlwSFlzAAAOxAAADsQBlSsOGwAAApJJREFUSMfFV+m2
+niAMFAgQtnTx/d+1rAou+PW2x8sPj4pJhsmQ4LJ809CvmPy/QXw+D/b8TlK6su2Zi/fwcjefR7Pf
+W+NDXWVCCLJNqPcot+rhA4P9k4J2E3nHRrE27xEMD8lENjyuTT8CKuo0HH8PsH8ieEi2XDdB+3gn
+6mrViwp+iCVHgl3YxZHA+pCGdy8qosXSzJGm0/xhNylGxEr+XVoKZIEb+8XgX7BRNanSR2RmTzhk
+6sKPn+m6sWzXqFq75kUIlZfZLkfpq9M+tM4AYz0Bj1v1wksodFmfy1R4IJjnFfmcCO4buU5exGIt
+dUjMmPiFdumNE/xDwHbwsu+5EgzWjP44LQ9Jg6z4NX+G2YTTzZbztRoC1BunE1QrhP4EsAZmOy8n
+wN7khMs5wWVFspQ26WuBENRSLsg1A1yj2G1tMPkF8jxHC10CHq2rdJqXkyTsmryIteMyaffX76Jk
+NlRhKErnoZbgWoxt0DFAC0nBLgSxNTZTYQv0G8C9tTSgBy9DmaUCOCFhauEDpeq4+1dsco8ISjjt
+Wct9ZGSr6kbkbSm3ttSA0uKuAO/W0jh78DIUVrbh5gHGQsNPZYdFBwbGgshwFxexXsLAYjSTB1/k
+XBKbNXo+bgQYaxCWxFpGDjUjnBIcP3NbKw+j4HOxM8JWm6SuGBp3OqebrrOO1W+DXL2MIsavHeP0
+sQT6JEIpYp1OdlF8WTN7T8FMoOsPoubCOmfB1I+al36I23aj7F8dmiQITk7UpCIQlXMc7nUggGJ4
+3Tg264qqQG5eJqebbiVzgmdFn4/9zeTGkVWBwzKnPu5wdZXnoBX7+SHuwPWtJXABJD9vzTdk0XUf
+n/5Wzf4wJidsJIHLvwL+vvH2r+wfNscUiZ+RLwQAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[37]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_is_not_eq</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">],</span> <span class="n">NotEquals</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Less</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_is_not_eq"><a class="ProveItLink" href="proofs/less_is_not_eq/thm_proof.html">less_is_not_eq</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/97be5388c05f867a4edc43d3e5c55b084f5efedc0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALAAAAAXCAMAAACccDU6AAAAPFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAo1xBWAAAAE3RSTlMA
+q1RmmUTNIjK7EInv3Xbn9enzK1aD6QAAAAlwSFlzAAAOxAAADsQBlSsOGwAAApNJREFUSMfFV4uS
+pCAMFAivALm79f//9XgqoKNzs1cuU2XpSJKm04S4LD809CMm/28Qv34PePxPUrqy7ZmL5/Byd/3e
+2P0erQ91lQkhyPZCPUc5qpsJ1vRPCtpN5N00irV9jmC4SaZhw+Pa9COgok7D8ecA+zuCh2TLdRO0
+j3eirlY9qOCbWHIk2IVdHAmsD2l496AiWizNHGk6vJ92k2JErOTfpaVAFrjFz2J/YqRqUqWPyOye
+cMjUhV+/03VjGdeoWlzzIoTKy2yXWfpq2oc8OAVM9ZTc7tSDkzhCoQt9LlPhhmCeV+RzVO4buU6e
+BGMtdYaYtXEGLfEfp92bgHFw0u25EgzWjH5+L6esQVb8mqeZbMLpxZbztRoC1BuKv0UgvQVYA8PO
+yRGwtznh8prgsiJZSpv0tUCIigGdINcMzBrFjvWA2QETwjng0Zgx3Ts5SgLXFFSsHZdJu3++ipLZ
+UIWhKJ2HWoJrMcagY4QWkwIuBPFo3DuAKAltSZwC7o2lBT04GcssFcAJCVMLHyhV8+5fTZN7XF6J
+pz1ruY+UbFXdirwtpegAg3WDCrqH3Vhah5OTsbCyDTcPMFYafqg7LHqwMBZEZnZxEeslDCyGs3nw
+Igkn+Tngzdh4Pu4DmEqQKYlFRs5oRuaS4DjNbUd5GAWfi50VWG2SumJs45Zew1I6PAPcGaOzG+Tq
+ZBKx+ayN03MJ9EmFUsQ6neyi+rJm9jOllLUXm24zzjNtJaU5GYZ4ed4o/KemSYLg5ETNqgGi0sdV
+QqQi5RYEUGeAN+MKqkBuTq66m24l1wRfVX0+1KukYXnaV125sC87bHxhF/D9Jm7i+s3W4tMm+qTl
+yfm4/Ky6+sJ493Ppwa7/xz5+vzf+Ap9pFH0QnSRUAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[38]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">min_real_closure</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span><span class="n">a_1_to_n</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">Min</span><span class="p">(</span><span class="n">a_1_to_n</span><span class="p">),</span> <span class="n">Real</span><span class="p">),</span> 
+                                    <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">),</span>
+                          <span class="n">domain</span><span class="o">=</span><span class="n">Natural</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="min_real_closure"><a class="ProveItLink" href="proofs/min_real_closure/thm_proof.html">min_real_closure</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/3f15b3f5b5d66c9efaed572bafea76b277e831db0/theorem_expr.html"><img src="data:image/png;base64,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
+hOiD/1v5D8DXqgpaJyQNAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[39]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">max_real_closure</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span><span class="n">a_1_to_n</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">Max</span><span class="p">(</span><span class="n">a_1_to_n</span><span class="p">),</span> <span class="n">Real</span><span class="p">),</span> 
+                                    <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">),</span>
+                          <span class="n">domain</span><span class="o">=</span><span class="n">Natural</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="max_real_closure"><a class="ProveItLink" href="proofs/max_real_closure/thm_proof.html">max_real_closure</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/d7eb97acf82730e6f00c82a880c0b8894d098d020/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[40]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">min_set_closure</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">(</span><span class="n">S</span><span class="p">,</span>
+    <span class="n">Forall</span><span class="p">(</span><span class="n">n</span><span class="p">,</span>
+    <span class="n">Forall</span><span class="p">(</span><span class="n">a_1_to_n</span><span class="p">,</span>
+           <span class="n">InSet</span><span class="p">(</span><span class="n">Min</span><span class="p">(</span><span class="n">a_1_to_n</span><span class="p">),</span> <span class="n">S</span><span class="p">),</span> 
+           <span class="n">domain</span><span class="o">=</span><span class="n">S</span><span class="p">),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">Natural</span><span class="p">),</span>
+    <span class="n">condition</span><span class="o">=</span><span class="n">SubsetEq</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">Real</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="min_set_closure"><a class="ProveItLink" href="proofs/min_set_closure/thm_proof.html">min_set_closure</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/296175d550b2dce2244de1f4fd9771926b8d032f0/theorem_expr.html"><img src="data:image/png;base64,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
+/1D+ATM59lU2YvcHAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[41]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">max_set_closure</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">(</span><span class="n">S</span><span class="p">,</span>
+    <span class="n">Forall</span><span class="p">(</span><span class="n">n</span><span class="p">,</span>
+    <span class="n">Forall</span><span class="p">(</span><span class="n">a_1_to_n</span><span class="p">,</span>
+           <span class="n">InSet</span><span class="p">(</span><span class="n">Max</span><span class="p">(</span><span class="n">a_1_to_n</span><span class="p">),</span> <span class="n">S</span><span class="p">),</span> 
+           <span class="n">domain</span><span class="o">=</span><span class="n">S</span><span class="p">),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">),</span>
+    <span class="n">condition</span><span class="o">=</span><span class="n">SubsetEq</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">Real</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="max_set_closure"><a class="ProveItLink" href="proofs/max_set_closure/thm_proof.html">max_set_closure</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/5cd2bfeb63f3b83fb9236b6bb2baa64a5e770acf0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAhkAAAAXBAMAAABUoUDhAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAGe0lEQVRYw+WYfWxTVRTAT9/H2r52j6qJQExw
+QYU/ZEuDsCh/zC5shrCQFTCaiNEaYhD/wLfEjyAqhWggkY9GQqQY2cP4D4JrZVFkEzIlZlFimAZR
+lIaHREEWxvgSRLTec+99H319XVvKP8aT9u3ee+5O3/3de8499wJUI2d/vDl9yop2A5ry4i9tU80l
+yac6cx/fpD7lRG2oXlOByIZ3+xPkG4rjJ4LVuyql4cOnEB2bRlUmPeVe6Do+gIVD32puTS1ysqhF
+aOsX42rUpNGObUsqpSHFybNOG5tGVSa9REkALL9ICuKdWrGmBqnT3S3bQOkGeNaksQr9KVUpjQDO
++/IynlKVSS+RyFz1HEG/6NSLNTWIGHP/EmloBphh0kBcoYaK4wahCLvL9KnKpJeEybfnHFkWb7hp
+hGsMSF/z6PNu7ggtjEvSqBHWOQ2R0K6rPIreR56JMn2qMuklU5BGhkyb4aYxpUYai1k0XWaafZK8
+6lrytlFOA77J5Q5WTiOcyx3LlttTqjHpJR1Iw0fCaJTQEEf6dbH7onz9Ga7x33HKuTd07X+tzL7q
+6P8Rfb5oMc78RXfVUMSkMQdgq+N/Y2OPVEpCUC9WhApouEze0Az2yBdA0AmNaZqUgNA1eNrUPK4F
+rzl2zUHo1se05uzfDIURXsznx+OfhEmjC/wYGheNtFBMPPrRaiidTmuNn7Qus0dK+nZ5xb0CGtxk
+lcnA/pOnefE7pAFHQQVKQ74CsFRMco1yAKQhUJp5311RmAdK/y0libD+XKbRp8PVe7qv4z47YNII
+6vgUDNgINg1aVTbTiBOCPVl7pFsL06tXO+Li524azGTlsmEi+aUmCIzy+peUxjntBaQByiJCY9dt
+pkYahfosbDjL+3YC/Ex+3h5w0UTR/lzoGAPEk3NHzaZO8qrklzkNwahjwdrnoEGrQbrZqyrMMuyR
+NtlkAyfScSHSB3PdNJjJyjfUOfgkYSJSQCOTNZCG0jqZ0BAum5pwCjLktRt5369AuQzj4v6rJTco
+1p97DV0t1u4vYuggu59srQ1ItOBWE+VZPOtJqyuA0zgTs0daJ1ohqY0sXqFFgmyobV5buzMzpyZ3
+tuwxF2vvcHHCZjeyDPGifQZhnhIciFJPiQcIDekznWsyBjwIFg3lHxBHQdRL02D9Z9w/ErP+y1pH
+28l3JTEsDFk0dmMOoeY3gYMGrU5mxZB/W9QeaWiKzm1jPgvC6keNrHttUJPKDzgKKh9qG4tpWI18
+qs79GbUTRKQhn9eRxiWQr6yBvmCCa8hc3i5odFzoRhfAl5hKXmuIVl2iA+//8swDMEgqD9DmEVPf
+yLcpMWXReIUu0Pc6Iw4atLqQ0ZDeSTlG6idRQqG2d9AAk+y7p5gGmpRigQHw072lDdaB3NRe+KbY
+yMIno6Dcfd65D85HJwCSmV8C9erUkKFc4pqgIRyW6ECUPyifxhiZ9fU6q2YS4CrQ/v6eBFzjQyfr
+20wN52VxcyXvmrVo+JKUojzqoEGr27mnhBY4RzqBEKG2FzIakpoqooEmw3E1Aqt/Yt5+gkSiTCEN
+bGTOuzSdfgsUkgqZqvUk+z+0GH6FE4ee0lb9cmbf8PGEmF/GNMqkT7tOs2nNkbnfPrxmUpJRx2o9
++sNh4AVsYf19hozHwO8Z+ImP8XRifuut+Lc+btGg89NgnixSdpVl16oqL9Jdp3Vqu5nsvw1CUskm
+3PkG81ctOEsHpKFcgU0f+M2lYIYNbBTbp2chQCP+Asf5p77kRYOtQRqC5RvPw0vOqnVCtVrCSSlG
+oPGIIe/lmbm5M0IBDSkCPs2mwasdSbbD9sVcI6W232RrAxYYnvcbYW3jQqShZGEwcHkWwGYs7rQe
+2Cj8jhGNelMrwPiShyuPY1ejM+fzb1k7t2BKipLClVC/Olny0DfbReP1jj2OKMqr8l6SfT3yW/b9
+h1wjpbZpTirGQY140pBnN/UCoRH4Ah6ePhzFLJYU12mBQXzwxgl+PLwj9Dlt/XakfbvkbmxqVjy3
+HyOtST6fH3VU7dzKKs0Htbfk6RvdwknDllQl91rUtn8LOvISO03wuvsiniKwUp9qFcEqDakzSfjb
+m95c+Ds7Sr5BgcZ1lVV8s2WUYOkSTKxugMa+gjvPnel0vEyfDQcbgEWsuvzfwIsorKREhF7PyTJK
+HsGMWi4YS1xTnSKqY3HyGYuGL43nlJovOaNexSj8J0SD/7H8C5pZALaNb26kAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[42]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">not_equals_is_less_than_or_greater_than</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span>
+           <span class="n">Or</span><span class="p">(</span><span class="n">Less</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">a</span><span class="p">),</span> <span class="n">greater</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">a</span><span class="p">)),</span>
+           <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span>
+           <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">NotEquals</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">a</span><span class="p">)]))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="not_equals_is_less_than_or_greater_than"><a class="ProveItLink" href="proofs/not_equals_is_less_than_or_greater_than/thm_proof.html">not_equals_is_less_than_or_greater_than</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/3395220c1eb13bd01925f6c6736407d1691bf8ab0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASAAAAAXCAMAAACcVWITAAAAOVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACXHtMAAAAEnRSTlMAq1Rm
+mUTNIjK7EInv3Xbt5cmRiLwgAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADdElEQVRYw+1YiZLkJgzl
+xgijTfz/HxvA5sbHuKc6VamwNft6eswTEnoSmJB/b+gO383+9JnfXtfvDWQt/nBIfGzhJfOONH/P
++Ffjw2yLPw8wf2jhNXNEIdPX6qspBarFF0NB/kjzxwV7Cx8wB1xSCmnz1QQSvMUXg4vyMYfFLL2F
+D5gjpmhZ9tUArR1eSeUst9eSQi5tsxosjLl7H7nEHJAfj6vvViDV4sVuOgFnSiiepu0VrLcwiZB1
+dwU+MUdcXRir/a7CbIsEECksts9jdLYNj6YW9eGfLR0mZY4bLEyJB9oT5ogiqtbAW1cvS/GjLTpo
+kCIR7nqr5erlZradl1dJQqMXiIOFGfEsMafMETVN/z1QhrNKUFUv+6q2W3n2F8da5H513K+OFtVo
+4YZiAWvsvIezrCoze7Nx0FuYEGcNCn3HvGNInnNXUvekxvhnkPjMtdo+CtBF1FfZYth/0VQNqiZd
+Q2zR98P8stU56b1lYrAwEldJo8rxYM68I8PbEi3E0T3R/yMc8FGAqH4coPgZbwO0BmuwyaSK7lhY
+t7uKecWzAJXCMmc+UOVzBFiONltBFBpDHpZDawwQgpgHKE/Y2e2MdC6x8PjmnwG4khhsYZ18y4Jv
+KMliJhZG4iyxagNPmA+07DgMgdM+q9I01IQa4jcSiuEgMW3qU361qDxBmDD++B/ek6ZZ2CB4+dKw
+W/ayH8PGYm4RFum4aS8IVA4W5sR7kdb3zAfqlSYlednlvOXRiteW5FWAhLHNuqpf8oTmRtOSkkkf
+9Tu1LSD8M7KTFaBD6LxmThytU7ThdGq0cEI8tvk5c0K6FN1iXVn3jecqZoRhu8RsY62tQSVTctoN
+pLH6uQZB+AbNBGezg2LlC1C0i6a4r9e1nUWw0cKMOER9PJBMmTsLENwzvMg1bLz/arGkrkFS1uFv
+AnRMCBL7628TJTaQHqaXFq/O0idXDe0up50xg7u9aiTmwcIaqoXk4NUfhEes2g+CpdjvbX5epKsJ
+1SW4kJ7fBz+7797fZX/tJi19LqLlIRN8TgqUFmMJ0OmOLBUq6/O2OllUGVQm1DHNpJ3odYs/f/F3
+9/rhY+ZLC6y73wW9TA+TcxJ2+74v1Sh4+5rl1v+Pma8syMdXs/kqHrwbSBdDja+8QP3YwkvmSwvP
+XzZNA8Qk+X+kbfpvu/cPZQEeu5jbnXcAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[43]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_complement_is_greater_eq</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Not</span><span class="p">(</span><span class="n">Less</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)),</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)),</span>
+           <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_complement_is_greater_eq"><a class="ProveItLink" href="proofs/less_complement_is_greater_eq/thm_proof.html">less_complement_is_greater_eq</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/37638561c302a27781f1cd77de4f762e769ac4960/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARQAAAAWBAMAAADz4X71AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADu0lEQVRIx8VWXUgUURQ+uzPj7s7qthAIZsiC
+4ktGS0ThQ7qx2b+1BPUUuWQQFcQGvVgW1mNZaiBiD7LCEpmxrEKCRbIEQRSF/QiCrIy5EUWJ0IPi
+U+feO7POvfODb33wze6ce8+ZM+ece84AbAA+ckmJAnukhK0bUPG5L3P4hgxFBIEDzuq0s+EARWMM
+k5taV0+8ObxsEwUOCEUZ7Ww4YZGxhfy/4OrKY6SaFASOuKTTaoNDvSmLZWnK2yRRva6uxJFyVBA4
+YpdOqw0z9h4x3UgxSuJRMOLqSh5ZLgr48JvCWp5mtNow4c8L7vYdpYSvW+ZeKiQ39aLADOmr6dFl
+UUarjRLUVxq/3M74oVB47+qKTCruqCBQl7bcGzcqdY56ohajMIwhDjNabGTjoFK52lryNLvw5CWm
+ZAwoDwE8cnWFvmK7IJBhQWtlt6Pz7DfozUMzhijJCNBaIPhkqOQaQFomnlSu10MsVCNPA+wGyqvg
+C1uTMne+0ghiBdH8jE+nlmNMsAea05vp8rUv+r47aLQKVfOMHFDFH2kFDz0f665IKWnNg142AGUg
+HUzweg+q+kHLBW8YdUiW3xidMcwEXXCACTznDLV0uQYfAfzLjBxQRcXFcvp6vlKC/CDT+PUwejWh
+amVMGWialHVzBchTeVegLe1fxb6ZZxRdAWUNerrEsmXOndGZbMLL0sEi9hxlATy096EroYyQoJIr
+VKCswFM+QRinEEnONCNXK0QFA/DbcpjbUirW/HZgHMfeGEpVleHu7KZ0t0rzqeU6FvXdAeL4kOFK
+jArUfk8ecnzZQh8E0FGpl5EDsYGLfUKLG0lshSD+NursJPow5Me/17fDT4UmUjs8aWjRkzlmsosC
+72omrxjVl51nbWUftEXZuZXFiUNsyGHlr6nxk1ztuHsMTuqtgtBDE7hCN1RDjXRxcPAhJui58SQ/
+ifZ9k10UqMe1up3rLY41luGpE5jkigQjB2JDrS6uCOLMkjdOHjOjk+3N0y+GGXjrz7FaOVXqzbMk
+2V0mC7Pi2Zf0xj+BvKmTB1UJJh0+WKYZKTqDSRlGUUNZZg0PD3PGPODIxOImnhXBpPpaH3xxuyE5
+Ac8cZh2ZtaV5K3+f+gXdEahrTEIHBkC5clndb7xDgMzzAXMR2n2mQYXmybEpbzPpUWUe00+PMj1Y
+BVOYO3SaEFFTgSiok4P9nJieqRFRYO3QTS26mzauokptMeEwWgaEV8VQpD3aabutt0g+NUHggB86
+7Ww4ffilGM3FB0pTDv4b/gFH5wKll+UTRAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[44]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_eq_complement_is_greater</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Not</span><span class="p">(</span><span class="n">LessEq</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)),</span> <span class="n">Less</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)),</span>
+           <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_eq_complement_is_greater"><a class="ProveItLink" href="proofs/less_eq_complement_is_greater/thm_proof.html">less_eq_complement_is_greater</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/85d0363ea20b76631b3f5cfa20860125ade240fd0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARQAAAAWBAMAAADz4X71AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADuklEQVRIx8VWW2gTQRS9m91tkt0YA0KhViSg
++KNiEFH8sI3U+o4GQb9EgxV8gUTwp1ql+qn1UaFI/ZAtBPEZoqCgogRBEEWpLxCkstWKKFoKfrT4
+5Z3HJjOz2cU/D5xN5s7cu2fmztxZgH9AlDyKqqExisrQf3CJhndL+IxMphVDAHZwNooRANNlTJHG
+nFAlkQo+5quGACQzjI1iBOELYyf5vydUyhWkVVAM8ouEAPs5/TEC0eRQniCJOh8qpQNpZBSDCP2d
+U28s4fTHCISepSSK7HSolCoyoRrEnHwUlEDCYfTHkDBP3NvPKXWcblP4ViG5maca6rjxSV7tDKM/
+hogV68VWF+PLkZEXoVIMsuM2KAZrfObpO7RVesvN1lgGhnCJU4y+GOUOsDz7rwfstzx69SGm5DZQ
+rgW4FCqFTrFLMRgw6uZIY2iXZ7YjVWjHpBcYAXIjBK89l8oC0CeY6Ecu98kmZxvDAEuB8hBEU/6k
+fNzd7A2fRnbSG3w7jZxlhmXQ7swgvVpNykkM2oKuVUYJ6BJL50Cj5yOa8/KnF/U/GjYWAGXcsfOy
+39mWAXAr9lFvH5Lup15lTDFDL6zmlsNegpyEC68AYhOMEtDFws4EnV5z7ZTEwKDrd44x4iq71sCU
+gevq5TApQN6qbNudTmwK62aVUZUC5h841ytLAS5uO2ehDR/ja8bwdJmjoNHah1KSJSVBNSnUYE7C
+deUwr4YkSc4wo7RXiAsuwE+QE4TyixY6LwTGO1gbk8WWJhxdnu70WTSfbqX7Cx8dJ8Ive1Ky1GAN
+aFWoKCWuH+IoVD/PKIHEwM5+kLfttfwssPF3OWcP8YfLMfx7ZCF8N6lkd9392slIsaMGgiEyVaqa
+9XWO7CXPlbAzw86tod44JIaRMn975/7XD/q76NRG2MJLBaFGEzhJ+1phtr5vcPACJuiu96YYWe0z
+Qlw0WJvcuYvVYzf0eDMmeVqeUQKJYbWOTdZLHC0spfFIB3nNe042tkq/GN7Ds1iF7ZWtD7y+DyTZ
+vULgD0El6B7yGKcM6mILNXepUPijw4wUPXbBgBvoYU6wgoeHuSRecOTGkm48P+yC9YRffP7LbwnR
+eTPgriN3be2+Nb4+/gF9aZi7vADduADmwQPWKm8OcTKBi+ImFGZ0ix4TunCuVmG3fIObHl0+Yfob
+o5tTQNoqxjNg3R8ckMz0TF1TDf4K3dbJZcb9X5ToMmcsHyDlojJVXApHc7c1Gnqc5NNVDAH4xtko
+RtCHX5FR/IIBs60C/w1/ARmPA4aU/BY2AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[45]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_from_not_less_eq</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span>
+       <span class="n">Less</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span>
+       <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span>
+       <span class="n">condition</span><span class="o">=</span><span class="n">Not</span><span class="p">(</span><span class="n">LessEq</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_from_not_less_eq"><a class="ProveItLink" href="proofs/less_from_not_less_eq/thm_proof.html">less_from_not_less_eq</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/4efd124afda5e4e3a18809d32352f9fc5f9081310/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAM8AAAAXBAMAAABewgYuAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADEUlEQVRIx61WXUgUURT+ZmdmZ3ZmHRd6SkE2
+lCAqWKIf6sEMyw1CkQRBhFrsIeghVogewmJ9DI2sKNsiGUKIMmTzwcCHWIIgiEL6gSCUEbYkCxF6
+MHzq3OvM7OxVl8q9MDPn3nPnfOec+50zA1RspP9L9e/Dim+sO0VXjAn1FQDaWc6JBHCMCWc3j2Ok
+ymnPAf300IY2D6Qkymn3AmEbMOObB4qKC6FgmqI2ZPIkXIEj2i7M5Y92YBYmlLczM28qAHSCrvFm
+GDH3+L+s4hiLNQMTlDNaPg7cK2ehKZiONQXheMIZunK7IC/x2disd3SYc1opPqJKL7TYWvO7J4+c
+X5WCRNlXhBz2DLnjPaDHWyHx7Rc+eMsHcNjeQtvzQMQ220tB9Llsu2XieU4EMnyPQiOuoOZc4RWp
+8Q5RFqLU47+SQQs3SYGGHJELRzOUYwuHHBFI8TySbwUrxAOCuoLrmVIgEDjTUERINdJtMVmg/Ktz
+kHgZM6CFJhGoitYLV5KwbvK+EmNtZaKYOigp/ERp6qAu4wlFM03iBDllpbeGqZjGq+1BPOasMbWR
+hAh0EZiXhnr0lzyPzopOfja4OpbLSAw3UEIG47aUB2VXZlb6yC8ZIzqJl3bjOzo4kHJ/KEAGM5vN
+PkAXkIg4GeyYYu3k4bRFui4X6BmLKKb+cqfjs5zeod+jeZUiUNhRSiytWOb6WtRhPxmNW5Z5UmCd
+hG10r2YM72JIUk6iU7zqaq8x/2sLy37B8kIy2pyGPSzpPt/0vMYen/AaAzwiS+22RSBmdJB/XPqT
+7OVoppi6Ku6uWWytcrAFXfaEPjOlYAz4rC4R3/kZYUogg0Jk0PKTqxXcW0OmTzMWeXZpeRJPN+ia
+zb6Rry8WMBhHw8EUtLu00PktN9oikiGSRlv3ou1+NEPNd+g57ClJmKXUrzvEz0PcSEeIamPZbKCE
+A3v86uTjEaiaDF9NZK0vtK8PFCltXaotOZ1rNgWdSQYVdSodiOKb0JyN++W80NmhNubKApk8bTrR
+MjuMjh8l3a+yPze2qLX/1swfa9u1dcDQe5sAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[46]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_eq_from_not_less</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span>
+       <span class="n">LessEq</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span>
+       <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span>
+       <span class="n">condition</span><span class="o">=</span><span class="n">Not</span><span class="p">(</span><span class="n">Less</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_eq_from_not_less"><a class="ProveItLink" href="proofs/less_eq_from_not_less/thm_proof.html">less_eq_from_not_less</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/84f6ab7ab5717da28e6f0dadcf5fa023d6e846bf0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAM8AAAAXBAMAAABewgYuAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADEUlEQVRIx61WXUgUURT+xp3Z2Z3RcaGHSEE2
+lF5KWKIf6sEMS4NQlgRhEWqpB6OH2EB6CIv1MTSyomyLZAohaks2Hwx8iCUIgkikHxBiZYQtyUKE
+HgyfOve6Oz93VSr3wp0595675zv3nO+cWaBsI/Ffqn8fRnh93UmaISbUlwFo50ZORICjTOjZPI4W
+FzYq3EbPAf30Uoc2DyRHvGvfJ9O12gP4aa2HNw9UKQTri+nRmvCRJ/4ypGiHZ5We9Wr9hPI+l3tX
+BqDjNMdaoHFyjX60U7dYMzBOMaPtY8C9jSw0uxNcUhBWUThDM7MLviV6PzztpA5zVjtljKhyAWqo
+1HzjxOHzq5KbKHtLOVAUPgCBcDskdlxygPbjkLmFPMwCQVOPen8cmEtFDR0vMyKQ5vKokGslU1i/
+ITWmUMmv2GuHLolWbpIuWmGJXDiSJNYYOGiJQLLjUW+NUyFFICgruJ4UyTDF/aEbId5Ej8W2PMVf
+mYPEy5gBLTSLQFW0n7/SRlL/VuorIdZWxp3QQY7jp0hvZRlP6TbTJI6TU0Zim5+KaazaHMQTflBX
+RyIi0EVgXhqiBMQITLNWAuRnQ0E3QjMYwg1vwWq3pSwouj5mpY/88mEkQOKlRnxHJweS7w+5yKCn
+UqkHiAGRoJVEbJK1k0fTBuliBcMv2I1Cyi+HoWfZ4/doVqEbyCyVEg/rMtfWog77yGjYMPQTAusk
+bKdndQKB16vrjERZvFrQXmP+1+aXhQ7YYTXsZkG3sxvIquz1GW8xwG9kKN2mCMSMDtLHJX2TZyxa
+mXRCV8Xd1eNrF+PlotCnx2WkgRllifjOc4RJgQwykUHNTrAKNm5x06cYi4o5oe0JPFuna7bYRr6+
+WsBgGA0H4lDv0kbXt8xoq0iGYAId3YvMDx8hVbTcIWm4qCRhlkLPxvMcGzPOD8XPQ1hLBIlq6VTK
+VcKuM3Z1EsowHoPQNFtNZK3PR9e+UNDbuhRTsrpKDrmdaXMr6hRKiGybUK31++W88K2C0pTZEEh3
+f2Q6f6zZ/crz58YUtebfmvkDGEi4zOXojL4AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[47]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">not_less_from_less_eq</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span>
+       <span class="n">Not</span><span class="p">(</span><span class="n">Less</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)),</span>
+       <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span>
+       <span class="n">condition</span><span class="o">=</span><span class="n">LessEq</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="not_less_from_less_eq"><a class="ProveItLink" href="proofs/not_less_from_less_eq/thm_proof.html">not_less_from_less_eq</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/b7c0b8d9f1ed1a60ceefbcee11af0cf7725cc1210/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANUAAAAXBAMAAABuThcPAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAC8klEQVRIx61WXUgUURQ++zP7M6PTRr1YEAtJ
+ICEsEYU9+ENpQVhLgS9BDvUQ+BAj+BQW1ltosD1ETYKMIIEJsvlg0IMMQRBEsZRBEMoYVuiD+KaP
+nXvuzu7Z2XaIyQuf3Lvnm/Pde37uFeA/RpIvzMY8M9j8T+MHm+vZxrzrZWTE4mgoqWiRLY4HEPWc
+RK9Y3Aql9YLNVSOIOSRxX8S9EErrLJvHc0HMkxIJG0DLhtJy2LypLsA8Vk02IYYbSoRLFw/bMZ8x
+tmyzVSIn8XFl5UMorTgvjYuYsvUcTHvV8F1KqVuHxhcwcBmJCwDPg1x2NzIkeIpuorOoA11yNbfq
+7QfW3H48pSExDMlMvaP2xZ7bclZbN23VnmzGLPev4FjGxWeAB/EStJBl5IvHOQ1d9gEMtyORtrV8
+rU5qzcrrGrwu1mu1uSzh3mfDiHcAdpMLn8Q6cqPCGYM+8rgtEXX9pXFuDAOuwxm3TquDh82vBYN2
+atenBVJdcSTA6MQ/W+fXMTrKGkSow4XWZjfTIvuG6A3ieDGsaGEM8Qi644shKDvwEs9TkoAF7Gjd
+bEngp/P77AmYpULSklO5qhbZJ8g5ccRIe/EcQUwhHkM6U1sb6pOIA5iKWEECRpEQg6kUTu+0wwZc
+JefxyQKrDbJHJ22PI4bGS+oVogcGvRjPr1LNR3dnHCUr24NaJDImft4hzmE4Aqcsy8rqunalpg6F
+XSExwaGEl5jWI8T00uVKlcaowdRLbusJEe68RLn2HHqMvsJ7GKdz6co1m2lJe+qgKTk0vjGtZtrw
+Irs4+B11twwao5oRhzn8XNnGJqB8wRtWG2QXt/R+mziVG7Xiuhs0Q30bcEtXbur4z6VNwNy3dhiQ
+fIY/DPwqzvRVtchefooFRxYHf2ufQrMbKTZ4vwv1b0lWNdOY3TnLYt3tf28kh2bcNAvRzt4GxxKb
+Stf+E6DYEXegjujXYpx7fO9u4yv1dxk85qB0FgO0HmKBWubfOHs1zD3z9AdIoMB7n12KEAAAAABJ
+RU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[48]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">not_less_eq_from_less</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span>
+       <span class="n">Not</span><span class="p">(</span><span class="n">LessEq</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)),</span>
+       <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span>
+       <span class="n">condition</span><span class="o">=</span><span class="n">Less</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="not_less_eq_from_less"><a class="ProveItLink" href="proofs/not_less_eq_from_less/thm_proof.html">not_less_eq_from_less</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/08c30e0cf228515fd3dd0a66cea3e6161c2de4740/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANUAAAAXBAMAAABuThcPAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAC70lEQVRIx61VTWgTQRR++dn87KZrxFMVZMEi
+iBSCiFIPaYK2ClINCr0INuhB8SBb6EmqRK+tEEHRWAhbCEINSuyhooeyCIIgStAKgkQ2UpX2UHpr
+j76ZSTZvN90osQPfMrPv2/fNvJ9ZgP8YYbrQvXl6Z/M/jR9krmrevIsNxNliX1dS/gpZHOxAVBMC
+Q2xxpSutJ2QuZ90boT6vCdxmcc93pXWczIMJpy2wZJDVYYEQvlO0rrRMMo+5ovaNSkHM4AjghkLd
+pYuGbb/DVP7upIYSAh9qtfddaQVpaZzGlC0nYJYvSp/tNK7tnprHwMUFTgE87uQy5WUI0RRdRmd+
+EwbZfPZSaz9Qt0Ywe1mBcQjH2x31L6Svi5ln3fRglkdqOJZw8QngTrAKvczga2kdhUFjF4bbFIga
+SsbpJFIvZFQFXla20JJJwpufjSPeAhgxCz7yFxN2DHMwzD2uC/gtd2mcyGEhqXDMatcKpw1PLRgz
+IptttcHVJVMAskl8rJ1cxhtLqoOPdzjTWk0RLWGP7NQFpxlDWwtjiEdQTXfNSxvwFM9TFYB57GhV
+7w3hp893GNMwx8lKuJhoaQm7dF9vcNiIWg3HE4gi4h5E485elh/4TMBUBPICMImEABQjOL3RDytw
+njsPzuRJbXC7NGM0OWwotKReINIw1ipN/1X22CyZkibag7eIL8dsG5yxB/bCkUKhoKmqcs5Rh2if
+1mwOT3iVaN1ltb541vXnkM9YfYdYuDMCjdoz+c/oC7yDKX4uVbpgEC1ml19pTQ4fX2kD8A0veLTH
+zQb4mFSyQSjj59I6NgHPF7wmtcHtACssRoxj36h2flKgZOU3HW5p+6YO/lxcZTHqG8hC+BG+GP1V
+KQ23tLgdxwCKMY4oDhqxh9Bj+URHPmMNXiOnZv8R979Ek/UoOisXCqS7nZwDuuDwbFDTHPiTQx7H
+YpuKOlMpGT5rtI3ovqMI5xbtcsv7Sv3dAI05SMnKX7W24mzX0LfN0x/V9MMAlV2cXQAAAABJRU5E
+rkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[49]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_or_greater_eq</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">Or</span><span class="p">(</span><span class="n">Less</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">greater_eq</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)),</span>
+                            <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_or_greater_eq"><a class="ProveItLink" href="proofs/less_or_greater_eq/thm_proof.html">less_or_greater_eq</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/31ac53eda69a4f54b6da032b7d412bb7b42f42740/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAAAWBAMAAAA1Ab1lAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADU0lEQVRIx71WXUgUURQ+uzOzP7O6LUQ/asiA
+4ktKS0jhQyZY2Z8hQT4FLRlEBTFBL5bE9liZWiClDzIPEpm5bEKBRbEvQRiFZIIkylj2UNQi9GD4
+1Dkzc2dn7o6jT1347uy99/vumXvuOWcWYAMtTJ3qv7zOjGspDBtrXxFxZc1lSfcS+JAJCRpU+ZoN
+ZrHb6UP45iXwIyMO0u/zvnYfIeSUDyGkUV9OXQ8T2OKkBxlxk/zd52u3GSEmfQhCE/WN1D1kAtbk
+13oxGUHmY4qv3RyipMj5Th9NUldKJ0gxQaH9fulWThoQ8CAh/+ulvWr4I37WHKMO6ujtRYUJHG2f
+23CHiQ/z8+997YoUJccQmcXHryzPxOdMs5lmkDEyn4F11lImkPPld8bZDjUtPBlxGGDQ124oab1k
+U7xSnDKmRhestWwtCMsAe4zBdoA8E4iwqLfaW7SXc2TEFQgnin07d24ri4dSOuMndK0qrAaM8Lo6
+bS1FlFYIYFDWGiMM0S9MsBf2a5sLdgc5MiKqxdrcRnvK+kHPxq5bwxJafos6EM2LC5y1gxU+Qgm+
+X6/pGDXYxARpOFTYsGYbT0YEdS6sRPQ86LqQ4eyCoXLZBWkVetMAp61yEVJtARqx4+poEZmQosTL
+tyyhRlqEgFl9dD0+zPkZ4Iwqay4/kwd+4aPOHE3dKgikFXjC5ZGDTBi/iPGploWQndmkdctGEdGz
+naz6RemUQwAjbTsgBu64iibgHj4arBK4hQnk/kAOslzdcJAJXRhWAgxF8Oe1OvghGaGjH5lg9FjC
+DPxdt4/DSWsus2DmkZiQ/lhZhm0sxQTBv8M5SeHqpINMCKRpcsVYqoBK4cLAwH3083NWxCKUO3cB
+hvPBZruwCWYCyxVLJJyxNlaYQD6hV+/mk8RBnmFzkZzxUZyBd5Gseb+n7CozS3eW5guWVSdjeMbw
+lHttdq1SwMi2oCuWEmEUFdKyWUUwj1hcQb1d+ovaC3iqFH806mEdsi0Qv7/5Cd0KVDekoBOPJl2+
+JB9gZTZK2fHAc6sFvBmATm426vhvMjZPbdZN5gSKrEaTIE8M9LvvhSJ8xNNu1VKbxzvJfeuQ3QJJ
+C+jtXoIbVPX1NQt4XPUS+JA5gQBSYxb+T/sHscPot7LYm5QAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[50]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">less_eq_or_greater</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">Or</span><span class="p">(</span><span class="n">LessEq</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">greater</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)),</span>
+                            <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="less_eq_or_greater"><a class="ProveItLink" href="proofs/less_eq_or_greater/thm_proof.html">less_eq_or_greater</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/fc166597eb8ec11f6bfef9b4945cf711bc34102c0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO4AAAAWBAMAAAA1Ab1lAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADVUlEQVRIx71WXUgUURQ+uzOzP7O6LUQ/asiA
+4ktKS0jhgyZY2Z8hQT4FLRn0BzFBL5bE9liZViClDzKBRGYum1BgUexLEEYhlSCJMpY9FLkIPRg+
+dc7M3Nmdu7OjT1347szc+3333HvuOWcXYB0tSJ3qPb3GiGMqCOtr3xBRpei0pLsJPMiEGH1UeZr1
+p7Hb7kH47ibwIiP20fsZT7uPEHKCXztPE9CoL6eulwmKNiIjrpO/73jabUGIceeY8EXL+2imvom6
+B0xQtBEZQeYjiqfdDKLEORSd1fI/J6krpRMkmMB2VpxfbtKAgOMB7+ultWocQ6PzTkondbR7UWEC
+1uTXfNR1mvgwN/fe065IUXIYkVp4/MrwzPBnNpdqARkj8xlYZy1lAjlbfmvc5Cy9LCQjDgAMetoN
+xK1NNkcrxSl8Pjxlz6VrQVgG2GV8bAXIMoEIC3qbRWo8VEBGXIJgrNC3s6c3M/+U0hk/YTCowqqP
+9uCz7YaUNvBhUNYaXxiiX5lgN+zRNjJaTStPRoS1SLvTaG9ZP+jpyFXrs4Sm36IOROviLjM/y/AR
+SnB/faZjVH8zEyRhf96KHeUcGeHXubAS0fOg60KKswuGyhlX0ir0JQFOWOUioNoCNJJnd5AjExKU
+eNnWRdRIC+Azq4+uR4c5PwOcVGXNmUfogd/4qDNHp27kBNIKPLH9vIUnE8bP4zpqWQDZqQ1aj2wU
+ET3dxapfmE45BDDSvg0iXN0Ix+AuPhqsEriJCeR+XwZYtWxstRbKkQndGFYCDIXw9Uod/JSMRNcP
+TjATkZgZ+DtuHoFjucg7axwhJv2xsgzbWIIJ/H+HM5LC5VEemeBL0uCKMVUBlcK5gYF76OfnrIiF
+KHduY9Zm/S18YZMrFkk4bS2sMIF8VK/eaTKWdBfytJ0RGeNHcRrehdLm/R5n24QZurNkkeyO4BmD
+U86xmbz3sbgL2RZ0RxIijKJCWjarCOYRiyuot0t/QXsBT5XCH416WINsC8Qfb35BjwLVDQnowqNJ
+Fy/Ie1mZDVN23M87whw141DzeDMAXZyBsPt/kxyZEyiyGo6DPDHQ77xEivAR16WqFtude8oJvMhO
+gaT59A43wTWq+nrRAh5V3QQeZE4ggNSUhv/T/gHUTOihU8LAzQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Misc-Additional-Min/Max-Theorems">Misc Additional Min/Max Theorems<a class="anchor-link" href="#Misc-Additional-Min/Max-Theorems">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[51]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">max_x_x_is_x</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span>
+           <span class="n">Equals</span><span class="p">(</span><span class="n">Max</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">x</span><span class="p">),</span>
+           <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="max_x_x_is_x"><a class="ProveItLink" href="proofs/max_x_x_is_x/thm_proof.html">max_x_x_is_x</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/e1955b0e8c6ac05ca6334b93e4d477024f8451360/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMkAAAAVBAMAAAAeFNdiAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAC4ElEQVRIx5WVTWgTQRTHX3Y32XQ3GYMeiiWW
+gOJB0UYRvw5tpFqFWlmqeBFMwIPgQdabhwrRo0XMxY9oqXuIYCzU2INCxTYeqqAo1XtkA1WhYvQg
+iURF3+xnsttRModk8v+/zO/tezOzAP8cageO2vEa1iCJDpyTjFCqx+hkPSNgM4jrftFJ5He31/GD
+k4yEUD9AJ6dX9qUMgHiH/nlbw+/4xhlGrqhfxC8xt7ItIED6Qhdcavod39jBoKAe0gBkRvkjNOsa
+Pkb4WNPv+MM1xjIa8JhViJHERkpZ/o6lFZp+xzdCjMZQ/XWl8opBGaYUPQ7AU0r/51nY8yeZfp41
+nenqvSdmEaRaz/gMliTm7aurHwK4xaCcMijpBGxCCvcChgDmtZBiOSnSKyyaXYKqPoK5GFtipELH
+W49+DsTWHLY82nfWnr8zKNEc6CYlrUIot9tyeJVvBswa7YIBbQ0AV/Zk2aJ3abJiqeFqXiEyPC5Z
+vxcMCmmIitGXu/MqSM+SlhMGwd7OWfqUqHzzUFp0Tneavx8rTgjs1dso0k8ClFJY3YeXRZ9iOxDR
+nfXe0I9g2VdzV8/040ft4JJqHF6kLKfaKgYTPKVwC3AVKcMvbQcLKFl7N9iA+5jvoqcvrfoMnk2i
+rg0lisZ9IIuT9o6cNCnpHkpZlYL0eVXWrltOUYmDDIAc6VqgDFhl3nO42/QxbD4Pk2E4alCE207w
+Q5pODCI5CDQo5esldQ4epEyn7/JhGAWpjrn+KJSDuKeFUjulTQ9kqYQnfGc+n08QIo/aYVfw8pmo
+J4lC4vXucO/WqfdP6zBQ1w2nUOMGcYmKBtIRfcN2DI8qnmfx6eGyCOPGs5DgCfumiGZZF7/rcO61
+coER7OhjckbAPW30BWbt7vMpFsV1ZFccZAQ7uvBhbhnEmzg7/rFUGLLlG8z3m+NMOxLrZvfqU/l8
+e2mLTIrjuGemi/Hq7frfK1nUO3A+MUJR/wvqMNXARomvpwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[52]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">min_x_x_is_x</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span>
+           <span class="n">Equals</span><span class="p">(</span><span class="n">Min</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">x</span><span class="p">),</span>
+           <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="min_x_x_is_x"><a class="ProveItLink" href="proofs/min_x_x_is_x/thm_proof.html">min_x_x_is_x</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/7a145496b41dfda17e878262622a7273981491f00/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMUAAAAVBAMAAAAEKDfsAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACvklEQVRIx5WVTWgTQRTH/8lussluOwQ8VEuV
+gCKoiFVEwYNWqlXQSqjiRTApHkQPEi+eqqQXDxYhHkRXS82hB6tQag8KChJRT37Qeg9soCoUDILS
+SKzim9nsbnY3o3UOm8lvZ97/zfuYBf468ivm+f+04A6WXjE/LTHBeYpP1ksWbIG2dplPOn51aS9b
+eVi2V+IO8YN8crb9ez0HaPf45u11xL77eGicl/hJfJR+tGL71yqZ179wgwsNoOTjobFTokE8TlsN
+Sdg7uM+1OpA40Qjy8OKSxEgJCvkUl7iwkWssUoyY2gjy0IhLEsL5u0rljUTjCNewegCFNC69wNVX
+V6pWk09X7z+zj6/XusdmKRipYDY9fhi4I9E4IzSyaWzm5xgG5tOJepP3sXXqnJ0dVK1B8kMUwmCF
+j/kAvwit1YOtj/dfcOYfhEZnERbXuAGMA99sruSVRsSOzm7sK60CouWAhy08WTIyTZqomhlm4MlM
+8/9rocHqWqapYQK/bZ6A6hRwAQNi89eARguPWm7KDxQovQx7LJ+G/pMhpEH1YrnW3vNHrByKtcdz
+e+lRO7SQF61KGot9vlhhXAlocI5sXm9Wa6yOB+TrXCAfrXyWOpHl18TTU6L3DW3CqcIJWyPbHdAg
+PpXpgSH6Ur8ZKYOiqwQa2cdHKOUKJhI4LjTUu+7iR9yZFDqKiNSFwDlbg/i2a0cxBH2J/PwxWY5R
+Faszfg0fjxQ4IiO7TNNMM2YMOcuu0zUzvtTLMqxnqWv0bffo8upNyynBJ2vRfjJQKUE/Zm3YQYs7
+M4FzhHiirGFMnIPFTjm3Qmehfd94POpdIJclTebyESOnUhWLfOCpk3Olr/02jxse7JdouFz9+HwR
+2m2anfw0Mzng4FuSfS6fdpHs7g7yh6bpD+qURMPlXo8kJR/V5L8+tpq1Yv5ZYoL4H4XO0jSDQFJm
+AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[53]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">max_nat_n_zero_is_n</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">(</span><span class="n">n</span><span class="p">,</span>
+           <span class="n">Equals</span><span class="p">(</span><span class="n">Max</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">zero</span><span class="p">),</span> <span class="n">n</span><span class="p">),</span>
+           <span class="n">domain</span><span class="o">=</span><span class="n">Natural</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="max_nat_n_zero_is_n"><a class="ProveItLink" href="proofs/max_nat_n_zero_is_n/thm_proof.html">max_nat_n_zero_is_n</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/d9e9c380fe5aa21fc669f8ef414d43f85894edb10/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMkAAAAVBAMAAAAeFNdiAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAC+0lEQVRIx5VV30sUURg9O/tjZu/srtKLJCYb
+ESw+uFMUFJguWCFIMA+9Ze6+RT1Nb/006w/QNTDYEJp+vvjgEPRgUdpDJUVgEGWBMZYYJpUPtYYW
+de/cmXV215v4Pd095+w99/u+e78B/hvyBhhDoDSwXnzcANMtUDK8li22CQSSJW/5zRaxP3WVTNnP
+B7MGEtramzD8AFscE7jcoZW5xv68Y6ma8UUkSd4CJwS7UPwiq3FewLcD5GuOLmaXqxlf7ANGgV2C
+XSgeMQE1KeDHqcs3moZyeLma8cUAkDYRM9feheJBWpCIqC00DfLlBy1taLma8QWV9CcRETSG4S+n
+p18IXEK0xcRuAILMpXXhPvb+1bJPeznTXX923nZ0hLloUGsrbxdXMLwDuArxIYidTaKJukjPcBAY
+MyO6y1gDNuGXQl6hLjaCToKHplm8YktXwfCTkP1nkF/fQ4sLxJPMJZ6HzV2yBiL5PS4T1t9B/rXq
+YkEqb1ZJwfCoqeoe3rd5EFtVM+S2MaYzl8SSrDt9uT1mgDzWXIaQn5B4uwh1ydpQFstdPAXDJbvU
+/FAHe6F2RoXfhawkwFxubUrTYZHWPUZaRCBX6n6aZjdeeXu4wsFzrbR07X2zwCdGpbb3eC68YhgK
+MhfpCfqpS+dzj6Eb1Gg86wLQZkKarOiLq3Dwu/Rt3uzSYgZxHmdKvXHEdYnajku2nrnUZJA9Zajm
+FY+JWfSRWIT9bAG7GcHKx80VHD9He31mDjVm2Cl5Cpl5V8WuYLgWsTwCS8zl+yXjEUYyLnOhF3PB
+3pGckxqZ4Ne7LLiC4wF6/9GILgSPFwqXqcuw1yhlEvJQUUvoiYZindLYPPzhYRFtRdthcBS4vhPx
+96zPnTN0k7he4cIVPnwC+xXF4rmEmz10Sjj4V5mm0uq8QFvC5UVMpfjr3A3M+OaceAK6YQkm6BqT
+lVZ/QcNpmrbyxkDAg6PC71yJIXbppILJXomT0cJgOSD6JKwyCax3pOi6n+SeDTCfBUqK/wPkw+KC
+MNlzLQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[54]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">min_nat_n_zero_is_zero</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">(</span><span class="n">n</span><span class="p">,</span>
+           <span class="n">Equals</span><span class="p">(</span><span class="n">Min</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">zero</span><span class="p">),</span> <span class="n">zero</span><span class="p">),</span>
+           <span class="n">domain</span><span class="o">=</span><span class="n">Natural</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="min_nat_n_zero_is_zero"><a class="ProveItLink" href="proofs/min_nat_n_zero_is_zero/thm_proof.html">min_nat_n_zero_is_zero</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/249f64f3f3dbbe90e773d416a532a182576790410/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMMAAAAVBAMAAAAJNkerAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACyUlEQVRIx42VTWgTURDH//nczUuyza0aqkRE
+iD3YKPVWtVCVggg5eLM28ST1FC+CX7W9eKyp0EOk4KrgxYOL4KF4ieihoEILolUobLVUqigFtZE2
+ivP2K7svWdM5hLe/zLz/m5k3u8B/TdoyL7V2LKGdfdwyH27tyHGKL3b77BTUpB11vkj86ZSeu7nH
+7elyCUquKdrGx/jDOR+JB1SSOzx2fw2Rnx7usmiGvQPOi8EOHueVLftIDADsW5EWyxuA6uEuOwTM
+AL1isIOjFBnP+EhUSeJ7DZBPbYjcZZNAj4qEKgQ7OER1iPq1ghJgX6hASnhD5C4jh5sZRMVmNPDr
+xcWXPhJh6irTu4AQSVx8hhsvRpd0iw+nr6zqhhfje+UQT3mDXXgQuO0jwU/A9EIG3TyLs8B8Rq5Z
+XJvUWc2ckU3aS0fISO3kIrd5L74Aya0vvXmCPgskM1wiWYbOJai208APk0fy7yH9bkhoCFaF6Wzg
+mBrP23hi+xR2xdWw1blEnksoNSlvSVSAvyZn7BeCZoMY7VXQIa8JhWrgoO50OzzIx1Dvj8MtwTYV
+NEkguIZA0elrD+VVbW63jYuHqZ8DE8vAJ/5Pds+oLWEWCtMhQYJz2r8jZ2ZL9IiK4Jy3F278mAbw
+/lAuUWLGBGbj905bEjHdkCikBQnOExrdeo1xtz7gOJ1SnF8XvkrNvbyCDjVi3Ows+lctJ37hIikk
+ygjUjP1HTAnOr49hJTT2qGgkxWbNm+wxFw6M0c9ODCE0UqncIomHdnPkOUjT6zklr3Std46/So/X
+t+2tpwyOM8DdA0h+4I09sURbJPOChIhncVSWNTOLyD6bLvgMTIN3O6trrV0dLK1hIWuO4EFgyca9
+PhINrvm8GpsxVfxrDpcoMfltCQEbx3w+Wg5nunPI1m9rEbOZypQX+LzlHa6gzWlibb+so1vmn1s7
+Ev4HBC7iNBsZJCMAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[55]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">max_bin_args_commute</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span>
+           <span class="n">Equals</span><span class="p">(</span><span class="n">Max</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">Max</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)),</span>
+           <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="max_bin_args_commute"><a class="ProveItLink" href="proofs/max_bin_args_commute/thm_proof.html">max_bin_args_commute</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/ebc29f05d3a4f78800946112d8573354c778c9ff0/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASUAAAAWBAMAAAB00JfzAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEcElEQVRIx8WWTWwbRRTH/9712utdZ2vBoYKG
+YFFUJEiJkaqKcAiuAgWpIJYW9VKEjSrEx6HaHpAoKihFQkhQFHMBDFW6h4CIUrmGQ5FS2oZD+SiC
+BKQiOKTdlBRECkkhwUGhqLw33vXKu2vLN0aydz1v/s+/efPmzQCdNKtzSxKdtmRkj9Wh2sh2blGc
+TpkuIEr7GD0z/GN9e/Vt2Ht+kl+mvrWCllD7KTj5G67wI/3v2uZ+qRqpNXLAvfz+ZFskrQjsW6IX
++UYrbAm2hB2EOkx/gztWAt3vI1r7DHCAVaW2THHyWfmeV+ohO2wJNjkfnNLvTD63GugeRLR2Ux1N
+z7ZlStOnskghejnIlI4afibItEAhUh8JMk220KZtyDTVRPt02sBMR2kKTpBpQ9Tw3UGm+WUKcTzA
+JBVbaBME9PXMzFftmbYxU4zmlSMmeeG4LR9eUq485VlmPzhej3NlEBptmQ+DTE43rQozDVyaQP/V
+XOGzIVr2akMA3wtpdeq5H3inPRNPvKL8Cckmpl4rXoS+iic8S97oiU+LcdVeyJeBzSLTZkTLCKZC
+FrcSk/Q5tgKn7ISJejhcAXwvpJUpgHuRzIQ5Nh7bssd7/46Z8CMMCCaF0uNpeci1yJa8GhOprmYf
+RIx2S28oTl0lOHWmgoVE6U7u7co2BPC9kFaiBUnZutnsRJ0tm4aOj70CclowLVrPMhO0XcR05FrP
+oiLuZoaGb5CmqjccYjJWkqbIp/dOWdA+FTNImw0BfC+kVSlykhNM8XsoBoaBu5wmpqNVh5m0LTcR
+k/RXw+K5pTK8imGSPhpi0v4xwEyj1/TR7u0zXSZPAN8LaRXekMUB+lq4b46GK7OIiUrKTPP5prVL
+TebE2pkqMcU/sT0LrYdW34401d942UP5hEMyM0mnMUx/su2Mu3aeAL4X0kqcnB9R5TSs6xI0qLLG
+PogxcZDpyRGvII4IJuUPm5mWoay8golU0bWMmd3QAaZKZfAGPfpDcULhemZak0fhOUu33+TelOMJ
+WOp6Ya3MGbafJiNjRKXX5zfiV+wQTPF3G8WdN/fDwJcAnS3LMP6+RXe0ZdfS9+oD2A6txrHJKEtu
+gWg6WTNIlxBbYabFl6yT4FIntrwQCGndi9BykUBMLGn9OFqHHmwul8tZw9C3e05fp+NuajcuYnbq
+cevAhfkTl84X5at76pbRBWmQIjzD2b9ujr2cDRx3h2o5wzS6a2vVntvHz52o4e4axUid9gQsdb2w
+tqux49RJcZ05iy/wmoiToezyinbXUKvK5VskMVinFU1Od3ZV+cETSP7hwNoXvB/79WIc4zRQuUzF
+QeQTJvKtTtWI85aT4RiOZKPP5ai2yRPozWd642yOXzw5j4NZ3NxfRPJt6tj5c3V0q2d9q6XjhqVC
+n3O09LTMHV7pUpYrqPh9+8J3lKxmpYh0vFxurqJjLR03LFxd1s+ZbScQ2I4lV+A0TTHVfEVT7Jiz
+M/Lm3PI+G7YYnV6o8SKitL8EsgPKQBX/f/sP2YxYuVhtc6kAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[56]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">min_bin_args_commute</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span>
+           <span class="n">Equals</span><span class="p">(</span><span class="n">Min</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">Min</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)),</span>
+           <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="min_bin_args_commute"><a class="ProveItLink" href="proofs/min_bin_args_commute/thm_proof.html">min_bin_args_commute</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/d33ba64ef4195c3713fe4fe965786f0d7b7cb9b70/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAR0AAAAWBAMAAAAP9FU/AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAESElEQVRIx8VWXWgcVRT+dmdnZ3cmmQz6UE1j
+OtBSUFtcRSr1oa5EW0FrtlX6opgtfRClyPRBUYklEfTBtmR9EF0N6TwEaaxs1z5UsCAbVGj9aVKh
+og/RWU0Vg6bRSlZiFM+9d2Z35yfLvPXA2Z399tw73/m9F4gjVlxcQTxRIreyYq7Wzbi47MTb8ccQ
+8oSrBvuxsfPqW3Hohxp7mLloDefa8ZD8FAzETavsq+vfdconLTRZDfuWE3o/+/FkRzpqEXjhKj1I
+GywM5X14UNJ2kNBx5sDtDch/tcB3I97ytNBRtqbUkU+Kdqx8w3wYtKH68aBI+aAzvzPW8ytAG9OB
+iLfcKZQ5pJkd+XSRVq5Qsb0yaAfxkHwe5LPYADKPrvjAWtRbbK4SOZnuXD6bGZ9T5Ljj57M5yvhA
+kM8C5UlP+fgkIxKNdE7oV3NzX3Tm8yDjkyCfcoO2ctDIHNy12N/E6yfOiuhWBqBSc3wQ5OP0URaJ
+z3PTePXTw3XWgKlq05xHsPfIaUqSIfQB4O3OfJjLFflPJG2KT9pA93UYs1w8r/enZrlVdQukJWAb
+r6w5LgbnM2TiFhaf/cBFM9NwQ+GaM2PUnd3EuSj0EBQjzGHrmXuf8Z6/ZnzwHXQQn6yBbA09OYFL
+lrSS4GWdMXcjQX2xJRSf7hIcxud1YBxgfdptNs1J7sI99vWUxJrQrK0V/Ftk6uWCruFDb0h8xvlc
+sZ71+JTQ4wg8g5RbCyouoIvQsRAfvaEUXD5l4D9WuoWmOckIdvK3LglNOsFyvm+EKlDH3Y6Pz6mq
+E+YDb1MazSsYo4WPh/io/+gI8fHMuVzg62tCUdxBH4u75qkk5DoSfEoyPgt5X76ytVyAD8MxZKmi
+6ShQv7FEh+oH41KAD+XLM+dMGniP4jIrFKdpKurWjWkyqvTYRzHFx7emTHjjboLzkf+wA3wInyr0
+QROjjv6gN2J7KD4Y6g3wyTqeOS1U36DWpdKQSkIxTG5ImMjQ44tb8Sse4XxS7zSHNmvhPcB5gM4L
+IpN2+RB+22sPYS/UZRYTQ77qDgHfCWugq4REg5N5SvBhbc3N2cLk35M12RRDgCkSPI0Nvno9+rGt
+XC6buq7t9bY8RsfXzAFcRn1m//N90yc2TL98fFrgk4vJAdprjvm5fp7tcSlwfI0v5/SC3re8bvTL
+3tHVG25eJS6ZWc+cFqoPO5vuYEksCHV7qsavJJdwDkd4fHT5MW8Yd49Ez6UWnuSmGrWaMhvnuvGt
+Z55sDfyXXOUyrBVTOEmG8hINAF4/+Ci/1hkZwqmEcAbvm9FnbOTZKcw1/xnbPGdTlz9ewFETm7YX
+obxFwL6fq5M7vX/fXGPbJl4h/Z6STYmNdR3LWq55pZXYUvieYapWlvw7WS77J+TUGts2cVbdG+cL
+HagHmq7kmjvtFLm2t4KdcPZF3nbXuIWGcT3mFfhwCPnF1fZ6gLyjimsr/wPG90qotS98lwAAAABJ
+RU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[57]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">max_y_ge_x</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span>
+           <span class="n">Equals</span><span class="p">(</span><span class="n">Max</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">y</span><span class="p">),</span>
+           <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span>
+           <span class="n">condition</span><span class="o">=</span><span class="n">greater_eq</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="max_y_ge_x"><a class="ProveItLink" href="proofs/max_y_ge_x/thm_proof.html">max_y_ge_x</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/1575f47b67f608b97a730595946b10aaf29977760/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQcAAAAXBAMAAAD0JJe7AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADy0lEQVRIx62WXWwMURTH/7uz092dqdHECyFs
+kHpQsQ8iIVJt6itBrEr6QnRFxMeDTBMeCAkSEV/Bg7AkNU36oCpreSBapJFIfESLhPBQphRRUh8t
+lUbCOXc/e2e2qeUk097d/9kzv3vvOede4J/MHLni/+sQIzQjNHJFtd0919JTwoMpBUJMR92rNh50
+PDZlxWFv8uCGgYU82FgYgxYFdvTRQJlkOhXZiiz3KFuAvbxdxwuD8NEk4s94NisspyKbUuEeZVaS
+Tw8VBlFMT/wzLcJ+GaLYzf1+nigWFGIuKjAlShniEk3QliFK3dzXu0cpIoKHnZ0PCoRYyhAeysww
+QSi9rZZyrk/9tSmtdJ1vTS5xvAoaFcBlOaW6w2igfSBpCXBmuDdV5Jd4anH1G7wWQZSZvij0QWxI
+KxXGRN8j4Zcog/IFmC2ypVMYF6XubcN8yhVK4jr4S5zxZ1yt3JocZZP2YERyesIQeAEDAkIdADYr
+e1KKYiqDHpGfgdByeChMmfTzfcQ4DiAUBC1dCh7oikUMHdcSEoR2XUrgOwLis7mdIaCtJoiLY9JK
+AL5UnWpoRzG1qmMShEVftpMjLZLXlvNyAU3GMDDXliCAD2EXiEsJmyG0yskE4f2eUcSLk81yEMco
+5hp5uWutwE9Sud1Fy+lP7+JuKjW1Cx7RwhiipyILIQSyOXbaNbsdwbaw2I5IgCB8N6y0glpTSxYN
+Lckn3mIpJ7AIBgF4OXGuUMsyzHFFtNbx0dYRNIlmqvvrw1kIIbDNM1OubPUCQv1qMUQ/1IEDaAlG
+U0pTZAJ0WnP6FCzBCZ6BvBInWIHCb9jFA9QHaLhzBj5glYDwnT2ek5hCIGs+mXZl45pbCdwDqG33
+w/g5Tbe1/pQy89AyVEP7wbMvUftSdTvEKlFLE/Vx7nlEPg+Ir8djImbHYrGQYejVudXBArBtbNaV
+7CgdHR3r8RZdHevMva97bn58FVV+b00qjb3eKlqxTk7Z8d38m6cyRMOtFbSxozJ1EWgT5/1T3MVh
+sRKGutrKgWABdWNzXMlG7cnXQbKKV0TRaZP8j5x+V+nZnf6wS4/60Aw8V79QzYqcQEtOYgqhYXHG
+dfgjKVfRxasuhlwONT2q3aZ/VZlT7+2tHhwJYeqcKPyn6Yuad4nGRTkQLFzIuqbsVN5mmlHi9Lyk
+3aSdcyyX7Uk4j/CQZgYJtzkWy2lfwicpOKwpL0RG4V4xpTviRuwt58tMcOhVRLU8do0jnIBwE/gi
+YueDcCpGnsvke2kjoZYn3CGEcJDKJvbP99L/fKH+b/YHt90XUIwK/XQAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[58]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">min_y_le_x</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span>
+           <span class="n">Equals</span><span class="p">(</span><span class="n">Min</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">y</span><span class="p">),</span>
+           <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">,</span>
+           <span class="n">condition</span><span class="o">=</span><span class="n">LessEq</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="min_y_le_x"><a class="ProveItLink" href="proofs/min_y_le_x/thm_proof.html">min_y_le_x</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/bca43335dac9b0b216dc91234c273373a2770d270/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQMAAAAXBAMAAAD9zzfBAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADtklEQVRIx61WS2gTURQ9+Uw+M+00ihtpqYFK
+oWgxCynookbqD1RaK7hRbMSFIEWmC0GlQhVc+KPtSmOhTqGLlkqMLiooSCoIftCqUNFFNMWoWKR+
+CiquvPdNTDKfSE17YZI3596577z77r3vAQsSbb64/z8dzFvU8HxxKeNsuZ+eEA/qyqSwCl1vUzyY
+fK51R4pxm7wrQZa+2syDQ+UxkGPA8TkaeFZo6IiacKv4dGcfh4FTvFF95VHw0hISL3ktrTpkM24V
+T9TZx1qDnRIuj0IFPYkvlFFnWnUrbpNHJXzo8BBjX5mpUM8UrtPyMmYK9U7GB519+Gj+J+n04zIp
+bGcKLsrHSKvu7wwFOrfO1ubx6ZE7RnATLZAp6W9YEykbwRDtAKm2AVf+NU+0tIoXlpC+w61TFHwh
+VC5Fr5bDo2qt95mwSq6G5yvQJLIkLYTLUHGnsIFyhFK3C/6Q3Xvj+MYjxsicqg3FveQFU8BrqCAK
+wRCCKVRFDNyjeX67RFYGwjvhIierLTOcJobLASKCoK60mZWB6XibquBW0k6hwdRh7gsKX7Sjfyn0
+oSpj4AF4c5Up4ykqCO21UNAJfEqGFCB3xpqNm3qozFSsz9gorDNXm0HhejJjpwAxrdEYf6OXPO6z
+BrpDD/wiLbe2WDP9zG7NUoilabhEw2IKM9ECBaHAJ5FfhmlhI4KpiIXCCzGDJhtlQuH4zFtryQVs
+gUrTuzlhblKDUrXlPvKfqNIvYFQ0TsU/GClQEIoLgkHOlGVQUJC+6RYKhI+21UChaNMbKfo5gtYo
+9LMGHvbfzQMMBmh4ohGfsFtM5B3oK0pHoXAPsMecKQvX2S7gIUANmub35SgQvubcDrRD/sErD0lz
+uUo1yUZ00CK9nHGuHgZ+CrgatWiKx+NhVVXaiyuCFZAEh5wpyUU6IiYP4j2mJw8cq5kYWTFx+uqE
+gQ/PulsoVmn6QK7O8hdTVgpDd1tpQyvztRBIiRN9Cg9wXkRBlfbqRRRYQVbLtLwpSWWPc78o4G7h
+Q6Hi8D+z243Tc/LvS7cS82IMeCV9pSoVuYDbRekoFHygLdGF6b+PngKuiImuhR2OLiUm36O/lvzZ
+9v7uDKfbynUx+C8TsOdDcnhLEQVWGLcfYZqTSyXaZh5P0POGdpF2zBaqjCtpP6TDshYksmPxeFGz
+EjaGwiajJSjkcU7OumybE1t3M19Vguabm6S7Mnts7gQFJwXHpMR1zI6rJS6JHy1bCKk56UxBKM5S
+qcQXfN9cxEvyoskfRTsJayU/ylsAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[59]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These theorems may now be imported from the theory package: proveit.numbers.ordering
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

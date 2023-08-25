@@ -1,0 +1,1 @@
+\left(\left(m, n\right) \mapsto \left\{\left[\forall_{k \in \{m~\ldotp \ldotp~n\}}~\left(f\left(k\right) = g\left(k\right)\right)\right] \Rightarrow \left(\left(\sum_{l = m}^{n} f\left(l\right)\right) = \left(\sum_{l = m}^{n} g\left(l\right)\right)\right) \textrm{ if } m \in \mathbb{Z} ,  n \in \mathbb{Z}\right..\right)

@@ -1,0 +1,1 @@
+\left(i, j, k, l\right) \mapsto \left\{\left(f\left(i\right), f\left(i + 1\right), \ldots, f\left(j\right)\right) = \left(f\left(k + a\right), f\left(\left(k + 1\right) + a\right), \ldots, f\left(l + a\right)\right) \textrm{ if } \left(\left(j + 1\right) - i\right) \in \mathbb{N} ,  k = \left(i - a\right) ,  l = \left(j - a\right)\right..

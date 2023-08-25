@@ -1,0 +1,1 @@
+\forall_{S, y}~\left[\forall_{x \in S~|~x \neq y}~\left(x \in \left(S - \left\{y\right\}\right)\right)\right]

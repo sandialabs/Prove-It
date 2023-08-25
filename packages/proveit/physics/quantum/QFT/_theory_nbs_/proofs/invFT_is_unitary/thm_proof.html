@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.physics.quantum.QFT.invFT_is_unitary theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.physics.quantum.QFT.invFT_is_unitary-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">physics</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">quantum</a>.<a class="ProveItLink" href="../../theory.html">QFT</a>.<a class="ProveItLink" href="../../theorems.html#invFT_is_unitary">invFT_is_unitary</a> theorem<a class="anchor-link" href="#Proof-of-proveit.physics.quantum.QFT.invFT_is_unitary-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> invFT_is_unitary
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="invFT_is_unitary">invFT_is_unitary:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/08eaf4c7318014f2dd5700d22649b88853783f700/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANIAAAAmBAMAAABDtNh+AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADyklEQVRIx6WXW0gUURjH/3ubmXV21xWkELKM
+CIQgltDqQWLLDQwSNohelFp6CS1pewmMdNeeSxfLB7vAVBBEF5duUE9WD0kX8iGqhxbtgmFBeMnS
+suycM87szM7udmQOuHvO8dv5ffdzBuAa7irYGCWt/LJbYWucUnglXTF7JFeQV/KkYo+EXl7BgzZB
+uM6pqvOXZcsRXRLJzek+f9ouSfzJJ9djtT2wxMid4xOrsOx4W3YWqTBR/arZ/C0MxNm8jo80bd2S
+i9n0Qa3X2sd4Auxli0QVWKjWFAVJxMlS5fOyindP0dZS+bqiLWWNU9ehh2mc/xOmCZSGGGlJijdj
+IKkUCLFQh7Gdfh8oXncT5MMzR/6GMIXANJyDECzO60kRM4bp7ArQDnkGjlHPIFmyVuSOoYv6NVWU
+5KAdQpwkHxtKgpSEVB5SgnqHeageWA48hy/pDidJuFgGTUAgDpeL909fUCPdFEOM9ABe3XvjmUzM
+TCKGvFSwKp6A/wQh+WhInbNwETcKxROiNK2SRCUgRRlpU5a050uuTU4CrgRWJXchcJusBRooaQp4
+kck8+w8ppJJcLGEDLBMdycWEbrV4z63W+YiepnSzhPyqATib5/GGtpCoUkkdBpJbLRMIcQuJ2QDp
+r/kgIMsjEPM1pbAhqxhpvuywgaT1CMGaEX4Wdb/+UCdNQPwm5a7IxtoQX91FXdBE2hdVbXIbSPp5
+kiEjZSL52ON2ZMuRFgm+E+RoVq/uij6slhW3ksemSTjzkK7qs4GUkWQ4+1hRURJiW/Te3kD7xWhY
+xp3Iq0g0l7TYW00kf7YWSDikkOa9dRC1CDqHF+OEWyR9XPXdn4CPdKt6badsjlMiVJgUGNUDP0sy
+kkbPS7akdLbbu1Ja7zxODL3cHPLFS9hWtXypyUwaoE+T5owkVTM69utijQq2aVndEYk06p5i5Ti1
+WBrHxlCqeFh6ViM8bib5yFxaNl/GSmj3ivnypKoZ++fFPk13T7kqIRFvjSws/NAdTMMgzWjLlWiG
+q6W/v5eQrgnmehKsbZFppk6bLmRybk5vzcsO8wVhCBFJSqs2edbnXAIGreVGNSs0aszLeubSYa2K
+JvC2Wu0VtcD7nFPDemFhmhUieeOmA5h5xKtlvSeIryG0Ez9Lr+Nw5Fx2p6znN9Os0OU4ZeWy3mkQ
+ud/fl++nZyw7qmaFRqdx8VntM3GuewTndaPYuMcnNhC1TXrEJybH7IICg5yCQ3ZJPt73r412SWO8
+gkLIHkh8wv36+MYe6Qb/y+tRe69qp5dgftLWGzWtkn8mkO81X1sRfQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/3258150f34adc6261dd0c0ef93ff57ca9714be5d0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

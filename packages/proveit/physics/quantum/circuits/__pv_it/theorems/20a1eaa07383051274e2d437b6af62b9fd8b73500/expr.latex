@@ -1,0 +1,8 @@
+m \mapsto \left\{\forall_{A, B_{1}, B_{2}, \ldots, B_{m}}~\left(\left(\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{A} & { /^{m} } \qw
+} \end{array}\right) \cong \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{B_{1}} & \qw \\
+\qin{B_{2}} & \qw \\
+\qin{\vdots} & \qw \\
+\qin{B_{m}} & \qw
+} \end{array}\right)\right) \Leftrightarrow \left(A = \left(B_{1} {\otimes}  B_{2} {\otimes}  \ldots {\otimes}  B_{m}\right)\right)\right) \textrm{ if } m \in \mathbb{N}^+\right..

@@ -1,0 +1,1 @@
+\left(\left(j, k\right) \mapsto \left\{\lvert j \rangle_{n} \neq \lvert k \rangle_{n} \textrm{ if } j \in \{0~\ldotp \ldotp~2^{n} - 1\} ,  k \in \{0~\ldotp \ldotp~2^{n} - 1\} ,  j \neq k\right..\right)

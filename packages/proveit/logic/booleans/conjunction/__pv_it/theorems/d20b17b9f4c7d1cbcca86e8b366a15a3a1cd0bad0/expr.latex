@@ -1,0 +1,1 @@
+\forall_{i, j \in \mathbb{Z}}~\left[\forall_{P~|~i \leq \left(j + 1\right)}~\left(\left(P\left(i\right) \land  P\left(i + 1\right) \land  \ldots \land  P\left(j\right)\right) = \left[\forall_{k \in \{i~\ldotp \ldotp~j\}}~P\left(k\right)\right]\right)\right]

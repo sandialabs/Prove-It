@@ -1,0 +1,4 @@
+proveit.logic.booleans.conjunction.unary_and_reduction_lemma
+proveit.logic.booleans.false_is_bool
+proveit.logic.booleans.forall_over_bool_by_cases
+proveit.logic.booleans.true_is_bool

@@ -1,0 +1,1 @@
+\left(f \mapsto \left[\forall_{a, b, c \in \mathbb{Z}~|~a < b, b \leq c}~\left(\left(\sum_{x = a}^{c} f\left(x\right)\right) = \left(\left(\sum_{x = a}^{b - 1} f\left(x\right)\right) + \left(\sum_{x = b}^{c} f\left(x\right)\right)\right)\right)\right]\right)

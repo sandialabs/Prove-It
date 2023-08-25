@@ -1,0 +1,1 @@
+\left(\left(\lvert \psi \rangle, \lvert \varphi \rangle\right) \mapsto \left\{\left(\lvert \psi \rangle \thinspace \lvert \varphi \rangle\right) = \left(\lvert \psi \rangle {\otimes} \lvert \varphi \rangle\right) \textrm{ if } \lvert \psi \rangle \in \mathcal{H} ,  \lvert \varphi \rangle \in \mathcal{H}\right..\right)

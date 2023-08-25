@@ -1,0 +1,3 @@
+proveit.logic.equality.equals_reversal
+proveit.logic.sets.equivalence.set_equiv_fold
+proveit.logic.sets.equivalence.set_equiv_unfold

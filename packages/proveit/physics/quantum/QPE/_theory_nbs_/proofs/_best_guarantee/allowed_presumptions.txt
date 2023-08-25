@@ -1,0 +1,8 @@
+proveit.physics.quantum.QPE._best_guarantee_delta_nonzero
+proveit.physics.quantum.QPE._alpha_ideal_case
+proveit.physics.quantum.QPE._best_round_is_int
+proveit.logic
+proveit.core_expr_types
+proveit.numbers
+proveit.physics.quantum.QPE._phase_is_real
+proveit.physics.quantum.QPE._two_pow_t_is_nat_pos

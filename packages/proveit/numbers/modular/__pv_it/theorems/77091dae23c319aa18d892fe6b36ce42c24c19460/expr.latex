@@ -1,0 +1,1 @@
+\forall_{a \in \mathbb{R}, b \in \mathbb{R}, N \in \mathbb{R}^+}~\left(\left|a - b\right|_{\textup{mod}\thinspace N} \geq \left(\left|a\right|_{\textup{mod}\thinspace N} - \left|b\right|_{\textup{mod}\thinspace N}\right)\right)

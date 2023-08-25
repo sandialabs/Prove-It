@@ -1,0 +1,1 @@
+\left(A, B, C, D\right) \mapsto \left\{(\lnot A) \lor (\lnot B) \textrm{ if } A \in \mathbb{B} ,  B \in \mathbb{B} ,  C \in \mathbb{B} ,  D \in \mathbb{B} ,  (\lnot C) \lor (\lnot D) ,  A \Rightarrow C ,  B \Rightarrow D\right..

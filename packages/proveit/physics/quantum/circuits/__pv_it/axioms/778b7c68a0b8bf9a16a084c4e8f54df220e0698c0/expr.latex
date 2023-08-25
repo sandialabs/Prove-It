@@ -1,0 +1,5 @@
+k \mapsto \left\{\forall_{A, B, S}~\left(\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{A~\mbox{part}~k~\mbox{on}~S} 
+} \end{array} = \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{B~\mbox{part}~k~\mbox{on}~S} 
+} \end{array}\right) = \left(A = B\right)\right) \textrm{ if } k \in \mathbb{N}^+\right..

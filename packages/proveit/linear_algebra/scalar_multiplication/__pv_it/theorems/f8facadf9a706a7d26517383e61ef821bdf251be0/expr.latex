@@ -1,0 +1,1 @@
+\forall_{V \underset{{\scriptscriptstyle c}}{\in} \textrm{VecSpaces}\left(K\right)}~\left[\forall_{a \in K}~\left[\forall_{x \in V}~\left(\left(a \cdot x\right) \in V\right)\right]\right]

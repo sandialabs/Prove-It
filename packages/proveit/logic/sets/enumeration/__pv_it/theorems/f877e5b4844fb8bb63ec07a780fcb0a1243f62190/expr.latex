@@ -1,0 +1,1 @@
+P \mapsto \left\{P\left(a_{1}\right) \land  P\left(a_{2}\right) \land  \ldots \land  P\left(a_{n}\right) \textrm{ if } \forall_{x \in \left\{a_{1}, a_{2}, \ldots, a_{n}\right\}}~P\left(x\right)\right..

@@ -1,0 +1,1 @@
+\left(\sum_{i=a}^{c} v\left(i\right)\right) = \left(\left(\sum_{i=a}^{b} v\left(i\right)\right) + \left(\sum_{i=b + 1}^{c} v\left(i\right)\right)\right)

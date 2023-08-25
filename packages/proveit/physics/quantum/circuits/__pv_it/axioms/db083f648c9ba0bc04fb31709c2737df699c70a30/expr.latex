@@ -1,0 +1,6 @@
+\left\{ \begin{array}{l}
+{\rm element}: \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{A~\mbox{part}~k} & \qw 
+} \end{array}\\
+{\rm targets}: S\\
+\end{array} \right\}

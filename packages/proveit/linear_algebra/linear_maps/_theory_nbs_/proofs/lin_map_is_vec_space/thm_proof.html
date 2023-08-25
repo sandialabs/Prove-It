@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.linear_algebra.linear_maps.lin_map_is_vec_space theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.linear_algebra.linear_maps.lin_map_is_vec_space-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">linear_algebra</a>.<a class="ProveItLink" href="../../theory.html">linear_maps</a>.<a class="ProveItLink" href="../../theorems.html#lin_map_is_vec_space">lin_map_is_vec_space</a> theorem<a class="anchor-link" href="#Proof-of-proveit.linear_algebra.linear_maps.lin_map_is_vec_space-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> lin_map_is_vec_space
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="lin_map_is_vec_space">lin_map_is_vec_space:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/1f1ed5570be0d0827a197923a448051b5ad138370/expr.html"><img src="data:image/png;base64,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
+n9WX7gAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/87eb5aa6d03a53adac6d5c1007f77b432fa957fb0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

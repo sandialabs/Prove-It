@@ -1,0 +1,2 @@
+proveit.logic.booleans.quantification.universality.forall_in_bool
+proveit.logic.sets.equivalence.set_equiv_def

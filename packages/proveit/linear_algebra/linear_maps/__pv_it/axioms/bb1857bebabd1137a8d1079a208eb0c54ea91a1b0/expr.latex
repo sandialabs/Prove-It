@@ -1,0 +1,1 @@
+\left(\forall_{x \in V}~\left(P\left(x\right) \in W\right), \forall_{x, y \in V}~\left(P\left(x + y\right) = \left(P\left(x\right) + P\left(y\right)\right)\right), \forall_{c \in K}~\left[\forall_{x \in V}~\left(P\left(c \cdot x\right) = \left(c \cdot P\left(x\right)\right)\right)\right]\right)

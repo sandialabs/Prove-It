@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.division.div_by_frac_is_mult_by_reciprocal theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.division.div_by_frac_is_mult_by_reciprocal-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">division</a>.<a class="ProveItLink" href="../../theorems.html#div_by_frac_is_mult_by_reciprocal">div_by_frac_is_mult_by_reciprocal</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.division.div_by_frac_is_mult_by_reciprocal-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> div_by_frac_is_mult_by_reciprocal
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="div_by_frac_is_mult_by_reciprocal">div_by_frac_is_mult_by_reciprocal:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/e2ee646dc85b850f3ef689309accae10506150490/expr.html"><img src="data:image/png;base64,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
+TkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/7de2cbc3c94d88e08c48541adee2bfa9be2bd6430/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>div_by_frac_is_mult_by_reciprocal may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

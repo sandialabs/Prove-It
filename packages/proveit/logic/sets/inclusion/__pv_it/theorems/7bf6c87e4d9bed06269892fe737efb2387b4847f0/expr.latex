@@ -1,0 +1,1 @@
+\forall_{A, B, C~|~A \subseteq B, B \subset C}~\left(A \subset C\right)

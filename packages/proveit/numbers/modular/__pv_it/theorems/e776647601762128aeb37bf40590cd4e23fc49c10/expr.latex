@@ -1,0 +1,1 @@
+\left\{\forall_{x \in \{0~\ldotp \ldotp~L - 1\}}~\left(\left(x ~\textup{mod}~ L\right) = x\right) \textrm{ if } L \in \mathbb{N}^+\right..

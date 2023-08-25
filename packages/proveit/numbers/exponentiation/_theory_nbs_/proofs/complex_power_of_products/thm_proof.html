@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.exponentiation.complex_power_of_products theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.exponentiation.complex_power_of_products-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">exponentiation</a>.<a class="ProveItLink" href="../../theorems.html#complex_power_of_products">complex_power_of_products</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.exponentiation.complex_power_of_products-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> complex_power_of_products
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="complex_power_of_products">complex_power_of_products:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/d0ad2a6270864293b3a3c5f88aa73e4205b076fc0/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/90968de5d280d07390be37796acd73e0b85011fc0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>complex_power_of_products may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

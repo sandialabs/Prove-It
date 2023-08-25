@@ -1,0 +1,8 @@
+\forall_{m \in \mathbb{N}^+}~\left[\forall_{A, B_{1}, B_{2}, \ldots, B_{m}}~\left(\left(\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qout{A}
+} \end{array}\right) \cong \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qout{B_{1}} \\
+& \qout{B_{2}} \\
+& \qout{\vdots} \\
+& \qout{B_{m}}
+} \end{array}\right)\right) \Leftrightarrow \left(A = \left(B_{1} {\otimes}  B_{2} {\otimes}  \ldots {\otimes}  B_{m}\right)\right)\right)\right]

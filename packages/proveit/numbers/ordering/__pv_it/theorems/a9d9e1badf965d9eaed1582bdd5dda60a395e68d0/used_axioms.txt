@@ -1,0 +1,4 @@
+proveit.logic.booleans.disjunction.left_in_bool
+proveit.logic.booleans.disjunction.right_in_bool
+proveit.numbers.ordering.less_eq_def
+proveit.numbers.ordering.transitivity_less_less

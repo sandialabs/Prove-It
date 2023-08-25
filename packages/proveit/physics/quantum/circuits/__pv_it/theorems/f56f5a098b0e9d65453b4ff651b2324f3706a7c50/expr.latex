@@ -1,0 +1,31 @@
+\begin{array}{l}\forall_{A_{1, 1}, A_{1, 2}, \ldots, A_{1, m}, A_{2, 1}, A_{2, 2}, \ldots, A_{2, m}, \ldots\ldots, A_{k, 1}, A_{k, 2}, \ldots, A_{k, m}, B_{1, 1}, B_{1, 2}, \ldots, B_{1, m}, B_{2, 1}, B_{2, 2}, \ldots, B_{2, m}, \ldots\ldots, B_{k, 1}, B_{k, 2}, \ldots, B_{k, m}, C_{1, 1}, C_{1, 2}, \ldots, C_{1, m}, C_{2, 1}, C_{2, 2}, \ldots, C_{2, m}, \ldots\ldots, C_{l, 1}, C_{l, 2}, \ldots, C_{l, m}}~\\
+\left[\begin{array}{l}\forall_{\scriptsize \begin{array}{l}R_{1, 1}, R_{1, 2}, \ldots, R_{1, m}, R_{2, 1}, R_{2, 2}, \ldots, R_{2, m}, \ldots\ldots, R_{k, 1}, R_{k, 2}, \ldots, R_{k, m}, S_{1, 1}, S_{1, 2}, \ldots, S_{1, m}, S_{2, 1}, S_{2, 2}, \ldots, S_{2, m}, \ldots\ldots, S_{k, 1}, S_{k, 2}, \ldots, S_{k, m}, T_{1, 1}, T_{1, 2}, \ldots, T_{1, m}, T_{2, 1}, T_{2, 2}, \ldots, T_{2, m}, \ldots\ldots, T_{l, 1}, T_{l, 2}, \ldots, T_{l, m} \\~|~\textrm{disjoint}\left(T_{1, 1}, \{1~\ldotp \ldotp~k\}\right), \textrm{disjoint}\left(T_{1, 2}, \{1~\ldotp \ldotp~k\}\right), \ldots, \textrm{disjoint}\left(T_{1, m}, \{1~\ldotp \ldotp~k\}\right), \textrm{disjoint}\left(T_{2, 1}, \{1~\ldotp \ldotp~k\}\right), \textrm{disjoint}\left(T_{2, 2}, \{1~\ldotp \ldotp~k\}\right), \ldots, \textrm{disjoint}\left(T_{2, m}, \{1~\ldotp \ldotp~k\}\right), \ldots\ldots, \textrm{disjoint}\left(T_{l, 1}, \{1~\ldotp \ldotp~k\}\right), \textrm{disjoint}\left(T_{l, 2}, \{1~\ldotp \ldotp~k\}\right), \ldots, \textrm{disjoint}\left(T_{l, m}, \{1~\ldotp \ldotp~k\}\right)\end{array}}~\\
+\left(\begin{array}{c} \begin{array}{l} \left(\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{1, 1}~\mbox{on}~R_{1, 1}} \qwx[1] & \gate{A_{2, 1}~\mbox{on}~R_{2, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{m, 1}~\mbox{on}~R_{m, 1}} \qwx[1] & \qw \\
+& \gate{A_{1, 2}~\mbox{on}~R_{1, 2}} \qwx[1] & \gate{A_{2, 2}~\mbox{on}~R_{2, 2}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{m, 2}~\mbox{on}~R_{m, 2}} \qwx[1] & \qw \\
+& \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\ddots} \qwx[1] & \gate{\vdots} \qwx[1] & \qw \\
+& \gate{A_{1, k}~\mbox{on}~R_{1, k}} & \gate{A_{2, k}~\mbox{on}~R_{2, k}} & \gate{\cdots} & \gate{A_{m, k}~\mbox{on}~R_{m, k}} & \qw
+} \end{array}\right) \cong \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \gate{B_{1, 1}~\mbox{on}~S_{1, 1}} \qwx[1] & \gate{B_{2, 1}~\mbox{on}~S_{2, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{B_{m, 1}~\mbox{on}~S_{m, 1}} \qwx[1] & \qw \\
+& \gate{B_{1, 2}~\mbox{on}~S_{1, 2}} \qwx[1] & \gate{B_{2, 2}~\mbox{on}~S_{2, 2}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{B_{m, 2}~\mbox{on}~S_{m, 2}} \qwx[1] & \qw \\
+& \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\ddots} \qwx[1] & \gate{\vdots} \qwx[1] & \qw \\
+& \gate{B_{1, k}~\mbox{on}~S_{1, k}} & \gate{B_{2, k}~\mbox{on}~S_{2, k}} & \gate{\cdots} & \gate{B_{m, k}~\mbox{on}~S_{m, k}} & \qw
+} \end{array}\right)\right) \Rightarrow  \\ \left(\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{1, 1}~\mbox{on}~R_{1, 1}} \qwx[1] & \gate{A_{2, 1}~\mbox{on}~R_{2, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{m, 1}~\mbox{on}~R_{m, 1}} \qwx[1] & \qw \\
+& \gate{A_{1, 2}~\mbox{on}~R_{1, 2}} \qwx[1] & \gate{A_{2, 2}~\mbox{on}~R_{2, 2}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{m, 2}~\mbox{on}~R_{m, 2}} \qwx[1] & \qw \\
+& \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\ddots} \qwx[1] & \gate{\vdots} \qwx[1] & \qw \\
+& \gate{A_{1, k}~\mbox{on}~R_{1, k}} \qwx[1] & \gate{A_{2, k}~\mbox{on}~R_{2, k}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{m, k}~\mbox{on}~R_{m, k}} \qwx[1] & \qw \\
+& \gate{C_{1, 1}~\mbox{on}~T_{1, 1}} \qwx[1] & \gate{C_{2, 1}~\mbox{on}~T_{2, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{C_{m, 1}~\mbox{on}~T_{m, 1}} \qwx[1] & \qw \\
+& \gate{C_{1, 2}~\mbox{on}~T_{1, 2}} \qwx[1] & \gate{C_{2, 2}~\mbox{on}~T_{2, 2}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{C_{m, 2}~\mbox{on}~T_{m, 2}} \qwx[1] & \qw \\
+& \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\ddots} \qwx[1] & \gate{\vdots} \qwx[1] & \qw \\
+& \gate{C_{1, l}~\mbox{on}~T_{1, l}} & \gate{C_{2, l}~\mbox{on}~T_{2, l}} & \gate{\cdots} & \gate{C_{m, l}~\mbox{on}~T_{m, l}} & \qw
+} \end{array}\right) \cong \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \gate{B_{1, 1}~\mbox{on}~S_{1, 1}} \qwx[1] & \gate{B_{2, 1}~\mbox{on}~S_{2, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{B_{m, 1}~\mbox{on}~S_{m, 1}} \qwx[1] & \qw \\
+& \gate{B_{1, 2}~\mbox{on}~S_{1, 2}} \qwx[1] & \gate{B_{2, 2}~\mbox{on}~S_{2, 2}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{B_{m, 2}~\mbox{on}~S_{m, 2}} \qwx[1] & \qw \\
+& \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\ddots} \qwx[1] & \gate{\vdots} \qwx[1] & \qw \\
+& \gate{B_{1, k}~\mbox{on}~S_{1, k}} \qwx[1] & \gate{B_{2, k}~\mbox{on}~S_{2, k}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{B_{m, k}~\mbox{on}~S_{m, k}} \qwx[1] & \qw \\
+& \gate{C_{1, 1}~\mbox{on}~T_{1, 1}} \qwx[1] & \gate{C_{2, 1}~\mbox{on}~T_{2, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{C_{m, 1}~\mbox{on}~T_{m, 1}} \qwx[1] & \qw \\
+& \gate{C_{1, 2}~\mbox{on}~T_{1, 2}} \qwx[1] & \gate{C_{2, 2}~\mbox{on}~T_{2, 2}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{C_{m, 2}~\mbox{on}~T_{m, 2}} \qwx[1] & \qw \\
+& \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\ddots} \qwx[1] & \gate{\vdots} \qwx[1] & \qw \\
+& \gate{C_{1, l}~\mbox{on}~T_{1, l}} & \gate{C_{2, l}~\mbox{on}~T_{2, l}} & \gate{\cdots} & \gate{C_{m, l}~\mbox{on}~T_{m, l}} & \qw
+} \end{array}\right)\right) \end{array} \end{array}\right)\end{array}\right]\end{array}

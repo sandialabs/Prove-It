@@ -1,0 +1,27 @@
+\begin{array}{cc} 
+ A_{1, 1} & B_{1, 1} \\
+A_{1, 2} & B_{1, 2} \\
+\vdots & \vdots \\
+A_{1, n} & B_{1, n} \\
+A_{2, 1} & B_{2, 1} \\
+A_{2, 2} & B_{2, 2} \\
+\vdots & \vdots \\
+A_{2, n} & B_{2, n} \\
+\begin{array}{c}:\\ :\\ \begin{array}{c} 
+ A_{{_{-}b}, 1} \\
+A_{{_{-}b}, 2} \\
+\vdots \\
+A_{{_{-}b}, n} \\
+\end{array}
+ \\: \\:\end{array} & \begin{array}{c}:\\ :\\ \begin{array}{c} 
+ B_{{_{-}b}, 1} \\
+B_{{_{-}b}, 2} \\
+\vdots \\
+B_{{_{-}b}, n} \\
+\end{array}
+ \\: \\:\end{array} \\
+A_{m, 1} & B_{m, 1} \\
+A_{m, 2} & B_{m, 2} \\
+\vdots & \vdots \\
+A_{m, n} & B_{m, n} \\
+\end{array}

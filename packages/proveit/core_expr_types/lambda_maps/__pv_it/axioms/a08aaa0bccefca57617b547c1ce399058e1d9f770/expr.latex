@@ -1,0 +1,1 @@
+\left(\left[x \mapsto f\left(x\right)\right] \circ \left[y \mapsto g\left(y\right)\right]\right) = \left[z \mapsto f\left(g\left(z\right)\right)\right]

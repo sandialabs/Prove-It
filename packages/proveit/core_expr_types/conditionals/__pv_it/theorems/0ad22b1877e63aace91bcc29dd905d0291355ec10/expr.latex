@@ -1,0 +1,1 @@
+n \mapsto \left\{\forall_{a, Q, R_{1}, R_{2}, \ldots, R_{n}}~\left(\begin{array}{c} \begin{array}{l} \left\{a \textrm{ if } Q ,  R_{1} \land  R_{2} \land  \ldots \land  R_{n}\right.. \\  = \left\{a \textrm{ if } Q, R_{1} ,  R_{2} ,  \ldots ,  R_{n}\right.. \end{array} \end{array}\right) \textrm{ if } n \in \mathbb{N}\right..

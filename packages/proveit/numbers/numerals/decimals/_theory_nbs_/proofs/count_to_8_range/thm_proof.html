@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.numerals.decimals.count_to_8_range theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.numerals.decimals.count_to_8_range-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numerals</a>.<a class="ProveItLink" href="../../theory.html">decimals</a>.<a class="ProveItLink" href="../../theorems.html#count_to_8_range">count_to_8_range</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.numerals.decimals.count_to_8_range-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> count_to_8_range
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="count_to_8_range">count_to_8_range:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/67f221b25deadfd729e3303146e34cc8f80418d00/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASEAAAAVBAMAAAD7r0UnAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADfElEQVRIx62WTWgTQRTH/8nuNsk2SYMHq0Vo
+ioLopTlUr40S8WJx8aAISoKg9OBHD2pKrRg9WI/x4EGkJCAiFrTBg6AXo9hzIx5albTFYw/SKhat
+aJydr/2YJFjogyZvZ9/83j/z3swUQAKbZs1QgQ0Dgqn/DV+C4U+5zfI8Pm8ya+dGFFHAAPlb5uBA
+/vwS9zLjFREWH2HfpXNTQkAmw+IGG41GkXpG5nAFwYKSQ0sTwCP4+apJgJGDMXeJZ9oB/TfzTkD7
+LmLNGvt+sn6Ij2ytxMrUOZLPj7E1DgEfgLNKouPA6as/4OerJgEh+2f1c0XvgfvM608ZayJ2L1dU
+k7PPIFqlDlmAbjZ0hyafUBKN2o0hFDl81SQgApeikoVF1iovKxCK4rf9ijSRASk5OkSBEcufqOhW
+5PBVk4D9bkWfgEVRaO0nd/QOv6Jo0QHpPH5wxl6ODn8jaTm3IjffbxJw2a2I2LRwXgl4n1A0v2uB
+OZGLB69BtgazWGM3WTC95u+OtFuRm+83CRj2Kop/486Xuth1BaFoBr1s/3UNIyLOjM9i5o11Uo+w
+vSQYm7Ltqe3SRXMpknzVBOChV5HpNAvfazo6nHKxHZZdQege1ysKqB2YJRO0oi+NmfIqMmutBEnA
+A6+icSekxAZvuhSFVpmiMsJ8F+s5/moC2i8L8RVfnkjFq2i85RJJgFdRWCT/CszSwgSSQlE0h9Bf
+VrUcwrzvzSqfQNasN4XOYntF4ZZL5AC8VRtAgO3OhsUVddbri5NpCi8jtiKKJ9Yoy1MY5E2sAK3s
+6yNf1SRfPbIl4K1QZIuKpxG0DHtk0q6awX9nDQZtKESqNEwjfVSkHl6TG4aG3SVCEwhXfYmiSa6I
+Bjl8r1luwJA9cjQBekT3kEsB2Rw9Qcl5lGVN0lWlXmAEeyx2kr/DSX6mD5Llo2EvLNzim91t9DjQ
+V3mQ5NPJ9EM+ScAyeaiXLhRg36LTjcYaTPte7MyTm5Z6CM3+SVKv+/oV0DDo+QXubSdVoS/jc3nS
+MmbFpyhOyhj7uDbPghz+Y/AP077GbZQEmPKMlvttH9p4TlizCT1KQZ61o6ooAgiPiPWV79PtPCes
+2YTRJpu6DVVF2YA33D8muz7ZzpNhzSYEqkqyaKI1S0VRwCn+IOOCaOclVS+opHfv6mprloqigEBy
+8/7P7msytmWDgH+H8gxVe1/IIQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/930eaa9c2c1c480f40a87adac05e59b793557ecb0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,25 @@
+\left(\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert m \rangle_{t}~\mbox{part}~1~\mbox{on}~\{1~\ldotp \ldotp~t\}} 
+} \end{array} \neq \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert n \rangle_{t}~\mbox{part}~1~\mbox{on}~\{1~\ldotp \ldotp~t\}} 
+} \end{array}\right), \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert m \rangle_{t}~\mbox{part}~2~\mbox{on}~\{1~\ldotp \ldotp~t\}} 
+} \end{array} \neq \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert n \rangle_{t}~\mbox{part}~2~\mbox{on}~\{1~\ldotp \ldotp~t\}} 
+} \end{array}\right), \ldots, \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert m \rangle_{t}~\mbox{part}~t~\mbox{on}~\{1~\ldotp \ldotp~t\}} 
+} \end{array} \neq \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert n \rangle_{t}~\mbox{part}~t~\mbox{on}~\{1~\ldotp \ldotp~t\}} 
+} \end{array}\right),\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert u \rangle~\mbox{part}~1~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} 
+} \end{array} \neq \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert u \rangle~\mbox{part}~1~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} 
+} \end{array}\right), \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert u \rangle~\mbox{part}~2~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} 
+} \end{array} \neq \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert u \rangle~\mbox{part}~2~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} 
+} \end{array}\right), \ldots, \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert u \rangle~\mbox{part}~s~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} 
+} \end{array} \neq \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert u \rangle~\mbox{part}~s~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} 
+} \end{array}\right)\right)

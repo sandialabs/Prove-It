@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.sets.equivalence.set_equiv_symmetry theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.sets.equivalence.set_equiv_symmetry-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">sets</a>.<a class="ProveItLink" href="../../theory.html">equivalence</a>.<a class="ProveItLink" href="../../theorems.html#set_equiv_symmetry">set_equiv_symmetry</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.sets.equivalence.set_equiv_symmetry-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> set_equiv_symmetry
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="set_equiv_symmetry">set_equiv_symmetry:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/044faf0e00a9c16a7177ae7e8dcdccedcfa5a0c90/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPgAAAAWBAMAAAAfsUzKAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADlklEQVRIx71VTWgTQRR++d9umjQFKQpKAoIg
+Ks2hFHqoTWkVSxGLXopUbRFRY8F4EcTaRPTiQRJEUESa9FLoQalePPTQWPGfShTFgkaiPagg/dHa
+WqvG92Z2YzI77fbkwOzMvnnf+38zAMsNF30iYM6zAlrxiKyABz7g9AaWYTgJ4MjJcSi+cynYfuA4
+H/2sl/NYh/CzCWddvrLyaIxI/WNkS0HfcZwTchyAc5ot6toX5APb25IzlVVXwRvkuG1EOyxXPkBQ
+Zv5jAMsP2rw79wY0i0lLnnSkZDgc1Vy551M9GmPhtPIEgD8GYY47S/FJyJU34bSTka4/GKZZsj8I
+Az5QQhqD3Y/Zs4VkOByN82yZALUL4DynRTFoB0JQAwxHdruXSGuaTGXRQq9taACzvyq2T6/BOyOU
+iycyHEo9zWJFYbIccbzmRw0IaMhBeYrhbOiZc4mUU8Q30M6CAXQ+JIHkff6+XtS5KTL7oAwH0Ov9
+ylYqgKlfbfzMj7M7As4gx41ls0/lyu0Ea9Uypa6L6XS1wADVJOSWDAcQsn77R9PrAounfxyd8HHc
+DoBrJeeFoZsHEO+brAoardsNcdJTS/udWRrPCzhwBJRFA0JZmHxPEm2dHHcCXKx41Ufs+MLscIvm
+o4diSm0CUxGw3mNOMRVZrdpDEKXdZkEDw2FYXDMgmAVerMHNaJs1zXFlKTfLh5tnyJYBb1prC6Kz
+/F7HORIT3fBebvZTn8QFOsPB5+bGBYPnZSjajXWoTHOcNcfrrf0ZWywhsE2LysmFBsNNdhOgIoNr
+h0y5iuy/DcorfLxtHGkN17mV0XNdHBmAG0Eh7ApVjr9NlIT97SEhW4TgMpwd51uD8jiKtnxHjzMa
+7naYxRC281tgoma1HiPytU/LlDIn5twR1G7QOjG2hNujXb6lOcfigTgWmy2h4XqYqHb4wo7rQV2l
+CdH7AZzoX0dY9KKH9Mzr3Vg0COeikCQND2I32vwgVdTFFlZJrcN+1muoOaoFWKHYXEQGeg0uiXIG
+82GwJudQyiuxnzKgJudSsDF/TDhZQw8UJcVDKgo4fHSizIhRvHv1uh4ntpjZu+vKiJRxMwicKcFh
+iioC6hC4foL6Uidq17/JsBuunxpT5U3FOPtdUHcdUkahdnG4pfDMlFHOrpgJOmXs5ohZsBISnLX0
+VyWeQTPlRuvUhAlE6tVe4b+XPV3LC/JK3Ow1Uf5RhgvCfx1/ATaa+Cg0tP60AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/4b40dc81ef7f8eea01ff25cbd7e74196cbb715aa0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>set_equiv_symmetry may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

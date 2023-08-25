@@ -1,0 +1,1 @@
+\forall_{N \in \mathbb{N}^+}~\left[\forall_{a, b, c \in \mathbb{Z}~|~|\{a~\ldotp \ldotp~b\}| \geq N}~\left(|\left\{\left(x + c\right) ~\textup{mod}~ N\right\}_{x \in \{a~\ldotp \ldotp~b\}}| = N\right)\right]

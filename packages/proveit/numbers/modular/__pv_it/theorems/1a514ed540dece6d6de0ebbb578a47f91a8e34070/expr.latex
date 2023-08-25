@@ -1,0 +1,1 @@
+\forall_{L \in \mathbb{R}^+}~\left[\forall_{x \in \left[0,L\right)}~\left(\left(x ~\textup{mod}~ L\right) = x\right)\right]

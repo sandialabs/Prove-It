@@ -1,0 +1,2 @@
+\left(A \mapsto \left\{\begin{array}{l}\exists_{U \in \mathcal{L}\left(\mathcal{H}, \mathcal{H}\right)~|~\left(U^{\dagger} \circ U\right) = I_{\mathcal{H}}}~\\
+\left(A = \left(U \circ \sqrt{\left(A^{\dagger} \circ A\right)}\right)\right)\end{array} \textrm{ if } A \in \mathcal{L}\left(\mathcal{H}, \mathcal{H}\right)\right..\right)

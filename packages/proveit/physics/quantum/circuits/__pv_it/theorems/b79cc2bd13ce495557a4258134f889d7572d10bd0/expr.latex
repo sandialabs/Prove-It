@@ -1,0 +1,6 @@
+\left\{ \begin{array}{l}
+{\rm element}: \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert \psi \rangle~\mbox{part}~1} & \qw 
+} \end{array}\\
+{\rm targets}: \{k~\ldotp \ldotp~k\}\\
+\end{array} \right\}

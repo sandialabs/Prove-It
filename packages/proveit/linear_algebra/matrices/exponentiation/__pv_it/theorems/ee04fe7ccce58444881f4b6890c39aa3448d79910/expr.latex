@@ -1,0 +1,1 @@
+\forall_{m \in \mathbb{N}^+}~\left[\forall_{b \in \mathbb{C}}~\left[\forall_{A, x~|~\left(A \thinspace x\right) = \left(b \cdot x\right)}~\left(\left(A^{m} \thinspace x\right) = \left(b^{m} \thinspace x\right)\right)\right]\right]

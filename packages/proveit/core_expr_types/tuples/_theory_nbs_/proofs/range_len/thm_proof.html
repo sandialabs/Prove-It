@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.core_expr_types.tuples.range_len theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.core_expr_types.tuples.range_len-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">core_expr_types</a>.<a class="ProveItLink" href="../../theory.html">tuples</a>.<a class="ProveItLink" href="../../theorems.html#range_len">range_len</a> theorem<a class="anchor-link" href="#Proof-of-proveit.core_expr_types.tuples.range_len-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> range_len
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="range_len">range_len:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/ace0878051e8cca7f19f26dfaed8f7bbe4b7aab30/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/3e61d0380c20934ca55b8ada0d14a0d56ade1ca80/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

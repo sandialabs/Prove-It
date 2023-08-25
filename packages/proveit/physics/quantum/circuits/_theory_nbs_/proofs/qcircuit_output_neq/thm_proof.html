@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.physics.quantum.circuits.qcircuit_output_neq theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.physics.quantum.circuits.qcircuit_output_neq-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">physics</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">quantum</a>.<a class="ProveItLink" href="../../theory.html">circuits</a>.<a class="ProveItLink" href="../../theorems.html#qcircuit_output_neq">qcircuit_output_neq</a> theorem<a class="anchor-link" href="#Proof-of-proveit.physics.quantum.circuits.qcircuit_output_neq-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> qcircuit_output_neq
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="qcircuit_output_neq">qcircuit_output_neq:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/d9fce66d781a7045d00e0702966f64241f7177fa0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAVEAAAAZCAMAAAC/1O3FAAAARVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAeYafp
+AAAAFnRSTlMAq1RmmUTNIjK7EInv3Xbt5cnn9enzas/lfgAAAAlwSFlzAAAOxAAADsQBlSsOGwAA
+AtxJREFUaN7dWYtu4yAQNO+n6V17t///qWcwdqDJ2s51RaQgNUrVDphhdnYXT9NLhlDT+w35wrW5
+fENCJ+NetrTX01sOkV61shODw9EPWmjOC7FbKI7ap4ljCbXDojFlNuWeI7QZJZlAdjaX7MPZYXYG
+i0gtG+6rQJboNVyRKCPzSQfAlqHRM9I5znU1mcBHBSFQ2RqHK4w6wtiLq+wYIJTK/HdR7XNY/k0z
+mX0wOGdLMbpHN7BmcwVI+ZdKiohzHjGMYpRRnV0wAc4tkjI9iLqeAKROUiX+ZPkv14Sif7Y38Ae/
+3UchkWGbNCXArUoWocyfX/mTSKesuoyOBnO0TKZh28fGSLRt6QEyBNl68R0jHWAKCgPWxyHansxG
+KkZKtNqoZ7NFbUFt8gxN/g3dyYv5ZhAIox1gP5t7YC2DL7Wg8Gh0AcazJM68Sj3V754sasGllJgW
+B+VT4ZGnLi8pG1uXYHJ1DpzRHsAMCiTVqCySYCMlmtZEyKPAU5etab7tSFO/55j152eBM9oBVMCB
+lIwmJ+WS692xj/75u7opzSG6uMWkRStDU0tR7Rt+Jqm7gkEIydop3HdCV4B0eXwsPwIBVu1SZCa/
+SgBOKjFN2tFvEYGm+prrc6PdaMz23lfc0DOJMtoDkjgAtjUbQcxnTz6ei/bW0G55kKFdn9iep1HS
+kp8Da7qalRLTzuG+dekNwLsjYH+OPxlKXGpDaSVabXRhVuM9xz2q9dfdDRcWsOrpBshR/+u326L+
+AXCb8sd9/X575Q6bJk7bteh1VRXxg7ovA+rZ52rIh5UrX/ILFvUNoL+UeAQkunvyDqBsiucvYZBE
+2X5Nwo/vnvq9FkP1ErSabBaZ0BBymd5N4h4DusbrIXDzo0H3o2JYY72veFJTYGeB5mp+8a0AG3PN
+NfvRjM7H1a/yzzJ69Qpk0HsmO1yiJ4pCGwOMUX454/Dh8Thi/P+dPUFj957v60tQ/wPathsg6WNF
+mAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/03307f228209df915ec93658c635c0e847180a860/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>qcircuit_output_neq may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

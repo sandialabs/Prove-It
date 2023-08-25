@@ -1,0 +1,1 @@
+\left\{\forall_{A~|~\left[A\right] \in \mathcal{L}\left(\mathcal{H}, X\right)}~\left[\forall_{\lvert \psi \rangle \in \mathcal{H}}~\left(\left(A \thinspace \lvert \psi \rangle\right) \in X\right)\right] \textrm{ if } \mathcal{H} \underset{{\scriptscriptstyle c}}{\in} \textrm{HilbertSpaces} ,  X \underset{{\scriptscriptstyle c}}{\in} \textrm{HilbertSpaces}\right..

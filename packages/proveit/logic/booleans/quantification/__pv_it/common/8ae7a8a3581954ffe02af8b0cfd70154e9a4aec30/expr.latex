@@ -1,0 +1,1 @@
+\left(\left(x_{1}, x_{2}, \ldots, x_{m}\right) \mapsto \left\{\forall_{y_{1}, y_{2}, \ldots, y_{n}~|~R\left(x_{1}, x_{2}, \ldots, x_{m},y_{1}, y_{2}, \ldots, y_{n}\right)}~P\left(x_{1}, x_{2}, \ldots, x_{m},y_{1}, y_{2}, \ldots, y_{n}\right) \textrm{ if } Q\left(x_{1}, x_{2}, \ldots, x_{m}\right)\right..\right)

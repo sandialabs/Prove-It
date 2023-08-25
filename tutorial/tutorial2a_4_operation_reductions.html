@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Chapter 2.a.iv.  Operation reductions</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../index.html"><img src="../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Chapter-2.a.iv.--Operation-reductions">Chapter 2.a.iv.  Operation reductions<a class="anchor-link" href="#Chapter-2.a.iv.--Operation-reductions">&#182;</a></h1><p><strong>Operation</strong> is the base class for most of the <strong>Expression</strong> classes defined in the <strong>Prove-It</strong> theory systems.  An <strong>Operation</strong> represents <em>operator(s)</em> acting upon <em>operand(s)</em>.  $1 + 5 - 1$, $1 &lt; k \leq l$, and $x_1 \cdot \ldots \cdot x_n$ are a few examples of expressions that can be represented by classes derived from <strong>Operation</strong>.</p>
+<p>There are essentially two kinds of reduction rules specific to <strong>Operation</strong> expressions when the operation itself is to be replaced, rather than just its operator and/or operand(s):</p>
+<ol>
+<li><em>Explicit operation replacement</em> is performed by replacing an operator with a <strong>Lambda</strong> expression.  In that case, the operation is replaced by the result of applying thislambda mapping to the operands (an internal beta reduction).  For example, $P(x, y)$ with $P:[(a, b) \mapsto a+b]$ becomes $x + y$.</li>
+<li><em>Implicit operation replacement</em> is performed by replacing an operator with a designated <strong>Literal</strong> operator of an <strong>Operation</strong> class.  In that case, the operation is replaced by one of that derived class rather than the <strong>Operation</strong> class. For example, $P(x, y)$ with $P:+$ becomes $x + y$ with the correct <code>Add</code> type rather than a generic <strong>Operation</strong> type.</li>
+</ol>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="o">%</span><span class="k">begin</span> operation_reductions
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Creating-operation-expressions">Creating operation expressions<a class="anchor-link" href="#Creating-operation-expressions">&#182;</a></h2><p>Operation expressions come in various forms.  In any of its forms an <strong>Operation</strong> has two sub-expressions representing its <em>operator(s)</em> and <em>operand(s)</em> respectively.  Each of these may either be an <strong>ExprTuple</strong> or it represents a singular operator/operand.  There are two main types of formatting for an <strong>Operation</strong>, though any formatting rules may be defined by a class that derives from <strong>Operation</strong>.  These are <em>infix</em> and <em>function</em> formatting.</p>
+<p>The default formatting of an <strong>Operation</strong> class is <em>infix</em> notation. However, we cannot create an object of type <strong>Operation</strong>:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">Operation</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Add</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">add_abc_opclass</span> <span class="o">=</span> <span class="n">Operation</span><span class="p">(</span><span class="n">Add</span><span class="o">.</span><span class="n">_operator_</span><span class="p">,</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">),</span> <span class="n">styles</span><span class="o">=</span><span class="p">{})</span>
+    <span class="k">assert</span> <span class="kc">False</span>
+<span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Expected error: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="o">%</span><span class="k">str</span>(e))
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Expected error: Do not create an object of type Operation; use a derived class (e.g., Function) instead.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We must use a class derived from <strong>Operation</strong>:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">MyOp</span><span class="p">(</span><span class="n">Operation</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">operands</span><span class="p">,</span> <span class="n">styles</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">Operation</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Add</span><span class="o">.</span><span class="n">_operator_</span><span class="p">,</span> <span class="n">operands</span><span class="p">,</span> <span class="n">styles</span><span class="o">=</span><span class="n">styles</span><span class="p">)</span>
+    
+<span class="n">add_abc_opclass</span> <span class="o">=</span> <span class="n">MyOp</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;To do this properly and be able to display the expression, the class needs to be &quot;</span>
+      <span class="s2">&quot;defined in its own module.&quot;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>To do this properly and be able to display the expression, the class needs to be defined in its own module.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Note, however, that this is not the proper way to create an expression representing $a+b+c$ because it is not of type <code>Add</code>, we just borrowed the <strong>Literal</strong> operator for the <code>Add</code> operation called <code>Add._operator_</code>.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">add_abc_opclass</span><span class="o">.</span><span class="vm">__class__</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+
+<div class="output_text output_subarea ">
+<pre>__main__.MyOp</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Instead, we should use the <code>Add</code> constructor.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">add_abc</span> <span class="o">=</span> <span class="n">Add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="add_abc">add_abc:</strong> <a class="ProveItLink" href="__pv_it/operation_reductions/de496ee2475985ca405037c773e5c371b35485f30/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAAAQBAMAAABzZ+XyAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAIquJdkTvuxBmmd1U
+zTKBpmoTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA7ElEQVQoz2NgwAAcZRsYiAO8CwgoiITS/Aeg
+DNYJ2BUegdLxDVAGjwN+hdYMWBUyKjs6oCq85KKDppDZZR4DQ5gA+w8UhRx/G/oFUBQy7mFYzsCR
+ycC1AUUhzw8GNgcUhdwGDCkMXB9ANAPD6t2703bv3gRkcV1g4AeKcO3evS17924FoMh6kO/YChj6
+A1BMBOqLP4BiYjqI6HdgmI/qa2Awrm9AVsjxBazwAIMujwCKwgdAd6OY+BMY9gzsDjy7uFBMZJrA
+vgBV4XIGBjsGDhU7IT/U4FFeiRbgzJZTGrDFDAMDgSiMRBdAThQA98A6GLhRfscAAAAASUVORK5C
+YII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">add_abc</span><span class="o">.</span><span class="vm">__class__</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+
+<div class="output_text output_subarea ">
+<pre>proveit.numbers.addition.add.Add</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>When you want <em>function</em> formatting, it is best to use the <code>Function</code> class that is derived from <code>Operation</code>:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">Function</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span>
+<span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="__pv_it/operation_reductions/150826301a1142eace30344ace67d559abc49f500/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACkAAAAVBAMAAAAp9toTAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAmYkQqzLvVES73WZ2
+Is1wFLxSAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA/0lEQVQY02NggANeKH2BARkch9I9EIpRyQBI
+sitARXk2gCmVsAIgaQfX9BhMpneC1ErDRTeCCI7PYHYCXJQNpIhpAYjJ/gAuygc0mNttiQDISqBl
+zGecg9SByhyAfP4DMAWMDEcOSAHVgbTdDwCJcgHdsZdhv4E30DCQFfUQKxoYGAIY5EBM1g9AQgsu
+ysCQA3YUSO0UBpgJDBx/GYyBJiyAyTNwHmBgnsGSwAB0CvcEYFD9AIsCncP+1TCBowDiSPYPYFHW
+BQzMMgcKt4MMA1rB6ADx0VK4324xMJTwFSCFCRgAw2klLAQ5YXHAC7RsjyyUwzwBXRoM7kDpswwM
+AGRaMXIQBtPcAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="__pv_it/operation_reductions/87065bb714d258da6970b903b4ab7170e3ae577a0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFEAAAAVBAMAAADMaB9/AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAmYkQqzLvVES73WZ2
+Is1wFLxSAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABlklEQVQoz31TPUjDQBT+kmub9Mfq4CD+1KKC
+UEQidq4BQRCX4KBrti4OFUVHXQWhpTg4OBTUQac4uVQaRXBRKLipYMHFsSAFF8F3d0n8geYN777L
+++7d+969AIH1oLs1/+zuQpj7clHGDPJaNoSZcsQysVIiX0CYvQlf3OM5h0KZF9zpHwLbocwYT6bW
+ONRaocw0FZpcOOnjskgQu59fnhQBdu0gLznRc+uZ0pkEe13/kIJbd1CEVc1GQzILN1ViJfmVrxb/
+kCD9V2gYSyK8qtSwKJmPUKlGjcvYkSXvAhYyXllGzMWah9k4r6FNLhcwEURRNqIdD76IBvGcB/Bv
+h/6FWRnOIOW1TXfAb68FeeIu2GHERhYM4njclGgb4IoqNEKfUq0JrTNj6yXMcZn9KDsCRatHOUs2
+UWvLttXAht31S6rjmLb5qdGmQCq23nlxJEMxZT2nwXtsCD8dIG5PwGa69GsGhNFFaosVJfKM5ufM
+n7a4P9eM3izhRrISef8DCaqP+ISKP7V8XuoDHvqX5qfDXewB+AYx01Cr5wkekAAAAABJRU5ErkJg
+gg==
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Operation-replacement">Operation replacement<a class="anchor-link" href="#Operation-replacement">&#182;</a></h2><p>We will demonstrate the two types of <em>operation replacement</em> in the following examples: explicit and implicit.</p>
+<h3 id="Explicit-operation-replacement">Explicit operation replacement<a class="anchor-link" href="#Explicit-operation-replacement">&#182;</a></h3><p>To start our demonstration, let us define a <strong>Lambda</strong> expression which maps a variable $f$ to an expression in which $f$ is used as an operator.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">Function</span><span class="p">,</span> <span class="n">Lambda</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Equals</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span>
+<span class="n">ab_substitution</span> <span class="o">=</span> <span class="n">Lambda</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">a</span><span class="p">),</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">b</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="ab_substitution">ab_substitution:</strong> <a class="ProveItLink" href="__pv_it/operation_reductions/38194b4311aac6fc27db8b0b959157f9b7832b770/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKkAAAAVCAMAAAAKAz4TAAAANlBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABHL6OuAAAAEXRSTlMAmYkQqzLv
+VES73WZ2Is3z6e3ESjgAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAIhSURBVEjHpZfblqsgDIY5yUlw
+b97/ZacCkUTjiB1u0vWv5jPmVCrE25On9Cy+PJn5/B0suSndJ/F3PEAITCqlZ0hO8T5Yb49cZ4O7
+YHSwkUIQTJnFugmq3gTrg/V+Nj0XKIfZ5AkyYNb5MEOWKFPYR14zuMq5SDlMcSfIAfPlLsxEu9mi
+JsI+lgthKqkcBmkAAasirjDpS5IZh4sfeX2Uf6pTOQzSANLsamw0I6JISJE2/1Fb4nPo2aiUEzTg
+c5w8ZjMpGUcgYEu6i024cJMm7AO6t59mCb1260i0jOjQF2AwunwGSJeMId3mstxGKhIatTj2A/Hp
+urZrDau/o51Z9AzG1Ve1CUO6dQU7//sfySnFH/3tR66xT9dl1WKv4VJm9jOHqfkrCkO6JQN1zqnf
+vGAiJT5dt6HWzkMrvBwowNRX9W1TAaTbYO4jXfAGR9UnPk3XtedWyJKLE33KYNo2la3bAdKtTfeR
+bnihhvFF4tN0XR9hNuHaMISZvX/FiL11W8sPSLN5NGJN9P0+HYuH+nR9f5KLUsjTSvttoBiM+QQZ
+JF1czbpfWl8tpBUiOwmga5PUkk1qPtG/HKiBUcevM0CalUbMngiBn3zick1XnLlHPGAAsltnxOam
+I203hasPcx2Rjz+mExiA7DYGvb246YZ9WBifcL6X5+d5esYApNo1yTeXf33jo8NT6EyBHjEACd/8
+P8lpSk9f/pEiGIBU+wP50hOHdxbtKAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Now we just need to define a <strong>Lambda</strong> expression for replacing $f$.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Add</span><span class="p">,</span> <span class="n">Mult</span>
+<span class="n">add_y_then_mult_z</span> <span class="o">=</span> <span class="n">Lambda</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Mult</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">z</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="add_y_then_mult_z">add_y_then_mult_z:</strong> <a class="ProveItLink" href="__pv_it/operation_reductions/0f14676b91366f9c4e5a71a58308444ede0c615f0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJQAAAAVCAMAAACXDjebAAAANlBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABHL6OuAAAAEXRSTlMAEHarMolU
+md1mIs3vRLvz6fgHHdMAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAHUSURBVEjHpVbXtuMgDESiY+Au
+//+za9yF5UKsh8whGYVRQSBEt4UGf3D9wmANDcUeS/idwZnRFDsj8t8ZZ4OBYq8N8J1xMuspsiW4
++c3bpx2eGQKbzosNshW+64v4mAiWQb4zVLcZKPaLGh57ZmIAogSl9XqaHKHQldUUW19OFOBUa5DT
+SktOiHJOieB3xpgLlCisY2WYzMW5YuvLidLC1GL7MrfMwB4f1HmVWxk+VAcQ0rOiBOZDPZ0hePJl
+RCkza5ZzdIbrxlC30Ms+laFqwEf5f/8csVLS3oSJYOtrJ4cYJ5Bbi8aqMs5SVdnSU467wqppY0S8
+7CKRhiSuRJ182UZPYy7HrdS82DPlDoco7D4LI5WxDACsKEWGWVO+ky8rasolLmKMuxxtsDEgJyHj
+1I+sqIEMqoxHPPuyorJcP2obZm6ITDHuDFMU2PGP0x77zZxaT8iMZ18+U7Im1NNhQqqRdUbt1MYA
+izhu7S/ufK2aeXLEC99WFEiNtiwZd4nZpB65rXU5xr2t4TjVN9H1ctKCe3xRuV5N23V5d202F3LV
+A9E8X+RvGWfLgeKL5I6Jk0snhfyYqNyvaTxxFF88Cz3aJN6Gkn96EK9jLvzwcMXwivEfC3INg+oT
+wYsAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ab_substitution</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">add_y_then_mult_z</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="__pv_it/operation_reductions/120df71a70177dc40c9fa07bbea2c1eff50063d60/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOgAAAAVBAMAAAC+i7+MAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAC+UlEQVRIx4VWQWgTQRR92812m6QJoSCIKGyx
+ED0oC0oxXgyCFaSVRaRQaEkQigUvHqSUihg8tBfBoFSkXoIKxYgheLKnpqXgqVBKEA8eCt6K0EqN
+eCr+2ZlNMrMT8+HNsm/nv/kz8//MAkiBQ2uprgSZIYAO38JEj8uht09dCbLTAjqLOzriooDeegrd
+CMDM+phc1iqc0RBWnqOTTXclMC5wVyvQ64UJmyK3pejj0tuiKhIiMCdwqBXou690JyJKj6i8WtIu
+RNVAQwSKHPGGVgBLav8lDFM7/J9Be9U9DBFmniNS0g86ow46gwfUMhj1QUfysdIFTJHUdrNzsrx7
+XCK42VmO3p1zrjTorTlY1Hms1XWvYhQYMSNiWU31N6RBI2YRz2gHWkk2PrS5HRDzZWYfg6kz5Kat
+X9Kg2Qz6DoCFpoB1Z5RFsIC31BKsV7BL0qA/6P07vRWbPscQ8SSCW8zluOLhebtA0p1HogZkWueC
+h2tgxGtqCfYBYlm2VuXy++VymWbkRR0mkjxgIf7hkTIXn5Ayq8oxC/xuF7DInTSwzzrl+ILdZlm4
+HwwarSFXlfNgzUseUU76E1vxmQG/IIodBn2H+KEkQOm8v0sb5y+HXziG/2U1WN6cwzZQ8plFD+mb
+pfYC9gKibU+D5T2E3ZAE7DzO0uNyK77PNH1GbFBLyLn4aqYkny30s7ypNV0uADLBrd/hOMJEQRIg
+9y16PG0Vl4uET7B0GmNe5ootz/QR1gq8GETFbG7c2G0nhLEaYviGL7KAvR3/KwqS28/RoYpP7LHy
+oV3fuXnqvOwzdfUxTT1WbYojcw/tRBBMiWPqekEWsOppVkMfmj2z5suqT8QoeAbdiTRCOKGeJyEC
+FYGwQIRy1iipF2rJP4/lM1mc15G89UKc5KHjPXwFLGpujBFMuOptAk6sg0O1mJOg3TPUtAkRlA8p
+DtXeoE7tSZVmxKRA6Gp+8hAaMY26VeNQ7VK6qpvQuihYw+l0hw92JcShMdDp1yMVJv4Bs1G37d1y
++FUAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Note that the $f(a)$ and $f(b)$ operations themselves were replaced according to the <code>add_y_then_mult_z</code> lambda mapping applied to $a$ and $b$ respectively.  Let's show an example with multiple operands.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ab_commutation</span> <span class="o">=</span> <span class="n">Lambda</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">[</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">]),</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">])))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="ab_commutation">ab_commutation:</strong> <a class="ProveItLink" href="__pv_it/operation_reductions/ae529ed04f4f49e0e804b9fa05103b62869110950/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANAAAAAVCAMAAAAAX5BBAAAANlBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABHL6OuAAAAEXRSTlMAmYkQqzLv
+VES73WZ2Is3z6e3ESjgAAAAJcEhZcwAADsQAAA7EAZUrDhsAAAKISURBVFjDrZfbuqUgCIA95Slr
+j+//slMeEpLMZo83rI8VP0KAxtjntX3Uz/7/z4bb7xwE801/LRv+r8MOjBxwIeQU3gjaCOrRkk77
+srN1NoYO3CBkyGvnQKhFmxlXcmekEdTf187rj7mckeALQnqQdwfaWDfljYMsQyM+yH6sm1v5XEAU
+OI7yXcGXAxsfowm41TQoXWikByXentNTSaPAgx1CcJUCFSgyNSirBlacp/VdAbXn9qkuosDCD00q
+OMtVaa/AvrGtx916vWVkdOk3JcKGx9muQlCmNMd7ODQYQBjhqoKrjOExBGYckYm7UdVbfVSoQ+Uh
+49GqMqbKXduL5B4sHCcBhhBGuKrgIre4PAfEAhgXviUJGRW91GvaK0pI8qnTJo2eOUcJMIQwwlUF
+F2kiIv788WjFaK/ms2CjsCmzniedR0cST0mLSbfEmZOOAgMII1xVcJFi0DXHu90tIwJCRkWvXSoP
+i2giDSmTy+TjTKhgCGGEqwou0qlBQAs8DkHJIaOsl6n619ifQjzXuvETPUSAEYQRriq4SB0GAe2w
+E117EhllvUx+1c7M1ob/2RG54I8NuJljtQcDiKwBAVcNnOWGa4TZ53OozV1sVPSne+M542ku5b/U
+sQ3H71N/NBMI8AW5sMAVAGdpRq0q0ABcPNm6VS9VEMumwmnjvSw6cd2LvP04Exq4Qhq2uWrgLPnE
+cXeVY43vZuSXfmfdZWXzM7fFF7Ah7kAVfEqj2G7mA8rXv96IuHeK4c324fW8g8XgynxK70Y3/365
+swkJI3f/XpTd99z2PhLewZL4TKzgJNfAP326ygcjed9toHPxUgCv4PCU5DkH1BQK3/RPHyK/dtiB
+k/wLAGsX7Nzg1m0AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">add_then_mult_z</span> <span class="o">=</span> <span class="n">Lambda</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">Mult</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">z</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="add_then_mult_z">add_then_mult_z:</strong> <a class="ProveItLink" href="__pv_it/operation_reductions/09ae201a6c31c6a1e125495098d3c0ca7d3702cb0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALcAAAAVCAMAAAAzZI9IAAAANlBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABHL6OuAAAAEXRSTlMAInZUiRDN
+mWbv3US7qzLz6SJmQj4AAAAJcEhZcwAADsQAAA7EAZUrDhsAAAJESURBVEjHpVdZloQgDEQW2Znx
+/pcdttiAYIc3fnSedlEVCsJCSHwO8v3BYB7grUbYJjeCMgSfpXhtIEQRb+sAgnFcMgorDYRI4m2d
+ghAnkvAUOBwQoom3dTJCYn1UEocDwldiq/6hkxEabYSeG0GHUtJDnM8luq3TIxh+NM/bo46Y9f4A
+4TvxW96nQmQioXgEpV4Ezts1QNA82MLnN+7hu+lY+jcghDjjHfNe6bRPMCaQQwHi7lx0jXpKZJsF
+JyyNtrrKtDrnmTI3cwvijHfMe6XTVTvlDnoUEab6oI7UThDfDFJgRc6XxJie502oayYOENY44x3z
+Xuq0u02S4FUnIrStbZM1Q0cjSid+XUTCBX/8/JruuS77qRnbxQevzC20zsG/64irbSkg7YTQtinT
+R7HY6FREhfKy8tueLUmf95x3rMuFDjFNzR+fJhFhWNM4jqno1orsFK08zMzzDt1OMcyTOe+Y90Ln
+seKLG+EKgXCWeJ1LpF3nnIefNFXdPO+zW8ArYY097zLvhU7bINvwQdQSZVcQMvJb1k0r6ZNdql/Z
+4qeX9RtqvsSO98XvuU4zpo47yk24EaF4JySlMQNV6I2pjgvPqbyqn8ZONwEehnW2jT3vMu+vOjwt
+IncZJYQJs1FpZiOv5h8Gt60C4ZT4Zb/E62TE9BjDP1RCM8Q5aXIuej0f9eeqTZ2CcM8rhqhumBh9
+7cPhsOcYIHTo686eTkWIJxAGkSkqLdnNAggFuqd7OoA4MFcwunFXBMJj426H18mIPz3UEfc702xL
+AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ab_commutation</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">add_then_mult_z</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="__pv_it/operation_reductions/1e1100cbe5be89c2e786ec6b0b6d822cb2e350760/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOYAAAAVBAMAAACgQo8/AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAC5ElEQVRIx4VVTUhUURT+xufzzZ/6GAgiEp7l
+ok0xUQi6aQgiEI1ZhBAoMwTSQASziBA3zko3QRYYYS0eJEgjibTKlaMI0SoxiZa2lSBrmjZBdO7P
+/NyfYT747uN97557zj33nvMA+BC0we8oECKSaPPNFLrSgla86ygQzkvakAhswlVJHe7HkIIpaaoh
+AE6Gc2rF6vSCRXDzgiZ6ijTM6KohYFLyntVnT9YUPArcU4JPyLd+lvBFfQ1DwKxkVbMXiBa16STE
+6BFTcyWPYJtFGNPDNAQsCSZqmr3Esj5/GcM0Dlt9jvFM6OdnCE5esDu0+yzoPgt4SCNj5HAwUG0e
+nPtMK+035vaVj04rgoCXEew5uJhWfQ5cT9E40Zx6vBEpMaEgQ9nykzXFp/snm/MRbV6vyaE98ieE
+uTLD2/rGGXMz7k/FZ+IpPtFBLDQr4e44C2ABr2kkui/ghYpPp4ZYAGepYXIK3bREiyAQTwtey+KZ
+4vNOCXP0GGm2gyxucOEljUTvBPEMy1S5/GalXKYNeXn0Z9B3wrcs4mQWXFAu1abgI+B3qz3mgVV6
+/GCTciJdt7NckD5jFeQ2lX1SCNtpJPi21riS4hlbauNzFYmqss9XcP+yQ+OL8YqJ8C9b9dzmAjxR
+7x2V53wWTthatyy3oXae9dxW4dWU+/ALUZaT0WZ47+FyYZdGYi6NL46v+DyiM0a00rC4AuwrgkAy
+EPzHDrDVZxW9+cvA42ZVpdELJkyI65wMnDVP2WdvKVkUVSBLZW937KhVkGDFw/gVH9Ra28VosSgK
+UeD7+NAGr8xjVjcU1cGtgUtqrRyyhhbfbKyNkfuKUI8lFJy+WVJ9Tg99O6Ag1xszM85zZryOOMmM
+Zh/iOKN3EUPAhqTVHpFQ/4GGvAerfVjp0bO2jm52/cV29tr/Qwo7ELT/5iudBLoKvqAdZ23ClKQV
+xlqWxd2KoB07NoEVaiRoYzHYUZC9ItVmgS7fFP4DqWyzTbGxA2oAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Implicit-operation-replacement">Implicit operation replacement<a class="anchor-link" href="#Implicit-operation-replacement">&#182;</a></h3><p>It is typical to derive classes from <strong>Operation</strong> that have a single corresponding <em>operator</em> that is a <strong>Literal</strong>.  This operator should be defined as the <code>_operator_</code> attribute of the derived class.  This indicates to <strong>Prove-It</strong> that this specific operator is tied to that specific class.  This knowlege is used in <em>implicit operation replacement</em>.  When an operator is replaced by <code>_operator_</code> of a particular <strong>Operation</strong> class, the <strong>Operation</strong> is reconstucted to by of that particular type.  For example.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">a_add_b_commutation</span> <span class="o">=</span> <span class="n">ab_commutation</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Add</span><span class="o">.</span><span class="n">_operator_</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="a_add_b_commutation">a_add_b_commutation:</strong> <a class="ProveItLink" href="__pv_it/operation_reductions/651fd8f441426417f50a46a34a5865e78725fb3a0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJMAAAAVBAMAAACwIsHjAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACEUlEQVQ4y3WUT0gbQRTGv2Qz2SQbm+CxVNgU
+D14saZGCXpReCoWWvQpKcpF6EXIoRby4p/YiGAuF+ucgKJRuKUhP9WTqRTwZoojH9OrF1KgXofTN
+JoG82ZmBmWXefO83b96+GQB56FtMZzSJQ3u8aFh13KjNKP4phzHdyswGDSNR+xjE8bbOIe4Doqzd
+5S31pKdapThZ0TrMAbbPDtWbtamnIk5SnOud8Rdb+gikmcHq5se5leNnFSXFB71Yn/ElD8+1qESY
+kHkVJcWvoEUlfbyT36EXgxyVbIzSOV6rKCleeHzKUbGzAnkl6uHOzhpOPIYqzYm/wIcwP0HY6t0w
+xZ1XyjPUfj5L6UiVsUOTaR9LPKpJD5+AcTUqElu3SLv9KPEFNqXDqmKTZsvAbmf/bxud/d8DN8CV
+iiKxXUZuClgKgvUg+CG9WsiQ4UErRG1B3POoduFQOexrUOR2UOyPKl1DaY+SVJUxi2ukWhzVhk3n
+n1BztROW1bLXjyq5WJWe2zgkVBsD5acM9U/mDytqVCTONSk5DFXEuZVHqhb+8ENMVCoMdYGj7r9n
+jcQDfrbCUFnX+mpT8FO4pNns8J9Gk6FmX8ob9F1FkVicLfISFY03Q08oh3vINHXV3qm9yBvAxLza
+H6p31vGVy8sbE/PrLGP9DVN7FDUZxbGafOWMKI2fUZyVlynmGlbjmnfcKC4A/wEuZnpcs4HOzQAA
+AABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Is created using the proper <code>Add</code> class for constructing the left and right sides of the equation.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">a_add_b_commutation</span><span class="o">.</span><span class="n">lhs</span><span class="o">.</span><span class="vm">__class__</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+
+<div class="output_text output_subarea ">
+<pre>proveit.numbers.addition.add.Add</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">a_add_b_commutation</span><span class="o">.</span><span class="n">rhs</span><span class="o">.</span><span class="vm">__class__</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+
+<div class="output_text output_subarea ">
+<pre>proveit.numbers.addition.add.Add</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We can do the same using <code>Mult._operator_</code>:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">a_mult_b_commutation</span> <span class="o">=</span> <span class="n">ab_commutation</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">Mult</span><span class="o">.</span><span class="n">_operator_</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="a_mult_b_commutation">a_mult_b_commutation:</strong> <a class="ProveItLink" href="__pv_it/operation_reductions/68b1447e12dd0ba32326138d8ff57429bc0081fa0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAH4AAAAVBAMAAAByPkciAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAB7ElEQVQ4y3VUTShEURT+xvO8eTPDTLMU9fws
+bGiUFBsvG6XorZSimY3YqFlIsjErNspQSlhMUVNEk52VYSMrGpLl2Nr4GWyUnDPmPdx73br39b73
+fed85557H4AIpKGA4PsHqorJH44U+hYZClq0dP3F9IsMxUxJXM3G2KYIthE/IWA1SVomJP0IzUkR
+rHFgiKnCXM+SpJ+jWRJBfxKmiJ04tJiOCKep3Dcp6jq6RWiwbEx0pVGZ1RlJP4UZ7sNNk+VB083X
+RL0SiIZNQQvtP71q7I/SOkQRgONIyLOmvzvxCPzlXZ3f43HgGopP6M9e61ZxSTUuYockGzA8a9ob
+TAtaWsgfoMx9Dtbc99EU5unRgy3y9oSAXU7NRhMI26h7EvRmDpgFXissLAC79HhkvZlHPMdglhPZ
+OIkhmFbodxEsVVjYhv7BlbP/uIWV3+1fcKBlhPrZfwmGu036C/xssRdnpI/hVnOvTLhI2wF/Xsgf
+ogZ9ctUVfQm1iU5gmTpA37Ss4RJrU6Hkd7v+DG7oHc699zP0Jok3gwcKVhhu7PD6d8MnNZAT9HVU
+0PjAz6kab70vFIF9BIqKu4p6CTlU0XwZvgKKMSchSyoaX75TVdy8BIVU/6QGmmMKXEHW8woe5/ZZ
+Mt6k4EZlqCqCL+1TbLRBZEDIAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">a_mult_b_commutation</span><span class="o">.</span><span class="n">lhs</span><span class="o">.</span><span class="vm">__class__</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+
+<div class="output_text output_subarea ">
+<pre>proveit.numbers.multiplication.mult.Mult</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> operation_reductions
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Next-chapter:-ToDo">Next chapter: <a href="tutorial04_relabeling.ipynb">ToDo</a><a class="anchor-link" href="#Next-chapter:-ToDo">&#182;</a></h1><h2 id="Table-of-Contents"><a href="tutorial00_introduction.ipynb#contents">Table of Contents</a><a class="anchor-link" href="#Table-of-Contents">&#182;</a></h2>
+</div>
+</div>
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

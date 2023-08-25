@@ -1,0 +1,1 @@
+a \mapsto \left\{\forall_{x, y \in H}~\left(\left \langle x, a \cdot y\right \rangle = \left(a \cdot \left \langle x, y\right \rangle\right)\right) \textrm{ if } a \in K\right..

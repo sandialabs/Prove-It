@@ -1,0 +1,5 @@
+k \mapsto \left\{\forall_{A, B, S~|~A \neq B}~\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{A~\mbox{part}~k~\mbox{on}~S} & \qw 
+} \end{array} \neq \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{B~\mbox{part}~k~\mbox{on}~S} & \qw 
+} \end{array}\right) \textrm{ if } k \in \mathbb{N}^+\right..

@@ -1,0 +1,1 @@
+n \mapsto \left\{\forall_{x \in \mathbb{C}}~\left(\left(x \cdot  x \cdot  ..\left(n - 3\right) \times.. \cdot  x\right) = x^{n}\right) \textrm{ if } n \in \mathbb{N}^+\right..

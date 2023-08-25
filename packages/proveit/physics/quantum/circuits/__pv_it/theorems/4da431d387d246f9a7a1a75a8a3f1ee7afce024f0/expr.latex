@@ -1,0 +1,5 @@
+\forall_{\lvert \psi \rangle}~\left[\forall_{k \in \mathbb{N}^+}~\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert \psi \rangle~\mbox{part}~1~\mbox{on}~\{k~\ldotp \ldotp~k\}} & \qw 
+} \end{array} = \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert \psi \rangle} & \qw 
+} \end{array}\right)\right]

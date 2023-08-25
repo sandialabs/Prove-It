@@ -1,0 +1,2 @@
+\left\{\forall_{n \in \mathbb{N}^+}~\left[\begin{array}{l}\forall_{x_{1}, x_{2}, \ldots, x_{n} \in V}~\\
+\left(\left(\left\{x_{1}, x_{2}, \ldots, x_{n}\right\} \in \textrm{SpanningSets}\left(V\right)\right) = \left(V = \textrm{Span}\left(\left\{x_{1}, x_{2}, \ldots, x_{n}\right\}\right)\right)\right)\end{array}\right] \textrm{ if } V \underset{{\scriptscriptstyle c}}{\in} \textrm{VecSpaces}\left(K\right)\right..

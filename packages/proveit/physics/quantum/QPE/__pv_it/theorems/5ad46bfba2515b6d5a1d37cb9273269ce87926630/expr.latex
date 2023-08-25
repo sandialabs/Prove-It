@@ -1,0 +1,1 @@
+\left\{\left[P_{\rm fail}\right]\left(e\right) = \left(\left(\sum_{l = -2^{t - 1} + 1}^{-\left(e + 1\right)} \left|\alpha_{b_{\textit{f}} \oplus l}\right|^{2}\right) + \left(\sum_{l = e + 1}^{2^{t - 1}} \left|\alpha_{b_{\textit{f}} \oplus l}\right|^{2}\right)\right) \textrm{ if } e \in \{1~\ldotp \ldotp~2^{t - 1} - 2\}\right..

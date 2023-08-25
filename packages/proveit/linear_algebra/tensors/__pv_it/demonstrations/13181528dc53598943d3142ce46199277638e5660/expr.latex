@@ -1,0 +1,1 @@
+\left(\left(\sum_{i=2}^{4} \left(i \cdot y\right)\right) \in \mathbb{R}^{3}, \begin{array}{c} \begin{array}{l} \left(\gamma \cdot \left(\sum_{i=2}^{4} \left(i \cdot y\right)\right)\right) \\  = \left(\sum_{i=2}^{4} \left(\left(\gamma \cdot i\right) \cdot y\right)\right) \end{array} \end{array}\right)

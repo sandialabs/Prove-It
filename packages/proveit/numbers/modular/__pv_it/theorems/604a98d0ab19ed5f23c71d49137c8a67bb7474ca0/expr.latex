@@ -1,0 +1,1 @@
+\left(a, b\right) \mapsto \left\{|\left\{x ~\textup{mod}~ N\right\}_{x \in \{a~\ldotp \ldotp~b\}}| = N \textrm{ if } a \in \mathbb{Z} ,  b \in \mathbb{Z} ,  |\{a~\ldotp \ldotp~b\}| \geq N\right..

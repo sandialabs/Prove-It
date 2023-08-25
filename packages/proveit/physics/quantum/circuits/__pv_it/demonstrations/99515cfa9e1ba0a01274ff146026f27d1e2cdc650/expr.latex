@@ -1,0 +1,5 @@
+\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{Y} & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{H} & \qw 
+} \end{array}\right)

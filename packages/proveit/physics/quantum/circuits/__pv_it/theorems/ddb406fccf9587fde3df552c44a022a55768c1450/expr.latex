@@ -1,0 +1,22 @@
+p \mapsto \left\{\begin{array}{l}\forall_{A_{1, 1}, A_{1, 2}, \ldots, A_{1, m}, A_{2, 1}, A_{2, 2}, \ldots, A_{2, m}, \ldots\ldots, A_{k, 1}, A_{k, 2}, \ldots, A_{k, m}, R_{1, 1}, R_{1, 2}, \ldots, R_{1, m}, R_{2, 1}, R_{2, 2}, \ldots, R_{2, m}, \ldots\ldots, R_{k, 1}, R_{k, 2}, \ldots, R_{k, m}, B_{1, 1}, B_{1, 2}, \ldots, B_{1, n}, B_{2, 1}, B_{2, 2}, \ldots, B_{2, n}, \ldots\ldots, B_{k, 1}, B_{k, 2}, \ldots, B_{k, n}, S_{1, 1}, S_{1, 2}, \ldots, S_{1, n}, S_{2, 1}, S_{2, 2}, \ldots, S_{2, n}, \ldots\ldots, S_{k, 1}, S_{k, 2}, \ldots, S_{k, n}}~\\
+\left(\begin{array}{c} \begin{array}{l} \left(\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{1, 1}~\mbox{on}~R_{1, 1}} \qwx[1] & \gate{A_{2, 1}~\mbox{on}~R_{2, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{m, 1}~\mbox{on}~R_{m, 1}} \qwx[1] & \qw \\
+& \gate{A_{1, 2}~\mbox{on}~R_{1, 2}} \qwx[1] & \gate{A_{2, 2}~\mbox{on}~R_{2, 2}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{m, 2}~\mbox{on}~R_{m, 2}} \qwx[1] & \qw \\
+& \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\ddots} \qwx[1] & \gate{\vdots} \qwx[1] & \qw \\
+& \gate{A_{1, k}~\mbox{on}~R_{1, k}} & \gate{A_{2, k}~\mbox{on}~R_{2, k}} & \gate{\cdots} & \gate{A_{m, k}~\mbox{on}~R_{m, k}} & \qw
+} \end{array}\right) \cong \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \gate{B_{1, 1}~\mbox{on}~S_{1, 1}} \qwx[1] & \gate{B_{2, 1}~\mbox{on}~S_{2, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{B_{n, 1}~\mbox{on}~S_{n, 1}} \qwx[1] & \qw \\
+& \gate{B_{1, 2}~\mbox{on}~S_{1, 2}} \qwx[1] & \gate{B_{2, 2}~\mbox{on}~S_{2, 2}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{B_{n, 2}~\mbox{on}~S_{n, 2}} \qwx[1] & \qw \\
+& \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\ddots} \qwx[1] & \gate{\vdots} \qwx[1] & \qw \\
+& \gate{B_{1, k}~\mbox{on}~S_{1, k}} & \gate{B_{2, k}~\mbox{on}~S_{2, k}} & \gate{\cdots} & \gate{B_{n, k}~\mbox{on}~S_{n, k}} & \qw
+} \end{array}\right)\right) =  \\ \left(\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{p\left(1\right), 1}~\mbox{on}~p^{\leftarrow}\left(R_{p\left(1\right), 1}\right)} \qwx[1] & \gate{A_{p\left(2\right), 1}~\mbox{on}~p^{\leftarrow}\left(R_{p\left(2\right), 1}\right)} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{p\left(m\right), 1}~\mbox{on}~p^{\leftarrow}\left(R_{p\left(m\right), 1}\right)} \qwx[1] & \qw \\
+& \gate{A_{p\left(1\right), 2}~\mbox{on}~p^{\leftarrow}\left(R_{p\left(1\right), 2}\right)} \qwx[1] & \gate{A_{p\left(2\right), 2}~\mbox{on}~p^{\leftarrow}\left(R_{p\left(2\right), 2}\right)} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{p\left(m\right), 2}~\mbox{on}~p^{\leftarrow}\left(R_{p\left(m\right), 2}\right)} \qwx[1] & \qw \\
+& \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\ddots} \qwx[1] & \gate{\vdots} \qwx[1] & \qw \\
+& \gate{A_{p\left(1\right), k}~\mbox{on}~p^{\leftarrow}\left(R_{p\left(1\right), k}\right)} & \gate{A_{p\left(2\right), k}~\mbox{on}~p^{\leftarrow}\left(R_{p\left(2\right), k}\right)} & \gate{\cdots} & \gate{A_{p\left(m\right), k}~\mbox{on}~p^{\leftarrow}\left(R_{p\left(m\right), k}\right)} & \qw
+} \end{array}\right) \cong \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \gate{B_{p\left(1\right), 1}~\mbox{on}~p^{\leftarrow}\left(S_{p\left(1\right), 1}\right)} \qwx[1] & \gate{B_{p\left(2\right), 1}~\mbox{on}~p^{\leftarrow}\left(S_{p\left(2\right), 1}\right)} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{B_{p\left(n\right), 1}~\mbox{on}~p^{\leftarrow}\left(S_{p\left(n\right), 1}\right)} \qwx[1] & \qw \\
+& \gate{B_{p\left(1\right), 2}~\mbox{on}~p^{\leftarrow}\left(S_{p\left(1\right), 2}\right)} \qwx[1] & \gate{B_{p\left(2\right), 2}~\mbox{on}~p^{\leftarrow}\left(S_{p\left(2\right), 2}\right)} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{B_{p\left(n\right), 2}~\mbox{on}~p^{\leftarrow}\left(S_{p\left(n\right), 2}\right)} \qwx[1] & \qw \\
+& \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\ddots} \qwx[1] & \gate{\vdots} \qwx[1] & \qw \\
+& \gate{B_{p\left(1\right), k}~\mbox{on}~p^{\leftarrow}\left(S_{p\left(1\right), k}\right)} & \gate{B_{p\left(2\right), k}~\mbox{on}~p^{\leftarrow}\left(S_{p\left(2\right), k}\right)} & \gate{\cdots} & \gate{B_{p\left(n\right), k}~\mbox{on}~p^{\leftarrow}\left(S_{p\left(n\right), k}\right)} & \qw
+} \end{array}\right)\right) \end{array} \end{array}\right)\end{array} \textrm{ if } p \in \textrm{Perm}\left(\{1~\ldotp \ldotp~k\}\right)\right..

@@ -1,0 +1,12 @@
+\begin{array}{cccc} 
+ \multirow{4}{*}{$\begin{array}{c} \uparrow \\ U_{1} \\ \downarrow \end{array}$} & \multirow{4}{*}{$\begin{array}{c} \uparrow \\ \cdots \\ \downarrow \end{array}$} & \multirow{4}{*}{$\begin{array}{c} \uparrow \\ U_{i} \\ \downarrow \end{array}$} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert \psi \rangle~\mbox{part}~1~\mbox{on}~\{1~\ldotp \ldotp~m\}} 
+} \end{array} \\
+ &  &  & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert \psi \rangle~\mbox{part}~2~\mbox{on}~\{1~\ldotp \ldotp~m\}} 
+} \end{array} \\
+ &  &  & \vdots \\
+ &  &  & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert \psi \rangle~\mbox{part}~m~\mbox{on}~\{1~\ldotp \ldotp~m\}} 
+} \end{array} \\
+\end{array}

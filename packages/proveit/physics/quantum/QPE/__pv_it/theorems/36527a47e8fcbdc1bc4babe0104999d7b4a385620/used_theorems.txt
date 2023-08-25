@@ -1,0 +1,9 @@
+proveit.linear_algebra.inner_products.complex_set_is_hilbert_space
+proveit.linear_algebra.inner_products.complex_vec_set_is_hilbert_space
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.equality.sub_left_side_into
+proveit.physics.quantum.QPE._Psi_ket_is_normalized_vec
+proveit.physics.quantum.QPE._two_pow_t_is_nat_pos
+proveit.physics.quantum.algebra.num_bra_is_lin_map
+proveit.physics.quantum.algebra.qmult_op_is_linmap
+proveit.physics.quantum.algebra.qmult_op_ket_is_ket

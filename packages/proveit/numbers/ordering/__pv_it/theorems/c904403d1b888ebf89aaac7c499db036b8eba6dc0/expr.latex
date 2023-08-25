@@ -1,0 +1,1 @@
+\forall_{x, y \in \mathbb{R}~|~y \leq x}~\left({\rm Min}\left(x, y\right) = y\right)

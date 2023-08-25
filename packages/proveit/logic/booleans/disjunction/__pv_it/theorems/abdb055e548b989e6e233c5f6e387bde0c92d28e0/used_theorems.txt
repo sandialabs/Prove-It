@@ -1,0 +1,2 @@
+proveit.logic.booleans.disjunction.demorgans_law_and_to_or_bin_explicit
+proveit.logic.booleans.in_bool_if_true

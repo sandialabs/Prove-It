@@ -1,0 +1,7 @@
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{B_{p\left({_{-}b}\right), 1}~\mbox{on}~p^{\leftarrow}\left(S_{p\left({_{-}b}\right), 1}\right)} & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{B_{p\left({_{-}b}\right), 2}~\mbox{on}~p^{\leftarrow}\left(S_{p\left({_{-}b}\right), 2}\right)} & \qw 
+} \end{array}, \ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{B_{p\left({_{-}b}\right), k}~\mbox{on}~p^{\leftarrow}\left(S_{p\left({_{-}b}\right), k}\right)} & \qw 
+} \end{array}

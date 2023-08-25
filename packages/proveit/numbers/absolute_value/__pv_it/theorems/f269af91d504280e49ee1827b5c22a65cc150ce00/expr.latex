@@ -1,0 +1,1 @@
+\left(\left(x, y\right) \mapsto \left\{\left(\left|x\right| \leq y\right) \Leftrightarrow \left(\left(\left(-y\right) \leq x\right) \land \left(x \leq y\right)\right) \textrm{ if } x \in \mathbb{R} ,  y \in \mathbb{R} ,  y \geq 0\right..\right)

@@ -1,0 +1,1 @@
+\forall_{b_{1}, b_{2}, \ldots, b_{j}~|~Q\left(b_{1}, b_{2}, \ldots, b_{j}\right)}~\left(\left(a_{1} {\otimes}  a_{2} {\otimes}  \ldots {\otimes}  a_{i} {\otimes} f\left(b_{1}, b_{2}, \ldots, b_{j}\right){\otimes} c_{1} {\otimes}  c_{2} {\otimes}  \ldots {\otimes}  c_{k}\right) \in V\right)

@@ -1,0 +1,1 @@
+N \mapsto \left\{\forall_{a, b, c \in \mathbb{Z}~|~|\{a~\ldotp \ldotp~b\}| \geq N}~\left(|\left\{\left(c + x\right) ~\textup{mod}~ N\right\}_{x \in \{a~\ldotp \ldotp~b\}}| = N\right) \textrm{ if } N \in \mathbb{N}^+\right..

@@ -1,0 +1,1 @@
+\left(P \mapsto \left(\left(\left(P\left(\top\right) = \bot\right) \land \left(P\left(\bot\right) = \top\right)\right) \Rightarrow \left(\left[\forall_{A \in \mathbb{B}}~P\left(A\right)\right] = \bot\right)\right)\right)

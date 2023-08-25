@@ -1,0 +1,3 @@
+\textrm{Pr}\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{\lvert \psi_{t} \rangle} & \gate{{\mathrm {FT}}^{\dag}_{t}} & \qout{{\mathrm {FT}}^{\dag}_{t} \thinspace \lvert \psi_{t} \rangle}
+} \end{array}\right)

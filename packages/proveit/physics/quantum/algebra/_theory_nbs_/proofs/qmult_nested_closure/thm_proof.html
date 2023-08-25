@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.physics.quantum.algebra.qmult_nested_closure theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.physics.quantum.algebra.qmult_nested_closure-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">physics</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">quantum</a>.<a class="ProveItLink" href="../../theory.html">algebra</a>.<a class="ProveItLink" href="../../theorems.html#qmult_nested_closure">qmult_nested_closure</a> theorem<a class="anchor-link" href="#Proof-of-proveit.physics.quantum.algebra.qmult_nested_closure-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> qmult_nested_closure
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="qmult_nested_closure">qmult_nested_closure:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/e0a2dbec4a7c8a6524202c8bd888f770979cc5350/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKoAAAAmBAMAAACmKh0SAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADX0lEQVRIx5WXXUgUQRzA/97d3seerlJPPt1J
+PdSTgtBDn3dQIgUlCGEYeAUSKdEWEkSRJ5ElmYkmpFFu0UuUKIWFRGURJERePfWBhweGpBWZmpql
+1+zM7exuO+fNDtzszux/fzPz/9wD4GuuIKegWAP8LcwteUnhFnVG+EXzuEWb+TcAbdyStTaUdY93
+B45FG1QXrwpy+mxQPfOcgpdtqBXgGqdcvtp9/5AaSfFoGrk63G/mpM6oXT85H/IxfxlbbN1tSb3U
+BwGrds3KUO+8TnVPMakFMeQmdQOrsBVCsEO9Hsrg2FM6tZBJ3fflbCwCQskkdoIINKinal2ZmhXR
+qeF5BlVCgJ5l+Hq3EY+mwI3M68+QOrLzKNV/akGnTsTjJJIH0E9YAjhGvHsBnEVIVxmMldtHqWek
+aUrdO5l6LuAgiaFDEzMgkTfx+OtM1CJKDTlmNKqH5rxsvOpRmgyRSClAFx6k9/T6oEYVgt4/GtUt
+a88L8fgIlV9WdeHBahOHdMz4UsgUWpTqAs9PSqXPn2H+SzpGC/sUIuRH2oCW/A7UV0adc8iUdPNV
+ZRp1Ynv4t0ZtjqOGvSegjr0LlDqLLJYgi1YMo62UYhsiNW2LOp42WfYqJgCWNOodSvmhHtYXMlIh
+shXfJg4AjOG7RmKg/V0WqgtdRjRqDqX0zsoX5S1g1Cvcx7aUoAREEg03VLMGHbvpXus1HygnpiZU
+KUEjevTvTqHGnDZOY2NVwDcQ8NugKjhXMei1N0GonkF06ZY1fz2ocxT4bEiwKiAL57VdjwOK83Bn
+Zxs2IRSYYgurrF/snlNgfbJWo97s0NY9Vx42BLH3F41kdM6ol6T8wMZbYKrq7lY9D2B3SSEqr5OI
+zUkm+wwVU69HSGO5wVQ4uD4+qpNNlWiQTaXteCC5+nw1ffxWe+85iHuq4SRWhnhhbcIUac7FDFSk
+sdF3dCO+/8qhONCJoqApNiw7jfVPnM5ItaYNa5WciLWbJq6o3RNat0ZWplbJfHWLt76R9pBTrrfM
+DvUFp5w/YgMqDVqq6Rj7K2WIOduyiVmPLPWqAdiFcQOzoOf5WNPjlpmraU7lZjmLj/kJ43llmfqU
+ps6I71nfdIrImO2xFuzKYrYHwwnGasKDYoZku53Pxyjvvw3VCf8BOLDgai4BiLAAAAAASUVORK5C
+YII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/b3f1572ec44f67baff97e970bd63a3a44df8139a0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

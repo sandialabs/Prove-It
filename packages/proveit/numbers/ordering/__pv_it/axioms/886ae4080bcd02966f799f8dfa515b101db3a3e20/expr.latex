@@ -1,0 +1,1 @@
+\left(x, y\right) \mapsto \left\{{\rm Max}\left(x, y\right) = \left\{\begin{array}{ccc}x \textrm{ if } x \geq y \\ y \textrm{ if } y > x\end{array}\right.. \textrm{ if } x \in \mathbb{R} ,  y \in \mathbb{R}\right..

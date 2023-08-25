@@ -1,0 +1,1 @@
+\left[\forall_{x~|~Q\left(x\right)}~\left(f\left(x\right) = 0\right)\right] \Rightarrow \left(\left[\sum_{x~|~Q\left(x\right)}~f\left(x\right)\right] \in \left\{0\right\}\right)

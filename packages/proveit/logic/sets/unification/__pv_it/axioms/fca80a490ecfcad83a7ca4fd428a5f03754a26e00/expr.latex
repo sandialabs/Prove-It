@@ -1,0 +1,1 @@
+\left\{\forall_{x, A_{1}, A_{2}, \ldots, A_{m}}~\left(\begin{array}{c} \begin{array}{l} \left(x \in \left(A_{1} \cup  A_{2} \cup  \ldots \cup  A_{m}\right)\right) =  \\ \left(\left(x \in A_{1}\right) \lor  \left(x \in A_{2}\right) \lor  \ldots \lor  \left(x \in A_{m}\right)\right) \end{array} \end{array}\right) \textrm{ if } m \in \mathbb{N}^+\right..

@@ -1,0 +1,5 @@
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.booleans.negation.negation_contradiction
+proveit.logic.booleans.quantification.existence.exists_unfolding
+proveit.logic.equality.fold_not_equals

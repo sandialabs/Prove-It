@@ -1,0 +1,2 @@
+\left(n \mapsto \left\{\begin{array}{l}\forall_{x_{1}, x_{2}, \ldots, x_{n} \in V}~\\
+\left(\begin{array}{c} \begin{array}{l} \left(\left\{x_{1}, x_{2}, \ldots, x_{n}\right\} \in \textrm{Bases}\left(V\right)\right) =  \\ \left(\begin{array}{c} \left(\left\{x_{1}, x_{2}, \ldots, x_{n}\right\} \in \textrm{SpanningSets}\left(V\right)\right) \land  \\ \left(\left\{x_{1}, x_{2}, \ldots, x_{n}\right\} \notin \textrm{LinDepSets}\left(V\right)\right) \end{array}\right) \end{array} \end{array}\right)\end{array} \textrm{ if } n \in \mathbb{N}^+\right..\right)

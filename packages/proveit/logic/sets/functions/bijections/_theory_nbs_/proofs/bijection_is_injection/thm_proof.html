@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.sets.functions.bijections.bijection_is_injection theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../../index.html"><img src="../../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.sets.functions.bijections.bijection_is_injection-theorem">Proof of <a class="ProveItLink" href="../../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">sets</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">functions</a>.<a class="ProveItLink" href="../../theory.html">bijections</a>.<a class="ProveItLink" href="../../theorems.html#bijection_is_injection">bijection_is_injection</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.sets.functions.bijections.bijection_is_injection-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> bijection_is_injection
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="bijection_is_injection">bijection_is_injection:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/8cd7934b25c63fade26959469e9580c3cd7608b30/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/34934950772f8cd9855d58d403b990e25b3fea200/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>bijection_is_injection may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

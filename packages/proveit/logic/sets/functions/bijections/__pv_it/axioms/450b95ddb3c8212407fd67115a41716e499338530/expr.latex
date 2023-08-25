@@ -1,0 +1,1 @@
+\begin{array}{c} \begin{array}{l} \left(f \in \left[A \xrightarrow[\text{onto}]{\text{1-to-1}} B\right]\right) =  \\ \left(\left(f \in \left[A \xrightarrow[]{\text{1-to-1}} B\right]\right) \land \left(f \in \left[A \xrightarrow[\text{onto}]{} B\right]\right)\right) \end{array} \end{array}

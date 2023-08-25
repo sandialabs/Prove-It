@@ -1,0 +1,1 @@
+\left(f\left(i\right), f\left(i + 1\right), \ldots, f\left(k\right),f\left(k + 1\right), f\left(k + 2\right), \ldots, f\left(j + 1\right)\right) = \left(f\left(i\right), f\left(i + 1\right), \ldots, f\left(j + 1\right)\right)

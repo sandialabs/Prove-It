@@ -1,0 +1,5 @@
+B \mapsto \left[\forall_{k \in \mathbb{N}^+}~\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \measure{B~\mbox{part}~1~\mbox{on}~\{k~\ldotp \ldotp~k\}} 
+} \end{array} = \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \measure{B} 
+} \end{array}\right)\right]

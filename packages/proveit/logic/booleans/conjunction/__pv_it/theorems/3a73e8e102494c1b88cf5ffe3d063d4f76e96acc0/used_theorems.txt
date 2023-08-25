@@ -1,0 +1,11 @@
+proveit.core_expr_types.conditionals.condition_prepend_reduction
+proveit.logic.booleans.conditioned_forall_over_bool_by_cases
+proveit.logic.booleans.conjunction.false_and_false_negated
+proveit.logic.booleans.conjunction.false_and_true_negated
+proveit.logic.booleans.forall_over_bool_by_cases
+proveit.logic.booleans.implication.falsified_antecedent_implication
+proveit.logic.booleans.negation.negation_intro
+proveit.logic.booleans.quantification.universality.bundle
+proveit.numbers.numerals.decimals.nat2
+proveit.numbers.numerals.decimals.posnat1
+proveit.numbers.numerals.decimals.tuple_len_2_typical_eq

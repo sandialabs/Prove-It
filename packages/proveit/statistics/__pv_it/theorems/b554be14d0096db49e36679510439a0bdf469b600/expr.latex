@@ -1,0 +1,1 @@
+\left(\forall_{x \in X~|~Q\left(x\right)}~R\left(x\right), \begin{array}{c} \begin{array}{l} \left[\textrm{Prob}_{x \in X~|~Q\left(x\right)}~f\left(x\right)\right] \leq  \\ \left[\textrm{Prob}_{x \in X~|~R\left(x\right)}~f\left(x\right)\right] \end{array} \end{array}\right)

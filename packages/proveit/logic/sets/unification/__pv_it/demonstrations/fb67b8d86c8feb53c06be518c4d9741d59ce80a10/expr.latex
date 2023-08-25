@@ -1,0 +1,1 @@
+\left(d \notin \left(\left\{a, b, c\right\} \cup \left\{2, 1 + 3, 2 + 3\right\}\right)\right) = \left(\left(d \notin \left\{a, b, c\right\}\right) \land \left(d \notin \left\{2, 1 + 3, 2 + 3\right\}\right)\right)

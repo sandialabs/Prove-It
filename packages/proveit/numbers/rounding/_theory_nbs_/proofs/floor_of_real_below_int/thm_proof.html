@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.rounding.floor_of_real_below_int theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.rounding.floor_of_real_below_int-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">rounding</a>.<a class="ProveItLink" href="../../theorems.html#floor_of_real_below_int">floor_of_real_below_int</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.rounding.floor_of_real_below_int-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> floor_of_real_below_int
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="floor_of_real_below_int">floor_of_real_below_int:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/0e8c202293c27c6534c8c51f528a8552ce3c03f80/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARIAAAAXBAMAAAA1o90XAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADrElEQVRIx8WWXWgUVxTH/7uzk52dSaYrPokh
+LESwBYMLFcU+yEqsVVRYEslD68dqH/yAlhH6YlGJ+Galbj/8GAMykaDG2DCVkpIUJPgkirJgpYtl
+ZVPTFtMihUKFPHnO3Z3Z2ewdV9yWHrjL3Ln/ufc395z7nwX+pYgD1+p6EoE8rJcNvkb8Arxd622X
+CuSxi5paBpLc6W4ZJOo2IWFBY2iPADNNF0+Ad/nGvpZJLiOMJLrPFzTE8MZ5+j1Irc3Bcc5SvmWS
+3jAS5UfHFzSGySSrWJZhGBiplkmmQ0jMn52aIISknSV3oFCW2lovk5ycZOxxUBBC0saF8iFwr1S6
+2zJJzK2SjM9c/SHlk4w8CArGe6EnJSQG3/wW2ARceLXlMuFD4rWYJGN2xQoeyfDeOoG7AspfEhKF
+92s1cAjxIGjPxPqP69WdQ5u/ExcvqeuOVIVEsZT5SNojiewNCrTUNkTyEpIo19AKIOEYWe90z9hZ
+08D3taP/+ZIz+AlTcxISPdhpz1ZINMRygTr55EFAoOM+2snB9I9KHIM+icYbdZqIyn7BbqBR08Q7
+ZT+7lDqkteXpRpL4ekdCArGWpGJZoM7j9KBkT1Tekx3Ucuvo59l7s5YwOyKZ44LYlST7fVLhiSFA
+wkp6j0UW1BlEFmQH2G3pjuQUs4C260/Z2YkWuCqo3SCPM60lbalRMWbELxKRXp7XpvXK2mveDJAI
+JdSviWb8DedUdcZEuUIymu2EIXM2FiSS+EJGovDEa6kdoYJVcFFDvxiLDfFA/FLBzKsiK3rZDZAI
+pTrE03/ag6fVGcVBJJKVJ7eib4Hb7/cEsaT69wIS47lnAVu4wkXu6NZq27ZTpmn0ibp3I2XlgG1/
+CcNwdCdQJ6Q8VTHlpejyar1QIRl5Fu1Nyb6ALNCXzj6vvxvp/GcxZY6L7KGvnI7jM7EnpvoBr9uR
+bR/UxGb0nYARIGGlPilQHuK293wRTb7FRbEFUqc9yjkoVDtHjFyMzrOoE0xldBcdg7urludmsLOW
+HaEEnnLiiqpvVKuakZBgAtdTYV/PWNo7rr/enEP8PF0N/OaObNRuIdp7FjhMiVMWdU3uqZEIJVcY
+Pbpsrf+OCUtC8o0wjqIneEzplP3b43kP198bs+2qyUVxBV9RZiftM7Xhemd7y9KtRNr3uXyTPSFB
+92xWRsIvgXNh7v0+utSGnC50+0h5oNY5RoZdqvpYj3cRjGNha/0uvCFsNI3+P9CMRF3n4v8J6z+d
+/QX1pfNudprTSAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/8d0b5765fa02c8d65d8b9fa3ee71b8cdbeab8ecc0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

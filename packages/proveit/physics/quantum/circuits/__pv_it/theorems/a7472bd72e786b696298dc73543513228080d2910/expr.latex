@@ -1,0 +1,5 @@
+\begin{array}{c} \begin{array}{l} \textrm{Pr}\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \gate{\begin{array}{c} \uparrow \\U_{1} \\ \downarrow\end{array}} & \gate{\begin{array}{c} \uparrow \\U_{2} \\ \downarrow\end{array}} & \gate{\begin{array}{c} \uparrow \\\cdots \\ \downarrow\end{array}} & \gate{\begin{array}{c} \uparrow \\U_{i} \\ \downarrow\end{array}} & \gate{\begin{array}{c} \uparrow \\V_{1} \\ \downarrow\end{array}} & \gate{\begin{array}{c} \uparrow \\V_{2} \\ \downarrow\end{array}} & \gate{\begin{array}{c} \uparrow \\\cdots \\ \downarrow\end{array}} & \gate{\begin{array}{c} \uparrow \\V_{j} \\ \downarrow\end{array}} & \qw
+} \end{array}\right) =  \\ \textrm{Pr}\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \gate{\begin{array}{c} \uparrow \\U_{1} \\ \downarrow\end{array}} & \gate{\begin{array}{c} \uparrow \\\cdots \\ \downarrow\end{array}} & \gate{\begin{array}{c} \uparrow \\U_{i} \\ \downarrow\end{array}} & \qout{\lvert \psi \rangle}
+} \end{array}\right) \end{array} \end{array}

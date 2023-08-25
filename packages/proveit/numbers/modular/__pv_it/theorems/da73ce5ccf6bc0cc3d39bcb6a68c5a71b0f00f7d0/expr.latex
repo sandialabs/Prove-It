@@ -1,0 +1,1 @@
+\left(x, N\right) \mapsto \left\{\left|x\right|_{\textup{mod}\thinspace N} = x \textrm{ if } x \in \mathbb{R} ,  N \in \mathbb{R}^+ ,  0 \leq x \leq \frac{N}{2}\right..

@@ -1,0 +1,1 @@
+\forall_{a \in \mathbb{R}, b \in \mathbb{Z}, c \in \mathbb{Z}, d \in \mathbb{Z}~|~a \neq 0, b = \left(c + d\right)}~\left(a^{b} = \left(a^{c} \cdot a^{d}\right)\right)

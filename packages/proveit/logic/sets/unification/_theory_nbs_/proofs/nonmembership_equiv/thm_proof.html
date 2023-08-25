@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.sets.unification.nonmembership_equiv theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.sets.unification.nonmembership_equiv-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">sets</a>.<a class="ProveItLink" href="../../theory.html">unification</a>.<a class="ProveItLink" href="../../theorems.html#nonmembership_equiv">nonmembership_equiv</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.sets.unification.nonmembership_equiv-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> nonmembership_equiv
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="nonmembership_equiv">nonmembership_equiv:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/297bf48f746a28afb6d30571fec8aaf45a437ad00/expr.html"><img src="data:image/png;base64,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
+UuV/DxFfB6p4y1cAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/71ccf6e5021740aa037724c96af0bb0f1083a2380/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>nonmembership_equiv may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

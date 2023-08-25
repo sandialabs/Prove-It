@@ -1,0 +1,1 @@
+\left(\left(a, b\right) \mapsto \left\{\left(a ~\textup{mod}~ b\right) \in \{0~\ldotp \ldotp~b - 1\} \textrm{ if } a \in \mathbb{Z} ,  b \in \mathbb{N}^+\right..\right)

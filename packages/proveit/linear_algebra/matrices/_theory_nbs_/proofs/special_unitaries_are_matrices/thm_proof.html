@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.linear_algebra.matrices.special_unitaries_are_matrices theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.linear_algebra.matrices.special_unitaries_are_matrices-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">linear_algebra</a>.<a class="ProveItLink" href="../../theory.html">matrices</a>.<a class="ProveItLink" href="../../theorems.html#special_unitaries_are_matrices">special_unitaries_are_matrices</a> theorem<a class="anchor-link" href="#Proof-of-proveit.linear_algebra.matrices.special_unitaries_are_matrices-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> special_unitaries_are_matrices
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="special_unitaries_are_matrices">special_unitaries_are_matrices:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/880df892ff15149754538d0818ae9ef75d4444240/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANsAAAAZBAMAAABKjUbMAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADkUlEQVRIx61WbUhTURh+tt193N1tKn1A/RCj
+DwZ9uCBDQeKmBoYEi+qXUiOLKEIm9CNLmkb0x3IjkFAqlgkRQa4Pf/QniogiCSXM/DOYlIUYFkhh
+Qth77tnu3cfdvJQH7u7ZPe85z3ue9z3PewADzeLHMjTBqOGGf8foIpgg79ojxqY4AzofU2vkp6S2
++zPgiaEW2FE5KwO7jMGJvtxvnjL+tiZ03Hs63nI2dqfJ5yKfZqUEnBUv8RpwR4FiZrC+IFw7PQN1
+NQI6T7+I4cYfchSbU4Ofcu0nX2Lgt3zuC4pofamFKHgQwAK5SFh7mMGJgnAN5PAEzONAmOh3jmbw
+a4smO9PxeHxCSYmpGFAloxRN4HAwJazPaRJBdi4dxJ80iXa0EwgxLtgjqPxaZP6+/DX15ZJIHphk
+vEGdA5hhpq4OQe4Amrl3UlkhNAc5ZSOHxTQ4lzb8lsfro/phrcj+++w/MOFNpkoI7osEt5e8I3Bb
+wc15iD2RIm1Jg9ukDTcrvybtaEbO8CQqxoyPHQRTEPvheUyfvtHzLh4fLghnojiZF4dYV4WjcFon
+7z67Rd2HPISqub24K99KR4jJeqBPZyimnQMW2e+Lv/xpcLQlSSzFYFAJKXgKJLmPHcgHFyZCW8kf
+nSFZ7dnYsHP7yFwa3HvgkDuCEM3fohi1aruTD+eDC5HHYlRKl0T72BCqi9Ph3LzrGEmDewVEB/0o
+J3bC3EhbIXI+HxzNgDmh8d69pgfrpKgQzd6dhTHvx2BEg0M5sJpeTVx/NeXpE/PujshAQNUyoZ4p
+TEKW8KRurM6fBsdWKOqAi7LG4eNkMqw5J7CVWx1XFz3Izh30ikiYCe2jUyk9VQTJu/GClBE7E23J
+zfKEzObpL1uMpeQwzAtkWcWtbq9KyYswRf4JgTyZiXYaVfTUqYiLV+pvzIDzkP64j8LJDti+KGrA
+s98+D0+gUjkTSmu8mRQxTB8L9o/pkVmteE+MKnpqVfj3Qp7OgLOSqpisDSWMHuvKEsY/rlJ3FM4V
+JEcfdCrCyFhQD2632mN6ajnZ23uN4O7bMs6dkhdZzd2hZvKo8VrbrPaYnjpifHfWbTkVIad2qpsX
+fIbRWEVI+qjoqaIuFVSwMs2u6Ey9nuq0JVHj8VQByl/fVTnhetpGFDnGgzBliaZOwbiXg7t0cwez
+Y9zbY/CuYk9eGjxB43AG7yraTeG/mtGb2HLdM+mQ/wUSG9ZuZQJIYwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/64acc506bc2906463464baee99b9029937d7b9990/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

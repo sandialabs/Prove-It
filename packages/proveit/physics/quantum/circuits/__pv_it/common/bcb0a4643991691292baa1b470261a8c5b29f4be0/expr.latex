@@ -1,0 +1,52 @@
+\begin{array}{cccccc} 
+ \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert \psi \rangle~\mbox{part}~1~\mbox{on}~\{1~\ldotp \ldotp~m\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} & \cdots & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert \psi \rangle~\mbox{part}~1~\mbox{on}~\{1~\ldotp \ldotp~m\}} 
+} \end{array} \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert \psi \rangle~\mbox{part}~2~\mbox{on}~\{1~\ldotp \ldotp~m\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} & \cdots & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert \psi \rangle~\mbox{part}~2~\mbox{on}~\{1~\ldotp \ldotp~m\}} 
+} \end{array} \\
+\vdots & \begin{array}{c}:\\ \left(m - 3\right) \times \\:\end{array} & \begin{array}{c}:\\ \left(m - 3\right) \times \\:\end{array} & \ddots & \begin{array}{c}:\\ \left(m - 3\right) \times \\:\end{array} & \vdots \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert \psi \rangle~\mbox{part}~m~\mbox{on}~\{1~\ldotp \ldotp~m\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} & \cdots & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert \psi \rangle~\mbox{part}~m~\mbox{on}~\{1~\ldotp \ldotp~m\}} 
+} \end{array} \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert u \rangle~\mbox{part}~1~\mbox{on}~\{m + 1~\ldotp \ldotp~m + l\}} & \qw 
+} \end{array} & A_{1, 1} & A_{2, 1} & \cdots & A_{k, 1} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert v \rangle~\mbox{part}~1~\mbox{on}~\{m + 1~\ldotp \ldotp~m + l\}} 
+} \end{array} \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert u \rangle~\mbox{part}~2~\mbox{on}~\{m + 1~\ldotp \ldotp~m + l\}} & \qw 
+} \end{array} & A_{1, 2} & A_{2, 2} & \cdots & A_{k, 2} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert v \rangle~\mbox{part}~2~\mbox{on}~\{m + 1~\ldotp \ldotp~m + l\}} 
+} \end{array} \\
+\vdots & \vdots & \vdots & \ddots & \vdots & \vdots \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert u \rangle~\mbox{part}~l~\mbox{on}~\{m + 1~\ldotp \ldotp~m + l\}} & \qw 
+} \end{array} & A_{1, l} & A_{2, l} & \cdots & A_{k, l} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert v \rangle~\mbox{part}~l~\mbox{on}~\{m + 1~\ldotp \ldotp~m + l\}} 
+} \end{array} \\
+\end{array}

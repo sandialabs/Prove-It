@@ -1,0 +1,1 @@
+\left\{\forall_{U \in \textrm{U}\left(n\right)}~\left[\forall_{\alpha \in \mathbb{R}^{\ge 0}}~\left[\forall_{\lvert \psi \rangle \in \mathbb{C}^{n}~|~\left \|\lvert \psi \rangle\right \| = \alpha}~\left(\left \|U \thinspace \lvert \psi \rangle\right \| = \alpha\right)\right]\right] \textrm{ if } n \in \mathbb{N}^+\right..

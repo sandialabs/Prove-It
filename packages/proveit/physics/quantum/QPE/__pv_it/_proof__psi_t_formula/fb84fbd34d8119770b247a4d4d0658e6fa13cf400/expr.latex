@@ -1,0 +1,1 @@
+\left(\sum_{k=0}^{\left(2 \cdot 2^{t}\right) - 1} \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \varphi \cdot k} \cdot \lvert k \rangle_{t + 1}\right), \left(\sum_{k=0}^{2^{t} - 1} \left(\mathsf{e}^{2 \cdot \pi \cdot \mathsf{i} \cdot \varphi \cdot k} \cdot \lvert k \rangle_{t + 1}\right)\right) + \left(\sum_{k=0}^{2^{t} - 1} {_{-}a}\left(k\right)\right)\right)

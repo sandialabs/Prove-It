@@ -1,0 +1,7 @@
+\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \multigate{1}{\textrm{QPE}_1\left(U, t\right)} & \gate{{\mathrm {FT}}^{\dag}_{t}} & { /^{t} } \qw \\
+& \ghost{\textrm{QPE}_1\left(U, t\right)} & { /^{s} } \qw & { /^{s} } \qw
+} \end{array}\right) \cong \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \multigate{1}{\textrm{QPE}\left(U, t\right)} & { /^{t} } \qw \\
+& \ghost{\textrm{QPE}\left(U, t\right)} & { /^{s} } \qw
+} \end{array}\right)

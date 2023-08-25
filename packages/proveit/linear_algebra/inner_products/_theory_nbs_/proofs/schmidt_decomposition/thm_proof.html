@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.linear_algebra.inner_products.schmidt_decomposition theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.linear_algebra.inner_products.schmidt_decomposition-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">linear_algebra</a>.<a class="ProveItLink" href="../../theory.html">inner_products</a>.<a class="ProveItLink" href="../../theorems.html#schmidt_decomposition">schmidt_decomposition</a> theorem<a class="anchor-link" href="#Proof-of-proveit.linear_algebra.inner_products.schmidt_decomposition-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> schmidt_decomposition
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="schmidt_decomposition">schmidt_decomposition:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/e8cf178c1e9e441e194aa7bbf641581e804d45960/expr.html"><img src="data:image/png;base64,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
+9AZD6+MHclAAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/50c6b7b9239acc62b0b84140bc6f6ab772d093510/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,1 @@
+\forall_{a, b \in \mathbb{Z}~|~a = 0}~\left(\left(a ~\textup{mod}~ b\right) \in \left\{0\right\}\right)

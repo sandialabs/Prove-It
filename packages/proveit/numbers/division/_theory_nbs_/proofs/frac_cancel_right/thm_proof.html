@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.division.frac_cancel_right theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.division.frac_cancel_right-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">division</a>.<a class="ProveItLink" href="../../theorems.html#frac_cancel_right">frac_cancel_right</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.division.frac_cancel_right-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> frac_cancel_right
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="frac_cancel_right">frac_cancel_right:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/2b5da68865682b2f1b83722c002f48172f6ddfe90/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQsAAAAmCAMAAADkzk48AAAAPFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAo1xBWAAAAE3RSTlMA
+q1RmmUTNIjK7EInv3Xah18O1XjQ+CwAAAAlwSFlzAAAOxAAADsQBlSsOGwAABB5JREFUaN7VWguX
+qywM5BEEguZ7+P//6wUVBZVKbeltOXu62z3tNAxhMoEy1m6I0Q/5IgiIRtFhh9uHhEiRteSCv44B
+MwYSBFLxBBGJOBrnKjjLUcyQzb7/di5kN/92TPTh6XjCFmPEicFwjbZDkfyXuDBLgEbMc+X2yJYO
+k0PGrzfjAcWKH+Kic0ty+1CJLQ/h+ditEwyp0dUpxA6FYTr/L+dCbHqmwp9mNMvTAbL0pkrAHUpU
+o1/gYnCbKoSlp74wQ79PsGYqexQd3vkTXJikzFkeH3Z5bxXj/aSLFeOAYt2PcJEqZchmdWJWxGgQ
+PBeqyoYcUGT/I1ykQSN3BElGr/8HIiZA1jmyA4oeRcLFFq+QLbi4j2/2U3fdO6LKUTYR9lyAWguY
+bsHFffzUWIUJYC/eQMMOZSvHngsTF07bJnvkPj5PFnDwVZO7VwM6QaEx1YvYojjRRi9u4/eJ3AhJ
+W4LdD+iIIlazEbiQyzbuWBsubuOPjrUfZhXPqY70Qxi9a8TFbfxRfoALXD9l4gKmLLHYioub+Em5
+e7rRH5JxUdhHSrnQPD7c4TUstyZBusjFJT5Z4KSpmL1Nx7oTZ68VlsxVK1MeOUR57Mpe6xzfELfe
+QHsXzT2PwrpDl7G9Zawal9M+e+kIGReCrpWtELlUU+t7bmEjF6f4AIuAO5x4le4v5UXOhQ9UXnS9
+J5E7APjnX/BFSocDksGUPfiKryhaUYqShdLM66/fx8V9vQilP5oAItD+J4YzdFqpB5HDciQSoHSZ
+i4jvefStp+lDeq0v0kIXtFN+JC9kzoWOtsYroG8Ou7ggYJQDVojc58V//0PIi2kDPNCLFV+jGILg
++ARZ5ylRYqHa0Qeo0Lm/CFm7JLiP0BJLsl1Pu7gQOcat5uuI1I/61Ig/OWBO4UzXTkMwY5Qp+E74
+iNdS5Z49aw7NvDSFyAGf7tkH/8m9RzCbUi4KxA5gnf0AF9sx4pGLsJlXNkI+aCxFLq/K8BkXxtfK
+3HppN+mTO+wI6D/AhRsKZzm6n9paiBaqE0bZysjruBAgbTd3rWazaz7twJz07Niei+3Ab58XQMoR
+hUwIXT6g7OdDh4rIq7hAj2blghN2nXrYKnzAYGzF6sEZn9hZ7avIq7jwsqnq+1XbXjzVJo9lLtQb
+8vPIhZL0RLsqU8Ewg9cafWI5nrhPPcIkB35lLt7hc149+8WkI8GOnHVngE/cpx5hkgO/L78rSlYt
+lDNfxE4Wrf4+9QiTXj59+31qbzLNwi1j7tynHmDStPh6LmQyyeyA4+Z96g6GUg6//vsXnUx9H8Ny
+McC6qaQwOusnv54LHJZwxZTNr96nZjA4ZKWnMRdv+L6Wnrt9Y50ld3ZG8tR9agZjt9Daf1/rPU31
+FLhfddF3J17vufvUFAYPaH8Ai4cpB8DlbIIAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/66b133e516031b5e8420502f5c4493f15589ea450/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>frac_cancel_right may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

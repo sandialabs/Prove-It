@@ -1,0 +1,1 @@
+n \mapsto \left\{\forall_{A \in \mathbb{C}^{n \times n}}~\left[\exists_{U \in \textrm{U}\left(n\right)}~\left(A = \left(U \thinspace \sqrt{\left(A^{\dagger} \thinspace A\right)}\right)\right)\right] \textrm{ if } n \in \mathbb{N}^+\right..

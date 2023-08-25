@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.linear_algebra.matrices.exponentiation.U_closure theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.linear_algebra.matrices.exponentiation.U_closure-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">linear_algebra</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">matrices</a>.<a class="ProveItLink" href="../../theory.html">exponentiation</a>.<a class="ProveItLink" href="../../theorems.html#U_closure">U_closure</a> theorem<a class="anchor-link" href="#Proof-of-proveit.linear_algebra.matrices.exponentiation.U_closure-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> U_closure
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="U_closure">U_closure:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/a2387de5902ba1861fef381cf28ad3ff9a5c8a6d0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAS4AAAAZBAMAAAB9Zt7RAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEYklEQVRIx72XXYgbVRTH/zsfmckkTfNUuhWX
+iFhXhDaYViyIZtmIBfswxTdbS8CHRUXNvghtdTfio2tJhVJH0I4fCMuqpMU+tPtgSlEKWlxkKa00
+kLVSXcWStli7FdFz7p1MMpnsOilsL5zMncyZc3/3nHPPvQP00+6ul3AHWqr+Q38vFHGHWm41uQy/
+t+WRK+lL7y6vWeq4llad6ydJV4S19TROYWH5uGW8zh5PiCvNl3sjcw3wRclGUVaq4hJrwviiiJt4
+KvDUXPfdXYh/P8/9B33ArBTieoLvxyJzaTYPFSn7P5WXzU1goGHW0JXL5hL9fM49qx2GFzzJ4Q12
+dSUyl8n+3RtJeVReRv4CkuVUxWiWg9l3lX6E+7W2+7d4kkPMBRKZ6PnFszkWSbkmfhP7bwKT5DG1
+kpexer9+LsiVbL+TdKXkoBJsrI+8z0VNf0VqTaSuATsp9MaQy/f6y263vza2X4plpdAoZ+v1b/vg
+StbrF6tRdDWplVeuB/5+1Q3FkRfEng37Fxvk3bQU4toOvLfiANUAl1ZGXJi2utTul1EKTJ3ckzH/
+DqiNhfPrOR7kYMOiRFSLUohrHEZ6Ra58gIuUx0X/My+NZ86exI71UO0u7TUiaTU5fo8S2Oaiharb
+F2BQIio1KcQVdxN273I9fxyPpru5yLnHRf8rGtdccGwc5NHxoaeyy09hYXWxMLIUqA6UNvULQa6v
+yfnWn1Bu0eOmFOJSGr3S/sDgIdyTcDU3xLVJTlmfonQosM+IKwFZBzl8bieXRUr/dNq1/JJkLXVw
+QWligOzqNSlidT3WI2m38y7QyCfwZWG+YHdyxdSGSKRYWpZmj2sO6uiBnztqjogjORIXA5bn/N43
+JG96cWSotVkXCj1mYa5jVJLI5kJqG89eWr/E+sP3TSRC+YXERuGRhlbENHwu2gU/3p1NlqC01OOM
+/zTJKwGuK37vcRpuA3c+YO9WsdmtQiV3sjDXa5RDbDOd4vwX1qW3hxMf7QpzGadEGMupmhjV49Ir
+2HcZa13uyMbL3eDaeiSwa8X8Gq79CE3cHCWZLOOyWhbFhYW5BoibbZZFxRHWdRGgYeQXw1xYL4zO
+Hr2Fhx3HyWCQuRSiGMJuytoWlzkH68gNFw/8+2IgwQafaXV3jghTeJvkWVo5D1HwbSn+OWcIU97K
+Zuvq847zDnHNxEL1y2sNXtZvie4fzMU4Z1Aw23HE+d5lRz8h96F2W9PeOF/3xOc6g0VMmrJXMM2q
+9Je+aZnzFzv0mldgaTq/cj4bTZwfRqrRuQdHamo+sNePdnCRzSFs0zDjWRc7wFZ0n+V8rh1pfHLD
+NsQR1JqdpQkfhp7G71nE/WyKR/4WOOyXzIp3uGlxkc0xjP+GqYy0vpdGMs+VZH1Z/rw64zh2Vz2d
+7lGq/q9Nd05FTCd0jvZWi3XCOdTfOVrzvPNk+6+JyB8Crdj/4kmIS3dv+3x/UuaKvSrfQ+rK6i+t
+8P1oodcp4za/H0//B/58GqASftR2AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/6a320dcb16e854288ff43af0a07e363e0f452ec70/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>U_closure may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

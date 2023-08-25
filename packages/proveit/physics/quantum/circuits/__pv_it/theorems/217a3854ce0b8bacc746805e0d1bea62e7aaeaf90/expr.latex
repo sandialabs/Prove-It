@@ -1,0 +1,3 @@
+\forall_{\lvert \psi \rangle \in \mathbb{C}^{2}, b \in \left\{0, 1\right\}~|~\left \|\lvert \psi \rangle\right \| = 1}~\left(\textrm{Pr}\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{\lvert \psi \rangle} & \meter & \qout{\lvert b \rangle}
+} \end{array}\right) = \left|\langle b \rvert \thinspace \lvert \psi \rangle\right|^{2}\right)

@@ -1,0 +1,4 @@
+\forall_{v \in A {\otimes} B}~\left[\begin{array}{l}\exists_{a_{1}, a_{2}, \ldots, a_{m}~|~\left\{a_{1}, a_{2}, \ldots, a_{m}\right\} \in \textrm{O.N.Bases}\left(A\right)}~\\
+\left[\begin{array}{l}\exists_{b_{1}, b_{2}, \ldots, b_{n}~|~\left\{b_{1}, b_{2}, \ldots, b_{n}\right\} \in \textrm{O.N.Bases}\left(B\right)}~\\
+\left[\begin{array}{l}\exists_{\lambda_{1}, \lambda_{2}, \ldots, \lambda_{{\rm Min}\left(m, n\right)} \in \mathbb{R}^{\ge 0}}~\\
+\left(v = \left(\sum_{i=1}^{{\rm Min}\left(m, n\right)} \left(\lambda_{i} \cdot \left(a_{i} {\otimes} b_{i}\right)\right)\right)\right)\end{array}\right]\end{array}\right]\end{array}\right]

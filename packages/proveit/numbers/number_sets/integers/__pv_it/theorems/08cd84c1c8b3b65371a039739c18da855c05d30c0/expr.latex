@@ -1,0 +1,1 @@
+\left(\left(a, b, x\right) \mapsto \left\{\left(x < a\right) \lor \left(b < x\right) \textrm{ if } a \in \mathbb{Z} ,  b \in \mathbb{Z} ,  x \in \mathbb{Z} ,  x \notin \{a~\ldotp \ldotp~b\}\right..\right)

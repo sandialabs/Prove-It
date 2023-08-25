@@ -1,0 +1,1 @@
+\forall_{n \in \mathbb{N}^+}~\left[\forall_{K}~\left[\forall_{V \underset{{\scriptscriptstyle c}}{\in} \textrm{VecSpaces}\left(K\right)}~\left[\forall_{x_{1}, x_{2}, \ldots, x_{n} \in V}~\left(\left(x_{1} +  x_{2} +  \ldots +  x_{n}\right) \in V\right)\right]\right]\right]

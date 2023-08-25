@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.number_sets.integers.nonpos_int_is_int_nonpos theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.number_sets.integers.nonpos_int_is_int_nonpos-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">number_sets</a>.<a class="ProveItLink" href="../../theory.html">integers</a>.<a class="ProveItLink" href="../../theorems.html#nonpos_int_is_int_nonpos">nonpos_int_is_int_nonpos</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.number_sets.integers.nonpos_int_is_int_nonpos-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> nonpos_int_is_int_nonpos
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="nonpos_int_is_int_nonpos">nonpos_int_is_int_nonpos:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/4a82a1b7dac5a655ec0e0c0c29e2504aa04de26f0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAL8AAAAaBAMAAAAUFZBoAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADA0lEQVRIx7VWbUhTURh+tnm3effhFYI+fsSg
+oIYU609QhCwqsiJa2B8jSPBHJBF3Bf2SnBFEJGgG2rTs9NMMEyuiCSJC1IhKCIqIwYL+xEJECEEi
+es+53q95uWyLDmw773vufZ/343nfM+B/LO8QQjOT/2LBl3K1Pwo0ow11tQNsdUW/Q19v0KAG+mu1
+L7e7HEYH6CuwgnCMwqhx1SecEnPh9/nCvURwjgvBFUQSiDBA4eKWKgG6HD2/nUG7H4jnNIBwEVGy
+foifnasS4JiTsi6JaGKKNm05kaKGGOQVoIcnrNpi/HJSelSMycJSz2GtyEAH4Kc0hWLV2af4ram5
+X/gkKg+0eDJCld6EBZykzRHiFNXLX2UA0XmLIF1kBrByfXWnUqMdpd+f9HlXKLytEsDDWZqeuSqE
+K8wkFxsue/IsHbYAw05Wki4spUxLr/GAlRGkyVcse7KPUpZGQLF6l382ImzbCx9XMV3SBT+98DiB
+40Kw9BwnKYJZWkOrmu4UjyukD5bgt2wqooYm2BqAeBG+oqSrIuTBCeCreIdSXPiilSb2HGA2v56Q
+aW/RqPFBCsiHa5dRDrCHmBDOYNkSQR6yIKtsPjfG6b7eBtDNWdXOJ8Z48wtqEy35SQsA1+MHp3E3
+w5wJIP+Bb1EIJqM2UCfIi/YaUC9gqpP8+Bxcxpg2Cy9lTACh7xVt0sfwUa9TP+Ql4tI2LiwYJE2e
+oqP5NSxCl8LbPDiLVqGbCMEEEHrvCNMA3ut9MAuMYocWqj9mkLQTgQE7N/YJf8jjcIrm0m4qfwyT
+OTwyAIQeEkegFC3pvUWd/LB0Y7MIVd54WtOeGcxnP+Tt99h+o9pq/V52S7y8PYGcASD0FP061Vpk
+vLIakV5qo8JpdeibsNrXyup5JkJ1kObNCLiej8NGFi1Kius0dbqYjKElHdj5FIG7tNvVWBpUDACh
+5ysATH83ON5b6dWt2OXxbNa8zN1GuKfC8RtRXQ77a72TLcv1TjYBbvLpYvelqSL77heZWvv/IuMS
+paL9BX5ww+gJb4sKAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/c1be1ab6fe3961ab0c1dc3b2ab6c195a322a63310/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>nonpos_int_is_int_nonpos may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

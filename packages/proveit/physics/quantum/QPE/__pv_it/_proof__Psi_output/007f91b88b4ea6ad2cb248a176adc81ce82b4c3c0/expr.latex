@@ -1,0 +1,19 @@
+\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle~\mbox{part}~1~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle~\mbox{part}~2~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array}, \ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle~\mbox{part}~t + s~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array}\right) = \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle~\mbox{part}~1~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle~\mbox{part}~2~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array}, \ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle~\mbox{part}~t~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array},\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle~\mbox{part}~t + 1~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle~\mbox{part}~t + 2~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array}, \ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle~\mbox{part}~t + s~\mbox{on}~\{1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array}\right)

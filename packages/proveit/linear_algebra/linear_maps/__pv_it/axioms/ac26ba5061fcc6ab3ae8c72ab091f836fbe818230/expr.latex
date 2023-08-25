@@ -1,0 +1,1 @@
+\left(\left(A, B\right) \mapsto \left\{\left\{A, B\right\} = \left(\left(A \circ B\right) + \left(B \circ A\right)\right) \textrm{ if } A \in V ,  B \in V\right..\right)

@@ -1,0 +1,12 @@
+\begin{array}{c} 
+ \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{b~\mbox{part}~1~\mbox{on}~\{1~\ldotp \ldotp~k\}} & \qw 
+} \end{array} \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{b~\mbox{part}~2~\mbox{on}~\{1~\ldotp \ldotp~k\}} & \qw 
+} \end{array} \\
+\vdots \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{b~\mbox{part}~k~\mbox{on}~\{1~\ldotp \ldotp~k\}} & \qw 
+} \end{array} \\
+\end{array}

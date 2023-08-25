@@ -1,0 +1,1 @@
+\left(|\left(a_{i}, a_{i + 1}, \ldots, a_{j - 1}, a_{j}\right)| = |\left(i, \left(i + 1\right), \ldots, j\right)|, |\left(y_{1}, y_{2}, \ldots, y_{m},x_{1}, x_{2}, \ldots, x_{n}, z\right)| = |\left(i, \left(i + 1\right), \ldots, j\right)|, i \in \mathbb{Z}, j \in \mathbb{Z}, \left(j - i\right) \in \mathbb{N}\right)

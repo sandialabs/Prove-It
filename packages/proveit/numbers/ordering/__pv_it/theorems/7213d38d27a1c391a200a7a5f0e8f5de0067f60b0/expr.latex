@@ -1,0 +1,1 @@
+\left(\left(a_{1}, a_{2}, \ldots, a_{n}\right) \mapsto \left\{{\rm Max}\left(a_{1}, a_{2}, \ldots, a_{n}\right) \in S \textrm{ if } \left(a_{1} \in S\right) \land  \left(a_{2} \in S\right) \land  \ldots \land  \left(a_{n} \in S\right)\right..\right)

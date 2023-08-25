@@ -1,0 +1,6 @@
+proveit.logic.booleans.eq_true_intro
+proveit.logic.booleans.negation.not_f
+proveit.logic.booleans.negation.not_t
+proveit.logic.booleans.true_axiom
+proveit.logic.equality.equals_transitivity
+proveit.logic.equality.substitution

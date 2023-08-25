@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theorems (or conjectures) for the theory of proveit.logic.sets.functions.bijections</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theorems-(or-conjectures)-for-the-theory-of-proveit.logic.sets.functions.bijections">Theorems (or conjectures) for the theory of <a class="ProveItLink" href="theory.html">proveit.logic.sets.functions.bijections</a><a class="anchor-link" href="#Theorems-(or-conjectures)-for-the-theory-of-proveit.logic.sets.functions.bijections">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the theorems of a theory:</span>
+<span class="o">%</span><span class="k">theorems_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">fy</span><span class="p">,</span> <span class="n">gx</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">Function</span><span class="p">,</span> <span class="n">Lambda</span><span class="p">,</span> <span class="n">Conditional</span>
+<span class="kn">from</span> <span class="nn">proveit.relation</span> <span class="k">import</span> <span class="n">total_ordering</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">And</span><span class="p">,</span> <span class="n">Implies</span><span class="p">,</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">NotEquals</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">Card</span><span class="p">,</span>
+    <span class="n">Functions</span><span class="p">,</span> <span class="n">Image</span><span class="p">,</span> <span class="n">Bijections</span><span class="p">,</span> <span class="n">Injections</span><span class="p">,</span> <span class="n">Surjections</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Natural</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining theorems for theory &#39;proveit.logic.sets.functions.bijections&#39;
+Subsequent end-of-cell assignments will define theorems
+&#39;%end theorems&#39; will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">membership_unfolding</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="n">f</span><span class="p">,</span> <span class="n">And</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">Injections</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)),</span>
+                   <span class="n">InSet</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">Surjections</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">))),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">Bijections</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="membership_unfolding"><a class="ProveItLink" href="proofs/membership_unfolding/thm_proof.html">membership_unfolding</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/273010fa1eff89a9421797542fcb85b608541b220/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">membership_folding</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="n">f</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">Bijections</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)),</span>
+        <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">InSet</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">Injections</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)),</span>
+                    <span class="n">InSet</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">Surjections</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">))]))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="membership_folding"><a class="ProveItLink" href="proofs/membership_folding/thm_proof.html">membership_folding</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/12fe348e52c947d02ca461484821b4f45de3a11c0/theorem_expr.html"><img src="data:image/png;base64,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
+H1fdVgkaM23zAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>A bijection is a function, an injection, and a surjection.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">bijection_is_function</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> <span class="n">Forall</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">Functions</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)),</span>
+                   <span class="n">domain</span><span class="o">=</span><span class="n">Bijections</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="bijection_is_function"><a class="ProveItLink" href="proofs/bijection_is_function/thm_proof.html">bijection_is_function</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/85f2c13e721cd7b8b7e3ae2e8da7c0d3cc180e160/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">bijection_is_injection</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> <span class="n">Forall</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">Injections</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)),</span>
+                   <span class="n">domain</span><span class="o">=</span><span class="n">Bijections</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="bijection_is_injection"><a class="ProveItLink" href="proofs/bijection_is_injection/thm_proof.html">bijection_is_injection</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/34934950772f8cd9855d58d403b990e25b3fea200/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">bijection_is_surjection</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> <span class="n">Forall</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">Surjections</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)),</span>
+                   <span class="n">domain</span><span class="o">=</span><span class="n">Bijections</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="bijection_is_surjection"><a class="ProveItLink" href="proofs/bijection_is_surjection/thm_proof.html">bijection_is_surjection</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/23a9471ec6afcd9c78dcba174b5c6818cdb944770/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">elim_domain_condition</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> <span class="n">Forall</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">Bijections</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)),</span>
+                   <span class="n">condition</span><span class="o">=</span><span class="n">InSet</span><span class="p">(</span><span class="n">Lambda</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Conditional</span><span class="p">(</span><span class="n">fx</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">A</span><span class="p">))),</span>
+                                   <span class="n">Bijections</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">))))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="elim_domain_condition"><a class="ProveItLink" href="proofs/elim_domain_condition/thm_proof.html">elim_domain_condition</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/e25fd43482835bc0ed007223885acfb44847a1fc0/theorem_expr.html"><img src="data:image/png;base64,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
+TkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>If mapped unique elements of a function are unique, then the function is a bijection onto its image.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">bijective_by_uniqueness</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">A</span><span class="p">),</span> 
+    <span class="n">Implies</span><span class="p">(</span><span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">NotEquals</span><span class="p">(</span><span class="n">fx</span><span class="p">,</span> <span class="n">fy</span><span class="p">),</span>
+                   <span class="n">domain</span><span class="o">=</span><span class="n">A</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">NotEquals</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)),</span>
+            <span class="n">InSet</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">Bijections</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">Image</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">A</span><span class="p">)))))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="bijective_by_uniqueness"><a class="ProveItLink" href="proofs/bijective_by_uniqueness/thm_proof.html">bijective_by_uniqueness</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/59385d7c94c4bac9681704b84a7c3ac3d1845b580/theorem_expr.html"><img src="data:image/png;base64,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
+AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">bijection_transitivity</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">),</span> 
+    <span class="n">Implies</span><span class="p">(</span><span class="n">And</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">Bijections</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)),</span> <span class="n">InSet</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">Bijections</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">))),</span>
+            <span class="n">InSet</span><span class="p">(</span><span class="n">Lambda</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Conditional</span><span class="p">(</span><span class="n">Function</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">fx</span><span class="p">),</span> <span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">A</span><span class="p">))),</span> 
+                  <span class="n">Bijections</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">C</span><span class="p">)))</span>
+    <span class="o">.</span><span class="n">with_wrap_before_operator</span><span class="p">())</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="bijection_transitivity"><a class="ProveItLink" href="proofs/bijection_transitivity/thm_proof.html">bijection_transitivity</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/018ec0da3cb2b7cbb2572af9098a0f24a8bccdc00/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAlkAAABNCAMAAACi/oHRAAAARVBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAeYafp
+AAAAFnRSTlMAq1RmmUTNIjK7EInv3Xbh+fvl1/Pp3hX/qAAAAAlwSFlzAAAOxAAADsQBlSsOGwAA
+DuZJREFUeNrtXemahCCSlENOYXZ2Znz/R10vFBDk8ujZr/zR1drVBQFBkiRJVNf9vQvD2E3iguN0
+oTdqOBck5t8EEbXI/gaUCJYyXH/kIn0CKojdJLsDvAhjWJueqfwuKADzKpQQlhJc5qLqUzqmmheR
+2M2fZFaHsgstAfMJsxwsqKIGEnxILDhc85rZf2eDuJdZwuldnHxHRm90PHOKKwKTw6z7wASxcFhB
+UfQZsUSqbCJjNzd0B9NaWbcq+Y6c3hCZjCkCk8GsG8EEsYihfG7rR/oVswBJea4icnNPd0CrqfWQ
+ekdWb2S6T2VgsmbD28CEseCKuQ3wj4jFxoT7rmTs5nZm9WCUcmpSjbQULcyiWQO1DEwps9rAhLHQ
+CgNER/gNswhJMU9Ebh6wWWwZ5nziulAtzOq4zBlT4klmtYGJYOGyvIe5+oRYMGWyHGNabFlrmMXG
+pT10C7PQcPs0UcesWjARLDm4ziNIf2KyUkCd4GBxpNDvDkrCncHHcZRbZ6ytB/D2rIpZOVNAIZh8
+Zt0BJoKlamrjwwfESvKZ2TM786Z5LKUo6w4ypoa5QOswJ+lhjqbuAtNFOPN7o1M4DZ1WMssv9xYw
+ndB8+kzUUXmFJY0rNC994GmBlK+BxtjNHIVjAyxiFhyvmSXGjrGOTB9KraaND/OBbyiY3xvYN44S
+XiErtFluubeA0YOe3wSxQldYMKno5ZG8TiwxpnwNJybhBSgG2PMym4WBbyioJKM8RrTE84iVWmMa
+eYe77NFbzAb7vaE93ghFCqMtF1C8cm8AI7jaSIrXFoph0WOV/WBvMwsl7eQAYjdTu3q00lxNF4kz
+S1LZgFHTc/XZ9qr93oBeQRqB/gLZqaxLKF65N2Ahe937obvCAmsasB/l28ziyYW3Uye3gtK16z3R
+4tpmUT0NufopH+LzWDT9chrnzCtIdYxfIOuKoHjltmORR20Z7q6wsKoGHN/24cWYXKhEl4YIDApg
+e9UnUrMhnodcwzaWCrtZAqizBy/cguBEI0KjyOA0ZVGUDcUrtxkLtfpBXGMRVQ3I354OUdJKOqtc
+b8nrTgWEpvysHs5DrsEuQ+6v7rjWGhB0XqmHaufaCRuMJLOXzXOh+OU2Y5HnWTWKpWoC1m9PhyAV
+JnWNr2uJqTsOSNKDx8s/tWR1aHfBoFdnF5otdbc37LZkS6lOrpIFZt0/PLosBcUvtxmLOgdAoliq
+OMLeXh0OyYVGb3PPuZn6w6n7oLaLR5ilOcbT2vD4syDz2//xP/+cr/9dfv+X+ZDp8fzk3/88/jhf
+o1MDEwE0ywK3N2wLBZY3aB1GtvjyR3grCcUvtxmL3Q+iu8Yy4pqeHsdXMwAz3KwLm+U68IInBrpY
+u3Vs2cTq3eRXY//MEi3aG4JskYcgsvW3IzMhCcUvtxmLOpgF2SPMIsnZ6dYLJqNZV8zi4Nq99rpj
+axDVsEphrmfNjDNrJvWob2KipDgIBi3WyoKTgHIqtxkLPmZD+YifNZXw6t4hTs/Z1F6KODfd4NZV
+68vu6JEZPPX19Tzrzd05nAi3N9CZ9fau5QFmCcbba64ElFO5zVjo3u/7blkUS93iGo2vZmmRdGxE
+2Fx3bqg/YAm86A467Ovf6hRHP55Fhi20SAK+ib30Q3u1rY2+A4yYq+Rsc11COZfbjmULxvTHNmwM
+S2W2FXs3ojVkRDkGHLmBvvERgPci3B2Cj+PSDXD+pXYBLJ3agn1bGIZ6w05oBPtzpkNgeqAlVnlQ
+QuU2Y5lKxBwA3IfXhjYWVjcDi3F8k1k5CwbCIzeBxNle8uvdnadHSlFatYOsI/hPQYligZWLvPHN
+WCnN4TEeQjdTK5OsIfsZs6TKRcZmk8bSDf8ds2wssnJtrd7MpIE5EQBkj5H9RnGR571+xiwOcpGB
+6d8E0d3fZZaNhVfWgry5ONQ5axthc32/QVZiyDPdgRt7I72EMmAWL6t/cpDciaV23xW8ub8js1ai
+HMduHmWWauuNnFN2hWDqmXUjlurTg3h80eSCrMKcnP7iBP/a7tBDW29IUojsQWbdiUWSajMy/eeB
+AD56cppnbRQIe5krSte8ud2xHsqbMyuhBtGzevm9McBCZDcy60ksA6xm1mQ5j0mfPHpwmuRtQTnD
+RJJHmGUO5S1xwHnVGT6rl90beWZCPiJ+8iQWXR3v1HOolBkI9NmIvMp06gYWu7mrO/ZDeXRer82H
+88Jn9bJ7I3NoF4HJZNajWKpN1rQSnitgdg3ksyGIIZNZDSJHmd1hDuVNvTG/au+sXnFv6MxKFoHJ
+ZNaTWHT9RuXKLGR2bx8OmeSGOJzkybJMyhKbRbTTG4Gzepm9QbPT00vAFNmsR7DQod472s7jraln
+g3yaWZntKhSN3NzVHeZQ3tIb85QRPquX1xtCZdv6EjC5ftZjWApwRZmFl/mf51WjesM9X3XTOXJA
+S7b4c8U910N5AkyLCjTMOXGBs3qJeI3R9ux4gSEqAJOtU/oUFt4SKehXZlFgfqzcwTj+ocJ2Qxkf
+sZTYORWuwXxIPrDgHfO3kiiL3fy9SxTFEv42GBuLaMoKZRtXZ3Ml+4OsPbsIVNj8QMpbnParCQ2J
+RiD0XyjW+7sqObo571Db/vtV4kTPnNzOdfFxSBYYDVKIQ7PhHbnRGP66rXC6bG5yM1sWCHkbmzXR
+ak+EhGA4wg9Ia+SsL3RHnPPxcHH1DL49A5HBrmU2vEAJfpQqdPHvWX4tPMkX8t6ZJeFBR3QETDX2
+8ii0q05CR40QBvvcCdSlB9/OLER+jMpn1v060tlC3swk41FLzwLjgzjCjcHM/pcd8V/cLHHE4wZ8
+R9Thor7Dz1XLZ9YTOtK5OdP9nuZ52B1rtbkQ2s6jmFZ90j4bsHLqOPyw+2DwGWYR+SNUyWx4v450
+rpB3H0ogPsIKEpv9zX0udE/Br/tK/f4EbGB1KJCimpkFx5/JqmXWXTrSmY5uiFliXQbIre4LWZY7
+c4ZvdpfWB3R966I4uDwRw2K9dHAR2J7Aqn4mq95m3aQjnSnkDQPHwtYarLqNWOtl62m5w4svJvBI
++vUBItMwkHidetd/EBhLrcOWhbcmsLKfyWpl1g060nlC3ihw6AFhx1Xa5saT43T2pFK+HaiTCLA+
+wCxatapRkhJ9JJ4WG4Q0fPvKt39kQMxl1s060nmpsedDDxxuvnwvOqb2RIrTQcvzycs+ZVCaU6N3
+P03WhFw1idRQR4aE/7zX7mtopOq6YHBAXDwN0mNW6DMapJejzMo7NX0+9CCNyACaMwGRxMLceW3Y
+pZ8kCyudDGkDs6LeP5TO2leEnm9UQ+7r0ambshWBlUeKQ+oTpcwKfUaDjrQr6m1nM2cJeePWCark
+Qo1yXcceUg2zYkcy7YOMtix46ICjiSb7mxyb5jFSHQU1rmBIXLyUWYHPaNGR9kS9bWZlCXnzN88b
+9o0qEofs9Z3MstM6bFnwULqHcUGRPx6FE3Mpvs7i4uXMCn5G7XUS9baZlSXkTd48I01LVCQCyWLH
+NkEOs/yQWoxZg019EXx+9jbC4cJ0bnBAnLuLiYu7IFMK5W0C5X5rnUS9bcRZQt7Dqxq4Y8GoYmef
+7AhaRJjldLefbRFhFiTht8CgyTc7XeGs4xSzguLcUXFxG2RSobxRoNxrrbOot82sLCHvd+UkVYl7
+i2R0abg1utAaCCaPxAyXOyrKLFszG+/FuLLg5rlbiPmWZPfbkimZzSkDw2DNh6faRfNJI+LiFrPS
+CuWtAuVOawVEvW1m5Qh503f1s0CqSlhZl7+4sFa7a6PjOX9Vd4cSlcslT3P78DsdzWzb+thOp3nu
+FmIyA/wMgTWzCHhi9G7tYqc5Y+LiFrOSCuXNAuVOawVEvV3dh7Rz3r8rrqzLVqLQFTZiHrMQXfVd
+AIpYKUdzm+6S165mtrLl7SzXYHvuFQK3kQi9EclPzDrXLnY0KiYubjMr5cG3C5TbrRUQ9XaZJTO6
++tWNuFIiCzKENbyXRmenBfC//6Oc60hipYBENLOtEhxVwe25Vwgb3dc4s861i4hzn8TFz8xKynqf
+P+Ok6r0qeW+q3ovAd1zVOyDq7TIrbSDAu19EVygxSImkFzZrwasvPCtbp5phMyQ9zWyLWY6Pbz23
+CjErpT5ps861C4tzx8XFD2alZL3vECi3Wysg6l3KLPXyFq9KLA4dP0t53kWAWYsGjxBhZnma23wX
+VXc0s63Z0EmePZ7bhZiItR+5DjLLq11YfCguLm7NhglZ7xsEyp3WCoh6F/pZ4u2vdJIFy5een5Yb
+ztpQ8L4Dgw3e6wCPmMYieZrZ1ra/Y2LW534hJpEb8QSzArULinNfiItbzLqW9b5DoNxprYCod6EK
+HRxfPq7Q5xd43l+1NLznRocjE7P0Z38YnT4nnuVpZh/xA1cWfH3uF2JiEdjzTzk/fnahf1x77+R7
+BMXFxeqO2vGsK1nvOwTKvdY6i3oXfmc2eP37fofsYXX+ymQryX6xWXgayRCjGARfp3r3olzNbKaC
+Dvz23C9E9e7r9t45kiWmnyPYNd9DtfPFuWPi4uuWr82suKz3PQLlfmudRL3dSGl/Xz/fdeHsmH9g
++B2y1837hpZm9p4G5aXhhtKjqHJfy432WZw7XuE+8Z9fqf2mc8bZ+PrZvaavgT0EvRuYddLMXneX
+z7LgKLAAMrvU+I3zo6VZNK8xKy3krcf3jxsPDWuGQ9C7hllbnOGsmc1n8xiQBecns2mU6+gr3ynz
+GLNwI7PSQt5keJ1YE5vrT+Afgt41zNr8zrNm9hItCsiCn6NIhmuc/lczSzUyK7k0ZOMXJ2FaZuBd
+9lrW5MFTDMI2mkbCM/5zk2mi3yCWVsNDzKrTHj2YlRbyBp+chJENpaIPjOwfvjKZdYv0ssWspI6v
+GD/R3hANllK8+0Wf/z+YdY/0conarx7pJ+2hG4yW/OmFlDLrJullSyE3OXEM+KMGaTnoPLAfocqY
+dZP08sGsDJP11Xlj2GAsfyJHdTarWXp5Z5ZOe1nosxbBDeEggn6MKvOz7pFeNsxKC3kD/mGTqHp6
+lGl4/5jV3SC9bDErLeTdf6pw1qKvRslPNWR3K97WKc0Q8lbfLt/7BsNDf078Z1dayNt5x/8BcqGu
+189lsjUAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>If the domain is finite, we know the function is a bijection if its image covers the codomain and is the same size as the domain.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">bijective_by_finite_image_size</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">n</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">A</span><span class="p">),</span> <span class="n">InSet</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">Bijections</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">Image</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">A</span><span class="p">))),</span>
+        <span class="n">condition</span><span class="o">=</span><span class="n">total_ordering</span><span class="p">(</span>
+            <span class="n">Equals</span><span class="p">(</span><span class="n">Card</span><span class="p">(</span><span class="n">Image</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">A</span><span class="p">)),</span> <span class="n">Card</span><span class="p">(</span><span class="n">A</span><span class="p">)),</span>
+            <span class="n">Equals</span><span class="p">(</span><span class="n">Card</span><span class="p">(</span><span class="n">A</span><span class="p">),</span> <span class="n">n</span><span class="p">))),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">Natural</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="bijective_by_finite_image_size"><a class="ProveItLink" href="proofs/bijective_by_finite_image_size/thm_proof.html">bijective_by_finite_image_size</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/7acc36530ed493a7c1c36e37e7038879c02dcef20/theorem_expr.html"><img src="data:image/png;base64,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
+uElCBMev18AAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These theorems may now be imported from the theory package: proveit.logic.sets.functions.bijections
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,19 @@
+\left(\left\{\begin{array}{ccc}\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{CONTROL~\mbox{on}~\left\{t + 1\right\}} & \qw 
+} \end{array} \textrm{ if } \left({_{-}b} + t\right) = 1 \\ \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} \textrm{ if } \left({_{-}b} + t\right) \neq 1\end{array}\right.., \left\{\begin{array}{ccc}\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{CONTROL~\mbox{on}~\left\{t + 1\right\}} & \qw 
+} \end{array} \textrm{ if } \left({_{-}b} + t\right) = 2 \\ \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} \textrm{ if } \left({_{-}b} + t\right) \neq 2\end{array}\right.., \ldots, \left\{\begin{array}{ccc}\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{CONTROL~\mbox{on}~\left\{t + 1\right\}} & \qw 
+} \end{array} \textrm{ if } \left({_{-}b} + t\right) = t \\ \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qw & \qw 
+} \end{array} \textrm{ if } \left({_{-}b} + t\right) \neq t\end{array}\right..,\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{U^{2^{-{_{-}b}}}~\mbox{part}~1~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{U^{2^{-{_{-}b}}}~\mbox{part}~2~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array}, \ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{U^{2^{-{_{-}b}}}~\mbox{part}~s~\mbox{on}~\{t + 1~\ldotp \ldotp~t + s\}} & \qw 
+} \end{array}\right)

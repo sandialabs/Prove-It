@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.modular.mod_natpos_in_interval theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.modular.mod_natpos_in_interval-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">modular</a>.<a class="ProveItLink" href="../../theorems.html#mod_natpos_in_interval">mod_natpos_in_interval</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.modular.mod_natpos_in_interval-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> mod_natpos_in_interval
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="mod_natpos_in_interval">mod_natpos_in_interval:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/d7344fa6d9a26ffb302a69dffba8327819dd13850/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAU8AAAAXBAMAAAB5SdDvAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEj0lEQVRIx9WXf2wTZRjHv22v7fWu7SokxonB
+GqOZEaEmukSDUMMkmCXahPjPJGwKxgyj6dCYEBGLMfyj2PkD9BTJ4X9zhHY60UGMC2KCEAyYCRFs
+0sVFXIzNgrIhIPF53/fa3fW9up5/6Zs8vbv3ved9P+/zPj+uwL9oWUvmbmG5S3vE01obm19MavGk
+kCZasCx1/dzlaTG11QTW0k2CPd3sSfd2Sxpu5McMuwwcp5+f6gf9l+jn4IRsI23XCQnyDP1EiDCe
+Ah5gPU964dR6hDRuL3FQrCcJmXVjOuGEktppWSuUruvYs/KSpYANwFbmSf1eQJWUkMatRYCeJwmk
+XUDvA0ZctCRvitdA7xJb1pNeQKOWzAUaZMvgqLXmB6VTNdA3gCWmpNVtNgaNmgiQbUKeXPRWS+YC
+5StgnQiqZ0ybRf8A8rJtvkBj0BBRHi+VjnkC7bQkvOAcj+lth7dMltdOZqA9NMEID1byHDS0cJxo
+hrjO86bt6DUGKvvOY5V5DUF1iqhVwHtN4BVrd+ssWZON8MPFyaT6eyYwiu1Z7Ab2JvElBy1s0GaA
+djijVelB+DKBSnlLmzYLWRfQ+ChzdQrePoQTTYDOBsV3QrSvoIiEsgv4E+pFnKX1c9hZjXpyw2+B
+RfyV2SSxOSVAiy55K1p2AQ2zmPQTbcTUM7ZB3zfD7zOobVYmCI99iqUJO+jXQpQpxMRqBnCZQFWa
+saWoXSVb8glXsm7keUIk/yr9wO76nqAtUne3ZFEydQvNpz1dYi1XA8Wex2mCKYIt12JJHTcysay+
+jzmUj0G83roDN+mmYrqARvstIAZ6lUD9Fwi0X62BnkWQ0NfwY63lP/VBkwfTEimYaNfdSReLYj/N
+FmTn37OsOtBB+wjg5Wd5EqJ7ZRWrWuW0juGOsY6M8+gLZSyHHZRbND1r0fNQaKE7+CuzRYcVGlJY
+brqk0YdNF1Beyvxsgo8p7WNw2We8UDFv5MbLV64X9a/tli26w0d3Cykkca0/awPFYTrRDHqrPnoR
+e2nCe7hOxZHwl3K/qAfNkde7RT0PJnYkm2mP2ml1BgN8NLCR+8dv5oQ4sDb9w0cdoENCImX/mMI7
+ejnoBbyWw1M0XQY38h3Px9tWImNF0w4aS2pH+EOBVeNpKzhSEamKzVTTk8Ic0ccOOa2OYjUf3afz
+y1toD/L12pCedIBuF6It/LzvF/a89cp1t11J7P+rGO4cIlNqnZX8SR4Ew0z/e5F7WrtsoFrneE74
+JZt1zEpPC1bUcfpumJ5vgcaqfhfNxBNoNwwjieIBfEQ9R3B/oNcw3iTQwZAjj8ZyQpr7ILW8Mzhi
+K6GeGld4sfpUyEbuNV/lM7alcICuUzikFoVFg4sdmuw7Q/rW+KcvGHldz6A1Y0ez+dVmhAWdriB4
+QiviDPkvr1h3A+NO1XcsaaZtkur3qEdQyq+2z7vgisWfIPwu3d15za87E+ohvEKBuokOWD2Vhc+p
+OmBJM03aEC80XhpLHZG62jpoGJbT+oV/jxg73PyuLKSZfy3yl/xz8zxxvsBeP9dwuAv/k5b6zxH9
+DevnTjQXvZQbAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/6fc05a547b77043584b3f6889f6ae3765f82af1b0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>mod_natpos_in_interval may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.booleans.conjunction.demorgans_law_or_to_and theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.booleans.conjunction.demorgans_law_or_to_and-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">booleans</a>.<a class="ProveItLink" href="../../theory.html">conjunction</a>.<a class="ProveItLink" href="../../theorems.html#demorgans_law_or_to_and">demorgans_law_or_to_and</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.booleans.conjunction.demorgans_law_or_to_and-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> demorgans_law_or_to_and
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="demorgans_law_or_to_and">demorgans_law_or_to_and:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/da518f8594dcec4fa1b45e3c0d6b3a95596d47cd0/expr.html"><img src="data:image/png;base64,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
+AABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/9653f78aebcfdd7a6b3773d43c54ca761881ec760/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

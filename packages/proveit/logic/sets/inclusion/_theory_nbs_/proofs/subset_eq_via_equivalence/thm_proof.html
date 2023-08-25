@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.logic.sets.inclusion.subset_eq_via_equivalence theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.logic.sets.inclusion.subset_eq_via_equivalence-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">sets</a>.<a class="ProveItLink" href="../../theory.html">inclusion</a>.<a class="ProveItLink" href="../../theorems.html#subset_eq_via_equivalence">subset_eq_via_equivalence</a> theorem<a class="anchor-link" href="#Proof-of-proveit.logic.sets.inclusion.subset_eq_via_equivalence-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> subset_eq_via_equivalence
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="subset_eq_via_equivalence">subset_eq_via_equivalence:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/fce06bb79d050201fd7469ba4ebaf40f7696e01c0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALkAAAAXBAMAAACllfPxAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAC0ElEQVRIx61VTWgTQRT+kk2yyaauCdTSi3RB
+L54MWAoeahP8wVLBgpeiovFQxHhoe1ab9CIIgqVe/E8K1ZOFKr3lYK3gD2IJKNiDC0EPpSDa1hpj
+i9Y3M7ubSVRitw7szpt5O9+8972fBVwPtY6+HxsZ78Udyb/pT9ATYcI2F+DeCT4FFn7T7F6LRs9k
+oMeA/Wx92gX6PTHttNHnTdOcFeILwFMGUsAQ827YBfpeMSW+ifniXCUgPwH/MtBKnuWAsOECfYq/
+w+fKfNbeVjQKbSl0Q0MOCrETcEO7iOagvsRnT3dF5SGyAs/oIehXpvnSBbpPBDXu/SKCK6kahqFt
+zZBflDEHgRt8M1dz3Ba0P6Izw4heI7jKl0OS6sqdT01Mq5B7A1B5VmrPuerScr4zw4SQ/fH9jC0F
+s12T1yx5kyFMUBf5ckBC/9wP7xNGHoUmlAtzzsKCQKUAfaoK/ZGB8FPCInPagY+2+/zQ/L7Ed3GZ
+hH6LHSKTgsS/tyg465kRIYlDWZDR/ZeL2H73JkBENwIdMrpWBH4IHmMVdOZNB2n8zMrkHr5XPCVO
+GRiPyeh6III4fM1jBDcN7bXMDIvNO7HudcCDLM4t9LW3QMLDFAfBAa5Lf2hthoxe9CUZKW0zrEx2
+JewghMg4HKGnT6xHt9hZoVN9BUuMZFak53lQeyxG26E1yuj+DIXBd53GVRaT0biFwdJNZa5nrV54
+7LbVCQK0ezxlJ62Hm9OVb+GXE3S6W0L35R+sOGUSh/rV9r8ALVvKYcfa2epU9WQXo00jnDynwnQC
+5bdMAyfljCxCLTtlYsDvLGbrFtwFRyIGNxvaBNQVaG8kZvxE+ZLNTDqHcZsZ1qP+rc+R/4+hHe4N
+TqNtNd9pSOiHIhgrWR4qffnJEedsqOrf4zPNSge2WmVt5/VKcqiOZVq9th2q/fUdXQc6Buvo52o3
+YutB39BQ/wPGL81zqz5PSX1PAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/af3b867efb8c83e2f897318469fb85bb216817880/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>subset_eq_via_equivalence may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

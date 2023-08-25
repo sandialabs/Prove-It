@@ -1,0 +1,1 @@
+\left(\sum_{i = 0}^{m + 1} x^{i}, \frac{1}{1 - x} \cdot \left(1 - x^{2 + m}\right)\right)

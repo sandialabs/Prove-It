@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Axioms for the theory of proveit.logic.booleans.implication</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Axioms-for-the-theory-of-proveit.logic.booleans.implication">Axioms for the theory of <a class="ProveItLink" href="theory.html">proveit.logic.booleans.implication</a><a class="anchor-link" href="#Axioms-for-the-theory-of-proveit.logic.booleans.implication">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the axioms of a theory:</span>
+<span class="o">%</span><span class="k">axioms_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">Implies</span><span class="p">,</span> <span class="n">TRUE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">,</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">And</span><span class="p">,</span> <span class="n">Iff</span><span class="p">,</span> <span class="n">Not</span><span class="p">,</span> <span class="n">NotEquals</span><span class="p">,</span> <span class="n">Boolean</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span>
+<span class="o">%</span><span class="k">begin</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining axioms for theory &#39;proveit.logic.booleans.implication&#39;
+Subsequent end-of-cell assignments will define axioms
+%end_axioms will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">implies_t_f</span> <span class="o">=</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Implies</span><span class="p">(</span><span class="n">TRUE</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">),</span> <span class="n">FALSE</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="implies_t_f">implies_t_f:</strong> <a class="ProveItLink" href="../__pv_it/axioms/64c4baeb128029e604d2dad66c10560a977838a60/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHoAAAAVBAMAAAB71edYAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA8ElEQVQ4y2NgYBBgIATwqGAyIKh7E24pEwaG
+qlUgsBab7A6wBQ24ZFgTwGwjHGZDxFNxybA3EKG7HZcMJwOm7qPoujkDcOg2w6L7DbputgYcukuw
+6OZwQNPNcgGH7gwU3ezg0F/1HU03BzhoUaMGLLMYi90MzMmoupkn4LB7NjbdDGGzUXTzfSBFN2OK
+AIpublx2L8bm72UCaC5fgMPfh7DYzX0APdQO4LDbF4tuMfT4ZnfAofsVUpqHgXNQGujUmWCncm1A
+0wqT4XpARH6WwpVBOQoYCIMKnDIHCWtmPIBTKoawbh7cRROjAkHdirgkAD2cQqjL4NQdAAAAAElF
+TkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">affirmation_via_contradiction</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Boolean</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Implies</span><span class="p">(</span><span class="n">Not</span><span class="p">(</span><span class="n">A</span><span class="p">),</span> <span class="n">FALSE</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="affirmation_via_contradiction">affirmation_via_contradiction:</strong> <a class="ProveItLink" href="../__pv_it/axioms/0b2b2394d208dc9b60274818d3b211a689b87bef0/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJkAAAAWBAMAAAAhlCOEAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACDklEQVQ4y2NgoBooA2IBEEOZGqblA7EriJFO
+BcOY/gOJRiBmn0AF01jkCxgY2BYwMHArUMG07fsbGBiYDYAmUsEw9gfvQW46e/fuaWp4lEEf6C4G
+DwaGWWD+AnQFDhBKHS7AxcDwAJdpQQz9G4BUIQM7OJVwnYDGTXbKFUg4QuKGOQCuY00D0AlY7IMw
+60HGcC7gBqvn/gQk+iSnMjzYUKSBZNpChI79CgysG5BNQ6QFviku8iAe0wNIJEScA3oe6G2gadyL
+kNS6wnWw9gD9mcWAlNwRpq1jYOC/AGIk2IH5DxIZGB6DGRuKdyGpvYCwnw3ol01gJmMBmmlAP/Me
+ADE2ga3jY3Bj4ALLPnA504BQy54A1/GABchWYdg5c+bMaSdQTWMFpbMPIFYNOBIiGN6AxUBua3mK
+UMs6gYEbqH0ukNXAB7Q9EqKd2xXFtBpQBHwHuxrsEu/d8guYM2fOnAQKN26EaUwCEK8BA3X3xl8M
+DJ3QxCq9AMm0lf+zGJjmf4PHEB8DQ30DxwaI27j5EKZxTICZ9oCB/QfMpzNno4UbKggGxokCJBkD
+TevDiAUWcDAAE9E7iEcN8JnGcpCByz+VoRLoaaa87JnIaqdDlfgIMCz5FgDltoBMnDnz5Mx5eDIb
+186ZU9HTZjSqignYcyFhANHIUoDiiQJyiwVoqOxCFjMlu5ApgJccCIDfiwCVsoREg7XbngAAAABJ
+RU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">denial_via_contradiction</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">Not</span><span class="p">(</span><span class="n">A</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Boolean</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Implies</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">)])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="denial_via_contradiction">denial_via_contradiction:</strong> <a class="ProveItLink" href="../__pv_it/axioms/bb1f6e7975966fafc16cb85a3e06239b6249ef7f0/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJ4AAAAXBAMAAAAIFOtYAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACJUlEQVQ4y6WVPUgcURDH/96pp7t62onVHQQk
+oOJVgTRhCw0BC0UbCwuDCcEPjCYQEAQ3kNYPQkSehLjY2chpAqIpokVA1IiIlgcLYicoFlqambe3
+d+/tRSN7A29v5s2935t5M/sWKEJGA3YMRUk8qVofgDIXqGX9USheo2a9pXEKtLH+JgzO6FOtyC09
+yh185Lxnw/BKU5qVoNOMWoyEmQzDq9Ks9V82PXcRpV3KQx1fg1Za94KD6gf+ZDJ7oXjtWrpo4fRX
+gRfAgpxyggssX3H+yetXjS7MpOnnCTCGmOwZYydbqKFXx955+lXyPX4kWTkiPcNiyb0nmdIEVDpm
+J7vNK3pM18/BTb97rPGkJyeVvvLbPzoCxb+0JvjvMxSP65Wj54D2o+SJZy5pPPZw4Km7eStAzSHp
+vTT6nslp96Xsb+a939R47GGp03lHCo9Srt4ivZnG2qB8GfEchiS4rfu2ymOPKUiGbY33zedZKOOm
+uyT9KY0JWY4enMtpju/Tmcpjjyc/OlXeav5MJ3j+JttDJXLb9p8JJzogxGc+P1PlscfTxjZV3lQO
+t3w7iMjiNTXMSe7uASbtirQXnxlXeNIj8xVpLd9qu6AlY4e+1k0FSnqNTbxphed5WL7r9Yhad18R
+pdswOl5jnLaMjAyJVJ6X9ZBU8PoN8VUI11s0X8AbD15pG2IubwVuMSO4ermAN3/vC/+/WzHmBj8A
+o0Xxiv18PUT+AqeEhq3dPYtNAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong><code>Iff</code> (if and only if) is defined as implication in both directions:</strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">iff_def</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Iff</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> <span class="n">And</span><span class="p">(</span><span class="n">Implies</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">),</span> <span class="n">Implies</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">A</span><span class="p">))))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="iff_def">iff_def:</strong> <a class="ProveItLink" href="../__pv_it/axioms/cf803a8534e2e0f4c1cb0b4fb91c17baee212bfa0/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAXkAAAAWBAMAAADX+PE1AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAD3klEQVRYw9WWTUhUURTHjzOj83zjvBQq2oRC
+EYSLJpAgohr7IpFIamMRZUVIGTRuhCizlkGRRFBE6KwEoULduHCRGn0RxRDhqqEBFxFEmYlWUtO9
+95xz38ybO80wuekPfxzfub/3zr333A+AvypGLtxqqcjimKLe7tShhbr+0uzo0pHE5FOwDRl2tXy4
+Jk/jerLQOVN8c7qm5vRlcCJLRta7MZMqZkAx7N3yYbs5ebsNLeRLG1u8ACj7DnDmn8kRl9MxgzaI
+7BVDviLno9ecfSCClj9rTWUW/A1QPgfQ8K+kPeVyOmZQ4wIgQ66IA4TyFFsVWWj0EU1lBWCPlfxi
+hPziW1XxIkipu3lIZ2OL5nSMVOm+PHRBTolkyP4IZmTSOrIYjtQX6uG0fB/nUyYmsuKZcKQIUuoq
+mMmw1as5HSNZbmVccmYBGfarZPJlnuybyWJGYUPEfZXN1VrVC/Zq0ZVQdWESh3zITNbT0mvOjLG2
+6F9R3zdAhr2X5zOek/1JMsABuIHfvSY6m0w+pbY3+j6vlLn55WILJJWqzSRFuZyzSLltrNVf1DGA
+fYp5HyWovM5aJIbdCUH1Qfs5zu3cWBP3+w1ZdBp6VCMHO2rdxAZfYuB7LPeVcU+/c0mS74SJtKoh
+HGdOx9w6pNoLQPArMezKeEitmNAszm0CHM7lCRmcW7tqVclMUOQ+ZnRPWC5Ka8aTfQ6pNfDEQJaJ
+nT/FnI65++9ZXNMfdzX+AGTYvhQu2tbXuJyi4J/x5vAQYFlC/ujE+gl2YAM5EtvFZ8vH82WvSd4p
+O2IGckBkmNDZc0yraxQ7IZ79AmTY0LZNxVLHcTnVwYOId/5F4YUxwa1YvjgyllxDtWJcfAlP3eeS
+FJ2KGUh1Vu1gTse47pPtXDgA7wAZNoyoHcSBPapJz3TDKu5zH7k8gme0LKxoxtnsiLPDmpdPvced
+gcR112skE3wd6suMsQ7R34N07ZAMGy6q0WqFTzi4YC9nbJh8Ue7xC/hshRyEFjq5xKgekX0PDHmy
+N5GZN7Zs0p/iQ2Q4M5ZxM1N/5Rz2x5BhyyUjd9qxWrXqReo9lBxcRw+mz4Cvfx4zFCUK5+nE6f9a
+s1LtPuEWT/YmUuqOkSyTX7ZSyLgxPmuxTO3++TisT3cgw6apFEmrVpMAx3i9hy+jsy4o8kXeg6Hb
++8BEGm/v3blczpXIxHRnsaKmltXZQxD8CfZbfTJGudALaKf3Qalk0czOTDYwAfb+U9YkbFoca3Lv
+JbfJBWS4o5ZKFsmws+Tz/D9ILqDK3DtwqWSRDDtLh73dTKEL6INhgEoki2Q+mNgI/F/6A9dMcbXF
+hKa/AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These axioms may now be imported from the theory package: proveit.logic.booleans.implication
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

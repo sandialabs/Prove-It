@@ -1,0 +1,5 @@
+proveit.physics.quantum.QPE._Psi_ket_is_normalized_vec
+proveit.linear_algebra
+proveit.logic
+proveit.physics.quantum.QPE._two_pow_t_is_nat_pos
+proveit.physics.quantum.algebra

@@ -1,0 +1,1 @@
+\left\{\lvert k \rangle_{n + 1} = \left(\lvert 0 \rangle {\otimes} \lvert k \rangle_{n}\right) \textrm{ if } k \in \{0~\ldotp \ldotp~2^{n} - 1\}\right..

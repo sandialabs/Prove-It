@@ -1,0 +1,1 @@
+\forall_{x \in \mathbb{R}}~\left(round\left(round\left(x\right)\right) = round\left(x\right)\right)

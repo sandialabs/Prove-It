@@ -1,0 +1,4 @@
+\begin{array}{cccccccc} 
+ A_{i} & A_{i + 1} & \cdots & A_{j} & B_{i} & B_{i + 1} & \cdot \cdot B_{{_{-}a}} \cdot \cdot & B_{j} \\
+C_{i} & C_{i + 1} & \cdot \cdot C_{{_{-}a}} \cdot \cdot & C_{j} & D_{i} & D_{i + 1} & \cdots & D_{j} \\
+\end{array}

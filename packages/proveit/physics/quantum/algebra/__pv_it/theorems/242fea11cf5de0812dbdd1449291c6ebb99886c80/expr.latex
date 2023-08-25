@@ -1,0 +1,5 @@
+\begin{array}{l}\forall_{\mathcal{H} \underset{{\scriptscriptstyle c}}{\in} \textrm{HilbertSpaces}~|~\textrm{Dim}\left(\mathcal{H}\right) = n}~\\
+\left[\begin{array}{l}\forall_{A, B \in \mathcal{L}\left(\mathcal{H}, \mathcal{H}\right)~|~A^{\dagger} = A, B^{\dagger} = B}~\\
+\left(\begin{array}{c} \begin{array}{l} \left(\left[A, B\right] = \vec{0}\left(\mathcal{L}\left(\mathcal{H}, \mathcal{H}\right)\right)\right) \Leftrightarrow  \\ \left[\begin{array}{l}\exists_{v_{1}, v_{2}, \ldots, v_{n}~|~\left\{v_{1}, v_{2}, \ldots, v_{n}\right\} \in \textrm{O.N.Bases}\left(\mathcal{H}\right)}~\\
+\left[\begin{array}{l}\exists_{a_{1}, a_{2}, \ldots, a_{n}, b_{1}, b_{2}, \ldots, b_{n} \in \mathbb{C}}~\\
+\left(\begin{array}{c} \left(A = \left(\sum_{i=1}^{n} \left(a_{i} \cdot \left(\lvert v_{i} \rangle \thinspace \langle v_{i} \rvert\right)\right)\right)\right) \land  \\ \left(B = \left(\sum_{i=1}^{n} \left(b_{i} \cdot \left(\lvert v_{i} \rangle \thinspace \langle v_{i} \rvert\right)\right)\right)\right) \end{array}\right)\end{array}\right]\end{array}\right] \end{array} \end{array}\right)\end{array}\right]\end{array}

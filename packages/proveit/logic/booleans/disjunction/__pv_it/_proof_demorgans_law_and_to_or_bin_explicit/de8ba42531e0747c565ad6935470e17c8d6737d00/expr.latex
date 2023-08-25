@@ -1,0 +1,1 @@
+\left(A \mapsto \left\{\forall_{B \in \mathbb{B}~|~\lnot \left((\lnot A) \land (\lnot B)\right)}~\left(A \lor B\right) \textrm{ if } A \in \mathbb{B}\right..\right)

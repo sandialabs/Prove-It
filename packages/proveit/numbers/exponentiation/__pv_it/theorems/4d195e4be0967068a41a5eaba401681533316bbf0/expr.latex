@@ -1,0 +1,1 @@
+\left(n \mapsto \left\{\forall_{x~|~x \geq 0}~\left(\sqrt[\leftroot{-3}\uproot{3}n]{(x^{n})} = x\right) \textrm{ if } n \in \mathbb{N}^+\right..\right)

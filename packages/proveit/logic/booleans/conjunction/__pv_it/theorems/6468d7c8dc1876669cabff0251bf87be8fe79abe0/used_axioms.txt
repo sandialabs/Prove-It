@@ -1,0 +1,2 @@
+proveit.logic.booleans.conjunction.empty_conjunction
+proveit.logic.booleans.eq_true_intro

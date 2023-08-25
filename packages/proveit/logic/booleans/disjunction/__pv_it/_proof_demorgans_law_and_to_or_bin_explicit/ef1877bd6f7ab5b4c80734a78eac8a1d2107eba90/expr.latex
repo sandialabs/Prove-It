@@ -1,0 +1,1 @@
+\left(B \mapsto \left\{\bot \lor B \textrm{ if } B \in \mathbb{B} ,  \lnot \left((\lnot \bot) \land (\lnot B)\right)\right..\right)

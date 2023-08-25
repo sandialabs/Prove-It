@@ -1,0 +1,2 @@
+proveit.logic.booleans.disjunction.demorgans_law_and_to_or_bin
+proveit.logic.booleans.disjunction.or_if_left

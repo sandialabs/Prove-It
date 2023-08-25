@@ -1,0 +1,7 @@
+\left(\left(i, j\right) \mapsto \left\{\forall_{a_{1}, a_{2}, \ldots, a_{i}, b_{1}, b_{2}, \ldots, b_{j}}~\left(\left(\begin{array}{cccc} 
+ \multirow{1}{*}{$\begin{array}{c} \uparrow \\ a_{1} \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ a_{2} \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ \cdots \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ a_{i} \\ \downarrow \end{array}$} \\
+\end{array}
+\right) \neq \left(\begin{array}{cccc} 
+ \multirow{1}{*}{$\begin{array}{c} \uparrow \\ b_{1} \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ b_{2} \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ \cdots \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ b_{j} \\ \downarrow \end{array}$} \\
+\end{array}
+\right)\right) \textrm{ if } i \in \mathbb{N} ,  j \in \mathbb{N} ,  i \neq j\right..\right)

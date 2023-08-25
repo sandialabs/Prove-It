@@ -1,0 +1,1 @@
+\forall_{A, B}~\left[\forall_{f \in \left[A \rightarrow B\right]~|~\forall_{a, b \in A~|~a \neq b}~\left(f\left(a\right) \neq f\left(b\right)\right)}~\left(f \in \left[A \xrightarrow[]{\text{1-to-1}} B\right]\right)\right]

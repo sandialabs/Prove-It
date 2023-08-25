@@ -1,0 +1,1 @@
+\left(a \lor (\lnot a)\right) = \left(\top \lor \bot\right)

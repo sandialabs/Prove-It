@@ -1,0 +1,1 @@
+\left(\left(A_{1}, A_{2}, \ldots, A_{m}\right) \mapsto \left\{\forall_{C~|~\left(A_{1} \Rightarrow C\right), \left(A_{2} \Rightarrow C\right), \ldots, \left(A_{m} \Rightarrow C\right)}~C \textrm{ if } \left(A_{1} \in \mathbb{B}\right) ,  \left(A_{2} \in \mathbb{B}\right) ,  \ldots ,  \left(A_{m} \in \mathbb{B}\right) ,  A_{1} \lor  A_{2} \lor  \ldots \lor  A_{m}\right..\right)

@@ -1,0 +1,1 @@
+\forall_{B \in \mathbb{B}~|~\lnot B}~(\lnot \left(\top \land B\right))

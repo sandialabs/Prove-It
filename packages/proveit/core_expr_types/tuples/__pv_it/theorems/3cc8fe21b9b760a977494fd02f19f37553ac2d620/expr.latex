@@ -1,0 +1,1 @@
+\left(f, i, j, k\right) \mapsto \left\{\begin{array}{c} \begin{array}{l} \left(f\left(i\right),f\left(j\right), f\left(j + 1\right), \ldots, f\left(k\right)\right) =  \\ \left(f\left(i\right), f\left(i + 1\right), \ldots, f\left(k\right)\right) \end{array} \end{array} \textrm{ if } \left(k - i\right) \in \mathbb{N} ,  j = \left(i + 1\right)\right..

@@ -1,0 +1,1 @@
+\left(\left(\sum_{l = e + 1}^{2^{t - 1} - 1} \frac{1}{l^{2}}\right) + \left(\frac{1}{e^{2}} + \left(\sum_{l = e + 1}^{2^{t - 1} - 1} \frac{1}{l^{2}}\right)\right), \left(\sum_{l = e + 1}^{2^{t - 1} - 1} \frac{1}{l^{2}}\right) + \frac{1}{e^{2}} + \left(\sum_{l = e + 1}^{2^{t - 1} - 1} \frac{1}{l^{2}}\right)\right)

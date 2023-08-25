@@ -1,0 +1,1 @@
+\left(a, b, n\right) \mapsto \left\{\left(\frac{a}{b}\right)^{-n} = \frac{b^{n}}{a^{n}} \textrm{ if } a \in \mathbb{C}^{\neq 0} ,  b \in \mathbb{C}^{\neq 0} ,  n \in \mathbb{N}^+\right..

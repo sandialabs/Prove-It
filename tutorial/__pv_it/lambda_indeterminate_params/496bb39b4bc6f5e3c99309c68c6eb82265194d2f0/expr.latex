@@ -1,0 +1,1 @@
+\left({_{-}a}_{1}, {_{-}a}_{2}, \ldots, {_{-}a}_{n}, y_{1}, y_{2}, \ldots, y_{n}\right) \mapsto \left(\left(x \cdot {_{-}a}_{1} \cdot y_{1}\right) +  \left(x \cdot {_{-}a}_{2} \cdot y_{2}\right) +  \ldots +  \left(x \cdot {_{-}a}_{m} \cdot y_{m}\right)\right)

@@ -1,0 +1,6 @@
+proveit.core_expr_types.conditionals.conditional_substitution
+proveit.core_expr_types.lambda_maps.lambda_substitution
+proveit.logic.equality.equals_reflexivity
+proveit.logic.equality.equals_transitivity
+proveit.logic.equality.substitution
+proveit.numbers.number_sets.natural_numbers.zero_in_nats

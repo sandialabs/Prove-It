@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Axioms for the theory of proveit.logic.sets.cartesian_products</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Axioms-for-the-theory-of-proveit.logic.sets.cartesian_products">Axioms for the theory of <a class="ProveItLink" href="theory.html">proveit.logic.sets.cartesian_products</a><a class="anchor-link" href="#Axioms-for-the-theory-of-proveit.logic.sets.cartesian_products">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the axioms of a theory:</span>
+<span class="o">%</span><span class="k">axioms_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">ExprTuple</span><span class="p">,</span> <span class="n">ExprRange</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">k</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">S</span>
+<span class="kn">from</span> <span class="nn">proveit.core_expr_types</span> <span class="k">import</span> <span class="n">a_1_to_m</span><span class="p">,</span> <span class="n">A_1_to_m</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">And</span><span class="p">,</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span>  <span class="n">CartProd</span><span class="p">,</span> <span class="n">CartExp</span>
+<span class="kn">from</span> <span class="nn">proveit.logic.sets.cartesian_products</span> <span class="k">import</span> <span class="n">a_in_A__1_to_m</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">NaturalPos</span><span class="p">,</span> <span class="n">one</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining axioms for theory &#39;proveit.logic.sets.cartesian_products&#39;
+Subsequent end-of-cell assignments will define axioms
+%end_axioms will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>A Cartesian product set is the set of tuples whose elements are contained in the respective sets of the product.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">cart_prod_def</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">m</span><span class="p">,</span> <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">A_1_to_m</span><span class="p">,</span> <span class="n">a_1_to_m</span><span class="p">),</span> 
+              <span class="n">Equals</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">CartProd</span><span class="p">(</span><span class="n">A_1_to_m</span><span class="p">)),</span>
+                     <span class="n">And</span><span class="p">(</span><span class="n">Equals</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ExprTuple</span><span class="p">(</span><span class="n">a_1_to_m</span><span class="p">)),</span>
+                         <span class="n">a_in_A__1_to_m</span><span class="p">))</span><span class="o">.</span><span class="n">with_wrap_after_operator</span><span class="p">()),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="cart_prod_def">cart_prod_def:</strong> <a class="ProveItLink" href="../__pv_it/axioms/a354b526656f0b75959a9fbfbf032e95bfff9c820/axiom_expr.html"><img src="data:image/png;base64,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
+AAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>A Cartesian exponentiation is the set defined by the Cartesian product of the base repeated the number of times indicated by the exponent.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">cart_exp_def</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">m</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> 
+              <span class="n">Equals</span><span class="p">(</span><span class="n">CartExp</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">m</span><span class="p">),</span> 
+                     <span class="n">CartProd</span><span class="p">(</span><span class="n">ExprRange</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">m</span><span class="p">)))),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="cart_exp_def">cart_exp_def:</strong> <a class="ProveItLink" href="../__pv_it/axioms/2ccd09a88bfc4954f64af163f333dfb23a6f4d3e0/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAbwAAAAVCAMAAAAKCqt/AAAAM1BMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADxgEwMAAAAEHRSTlMAq1RmmUTNIjK7
+EInv3XZehM4hfQAAAAlwSFlzAAAOxAAADsQBlSsOGwAABH9JREFUaN69WomSrCAM5JRLefz/1z6u
+KCIKjrpU7WYO7IQ0hBAGobeaXRY52FXUH1BGpbUYWarkbwifNPHHzw2BitvuHmiGD9NMqg805TNF
+aMb+O/wTwiftZy3cfmANgK7g3uGbswh9TN4QGDHbS8aMQfSftpN/5/xUYmZA1YaQAXrzZrDbqZ2D
+a8MYpqIOS1/jbDMdQEF6h7N1RJN4TN4ImJ7WlypMIq2cZ92/krN/twzM9g1hA7hsg91O7Rx8gAVf
+uziASb/EXWk6gGbpHS5htQj1PGyOgLF1VjKWNjzvpdkvOuufEQ71I/mKUABc9h/rdmrnaJQNvGk3
+pU38He52pgNolsHhwKchz8kbAZvXV05CEBdhZoXVRxXqD3s+Aly2wW6ndo5uSnPwQCIPze8svb3p
+AJpkcDjNM2xCL5DXByPrV9ylzlIijnOkFdh2R70iFAC5YdFY+Mdu7X5ndt7borKyqVi3A9rGTAfQ
+JKPD5yW02bxBXh9sy0i0c+aXbHdFOAKIlD6LXRbd0NPs19TCLdbCWL/1SGNUN+PhC2QT+Ja2MdMB
+NMnocBa/VnfWuTklrwtWTEnqfMPnaRJbioYbCEeAOPbaSw09zX4tOw1SIZxrF/I90gml0mKcIXcb
+bF/bmOkAmmR0uMDwb3zyn5K3B+PGWmp39pTppLbKudt7S4FwBPCjP3qpoafZ76iFc7SEOCacja4c
+CJvJOjLf0jZmOoAmmRwe1knniC0WFvfHGXfI24GRMGK5H/FcKWKO3ySvQqgAxEnlodYjOhWKpEX7
+NccjJyGWsGk9RhQxYQ8zx571qMVIPaRrOoAmmbwcfDydRwIVQj3ByHirmO6RV4KliYLbrqcQ1smP
+5LUBDh440TNGXqANrbRd5wUpq1BJD59fIK82HUB5sfK8s6k9O2dIqJjYQJm33jDGFv/HT8pjBVjK
+lUQz6OnMqXD65p6XEdoAh9hzomcwbPqpF2lbTMz9BLrIDFzUkMkjy/OweTAdQJPMDjckn8/qAvFW
+5iGScGEhU7lYeRtYOLY6RVslg8IQdjvLzQhNgOOu39bTTyHAzrjaUuz0PIqLk3vaUnLYpOp5wnIw
+HUCTzA4XeSurC8R6s4BIHzYJHyAPwCIgYa7KhCDdZXEy71Lq0VQXnwI08u2mnka/VBrJBZLtARGP
+ySlTUQZdzbR4xoVzXjlXBrSNmQ6gSYLDc4IrqgIxpyV5njKr+uQBGEohhlcZmoTp5E/mDOMfyjoZ
+oQUAqsVUJMYNPY1+aGHb/00Lj8LGTzmzl+Vf7jcTOAou/Ja2MdOXHfghx9wXiOmkYiOJPG0gFTFX
+5K1jIc2ywvNrqDcvsj7SIpYPLALQLA8O3xeIpdmtPE+H7VVYynwDl2WfLbo8rtm+VfX9UAujH1gE
+oFnWDq8LxFulJN2FXV2VHsmT4SrqGGjU44tm9ScX6Q+0PL2huQQFWTu8LhAL+FWCXNIF3R3yzpp+
+PDKt/oK8B1o+mV0ACrLrcG3CnjdEixn+UYV4/CsBYf+CvZ+12C+4A9As7TLz/3z5LXuEFF27AAAA
+AElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These axioms may now be imported from the theory package: proveit.logic.sets.cartesian_products
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

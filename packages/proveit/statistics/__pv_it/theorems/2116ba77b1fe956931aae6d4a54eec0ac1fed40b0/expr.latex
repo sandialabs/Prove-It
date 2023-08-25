@@ -1,0 +1,1 @@
+\forall_{\Omega \underset{{\scriptscriptstyle c}}{\in} \textrm{SampleSpaces}}~\left[\forall_{S~|~S \subseteq \Omega}~\left(\textrm{Pr}\left(\Omega - S\right) = \left(1 - \textrm{Pr}\left(S\right)\right)\right)\right]

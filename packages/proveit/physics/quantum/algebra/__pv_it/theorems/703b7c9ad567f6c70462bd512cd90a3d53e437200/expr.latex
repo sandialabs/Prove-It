@@ -1,0 +1,1 @@
+\forall_{n}~\left[\forall_{j, k~|~j = k}~\left(\lvert j \rangle_{n} = \lvert k \rangle_{n}\right)\right]

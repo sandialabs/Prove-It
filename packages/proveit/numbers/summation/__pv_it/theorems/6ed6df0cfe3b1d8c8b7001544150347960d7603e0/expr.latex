@@ -1,0 +1,1 @@
+\left\{\forall_{j, k \in \mathbb{Z}}~\left(\left(\sum_{i = j}^{k} \left(x \cdot f\left(i\right)\right)\right) = \left(x \cdot \left(\sum_{i = j}^{k} f\left(i\right)\right)\right)\right) \textrm{ if } x \in \mathbb{C}\right..

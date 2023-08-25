@@ -1,0 +1,13 @@
+\begin{array}{c} \begin{array}{l} \left(\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{\lvert \psi_{t} \rangle} & { /^{t} } \qw \\
+\qin{\lvert u \rangle} & { /^{s} } \qw
+} \end{array}\right) \cong \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\multiqin{1}{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle} & { /^{t} } \qw \\
+\ghostqin{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle} & { /^{s} } \qw
+} \end{array}\right)\right) \Rightarrow  \\ \left(\begin{array}{c} \begin{array}{l} \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\qin{\lvert \psi_{t} \rangle} & \gate{{\mathrm {FT}}^{\dag}_{t}} & \qout{\lvert \Psi \rangle} \\
+\qin{\lvert u \rangle} & { /^{s} } \qw & \qout{\lvert u \rangle}
+} \end{array}\right) \\  \cong \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+\multiqin{1}{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle} & \gate{{\mathrm {FT}}^{\dag}_{t}} & \qout{\lvert \Psi \rangle} \\
+\ghostqin{\lvert \psi_{t} \rangle {\otimes} \lvert u \rangle} & { /^{s} } \qw & \qout{\lvert u \rangle}
+} \end{array}\right) \end{array} \end{array}\right) \end{array} \end{array}

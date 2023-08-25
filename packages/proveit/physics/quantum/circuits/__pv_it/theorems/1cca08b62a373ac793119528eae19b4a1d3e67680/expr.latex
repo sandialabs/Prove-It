@@ -1,0 +1,24 @@
+\left(\left(k, l\right) \mapsto \left\{\begin{array}{l}\forall_{A_{1, 1}, A_{1, 2}, \ldots, A_{1, l}, A_{2, 1}, A_{2, 2}, \ldots, A_{2, l}, \ldots\ldots, A_{k, 1}, A_{k, 2}, \ldots, A_{k, l}, B_{1, 1}, B_{1, 2}, \ldots, B_{1, l}, B_{2, 1}, B_{2, 2}, \ldots, B_{2, l}, \ldots\ldots, B_{k, 1}, B_{k, 2}, \ldots, B_{k, l}}~\\
+\left(\begin{array}{c} \begin{array}{l} \left(\left(\begin{array}{cccc} 
+ A_{1, 1} & A_{2, 1} & \cdots & A_{k, 1} \\
+A_{1, 2} & A_{2, 2} & \cdots & A_{k, 2} \\
+\vdots & \vdots & \ddots & \vdots \\
+A_{1, l} & A_{2, l} & \cdots & A_{k, l} \\
+\end{array}
+\right) \neq \left(\begin{array}{cccc} 
+ B_{1, 1} & B_{2, 1} & \cdots & B_{k, 1} \\
+B_{1, 2} & B_{2, 2} & \cdots & B_{k, 2} \\
+\vdots & \vdots & \ddots & \vdots \\
+B_{1, l} & B_{2, l} & \cdots & B_{k, l} \\
+\end{array}
+\right)\right) \Rightarrow  \\ \left(\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \gate{A_{1, 1}} \qwx[1] & \gate{A_{2, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{k, 1}} \qwx[1] & \qw \\
+& \gate{A_{1, 2}} \qwx[1] & \gate{A_{2, 2}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{A_{k, 2}} \qwx[1] & \qw \\
+& \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\ddots} \qwx[1] & \gate{\vdots} \qwx[1] & \qw \\
+& \gate{A_{1, l}} & \gate{A_{2, l}} & \gate{\cdots} & \gate{A_{k, l}} & \qw
+} \end{array}\right) \neq \left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \gate{B_{1, 1}} \qwx[1] & \gate{B_{2, 1}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{B_{k, 1}} \qwx[1] & \qw \\
+& \gate{B_{1, 2}} \qwx[1] & \gate{B_{2, 2}} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{B_{k, 2}} \qwx[1] & \qw \\
+& \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\ddots} \qwx[1] & \gate{\vdots} \qwx[1] & \qw \\
+& \gate{B_{1, l}} & \gate{B_{2, l}} & \gate{\cdots} & \gate{B_{k, l}} & \qw
+} \end{array}\right)\right) \end{array} \end{array}\right)\end{array} \textrm{ if } k \in \mathbb{N}^+ ,  l \in \mathbb{N}^+\right..\right)

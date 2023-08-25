@@ -1,0 +1,7 @@
+proveit.core_expr_types.operations.operands_substitution
+proveit.logic.equality.equality_in_bool
+proveit.logic.equality.equals_reflexivity
+proveit.logic.equality.equals_transitivity
+proveit.logic.equality.not_equals_def
+proveit.logic.equality.substitution
+proveit.numbers.number_sets.natural_numbers.zero_in_nats

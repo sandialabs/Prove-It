@@ -1,0 +1,1 @@
+\left(m \mapsto \left\{\left|\frac{m}{2^{t}} - \varphi\right|_{\textup{mod}\thinspace 1} \leq 2^{-n} \textrm{ if } m \in \{0~\ldotp \ldotp~2^{t} - 1\} ,  \left|m - b_{\textit{f}}\right|_{\textup{mod}\thinspace 2^{t}} \leq \left(2^{t - n} - 1\right)\right..\right)

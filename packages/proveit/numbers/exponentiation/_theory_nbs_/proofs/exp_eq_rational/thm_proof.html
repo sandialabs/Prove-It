@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.exponentiation.exp_eq_rational theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.exponentiation.exp_eq_rational-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">exponentiation</a>.<a class="ProveItLink" href="../../theorems.html#exp_eq_rational">exp_eq_rational</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.exponentiation.exp_eq_rational-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> exp_eq_rational
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="exp_eq_rational">exp_eq_rational:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/f33df75b09a876b7d0fd730c536e8dd9b47d5ca40/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANkAAAAXBAMAAAB0cveBAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACyUlEQVRIx61WTWgTQRT+8rPJZreJFU9VkEAK
+npRQiz85pJW2/hysgYp4svEkeNp6lCpRL0KDVVQwHmQLItighhbsQShBEAVRclD0UthIRbRQepH0
+6JvZmfwxWwvJg+y8ee/N+2bez0yAblBYjMbimqXSc7mFLtEPMb6wZpU+ufwCMb1slugMzF8SzCjy
+SgMujyWBMTa71BnaM8m8Q1Vp4MovAzdY2O92hjYi01PD/XlV2lz5IBCyATPeGVpZMu/1vymVgSvv
+sRGgaIY6TFtWcmcH1pIqC1ceot+nlZWPnaEFqUiM9d0zC6ogriYxJ3iTKvIk8HgbLoe9VWzPQVSd
+03X4FU6s3E1/GUNCHKAYTCHc6+2p+GCn20FbFFKU0n4YQ/Yuhe5msII+GXHKb8Q2M0onerWQCb+B
+OfA/tB5an8Nxpc7ucfBZOtwgRMejSEZzFIgrMA5a20BD3WcbTdr6pmA1VrvZNItYeokJ1k+skm+t
+Ch9vfdzeBzhOA83V86XMphFJaDXMK/JGR47JBvFX6LNAPW5802vExqy+EC19ucPO4zkzSCVb0Lj+
+VIEoyW1cijgwHvrKKKnOdg8RWRYB5mOaZsFhne0ggCc6DVf34zcmmAFDckp1NKGHtKlXtn/zaVlT
+3hHHMJls6hT4ciz0MXcHNf7dg704RCeIn2+LpNBLG5H9Coxxp39Ambe55TPyWYjKanxlRVI2W1jm
+T9VXfMAM33ZblTC9G0luI+j7lp36WjLX6mVlzU7YRUyb2SCKtFzboM7gXQAz0egArpcQZCNo0BvK
+zBpv2y9vaCMHFpGPB38u/6EB/UezCD/i3f3lYq6BxvWCmI0sE+9nOer4ZPG0vzQizXHDilBmi4UC
+BXrpFpTd7doI3rsZ/ekxjz1pthh8zrnGlZsYz6jQmm1wfTuX96/WaUAOWrqpde4cUZ6txabr1JV/
+TP8APxPKM6ZGD2IAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/e7bcdb9de46f2717099ad7af5d9697ea2e836d9e0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

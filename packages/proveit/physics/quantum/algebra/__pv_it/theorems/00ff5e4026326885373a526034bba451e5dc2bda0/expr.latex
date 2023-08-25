@@ -1,0 +1,1 @@
+n \mapsto \left\{\forall_{k \in \{0~\ldotp \ldotp~2^{n} - 1\}}~\left(\lvert k \rangle_{n} \in \mathbb{C}^{2^{n}}\right) \textrm{ if } n \in \mathbb{N}^+\right..

@@ -1,0 +1,1 @@
+\left(\left(a_{1}, a_{2}, \ldots, a_{n}, b_{1}, b_{2}, \ldots, b_{n}\right) \mapsto \left\{\left(a_{1}, a_{2}, \ldots, a_{n}\right) = \left(b_{1}, b_{2}, \ldots, b_{n}\right) \textrm{ if } \left(a_{1} = b_{1}\right) \land  \left(a_{2} = b_{2}\right) \land  \ldots \land  \left(a_{n} = b_{n}\right)\right..\right)

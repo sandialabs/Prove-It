@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theory of proveit.logic.sets.comprehension</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theory-of-proveit.logic.sets.comprehension">Theory of <a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../_theory_nbs_/theory.html">logic</a>.<a class="ProveItLink" href="../../_theory_nbs_/theory.html">sets</a>.comprehension<a class="anchor-link" href="#Theory-of-proveit.logic.sets.comprehension">&#182;</a></h1><p>Subset comprehension is a way to define a subset of a set by listing properties/conditions of the elements of the subset.  For example, $\{x~|~Q(x)\}_{x \in S}$, is the subset of $S$ for which every element $x$ satisfies the condition $Q(x)$.</p>
+<p>More generally, comprehension may define a set by mapping subset elements via some function.  For example, $\{f(x)~|~Q(x)\}_{x \in S}$ is the set that contains only and all $f(x)$ elements such that $x \in S$ and $Q(x)$ is <code>TRUE</code>.  This furthermore generalizes to mapping any number of elements and specifying any number of conditions.  For example, $\{f(x, y)~|~Q(x, y), R(x, y)\}_{x, y \in S}$ is the set that contains only and all of $f(x, y)$ elements such that $x \in S$, $y \in S$, $Q(x, y)$, and $R(x, y)$.  It is also possible not to specify any conditions and simply define a direct map of a set: $\{f(x)\}_{x \in S}$ or $\{f(x, y)\}_{x, y \in S}$.</p>
+<p>To avoid Russell's paradox (the set of all sets which, paradoxically, do not contain themselves), axioms should only define sets that preserve the property of having a well-defined, ordinal rank and therefore set membership is always irreflexive (a set cannot contain itself).  Set rank is essentially the depth of the tree of set membership relations (e.g., the empty set has rank 0, a set containing only empty sets is rank 1, etc.). By our convention in the <code>proveit.logic.sets</code> theory package, if something contains an element via set membership (<code>InSet</code>), it is a defacto <em>set</em> and should have a well-define ordinal rank.  Anything that contains no elements, or is consistent with containing no elements, may be regarded as having rank 0 just like the emtpy set.  For example, proper classes have rank 0 (these can contain members via class membership but not set membership).</p>
+<p>As an obvious corollary, <em>no</em> universal set should be defined via axioms.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="o">%</span><span class="k">theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<h3>Local content of this theory</h3>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<table><tr>
+<th><a class="ProveItLink" href="common.html">common expressions</a></th>
+<th><a class="ProveItLink" href="axioms.html">axioms</a></th>
+<th><a class="ProveItLink" href="theorems.html">theorems</a></th>
+<th><a class="ProveItLink" href="demonstrations.html">demonstrations</a></th>
+</tr></table>
+<h3>Sub-theories</h3>
+
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<h3>All axioms contained within this theory</h3>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<dt><a class="ProveItLink" href="axioms.html#comprehension_def">proveit.logic.sets.comprehension.comprehension_def</a></dt><dd><a class="ProveItLink" href="../__pv_it/axioms/fe8cfed962229e9bdef2d6d73ad0e27a41a45f0b0/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a></dd>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

@@ -1,0 +1,9 @@
+\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{CONTROL~\mbox{on}~\left\{2\right\}} & \qw 
+} \end{array},\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{U~\mbox{part}~1~\mbox{on}~\{2~\ldotp \ldotp~m + 2\}} & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{U~\mbox{part}~2~\mbox{on}~\{2~\ldotp \ldotp~m + 2\}} & \qw 
+} \end{array}, \ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{U~\mbox{part}~m + 1~\mbox{on}~\{2~\ldotp \ldotp~m + 2\}} & \qw 
+} \end{array}\right)

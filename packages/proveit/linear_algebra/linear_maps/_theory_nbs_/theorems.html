@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theorems (or conjectures) for the theory of proveit.linear_algebra.linear_maps</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theorems-(or-conjectures)-for-the-theory-of-proveit.linear_algebra.linear_maps">Theorems (or conjectures) for the theory of <a class="ProveItLink" href="theory.html">proveit.linear_algebra.linear_maps</a><a class="anchor-link" href="#Theorems-(or-conjectures)-for-the-theory-of-proveit.linear_algebra.linear_maps">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the theorems of a theory:</span>
+<span class="o">%</span><span class="k">theorems_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">Function</span><span class="p">,</span> <span class="n">Lambda</span><span class="p">,</span> <span class="n">Conditional</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">c</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">W</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">InClass</span><span class="p">,</span> <span class="n">Equals</span>
+<span class="kn">from</span> <span class="nn">proveit.linear_algebra</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">VecSpaces</span><span class="p">,</span> <span class="n">VecAdd</span><span class="p">,</span> <span class="n">ScalarMult</span><span class="p">,</span> <span class="n">LinMap</span><span class="p">,</span> <span class="n">LinMapAdd</span><span class="p">,</span> <span class="n">Identity</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining theorems for theory &#39;proveit.linear_algebra.linear_maps&#39;
+Subsequent end-of-cell assignments will define theorems
+&#39;%end theorems&#39; will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>A linear map from $V$ to $W$ will map an element of $V$ to an element of $W$.  We don't place a restriction on $V$ or $W$, but they should be proper vector spaces for $P \in \mathcal{L}(V, W)$ to be provable.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">lin_map_domains</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">W</span><span class="p">),</span> <span class="n">Forall</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">Function</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">W</span><span class="p">),</span>
+                             <span class="n">domain</span><span class="o">=</span><span class="n">V</span><span class="p">),</span>
+                   <span class="n">domain</span><span class="o">=</span><span class="n">LinMap</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">W</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="lin_map_domains"><a class="ProveItLink" href="proofs/lin_map_domains/thm_proof.html">lin_map_domains</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/263b40884e9d167c175ce67a56611f63f71187700/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">lin_map_linearity</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">W</span><span class="p">),</span> <span class="n">Forall</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">Forall</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> 
+                             <span class="n">Equals</span><span class="p">(</span><span class="n">Function</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">VecAdd</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)),</span>
+                                    <span class="n">VecAdd</span><span class="p">(</span><span class="n">Function</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span>
+                                           <span class="n">Function</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">y</span><span class="p">))),</span>
+                             <span class="n">domain</span><span class="o">=</span><span class="n">V</span><span class="p">),</span>
+                   <span class="n">domain</span><span class="o">=</span><span class="n">LinMap</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">W</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="lin_map_linearity"><a class="ProveItLink" href="proofs/lin_map_linearity/thm_proof.html">lin_map_linearity</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/897b9279a0a8f79e8ec5d82c558fb83ff8ccd12d0/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">Forall</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">Identity</span><span class="p">(</span><span class="n">V</span><span class="p">),</span> <span class="n">LinMap</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">V</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="../__pv_it/theorems/380eeb3187a1bd7649a5d3a87296553ac20efef00/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAK0AAAAVBAMAAADGGHNoAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACeklEQVQ4y41Vz2sTQRh9zWY3m900ydHqpSD2
+oAdzKHiT0iAIKq5HPdiAB8GDjRdBqjb+AeJ6EgraxYMgHozeBMFcPIgKQUS0NCR4ETxowUaNttb5
+dn7s7CYLWXg7b97MfN/Mm5ldYNSTwzhPPU2sp434PE7Y4vQo9axAmSp7422ZJuCuDnanBDz9xqPi
+AIqLg2nY3feURNJiBSGOUJfz8YEP6FVqp4TNzi/6rHBqwGMGnApVRS9w3CA7/fjIKr1uNVPi3sYC
+9c+ySRVacsURneWwArbmhFPUBd+9mJl3Ox8E+4OlgAIxWBus3ghlRQtBCIOltRL20pKwqkvmxUDS
+whwvZxgmfgFLvKqoVeF42+m8ThgYOvBTly6rsGodxxjcvrQhom6Z4yiwEo9L2WD+0yVtY9dFeY7B
++AFDpFHUqHFcQq4MY72JzCvuFCbJbve3LtaiK7MpyDtK/lfaENFMiyMfuCzPczZCHoCCJ/ZBiTYz
+q/OJb1tf9HpJZ20gbYiovcGR6dG2HQzgQo9b8jXRiQ6i1dLiYttQp0ZSs8WB2mH2WvZwSPYIfVjo
+6WJ0R5bJfEf4gO4j1SBpps2Bp3RDSr1cRfbIs5B40dDFb2r48X0BbJrrvfAw+iKLoLRvPgeuki9W
+WdkQnhJ0Y6Ilb465tbNdnaFsT6h60pNXmFNxSsOTOkE7nm1/VXHtNpypnT266Eyd4eRK/f6JrV3E
+bkJcWkyuKUo1j0PMvq/d5Y/DovlM3mO1Cw1F9+v6NQExx02taXaUmHyMOUWbyY9WNaquaU35+ghx
+6LkjidPTfzX+8PdRdfTH+V88VN86JOaUT/sRXR8nbq43Sv3C8R9BYKlkjMKESwAAAABJRU5ErkJg
+gg==
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Linear-map-sets-are-vector-spaces">Linear map sets are vector spaces<a class="anchor-link" href="#Linear-map-sets-are-vector-spaces">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">lin_map_is_vec_space</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">K</span><span class="p">,</span> <span class="n">Forall</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">W</span><span class="p">),</span> <span class="n">InClass</span><span class="p">(</span><span class="n">LinMap</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">W</span><span class="p">),</span> <span class="n">VecSpaces</span><span class="p">(</span><span class="n">K</span><span class="p">)),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">VecSpaces</span><span class="p">(</span><span class="n">K</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="lin_map_is_vec_space"><a class="ProveItLink" href="proofs/lin_map_is_vec_space/thm_proof.html">lin_map_is_vec_space</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/87eb5aa6d03a53adac6d5c1007f77b432fa957fb0/theorem_expr.html"><img src="data:image/png;base64,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
+n9WX7gAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These theorems may now be imported from the theory package: proveit.linear_algebra.linear_maps
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

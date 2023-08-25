@@ -1,0 +1,1 @@
+\left\{\forall_{V_{1}, V_{2}, \ldots, V_{i} \underset{{\scriptscriptstyle c}}{\in} \textrm{VecSpaces}\left(K\right)}~\left(\left(V_{1} {\otimes}  V_{2} {\otimes}  \ldots {\otimes}  V_{i}\right) \underset{{\scriptscriptstyle c}}{\in} \textrm{VecSpaces}\left(K\right)\right) \textrm{ if } i \in \mathbb{N}^+\right..

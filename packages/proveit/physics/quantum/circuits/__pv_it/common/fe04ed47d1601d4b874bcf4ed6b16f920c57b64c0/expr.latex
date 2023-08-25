@@ -1,0 +1,6 @@
+\left\{ \begin{array}{l}
+{\rm element}: \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{A_{k}~\mbox{part}~{_{-}a}} 
+} \end{array}\\
+{\rm targets}: \{N_{k - 1} + 1~\ldotp \ldotp~N_{k}\}\\
+\end{array} \right\}

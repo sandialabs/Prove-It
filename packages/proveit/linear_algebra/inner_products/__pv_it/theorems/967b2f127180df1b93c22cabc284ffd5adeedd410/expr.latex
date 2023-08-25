@@ -1,0 +1,1 @@
+i \mapsto \left\{b_{i} \cdot \textrm{OrthoProj}\left(\mathcal{H}, \textrm{Span}\left(\left\{x_{i}\right\}\right)\right) \textrm{ if } i \in \{1~\ldotp \ldotp~n\}\right..

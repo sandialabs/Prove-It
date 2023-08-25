@@ -1,0 +1,3 @@
+\begin{array}{l}\exists_{x_{1}, x_{2}, \ldots, x_{n}~|~\left\{x_{1}, x_{2}, \ldots, x_{n}\right\} \in \textrm{O.N.Bases}\left(\mathcal{H}\right)}~\\
+\left[\begin{array}{l}\exists_{a_{1}, a_{2}, \ldots, a_{n} \in \mathbb{C}}~\\
+\left(M = \left(\sum_{i=1}^{n} \left(a_{i} \cdot \textrm{OrthoProj}\left(\mathcal{H}, \textrm{Span}\left(\left\{x_{i}\right\}\right)\right)\right)\right)\right)\end{array}\right]\end{array}

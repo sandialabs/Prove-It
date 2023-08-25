@@ -1,0 +1,7 @@
+proveit.logic.booleans.disjunction.true_or_false
+proveit.logic.booleans.fold_is_bool
+proveit.logic.booleans.true_eq_true
+proveit.logic.booleans.true_not_false
+proveit.logic.equality.substitute_falsehood
+proveit.logic.equality.substitute_truth
+proveit.logic.equality.unfold_not_equals

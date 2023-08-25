@@ -1,0 +1,5 @@
+\lvert \psi \rangle \mapsto \left[\forall_{k \in \mathbb{N}^+}~\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert \psi \rangle~\mbox{part}~1~\mbox{on}~\{k~\ldotp \ldotp~k\}} 
+} \end{array} = \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert \psi \rangle} 
+} \end{array}\right)\right]

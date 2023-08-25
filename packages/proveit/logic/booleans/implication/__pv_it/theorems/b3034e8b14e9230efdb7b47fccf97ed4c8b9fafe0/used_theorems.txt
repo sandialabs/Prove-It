@@ -1,0 +1,1 @@
+proveit.logic.booleans.implication.iff_implies_right

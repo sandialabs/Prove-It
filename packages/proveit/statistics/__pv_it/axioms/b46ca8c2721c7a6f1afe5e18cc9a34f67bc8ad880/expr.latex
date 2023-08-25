@@ -1,0 +1,1 @@
+\left\{\forall_{X~|~X \subseteq \Omega}~\left(\textrm{Pr}\left(X\right) = \left[\sum_{x \in X}~\textrm{Pr}\left(x\right)\right]\right) \textrm{ if } \Omega \underset{{\scriptscriptstyle c}}{\in} \textrm{SampleSpaces}\right..

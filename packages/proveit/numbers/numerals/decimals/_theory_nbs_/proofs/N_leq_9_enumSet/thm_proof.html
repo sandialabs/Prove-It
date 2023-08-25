@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.numerals.decimals.N_leq_9_enumSet theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.numerals.decimals.N_leq_9_enumSet-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numerals</a>.<a class="ProveItLink" href="../../theory.html">decimals</a>.<a class="ProveItLink" href="../../theorems.html#N_leq_9_enumSet">N_leq_9_enumSet</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.numerals.decimals.N_leq_9_enumSet-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> N_leq_9_enumSet
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="N_leq_9_enumSet">N_leq_9_enumSet:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/ace0ec6844d4626ccd240170c311a5fd30b1234d0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQ8AAAAYBAMAAAAWpWWaAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEN27zYnvRFSrImZ2
+MpmnAiL6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAD5klEQVRIx8WWX2gURxzHv5vLent/NlmkFMWS
+u/ggLQhu/IcixYMW0r5tlQi2KieI2vqQU0TxySvBFxEuStVEW10qCEVJDnyMtAft+aY9sBWkKtGI
+YAunxhjFVNaZ+c1Mwl68nIJk4Ha/N/P7zXz29/vN7AJTWo+Pchmz33pKiHlW76xzXCoCrRXjyWxz
+/J5nl0Efz2tGjP3vd+X4YX6d+3S5gw3juRucA3Ny9kSN4R+732H2Cgw/1HXBeYPtzQ5+XRXthfEY
+1gpuFu1Y8CJsZvFkmZv+lX/tdvUg1c8qUnWN5JT1HXnv/nyhXNfs2kyiEARBlmLctUU6tFSPsutq
+Lo/53wBsPCpI5lVehkHMNLt8gbn0gPPvqyI6B1OmsQ2Wxv9E3heNfiUpO3GM1Ppq9V6elgf6iGgx
+brB513Hd5zb74GvZZ3zYTjQ9HUgiDdOlv0kFcgrYTurPvDEmO5MKRG++5hKWkfKAAVJDwAdCxLKI
+uBLk1OV4RoAg3u9Eis2V6UAivZShqSDdDs5SlPbloED++TIMUtCVkde9GxVIawbmEwUSq5QJBHFE
+hzZjOpDWYdgvQiAs4GcVtaVK3KsBWTl1Kmlf6MB/QqRcJJ8rELiRXLpO/XOQFAOZCIGwtkSJPUU5
+6CuQ0+WfSGz7+5qu5HPyHguu5XVEJjTIHaM9DHJvIW+U75YMO1882P/XgKgu3OqXj3oBCqQDg7T+
+WBE7lcNJJR6N+rpG2CRXCCSR78ni+jLW/Okicr5IIM9qQJp0/NWu8TQIqyvxdEYAPJBlEs8q86/X
+koOxAzeZGsxT8R+NZd+cmV86eS49RGsjMjJp1S3WSvhTQFrEQWCMAr/J3JgZOfQrrHGCaysfecWM
+fsgLkPlGnRqxRxxRrFa4WJFQAbkNrBU5vwgFEsmg5RWlhoHICmqSJwC2yiAIOjaf2UkRsUtunRph
+W5dv9kR4++IQ4pTLwJEgB/r7x4+LrjlpxB4LtXQyIilJzg5yxIoqg67c4p+y31V3hl2TyPKadRSI
+IULlIekI9S1PjUHWTHMzk7G4QhVYjZADDg5L1+/Y+j5X1lakWJ1vgDi8aWPUBcHH+LBCx6fJUp/i
+9j+zE5vUED9HUjTHUwiz+DCuOEJFPGOnHCx40nWvg8tCJduxBrR9/xpn0TBmBGnbxI4F/hqLnRg7
+jSb+4lsSBGOkolX20hMKI8GPwgwDD++SA7Y8rMjB8yx/QtlnqtKhq5qTIDM3U1eypU/r71FHTZo1
+6PDWIKbu8+qpSbMGHRoESepD5iP9zVaqp7RZow6439iXnP7W0J5J1FMlvKWDsauxr76Bvvf8zbqR
+FfFrtC0XIh6s2sMAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/2d84bf844e651596ef4c0343d7a22632eb89c1360/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

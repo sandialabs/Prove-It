@@ -1,0 +1,1 @@
+\left(\left(x, r\right) \mapsto \left\{\mathsf{e}^{\frac{2 \cdot \pi \cdot \mathsf{i} \cdot \left(x ~\textup{mod}~ r\right)}{r}} = \mathsf{e}^{\frac{2 \cdot \pi \cdot \mathsf{i} \cdot x}{r}} \textrm{ if } x \in \mathbb{R} ,  r \in \mathbb{R}\right..\right)

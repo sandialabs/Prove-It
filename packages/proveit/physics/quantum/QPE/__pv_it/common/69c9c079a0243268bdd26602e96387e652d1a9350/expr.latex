@@ -1,0 +1,6 @@
+\left\{ \begin{array}{l}
+{\rm element}: \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert round\left(2^{t} \cdot \varphi\right) ~\textup{mod}~ 2^{t} \rangle_{t}~\mbox{part}~{_{-}a}} 
+} \end{array}\\
+{\rm targets}: \{1~\ldotp \ldotp~t\}\\
+\end{array} \right\}

@@ -1,0 +1,1 @@
+\left(f \notin \left(\left\{a, b, c\right\} \cap \left\{a, b, c, d, e\right\}\right), \left(f \notin \left\{a, b, c\right\}\right) \lor \left(f \notin \left\{a, b, c, d, e\right\}\right)\right)

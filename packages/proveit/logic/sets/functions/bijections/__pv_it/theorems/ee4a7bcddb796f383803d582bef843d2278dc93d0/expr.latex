@@ -1,0 +1,1 @@
+\left(A, B\right) \mapsto \left[\forall_{f \in \left[A \xrightarrow[\text{onto}]{\text{1-to-1}} B\right]}~\left(f \in \left[A \xrightarrow[\text{onto}]{} B\right]\right)\right]

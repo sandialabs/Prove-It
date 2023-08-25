@@ -1,0 +1,1 @@
+n \mapsto \left\{\forall_{S, N~|~|S| \geq N}~\left[\exists_{x_{1}, x_{2}, \ldots, x_{n} \in S~|~|\left(x_{1}, x_{2}, \ldots, x_{n}\right)| = N}~\textrm{distinct}\left(x_{1}, x_{2}, \ldots, x_{n}\right)\right] \textrm{ if } n \in \mathbb{N}^+\right..

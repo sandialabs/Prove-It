@@ -1,0 +1,2 @@
+proveit.logic.equality.equality_in_bool
+proveit.logic.equality.not_equals_def

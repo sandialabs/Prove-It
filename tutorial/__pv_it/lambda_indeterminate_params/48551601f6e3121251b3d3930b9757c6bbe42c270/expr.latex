@@ -1,0 +1,1 @@
+b \mapsto \left[\left(x_{1}, x_{2}, \ldots, x_{n}, y_{1}, y_{2}, \ldots, y_{n}\right) \mapsto \left(\left(b \cdot x_{1} \cdot y_{1}\right) +  \left(b \cdot x_{2} \cdot y_{2}\right) +  \ldots +  \left(b \cdot x_{m} \cdot y_{m}\right)\right)\right]

@@ -1,0 +1,1 @@
+\forall_{A, B~|~A \subseteq B, B \subseteq \Omega}~\left(\textrm{Pr}\left(A\right) \leq \textrm{Pr}\left(B\right)\right)

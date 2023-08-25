@@ -1,0 +1,2 @@
+proveit.logic.booleans.implication.denial_via_contradiction
+proveit.logic.equality.equality_in_bool

@@ -1,0 +1,7 @@
+\left(\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{A_{{_{-}b}, 1}~\mbox{on}~R_{{_{-}b}, 1}} & \qw 
+} \end{array}, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{A_{{_{-}b}, 2}~\mbox{on}~R_{{_{-}b}, 2}} & \qw 
+} \end{array}, \ldots, \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \gate{A_{{_{-}b}, k}~\mbox{on}~R_{{_{-}b}, k}} & \qw 
+} \end{array}\right)

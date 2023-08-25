@@ -1,0 +1,2642 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Theorems (or conjectures) for the theory of proveit.numbers.summation</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Theorems-(or-conjectures)-for-the-theory-of-proveit.numbers.summation">Theorems (or conjectures) for the theory of <a class="ProveItLink" href="theory.html">proveit.numbers.summation</a><a class="anchor-link" href="#Theorems-(or-conjectures)-for-the-theory-of-proveit.numbers.summation">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the theorems of a theory:</span>
+<span class="o">%</span><span class="k">theorems_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">fa</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span>
+                     <span class="n">gx</span><span class="p">,</span> <span class="n">gy</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">Qx</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">Function</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="n">Implies</span><span class="p">,</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">Card</span><span class="p">,</span> <span class="n">SetOfAll</span>
+<span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">Operation</span>
+<span class="kn">from</span> <span class="nn">proveit.core_expr_types</span> <span class="k">import</span> <span class="n">x_1_to_m</span><span class="p">,</span> <span class="n">y_1_to_n</span><span class="p">,</span> <span class="n">fi</span><span class="p">,</span> <span class="n">fj</span><span class="p">,</span> <span class="n">gi</span><span class="p">,</span> <span class="n">gj</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="p">(</span><span class="n">Card</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Implies</span><span class="p">,</span> <span class="n">InSet</span><span class="p">,</span> <span class="n">NotEquals</span><span class="p">,</span>
+                           <span class="n">SetOfAll</span><span class="p">,</span> <span class="n">SubsetEq</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="p">(</span><span class="n">Add</span><span class="p">,</span> <span class="n">Abs</span><span class="p">,</span> <span class="n">Exp</span><span class="p">,</span> <span class="n">frac</span><span class="p">,</span> <span class="n">greater</span><span class="p">,</span> <span class="n">Integrate</span><span class="p">,</span> <span class="n">Less</span><span class="p">,</span> <span class="n">LessEq</span><span class="p">,</span>
+                             <span class="n">Mult</span><span class="p">,</span> <span class="n">Neg</span><span class="p">,</span> <span class="n">number_ordering</span><span class="p">,</span> <span class="n">subtract</span><span class="p">,</span> <span class="n">Sum</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">ZeroSet</span><span class="p">,</span> <span class="n">Natural</span><span class="p">,</span> <span class="n">NaturalPos</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">IntervalCC</span><span class="p">,</span> <span class="n">Real</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">Complex</span><span class="p">,</span> <span class="n">Interval</span><span class="p">,</span> <span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">,</span> <span class="n">infinity</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers.functions</span> <span class="k">import</span> <span class="n">MonDecFuncs</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers.summation</span> <span class="k">import</span> <span class="n">al</span><span class="p">,</span> <span class="n">ak</span><span class="p">,</span> <span class="n">bl</span><span class="p">,</span> <span class="n">bk</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining theorems for theory &#39;proveit.numbers.summation&#39;
+Subsequent end-of-cell assignments will define theorems
+&#39;%end theorems&#39; will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">distributive_summation</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">(</span>
+        <span class="n">f</span><span class="p">,</span>
+    <span class="n">Forall</span><span class="p">(</span>
+        <span class="n">x</span><span class="p">,</span>
+    <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">),</span>
+    <span class="n">Equals</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">Mult</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fi</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">)),</span>
+           <span class="n">Mult</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Sum</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">fi</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">)))),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">Integer</span><span class="p">),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="distributive_summation"><a class="ProveItLink" href="proofs/distributive_summation/thm_proof.html">distributive_summation</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/b5427a97b2b8ac98c87a6412455d730ef0f9af3a0/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">distributive_summation_spec</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">),</span>
+    <span class="n">Forall</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">x</span><span class="p">),</span>
+    <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">),</span>
+    <span class="n">Equals</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">Mult</span><span class="p">(</span><span class="n">Mult</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">gj</span><span class="p">),</span> <span class="n">fj</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">)),</span>
+           <span class="n">Mult</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Sum</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">Mult</span><span class="p">(</span><span class="n">gj</span><span class="p">,</span> <span class="n">fj</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">)))),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">Integer</span><span class="p">),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="distributive_summation_spec"><a class="ProveItLink" href="proofs/distributive_summation_spec/thm_proof.html">distributive_summation_spec</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/8378fbcfbcd8d53b5bb9b70e75922810d011064e0/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Several-basic-closure-theorems:-if-we-sum-up-terms-each-of-which-belongs-to-set-S,-we-generally-end-up-with-a-sum-in-set-S-as-well.">Several basic closure theorems: if we sum up terms each of which belongs to set S, we generally end up with a sum in set S as well.<a class="anchor-link" href="#Several-basic-closure-theorems:-if-we-sum-up-terms-each-of-which-belongs-to-set-S,-we-generally-end-up-with-a-sum-in-set-S-as-well.">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">summation_zero_closure</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">Q</span><span class="p">],</span> <span class="n">Implies</span><span class="p">(</span><span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">fx</span><span class="p">,</span> <span class="n">zero</span><span class="p">),</span> <span class="n">condition</span><span class="o">=</span><span class="n">Qx</span><span class="p">),</span> 
+                    <span class="n">InSet</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">Qx</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">ZeroSet</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="summation_zero_closure"><a class="ProveItLink" href="proofs/summation_zero_closure/thm_proof.html">summation_zero_closure</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/3b292e0bbd9ba973b900700674156c6f754147ae0/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">summation_nat_closure</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">Q</span><span class="p">],</span> <span class="n">Implies</span><span class="p">(</span><span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">fx</span><span class="p">,</span> <span class="n">Natural</span><span class="p">),</span> <span class="n">condition</span><span class="o">=</span><span class="n">Qx</span><span class="p">),</span> 
+                    <span class="n">InSet</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">Qx</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Natural</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="summation_nat_closure"><a class="ProveItLink" href="proofs/summation_nat_closure/thm_proof.html">summation_nat_closure</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/513deef057c2d057451cc2cdc089b79eb366513c0/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">summation_nat_pos_closure</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">Q</span><span class="p">],</span> <span class="n">Implies</span><span class="p">(</span><span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">fx</span><span class="p">,</span> <span class="n">NaturalPos</span><span class="p">),</span> <span class="n">condition</span><span class="o">=</span><span class="n">Qx</span><span class="p">),</span> 
+                    <span class="n">InSet</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">Qx</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="summation_nat_pos_closure"><a class="ProveItLink" href="proofs/summation_nat_pos_closure/thm_proof.html">summation_nat_pos_closure</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/28b07aa3d330f5d7514e33246f169d3220d9c4490/theorem_expr.html"><img src="data:image/png;base64,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
+QmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">summation_int_closure</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">Q</span><span class="p">],</span> <span class="n">Implies</span><span class="p">(</span><span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">fx</span><span class="p">,</span> <span class="n">Integer</span><span class="p">),</span> <span class="n">condition</span><span class="o">=</span><span class="n">Qx</span><span class="p">),</span> 
+                    <span class="n">InSet</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">Qx</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Integer</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="summation_int_closure"><a class="ProveItLink" href="proofs/summation_int_closure/thm_proof.html">summation_int_closure</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/2b18e93293480d554002c28112530eadf85a672d0/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">summation_real_closure</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">Q</span><span class="p">],</span> <span class="n">Implies</span><span class="p">(</span><span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">fx</span><span class="p">,</span> <span class="n">Real</span><span class="p">),</span> <span class="n">condition</span><span class="o">=</span><span class="n">Qx</span><span class="p">),</span> 
+                       <span class="n">InSet</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">Qx</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Real</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="summation_real_closure"><a class="ProveItLink" href="proofs/summation_real_closure/thm_proof.html">summation_real_closure</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/78b7baa5769aeac3d3c5ddc7d67e945828c3bc620/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">summation_complex_closure</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">[</span><span class="n">f</span><span class="p">,</span> <span class="n">Q</span><span class="p">],</span> <span class="n">Implies</span><span class="p">(</span><span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">fx</span><span class="p">,</span> <span class="n">Complex</span><span class="p">),</span> <span class="n">condition</span><span class="o">=</span><span class="n">Qx</span><span class="p">),</span> 
+                       <span class="n">InSet</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">Qx</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="summation_complex_closure"><a class="ProveItLink" href="proofs/summation_complex_closure/thm_proof.html">summation_complex_closure</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/96cc5d54ff3dbdb6e50b4be0ef865d2e687698840/theorem_expr.html"><img src="data:image/png;base64,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
+uOanlv8AT9pyts5cpmMAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h5 id="Splitting-up-summations">Splitting up summations<a class="anchor-link" href="#Splitting-up-summations">&#182;</a></h5>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">sum_split_general</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">(</span><span class="n">f</span><span class="p">,</span>
+           <span class="n">Forall</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">],</span>
+                  <span class="n">Equals</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">c</span><span class="p">)),</span>
+                         <span class="n">Add</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)),</span>
+                             <span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">one</span><span class="p">),</span> <span class="n">c</span><span class="p">)))),</span>
+                   <span class="n">domain</span><span class="o">=</span><span class="n">Integer</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">number_ordering</span><span class="p">(</span><span class="n">LessEq</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">))])</span>
+    <span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="sum_split_general"><a class="ProveItLink" href="proofs/sum_split_general/thm_proof.html">sum_split_general</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/7beee838a8e473ef4e531cb937860bd8018889690/theorem_expr.html"><img src="data:image/png;base64,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
+uf8DGm4WBqWfYE4AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">sum_split_after</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">(</span><span class="n">f</span><span class="p">,</span>
+           <span class="n">Forall</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">],</span>
+                  <span class="n">Equals</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">c</span><span class="p">)),</span>
+                         <span class="n">Add</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)),</span>
+                             <span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">one</span><span class="p">),</span> <span class="n">c</span><span class="p">)))),</span>
+                   <span class="n">domain</span><span class="o">=</span><span class="n">Integer</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">LessEq</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">Less</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">)])</span>
+    <span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="sum_split_after"><a class="ProveItLink" href="proofs/sum_split_after/thm_proof.html">sum_split_after</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/a8661670711fa3cdb8c297e4481bdc98de6506dd0/theorem_expr.html"><img src="data:image/png;base64,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
+PkldxHv/B8e8HdnGSCoTAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">sum_split_before</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">(</span><span class="n">f</span><span class="p">,</span>
+           <span class="n">Forall</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">],</span>
+                  <span class="n">Equals</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">c</span><span class="p">)),</span>
+                         <span class="n">Add</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">subtract</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">one</span><span class="p">))),</span>
+                             <span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">)))),</span>
+                  <span class="n">domain</span><span class="o">=</span><span class="n">Integer</span><span class="p">,</span>
+                  <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Less</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">)])</span>
+    <span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="sum_split_before"><a class="ProveItLink" href="proofs/sum_split_before/thm_proof.html">sum_split_before</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/9fbccde6af99abd32e828285e510fee75edd0eca0/theorem_expr.html"><img src="data:image/png;base64,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
+J6wlJ5QAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">sum_split_first</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">(</span><span class="n">f</span><span class="p">,</span>
+        <span class="n">Forall</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span>
+               <span class="n">Equals</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)),</span>
+                      <span class="n">Add</span><span class="p">(</span><span class="n">fa</span><span class="p">,</span> <span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">one</span><span class="p">),</span> <span class="n">b</span><span class="p">)))),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">Integer</span><span class="p">,</span>
+        <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Less</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)])</span>
+      <span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="sum_split_first"><a class="ProveItLink" href="proofs/sum_split_first/thm_proof.html">sum_split_first</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/cfd657c341c43e7ed4570f19599957cab1a6dc8d0/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Index-shifting">Index shifting<a class="anchor-link" href="#Index-shifting">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">index_shift</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">(</span><span class="n">f</span><span class="p">,</span>
+           <span class="n">Forall</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">),</span>
+                  <span class="n">Equals</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)),</span>
+                         <span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">subtract</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">c</span><span class="p">)),</span>
+                             <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">c</span><span class="p">),</span> <span class="n">Add</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">)))),</span>
+                  <span class="n">domain</span><span class="o">=</span><span class="n">Integer</span><span class="p">)</span>
+    <span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="index_shift"><a class="ProveItLink" href="proofs/index_shift/thm_proof.html">index_shift</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/801345abebec5b7a87c8c43e135db82a524e0bc20/theorem_expr.html"><img src="data:image/png;base64,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
+w63/A0Aibd5CAChbAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Index-negation">Index negation<a class="anchor-link" href="#Index-negation">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># This can be generalized later when we establish a</span>
+<span class="c1"># class of even functions</span>
+<span class="n">index_negate</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">(</span><span class="n">f</span><span class="p">,</span>
+           <span class="n">Forall</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span>
+                  <span class="n">Equals</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)),</span>
+                         <span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">Neg</span><span class="p">(</span><span class="n">x</span><span class="p">)),</span>
+                             <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">Neg</span><span class="p">(</span><span class="n">b</span><span class="p">),</span> <span class="n">Neg</span><span class="p">(</span><span class="n">a</span><span class="p">)))),</span>
+                  <span class="n">domain</span><span class="o">=</span><span class="n">Integer</span><span class="p">)</span>
+    <span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="index_negate"><a class="ProveItLink" href="proofs/index_negate/thm_proof.html">index_negate</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/24bdce39813cc22d4139c34a4559441ae56516b30/theorem_expr.html"><img src="data:image/png;base64,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
+2tvX/w9JRVhfSGnvBQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">sum_zero_and_one</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">(</span><span class="n">f</span><span class="p">,</span>
+           <span class="n">Equals</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">)),</span>
+                  <span class="n">Add</span><span class="p">(</span><span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">zero</span><span class="p">),</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">one</span><span class="p">)))</span>
+    <span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="sum_zero_and_one"><a class="ProveItLink" href="proofs/sum_zero_and_one/thm_proof.html">sum_zero_and_one</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/ef95be14b4ccbabb1eb107c14f223ef4e16dcb720/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Some-specific-summation-formulas">Some specific summation formulas<a class="anchor-link" href="#Some-specific-summation-formulas">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">trivial_sum</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)),</span>
+                             <span class="n">Mult</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">Neg</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">one</span><span class="p">),</span> <span class="n">x</span><span class="p">)),</span>
+                   <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">Integer</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="trivial_sum"><a class="ProveItLink" href="proofs/trivial_sum/thm_proof.html">trivial_sum</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/95b082ccd8e51b150bf4bd924392c21f53419eba0/theorem_expr.html"><img src="data:image/png;base64,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
+QmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># finite_geom_sum = (</span>
+<span class="c1">#     Forall([x, n],</span>
+<span class="c1">#            Equals(Sum(m, Exp(x, m), domain=Interval(zero, n)),</span>
+<span class="c1">#                   frac(subtract(one, Exp(x, Add(n, one))),</span>
+<span class="c1">#                        subtract(one, x))),</span>
+<span class="c1">#            domains=[Complex, NaturalPos]))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">finite_geom_sum</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">n</span><span class="p">],</span>
+           <span class="n">Equals</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">Exp</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">i</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">zero</span><span class="p">,</span> <span class="n">n</span><span class="p">)),</span>
+                  <span class="n">frac</span><span class="p">(</span><span class="n">subtract</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">Exp</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Add</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">one</span><span class="p">))),</span>
+                       <span class="n">subtract</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">x</span><span class="p">))),</span>
+           <span class="n">domains</span><span class="o">=</span><span class="p">[</span><span class="n">Complex</span><span class="p">,</span> <span class="n">Natural</span><span class="p">],</span>
+           <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">NotEquals</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">one</span><span class="p">)]))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="finite_geom_sum"><a class="ProveItLink" href="proofs/finite_geom_sum/thm_proof.html">finite_geom_sum</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/dc74ff74bbf98dcb038a9fc6b1d2fe7582e2850a0/theorem_expr.html"><img src="data:image/png;base64,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
+eruqswH/AwETTolXiY/6AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[21]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">gen_finite_geom_sum</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span>
+        <span class="n">Forall</span><span class="p">((</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">),</span>
+               <span class="n">Equals</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">Exp</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">i</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">)),</span>
+                      <span class="n">frac</span><span class="p">(</span><span class="n">subtract</span><span class="p">(</span><span class="n">Exp</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">j</span><span class="p">),</span> <span class="n">Exp</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Add</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">one</span><span class="p">))),</span> <span class="n">subtract</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">x</span><span class="p">))),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">Integer</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">LessEq</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">)),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">NotEquals</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">one</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="gen_finite_geom_sum"><a class="ProveItLink" href="proofs/gen_finite_geom_sum/thm_proof.html">gen_finite_geom_sum</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/eb8e4956df447b851837cdb58a40aa1684bd0dba0/theorem_expr.html"><img src="data:image/png;base64,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
+AElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[22]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">inf_geom_sum</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">m</span><span class="p">,</span><span class="n">Exp</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">m</span><span class="p">),</span>
+                                  <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">zero</span><span class="p">,</span> <span class="n">infinity</span><span class="p">)),</span> 
+                              <span class="n">frac</span><span class="p">(</span><span class="n">one</span><span class="p">,</span><span class="n">subtract</span><span class="p">(</span><span class="n">one</span><span class="p">,</span><span class="n">x</span><span class="p">))),</span>
+                    <span class="n">domain</span><span class="o">=</span><span class="n">Complex</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">Less</span><span class="p">(</span><span class="n">Abs</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">one</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="inf_geom_sum"><a class="ProveItLink" href="proofs/inf_geom_sum/thm_proof.html">inf_geom_sum</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/1ab3b214ce207323d8b4aff26b8c46df27fc886d0/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[23]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">sum_first_n_int</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">n</span><span class="p">,</span>
+                       <span class="n">Equals</span><span class="p">(</span> <span class="n">Sum</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">n</span><span class="p">)),</span>
+                               <span class="n">frac</span><span class="p">(</span><span class="n">Mult</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">Add</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">one</span><span class="p">)),</span> <span class="n">two</span><span class="p">)</span> <span class="p">),</span>
+                       <span class="n">domain</span><span class="o">=</span><span class="n">NaturalPos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="sum_first_n_int"><a class="ProveItLink" href="proofs/sum_first_n_int/thm_proof.html">sum_first_n_int</a> (conjecture with conjecture-based proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/467b80e655e10b534e6dab8e51d5509218ad40280/theorem_expr.html"><img src="data:image/png;base64,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
+AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[24]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">same_sums</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">((</span><span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">),</span>
+           <span class="n">Forall</span><span class="p">((</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span>
+                  <span class="n">Implies</span><span class="p">(</span><span class="n">Forall</span><span class="p">(</span><span class="n">k</span><span class="p">,</span>
+                                 <span class="n">Equals</span><span class="p">(</span><span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">k</span><span class="p">),</span> <span class="n">Function</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">k</span><span class="p">)),</span>
+                                 <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">)),</span>
+                          <span class="n">Equals</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">l</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">)),</span>
+                                 <span class="n">Sum</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">Function</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">l</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">)))),</span>
+                  <span class="n">domain</span><span class="o">=</span><span class="n">Integer</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="same_sums"><a class="ProveItLink" href="proofs/same_sums/thm_proof.html">same_sums</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/aca0bd59e6c6807f4ecfa573e1550f792936178c0/theorem_expr.html"><img src="data:image/png;base64,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
+U/yzRKQAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[25]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Could also make such a theorem to apply whenever addition is</span>
+<span class="c1"># commutative, not just for the Complex numbers.</span>
+<span class="c1"># See alternate version below controlling mapping from S to R</span>
+<span class="c1"># to be bijective.</span>
+<span class="c1"># equiv_sums = (</span>
+<span class="c1">#     Forall((f, g, R, S),</span>
+<span class="c1">#            Implies(Forall(a, InSet(fa, Complex), domain=R),</span>
+<span class="c1">#                    Equals(Sum(x, fx, domain=R),</span>
+<span class="c1">#                           Sum(y, Function(f, gy), domain=S))),</span>
+<span class="c1">#            conditions=[Equals(SetOfAll(y, gy, domain=S), R)]))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[26]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">equiv_sums</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="n">n</span><span class="p">,</span> 
+    <span class="n">Forall</span><span class="p">((</span><span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">R</span><span class="p">,</span> <span class="n">S</span><span class="p">),</span>
+           <span class="n">Implies</span><span class="p">(</span><span class="n">Forall</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">fa</span><span class="p">,</span> <span class="n">Complex</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">R</span><span class="p">),</span>
+                   <span class="n">Equals</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">R</span><span class="p">),</span>
+                          <span class="n">Sum</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">gy</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">S</span><span class="p">))),</span>
+           <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">Equals</span><span class="p">(</span><span class="n">SetOfAll</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">gy</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">S</span><span class="p">),</span> <span class="n">R</span><span class="p">),</span>
+                       <span class="n">Equals</span><span class="p">(</span><span class="n">Card</span><span class="p">(</span><span class="n">S</span><span class="p">),</span> <span class="n">n</span><span class="p">),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">Card</span><span class="p">(</span><span class="n">R</span><span class="p">),</span> <span class="n">n</span><span class="p">)]),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">Natural</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="equiv_sums"><a class="ProveItLink" href="proofs/equiv_sums/thm_proof.html">equiv_sums</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/d48b792c4a25d39396009256fbb092be028325a40/theorem_expr.html"><img src="data:image/png;base64,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
+tkQAAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Bounding-Theorems">Bounding Theorems<a class="anchor-link" href="#Bounding-Theorems">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[27]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">bounded_sum</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">S</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">),</span> <span class="n">Implies</span><span class="p">(</span><span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">LessEq</span><span class="p">(</span>
+    <span class="n">fx</span><span class="p">,</span> <span class="n">gx</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">S</span><span class="p">),</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fx</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">S</span><span class="p">),</span> <span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">gx</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">S</span><span class="p">))))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="bounded_sum"><a class="ProveItLink" href="proofs/bounded_sum/thm_proof.html">bounded_sum</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/6e87fdfa256aef012e7f9bc66d4aa07e434c87e40/theorem_expr.html"><img src="data:image/png;base64,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
+juoKTwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[28]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">weak_summation_from_summands_bound</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">S</span><span class="p">),</span> <span class="n">Implies</span><span class="p">(</span><span class="n">Forall</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">LessEq</span><span class="p">(</span><span class="n">ak</span><span class="p">,</span> <span class="n">bk</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">S</span><span class="p">),</span>
+                       <span class="n">LessEq</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">al</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">S</span><span class="p">),</span>
+                              <span class="n">Sum</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">bl</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">S</span><span class="p">))))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="weak_summation_from_summands_bound"><a class="ProveItLink" href="proofs/weak_summation_from_summands_bound/thm_proof.html">weak_summation_from_summands_bound</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/83a3cd6a58e0c96edba9fcdee0705c3502f779780/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[29]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">strong_summation_from_summands_bound</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">S</span><span class="p">),</span> <span class="n">Implies</span><span class="p">(</span><span class="n">Forall</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">Less</span><span class="p">(</span><span class="n">ak</span><span class="p">,</span> <span class="n">bk</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">S</span><span class="p">),</span>
+                       <span class="n">Less</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">al</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">S</span><span class="p">),</span>
+                            <span class="n">Sum</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">bl</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">S</span><span class="p">))),</span>
+                      <span class="n">condition</span><span class="o">=</span><span class="n">greater</span><span class="p">(</span><span class="n">Card</span><span class="p">(</span><span class="n">S</span><span class="p">),</span> <span class="n">zero</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="strong_summation_from_summands_bound"><a class="ProveItLink" href="proofs/strong_summation_from_summands_bound/thm_proof.html">strong_summation_from_summands_bound</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/109528a6e0e1ca35fcd861bc09cc0fd04b1fb5e80/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[30]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># sum_integrate_ineq = (</span>
+<span class="c1">#     Forall(f,</span>
+<span class="c1">#     Forall((a,b),</span>
+<span class="c1">#         LessEq(</span>
+<span class="c1">#             Sum(x, Function(f,x), domain=Interval(a,b)),</span>
+<span class="c1">#             Add(fa, Integrate(x, Function(f, x), domain=IntervalCC(a,b)))),</span>
+<span class="c1">#     domain=Integer, condition=LessEq(a,b)),</span>
+<span class="c1">#     domain=MonDecFuncs))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[31]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">integral_upper_bound_of_sum_lemma</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">(</span><span class="n">S</span><span class="p">,</span>
+    <span class="n">Forall</span><span class="p">(</span><span class="n">f</span><span class="p">,</span>
+    <span class="n">Forall</span><span class="p">((</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">),</span> <span class="n">LessEq</span><span class="p">(</span>
+            <span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="n">x</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">)),</span>
+            <span class="n">Add</span><span class="p">(</span><span class="n">fa</span><span class="p">,</span> <span class="n">Integrate</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">IntervalCC</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">)))),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">Integer</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">LessEq</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">),</span> <span class="n">SubsetEq</span><span class="p">(</span><span class="n">IntervalCC</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="n">S</span><span class="p">)]),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">MonDecFuncs</span><span class="p">(</span><span class="n">S</span><span class="p">),</span>
+        <span class="n">condition</span><span class="o">=</span><span class="n">SubsetEq</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">Real</span><span class="p">))))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="integral_upper_bound_of_sum_lemma"><a class="ProveItLink" href="proofs/integral_upper_bound_of_sum_lemma/thm_proof.html">integral_upper_bound_of_sum_lemma</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/c48277be1924a1f3bb4a670a313fec913888fce40/theorem_expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[32]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">integral_upper_bound_of_sum</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Forall</span><span class="p">(</span><span class="n">S</span><span class="p">,</span>
+    <span class="n">Forall</span><span class="p">(</span><span class="n">f</span><span class="p">,</span>
+    <span class="n">Forall</span><span class="p">((</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">),</span> <span class="n">LessEq</span><span class="p">(</span>
+            <span class="n">Sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="n">x</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Interval</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)),</span>
+            <span class="n">Integrate</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Function</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">IntervalCC</span><span class="p">(</span><span class="n">subtract</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">one</span><span class="p">),</span><span class="n">b</span><span class="p">))),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">Integer</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">LessEq</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">),</span> 
+                                    <span class="n">SubsetEq</span><span class="p">(</span><span class="n">IntervalCC</span><span class="p">(</span><span class="n">subtract</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">one</span><span class="p">),</span> <span class="n">b</span><span class="p">),</span> <span class="n">S</span><span class="p">)]),</span>
+        <span class="n">domain</span><span class="o">=</span><span class="n">MonDecFuncs</span><span class="p">(</span><span class="n">S</span><span class="p">),</span>
+        <span class="n">condition</span><span class="o">=</span><span class="n">SubsetEq</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">Real</span><span class="p">))))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="integral_upper_bound_of_sum"><a class="ProveItLink" href="proofs/integral_upper_bound_of_sum/thm_proof.html">integral_upper_bound_of_sum</a> (conjecture without proof):<br></strong> <a class="ProveItLink" href="../__pv_it/theorems/e67f602fd292f9fdb68a8a90fe6cc4aafa0075a70/theorem_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAy8AAAA/BAMAAAAbPeoFAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAN0UlEQVR42uVdC2wcxRn+7/aee/b5oiIBhZKj
+pBRUkhzQUgVF8VFSQALiFOoKlKp2gwqFqs1BH2pLiq+otDzSnmlEUyclWSpABCexIUBK0iYu5REC
+IS4PlUeD14VCaajj2Bg7Dvg6szO7O//u3N46Fx0SO5Lv883szP43387/mjkbwFXayuV+qHeJlssf
+1uteixxYrajXeDRG9FpEuVfDuKxczpqvbmJaW4v1J2as9bI63SrdjjFxdbUe73i0vVWbLJ0Yb2pt
+y5qvbmLgIyjR4brdqq2AEY6r1iPZW1nu8dqEWeNAaMjar8EiRv0bRoCdVbs8VrFpQ642aTZkMQaY
+mEg7RkhMDWpV+pxW8YLzxDfVlaKrhHdhDDAxpSJGSL+azlfp01jpgsQEenvc9MV50YHBJeabDoRk
+Tmmv9lxXsiSxDHq7c/rizC1gDCwx5hzbc91QjGSq9bq6yrT6VopuajsxBpaYxk6MAE3yacAEVAgg
+XhH1mO5DKboflAmMgSWmlMVIKNLmVe3VIJ/wxIj9e+jfoz6Uors8jjGwxMx0IJndRdWD94hcvJBQ
+XbrvCT9K0VVaMAaVGPU9jH7FG5VW9wgL6Vh/StE93TmEQSVGmcDotzwprW0WTM+UP6Xo1pLtCINK
+THIYo2+FU5DVrhM+wIQ/pejWkuMIg0pMUydG3+GGNPVysKoV8uGWjSIMKjFtvRj9lg6ZVY8eEtzw
+9sOUKH4AYVCJaVmM0bcl6JNpoTG5HzC98izCoBKzTBNxWdkuU962aVIWtU9W03V+yjpNxKAS8yHC
+uWXmVqk/HNzzgWe/9IjMYAk7vS3FwxVpf1bEgBITP4gwZG+iKwOeIUhYFvd0CB7EwGHLNDcvYkCJ
+MefXxIEDtsHw9NMSBz2mlK65wz+xUOoUMaDEpKcwlsq2aTgfry2OBY+J32+HLeEDHnct4CGd6YN+
+EQNKTGQEY7ps77Qo6Mp/cfwGx7LMxbOnL+XhO6T5ZVF5+Nk0LKJFjOGfn+QgJmQ8BLk6E+MW5cgH
+/hMYYZ1rJUS2Ue8obMY5aT4LA5rEn7INfmxMdrsLt9LXz5lv37Aafvm4EAFNimgR82WKVzmIiVAv
+P1aoMzFuUY54iY1jhA1lZ/zxwAo6Nfda7/mhsmXCbISvctU1ydzp1DH0FIdqhZ4xm9yRSjJZxPyc
+Kr9OBzEJ+vD+pN6qzC3KES8NkxghWnb6wY9dTqfvXOv95/nqsCNS5UU+wXvsiS7JAtCGz6ymS9DS
+PIr1EEQFHpNjIlrEUBZTWaeNoY/Jg/Umxi3KES9Yn9Oy4wOso/iU2fPcwNpnWoKlX9PcdqdZ9kC1
+sZDRrthlrSUhAgqNiGgRoxA+Yy7jfyb5aa83MW5R6kBMrIw/J5uysF0Zy2Fiul+3mgRiZspyb38x
+Xk+2K66wBs1XJQZ27937jIuYhr17/9lbb2LcotSBGHXPIfEC5fi/0zmLkA+vDn3yNqI1Uix92cIV
+0t0vgIwYWXh6+u6jDA+A/GwavG8bueIB1nDt9lLWrCL34ullhjYxFwCsdhETKUJSqzWY46aRO4n5
+6sS4REGlwgBPS30U5XZ5zDCMUUjLmNTp5jKJwKB+MRmpXSTmrqX2papATFkmxZS1TPLpEyJkKZ7F
+PutTNC/GqyoTcy3E6TOxZGhB0SaGVF1rPB/cCKaonVv+mnXL7me3nWOtqO7d2x54zi3WF/ioEfaW
+K2HjPqmurq7C7EfO+R4mhovCQm3zxFDo6YfW5IUBeDm1wK9A+Xj1LLMv9fgf7epaRYbe/sZ/LGL6
+MNL5KO9CaRZjFhrJxHwRmrVPkOeLXbqDPV8hkRg7vZaQhTlx5pM/T8gtKJMhwuxpzBPMwXlWlR0C
+MbSJSWop4nCEdSiJAeZqeJjCysvITQe7FsOjRK55gnKbQei3lhR5Or/iEkvN8FGjvQIxRo16h2FE
+U7ClFxHDROGFnmqkt24spDZpLmJO1c1zj4iY3/zP7EuIWc8GmwOJYQ9iYADFhnOZxSddi+z8K+/M
+iYEfvCAjJv2+TGWwnk+QMfiBXDbFLQCvWVWViQnrMeY6hERi5jDbT12UhfQZeph8knk6IsY+EXI7
+XfeuQG2xOeo1AjFGTdJY9+k0nK0jYpgovOzkt1bgxu+Dk5h5OTDPPeIdrNlmX3LfVWA6WBkvYjr6
+3Qa7weDUUANRtGJE4y8QE5LlOLnr9YQxoNH960z5gjpmVVUmBtoXUNWas1I5BjExhXY78ZksD317
+X4Lweh3SC7aqd944aBCTmITNQ5DefjQh5uaoug7e1de/PCdDa9InbYZGa9QHhXk1aq4HTsx/8zgl
+Y4jSvWALsFONPOrO54UBjNZ3smCde8yAunlfARFDW0IQ58tx1EpWyYw/wLvIPDDbRFUZ/YrF/eRp
+6UfGX+4uN8pO0SQzpiqj3/lQNS6dOgXKsFVV2cbAg9cYSaOVKFeWOpl2UshkrDcqe98BJanDHbAR
+OrKxLCVGHYllI7mHiNdxOzXbHZDU4yOwFEjNErgBfmSNOkuYV6Pm0+zXVHxtDhNDRVH/kaAhMD3V
+yG6tXFe0BzBajdjcPAyegY2FEiaGtoQgzB2l/QdzHl6ZcYpCKMxYko+q3hHqg142B4gYO8C0iWmS
+HbrhS2ItVarHQ4oudOMjjECo/bNmlQcxyw1i/9iSEYmJ/9W4lnzySxkxPYWbkzrRt0m9QyNiG8QQ
++7F6HH4Kdz60kxIT0uOTsFYlNaUvaXC5NerloiaiNWzIdGRNpyOJSUWJ5BNUedBTjey6TSnBezBa
+w2s0sA6DZ2AhrMCqjLaEIMqnUp11wIuYEnJ04ywMJz5yeOLuvmiWec4owCSL6NtOYkqyHGwHs3HE
+R55760VwCfecKVOz83mzqnIcAyH6QGp2fpdll49hn5DYeOJBZaE3kteTutIHoTxlwFBl4/PPPLN1
+2Fj+p3BihuEEOk503RicaI16i0CMUXMXV2WpSxzEUFEaFqfpI0JPNfJbb6UahQ/AWqOUGX7uMUOU
++CAkyKXUBTOIoS0hw/ugvIj58oZhjKT5OZnBTvSDukifdQbVUotdxJhlj+0yyKJx5kfAr4lzOxQ+
+l/Z/ibnc+351QtGs8iDGmJesnaUS0v4NZKJuYysmMZ41VkxMN4lJdRInIz5p6mVDlRFiaM2txGO/
+xRpVUGWshuVd0unoEs2d9u8pJM/W2KlG49bRU3Kw1RqAtyaOKpjnHjNkia68H60Y2hIybdslYtYP
+Z3KdMTjYHs3LVs3PXJlk25+zxN8hi8bP4feyesb7q2e8HcQQeUIFNzE9GvBAMw9X0q8iLoXlGmWA
+EjNbS+ZUfQ1sYsQ0aRt6CTFrgdTMgiQ1/nzUIUETsZoLi8xd3pp3E9NQKF2qdRunGo1bpyIQ7bdX
+DG2ln3GGRq/opivmqcTY2QIxrC8hJvInPj1HV077QxeapBNjWZS6tNOZAwWvtP8696GbcGapM3UZ
+kW6kNI6L6CTmFxdukWyUUd0d/z1tf7o4R/3zdyA1dL46Mz//WyTAXEgekm1DkNqudz9LYx5l8+nP
+3/We8uRiUjPrjS3UJ+ajrhKIYTVREvoVvvZW793nuYmJnjtnMzHv9FSjcevTZ+z7XcZecrTVePqM
+c48r6IbSV8/YZ37i65dt532p87+EarcLFm6z59Q8cGQdPIq8as8k+XnFTPcnzT6mIuFqa+NeWvh6
+ss9A7XGnSRpXm+ptlVklz9dj9epvB9N4brq7uqZ5CItNsLm61U5wB+7SlIxQmGDo1tIBspCR1IEd
+leGSHsUI823SqEFZcD4W2mZIdohmv/k8yDaelTfNodeDkyGcv+sT0Rcxvz2mllyZ+RkjhekTE5Uk
+6mQDkOsykrqKxCiHMAq+chjvqNzA8W2+cGR7/s3msxf12vGHOI8k0/KdRzPA7fC/579dr4WYlGbn
+zPC8hqgLVfAiRgEvYm6x+ivgJob1JcQcyxw1dJsDGDusCVBbPLOs0qlvM++tjNYwT+YoDOtxGEND
+UJiWKpOUCgN0ybPLa6UXq+8jtH3l62aWi143V2SHLXpMKxKp5c8wNOsiBvUk5gDC2PtXGmXvnmp/
+yiYiC+0bTaEb+2oQyTzDyTCwh8oLIrYIZ5e9tVFMJp+1UJoyNYi0DGFQiWnOYfRbmmSxoWVaSjn3
+ppDvgo9TB5WYjjxGv6UkC+3jZrJ/P7JzfFPIZ0kcQhhUYhr6Mfot+6WuwW6On8LVs6czcnoCYVCJ
+SU1i9Fv+IK3dwT3OZ8C9KeS3JPsQBpWY+BRGn0WVR5AdzNOlZ9Fcm0J+S08GYWD/AMOVDvRXKnz7
+PEYDmVR7iMypa1PItztSRBhYYpoLGP2VmNwkKdRfTnau0MC9KeS3fBdjYInp6cXo05mTe9cq9aTU
+RUeTF9emkF/dOooxsMRE+gRMv3mDlU4WjLfEyleov8j6zbEp5N8bGcYYWGLUKQHfDnUujVD9sxIZ
+74qd3OtPN39zbAr5X8E6xuD+hb93BcwldTM+EY23e5lVinrSfbWKc7EDg0tMoy5gk7VKqPGubGIq
+7hS+Xqv7PoYxwMSYfynZwBVQYKoMGW9XmVGxpa3Gr92FMhgDTAw8YmG87xHrOwSi8XZ5xbsq2+72
+2oSZr2EMMjFJ3cJFS4Y0t/F2leXFyqOtrU2T7cToTczH/J8uqC9jrF6u8GjbWKxFFv51NQs9/+nC
+PR/FP11QW+v2Txfgxw6sKpvXIaF4TXN1jwNvam3V2Ov/AQcWt5lBgT6GAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[33]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> theorems
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These theorems may now be imported from the theory package: proveit.numbers.summation
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

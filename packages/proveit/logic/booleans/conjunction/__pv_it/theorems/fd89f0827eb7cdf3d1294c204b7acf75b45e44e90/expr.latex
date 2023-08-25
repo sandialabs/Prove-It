@@ -1,0 +1,1 @@
+\left(\left(A, B\right) \mapsto \left\{\lnot \left(A \land B\right) \textrm{ if } \lnot A ,  \lnot B\right..\right)

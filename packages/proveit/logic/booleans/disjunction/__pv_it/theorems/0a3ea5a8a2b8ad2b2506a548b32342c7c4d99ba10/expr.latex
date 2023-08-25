@@ -1,0 +1,1 @@
+\left(C \mapsto \left\{C \textrm{ if } \left(A_{1} \Rightarrow C\right) \land  \left(A_{2} \Rightarrow C\right) \land  \ldots \land  \left(A_{m} \Rightarrow C\right)\right..\right)

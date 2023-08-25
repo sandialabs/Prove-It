@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Axioms for the theory of proveit.numbers.number_sets.natural_numbers</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../index.html"><img src="../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Axioms-for-the-theory-of-proveit.numbers.number_sets.natural_numbers">Axioms for the theory of <a class="ProveItLink" href="theory.html">proveit.numbers.number_sets.natural_numbers</a><a class="anchor-link" href="#Axioms-for-the-theory-of-proveit.numbers.number_sets.natural_numbers">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="c1"># Prepare this notebook for defining the axioms of a theory:</span>
+<span class="o">%</span><span class="k">axioms_notebook</span> # Keep this at the top following &#39;import proveit&#39;.
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">proveit</span> <span class="k">import</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">S</span>
+<span class="kn">from</span> <span class="nn">proveit.logic</span> <span class="k">import</span> <span class="p">(</span><span class="n">Boolean</span><span class="p">,</span> <span class="n">Implies</span><span class="p">,</span> <span class="n">And</span><span class="p">,</span> <span class="n">Forall</span><span class="p">,</span> <span class="n">Equals</span><span class="p">,</span> <span class="n">NotEquals</span><span class="p">,</span> 
+                           <span class="n">InSet</span><span class="p">,</span> <span class="n">SetEquiv</span><span class="p">,</span> <span class="n">SetOfAll</span><span class="p">,</span> <span class="n">SubsetEq</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">zero</span><span class="p">,</span> <span class="n">one</span><span class="p">,</span> <span class="n">Add</span><span class="p">,</span> <span class="n">Natural</span><span class="p">,</span> <span class="n">NaturalPos</span><span class="p">,</span> <span class="n">greater</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">begin</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Defining axioms for theory &#39;proveit.numbers.number_sets.natural_numbers&#39;
+Subsequent end-of-cell assignments will define axioms
+%end_axioms will finalize the definitions
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Peano's-axioms-define-the-natural-numbers">Peano's axioms define the natural numbers<a class="anchor-link" href="#Peano's-axioms-define-the-natural-numbers">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">zero_in_nats</span> <span class="o">=</span> <span class="n">InSet</span><span class="p">(</span><span class="n">zero</span><span class="p">,</span> <span class="n">Natural</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="zero_in_nats">zero_in_nats:</strong> <a class="ProveItLink" href="../__pv_it/axioms/464468e67a35817776418232c73ea3d04d99d6270/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADMAAAAQBAMAAABJt1qBAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAiXaZIs1UEN1mu6sy
+RO+L2jdBAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAA9klEQVQY02NgwAAVv5YWMMj9u8DAwChkgia3
+jHcDA/sHICOMocIBVWqHgyQDwwMGBs4GBsYFqFLbFrA6MDQwMHBtYGD7DhZhWtHRCmZsmcQSAJLi
+N2Dg+QYS4A0qgOrawn1AESRVD5T6CRJwhckwbGFYwHUBKOUvwMDzCSQQwoCQOszeDpX6CBIIQJLi
+TMgCurBegIEXpIvnRUdHRxdUimE79wOwM9hAzmBfgKSLoZod5PgFDJxgxzcgS/EoAFVyPmBgBluj
+BJdaA8Q6IEPaGOoOgARYE2BSYUAMVl4stAcswL7rOkTm6D+gDvYA5KDjlYIGFBQAAFS8PxwW/emj
+AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">successor_in_nats</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">one</span><span class="p">),</span> <span class="n">Natural</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Natural</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="successor_in_nats">successor_in_nats:</strong> <a class="ProveItLink" href="../__pv_it/axioms/0cacce82323d41514e7095b9a18df7da43951f010/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAK4AAAAVBAMAAAAtL8hrAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACnElEQVQ4y4WVS2gTURSG/0kyyWQmTQNuVIpE
+RIjgYyhVEEQC1VJwEzduWkvQhdiNI4JQHzUuBYlRCBJRmCoIIsVRcOHOjeADMQsfVRwcH1Sim2y0
+4spz596ZPDq3HviTOydzvzn57z13gBUjJRQd1gqzVo4vQtEx1Xetf2pMw3j1RPWAHEtskEyMOVwR
+oX0AsmZfMp3fD9wDvgJ72fURCfe20PKYG/tLn9N9WeWdYSIDJG2cZ37UJNxRoU6oQYlZxh3p526i
+EgeAeJGhYeQl3MdCXc543dyMzS9arlv2uSe8k4yL54hTAUmZvWUuKTfJqz/wI6jXWp11GPcw8NJ1
+X0i4CYdrau3plhfFNfxVT4U2K1Yadca9D4wD1yRcVg6Tc9nTl6K4cf/PJK0OVyvOz9NgB3AcqVz3
+nn79ELtEYiDvSy29R+pPFDfmm9+xUbEwHLtOg82052yjFOSra+pYb9gJsRyZki9d/4UYwyRc9yPZ
+lgu5WpsNL7oUNcFV7CEaXGIVhM9LjLMe8YoGeriItaGUo+pV/XrvdNer55gPk6TybjJqtPrNbxOg
+sHE24AofGHTQtKN8aPq3dXNRTdNgC+kBLeetSTNj6f5/KRg3J4K29LgyDrbZTtS6+TOyXtjHFbq6
+QIOdpDPk16lFDNq8lwootsRtbBsxnatgMV7p5RpLYiNSHAo3EGuwMdI+VjybsY4siR9tNK4Q925g
+uNbkOkjnwXCvv8rQ71XkAF/xuTo3STv2TBwob4InPcUeTXN4verWILsgFNFvfpwV3xM33J62TDWD
+QRsLBd4f24HPwe8jy84W1ew/lyIbNbhLzeGniRlyRHtLezBcB4tL9l6QnYMzfef9o0a9N1HjkoT0
+kVf/9x6aFYqO75J81sI/jnmqdXuyuT0AAAAASUVORK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The following two axioms will ensure that successors are never repeated.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">successor_is_injective</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">((</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">Equals</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">m</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Natural</span><span class="p">,</span> 
+                                <span class="n">condition</span><span class="o">=</span><span class="n">Equals</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">one</span><span class="p">),</span> <span class="n">Add</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">one</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="successor_is_injective">successor_is_injective:</strong> <a class="ProveItLink" href="../__pv_it/axioms/9fbd28ecb4f53c3cb2f9b7db84095439bf5ad47b0/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQ8AAAAXBAMAAADn89dPAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADJklEQVRIx72WT0gUURzHv+7M7I6z67qnoA5h
+VOSlGiIDIWpBJT0Ec+gSmu0t6tJ4NEu3YyRihcRUhzEhCA8tQoEdomMRwQYRdhDGCsUkESKKguj3
+5u+bmXWnoPXBsr/5/X7vzee93583wJaMTH2zjq0aH+qbB+lXYMLuBnOkKvXteRXoYcK5BoM8SHK4
+AFxlEZxsMEhXksNhIG0C2bYGgzxPcsiZECg86UanSCnJI00UrxcXXzUYRKRcHdwxsmpFi4Xprs9r
+FBOqmV7gTsJCRedvX4105+SY2eL3W7lhKd/Zw8lFNt4wkem+aikKnEBnNoRMoXYTevsYR22Tk8uC
+FnGYKfmMMbNyhA7Ce2hpg6S9R+ZHeL6t+w1hg4JHMM1mVotTTGyfwq6sKZoByDR/2PST16tAv6+a
+Dh3gxBd6kdc9choU5RtSP8PvcHUi7UdmMFaNXBV7WZuzilkEID2cvdnOwapTdIiYbff9TnfwQJDa
+QFM0Z0lHFDnilVhdlY7RuXZNLOU7y7ClT8BH5te+d5QHqXJePkhQ+VV3KgcyF4SGUbSqZjhHSNdS
+wVndtJfCHIHPDKi5Qp4lBJN0xV6rPXu/PwDJlDgvHyRVRJ9BQ3XNOg+yxzs/Slva90Ez0ulJ90jD
+towKgc25TCtfWkZrmVWZLZmSaoOguBqASJOclw8ieU3ZNZs8yGnXxopzrIxloRwGId1x4G7WKXA0
+MfNOjNsnyKQBCOcN4yaBzKYDkFTB9+oz7tEZ2CCyB+KYByAaxkvjlgNyzbXJ5HiG0vlQJEdIR7E8
+tULB8+vlBVYxJjtStyxXnBORDgQg7JW+Vzw0jrlbrhUaLCS1vCt+z9ig7XSKmGXSQrvT4jqApVCy
+el4cSN4KktWZyoGsc3faX96KUoE+BYY+Y7yNpDUVwxQu+Z2OJg7ktu/lgGSe/LLQ7H9c2eY11XUf
+ufiMqbxsTfgEq3H9u9WozBtTCDcGrne5J8LGQ1/VH3GnRfzllYTvjDioZNbyc5YR9XBntceJQKVH
+riZ+wmh9kJWYRsDmIHgat/AXTMzc8d+vcXdnStyibCLbw/yXd/wB0hzgYTrKUi8AAAAASUVORK5C
+YII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">zero_not_successor</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">NotEquals</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">one</span><span class="p">),</span> <span class="n">zero</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">Natural</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="zero_not_successor">zero_not_successor:</strong> <a class="ProveItLink" href="../__pv_it/axioms/cb088cf3f6f178c923d1f7dad0466484af8f379a0/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKsAAAAVCAMAAAAO9u4uAAAAPFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAo1xBWAAAAE3RSTlMA
+q1RmmUTNIjK7EInv3Xbn9enzK1aD6QAAAAlwSFlzAAAOxAAADsQBlSsOGwAAAmxJREFUSMe1V1mW
+pCAQZN8SsrvH+991WERl0ZaaN3yYTyvEIHItQv5l6c5+8Or/QM8WstauLIk3Pwh3i6bHPeOLn2PQ
+2nfLhEIG558z9noHgEIfaCHrc7UotFOtffUOFWrbhVMzAYk1lxsVHeaCrmhThdV2UVbBWzt39fAj
+Vq5czGSllxsesrb2QNfjwWrQ+c7O4wRvuRI/EdZenWszcVZeSGi+n1ytRqtq7TpXNTpEXmUlW1be
+bOxA+5CWh9UQgMZKpE4DWnzPFeiwaZMzrnLlB1rkaLZukWtVZbcQPYZpf/2aKz89IrJe4es7XY8M
+2qBwxQOtab3My3AQEGsF9x0isKuVkgSb9zevuTL/KOvJFU50khTkmJJIrY2PGSXgxhrt5dW6qKg8
+E+GQypcIozOuZuujta0MrpCURdeCTmcfE0QIU3sEEpGc/MQ1scytRb2PV+kfZa25xUpu7WhFOO4l
+jxtE0bYVZpjUOHBtY6CyjHngXsdAaOP1509onWBLZS0v7Ghgpcg6Ln2k6OPx3NkZmIkxwGTPtWZ8
+tbmQpBCA17nVdZ+hkfEspVBXtN7zRjtMz9Nml34TucYYwL6t1Yqz25JU8X1unrnCUSlEe3w29rHk
+M+dNg6Z1/1R2cmBwZfNihauDIaJNaKwMpd9z9hivlPpN0SJEkM+yxu0EYOUW+uxPZxCCGGKg0ZXI
+UaBgWvuyb12K4XRqe4dOjszfTuzO3sDzgXAowHX2mM4g97PLMPuQp7HrDr23YwSexy5TfVxKCb2d
+M+xHU3s313FYQfexAile5RPCtnZtdScMbgX9gTTY2qX/P93Hze/ov04IFRyVGik6AAAAAElFTkSu
+QmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The induction axiom defines the naturals as only zero and its successors and nothing else.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">induction</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">Implies</span><span class="p">(</span><span class="n">And</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">zero</span><span class="p">,</span> <span class="n">S</span><span class="p">),</span> <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">Add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">one</span><span class="p">),</span> <span class="n">S</span><span class="p">),</span> <span class="n">domain</span><span class="o">=</span><span class="n">S</span><span class="p">)),</span>
+                             <span class="n">SetEquiv</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">Natural</span><span class="p">)),</span>
+                   <span class="n">condition</span><span class="o">=</span><span class="n">SubsetEq</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">Natural</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="induction">induction:</strong> <a class="ProveItLink" href="../__pv_it/axioms/2c37bd11bafd701bf0ad462bfa46d2a9d186c02e0/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfEAAAAXBAMAAADpdmtlAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAFvElEQVRYw+VYW4gbVRj+k5kkk0mTplpcWxCC
+rgXxwipV8WW7WLXiUg32QbBaYvuwUEHHl4LY1VGLIGVxUOo2giUrpbBqaboyaIus8WFf1GosWKol
+MvVCvdB1tUqrFtfzn+tkcmaaPveHr93z/yf5vm/mXANwceGEEN8jHKWOm/iNOY7YYlz+9PG4stOX
+hYuLUkUhJjZF2oVq8ld+x6GNTJCQ92PKMeL2//16Az48X93ERZYxeU2/zq9XKMyu6ykPjjZvLQ1F
+nSdSpJsMmphoAHwPWhKa97VlJpD1IjF1BJ8DfUKvZspgLwAKRNyNubE+jds1hc2wPzpm8gFML8BW
+3poRzhMp9nH0ci1/kjjPNkBLgnlfV2bieC8S3754Qrzfq5z3AFpABRI8j7PG69O5OSRhtKEQ/dhd
+AEYNVnMBx4TzRIq1HCo2iD9+I7aMEdCSYN7XlZlA3ou+3H1lsGi3y7ysA22gAlezp1ao9Ol8iUK+
+DOl/2LR6s8NNnqMTcAl7D6Wbq9x5IkWLQ8VNYefwCWhJMO+rMsYbIZGiF6QIrnAfpaNzYDhXQ+co
+kMAgTyjb7zRfpbB0BKw/6GLzhBhxmTMAlgtZNtGLlsedJ1GkawyxzreAlgTzvizTeDkkUvSCAj61
+xTlaGEi5v6JzFIg40ul82q/zUYUDxPkZzG2TU81e/IBaLfN1Zkys7QkUZpPBnl+5c0bn/CBoSTDv
+yzINo6lEil78M+y/AfDy1TYTiLhXjROMkSTnWxSea4L1X2TpWrP4u8PnF+YHhfMIRTjE8zfhZLBe
+5/w20JJg3hdls0PjTyVS9OqKAdhhf9NmAhFPQQ5f0sb5YXri4CsRbRbq9bozPlo1PuafPaqAzv/F
+XGio2j8vkimbptPWKkOxwZ1zChWCjMyJCsPtsKZxuc75DaAlwbwvy3zmbJYiRS/xUMrMuVG5jgtE
+5Bt41kgH8Aoo57Rp76J/lg/Dffy75xQONCGD79wiQ7nztRy8f5EM3U1SLpQC7pxR0LBO1quKjKw0
+VQYX7qHt9Z3OZ53Ol8o57dhLgnlflOUOOSdEil6Rdw4rUy0mEJEOsmxBTIWc02aejpf0sAnNXudk
+hUvjCmer7YoMWpukMi2+T9tt7pxRsD3JDZMp5wCf61e4R0BLgnlflMWR9nFHiBS9os6nUBMKpCJr
+w+SfpUP8EMw4aPMZ9vpfeCho9o72vAcG3dXachiSIZUjqXRbnGPuFKdXSjG/7geHHfAkmRrtkDkL
+b+uc3whaEsz7osyH9DFHiJS9os6twGMCqciZrXTlfw1CzmnzaubcPXytcL5HwWiBSWffvJxmbbZM
+G57Quk04R4qSsyJbmVbfLk9kCHsXGYZNnfM7QEuCeV+W2X7nSZGyV9c8303wk8cEUpHbafqtB8oh
+57S5gTs3S2KwHQzhKLxLV6msOKOYJ1iBUho4x/Mud44UBuyxxPlMkMkdJn1ubytTiTj/yOF7lIYE
+874ss51PiZS9ugIXQHxbYifFtQigAZmFkHPanOLO7aZYWidC2Dt7JRt/Kx7mojLLl6HAIk7bFL4v
+K+DOKQWcJZsQ2S0qiox0aVPY9weDt0Tm+bIvHiNz4ys9CeZ9EGUQr5SLlL3C8dJ5jx3qUWBRLLnk
+efOTtaea7MSZduFBcRksugpqlB0SB0sW4zG3VKuVg53dZCSOc2jOcHTVautJMO+rcvhWXnQvcB4b
+D4s0y5BylHPeHMXvMKpQEmMTLwgCsbFW73x7oWaS/a2LDOT1QXdjkdePmLuTry8niuu5JJk7Rt8P
+rXC8mTlETjITY/yShzEZQtzPJZ7eufnj7C+Q291FhmuBA3z71MbTCXk/pjyZbBwF6q6OyRfW6RBi
+Imqj+zeZd+r17t9ocKu240knE/J+THk62Xncs052ngsUYuJU9NeoC/wO9yyH/tcvJz5/ei6mnCBO
+CDwFic5TdTy3w6USl4zT/wEQrfUwtClbTwAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="In-addition-to-Peano's-axioms,-we-need-an-extra-axiom-to-declare-that-every-object-is-either-a-Natural-or-not.">In addition to Peano's axioms, we need an extra axiom to declare that every object is either a Natural or not.<a class="anchor-link" href="#In-addition-to-Peano's-axioms,-we-need-an-extra-axiom-to-declare-that-every-object-is-either-a-Natural-or-not.">&#182;</a></h3><p>(We must be explicit about defining Natural as a genuine set.)</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">boolean_natural_membership</span> <span class="o">=</span> <span class="n">Forall</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">InSet</span><span class="p">(</span><span class="n">InSet</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Natural</span><span class="p">),</span> <span class="n">Boolean</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="boolean_natural_membership">boolean_natural_membership:</strong> <a class="ProveItLink" href="../__pv_it/axioms/38c457c096ffefaadf09cc2d3936ebf2a12d90320/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJoAAAAVBAMAAABMN+opAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAq1RmmUTNIjK7EInv
+3XZ/CtNrAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACRUlEQVQ4y5WUTWgTQRiG381ufna3DbmIFooU
+BEFULD0IRZCA+IN6iAoe/F3oQQjFjggFoYd4VFD3IkXRmoOIPbSmIogIxUsPUcRUUPEQXKl6EMxV
+EARn5pttZ7JdIR+8y+wzM+/8fDMDJIMppUS+J14cInWH9+VOFf67pWzUVfGrOTG+XIHgJfG/Ra/c
+rpQId+gY8ARY6a4Iz+WrGyTfL34v6FMISMmwPvnD6ANy9W63E3juSn5VrDjUqpxh0jpu2/iw/YBd
+TrqNWJKLgXx9l/qUtI283/4o3S5Hk8INr00u3XKS23waOb3vVqXVyF5UK7PYpmJDuI2ZXLht3EP8
+bbv9Ru98RGn+6+OXcs6TcSeLubgt3BZgcJ6F+eUG8UPAXd1tTKlc3Oy0jBRZrFCem+OF3TBTF54d
+/3uY+CXkS7rbe5LN7D+WTEaw5oaRzD1e2AGDi5WunKxL7tb9iu62RCrAoeYFvhXtz8rNqg/ywi2T
+Czc325A8ExlJiN14YunMe6E2N68kVnrG5NINIfFgL/90Dn5jxkqB88yT+9zS3HCTn1LshMHJLSD+
+tMqPDhvIqUM3Q5qtDMKXoLN6s2q84TVeGDW5dMtExKd4EmzMFFTVAmnX9aM4LkE8DBUOqAOkcYSn
+sfhMcasmyO+46gbpYSezj5p7A6coHRNN/n3E9cHg+NF8IN6QmIumr+Lnqb9G0i7DC3WD4oes9X+O
+KT9wVFHc6cS9NmL9N0HjzvfFnzGcVkqNK73wWaXUmO6F5yNSWhRZKv8H2fmdaVUcrekAAAAASUVO
+RK5CYII=
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Define-the-positive-naturals-(excluding-zero)">Define the positive naturals (excluding zero)<a class="anchor-link" href="#Define-the-positive-naturals-(excluding-zero)">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">natural_pos_def</span> <span class="o">=</span> <span class="n">Equals</span><span class="p">(</span><span class="n">NaturalPos</span><span class="p">,</span> <span class="n">SetOfAll</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">conditions</span><span class="o">=</span><span class="p">[</span><span class="n">greater</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">zero</span><span class="p">)],</span> <span class="n">domain</span><span class="o">=</span><span class="n">Natural</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="natural_pos_def">natural_pos_def:</strong> <a class="ProveItLink" href="../__pv_it/axioms/26d443595cec79190adb19817f3934f6011e698a0/axiom_expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAAAZBAMAAACVwzzTAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAEN27zYnvRFSrImZ2
+MpmnAiL6AAAACXBIWXMAAA7EAAAOxAGVKw4bAAACa0lEQVRIx8WWz2sTQRTHv2OyTbNx06WoWLzE
+HxcFJbJi24MQ8GCPq/XHwUv+gUIUrRfBBQURDW3spRQPEakoiC4eqgfBpU0PRSw5eCxarV4qSkSs
+Iii+3U0y07CzG6rFd8jOm3nZz7z35sss0LQ01tli/wXALgiOGv6Ce+Wg2e6vB3ScXClIAJUzgqMU
+QgHamB403ZcYBatJMuj8gvYAJ+Zp+7HRoKWb5dNAHkvGQcOwWxeVTHuAuMX2tEY3bDwbLyMjyaBd
+wGNgUAaYeKbm1gbYxBPuB0Z0GSBZnV0bgB1zGsPfwBtLBkA2VggDXCxNzjgCgPuYPlpHuQBbCnjN
+tmcEJb/b4dpuX905wOx32E8BwH2q/VtfIN8I4GBjPhiQsi7nJc27ayNR2An1FwcIPtmV5SbAhPoj
+GIBSUgK4f4TSZ98bcvAAgu/auZI7R4BLVLaegWBAD8tItLlE2uysIZkTSsR9D7C/3uQRCzheCAZo
+TlaYEHvgapPe1mXrHMB9t0QT3sMAnustulf3ncIU/f8QjV9mJT1wz0WHSWfc5ADuU5OX/ecU8J7W
+eaUXxnpxTdHTtJGB+mGRAh5VUUlVOYD7zWOKDRYbElWT/kQ/151FBXi1QrtnYYCz1KSnQg+aPptu
+Co19mKv60amPC/PAC3eyePWBEnVHhCq52w6I3jZsd5SZV/KisvX8XwECo29X0KUnPHQRizNRgNXa
+jAJ4rbyFYaQOG0YfATbHowCrtRkF2OJufAifNc30M0jciLyoH46L+VRDYyfdWLWGvUV46nsCzP37
+Twe6gGdt3KGtaLvKSK7XFwobNHr90R9qbahr09xOeQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> axioms
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>These axioms may now be imported from the theory package: proveit.numbers.number_sets.natural_numbers
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

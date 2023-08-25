@@ -1,0 +1,15 @@
+\begin{array}{c} 
+ \multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & A_{1, 1} & \rightarrow \end{array}} \\
+\multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & A_{1, 2} & \rightarrow \end{array}} \\
+\multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & \vdots & \rightarrow \end{array}} \\
+\multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & A_{1, n} & \rightarrow \end{array}} \\
+\multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & A_{2, 1} & \rightarrow \end{array}} \\
+\multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & A_{2, 2} & \rightarrow \end{array}} \\
+\multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & \vdots & \rightarrow \end{array}} \\
+\multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & A_{2, n} & \rightarrow \end{array}} \\
+\multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & \begin{array}{c}\vdots\\ \vdots\end{array} & \rightarrow \end{array}} \\
+\multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & A_{m, 1} & \rightarrow \end{array}} \\
+\multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & A_{m, 2} & \rightarrow \end{array}} \\
+\multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & \vdots & \rightarrow \end{array}} \\
+\multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & A_{m, n} & \rightarrow \end{array}} \\
+\end{array}

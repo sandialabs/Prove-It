@@ -1,0 +1,1 @@
+\left(\left|m - \left(2^{t} \cdot \varphi\right)\right|_{\textup{mod}\thinspace 2^{t}} - \left|m - \left\lfloor 2^{t} \cdot \varphi\right\rfloor\right|_{\textup{mod}\thinspace 2^{t}}, -\left\lfloor 2^{t} \cdot \varphi\right\rfloor + \left(2^{t} \cdot \varphi\right)\right)

@@ -1,0 +1,4 @@
+\begin{array}{cccccccc} 
+ A_{i} & A_{i + 1} & A_{i + 2} & \cdots & A_{j} & A & B & C \\
+C_{i} & C_{i + 1} & C_{i + 2} & \cdots & C_{j} & D & E & F \\
+\end{array}

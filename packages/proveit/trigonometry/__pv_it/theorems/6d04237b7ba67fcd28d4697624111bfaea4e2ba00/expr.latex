@@ -1,0 +1,1 @@
+\forall_{\theta \in \mathbb{R}~|~\left|\theta\right| \leq \frac{\pi}{2}}~\left(\sin{\left|\theta\right|} \geq \frac{2 \cdot \left|\theta\right|}{\pi}\right)

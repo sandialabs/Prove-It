@@ -1,0 +1,1 @@
+\left(K \mapsto \left[\forall_{H \underset{{\scriptscriptstyle c}}{\in} \textrm{InnerProdSpaces}\left(K\right)}~\left[\forall_{x, y \in H}~\left(\left \langle x, y\right \rangle = \left(\left \langle y, x\right \rangle^*\right)\right)\right]\right]\right)

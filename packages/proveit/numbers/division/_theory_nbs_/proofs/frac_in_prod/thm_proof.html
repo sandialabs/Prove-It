@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.division.frac_in_prod theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../index.html"><img src="../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.division.frac_in_prod-theorem">Proof of <a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../theory.html">division</a>.<a class="ProveItLink" href="../../theorems.html#frac_in_prod">frac_in_prod</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.division.frac_in_prod-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> frac_in_prod
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="frac_in_prod">frac_in_prod:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/ca54f29660a1c11633493e1844ed90a01f510c820/expr.html"><img src="data:image/png;base64,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
+rkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/6fba1696b3a1c4528d6b819771120bef7baf0af40/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>frac_in_prod may now be readily provable (assuming required theorems are usable).  Simply execute &#34;%qed&#34;.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

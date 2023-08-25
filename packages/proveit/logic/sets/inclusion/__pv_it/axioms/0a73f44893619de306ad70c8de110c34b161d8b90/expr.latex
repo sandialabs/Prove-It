@@ -1,0 +1,1 @@
+\forall_{A, B}~\left(\left(A \subseteq B\right) = \left[\forall_{x \in A}~\left(x \in B\right)\right]\right)

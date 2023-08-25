@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Demonstrations for the theory of proveit.linear_algebra.scalar_multiplication</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../index.html"><img src="../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Demonstrations-for-the-theory-of-proveit.linear_algebra.scalar_multiplication">Demonstrations for the theory of <a class="ProveItLink" href="theory.html">proveit.linear_algebra.scalar_multiplication</a><a class="anchor-link" href="#Demonstrations-for-the-theory-of-proveit.linear_algebra.scalar_multiplication">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="kn">from</span> <span class="nn">proveit.linear_algebra</span> <span class="k">import</span> <span class="n">ScalarMult</span>
+<span class="kn">from</span> <span class="nn">proveit.numbers</span> <span class="k">import</span> <span class="n">zero</span><span class="p">,</span> <span class="n">one</span>
+<span class="kn">from</span> <span class="nn">proveit.physics.quantum</span> <span class="k">import</span> <span class="n">Ket</span>
+<span class="o">%</span><span class="k">begin</span> demonstrations
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Some-Example-Simple-ScalarMult-Expressions-for-Demonstrations">Some Example Simple ScalarMult Expressions for Demonstrations<a class="anchor-link" href="#Some-Example-Simple-ScalarMult-Expressions-for-Demonstrations">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">example_scalar_mult_01</span><span class="p">,</span> <span class="n">example_scalar_mult_02</span><span class="p">,</span> <span class="n">example_scalar_mult_03</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">ScalarMult</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">Ket</span><span class="p">(</span><span class="n">one</span><span class="p">)),</span>
+        <span class="n">ScalarMult</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">ScalarMult</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">Ket</span><span class="p">(</span><span class="n">zero</span><span class="p">))),</span>
+        <span class="n">ScalarMult</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">ScalarMult</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">ScalarMult</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">Ket</span><span class="p">(</span><span class="n">zero</span><span class="p">)))))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="example_scalar_mult_01">example_scalar_mult_01:</strong> <a class="ProveItLink" href="../__pv_it/demonstrations/4081fb2a87f640cdcc3a930416d5dabb57e02ad50/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC4AAAAVBAMAAADLKsFqAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAMt0Qq5nNdoki72ZE
+u1S8GQohAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAkUlEQVQY02NgQAYTIBQjAxrogVC8AiBJZVRx
+IQMGvgAGBpOwz8jizK75BgwMCkA2+2dU9fVA8T4c4nNxiLNNwC7O14BdHGQxVvEYmDjzNxRxEbh6
+VRTxFzjMycQuznmBgYHjJ6p4P9DtHA8YWLy+eSOLu6xP2cDAhD2cGZ7iEL+JXZw5Abs4+wY08UII
+xcLAAACsfi8JcgnclQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="example_scalar_mult_02">example_scalar_mult_02:</strong> <a class="ProveItLink" href="../__pv_it/demonstrations/9777099557c4a2fb6f3cedbb49408f5261d795da0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFgAAAAVBAMAAAAwfTS1AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAMt0Qq5nNdoki72ZU
+RLsDrqvKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABU0lEQVQoz4WTsUvDQBTGv5g2TU0aO7gbETcF
+EXVwsa66ZBJFhK6iQ511yCB0sZDNrRb8B7LYUUQQxMnZKatzoSp28L1Ea95dxBty933f7y53eRdA
+tqqUUdYZesLtTMpO1nl1oNbiWXO50A2lQbDd3oMb0PgUWNkZ5OA1xSD4GMsRfBpbS0AlD+9DGh04
+PuwEFzR2AgXuabDXgDtAl8W1zNymBk8FMEaw+LMcyawcavAGwZ/pwXEuMyvW4KsQxhvSE/ZlNnFX
+CL8DBySefjJzyM/JZ0iDthGiRitPk5gZLzSvwJmRHtAdAY8kXv7dhpfAIeOQxL3MvJZelB7KTVQT
+ErdU+4/fzG5AGlTuBazXYfMrd1HaGm6PM4O+kDAIXm1v0v5YLCo3dBaFVxQPfKF9Jbz5A37l8sZK
+6EWFsMl3pqv+KGZSCFfi79Vlu5TyJOtKPCHCF2VlW4BiJ/YdAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="example_scalar_mult_03">example_scalar_mult_03:</strong> <a class="ProveItLink" href="../__pv_it/demonstrations/b1f14e00d65c1853ef847445f0235135a75a77970/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIIAAAAVBAMAAAB4Tis1AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAMt0Qq5nNdoki72ZU
+RLsDrqvKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABtElEQVQ4y5WUP0jDQBTGvzS2TU2MpbhbEbcK
+IurgYCvooksmqYiQwUUqWGcFMwguit3casFZzKKjFEERJ2enbtK54B908JIX9O4lDh58yX0v7/2S
++5MD1JZjHo1Eq0WpsXRgj/lsW/XHdLPzwECdBG1USrA8FngQKkwoBONwFZYj+rukqZWeVDDDAroL
+fXFbJWxhsoGi6GcmSFmZsAY1kPbFZV8hmEUYHRyJvumQFEKLEfoRI9gVWD00A3NOkgsslxHu44RB
+B9oXMsGi1EjKR3uMUI0TyoLwGU45DkhyQcZnhFqccOZBe0M4ldckuSDVZoRSMuEdWBfmkUQF+ms4
+cU9QAxe/hLIbjcLDgPiGIWGGSdErxxiBAhIh5fzMpPVFW+2Z9N9R2B2YImNTmFuSXGDXGeElTjBb
+SLvIdYS5IRkfv8+NCtRAsF44aSi7uoTZPIx2tNZV9C29Lv8818QaKYGC0MLlhi8Tpg/nxXgDMx5J
+biPMp/JI/LtxFxwORZLSrpg3nT8I3ei3S/sswWZHUpiZQNCDzdGMpDS9wwJzyYSsH9G7sVPulJ+b
+ddXv0K0voDRCfQMuvXw6lLSOZgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="ScalarMult.shallow_simplification()"><code>ScalarMult.shallow_simplification()</code><a class="anchor-link" href="#ScalarMult.shallow_simplification()">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">example_scalar_mult_01</span><span class="o">.</span><span class="n">shallow_simplification</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../__pv_it/demonstrations/65efde4fad839179eb1fd42aa7dedc0d9cfbb04d0/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../__pv_it/demonstrations/56b5f259141e25e9fae8b9f29d2c167d193511a20/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHEAAAAVBAMAAACDNRyvAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABRElEQVQ4y3WUu0oDQRSG/73ktuqSWiy0s9NC
+tA1Yi6lSGVwLwUZMISJW29naWyiIjSAEnyD6AGKnKYTUqUxhas+vu3Fmd87AMJePb86cw+wCaMJs
+XjaOUCRFCn/dYmH/b3yV/lQyTYoN6eO2xeJ7YIuHpi4zp5UElfcTy+yefQMRF4cOc0ZrPHfNjukL
+C5nEpStmThtwm95AFo22YpJuKiYOpFdTxSQ91UxWLnzTTKFHmski1BNuXTywPRbpnWbWZBJcaTGF
+Xv+b+4nJYrlp/KWZQg0z6pksaAFzakyh6m2r8mqDWy1PoS+aucQKDbSYQne4sdu0WDiRyTbr0HKY
+OR3L8HlznBpsYTj9AHjRqF82ZzQaub+jgOVa1L4y0nrPzeaZwLlm/tJnN+sge/UqxZ6breYnqxTe
+ssX8LG++9ZXS38SgP7qldXBf371oAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">example_scalar_mult_02</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<a class="ProveItLink" href="../__pv_it/demonstrations/9777099557c4a2fb6f3cedbb49408f5261d795da0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFgAAAAVBAMAAAAwfTS1AAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAMt0Qq5nNdoki72ZU
+RLsDrqvKAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABU0lEQVQoz4WTsUvDQBTGv5g2TU0aO7gbETcF
+EXVwsa66ZBJFhK6iQ511yCB0sZDNrRb8B7LYUUQQxMnZKatzoSp28L1Ea95dxBty933f7y53eRdA
+tqqUUdYZesLtTMpO1nl1oNbiWXO50A2lQbDd3oMb0PgUWNkZ5OA1xSD4GMsRfBpbS0AlD+9DGh04
+PuwEFzR2AgXuabDXgDtAl8W1zNymBk8FMEaw+LMcyawcavAGwZ/pwXEuMyvW4KsQxhvSE/ZlNnFX
+CL8DBySefjJzyM/JZ0iDthGiRitPk5gZLzSvwJmRHtAdAY8kXv7dhpfAIeOQxL3MvJZelB7KTVQT
+ErdU+4/fzG5AGlTuBazXYfMrd1HaGm6PM4O+kDAIXm1v0v5YLCo3dBaFVxQPfKF9Jbz5A37l8sZK
+6EWFsMl3pqv+KGZSCFfi79Vlu5TyJOtKPCHCF2VlW4BiJ/YdAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">temp_result</span> <span class="o">=</span> <span class="n">example_scalar_mult_02</span><span class="o">.</span><span class="n">shallow_simplification</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="temp_result">temp_result:</strong> <span style="font-size:20px;"> <a class="ProveItLink" href="../__pv_it/demonstrations/7328515d87016ccb9d88126a007e0f1476374a110/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../__pv_it/demonstrations/b50d2176091abbff5f6838caa61900626bdb581c0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJsAAAAVBAMAAACj9YEXAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABvUlEQVQ4y42Uv0vDQBzFX03T1lhKZ3Gok13E
+DFLHFnRUzORUsA5CF7FDEXHqJrrYXfAH3QSh+A/YdlZxcxI6d9FBcPUud72kLwkYeIR730/e5XuX
+HIAi6Jo1Uvo+1pUIPkNgzqUqGem+ur8JPWkhkcC60MQLVcmQ8NZKERtypo5SNG5K2A3YH8ehODYE
+nHHtezhycKjFcYbIysnWQnFsCPgS2EZarsG5FscZYh4Ux4aAX4GqlxrIoqfEcYaocFwlGvcLfLk4
+EINMR4njDNHmuHYkzpZwx9+i9LsSxQVEk+OakbjUj4BL/krnGkrA2YO8HpnocVwvPq6GrPgerK4S
+vV1AXAdP7/vTsiFaEfBzCQXRZOFbiZs1ROhpp0VxvqEWuurCqgELXaWYrVDEP5rFC3DlISP+VutO
+idYuIEYcN4rGXQAnwJLcioESv50hdqSxGzom2BCw49o3wKb8ZWpKHGeIiRh/3h4FnyYbArbbq+Lw
+kT06fSWOM4QzpiIb0+PHkvuyqJVI5FpUZGMK52X/p1rJxJCrw3h4T567A6VkAnWu1uPhsp4/X0yK
+K/snfYmP/lljTq+l/PGXtZBE/AFRcZ6nZflVnAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Notice the result here is no longer a ScalarMult!</span>
+<span class="c1"># Moral: simplification can change the type.</span>
+<span class="nb">type</span><span class="p">(</span><span class="n">temp_result</span><span class="o">.</span><span class="n">rhs</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+
+<div class="output_text output_subarea ">
+<pre>proveit.physics.quantum.algebra.bra_ket.Ket</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">temp_result</span><span class="o">.</span><span class="n">inner_expr</span><span class="p">()</span><span class="o">.</span><span class="n">rhs</span><span class="o">.</span><span class="n">operands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">simplify</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../__pv_it/demonstrations/7328515d87016ccb9d88126a007e0f1476374a110/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../__pv_it/demonstrations/b50d2176091abbff5f6838caa61900626bdb581c0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJsAAAAVBAMAAACj9YEXAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABvUlEQVQ4y42Uv0vDQBzFX03T1lhKZ3Gok13E
+DFLHFnRUzORUsA5CF7FDEXHqJrrYXfAH3QSh+A/YdlZxcxI6d9FBcPUud72kLwkYeIR730/e5XuX
+HIAi6Jo1Uvo+1pUIPkNgzqUqGem+ur8JPWkhkcC60MQLVcmQ8NZKERtypo5SNG5K2A3YH8ehODYE
+nHHtezhycKjFcYbIysnWQnFsCPgS2EZarsG5FscZYh4Ux4aAX4GqlxrIoqfEcYaocFwlGvcLfLk4
+EINMR4njDNHmuHYkzpZwx9+i9LsSxQVEk+OakbjUj4BL/krnGkrA2YO8HpnocVwvPq6GrPgerK4S
+vV1AXAdP7/vTsiFaEfBzCQXRZOFbiZs1ROhpp0VxvqEWuurCqgELXaWYrVDEP5rFC3DlISP+VutO
+idYuIEYcN4rGXQAnwJLcioESv50hdqSxGzom2BCw49o3wKb8ZWpKHGeIiRh/3h4FnyYbArbbq+Lw
+kT06fSWOM4QzpiIb0+PHkvuyqJVI5FpUZGMK52X/p1rJxJCrw3h4T567A6VkAnWu1uPhsp4/X0yK
+K/snfYmP/lljTq+l/PGXtZBE/AFRcZ6nZflVnAAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># notice here we eliminate multiply-nested ScalarMults</span>
+<span class="c1"># and multiplicative identity scalars</span>
+<span class="c1"># with our shallow_simplification() method</span>
+<span class="n">temp_result_02</span> <span class="o">=</span> <span class="n">example_scalar_mult_03</span><span class="o">.</span><span class="n">shallow_simplification</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<strong id="temp_result_02">temp_result_02:</strong> <span style="font-size:20px;"> <a class="ProveItLink" href="../__pv_it/demonstrations/34b66bb78ac8e35f76de674f2ceffca9a0df77750/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../__pv_it/demonstrations/437319c3bc0e07384f7518115f1d08352a829ee20/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMUAAAAVBAMAAAAEKDfsAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACAklEQVRIx51VMUscQRh9597e6XoeS0qxOLEw
+jWQL0dIDLZVcZRXxUgg2EgsRsbpOksbrBTUEEQTlyB/wYq2SLrEQrG1MIGrrzLo33+yb3SYLj2Xe
+977vzX4zOwMgBD1MFLKHd4k0zEhJq9AXUdQhxtLDYuf1fa3w3UK+CpMK9w0ryoRXB6pH6ey58RDT
+ej4tgevRU/lN+L8+WSUdYhFY2nxMZZci/ysCPVixwB5GVdYzeGeVdIgtPd+0xxdgHkXd0x0L7GFU
+A6CSDtF2Pa6AmUahq9UNAXsY1RSXZMJruh7PwEOEj2pQagnYw6g22IOJct3x8HV2K94cxZ8C8hDV
+KnswEc8w7VH4p7Jr8XL2NwXA9ol+Tln1jT2YCKJsjzrKant6bQF9h6j2pORyPBcmBjrGw39KuqCy
+z2uoqv5U/wi4V0ZllQzWySMmLA8cy2rORPHPOdgWZKz5q+p/eoVLYLeBkjqlvEMBrYeoLtiDiUrN
+9fgMbAIjes27Av4Oo1rQxHvr3GQi3pXFv6nsIPL3gdlkZ/fAHkZ1r8a3B2vyCzFRVV0Yunn6bWf7
+GxPqzNbtCToC9jCq4I6CDnGWc2p7ekcMW8hV9a9T0CF2crIrYXJg9pCv+sFRJiphdvaivu26gnwV
+PnCUCb+bnf028e8hX4VCjW9iJt7QXZwsmN5voxZyVS9UJcM3hNdXlgAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span><br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="ScalarMult.scalar_one_elimination()"><code>ScalarMult.scalar_one_elimination()</code><a class="anchor-link" href="#ScalarMult.scalar_one_elimination()">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">example_scalar_mult_01</span><span class="o">.</span><span class="n">scalar_one_elimination</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../__pv_it/demonstrations/65efde4fad839179eb1fd42aa7dedc0d9cfbb04d0/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../__pv_it/demonstrations/56b5f259141e25e9fae8b9f29d2c167d193511a20/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHEAAAAVBAMAAACDNRyvAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAABRElEQVQ4y3WUu0oDQRSG/73ktuqSWiy0s9NC
+tA1Yi6lSGVwLwUZMISJW29naWyiIjSAEnyD6AGKnKYTUqUxhas+vu3Fmd87AMJePb86cw+wCaMJs
+XjaOUCRFCn/dYmH/b3yV/lQyTYoN6eO2xeJ7YIuHpi4zp5UElfcTy+yefQMRF4cOc0ZrPHfNjukL
+C5nEpStmThtwm95AFo22YpJuKiYOpFdTxSQ91UxWLnzTTKFHmski1BNuXTywPRbpnWbWZBJcaTGF
+Xv+b+4nJYrlp/KWZQg0z6pksaAFzakyh6m2r8mqDWy1PoS+aucQKDbSYQne4sdu0WDiRyTbr0HKY
+OR3L8HlznBpsYTj9AHjRqF82ZzQaub+jgOVa1L4y0nrPzeaZwLlm/tJnN+sge/UqxZ6breYnqxTe
+ssX8LG++9ZXS38SgP7qldXBf371oAAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">example_scalar_mult_02</span><span class="o">.</span><span class="n">scalar_one_elimination</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../__pv_it/demonstrations/c4aa02659c4d75fb41488992322c5c79ed11c4d30/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../__pv_it/demonstrations/be91f747e0c2874e044eba2e0eb305ac83e494ad0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMUAAAAVBAMAAAAEKDfsAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACLElEQVRIx42VPUgbYRjH/2dyiZ5pOByLQ8RB
+F/GGYtHFgB0tZnJSqoOQRXQIIp0yVVoKdXES/ECk0GKRbk5+zLa42Q6FzC4qtLr6PGcS7/2/d0kP
+3hz3v/vd7/148h4AH3SYgVM/1+p3HNiHg5YIOgICKEgfPp5/SvsurbtgO/rREsELaVelyBMUKPBq
+wMdL1VflZ9BSpIpAfh+JiDsH93Ip4uBAgEzg7sLTiwVpmRI7poHZlX9IRLLateEIxoEAH4BJpHUK
+16R1LrNjVftrOgykC+TgQIAfwHjJOdGbmm+wY912GMgIO0Zsxz1wHWBe50kHWeblmLMdBlJhR8Vy
+uApUw1pIX8jPa3Jki5bDRMrsKFsO568AhXAFO7XL7zR++0WPAzQGZzpMZI8de/GOIrJSkSmd+lEa
+hxfEO5rI5tMr32gnrUAGLsBxAXmZp/yNJNfk6DpsOtw7xCCRV3rL5AiDxwUcD8J/WreO4yjZgc+I
+Qf5jrnAOfCohI1tPakeSMVqPmLkykTN2nNmO98AK0KsLqBX/kcaRK9gOAwkLcSqy1XIggBe4W8BE
+o0wr5AgLOn2LRORKTn+2F6vNBzgQwK0MyTat0+Tp1H8lR17uPPt99wtJiFfjSqzFb9QpLYDn+nXY
+4b3kG1oj1g7HQQPI+fXdL1tlxxraIKdMnMYD0zoEXfJe6/uR89sgM0zMxAODjZdZnYJ70gZx+NtJ
+QUd9fbR4+vTat7+1PWiFPADR78GTec0X5gAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">example_scalar_mult_03</span><span class="o">.</span><span class="n">scalar_one_elimination</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../__pv_it/demonstrations/1262b8aaa76e8cdd4d9a580003943819f62d3d1c0/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../__pv_it/demonstrations/888a2f53a7f9bc81c20e0bc6c54044c90f38a0bd0/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARcAAAAVBAMAAACeQrdYAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADE0lEQVRIx51WMWgUQRR9m929u1w252EZBE8s
+TKNeIYo2OaLdKl4VUSKJiJBGPCGEQJpUBkXwGitBT0QEBVnsrLxYq1ynFsrVAYkaEy39M/Mv2fyf
+zYkLj919O+/N29m/MwOgjO2Hh90Jbl/iJ16K26ldFtFz7fIT+3SgKjQHsTsRu1NELkMVB7zSWZSv
+IILEnT+w3FocI6zUtxr5NXrrp8gmKEwwfhN+g65HGQOLKoz0lYQJc+ZQGSdYbhBOI/x4IyWaAC7P
+rSOboDBXcamMFl3n6g64JrMoX0lQmFw1fIwiWE7Im3c6mhLNm6TpMJKIUWghaOM0XRcaDliSYZSv
+JCjMHeAsgirLCYMQoqYM01Rhog78dewzN/cZg3URRvlKgsK8B8bqXpvlhOOijT8t+lZEjD0NlNaQ
+M/U/w8jJopG+iqAwv4HVKq6wnDAr2uRrom9FxJiiMH9sYeMcI+iIMNJXEUESmjCLtrCNnDAj2thX
+TPetiBj7ayj9hK3gW4yCGb/8c3vYXNJXEUHi/aIwFVvBRk54ItoUq6JvRbgwZLRANycZflOMjPRV
+BIepIZ84OeHBVpsp83aDyWbf4QZ2Iugz1TBEI/ONblYZpe8ijPRVBH0mCvOmglLHyQmpNsXG9r7x
+DDsRtoD9NTeLvWYMNbPDWF9FuAIeq9raM3LC/3ymqI0CEeY3OMXwW6Jm/uEz4R1wr27/SiMnvBVt
+ooroWxE06TWRn4adIO4yCm0xMtJXERTmNjAHO18ZOcH8lzi/taDafzT4gWwiNm95seumzlmGnQDS
+h/TVHSU06OFD2JncyAkrdPnl0fXNOatEAzb8eeMTMgkKc2H8K9yi8oJRTEQY6asIChPOHu66GcLI
+CcWucHmJPgRvIexy67UcMCJVylcSvS2EXf1HHOwylz7UkreUEWaZVz+7As5LlfKVRC9MVGb5PHum
+j6jch4g3twSu+Ay8ttrPLPchemEmWG4tJuVGpN2H4DB2P7XMiPS+c7IP0QszynJr4VWEaC92J464
+07AJVHbAAb3tVL6CGOAa6rCc8BfGzfwcC3NvVQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="ScalarMult.double_scaling_reduction()"><code>ScalarMult.double_scaling_reduction()</code><a class="anchor-link" href="#ScalarMult.double_scaling_reduction()">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># quite reasonably, the double-scaling_reduction() method</span>
+<span class="c1"># only works for nested ScalarMults</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">example_scalar_mult_01</span><span class="o">.</span><span class="n">double_scaling_reduction</span><span class="p">(</span><span class="n">auto_simplify</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">the_error</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ValueError: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">the_error</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>ValueError: &#39;double_scaling_reduction&#39; is only applicable for a doubly nested ScalarMult
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">example_scalar_mult_02</span><span class="o">.</span><span class="n">double_scaling_reduction</span><span class="p">(</span><span class="n">auto_simplify</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../__pv_it/demonstrations/d9a92a3f0726b2d59d49fc97ff4c6ab485e73b500/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../__pv_it/demonstrations/4f4db38d70e0f14759c67534f0d1015a122cb7430/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAO0AAAAVBAMAAABYonTIAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAACYUlEQVRIx42WMWgUQRSG/729vcttzmNJKSlO
+UphG3EIUbXIQS8WrUimehZBGTHGEYHWVhyJ4TSpBIxIExXDYWbmxVkmnFkLqNFHQ2Dpv33q3b2Ze
+8MHPMcv83787+3bmACSQFfiH++Cp9vR/cwL/ZQ2DSmrNXpDD6ph/Pxu9LQSPZcG9PNvWMThndNCd
+Tgg7QGtbGi6fTnCB7nHAsoosti1nLuqYqIfoy91S7gpwY/23MNTS6DliGtwuJGvFtTGz1lUxdbr9
+s6XcDbohmfsQuIIqvY9hIVkbHlvOnFlTMQ1YuSM39xOw1A0yM2h0WbJGHhszN1XMeSs37Lm5f4DD
+FLfMoDZgydfb89iYuapi+lZuvePkRmQY5A1Y3WOJIotjY+ZVFbNq5eZPI3ODX8bQzjtipscC7r2i
+eoPyIri591XMCys3Tv25HdTNlxCOWKLI4tiYeVHFPJnm3qQHaYwngOioWCBjeN9Gy6xv6wdLFFkc
+GzMPJ1wbU8qN12QuXk4bYinNd4bZEeu4XLYx892Ea2P+Y53xEXjcRc1sq+EWS7zfY9b5kor5YOU2
+227uA2AdmKeGyFiiyOLYmPlIxeSdfm16yORfSfWnyI3T6CmwXP5kxMmx57Exs69iDszP92d3JntB
+y6ziiW9HX8uGqH/GHF+0vPGYJYosjo2Zr1VMvG9RduA/B0PqjpOFXMsOfOfyloopbd1cQyW3mZRO
+ANcy9OXWBzpm1+6SxJ9Lhx1t6kHm4MnS9P0PmdcxuG7NjTJ/7qIeQJYo8+Tu6hgEbWvynBxWigag
+hj1VCB7LnHu5kqiYvwuA5UI/SDk9AAAAAElFTkSuQmCC
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">example_scalar_mult_03</span><span class="o">.</span><span class="n">double_scaling_reduction</span><span class="p">(</span><span class="n">auto_simplify</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+<span style="font-size:20px;"> <a class="ProveItLink" href="../__pv_it/demonstrations/a417d476781e3c4f7195a2fd7006f609183944a20/proof.html" style="text-decoration: none">&nbsp;&#x22A2;&nbsp;&nbsp;</a><a class="ProveItLink" href="../__pv_it/demonstrations/e2543f912a9809a25278e31bdd83d39d8f6b8fc80/expr.html"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUEAAAAVBAMAAAAqSEFXAAAAMFBMVEX///8AAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAv3aB7AAAAD3RSTlMAInZUiRDNmWbv3US7
+qzJazP2FAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADZ0lEQVRIx52WP2hTURTGT5q8pE1fY+goBSMd
+7KJmEKVdGqqbFjNVFKUREbqIFUIpumRqUQpm6SRopIhgsQS3TibOKtnUQclckKi11dF77rkvuefc
+mwxeOOS9k/v97vfufwDIgigyEfP+nYn+yXokkSzmT/dlR69tmzuUFwgnMclfL9JPqCijOfXwxgR4
+ZJNuWmv6sRN1+v1oc8+o2CtatWQiXlAd9oI5TMzdg/iyep7CL6pQiIIyKdXcKVHJbgwdXjiRhXMW
+NyhB8OmuZchJLADcWDlgDm/BtSzU1HMS6902wcuCKyVukrNZY8phMh88hzT0uCn8+tOWyEms4vcw
+h8M1SDTgvHoexo5cN8HLqkequVpjVbIbUw4fAVyCRL7HHRF13ETVcRi2IH4AE/iyiYoiBS9Vj5S4
+m7yScPgBYLYYa/S4Z6UhmYiXHIdHliGzD0lcaEs41BUKPg1LHilxlzhbOPwD0MnDzR63LB3KRKrg
+OFxUDv/SLJ9HbIuCFZQ5UuLOczZ3GKDDil6uhrskHcqE7h3u8FgBMr9AL5U1nIwlCoD7r7C8Brtj
+XYdrnM0dxn4rhzm9VAx3SzqUiXTe61CBHqiXaRyrKgUrKHOkxJ3mbI/DAqTqXe6TXp1F3Q8yMVLv
+NhMcmlEuwKjqw+/qpYOnyw8KVlDmSInb4Wy7MTXKyuHbHGRaXa5lKL0sHOqE1Qy87K6U+D5t7bt4
+SlQpBjkkKXF3OdtujFbKbF5PcsP9n1EOGzCsErjeZnCUaxRsHg4Y5ZlBowzvAR4X9UZhuO+kQ5kI
+c+6OXYVUCfSetYEzukHBCsocKXE3OFs4fAiwAnqzNVy99C9bdxOZ0PtI4ic79bbgapv2/bK9sbA7
+QMsjJW6Zs1ljddWvwVPQB5bh7qnHr8/u9DZcmciovh77cvjZdnhl7hvQ2bmNY1WnYAVljpS426wS
+a0w5DMon27STGW66LbcJmdgB7+1L3z9iSDpqwpXtgO/eWOvPjm5f+uJkuPY5rouTWO/jsBldM6I7
+gitb9zlMVfqzI4dh1uI2JUEmwqzXYYD7F05oXDGxhmMEZaHv7j0xgB05XLC51yVBJoKG16G+tDb7
+W0FZ0PA4bA5gRw6nbG4sJ+eJTIzz11P0M4YuEXDcBHhk4256KDuAPWQWQavH/QdH5BmGA/lIzwAA
+AABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a></span>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">end</span> demonstrations
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

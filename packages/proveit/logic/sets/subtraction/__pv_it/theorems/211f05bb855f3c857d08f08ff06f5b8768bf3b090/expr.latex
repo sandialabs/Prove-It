@@ -1,0 +1,1 @@
+\forall_{S, y}~\left[\forall_{x~|~x \notin \left(S - \left\{y\right\}\right)}~\left(\left(x \notin S\right) \lor \left(x = y\right)\right)\right]

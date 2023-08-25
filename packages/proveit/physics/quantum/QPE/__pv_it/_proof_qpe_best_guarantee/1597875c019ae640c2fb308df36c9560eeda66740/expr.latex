@@ -1,0 +1,1 @@
+\left(round\left(2^{t} \cdot \varphi\right) ~\textup{mod}~ 2^{t}\right) \in \{0~\ldotp \ldotp~2^{t} - 1\}

@@ -1,0 +1,24 @@
+\begin{array}{ccc} 
+ \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert \Psi \rangle~\mbox{part}~1~\mbox{on}~\{1~\ldotp \ldotp~t\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \meter 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert m \rangle_{t}~\mbox{part}~1~\mbox{on}~\{1~\ldotp \ldotp~t\}} 
+} \end{array} \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert \Psi \rangle~\mbox{part}~2~\mbox{on}~\{1~\ldotp \ldotp~t\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \meter 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert m \rangle_{t}~\mbox{part}~2~\mbox{on}~\{1~\ldotp \ldotp~t\}} 
+} \end{array} \\
+\vdots & \begin{array}{c}:\\ \left(t - 3\right) \times \\:\end{array} & \vdots \\
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \qin{\lvert \Psi \rangle~\mbox{part}~t~\mbox{on}~\{1~\ldotp \ldotp~t\}} & \qw 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \meter 
+} \end{array} & \begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& & \qout{\lvert m \rangle_{t}~\mbox{part}~t~\mbox{on}~\{1~\ldotp \ldotp~t\}} 
+} \end{array} \\
+\end{array}

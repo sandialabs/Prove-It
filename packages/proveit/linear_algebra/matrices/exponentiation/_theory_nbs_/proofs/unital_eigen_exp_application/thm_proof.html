@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.linear_algebra.matrices.exponentiation.unital_eigen_exp_application theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.linear_algebra.matrices.exponentiation.unital_eigen_exp_application-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">linear_algebra</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">matrices</a>.<a class="ProveItLink" href="../../theory.html">exponentiation</a>.<a class="ProveItLink" href="../../theorems.html#unital_eigen_exp_application">unital_eigen_exp_application</a> theorem<a class="anchor-link" href="#Proof-of-proveit.linear_algebra.matrices.exponentiation.unital_eigen_exp_application-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> unital_eigen_exp_application
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="unital_eigen_exp_application">unital_eigen_exp_application:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/d670b702f69c654a86442eaf63e97203cec86bee0/expr.html"><img src="data:image/png;base64,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
+aZtcyQAAAABJRU5ErkJggg==
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/ba89eac04854e6947a3cec26d1023a74e1cb07db0/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

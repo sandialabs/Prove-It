@@ -1,0 +1,1 @@
+\forall_{\left(x_{1} \in S_{1}\right), \left(x_{2} \in S_{2}\right), \ldots, \left(x_{n} \in S_{n}\right)~|~R\left(x_{1}, x_{2}, \ldots, x_{n}\right)}~Q\left(x_{1}, x_{2}, \ldots, x_{n}\right)

@@ -1,0 +1,1 @@
+\left(\left(a, b, c, d\right) \mapsto \left\{a^{b} = \left(a^{c} \cdot a^{d}\right) \textrm{ if } a \in \mathbb{R} ,  b \in \mathbb{Z} ,  c \in \mathbb{Z} ,  d \in \mathbb{Z} ,  a \neq 0 ,  b = \left(c + d\right)\right..\right)

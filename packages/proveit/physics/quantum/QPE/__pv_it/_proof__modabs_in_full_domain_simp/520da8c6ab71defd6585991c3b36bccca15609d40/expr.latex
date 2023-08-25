@@ -1,0 +1,1 @@
+|\left(2^{t - 1} \textrm{ if } 2^{t - 1} \geq \left(2^{t - 1} - 1\right), 2^{t - 1} - 1 \textrm{ if } \left(2^{t - 1} - 1\right) > 2^{t - 1}\right)| = |\left(1, \ldots, 2\right)|

@@ -1,0 +1,7 @@
+\begin{array}{c} 
+ \multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & a_{1} & \rightarrow \end{array}} \\
+\multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & a_{2} & \rightarrow \end{array}} \\
+\multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & \vdots & \rightarrow \end{array}} \\
+\multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & a_{i} & \rightarrow \end{array}} \\
+\multicolumn{1}{c}{\begin{array}{lcr} \leftarrow & b & \rightarrow \end{array}} \\
+\end{array}

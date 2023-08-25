@@ -1,0 +1,1 @@
+f \mapsto \left[\forall_{a, b, c \in \mathbb{Z}}~\left(\left(\sum_{x = a}^{b} f\left(x\right)\right) = \left(\sum_{x = a + c}^{b + c} f\left(x - c\right)\right)\right)\right]

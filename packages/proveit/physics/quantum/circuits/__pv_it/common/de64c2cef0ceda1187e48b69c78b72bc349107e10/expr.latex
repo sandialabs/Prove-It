@@ -1,0 +1,3 @@
+\begin{array}{cccc} 
+ \multirow{1}{*}{$\begin{array}{c} \uparrow \\ B_{1} \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ B_{2} \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ \cdots \\ \downarrow \end{array}$} & \multirow{1}{*}{$\begin{array}{c} \uparrow \\ B_{k} \\ \downarrow \end{array}$} \\
+\end{array}

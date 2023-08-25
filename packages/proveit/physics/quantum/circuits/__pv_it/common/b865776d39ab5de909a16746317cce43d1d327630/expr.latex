@@ -1,0 +1,6 @@
+\begin{array}{c} \Qcircuit@C=1em @R=.7em{
+& \gate{B_{p\left(1\right), 1}~\mbox{on}~p^{\leftarrow}\left(S_{p\left(1\right), 1}\right)} \qwx[1] & \gate{B_{p\left(2\right), 1}~\mbox{on}~p^{\leftarrow}\left(S_{p\left(2\right), 1}\right)} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{B_{p\left(n\right), 1}~\mbox{on}~p^{\leftarrow}\left(S_{p\left(n\right), 1}\right)} \qwx[1] & \qw \\
+& \gate{B_{p\left(1\right), 2}~\mbox{on}~p^{\leftarrow}\left(S_{p\left(1\right), 2}\right)} \qwx[1] & \gate{B_{p\left(2\right), 2}~\mbox{on}~p^{\leftarrow}\left(S_{p\left(2\right), 2}\right)} \qwx[1] & \gate{\cdots} \qwx[1] & \gate{B_{p\left(n\right), 2}~\mbox{on}~p^{\leftarrow}\left(S_{p\left(n\right), 2}\right)} \qwx[1] & \qw \\
+& \gate{\vdots} \qwx[1] & \gate{\vdots} \qwx[1] & \gate{\ddots} \qwx[1] & \gate{\vdots} \qwx[1] & \qw \\
+& \gate{B_{p\left(1\right), k}~\mbox{on}~p^{\leftarrow}\left(S_{p\left(1\right), k}\right)} & \gate{B_{p\left(2\right), k}~\mbox{on}~p^{\leftarrow}\left(S_{p\left(2\right), k}\right)} & \gate{\cdots} & \gate{B_{p\left(n\right), k}~\mbox{on}~p^{\leftarrow}\left(S_{p\left(n\right), k}\right)} & \qw
+} \end{array}

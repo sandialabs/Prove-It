@@ -1,0 +1,1 @@
+\forall_{a, b, c \in \mathbb{R}~|~b < a < c}~\left(\left|a\right| < {\rm Max}\left(\left|b\right|, \left|c\right|\right)\right)

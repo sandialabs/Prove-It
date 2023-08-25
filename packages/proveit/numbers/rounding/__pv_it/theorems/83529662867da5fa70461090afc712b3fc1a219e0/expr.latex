@@ -1,0 +1,1 @@
+\left(\left(x, y\right) \mapsto \left\{\left(x + 1\right) \leq \left\lceil y\right\rceil \textrm{ if } x \in \mathbb{Z} ,  y \in \mathbb{R} ,  x < y\right..\right)

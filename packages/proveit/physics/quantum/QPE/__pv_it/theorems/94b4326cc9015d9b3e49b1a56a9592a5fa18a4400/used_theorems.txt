@@ -1,0 +1,9 @@
+proveit.logic.booleans.disjunction.binary_or_contradiction
+proveit.logic.booleans.implication.contrapose_neg_consequent
+proveit.logic.booleans.in_bool_if_true
+proveit.logic.equality.fold_not_equals
+proveit.logic.equality.sub_right_side_into
+proveit.logic.equality.unfold_not_equals
+proveit.logic.sets.membership.not_in_set_is_bool
+proveit.logic.sets.membership.unfold_not_in_set
+proveit.physics.quantum.QPE._scaled_delta_b_is_zero_or_non_int

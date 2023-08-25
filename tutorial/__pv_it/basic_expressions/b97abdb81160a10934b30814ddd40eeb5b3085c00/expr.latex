@@ -1,0 +1,1 @@
+\begin{array}{c} \begin{array}{l} \left(a_{i}, a_{i + 1}, \ldots, a_{j}\right) =  \\ \left(a_{i}, a_{i + 1}, \ldots, a_{j - 1}, a_{j}\right) \end{array} \end{array}

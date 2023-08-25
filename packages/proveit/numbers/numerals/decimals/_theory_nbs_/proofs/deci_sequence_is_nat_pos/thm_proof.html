@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8" />
+<title>Proof of proveit.numbers.numerals.decimals.deci_sequence_is_nat_pos theorem</title>
+
+<style type="text/css">
+/* Overrides of notebook CSS for static HTML export */
+body {
+  overflow: visible;
+  padding: 8px;
+}
+div#notebook {
+  overflow: visible;
+  border-top: none;
+}@media print {
+  div.cell {
+    display: block;
+    page-break-inside: avoid;
+  } 
+  div.output_wrapper { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+  div.output { 
+    display: block;
+    page-break-inside: avoid; 
+  }
+}
+</style>
+
+<!-- Custom stylesheet, it must be in the same directory as the html file -->
+<link rel="stylesheet" href="notebook.css">
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script></head>
+<body>
+  <div tabindex="-1" id="notebook" class="border-box-sizing">
+    <div class="container" id="notebook-container">
+    <a href="../../../../../../../../index.html"><img src="../../../../../../../../pv_it.png" alt="logo" style="width:50px;float:left;position:absolute"></a> 
+
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Proof-of-proveit.numbers.numerals.decimals.deci_sequence_is_nat_pos-theorem">Proof of <a class="ProveItLink" href="../../../../../../_theory_nbs_/theory.html">proveit</a>.<a class="ProveItLink" href="../../../../../_theory_nbs_/theory.html">numbers</a>.<a class="ProveItLink" href="../../../../_theory_nbs_/theory.html">numerals</a>.<a class="ProveItLink" href="../../theory.html">decimals</a>.<a class="ProveItLink" href="../../theorems.html#deci_sequence_is_nat_pos">deci_sequence_is_nat_pos</a> theorem<a class="anchor-link" href="#Proof-of-proveit.numbers.numerals.decimals.deci_sequence_is_nat_pos-theorem">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">proveit</span>
+<span class="n">theory</span> <span class="o">=</span> <span class="n">proveit</span><span class="o">.</span><span class="n">Theory</span><span class="p">()</span> <span class="c1"># the theorem&#39;s theory</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">proving</span> deci_sequence_is_nat_pos
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+<div class="output_html rendered_html output_subarea ">
+With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof of<br><strong id="deci_sequence_is_nat_pos">deci_sequence_is_nat_pos:</strong> <a class="ProveItLink" href="../../../__pv_it/theorems/3f6aa7d45c6c1610c61fafbea91a7eba7be4536b0/expr.html"><img src="data:image/png;base64,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
+" style="display:inline;vertical-align:middle;" /></a><br>(see <a class="ProveItLink" href="../../../__pv_it/theorems/a94f0d2a5718b93a792bc3db91a66bb4e9859f560/dependencies.html">dependencies</a>)<br>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    </div>
+  </div>
+<footer>
+  <p>These web pages were generated on 2023-08-23 by <a href="https://github.com/PyProveIt/Prove-It">Prove-It</a> Beta Version 0.3, licensed under the GNU Public License by Sandia Corporation.</p>
+  <p>Presented proofs are not absolutely guaranteed.  For assurance, it is important to check the structure 
+  of the statement being proven, independently verify the derivation steps, track dependencies, and ensure that 
+  employed axioms are valid and properly structured.  Inconsistencies may exist, unknowingly, in this system.
+  </p>
+  <p>
+  This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, under the Quantum Computing Application Teams program. Sandia National Labs is managed and operated by National Technology and Engineering Solutions of Sandia, LLC, a subsidiary of Honeywell International, Inc., for the U.S. Dept. of Energy's NNSA under contract DE-NA0003525. The views expressed above do not necessarily represent the views of the DOE or the U.S. Government.
+  </p>
+  <br>
+  <p>Please send questions/comments to: <a href="mailto:wwitzel@sandia.gov">
+  wwitzel@sandia.gov</a>.</p>
+</footer> 
+</body>
+
+ 
+
+
+</html>

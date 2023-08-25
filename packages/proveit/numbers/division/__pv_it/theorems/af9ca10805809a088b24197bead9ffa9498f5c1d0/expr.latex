@@ -1,0 +1,1 @@
+a \mapsto \left\{\forall_{x, y \in \mathbb{R}^+~|~x < y}~\left(\frac{a}{x} < \frac{a}{y}\right) \textrm{ if } a \in \mathbb{R}^-\right..

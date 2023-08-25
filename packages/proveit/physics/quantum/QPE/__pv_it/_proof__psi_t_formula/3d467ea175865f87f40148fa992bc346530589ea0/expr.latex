@@ -1,0 +1,1 @@
+\sum_{k=0}^{2^{t} - 1} \left({_{-}a}\left(k\right) \cdot \left(\lvert 1 \rangle {\otimes} \lvert k \rangle_{t}\right)\right)
