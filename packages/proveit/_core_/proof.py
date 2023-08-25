@@ -2632,6 +2632,8 @@ class _ShowProof:
     def is_possibly_usable(self):
         return True
 
+    def explicitly_allowed(self):
+        return True
 
 class ProofFailure(Exception):
     def __init__(self, expr, assumptions, message):
