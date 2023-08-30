@@ -3378,8 +3378,8 @@ class StoredDefinitionExistence(StoredTheorem):
         existence for a set of defining properties' __pv_it database
         entries.
         '''
-        def_existence = theory.get_definition_existence(name)
-        obj_id = def_existence._style_id
+        defining_property = theory.get_defining_property(name)
+        obj_id = defining_property.required_proofs[0]._style_id
         _, hash_id = TheoryFolderStorage.proveit_object_to_storage[obj_id]
         StoredTheorem.__init__(self, theory, name, hash_id=hash_id)
 
