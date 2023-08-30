@@ -1146,6 +1146,8 @@ def display_assignments(names, right_sides, beginning_proof=False,
         processed_right_sides.append(right_side)
     names = list(names)
     right_sides = processed_right_sides
+    expr_names = []
+    exprs = []
     for name, right_side in zip(names, right_sides):
         if name == '_': continue
         if prove_it_magic.kind in ('axioms', 'defining_properties',
@@ -1153,9 +1155,9 @@ def display_assignments(names, right_sides, beginning_proof=False,
             if not isinstance(
                     right_side, Expression) and (
                     right_side is not None):
-                raise ValueError("Right hand side of end-of-cell "
-                                 "assignment(s) is {}, but is expected to "
-                                 "be Expression(s).".format(right_side))
+                continue # skip non-Expressions
+        expr_names.append(name)
+        exprs.append(right_side)
         if name in prove_it_magic.definitions:
             prev_def = prove_it_magic.definitions[name]
             if right_side != prev_def and isinstance(prev_def, Expression):
@@ -1229,7 +1231,7 @@ def display_assignments(names, right_sides, beginning_proof=False,
         # We now have definitions for the 'literals'.
         prove_it_magic.defined_literals.update(literals)
     
-    for name, right_side in zip(names, right_sides):
+    for name, right_side in zip(expr_names, exprs):
         if name == '_':
             # Not a real assignment
             display(right_side)
@@ -1255,7 +1257,7 @@ def assignment_html(name, right_side, beginning_proof=False,
     if kind in ('axioms', 'defining_properties', 'theorems', 'common'):
         if kind == 'axioms' or kind == 'theorems':
             kind = kind[:-1]
-        else:
+        elif kind == 'defining_properties':
             kind = 'defining_property'
         name_kind_theory = (name, kind, theory)
     right_side_str, expr = None, None

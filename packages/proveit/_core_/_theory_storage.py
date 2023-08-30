@@ -1409,7 +1409,7 @@ class TheoryFolderStorage:
         called yet in the special expressions notebook).
         '''
         from proveit import Expression
-        from proveit._core_.proof import Axiom, Theorem
+        from proveit._core_.proof import Axiom, Theorem, DefiningProperty
         from json import JSONDecodeError
 
         if not isinstance(expr, Expression):
