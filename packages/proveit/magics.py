@@ -58,6 +58,10 @@ class AssignmentBehaviorModifier:
 
         def new_run_cell(self, raw_cell, *args, **kwargs):
             lines = raw_cell.split('\n')
+            if lines[0].rstrip() == "# BUILD COMMAND":
+                # Avoid a bad interaction with build.py).
+                return ipython.orig_run_cell(raw_cell, *args, **kwargs)
+            new_lines = []
             try:
                 remaining_ast_nodes = deque(ast.parse(raw_cell).body)
             except SyntaxError:
@@ -65,36 +69,38 @@ class AssignmentBehaviorModifier:
                 return ipython.orig_run_cell(raw_cell, *args, **kwargs)
             while len(remaining_ast_nodes) > 0:
                 ast_node = remaining_ast_nodes.popleft()
+                line_idx = ast_node.lineno-1
+                if len(remaining_ast_nodes) == 0:
+                    orig_lines = lines[line_idx:]
+                else:
+                    orig_lines = lines[line_idx:remaining_ast_nodes[0].lineno-1]
+                orig_line = '\n'.join(orig_lines)
                 if isinstance(ast_node, ast.With):
                     # Dig into 'with' blocks.
-                    remaining_ast_nodes.extendleft(ast_node.body)
+                    remaining_ast_nodes.extendleft(reversed(ast_node.body))
+                    new_lines.append(orig_line[:orig_line.find(':')+1])
                     continue
+                orig_line_stripped = orig_line.lstrip()
+                whitespace = orig_line[:-len(orig_line_stripped)]
                 if isinstance(ast_node, ast.Assign):
                     try:
                         target_strs = list(
                                 ast_yield_expr_strs(ast_node.targets))
                     except NotImplementedError:
                         target_strs = None # forget it
+                    new_lines.append(orig_line)
                     # Skip assignment of 'theory' which happens in the
                     # theory proof templates.
                     if target_strs is not None and 'theory' not in target_strs:
-                        lines.append(assignment_fn(target_strs))
-                elif len(remaining_ast_nodes) == 0 and (
-                        isinstance(ast_node, ast.Expr) and (
-                                len(lines) < 2 or
-                                lines[-2][:21] != "len(gc.get_objects())")):
+                        new_lines.append(whitespace+assignment_fn(target_strs))
+                elif len(remaining_ast_nodes) == 0 and isinstance(ast_node, ast.Expr):
                     # This will display a tuple of expressions, for example,
-                    # in a nice way.  (checking for "len(gc.get...)" avoids
-                    # a bad interaction with build.py).
-                    orig_lines = lines
-                    lines = lines[:ast_node.lineno-1]
-                    last_lines = orig_lines[ast_node.lineno-1:]
-                    stripped = last_lines[0].lstrip()
-                    whitespace = last_lines[0][:-len(stripped)]
-                    lines.append(whitespace + "_ = " + stripped + '\n' +
-                                 '\n'.join(last_lines[1:]))
-                    lines.append(assignment_fn('_'))
-            new_raw_cell = '\n'.join(lines)
+                    # in a nice way. 
+                    new_lines.append(whitespace + "_ = " + orig_line_stripped)
+                    new_lines.append(whitespace + assignment_fn('_'))
+                else:
+                    new_lines.append(orig_line)
+            new_raw_cell = '\n'.join(new_lines)
             return ipython.orig_run_cell(new_raw_cell, *args, **kwargs)
 # ipython.run_cell = new.instancemethod(new_run_cell, ipython)#Comment out
 # for python 3
@@ -114,8 +120,6 @@ class AssignmentBehaviorModifier:
             ','.join(
                 "'%s'" %
                 varname for varname in varnames) +
-            "], [" +
-            ','.join(varnames) +
             "])")
 
 
@@ -1079,8 +1083,7 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         # assign the theorem name to the theorem expression
         # and display this assignment
         self.shell.user_ns[theorem_name] = begin_proof_result
-        display_assignments([theorem_name], [begin_proof_result],
-                            beginning_proof=True)
+        display_assignments([theorem_name], beginning_proof=True)
 
     @line_magic
     def existence_proving(self, line):
@@ -1094,8 +1097,7 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         # assign the theorem name to the theorem expression
         # and display this assignment
         self.shell.user_ns[theorem_name] = begin_proof_result
-        display_assignments([theorem_name], [begin_proof_result],
-                            beginning_proof=True,
+        display_assignments([theorem_name], beginning_proof=True,
                             beginning_existence_proof=True)
 
     @line_magic
@@ -1127,13 +1129,16 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         thm_expr = self.shell.user_ns[line.strip()]
         ProveItMagicCommands.display_dependencies_latex(self, name, thm_expr)
 
-def display_assignments(names, right_sides, beginning_proof=False,
+def display_assignments(names, beginning_proof=False,
                         beginning_existence_proof=False):
     from proveit import single_or_composite_expression, Judgment
-    
     theory = prove_it_magic.theory
     processed_right_sides = []
-    for right_side in right_sides:
+    for name in names:
+        try:
+            right_side = prove_it_magic.shell.user_ns[name]
+        except:
+            continue # e.g., an error from 'getting' a TemporarySetter.
         if right_side is None: continue
         if not isinstance(right_side, Judgment):
             try:
@@ -1149,7 +1154,10 @@ def display_assignments(names, right_sides, beginning_proof=False,
     expr_names = []
     exprs = []
     for name, right_side in zip(names, right_sides):
-        if name == '_': continue
+        if name == '_':
+            # Not a real assignment, just something to display.
+            display(right_side)
+            continue
         if prove_it_magic.kind in ('axioms', 'defining_properties',
                                    'theorems', 'common'):
             if not isinstance(
@@ -1164,12 +1172,16 @@ def display_assignments(names, right_sides, beginning_proof=False,
                 prove_it_magic.expr_names[prev_def].remove(name)
                 if len(prove_it_magic.expr_names[prev_def]) == 0:
                     prove_it_magic.expr_names.pop(prev_def)
+        """
+        # This wasn't actually ever happening because a right side of None
+        # would have been skipped during processing.
         if right_side is None:
             # unsetting a defintion
             prove_it_magic.lower_case_names.remove(name.lower())
             prev_def = prove_it_magic.definitions[name]
             prove_it_magic.definitions.pop(name)
             continue
+        """
         if prove_it_magic.kind == 'axioms' or (
                 prove_it_magic.kind == 'theorems' or
                 prove_it_magic.kind == 'defining_properties'):
@@ -1232,14 +1244,10 @@ def display_assignments(names, right_sides, beginning_proof=False,
         prove_it_magic.defined_literals.update(literals)
     
     for name, right_side in zip(expr_names, exprs):
-        if name == '_':
-            # Not a real assignment
-            display(right_side)
-        else:
-            display(HTML(assignment_html(
-                    name, right_side, beginning_proof=beginning_proof,
-                    beginning_existence_proof=beginning_existence_proof,
-                    representative_name=names[-1])))
+        display(HTML(assignment_html(
+                name, right_side, beginning_proof=beginning_proof,
+                beginning_existence_proof=beginning_existence_proof,
+                representative_name=names[-1])))
 
     # While we are displaying assignments check if a theorem that 
     # is being proven is readily provable; if so, indicate that 

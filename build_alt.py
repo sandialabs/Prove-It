@@ -305,7 +305,7 @@ class RecyclingExecutePreprocessor(ExecutePreprocessor):
         # we are done so we can "recycle" our Kernel to be used cleanly
         # for the next notebook.
         self.nb = nb
-        init_modules_source = """
+        init_modules_source = """# BUILD COMMAND
 import sys
 from proveit import *
 from proveit import defaults
@@ -320,7 +320,7 @@ __init_modules # avoid Prove-It magic assignment
         self.preprocess_cell(init_modules_cell, resources, 0)
 
         # change the working directory
-        cd_source = 'import os\nos.chdir(r\"' + path + '")'
+        cd_source = '# BUILD COMMAND\nimport os\nos.chdir(r\"' + path + '")'
         cd_cell = nbformat.NotebookNode(
             cell_type='code', source=cd_source, metadata=dict())
         self.preprocess_cell(cd_cell, resources, 0)
@@ -355,7 +355,7 @@ __init_modules # avoid Prove-It magic assignment
             # Delete all modules except those that were initially loaded.
             # Also, %reset local variables and history.
             # We are preparing the Kernel to be recycled.
-            reset_source = """
+            reset_source = """# BUILD COMMAND
 import sys
 import proveit
 proveit.reset()
@@ -377,7 +377,8 @@ for m in list(sys.modules.keys()):
             cell, _ = self.preprocess_cell(reset_cell, resources, 0)
 
             # Garbage collect.
-            garbage_collect_source = """import sys
+            garbage_collect_source = """# BUILD COMMAND
+import sys
 import gc
 gc.collect()
 len(gc.get_objects()) # used to check for memory leaks
@@ -1099,6 +1100,14 @@ if __name__ == '__main__':
         help=("build the 'axioms' notebooks defining theory axioms "
               "(also update 'theory' notebooks, --essential is disabled)"))
     parser.add_argument(
+        '--definitions',
+        dest='build_definitions',
+        action='store_const',
+        const=True,
+        default=False,
+        help=("build the 'definitions' notebooks defining theory Literals "
+              "(also update 'theory' notebooks, --essential is disabled)"))
+    parser.add_argument(
         '--theorems',
         dest='build_theorems',
         action='store_const',
@@ -1214,9 +1223,11 @@ if __name__ == '__main__':
                     os.remove(sub_path)
             '''
     elif not args.download and args.tar == '':
-        if (args.build_commons or args.build_axioms or args.build_theorems or 
-                args.build_theories or args.build_demos or args.build_theorem_proofs or
-                args.build_dependencies or args.build_expr_and_proofs):
+        if args.build_commons or args.build_axioms or (
+                args.build_definitions or args.build_theorems or 
+                args.build_theories or args.build_demos or 
+                args.build_theorem_proofs or args.build_dependencies 
+                or args.build_expr_and_proofs):
             # Disable --essential if anything more specific is requested.
             args.build_essential = False
         if args.build_commons or args.build_all or args.build_essential:
@@ -1239,12 +1250,17 @@ if __name__ == '__main__':
             mpi_build(notebook_path_generator(paths, '_theory_nbs_/axioms.ipynb'),
                       no_latex=args.nolatex, git_clear=not args.nogitclear,
                       no_execute=args.noexecute, export_to_html=True)
+        if args.build_definitions or args.build_all or args.build_essential:
+            mpi_build(notebook_path_generator(paths, '_theory_nbs_/definitions.ipynb'),
+                      no_latex=args.nolatex, git_clear=not args.nogitclear,
+                      no_execute=args.noexecute, export_to_html=True)
         if args.build_theorems or args.build_all or args.build_essential:
             mpi_build(notebook_path_generator(paths, '_theory_nbs_/theorems.ipynb'),
                       no_latex=args.nolatex, git_clear=not args.nogitclear,
                       no_execute=args.noexecute, export_to_html=True)
-        if (args.build_theories or args.build_axioms or args.build_theorems
-                or args.build_all or args.build_essential):
+        if args.build_theories or args.build_axioms or (
+                args.build_definitions or args.build_theorems or 
+                args.build_all or args.build_essential):
             # Update the theory after updating axioms/theorems so all the
             # theory information is up-to-date.  Also include index.ipynb
             # (which should update with updates to theories) and guide.ipynb
