@@ -1136,7 +1136,11 @@ def display_assignments(names, beginning_proof=False,
     processed_right_sides = []
     for name in names:
         try:
-            right_side = prove_it_magic.shell.user_ns[name]
+            if '.' in name:
+                name, attr = name.split('.', 1)
+                right_side = getattr(prove_it_magic.shell.user_ns[name], attr)          
+            else:
+                right_side = prove_it_magic.shell.user_ns[name]
         except:
             continue # e.g., an error from 'getting' a TemporarySetter.
         if right_side is None: continue
