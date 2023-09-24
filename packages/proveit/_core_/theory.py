@@ -574,7 +574,14 @@ class Theory:
 
     @staticmethod
     def get_stored_theorem(fullname):
-        return Theory.get_stored_stmt(fullname, 'theorem')
+        '''
+        Return the stored theorem of the given name, or stored
+        definition existence if that theorem doesn't exist.
+        '''
+        try:
+            return Theory.get_stored_stmt(fullname, 'theorem')
+        except:
+            return Theory.get_stored_stmt(fullname, 'definition_existence')
 
     @staticmethod
     def get_stored_stmt(fullname, kind):
