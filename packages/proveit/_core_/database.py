@@ -307,10 +307,14 @@ class Database:
         conn.commit()
         conn.close()
 
-    def fetch_all(self, table):
+    def fetch_all(self, table, attr_names=None, **kwargs):
         # Query the db, returning all records in the specified table,
         # in the form of a list of tuples (each tuple corresponding
-        # to a record).
+        # to a record). attr_names is an optional list of attributes
+        # to select from the table (instead of just including
+        # all possible attribute columns). Optional kwargs can
+        # eventually be used (not yet implemented) to restrict
+        # retrieval by specifying attribute values.
         # (Currently a convenience method; to be updated later.)
 
         # Connect to database
@@ -318,11 +322,45 @@ class Database:
         # Create a cursor
         c = conn.cursor()
         # Query the specified table in the database
-        c.execute("SELECT rowid, * FROM " + table) # need to fix
+        # (not yet using kwargs).
+
+        # Create the command string.
+        command_str = ""
+        if attr_names is None:
+            command_str = ("SELECT rowid, * FROM {table}".
+                          format(table=table))
+        else:
+            attr_str = "" + attr_names[-1] + " "
+            for attr_name in reversed(attr_names[:-1]):
+                attr_str = attr_name + ", " + attr_str
+            command_str += ("SELECT " + attr_str + "FROM {table}".
+                           format(table=table))
+
+        # Execute command
+        c.execute(command_str)
         items = c.fetchall()
         # Close our connection
         conn.close()
         return items
+
+
+        # Create the command string.
+        # command_str = ""
+        # for idx, (attr,attr_value) in enumerate(kwargs.items()):
+        #     if isinstance(attr_value, str):
+        #         # need to make the quotation marks explicit
+        #         attr_value = "\'" + str(attr_value) + "\'"
+        #     if idx == 0:
+        #         command_str = (
+        #             ("DELETE FROM {table} " +
+        #              " WHERE ({attr}={attr_value}").
+        #              format(table=table, attr=attr,
+        #                    attr_value=attr_value))
+        #     else:
+        #         command_str = (
+        #             command_str + " AND {attr}={attr_value}".
+        #             format(attr=attr, attr_value=attr_value))
+        # command_str = command_str + ")"
 
     def check_for_record(self, table, **kwargs):
         '''
