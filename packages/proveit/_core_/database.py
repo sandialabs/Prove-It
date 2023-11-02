@@ -81,9 +81,9 @@ class Database:
 
         # Eventually the axiom table will be reduced to holding
         # just id and name (like the associated name_to_hash.txt files)
-        # c.execute("""CREATE TABLE IF NOT EXISTS axiom (
-        c.execute("DROP TABLE IF EXISTS axiom")
-        c.execute("""CREATE TABLE axiom (
+        # c.execute("DROP TABLE IF EXISTS axiom")
+        # c.execute("""CREATE TABLE axiom (
+        c.execute("""CREATE TABLE IF NOT EXISTS axiom (
             id            TEXT NOT NULL PRIMARY KEY,
             path_name     TEXT,
             name          TEXT,
@@ -157,8 +157,8 @@ class Database:
         # Close the connection
         conn.close()
 
-        print("Database now initialized for pkg '{}'.\n".
-              format(package_name))
+        # print("Database now initialized for pkg '{}'.\n".
+        #       format(package_name))
 
     def insert_record(self, table, record):
         '''
@@ -324,9 +324,9 @@ class Database:
         # Query the specified table in the database
         # (not yet using kwargs).
 
-        # Create the command string.
+        # Create the command string (depends on attr_names supplied).
         command_str = ""
-        if attr_names is None:
+        if (attr_names is None or len(attr_names)==0):
             command_str = ("SELECT rowid, * FROM {table}".
                           format(table=table))
         else:
@@ -336,31 +336,14 @@ class Database:
             command_str += ("SELECT " + attr_str + "FROM {table}".
                            format(table=table))
 
-        # Execute command
+        # Execute command and fetch items
         c.execute(command_str)
         items = c.fetchall()
+
         # Close our connection
         conn.close()
+
         return items
-
-
-        # Create the command string.
-        # command_str = ""
-        # for idx, (attr,attr_value) in enumerate(kwargs.items()):
-        #     if isinstance(attr_value, str):
-        #         # need to make the quotation marks explicit
-        #         attr_value = "\'" + str(attr_value) + "\'"
-        #     if idx == 0:
-        #         command_str = (
-        #             ("DELETE FROM {table} " +
-        #              " WHERE ({attr}={attr_value}").
-        #              format(table=table, attr=attr,
-        #                    attr_value=attr_value))
-        #     else:
-        #         command_str = (
-        #             command_str + " AND {attr}={attr_value}".
-        #             format(attr=attr, attr_value=attr_value))
-        # command_str = command_str + ")"
 
     def check_for_record(self, table, **kwargs):
         '''

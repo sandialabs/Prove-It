@@ -78,12 +78,19 @@ class Theory:
         use the path of the containing directory.  If no path
         is provided, base the theory on the current working directory.
         '''
+        self.gregarious = False
+        if self.gregarious:
+            print("Entering Theory.__init__() with:")
+            print("    path          = {}".format(path))
+            print("    active_folder = {}".format(active_folder))
         if not os.path.exists(path):
             raise TheoryException(
                 "%s is not a valid path; unable to create Theory." %
                 path)
 
         path = os.path.abspath(path)
+        if self.gregarious:
+            print("    abspath(path) = {}".format(path))
         # If in a __pv_it_ directory, go to the containing theory
         # directory.
         splitpath = path.split(os.path.sep)
@@ -110,15 +117,21 @@ class Theory:
         # Makes the case be consistent in operating systems (i.e. Windows)
         # with a case insensitive filesystem:
         normpath = os.path.normcase(path)
+        if self.gregarious:
+            print("    normpath      = {}".format(normpath))
 
         if normpath in Theory.storages:
             # got the storage - we're good
+            if self.gregarious:
+                print("    normpath already in Theory.storages! Yay!")
             self._storage = Theory.storages[normpath]
             self.name = self._storage.name
             if active_folder is not None:
                 self.set_active_folder(active_folder, owns_active_folder)
             return
 
+        if self.gregarious:
+            print("    Oh no! normpath is NOT already in Theory.storages!")
         if os.path.isfile(
                 path):  # just in case checking for '.py' or '.pyc' wasn't sufficient
             path, _ = os.path.split(path)
@@ -150,6 +163,11 @@ class Theory:
             root_directory = os.path.join(remaining_path, name.split('.')[0])
         # Create the Storage object for this Theory
         if normpath not in Theory.storages:
+            if self.gregarious:
+                print("    About to create the TheoryStorage object:")
+                print("        name: {}".format(name))
+                print("        path: {}".format(path))
+                print("        root_directory: {}".format(root_directory))
             Theory.storages[normpath] = TheoryStorage(
                 self, name, path, root_directory)
         self._storage = Theory.storages[normpath]
@@ -246,6 +264,9 @@ class Theory:
         return self._storage.append_sub_theory_name(sub_theory_name)
 
     def _set_axioms(self, axiom_definitions):
+        if self.gregarious:
+            print("Entering Theory._set_axioms() method.")
+            print("    axiom_definitions = {}".format(axiom_definitions))
         if not isinstance(axiom_definitions, OrderedDict):
             raise TypeError("'axioms_definitions' must be an OrderedDict")
         self._storage.set_special_expressions(axiom_definitions,
