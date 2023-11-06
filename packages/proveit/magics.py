@@ -67,6 +67,7 @@ class AssignmentBehaviorModifier:
             except SyntaxError:
                 # Syntax error. Just do the usual thing.
                 return ipython.orig_run_cell(raw_cell, *args, **kwargs)
+            assignment_targets = []
             while len(remaining_ast_nodes) > 0:
                 ast_node = remaining_ast_nodes.popleft()
                 line_idx = ast_node.lineno-1
@@ -81,7 +82,6 @@ class AssignmentBehaviorModifier:
                     new_lines.append(orig_line[:orig_line.find(':')+1])
                     continue
                 orig_line_stripped = orig_line.lstrip()
-                whitespace = orig_line[:-len(orig_line_stripped)]
                 if isinstance(ast_node, ast.Assign):
                     try:
                         target_strs = list(
@@ -92,14 +92,17 @@ class AssignmentBehaviorModifier:
                     # Skip assignment of 'theory' which happens in the
                     # theory proof templates.
                     if target_strs is not None and 'theory' not in target_strs:
-                        new_lines.append(whitespace+assignment_fn(target_strs))
+                        assignment_targets.extend(target_strs)
                 elif len(remaining_ast_nodes) == 0 and isinstance(ast_node, ast.Expr):
                     # This will display a tuple of expressions, for example,
                     # in a nice way. 
+                    whitespace = orig_line[:-len(orig_line_stripped)]
                     new_lines.append(whitespace + "_ = " + orig_line_stripped)
                     new_lines.append(whitespace + assignment_fn('_'))
                 else:
                     new_lines.append(orig_line)
+            if len(assignment_targets) > 0:
+                new_lines.append(assignment_fn(assignment_targets))
             new_raw_cell = '\n'.join(new_lines)
             return ipython.orig_run_cell(new_raw_cell, *args, **kwargs)
 # ipython.run_cell = new.instancemethod(new_run_cell, ipython)#Comment out
@@ -1226,17 +1229,23 @@ def display_assignments(names, beginning_proof=False,
         
         if len(right_sides) > 1:
             combined_right_sides = And(*right_sides)
+            combined_right_sides = combined_right_sides.with_wrapping_at(
+                *range(2, 2*len(right_sides), 2))
         else:
             combined_right_sides = right_sides[0]
  
         # Defining the used Literals on the right side that are
         # package literals that have not been defined yet.
-        literals = theory.literals.intersection(
-                used_literals(combined_right_sides)).difference(
-                        prove_it_magic.defined_literals)
+        literals = [lit for lit in used_literals(combined_right_sides)
+                    if lit in theory.literals 
+                    and lit not in prove_it_magic.defined_literals]
+        #print('num combined', len(right_sides), 'literals', literals)
+        existence_vars = [lit.as_variable() for lit in literals]
+        if len(existence_vars)==0:
+            raise Exception("Not defining any undefined Literals of this "
+                            "theory package")
         existence = Exists(
-                [lit.as_variable() for lit in literals],
-                 combined_right_sides.literals_as_variables(*literals))
+            existence_vars, combined_right_sides.literals_as_variables(*literals))
         # Name the DefinitionExistence after the last-named
         # DefiningProperty as a convention.
         def_existence = DefinitionExistence(existence, theory, names[-1])
