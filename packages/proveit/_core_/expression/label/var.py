@@ -51,7 +51,8 @@ class Variable(Label):
         return self
 
     def _used_vars(self):
-        return {self}
+        from proveit.util import OrderedSet
+        return OrderedSet([self])
 
     def _free_var_ranges(self, exclusions=None):
         '''

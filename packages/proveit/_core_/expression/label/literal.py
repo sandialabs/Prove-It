@@ -75,7 +75,8 @@ class Literal(Label):
             str(literal_class))
 
     def _used_literals(self):
-        return {self}
+        from proveit.util import OrderedSet
+        return OrderedSet([self])
 
     def as_variable(self):
         '''

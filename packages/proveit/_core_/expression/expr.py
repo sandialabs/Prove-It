@@ -1657,20 +1657,26 @@ class Expression(metaclass=ExprType):
     def _used_literals(self):
         '''
         Return all of the used Literals of this Expression,
-        included those in sub-expressions.
+        included those in sub-expressions as an OrderedSet in the
+        order of appearance.
         Call externally via the used_literals method in expr.py.
         '''
-        return set().union(*[expr._used_literals() for
-                             expr in self._sub_expressions])
+        used_lits = OrderedSet()
+        for subexpr in  self._sub_expressions:
+            used_lits.update(subexpr._used_literals())
+        return used_lits
 
     def _used_vars(self):
         '''
         Return all of the used Variables of this Expression,
-        included those in sub-expressions.
+        included those in sub-expressions as an OrderedSet in the
+        order of appearance.
         Call externally via the used_vars method in expr.py.
         '''
-        return set().union(*[expr._used_vars() for
-                             expr in self._sub_expressions])
+        used_vars = OrderedSet()
+        for subexpr in  self._sub_expressions:
+            used_vars.update(subexpr._used_vars())
+        return used_vars
 
     def _contained_parameter_vars(self):
         '''
