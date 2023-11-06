@@ -1012,8 +1012,8 @@ class TheoryFolderStorage:
         Obtain the TheoryFolderStorage that 'owns' the given
         expression, or the default TheoryFolderStorage.
         '''
-        from .theory import Theory
-        from proveit._core_.expression.label.var import is_dummy_var
+        from proveit import Literal, Operation
+        from proveit._core_.proof import Axiom, Theorem, DefiningProperty
         proveit_obj_to_storage = TheoryFolderStorage.proveit_object_to_storage
         '''
         if is_dummy_var(obj):
@@ -1031,7 +1031,18 @@ class TheoryFolderStorage:
         else:
             # Return the "active theory folder storage" as default.
             # This is set by the %begin Prove-It magic command.
-            return TheoryFolderStorage.active_theory_folder_storage
+            if isinstance(obj, Axiom):
+                return obj.theory._theory_folder_storage('axioms')
+            elif isinstance(obj, Theorem):
+                return obj.theory._theory_folder_storage('theorems')
+            elif isinstance(obj, DefiningProperty):
+                return obj.theory._theory_folder_storage('theorems')
+            elif (isinstance(obj, Literal) and
+                    obj in Operation.operation_class_of_operator):
+                # _operator_'s of Operations are to be stored in 'common'.
+                return obj.theory._theory_folder_storage('common')
+            else:
+                return TheoryFolderStorage.active_theory_folder_storage
 
     def special_expr_address(self, obj_hash_id):
         '''
@@ -1113,6 +1124,8 @@ class TheoryFolderStorage:
         Helper method of retrieve_png.
         '''
         (theory_folder_storage, hash_directory) = self._retrieve(expr)
+        if theory_folder_storage != self:
+            return self._retrieve_png(expr)
         assert theory_folder_storage == self, \
             "How did the theory end up different from expected??"
         # generate the latex and png file paths, from pv_it_filename and
@@ -1301,19 +1314,10 @@ class TheoryFolderStorage:
         proveit_obj_to_storage = TheoryFolderStorage.proveit_object_to_storage
         if prove_it_object._style_id in proveit_obj_to_storage:
             return proveit_obj_to_storage[prove_it_object._style_id]
-        if isinstance(prove_it_object, Axiom):
-            theory_folder_storage = \
-                prove_it_object.theory._theory_folder_storage('axioms')
-        elif isinstance(prove_it_object, Theorem):
-            theory_folder_storage = \
-                prove_it_object.theory._theory_folder_storage('theorems')
-        elif (isinstance(prove_it_object, Literal) and
-                prove_it_object in Operation.operation_class_of_operator):
-            # _operator_'s of Operations are to be stored in 'common'.
-            theory_folder_storage = \
-                prove_it_object.theory._theory_folder_storage('common')
-        else:
-            theory_folder_storage = self
+
+        theory_folder_storage = TheoryFolderStorage.get_folder_storage_of_obj(
+            prove_it_object)
+
         if theory_folder_storage is not self:
             # Stored in a different folder.
             return theory_folder_storage._retrieve(prove_it_object)
