@@ -109,10 +109,12 @@ class TheoryStorage:
             for k, line in enumerate(f.readlines()):
                 self.sub_theory_names.append(line.strip())
 
-        # Map (kind, name) pair to the corresponding special
-        # object (Axiom, Theorem, or Expression of a common
-        # expression).
+        # Map (kind, name) pair to the hash of the corresponding
+        # special object (Axiom, Theorem, or Expression of a common
+        # expression) or to the hash of the of underlying Expression
+        # of the corresponding special object.
         self._kindname_to_exprhash = dict()
+        self._kindname_to_objhash  = dict()
 
         # Map each common expression, axiom, or theorem name
         # to 'common', 'axiom', or 'theorem' respectively.
@@ -120,10 +122,13 @@ class TheoryStorage:
 
         # Map the special object kind ('common', 'axiom', or
         # 'theorem') to a dictionary mapping names to storage
-        # identifiers (the identifier being a hash of the associated
-        # expression object):
-        self._special_expr_ids = {'common': None, 'axiom': None,
-                                  'theorem': None}
+        # identifiers (the identifier being either a hash of the
+        # associated expression object or a hash of the object
+        # (common expr, axiom, or theorem) itself):
+        self._special_expr_hash_ids     = {'common': None, 'axiom': None,
+                                      'theorem': None}
+        self._special_obj_hash_ids = {'common': None, 'axiom': None,
+                                      'theorem': None}
 
         # Names of axioms, theorems, and common expressions that have
         # been read in and not in need of an update.
@@ -345,26 +350,28 @@ class TheoryStorage:
         renaming and definition of objects.
         '''
         folder = TheoryStorage._kind_to_folder(kind)
-        name_to_expr_id_file = os.path.join(self.pv_it_dir, folder,
-                                         'name_to_expr_id.txt')
+        name_to_expr_and_obj_hashes_file = os.path.join(
+                self.pv_it_dir, folder, 'name_to_expr_and_obj_hashes.txt')
 
         theory_name = self.name
 
-        special_expr_ids = self._special_expr_ids[kind] = dict()
+        # might want to eventually combine these two dicts into one
+        special_expr_hash_ids = self._special_expr_hash_ids[kind] = dict()
+        special_obj_hash_ids  = self._special_obj_hash_ids[kind]  = dict()
 
-        expr_id_to_old_name = dict()
-        old_name_to_expr_id = dict()
+        expr_hash_id_to_old_name = dict()
+        old_name_to_expr_hash_id = dict()
         orig_lines = []
-        if os.path.isfile(name_to_expr_id_file):
-            with open(name_to_expr_id_file, 'r') as f:
+        if os.path.isfile(name_to_expr_and_obj_hashes_file):
+            with open(name_to_expr_and_obj_hashes_file, 'r') as f:
                 for line in f.readlines():
                     orig_lines.append(line.rstrip())
-                    name, expr_id = line.split()
-                    expr_id_to_old_name[expr_id] = name
-                    old_name_to_expr_id[name] = expr_id
+                    name, expr_hash_id, obj_hash_id = line.split()
+                    expr_hash_id_to_old_name[expr_hash_id] = name
+                    old_name_to_expr_hash_id[name] = expr_hash_id
 
         # for tracking modified objects
-        modified_expr_ids = set()
+        modified_expr_hash_ids = set()
 
         for name, obj in definitions.items():
             if kind == 'common':
@@ -374,23 +381,26 @@ class TheoryStorage:
             # record the special expression in this theory object
             theory_folder_storage = \
                 self.theory._theory_folder_storage(folder)
-            # get the expression id to be stored in the database 
+            # get both the expr hash id and the obj hash id
+            # to be stored in the database 
             hash_id = theory_folder_storage._prove_it_storage_id(obj)
             if kind == 'common':
                 expr_id = hash_id
             else:
                 expr_id = theory_folder_storage._prove_it_storage_id(expr)
 
-            if expr_id in expr_id_to_old_name:
-                if expr_id_to_old_name[expr_id] != name:
-                    # same expression as before, but with a new name
-                    print("* Renaming %s to %s" % (expr_id_to_old_name[expr_id],
-                                                 name))
-                expr_id_to_old_name.pop(expr_id)
+            if expr_id in expr_hash_id_to_old_name:
+                if expr_hash_id_to_old_name[expr_id] != name:
+                    # obj has same expression as before, but new name
+                    print("Renaming {} to {}".format(
+                            expr_hash_id_to_old_name[expr_id], name))
+                expr_hash_id_to_old_name.pop(expr_id)
 
-            special_expr_ids[name] = expr_id
+            special_expr_hash_ids[name] = expr_id
+            special_obj_hash_ids[name] = hash_id
 
             self._kindname_to_exprhash[(kind, name)] = expr_id
+            self._kindname_to_objhash[(kind, name)]  = hash_id
             # Update the dict, setting 'name' as the value for
             # expr_id key. If the name (but not the content) had
             # changed for an axiom, theorem, or common expr, the
@@ -398,24 +408,27 @@ class TheoryStorage:
             # before and get mapped to the new name.
             theory_folder_storage._objhash_to_names.setdefault(
                 expr_id, []).append(name)
+            theory_folder_storage._objhash_to_names.setdefault(
+                hash_id, []).append(name)
 
             if folder != 'common':
                 # b/c folder is 'theorems' or 'axioms' (i.e. plural)
                 kind = folder[:-1]
 
-                if name not in old_name_to_expr_id:
-                    # added special object or just changed a name?
+                if name not in old_name_to_expr_hash_id:
+                    # added special object or just changed a name
                     print('Adding {} {} to {} theory'.
                           format(kind, name, theory_name))
-                elif old_name_to_expr_id[name] != expr_id:
+                elif old_name_to_expr_hash_id[name] != expr_id:
                     # modified the content of axiom or theorem,
                     # kept name the same
                     print('Modifying {} {} in {} theory.'.
                           format(kind, name, theory_name))
+                    modified_expr_hash_ids.add(old_name_to_expr_hash_id[name])
 
                 # Also make sure there is a "used_by" sub-folder.
                 used_by_folder = os.path.join(self.pv_it_dir, folder,
-                                              expr_id, 'used_by')
+                                              hash_id, 'used_by')
                 if not os.path.isdir(used_by_folder):
                     try:
                         os.mkdir(used_by_folder)
@@ -423,14 +436,14 @@ class TheoryStorage:
                         pass  # no worries
 
         # Indicate special expression removals.
-        for expr_id, name in expr_id_to_old_name.items():
+        for expr_id, name in expr_hash_id_to_old_name.items():
             if folder == 'common':
-                if expr_id not in modified_expr_ids:
-                    print("* Removing %s from %s theory" %
+                if expr_id not in modified_expr_hash_ids:
+                    print("Removing %s from %s theory" %
                           (name, theory_name))
             else:
                 # axioms or theorems folder
-                if expr_id not in modified_expr_ids:
+                if expr_id not in modified_expr_hash_ids:
                     print("Removing %s %s from %s theory" %
                           (kind, name, theory_name))
                 if folder == 'theorems':
@@ -439,16 +452,18 @@ class TheoryStorage:
                 # Remove proofs that depended upon the removed theorem.
                 # Note the use of (obj) hash_id instead of expr_id here!
                 StoredSpecialStmt.remove_dependency_proofs(
-                        self.theory, kind, hash_id) 
+                        self.theory, kind, hash_id)
 
-        # Now we'll write the new name to hash information.
+        # Now we write the new name-to-hash information.
         names = definitions.keys()
         self._update_name_to_kind(names, kind)
         new_lines = []
         for name in names:
-            new_lines.append(name + ' ' + special_expr_ids[name])
+            new_lines.append(name + ' '
+                    + special_expr_hash_ids[name] + ' '
+                    + special_obj_hash_ids[name])
         if new_lines != orig_lines:
-            with open(name_to_expr_id_file, 'w') as f:
+            with open(name_to_expr_and_obj_hashes_file, 'w') as f:
                 for line in new_lines:
                     f.write(line + '\n')
     
@@ -494,7 +509,7 @@ class TheoryStorage:
         Theory respectively.
         '''
         self.get_expression_axiom_and_theorem_names()
-        return self._name_to_kind[name]                
+        return self._name_to_kind[name]
 
     def load_special_names(self):
         '''
@@ -502,8 +517,8 @@ class TheoryStorage:
         stored for this theory.
         '''
         for kind in ('common', 'axiom', 'theorem'):
-            special_expr_ids = self._special_expr_ids[kind]
-            if special_expr_ids is None:
+            special_expr_hash_ids = self._special_expr_hash_ids[kind]
+            if special_expr_hash_ids is None:
                 # while the names are read in, the expr id map will
                 # be generated
                 list(self._load_special_names(kind))
@@ -520,19 +535,25 @@ class TheoryStorage:
         '''
         folder = TheoryStorage._kind_to_folder(kind)
         theory_folder_storage = self.theory_folder_storage(folder)
-        name_to_expr_id_filename = os.path.join(self.pv_it_dir, folder,
-                                                'name_to_expr_id.txt')
-        special_expr_ids = self._special_expr_ids[kind] = dict()
+        name_to_expr_and_obj_hashes_filename = os.path.join(
+                self.pv_it_dir, folder, 'name_to_expr_and_obj_hashes.txt')
 
-        if os.path.isfile(name_to_expr_id_filename):
-            with open(name_to_expr_id_filename, 'r') as f:
+        special_expr_hash_ids = self._special_expr_hash_ids[kind] = dict()
+        special_obj_hash_ids  = self._special_obj_hash_ids[kind]  = dict()
+
+        if os.path.isfile(name_to_expr_and_obj_hashes_filename):
+            with open(name_to_expr_and_obj_hashes_filename, 'r') as f:
                 for line in f.readlines():
-                    name, expr_id = line.split()
-                    special_expr_ids[name] = expr_id
+                    name, expr_hash_id, obj_hash_id = line.split()
+                    special_expr_hash_ids[name] = expr_hash_id
+                    special_obj_hash_ids[name] = obj_hash_id
 
-                    self._kindname_to_exprhash[(kind, name)] = expr_id
+                    self._kindname_to_exprhash[(kind, name)] = expr_hash_id
+                    self._kindname_to_objhash[(kind, name)]  = obj_hash_id
                     theory_folder_storage._objhash_to_names.setdefault(
-                        expr_id, []).append(name)
+                        expr_hash_id, []).append(name)
+                    theory_folder_storage._objhash_to_names.setdefault(
+                        obj_hash_id, []).append(name)
                     yield name
 
     def get_axiom_hash(self, name):
@@ -543,7 +564,7 @@ class TheoryStorage:
         '''
         list(self._load_special_names('axiom'))
         try:
-            return self._special_expr_ids['axiom'][name]
+            return self._special_obj_hash_ids['axiom'][name]
         except KeyError:
             raise KeyError("%s not found as an axiom in %s"
                            % (name, self.theory.name))
@@ -556,7 +577,7 @@ class TheoryStorage:
         '''
         list(self._load_special_names('theorem'))
         try:
-            return self._special_expr_ids['theorem'][name]
+            return self._special_obj_hash_ids['theorem'][name]
         except KeyError:
             raise KeyError("%s not found as a theorem in %s"
                            % (name, self.theory.name))
@@ -600,13 +621,13 @@ class TheoryStorage:
         from .theory import Theory
         folder = TheoryStorage._kind_to_folder(kind)
 
-        special_expr_ids = self._special_expr_ids[kind]
+        special_expr_ids = self._special_expr_hash_ids[kind]
 
         if special_expr_ids is None:
             # while the names are read in,
             # the hash id map will be generated
             list(self._load_special_names(kind))
-            special_expr_ids = self._special_expr_ids[kind]
+            special_expr_ids = self._special_expr_hash_ids[kind]
         if special_expr_ids is None:
             raise KeyError("%s of name '%s' not found" % (kind, name))
 
@@ -758,12 +779,6 @@ class TheoryStorage:
         if not os.path.isdir(proof_path):
             # make the directory for the proofs
             os.makedirs(proof_path)
-        # make a generic 'presumptions.txt' file
-        presumptions_filename = os.path.join(proof_path, 'presumptions.txt')
-        with open(presumptions_filename, 'w') as _f:
-            _f.write(StoredTheorem.PRESUMPTIONS_HEADER + '\n')
-            _f.write('proveit\n')  # presume all of Prove-It by default
-            _f.write(StoredTheorem.PRESUMPTION_EXCLUSION_HEADER + '\n')
         # write the generic proof file
         with open(filename, 'w') as proof_notebook:
             proof_notebook.write(generic_nb_str)
@@ -980,6 +995,8 @@ class TheoryFolderStorage:
             for name in names:
                 self.theory_storage._kindname_to_exprhash.pop(
                     (kind, name), None)
+                self.theory_storage._kindname_to_objhash.pop(
+                    (kind, name), None)
         self._objhash_to_names.clear()
         if folder == 'axioms':
             self.theory_storage._axiom_names = None
@@ -990,7 +1007,8 @@ class TheoryFolderStorage:
         if folder == 'common':
             self.theory_storage._common_exp_names = None
             self.theory_storage._loadedCommonExprs = dict()
-        self.theory_storage._special_expr_ids[kind] = None
+        self.theory_storage._special_expr_hash_ids[kind] = None
+        self.theory_storage._special_obj_hash_ids[kind] = None
 
     @staticmethod
     def retrieve_png(expr, latex, config_latex_tool_fn):
@@ -2206,6 +2224,8 @@ class TheoryFolderStorage:
             if hash_subfolder == 'notebook.css':
                 continue
             if hash_subfolder == 'name_to_expr_id.txt':
+                continue
+            if hash_subfolder == 'name_to_expr_and_obj_hashes.txt':
                 continue
             hashpath = os.path.join(self.path, hash_subfolder)
             if hash_subfolder not in owned_hash_folders:
