@@ -327,16 +327,16 @@ class TheoryStorage:
             self._common_expr_names = None  # force a reload
         elif kind == 'axiom' or kind == 'theorem':
             if kind == 'axiom':
-                self._axiom_names = None  # force a reload
                 # Convert definitions from expressions to Axiom Proofs.
                 definitions = {name: Axiom(expr, self.theory, name)
                                for name, expr in definitions.items()}
+                self._axiom_names = None  # force a reload
             elif kind == 'theorem':
-                self._theorem_names = None  # force a reload
                 # Convert definitions from expressions to Theorem
                 # Proofs.
                 definitions = {name: Theorem(expr, self.theory, name)
                                for name, expr in definitions.items()}
+                self._theorem_names = None  # force a reload
             # "Retrieve" the proofs to make sure they are stored
             # for future needs.
             self.theory_folder_storage(kind + 's')
