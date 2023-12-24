@@ -1,1 +1,0 @@
-generic transitive relations and relation sequences
