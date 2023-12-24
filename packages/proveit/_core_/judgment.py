@@ -94,7 +94,7 @@ class Judgment:
     disallowed_theorems_and_theories = None
     presumed_theorems_and_dependencies = None
     
-    proofs_subfolder = 'proofs' # may change to 'def_existence_proofs'
+    proofs_subfolder = 'proofs'
     
     qed_in_progress = False  # set to true when "%qed" is in progress
 
@@ -305,8 +305,6 @@ class Judgment:
             raise ValueError(
                 'Inconsistent theorem for the Judgment in begin_proof call')
         Judgment.proofs_subfolder = 'proofs'
-        if definition_existence_proof:
-            Judgment.proofs_subfolder = 'def_existence_proofs'
 
         # The lists of theorems/theories that are allowed/disallowed
         # to be presumed while proving this theorem.

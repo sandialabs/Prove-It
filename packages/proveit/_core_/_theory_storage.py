@@ -333,14 +333,14 @@ class TheoryStorage:
         from proveit._core_.proof import Axiom, Theorem, DefiningProperty
         if kind == 'common':
             self._common_expr_names = None  # force a reload
-        elif kind == 'axiom' or kind == 'theorem':
+        else:
             if kind == 'axiom':
                 self._axiom_names = None  # force a reload
                 # Convert definitions from expressions to Axiom Proofs.
                 definitions = {name: Axiom(expr, self.theory, name)
                                for name, expr in definitions.items()}
             elif kind == 'defining_property':
-                for definition in definitions:
+                for definition in definitions.values():
                     assert isinstance(definition, DefiningProperty)
             elif kind == 'theorem':
                 self._theorem_names = None  # force a reload
@@ -784,8 +784,6 @@ class TheoryStorage:
         '''
         from proveit._core_.theory import Theory
         subfolder = 'proofs'
-        if definition_existence_proof:
-            subfolder = 'def_existence_proofs'
         proofs_path = os.path.join(self.directory, '_theory_nbs_', 
                                    subfolder)
         proof_path = os.path.join(proofs_path, theorem_name)
@@ -862,8 +860,6 @@ class TheoryStorage:
         import proveit
         proveit_path = os.path.split(proveit.__file__)[0]
         subfolder = 'proofs'
-        if definition_existence_proof:
-            subfolder = 'def_existence_proofs'
         # read the template and change the theories as appropriate
         template_name = '_theorem_proof_template_.ipynb'
         if definition_existence_proof:
@@ -901,8 +897,6 @@ class TheoryStorage:
         '''
         import shutil
         subfolder = 'proofs'
-        if definition_existence_proofs:
-            subfolder = 'def_existence_proofs'
         proofs_path = os.path.join(self.directory, '_theory_nbs_', subfolder)
         if not os.path.isdir(proofs_path):
             return  # nothing to stash
@@ -1013,7 +1007,8 @@ class TheoryFolderStorage:
         expression, or the default TheoryFolderStorage.
         '''
         from proveit import Literal, Operation
-        from proveit._core_.proof import Axiom, Theorem, DefiningProperty
+        from proveit._core_.proof import (Axiom, Theorem, DefiningProperty,
+                                          DefinitionExistence)
         proveit_obj_to_storage = TheoryFolderStorage.proveit_object_to_storage
         '''
         if is_dummy_var(obj):
@@ -1035,8 +1030,10 @@ class TheoryFolderStorage:
                 return obj.theory._theory_folder_storage('axioms')
             elif isinstance(obj, Theorem):
                 return obj.theory._theory_folder_storage('theorems')
+            elif isinstance(obj, DefinitionExistence):
+                return obj.theory._theory_folder_storage('defining_properties')
             elif isinstance(obj, DefiningProperty):
-                return obj.theory._theory_folder_storage('theorems')
+                return obj.theory._theory_folder_storage('defining_properties')
             elif (isinstance(obj, Literal) and
                     obj in Operation.operation_class_of_operator):
                 # _operator_'s of Operations are to be stored in 'common'.
@@ -3379,7 +3376,7 @@ class StoredDefinitionExistence(StoredTheorem):
     def __init__(self, theory, name):
         '''
         Creates a StoredDefinitionExistence object for managing the
-        existence for a set of defining properties' __pv_it database
+        existence for a set of defining properties ' __pv_it database
         entries.
         '''
         defining_property = theory.get_defining_property(name)

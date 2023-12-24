@@ -1420,7 +1420,7 @@ class DefinitionExistence(Theorem):
     def _generate_step_info(self, object_rep_fn):
         # For these purposes, we should use 'definition existence' even 
         # if the status is 'conjectured existence'.
-        return 'definition existence_' + str(self) + ':'
+        return 'definition_existence_' + str(self) + ':'
 
     def _stored_theorem(self):
         from ._theory_storage import StoredDefinitionExistence
@@ -1462,7 +1462,7 @@ class DefiningProperty(Proof):
                 _marked_req_indices=marked_req_indices)
 
     def step_type(self):
-        return 'defining property'
+        return 'defining_property'
 
     def _generate_step_info(self, object_rep_fn):
         return self.step_type() + '_' + str(self) + ':'
