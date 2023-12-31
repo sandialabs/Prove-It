@@ -10,7 +10,7 @@ from ._core_ import (
     InnerExpr, InnerExprGenerator, generate_inner_expressions,
     Operation, IndexedVar, Function,
     OperationOverInstances, bundle, unbundle, OperationError,
-    Conditional, Lambda, Composition,
+    Conditional, Lambda,
     ParameterCollisionError, ParameterMaskingError,
     ParameterRelabelingError,  LambdaApplicationError, 
     ArgumentExtractionError,

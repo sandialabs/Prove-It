@@ -12,7 +12,7 @@ from .operation import (
     OperationOverInstances, bundle, unbundle, OperationError)
 from .conditional import Conditional
 from .lambda_expr import (
-    Lambda, Composition,
+    Lambda,
     ParameterCollisionError, ParameterMaskingError,
     ParameterRelabelingError, LambdaApplicationError, 
     ArgumentExtractionError)

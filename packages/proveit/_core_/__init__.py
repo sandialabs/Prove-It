@@ -10,7 +10,7 @@ from .expression import (
     safe_dummy_var, safe_dummy_vars, safe_default_or_dummy_var,
     Operation, IndexedVar, Function,
     OperationOverInstances, bundle, unbundle, OperationError,
-    Conditional, Lambda, Composition,
+    Conditional, Lambda,
     ParameterCollisionError, ParameterMaskingError,
     ParameterRelabelingError, LambdaApplicationError, 
     ArgumentExtractionError,

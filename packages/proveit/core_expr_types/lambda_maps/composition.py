@@ -7,7 +7,7 @@ class Composition(Operation):
     of functions (lambda maps).
     '''
     
-    # operator of the Add operation
+    # operator of the Composition operation
     _operator_ = Literal(string_format='o', latex_format=r'\circ', 
                          theory=__file__)
     

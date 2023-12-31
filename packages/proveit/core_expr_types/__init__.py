@@ -1,5 +1,5 @@
 from .tuples import Len
-from .lambda_maps import FunctionalPower
+from .lambda_maps import FunctionalPower, Composition
 from .conditionals import ConditionalSet
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
