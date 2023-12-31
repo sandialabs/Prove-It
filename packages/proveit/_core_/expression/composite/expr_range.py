@@ -698,7 +698,7 @@ class ExprRange(Expression):
         Helper for ExprRange.instance_context
         '''
 
-        from proveit import ConditionalSet
+        from proveit.core_expr_types import ConditionalSet
         from proveit.relation import Relation
         from proveit.logic import Not, Equals, NotEquals, InSet
         from proveit.numbers import (

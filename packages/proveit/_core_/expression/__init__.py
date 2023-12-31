@@ -10,7 +10,7 @@ from .fencing import maybe_fenced_string, maybe_fenced_latex, maybe_fenced
 from .operation import (
     Operation, IndexedVar, Function,
     OperationOverInstances, bundle, unbundle, OperationError)
-from .conditional import Conditional, ConditionalSet
+from .conditional import Conditional
 from .lambda_expr import (
     Lambda, Composition,
     ParameterCollisionError, ParameterMaskingError,
