@@ -94,8 +94,6 @@ class Judgment:
     disallowed_theorems_and_theories = None
     presumed_theorems_and_dependencies = None
     
-    proofs_subfolder = 'proofs'
-    
     qed_in_progress = False  # set to true when "%qed" is in progress
 
     # Judgments for which derive_side_effects is in progress, tracked to 
@@ -304,8 +302,7 @@ class Judgment:
         if theorem.proven_truth != self:
             raise ValueError(
                 'Inconsistent theorem for the Judgment in begin_proof call')
-        Judgment.proofs_subfolder = 'proofs'
-
+        
         # The lists of theorems/theories that are allowed/disallowed
         # to be presumed while proving this theorem.
         allowed, disallowed = theorem.get_allowed_and_disallowed_presumptions()
@@ -356,7 +353,7 @@ class Judgment:
                 defaults._proven_truth = proven_truth
                 proven_truth.raise_unusable_proof()
             print("{} has been proven.".format(Judgment.theorem_being_proven))
-            Judgment.theorem_being_proven._recordProof(proven_truth.proof())
+            Judgment.stored_theorem_being_proven._recordProof(proven_truth.proof())
         finally:
             Judgment.qed_in_progress = False
         return proven_truth.proof()

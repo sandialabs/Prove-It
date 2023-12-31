@@ -53,10 +53,10 @@ class Theory:
     storages = dict()
 
     special_expr_kind_to_module_name = {
-        'common': '_common_',
-        'axiom': '_axioms_',
-        'defining_property': '_definitions_',
-        'theorem': '_theorems_'}
+        'common': 'common',
+        'axiom': 'axioms',
+        'defining_property': 'definitions',
+        'theorem': 'theorems'}
 
     @staticmethod
     def _clear_():
@@ -270,10 +270,13 @@ class Theory:
             theorem_definitions, 'theorem')
 
     def _clear_axioms(self):
-        self._setAxioms([], dict())
+        self._set_axioms([], dict())
+
+    def _clear_defining_properties(self):
+        self._set_defining_properties([], dict())
 
     def _clear_theorems(self):
-        self._setTheorems([], dict())
+        self._set_theorems([], dict())
 
     def _clear_common_exressions(self):
         self._set_common_expressions([], dict(), clear=True)
@@ -353,9 +356,13 @@ class Theory:
 
     def get_theorem(self, name):
         '''
-        Return the Theorem of the given name in this theory.
+        Return the Theorem of the given name, or 
+        DefinitionExistence if that theorem doesn't exist.
         '''
-        return self._storage.get_theorem(name)
+        try:
+            return self._storage.get_theorem(name)
+        except KeyError:
+            return self._storage.get_definition_existence(name)            
 
     def get_defining_property(self, name):
         '''
@@ -647,14 +654,17 @@ class Theory:
         return TheoryFolderStorage.retrieve_png(
             expr, latex, config_latex_tool_fn)
 
-    def _theory_folder_storage(self, folder=None):
+    def _theory_folder_storage(self, folder=None, kind=None):
         '''
         Return the TheoryFolderStorage object associated with this
         theory and the folder.  The default folder is the
         "active_folder".
         '''
         if folder is None:
-            folder = self.active_folder
+            if kind is None:
+                folder = self.active_folder
+            else:
+                folder = self._storage._kind_to_folder(kind)
         if folder is None:
             raise ValueError("A 'folder' must be specified")
         return self._storage.theory_folder_storage(folder)

@@ -423,7 +423,7 @@ class Proof:
         if unique_rep[:6] != 'Proof:':
             raise ValueError("Invalid 'unique_rep' for Proof: %s" % unique_rep)
         step_info, remaining = unique_rep[6:].split(':', 1)
-        kind, full_name = step_info.split('_', 1)
+        kind, full_name = step_info.split('-', 1)
         return (kind, full_name)
 
     @staticmethod
@@ -998,7 +998,7 @@ class Axiom(Proof):
                      _marked_req_indices=marked_req_indices)
 
     def _generate_step_info(self, object_rep_fn):
-        return self.step_type() + '_' + str(self) + ':'
+        return self.step_type() + '-' + str(self) + ':'
 
     def step_type(self):
         return 'axiom'
@@ -1062,7 +1062,7 @@ class Theorem(Proof):
     def _generate_step_info(self, object_rep_fn):
         # For these purposes, we should use 'theorem' even if the
         # status is 'conjecture'.
-        return 'theorem_' + str(self) + ':'
+        return 'theorem-' + str(self) + ':'
 
     def step_type(self):
         if self.is_conjecture():
@@ -1420,11 +1420,13 @@ class DefinitionExistence(Theorem):
     def _generate_step_info(self, object_rep_fn):
         # For these purposes, we should use 'definition existence' even 
         # if the status is 'conjectured existence'.
-        return 'definition_existence_' + str(self) + ':'
+        return 'definition_existence-' + str(self) + ':'
 
     def _stored_theorem(self):
         from ._theory_storage import StoredDefinitionExistence
-        return StoredDefinitionExistence(self.theory, self.name)
+        _, hash_id = self.theory._theory_folder_storage('definitions')._retrieve(self)
+        return StoredDefinitionExistence(self.theory, self.name,
+                                         hash_id=hash_id)
 
 class DefiningProperty(Proof):
     '''
@@ -1465,7 +1467,7 @@ class DefiningProperty(Proof):
         return 'defining_property'
 
     def _generate_step_info(self, object_rep_fn):
-        return self.step_type() + '_' + str(self) + ':'
+        return self.step_type() + '-' + str(self) + ':'
 
     def _storedDefiningProperty(self):
         from ._theory_storage import StoredDefiningProperty
@@ -2659,9 +2661,11 @@ class _ShowProof:
         self._style_id = proof_id
         if '_' in step_info:
             # Must be an axiom or theorem with the format
-            # axiom_theory.name or theorem_theory.name
-            self.step_type_str, full_name = step_info.split('_', 1)
-            assert self.step_type_str in ('axiom', 'theorem')
+            # axiom-theory.name or theorem-theory.name
+            self.step_type_str, full_name = step_info.split('-', 1)
+            assert self.step_type_str in (
+                'axiom', 'defining_property', 'definition_existence', 
+                'theorem')
             full_name_segments = full_name.split('.')
             theory_name = '.'.join(full_name_segments[:-1])
             self.theory = Theory.get_theory(theory_name)
@@ -2701,11 +2705,14 @@ class _ShowProof:
         return self.step_type_str
 
     def get_link(self):
-        from ._theory_storage import StoredAxiom, StoredTheorem
+        from ._theory_storage import (axiom_specification_link, 
+                                      theorem_proof_link)
         if self.step_type_str == 'axiom':
-            return StoredAxiom(self.theory, self.name).get_def_link()
-        elif self.step_type_str in ('theorem', 'conjecture'):
-            return StoredTheorem(self.theory, self.name).get_proof_link()
+            return axiom_specification_link(self.theory, self.name)
+        elif self.step_type_str == 'theorem':
+            return theorem_proof_link(self.theory, self.name)
+        elif self.step_type_str == 'definition_existence':
+            return theorem_proof_link(self.theory, self.name)
         else:
             return self.theory_folder_storage.proof_notebook(self)
 

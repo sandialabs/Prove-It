@@ -452,6 +452,12 @@ class ProveItMagicCommands:
         if not os.path.isfile('__init__.py'):
             open('__init__.py', 'w').close()  # create an empty __init__.py
         theory = Theory()
+
+        # create the _sub_theories_.txt file if it does not already exist
+        sub_theories_path = os.path.join(theory.directory, '_sub_theories_.txt')
+        if not os.path.isfile(sub_theories_path):
+            open(sub_theories_path, 'wt').close()
+        
         proveit_path = os.path.split(proveit.__file__)[0]
         display(HTML('<h3>Local content of this theory</h3>'))
         special_notebook_types = (
@@ -587,7 +593,7 @@ class ProveItMagicCommands:
         if self.kind is None:
             self.definitions.clear()
         if self.kind is not None:
-            if self.kind != 'axioms':
+            if self.kind != 'axiom':
                 raise ProveItMagicFailure(
                     "Run %%begin axioms in a separate notebook from %%begin %s." %
                     self.kind)
@@ -599,14 +605,14 @@ class ProveItMagicCommands:
         print("Subsequent top-level assignments ('with' blocks included) will name axioms.")
         print("%end_axioms will finalize the axioms of the theory.")
 
-    def begin_conservative_defs(self):
+    def begin_defining_properties(self):
         # theory based upon current working directory
         if self.kind is None:
             self.definitions.clear()
         if self.kind is not None:
-            if self.kind != 'definitions':
+            if self.kind != 'defining_property':
                 raise ProveItMagicFailure(
-                    "Run %%begin definitions in a separate notebook from %%begin %s." %
+                    "Run %%begin defining_properties in a separate notebook from %%begin %s." %
                     self.kind)
             print(
                 "WARNING: Re-running %begin_definitions does not reset previously defined definitions.")
@@ -614,9 +620,9 @@ class ProveItMagicCommands:
                 "         It is suggested that you restart and run all cells after editing definitions.")
         print("Creating conservative definitions for theory '" + self.theory.name + "'.")
         print("Subsequent top-level assignments ('with' blocks included) will name and define properties of theory Literals.")
-        print("The Literals may be commen expressions of the theory or '_operator_' attributes of Operations in this package.")
+        print("The Literals may be common expressions of the theory or '_operator_' attributes of Operations in this package.")
         print("Inter-dependent properties (whose unique existence must be proven collectively) should be named/defined in the same cell.")
-        print("%end_defining_properties will finalize the conservative definitions of the theory.")
+        print("%end defining_properties will finalize the conservative definitions of the theory.")
     
     def begin_theorems(self):
         # theory based upon current working directory
@@ -654,20 +660,20 @@ class ProveItMagicCommands:
         print("Subsequent end-of-cell assignments will define common sub-expressions")
         print("%end_common will finalize the definitions")
 
-    def clear(self, kind):
+    def clear(self, folder):
         # theory based upon current working directory
-        self.theory = Theory(active_folder=kind)
-        if kind == 'axioms':
+        if folder == 'axioms':
             self.theory._clear_axioms()
-        elif kind == 'definitions':
+        elif folder == 'definitions':
             self.theory._clear_conservative_defs()
-        elif kind == 'theorems':
+        elif folder == 'theorems':
             self.theory._clear_theorems()
-        elif kind == 'common':
+        elif folder == 'common':
             self.theory._clear_common_exressions()
         elif Judgment.theorem_being_proven is not None:
-            kind = '_proof_' + Judgment.theorem_being_proven.name
+            folder = '_proof_' + Judgment.theorem_being_proven.name
         # clean unreferenced expressions:
+        self.theory = Theory(active_folder=folder)
         self.theory.clean_active_folder(clear=True)
         self.kind = None
 
@@ -712,9 +718,9 @@ class ProveItMagicCommands:
 
     def existence_proving(self, theorem_name):
         # the theory should be up a directory from the 
-        # _def_existence_proofs_ directory
+        # proofs directory
         import proveit
-        active_folder = '_def_existence_proof_' + theorem_name
+        active_folder = '_proof_' + theorem_name
         self.theory = Theory(
             '..',
             active_folder=active_folder,
@@ -741,25 +747,26 @@ class ProveItMagicCommands:
         self.theory = None
         return proof
 
-    def end(self, kind):
+    def end(self, folder):
         '''
         Finish 'axioms', 'definitions', 'theorems', 'common',
         or other (e.g., 'demonstrations')
         for the Theory associated with the current working directory.
         '''
         import proveit
+        kind = self._folder_to_kind(folder)
         if self.kind != kind:
             raise ProveItMagicFailure(
-                r"Must run %begin " + kind + r" before %end " + kind)
+                r"Must run %begin " + folder + r" before %end " + folder)
         # Add the special statements / expressions to the theory
         theory = self.theory
-        if kind == 'axioms':
+        if folder == 'axioms':
             theory._set_axioms(self.definitions)
-        elif kind == 'defining_properties':
+        elif folder == 'definitions':
             theory._set_defining_properties(self.definitions)
-        elif kind == 'theorems':
+        elif folder == 'theorems':
             theory._set_theorems(self.definitions)
-        elif kind == 'common':
+        elif folder == 'common':
             theory._set_common_expressions(self.definitions)
 
         # clean unreferenced expressions, but only when "display latex"
@@ -768,8 +775,8 @@ class ProveItMagicCommands:
             self.theory.clean_active_folder()
 
         # Turn off the ownership while remaking expression notebooks.
-        theory.set_active_folder(active_folder=kind, owns_active_folder=False)
-        if kind in ('axioms', 'definitions', 'theorems', 'common'):
+        theory.set_active_folder(active_folder=folder, owns_active_folder=False)
+        if folder in ('axioms', 'definitions', 'theorems', 'common'):
             # Update the expression notebooks now that these have been registered
             # as special expressions.
             for name, expr in self.definitions.items():
@@ -782,20 +789,20 @@ class ProveItMagicCommands:
                 print(
                     "Theory %s has no %s" %
                     (theory.name, kind if kind != 'common' else 'common expressions'))
-            elif kind == 'common':
+            elif folder == 'common':
                 print(
                     "These common expressions may now be imported from the theory package: %s" %
                     theory.name)
             else:
                 print("These %s may now be imported from the theory package: %s" %
-                      (kind, theory.name))
+                      (folder, theory.name))
         proveit.defaults._running_theory_notebook = None
         self.ran_finish = True
 
-        if kind == 'theorems':
+        if folder == 'theorems':
             # stash proof notebooks that are not active theorems.
             self.theory.stash_extraneous_thm_proof_notebooks()
-        elif kind == 'definitions':
+        elif folder == 'definitions':
             # stash definition existence notebooks that are not active 
             # theorems.
             self.theory.stash_extraneous_thm_proof_notebooks(
@@ -819,11 +826,11 @@ class ProveItMagicCommands:
         else:
             raise ValueError("Unknown format type: %s" % format_type)
 
-    def display_dependencies(self, name, thm_expr):
+    def display_dependencies(self, name, thm_judgment):
         '''
         Show the dependencies of an axiom or theorem.
         '''
-        proof = thm_expr.proof()  # Axiom or Theorem
+        proof = thm_judgment.proof()  # Axiom or Theorem
 
         from proveit._core_._theory_storage import TheoryFolderStorage
 
@@ -879,11 +886,11 @@ class ProveItMagicCommands:
                 self.display_special_stmt(Theory.find_theorem(dependent))
             display(HTML('</dl>'))
 
-    def display_dependencies_latex(self, name, thm_expr):
+    def display_dependencies_latex(self, name, thm_judgment):
         '''
         Show the dependencies of an axiom or theorem.
         '''
-        proof = thm_expr.proof()  # Axiom or Theorem
+        proof = thm_judgment.proof()  # Axiom or Theorem
 
         if isinstance(proof, Theorem):
             try:
@@ -901,7 +908,7 @@ class ProveItMagicCommands:
                 print(r'\begin{itemize}')
                 for req_stmt in req_unproven_theorems:
                     self.display_special_stmt(
-                        Theory.find_theorem(req_stmt), 'latex')
+                        req_stmt, 'latex')
                 print(r'\end{itemize}')
             if len(req_axioms) > 0:
                 print(
@@ -910,7 +917,7 @@ class ProveItMagicCommands:
                 print(r'\begin{itemize}')
                 for req_stmt in req_axioms:
                     self.display_special_stmt(
-                        Theory.find_axiom(req_stmt), 'latex')
+                        req_stmt, 'latex')
                 print(r'\end{itemize}')
             if len(conservative_defs) > 0:
                 print(
@@ -919,7 +926,7 @@ class ProveItMagicCommands:
                 print(r'\begin{itemize}')
                 for req_stmt in conservative_defs:
                     self.display_special_stmt(
-                        Theory.find_axiom(req_stmt), 'latex')
+                        req_stmt, 'latex')
                 print(r'\end{itemize}')
 
         dependents = proof.direct_dependents()
@@ -927,9 +934,9 @@ class ProveItMagicCommands:
             print('No theorems/conjectures depend upon %s' % name)
         else:
             print('Theorems/conjectures that depend directly on %s' % name)
-            for dependent in sorted(proof.direct_dependents(), key=stmt_sort):
-                self.display_special_stmt(
-                    Theory.find_theorem(dependent), 'latex')
+            for dependent in sorted(proof.direct_dependents(), key=str):
+                self.display_special_stmt(Theory.find_theorem(dependent),
+                                          'latex')
 
 
 @magics_class
@@ -996,36 +1003,47 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         '''
         ProveItMagicCommands.prepare_notebook(self, 'theorems')
 
-    def _extract_kind(self, line):
-        kind = line.strip()
-        split_kind = kind.split()
-        if len(split_kind) > 1:
+    def _extract_folder(self, line):
+        split_line = line.strip().split()
+        if len(split_line) > 1:
             # only comments aloud if there are multiple words on the line
-            assert split_kind[1][0] == '#'
-            kind = split_kind[0]
-        return kind
+            assert split_line[1][0] == '#'
+        if split_line[0] == 'defining_properties':
+            return 'definitions'
+        return split_line[0]
+    
+    def _folder_to_kind(self, folder):
+        if folder == 'axioms' or folder == 'theorems':
+            return folder[:-1]
+        elif folder == 'definitions':
+            return 'defining_property'
+        return folder
+
+    def _extract_kind(self, line):
+        return self._folder_to_kind(self._extract_folder(line))
 
     @line_magic
     def begin(self, line):
-        kind = self._extract_kind(line)
+        folder = self._extract_folder(line)
         # theory based upon current working directory
-        self.theory = Theory(active_folder=kind, owns_active_folder=True)
-        if kind in ('axioms', 'defining_properties', 'theorems', 'common'):
+        self.theory = Theory(active_folder=folder, owns_active_folder=True)
+        kind = self._folder_to_kind(folder)
+        if kind in ('axiom', 'defining_property', 'theorem', 'common'):
             from proveit import defaults
             # Unload anything previously loaded from this folder
             # to force it to regenerate expression notebooks,
             # etc.
-            self.theory._theory_folder_storage(kind).unload()
+            self.theory._theory_folder_storage(kind=kind).unload()
             if defaults.sideeffect_automation or defaults.conclude_automation:
                 raise Exception("The proveit.defaults.automation flag should "
                                 "be disabled at the beginning of a "
                                 "'common expressions', 'axioms', "
                                 "'definitions', or 'theorems' notebook.")
-        if kind == 'axioms':
+        if kind == 'axiom':
             self.begin_axioms()
-        elif kind == 'defining_properties':
-            self.begin_conservative_defs()
-        elif kind == 'theorems':
+        elif kind == 'defining_property':
+            self.begin_defining_properties()
+        elif kind == 'theorem':
             self.begin_theorems()
         elif kind == 'common':
             self.begin_common()
@@ -1033,14 +1051,13 @@ class ProveItMagic(Magics, ProveItMagicCommands):
 
     @line_magic
     def end(self, line):
-        kind = self._extract_kind(line)
-        ProveItMagicCommands.end(self, kind)
+        folder = self._extract_folder(line)
+        ProveItMagicCommands.end(self, folder)
         self.theory = None
 
     @line_magic
     def clear(self, line):
-        kind = line.strip()
-        ProveItMagicCommands.clear(kind)
+        folder = self._extract_folder(line)
 
     @line_magic
     def clean_active_folder(self, line):
@@ -1119,18 +1136,24 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         '''
         Show the dependencies of an axiom or theorem.
         '''
+        from proveit._core_.proof import DefiningProperty
         name = line.strip()
-        thm_expr = self.shell.user_ns[line.strip()]
-        ProveItMagicCommands.display_dependencies(self, name, thm_expr)
+        thm_judgment = self.shell.user_ns[line.strip()]
+        if isinstance(thm_judgment.proof(), DefiningProperty):
+            thm_judgment = thm_judgment.proof().required_proofs[0].proven_truth
+        ProveItMagicCommands.display_dependencies(self, name, thm_judgment)
 
     @line_magic
     def dependencies_latex(self, line):
         '''
         Show the dependencies of an axiom or theorem.
         '''
+        from proveit._core_.proof import DefiningProperty
         name = line.strip()
-        thm_expr = self.shell.user_ns[line.strip()]
-        ProveItMagicCommands.display_dependencies_latex(self, name, thm_expr)
+        thm_judgment = self.shell.user_ns[line.strip()]
+        if isinstance(thm_judgment.proof(), DefiningProperty):
+            thm_judgment = thm_judgment.proof().required_proofs[0].proven_truth
+        ProveItMagicCommands.display_dependencies_latex(self, name, thm_judgment)
 
 def display_assignments(names, beginning_proof=False,
                         beginning_existence_proof=False):
@@ -1165,8 +1188,8 @@ def display_assignments(names, beginning_proof=False,
             # Not a real assignment, just something to display.
             display(right_side)
             continue
-        if prove_it_magic.kind in ('axioms', 'defining_properties',
-                                   'theorems', 'common'):
+        if prove_it_magic.kind in ('axiom', 'defining_property',
+                                   'theorem', 'common'):
             if not isinstance(
                     right_side, Expression) and (
                     right_side is not None):
@@ -1189,9 +1212,9 @@ def display_assignments(names, beginning_proof=False,
             prove_it_magic.definitions.pop(name)
             continue
         """
-        if prove_it_magic.kind == 'axioms' or (
-                prove_it_magic.kind == 'theorems' or
-                prove_it_magic.kind == 'defining_properties'):
+        if prove_it_magic.kind == 'axiom' or (
+                prove_it_magic.kind == 'theorem' or
+                prove_it_magic.kind == 'defining_property'):
             # Axiom, DefiningProperty, and Theorem variables should 
             # all be bound though we will only check for variables that 
             # are entirely unbound because it would be challenging
@@ -1211,13 +1234,13 @@ def display_assignments(names, beginning_proof=False,
                 if not(
                         prove_it_magic.ran_finish and name in prove_it_magic.definitions):
                     raise ProveItMagicFailure(
-                        "%s names must be unique regardless of capitalization" % prove_it_magic.kind[:-1])
+                        "%s names must be unique regardless of capitalization" % prove_it_magic.kind)
         prove_it_magic.lower_case_names.add(name.lower())
         prove_it_magic.definitions[name] = right_side
         if isinstance(right_side, Expression):
             prove_it_magic.expr_names.setdefault(
                 right_side, []).append(name)
-    if prove_it_magic.kind == 'defining_properties':
+    if prove_it_magic.kind == 'defining_property':
         # With conservative definitions, DefiningProperties are given
         # as the right sides, all associated with the same
         # DefinitionExistence when multiple DefiningProperties appear in
@@ -1239,6 +1262,18 @@ def display_assignments(names, beginning_proof=False,
         literals = [lit for lit in used_literals(combined_right_sides)
                     if lit in theory.literals 
                     and lit not in prove_it_magic.defined_literals]
+        if len(literals) > 1:
+            # Check for the special case of a Literal on the left side of an
+            # equation and not appearing on the left side.  Only that Literal
+            # needs to be quantified over in the definition existence.
+            # (This is specifically designed for true_def to remove FALSE
+            # from the literals list).
+            from proveit.logic import Equals
+            if isinstance(combined_right_sides, Equals):
+                if combined_right_sides.lhs in literals:
+                    if combined_right_sides.lhs not in used_literals(
+                            combined_right_sides.rhs):
+                        literals = [combined_right_sides.lhs]
         #print('num combined', len(right_sides), 'literals', literals)
         existence_vars = [lit.as_variable() for lit in literals]
         if len(existence_vars)==0:
@@ -1275,11 +1310,7 @@ def assignment_html(name, right_side, beginning_proof=False,
     name_kind_theory = None
     kind = prove_it_magic.kind
     theory = prove_it_magic.theory
-    if kind in ('axioms', 'defining_properties', 'theorems', 'common'):
-        if kind == 'axioms' or kind == 'theorems':
-            kind = kind[:-1]
-        elif kind == 'defining_properties':
-            kind = 'defining_property'
+    if kind in ('axiom', 'defining_property', 'theorem', 'common'):
         name_kind_theory = (name, kind, theory)
     right_side_str, expr = None, None
     if isinstance(right_side, Expression) and name_kind_theory is not None:
@@ -1315,7 +1346,7 @@ def assignment_html(name, right_side, beginning_proof=False,
             definition_existence_proof=True)
         status = 'conjectured existence without proof'  # default
         try:
-            thm = theory.get_stored_theorem(theory.name + '.' + name)
+            thm = theory.get_stored_definition_existence(theory.name + '.' + name)
             if thm.is_complete():
                 status = 'established definition existence'
             elif thm.has_proof():
@@ -1344,7 +1375,7 @@ def assignment_html(name, right_side, beginning_proof=False,
             stored_thm.path, 'dependencies.ipynb')
         html += '(see <a class="ProveItLink" href="%s">dependencies</a>)<br>' % (
             relurl(dependencies_notebook_path))
-    if (kind in ('axiom', 'defining_properties', 'theorem', 'common')) and (
+    if (kind in ('axiom', 'defining_property', 'theorem', 'common')) and (
             num_duplicates > 0):
         prev = prove_it_magic.expr_names[right_side][-2]
         if kind == 'theorem':
