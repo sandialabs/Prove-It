@@ -338,29 +338,34 @@ class TheoryStorage:
         Set the common expressions, axioms, or theorems of the theory.
         '''
         from proveit._core_.proof import Axiom, Theorem, DefiningProperty
+        if kind == 'axiom':
+            # Convert definitions from expressions to Axiom Proofs.
+            definitions = {name: Axiom(expr, self.theory, name)
+                           for name, expr in definitions.items()}
+        elif kind == 'defining_property':
+            for definition in definitions.values():
+                assert isinstance(definition, DefiningProperty)
+        elif kind == 'theorem':
+            # Convert definitions from expressions to Theorem
+            # Proofs.
+            definitions = {name: Theorem(expr, self.theory, name)
+                           for name, expr in definitions.items()}
+
+        # "Retrieve" the proofs to make sure they are stored
+        # for future needs.
+        #folder = TheoryStorage._kind_to_folder(kind)
+        #self.theory_folder_storage(folder)
+
+        # Set the special objects.
+        self._set_special_objects(definitions, kind)
         if kind == 'common':
             self._common_expr_names = None  # force a reload
-        else:
-            if kind == 'axiom':
-                # Convert definitions from expressions to Axiom Proofs.
-                definitions = {name: Axiom(expr, self.theory, name)
-                               for name, expr in definitions.items()}
-                self._axiom_names = None  # force a reload
-            elif kind == 'defining_property':
-                for definition in definitions.values():
-                    assert isinstance(definition, DefiningProperty)
-                self._defining_property_names = None  # force a reload
-            elif kind == 'theorem':
-                # Convert definitions from expressions to Theorem
-                # Proofs.
-                definitions = {name: Theorem(expr, self.theory, name)
-                               for name, expr in definitions.items()}
-                self._theorem_names = None  # force a reload
-            # "Retrieve" the proofs to make sure they are stored
-            # for future needs.
-            folder = TheoryStorage._kind_to_folder(kind)
-            self.theory_folder_storage(folder)
-        self._set_special_objects(definitions, kind)
+        elif kind == 'axiom':
+            self._axiom_names = None  # force a reload
+        elif kind == 'defining_property':
+            self._defining_property_names = None  # force a reload
+        elif kind == 'theorem':
+            self._theorem_names = None  # force a reload        
 
     def _set_special_objects(self, definitions, kind):
         '''
@@ -402,7 +407,7 @@ class TheoryStorage:
                 expr = obj.proven_truth.expr
             # record the special expression in this theory object
             theory_folder_storage = \
-                self.theory._theory_folder_storage(folder)
+                self.theory_folder_storage(folder)
             # get both the expr hash id and the obj hash id
             # to be stored in the database 
             hash_id = theory_folder_storage._prove_it_storage_id(obj)
@@ -410,7 +415,7 @@ class TheoryStorage:
                 expr_id = hash_id
             else:
                 expr_id = theory_folder_storage._prove_it_storage_id(expr)
-
+            
             if expr_id in expr_hash_id_to_old_name:
                 if expr_hash_id_to_old_name[expr_id] != name:
                     # obj has same expression as before, but new name
@@ -448,6 +453,8 @@ class TheoryStorage:
                     modified_expr_hash_ids.add(old_name_to_expr_hash_id[name])
 
         # Indicate special expression removals.
+        removed_def_existences = set()
+        proveit_obj_to_storage = TheoryFolderStorage.proveit_object_to_storage
         for expr_id, name in expr_hash_id_to_old_name.items():
             if folder == 'common':
                 if expr_id not in modified_expr_hash_ids:
@@ -458,15 +465,28 @@ class TheoryStorage:
                 if expr_id not in modified_expr_hash_ids:
                     print("Removing %s %s from %s theory" %
                           (kind, name, theory_name))
+                hash_id = old_name_to_obj_hash_id[name]
                 if folder == 'theorems':
                     # Remove the proof of the removed theorem:
                     StoredTheorem(self.theory, name).remove_proof()
                 elif folder == 'definitions':
                     # Remove the proof of the removed definition existence:
-                    StoredDefinitionExistence(self.theory, name).remove_proof()
+                    from proveit._core_.proof import DefiningProperty
+                    # Get the associated DefinitionExistence of a 
+                    # DefiningProperty.
+                    obj = theory_folder_storage.make_judgment_or_proof(hash_id)
+                    assert isinstance(obj, DefiningProperty)
+                    def_existence = obj.required_proofs[0]
+                    name = def_existence.name
+                    if name not in removed_def_existences:
+                        obj_id = def_existence._style_id
+                        _, hash_id = proveit_obj_to_storage[obj_id]
+                        def_existence = StoredDefinitionExistence(self.theory, name,
+                                                                  hash_id=hash_id)
+                        def_existence.remove_proof()
+                        removed_def_existences.add(name)
                 # Remove proofs that depended upon the removed theorem.
                 # Note the use of (obj) hash_id instead of expr_id here!
-                hash_id = old_name_to_obj_hash_id[name]
                 StoredSpecialStmt.remove_dependency_proofs(
                         self.theory, kind, hash_id)
 
@@ -2669,7 +2689,7 @@ class StoredDefiningProperty(StoredSpecialStmt):
         '''
         definitions_notebook_link = relurl(
                 os.path.join(self.theory.get_path(), '_theory_nbs_',
-                             'definintions.ipynb'))
+                             'definitions.ipynb'))
         return definitions_notebook_link + '#' + self.name
 
 

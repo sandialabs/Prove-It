@@ -819,7 +819,8 @@ class Proof:
             if proof.step_type() == 'instantiation' and not hasattr(self, '_steps_to_include'):
                 html += '<tr><td>&nbsp;</td><td colspan=4 style="text-align:left">' + \
                     proof._mapping('HTML') + '</td></tr>'
-            if proof.step_type() in {'axiom', 'theorem', 'conjecture'}:
+            elif proof.step_type() in {'axiom', 'theorem', 'conjecture',
+                                       'defining_property'}:
                 html += '<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left">'
                 html += '<a class="ProveItLink" href="%s">' % proof.get_link() + str(proof.theory) + \
                     '.' + proof.name + '</a>'
