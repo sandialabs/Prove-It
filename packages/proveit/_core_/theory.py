@@ -401,15 +401,23 @@ class Theory:
     def find_axiom(full_name):
         '''
         Given the full name of an axiom that includes the theory
-        name, return the Axiom obtained the proper Theory.
+        name, return the Axiom obtained from the proper Theory.
         '''
         return Theory._findStmt(full_name, 'axiom')
+
+    @staticmethod
+    def find_defining_property(full_name):
+        '''
+        Given the full name of a defining property that includes the theory
+        name, return the DefiningProperty obtained from the proper Theory.
+        '''
+        return Theory._findStmt(full_name, 'defining property')
 
     @staticmethod
     def find_theorem(full_name):
         '''
         Given the full name of an theorem that includes the theory
-        name, return the Theorem obtained the proper Theory.
+        name, return the Theorem obtained from the proper Theory.
         '''
         return Theory._findStmt(full_name, 'theorem')
 
@@ -420,6 +428,8 @@ class Theory:
         theory = Theory.get_theory(theory_name)
         if kind == 'axiom':
             return theory.get_axiom(stmt_name)
+        if kind == 'defining property':
+            return theory.get_defining_property(stmt_name)
         if kind == 'theorem':
             return theory.get_theorem(stmt_name)
 

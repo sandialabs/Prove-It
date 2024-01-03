@@ -2556,8 +2556,10 @@ class StoredSpecialStmt:
         remove_if_exists(os.path.join(path, 'complete'))
         remove_if_exists(os.path.join(path, 'proof.pv_it'))
         remove_if_exists(os.path.join(path, 'used_axioms.txt'))
+        remove_if_exists(os.path.join(path, 'used_defining_properties.txt'))
         remove_if_exists(os.path.join(path, 'used_theorems.txt'))
         remove_if_exists(os.path.join(path, 'eliminated_axioms.txt'))
+        remove_if_exists(os.path.join(path, 'eliminated_defining_properties.txt'))
         remove_if_exists(os.path.join(path, 'eliminated_theorems.txt'))
 
     def read_dependent_theorems(self):
@@ -2734,6 +2736,12 @@ class StoredTheorem(StoredSpecialStmt):
         '''
         return list(self._read_stmts('used_axioms.txt'))
 
+    def read_used_defining_properties(self):
+        '''
+        Return the recorded list of used defining properties.
+        '''
+        return list(self._read_stmts('used_defining_properties.txt'))
+
     def read_used_theorems(self):
         '''
         Return the recorded list of used theorems.
@@ -2746,6 +2754,13 @@ class StoredTheorem(StoredSpecialStmt):
         (via literal generalization).
         '''
         return set(self._read_stmts('eliminated_axioms.txt'))
+
+    def read_eliminated_defining_properties(self):
+        '''
+        Return the recorded set of eliminated defining properties
+        (via literal generalization).
+        '''
+        return set(self._read_stmts('eliminated_defining_properties.txt'))
 
     def read_eliminated_theorems(self):
         '''
@@ -2971,9 +2986,9 @@ class StoredTheorem(StoredSpecialStmt):
     def _recordProof(self, proof):
         '''
         Record the given proof as the proof of this stored theorem.
-        Updates dependency links (used_axioms.txt, used_theorems.txt
-        files and used_by folder) and completion markers appropriately
-        (empty 'complete' files).
+        Updates dependency links (used_axioms.txt, used_theorems.txt, and
+        and used_defining_properties.txt files and used_by folder) 
+        and completion markers appropriately (empty 'complete' files).
         '''
         from proveit._core_ import Proof
         from .theory import Theory, TheoryException
@@ -2999,7 +3014,8 @@ class StoredTheorem(StoredSpecialStmt):
                               in proof.used_theorems()]
 
         # Remove used_by links that are obsolete because the proof has
-        # changed
+        # changed.  Note that defining properties don't have used_by
+        # links (the associated DefinitionExistence theorems do).
         prev_used_axiom_names, prev_used_theorem_names = (
             self.read_used_axioms(), self.read_used_theorems())
         for prev_used_axiom in prev_used_axiom_names:
@@ -3033,6 +3049,14 @@ class StoredTheorem(StoredSpecialStmt):
                     self.theory._storage._includeReference(
                         stored_used_stmt.theory)
                     used_stmts_file.write(str(stored_used_stmt) + '\n')
+        # record defining properties that this theorem directly uses
+        used_stmts_filename = 'used_defining_properties.txt'
+        with open(os.path.join(self.path, used_stmts_filename),
+                  'w') as used_stmts_file:
+            for defining_property in proof.used_defining_properties():
+                self.theory._storage._includeReference(
+                    defining_property.theory)
+                used_stmts_file.write(str(defining_property) + '\n')
 
         # for each used axiom/theorem, record that it is used by the
         # newly proven theorem
@@ -3052,12 +3076,18 @@ class StoredTheorem(StoredSpecialStmt):
         # use of a Literal generalization.
         eliminated_axiom_names = [str(used_axiom) for used_axiom in 
                                   proof.eliminated_axioms()]
+        eliminated_def_prop_names = [str(used_def_prop) for used_def_prop in 
+                                     proof.eliminated_defining_properties()]
         eliminated_theorem_names = [str(used_theorem) for used_theorem 
                                     in proof.eliminated_theorems()]
-        if len(eliminated_axiom_names)>0 or len(eliminated_theorem_names)>0:
-            # record eliminated axioms/theorems
+        if len(eliminated_axiom_names)>0 or (
+                len(eliminated_def_prop_names)>0 or
+                len(eliminated_theorem_names)>0):
+            # record eliminated axioms / defining properties / theorems
             for used_stmt_names, used_stmts_filename in (
                     (eliminated_axiom_names, 'eliminated_axioms.txt'),
+                    (eliminated_def_prop_names, 
+                     'eliminted_defining_properties.txt'),
                     (eliminated_theorem_names, 'eliminated_theorems.txt')):
                 with open(os.path.join(self.path, used_stmts_filename),
                           'w') as used_stmts_file:
@@ -3174,58 +3204,127 @@ class StoredTheorem(StoredSpecialStmt):
         # completion marker and inform dependents that it is not longer
         # complete.
         self._undoDependentCompletion()
-        # remove 'proof.pv_it', 'used_axioms.txt', 'used_theorems.txt',
+        # remove 'proof.pv_it', 'used_axioms.txt', 'used_theorems.txt', and
+        # 'used_defining_properties.txt'.
         remove_if_exists(os.path.join(self.path, 'proof.pv_it'))
         remove_if_exists(os.path.join(self.path, 'used_axioms.txt'))
+        remove_if_exists(os.path.join(self.path, 
+                                      'used_defining_properties.txt'))
         remove_if_exists(os.path.join(self.path, 'used_theorems.txt'))
         remove_if_exists(os.path.join(self.path, 'eliminated_axioms.txt'))
+        remove_if_exists(os.path.join(self.path, 
+                                      'eliminated_defining_properties.txt'))
         remove_if_exists(os.path.join(self.path, 'eliminated_theorems.txt'))
 
     def all_requirements(self, *, dead_end_theorem_exprs=None,
                          excluded_names=None, sort_key=None):
         '''
-        Returns the axioms that are required (directly or indirectly) 
-        by the theorem.  Also, return the set of "dead-end" theorems 
-        that are required (directly or indirectly).  A "dead-end" 
-        theorem is either unproven or has an expression that matches 
-        one in the optionally provided `dead_end_theorem_exprs`.
-        Conservative definitions that are not logically necessary
-        for the proof are extracted from these sets and returned on
-        their own.
+        Returns the axioms and defining properties that are required 
+        (directly or indirectly) by the theorem.  Also, return the set
+        of "dead-end" theorems that are required (directly or 
+        indirectly).  A "dead-end" theorem is either unproven or has 
+        an expression that matches one in the optionally provided 
+        `dead_end_theorem_exprs`.  For the defining properties,
+        only include the ones needed to define literals that appear
+        in the 'self' theorem, required axioms, required dead-end
+        theorems, or other required defining properties; ones that
+        are used to define a Literal that does not appear anywhere
+        are not logically required for the proof.
 
-        Returns the list of axioms, "dead-end" theorems, and
-        conservative definitions as a tuple.  These will be sorted
-        according to sort_key with the exception that a conservatively
-        defined literal will not appear before its definition in the
-        list of conservative definitions.
+        Returns the list of axioms, defining properties, "dead-end" 
+        theorems, and conservative definitions as a tuple.  These will
+        be sorted according to sort_key.
         '''
-        from .theory import Theory
-        required_axioms, required_deadend_theorems, required_cons_defs = (
-                StoredTheorem.requirements_of_theorems(
+        from proveit import used_literals
+        from proveit._core_.proof import DefinitionExistence
+        
+        used_axioms, used_def_props, used_deadend_theorems = (
+                StoredTheorem.used_by_theorems(
                         [self], dead_end_theorem_exprs=dead_end_theorem_exprs,
                         excluded_names=excluded_names, sort_key=sort_key))
+        """
+        # No need for extracting conservative definitions any more
+        # now that we have more explicit conservative definitions, and
+        # there isn't a real need to report ones that aren't required.
         thm = Theory.find_theorem(str(self))
-        axioms, theorems, cons_defs = (
+        axioms, defining_properties, theorems, cons_defs = (
                 StoredTheorem._extract_conservative_definitions(
                         thm.proven_truth.expr,
-                        required_axioms, required_deadend_theorems,
+                        reqd_axioms, reqd_def_props, reqd_deadend_theorems,
                         sort_key=sort_key))
-        return (axioms, theorems, 
-                list(required_cons_defs) + cons_defs)
+        return (axioms, defining_properties, theorems, 
+                list(reqd_cons_defs) + cons_defs)
+        """
+
+        # Map theory names and formats to Literals so we can find
+        # correspondences with DefinitionExistence proof instance parameters
+        # (which are Variable forms of literals).
+        all_used_literals = set()
+        theory_and_formats_to_literals = dict()
+        used_proofs = set(used_axioms).union(used_def_props).union(
+            used_deadend_theorems)
+        for proof in used_proofs:
+            for literal in used_literals(proof.proven_truth.expr):
+                if literal not in all_used_literals:
+                    all_used_literals.add(literal)
+                    theory_and_formats_to_literals[
+                        (literal.theory.name, literal.string_format, 
+                         literal.latex_format)] = literal
+        
+        # Map literals to defining properties amongst the used
+        # defining propertiers.
+        lit_to_def_props = dict()
+        for def_prop in used_def_props:
+            def_existence = def_prop.required_proofs[0]
+            assert isinstance(def_existence, DefinitionExistence)
+            def_existence_expr = def_existence.proven_truth.expr
+            for instance_param in def_existence_expr.instance_params:
+                literal = theory_and_formats_to_literals[(
+                    def_existence.theory.name, 
+                    instance_param.string_format,
+                    instance_param.latex_format)]
+                lit_to_def_props.setdefault(literal, set()).add(def_prop)
+        
+        def_props_to_process = set()
+        all_used_literals = set()
+        thm = self.theory.get_theorem(self.name)
+        for axiom in set(used_axioms).union(used_deadend_theorems).union(
+                [thm]):
+            for literal in used_literals(axiom.proven_truth.expr):
+                all_used_literals.add(literal)
+                def_props_to_process.update(lit_to_def_props.get(literal, 
+                                                                 tuple()))
+        reqd_def_props = set()
+        while len(def_props_to_process) > 0:
+            def_prop = def_props_to_process.pop()
+            if def_prop in reqd_def_props:
+                continue # already processed
+            reqd_def_props.add(def_prop)
+            # See if the defining property being processed uses literals
+            # that require other defining properties.
+            for literal in used_literals(def_prop.proven_truth.expr):
+                if literal not in all_used_literals:
+                    all_used_literals.add(literal)
+                    # May add more defining propertiers to process.
+                    def_props_to_process.update(lit_to_def_props.get(literal,
+                                                                     tuple()))
+        reqd_axioms = used_axioms
+        reqd_deadend_theorems = used_deadend_theorems
+        
+        return (reqd_axioms, reqd_def_props, reqd_deadend_theorems)
 
     @staticmethod
-    def requirements_of_theorems(theorems, *, dead_end_theorem_exprs=None,
-                                 excluded_names=None, sort_key=None):
+    def used_by_theorems(theorems, *, dead_end_theorem_exprs=None,
+                         excluded_names=None, sort_key=None):
         '''
-        Returns the set of axioms that are required (directly or
-        indirectly) by the theorems.  Also, return the set of "dead-end"
-        theorems that are required (directly or indirectly).  A 
-        "dead-end" theorem is either unproven or has an expression that
-        matches one in the optionally provided `dead_end_theorem_exprs`.
-        Also returns the conservative definitions used indirectly.
+        Returns the set of axioms, defining properties, and "dead-end" 
+        theorems that are used (directly or indirectly) by the theorems
+        and not eliminated via literal generalization.  A "dead-end" 
+        theorem is either unproven or has an expression that matches 
+        one in the optionally provided `dead_end_theorem_exprs`.
 
-        Returns these axiom, theorem, and conservative definitions as
-        a tuple.
+        Returns these Axiom, DefiningProperty, and Theorem
+        objects as a tuple.
         '''
         from .theory import Theory
         if excluded_names is None: excluded_names = frozenset()
@@ -3236,23 +3335,26 @@ class StoredTheorem(StoredSpecialStmt):
             stored_theorem = next(iter(theorems))
             if not isinstance(stored_theorem, StoredTheorem):
                 stored_theorem = stored_theorem._stored_theorem()
-            eliminated_axiom_names, eliminated_theorem_names = (
+            eliminated_axiom_names, eliminated_defining_property_names = (
                 stored_theorem.read_eliminated_axioms(), 
-                stored_theorem.read_eliminated_theorems())
+                stored_theorem.read_eliminated_defining_properties())
+            eliminated_theorem_names = stored_theorem.read_eliminated_theorems()
             excluded_names = set(excluded_names)
             excluded_names.update(eliminated_axiom_names)
+            excluded_names.update(eliminated_defining_property_names)
             excluded_names.update(eliminated_theorem_names)
         else:
             # When there are multiple theorems, if any have
-            # axioms/theorems to eliminate, they will be processed
-            # separately.
+            # axioms/defining properties/theorems to eliminate, they will be 
+            # processed separately.
             eliminated_axiom_names = frozenset()
+            eliminated_defining_property_names = frozenset()
             eliminated_theorem_names = frozenset()
         if dead_end_theorem_exprs is None:
             dead_end_theorem_exprs = frozenset()
-        required_axioms = set()
-        required_deadend_theorems = set()
-        required_conservative_definitions = set()
+        used_axioms = set()
+        used_defining_properties = set()
+        used_deadend_theorems = set()
         processed = set()
         to_process = set([str(theorem) for theorem in theorems])
         while len(to_process) > 0:
@@ -3266,42 +3368,54 @@ class StoredTheorem(StoredSpecialStmt):
                     not stored_theorem.has_proof()):
                 # This is a dead-end or unproven theorem.  Mark it
                 # as such and go no further on this path.
-                required_deadend_theorems.add(next_theorem)
+                used_deadend_theorems.add(next_theorem)
                 continue
-            if len(eliminated_axiom_names)==len(eliminated_theorem_names)==0:
-                _eliminated_axiom_names, _eliminated_theorem_names = (
+            if len(eliminated_axiom_names)==(
+                    len(eliminated_defining_property_names)==
+                    len(eliminated_theorem_names)==0):
+                _eliminated_axiom_names, _eliminated_defining_property_names = (
                     stored_theorem.read_eliminated_axioms(), 
+                    stored_theorem.read_eliminated_defining_properties()
+                    )
+                _eliminated_theorem_names = (
                     stored_theorem.read_eliminated_theorems())
-                if (len(_eliminated_axiom_names) > 0 or 
+                if len(_eliminated_axiom_names) > 0 or (
+                        len(_eliminated_defining_property_names) > 0 or
                         len(_eliminated_theorem_names) > 0):
-                    # When there are eliminated axioms or theorems, we
-                    # must call all_requirements recursively to make
-                    # sure we do the elimination properly.
-                    _req_axioms, _req_theorems, _required_cons_defs = (
+                    # When there are eliminated axioms, defining properties,
+                    # or theorems, we must call all_requirements recursively
+                    # to make sure we do the elimination properly.
+                    _req_axioms, _req_def_props, _req_theorems = (
                         stored_theorem.all_requirements(
                             dead_end_theorem_exprs=dead_end_theorem_exprs,
                             excluded_names=excluded_names))
-                    required_axioms.update(_req_axioms)
-                    required_deadend_theorems.update(_req_theorems)
-                    required_conservative_definitions.update(
-                            _required_cons_defs)
+                    used_axioms.update(_req_axioms)
+                    used_defining_properties.update(_req_def_props)
+                    used_deadend_theorems.update(_req_theorems)
                     continue
-            used_axiom_names, used_theorem_names = (
+            used_axiom_names, used_defining_property_names = (
                 stored_theorem.read_used_axioms(), 
-                stored_theorem.read_used_theorems())
-            required_axioms.update({Theory.find_axiom(name) for name
-                                    in used_axiom_names
-                                    if name not in excluded_names})
+                stored_theorem.read_used_defining_properties())
+            used_theorem_names = stored_theorem.read_used_theorems()
+            used_axioms.update({Theory.find_axiom(name) for name
+                                in used_axiom_names
+                                if name not in excluded_names})
+            used_defining_properties.update(
+                {Theory.find_defining_property(name) for name
+                 in used_defining_property_names
+                 if name not in excluded_names})
             for used_theorem_name in used_theorem_names:
                 if used_theorem_name not in processed:
                     if used_theorem_name not in excluded_names:
                         to_process.add(used_theorem_name)
-        return (required_axioms, required_deadend_theorems,
-                required_conservative_definitions)
+        return (used_axioms, used_defining_properties,
+                used_deadend_theorems)
     
+    """
     @staticmethod
     def _extract_conservative_definitions(
-            expr, required_axioms, required_deadend_theorems, sort_key=None):
+            expr, required_axioms, required_defining_properties,
+            required_deadend_theorems, sort_key=None):
         '''
         Given a collection of required axioms and required "deadend"
         theorems, extract those that are conservative extension
@@ -3311,7 +3425,7 @@ class StoredTheorem(StoredSpecialStmt):
         where the conservative_defs have been removed from the required 
         axioms and deadend theorems.  The conservative_defs will
         be in an order in which a literal is not used in another
-        definiition before it is defined.  If 'sort_key' is provided,
+        definition before it is defined.  If 'sort_key' is provided,
         it will be sorted according to the key apart from this
         constraint.  The required_axioms and required_deadend_theorems 
         that are returned will also be sorted according to this key.
@@ -3389,15 +3503,21 @@ class StoredTheorem(StoredSpecialStmt):
         # conservative definitions removed.
         required_axioms = [req_axiom for req_axiom in required_axioms
                            if req_axiom not in conservative_defs_set]
+        required_defining_properties = (
+            [req_def_prop for req_def_prop in required_defining_properties
+             if req_def_prop not in conservative_defs_set])
         required_deadend_theorems = [
                 req_stmt for req_stmt in required_deadend_theorems
                 if req_stmt not in conservative_defs_set]
         if sort_key is not None:
             required_axioms = sorted(required_axioms, key=sort_key)
+            required_defining_properties = sorted(required_defining_properties, 
+                                                  key=sort_key)
             required_deadend_theorems = sorted(required_deadend_theorems, 
                                                key=sort_key)
-        return (required_axioms, required_deadend_theorems,
-                conservative_defs)
+        return (required_axioms, required_defining_properties, 
+                required_deadend_theorems, conservative_defs)
+    """
 
     def all_used_or_presumed_theorem_names(self, names=None):
         '''

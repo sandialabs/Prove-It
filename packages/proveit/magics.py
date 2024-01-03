@@ -454,7 +454,7 @@ class ProveItMagicCommands:
         theory = Theory()
 
         # create the _sub_theories_.txt file if it does not already exist
-        sub_theories_path = os.path.join(theory.directory, '_sub_theories_.txt')
+        sub_theories_path = os.path.join(theory.get_path(), '_sub_theories_.txt')
         if not os.path.isfile(sub_theories_path):
             open(sub_theories_path, 'wt').close()
         
@@ -832,41 +832,41 @@ class ProveItMagicCommands:
         '''
         proof = thm_judgment.proof()  # Axiom or Theorem
 
-        from proveit._core_._theory_storage import TheoryFolderStorage
-
+        display(HTML('<h2>Dependencies of %s</h2>' % name))
+        display(HTML(proof.proven_truth.expr._repr_html_()))
+        
         if isinstance(proof, Theorem):
             #try:
-            req_axioms, req_unproven_theorems, conservative_defs = (
+            reqd_axioms, reqd_def_props, reqd_unproven_theorems = (
                     proof.all_requirements(sort_key=str))
             #except BaseException:
             #    display(HTML('<h3>This theorem has not been proven yet.</h3>'))
             #    required_axioms, required_unproven_theorems = tuple(), tuple()
 
-            if len(req_unproven_theorems) > 0:
+            if len(reqd_unproven_theorems) > 0:
                 display(
                     HTML(
                         '<h3>Unproven conjectures required (directly or indirectly) to prove %s</h3>' %
                         name))
                 display(HTML('<dl>'))
-                for req_stmt in req_unproven_theorems:
+                for req_stmt in reqd_unproven_theorems:
                     self.display_special_stmt(req_stmt)
                 display(HTML('</dl>'))
-            if len(req_axioms) > 0:
+            if len(reqd_axioms) > 0:
                 display(
                     HTML(
                         '<h3>Axioms required (directly or indirectly) to prove %s</h3>' %
                         name))
                 display(HTML('<dl>'))
-                for req_stmt in req_axioms:
+                for req_stmt in reqd_axioms:
                     self.display_special_stmt(req_stmt)
                 display(HTML('</dl>'))
-            if len(conservative_defs) > 0:
+            if len(reqd_def_props) > 0:
                 display(
                     HTML(
-                        '<h3>Conservative definitions used (but not '
-                        'logically required) to prove %s</h3>' %name))
+                        '<h3>Defining properties required for the literals that appear</h3>'))
                 display(HTML('<dl>'))
-                for req_stmt in conservative_defs:
+                for req_stmt in reqd_def_props:
                     self.display_special_stmt(req_stmt)
                 display(HTML('</dl>'))
 
@@ -891,14 +891,16 @@ class ProveItMagicCommands:
         Show the dependencies of an axiom or theorem.
         '''
         proof = thm_judgment.proof()  # Axiom or Theorem
+        print('Dependencies of %s' % name)
+        print(r'$' + proof.proven_truth.expr.latex() + '$')
 
         if isinstance(proof, Theorem):
             try:
-                req_axioms, req_unproven_theorems, conservative_defs = (
+                req_axioms, reqd_def_props, req_unproven_theorems = (
                         proof.all_requirements(sort_key=str))
             except BaseException:
                 print('This theorem has not been proven yet.')
-                req_axioms, req_unproven_theorems, conservative_defs = (
+                req_axioms, reqd_def_props, req_unproven_theorems = (
                         tuple(), tuple(), tuple())
 
             if len(req_unproven_theorems) > 0:
@@ -919,12 +921,11 @@ class ProveItMagicCommands:
                     self.display_special_stmt(
                         req_stmt, 'latex')
                 print(r'\end{itemize}')
-            if len(conservative_defs) > 0:
+            if len(reqd_def_props) > 0:
                 print(
-                    'Conservative definitions used (but not logically '
-                    'required) to prove %s' % name)
+                    'Defining properties required for the literals that appear')
                 print(r'\begin{itemize}')
-                for req_stmt in conservative_defs:
+                for req_stmt in reqd_def_props:
                     self.display_special_stmt(
                         req_stmt, 'latex')
                 print(r'\end{itemize}')
@@ -1245,7 +1246,8 @@ def display_assignments(names, beginning_proof=False,
         # as the right sides, all associated with the same
         # DefinitionExistence when multiple DefiningProperties appear in
         # a cell.
-        from proveit.logic import Exists, And
+        from proveit import Operation
+        from proveit.logic import And, Forall, Exists
         from proveit._core_.proof import (DefinitionExistence,
                                           DefiningProperty)
         from proveit._core_.expression import used_literals
@@ -1264,16 +1266,24 @@ def display_assignments(names, beginning_proof=False,
                     and lit not in prove_it_magic.defined_literals]
         if len(literals) > 1:
             # Check for the special case of a Literal on the left side of an
-            # equation and not appearing on the left side.  Only that Literal
-            # needs to be quantified over in the definition existence.
-            # (This is specifically designed for true_def to remove FALSE
-            # from the literals list).
+            # equation (along or as an operator) and not appearing on the 
+            # left side.  Only that Literal needs to be quantified over in 
+            # the definition existence.
             from proveit.logic import Equals
             if isinstance(combined_right_sides, Equals):
                 if combined_right_sides.lhs in literals:
                     if combined_right_sides.lhs not in used_literals(
                             combined_right_sides.rhs):
                         literals = [combined_right_sides.lhs]
+            elif isinstance(combined_right_sides, Forall) and (
+                    isinstance(combined_right_sides.instance_expr, Equals) and
+                    isinstance(combined_right_sides.instance_expr.lhs, Operation)
+                    and (combined_right_sides.instance_expr.lhs.operands ==
+                         combined_right_sides.instance_params) and
+                    combined_right_sides.instance_expr.lhs._operator_ in literals and
+                    combined_right_sides.instance_expr.lhs._operator_ not in (
+                        used_literals(combined_right_sides.instance_expr.rhs))):
+                literals = [combined_right_sides.instance_expr.lhs._operator_]
         #print('num combined', len(right_sides), 'literals', literals)
         existence_vars = [lit.as_variable() for lit in literals]
         if len(existence_vars)==0:

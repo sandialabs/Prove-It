@@ -114,19 +114,24 @@ class Proof:
             # required proofs.
             eliminated_proof_steps = set()
             eliminated_axioms = set()
+            eliminated_defining_properties = set()
             eliminated_theorems = set()
             for required_proof in self.required_proofs:
                 eliminated_proof_steps.update(
                     required_proof.eliminated_proof_steps())
                 eliminated_axioms.update(
                     required_proof.eliminated_axioms())
+                eliminated_defining_properties.update(
+                    required_proof.eliminated_defining_properties())
                 eliminated_theorems.update(
                     required_proof.eliminated_theorems())
             # Now see if any of these are reintroduced through
             # side-channels.
             proofs_to_check__to__nonelims = dict()
             for eliminated_set in (eliminated_proof_steps,
-                                   eliminated_axioms, eliminated_theorems):
+                                   eliminated_axioms,
+                                   eliminated_defining_properties,
+                                   eliminated_theorems):
                 # Collect subsets of the required proofs that aren't 
                 # eliminating a particular Proof, and map such subsets 
                 # to the set of mutually non-eliminated Proofs.
@@ -157,19 +162,24 @@ class Proof:
                     # No proof steps to eliminate.
                     _proofs = Proof.requirements_of_proofs(proofs_to_check)
                 # Get all direct/indirect Axiom/Theorem requirements.
-                axioms_to_check, thms_to_check, _ = (
+                axioms_to_check, def_props_to_check, thms_to_check, _ = (
                     StoredTheorem.requirements_of_theorems(
                         [_proof for _proof in _proofs 
                          if isinstance(_proof, Theorem)]))
                 # Might backtrack on eliminated axioms/theorems.
                 axiom_violations = axioms_to_check.intersection(nonelims)
                 eliminated_axioms -= axiom_violations
+                defining_property_violations = def_props_to_check.intersection(
+                    nonelims)
+                eliminated_defining_properties -= defining_property_violations
                 thm_violations = thms_to_check.intersection(nonelims)
                 eliminated_theorems -= thm_violations
             # These should be good to go now:
             self._eliminated_proof_steps = frozenset(
                 eliminated_proof_steps)
             self._eliminated_axioms = frozenset(eliminated_axioms)
+            self._eliminated_defining_properties = frozenset(
+                eliminated_defining_properties)
             self._eliminated_theorems = frozenset(eliminated_theorems)
 
         all_required_proofs = self.all_required_proofs()
@@ -624,7 +634,7 @@ class Proof:
 
     def used_axioms(self):
         '''
-        Returns the set of names of axioms that are used directly
+        Returns the set of Axioms that are used directly
         (not via other theorems) in this proof.
         '''
         axioms = set().union(
@@ -633,10 +643,22 @@ class Proof:
         if self.proven_truth.num_lit_gen > 0:
             return axioms - self._eliminated_axioms
         return axioms
+    
+    def used_defining_properties(self):
+        '''
+        Returns the set of DefiningProperties that are used 
+        directly (not via other theorems) in this proof.
+        '''
+        defining_properties = set().union(
+            *[required_proof.used_defining_properties()
+              for required_proof in self.required_proofs])
+        if self.proven_truth.num_lit_gen > 0:
+            return defining_properties - self._eliminated_defining_properties
+        return defining_properties
 
     def used_theorems(self):
         '''
-        Returns the set of names of axioms that are used directly 
+        Returns the set of Theorems that are used directly 
         (not via other theorems) in this proof.
         '''
         thms = set().union(
@@ -664,6 +686,15 @@ class Proof:
             return self._eliminated_axioms
         return frozenset()
 
+    def eliminated_defining_properties(self):
+        '''
+        Returns the set of DefiningProperties that are eliminated 
+        in this proof via literal generalization.
+        '''
+        if self.proven_truth.num_lit_gen > 0:
+            return self._eliminated_defining_properties
+        return frozenset()
+
     def eliminated_theorems(self):
         '''
         Returns the set of Theorems that are eliminated in 
@@ -681,6 +712,8 @@ class Proof:
         if self.proven_truth.num_lit_gen > 0:
             if isinstance(proof, Axiom):
                 return proof in self._eliminated_axioms
+            if isinstance(proof, DefiningProperty):
+                return proof in self._eliminated_defining_properties
             if isinstance(proof, Theorem):
                 return proof in self._eliminated_theorems
             return proof in self._eliminated_proof_steps
@@ -1482,6 +1515,9 @@ class DefiningProperty(Proof):
 
     def __str__(self):
         return self.theory.name + '.' + self.name
+
+    def used_defining_properties(self):
+        return {self}
     
 def _checkImplication(implication_expr, antecedent_expr, consequent_expr):
     '''
@@ -2447,17 +2483,22 @@ class Generalization(Proof):
                 # other requirements that use these Literals.
                 eliminated_proof_steps = []
                 eliminated_axioms = []
+                eliminated_defining_properties = []
                 eliminated_theorems = []
                 self._append_eliminated_requirements_and_check_violation(
                         instance_truth, new_conditions,
                         generalized_expr, eliminated_proof_steps,
-                        eliminated_axioms, eliminated_theorems)
+                        eliminated_axioms, eliminated_defining_properties,
+                        eliminated_theorems)
                 instance_proof = instance_truth.proof()
                 self._eliminated_proof_steps = frozenset(
                     eliminated_proof_steps).union(
                         instance_proof.eliminated_proof_steps())
                 self._eliminated_axioms = frozenset(eliminated_axioms).union(
                     instance_proof.eliminated_axioms())
+                self._eliminated_defining_properties = (
+                    frozenset(eliminated_defining_properties).union(
+                        instance_proof.eliminated_defining_properties()))
                 self._eliminated_theorems = (
                     frozenset(eliminated_theorems).union(
                         instance_proof.eliminated_theorems()))
@@ -2477,13 +2518,15 @@ class Generalization(Proof):
         gen.generalized_literals = self.generalized_literals
         gen._eliminated_proof_steps = self._eliminated_proof_steps
         gen._eliminated_axioms = self._eliminated_axioms
+        gen._eliminated_defining_properties = self._eliminated_defining_properties
         gen._eliminated_theorems = self._eliminated_theorems
         return gen
 
     def _append_eliminated_requirements_and_check_violation(
             self, instance_truth, new_conditions,
             generalized_expr, eliminated_proof_steps,
-            eliminated_axioms, eliminated_theorems):
+            eliminated_axioms, eliminated_defining_properties,
+            eliminated_theorems):
         '''
         There is literal generalization going on.  Convert the
         new conditions to forms using the literals in place
@@ -2536,6 +2579,8 @@ class Generalization(Proof):
         # eliminated in the proof of the instance expression.
         excluded_names = {str(ax) for ax in 
                           instance_proof.eliminated_axioms()}
+        excluded_names.update({str(prop) for prop in 
+                               instance_proof.eliminated_defining_properties()})
         excluded_names.update({str(thm) for thm in 
                                instance_proof.eliminated_theorems()})
         required_theorems = set()
@@ -2546,6 +2591,7 @@ class Generalization(Proof):
                 continue
             proof_expr = proof.proven_truth.expr
             proof_is_axiom = isinstance(proof, Axiom)
+            proof_is_defining_property = isinstance(proof, DefiningProperty)
             proof_is_theorem = isinstance(proof, Theorem)
             if proof_is_axiom or proof_is_theorem:
                 if str(proof) in excluded_names:
@@ -2557,6 +2603,10 @@ class Generalization(Proof):
                     # Axiom corresponding to a condition -- it is
                     # eliminated.
                     eliminated_axioms.append(proof)
+                elif proof_is_defining_property:
+                    # DefiningProperty corresonding to a condition -- 
+                    # it is eliminated.
+                    eliminated_defining_properties.append(proof)
                 elif proof_is_theorem:
                     # Theorem corresonding to a condition -- it is
                     # eliminated.
@@ -2581,19 +2631,24 @@ class Generalization(Proof):
 
         # Search through the requirements of the required theorems
         # for indirectly eliminated axioms/theorems.
-        required_axioms, required_deadend_theorems, _ = (
+        required_axioms, required_def_props, required_deadend_theorems, _ = (
             StoredTheorem.requirements_of_theorems(
                 required_theorems, 
                 dead_end_theorem_exprs=converted_conditions,
                 excluded_names=excluded_names))
         # Disregard conservative definitions.
-        required_axioms, required_deadend_theorems, _ = (
+        required_axioms, required_def_props, required_deadend_theorems, _ = (
                 StoredTheorem._extract_conservative_definitions(
-                        instance_truth.expr, required_axioms, 
-                        required_deadend_theorems))
+                        instance_truth.expr, required_axioms,
+                        required_def_props, required_deadend_theorems))
         for required_axiom in required_axioms:
             if required_axiom.proven_truth.expr in converted_conditions:
                 eliminated_axioms.append(required_axiom)
+            else:
+                check_axiom_or_unproven_theorem(required_axiom)
+        for required_def_prop in required_def_props:
+            if required_def_prop.proven_truth.expr in converted_conditions:
+                eliminated_defining_properties.append(required_def_prop)
             else:
                 check_axiom_or_unproven_theorem(required_axiom)
         for required_theorem in required_deadend_theorems:

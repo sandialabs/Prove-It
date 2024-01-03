@@ -1115,6 +1115,7 @@ class Judgment:
             hypothesis = hypothesis.expr  # we want the expression for this purpose
         return self._checkedTruth(Deduction(self, hypothesis))
 
+    """
     def conservative_definition_lit(self):
         '''
         If this Judgment is in the form of a conservative definition
@@ -1149,6 +1150,7 @@ class Judgment:
             # The operands must match the instance parameters.
             return None
         return equality.lhs.operator
+    """
 
     """
     @prover
