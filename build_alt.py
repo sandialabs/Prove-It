@@ -974,6 +974,14 @@ def theoremproof_path_generator(top_level_paths):
     for path in top_level_paths:
         for theory_path in find_theory_paths(path):
             theory = Theory(theory_path)
+            def_existence_names = set()
+            for name in theory.get_defining_property_names():
+                name = theory.get_definition_existence(name).name
+                if name in def_existence_names:
+                    continue
+                def_existence_names.add(name)
+                yield os.path.join(theory._storage.directory, '_theory_nbs_',
+                                   'def_existence_proofs', name, 'thm_proof.ipynb')
             for theorem_name in theory.get_theorem_names():
                 yield os.path.join(theory._storage.directory, '_theory_nbs_',
                                    'proofs', theorem_name, 'thm_proof.ipynb')
@@ -1321,7 +1329,8 @@ if __name__ == '__main__':
                       no_latex=args.nolatex, git_clear=not args.nogitclear,
                       no_execute=args.noexecute, export_to_html=True)
         if args.build_expr_and_proofs or args.build_all:
-            filebases = ('expr', 'common_expr', 'axiom_expr', 'theorem_expr', 'proof')
+            filebases = ('expr', 'common_expr', 'axiom_expr', 
+                         'definition_property_expr', 'theorem_expr', 'proof')
             mpi_build(database_notebook_path_generator(paths, filebases),
                       no_latex=args.nolatex, git_clear=False,
                       no_execute=args.noexecute, export_to_html=True)
