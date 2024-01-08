@@ -424,6 +424,7 @@ class TheoryStorage:
                 judgment_id = None
             else:
                 expr_id = theory_folder_storage._prove_it_storage_id(expr)
+                judgment_id = theory_folder_storage._prove_it_storage_id(obj.proven_truth)
 
             if expr_id in expr_hash_id_to_old_name:
                 if expr_hash_id_to_old_name[expr_id] != name:
