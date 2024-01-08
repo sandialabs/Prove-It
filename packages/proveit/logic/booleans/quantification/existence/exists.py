@@ -125,7 +125,7 @@ class Exists(OperationOverInstances):
                 "Call the Judgment.eliminate{0} to complete the "
                 "Skolemization\n(when the 'constant(s)' are no longer needed).\n"
                 "Adding to defaults.assumptions:". format(
-                    skolem_constants, (*Q_skolem.entries)))
+                    skolem_constants, *Q_skolem.entries))
 
         return ExprTuple(*Q_skolem.entries, P_skolem)
 

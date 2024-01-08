@@ -1,7 +1,10 @@
-import collections
+try:
+    from collections.abc import MutableSet # Abstract Base Class (abc)
+except:
+    from collections import MutableSet # older versions of Python
 
 # Inspired by https://stackoverflow.com/questions/1653970/does-python-have-an-ordered-set
-class OrderedSet(collections.MutableSet):
+class OrderedSet(MutableSet):
     '''
     An ordered set that iterates in the order things are added
     but doesn't add duplicates.  This is specially designed to allow
