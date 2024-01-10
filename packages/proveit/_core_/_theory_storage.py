@@ -400,14 +400,15 @@ class TheoryStorage:
         # for tracking modified objects
         modified_expr_hash_ids = set()
 
+        theory_folder_storage = \
+            self.theory_folder_storage(folder)
+
         for name, obj in definitions.items():
             if kind == 'common':
                 expr = obj
             else:
                 expr = obj.proven_truth.expr
             # record the special expression in this theory object
-            theory_folder_storage = \
-                self.theory_folder_storage(folder)
             # get both the expr hash id and the obj hash id
             # to be stored in the database 
             hash_id = theory_folder_storage._prove_it_storage_id(obj)
