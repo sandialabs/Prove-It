@@ -32,16 +32,12 @@ class Database:
 
         The theorem table does not yet record whether or not the
         theorem is still a conjecture or has a conjecture-based proof
-        or a non-conjecture-base proof. We might use an attribute
+        or a non-conjecture-based proof. We might use an attribute
         such as 'proof_status' with possible values of 'conjecture',
         'conjecture-based', or 'complete'.
 
-        # Recall that we have only five data types to work with:
-        # NULL
-        # INTEGER
-        # REAL
-        # TEXT
-        # BLOB
+        Recall that we have only five data types to work with:
+            NULL, INTEGER, REAL, TEXT, BLOB
         '''
 
         # Allow the directory to be empty, and if not empty then
@@ -61,15 +57,16 @@ class Database:
         # create a cursor
         c = conn.cursor()
 
-        # create our tables/relations,
-        # deleting each first if it already exists
-        # (The deletions will eventually be omitted, instead using
-        # the following code:
-        # c.execute("""CREATE TABLE IF NOT EXISTS table_name(...)""")
-
-        # c.execute("""CREATE TABLE IF NOT EXISTS common (
-        c.execute("DROP TABLE IF EXISTS common")
-        c.execute("""CREATE TABLE common (
+        # ========================================================== #
+        # Create our tables/relations, if they don't already exist.  #
+        # Alternative creation code options are included as comments #
+        # for testing and future use.                                #
+        # ========================================================== #
+        
+        # COMMON
+        # c.execute("DROP TABLE IF EXISTS common")
+        # c.execute("""CREATE TABLE common (
+        c.execute("""CREATE TABLE IF NOT EXISTS common (
             id            TEXT NOT NULL PRIMARY KEY,
             path_name     TEXT,
             name          TEXT,
@@ -79,6 +76,7 @@ class Database:
             FOREIGN KEY (expression) REFERENCES expression (id)
             )""")
 
+        # AXIOM
         # Eventually the axiom table will be reduced to holding
         # just id and name (like the associated name_to_hash.txt files)
         # c.execute("DROP TABLE IF EXISTS axiom")
@@ -92,6 +90,7 @@ class Database:
             latex_format  TEXT
             )""")
 
+        # DEFINITION
         # c.execute("DROP TABLE IF EXISTS definition")
         # c.execute("""CREATE TABLE definition (
         c.execute("""CREATE TABLE IF NOT EXISTS definition (
@@ -99,9 +98,10 @@ class Database:
             expression TEXT
             )""")
 
-        # c.execute("""CREATE TABLE IF NOT EXISTS theorem (
-        c.execute("DROP TABLE IF EXISTS theorem")
-        c.execute("""CREATE TABLE theorem (
+        # THEOREM
+        # c.execute("DROP TABLE IF EXISTS theorem")
+        # c.execute("""CREATE TABLE theorem (
+        c.execute("""CREATE TABLE IF NOT EXISTS theorem (
             id            TEXT NOT NULL PRIMARY KEY,
             path_name     TEXT,
             name          TEXT,
@@ -111,6 +111,7 @@ class Database:
             FOREIGN KEY (judgment) REFERENCES judgment (id)
             )""")
 
+        # PROOF_STEP
         # c.execute("DROP TABLE IF EXISTS proof_step")
         # c.execute("""CREATE TABLE proof_step (
         c.execute("""CREATE TABLE IF NOT EXISTS proof_step (
@@ -127,6 +128,7 @@ class Database:
             FOREIGN KEY (judgment) REFERENCES judgment (id)
             )""")
 
+        # JUDGMENT
         # c.execute("DROP TABLE IF EXISTS judgment")
         # c.execute("""CREATE TABLE judgment (
         c.execute("""CREATE TABLE IF NOT EXISTS judgment (
@@ -139,6 +141,7 @@ class Database:
             FOREIGN KEY (expression) REFERENCES expression (id)
             )""")
 
+        # EXPRESSION
         # c.execute("DROP TABLE IF EXISTS expression")
         # c.execute("""CREATE TABLE expression (
         c.execute("""CREATE TABLE IF NOT EXISTS expression (
@@ -224,7 +227,119 @@ class Database:
                       record)
         except Exception as the_exception:
             print("Database Exception: {}".format(the_exception))
-            print("Database insertion unsuccessful")
+            print("Database insertion unsuccessful.")
+
+        # Commit the command(s) and close the connection
+        conn.commit()
+        conn.close()
+
+    def update_record(self, table, kwargs_for_id, kwargs_for_setting):
+        '''
+        Update one or more records (i.e. one or more rows) from the
+        specified table in the database, identifying the record(s) by
+        the conjunction of the table attribute/value kwargs supplied
+        in the kwargs_for_id dictionary, and updating the record
+        attributes and values specified in the kwargs_for_setting
+        dictionary.
+        Table attribute names should be specified as strings (i.e.
+        with quotation marks); attribute values should be either NULL
+        or of type INTEGER, REAL, or TEXT (i.e. string). For example,
+        in a table called 'customers' containing (TEXT) attributes
+        last_name, first_name, and (INTEGER) attribute telephone_num,
+        calling the following:
+
+        update_record(
+            'customers', {'last_name':'Brown', 'telephone_num':1234},
+            {'first_name':'Bobby'})
+
+        will UPDATE records that have both (i.e. simultanously) a
+        last_name attribute of 'Brown' and a telephone_num attribute
+        of 1234 in the table 'customers', to then have a first_name
+        attribute of 'Bobby'.
+
+        The table must be an actual table in the database, and all
+        attributes must be actual attributes of the table, else a
+        ValueError is raised.
+
+        Updating a non-existent record will NOT raise an error.
+        '''
+
+        # Check that the kwargs_for_setting dictionary is not empty
+        # (otherwise, there is nothing to update)
+        # (We might redo this to simply return with no error if
+        # there is nothing to set?)
+        if len(kwargs_for_setting)==0:
+            raise ValueError(
+                ("Failed attempt to update record(s) in the '{0}' table " +
+                 "in database '{1}': no attribute/value kwargs supplied " +
+                 "for updating.").
+                format(table, self.file_name))
+
+        # Check: Is the specified table a valid table in the database?
+        if not self._valid_table(table):
+            raise ValueError(
+                ("Failed attempt to update a record or records from " +
+                 "the '{0}' table in database '{1}': " +
+                 "no such table in the database.").
+                format(table, self.file_name))
+
+        # Check: Are the identifying attributes valid for the table?
+        for k in kwargs_for_id.keys():
+            if not self._valid_attribute(table, k):
+                raise ValueError(
+                    ("Failed attempt to update record in the '{0}' table " +
+                    "in database '{1}'. The table '{0}' has no attribute " +
+                    "'{2}'.").format(table, self.file_name, k))
+
+        # Check: Are the attributes-to-set valid for the table?
+        for k in kwargs_for_setting.keys():
+            if not self._valid_attribute(table, k):
+                raise ValueError(
+                    ("Failed attempt to update record in the '{0}' table " +
+                    "in database '{1}'. The table '{0}' has no attribute " +
+                    "'{2}'.").format(table, self.file_name, k))
+
+
+        # Construct the command string.
+        # Beginning and SET portion
+        command_str = ""
+        for idx, (attr,attr_value) in enumerate(kwargs_for_setting.items()):
+            if isinstance(attr_value, str):
+                # need to make the quotation marks explicit
+                attr_value = "\'" + str(attr_value) + "\'"
+            if idx == 0:
+                command_str = (
+                    ("UPDATE {table} SET " +
+                     "{attr}={attr_value}").
+                     format(table=table, attr=attr,
+                           attr_value=attr_value))
+            else:
+                command_str = (
+                    command_str + ", {attr}={attr_value}".
+                    format(attr=attr, attr_value=attr_value))
+
+        # Continue constructing the command string.
+        # WHERE portion
+        for idx, (attr,attr_value) in enumerate(kwargs_for_id.items()):
+            print("idx, (attr,attr_value) = {}, {}".format(idx, (attr,attr_value)))
+            if isinstance(attr_value, str):
+                # need to make the quotation marks explicit
+                attr_value = "\'" + str(attr_value) + "\'"
+            if idx == 0:
+                command_str += ((
+                    " WHERE {attr}={attr_value}").
+                    format(attr=attr, attr_value=attr_value))
+            else:
+                command_str += ((
+                    ", {attr}={attr_value}").
+                    format(attr=attr, attr_value=attr_value))
+
+        # Connect to database and create a cursor
+        conn = sqlite3.connect(self.full_path_file_name)
+        c = conn.cursor()
+
+        # Update record(s) from the specified table
+        c.execute(command_str)
 
         # Commit the command(s) and close the connection
         conn.commit()
@@ -252,7 +367,6 @@ class Database:
         attributes must be actual attributes of the table, else a
         ValueError is raised.
         Deleting a non-existent record will NOT raise an error.
-        
         '''
 
         # Check that the kwargs dictionary is not empty:
@@ -301,7 +415,6 @@ class Database:
 
         # Delete record(s) from the specified table
         c.execute(command_str)
-        print("    Deletion raised no fatal errors.")
 
         # Commit the command(s) and close the connection
         conn.commit()
@@ -435,6 +548,27 @@ class Database:
         # Commit the command(s) and close the connection
         conn.commit()
         conn.close()
+
+    def clear_all_records_in_database(self):
+        '''
+        Clear all records (i.e. all tables) in database.
+        This leaves the existing tables, but leaves them empty
+        of any records.
+        '''
+        # Get list of all tables in the database
+        tables = self._get_list_of_tables()
+        # Connect to database
+        conn = sqlite3.connect(self.full_path_file_name)
+        # Create a cursor
+        c = conn.cursor()
+        # Delete all records from each table
+        for table in tables:
+            c.execute("DELETE FROM " + table)
+
+        # Commit the command(s) and close the connection
+        conn.commit()
+        conn.close()
+
 
 
     # ==================================== #
