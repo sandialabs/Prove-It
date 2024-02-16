@@ -104,7 +104,8 @@ class Qmult(Operation):
                         Ket(operand.operand)):
                     return qmult_of_bra.instantiate(
                             {Hspace:_Hspace, varphi:operand.operand})
-            elif operand in MatrixSpace.known_memberships:
+            elif InClass.has_known_membership(
+                    operand, domain_type=MatrixSpace._operator_):
                 # Qmult of a matrix.  It equates to a lambda
                 # map, but this isn't considered a simplification.
                 # Use linmap_reduction instead if this is desired.
@@ -171,21 +172,16 @@ class Qmult(Operation):
         if self.operands.is_single():
             # Unary Qmult
             operand = self.operand
-            if operand in MatrixSpace.known_memberships:
-                # Qmult of matrix equates to a linear map
-                mspace_memberships = MatrixSpace.known_memberships[operand]
-                matrix_dimensions = set()
-                for mspace_membership in mspace_memberships:
-                    # Qmult of a matrix is the linear map
-                    # represented by the matrix.
-                    mspace = mspace_membership.domain
-                    _m, _n = (mspace.operands['rows'], 
-                              mspace.operands['columns'])
-                    matrix_dimensions.add((_m, _n))
-                for _m, _n in matrix_dimensions:
-                    return qmult_of_matrix.instantiate(
-                            {m:_m, n:_n, M:operand})
-            elif isinstance(operand, Bra):
+            for mspace_membership in InClass.yield_known_memberships(
+                    operand, domain_type=MatrixSpace._operator_):
+                # Qmult of a matrix is the linear map
+                # represented by the matrix.
+                mspace = mspace_membership.domain
+                _m, _n = (mspace.operands['rows'], 
+                          mspace.operands['columns'])
+                return qmult_of_matrix.instantiate(
+                    {m:_m, n:_n, M:operand})
+            if isinstance(operand, Bra):
                 for _Hspace in yield_known_hilbert_spaces(
                         Ket(operand.operand)):
                     return qmult_of_bra_as_map.instantiate(
@@ -564,29 +560,20 @@ class QmultCodomainMembership(ClassMembership):
                 
                 for _attempt in (0, 1):               
                     # Handle unary Qmult on a matrix.
-                    if op in MatrixSpace.known_memberships:
-                        mspace_memberships = MatrixSpace.known_memberships[op]
-                        thm = None
-                        matrix_dimensions = set()
-                        for mspace_membership in mspace_memberships:
-                            mspace = mspace_membership.domain
-                            _m, _n = (mspace.operands['rows'], 
-                                      mspace.operands['columns'])
-                            matrix_dimensions.add((_m, _n))
-                        for _m, _n in matrix_dimensions:
-                            # Prove linear map membership while we are
-                            # at it.
-                            qmult_matrix_is_linmap.instantiate(
-                                    {m:_m, n:_n, M:op}, preserve_all=True)
-                            used_mspace = mspace
-                            thm = qmult_matrix_in_QmultCodomain
-                        if thm is not None:
-                            # Choose any valid matrix space (the last 
-                            # used ones will do) for the QmultCodomain
-                            # membership proof.
-                            _m, _n = (used_mspace.operands['rows'], 
-                                      used_mspace.operands['columns'])
-                            return thm.instantiate({m:_m, n:_n, M:op})
+                    for mspace_membership in InClass.yield_known_memberships(
+                            op, domain_type=MatrixSpace._operator_):
+                        mspace = mspace_membership.domain
+                        _m, _n = (mspace.operands['rows'], 
+                                  mspace.operands['columns'])
+                        # Prove linear map membership while we are
+                        # at it.
+                        qmult_matrix_is_linmap.instantiate(
+                            {m:_m, n:_n, M:op}, preserve_all=True)
+                        # Choose any valid matrix space (the last 
+                        # used ones will do) for the QmultCodomain
+                        # membership proof.
+                        return qmult_matrix_in_QmultCodomain.instantiate(
+                            {m:_m, n:_n, M:op})
     
                     # Handle unary Qmult on a ket.
                     for _Hspace in yield_known_hilbert_spaces(op):
@@ -878,20 +865,15 @@ def containing_hilbert_space_linmap_sets(qobj):
     '''
     from proveit.linear_algebra.inner_products.hilbert_spaces import (
             deduce_as_hilbert_space)
-    known_linmap_memberships = LinMap.known_memberships
     # Prove the membership of qobj in Q* to prove
     # the side-effect linear map membership as well.
     #QmultCodomain.membership_object(qobj).conclude()
     for qobj in (qobj, Qmult(qobj)):
-        if qobj in known_linmap_memberships:
-            for linmap_membership in known_linmap_memberships[qobj]:
-                linmap = linmap_membership.domain
-                if not isinstance(linmap, LinMap):
-                    raise TypeError("Expecting LinMap.known_memberships to "
-                                    "contain known memberships of LinMap "
-                                    "domains.")
-                for vec_space in linmap.operands:
-                    deduce_as_hilbert_space(vec_space)
-                if all(InClass(V, HilbertSpaces).proven() for V 
-                       in linmap.operands):
-                    yield linmap
+        for linmap_membership in InClass.yield_known_memberships(
+                qobj, domain_type=LinMap._operator_):
+            linmap = linmap_membership.domain
+            for vec_space in linmap.operands:
+                deduce_as_hilbert_space(vec_space)
+            if all(InClass(V, HilbertSpaces).proven() for V 
+                   in linmap.operands):
+                yield linmap
