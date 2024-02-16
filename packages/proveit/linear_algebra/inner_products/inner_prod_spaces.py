@@ -31,12 +31,6 @@ class InnerProdSpaces(VecSpaces):
             latex_format=r'\textrm{InnerProdSpaces}',
             theory=__file__)
     
-    # Map vector spaces to their known membership(s) within 
-    # InnerProdSpaces(K) for some field K. Such a membership relation 
-    # is the indication that it is a vector space over the 
-    # corresponding field.
-    known_vec_spaces_memberships = dict() 
-        
     def __init__(self, field, *, styles=None, _operator=None):
         if _operator is None:
             _operator = InnerProdSpaces._operator_
@@ -63,9 +57,11 @@ class InnerProdSpaces(VecSpaces):
         will be raised.
         '''
         for vec_space in VecSpaces.yield_known_vec_spaces(vec, field=field):
-            if vec_space in InnerProdSpaces.known__vec_space_memberships:
-                # This vector space is already known to be an inner
-                # product space.
+            if (field is None and InClass.has_known_membership(
+                    vec_space, domain_type=InnerProdSpaces._operator_)):
+                yield vec_space
+            elif field is not None and (
+                    InClass(vec_space, InnerProdSpaces(field)).proven()):
                 yield vec_space
             else:
                 try:
@@ -126,8 +122,6 @@ class InnerProdSpacesMembership(ClassMembership):
         Prove VecSpaces membership as a side-effect and
         remember known InnerProdSpaces memberships.
         '''
-        InnerProdSpaces.known_vec_spaces_memberships.setdefault(
-                self.element, set()).add(judgment)
         yield self.derive_vec_spaces_membership
     
     @prover
