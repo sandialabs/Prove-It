@@ -1,3 +1,4 @@
 addition
 multiplication
 exponentiation
+transposition
