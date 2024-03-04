@@ -9,7 +9,8 @@ class Database:
     def __init__(self, directory, db_file_name, package_name):
         '''
         Initialize a database, creating a standard set of tables
-        to hold common expressions, axioms, theorems, proof steps, etc.
+        to hold common expressions, axioms, theorems, proof steps, etc.,
+        if they do not already exist in an already-existing database.
         The database will be directory/db_file_name, where directory
         is an absolute path (currently provided in the __init__() for
         the TheoryStorage class), db_file_name is expected be a string
@@ -51,7 +52,10 @@ class Database:
         # for convenience:
         self.full_path_file_name = self.directory + self.file_name
 
-        # connect to (or create) the database
+        current_tables = self._get_list_of_tables()
+
+        # connect to the database
+        # (or create it if it doesn't already exist) 
         conn = sqlite3.connect(self.full_path_file_name)
 
         # create a cursor
@@ -59,13 +63,31 @@ class Database:
 
         # ========================================================== #
         # Create our tables/relations, if they don't already exist.  #
-        # Alternative creation code options are included as comments #
-        # for testing and future use.                                #
+        #                                                            #
+        # User should manually update the x_attributes_and_types     #
+        # set of attribute/type tuples for table x whenever          #
+        # changing the attributes/types structure of a table. This   #
+        # then helps prompt the regeneration of the table if the     #
+        # table already exists in the database but with the          #
+        # incorrect attribute/type pairs.                            #
         # ========================================================== #
         
-        # COMMON
-        # c.execute("DROP TABLE IF EXISTS common")
-        # c.execute("""CREATE TABLE common (
+        # COMMON     #
+
+        common_attributes_and_types = {
+            ('id', 'TEXT'), ('path_name', 'TEXT'), ('name', 'TEXT'),
+            ('expression', 'TEXT'), ('string_format', 'TEXT'),
+            ('latex_format', 'TEXT')}
+        if 'common' in current_tables:
+            temp_entries = self.fetch_all('common')
+            # get possibly 'old' attributes and types
+            prev_common_attributes_and_types = (
+                    self._get_table_attributes_and_types('common'))
+            if common_attributes_and_types != prev_common_attributes_and_types:
+                # table structure has changed so table should be
+                # be regenerated in the database
+                c.execute("DROP TABLE IF EXISTS common")
+
         c.execute("""CREATE TABLE IF NOT EXISTS common (
             id            TEXT NOT NULL PRIMARY KEY,
             path_name     TEXT,
@@ -76,11 +98,21 @@ class Database:
             FOREIGN KEY (expression) REFERENCES expression (id)
             )""")
 
-        # AXIOM
-        # Eventually the axiom table will be reduced to holding
-        # just id and name (like the associated name_to_hash.txt files)
-        # c.execute("DROP TABLE IF EXISTS axiom")
-        # c.execute("""CREATE TABLE axiom (
+        # AXIOM      #
+
+        axiom_attributes_and_types = {
+            ('id', 'TEXT'), ('path_name', 'TEXT'), ('name', 'TEXT'),
+            ('judgment', 'TEXT'), ('string_format', 'TEXT'),
+            ('latex_format', 'TEXT')}
+        if 'axiom' in current_tables:
+            # get possibly 'old' attributes and types
+            prev_axiom_attributes_and_types = (
+                    self._get_table_attributes_and_types('axiom'))
+            if axiom_attributes_and_types != prev_axiom_attributes_and_types:
+                # table structure has changed so table should be
+                # be regenerated in the database
+                c.execute("DROP TABLE IF EXISTS axiom")
+
         c.execute("""CREATE TABLE IF NOT EXISTS axiom (
             id            TEXT NOT NULL PRIMARY KEY,
             path_name     TEXT,
@@ -90,17 +122,41 @@ class Database:
             latex_format  TEXT
             )""")
 
-        # DEFINITION
-        # c.execute("DROP TABLE IF EXISTS definition")
-        # c.execute("""CREATE TABLE definition (
+        # DEFINITION #
+
+        definition_attributes_and_types = {
+                ('name', 'TEXT'), ('expression', 'TEXT')}
+        if 'definition' in current_tables:
+            # get possibly 'old' attributes and types
+            prev_definition_attributes_and_types = (
+                    self._get_table_attributes_and_types('definition'))
+            if definition_attributes_and_types != (
+                    prev_definition_attributes_and_types):
+                # table structure has changed so table should be
+                # be regenerated in the database
+                c.execute("DROP TABLE IF EXISTS definition")
+
         c.execute("""CREATE TABLE IF NOT EXISTS definition (
             name       TEXT,
             expression TEXT
             )""")
 
-        # THEOREM
-        # c.execute("DROP TABLE IF EXISTS theorem")
-        # c.execute("""CREATE TABLE theorem (
+        #  THEOREM   #
+
+        theorem_attributes_and_types = {
+                ('id', 'TEXT'), ('path_name', 'TEXT'), ('name', 'TEXT'),
+                ('judgment', 'TEXT'), ('string_format', 'TEXT'),
+                ('latex_format', 'TEXT')}
+        if 'theorem' in current_tables:
+            # get possibly 'old' attributes and types
+            prev_theorem_attributes_and_types = (
+                    self._get_table_attributes_and_types('theorem'))
+            if theorem_attributes_and_types != (
+                    prev_theorem_attributes_and_types):
+                # table structure has changed so table should be
+                # be regenerated in the database
+                c.execute("DROP TABLE IF EXISTS theorem")
+
         c.execute("""CREATE TABLE IF NOT EXISTS theorem (
             id            TEXT NOT NULL PRIMARY KEY,
             path_name     TEXT,
@@ -111,9 +167,24 @@ class Database:
             FOREIGN KEY (judgment) REFERENCES judgment (id)
             )""")
 
-        # PROOF_STEP
-        # c.execute("DROP TABLE IF EXISTS proof_step")
-        # c.execute("""CREATE TABLE proof_step (
+        # PROOF_STEP #
+
+        proof_step_attributes_and_types = {
+                ('id', 'TEXT'), ('type', 'TEXT'),
+                ('path_name', 'TEXT'), ('name', 'TEXT'), ('judgment', 'TEXT'),
+                ('requirements', 'TEXT'), ('equality_requirements', 'TEXT'),
+                ('instantiations', 'TEXT'), ('string_format', 'TEXT'),
+                ('latex_format', 'TEXT')}
+        if 'proof_step' in current_tables:
+            # get possibly 'old' attributes and types
+            prev_proof_step_attributes_and_types = (
+                    self._get_table_attributes_and_types('proof_step'))
+            if proof_step_attributes_and_types != (
+                    prev_proof_step_attributes_and_types):
+                # table structure has changed so table should be
+                # be regenerated in the database
+                c.execute("DROP TABLE IF EXISTS proof_step")
+        
         c.execute("""CREATE TABLE IF NOT EXISTS proof_step (
             id                    TEXT NOT NULL PRIMARY KEY,
             type                  TEXT,
@@ -128,9 +199,22 @@ class Database:
             FOREIGN KEY (judgment) REFERENCES judgment (id)
             )""")
 
-        # JUDGMENT
-        # c.execute("DROP TABLE IF EXISTS judgment")
-        # c.execute("""CREATE TABLE judgment (
+        #  JUDGMENT  #
+    
+        judgment_attributes_and_types = {
+                ('id', 'TEXT'), ('expression', 'TEXT'),
+                ('assumptions', 'TEXT'), ('num_lit_gens', 'INTEGER'),
+                ('string_format', 'TEXT'), ('latex_format', 'TEXT')}
+        if 'judgment' in current_tables:
+            # get possibly 'old' attributes and types
+            prev_judgment_attributes_and_types = (
+                    self._get_table_attributes_and_types('judgment'))
+            if judgment_attributes_and_types != (
+                    prev_judgment_attributes_and_types):
+                # table structure has changed so table should be
+                # be regenerated in the database
+                c.execute("DROP TABLE IF EXISTS judgment")
+
         c.execute("""CREATE TABLE IF NOT EXISTS judgment (
             id            TEXT NOT NULL PRIMARY KEY,
             expression    TEXT NOT NULL,
@@ -141,7 +225,23 @@ class Database:
             FOREIGN KEY (expression) REFERENCES expression (id)
             )""")
 
-        # EXPRESSION
+        # EXPRESSION #
+
+        expression_attributes_and_types = {
+                ('id', 'TEXT'), ('subexpressions', 'TEXT'),
+                ('class_path', 'TEXT'), ('core_info', 'TEXT'),
+                ('style_str', 'TEXT'),('string_format', 'TEXT'),
+                ('latex_format', 'TEXT'), ('ref_count', 'INTEGER')}
+        if 'expression' in current_tables:
+            # get possibly 'old' attributes and types
+            prev_expression_attributes_and_types = (
+                    self._get_table_attributes_and_types('expression'))
+            if expression_attributes_and_types != (
+                    prev_expression_attributes_and_types):
+                # table structure has changed so table should be
+                # be regenerated in the database
+                c.execute("DROP TABLE IF EXISTS expression")
+
         # c.execute("DROP TABLE IF EXISTS expression")
         # c.execute("""CREATE TABLE expression (
         c.execute("""CREATE TABLE IF NOT EXISTS expression (
@@ -151,7 +251,8 @@ class Database:
             core_info      TEXT,
             style_str      TEXT,
             string_format  TEXT,
-            latex_format   TEXT
+            latex_format   TEXT,
+            ref_count      INTEGER
             )""")
 
         # Commit the commands
@@ -160,71 +261,64 @@ class Database:
         # Close the connection
         conn.close()
 
-        # print("Database now initialized for pkg '{}'.\n".
-        #       format(package_name))
-
-    def insert_record(self, table, record):
+    def insert_record(self, table, attr_value_dict):
         '''
         Insert a single new record (i.e. row) into the specified table
-        in the database. The record must be an appropriate-length
-        list of attribute values. A ValueError is raised if the table
-        is not a valid table in the database or if the list of
-        attribute values has the wrong length. Python's None is an
-        acceptable value for an attribute that is not declared as NOT
-        NULL.
+        in the database, with attributes (and associated attribute
+        values) specified by the attr_value_dict dictionary.
+        The attr_value_dict must include any and all table attributes
+        that have been declared as NOT NULL. 
+        A ValueError is raised if the table is not a valid table in
+        the database or if the list of attributes used as keys in the
+        attr_value_dict dictionary contains invalid attributes.
+        If an attribute is not declared as NOT NULL, Python's None
+        is an acceptable value or one can simply omit any such
+        attribute:value pair (in which case the record will be inserted
+        with 'NULL' as the attribute value, and eventually returned
+        in Python with None as the value when retrieving records).
         Catches and returns integrity error information if record
         has a primary key already existing in table.
         '''
         
-        # print("Entering the insert_record() method:")
-        # print("    with self.full_path_file_name: {}".format(self.full_path_file_name))
-        # print("    with record: {}".format(record))
-        # print("    with table: {}".format(table))
-
-        # An initial minimal check for problems:
-        # is the specified table a valid table in the database?
+        # Check: Is the specified table a valid table in the database?
         if not self._valid_table(table):
             raise ValueError(
                 ("Failed attempt to insert a record into the '{0}' table " +
                  "in database '{1}': no such table in the database.").
                 format(table, self.file_name))
 
-        conn = sqlite3.connect(self.full_path_file_name)
-        c = conn.cursor()
+        # Allowing users to submit a dictionary with None value(s)
+        # can create headaches if we don't first clean them out (such
+        # 'null' entries will be handled automatically)
+        clean_attr_value_dict = (
+            {k: v for k, v in attr_value_dict.items() if v is not None})
 
-        # Another minimal check for problems:
-        # length of record must match number of attributes in table.
-        # Get the actual number of attributes in the target table.
-        c.execute("SELECT count() FROM PRAGMA_TABLE_INFO('{0}')".format(table))
-        # Fetch that selected count.
-        num_attributes = c.fetchone()[0]
-        # print("    num_attributes = {}".format(num_attributes))
-        if num_attributes != len(record):
-            raise ValueError(
-                ("Failed attempt to insert a record into the '{0}' table " +
-                "in database '{1}'. The provided record had {2} " +
-                "attributes, whereas the table expected a record "+
-                "with {3} attributes.").format(
-                    table, self.file_name, len(record), num_attributes ))
+        # the following guarantees that the attr_names and attr_values
+        # are consistently ordered when used separately
+        attr_names, attr_values = zip(*clean_attr_value_dict.items())
+
+        # Check: Are the attributes valid for the table?
+        for k in attr_names:
+            if not self._valid_attribute(table, k):
+                raise ValueError(
+                    ("Failed attempt to insert a record in the '{0}' table " +
+                    "in database '{1}'. The table '{0}' has no attribute " +
+                    "'{2}'.").format(table, self.file_name, k))
 
         # More sophisticated check might eventually be useful as well:
         # check that each attribute value has the correct type (TBA).
 
-        # use num_attributes to construct the correct execution
-        # string for inserting the record
-        question_mark_string = '('
-        for _i in range(num_attributes-1):
-            question_mark_string += '?,'
-        question_mark_string = question_mark_string + '?)'
+        # Connect to database and create a cursor
+        conn = sqlite3.connect(self.full_path_file_name)
+        c = conn.cursor()
 
-        # Insert attribute values into the specified table
-        # Do this inside try/except block to catch a database
+        # Insert attribute values into the specified table.
+        # We do this inside try/except block to catch a database
         # IntegrityError but still allow the database to be
         # successfully closed afterward.
         try:
-            c.execute("INSERT INTO '{0}' VALUES {1}".
-                      format(table, question_mark_string),
-                      record)
+            c.execute("INSERT INTO '{0}' {1} VALUES {2}".
+                      format(table, str(attr_names), str(attr_values)))
         except Exception as the_exception:
             print("Database Exception: {}".format(the_exception))
             print("Database insertion unsuccessful.")
@@ -233,29 +327,31 @@ class Database:
         conn.commit()
         conn.close()
 
-    def update_record(self, table, kwargs_for_id, kwargs_for_setting):
+    def update_records(self, table, dict_for_id=None, dict_for_setting=None):
         '''
-        Update one or more records (i.e. one or more rows) from the
+        Update zero or more records (i.e. one or more rows) in the
         specified table in the database, identifying the record(s) by
-        the conjunction of the table attribute/value kwargs supplied
-        in the kwargs_for_id dictionary, and updating the record
-        attributes and values specified in the kwargs_for_setting
-        dictionary.
+        the conjunction of the table attribute/value pairs supplied
+        in the dict_for_id dictionary, and updating the record
+        attribute/value pairs specified in the dict_for_setting
+        dictionary. If the dict_for_id dictionary is None or empty,
+        ALL records in the table will be updated.
         Table attribute names should be specified as strings (i.e.
-        with quotation marks); attribute values should be either NULL
+        with quotation marks); attribute values should be either None
         or of type INTEGER, REAL, or TEXT (i.e. string). For example,
         in a table called 'customers' containing (TEXT) attributes
         last_name, first_name, and (INTEGER) attribute telephone_num,
         calling the following:
 
-        update_record(
-            'customers', {'last_name':'Brown', 'telephone_num':1234},
-            {'first_name':'Bobby'})
+            update_record(
+                'customers',
+                {'last_name':'Brown', 'telephone_num':1234},
+                {'first_name':'Bobby'})
 
         will UPDATE records that have both (i.e. simultanously) a
-        last_name attribute of 'Brown' and a telephone_num attribute
-        of 1234 in the table 'customers', to then have a first_name
-        attribute of 'Bobby'.
+        last_name attribute value of 'Brown' and a telephone_num
+        attribute value of 1234 in the table 'customers', to then have
+        a first_name attribute value of 'Bobby'. 
 
         The table must be an actual table in the database, and all
         attributes must be actual attributes of the table, else a
@@ -264,15 +360,13 @@ class Database:
         Updating a non-existent record will NOT raise an error.
         '''
 
-        # Check that the kwargs_for_setting dictionary is not empty
+        # Check that the dict_for_setting dictionary is not empty
         # (otherwise, there is nothing to update)
-        # (We might redo this to simply return with no error if
-        # there is nothing to set?)
-        if len(kwargs_for_setting)==0:
+        if dict_for_setting is None or len(dict_for_setting)==0:
             raise ValueError(
                 ("Failed attempt to update record(s) in the '{0}' table " +
-                 "in database '{1}': no attribute/value kwargs supplied " +
-                 "for updating.").
+                 "in database '{1}': no attribute/value dictionary supplied " +
+                 "to specify updating.").
                 format(table, self.file_name))
 
         # Check: Is the specified table a valid table in the database?
@@ -284,55 +378,76 @@ class Database:
                 format(table, self.file_name))
 
         # Check: Are the identifying attributes valid for the table?
-        for k in kwargs_for_id.keys():
-            if not self._valid_attribute(table, k):
-                raise ValueError(
-                    ("Failed attempt to update record in the '{0}' table " +
-                    "in database '{1}'. The table '{0}' has no attribute " +
-                    "'{2}'.").format(table, self.file_name, k))
+        if dict_for_id is not None:
+            for k in dict_for_id.keys():
+                if not self._valid_attribute(table, k):
+                    raise ValueError(
+                        ("Failed attempt to update record in the '{0}' table " +
+                        "in database '{1}'. The '{0}' table has no attribute " +
+                        "'{2}' for identifying the record.").
+                        format(table, self.file_name, k))
 
         # Check: Are the attributes-to-set valid for the table?
-        for k in kwargs_for_setting.keys():
+        for k in dict_for_setting.keys():
             if not self._valid_attribute(table, k):
                 raise ValueError(
                     ("Failed attempt to update record in the '{0}' table " +
-                    "in database '{1}'. The table '{0}' has no attribute " +
-                    "'{2}'.").format(table, self.file_name, k))
+                    "in database '{1}'. The '{0}' table has no attribute " +
+                    "'{2}' to set.").format(table, self.file_name, k))
 
-
-        # Construct the command string.
-        # Beginning and SET portion
+        # Construct the command string: Beginning and SET portion
         command_str = ""
-        for idx, (attr,attr_value) in enumerate(kwargs_for_setting.items()):
+        for idx, (attr,attr_value) in enumerate(dict_for_setting.items()):
             if isinstance(attr_value, str):
                 # need to make the quotation marks explicit
                 attr_value = "\'" + str(attr_value) + "\'"
             if idx == 0:
-                command_str = (
-                    ("UPDATE {table} SET " +
-                     "{attr}={attr_value}").
-                     format(table=table, attr=attr,
-                           attr_value=attr_value))
+                if attr_value is not None:
+                    command_str = (
+                        ("UPDATE {table} SET " +
+                         "{attr}={attr_value}").
+                         format(table=table, attr=attr,
+                               attr_value=attr_value))
+                else:
+                    command_str = (
+                        ("UPDATE {table} SET " +
+                         "{attr}=NULL").
+                         format(table=table, attr=attr))
             else:
-                command_str = (
-                    command_str + ", {attr}={attr_value}".
-                    format(attr=attr, attr_value=attr_value))
+                if attr_value is not None:
+                    command_str = (
+                        command_str + ", {attr}={attr_value}".
+                        format(attr=attr, attr_value=attr_value))
+                else:
+                    command_str = (
+                        command_str + ", {attr}=NULL".
+                        format(attr=attr))
 
-        # Continue constructing the command string.
-        # WHERE portion
-        for idx, (attr,attr_value) in enumerate(kwargs_for_id.items()):
-            print("idx, (attr,attr_value) = {}, {}".format(idx, (attr,attr_value)))
-            if isinstance(attr_value, str):
-                # need to make the quotation marks explicit
-                attr_value = "\'" + str(attr_value) + "\'"
-            if idx == 0:
-                command_str += ((
-                    " WHERE {attr}={attr_value}").
-                    format(attr=attr, attr_value=attr_value))
-            else:
-                command_str += ((
-                    ", {attr}={attr_value}").
-                    format(attr=attr, attr_value=attr_value))
+        # Continue constructing the command string: WHERE portion
+        if dict_for_id is not None and len(dict_for_id) != 0:
+            # then we limit the update(s) to particular records
+            for idx, (attr,attr_value) in enumerate(dict_for_id.items()):
+                if isinstance(attr_value, str):
+                    # need to make the quotation marks explicit
+                    attr_value = "\'" + str(attr_value) + "\'"
+                if idx == 0:
+                    if attr_value is not None:
+                        command_str += ((
+                            " WHERE {attr}={attr_value}").
+                            format(attr=attr, attr_value=attr_value))
+                    else:
+                        command_str += ((
+                            " WHERE {attr} is null").
+                            format(attr=attr))
+                else:
+                    if attr_value is not None:
+                        command_str += ((
+                            ", {attr}={attr_value}").
+                            format(attr=attr, attr_value=attr_value))
+                    else:
+                        command_str += ((
+                            ", {attr} is null").
+                            format(attr=attr))
 
         # Connect to database and create a cursor
         conn = sqlite3.connect(self.full_path_file_name)
@@ -345,36 +460,32 @@ class Database:
         conn.commit()
         conn.close()
 
-    def delete_record(self, table, **kwargs):
+    def delete_records(self, table, attr_value_dict=None):
         '''
-        Delete one or more records (i.e. one or more rows) from the
+        Delete zero or more records (i.e. one or more rows) from the
         specified table in the database, identifying the records by the
-        conjunction of the table attribute/value kwargs supplied.
-        Table attribute names should be specified without quotation
-        marks; attribute values should be either NULL or of type
-        INTEGER, REAL, or TEXT (i.e. string). For example, in a table
-        called 'customers' containing (TEXT) attributes last_name,
+        conjunction of the attribute:value pairs in the
+        attr_value_dict dictionary.
+        Table attribute names should be specified as strings;
+        attribute values should be either None (without quotes) or of
+        type INTEGER, REAL, or TEXT (i.e. string). For example, in a
+        table called 'customers' containing (TEXT) attributes last_name,
         first_name, and (INTEGER) attribute telephone_num, calling the
         following:
 
-            delete_record(
-                'customers', last_name='Brown', telephone_num=1234)
+            delete_record('customers',
+                {'last_name':'Brown', 'telephone_num':1234})
 
-        will delete ALL records that have both (i.e. simultanously) a
-        last_name attribute of 'Brown' and a telephone_num attribute
-        of 1234 in the table 'customers'.
+        will delete ALL records in the customers table that have both
+        (i.e. simultanously) a last_name value of 'Brown' and a
+        telephone_num value of 1234 in the table 'customers'.
         The table must be an actual table in the database, and all
         attributes must be actual attributes of the table, else a
-        ValueError is raised.
+        ValueError is raised. If the attr_value_dict dictionary is
+        empty or None, ALL records in the specific table will be
+        deleted (but the table itself will remain, just empty).
         Deleting a non-existent record will NOT raise an error.
         '''
-
-        # Check that the kwargs dictionary is not empty:
-        if len(kwargs)==0:
-            raise ValueError(
-                ("Failed attempt to check for record in the '{0}' table " +
-                 "in database '{1}': no attribute/value kwargs supplied.").
-                format(table, self.file_name))
 
         # Check: Is the specified table a valid table in the database?
         if not self._valid_table(table):
@@ -385,40 +496,185 @@ class Database:
                 format(table, self.file_name))
 
         # Check: Are the attributes valid for the table?
-        for k in kwargs.keys():
+        for k in attr_value_dict.keys():
             if not self._valid_attribute(table, k):
                 raise ValueError(
                     ("Failed attempt to check for record in the '{0}' table " +
                     "in database '{1}'. The table '{0}' has no attribute " +
                     "'{2}'.").format(table, self.file_name, k))
 
-        # Create the command string.
+        # Construct the command string.
         command_str = ""
-        for idx, (attr,attr_value) in enumerate(kwargs.items()):
-            if isinstance(attr_value, str):
-                # need to make the quotation marks explicit
-                attr_value = "\'" + str(attr_value) + "\'"
-            if idx == 0:
-                command_str = (
-                    ("DELETE FROM {table} " +
-                     " WHERE ({attr}={attr_value}").
-                     format(table=table, attr=attr,
-                           attr_value=attr_value))
-            else:
-                command_str = (
-                    command_str + " AND {attr}={attr_value}".
-                    format(attr=attr, attr_value=attr_value))
-        command_str = command_str + ")"
+        if attr_value_dict is None or len(attr_value_dict)==0:
+            # no record specifications suplied,
+            # so delete all rows of the specified table
+            command_str += "DELETE FROM " + table
+        else:
+            for idx, (attr,attr_value) in enumerate(attr_value_dict.items()):
+                if isinstance(attr_value, str):
+                    # need to make the quotation marks explicit
+                    attr_value = "\'" + str(attr_value) + "\'"
+                if idx == 0:
+                    if attr_value is not None:
+                        command_str = (
+                            ("DELETE FROM {table} " +
+                             " WHERE ({attr}={attr_value}").
+                             format(table=table, attr=attr,
+                                   attr_value=attr_value))
+                    else:
+                        command_str = (
+                            ("DELETE FROM {table} " +
+                             " WHERE ({attr} is null").
+                             format(table=table, attr=attr))
+                else:
+                    if attr_value is not None:
+                        command_str = (
+                            command_str + " AND {attr}={attr_value}".
+                            format(attr=attr, attr_value=attr_value))
+                    else:
+                        command_str = (
+                            command_str + " AND {attr} is null".
+                            format(attr=attr))
+            command_str = command_str + ")"
 
         conn = sqlite3.connect(self.full_path_file_name)
         c = conn.cursor()
 
-        # Delete record(s) from the specified table
+        # Delete record(s) from the specified table by executing
+        # the constructed command string
         c.execute(command_str)
 
         # Commit the command(s) and close the connection
         conn.commit()
         conn.close()
+
+    def retrieve_records(
+            self, table, attr_value_dict_for_id=None, attr_names=None):
+        '''
+        Retrieve zero or more records (i.e. one or more rows) from the
+        specified table in the database, identifying the record(s) by
+        the conjunction of the table attribute/value pairs supplied
+        in the attr_value_dict_for_id dictionary, and return the values
+        for just the attributes listed in the attr_names list.
+        Table attribute names should be specified with quotation
+        marks (i.e. as strings) and attribute values should be either
+        None or of type INTEGER, REAL, or TEXT (i.e. string).
+        For example, in a table called 'customers' containing (TEXT)
+        attributes last_name, first_name, and (INTEGER) attribute
+        telephone_num, calling the following:
+
+            retrieve_records(
+                'customers',
+                {'last_name':'Brown', 'telephone_num':1234},
+                ['first_name', 'telephone_num'])
+
+        will retrieve ALL the first name, telephone combinations for
+        all records that have both (i.e. simultanously) a last_name
+        attribute of 'Brown' and a telephone_num attribute of 1234 in
+        the table 'customers'. The data returned is in the form of
+        a list of tuples of the requested info; in the example above,
+        it might look like
+
+            [('Bobby', 1234), ('Jerry', 1234), ('James', 1234)]
+
+        If the attr_value_dict_for_id dictionary is None or empty, all
+        records in the table will be returned. If attributes list is
+        None or empty, then all attributes will be returned for any
+        records found.
+
+        The table must be an actual table in the database, and all
+        attributes must be actual attributes of the table, else a
+        ValueError is raised.
+        Retrieving a non-existent record will NOT raise an error;
+        instead it will return an empty list.
+        '''
+
+        # Check: Is the specified table a valid table in the database?
+        if not self._valid_table(table):
+            raise ValueError(
+                ("Failed attempt to retrieve a record or records from " +
+                 "the '{0}' table in database '{1}': " +
+                 "no such table in the database.").
+                format(table, self.file_name))
+
+        # Check: Are the identifying attributes valid for the table?
+        if (attr_value_dict_for_id is not None
+            and len(attr_value_dict_for_id) > 0):
+            for k in attr_value_dict_for_id.keys():
+                if not self._valid_attribute(table, k):
+                    raise ValueError(
+                        ("Failed attempt to retrieve a record or records " +
+                         "from the '{0}' table in database '{1}'. " +
+                         "The table '{0}' has no attribute " +
+                         "'{2}'.").format(table, self.file_name, k))
+
+        # Check: Are the attributes-to-return valid for the table?
+        if attr_names is not None and len(attr_names) > 0:
+            for k in attr_names:
+                if not self._valid_attribute(table, k):
+                    raise ValueError(
+                        ("Failed attempt to retrieve a record or records "+
+                         "from the '{0}' table in database '{1}'. "
+                         "The table '{0}' has no attribute " +
+                        "'{2}'.").format(table, self.file_name, k))
+
+        # Construct the SELECT portion of the command string (which
+        # depends on attr_names list supplied).
+        command_str = ""
+        if (attr_names is None or len(attr_names)==0):
+            # we select all attributes in the table
+            command_str = ("SELECT * FROM {table}".format(table=table))
+        else:
+            # we select only specified attributes from table
+            attr_str = "" + attr_names[-1] + " "
+            for attr_name in reversed(attr_names[:-1]):
+                attr_str = attr_name + ", " + attr_str
+            command_str += ("SELECT " + attr_str + "FROM {table}".
+                           format(table=table))
+
+        # Construct the WHERE portion of the command string (which
+        # depends on the attr_value_dict_for_id dictionary supplied)
+        if (attr_value_dict_for_id is not None
+            and len(attr_value_dict_for_id)>0):
+            for idx, (attr,attr_value) in enumerate(
+                    attr_value_dict_for_id.items()):
+                if isinstance(attr_value, str):
+                    # need to make the quotation marks explicit
+                    attr_value = "\'" + str(attr_value) + "\'"
+                if idx == 0:
+                    if attr_value is not None:
+                        command_str += ((
+                            " WHERE {attr}={attr_value}").
+                            format(attr=attr, attr_value=attr_value))
+                    else:
+                        command_str += ((
+                            " WHERE {attr} is null").
+                            format(attr=attr))
+                else:
+                    if attr_value is not None:
+                        command_str += ((
+                            " AND {attr}={attr_value}").
+                            format(attr=attr, attr_value=attr_value))
+                    else:
+                        command_str += ((
+                            " AND {attr} is null").
+                            format(attr=attr))
+
+        # Connect to database and create a cursor
+        conn = sqlite3.connect(self.full_path_file_name)
+        c = conn.cursor()
+
+        # Retrieve record(s) from the specified table by executing
+        # the constructed command string and fetching results
+        c.execute(command_str)
+        items = c.fetchall()
+
+        # Commit the command(s) and close the connection
+        conn.commit()
+        conn.close()
+
+        return items
+
 
     def fetch_all(self, table, attr_names=None, **kwargs):
         # Query the db, returning all records in the specified table,
@@ -429,13 +685,6 @@ class Database:
         # eventually be used (not yet implemented) to restrict
         # retrieval by specifying attribute values.
         # (Currently a convenience method; to be updated later.)
-
-        # Connect to database
-        conn = sqlite3.connect(self.full_path_file_name)
-        # Create a cursor
-        c = conn.cursor()
-        # Query the specified table in the database
-        # (not yet using kwargs).
 
         # Create the command string (depends on attr_names supplied).
         command_str = ""
@@ -449,6 +698,11 @@ class Database:
             command_str += ("SELECT " + attr_str + "FROM {table}".
                            format(table=table))
 
+        # Connect to database
+        conn = sqlite3.connect(self.full_path_file_name)
+        # Create a cursor
+        c = conn.cursor()
+
         # Execute command and fetch items
         c.execute(command_str)
         items = c.fetchall()
@@ -458,30 +712,27 @@ class Database:
 
         return items
 
-    def check_for_record(self, table, **kwargs):
+    def check_for_record(self, table, attr_value_dict=None):
         '''
         A minimal check for the existence of a record, with one or more
-        attributes and corresponding values specified by key word args.
+        attributes and corresponding values specified by items in the
+        attr_value_dict dictionary.
         Returns True if such a record exists and False if not.
         table should be a string specifying a valid table in self.
-        Table attribute names should be specified without quotation
-        marks; attribute values should be either NULL or of type
+        Table attribute names should be specified as strings;
+        attribute values should be either None or of type
         INTEGER, REAL, or TEXT (i.e. string). For example,
 
             self.check_for_record(
-                    'passenger', first_name='Bob', b_year=1961)
+                    'passenger', {'first_name':'Bob', 'b_year':1961})
 
         would check the passenger table for an entry where the
         first_name attribute would be the string 'Bob' and the
         b_year attribute would be the integer 1961.
+        If the attr_value_dict dictionary is None or empty, the method
+        simply checks for the existence of any records at all in the
+        specified table.
         '''
-
-        # Check that the kwargs dictionary is not empty:
-        if len(kwargs)==0:
-            raise ValueError(
-                ("Failed attempt to check for record in the '{0}' table " +
-                 "in database '{1}': no attribute/value kwargs supplied.").
-                format(table, self.file_name))
 
         # Check: Is the specified table a valid table in the database?
         if not self._valid_table(table):
@@ -490,39 +741,59 @@ class Database:
                  "in database '{1}': no such table in the database.").
                 format(table, self.file_name))
 
-        # Check: Are the attributes valid for the table?
-        for k in kwargs.keys():
-            if not self._valid_attribute(table, k):
-                raise ValueError(
-                    ("Failed attempt to check for record in the '{0}' table " +
-                    "in database '{1}'. The table '{0}' has no attribute " +
-                    "'{2}'.").format(table, self.file_name, k))
+        # Check: Are the identifying attributes (if any) valid for
+        #        the table?
+        if attr_value_dict is not None:
+            for k in attr_value_dict.keys():
+                if not self._valid_attribute(table, k):
+                    raise ValueError(
+                        ("Failed attempt to check for record in the '{0}' " +
+                         "table in database '{1}'. The '{0}' table has " +
+                         "no attribute '{2}'.").
+                        format(table, self.file_name, k))
 
-        # Connect to database
+        # Construct the query string. We don't care how many such
+        # entries might exist, just if ANY such entry exists at all.
+        query_str = ""
+        if attr_value_dict is None or len(attr_value_dict)==0:
+            query_str = ("SELECT EXISTS(SELECT 1 FROM {table})".
+                        format(table=table))
+        else:
+            # attr_value_dict is not empty, so looking for more
+            # detailed table entries
+            for idx, (attr,attr_value) in enumerate(attr_value_dict.items()):
+                if isinstance(attr_value, str):
+                    # need to make the quotation marks explicit
+                    attr_value = "\'" + str(attr_value) + "\'"
+                if idx == 0:
+                    if attr_value is not None:
+                        query_str = (
+                            ("SELECT EXISTS(SELECT 1 FROM {table} " +
+                            " WHERE ({attr}={attr_value}").
+                            format(table=table, attr=attr,
+                                   attr_value=attr_value))
+                    else:
+                        query_str = (
+                            ("SELECT EXISTS(SELECT 1 FROM {table} " +
+                            " WHERE ({attr} is null").
+                            format(table=table, attr=attr))
+                else:
+                    if attr_value is not None:
+                        query_str = (
+                            query_str + " AND {attr}={attr_value}".
+                            format(attr=attr, attr_value=attr_value))
+                    else:
+                        query_str = (
+                            query_str + " AND {attr} is null".
+                            format(attr=attr))
+            query_str = query_str + "))"
+
+        # Connect to database and establish cursor
         conn = sqlite3.connect(self.full_path_file_name)
-        # Create a cursor
         c = conn.cursor()
 
-        # Query the specified table in the database.
-        # Here we don't care how many such entries might exist,
-        # just if any such entries exist at all.
-        query_str = ""
-        for idx, (attr,attr_value) in enumerate(kwargs.items()):
-            if isinstance(attr_value, str):
-                # need to make the quotation marks explicit
-                attr_value = "\'" + str(attr_value) + "\'"
-            if idx == 0:
-                query_str = (
-                    ("SELECT EXISTS(SELECT 1 FROM {table} " +
-                    " WHERE ({attr}={attr_value}").
-                    format(table=table, attr=attr,
-                           attr_value=attr_value))
-            else:
-                query_str = (
-                    query_str + " AND {attr}={attr_value}".
-                    format(attr=attr, attr_value=attr_value))
-        query_str = query_str + "))"
-
+        # Execute the query and fetch the result (result will
+        # be 1 if an entry exists or 0 if no such entry exists)
         c.execute(query_str)
         result = c.fetchone()[0]
 
@@ -569,6 +840,29 @@ class Database:
         conn.commit()
         conn.close()
 
+    def clear_database(self):
+        '''
+        Delete all tables in database (i.e., don't just clear the
+        records from each table, but delete the tables themselves,
+        so they must be re-created from scratch during any
+        initialization procedure). This becomes important to be able
+        to do if the structure of one or more tables is modified (but
+        the initilization process wouldn't recreate the table if the
+        original differently-structured table still existed).
+        '''
+        # Get list of all tables in the database
+        tables = self._get_list_of_tables()
+        # Connect to database
+        conn = sqlite3.connect(self.full_path_file_name)
+        # Create a cursor
+        c = conn.cursor()
+        # Delete each each table (i.e. remove table from database)
+        for table in tables:
+            c.execute("DROP table IF EXISTS " + table)
+
+        # Commit the command(s) and close the connection
+        conn.commit()
+        conn.close()
 
 
     # ==================================== #
@@ -624,6 +918,39 @@ class Database:
         # Close connection and return list of attribute names
         conn.close()
         return list(attribute_names)
+
+    def _get_table_attributes_and_types(self, table):
+        '''
+        Return the set of (attribute, type) tuples for the given table.
+        This is useful for raising informative errors, for example
+        when a client tries to delete a record by specifying a value
+        for an attribute that doesn't exist. This is also useful for
+        checking for changes in the structure of tables during
+        development.
+        For example, in a database with a table called 'customers'
+        containing (TEXT) attributes last_name, first_name, and
+        (INTEGER) attribute telephone_num, calling the following:
+
+            self._get_table_attributes_and_types('customers')
+
+        will return the following set of tuples:
+
+            {('lastname', 'TEXT'), ('first_name', 'TEXT'),
+             ('telephone_num', 'INTEGER')}
+        '''
+
+        # Connect to the database.
+        conn = sqlite3.connect(self.full_path_file_name)
+        # Create a cursor
+        c = conn.cursor()
+        # Obtain the attribute names and types
+        c.execute("SELECT name, type FROM PRAGMA_TABLE_INFO('{0}')".
+                  format(table));
+        set_of_attr_type_tuples = set(c.fetchall())
+
+        # Close connection and return set of (attribute, type) tuples
+        conn.close()
+        return set_of_attr_type_tuples
 
     def _valid_table(self, table):
         '''
@@ -683,7 +1010,6 @@ class Database:
         # ============================================================ #
 
         if unique_rep_str[:5] == 'Proof':
-            # print("    Attempting to parse a unique_rep string for a Proof step.")
             _proveit_obj = 'Proof'
 
             _id_str = _rep_str_semi_parsed[0]
@@ -761,7 +1087,6 @@ class Database:
         # ============================================================ #
 
         elif unique_rep_str[:8] == 'Judgment':
-            # print("    Attempting to parse a unique_rep string for a Judgment.")
             _proveit_obj = 'Judgment'
             _id_str = _rep_str_semi_parsed[0]     # 'Judgment:expr_id'
             _expr_id = _id_str.split(":")[1]      #          'expr_id'
