@@ -10,9 +10,6 @@ class MatrixSpace(Operation):
     '''
     _operator_ = Literal(string_format=r'MSpace', theory=__file__)
     
-    # Map elements to their known memberships in a matrix space.
-    known_memberships = dict()
-    
     def __init__(self, field, rows, columns, *, styles=None):
         '''
         Create F^{m x n} as the MatrixSpace for field F with
@@ -91,11 +88,4 @@ class MatrixSpaceMembership(SetMembership):
 
     def __init__(self, element, domain):
         SetMembership.__init__(self, element, domain)
-        
-    def side_effects(self, judgment):
-        MatrixSpace.known_memberships.setdefault(
-                self.element, set()).add(judgment)
-        return # generator yielding nothing
-        yield
-
 

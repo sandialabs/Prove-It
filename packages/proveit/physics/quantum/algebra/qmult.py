@@ -622,33 +622,6 @@ class QmultCodomainMembership(ClassMembership):
                 
                 for _attempt in (0, 1):               
                     # Handle unary Qmult on a matrix.
-<<<<<<< HEAD
-                    if op in MatrixSpace.known_memberships:
-                        mspace_memberships = MatrixSpace.known_memberships[op]
-                        print(op)
-                        thm = None
-                        matrix_dimensions = set()
-                        for mspace_membership in mspace_memberships:
-                            mspace = mspace_membership.domain
-                            _m, _n = (mspace.operands['rows'], 
-                                      mspace.operands['columns'])
-                            matrix_dimensions.add((_m, _n))
-                        for _m, _n in matrix_dimensions:
-                            # Prove linear map membership while we are
-                            # at it.
-                    
-                            qmult_matrix_is_linmap.instantiate(
-                                    {m:_m, n:_n, M:op}, preserve_all=True)
-                            used_mspace = mspace
-                            thm = qmult_matrix_in_QmultCodomain
-                        if thm is not None:
-                            # Choose any valid matrix space (the last 
-                            # used ones will do) for the QmultCodomain
-                            # membership proof.
-                            _m, _n = (used_mspace.operands['rows'], 
-                                      used_mspace.operands['columns'])
-                            return thm.instantiate({m:_m, n:_n, M:op})
-=======
                     for mspace_membership in InClass.yield_known_memberships(
                             op, domain_type=MatrixSpace._operator_):
                         mspace = mspace_membership.domain
@@ -663,7 +636,6 @@ class QmultCodomainMembership(ClassMembership):
                         # membership proof.
                         return qmult_matrix_in_QmultCodomain.instantiate(
                             {m:_m, n:_n, M:op})
->>>>>>> d8d317cee73114b80c071759ecf5d4f707aee5f6
     
                     # Handle unary Qmult on a ket.
                     for _Hspace in yield_known_hilbert_spaces(op):
