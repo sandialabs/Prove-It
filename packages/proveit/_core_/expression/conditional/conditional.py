@@ -310,9 +310,9 @@ class Conditional(Expression):
             from proveit.core_expr_types.conditionals import \
                 true_condition_reduction
             return true_condition_reduction.instantiate({a: self.value})
-        elif self.condition.proven():
+        elif self.condition.readily_provable():
             return self.satisfied_condition_reduction()
-        elif self.condition.disproven():
+        elif self.condition.readily_disprovable():
             return self.dissatisfied_condition_reduction()
         elif (isinstance(self.value, Conditional) and
               self.condition == self.value.condition):
@@ -380,6 +380,7 @@ class Conditional(Expression):
                 _n = _R.num_elements()
                 return true_condition_elimination.instantiate(
                         {a:self.value, Q:_Q, R:_R, m:_m, n:_n})
+
         elif must_evaluate:
             # The only way we can equate a Conditional to an
             # irreducible is if we prove the condition to be true.
