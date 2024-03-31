@@ -146,6 +146,12 @@ class ExprTuple(Composite, Expression):
             return ExprTuple(*(self.entries + other.entries))
         else:
             return ExprTuple(*(self.entries + tuple(other)))
+    
+    def is_empty(self):
+        '''
+        Return True if this has no elements.
+        '''
+        return (len(self.entries) == 0)
 
     def is_single(self):
         '''
