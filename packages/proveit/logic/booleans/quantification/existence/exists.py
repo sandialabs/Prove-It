@@ -358,11 +358,12 @@ class Exists(OperationOverInstances):
         from . import exists_not_implies_not_forall
         from proveit.logic import Not
         _x = self.instance_params
-        _Q = Lambda(_x, self.condition)
+        _n = self.instance_params.num_elements()
+        _Q = Lambda(_x, self.conditions)
         if isinstance(self.instance_expr, Not):
             _P = Lambda(_x, self.instance_expr.operand)
             _impl = exists_not_implies_not_forall.instantiate(
-                {P: _P, Q: _Q, S: self.domain, x: _x}) 
+                {P: _P, Q: _Q, x: _x, y: _x, n: _n})
             return _impl.derive_consequent()
         else:
             _P = Lambda(_x, self.instance_expr)
