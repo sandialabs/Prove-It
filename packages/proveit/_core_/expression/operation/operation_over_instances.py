@@ -811,7 +811,7 @@ class OperationOverInstances(Operation):
         Format the OperationOverInstances according to the style
         which may join nested operations of the same type.
         '''
-        from proveit.logic import InSet, InClass
+        from proveit.logic import And, InSet, InClass
 
         if with_wrapping is None:
             # style call to wrap the expression after the parameters
@@ -828,11 +828,18 @@ class OperationOverInstances(Operation):
             justification = self.get_style('justification', 'center')
         # override this default as desired
         explicit_iparams = list(self.explicit_instance_params())
-        explicit_conditions = ExprTuple(*self.explicit_conditions())
+        if (hasattr(self, 'condition') and isinstance(self.condition, And)
+            and (self.condition.operands.is_single() or
+                 self.condition.operands.is_empty()) ):
+            # explicitly format And cases that should reduce
+            explicit_conditions = self.condition
+            has_explicit_conditions = True
+        else:
+            explicit_conditions = ExprTuple(*self.explicit_conditions())
+            has_explicit_conditions = (explicit_conditions.num_entries() > 0)
         explicit_domains = ExprTuple(*self.explicit_domains())
         instance_expr = self.instance_expr
         has_explicit_iparams = (len(explicit_iparams) > 0)
-        has_explicit_conditions = (explicit_conditions.num_entries() > 0)
         if not has_explicit_conditions:
             # No explicit conditions to wrap
             condition_wrapping = None
@@ -994,6 +1001,8 @@ class OperationOverInstances(Operation):
                 else:
                     out_str += entry.formatted(format_type, fence=fence)
                     count += len(entry.formatted(format_type, fence=fence))
+        else:
+            out_str += params.formatted(format_type, fence=fence)
         return out_str
 
     @equality_prover('instance_substituted', 'instance_substitute')
