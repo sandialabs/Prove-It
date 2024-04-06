@@ -29,6 +29,7 @@ class Not(Operation):
         if self.operand.proven():
             # derive FALSE given Not(A) and A
             yield self.derive_contradiction
+        yield self.unfold  # (A ⇒ ⊥) from Not(A)
         yield self.derive_in_bool  # [Not(A) in Boolean] given Not(A)
         if hasattr(self.operand, 'negation_side_effects'):
             # derive negation side-effects for the specific type of
@@ -37,19 +38,27 @@ class Not(Operation):
                     judgment):
                 yield neg_side_effect
 
+    """
     def in_bool_side_effects(self, judgment):
         '''
         From not(A) in Boolean deduce A in Boolean, where self is not(A).
         '''
         yield self.deduce_operand_in_bool
+    """
 
     def _readily_provable(self, **kwargs):
         '''
-        Not(A) is readily provable if A is readily disprovable.
+        Not(A) is readily provable if A is readily disprovable
+        or (A ⇒ ⊥) is readily provable.
         '''
+        from proveit.logic import Implies, FALSE
         # Note: here we need to call the '_' version; otherwise,
         # we will have an infinite recursion.
-        return self.operand._readily_disprovable(**kwargs)
+        if self.operand._readily_disprovable(**kwargs):
+            return True
+        if Implies(self.operand, FALSE).readily_provable():
+            return True
+        return False
 
     def _readily_disprovable(self):
         '''
@@ -57,13 +66,34 @@ class Not(Operation):
         '''
         return self.operand.readily_provable()
 
+    @equality_prover('defined', 'define')
+    def definition(self, **defaults_config):
+        '''
+        Return Not(A) = (A ⇒ ⊥) where self represents Not(A).
+        '''
+        from . import not_def
+        return not_def.instantiate({A: self.operand})
+
+    @prover
+    def unfold(self, **defaults_config):
+        '''
+        From Not(A), derive and return (A ⇒ ⊥).
+        '''
+        from . import unfold_negation
+        # Don't auto-simplify.
+        return unfold_negation.instantiate({A: self.operand},
+                                             auto_simplify=False)
+
     @prover
     def conclude(self, **defaults_config):
         '''
         Try to automatically conclude this negation via evaluation reductions
         or double negation.
         '''
-        from proveit.logic import EvaluationError
+        from proveit.logic import Implies, FALSE, EvaluationError
+        if Implies(self.operand, FALSE).proven():
+            # Conclude Not(A) from (A ⇒ ⊥).
+            return self.conclude_as_folded()
         # as a last resort (conclude_negation on the operand should have been
         # tried first), conclude negation via evaluating the operand as false.
         try:
@@ -85,6 +115,14 @@ class Not(Operation):
             return Not(self).conclude_via_double_negation()
         except BaseException:
             return Not(self).conclude()
+
+    @prover
+    def conclude_as_folded(self, **defaults_config):
+        '''
+        Conclude Not(A) from (A ⇒ ⊥).
+        '''
+        from . import fold_negation
+        return fold_negation.instantiate({A: self.operand})
 
     def latex(self, fence=False, **kwargs):
         out_str = ''
@@ -131,6 +169,7 @@ class Not(Operation):
         # May now be able to evaluate via loaded truth tables.
         return Operation.shallow_simplification(self)
 
+    """
     @prover
     def substitute_in_false(self, lambda_map, **defaults_config):
         '''
@@ -154,6 +193,7 @@ class Not(Operation):
         Plambda = Equals._lambda_expr(lambda_map, self.operand)
         return substitute_falsehood.instantiate(
             {x: self.operand, P: Plambda})
+    """
 
     @relation_prover
     def derive_in_bool(self, **defaults_config):
@@ -185,6 +225,7 @@ class Not(Operation):
                     {A: self.operand.operand})
         return closure.instantiate({A: self.operand})
 
+    """
     @prover
     def deduce_operand_in_bool(self, **defaults_config):
         '''
@@ -193,6 +234,7 @@ class Not(Operation):
         '''
         from . import operand_is_bool
         return operand_is_bool.instantiate({A: self.operand})
+    """
 
     @prover
     def equate_negated_to_false(self, **defaults_config):
@@ -215,7 +257,8 @@ class Not(Operation):
     @prover
     def double_negation_equivalence(self, **defaults_config):
         r'''
-        Given not(not(A)), deduce and return not(not(A)) = A.
+        Given A in Boolean and not(not(A)), 
+        deduce and return not(not(A)) = A.
         '''
         from . import double_negation_equiv
         if isinstance(self.operand, Not):

@@ -1,2 +1,0 @@
-proveit.logic.booleans.implication.modus_tollens_denial
-proveit.logic.booleans.disjunction.binary_or_contradiction

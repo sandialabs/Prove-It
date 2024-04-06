@@ -1,1 +1,4 @@
 proveit.logic.equality.rhs_via_equality
+proveit.numbers.number_sets.natural_numbers.fold_forall_natural
+proveit.logic.booleans.conjunction.closure
+proveit.core_expr_types.conditionals.singular_conjunction_condition_reduction

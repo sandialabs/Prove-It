@@ -1,1 +1,3 @@
 proveit.logic.booleans.negation.negation_intro
+proveit.logic.equality.equals_transitivity
+proveit.logic.equality.substitution

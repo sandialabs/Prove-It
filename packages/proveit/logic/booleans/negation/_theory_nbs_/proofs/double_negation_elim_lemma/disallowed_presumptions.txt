@@ -1,1 +1,0 @@
-proveit.logic.booleans.negation.double_negation_elim

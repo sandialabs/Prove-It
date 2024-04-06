@@ -1,1 +1,2 @@
 proveit.logic.equality.rhs_via_equality
+proveit.logic.equality.not_equals_def

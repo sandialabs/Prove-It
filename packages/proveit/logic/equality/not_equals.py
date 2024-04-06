@@ -157,8 +157,8 @@ class NotEquals(Relation):
         '''
         From x != y derive y != x.
         '''
-        from . import not_equals_symmetry
-        return not_equals_symmetry.instantiate({x: self.lhs, y: self.rhs})
+        from . import not_equals_reversal
+        return not_equals_reversal.instantiate({x: self.lhs, y: self.rhs})
 
     def reversed(self):
         '''
@@ -167,13 +167,15 @@ class NotEquals(Relation):
         '''
         return NotEquals(self.rhs, self.lhs)
 
+    """
     @equality_prover("reversed", "reverse")
     def symmetrization(self, **defaults_config):
         '''
-        Prove (x != y) = (y != x).
+        Prove (x != y) ⇔ (y != x).
         '''
         from . import not_equals_symmetry
         return not_equals_symmetry.instantiate({y:self.lhs, x:self.rhs})
+    """
 
     @prover
     def derive_via_double_negation(self, **defaults_config):

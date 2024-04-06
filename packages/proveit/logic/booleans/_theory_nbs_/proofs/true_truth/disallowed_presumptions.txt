@@ -1,0 +1,3 @@
+proveit.logic.booleans.true_is_bool
+proveit.logic.booleans.in_bool_if_true
+proveit.logic.booleans.negation.not_t

@@ -1,1 +1,2 @@
 proveit.logic.booleans.implication.false_implies_false
+proveit.logic.booleans.eq_true_intro

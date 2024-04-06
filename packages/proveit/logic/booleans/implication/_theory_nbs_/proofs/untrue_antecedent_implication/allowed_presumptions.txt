@@ -1,1 +1,3 @@
 proveit.logic.equality.not_equals_contradiction
+proveit.logic.booleans.implication.affirmation_via_contradiction
+proveit.logic.booleans.eq_true_elim

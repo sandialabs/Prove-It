@@ -35,10 +35,71 @@ class Exists(OperationOverInstances):
             domain=domain, domains=domains, condition=condition,
             conditions=conditions, _lambda_map=_lambda_map, styles=styles)
 
+    def _readily_provable(self):
+        '''
+        Return True iff we should be able to conclude this existential
+        quantification.  Certain forms may be proved automatically
+        (e.g., existence of a conservative definition).
+        '''
+        from proveit import Operation, free_vars
+        from proveit.logic import Equals, Forall
+        if self.instance_params.is_single() and (
+                self.conditions.num_entries() == 0 and
+                isinstance(self.instance_expr, Equals) and
+                self.instance_expr.lhs == self.instance_param and
+                self.instance_param not in free_vars(self.instance_expr.rhs)):
+            # Existential for a conservative definition.
+            return True
+        elif self.instance_params.is_single() and (
+                self.conditions.num_entries() == 0 and
+                isinstance(self.instance_expr, Forall) and
+                isinstance(self.instance_expr.instance_expr, Equals) and
+                isinstance(self.instance_expr.instance_expr.lhs, Operation) and
+                self.instance_expr.instance_expr.lhs.operator == self.instance_param and
+                self.instance_expr.instance_expr.lhs.operands == (
+                    self.instance_expr.instance_params) and 
+                self.instance_param not in free_vars(
+                    self.instance_expr.instance_expr.rhs)):
+            # Existential for a conservatively defined operation.
+            return True
+        return False
+
     @prover
     def conclude(self, **defaults_config):
-        from proveit.logic import SubsetEq
-        if (self.has_domain() and self.instance_params.is_single 
+        from proveit import Operation, free_vars
+        from proveit.logic import Forall, Equals, SubsetEq
+        if self.instance_params.is_single() and (
+                self.conditions.num_entries() == 0 and
+                isinstance(self.instance_expr, Equals) and
+                self.instance_expr.lhs == self.instance_param and
+                self.instance_param not in free_vars(self.instance_expr.rhs)):
+            # Existential for a conservative definition.
+            from . import conservative_def_existence
+            return conservative_def_existence.instantiate(
+                {x:self.instance_param, y:self.instance_expr.rhs})
+        elif self.instance_params.is_single() and (
+                self.conditions.num_entries() == 0 and
+                isinstance(self.instance_expr, Forall) and
+                isinstance(self.instance_expr.instance_expr, Equals) and
+                isinstance(self.instance_expr.instance_expr.lhs, Operation) and
+                self.instance_expr.instance_expr.lhs.operator == self.instance_param and
+                self.instance_expr.instance_expr.lhs.operands == (
+                    self.instance_expr.instance_params) and 
+                self.instance_param not in free_vars(
+                    self.instance_expr.instance_expr.rhs)):
+            # Existential for a conservatively defined operation.
+            from . import existence_by_basic_example
+            exist_by_example_relabeled = (
+                existence_by_basic_example.
+                inner_expr().instance_expr.operand.relabeled(
+                    {x:self.instance_param}))
+            return exist_by_example_relabeled.instantiate(
+                {P:Lambda(self.instance_param, self.instance_expr), 
+                 self.instance_param:Lambda(
+                     self.instance_expr.instance_expr.lhs.operands,
+                     self.instance_expr.instance_expr.rhs)})
+            
+        if (self.has_domain() and self.instance_params.is_single()
                 and self.conditions.is_single()):
             instance_map = Lambda(self.instance_params, self.instance_expr)
             domain = self.domain 
@@ -274,7 +335,7 @@ class Exists(OperationOverInstances):
         '''
         from proveit.logic.sets.inclusion import (
                 inclusive_existential_quantification)
-        if not (self.has_domain() and self.instance_params.is_single 
+        if not (self.has_domain() and self.instance_params.is_single() 
                 and self.conditions.is_single()):
             raise ValueError("May only call conclude_via_domain_inclusion "
                              "on a Forall expression with a single instance "

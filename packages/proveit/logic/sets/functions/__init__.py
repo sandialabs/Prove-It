@@ -3,6 +3,7 @@ from .images import Image, InvImage
 from .injections import Injections
 from .surjections import Surjections
 from .bijections import Bijections
+from .inversion import Inverse
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.

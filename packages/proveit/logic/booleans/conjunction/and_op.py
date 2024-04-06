@@ -285,6 +285,7 @@ class And(Operation):
             demorgan_or = Or(*[operand.operand for operand in self.operands])
             yield demorgan_or.conclude_via_demorgans
 
+    """
     def in_bool_side_effects(self, judgment):
         '''
         From (A and B and .. and Z) in Boolean deduce
@@ -294,6 +295,7 @@ class And(Operation):
         for _i in range(self.operands.num_entries()):
             if not isinstance(self.operands[_i], ExprRange):
                 yield lambda : self.deduce_part_in_bool(_i)
+    """
 
     def _build_canonical_form(self):
         '''
@@ -461,6 +463,7 @@ class And(Operation):
         '''
         return compose(*self.operands.entries)
 
+    """
     @prover
     def deduce_left_in_bool(self, **defaults_config):
         '''
@@ -511,6 +514,7 @@ class And(Operation):
             _n = _C.num_elements()
             return each_is_bool.instantiate(
                     {m: _m, n: _n, A: _A, B: _B, C: _C})
+    """
 
     @prover
     def conclude_via_demorgans(self, **defaults_config):

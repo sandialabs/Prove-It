@@ -235,6 +235,7 @@ class Or(Operation):
             demorgan_and = And(*[operand.operand for operand in self.operands])
             yield demorgan_and.conclude_via_demorgans
 
+    """
     def in_bool_side_effects(self, judgment):
         '''
         From (A or B or .. or Z) in Boolean deduce (A in Boolean), (B in Boolean), ...
@@ -244,6 +245,7 @@ class Or(Operation):
         for _i in range(self.operands.num_entries()):
             if not isinstance(self.operands[_i], ExprRange):
                 yield lambda : self.deduce_part_in_bool(_i)
+    """
 
     @prover
     def conclude_negation(self, **defaults_config):
@@ -477,6 +479,7 @@ class Or(Operation):
                 pass
         return self.derive_via_singular_dilemma(conclusion)
 
+    """
     @prover
     def deduce_left_in_bool(self, **defaults_config):
         '''
@@ -520,6 +523,7 @@ class Or(Operation):
         _n = _C.num_elements()
         return each_is_bool.instantiate(
                 {m: _m, n: _n, A: _A, B: _B, C: _C})
+    """
 
     @prover
     def deduce_not_left_if_neither(self, **defaults_config):

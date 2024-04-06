@@ -27,7 +27,7 @@ from .sets import (Union, UnionAll, Intersect, IntersectAll, Difference,
                    SetOfAll, CartProd, CartExp,
                    PowerSet, Disjoint, Distinct, Card)
 from .sets import (Functions, Injections, Surjections, Bijections,
-                   Image, InvImage)
+                   Image, InvImage, Inverse)
 from .classes import InClass, NotInClass, ClassMembership, ClassNonmembership
 
 #from mapping.mapping_ops import Domain, CoDomain
@@ -42,7 +42,7 @@ if proveit.defaults.running_theory_notebook is None:
     from .booleans.negation import not_f, not_t
     from .booleans.negation import not_false
     from .booleans.implication import true_implies_true, false_implies_true, false_implies_false
-    from .booleans import true_axiom, bools_def, false_not_true
+    from .booleans import true_truth, boolean_def, false_not_true
     from .booleans import true_eq_true, false_eq_false, true_not_false, true_is_bool, false_is_bool
 
 

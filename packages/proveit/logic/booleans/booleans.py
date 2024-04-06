@@ -185,7 +185,7 @@ class BooleanMembership(SetMembership):
         is readily provable or disprovable.
         '''
         element = self.element
-        if element.readily_provable() or element.readily_disprovable():
+        if element.readily_provable():
             return True
         if hasattr(element, 'readily_in_bool'):
             return element.readily_in_bool()
@@ -313,12 +313,15 @@ class TrueLiteral(Literal, IrreducibleValue):
     def deduce_not_equal(self, other, **defaults_config):
         from . import true_not_false
         from . import TRUE, FALSE
+        from proveit.logic import NotEquals
         if other == FALSE:
             return true_not_false
         if other == TRUE:
             raise ProofFailure(
+                NotEquals(TRUE, TRUE), defaults.assumptions,
                 "Cannot prove TRUE != TRUE since that statement is false")
         raise ProofFailure(
+            NotEquals(TRUE, other), defaults.assumptions,
             "Inequality between TRUE and a non-boolean not defined")
 
     def readily_in_bool(self):

@@ -1,0 +1,2 @@
+proveit.logic.booleans.true_truth
+proveit.logic.equality.lhs_via_equality

@@ -292,13 +292,12 @@ class Implies(TransitiveRelation):
     @prover
     def derive_via_contradiction(self, **defaults_config):
         r'''
-        From (Not(A) => FALSE), derive and return A assuming A in Boolean.
-        Or from (A => FALSE), derive and return Not(A) assuming A in Boolean.
-        Or from (A => FALSE), derive and return A != TRUE.
+        From (Not(A) => FALSE), derive and return A.
+        Or from (A => FALSE), derive and return Not(A).
         '''
-        from proveit.logic import FALSE, in_bool
-        from . import affirmation_via_contradiction, denial_via_contradiction
-        from . import not_true_via_contradiction
+        from proveit.logic import FALSE
+        from proveit.logic.booleans.negation import fold_negation
+        from . import affirmation_via_contradiction
         if self.consequent != FALSE:
             raise ValueError(
                 'derive_via_contradiction method is only applicable if FALSE is implicated, not for ' +
@@ -307,12 +306,8 @@ class Implies(TransitiveRelation):
             stmt = self.antecedent.operand
             return affirmation_via_contradiction.instantiate({A: stmt})
         else:
-            if in_bool(self.antecedent).proven():
-                return denial_via_contradiction.instantiate(
-                    {A: self.antecedent})
-            else:
-                return not_true_via_contradiction.instantiate(
-                    {A: self.antecedent})
+            return fold_negation.instantiate(
+                {A: self.antecedent})
 
     @prover
     def conclude_self_implication(self, **defaults_config):

@@ -16,7 +16,7 @@ from .cartesian_products import CartProd, CartExp
 from .disjointness import Disjoint, Distinct
 from .cardinality import Card
 from .functions import (Functions, Injections, Surjections, Bijections, 
-                        Image, InvImage)
+                        Image, InvImage, Inverse)
 
 def is_infinite_set(expr):
     if hasattr(expr, 'is_infinite_set'):

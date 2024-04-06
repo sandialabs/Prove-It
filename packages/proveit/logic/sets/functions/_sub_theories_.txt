@@ -2,3 +2,4 @@ images
 injections
 surjections
 bijections
+inversion

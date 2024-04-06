@@ -146,14 +146,11 @@ class Equals(EquivRelation):
         if (lhs == TRUE and rhs.readily_provable()) or (
                 rhs == TRUE and lhs.readily_provable()):
             return True
-        if (lhs == FALSE and rhs.readily_disprovable()) or (
-                rhs == FALSE and lhs.readily_disprovable()):
-            return True
         if not isinstance(lhs, ExprTuple) and (
                 not isinstance(rhs, ExprTuple) and
-                Iff(lhs, rhs).readily_provable() and 
                 in_bool(lhs).readily_provable() and
-                in_bool(rhs).readily_provable()):
+                in_bool(rhs).readily_provable() and
+                Iff(lhs, rhs).readily_provable()):
             from proveit.logic.booleans.implication import eq_from_iff
             if eq_from_iff.is_usable():
                 return True
@@ -529,8 +526,8 @@ class Equals(EquivRelation):
         From x = y derive y = x.  This derivation is an automatic 
         side-effect.
         '''
-        from . import equals_reversal
-        return equals_reversal.instantiate({x: self.lhs, y: self.rhs})
+        from . import equals_symmetry
+        return equals_symmetry.instantiate({x: self.lhs, y: self.rhs})
 
     def reversed(self):
         '''
@@ -540,14 +537,15 @@ class Equals(EquivRelation):
         '''
         return Equals(self.rhs, self.lhs)
 
+    """
     @equality_prover("reversed", "reverse")
     def symmetrization(self, **defaults_config):
         '''
-        Prove (x = y) = (y = x).
+        Prove (x = y) ⇔ (y = x).
         '''
         from . import equals_symmetry
         return equals_symmetry.instantiate({y:self.lhs, x:self.rhs})
-
+    """
 
     @staticmethod
     def yield_known_equal_expressions(expr, *, exceptions=None,
@@ -844,17 +842,18 @@ class Equals(EquivRelation):
             from proveit.core_expr_types.operations import \
                 operands_substitution, operands_substitution_via_tuple
             _n = lambda_map.parameters.num_elements()
-            if self.proven():
+            if self.proven() and operands_substitution_via_tuple.is_usable():
                 # If we know the tuples are equal, use the theorem
                 # with this equality as a prerequisite.
                 return operands_substitution_via_tuple.instantiate(
                     {n: _n, f: lambda_map, x: self.lhs, y: self.rhs},
                     **extra_kwargs)
-            # Otherwise, we'll use the axiom in which the prerequisite
-            # is that the individual elements are equal.
-            return operands_substitution.instantiate(
-                {n: _n, f: lambda_map, x: self.lhs, y: self.rhs},
-                **extra_kwargs)
+            if operands_substitution.is_usable():
+                # Otherwise, we'll use the axiom in which the prerequisite
+                # is that the individual elements are equal.
+                return operands_substitution.instantiate(
+                    {n: _n, f: lambda_map, x: self.lhs, y: self.rhs},
+                    **extra_kwargs)
         # Regular single-operand substitution:
         return substitution.instantiate(
             {f: lambda_map, x: self.lhs, y: self.rhs}, **extra_kwargs)
@@ -874,8 +873,8 @@ class Equals(EquivRelation):
         touched by the substitution.
         '''
         from . import sub_left_side_into
-        from . import (substitute_truth, substitute_in_true, 
-                       substitute_falsehood, substitute_in_false)
+        from . import (substitute_truth, substitute_in_true)#, 
+        #               substitute_falsehood, substitute_in_false)
         from proveit.logic import TRUE, FALSE
         lambda_map = Equals._lambda_expr(lambda_map, self.rhs)
 
@@ -920,6 +919,7 @@ class Equals(EquivRelation):
                 # option
                 substitute_in_true.instantiate(
                     {x: self.rhs, P: lambda_map}, **extra_kwargs)
+            """
             elif self.rhs == FALSE:
                 # substitute_falsehood may provide a shorter proof
                 # option
@@ -930,6 +930,7 @@ class Equals(EquivRelation):
                 # option
                 substitute_in_false.instantiate(
                     {x: self.rhs, P: lambda_map}, **extra_kwargs)
+            """
         except BaseException:
             pass
         return sub_left_side_into.instantiate(
@@ -950,9 +951,10 @@ class Equals(EquivRelation):
         touched by the substitution.
         '''
         from . import sub_right_side_into
-        from . import (substitute_truth, substitute_in_true, 
-                       substitute_falsehood, substitute_in_false)
+        from . import substitute_truth, substitute_in_true
+        #, substitute_falsehood, substitute_in_false)
         from proveit.logic import TRUE, FALSE
+        from proveit import UnusableProof
         
         # Check if we want to use the reverse equality for a shorter
         # proof.
@@ -961,7 +963,10 @@ class Equals(EquivRelation):
             if (reversed_eq.prove().proof().num_steps() <
                     self.prove().proof().num_steps()):
                 # Reverse it for a shorter proof.
-                return reversed_eq.sub_left_side_into(lambda_map)
+                try:
+                    return reversed_eq.sub_left_side_into(lambda_map)
+                except UnusableProof:
+                    pass # Nevermind -- not usable.
         
         lambda_map = Equals._lambda_expr(lambda_map, self.lhs)
         extra_kwargs = {'simplify_only_where_marked': True,
@@ -996,6 +1001,7 @@ class Equals(EquivRelation):
                 # options
                 substitute_in_true.instantiate(
                     {x: self.lhs, P: lambda_map}, **extra_kwargs)
+            """
             elif self.lhs == FALSE:
                 # substitute_falsehood may provide a shorter proof
                 # options
@@ -1006,6 +1012,7 @@ class Equals(EquivRelation):
                 # options
                 substitute_in_false.instantiate(
                     {x: self.lhs, P: lambda_map}, **extra_kwargs)
+            """
         except BaseException:
             pass
         return sub_right_side_into.instantiate(
@@ -1042,6 +1049,7 @@ class Equals(EquivRelation):
     def readily_in_bool(self):
         return True # equality is always boolean
 
+    """
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
         '''
@@ -1050,6 +1058,7 @@ class Equals(EquivRelation):
         from . import equality_in_bool
         return equality_in_bool.instantiate({x: self.lhs, y: self.rhs},
                                             preserve_all=True)
+    """
 
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,

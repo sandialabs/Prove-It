@@ -1,0 +1,3 @@
+proveit.logic.booleans.implication.false_implies_false
+proveit.core_expr_types.conditionals.satisfied_condition_reduction
+proveit.logic.equality.lhs_via_equality
