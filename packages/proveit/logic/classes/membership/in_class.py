@@ -174,11 +174,16 @@ class InClass(Relation):
         however.
         '''
         from proveit.logic import Equals, is_irreducible_value
+        # check if this is readily provable from the domain side
         if hasattr(self, 'membership_object'):
             if self.membership_object._readily_provable():
                 return True
         element = self.element
         domain = self.domain
+        # check if this is readily provable from the element side
+        if hasattr(element, 'readily_provable_membership'):
+            if element.readily_provable_membership(domain):
+                return True
         
         # Try a known evaluation.
         if not is_irreducible_value(element):
@@ -218,16 +223,23 @@ class InClass(Relation):
         '''
         from proveit.logic import Equals, is_irreducible_value
         
+        # check if this is readily provable from the domain side
         if hasattr(self, 'membership_object') and (
                 self.membership_object._readily_provable()):
             # Don't bother with a fancy, indirect approach if
             # we can readily conclude membership via the membership
             # object.
             return self.membership_object.conclude()
-
-        # Try a known evaluation of the element.
         element = self.element
         domain = self.domain
+
+        # check if this is readily provable from the element side;
+        # if so, call 'deduce_membership' on the element.
+        if hasattr(element, 'readily_provable_membership'):
+            if element.readily_provable_membership(domain):
+                return element.deduce_membership(domain)
+
+        # Try a known evaluation of the element.
         if not is_irreducible_value(element):
             try:
                 evaluation = Equals.get_known_evaluation(element)
