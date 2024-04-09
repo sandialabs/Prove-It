@@ -1314,7 +1314,7 @@ class Theorem(Proof):
             # Propagate to dependents.
             to_process = set(self._meaning_data._dependents)
             processed = {self}
-            while len(to_process) > 1:
+            while len(to_process) > 0:
                 dep_proof = to_process.pop()
                 if dep_proof in processed: continue
                 if dep_proof._meaning_data._non_allowances is None:
