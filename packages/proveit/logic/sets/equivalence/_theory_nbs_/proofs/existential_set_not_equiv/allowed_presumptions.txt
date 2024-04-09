@@ -1,0 +1,9 @@
+proveit.logic.equality.sub_right_side_into
+proveit.numbers.numerals.decimals.posnat1
+proveit.core_expr_types.conditionals.satisfied_condition_reduction
+proveit.logic.booleans.quantification.existence.exists_not_implies_not_forall
+proveit.logic.sets.equivalence.set_equiv_unfold
+proveit.logic.booleans.negation.negation_contradiction
+proveit.logic.sets.equivalence.set_equiv_is_bool
+proveit.logic.sets.equivalence.fold_set_not_equiv
+proveit.logic.booleans.conjunction.empty_conjunction_eval
