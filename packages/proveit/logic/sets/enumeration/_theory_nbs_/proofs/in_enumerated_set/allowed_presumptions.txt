@@ -17,3 +17,4 @@ proveit.logic.booleans.disjunction.associate
 proveit.numbers.numerals.decimals.nat2
 proveit.numbers.numerals.decimals.tuple_len_2_typical_eq
 proveit.logic.sets.enumeration.fold
+proveit.numbers.number_sets.real_numbers.nat_within_real
