@@ -16,15 +16,15 @@ import shutil
 import argparse
 import nbformat
 from nbconvert.preprocessors import Preprocessor, ExecutePreprocessor
-#from nbconvert.preprocessors.execute import executenb
+from nbconvert.preprocessors.execute import executenb
 from nbconvert import HTMLExporter
 import IPython
 from IPython.lib.latextools import LaTeXTool
 import base64
 import datetime
 import tarfile
-# import urllib#Comment out for Python 3
-import urllib.request  # Comment in for Python 3
+import urllib#Comment out for Python 3
+#import urllib.request  # Comment in for Python 3
 import zmq  # to catch ZMQError which randomly occurs when starting a Jupyter kernel
 import proveit
 from proveit import Theory

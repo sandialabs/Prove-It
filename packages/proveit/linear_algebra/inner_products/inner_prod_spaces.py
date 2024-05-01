@@ -35,7 +35,7 @@ class InnerProdSpaces(VecSpaces):
         if _operator is None:
             _operator = InnerProdSpaces._operator_
         VecSpaces.__init__(self, field, styles=styles, _operator=_operator)
-    
+        
     def membership_object(self, element):
         return InnerProdSpacesMembership(element, self)
     
@@ -179,16 +179,16 @@ def deduce_as_inner_prod_space(expr, *, field=None,
         # If there is a 'deduce_as_inner_prod_space' class method for
         # the expression, try that.
         membership = expr.deduce_as_inner_prod_space()
-    if membership is not None:
-        InClass.check_proven_class_membership(
-                membership, expr, InnerProdSpaces)
-        if field is not None and membership.domain.field != field:
-            raise ValueError("'deduce_as_inner_prod_space' proved membership "
-                             "in inner product spaces over %s, not over "
-                             "the requested %s field"
-                             %(membership.domain.field, field))
-            
-        return membership
+        if membership is not None:
+            InClass.check_proven_class_membership(
+                    membership, expr, InnerProdSpaces)
+            if field is not None and membership.domain.field != field:
+                raise ValueError("'deduce_as_inner_prod_space' proved membership "
+                                "in inner product spaces over %s, not over "
+                                "the requested %s field"
+                                %(membership.domain.field, field))
+                
+            return membership
     raise NotImplementedError(
             "'deduce_as_inner_prod_space' is only implemented when "
             "the element is a CartExp expression or has a "

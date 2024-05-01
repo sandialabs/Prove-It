@@ -1,0 +1,6 @@
+proveit.linear_algebra.inner_products.hilbert_space_is_inner_prod_space
+proveit.core_expr_types.conditionals.satisfied_condition_reduction
+proveit.linear_algebra.inner_products.complex_set_is_hilbert_space
+proveit.logic.equality.sub_right_side_into
+proveit.physics.quantum.algebra.qmult_bra_is_linmap
+proveit.physics.quantum.algebra.qmult_of_bra_as_map

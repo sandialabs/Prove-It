@@ -63,4 +63,7 @@ class InnerProd(Operation):
         if must_evaluate and not is_irreducible_value(simp.rhs):
             return simp.inner_expr().rhs.evaluate()
         return simp
+     
+
+
 

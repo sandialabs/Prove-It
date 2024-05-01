@@ -200,7 +200,7 @@ class Qmult(Operation):
         #    pass
         yield_known_hilbert_spaces = HilbertSpaces.yield_known_hilbert_spaces
         for _Hspace in yield_known_hilbert_spaces(ket):
-            if isinstance(M, Bra) and M.operand==ket.operand:
+            if isinstance(M, Bra) and M.operand==ket.operand and ket_self_projection.is_usable():
             #if M.operand==ket.operand:
                 #print("same")
                 self_proj_eq=ket_self_projection.instantiate({Hspace: _Hspace, psi:ket.operand})
