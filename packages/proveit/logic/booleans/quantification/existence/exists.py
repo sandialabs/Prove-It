@@ -1,5 +1,6 @@
 from proveit import (Lambda, Conditional, OperationOverInstances, Judgment,
-                     composite_expression, prover, relation_prover)
+                     composite_expression, prover, relation_prover,
+                     equality_prover)
 from proveit import defaults, Literal, Function, ExprTuple
 from proveit import n, x, y, z, A, B, P, Q, R, S, Px
 
@@ -212,19 +213,24 @@ class Exists(OperationOverInstances):
         return exists_unfolding.instantiate(
             {n: _n, P: _P, Q: _Q, x: _x, y: _y}).derive_consequent()
 
-    @prover
+    @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
         '''
-        Return definition of this existential quantifier as an
-        equation with this existential quantifier on the left
-        and a negated universal quantification on the right.
+        Return the definition of this existential quantifier as an
+        equation with this existential quantifier on the left and a
+        negated universal quantification on the right. For example,
+        calling Exists(x, P(x)).definition() will return:
+        |- Exists(x, P(x)) = Not(Forall(x, P(x) != T))
         '''
-        from proveit.logic.booleans.quantification.existence \
-            import exists_def
+        from proveit.logic.booleans.quantification.existence import exists_def
         _x = _y = self.instance_params
         _n = _x.num_elements()
-        _P = Lambda(_x, self.operand.body.value)
-        _Q = Lambda(_x, self.operand.body.condition)
+        _Q = Lambda(_x, self.conditions)
+        if self.conditions.is_empty():
+            _P = Lambda(_x, self.operand.body)
+        else:
+            _P = Lambda(_x, self.operand.body.value)
+
         return exists_def.instantiate(
             {n: _n, P: _P, Q: _Q, x: _x, y: _y}, preserve_expr=self)
 
