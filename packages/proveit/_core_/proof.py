@@ -1604,7 +1604,9 @@ class Instantiation(Proof):
                              simplify_only_where_marked,
                              markers_and_marked_expr)
         assert inst.mapping == mapping
-        #if not defaults.simplify_with_known_evaluations:
+        # un-commenting the following IF block leads to infinite loop
+        # or seeming-infinite loop and crashing of nbs
+        # if not defaults.simplify_with_known_evaluations:
         #    Instantiation.instantiations.setdefault(key, set()).add(inst)
         return inst
 
@@ -2138,7 +2140,7 @@ class Instantiation(Proof):
                             subbed_conds = subbed_cond.operands
                     else:
                         subbed_conds = [subbed_cond]
-    
+
                     for subbed_cond in subbed_conds:
                         if isinstance(subbed_cond, ExprRange):
                             # If the substituted condition "entry" is
