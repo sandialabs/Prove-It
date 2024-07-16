@@ -40,6 +40,7 @@ class Database:
         Recall that we have only five data types to work with:
             NULL, INTEGER, REAL, TEXT, BLOB
         '''
+        self.gregarious = False
 
         # Allow the directory to be empty, and if not empty then
         # with or without the ending forward slash '/'.
@@ -675,6 +676,160 @@ class Database:
 
         return items
 
+    def retrieve_records_as_dictionaries(
+            self, table, attr_value_dict_for_id=None, attr_names=None):
+        '''
+        Retrieve zero or more records (i.e. one or more rows) from the
+        specified table in the database, identifying the record(s) by
+        the conjunction of the table attribute/value pairs supplied
+        in the attr_value_dict_for_id dictionary, and return the values
+        for just the attributes listed in the attr_names list.
+        Table attribute names should be specified with quotation
+        marks (i.e. as strings) and attribute values should be either
+        None or of type INTEGER, REAL, or TEXT (i.e. string).
+        For example, in a table called 'customers' containing (TEXT)
+        attributes last_name, first_name, and (INTEGER) attribute
+        telephone_num, calling the following:
+
+            retrieve_records(
+                'customers',
+                {'last_name':'Brown', 'telephone_num':1234},
+                ['first_name', 'telephone_num'])
+
+        will retrieve ALL the first name, telephone combinations for
+        all records that have both (i.e. simultanously) a last_name
+        attribute of 'Brown' and a telephone_num attribute of 1234 in
+        the table 'customers'. The data returned is in the form of
+        a list of tuples of the requested info; in the example above,
+        it might look like
+
+            [('Bobby', 1234), ('Jerry', 1234), ('James', 1234)]
+
+        If the attr_value_dict_for_id dictionary is None or empty, all
+        records in the table will be returned. If attributes list is
+        None or empty, then all attributes will be returned for any
+        records found.
+
+        The table must be an actual table in the database, and all
+        attributes must be actual attributes of the table, else a
+        ValueError is raised.
+        Retrieving a non-existent record will NOT raise an error;
+        instead it will return an empty list.
+
+        UNDER CONSTRUCTION: return each found record in the form of
+        a dictionary instead of an ordered list, in part to provide
+        easier post-retrieval access and interactivity. So in the
+        example above, we want to return something like the following:
+
+            [('first_name':'Bobby', 'telephone_num':1234),
+             ('first_name':'Jerry', 'telephone_num':1234),
+             ('first_name':'James', 'telephone_num':1234)]
+
+        This might allow the post-retrieval code to be simpler and
+        less dependent on the specific order of attributes retrieved.
+        '''
+
+        # Check: Is the specified table a valid table in the database?
+        if not self._valid_table(table):
+            raise ValueError(
+                ("Failed attempt to retrieve a record or records from " +
+                 "the '{0}' table in database '{1}': " +
+                 "no such table in the database.").
+                format(table, self.file_name))
+
+        # Check: Are the identifying attributes valid for the table?
+        if (attr_value_dict_for_id is not None
+            and len(attr_value_dict_for_id) > 0):
+            for k in attr_value_dict_for_id.keys():
+                if not self._valid_attribute(table, k):
+                    raise ValueError(
+                        ("Failed attempt to retrieve a record or records " +
+                         "from the '{0}' table in database '{1}'. " +
+                         "The table '{0}' has no attribute " +
+                         "'{2}'.").format(table, self.file_name, k))
+
+        # Check: Are the attributes-to-return valid for the table?
+        if attr_names is not None and len(attr_names) > 0:
+            for k in attr_names:
+                if not self._valid_attribute(table, k):
+                    raise ValueError(
+                        ("Failed attempt to retrieve a record or records "+
+                         "from the '{0}' table in database '{1}'. "
+                         "The table '{0}' has no attribute " +
+                        "'{2}'.").format(table, self.file_name, k))
+
+        # Construct the SELECT portion of the command string (which
+        # depends on attr_names list supplied).
+        command_str = ""
+        if (attr_names is None or len(attr_names)==0):
+            # we select all attributes in the table
+            command_str = ("SELECT * FROM {table}".format(table=table))
+        else:
+            # we select only specified attributes from table
+            attr_str = "" + attr_names[-1] + " "
+            for attr_name in reversed(attr_names[:-1]):
+                attr_str = attr_name + ", " + attr_str
+            command_str += ("SELECT " + attr_str + "FROM {table}".
+                           format(table=table))
+
+        # Construct the WHERE portion of the command string (which
+        # depends on the attr_value_dict_for_id dictionary supplied)
+        if (attr_value_dict_for_id is not None
+            and len(attr_value_dict_for_id)>0):
+            for idx, (attr,attr_value) in enumerate(
+                    attr_value_dict_for_id.items()):
+                if isinstance(attr_value, str):
+                    # need to make the quotation marks explicit
+                    attr_value = "\'" + str(attr_value) + "\'"
+                if idx == 0:
+                    if attr_value is not None:
+                        command_str += ((
+                            " WHERE {attr}={attr_value}").
+                            format(attr=attr, attr_value=attr_value))
+                    else:
+                        command_str += ((
+                            " WHERE {attr} is null").
+                            format(attr=attr))
+                else:
+                    if attr_value is not None:
+                        command_str += ((
+                            " AND {attr}={attr_value}").
+                            format(attr=attr, attr_value=attr_value))
+                    else:
+                        command_str += ((
+                            " AND {attr} is null").
+                            format(attr=attr))
+
+        # Connect to database and create a cursor
+        conn = sqlite3.connect(self.full_path_file_name)
+        c = conn.cursor()
+
+        # Retrieve record(s) from the specified table by executing
+        # the constructed command string and fetching results
+        c.execute(command_str)
+        items = c.fetchall()
+
+        # reconstruct the list of tuples to be a list of dictionaries?
+        items_as_dictionaries = []
+        for item in items:
+            temp_dict = dict()
+            if (attr_names is None or len(attr_names)==0):
+                # construct list from all attributes
+                attr_names = self._get_list_of_table_attributes(table)
+                # otherwise we simply use the already-provided list
+            for sub_item_attr, sub_item in zip(attr_names, item):
+                # construct the dictionary
+                temp_dict[sub_item_attr] = sub_item
+            # add constructed dictionary to list
+            items_as_dictionaries.append(temp_dict)
+
+
+        # Commit the command(s) and close the connection
+        conn.commit()
+        conn.close()
+
+        return items_as_dictionaries
+
 
     def fetch_all(self, table, attr_names=None, **kwargs):
         # Query the db, returning all records in the specified table,
@@ -1127,6 +1282,7 @@ class Database:
 
         else:
             # Assumed to be an Expression
+            # print(f"\n_rep_str_semi_parsed = {_rep_str_semi_parsed}\n")
             _proveit_obj = 'Expression'
             _sub_exprs  = '[' + _rep_str_semi_parsed[0] + ']'
             _class_path = _rep_str_semi_parsed[1]
