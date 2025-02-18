@@ -57,6 +57,7 @@ class ExprType(type):
         return super().__new__(meta, name, bases, attrs)
 
     def __init__(cls, *args, **kwargs):
+        
         type.__init__(cls, *args, **kwargs)
         
         # Register the '_operator_' if there is one.
@@ -233,6 +234,7 @@ class Expression(metaclass=ExprType):
         fraction).  The meaning of the expression is independent of its styles
         signature.
         '''
+        self.gregarious = False # FOR TESTING; DELETE EVENTUALLY
         from proveit._core_.theory import UnsetCommonExpressionPlaceholder
         for core_info_elem in core_info:
             if not isinstance(core_info_elem, str):
@@ -544,7 +546,9 @@ class Expression(metaclass=ExprType):
     def _generate_unique_rep(self, object_rep_fn, core_info=None, 
                              styles=None, style_options=None):
         '''
-        Generate a unique representation string using the given function to obtain representations of other referenced Prove-It objects.
+        Generate a unique representation string using the given
+        function to obtain representations of other referenced
+        Prove-It objects.
         '''
         if core_info is None:
             core_info = self._core_info
@@ -559,8 +563,31 @@ class Expression(metaclass=ExprType):
                                          style_name, None))
         else:
             style_str = ''
+        # for testing
+        if self.gregarious:
+            if core_info == ('Operation',):
+                print(f"\nOPERATION! ({self})")
+                print(f"    self._subexpressions:")
+                for expr in self._sub_expressions:
+                    print(f"{expr} with object_rep_fn = {object_rep_fn(expr)}")
+                print()
+        # end testing
         sub_expr_info = ','.join(object_rep_fn(expr)
                                  for expr in self._sub_expressions)
+        # for testing
+        if self.gregarious:
+            if core_info == ('Variable', 'B', 'B'):
+                print(f"\nself = {self}")
+                print(f"core_info = {core_info}")
+                print(f"sub_expr_info consists of: {sub_expr_info}")
+            if core_info == ('Operation',):
+                print(f"\nOPERATION! ({self})\n")
+                print(f"sub_expr_info consists of: {sub_expr_info}")
+            if core_info[0] == 'Literal':
+                print(f"\nLITERAL! ({self})\n")
+                print("{0}; {1}; {2}; {3}".format(sub_expr_info, self._class_path(),
+                                ','.join(core_info), style_str))
+        # end testing
         # Note: putting the sub-expressions at the front makes it convenient
         # to just grab that piece which is used when adding or removing
         # references to stored information.
@@ -1894,6 +1921,26 @@ class Expression(metaclass=ExprType):
         (%end_[common/axioms/theorems] has not been called yet in the special
         expressions notebook).
         '''
+        import proveit
+        import hashlib
+        if self.gregarious:
+            print("Entering the Expression._repr_html_() method.")
+            print("    with expression = {}".format(self))
+            print("    with Theory = {}".format(proveit.Theory()))
+            print("    self._labeled_meaning_id = {}".format(self._labeled_meaning_id))
+            print("    self._core_info = {}".format(self._core_info))
+            # print("    self._prove_it_storage_id = {}".format(self._prove_it_storage_id))
+        def object_rep_fn(expr): return hex(expr._labeled_meaning_id)
+        temp_unique_rep = self._generate_unique_rep(object_rep_fn, self._core_info)
+        if self.gregarious:
+            print("    temp_unique_rep = {}".format(temp_unique_rep))
+        temp_unique_rep_hash = hashlib.sha1(temp_unique_rep.encode('utf-8')).hexdigest()
+        temp_hash_index = 0
+        temp_unique_rep_hash_indexed = temp_unique_rep_hash + str(temp_hash_index)
+        
+        if self.gregarious:
+            print("    temp_unique_rep_hash = {}".format(temp_unique_rep_hash))
+
         if not defaults.display_latex:
             return None  # No LaTeX display at this time.
         if not hasattr(self._style_data, 'png'):
@@ -1912,6 +1959,29 @@ class Expression(metaclass=ExprType):
                 html += '<img src="' + self._style_data.png_url + \
                     r'" style="display:inline;vertical-align:middle;" />'
             html += '</a>'
+
+        # try incrementing ref_count for the expression, if the Theory
+        # has a database established
+        temp_theory = proveit.Theory()
+        if self.gregarious:
+            print("    defined temp_theory inside Expression._repr_html_() method.")
+            print("    temp_unique_rep = {}".format(temp_unique_rep))
+            print("    temp_unique_rep_hash = {}".format(temp_unique_rep_hash))
+
+        if self.gregarious:
+            if hasattr(temp_theory._storage, 'pkg_database'):
+                print("    and database file 'pkg_database.db'.")
+                temp_database = temp_theory._storage.pkg_database
+                # check for the expression in the database expression table
+                expr_record_exists = temp_theory._storage.pkg_database.check_for_record('expression', {'id':temp_unique_rep_hash})
+                print("    expr_record_exists = {}".format(expr_record_exists))
+                if expr_record_exists:
+                    print("    expression exists in the database!")
+                else:
+                    print("    expression does not exist in the database.")
+            else:
+                print("    but no database file established.")
+
         return html
 
     def _config_latex_tool(self, lt):
