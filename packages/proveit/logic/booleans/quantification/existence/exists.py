@@ -146,7 +146,7 @@ class Exists(OperationOverInstances):
         '''
         from proveit import Lambda
         from proveit import n, P, Q, alpha
-        from proveit.logic import And
+        from proveit.logic import And, TRUE
         from proveit.core_expr_types import (x_1_to_n, y_1_to_n)
         from proveit.logic.booleans.quantification.existence import (
             skolem_elim)
@@ -173,9 +173,14 @@ class Exists(OperationOverInstances):
             else:
                 # There is no condition but we still need to provide
                 # something for _Q so we provide an empty conjunction,
-                # And().
+                # And(). Later changed to TRUE to deal with occasional
+                # errors where the And() wasn't being simplified and
+                # equivalent expressions were not being recognized as
+                # equivalent.
+                # _Q = Lambda(
+                #     existential.instance_params, And())
                 _Q = Lambda(
-                    existential.instance_params, And())
+                    existential.instance_params, TRUE)
             _alpha = judgment
             _n = existential.instance_params.num_elements()
             x_1_to__n = ExprTuple(x_1_to_n.basic_replaced({n: _n}))
@@ -191,11 +196,16 @@ class Exists(OperationOverInstances):
             #         skolem_constants,
             #         conditions=[_Q.apply(*skolem_constants)])
     
+            # return skolem_elim.instantiate(
+            #     {n: _n, P: _P, Q: _Q, alpha: _alpha,
+            #      x_1_to__n: skolem_constants,
+            #      y_1_to__n: existential.instance_params},
+            #     preserve_all=True).derive_consequent()
             return skolem_elim.instantiate(
                 {n: _n, P: _P, Q: _Q, alpha: _alpha,
                  x_1_to__n: skolem_constants,
                  y_1_to__n: existential.instance_params},
-                preserve_all=True).derive_consequent()
+                 preserved_exprs = {existential, P_implies_alpha.expr}).derive_consequent()
 
     @prover
     def unfold(self, **defaults_config):
