@@ -160,11 +160,9 @@ class TheoryStorage:
         # storing things (unless it already existed)
 
         # Database development, initially restricted to a single pkg
-        # now restricted to the proveit.logic.booleans packages:
-        if 'proveit.logic.booleans' in name:
-            if self.gregarious:
-                print("About to (re)create the pkg_database.db file for theory pkg: {}.".
-                      format(self.name))
+        # (now restricted to the proveit.logic.booleans packages)
+        # and the top-level 'proveit' pkg:
+        if 'proveit.logic.booleans' in name or name == 'proveit':
             self.pkg_database = Database(
                     directory+'/', 'pkg_database.db', self.name)
 
@@ -405,10 +403,16 @@ class TheoryStorage:
                     db_hash_to_old_name[temp_id] = temp_name
                     db_old_name_to_hash[temp_name] = temp_id
 
+        # clear the db 'kind' table in preparation for repopulation
+        # NOTE for later: should then not have to check for presence
+        # of table items during the population process.
+        if hasattr(self, 'pkg_database'):
+            self.pkg_database.clear_all_records_in_table(kind)
+
         # determine hash ids
-        modified_hash_ids = set()  # for modified statements
+        # modified_hash_ids = set()  # for modified statements ?? This appears to be unused
         for name, obj in definitions.items():
-            obj = definitions[name] # ?? This appears to be redundant
+            # obj = definitions[name] # ?? This appears to be redundant
             if kind == 'common':
                 expr = obj
             else:
@@ -476,7 +480,7 @@ class TheoryStorage:
             if kind == 'axiom':
                 if (hasattr(self, 'pkg_database') and
                     self.pkg_database.check_for_record(
-                        'axiom', id=hash_id)):
+                        'axiom', {'id':hash_id})):
                     if self.gregarious:
                         print("    Axiom record exists in database.")
                     pass
@@ -490,22 +494,21 @@ class TheoryStorage:
                     if 'proveit.logic.booleans' in self.name:
                         if self.gregarious:
                             print("        Adding Axiom record to the database.")
-                        self.pkg_database.insert_record(
-                            'axiom',
-                            [hash_id,
-                             obj.__str__(),
-                             name,
-                             judgment_id,
-                             obj.proven_truth.string(),
-                             obj.proven_truth.latex()])
+                        self.pkg_database.insert_record('axiom',
+                            {'id':hash_id,
+                             'path_name':obj.__str__(),
+                             'name':name,
+                             'judgment':judgment_id,
+                             'string_format':obj.proven_truth.string(),
+                             'latex_format':obj.proven_truth.latex()})
                         if self.gregarious:
-                            print("        Axiom record added to the database.")
+                            print(f"        Axiom {name} record added to the database.")
 
             # Populate THEOREM table in database with the current theorem
             elif kind == 'theorem':
                 if (hasattr(self, 'pkg_database') and
                     self.pkg_database.check_for_record(
-                        'theorem', id=hash_id)):
+                        'theorem', {'id':hash_id})):
                     if self.gregarious:
                         print("    Theorem record exists in database.")
                     pass
@@ -519,16 +522,19 @@ class TheoryStorage:
                     if 'proveit.logic.booleans' in self.name:
                         if self.gregarious:
                             print("        Adding Theorem record to the database.")
-                        self.pkg_database.insert_record(
-                            'theorem',
-                            [hash_id,
-                             obj.__str__(),
-                             name,
-                             judgment_id,
-                             obj.proven_truth.string(),
-                             obj.proven_truth.latex()])
+                        self.pkg_database.insert_record('theorem',
+                            {'id':hash_id,
+                             'path_name':obj.__str__(),
+                             'name':name,
+                             'judgment':judgment_id,
+                             'string_format':obj.proven_truth.string(),
+                             'latex_format':obj.proven_truth.latex()})
                         if self.gregarious:
                             print("        Theorem record added to the database.")
+                            # print("        Theorem table now contains: ")
+                            # temp_records = self.pkg_database.retrieve_records('theorem', attr_names=['id', 'name'])
+                            # for record in temp_records:
+                            #     print(record)
 
             # Populate COMMON table in database
             # with the current common expression
@@ -544,9 +550,17 @@ class TheoryStorage:
                     print("        Path name: {}".format(self.name + '.' + name))
                     print("        common expr name: {}".format(name))
                     print("    Checking if common expression already in database....")
+                # temp checking:
+                if (hasattr(self, 'pkg_database')):
+                    if self.gregarious:
+                        print("... Database appears to exist!")
+                    temp_entries = self.pkg_database.fetch_all('common')
+                    if self.gregarious:
+                        print("... temp_entries = ")
+                        print(f'{temp_entries}')
                 if (hasattr(self, 'pkg_database') and
                     self.pkg_database.check_for_record(
-                        'common', id=hash_id)):
+                        'common', {'id':hash_id})):
                     if self.gregarious:
                         print("    Common expression record exists in database.")
                     pass
@@ -557,19 +571,18 @@ class TheoryStorage:
                 else:
                     if self.gregarious:
                         print("    Common expression record does not exist in database.")
-                    if 'proveit.logic.booleans' in self.name:
+                    if 'proveit.logic.booleans' in self.name or self.name == 'proveit':
                         if self.gregarious:
                             print("        Adding common expression record to the database.")
-                        self.pkg_database.insert_record(
-                            'common',
-                            [hash_id,
-                             self.name + '.' + name,
-                             name,
-                             expr_id,
-                             obj.string(),
-                             obj.latex()])
+                        self.pkg_database.insert_record('common',
+                            {'id':hash_id,
+                             'path_name':self.name + '.' + name,
+                             'name':name,
+                             'expression':expr_id,
+                             'string_format':obj.string(),
+                             'latex_format':obj.latex()})
                         if self.gregarious:
-                            print("        Theorem record added to the database.")
+                            print(f"        Common expression {name} record added to the database.")
 
 
         # Indicate special expression removals.
@@ -1041,6 +1054,7 @@ class TheoryFolderStorage:
     clean_nb_method = None
 
     def __init__(self, theory_storage, folder):
+        self.gregarious = False
         self.theory_storage = theory_storage
         self.theory = theory_storage.theory
         self.pv_it_dir = self.theory_storage.pv_it_dir
@@ -1062,7 +1076,6 @@ class TheoryFolderStorage:
         # theorems, we'll keep track of the previous
         # version.
         self._prev_objhash_to_names = dict()
-        self.gregarious = False
 
     @staticmethod
     def get_folder_storage_of_obj(obj):
@@ -1283,6 +1296,8 @@ class TheoryFolderStorage:
         prefix = None
         if isinstance(prove_it_object, Expression):
             prefix = ''  # No prefix for Expressions
+            if self.gregarious:
+                print("    prove_it_object was an Expression.")
         elif isinstance(prove_it_object, Judgment):
             # prefix to indicate that it is a Judgment
             prefix = 'Judgment:'
@@ -1294,6 +1309,18 @@ class TheoryFolderStorage:
                 'Judgments, and Proofs')
         # Generate a unique representation using Prove-It object ids for
         # this storage to represent other referenced Prove-It objects.
+        # TESTING
+        if isinstance(prove_it_object, Expression):
+            if self.gregarious:
+                if prove_it_object._core_info == ('Operation',):
+                    print(f"\nInside TheoryFolderStorage.proveItObjUniqueRep:")
+                    print(f"    prefix = {prefix}")
+                    print(f"    generated unique rep = {prove_it_object._generate_unique_rep(self._prove_it_storage_id)}")
+                if prove_it_object._core_info[0] == 'Literal':
+                    print(f"\nInside TheoryFolderStorage.proveItObjUniqueRep:")
+                    print(f"    LITERAL: {prove_it_object.string()}")
+                    print(f"    generated unique rep = {prove_it_object._generate_unique_rep(self._prove_it_storage_id)}")
+        # END TESTING
         return prefix + prove_it_object._generate_unique_rep(
             self._prove_it_storage_id)
 
@@ -1446,9 +1473,32 @@ class TheoryFolderStorage:
         # proveit_obj_to_storage is a dict giving
         # hash : (TheoryFolderStorage obj, hash_directory)
         proveit_obj_to_storage = TheoryFolderStorage.proveit_object_to_storage
-        # print("    prove_it_object._style_id  = {}".format(prove_it_object._style_id ))
         if prove_it_object._style_id in proveit_obj_to_storage:
-            return proveit_obj_to_storage[prove_it_object._style_id]
+            # TESTING BLOCK
+            _theory_folder_storage, _hash_dir = proveit_obj_to_storage[prove_it_object._style_id]
+            # print("Inside TheoryStorageFolder._retrieve():\n" +
+            #       f"    prove_it_object._style_id {prove_it_object._style_id} " +
+            #       "found in storage.")
+            # if hasattr(prove_it_object, 'string'):
+            #     print(f"    prove_it_object = {prove_it_object.string()}")
+            # print(f"    prove_it_object type = {type(prove_it_object)}")
+            # print(f"    prove_it_object is an Expression: {isinstance(prove_it_object, Expression)}")
+            # print(f"    hash_directory = {proveit_obj_to_storage[prove_it_object._style_id][1]}")
+            # print(f"    TheoryStorageFolder.pv_it_dir = {_theory_folder_storage_obj.pv_it_dir}")
+            # print(f"    active_theory_folder_storage dir = {TheoryFolderStorage.active_theory_folder_storage.pv_it_dir}")
+            # END TESTING BLOCK
+
+            # but also check … to see if active theory folder storage is none
+            # or if they match (current vs active)
+            active_theory_folder_storage = (
+                    TheoryFolderStorage.active_theory_folder_storage)
+            if (active_theory_folder_storage is None 
+                    or (active_theory_folder_storage ==
+                    _theory_folder_storage)):
+                return proveit_obj_to_storage[prove_it_object._style_id]
+            else:
+                if self.gregarious:
+                    print(f"Inside the ELSE block! prove_it_object = {prove_it_object}")
 
         # prove_it_object._style_id not found in storage, so we continue
         if isinstance(prove_it_object, Axiom):
@@ -1469,6 +1519,8 @@ class TheoryFolderStorage:
             return theory_folder_storage._retrieve(prove_it_object)
 
         unique_rep = self._proveItObjUniqueRep(prove_it_object)
+        if self.gregarious:
+            print("    Inside TheoryStorageFolder._retrieve(), unique_rep = {}".format(unique_rep))
 
         # hash the unique representation and make a sub-directory of
         # this hash value
@@ -1514,7 +1566,7 @@ class TheoryFolderStorage:
                 _temp_latex_format = prove_it_object.latex()
                 if (hasattr(self.theory_storage, 'pkg_database') and
                     self.theory_storage.pkg_database.check_for_record(
-                        'judgment', id=rep_hash + str(index))):
+                        'judgment', {'id':rep_hash + str(index)})):
                     # Judgment record exists in database.
                     pass
                 elif not hasattr(self.theory_storage, 'pkg_database'):
@@ -1523,15 +1575,21 @@ class TheoryFolderStorage:
                 else:
                     # Judgment record does not exist in database.
                     if 'proveit.logic.booleans' in self.theory_storage.name:
-                        # print("        Adding Judgment record to the database.")
+                        if self.gregarious:
+                            print("        Adding Judgment record to the database.")
                         self.theory_storage.pkg_database.insert_record(
                             'judgment',
-                            [_temp_id,
-                             unique_rep_dict['expr'],
-                             unique_rep_dict['assumptions'],
-                             unique_rep_dict['num_lit_gens'],
-                             _temp_string_format,
-                             _temp_latex_format])
+                            {'id':_temp_id,
+                             'expression':unique_rep_dict['expr'],
+                             'assumptions':unique_rep_dict['assumptions'],
+                             'num_lit_gens':unique_rep_dict['num_lit_gens'],
+                             'string_format':_temp_string_format,
+                             'latex_format':_temp_latex_format})
+                        if self.gregarious:
+                            print("        Judgment table now has the following id/string entries:")
+                            temp_items = self.theory_storage.pkg_database.retrieve_records('judgment', {}, ['id', 'string_format'])
+                            for item in temp_items:
+                                print(f'{item}')
 
             # ================================================= #
             # Expression object                                 #
@@ -1544,7 +1602,7 @@ class TheoryFolderStorage:
                 _temp_latex      = prove_it_object.latex()
                 if (hasattr(self.theory_storage, 'pkg_database') and
                     self.theory_storage.pkg_database.check_for_record(
-                        'expression', id=rep_hash + str(index))):
+                        'expression', {'id':rep_hash + str(index)})):
                     # Expression record already exists in database.
                     pass
                 elif not hasattr(self.theory_storage, 'pkg_database'):
@@ -1552,15 +1610,18 @@ class TheoryFolderStorage:
                     pass
                 else:
                     # Expression record does not exist in database.
-                    if 'proveit.logic.booleans' in self.theory_storage.name:
+                    if ('proveit.logic.booleans' in self.theory_storage.name or
+                        self.theory_storage.name == 'proveit'):
                         self.theory_storage.pkg_database.insert_record(
                             'expression',
-                            [_temp_id,
-                             unique_rep_dict['sub_exprs'],
-                             unique_rep_dict['class_path'],
-                             unique_rep_dict['core_info'],
-                             unique_rep_dict['style_str'],
-                             _temp_string, _temp_latex])
+                            {'id':_temp_id,
+                             'subexpressions':unique_rep_dict['sub_exprs'],
+                             'class_path':unique_rep_dict['class_path'],
+                             'core_info':unique_rep_dict['core_info'],
+                             'style_str':unique_rep_dict['style_str'],
+                             'latex_format':_temp_string,
+                             'latex_format':_temp_latex,
+                             'ref_count':0})
 
             # ================================================= #
             # Proof (Proof Step) object                         #
@@ -1583,7 +1644,7 @@ class TheoryFolderStorage:
                 _temp_proven_truth = prove_it_object.proven_truth
                 if (hasattr(self.theory_storage, 'pkg_database') and
                     self.theory_storage.pkg_database.check_for_record(
-                        'proof_step', id=_temp_id)):
+                        'proof_step', {'id':_temp_id})):
                     # Proof step record exists in database.
                     pass
                 elif not hasattr(self.theory_storage, 'pkg_database'):
@@ -1596,16 +1657,16 @@ class TheoryFolderStorage:
                             print("    Adding Proof step record to the database.")
                         self.theory_storage.pkg_database.insert_record(
                             'proof_step',
-                            [_temp_id,
-                             unique_rep_dict['type'],
-                             unique_rep_dict['path_name'],
-                             unique_rep_dict['name'],
-                             unique_rep_dict['judgment_id'],
-                             unique_rep_dict['reqs'],
-                             unique_rep_dict['eq_reqs'],
-                             unique_rep_dict['subst_dict'],
-                             _temp_proven_truth.string(),
-                             _temp_proven_truth.latex()])
+                            {'id':_temp_id,
+                             'type':unique_rep_dict['type'],
+                             'path_name':unique_rep_dict['path_name'],
+                             'name':unique_rep_dict['name'],
+                             'judgment':unique_rep_dict['judgment_id'],
+                             'requirements':unique_rep_dict['reqs'],
+                             'equality_requirements':unique_rep_dict['eq_reqs'],
+                             'instantiations':unique_rep_dict['subst_dict'],
+                             'string_format':_temp_proven_truth.string(),
+                             'latex_format':_temp_proven_truth.latex()})
 
             return result
 
@@ -2353,6 +2414,8 @@ class TheoryFolderStorage:
         '''
         Helper method for make_expression
         '''
+        if self.gregarious:
+            print("Entering TheoryStorageFolder._make_expression()!")
         from proveit import Expression
         from ._dependency_graph import ordered_dependency_nodes
         from .theory import Theory
@@ -2410,7 +2473,6 @@ class TheoryFolderStorage:
                     theory_folder_storage._extractReferencedStorageIds(
                         unique_rep, storage_ids=dependent_refs)
                 sub_expr_ids_map[expr_id] = dependent_ids
-                #print('dependent_ids', dependent_ids)
                 return dependent_ids
 
         expr_ids = ordered_dependency_nodes(expr_id, get_dependent_expr_ids)
@@ -2442,6 +2504,7 @@ class TheoryFolderStorage:
                 expr_class_strs[expr_id], core_info_map[expr_id],
                 styles_map[expr_id], sub_expressions)
             expr_style_id = expr._style_id
+            # REPLACING this if block with the one below
             if expr_style_id not in proveit_obj_to_storage:
                 # Remember the storage corresponding to the style id
                 # for future reference.
@@ -2449,6 +2512,21 @@ class TheoryFolderStorage:
                     exprid_to_storage[expr_id]
                 theory_folder_storage._record_storage(
                     expr_style_id, hash_id)
+            # if expr_style_id not in proveit_obj_to_storage:
+            #     # Remember the storage corresponding to the style id
+            #     # for future reference.
+            #     # get the active theory folder (e.g. assoc'd with
+            #     # current notebook being run), if it exists
+            #     active_theory_folder_storage = (
+            #         TheoryFolderStorage.active_theory_folder_storage)
+            #     # active_theory_folder_storage_dir = None
+            #     theory_folder_storage, hash_id = \
+            #         exprid_to_storage[expr_id]
+            #     if (active_theory_folder_storage is None 
+            #         or (active_theory_folder_storage ==
+            #         theory_folder_storage)):
+            #         theory_folder_storage._record_storage(
+            #             expr_style_id, hash_id)
             built_expr_map[expr_id] = expr
 
         return built_expr_map[master_expr_id]
