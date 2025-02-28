@@ -2,3 +2,4 @@ algebra
 circuits
 QFT
 QPE
+QEC
