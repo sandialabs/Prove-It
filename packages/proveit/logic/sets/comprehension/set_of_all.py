@@ -1,6 +1,7 @@
 from proveit import (
         ExprTuple, Function, Literal, OperationOverInstances,
-        Lambda, composite_expression, relation_prover, defaults)
+        Lambda, composite_expression, relation_prover, defaults,
+        prover)
 from proveit import f, n, x, y, Q, R, S
 
 
@@ -130,7 +131,7 @@ class SetOfAll(OperationOverInstances):
     # The below must be updated
     # Being updated gradually by wdc starting 12/21/2021
 
-    @relation_prover
+    @prover
     def unfold_membership(self, element, **defaults_config):
         '''
         From (x in {y | Q(y)})_{y in S}, derive and return
@@ -140,41 +141,69 @@ class SetOfAll(OperationOverInstances):
         From (x in {f(y) | ..Q(y)..})_{y in S}, derive and return
         exists_{y in S | ..Q(y)..} x = f(y).
         Also derive x in S, but this is not returned.
+        As an example, consider the set A defined by:
+
+            A = SetOfAll(i, ExprTuple(i, zero),
+                domain = Interval(zero, num(10)))
+
+        which gives a set of tuples like this:
+
+            {(0,0), (1,0), ... (10,0)}.
+
+        Then A.unfold_membership(x, assumptions = [InSet(x, A)])
+        yields the judgment:
+
+            x in A |- Exists_{i in {0, 1, ..., 10}} s.t. x = (i, 0).
+
         '''
         from . import (unfold, unfold_basic_comprehension,
                        in_superset_if_in_comprehension)
         from proveit.logic import And
+        from proveit.numbers import num
         if len(self.explicit_conditions())==1:
             explicit_conditions = self.explicit_conditions()[0]
         else:
+            # which includes case of no explicit conditions!
             explicit_conditions = And(*self.explicit_conditions())
-        # why is the following line there before testing number of vars
-        _Q_op, _Q_op_sub = Function(Q, self.all_instance_vars()), explicit_conditions
+        _Q_op, _Q_op_sub = (
+                Function(Q, self.all_instance_vars()), explicit_conditions)
         if (len(self.all_instance_vars()) == 1 and
             self.instance_element == self.instance_var):
-            # simple case of {x | Q(x)}_{x in S};
-            # derive x in S side-effect
-            print("(1) SetOfAll.unfold_membership(): inside first if.")
-            print("_Q_op = ")
-            display(_Q_op)
-            print("_Q_op_sub = ")
-            display(_Q_op_sub)
+            # simple case of {x | Q(x)}_{x in S}; derive (but don't)
+            # explicitly return) side-effect that x is in S;
+            # we do this here because some cases below do not include
+            # the membership in the returned result
             in_superset_if_in_comprehension.instantiate(
                     {S: self.domain, _Q_op: _Q_op_sub,
                      x: element, y: self.instance_var})
-            print("SetOfAll.unfold_membership(): end")
             if len(self.explicit_conditions())==1:
                 _Q_op, _Q_op_sub = (
                     Function(Q, self.all_instance_vars()), explicit_conditions)
-            #     return unfold_basic1_cond_comprehension.instantiate(
-            #             {S:self.domain, Q_op:Q_op_sub,
-            #              x:element, y:self.instance_vars[0]})
-            # else:
-            #     return unfold_basic_comprehension.instantiate({S:self.domain, Q_op:Q_op_sub, x:element}, {y:self.instance_vars[0]}, assumptions=assumptions)
-        # else:
-        #     f_op, f_sub = Function(f, self.instance_vars), self.instance_element
-        #     return unfold_comprehension.instantiate({S:self.domain,  Q_op:Q_op_sub, f_op:f_sub, x:element}, {y_multi:self.instance_vars}).derive_conclusion(assumptions)
-
+                _y_sub = self.all_instance_vars
+                return unfold_basic_comprehension.instantiate(
+                        {S:self.domain, _Q_op:_Q_op_sub, x:element,
+                         y:self.all_instance_vars()[0]})
+            else:
+                # multiple explicit conditions, so we use the And(*)
+                # construction from earlier for the _Q_op_sub
+                return unfold_basic_comprehension.instantiate(
+                        {S:self.domain, _Q_op:_Q_op_sub, x:element,
+                         y:self.all_instance_vars()[0]})
+        else: 
+            # cases where we have:
+            # (1) multiple instance_vars,
+            # (2) and/or instance_element is not just an instance_var
+            _n_sub = num(len(self.all_instance_vars()))
+            _f_op, _f_sub = (
+                Function(f, self.all_instance_vars()), self.instance_element)
+            if len(self.explicit_conditions())<=1:
+                should_auto_simplify = True # will simplify And()
+            else:
+                should_auto_simplify = False
+            return unfold.instantiate(
+                {n:_n_sub, S:self.all_domains(),  _Q_op:_Q_op_sub, _f_op:_f_sub,
+                x:element, y:self.all_instance_vars()},
+                auto_simplify = should_auto_simplify).derive_consequent()
 
 
     """
