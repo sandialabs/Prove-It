@@ -73,6 +73,21 @@ class UnionMembership(SetMembership):
         _m = _A.num_elements()
         return membership_folding.instantiate({m: _m, x: element, A: _A})
 
+    @prover
+    def deduce_in_bool(self, **defaults_config):
+        '''
+        Deduce that self = (elem in (A U B U ... U M)) is in Bool.
+        Used as helper function elsewhere and not usually explicitly
+        called by the user.
+        '''
+        from . import union_membership_is_bool
+        element = self.element
+        operands = self.domain.operands
+        _A_sub = operands
+        _m_sub = _A_sub.num_elements()
+        return union_membership_is_bool.instantiate(
+                {m:_m_sub, x:element, A:_A_sub})
+
 
 class UnionNonmembership(SetNonmembership):
     '''
@@ -128,3 +143,19 @@ class UnionNonmembership(SetNonmembership):
         _m = _A.num_elements()
         return nonmembership_folding.instantiate(
             {m: _m, x: element, A: _A})
+
+    @prover
+    def deduce_in_bool(self, **defaults_config):
+        '''
+        Deduce that self = (elem NotIn (A U B U ... U M)) is in Bool.
+        Used as helper function elsewhere and not usually explicitly
+        called by the user.
+        '''
+        from . import union_nonmembership_is_bool
+        element = self.element
+        operands = self.domain.operands
+        _A_sub = operands
+        _m_sub = _A_sub.num_elements()
+        return union_nonmembership_is_bool.instantiate(
+                {m:_m_sub, x:element, A:_A_sub})
+
