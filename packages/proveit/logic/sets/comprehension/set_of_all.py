@@ -36,6 +36,14 @@ class SetOfAll(OperationOverInstances):
             assert False, ("Expecting either 'instance_param' or 'instance_params' "
                            "to be set")
 
+    def membership_object(self, element):
+        from .set_of_all_membership import SetOfAllMembership
+        return SetOfAllMembership(element, self)
+
+    def nonmembership_object(self, element):
+        from .set_of_all_membership import SetOfAllNonmembership
+        return SetOfAllNonmembership(element, self)
+
     def _formatted(self, format_type, fence=False, **kwargs):
         from proveit import ExprRange
         out_str = ''
@@ -155,54 +163,54 @@ class SetOfAll(OperationOverInstances):
 
             x in A |- Exists_{i in {0, 1, ..., 10}} s.t. x = (i, 0).
 
+        This method might now be obsolete with the establishment of
+        the SetOfAllMemberhip class and related methods.
+
         '''
         from . import (unfold, unfold_basic_comprehension,
                        in_superset_if_in_comprehension)
         from proveit.logic import And
         from proveit.numbers import num
+
         if len(self.explicit_conditions())==1:
             explicit_conditions = self.explicit_conditions()[0]
         else:
             # which includes case of no explicit conditions!
             explicit_conditions = And(*self.explicit_conditions())
+
         _Q_op, _Q_op_sub = (
                 Function(Q, self.all_instance_vars()), explicit_conditions)
+
         if (len(self.all_instance_vars()) == 1 and
             self.instance_element == self.instance_var):
-            # simple case of {x | Q(x)}_{x in S}; derive (but don't)
-            # explicitly return) side-effect that x is in S;
+            # simple case of {y | Q(y)}_{y in S}
+            # or {y | Q1(y), ..., Qn(y)}_{y in S}: derive (but don't
+            # explicitly return) side-effect (x in S);
             # we do this here because some cases below do not include
-            # the membership in the returned result
+            # the membership (x in S) in the returned result
             in_superset_if_in_comprehension.instantiate(
                     {S: self.domain, _Q_op: _Q_op_sub,
                      x: element, y: self.instance_var})
-            if len(self.explicit_conditions())==1:
-                _Q_op, _Q_op_sub = (
-                    Function(Q, self.all_instance_vars()), explicit_conditions)
-                _y_sub = self.all_instance_vars
-                return unfold_basic_comprehension.instantiate(
-                        {S:self.domain, _Q_op:_Q_op_sub, x:element,
-                         y:self.all_instance_vars()[0]})
-            else:
-                # multiple explicit conditions, so we use the And(*)
-                # construction from earlier for the _Q_op_sub
-                return unfold_basic_comprehension.instantiate(
-                        {S:self.domain, _Q_op:_Q_op_sub, x:element,
-                         y:self.all_instance_vars()[0]})
+            _y_sub = self.all_instance_vars()[0]
+            return unfold_basic_comprehension.instantiate(
+                    {S:self.domain, _Q_op:_Q_op_sub, x:element, y:_y_sub})
         else: 
             # cases where we have:
             # (1) multiple instance_vars,
             # (2) and/or instance_element is not just an instance_var
+            # In fact, this doesn't yet work with multiple instance vars
             _n_sub = num(len(self.all_instance_vars()))
             _f_op, _f_sub = (
                 Function(f, self.all_instance_vars()), self.instance_element)
+            _y_sub = self.all_instance_vars()
             if len(self.explicit_conditions())<=1:
-                should_auto_simplify = True # will simplify And()
+                should_auto_simplify = True
+                # will simplify vacuous And() and trivial And(Q(y))
             else:
                 should_auto_simplify = False
             return unfold.instantiate(
                 {n:_n_sub, S:self.all_domains(),  _Q_op:_Q_op_sub, _f_op:_f_sub,
-                x:element, y:self.all_instance_vars()},
+                x:element, y:_y_sub},
                 auto_simplify = should_auto_simplify).derive_consequent()
 
 
