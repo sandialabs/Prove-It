@@ -1,4 +1,4 @@
-from proveit import Literal, Operation, prover
+from proveit import equality_prover, Literal, Operation, prover
 from proveit import a, b, c, d, n, x
 
 
@@ -120,3 +120,42 @@ class Interval(Operation):
         _c, _d = interval2.operands
         return disjoint_intervals.instantiate(
                 {a:_a, b:_b, c:_c, d:_d})
+
+    @equality_prover("union_partitioned", "union_split")
+    def union_partition(
+            self, before_split_value, **defaults_config):
+        '''
+        From an integer interval such as self = {a,...,c}, and supplied
+        integer b = before_split_value (or something equivalent to an
+        integer) with (a <= b + 1 <= c), deduce and return an
+        equality between the original interval {a,...,c} and the union
+        of two partitioning intervals {a,...,b} and {b+1,...,c}:
+
+            |- {a,...,c} = {a,...,b} U {b+1,c}
+
+        Recall that {x, y} = {} if x > y, so this partitioning works
+        even if b = a - 1, producing:
+
+            |- {a,...,c} = {a,...,a-1} U {a,...,c},
+
+        which could then be simplified to {} U {a,...,c} = {a,...,c}.
+        Usage might require separate proof that a <= b + 1 <= c.
+
+        Example. If self = {1,...,10}, calling
+        
+            self.union_partition_(num(4))
+
+        will deduce and return:
+
+            |- {1,...,10} = {1,...,4} U {5,...,10}.
+        '''
+        
+        from . import union_of_intervals
+        from proveit.numbers import one, Add
+
+        _a_sub = self.lower_bound
+        _b_sub = before_split_value
+        _c_sub = Add(before_split_value, one)
+        _d_sub = self.upper_bound
+        return union_of_intervals.instantiate(
+                {a:_a_sub, b:_b_sub, c:_c_sub, d:_d_sub}).derive_reversed()
