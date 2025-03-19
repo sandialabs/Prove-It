@@ -68,78 +68,6 @@ class LogicalHadamard(Function):
                 self, LogicalHadamard._operator_, (i, surface_code),
                 styles=styles)
 
-class RoughBoundaryA(Function):
-    '''
-    RoughBoundaryA(SC(n)) represents one of the two subsets of rough
-    boundary points associated with the planar surface code SC(n).
-    These points don't represent the data qubits themselves but rather
-    the non-operator "end points" of the data qubits when the data
-    qubits are considered as edges in a Kitaev-style graphical
-    representation of the surface code, indicated by the asterisks in
-    the figure:
-                        A   * * * * *
-                            |_|_|_|_|
-                            |_|_|_|_|
-                            |_|_|_|_|
-                            |_|_|_|_|
-                            | | | | |
-                        B   * * * * *
-
-    RoughBoundaryB() represents the other subset of rough bounday
-    points. Rectilinear distances from points in one set to points in
-    the other set can then correspond to lengths of operator chains
-    across the logical qubit.
-    '''
-
-    # the literal operator of the RoughBoundaryA operation
-    _operator_ = Literal(
-            string_format='RBA', latex_format=r'R\!B\!_{A}\!', theory=__file__)
-
-    def __init__(self, surface_code, *, styles=None):
-        '''
-        Create an expression representing the set of two subsets of
-        rough boundary "endpoints" of a given surface code.
-        '''
-        Function.__init__(
-                self, RoughBoundaryA._operator_, surface_code,
-                styles=styles)
-
-class RoughBoundaryB(Function):
-    '''
-    RoughBoundaryB(SC(n)) represents one of the two subsets of rough
-    boundary points associated with the planar surface code SC(n).
-    These points don't represent the data qubits themselves but rather
-    the non-operator "end points" of the data qubits when the data
-    qubits are considered as edges in a Kitaev-style graphical
-    representation of the surface code, indicated by the asterisks in
-    the figure:
-                        A   * * * * *
-                            |_|_|_|_|
-                            |_|_|_|_|
-                            |_|_|_|_|
-                            |_|_|_|_|
-                            | | | | |
-                        B   * * * * *
-
-    RoughBoundaryA() represents the other subset of rough bounday
-    points. Rectilinear distances from points in one set to points in
-    the other set can then correspond to lengths of operator chains
-    across the logical qubit.
-    '''
-
-    # the literal operator of the RoughBoundaryA operation
-    _operator_ = Literal(
-            string_format='RBB', latex_format=r'R\!B\!_{B}\!', theory=__file__)
-
-    def __init__(self, surface_code, *, styles=None):
-        '''
-        Create an expression representing the set of two subsets of
-        rough boundary "endpoints" of a given surface code.
-        '''
-        Function.__init__(
-                self, RoughBoundaryB._operator_, surface_code,
-                styles=styles)
-
 class RoughBoundaries(Function):
     '''
     RoughBoundaries(SC(n)) represents the set of two subsets of rough
@@ -173,6 +101,85 @@ class RoughBoundaries(Function):
         '''
         Function.__init__(
                 self, RoughBoundaries._operator_, surface_code,
+                styles=styles)
+
+
+class RoughBoundaryA(Function):
+    '''
+    RoughBoundaryA(SC(n)) represents one of the two subsets of rough
+    boundary points associated with the planar surface code SC(n).
+    These points don't represent the data qubits themselves but rather
+    the non-operator "end points" of the data qubits when the data
+    qubits are considered as edges in a Kitaev-style graphical
+    representation of the surface code, indicated by the asterisks in
+    the figures (think of the second figure as a 90 deg clockwise
+    rotation of the first one):
+
+                A   * * * * *          * - - - - - *
+                    |_|_|_|_|             | | | |
+                    |_|_|_|_|       B  * - - - - - *  A
+                    |_|_|_|_|             | | | |
+                    |_|_|_|_|          * - - - - - *
+                    | | | | |             | | | |
+                B   * * * * *          * - - - - - *
+                                          | | | |
+                                       * - - - - - *
+
+    RoughBoundaryB() (defined below) represents the other subset of
+    rough boundary points. Rectilinear distances from points in one
+    set to points in the other set can then correspond to lengths of
+    operator chains across the logical qubit.
+    '''
+
+    # the literal operator of the RoughBoundaryA operation
+    _operator_ = Literal(
+            string_format='RBA', latex_format=r'R\!B\!_{A}\!', theory=__file__)
+
+    def __init__(self, surface_code, *, styles=None):
+        '''
+        Create an expression representing one of the two subsets of
+        rough boundary "endpoints" of a given surface code.
+        '''
+        Function.__init__(
+                self, RoughBoundaryA._operator_, surface_code,
+                styles=styles)
+
+class RoughBoundaryB(Function):
+    '''
+    RoughBoundaryB(SC(n)) represents one of the two subsets of rough
+    boundary points associated with the planar surface code SC(n).
+    These points don't represent the data qubits themselves but rather
+    the non-operator "end points" of the data qubits when the data
+    qubits are considered as edges in a Kitaev-style graphical
+    representation of the surface code, indicated by the asterisks in
+    the figure:
+                A   * * * * *          * - - - - - *
+                    |_|_|_|_|             | | | |
+                    |_|_|_|_|       B  * - - - - - *  A
+                    |_|_|_|_|             | | | |
+                    |_|_|_|_|          * - - - - - *
+                    | | | | |             | | | |
+                B   * * * * *          * - - - - - *
+                                          | | | |
+                                       * - - - - - *
+
+    RoughBoundaryA() (defined above) represents the other subset of
+    rough bounday points. Rectilinear distances from points in one
+    set to points in the other set can then correspond to lengths of
+    operator chains across the logical qubit.
+    '''
+
+    # the literal operator of the RoughBoundaryB operation
+    _operator_ = Literal(
+            string_format='RBB', latex_format=r'R\!B\!_{B}\!', theory=__file__)
+
+    def __init__(self, surface_code, *, styles=None):
+        '''
+        Create an expression representing one of the two subsets of
+        rough boundary "endpoints" of a given surface code.
+        '''
+        Function.__init__(
+                self, RoughBoundaryB._operator_, surface_code,
                 styles=styles)
 
 class SmoothBoundaries(Function):
@@ -212,6 +219,94 @@ class SmoothBoundaries(Function):
         Function.__init__(
                 self, SmoothBoundaries._operator_, surface_code,
                 styles=styles)
+
+
+class SmoothBoundaryA(Function):
+    '''
+    SmoothBoundaryA(SC(n)) represents one of the two subsets (subset
+    A in the figures below) of smooth boundary points associated with
+    the planar surface code SC(n). These points don't represent the
+    data qubits themselves but rather the non-operator "end points" of
+    the data qubits when the data qubits are considered as edges in a
+    Kitaev-style graphical representation of the surface code,
+    indicated by the asterisks in the figures below. The 2nd figure is
+    the "dual" representation of the first (where each qubit edge has
+    been rotated by 90 degs) and rotating the 2nd figure clockwise by
+    90 degs produces the 3rd figure:
+                                                    dual rotated
+        standard:       dual:   * - - - - - *            A
+                                   | | | |           * * * * *
+      A *|_|_|_|_|* B         A * - - - - - * B      |_|_|_|_|
+        *|_|_|_|_|*                | | | |           |_|_|_|_|
+        *|_|_|_|_|*             * - - - - - *        |_|_|_|_|
+        *|_|_|_|_|*                | | | |           |_|_|_|_|
+        *|_|_|_|_|*             * - - - - - *        | | | | |
+                                   | | | |           * * * * *
+                                * - - - - - *            B
+
+    SmoothBoundaryB() (representing the points marked B and defined
+    below) represents the other subset of smooth boundary points.
+    Rectilinear distances from points in set A to points set B (i.e.
+    from one smooth boundary to the other) can then correspond to
+    lengths of operator chains across the logical qubit.
+    '''
+
+    # the literal operator of the SmoothBoundaryA operation
+    _operator_ = Literal(
+            string_format='SBA', latex_format=r'S\!B\!_{A}\!', theory=__file__)
+
+    def __init__(self, surface_code, *, styles=None):
+        '''
+        Create an expression representing one of the two subsets of
+        smooth boundary "endpoints" of a given surface code.
+        '''
+        Function.__init__(
+                self, SmoothBoundaryA._operator_, surface_code,
+                styles=styles)
+
+class SmoothBoundaryB(Function):
+    '''
+    SmoothBoundaryB(SC(n)) represents one of the two subsets (subset
+    B in the figures below) of smooth boundary points associated with
+    the planar surface code SC(n). These points don't represent the
+    data qubits themselves but rather the non-operator "end points" of
+    the data qubits when the data qubits are considered as edges in a
+    Kitaev-style graphical representation of the surface code,
+    indicated by the asterisks in the figures below. The 2nd figure is
+    the "dual" representation of the first (where each qubit edge has
+    been rotated by 90 degs) and rotating the 2nd figure clockwise by
+    90 degs produces the 3rd figure:
+                                                    dual rotated
+        standard:       dual:   * - - - - - *            A
+                                   | | | |           * * * * *
+      A *|_|_|_|_|* B         A * - - - - - * B      |_|_|_|_|
+        *|_|_|_|_|*                | | | |           |_|_|_|_|
+        *|_|_|_|_|*             * - - - - - *        |_|_|_|_|
+        *|_|_|_|_|*                | | | |           |_|_|_|_|
+        *|_|_|_|_|*             * - - - - - *        | | | | |
+                                   | | | |           * * * * *
+                                * - - - - - *            B
+
+    SmoothBoundaryA() (representing the points marked A and defined
+    above) represents the other subset of smooth boundary points.
+    Rectilinear distances from points in set A to points set B (i.e.
+    from one smooth boundary to the other) can then correspond to
+    lengths of operator chains across the logical qubit.
+    '''
+
+    # the literal operator of the SmoothBoundaryB operation
+    _operator_ = Literal(
+            string_format='SBB', latex_format=r'S\!B\!_{B}\!', theory=__file__)
+
+    def __init__(self, surface_code, *, styles=None):
+        '''
+        Create an expression representing one of the two subsets of
+        smooth boundary "endpoints" of a given surface code.
+        '''
+        Function.__init__(
+                self, SmoothBoundaryB._operator_, surface_code,
+                styles=styles)
+
 
 class ManhattanDistance(Function):
     '''
