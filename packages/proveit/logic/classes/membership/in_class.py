@@ -269,7 +269,7 @@ class InClass(Relation):
         # simplify both sides.
         try:
             return Relation.conclude(self)
-        except ProofFailure:
+        except (ProofFailure, NotImplementedError):
             # Both sides are already irreducible or simplified
             # or we were unable to simplify either side.
             pass
