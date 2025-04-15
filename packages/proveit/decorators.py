@@ -26,7 +26,7 @@ def _make_decorated_prover(func, automatic=False):
     is_conclude_method = func.__name__.startswith('conclude')
 
     def decorated_prover(*args, **kwargs):
-        from proveit import Expression, Judgment, InnerExpr
+        from proveit import Expression, Judgment, InnerExpr, ProofFailure
         from proveit._core_.proof import Assumption
         from proveit.logic import Equals
         if (kwargs.get('preserve_all', False) and 
@@ -51,9 +51,11 @@ def _make_decorated_prover(func, automatic=False):
                 # preserve _self.
                 if (not isinstance(_self, Expression) 
                         and hasattr(_self, 'expr')):
-                    preserve_expr = _self.expr
+                    # preserve_expr = _self.expr
+                    kwargs['preserved_exprs'] = {_self.expr}
                 else:
-                    preserve_expr = _self
+                    # preserve_expr = _self
+                    kwargs['preserved_exprs'] = {_self}
         defaults_to_change = set(kwargs.keys()).intersection(
                 defaults.__dict__.keys())
         if 'automation' in kwargs.keys():
@@ -207,14 +209,16 @@ def _make_decorated_prover(func, automatic=False):
                         "expected to be a method for an Expression type "
                         "or the object must have an 'expr' attribute."%func)                
             if proven_truth is None:
-                raise ValueError("@prover method %s is not implemented "
+                raise NotImplementedError("@prover method %s is not implemented "
                                  "for %s."
                                 %(func, expr))
             if func.__name__.startswith('conclude_negation'):
                 from proveit.logic import Not
                 not_expr = Not(expr)
                 if proven_truth.expr != not_expr:
-                    raise ValueError(
+                    raise ProofFailure( # previously ValueError
+                            not_expr,
+                            defaults.assumptions,
                             "@prover method %s whose name starts with "
                             "'conclude_negation' must prove %s "
                             "but got %s."%(func, not_expr, proven_truth))   
@@ -222,7 +226,10 @@ def _make_decorated_prover(func, automatic=False):
                 return proven_truth.with_matching_style(not_expr)
             else:
                 if proven_truth.expr != expr:
-                    raise ValueError("@prover method %s whose name starts with "
+                    raise ProofFailure( # previously ValueError
+                           expr,
+                           defaults.assumptions,
+                           "@prover method %s whose name starts with "
                                      "'conclude' must prove %s but got "
                                      "%s."%(func, expr, proven_truth))
                 # Match the style of self.
