@@ -61,7 +61,8 @@ class SetOfAllMembership(SetMembership):
             _S_sub = self.domain.all_domains()[0] # only 1 instance var
             _y_sub = self.domain.all_instance_vars()
             return basic_comprehension.instantiate(
-                    {S:_S_sub, _Q_op:_Q_op_sub, x:element, y:_y_sub})
+                    {S:_S_sub, _Q_op:_Q_op_sub, x:element, y:_y_sub},
+                    preserved_exprs = {self.domain})
         else: 
             # cases where we have:
             # (1) multiple instance_vars,
@@ -215,6 +216,8 @@ class SetOfAllMembership(SetMembership):
     @prover
     def conclude(self, **defaults_config):
         '''
+        STILL UNDER ACTIVE TESTING as of 4/15/2025
+
         Called on a SetOfAllMembership object such as
         self = [elem in SetOfAll()], and depending on the form of self,
         derive and return self, knowing or assuming the rhs of the
@@ -238,8 +241,16 @@ class SetOfAllMembership(SetMembership):
         This method does not work for cases in which the underlying
         SetOfAll domain has both multiple instance variables
         and multiple explicit conditions simultaneously.
+
+        Errors are arising especially with expressions that involve
+        multiple explicit conditions, producing instantiated forms
+        of the applied theorems whose component(s) do not quite
+        match the "natural" or expected assumption(s) one might have
+        or might construct. This turns out to be a thorny problem.
         '''
 
+        from proveit import defaults
+        # print(f"\nEntering the SetOfAllMembership.conclude() method!\n")
         from . import (fold, fold_basic_comprehension,
                        in_superset_if_in_comprehension)
         element = self.element
@@ -249,21 +260,41 @@ class SetOfAllMembership(SetMembership):
         else:
             # which includes case of no explicit conditions!
             explicit_conditions = And(*self.domain.explicit_conditions())
+
         _Q_op, _Q_op_sub = (
                 Function(Q, self.domain.all_instance_vars()),
                 explicit_conditions)
 
         if (len(self.domain.all_instance_vars()) == 1 and
             self.domain.instance_element == self.domain.instance_var):
+            # print(f"Entering IF branch in SetOfAllMembership.conclude().")
             # cases like [x in {y}_{y in S}]
             #         or [x in {y | Q(y)}_{y in S}]
             #         or [x in {y | Q1(y), Q2(y),...,Qn(y)}_{y in S}]
             _S_sub = self.domain.domain
             _y_sub = self.domain.all_instance_vars()[0]
+            # temp_inst = fold_basic_comprehension.instantiate(
+            #         {S:_S_sub, _Q_op:_Q_op_sub, x:element,
+            #          y:_y_sub}, preserve_expr = self.domain.condition,
+            #          auto_simplify = False)
+            # display(temp_inst.domain.condition)
+            # defaults._temp_inst = temp_inst
+            # defaults._temp_expr = self.expr 
+
+            # return fold_basic_comprehension.instantiate(
+            #         {S:_S_sub, _Q_op:_Q_op_sub, x:element, y:_y_sub},
+            #          preserved_exprs = {self.domain.condition},
+            #          auto_simplify = True)
+            # testing this alternative 20250412 for changes in Conditional.shallow_simplification
             return fold_basic_comprehension.instantiate(
-                    {S:_S_sub, _Q_op:_Q_op_sub, x:element,
-                     y:_y_sub})
+                    {S:_S_sub, _Q_op:_Q_op_sub, x:element, y:_y_sub},
+                     preserved_exprs = {self.domain.condition},
+                     # preserve_expr = self.domain.operands[0].body.condition,
+                     # preserve_expr = self.domain.condition,
+                     auto_simplify = True)
+
         else: 
+            # print(f"\nEntering ELSE branch in SetOfAllMembership.conclude().\n")
             # cases where we have:
             # (1) multiple instance_vars,
             # (2) and/or instance_element is not just an instance_var
@@ -272,15 +303,93 @@ class SetOfAllMembership(SetMembership):
             _f_op, _f_sub = (
                     Function(f, self.domain.all_instance_vars()),
                     self.domain.instance_element)
-            if len(self.domain.explicit_conditions())<=1:
+            # self.domain.condition == self.domain.domain
+            # if len(self.domain.explicit_conditions())<1: # changing from <= 1 to < 1 20250405
+            if (len(self.domain.conditions) == len(self.domain.explicit_domains())):
+                # want to be able to simplify empty And() created
+                # above for 'explicit_conditions'
                 should_auto_simplify = True
-                # will simplify vacuous And() and trivial And(Q(y))
+                # print(f"should_auto_simplify = {should_auto_simplify}")
+                # print()
             else:
+                # generally don't mess with anything
                 should_auto_simplify = False
+                # print(f"should_auto_simplify = {should_auto_simplify}")
+                # print()
+
+            # BEGIN TESTING
+            # temporarily keeping these try-except blocks;
+            # see further down for "testing" without the try-except
+            # print(f"---- Begin testing section in SetOfAllMembership.conclude() ----")
+            try:
+                temp_inst = fold.instantiate(
+                    {n:_n_sub, S:self.domain.all_domains(), 
+                    _Q_op:_Q_op_sub, _f_op:_f_sub,
+                    x:element, y:self.domain.all_instance_vars()},
+                    # preserved_exprs = {self.domain.condition},
+                    auto_simplify = should_auto_simplify)
+                print("'fold' instantiation gives: ")
+                display(temp_inst)
+                display(temp_inst.expr.antecedent)
+                print(f"assumption:")
+                display(defaults.assumptions[0])
+                print(f"assumption==antecedent = {defaults.assumptions[0]==temp_inst.expr.antecedent}")
+                print()
+                print(f"In the TRY block, the derive_consequent() returns: ")
+                return temp_inst.derive_consequent()
+
+            except Exception as the_exception:
+                print(f"Exception raised under should_auto_simplify = {should_auto_simplify}")
+                print(f"Switching to should_auto_simplify = {not should_auto_simplify}")
+                temp_inst = fold.instantiate(
+                    {n:_n_sub, S:self.domain.all_domains(), 
+                    _Q_op:_Q_op_sub, _f_op:_f_sub,
+                    x:element, y:self.domain.all_instance_vars()},
+                    # preserved_exprs = {self.domain.condition},
+                    auto_simplify = not should_auto_simplify)
+                print("'fold' instantiation gives: ")
+                display(temp_inst)
+                print()
+                print(f"The derive_consequent() returns: ")
+                return temp_inst.derive_consequent()
+
+
+            # temp_inst = fold.instantiate(
+            #         {n:_n_sub, S:self.domain.all_domains(), 
+            #         _Q_op:_Q_op_sub, _f_op:_f_sub,
+            #         x:element, y:self.domain.all_instance_vars()},
+            #         # preserved_exprs = {self.domain.condition},
+            #         auto_simplify = should_auto_simplify)
+
+            # Use the following when testing for when self.domain
+            # conditional's condition no longer being simplified inside
+            # the Conditional.shallow_simplification() method
+            # print()
+            # print(f"preserve_expr = {self.domain.operands[0].body.condition}")
+            # print()
+            # temp_inst = fold.instantiate(
+            #         {n:_n_sub, S:self.domain.all_domains(), 
+            #         _Q_op:_Q_op_sub, _f_op:_f_sub,
+            #         x:element, y:self.domain.all_instance_vars()},
+            #         preserve_expr = self.domain.operands[0].body.condition,
+            #         auto_simplify = True)
+            # print("'fold' instantiation gives: ")
+            # display(temp_inst)
+            # print()
+            # print(f"assumption==antecedent = {defaults.assumptions[0]==temp_inst.expr.antecedent}")
+            # print()
+            # print(f"And the derive_consequent() returns: ")
+            # return temp_inst.derive_consequent()
+
+            # END TESTING
+
+            # this block will not be reached while the testing
+            # block above are un-commented-out
             return fold.instantiate(
                 {n:_n_sub, S:self.domain.all_domains(), 
                 _Q_op:_Q_op_sub, _f_op:_f_sub,
                 x:element, y:self.domain.all_instance_vars()},
+                # preserved_exprs = {self.domain.condition},
                 auto_simplify = should_auto_simplify).derive_consequent()
 
     @prover
@@ -508,13 +617,32 @@ class SetOfAllNonmembership(SetNonmembership):
             _f_op, _f_sub = (
                     Function(f, self.domain.all_instance_vars()),
                     self.domain.instance_element)
-            if len(self.domain.explicit_conditions())<=1:
+
+            if (len(self.domain.conditions) == len(self.domain.explicit_domains())):
+                # want to be able to simplify any empty And() created
+                # above for 'explicit_conditions'
                 should_auto_simplify = True
-                # will simplify vacuous And() and trivial And(Q(y))
             else:
+                # otherwise, generally don't mess with anything
                 should_auto_simplify = False
-            return nonmembership_fold.instantiate(
-                {n:_n_sub, S:self.domain.all_domains(), 
-                _Q_op:_Q_op_sub, _f_op:_f_sub,
-                x:element, y:self.domain.all_instance_vars()},
-                auto_simplify = should_auto_simplify)
+
+            # See the try-except block below as current alternative
+            # return nonmembership_fold.instantiate(
+            #     {n:_n_sub, S:self.domain.all_domains(), 
+            #     _Q_op:_Q_op_sub, _f_op:_f_sub,
+            #     x:element, y:self.domain.all_instance_vars()},
+            #     auto_simplify = should_auto_simplify)
+
+            try:
+                return nonmembership_fold.instantiate(
+                        {n:_n_sub, S:self.domain.all_domains(), 
+                        _Q_op:_Q_op_sub, _f_op:_f_sub,
+                        x:element, y:self.domain.all_instance_vars()},
+                        auto_simplify = should_auto_simplify)
+
+            except Exception as the_exception:
+                return nonmembership_fold.instantiate(
+                        {n:_n_sub, S:self.domain.all_domains(), 
+                        _Q_op:_Q_op_sub, _f_op:_f_sub,
+                        x:element, y:self.domain.all_instance_vars()},
+                        auto_simplify = not should_auto_simplify)
