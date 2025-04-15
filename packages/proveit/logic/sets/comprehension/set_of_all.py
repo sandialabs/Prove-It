@@ -16,8 +16,8 @@ class SetOfAll(OperationOverInstances):
                  conditions=None, styles=None, _lambda_map=None):
         '''
         Create an expression representing the set of all
-        instance_element for instance parameter(s) such that the conditions
-        are satisfied:
+        instance_element for instance parameter(s) such that the
+        conditions are satisfied:
         {instance_element | conditions}_{instance_param_or_params \in S}
         '''
         OperationOverInstances.__init__(
@@ -33,8 +33,8 @@ class SetOfAll(OperationOverInstances):
             if not hasattr(self, 'domains') or None in self.domains:
                 raise ValueError("SetOfAll requires domains")
         else:
-            assert False, ("Expecting either 'instance_param' or 'instance_params' "
-                           "to be set")
+            assert False, ("Expecting either 'instance_param' or "
+                           "'instance_params' to be set")
 
     def membership_object(self, element):
         from .set_of_all_membership import SetOfAllMembership
@@ -94,6 +94,22 @@ class SetOfAll(OperationOverInstances):
             out_str += explicit_domains[0].formatted(format_type)
         out_str += '}'
         return out_str
+
+    # @equality_prover('shallow_simplified', 'shallow_simplify')
+    # def shallow_simplification(self, *, must_evaluate=False,
+    #                            **defaults_config):
+    #     '''
+    #     From this forall statement, evaluate it to TRUE or FALSE if
+    #     possible by calling the domain's forall_evaluation method
+
+    #     A possible fix --- play around with this and test 20250321
+    #     possibly look at Operation.shallow_simplification as model.
+    #     Consider a simplification() method??
+    #     '''
+    #     with defaults.temporary() as temp_defaults:
+    #         temp_defaults.preserved_exprs.add(self.condition)
+        
+    #         return OperationOverInstances.shallow_simplification(self)
 
     @relation_prover
     def deduce_superset_eq_relation(self, superset, **defaults_config):
