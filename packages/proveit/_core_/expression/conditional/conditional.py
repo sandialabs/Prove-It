@@ -303,6 +303,8 @@ class Conditional(Expression):
             {a if [⋀](Q).  =  {a if Q.
             {a if a ⋀ b, c ⋀ d.  =  {a if a ⋀ b ⋀ c ⋀ d.
             etc.
+        Experimental modifications starting 20250412 by wdc:
+        removing simplifications of nested conjunctions.
         '''
         from proveit import a, m, n, Q, R
         from proveit.logic import And, TRUE, Equals
@@ -327,6 +329,7 @@ class Conditional(Expression):
                         singular_conjunction_condition_reduction)
                 return singular_conjunction_condition_reduction \
                     .instantiate({a: self.value, Q: conditions[0]})
+            # comment out the following ELIF
             elif (conditions.is_double() and
                     all(isinstance(cond, And) for cond in conditions)):
                 from proveit.core_expr_types.conditionals import (
@@ -354,6 +357,7 @@ class Conditional(Expression):
                 _m = _Q.num_elements()
                 _a = self.value
                 return thm.instantiate({m: _m, a: _a, Q: _Q})
+            # comment out the following ELIF
             elif (conditions.is_double() 
                       and isinstance(conditions[0], And)):
                 from proveit.core_expr_types.conditionals import (
@@ -362,6 +366,7 @@ class Conditional(Expression):
                 _m = _Q.num_elements()
                 return condition_append_reduction.instantiate(
                     {a: self.value, m: _m, Q: _Q, R: conditions[1]})
+            # comment out the following ELIF
             elif (conditions.is_double()
                       and isinstance(conditions[1], And)):
                 from proveit.core_expr_types.conditionals import (
