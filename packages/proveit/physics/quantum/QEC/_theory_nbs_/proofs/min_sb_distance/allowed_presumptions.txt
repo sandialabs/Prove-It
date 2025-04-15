@@ -1,0 +1,12 @@
+proveit.physics.quantum.QEC.smooth_boundary_pts_north_west
+proveit.physics.quantum.QEC.smooth_boundary_pts_south_east
+proveit.numbers.numerals.decimals.posnat2
+proveit.numbers.numerals.decimals.tuple_len_2_typical_eq
+proveit.logic.equality.sub_right_side_into
+proveit.physics.quantum.QEC.d_ge_n_smooth_north_south_i_1_to_n_minus_1
+proveit.physics.quantum.QEC.d_ge_n_smooth_west_east_i_1_to_n_minus_1
+proveit.physics.quantum.QEC.d_ge_n_smooth_north_east_i_1_to_n_minus_1
+proveit.physics.quantum.QEC.d_ge_n_smooth_west_south_i_1_to_n_minus_1
+proveit.logic.booleans.disjunction.singular_constructive_dilemma
+proveit.logic.booleans.in_bool_if_true
+proveit.logic.sets.unification.membership_unfolding
