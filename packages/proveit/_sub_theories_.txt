@@ -4,5 +4,6 @@ numbers
 trigonometry
 abstract_algebra
 linear_algebra
+graphs
 statistics
 physics
