@@ -2,6 +2,7 @@ from .quantification import Forall, Exists, NotExists, UniqueExists
 from .booleans import in_bool, BooleanSet, TrueLiteral, FalseLiteral
 from .conjunction import And, compose
 from .disjunction import Or
+from .exclusive_disjunction import XOr
 from .negation import Not
 from .implication import Implies, Iff, conclude_via_implication
 
