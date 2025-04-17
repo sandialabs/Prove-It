@@ -2,7 +2,7 @@ from proveit import (Literal, defaults, USE_DEFAULTS,
                      prover, relation_prover, equality_prover,
                      ProofFailure, UnsatisfiedPrerequisites)
 from proveit.relation import Relation
-from proveit import x, S
+from proveit import x, S, C
 from proveit.util import OrderedSet
 
 
@@ -27,9 +27,9 @@ class NotInClass(Relation):
     def __init__(self, element, domain, *, 
                  operator=None, styles=None):
         '''
-        Create an class nonmembership relation indicating that the
+        Create a class nonmembership relation indicating that the
         given 'element' is NOT in the given 'domain'.  If an 'operator'
-        is provide, use this as the operator instead of
+        is provided, use this as the operator instead of the
         NotInClass._operator_ (e.g., for NotInSet which derives from
         NotInClass but uses a distinct operator).
         '''
@@ -117,7 +117,7 @@ class NotInClass(Relation):
         '''
         from . import not_in_class_is_bool
         return not_in_class_is_bool.instantiate(
-                {x: self.element, S: self.domain})
+                {x: self.element, C: self.domain})
 
     @prover
     def unfold_not_in(self, **defaults_config):
@@ -128,7 +128,7 @@ class NotInClass(Relation):
         # We include the auto_simplify=False to keep the membership
         # result inside the Not() from being reduced to False.
         return unfold_not_in_class.instantiate(
-            {x: self.element, S: self.domain}, auto_simplify=False)
+            {x: self.element, C: self.domain}, auto_simplify=False)
 
     def _build_canonical_form(self):
         '''
@@ -224,7 +224,7 @@ class NotInClass(Relation):
         '''
         from . import double_negated_membership
         return double_negated_membership.instantiate(
-                {x:self.element, S:self.domain})
+                {x:self.element, C:self.domain})
 
     @prover
     def conclude_as_folded(self, **defaults_config):
@@ -233,7 +233,7 @@ class NotInClass(Relation):
         '''
         from . import fold_not_in_class
         return fold_not_in_class.instantiate(
-            {x: self.element, S: self.domain})
+            {x: self.element, C: self.domain})
 
     @staticmethod
     def yield_known_nonmemberships(element, assumptions=USE_DEFAULTS):
