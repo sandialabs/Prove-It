@@ -181,7 +181,7 @@ class XOr(Operation):
         '''
         # from proveit.logic import And
         from . import true_xor_false, false_xor_true
-        if self in {true_xor_false, false_xor_true}:
+        if self in {true_xor_false.expr, false_xor_true.expr}:
             # should be proven via one of the imported theorems as a
             # simple special case
             return self.prove()
@@ -237,7 +237,7 @@ class XOr(Operation):
         #         return self.conclude_via_example(operand)
 
         raise ProofFailure(self, defaults.assumptions,
-                "Or.conclude() has failed to find a proof for the "
+                "XOr.conclude() has failed to find a proof for the "
                 "exclusive disjunction: ({})".format(self))
 
     # not yet clear if this is relevant or correct
