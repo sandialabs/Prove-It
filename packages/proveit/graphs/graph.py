@@ -29,6 +29,7 @@ class Graphs(Literal):
         '''
         return True
 
+
 class GraphsMembership(ClassMembership):
 
     def __init__(self, element, domain):
@@ -37,6 +38,8 @@ class GraphsMembership(ClassMembership):
         if domain != Graphs:
             raise TypeError("domain expected to be Graphs, not %s"
                             %domain.__class__)
+
+    # def conclude(): see if and when needed
 
 class Graph(Function):
     '''
