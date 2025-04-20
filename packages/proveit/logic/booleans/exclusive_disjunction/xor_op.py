@@ -1,6 +1,7 @@
-from proveit import (A, B, C,
-        defaults, equality_prover, Literal, Operation, ProofFailure,
-        prover, SimplificationDirectives)
+from proveit import (m, n, A, B, C, D,
+        defaults, Expression, equality_prover, Literal,
+        Operation, ProofFailure, prover,
+        SimplificationDirectives, TransRelUpdater)
 from proveit.logic.booleans import in_bool
 
 class XOr(Operation):
@@ -196,15 +197,15 @@ class XOr(Operation):
             _B_cf = _B.canonical_form()
             if _B_cf == Not(_A_cf):
                 # Prove A or Not(A)
-                from proveit.logic.booleans import unfold_is_bool
+                from proveit.logic.booleans import unfold_is_bool_xor
                 replacements = []
                 if _B != Not(_A):
                     replacements.append(Not(_A).deduce_canonically_equal(_B))
-                return unfold_is_bool.instantiate(
+                return unfold_is_bool_xor.instantiate(
                         {A:_A}, replacements=replacements)
             elif _A_cf == Not(_B_cf):
                 # Prove Not(A) or A
-                return Or(_B, _A).prove().inner_expr().commute()
+                return XOr(_B, _A).prove().inner_expr().commute()
 
             # can we then check if we know A, Not(B) and use
             # related theorem xor_if_only_left or xor_if_only_right?
@@ -248,7 +249,7 @@ class XOr(Operation):
         from proveit.logic import Not
         if self.operands.is_double():
             if self.operands[1] == Not(self.operands[0]):
-                # (A or not(A)) is an unfolded Boolean
+                # (A xor not(A)) is an unfolded Boolean
                 return  # stop to avoid infinite recursion.
         yield self.derive_in_bool
 
@@ -288,7 +289,6 @@ class XOr(Operation):
 
     @prover
     def conclude_negation(self, **defaults_config):
-        # NEW
 
         from . import (true_xor_true_negated, false_xor_false_negated,
                        xor_not_if_both, xor_not_if_neither)
@@ -366,8 +366,6 @@ class XOr(Operation):
         equality = Equals(self, rhs)
         return deduce_equality_via_commutation(equality, one_side=self)
 
-    # WORKING HERE
-
     @prover
     def derive_right_if_not_left(self, **defaults_config):
         '''
@@ -407,6 +405,301 @@ class XOr(Operation):
         return singular_constructive_multi_dilemma.instantiate(
                 {m: _m_sub, A: _A_sub, C: conclusion}, preserve_expr=conclusion)
 
+    @prover
+    def derive_via_multi_dilemma(self, conclusion, **defaults_config):
+        '''
+        From (A xor B) as self, and assuming A => C, B => D, and
+        A, B, C, and D are Boolean, derive and return the conclusion,
+        C xor D. Multiple variants are considered.
+        '''
+        from . import (constructive_dilemma, destructive_dilemma,
+                       constructive_multi_dilemma, destructive_multi_dilemma)
+        from proveit.logic import Not, XOr
+        from proveit import ExprTuple
+        assert (isinstance(conclusion, XOr) and
+                (conclusion.operands.num_entries()
+                == self.operands.num_entries())), \
+                ("derive_via_multi_dilemma requires conclusion to be an "
+                 "exclusive disjunction, XOr, with the same number of "
+                 "operands as self.")
+        with defaults.temporary() as temp_defaults:
+            # temp_defaults.preserve_expr(conclusion)
+            temp_defaults.preserved_exprs = (
+                    defaults.preserved_exprs.union([conclusion]))
+            # Check for destructive versus constructive dilemma cases.
+            if (all(isinstance(operand, Not) for operand in self.operands)
+               and
+               all(isinstance(operand, Not) for operand in conclusion.operands)
+               ):
+                # destructive case.
+                if (self.operands.is_double()
+                    and destructive_dilemma.is_usable()):
+                    # From Not(C) xor Not(D), A => C, B => D, conclude
+                    # Not(A) xor Not(B)
+                    return destructive_dilemma.instantiate(
+                        {C: self.operands[0].operand,
+                         D: self.operands[1].operand,
+                         A: conclusion.operands[0].operand,
+                         B: conclusion.operands[1].operand})
+                elif destructive_multi_dilemma.is_usable():
+                    # raise NotImplementedError("Generalized destructive
+                    # multi-dilemma not implemented yet.")
+                    # Iterated destructive case.
+                    # From (Not(A) xor Not(B) xor Not(C)
+                    # xor Not(D)) as self
+                    negated_operands_self = [
+                        operand.operand for operand in self.operands]
+                    negated_operands_conc = [
+                        operand.operand for operand in conclusion.operands]
+                    _A = ExprTuple(*negated_operands_self)
+                    _B = ExprTuple(*negated_operands_conc)
+                    _m = _A.num_elements()
+                    return destructive_multi_dilemma.instantiate(
+                            {m: _m, A: _A, B: _B})
+            # constructive case.
+            if self.operands.is_double():
+                # From (A xor B), A => C, B => D, conclude C or D.
+                return constructive_dilemma.instantiate(
+                    {A: self.operands[0],
+                     B: self.operands[1],
+                     C: conclusion.operands[0],
+                     D: conclusion.operands[1]})
+            #raise NotImplementedError("Generalized constructive multi-dilemma not implemented yet.")
+            _A = self.operands
+            _B = conclusion.operands
+            _m = _A.num_elements()
+            return constructive_multi_dilemma.instantiate(
+                    {m: _m, A: _A, B: _B})
+
+    @prover
+    def derive_via_dilemma(self, conclusion, **defaults_config):
+        '''
+        If the conclusion is also an XOr operation with the same number
+        of operands as self, try derive_via_multi_dilemma.  Otherwise,
+        or if that fails, try derive_via_singular_dilemma.
+        '''
+        if (isinstance(conclusion, XOr) and
+                (conclusion.operands.num_entries() ==
+                 self.operands.num_entries())):
+            try:
+                return self.derive_via_multi_dilemma(conclusion)
+            except ProofFailure:
+                pass
+        return self.derive_via_singular_dilemma(conclusion)
+
+    @prover
+    def deduce_left_in_bool(self, **defaults_config):
+        '''
+        Deduce A in Boolean from (A xor B) in Boolean.
+        '''
+        from . import left_in_bool
+        if self.operands.is_double():
+            return left_in_bool.instantiate(
+                {A: self.operands[0], B: self.operands[1]})
+
+    @prover
+    def deduce_right_in_bool(self, **defaults_config):
+        '''
+        Deduce B in Boolean from (A xor B) in Boolean.
+        '''
+        from . import right_in_bool
+        if self.operands.is_double():
+            return right_in_bool.instantiate(
+                {A: self.operands[0], B: self.operands[1]})
+
+    @prover
+    def deduce_part_in_bool(self, index_or_expr, **defaults_config):
+        '''
+        Deduce X in Boolean from (A xor B xor .. xor X xor .. xor Z)
+        in Boolean, specifying X by expression or index number.
+        '''
+        from . import each_is_bool
+        idx = index_or_expr if isinstance(
+            index_or_expr, int) else list(
+            self.operands).index(index_or_expr)
+        if idx < 0 or idx >= self.operands.num_entries():
+            raise IndexError("Operand out of range: " + str(idx))
+        if self.operands.is_double():
+            if idx == 0:
+                return self.deduce_left_in_bool()
+            elif idx == 1:
+                return self.deduce_right_in_bool()
+        _A_sub, _B_sub, _C_sub = (
+            self.operands[:idx], self.operands[idx],self.operands[idx + 1:])
+        _m_sub = _A_sub.num_elements()
+        _n_sub = _C_sub.num_elements()
+        return each_is_bool.instantiate(
+                {m: _m_sub, n: _n_sub, A: _A_sub, B: _B_sub, C: _C_sub})
+
+    @equality_prover('shallow_simplified', 'shallow_simplify')
+    def shallow_simplification(self, *, must_evaluate=False,
+                               **defaults_config):
+        '''
+        IN DEVELOPMENT, BASED ON DISJUNCTION Or.
+        Attempt to determine whether this XOr, with
+        simplified operands, evaluates to TRUE or FALSE under the
+        given assumptions.  If all operands have simplified to FALSE,
+        the disjunction is FALSE. If exactly one of two operands has
+        simplified to TRUE and the other FALSE, the XOr is TRUE.
+        More generally, an XOr is TRUE if exactly an odd number of
+        its operands are TRUE and the rest are FALSE. (This is
+        considerably more troublesome than the more common inclusive
+        disjunction Or.)
+        If it can't be evaluated, and must_evaluate is False,
+        ungroup nested disjunctions if that is an active
+        simplification direction.  Also, if applicable, perform
+        a unary reduction: XOr(A) = A.
+        '''
+        from proveit.logic import (Equals, FALSE, TRUE, EvaluationError,
+                                   is_irreducible_value)
+        # load in truth-table evaluations
+        from . import (xor_t_t, xor_t_f, xor_f_t, xor_f_f)
+        if self.operands.num_entries() == 0:
+            from proveit.logic.booleans.exclusive_disjunction import (
+                    empty_xor_eval)
+            # XOr() = FALSE
+            return empty_xor_eval
+
+        # Check whether or not all of the operands are FALSE
+        # or any are TRUE.
+        all_are_false = True
+        # NEW
+        _num_true_ops = 0
+        _num_false_ops = self.operands.num_entries()
+        # END NEW
+        for operand in self.operands:
+            if operand != FALSE:
+                all_are_false = False
+                _num_false_ops -= 1
+            if operand == TRUE:
+                _num_true_ops += 1
+            # if operand == TRUE:
+            #     # If any simplified operand is TRUE, the disjunction
+            #     # may only evaluate to TRUE if it can be evaluated.
+            #     # Only use automation here if 'must_evaluate' is True.
+            #     self.conclude(automation=must_evaluate)
+            #     return Equals(self, TRUE).prove()
+
+        # If all of the operands are FALSE, we can prove that the
+        # conjunction is equal to FALSE.
+        if all_are_false:
+            self.conclude_negation()
+            return Equals(self, FALSE).prove()
+
+        # EVENTUALLY should be able to prove TRUE if we have an
+        # odd number of TRUE operands with the remainder all FALSE
+        # if ((_num_true_ops % 2 == 1)
+        #     and _num_true_ops + _num_false_ops == self.operands.num_entries()):
+        #     # call some relevant method here that will use some
+        #     # yet-to-be created theorem
+
+        if must_evaluate:
+            # FROM the Or method; not yet clear how to appy to XOr
+            # if self.operands.contains_range():
+            #     if self.operands.num_entries() == 1:
+            #         # Disjunction of a single ExprRange.  Convert to an
+            #         # existential quantification and evaluate that.
+            #         expr_range = self.operands[0]
+            #         _i = expr_range.true_start_index
+            #         _j = expr_range.true_end_index
+            #         _P = expr_range.lambda_map
+            #         conj_eq_quant = (disjunction_eq_quantification
+            #                          .instantiate({i:_i, j:_j, P:_P},
+            #                                       preserve_all=True))
+            #         return conj_eq_quant.apply_transitivity(
+            #                 conj_eq_quant.rhs.evaluation())
+            #     return prove_via_grouping_ranges(
+            #             self, lambda expr, **kwargs: expr.evaluation(**kwargs))
+            if not all(is_irreducible_value(operand) for
+                       operand in self.operands):
+                # The simplification of the operands may not have
+                # worked hard enough.  Let's work harder if we
+                # must evaluate.
+                for operand in self.operands:
+                    if not is_irreducible_value(operand):
+                        operand.evaluation()
+                return self.evaluation()
+            # Can't evaluate the XOr if not all operands are FALSE
+            # but we also don't have exactly an odd number TRUE.
+            raise EvaluationError(self)
+
+        if self.operands.is_single():
+            # XOr(A) = A
+            return self.unary_reduction()
+
+        expr = self
+        # for convenience updating our equation
+        eq = TransRelUpdater(expr)
+
+        if XOr._simplification_directives_.ungroup:
+            # ungroup the expression (disassociate nested disjunctions).
+            _n = 0
+            length = expr.operands.num_entries() - 1
+            # loop through all operands
+            while _n < length:
+                operand = expr.operands[_n]
+                if isinstance(operand, XOr):
+                    # if it is grouped, ungroup it
+                    expr = eq.update(expr.disassociation(
+                            _n, auto_simplify=False))
+                length = expr.operands.num_entries()
+                _n += 1
+
+        return Expression.shallow_simplification(self)
+
+    @prover
+    def derive_contradiction(self, **defaults_config):
+        r'''
+        From (A xor B), and (1) knowing or assuming not(A) and not(B),
+        derive and return FALSE; or (2) knowing or assuming A and B,
+        derive and return FALSE. The disjunction Or version of this
+        method also deals with cases of more than 2 operands, but the
+        XOr case does not.
+        '''
+        from . import (binary_xor_neither_contradiction,
+                       binary_xor_both_contradiction)
+        from proveit.logic import FALSE, TRUE
+        
+        if self.operands.is_double():
+            _A_sub = self.operands[0]
+            _B_sub = self.operands[1]
+            if (_A_sub.readily_disprovable() and _B_sub.readily_disprovable()):
+                return binary_xor_neither_contradiction.instantiate(
+                    {A: _A_sub, B: _B_sub})
+            # if (_A_sub == FALSE and _B_sub == FALSE):
+            #     return binary_xor_neither_contradiction.instantiate(
+            #         {A: _A_sub, B: _B_sub})
+            elif (_A_sub.readily_provable() and _B_sub.readily_provable()):
+                return binary_xor_both_contradiction.instantiate(
+                    {A: _A_sub, B: _B_sub})
+            else:
+                raise NotImplementedError("'derive_contradiction() "
+                        f"not implemented for {self}")
+        else:
+            raise NotImplementedError("'derive_contradiction() "
+                    f"not implemented for non-binary case: {self}.")
+
+    @prover
+    def affirm_via_contradiction(self, conclusion, **defaults_config):
+        '''
+        From (A xor B), derive the conclusion, provided that the
+        negated conclusion implies not(A xor B), and the conclusion is a
+        Boolean.
+        '''
+        from proveit.logic.booleans.implication import affirm_via_contradiction
+        return affirm_via_contradiction(self, conclusion)
+
+    @prover
+    def deny_via_contradiction(self, conclusion, **defaults_config):
+        '''
+
+        From (A xor B), derive the negated conclusion provided that the
+        conclusion implies not(A xor B), and the conclusion
+        is a Boolean.
+        '''
+        from proveit.logic.booleans.implication import deny_via_contradiction
+        return deny_via_contradiction(self, conclusion)
+
     # WORKING HERE
 
     @equality_prover('unary_reduced', 'unary_reduce')
@@ -419,11 +712,11 @@ class XOr(Operation):
             {A in Bool} |– [xor](A) = A
         '''
         from proveit.logic.booleans.exclusive_disjunction import (
-            unary_or_reduction)
+            unary_xor_reduction)
         if not self.operands.is_single():
             raise ValueError(
                     "XOr.unary_reduction(): expression must have only a "
                     "single operand in order to invoke the "
                     "unary_or_reduction theorem.")
         operand = self.operands[0]
-        return unary_or_reduction.instantiate({A: operand})
+        return unary_xor_reduction.instantiate({A: operand})
