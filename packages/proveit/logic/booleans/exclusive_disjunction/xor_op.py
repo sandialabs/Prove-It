@@ -543,10 +543,8 @@ class XOr(Operation):
         # Check whether or not all of the operands are FALSE
         # or any are TRUE.
         all_are_false = True
-        # NEW
         _num_true_ops = 0
         _num_false_ops = self.operands.num_entries()
-        # END NEW
         for operand in self.operands:
             if operand != FALSE:
                 all_are_false = False
@@ -560,8 +558,20 @@ class XOr(Operation):
             #     self.conclude(automation=must_evaluate)
             #     return Equals(self, TRUE).prove()
 
-        # If all of the operands are FALSE, we can prove that the
-        # conjunction is equal to FALSE.
+        # If binary and both operands evaluate to TRUE or FALSE
+        # we should be able to prove a simplification
+        if (self.operands.is_double()
+            and _num_true_ops + _num_false_ops == 2):
+            if (all_are_false or _num_true_ops == 2):
+                self.conclude_negation()
+                return Equals(self, FALSE).prove()
+            else:
+                self.conclude()
+                return Equals(self, TRUE).prove()
+
+        # If we are not dealing with 2 operands but all of the
+        # operands are FALSE, we can still prove that the XOr is
+        # equal to FALSE.
         if all_are_false:
             self.conclude_negation()
             return Equals(self, FALSE).prove()
@@ -597,7 +607,7 @@ class XOr(Operation):
                 # must evaluate.
                 for operand in self.operands:
                     if not is_irreducible_value(operand):
-                        operand.evaluation()
+                        temp_result = operand.evaluation()
                 return self.evaluation()
             # Can't evaluate the XOr if not all operands are FALSE
             # but we also don't have exactly an odd number TRUE.
