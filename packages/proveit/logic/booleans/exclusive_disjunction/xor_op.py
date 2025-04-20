@@ -1,8 +1,12 @@
 from proveit import (m, n, A, B, C, D,
-        defaults, Expression, equality_prover, Literal,
-        Operation, ProofFailure, prover,
+        defaults, Expression, equality_prover, Judgment, Literal,
+        Operation, ProofFailure, prover, relation_prover,
         SimplificationDirectives, TransRelUpdater)
 from proveit.logic.booleans import in_bool
+from proveit.abstract_algebra.generic_methods import (
+        apply_commutation_thm, apply_association_thm,
+        apply_disassociation_thm, deduce_equality_via_commutation,
+        generic_permutation, group_commutation)
 
 class XOr(Operation):
     '''
@@ -253,9 +257,9 @@ class XOr(Operation):
                 return  # stop to avoid infinite recursion.
         yield self.derive_in_bool
 
-    # not yet clear if this is relevant or correct
-    # commented out until further updates to deduce_not_left_if_neither,
-    # etc., in code block
+    # Started to adapt this from the Or class, but realized
+    # it would have to be modified considerably to apply to XOR.
+    # Leaving here as a placeholder for future consideration.
     # def negation_side_effects(self, judgment):
     #     '''
     #     Side-effect derivations to attempt automatically for
@@ -275,17 +279,15 @@ class XOr(Operation):
     #         demorgan_and = And(*[operand.operand for operand in self.operands])
     #         yield demorgan_and.conclude_via_demorgans
 
-    # not clear if this will eventually work; commenting out until
-    # we have the deduce_part_in_bool() method
-    # def in_bool_side_effects(self, judgment):
-    #     '''
-    #     From (A xor B xor .. xor Z) in Boolean,
-    #     deduce (A in Boolean), (B in Boolean), ... (Z in Boolean).
-    #     '''
-    #     from proveit import ExprRange
-    #     for _i in range(self.operands.num_entries()):
-    #         if not isinstance(self.operands[_i], ExprRange):
-    #             yield lambda : self.deduce_part_in_bool(_i)
+    def in_bool_side_effects(self, judgment):
+        '''
+        From (A xor B xor .. xor Z) in Boolean,
+        deduce (A in Boolean), (B in Boolean), ... (Z in Boolean).
+        '''
+        from proveit import ExprRange
+        for _i in range(self.operands.num_entries()):
+            if not isinstance(self.operands[_i], ExprRange):
+                yield lambda : self.deduce_part_in_bool(_i)
 
     @prover
     def conclude_negation(self, **defaults_config):
@@ -315,14 +317,6 @@ class XOr(Operation):
             return not_xor_if_not_any.instantiate(
                     {m:_m_sub, A:_A_sub}, auto_simplify=False)
 
-    # Not relevant for XOr; delete
-    # @prover
-    # def conclude_via_both(self, **defaults_config):
-    #     from . import or_if_both
-    #     assert self.operands.is_double()
-    #     return or_if_both.instantiate(
-    #         {A: self.operands[0], B: self.operands[1]})
-
     @prover
     def conclude_via_only_left(self, **defaults_config):
         from . import xor_if_only_left
@@ -330,25 +324,12 @@ class XOr(Operation):
         return xor_if_only_left.instantiate(
             {A: self.operands[0], B: self.operands[1]})
 
-    # Not relevant for XOr; delete
-    # @prover
-    # def conclude_via_left(self, **defaults_config):
-    #     '''
-    #     From A being (or assumed) True, conclude that (A V B) is True.
-    #     '''
-    #     from . import or_if_left
-    #     assert self.operands.is_double()
-    #     return or_if_left.instantiate(
-    #         {A: self.operands[0], B: self.operands[1]})
-
     @prover
     def conclude_via_only_right(self, **defaults_config):
         from . import xor_if_only_right
         assert self.operands.is_double()
         return xor_if_only_right.instantiate(
             {A: self.operands[0], B: self.operands[1]})
-
-    
 
     def _build_canonical_form(self):
         '''
@@ -360,7 +341,6 @@ class XOr(Operation):
         return XOr(*sorted([operand.canonical_form() for operand 
                           in self.operands.entries], key=hash))
 
-    # this one doesn't yet work
     def _deduce_canonically_equal(self, rhs):
         from proveit.logic import Equals
         equality = Equals(self, rhs)
@@ -464,7 +444,7 @@ class XOr(Operation):
                      B: self.operands[1],
                      C: conclusion.operands[0],
                      D: conclusion.operands[1]})
-            #raise NotImplementedError("Generalized constructive multi-dilemma not implemented yet.")
+
             _A = self.operands
             _B = conclusion.operands
             _m = _A.num_elements()
@@ -700,7 +680,98 @@ class XOr(Operation):
         from proveit.logic.booleans.implication import deny_via_contradiction
         return deny_via_contradiction(self, conclusion)
 
-    # WORKING HERE
+    def readily_in_bool(self):
+        '''
+        Returns True if we can readily prove that all of the operands
+        are provably boolean and therefore this exclusive disjunction
+        XOr is provably boolean. As in the Or case, we re-use the
+        readily_in_bool() method of the conjunction (And) class.
+        '''
+        from . import closure
+        from proveit.logic import And
+        if not self.operands.is_double() and not closure.is_usable():
+            return False
+        # The requirement for a conjunction is the same for a 
+        # disjunction (Or or XOr) -- all operands must be provably
+        # boolean.
+        return And.readily_in_bool(self)
+
+    @relation_prover
+    def deduce_in_bool(self, **defaults_config):
+        '''
+        Attempt to deduce, then return, that this 'xor' expression
+        is in the set of BOOLEANS.
+        '''
+        from . import binary_closure, closure
+        if self.operands.is_double():
+            return binary_closure.instantiate(
+                {A: self.operands[0], B: self.operands[1]},
+                preserve_expr=self)
+        else:
+            _A_sub = self.operands
+            _m_sub = _A_sub.num_elements()
+            return closure.instantiate(
+                {m: _m_sub, A: _A_sub}, preserve_expr=self)
+
+    @prover
+    def conclude_via_permutation(self, permuted_xor, **defaults_config):
+        '''
+        From some true (or assumed true) but permutated version of this
+        XOr expression, conclude that this XOr expression is true.
+        For example, let this_xor = A xor B xor C xor D
+        and let perm_of_this_xor = S |- B xor A xor C xor D.
+        From perm_of_this_xor, conclude this_xor, using the following:
+
+            this_xor.conclude_via_permuation(
+                    perm_of_this_xor, assumptions = S),
+
+        which will return S |– A xor B xor C xor D.
+
+        '''
+
+        # Check that the permuted_xor is an instance of XOr. Need to
+        # distinguish between Judgment and Expression versions of the
+        # provided permuted_xor.
+        if isinstance(permuted_xor, Judgment):
+            perm_xor_expr = permuted_xor.expr
+        else:
+            perm_xor_expr = permuted_xor
+        if not isinstance(perm_xor_expr, XOr):
+            raise TypeError('permuted_xor arg should be an exclusive '
+                            'disjunction (XOr) Expression or Judgment '
+                            'but instead was {permuted_xor}.')
+
+        # Check that each of the operands in permuted_xor occur as
+        # operands in self (and vice-versa), otherwise throw a
+        # ValueError.
+        self_operands = self.operands
+        perm_operands = permuted_xor.operands
+        unexpected_operands = (
+            set(self_operands).symmetric_difference(set(perm_operands)))
+        if len(unexpected_operands) != 0:
+            raise ValueError(
+                    f"The original expression: {self}, and the provided "
+                    f"permutated XOr: {permuted_xor}, differ, with "
+                    f"unexpected item(s): {unexpected_operands}.")
+
+        # NOTICE that we are assuming no repetition of operands and
+        # that len(perm_operands) = self_operands.num_entries()
+
+        for _i in range(self_operands.num_entries()):
+            # update the operands list each time for the
+            # permuting version
+            perm_operands = permuted_xor.operands
+            temp_operand = self_operands[_i]
+            _j = perm_operands.index(temp_operand)
+            equiv_permuted_xor = (
+                permuted_xor.commutation(_j, _i)
+            )
+            permuted_xor = (
+                equiv_permuted_xor
+                .sub_right_side_into(permuted_xor)
+            )
+
+        return permuted_xor
 
     @equality_prover('unary_reduced', 'unary_reduce')
     def unary_reduction(self, **defaults_config):
@@ -720,3 +791,131 @@ class XOr(Operation):
                     "unary_or_reduction theorem.")
         operand = self.operands[0]
         return unary_xor_reduction.instantiate({A: operand})
+
+    @equality_prover('commuted', 'commute')
+    def commutation(self, init_idx=None, final_idx=None, **defaults_config):
+        '''
+        Given Boolean operands, deduce that this expression is equal
+        to a form in which the operand at index init_idx has been
+        moved to final_idx. For example,
+
+          (A xor B xor ... xor Y xor Z) = (A xor ... xor Y xor B xor Z)
+
+        via init_idx = 1 (for 'B') and final_idx = -2.
+        '''
+
+        from . import (commutation, leftward_commutation,
+                       rightward_commutation)
+        return apply_commutation_thm(
+            self, init_idx, final_idx, commutation,
+            leftward_commutation, rightward_commutation)
+
+    @equality_prover('group_commuted', 'group_commute')
+    def group_commutation(self, init_idx, final_idx, length,
+                          disassociate=True, **defaults_config):
+        '''
+        Given Boolean operands, deduce that this expression is equal
+        to a form in which the operands at indices
+        [init_idx, init_idx+length) have been moved to
+        [final_idx, final_idx+length). It will do this by performing
+        association first. If disassociate is True, it will be
+        disassociated afterward. For example, the call
+        XOr(A,B,C,D).group_commutation(0, 1, length=2,
+                                 assumptions=in_bool(A,B,C,D))
+        will conceptually follow the steps:
+        (1) associates 2 elements (i.e. length = 2) starting at index 0
+            to obtain (A V B) V C V D
+        (2) removes the element to be commuted to obtain C V D
+        (3) inserts the element to be commuted at the desire index 1 to
+            obtain C V (A V B) V D
+        (4) then disassociates to obtain C V A V B V D
+        (5) eventually producing the output:
+            {A in Bool, ..., D in Bool} |-
+            (A V B V C V D) = (C V A V B V D)
+        '''
+        return group_commutation(
+            self, init_idx, final_idx, length, disassociate)
+
+    @equality_prover('moved', 'move')
+    def permutation_move(self, init_idx=None, final_idx=None,
+                         **defaults_config):
+        '''
+        Given Boolean operands, deduce that this expression is equal 
+        to a form in which the operand at index init_idx has been
+        moved to final_idx. For example,
+
+          (a xor b xor ... xor y xor z) = (a xor ... xor y xor b xor z)
+
+        via init_idx = 1 (for the 'b') and final_idx = -2.
+        '''
+
+        return self.commutation(init_idx=init_idx, final_idx=final_idx)
+
+    @equality_prover('permuted', 'permute')
+    def permutation(self, new_order=None, cycles=None, **defaults_config):
+        '''
+        Deduce that this XOr expression is equal to an XOr in which
+        the terms at indices 0, 1, …, n-1 have been reordered as
+        specified EITHER by the new_order list OR by the cycles list
+        parameter. For example,
+
+            (a xor b xor c xor d).permutation(new_order=[0, 2, 3, 1])
+        and
+            (a xor b xor c xor d).permutation(cycles=[(1, 2, 3)])
+
+        would both return
+
+            |- (a xor b xor c xor d) = (a xor c xor d xor d).
+        '''
+        return generic_permutation(self, new_order, cycles)
+
+    @equality_prover('associated', 'associate')
+    def association(self, start_idx, length, **defaults_config):
+        '''
+        Given Boolean operands, deduce that this expression is equal
+        to a form in which operands in the range
+            [start_idx, start_idx+length)
+        are grouped together. For example,
+        (A or B or ... or Y or Z) =
+        (A or B ... or (L or ... or M) or ... or Y or Z)
+        '''
+        from . import association
+        return apply_association_thm(
+            self, start_idx, length, association)
+
+    @prover
+    def associate(self, start_idx, length, **defaults_config):
+        '''
+        From self, derive and return a form in which operands in the
+        range [start_idx, start_idx+length) are grouped together.
+        For example, from (A xor B xor ... xor Y xor Z) derive
+        (A xor B ... xor (L xor ... xor M) xor ... xor Y xor Z).
+        '''
+        from . import associate
+        return apply_association_thm(
+            self, start_idx, length, associate)
+
+    @equality_prover('disassociated', 'disassociate')
+    def disassociation(self, idx, **defaults_config):
+        '''
+        Given Boolean operands, deduce that this expression is equal to
+        a form in which the operand at index idx is no longer grouped
+        together.
+        For example,
+            (A or B ... or (L or ... or M) or ... or Y or Z) =
+            (A or B or ... or Y or Z)
+        '''
+        from . import disassociation
+        return apply_disassociation_thm(self, idx, disassociation)
+
+    @prover
+    def disassociate(self, idx, **defaults_config):
+        '''
+        From self, derive and return a form in which the operand
+        at the given index is ungrouped.
+        For example, from
+            (A xor B ... xor (L xor ... xor M) xor ... xor Y xor Z)
+        derive (A xor B xor ... xor Y xor Z).
+        '''
+        from . import disassociate
+        return apply_disassociation_thm(self, idx, disassociate)
