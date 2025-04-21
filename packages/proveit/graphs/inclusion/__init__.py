@@ -1,8 +1,5 @@
-from .graph import Edges, EndPoints, Graph, Graphs, Path, Vertices
-from .membership import (
-      GraphMembership, GraphNonmembership, InGraph, NotInGraph)
-from .union import GraphUnion
-from .inclusion import NotSubgraph, Subgraph
+from .subgraph import Subgraph
+from .not_subgraph import NotSubgraph
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.

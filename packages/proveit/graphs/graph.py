@@ -35,7 +35,7 @@ class GraphsMembership(ClassMembership):
     def __init__(self, element, domain):
         from . import Graphs
         ClassMembership.__init__(self, element, domain)
-        if domain != Graphs:
+        if domain != Graphs():
             raise TypeError("domain expected to be Graphs, not %s"
                             %domain.__class__)
 
@@ -66,11 +66,51 @@ class Graph(Function):
         Function.__init__(
                 self, Graph._operator_, (V, E), styles=styles)
 
+class Vertices(Function):
+    '''
+    Given a graph G(V, E) with vertex set V and edge set E,
+    Vertices(G(V, E)) represents the set V of vertices ---
+    that is, Vertices(G(V,E)) = V.
+    '''
+
+    # the literal operator of the Vertices operation
+    _operator_ = Literal(string_format='Vertices',
+                         latex_format=r'\text{Vertices}',
+                         theory=__file__)
+
+    def __init__(self, G, *, styles=None):
+        '''
+        Given a graph G(V,E) = (V,E), represent the vertex set of G.
+        '''
+        self.graph = G
+        Function.__init__(
+                self, Vertices._operator_, G, styles=styles)
+
+class Edges(Function):
+    '''
+    Given a graph G(V, E) with vertex set V and edge set E,
+    Edges(G(V, E)) represents the set E of vertices ---
+    that is, Edges(G(V,E)) = E.
+    '''
+
+    # the literal operator of the Vertices operation
+    _operator_ = Literal(string_format='Edges',
+                         latex_format=r'\text{Edges}',
+                         theory=__file__)
+
+    def __init__(self, G, *, styles=None):
+        '''
+        Given a graph G(V,E) = (V,E), represent the edge set of G.
+        '''
+        self.graph = G
+        Function.__init__(
+                self, Edges._operator_, G, styles=styles)
+
 
 class Path(Graph):
     '''
-    A Path is a non-empty graph P = (V,E) with vertex set V and edge
-    set E such that:
+    Path(V,E) represents a path. A Path is a non-empty graph
+    P = (V,E) with vertex set V and edge set E such that:
 
         V = {x0, x1, ..., xk}, E = {x0x1, x1x2, ..., x_{k-1}x_{k}},
 
