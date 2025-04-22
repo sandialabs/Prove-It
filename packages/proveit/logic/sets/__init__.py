@@ -11,7 +11,7 @@ from .unification import Union, UnionAll
 from .intersection import Intersect, IntersectAll
 from .subtraction import Difference
 from .comprehension import SetOfAll
-from .power_set import PowerSet
+from .power_set import PowerSet, KElemSubsets
 from .cartesian_products import CartProd, CartExp
 from .disjointness import Disjoint, Distinct
 from .cardinality import Card
