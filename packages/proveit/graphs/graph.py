@@ -53,8 +53,8 @@ class Graph(Function):
     '''
 
     # the literal operator of the Graph operation
-    _operator_ = Literal(string_format='Graph',
-                         latex_format=r'\textrm{Graph}',
+    _operator_ = Literal(string_format='G',
+                         latex_format=r'\textrm{G}',
                          theory=__file__)
 
     def __init__(self, V, E, *, styles=None):
