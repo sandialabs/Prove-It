@@ -74,8 +74,8 @@ class Vertices(Function):
     '''
 
     # the literal operator of the Vertices operation
-    _operator_ = Literal(string_format='Vertices',
-                         latex_format=r'\text{Vertices}',
+    _operator_ = Literal(string_format='V',
+                         latex_format=r'\mathrm{V}',
                          theory=__file__)
 
     def __init__(self, G, *, styles=None):
@@ -94,8 +94,8 @@ class Edges(Function):
     '''
 
     # the literal operator of the Vertices operation
-    _operator_ = Literal(string_format='Edges',
-                         latex_format=r'\text{Edges}',
+    _operator_ = Literal(string_format='E',
+                         latex_format=r'\mathrm{E}',
                          theory=__file__)
 
     def __init__(self, G, *, styles=None):
