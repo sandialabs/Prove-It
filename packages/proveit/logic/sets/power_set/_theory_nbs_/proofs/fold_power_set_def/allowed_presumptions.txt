@@ -1,0 +1,1 @@
+proveit.logic.equality.lhs_via_equality
