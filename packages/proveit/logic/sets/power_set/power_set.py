@@ -16,14 +16,10 @@ class PowerSet(Function):
         Function.__init__(self, PowerSet._operator_, operand,
                           styles=styles)
 
-    """
-    # Needs implementation
-
     def membership_object(self, element):
-        from .powerset_membership import PowerSetMembership
+        from .power_set_membership import PowerSetMembership
         return PowerSetMembership(element, self)
 
     def nonmembership_object(self, element):
-        from .powerset_membership import PowerSetNonmembership
+        from .power_set_membership import PowerSetNonmembership
         return PowerSetNonmembership(element, self)
-    """
