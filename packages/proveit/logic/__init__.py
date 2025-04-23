@@ -24,7 +24,7 @@ from .sets import (
     NotProperSubset, superset_eq, not_superset_eq, proper_superset,
     not_proper_superset)
 from .sets import (Union, UnionAll, Intersect, IntersectAll, Difference,
-                   SetOfAll, CartProd, CartExp, KElemSubsets,
+                   SetOfAll, CartProd, CartExp, KPowerSet,
                    PowerSet, Disjoint, Distinct, Card)
 from .sets import (Functions, Injections, Surjections, Bijections,
                    Image, InvImage)
