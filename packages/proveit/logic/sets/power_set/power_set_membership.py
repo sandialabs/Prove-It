@@ -106,6 +106,20 @@ class PowerSetNonmembership(SetNonmembership):
         return NotSubsetEq(element, self.domain.operand)
 
     @prover
+    def unfold(self, **defaults_config):
+        '''
+        From TRUE or assumed self = [element not in PowerSet(S)],
+        derive and return [NotSubsetEq(element, S)].
+        '''
+        from . import unfold_not_in_power_set
+        element = self.element
+        operand = self.domain.operand
+        _x_sub = element
+        _S_sub = operand
+        return unfold_not_in_power_set.instantiate(
+            {x: _x_sub, S: _S_sub}, auto_simplify=False)
+
+    @prover
     def conclude(self, **defaults_config):
         '''
         Called on the self = [elem not in PowerSet(S)], from known
