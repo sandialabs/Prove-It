@@ -4,11 +4,11 @@ from proveit import n, x
 
 class KPowerSet(Function):
     '''
-    Given a S and a natural number k <= |S|, KPowerSet(S, k)
+    Given a set S and a natural number k <= |S|, KPowerSet(S, k)
     represents the set of all k-element subsets of S, denoted [S]^{k}.
     Such sets are similar in principle to the PowerSet of S (which
-    contains [S]^{k}) and arise often enough in set theory and 
-    combinatorics to have somewhat standard notation.
+    contains all the elements of [S]^{k}) and arise often enough in
+    set theory and combinatorics to have somewhat standard notation.
     In Prove-It, [S]^{k} arises in the context of graph theory,
     using k = 2 to describe the superset of possible graph edges in
     a simple graph.
@@ -35,12 +35,10 @@ class KPowerSet(Function):
             r'\left[' + self.operands[0].latex()
                       + r'\right]^{' + self.operands[1].latex() + r'}')
 
-    # TO BE UPDATED ONCE MEMBERSHIP DEFINED
-    
-    # def membership_object(self, element):
-    #     from .k_elem_subsets_membership import KElemSubsetsMembership
-    #     return KElemSubsetsMembership(element, self)
+    def membership_object(self, element):
+        from .k_power_set_membership import KPowerSetMembership
+        return KPowerSetMembership(element, self)
 
-    # def nonmembership_object(self, element):
-    #     from .k_elem_subsets_membership import KElemSubsetsNonmembership
-    #     return KElemSubsetsNonmembership(element, self)
+    def nonmembership_object(self, element):
+        from .k_power_set_membership import KPowerSetNonmembership
+        return KPowerSetNonmembership(element, self)

@@ -1,0 +1,2 @@
+proveit.logic.equality.sub_right_side_into
+proveit.logic.booleans.conjunction.demorgans_law_or_to_and_bin
