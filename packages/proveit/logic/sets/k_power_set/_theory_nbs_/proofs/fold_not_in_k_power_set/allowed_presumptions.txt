@@ -1,2 +1,2 @@
 proveit.logic.sets.k_power_set.not_in_k_power_set_equiv
-proveit.logic.equality.rhs_via_equality
+proveit.logic.equality.lhs_via_equality
