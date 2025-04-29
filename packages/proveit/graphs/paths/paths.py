@@ -29,3 +29,11 @@ class Paths(Function):
         '''
         Function.__init__(
                 self, Paths._operator_, G, styles=styles)
+
+    def membership_object(self, element):
+        from .paths_membership import PathsMembership
+        return PathsMembership(element, self)
+
+    def nonmembership_object(self, element):
+        from .paths_membership import PathsNonmembership
+        return PathsNonmembership(element, self)
