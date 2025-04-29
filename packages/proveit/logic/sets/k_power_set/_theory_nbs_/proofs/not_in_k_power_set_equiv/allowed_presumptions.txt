@@ -1,2 +1,6 @@
 proveit.logic.equality.sub_right_side_into
 proveit.logic.booleans.conjunction.demorgans_law_or_to_and_bin
+proveit.logic.booleans.negation.closure
+proveit.logic.booleans.disjunction.binary_closure
+proveit.logic.booleans.implication.contrapose_neg_antecedent
+proveit.logic.sets.inclusion.subset_eq_is_bool
