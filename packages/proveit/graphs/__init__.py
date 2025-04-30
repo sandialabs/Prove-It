@@ -1,10 +1,11 @@
-from .graph import Edges, EndPoints, Graph, Graphs, Path, Vertices
+from .graph import Edges, EndPoints, Graph, Graphs, Path
 from .endpoints import Endpoints
 from .inclusion import NotSubgraph, Subgraph
 from .membership import (
       GraphMembership, GraphNonmembership, InGraph, NotInGraph)
 from .paths import Paths
 from .union import GraphUnion
+from .vertices import Vertices
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

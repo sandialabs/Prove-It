@@ -66,25 +66,6 @@ class Graph(Function):
         Function.__init__(
                 self, Graph._operator_, (V, E), styles=styles)
 
-class Vertices(Function):
-    '''
-    Given a graph G(V, E) with vertex set V and edge set E,
-    Vertices(G(V, E)) represents the set V of vertices ---
-    that is, Vertices(G(V,E)) = V.
-    '''
-
-    # the literal operator of the Vertices operation
-    _operator_ = Literal(string_format='V',
-                         latex_format=r'\mathrm{V}',
-                         theory=__file__)
-
-    def __init__(self, G, *, styles=None):
-        '''
-        Given a graph G(V,E) = (V,E), represent the vertex set of G.
-        '''
-        self.graph = G
-        Function.__init__(
-                self, Vertices._operator_, G, styles=styles)
 
 class Edges(Function):
     '''
