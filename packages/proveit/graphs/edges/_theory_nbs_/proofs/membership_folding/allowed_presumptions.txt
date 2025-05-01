@@ -1,0 +1,2 @@
+proveit.graphs.edges.membership_def
+proveit.logic.equality.lhs_via_equality

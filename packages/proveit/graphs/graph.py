@@ -67,27 +67,6 @@ class Graph(Function):
                 self, Graph._operator_, (V, E), styles=styles)
 
 
-class Edges(Function):
-    '''
-    Given a graph G(V, E) with vertex set V and edge set E,
-    Edges(G(V, E)) represents the set E of vertices ---
-    that is, Edges(G(V,E)) = E.
-    '''
-
-    # the literal operator of the Vertices operation
-    _operator_ = Literal(string_format='E',
-                         latex_format=r'\mathrm{E}',
-                         theory=__file__)
-
-    def __init__(self, G, *, styles=None):
-        '''
-        Given a graph G(V,E) = (V,E), represent the edge set of G.
-        '''
-        self.graph = G
-        Function.__init__(
-                self, Edges._operator_, G, styles=styles)
-
-
 class Path(Graph):
     '''
     Path(V,E) represents a path. A Path is a non-empty graph
@@ -116,24 +95,3 @@ class Path(Graph):
         self.edge_set   = E
         Function.__init__(
                 self, Path._operator_, (V, E), styles=styles)
-
-
-class EndPoints(Function):
-    '''
-    EndPoints(P) denotes the set of two endpoints of a Path P = (V, E),
-    where Path P has vertex set V and edge set E. EndPoints(P) will be
-    a subset of the Path P's vertex set V.
-    EndPoints(P) will not "know" the original path P whence it came.
-    '''
-
-    # the literal operator of the EndPoints operator
-    _operator_ = Literal(
-            string_format='EndPts', latex_format=r'\text{EndPts}',
-            theory=__file__)
-
-    def __init__(self, P, *, styles=None):
-        '''
-        Create the endpoints set EndPts(P) for Path P.
-        '''
-        Function.__init__(
-                self, EndPoints._operator_, P, styles=styles)

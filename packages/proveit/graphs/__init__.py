@@ -1,4 +1,5 @@
-from .graph import Edges, EndPoints, Graph, Graphs, Path
+from .graph import Graph, Graphs, Path
+from .edges import Edges
 from .endpoints import Endpoints
 from .inclusion import NotSubgraph, Subgraph
 from .membership import (
