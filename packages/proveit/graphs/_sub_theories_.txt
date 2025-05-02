@@ -4,4 +4,5 @@ inclusion
 union
 membership
 paths
+paths_of
 endpoints
