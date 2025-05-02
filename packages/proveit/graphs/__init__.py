@@ -6,7 +6,7 @@ from .membership import (
       GraphMembership, GraphNonmembership, InGraph, NotInGraph)
 from .paths import Paths
 from .union import GraphUnion
-from .vertices import Vertices
+from .vertices import Degree, Vertices
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

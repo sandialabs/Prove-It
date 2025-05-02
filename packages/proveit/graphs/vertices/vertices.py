@@ -30,3 +30,27 @@ class Vertices(Function):
     def nonmembership_object(self, element):
         from .vertices_membership import VerticesNonmembership
         return VerticesNonmembership(element, self)
+
+
+class Degree(Function):
+    '''
+    Degree(v, G), denoted deg(v), represents the degree or valency of
+    the vertex v occuring in the graph G. For an undirected graph with
+    no loops, deg(v) will be equal to the number of edges incident
+    with vertex v. For vertex v in a directed graph, deg(v) will equal
+    the sum of the in-degree and out-degree of vertex v.
+    '''
+
+    # the literal operator of the Degree operation
+    _operator_ = Literal(string_format='deg',
+                         latex_format=r'\mathrm{deg}',
+                         theory=__file__)
+
+    def __init__(self, v, G, *, styles=None):
+        '''
+        Given a vertex v of a graph G(V,E) = (V,E), represent the
+        degree of the vertex v.
+        '''
+        Function.__init__(
+                self, Degree._operator_, (v, G), styles=styles)
+
