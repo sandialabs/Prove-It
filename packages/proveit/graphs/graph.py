@@ -33,7 +33,6 @@ class Graphs(Literal):
 class GraphsMembership(ClassMembership):
 
     def __init__(self, element, domain):
-        from . import Graphs
         ClassMembership.__init__(self, element, domain)
         if domain != Graphs():
             raise TypeError("domain expected to be Graphs, not %s"
