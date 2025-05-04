@@ -11,8 +11,8 @@ class Edges(Function):
     '''
 
     # the literal operator of the Vertices operation
-    _operator_ = Literal(string_format='E',
-                         latex_format=r'\mathrm{E}',
+    _operator_ = Literal(string_format='Edges',
+                         latex_format=r'\mathrm{Edges}',
                          theory=__file__)
 
     def __init__(self, G, *, styles=None):
