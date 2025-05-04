@@ -1,0 +1,4 @@
+proveit.logic.equality.rhs_via_equality
+proveit.logic.equality.sub_right_side_into
+proveit.logic.sets.comprehension.unfold_basic_comprehension
+proveit.logic.sets.comprehension.in_superset_if_in_comprehension

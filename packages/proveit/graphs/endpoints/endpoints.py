@@ -7,7 +7,6 @@ class Endpoints(Function):
     a subset of the Path P's vertex set V, and for a non-trivial path
     consisting of more than one vertex will consist of the 1-degree
     vertices.
-    Endpoints(P) will not "know" the original path P whence it came.
     '''
 
     # the literal operator of the Endpoints operator
@@ -19,6 +18,7 @@ class Endpoints(Function):
         '''
         Create the endpoints set EndPts(P) for Path P.
         '''
+        self.path = P
         Function.__init__(
                 self, Endpoints._operator_, P, styles=styles)
 
