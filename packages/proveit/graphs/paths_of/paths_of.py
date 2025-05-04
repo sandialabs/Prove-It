@@ -1,18 +1,5 @@
 from proveit import Function, Literal
 
-'''
-Consider:
-(1) Changing the current Paths(G) function to PathsOf(G)
-(2) Adding a new Paths class to denote the set of all graphs
-    that are also paths. Paths() would then be a subset (subclass?)
-    of Graphs().
-(3) Move the Path(V,E) class from graph.py to here to represent
-    a specific path with vertex set V and edge set E.
-    A path P = Path(V, E) would be an element of the Paths() class,
-    and also an element of the Graphs() class.
-This might work well.
-'''
-
 class PathsOf(Function):
     '''
     Given a graph G = G(V, E) with vertex set V and edge set E,
@@ -43,7 +30,6 @@ class PathsOf(Function):
         Function.__init__(
                 self, PathsOf._operator_, G, styles=styles)
 
-    # the membership stuff still to be updated!
     def membership_object(self, element):
         from .paths_of_membership import PathsOfMembership
         return PathsOfMembership(element, self)
