@@ -93,3 +93,21 @@ class EndpointsNonmembership(SetNonmembership):
         '''
         return
         yield
+
+    @equality_prover('defined', 'define')
+    def definition(self, **defaults_config):
+        '''
+        From self = [elem not in Endpoints(P)], where P is a path
+        (i.e. P is an element of the Paths class, or P has been
+        explicitly constructed as a Path(V,E) with vertex set V and
+        edge set E), deduce and return:
+            [elem not in Endpoints(P)]
+            = [elem not in {v | deg(v) <= 1}_{Vertices(P)}],
+        where the rhs of that equality is a SetOfAll construction.
+        '''
+
+        from . import nonmembership_def
+        element = self.element
+        _P_sub  = self.domain.path  # or self.domain.operand
+        return nonmembership_def.instantiate(
+                {v:element, P:_P_sub },auto_simplify=False)
