@@ -132,3 +132,17 @@ class EndpointsNonmembership(SetNonmembership):
                 domain = Vertices(_path))
         return NotInSet(element, _setofall)
 
+    @prover
+    def unfold(self, **defaults_config):
+        '''
+        From self = [elem not in Endpoints(P)],
+        derive and return [elem not in {v | deg(v) <= 1}_{Vertices(P)}],
+        knowing or assuming self (and that P is a member of the
+        class of all Paths).
+        '''
+        from . import nonmembership_unfolding
+        element = self.element
+        _P_sub  = self.domain.path  # or self.domain.operand
+        return nonmembership_unfolding.instantiate(
+                {v:element, P:_P_sub },auto_simplify=False)
+
