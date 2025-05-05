@@ -1,3 +1,4 @@
+from proveit import equality_prover
 from proveit.logic import SetMembership, SetNonmembership
 
 
