@@ -146,3 +146,18 @@ class EndpointsNonmembership(SetNonmembership):
         return nonmembership_unfolding.instantiate(
                 {v:element, P:_P_sub },auto_simplify=False)
 
+    @prover
+    def conclude(self, **defaults_config):
+        '''
+        Called on self = [elem not in Endpoints(P)], and
+        knowing or assuming:
+                [elem not in {v | deg(v) <= 1}_{Vertices(P)}]
+        (and that P is a member of the class of Paths),
+        derive and return self.
+        '''
+        from . import nonmembership_folding
+        element = self.element
+        _P_sub  = self.domain.path
+        return nonmembership_folding.instantiate(
+            {v:element, P:_P_sub}, auto_simplify=False)
+
