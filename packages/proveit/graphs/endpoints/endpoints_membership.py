@@ -1,4 +1,4 @@
-from proveit import equality_prover
+from proveit import v, P, equality_prover
 from proveit.logic import SetMembership, SetNonmembership
 
 
@@ -14,17 +14,42 @@ class EndpointsMembership(SetMembership):
     @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
         '''
-        From self = [elem in Endpoints(P)], where P is a non-trivial
-        path (i.e. a path with at least one edge), deduce and return:
-            [elem in Vertices(Graph(V,E))] = [elem in V]
+        From self = [elem in Endpoints(P)], where P is a path (i.e. P
+        is an element of the Paths class, or P has been explicitly
+        constructed as a Path(V,E) with vertex set V and edge set E),
+        deduce and return:
+            [elem in Endpoints(P)]
+            = [elem in {v | deg(v) <= 1}_{Vertices(P)}],
+        where the rhs of that equality is a SetOfAll construction.
         '''
 
         from . import membership_def
         element = self.element
-        _V_sub  = self.domain.graph.vertex_set
-        _E_sub  = self.domain.graph.edge_set
+        _P_sub  = self.domain.path  # or self.domain.operand
+        # _V_sub  = self.domain.graph.vertex_set
+        # _E_sub  = self.domain.graph.edge_set
         return membership_def.instantiate(
-                {v:element, V:_V_sub, E:_E_sub },auto_simplify=False)
+                {v:element, P:_P_sub },auto_simplify=False)
+
+    def as_defined(self):
+        '''
+        From self = [elem in Endpoints(P)], return:
+        [elem in {v | deg(v) <= 1}_{Vertices(P)}],
+        i.e. the elem is in the SetOfAll v from Vertices(P) such
+        that deg(v) <= 1. 
+        The method returns an expression, not a Judgment, and does
+        not check that P is actually in the class of Paths.
+        '''
+        from proveit.logic import InSet, SetOfAll
+        from proveit.numbers import one, LessEq
+        from proveit.graphs import Degree, Vertices
+        element   = self.element
+        _domain   = self.domain
+        _path     = self.domain.path
+        _setofall = SetOfAll(
+                v, v, conditions = [LessEq(Degree(v, _path),one)],
+                domain = Vertices(_path))
+        return InSet(element, _setofall)
 
 
 class EndpointsNonmembership(SetNonmembership):
