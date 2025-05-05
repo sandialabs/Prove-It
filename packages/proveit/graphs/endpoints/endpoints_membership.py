@@ -35,3 +35,10 @@ class EndpointsNonmembership(SetNonmembership):
 
     def __init__(self, element, domain):
         SetNonmembership.__init__(self, element, domain)
+
+    def side_effects(self, judgment):
+        '''
+        Currently no side-effects for EndpointsNonmembership.
+        '''
+        return
+        yield
