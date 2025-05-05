@@ -1,4 +1,4 @@
-from proveit import v, P, equality_prover
+from proveit import v, P, equality_prover, prover
 from proveit.logic import SetMembership, SetNonmembership
 
 
@@ -26,8 +26,6 @@ class EndpointsMembership(SetMembership):
         from . import membership_def
         element = self.element
         _P_sub  = self.domain.path  # or self.domain.operand
-        # _V_sub  = self.domain.graph.vertex_set
-        # _E_sub  = self.domain.graph.edge_set
         return membership_def.instantiate(
                 {v:element, P:_P_sub },auto_simplify=False)
 
@@ -50,6 +48,20 @@ class EndpointsMembership(SetMembership):
                 v, v, conditions = [LessEq(Degree(v, _path),one)],
                 domain = Vertices(_path))
         return InSet(element, _setofall)
+
+    @prover
+    def unfold(self, **defaults_config):
+        '''
+        From self = [elem in Endpoints(P)],
+        derive and return [elem in {v | deg(v) <= 1}_{Vertices(P)}],
+        knowing or assuming self (and that P is a member of the
+        class of all Paths).
+        '''
+        from . import membership_unfolding
+        element = self.element
+        _P_sub  = self.domain.path  # or self.domain.operand
+        return membership_unfolding.instantiate(
+                {v:element, P:_P_sub },auto_simplify=False)
 
 
 class EndpointsNonmembership(SetNonmembership):
