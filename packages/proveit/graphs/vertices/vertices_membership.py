@@ -111,10 +111,18 @@ class VerticesNonmembership(SetNonmembership):
         From self = [elem not in Vertices(Graph(V,E))],
         return: [elem not in V] (i.e. an expression, not a Judgment)
         '''
-        from proveit.logic import NotInSet
-        element = self.element
-        _V = self.domain.graph.vertex_set
-        return NotInSet(element, _V)
+        if isinstance(self.domain.operand, Graph):
+            from proveit.logic import NotInSet
+            element = self.element
+            _V =  self.domain.graph.vertex_set
+            return NotInSet(element, _V)
+        else:
+            raise NotImplementedError(
+                "VerticesNonmembership.as_defined() called on "
+                f"self = {self.expr} with domain = {self.expr.domain}, "
+                "but the method is implemented only for domains of "
+                "the form Vertices(G) where G is an explicit Graph "
+                "object of the form Graph(V,E) with a named vertex set.")
 
     @prover
     def unfold(self, **defaults_config):
