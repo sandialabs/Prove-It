@@ -1,0 +1,2 @@
+proveit.logic.sets.comprehension.fold_basic_comprehension
+proveit.logic.equality.sub_left_side_into
