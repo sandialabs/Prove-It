@@ -111,3 +111,24 @@ class EndpointsNonmembership(SetNonmembership):
         _P_sub  = self.domain.path  # or self.domain.operand
         return nonmembership_def.instantiate(
                 {v:element, P:_P_sub },auto_simplify=False)
+
+    def as_defined(self):
+        '''
+        From self = [elem not in Endpoints(P)], return:
+        [elem not in {v | deg(v) <= 1}_{Vertices(P)}],
+        i.e. the elem is not in the SetOfAll v from Vertices(P) such
+        that deg(v) <= 1. 
+        The method returns an expression, not a Judgment, and does
+        not check that P is actually in the class of Paths.
+        '''
+        from proveit.logic import NotInSet, SetOfAll
+        from proveit.numbers import one, LessEq
+        from proveit.graphs import Degree, Vertices
+        element   = self.element
+        _domain   = self.domain
+        _path     = self.domain.path
+        _setofall = SetOfAll(
+                v, v, conditions = [LessEq(Degree(v, _path),one)],
+                domain = Vertices(_path))
+        return NotInSet(element, _setofall)
+
