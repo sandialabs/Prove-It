@@ -20,6 +20,12 @@ class InSet(InClass):
     def __init__(self, element, domain, *, styles=None):
         element = single_or_composite_expression(element)
         domain = single_or_composite_expression(domain)
+        if (hasattr(domain, 'is_proper_class') and domain.is_proper_class):
+            raise ValueError(
+                    f"The domain {domain} is a proper class (as specified "
+                    f"by its 'is_proper_class' attribute) and thus "
+                    f"should use the 'InClass()' constructor instead "
+                    f"of the 'InSet()' constructor.")
         InSet.inset_expressions[(element, domain)] = self
         InClass.__init__(self, element, domain, operator=InSet._operator_,
                          styles=styles)
