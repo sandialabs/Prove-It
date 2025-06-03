@@ -273,6 +273,21 @@ class IntegerNonPosSet(NumberSet):
         from .integer_membership import IntegerNonPosMembership    
         return IntegerNonPosMembership(element)
 
+class IntegerEvenSet(NumberSet):
+    '''
+    Class to represent the even integers {..., -2, 0, 2, 4, ...}
+    and provide related methods. The even integer set appears as
+    'IntegerEven' in string output and as mathbb 'E' in LaTeX output.
+    '''
+    def __init__(self, *, styles=None):
+        NumberSet.__init__(self, 'IntegerEven', r'\mathbb{E}',
+                           theory=__file__, styles=styles,
+                           fence_when_forced=True)
+
+    def membership_object(self, element):
+        from .integer_membership import IntegerEvenMembership    
+        return IntegerEvenMembership(element)
+
 
 if proveit.defaults.running_theory_notebook is None:
     # Import some fundamental theorems without quantifiers when not 

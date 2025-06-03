@@ -2,7 +2,7 @@ from proveit import prover, relation_prover
 from proveit import a, x
 from proveit.logic import NotEquals, InSet
 from proveit.numbers import Less, LessEq
-from proveit.numbers import (zero, Integer, IntegerNeg,
+from proveit.numbers import (zero, Integer, IntegerEven, IntegerNeg,
                              IntegerNonPos, IntegerNonZero)
 from proveit.numbers.number_sets.number_set import NumberMembership
 
@@ -265,3 +265,71 @@ class IntegerNonPosMembership(NumberMembership):
                 nonpos_int_within_rational_nonpos)
         return nonpos_int_within_rational_nonpos.derive_superset_membership(
             self.element, auto_simplify=False)
+
+class IntegerEvenMembership(NumberMembership):
+    '''
+    Defines methods that apply to membership in IntegerEven (the
+    set of even integers, E = {..., -2, 0, 2, 4, ...}).
+    '''
+
+    def __init__(self, element):
+        NumberMembership.__init__(self, element, IntegerEven)
+
+    def _readily_provable(self):
+        return NumberMembership._readily_provable(self)
+
+    # @prover
+    # def conclude(self, **defaults_config):
+    #     # Use proven, not readily provable here:
+    #     if (InSet(self.element, Integer).proven() and
+    #             NotEquals(self.element, zero).proven()):
+    #         return self.conclude_as_last_resort()
+    #     return NumberMembership.conclude(self)
+
+    # @prover
+    # def conclude_as_last_resort(self, **defaults_config):
+    #     '''
+    #     Conclude element in IntegerNonZero by proving it is integer
+    #     and non-zero.  This is called via NumberMembership.conclude
+    #     if the 'deduce_in_number_set' method of the element raises
+    #     a NotImplementedError.
+    #     '''
+    #     from . import nonzero_int_is_int_nonzero
+    #     return nonzero_int_is_int_nonzero.instantiate({a:self.element})
+
+    def side_effects(self, judgment):
+        '''
+        Yield side-effects when proving 'n in IntegerEven' for 
+        # a given n. No side-effects provided yet.
+        '''
+        # yield self.derive_element_not_zero
+        # yield self.derive_element_in_integer
+        # yield self.derive_element_in_rational_nonzero
+        return
+        yield
+
+    @relation_prover
+    def deduce_in_bool(self, **defaults_config):
+        from . import even_int_membership_is_bool
+        return even_int_membership_is_bool.instantiate(
+            {x: self.element}, auto_simplify=False)
+
+    # @prover
+    # def derive_element_not_zero(self, **defaults_config):
+    #     from . import nonzero_if_in_nonzero_int
+    #     return nonzero_if_in_nonzero_int.instantiate(
+    #         {a: self.element}, auto_simplify=False)
+
+    @prover
+    def derive_element_in_integer(self, **defaults_config):
+        from . import nonzero_int_within_int
+        return nonzero_int_within_int.derive_superset_membership(
+            self.element, auto_simplify=False)
+
+    # @prover
+    # def derive_element_in_rational_nonzero(self, **defaults_config):
+    #     from proveit.numbers.number_sets.rational_numbers import (
+    #             nonzero_int_within_rational_nonzero)
+    #     return nonzero_int_within_rational_nonzero.derive_superset_membership(
+    #         self.element, auto_simplify=False)
+

@@ -2,7 +2,7 @@
 
 from .number_sets import (
     ZeroSet, Natural, NaturalPos,
-    Integer, IntegerNonZero, IntegerNeg, IntegerNonPos,
+    Integer, IntegerEven, IntegerNonZero, IntegerNeg, IntegerNonPos,
     Rational, RationalNonZero, RationalPos, RationalNeg, RationalNonNeg,
     RationalNonPos,
     Real, RealNonZero, RealNeg, RealPos, RealNonNeg, RealNonPos,
