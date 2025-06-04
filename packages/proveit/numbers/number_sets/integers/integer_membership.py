@@ -1,8 +1,8 @@
 from proveit import prover, relation_prover
-from proveit import a, x
-from proveit.logic import NotEquals, InSet
-from proveit.numbers import Less, LessEq
-from proveit.numbers import (zero, Integer, IntegerEven, IntegerNeg,
+from proveit import a, x, z
+from proveit.logic import Equals, Exists, InSet, NotEquals
+from proveit.numbers import Less, LessEq, Mult
+from proveit.numbers import (zero, two, Integer, IntegerEven, IntegerNeg,
                              IntegerNonPos, IntegerNonZero)
 from proveit.numbers.number_sets.number_set import NumberMembership
 
@@ -278,24 +278,29 @@ class IntegerEvenMembership(NumberMembership):
     def _readily_provable(self):
         return NumberMembership._readily_provable(self)
 
-    # @prover
-    # def conclude(self, **defaults_config):
-    #     # Use proven, not readily provable here:
-    #     if (InSet(self.element, Integer).proven() and
-    #             NotEquals(self.element, zero).proven()):
-    #         return self.conclude_as_last_resort()
-    #     return NumberMembership.conclude(self)
+    @prover
+    def conclude(self, **defaults_config):
+        '''
+        Conclude element in IntegerEven using the fact that the
+        element can be expressed as 2z for some z in Integer.
+        '''
+        # Use proven, not readily provable here:
+        if Exists(z, Equals(self.element, Mult(two, z)), domain=Integer).proven():
+            return self.conclude_as_last_resort()
+        return NumberMembership.conclude(self)
 
-    # @prover
-    # def conclude_as_last_resort(self, **defaults_config):
-    #     '''
-    #     Conclude element in IntegerNonZero by proving it is integer
-    #     and non-zero.  This is called via NumberMembership.conclude
-    #     if the 'deduce_in_number_set' method of the element raises
-    #     a NotImplementedError.
-    #     '''
-    #     from . import nonzero_int_is_int_nonzero
-    #     return nonzero_int_is_int_nonzero.instantiate({a:self.element})
+    @prover
+    def conclude_as_last_resort(self, **defaults_config):
+        '''
+        Conclude element in IntegerEven using the fact that the
+        element can be expressed as 2z for some Integer z.
+        This is called via NumberMembership.conclude
+        if the 'deduce_in_number_set' method of the element raises
+        a NotImplementedError.
+        '''
+        from . import double_int_is_even
+        _a_sub = self.element
+        return double_int_is_even.instantiate({a:_a_sub})
 
     def side_effects(self, judgment):
         '''
@@ -318,24 +323,11 @@ class IntegerEvenMembership(NumberMembership):
         return even_int_membership_is_bool.instantiate(
             {x: self.element}, auto_simplify=False)
 
-    # @prover
-    # def derive_element_not_zero(self, **defaults_config):
-    #     from . import nonzero_if_in_nonzero_int
-    #     return nonzero_if_in_nonzero_int.instantiate(
-    #         {a: self.element}, auto_simplify=False)
-
     @prover
     def derive_element_in_integer(self, **defaults_config):
         from . import even_int_within_int
         return even_int_within_int.derive_superset_membership(
             self.element, auto_simplify=False)
-
-    # @prover
-    # def derive_element_in_rational_nonzero(self, **defaults_config):
-    #     from proveit.numbers.number_sets.rational_numbers import (
-    #             nonzero_int_within_rational_nonzero)
-    #     return nonzero_int_within_rational_nonzero.derive_superset_membership(
-    #         self.element, auto_simplify=False)
 
     @prover
     def derive_element_in_rational(self, **defaults_config):
