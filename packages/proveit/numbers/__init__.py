@@ -3,8 +3,8 @@
 from .number_sets import (
     ZeroSet, Natural, NaturalPos,
     Integer, IntegerEven, IntegerNonZero, IntegerNeg, IntegerNonPos,
-    Rational, RationalNonZero, RationalPos, RationalNeg, RationalNonNeg,
-    RationalNonPos,
+    IntegerOdd, Rational, RationalNonZero, RationalPos, RationalNeg,
+    RationalNonNeg, RationalNonPos,
     Real, RealNonZero, RealNeg, RealPos, RealNonNeg, RealNonPos,
     Complex, ComplexNonZero, Conjugate,
     complex_polar_coordinates, 
