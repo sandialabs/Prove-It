@@ -1,9 +1,10 @@
 from proveit import prover, relation_prover
 from proveit import a, x, z
 from proveit.logic import Equals, Exists, InSet, NotEquals
-from proveit.numbers import Less, LessEq, Mult
-from proveit.numbers import (zero, two, Integer, IntegerEven, IntegerNeg,
-                             IntegerNonPos, IntegerNonZero)
+from proveit.numbers import Add, Less, LessEq, Mult
+from proveit.numbers import (
+        zero, one, two, Integer, IntegerEven, IntegerNeg,
+        IntegerNonPos, IntegerNonZero, IntegerOdd)
 from proveit.numbers.number_sets.number_set import NumberMembership
 
 
@@ -294,7 +295,7 @@ class IntegerEvenMembership(NumberMembership):
         '''
         Conclude element in IntegerEven using the fact that the
         element can be expressed as 2z for some Integer z.
-        This is called via NumberMembership.conclude
+        This method is called via NumberMembership.conclude()
         if the 'deduce_in_number_set' method of the element raises
         a NotImplementedError.
         '''
@@ -348,3 +349,87 @@ class IntegerEvenMembership(NumberMembership):
         from . import even_int_is_double_int
         _a_sub = self.element
         return even_int_is_double_int.instantiate({a:_a_sub})
+
+class IntegerOddMembership(NumberMembership):
+    '''
+    Defines methods that apply to membership in IntegerOdd (the
+    set of odd integers, O = {..., -3, -1, 1, 3, ...}).
+    '''
+
+    def __init__(self, element):
+        NumberMembership.__init__(self, element, IntegerOdd)
+
+    def _readily_provable(self):
+        return NumberMembership._readily_provable(self)
+
+    @prover
+    def conclude(self, **defaults_config):
+        '''
+        Conclude element in IntegerOdd using the fact that the
+        element can be expressed as (2z + 1) for some z in Integer.
+        '''
+        # Use proven, not readily provable here:
+        if Exists(z, Equals(self.element, Add(Mult(two, z), one)),
+                  domain=Integer).proven():
+            return self.conclude_as_last_resort()
+        return NumberMembership.conclude(self)
+
+    @prover
+    def conclude_as_last_resort(self, **defaults_config):
+        '''
+        Conclude element in IntegerEven using the fact that the
+        element can be expressed as (2z + 1) for some Integer z.
+        This method is called via NumberMembership.conclude()
+        if the 'deduce_in_number_set' method of the element raises
+        a NotImplementedError.
+        '''
+        from . import double_int_plus_one_is_odd
+        _a_sub = self.element
+        return double_int_plus_one_is_odd.instantiate({a:_a_sub})
+
+    def side_effects(self, judgment):
+        '''
+        Yield side-effects when proving 'n in IntegerEven' for 
+        # a given n:
+        (1) An odd integer n is an integer;
+        (2) An odd integer n is a rational number;
+        (3) An odd integer n is a real number;
+        (4) An odd integer n can be expressed as 2z+1 for some
+            integer z.
+        '''
+        yield self.derive_element_in_integer
+        yield self.derive_element_in_rational
+        yield self.derive_element_in_real
+        yield self.derive_element_as_double_int_plus_one
+
+    @relation_prover
+    def deduce_in_bool(self, **defaults_config):
+        from . import odd_int_membership_is_bool
+        return odd_int_membership_is_bool.instantiate(
+            {x: self.element}, auto_simplify=False)
+
+    @prover
+    def derive_element_in_integer(self, **defaults_config):
+        from . import odd_int_within_int
+        return odd_int_within_int.derive_superset_membership(
+            self.element, auto_simplify=False)
+
+    @prover
+    def derive_element_in_rational(self, **defaults_config):
+        from proveit.numbers.number_sets.rational_numbers import (
+                odd_int_within_rational)
+        return odd_int_within_rational.derive_superset_membership(
+                self.element, auto_simplify=False)
+
+    @prover
+    def derive_element_in_real(self, **defaults_config):
+        from proveit.numbers.number_sets.real_numbers import (
+                odd_int_within_real)
+        return odd_int_within_real.derive_superset_membership(
+                self.element, auto_simplify=False)
+
+    @prover
+    def derive_element_as_double_int_plus_one(self, **defaults_config):
+        from . import odd_int_is_double_int_plus_one
+        _a_sub = self.element
+        return odd_int_is_double_int_plus_one.instantiate({a:_a_sub})
