@@ -300,10 +300,14 @@ class IntegerEvenMembership(NumberMembership):
     def side_effects(self, judgment):
         '''
         Yield side-effects when proving 'n in IntegerEven' for 
-        # a given n. No side-effects provided yet.
+        # a given n:
+        (1) An even integer n is an integer;
+        (2) An even integer n can be expressed as 2z for some
+            integer z.
         '''
         yield self.derive_element_in_integer
         # yield self.derive_element_in_rational_nonzero
+        yield self.derive_element_as_double_int
 
     @relation_prover
     def deduce_in_bool(self, **defaults_config):
@@ -330,3 +334,8 @@ class IntegerEvenMembership(NumberMembership):
     #     return nonzero_int_within_rational_nonzero.derive_superset_membership(
     #         self.element, auto_simplify=False)
 
+    @prover
+    def derive_element_as_double_int(self, **defaults_config):
+        from . import even_int_is_double_int
+        _a_sub = self.element
+        return even_int_is_double_int.instantiate({a:_a_sub})
