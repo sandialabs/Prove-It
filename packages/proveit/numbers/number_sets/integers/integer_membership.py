@@ -302,11 +302,14 @@ class IntegerEvenMembership(NumberMembership):
         Yield side-effects when proving 'n in IntegerEven' for 
         # a given n:
         (1) An even integer n is an integer;
-        (2) An even integer n can be expressed as 2z for some
+        (2) An even integer n is a rational number;
+        (3) An even integer is a real number;
+        (4) An even integer n can be expressed as 2z for some
             integer z.
         '''
         yield self.derive_element_in_integer
-        # yield self.derive_element_in_rational_nonzero
+        yield self.derive_element_in_rational
+        yield self.derive_element_in_real
         yield self.derive_element_as_double_int
 
     @relation_prover
@@ -333,6 +336,20 @@ class IntegerEvenMembership(NumberMembership):
     #             nonzero_int_within_rational_nonzero)
     #     return nonzero_int_within_rational_nonzero.derive_superset_membership(
     #         self.element, auto_simplify=False)
+
+    @prover
+    def derive_element_in_rational(self, **defaults_config):
+        from proveit.numbers.number_sets.rational_numbers import (
+                even_int_within_rational)
+        return even_int_within_rational.derive_superset_membership(
+                self.element, auto_simplify=False)
+
+    @prover
+    def derive_element_in_real(self, **defaults_config):
+        from proveit.numbers.number_sets.real_numbers import (
+                even_int_within_real)
+        return even_int_within_real.derive_superset_membership(
+                self.element, auto_simplify=False)
 
     @prover
     def derive_element_as_double_int(self, **defaults_config):
