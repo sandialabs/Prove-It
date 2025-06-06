@@ -377,7 +377,7 @@ class IntegerOddMembership(NumberMembership):
     @prover
     def conclude_as_last_resort(self, **defaults_config):
         '''
-        Conclude element in IntegerEven using the fact that the
+        Conclude element in IntegerOdd using the fact that the
         element can be expressed as (2z + 1) for some Integer z.
         This method is called via NumberMembership.conclude()
         if the 'deduce_in_number_set' method of the element raises
@@ -389,7 +389,7 @@ class IntegerOddMembership(NumberMembership):
 
     def side_effects(self, judgment):
         '''
-        Yield side-effects when proving 'n in IntegerEven' for 
+        Yield side-effects when proving 'n in IntegerOdd' for 
         # a given n:
         (1) An odd integer n is an integer;
         (2) An odd integer n is a rational number;
