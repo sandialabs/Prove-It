@@ -29,7 +29,8 @@ from proveit.abstract_algebra.generic_methods import (
         sorting_operands, sorting_and_combining_like_operands,
         common_likeness_key)
 from proveit import TransRelUpdater
-from proveit.numbers import (ZeroSet, Integer, IntegerNeg, IntegerNonPos,
+from proveit.numbers import (ZeroSet, Integer, IntegerEven,
+                             IntegerNeg, IntegerNonPos, IntegerOdd,
                              Natural, NaturalPos, IntegerNonZero,
                              Rational, RationalPos, RationalNonZero,
                              RationalNeg, RationalNonNeg,
@@ -1195,6 +1196,20 @@ class Add(NumberOperation):
                 _a = self.operands
                 _i = _a.num_elements()                
                 add_pkg.add_int_nonpos_closure.instantiate({i: _i, a: _a})
+            if number_set == IntegerEven:
+                if self.operands.is_double():
+                    return add_pkg.add_int_even_closure_bin.instantiate(
+                        {a: self.operands[0], b: self.operands[1]})
+                _a = self.operands
+                _i = _a.num_elements()
+                return add_pkg.add_int_even_closure.instantiate({i: _i, a: _a})
+            if number_set == IntegerOdd:
+                if (InSet(self.operands.num_elements(), IntegerOdd)
+                        .readily_provable()):
+                    _a =  self.operands
+                    _i = _a.num_elements()
+                    return (add_pkg.add_int_odd_from_odd_odd
+                            .instantiate({i: _i, a: _a}))
             if number_set == RationalPos:
                 if self.operands.is_double():
                     return add_pkg.add_rational_pos_closure_bin.instantiate(
@@ -1251,6 +1266,37 @@ class Add(NumberOperation):
                 _a = self.operands
                 _i = _a.num_elements()
                 return add_pkg.add_real_nonpos_closure.instantiate({i:_i, a: _a})
+
+        # Handle special even/odd integer cases:
+        # (1) even + odd = odd
+        # (2) sum of even number of odds is even
+        # Note: the sum of odd number of odds is odd handled earlier.
+        if number_set == IntegerOdd:
+            if self.operands.is_double():
+                if (InSet(self.operands[0], IntegerEven).readily_provable()
+                    and InSet(self.operands[1], IntegerOdd).readily_provable()):
+                    _a = self.operands[0]
+                    _b = self.operands[1]
+                    return (add_pkg.add_int_odd_from_even_and_odd_bin
+                            .instantiate({a: _a, b: _b}))
+                if (InSet(self.operands[0], IntegerOdd).readily_provable()
+                    and InSet(self.operands[1], IntegerEven).readily_provable()):
+                    _a = self.operands[1]
+                    _b = self.operands[0]
+                    temp_inst = (
+                            add_pkg.add_int_odd_from_even_and_odd_bin
+                            .instantiate({a: _a, b: _b}))
+                    return temp_inst.inner_expr().element.commute()
+        if number_set == IntegerEven:
+            if (all(InSet(operand, IntegerOdd).proven() for
+                    operand in self.operands)
+                and InSet(self.operands.num_elements(), IntegerEven)
+                    .readily_provable()): 
+                _a = self.operands
+                _i = self.operands.num_elements()
+                return (add_pkg.add_int_even_from_even_odd
+                        .instantiate({i:_i, a:_a}))
+
 
         # Try special case where one term is positive and the
         # rest are non-negative.
