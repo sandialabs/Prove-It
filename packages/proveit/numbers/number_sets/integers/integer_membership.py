@@ -1,7 +1,7 @@
 from proveit import prover, relation_prover
-from proveit import a, x, z
+from proveit import a, b, n, x, z
 from proveit.logic import Equals, Exists, InSet, NotEquals
-from proveit.numbers import Add, Less, LessEq, Mult
+from proveit.numbers import Add, Less, LessEq, Mult, Neg
 from proveit.numbers import (
         zero, one, two, Integer, IntegerEven, IntegerNeg,
         IntegerNonPos, IntegerNonZero, IntegerOdd)
@@ -282,12 +282,51 @@ class IntegerEvenMembership(NumberMembership):
     @prover
     def conclude(self, **defaults_config):
         '''
-        Conclude element in IntegerEven using the fact that the
-        element can be expressed as 2z for some z in Integer.
+        Conclude element in IntegerEven using the fact that
+        (1) the element can be expressed as 2z for some z in Integer,
+        or (2) the element is a product of integers with at least one of
+        the integers being even, or (3) the element is the negation of
+        an even integer. Addition cases are handled mostly through
+        Add.deduce_in_number_set().
         '''
-        # Use proven, not readily provable here:
-        if Exists(z, Equals(self.element, Mult(two, z)), domain=Integer).proven():
+        if (Exists(z, Equals(self.element, Mult(two, z)), domain=Integer)
+                .proven()):
             return self.conclude_as_last_resort()
+
+        if isinstance(self.element, Mult):
+            operands = self.element.operands
+            if operands.is_double():
+                _a = operands[0]
+                _b = operands[1]
+                if (InSet(_a, IntegerEven).proven()
+                        and InSet(_b, Integer).proven()):
+                    from proveit.numbers.multiplication import (
+                            mult_int_even_from_left_even_bin)
+                    return mult_int_even_from_left_even_bin.instantiate(
+                            {a:_a, b:_b})
+                if (InSet(_b, IntegerEven).proven()
+                        and InSet(_a, Integer).proven()):
+                    from proveit.numbers.multiplication import (
+                            mult_int_even_from_right_even_bin)
+                    return mult_int_even_from_right_even_bin.instantiate(
+                            {a:_a, b:_b})
+            if len(operands) > 0: # empty Mult is 1 (odd) by axiom
+                if (all(InSet(a, Integer).proven() for a in operands)
+                    and any(InSet(a, IntegerEven).proven() for a in operands)):
+                    from proveit.numbers.multiplication import (
+                            mult_int_even_from_ints_with_any_even)
+                    _a = operands
+                    _n = operands.num_elements()
+                    return mult_int_even_from_ints_with_any_even.instantiate(
+                            {n:_n, a:_a})
+
+        if (isinstance(self.element, Neg)
+            and InSet(self.element.operand, IntegerEven).proven()):
+            # Neg(even) is even
+            from . import neg_even_is_even
+            _a = self.element.operand
+            return neg_even_is_even.instantiate({a:_a})
+
         return NumberMembership.conclude(self)
 
     @prover
@@ -307,15 +346,12 @@ class IntegerEvenMembership(NumberMembership):
         '''
         Yield side-effects when proving 'n in IntegerEven' for 
         # a given n:
-        (1) An even integer n is an integer;
-        (2) An even integer n is a rational number;
-        (3) An even integer is a real number;
-        (4) An even integer n can be expressed as 2z for some
+        (1) An even integer n is an integer (this will then cascade
+            to rationals, reals, and complex numbers);
+        (2) An even integer n can be expressed as 2z for some
             integer z.
         '''
         yield self.derive_element_in_integer
-        yield self.derive_element_in_rational
-        yield self.derive_element_in_real
         yield self.derive_element_as_double_int
 
     @relation_prover
@@ -391,15 +427,12 @@ class IntegerOddMembership(NumberMembership):
         '''
         Yield side-effects when proving 'n in IntegerOdd' for 
         # a given n:
-        (1) An odd integer n is an integer;
-        (2) An odd integer n is a rational number;
-        (3) An odd integer n is a real number;
-        (4) An odd integer n can be expressed as 2z+1 for some
+        (1) An odd integer n is an integer (this will cascade to
+            rationals, reals, and complex numbers);
+        (2) An odd integer n can be expressed as 2z+1 for some
             integer z.
         '''
         yield self.derive_element_in_integer
-        yield self.derive_element_in_rational
-        yield self.derive_element_in_real
         yield self.derive_element_as_double_int_plus_one
 
     @relation_prover
