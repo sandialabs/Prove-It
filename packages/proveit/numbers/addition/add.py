@@ -1173,42 +1173,45 @@ class Add(NumberOperation):
                         {a: self.operands[0], b: self.operands[1]})
                 _a = self.operands
                 _i = _a.num_elements()                
-                add_pkg.add_nat_closure.instantiate({i: _i, a: _a})
+                return add_pkg.add_nat_closure.instantiate({i: _i, a: _a})
             if number_set == NaturalPos:
                 if self.operands.is_double():
                     return add_pkg.add_nat_pos_closure_bin.instantiate(
                         {a: self.operands[0], b: self.operands[1]})
                 _a = self.operands
                 _i = _a.num_elements()                
-                add_pkg.add_nat_pos_closure.instantiate({i: _i, a: _a})
+                return add_pkg.add_nat_pos_closure.instantiate({i: _i, a: _a})
             if number_set == IntegerNeg:
                 if self.operands.is_double():
                     return add_pkg.add_int_neg_closure_bin.instantiate(
                         {a: self.operands[0], b: self.operands[1]})
                 _a = self.operands
                 _i = _a.num_elements()                
-                add_pkg.add_int_neg_closure.instantiate({i: _i, a: _a})
+                return add_pkg.add_int_neg_closure.instantiate({i: _i, a: _a})
             if number_set == IntegerNonPos:
                 if self.operands.is_double():
                     return add_pkg.add_int_nonpos_closure_bin.instantiate(
                         {a: self.operands[0], b: self.operands[1]})
                 _a = self.operands
                 _i = _a.num_elements()                
-                add_pkg.add_int_nonpos_closure.instantiate({i: _i, a: _a})
+                return (add_pkg.add_int_nonpos_closure
+                        .instantiate({i: _i, a: _a}))
             if number_set == RationalPos:
                 if self.operands.is_double():
                     return add_pkg.add_rational_pos_closure_bin.instantiate(
                         {a: self.operands[0], b: self.operands[1]})
                 _a = self.operands
                 _i = _a.num_elements()                
-                add_pkg.add_rational_pos_closure.instantiate({i: _i, a: _a})
+                return (add_pkg.add_rational_pos_closure
+                        .instantiate({i: _i, a: _a}))
             if number_set == RationalNeg:
                 if self.operands.is_double():
                     return add_pkg.add_rational_neg_closure_bin.instantiate(
                         {a: self.operands[0], b: self.operands[1]})
                 _a = self.operands
                 _i = _a.num_elements()                
-                add_pkg.add_rational_neg_closure.instantiate({i: _i, a: _a})
+                return (add_pkg.add_rational_neg_closure
+                        .instantiate({i: _i, a: _a}))
             if number_set == RationalNonNeg:
                 if self.operands.is_double():
                     return add_pkg.add_rational_nonneg_closure_bin.instantiate(
