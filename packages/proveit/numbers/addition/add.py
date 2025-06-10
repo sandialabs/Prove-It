@@ -3,7 +3,7 @@ import bisect
 from collections import deque, Counter
 
 from proveit import (Expression, Judgment, Literal, Operation, ExprTuple,
-                     ExprRange, defaults, StyleOptions, 
+                     ExprRange, defaults, StyleOptions,
                      prover, relation_prover, equality_prover,
                      auto_prover, auto_relation_prover, auto_equality_prover,
                      maybe_fenced_latex, ProofFailure, InnerExpr,
@@ -15,7 +15,7 @@ from proveit.logic import (And, Equals, NotEquals,
                            EvaluationError, InSet)
 from proveit.logic.irreducible_value import is_irreducible_value
 from proveit.numbers import (NumberOperation, standard_number_set,
-                             pos_number_set, neg_number_set, 
+                             pos_number_set, neg_number_set,
                              nonneg_number_set, nonpos_number_set,
                              nonzero_number_set,
                              union_number_set, deduce_number_set,
@@ -23,7 +23,7 @@ from proveit.numbers import (NumberOperation, standard_number_set,
 from proveit.numbers.numerals.decimals import DIGITS
 import proveit.numbers.numerals.decimals
 from proveit.abstract_algebra.generic_methods import (
-        apply_commutation_thm, apply_association_thm, 
+        apply_commutation_thm, apply_association_thm,
         apply_disassociation_thm, group_commutation, pairwise_evaluation,
         deduce_equality_via_commutation, generic_permutation,
         sorting_operands, sorting_and_combining_like_operands,
@@ -36,14 +36,14 @@ from proveit.numbers import (ZeroSet, Integer, IntegerEven,
                              RationalNeg, RationalNonNeg,
                              RationalNonPos,
                              Real, RealPos, RealNeg, RealNonNeg,
-                             RealNonPos, RealNonZero, Complex, 
+                             RealNonPos, RealNonZero, Complex,
                              ComplexNonZero)
 
 
 class Add(NumberOperation):
     # operator of the Add operation
     _operator_ = Literal(string_format='+', theory=__file__)
-    
+
     # The 'order_key' simplification directive can be used
     # to sort terms in a particular order.  By default, there
     # is no sorting -- it keeps the original order as much as
@@ -58,7 +58,7 @@ class Add(NumberOperation):
         r'''
         Add together any number of operands.
         '''
-        NumberOperation.__init__(self, Add._operator_, operands, 
+        NumberOperation.__init__(self, Add._operator_, operands,
                                  styles=styles)
         self.terms = self.operands
 
@@ -83,9 +83,9 @@ class Add(NumberOperation):
         '''
         from proveit import ExprRange
         from proveit.numbers import Neg
-        
-        # Where should we use subtraction notation 
-        subtraction_positions = []        
+
+        # Where should we use subtraction notation
+        subtraction_positions = []
         for _k, operand in enumerate(self.operands.entries):
             if isinstance(operand, Neg):
                 if operand.use_subtraction_notation():
@@ -94,7 +94,7 @@ class Add(NumberOperation):
                 if isinstance(operand.body, Neg):
                     if operand.body.use_subtraction_notation():
                         subtraction_positions.append(_k)
-        
+
         if len(subtraction_positions) > 0:
             operators = []
             operands = list(self.operands.entries)
@@ -159,7 +159,7 @@ class Add(NumberOperation):
 
     def remake_constructor(self):
         from proveit.numbers import Neg
-        if (self.operands.is_double() 
+        if (self.operands.is_double()
                 and isinstance(self.operands[1], Neg)
                 and self.operands[1].use_subtraction_notation()):
             return 'subtract'  # use a different constructor if using the subtraction style
@@ -171,7 +171,7 @@ class Add(NumberOperation):
         that could be used to recreate the Operation.
         '''
         from proveit.numbers import Neg
-        if (self.operands.is_double() 
+        if (self.operands.is_double()
                 and isinstance(self.operands[1], Neg)
                 and self.operands[1].use_subtraction_notation()):
             yield self.operands[0]
@@ -220,12 +220,12 @@ class Add(NumberOperation):
 
     def _build_canonical_form(self):
         '''
-        Returns a form of this Add with operands in their canonical 
-        forms, nested addition is ungrouped, and "common" terms that 
-        are the same except coefficient factors are combined, and 
+        Returns a form of this Add with operands in their canonical
+        forms, nested addition is ungrouped, and "common" terms that
+        are the same except coefficient factors are combined, and
         these terms are all ordered deterministically according to
         hash values of the non-coefficient parts of the terms.
-        
+
         Example: (2/3)*a*b + c + 1 - (-1/4)*a*b + c + (1/3) ->
                  (4/3) + (11/12) a*b + 2 c
         The order of the terms is arbitrary but deterministic
@@ -301,9 +301,9 @@ class Add(NumberOperation):
             return sum_as_expr
         terms = []
         for remainder in sorted(remainder_to_rational_coef.keys(), key=hash):
-            if remainder==one: 
+            if remainder==one:
                 # We'll save the constant (numeric rational) for the
-                # last term (consistent with the 'quick simplified' 
+                # last term (consistent with the 'quick simplified'
                 # form).
                 continue
             coef = remainder_to_rational_coef[remainder].canonical_form()
@@ -326,8 +326,8 @@ class Add(NumberOperation):
             return terms[0]
         else:
             return Add(*terms)
-        
-        return Add(*sorted([operand.canonical_form() for operand 
+
+        return Add(*sorted([operand.canonical_form() for operand
                            in self.operands.entries], key=hash))
 
     @prover
@@ -387,7 +387,7 @@ class Add(NumberOperation):
         from proveit.numbers.multiplication import (
             mult_def_rev, repeated_addition_to_mult)
         operands = self.operands
-        if (operands.num_entries() == 1 
+        if (operands.num_entries() == 1
                 and isinstance(operands[0], ExprRange)
                 and operands[0].is_parameter_independent):
             expr_range = operands[0]
@@ -427,7 +427,7 @@ class Add(NumberOperation):
         from proveit.numbers import Neg
         expr = self
 
-        # A convenience to allow successive update to the equation via 
+        # A convenience to allow successive update to the equation via
         # transitivities. (starting with self=self).
         eq = TransRelUpdater(self)
 
@@ -435,7 +435,7 @@ class Add(NumberOperation):
         for _i, operand in enumerate(self.operands.entries):
             if isinstance(operand, Neg):
                 neg_operand_indices.setdefault(
-                        operand.operand.canonical_form(), 
+                        operand.operand.canonical_form(),
                         OrderedSet()).add(_i)
 
         canceled_indices = []
@@ -449,13 +449,13 @@ class Add(NumberOperation):
                 if len(indices) == 0:
                     # no more indices to use in the future
                     neg_operand_indices.pop(operand_cf)
-                # By finding where i and j will be inserted into the 
-                # canceled_indices array, we can figure out how much 
-                # they need to shift by to compensate for previous 
+                # By finding where i and j will be inserted into the
+                # canceled_indices array, we can figure out how much
+                # they need to shift by to compensate for previous
                 # cancelations.
                 i_shift = bisect.bisect_left(canceled_indices, _i)
                 j_shift = bisect.bisect_left(canceled_indices, _j)
-                # Insert the last one first so we don't need to 
+                # Insert the last one first so we don't need to
                 # compensate:
                 if _i < _j:
                     canceled_indices.insert(j_shift, _j)
@@ -506,7 +506,7 @@ class Add(NumberOperation):
 
         if self.operands.is_double():
             return basic_thm.instantiate({a:_a, b:_b})
-        elif (not self.operands.contains_range() 
+        elif (not self.operands.contains_range()
                 and self.operands.num_entries() == 3):
             # _k is the 3rd index, completing i and j in the set {0,1,2}.
             _k = {0, 1, 2}.difference([idx1, idx2]).pop()
@@ -523,7 +523,7 @@ class Add(NumberOperation):
             return general_thm.instantiate(
                 {i: _i, j: _j, k: _k, a: _a, b: _b, c: _c, d: _d, e: _e})
 
-    @equality_prover('eliminated_zeros', 'eliminate_zeros')   
+    @equality_prover('eliminated_zeros', 'eliminate_zeros')
     def zero_eliminations(self, **defaults_config):
         '''
         Derive and return this Add expression equal to a form in which
@@ -580,24 +580,24 @@ class Add(NumberOperation):
         '''
         Returns a proven simplification equation for this Add
         expression assuming the operands have been simplified.
-        
+
         Perform a number of possible simplifications of an Add
-        expression after the operands have been simplified.  
+        expression after the operands have been simplified.
         Disassociate grouped terms, eliminate zero terms,
         cancel common terms that are subtracted, combine like terms,
         convert repeated addition to multiplication, etc.
         '''
-        from proveit.numbers import (one, Add, Div, Neg, Mult, 
+        from proveit.numbers import (one, Add, Div, Neg, Mult,
                                      is_numeric_int,
                                      is_numeric_rational)
         from proveit.numbers.multiplication.mult import (
                 coefficient_and_remainder)
         from . import empty_addition, unary_add_reduction
-        
+
         if self.operands.num_entries() == 0:
             # [+]() = 0
             return empty_addition
-        
+
         if self.operands.is_single():
             return unary_add_reduction.instantiate({a:self.operands[0]},
                                                     preserve_all=True)
@@ -609,11 +609,11 @@ class Add(NumberOperation):
             neg_distribution = negated.distribution(auto_simplify=False)
             neg_factored = neg_distribution.derive_reversed()
             return neg_factored.inner_expr().rhs.simplify()
-        
+
         expr = self
         # for convenience updating our equation
         eq = TransRelUpdater(expr)
-        
+
         if Add._simplification_directives_.ungroup:
             # ungroup the expression (disassociate nested additions).
             _n = 0
@@ -638,7 +638,7 @@ class Add(NumberOperation):
                             _n, preserve_all=True))
                 length = expr.operands.num_entries()
                 _n += 1
-        
+
         # See if there are any parameter-independent expression
         # ranges to be converted to multiplication:
         #  x + x + ..(n-3)x.. + x = x*n
@@ -680,7 +680,7 @@ class Add(NumberOperation):
         # If all operands are irreducible, perform the evaluation.
         terms = self.terms
         if all(is_irreducible_value(term) for term in terms):
-            if self.operands.is_double():                
+            if self.operands.is_double():
                 if all(is_numeric_int(term) for term in terms):
                     # Evaluate the addition of two literal integers.
                     evaluation = self._integer_binary_eval()
@@ -695,7 +695,7 @@ class Add(NumberOperation):
                     # appropriate.
                     pass
             else:
-                # Do a pairwise addition of irreducible terms.         
+                # Do a pairwise addition of irreducible terms.
                 return pairwise_evaluation(self)
 
         order_key_fn = Add._simplification_directives_.order_key_fn
@@ -714,14 +714,14 @@ class Add(NumberOperation):
                     else coefficient_and_remainder(term)[1])
             # Sort and combine like operands.
             expr = eq.update(sorting_and_combining_like_operands(
-                    expr, order_key_fn=order_key_fn, 
+                    expr, order_key_fn=order_key_fn,
                     likeness_key_fn=likeness_key_fn,
                     preserve_likeness_keys=True, auto_simplify=True))
         else:
             # See if we should reorder the terms.
             expr = eq.update(sorting_operands(expr, order_key_fn=order_key_fn,
                                               auto_simplify=False))
-        
+
         if expr != self:
             # Try starting over with a call to shallow_simplification
             # (an evaluation may already be known).
@@ -733,7 +733,7 @@ class Add(NumberOperation):
             raise NotImplementedError(
                 "Addition evaluation only implemented for rationals: %s"
                 %self)
-        
+
         if must_evaluate:
             # The simplification of the operands may not have
             # worked hard enough.  Let's work harder if we
@@ -745,7 +745,7 @@ class Add(NumberOperation):
             # irreductible values.
             return self.evaluation()
         return eq.relation
-    
+
     def quick_simplified(self):
         '''
         Return a simplified version of this Add expression
@@ -757,13 +757,13 @@ class Add(NumberOperation):
         and expression ranges are well-formed.
         This quick-n-dirty approach can be good
         enough for the purposes of displaying expressions involving
-        expression ranges.  See also the quick_simplified_index 
+        expression ranges.  See also the quick_simplified_index
         function defined in number_operation.py.
         '''
         from proveit.numbers import is_numeric_int, num, Neg
-        
-        # Extract any literal integers and expand nested sums.  
-        # While we are at it, determing the extremal shifts at the 
+
+        # Extract any literal integers and expand nested sums.
+        # While we are at it, determing the extremal shifts at the
         # heads and tails of expression ranges.
         terms = [] # split into sign, abs_term pairs
         int_sum = 0
@@ -774,7 +774,7 @@ class Add(NumberOperation):
         # Map non-shiftted tail to earliest shift of ExprRange terms:
         earliest_tail_shift = dict() # (Lambda, index expr) -> int
         all_abs_terms = set()
-        
+
         def expandable_range(term):
             if not isinstance(term, ExprRange):
                 return False
@@ -785,7 +785,7 @@ class Add(NumberOperation):
             if isinstance(term.body, Add) or  isinstance(term.body, Neg):
                 return False
             return True
-            
+
         while len(remaining_terms):
             term = remaining_terms.popleft()
             if term == Neg:
@@ -819,7 +819,7 @@ class Add(NumberOperation):
             all_abs_terms.add(term)
             terms.append((sign, term))
         term = None
-        
+
         # Extend the "latest heads" and "earliest tails" if there
         # are individual terms that match them so we can maximize
         # cancelations.
@@ -838,7 +838,7 @@ class Add(NumberOperation):
                     else:
                         break
                 extremal_shifts[(lambda_map, base)] = shift
-        
+
         # Expand ExprRange heads and tails to their extremal shifts
         if len(latest_head_shift) > 0:
             old_terms = terms
@@ -863,9 +863,9 @@ class Add(NumberOperation):
                         continue # already expanded all elements.
                     start_index = Add(start_base,
                                       num(latest_start)).quick_simplified()
-                    end_index = Add(end_base, 
+                    end_index = Add(end_base,
                                     num(earliest_end)).quick_simplified()
-                    terms.append((sign, ExprRange(abs_term.parameter, 
+                    terms.append((sign, ExprRange(abs_term.parameter,
                                                   abs_term.body,
                                                   start_index, end_index)))
                     shift = earliest_end + 1
@@ -876,7 +876,7 @@ class Add(NumberOperation):
                         shift += 1
                 else:
                     terms.append((sign, abs_term))
-        
+
         # Do cancelations of opposite terms.
         # Also check for clearly empty ExprRanges.
         abs_term_to_neg_idx = dict()
@@ -901,9 +901,9 @@ class Add(NumberOperation):
                 else:
                     # Store for possible cancelation ahead.
                     abs_term_to_pos_idx[abs_term] = idx
-        terms = [term for idx, term in enumerate(terms) if 
+        terms = [term for idx, term in enumerate(terms) if
                  idx not in cancelation_indices]
-        
+
         # Re-extend heads and tails of ExprRanges that may have been
         # split apart, now that we've had a chance to find cancelations.
         if len(latest_head_shift) > 0 and len(terms) > 0:
@@ -913,39 +913,39 @@ class Add(NumberOperation):
             following_term = None
             for sign, abs_term in reversed(old_terms):
                 if following_term is not None:
-                    if (sign==following_term[0] 
+                    if (sign==following_term[0]
                             and expandable_range(following_term[1])):
                         # See if the current term prepends the head of
                         # the following range.
                         start_base, start_shift = split_int_shift(
                                 following_term[1].true_start_index)
                         lambda_map = following_term[1].lambda_map
-                        index = Add(start_base, 
+                        index = Add(start_base,
                                     num(start_shift-1)).quick_simplified()
                         if abs_term == lambda_map.apply(index):
                             # Prepend the head.
                             following_term[1] = ExprRange(
-                                    following_term[1].parameter, 
+                                    following_term[1].parameter,
                                     following_term[1].body,
                                     index, following_term[1].true_end_index)
                             continue
                     reversed_terms.append(following_term)
                 following_term = [sign, abs_term]
             reversed_terms.append(following_term) # get the last one
-            
+
             # Try to extend tails, reversing again.
             terms = []
             prev_term = None
             for sign, abs_term in reversed(reversed_terms):
                 if prev_term is not None:
-                    if (sign==prev_term[0] and 
+                    if (sign==prev_term[0] and
                             expandable_range(prev_term[1])):
                         # See if the current term extends the tail of
                         # the previous range.
                         end_base, end_shift = split_int_shift(
                                 prev_term[1].true_end_index)
                         lambda_map = prev_term[1].lambda_map
-                        index = Add(end_base, 
+                        index = Add(end_base,
                                     num(end_shift+1)).quick_simplified()
                         if abs_term == lambda_map.apply(index):
                             # Extend the tail.
@@ -956,7 +956,7 @@ class Add(NumberOperation):
                     terms.append(prev_term)
                 prev_term = [sign, abs_term]
             terms.append(prev_term) # get the last one
-        
+
         # Merge the sign and abs_term into each term.
         for idx, (sign, abs_term) in enumerate(terms):
             if sign==1:
@@ -967,7 +967,7 @@ class Add(NumberOperation):
                     terms[idx] = Neg(Add(abs_term))
                 else:
                     terms[idx] = Neg(abs_term)
-        
+
         if int_sum == 0:
             if len(terms) == 0:
                 return num(0)
@@ -981,10 +981,10 @@ class Add(NumberOperation):
 
     def quick_simplification(self):
         '''
-        Return a simplification of this Add expression without any 
+        Return a simplification of this Add expression without any
         proof.  See Add.quick_simplified for more details.
         '''
-        return Equals(self, self.quick_simplified())        
+        return Equals(self, self.quick_simplified())
 
     def _integer_binary_eval(self):
         '''
@@ -1035,7 +1035,7 @@ class Add(NumberOperation):
         or a (possibly negated) fraction with no common divisors between
         the numerator and denominator other than 1.
         '''
-        from proveit.numbers import (Div, num, is_numeric_rational, 
+        from proveit.numbers import (Div, num, is_numeric_rational,
                                      numeric_rational_ints)
         from . import rational_pair_addition
         terms = self.terms
@@ -1057,7 +1057,7 @@ class Add(NumberOperation):
         # numerator and denominator and then reduce it to an
         # irreducible form.
         return rational_pair_addition.instantiate(
-                {a:_a, b:_b, c:_c, d:_d}, 
+                {a:_a, b:_b, c:_c, d:_d},
                 auto_simplify=True, replacements=replacements,
                 preserve_expr=self)
 
@@ -1123,7 +1123,7 @@ class Add(NumberOperation):
         from proveit.numbers import (zero, one, Neg, greater,
                                      Less, LessEq, greater_eq)
         from proveit.logic import InSet
-        
+
         if number_set == ZeroSet:
             if self.operands.is_double():
                 return add_pkg.add_zero_closure_bin.instantiate(
@@ -1159,7 +1159,7 @@ class Add(NumberOperation):
             _a = self.operands
             _i = _a.num_elements()
             return add_pkg.add_complex_closure.instantiate({i: _i, a: _a})
-        
+
         # Prove what we can in preparation.
         for operand in self.operands:
             deduce_number_set(operand)
@@ -1173,28 +1173,28 @@ class Add(NumberOperation):
                     return add_pkg.add_nat_closure_bin.instantiate(
                         {a: self.operands[0], b: self.operands[1]})
                 _a = self.operands
-                _i = _a.num_elements()                
-                add_pkg.add_nat_closure.instantiate({i: _i, a: _a})
+                _i = _a.num_elements()
+                return add_pkg.add_nat_closure.instantiate({i: _i, a: _a})
             if number_set == NaturalPos:
                 if self.operands.is_double():
                     return add_pkg.add_nat_pos_closure_bin.instantiate(
                         {a: self.operands[0], b: self.operands[1]})
                 _a = self.operands
-                _i = _a.num_elements()                
-                add_pkg.add_nat_pos_closure.instantiate({i: _i, a: _a})
+                _i = _a.num_elements()
+                return add_pkg.add_nat_pos_closure.instantiate({i: _i, a: _a})
             if number_set == IntegerNeg:
                 if self.operands.is_double():
                     return add_pkg.add_int_neg_closure_bin.instantiate(
                         {a: self.operands[0], b: self.operands[1]})
                 _a = self.operands
-                _i = _a.num_elements()                
-                add_pkg.add_int_neg_closure.instantiate({i: _i, a: _a})
+                _i = _a.num_elements()
+                return add_pkg.add_int_neg_closure.instantiate({i: _i, a: _a})
             if number_set == IntegerNonPos:
                 if self.operands.is_double():
                     return add_pkg.add_int_nonpos_closure_bin.instantiate(
                         {a: self.operands[0], b: self.operands[1]})
                 _a = self.operands
-                _i = _a.num_elements()                
+                _i = _a.num_elements()
                 add_pkg.add_int_nonpos_closure.instantiate({i: _i, a: _a})
             if number_set == IntegerEven:
                 if self.operands.is_double():
@@ -1215,15 +1215,17 @@ class Add(NumberOperation):
                     return add_pkg.add_rational_pos_closure_bin.instantiate(
                         {a: self.operands[0], b: self.operands[1]})
                 _a = self.operands
-                _i = _a.num_elements()                
-                add_pkg.add_rational_pos_closure.instantiate({i: _i, a: _a})
+                _i = _a.num_elements()
+                return (add_pkg.add_rational_pos_closure
+                        .instantiate({i: _i, a: _a}))
             if number_set == RationalNeg:
                 if self.operands.is_double():
                     return add_pkg.add_rational_neg_closure_bin.instantiate(
                         {a: self.operands[0], b: self.operands[1]})
                 _a = self.operands
-                _i = _a.num_elements()                
-                add_pkg.add_rational_neg_closure.instantiate({i: _i, a: _a})
+                _i = _a.num_elements()
+                return (add_pkg.add_rational_neg_closure
+                        .instantiate({i: _i, a: _a}))
             if number_set == RationalNonNeg:
                 if self.operands.is_double():
                     return add_pkg.add_rational_nonneg_closure_bin.instantiate(
@@ -1243,14 +1245,14 @@ class Add(NumberOperation):
                     return add_pkg.add_real_pos_closure_bin.instantiate(
                         {a: self.operands[0], b: self.operands[1]})
                 _a = self.operands
-                _i = _a.num_elements()                
+                _i = _a.num_elements()
                 return add_pkg.add_real_pos_closure.instantiate({i: _i, a: _a})
             if number_set == RealNeg:
                 if self.operands.is_double():
                     return add_pkg.add_real_neg_closure_bin.instantiate(
                         {a: self.operands[0], b: self.operands[1]})
                 _a = self.operands
-                _i = _a.num_elements()                
+                _i = _a.num_elements()
                 return add_pkg.add_real_neg_closure.instantiate({i: _i, a: _a})
             if number_set == RealNonNeg:
                 if self.operands.is_double():
@@ -1291,7 +1293,7 @@ class Add(NumberOperation):
             if (all(InSet(operand, IntegerOdd).proven() for
                     operand in self.operands)
                 and InSet(self.operands.num_elements(), IntegerEven)
-                    .readily_provable()): 
+                    .readily_provable()):
                 _a = self.operands
                 _i = self.operands.num_elements()
                 return (add_pkg.add_int_even_from_even_odd
@@ -1376,7 +1378,7 @@ class Add(NumberOperation):
                                    RealNeg:Real}
             major_number_set = to_major_number_set[number_set]
         if number_set in {IntegerNonPos, RationalNonPos, RealNonPos}:
-            # Prove it is non-positive and prove it is in the 
+            # Prove it is non-positive and prove it is in the
             # corresponding major number set (Integer, Rational, Real)
             self.deduce_non_positive(try_deduce_number_set=False)
             to_major_number_set = {IntegerNonPos:Integer,
@@ -1384,7 +1386,7 @@ class Add(NumberOperation):
                                    RealNonPos:Real}
             major_number_set = to_major_number_set[number_set]
         if number_set in {Natural, RationalNonNeg, RealNonNeg}:
-            # Prove it is non-positive and prove it is in the 
+            # Prove it is non-positive and prove it is in the
             # corresponding major number set (Integer, Rational, Real)
             self.deduce_non_negative(try_deduce_number_set=False)
             to_major_number_set = {Natural:Integer,
@@ -1412,7 +1414,7 @@ class Add(NumberOperation):
         if greater(self, zero).proven():
             # Already known (don't use readily_provable).
             return greater(self, zero).prove()
-        
+
         if self.terms.is_double() and isinstance(self.terms[1], Neg):
             # (a - b) with a > b => (a - b) is positive
             _a, _b = self.terms[0], self.terms[1].operand
@@ -1438,7 +1440,7 @@ class Add(NumberOperation):
         if Less(self, zero).proven():
             # Already known (don't use readily_provable).
             return Less(self, zero).prove()
-        
+
         if self.terms.is_double() and isinstance(self.terms[1], Neg):
             # (a - b) with a < b => (a - b) is negative
             _a, _b = self.terms[0], self.terms[1].operand
@@ -1463,7 +1465,7 @@ class Add(NumberOperation):
         if LessEq(self, zero).proven():
             # Already known (don't use readily_provable).
             return LessEq(self, zero).prove()
-        
+
         if self.terms.is_double() and isinstance(self.terms[1], Neg):
             # (a - b) with a <= b => (a - b) is non-positive
             _a, _b = self.terms[0], self.terms[1].operand
@@ -1488,7 +1490,7 @@ class Add(NumberOperation):
         if greater_eq(self, zero).proven():
             # Already known (don't use readily_provable).
             return greater_eq(self, zero).prove()
-        
+
         if self.terms.is_double() and isinstance(self.terms[1], Neg):
             # (a - b) with a >= b => (a - b) is non-negative
             _a, _b = self.terms[0], self.terms[1].operand
@@ -1528,9 +1530,9 @@ class Add(NumberOperation):
             if RealNeg.readily_includes(operand_ns):
                 any_negative = True
             list_of_operand_sets.append(operand_ns)
-        # Find the number set that 
+        # Find the number set that
         number_set = union_number_set(*list_of_operand_sets)
-        
+
         if number_set in nonzero_to_full_number_set:
             # Adding non-zero operands provides no guarantee that the
             # result will be non-zero (unlike adding positives,
@@ -1568,7 +1570,7 @@ class Add(NumberOperation):
                     restriction = nonpos_number_set # non-positive
                 elif NotEquals(_a, _b).readily_provable():
                     restriction = nonzero_number_set # non-zero
-        
+
         # Use the positive, negative, non-negative, non-positive, or
         # non-zero restriction.
         if restriction is not None:
@@ -1610,15 +1612,15 @@ class Add(NumberOperation):
 
     def index(self, the_term, also_return_num=False):
         '''
-        Return the starting index of the_term, which may be a single 
-        operand, a list of consecutive operands, or a Add expression 
+        Return the starting index of the_term, which may be a single
+        operand, a list of consecutive operands, or a Add expression
         that represents the sum of the list of consecutive operands.
-        If also_return_num is True, return a tuple of the index and 
+        If also_return_num is True, return a tuple of the index and
         number of operands for the_term.
         '''
         if isinstance(the_term, Add):
             the_term = the_term.operands.entries
-        if (hasattr(the_term, '__getitem__') and 
+        if (hasattr(the_term, '__getitem__') and
                 hasattr(the_term, '__len__')):
             # multiple operands in the_term
             first_term = the_term[0]
@@ -1654,11 +1656,11 @@ class Add(NumberOperation):
         return True
 
     @auto_equality_prover('factorized', 'factor')
-    def factorization(self, the_factors, pull="left", 
+    def factorization(self, the_factors, pull="left",
                       group_factors=True, group_remainder=True,
                       **defaults_config):
         '''
-        Factor out the factor(s) from this sum, pulling it either to 
+        Factor out the factor(s) from this sum, pulling it either to
         the "left" or "right".
         If group_factors is True, the factors are grouped
         together as a sub-product.
@@ -1727,11 +1729,11 @@ class Add(NumberOperation):
         _j = _b.num_elements()
         _k = _c.num_elements()
         distribution = distribute_through_sum.instantiate(
-            {i: _i, j: _j, k: _k, a: _a, b: _b, c: _c}, 
+            {i: _i, j: _j, k: _k, a: _a, b: _b, c: _c},
             preserve_expr=expr, replacements=replacements)
         eq.update(distribution.derive_reversed())
         return eq.relation
-    
+
     @equality_prover('combined_terms', 'combine_terms')
     def combining_terms(self, **defaults_config):
         '''
@@ -1791,13 +1793,13 @@ class Add(NumberOperation):
         Combine terms, adding their literal, rational coeffiicents.
         Alias for `combining_terms`.
         '''
-        return self.combining_terms() 
+        return self.combining_terms()
 
     @equality_prover('commuted', 'commute')
-    def commutation(self, init_idx=None, final_idx=None, 
+    def commutation(self, init_idx=None, final_idx=None,
                     **defaults_config):
         '''
-        Given numerical operands, deduce that this expression is equal 
+        Given numerical operands, deduce that this expression is equal
         to a form in which the operand
         at index init_idx has been moved to final_idx.
         For example, (a + b + ... + y + z) = (a + ... + y + b + z)
@@ -1807,16 +1809,16 @@ class Add(NumberOperation):
         return apply_commutation_thm(
             self, init_idx, final_idx, commutation,
             leftward_commutation, rightward_commutation)
-    
+
     @equality_prover('group_commuted', 'group_commute')
     def group_commutation(self, init_idx, final_idx, length,
                           disassociate=True, **defaults_config):
         '''
         Given numerical operands, deduce that this expression is equal
-        to a form in which the operands at indices 
-        [init_idx, init_idx+length) have been moved to 
+        to a form in which the operands at indices
+        [init_idx, init_idx+length) have been moved to
         [final_idx. final_idx+length).
-        It will do this by performing association first.  
+        It will do this by performing association first.
         If disassocate is True, it will be disassociated afterwards.
         '''
         return group_commutation(
@@ -1826,7 +1828,7 @@ class Add(NumberOperation):
     def permutation_move(self, init_idx=None, final_idx=None,
                          **defaults_config):
         '''
-        Given numerical operands, deduce that this expression is equal 
+        Given numerical operands, deduce that this expression is equal
         to a form in which the operand
         at index init_idx has been moved to final_idx.
         For example, (a + b + ... + y + z) = (a + ... + y + b + z)
@@ -1851,10 +1853,10 @@ class Add(NumberOperation):
     @equality_prover('associated', 'associate')
     def association(self, start_idx, length, **defaults_config):
         '''
-        Given numerical operands, deduce that this expression is equal 
+        Given numerical operands, deduce that this expression is equal
         to a form in which operands in the
         range [start_idx, start_idx+length) are grouped together.
-        For example, (a + b + ... + y + z) = 
+        For example, (a + b + ... + y + z) =
             (a + b ... + (l + ... + m) + ... + y + z)
         '''
         from . import association
@@ -1877,10 +1879,10 @@ class Add(NumberOperation):
     @equality_prover('disassociated', 'disassociate')
     def disassociation(self, idx, **defaults_config):
         '''
-        Given numerical operands, deduce that this expression is equal 
+        Given numerical operands, deduce that this expression is equal
         to a form in which the operand
         at index idx is no longer grouped together.
-        For example, (a + b ... + (l + ... + m) + ... + y+ z) 
+        For example, (a + b ... + (l + ... + m) + ... + y+ z)
             = (a + b + ... + y + z)
         '''
         from proveit.core_expr_types import Len
@@ -1930,7 +1932,7 @@ class Add(NumberOperation):
         one of its terms.  For example
             a + b + c + d < a + z + c + d   given   b < z.
 
-        Also see NumberOperation.deduce_bound.            
+        Also see NumberOperation.deduce_bound.
         '''
         from proveit.numbers import NumberOrderingRelation, Less
         if isinstance(term_relation, Judgment):
@@ -1981,12 +1983,12 @@ class Add(NumberOperation):
             expr = eq.update(thm.instantiate(
                     {i: _i, j: _j, a: _a, b: _b, x: _x, y: _y}))
         if num > 1 and isinstance(expr.terms[idx], Add):
-            expr = eq.update(expr.disassociation(idx))            
+            expr = eq.update(expr.disassociation(idx))
         relation = eq.relation
         if relation.lhs != self:
             relation = relation.with_direction_reversed()
         assert relation.lhs == self
-        return relation    
+        return relation
 
     @relation_prover
     def bound_by_term(self, term_or_idx, use_weak_bound=False,
@@ -1994,10 +1996,10 @@ class Add(NumberOperation):
         '''
         Deduce that this sum is bound by the given term (or term at
         the given index).
-        
+
         For example,
         a + b + c + d ≥ b provided that a ≥ 0, c ≥ 0, and d ≥ 0.
-        
+
         To use this method, we must know that the
         other terms are all in RealPos, RealNeg, RealNonNeg, or
         RealNonPos and will call
@@ -2010,7 +2012,7 @@ class Add(NumberOperation):
         from proveit.numbers import RealPos, RealNeg, RealNonNeg, RealNonPos
         relevant_number_sets = {RealPos, RealNeg, RealNonNeg, RealNonPos}
         for _k, term_entry in enumerate(self.terms.entries):
-            if _k == term_or_idx or term_entry == term_or_idx: 
+            if _k == term_or_idx or term_entry == term_or_idx:
                 # skip the term doing the bounding.
                 continue
             for number_set in list(relevant_number_sets):
@@ -2018,7 +2020,7 @@ class Add(NumberOperation):
                     in_number_set = And(ExprRange(
                             term_entry.parameter,
                             InSet(term_entry.body, number_set),
-                            term_entry.true_start_index, 
+                            term_entry.true_start_index,
                             term_entry.true_end_index))
                 else:
                     in_number_set = InSet(term_entry, number_set)
@@ -2086,10 +2088,10 @@ class Add(NumberOperation):
 
     def _deduce_specific_bound_by_term(self, thm, term_or_idx):
         '''
-        Helper method for 
+        Helper method for
         deduce_weak_lower_bound_by_term,
-        deduce_weak_upper_bound_by_term, 
-        deduce_strong_lower_bound_by_term, and 
+        deduce_weak_upper_bound_by_term,
+        deduce_strong_lower_bound_by_term, and
         deduce_strong_lower_bound_by_term.
         '''
         if isinstance(term_or_idx, Expression):
@@ -2109,7 +2111,7 @@ class Add(NumberOperation):
         _c = self.terms[idx + 1:]
         _i = _a.num_elements()
         _j = _c.num_elements()
-        return thm.instantiate({i: _i, j: _j, a: _a, b: _b, c: _c})        
+        return thm.instantiate({i: _i, j: _j, a: _a, b: _b, c: _c})
 
     @relation_prover
     def deduce_not_equal(self, other, *, try_deduce_number_set=True,
@@ -2210,7 +2212,7 @@ def split_int_shift(expr):
             shift = expr.terms[-1].as_int()
             if expr.terms.num_entries() == 1:
                 return shift
-            elif (expr.terms.num_entries() == 2 and 
+            elif (expr.terms.num_entries() == 2 and
                     not isinstance(expr.terms[0], ExprRange)):
                 return expr.terms[0], shift
             else:
