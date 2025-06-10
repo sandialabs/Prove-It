@@ -1195,7 +1195,8 @@ class Add(NumberOperation):
                         {a: self.operands[0], b: self.operands[1]})
                 _a = self.operands
                 _i = _a.num_elements()
-                add_pkg.add_int_nonpos_closure.instantiate({i: _i, a: _a})
+                return (add_pkg.add_int_nonpos_closure
+                        .instantiate({i: _i, a: _a}))
             if number_set == IntegerEven:
                 if self.operands.is_double():
                     return add_pkg.add_int_even_closure_bin.instantiate(
