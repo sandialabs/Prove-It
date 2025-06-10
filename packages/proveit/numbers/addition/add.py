@@ -1268,25 +1268,25 @@ class Add(NumberOperation):
                 return add_pkg.add_real_nonpos_closure.instantiate({i:_i, a: _a})
 
         # Handle special even/odd integer cases:
-        # (1) even + odd = odd
+        # (1) even + odd = odd, odd + even = odd
         # (2) sum of even number of odds is even
-        # Note: the sum of odd number of odds is odd handled earlier.
+        # Note: case of odd number of odds (being odd) handled earlier.
         if number_set == IntegerOdd:
             if self.operands.is_double():
                 if (InSet(self.operands[0], IntegerEven).readily_provable()
-                    and InSet(self.operands[1], IntegerOdd).readily_provable()):
+                    and
+                    InSet(self.operands[1], IntegerOdd).readily_provable()):
                     _a = self.operands[0]
                     _b = self.operands[1]
                     return (add_pkg.add_int_odd_from_even_and_odd_bin
                             .instantiate({a: _a, b: _b}))
                 if (InSet(self.operands[0], IntegerOdd).readily_provable()
-                    and InSet(self.operands[1], IntegerEven).readily_provable()):
-                    _a = self.operands[1]
-                    _b = self.operands[0]
-                    temp_inst = (
-                            add_pkg.add_int_odd_from_even_and_odd_bin
+                    and
+                    InSet(self.operands[1], IntegerEven).readily_provable()):
+                    _a = self.operands[0]
+                    _b = self.operands[1]
+                    return (add_pkg.add_int_odd_from_odd_and_even_bin
                             .instantiate({a: _a, b: _b}))
-                    return temp_inst.inner_expr().element.commute()
         if number_set == IntegerEven:
             if (all(InSet(operand, IntegerOdd).proven() for
                     operand in self.operands)
