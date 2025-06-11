@@ -293,6 +293,9 @@ class IntegerEvenMembership(NumberMembership):
                 .proven()):
             return self.conclude_as_last_resort()
 
+        if isinstance(self.element, Add):
+            return self.element.deduce_in_number_set(self.number_set)
+
         if isinstance(self.element, Mult):
             operands = self.element.operands
             if operands.is_double():
@@ -334,9 +337,8 @@ class IntegerEvenMembership(NumberMembership):
         '''
         Conclude element in IntegerEven using the fact that the
         element can be expressed as 2z for some Integer z.
-        This method is called via NumberMembership.conclude()
-        if the 'deduce_in_number_set' method of the element raises
-        a NotImplementedError.
+        This method is called from NumberMembership.conclude()
+        as an almost-last resort.
         '''
         from . import double_int_is_even
         _a_sub = self.element
