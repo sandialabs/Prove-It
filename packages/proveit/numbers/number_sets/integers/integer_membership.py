@@ -1,7 +1,7 @@
 from proveit import prover, relation_prover
 from proveit import a, b, n, x, z
 from proveit.logic import Equals, Exists, InSet, NotEquals
-from proveit.numbers import Add, Less, LessEq, Mult, Neg
+from proveit.numbers import Add, Less, LessEq, Mult, Neg, subtract
 from proveit.numbers import (
         zero, one, two, Integer, IntegerEven, IntegerNeg,
         IntegerNonPos, IntegerNonZero, IntegerOdd)
@@ -286,9 +286,11 @@ class IntegerEvenMembership(NumberMembership):
         (1) the element can be expressed as 2z for some z in Integer;
         (2) the element is an instance of Add();
         (3) the element is a product of integers with at least one of
-        the integers being even; or
-        (4) the element is the negation of an even integer.
+        the integers being even;
+        (4) the element is the negation of an even integer; or
+        (5) the element is the successor of an odd integer.
         '''
+        print("Entering the IntegerEvenMembership.conclude() method.")
         if (Exists(z, Equals(self.element, Mult(two, z)), domain=Integer)
                 .proven()):
             return self.conclude_as_last_resort()
@@ -329,6 +331,11 @@ class IntegerEvenMembership(NumberMembership):
             from . import neg_even_is_even
             _a = self.element.operand
             return neg_even_is_even.instantiate({a:_a})
+
+        if InSet(subtract(self.element, one), IntegerOdd).readily_provable():
+            from . import odd_int_has_even_successor
+            _a = self.element
+            return odd_int_has_even_successor.instantiate({a: _a})
 
         return NumberMembership.conclude(self)
 
@@ -406,9 +413,11 @@ class IntegerOddMembership(NumberMembership):
         Conclude element in IntegerOdd using the fact that the element:
         (1) can be expressed as (2z + 1) for some z in Integer;
         (2) is an instance of Add();
-        (3) is a product of all odd integers; or
-        (4) the element is the negation of an odd integer.
+        (3) is a product of all odd integers;
+        (4) the element is the negation of an odd integer; or
+        (5) the element is the successor of an even integer.
         '''
+        print("Entering IntegerOddMembership.conclude() method.")
         if Exists(z, Equals(self.element, Add(Mult(two, z), one)),
                   domain=Integer).proven():
             return self.conclude_as_last_resort()
@@ -431,6 +440,12 @@ class IntegerOddMembership(NumberMembership):
             from . import neg_odd_is_odd
             _a = self.element.operand
             return neg_odd_is_odd.instantiate({a:_a})
+
+        if (InSet(subtract(self.element, one), IntegerEven)
+            .readily_provable()):
+            from . import even_int_has_odd_successor
+            _a = self.element
+            return even_int_has_odd_successor.instantiate({a: _a})
 
         return NumberMembership.conclude(self)
 
