@@ -414,6 +414,13 @@ class IntegerOddMembership(NumberMembership):
         if isinstance(self.element, Add):
             return self.element.deduce_in_number_set(self.number_set)
 
+        if (isinstance(self.element, Neg)
+            and InSet(self.element.operand, IntegerOdd).proven()):
+            # Neg(odd) is odd
+            from . import neg_odd_is_odd
+            _a = self.element.operand
+            return neg_odd_is_odd.instantiate({a:_a})
+
         return NumberMembership.conclude(self)
 
     @prover
