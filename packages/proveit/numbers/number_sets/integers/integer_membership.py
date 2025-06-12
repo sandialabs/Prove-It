@@ -290,7 +290,6 @@ class IntegerEvenMembership(NumberMembership):
         (4) the element is the negation of an even integer; or
         (5) the element is the successor of an odd integer.
         '''
-        print("Entering the IntegerEvenMembership.conclude() method.")
         if (Exists(z, Equals(self.element, Mult(two, z)), domain=Integer)
                 .proven()):
             return self.conclude_as_last_resort()
@@ -417,7 +416,6 @@ class IntegerOddMembership(NumberMembership):
         (4) the element is the negation of an odd integer; or
         (5) the element is the successor of an even integer.
         '''
-        print("Entering IntegerOddMembership.conclude() method.")
         if Exists(z, Equals(self.element, Add(Mult(two, z), one)),
                   domain=Integer).proven():
             return self.conclude_as_last_resort()
