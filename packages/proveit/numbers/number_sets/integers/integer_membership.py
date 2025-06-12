@@ -283,11 +283,11 @@ class IntegerEvenMembership(NumberMembership):
     def conclude(self, **defaults_config):
         '''
         Conclude element in IntegerEven using the fact that
-        (1) the element can be expressed as 2z for some z in Integer,
-        or (2) the element is a product of integers with at least one of
-        the integers being even, or (3) the element is the negation of
-        an even integer. Addition cases are handled mostly through
-        Add.deduce_in_number_set().
+        (1) the element can be expressed as 2z for some z in Integer;
+        (2) the element is an instance of Add();
+        (3) the element is a product of integers with at least one of
+        the integers being even; or
+        (4) the element is the negation of an even integer.
         '''
         if (Exists(z, Equals(self.element, Mult(two, z)), domain=Integer)
                 .proven()):
@@ -403,16 +403,27 @@ class IntegerOddMembership(NumberMembership):
     @prover
     def conclude(self, **defaults_config):
         '''
-        Conclude element in IntegerOdd using the fact that the
-        element can be expressed as (2z + 1) for some z in Integer.
+        Conclude element in IntegerOdd using the fact that the element:
+        (1) can be expressed as (2z + 1) for some z in Integer;
+        (2) is an instance of Add();
+        (3) is a product of all odd integers; or
+        (4) the element is the negation of an odd integer.
         '''
-        # Use proven, not readily provable here:
         if Exists(z, Equals(self.element, Add(Mult(two, z), one)),
                   domain=Integer).proven():
             return self.conclude_as_last_resort()
 
         if isinstance(self.element, Add):
             return self.element.deduce_in_number_set(self.number_set)
+
+        if isinstance(self.element, Mult):
+            operands = self.element.operands
+            if all(InSet(a, IntegerOdd).proven() for a in operands):
+                from proveit.numbers.multiplication import (
+                        mult_int_odd_from_all_odd)
+                _a = operands
+                _n = operands.num_elements()
+                return mult_int_odd_from_all_odd.instantiate({n:_n, a:_a})
 
         if (isinstance(self.element, Neg)
             and InSet(self.element.operand, IntegerOdd).proven()):
