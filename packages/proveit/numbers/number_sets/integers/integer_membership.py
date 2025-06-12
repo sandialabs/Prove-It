@@ -410,6 +410,10 @@ class IntegerOddMembership(NumberMembership):
         if Exists(z, Equals(self.element, Add(Mult(two, z), one)),
                   domain=Integer).proven():
             return self.conclude_as_last_resort()
+
+        if isinstance(self.element, Add):
+            return self.element.deduce_in_number_set(self.number_set)
+
         return NumberMembership.conclude(self)
 
     @prover
