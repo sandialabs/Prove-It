@@ -250,7 +250,7 @@ class ExprArray(ExprTuple):
         # Wrap with two vertical dots above and below.
         n = nested_range_depth
         return (r'\begin{array}{c}' + r':\\ '*n + expr_latex 
-                + r' \\:'*n + '\end{array}')
+                + r' \\:'*n + r'\end{array}')
     
     @staticmethod
     def horizontal_explicit_cell_latex(expr_latex, nested_range_depth):

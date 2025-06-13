@@ -208,6 +208,8 @@ class ExprTuple(Composite, Expression):
             justification=None,
             **kwargs):
         from .expr_range import ExprRange
+        from proveit._core_.expression.operation import Operation
+        from proveit._core_.expression.label.literal import Literal
 
         out_str = ''
         if len(self.entries) == 0 and fence:
@@ -267,6 +269,14 @@ class ExprTuple(Composite, Expression):
                     formatted_entries.append(
                         [operator, sub_expr.formatted(format_type,
                                                       fence=True)])
+                elif (isinstance(sub_expr, Literal) and
+                      sub_expr in Operation.operation_class_of_operator):
+                    # always fence literals that serve as Operation-class
+                    # operators with square braces.
+                    formatted_entries.append(
+                        [operator, sub_expr.formatted(format_type,
+                                                      really_force_fence=True, 
+                                                      fence_type='[]')])
                 else:
                     formatted_entries.append(
                         [operator, sub_expr.formatted(format_type,
@@ -1161,7 +1171,7 @@ class ExprTuple(Composite, Expression):
         If this is an tuple of expressions that can be directly merged
         together into a single ExprRange, return this proven
         equivalence.  For example,
-        {j \in Natural, k-(j+1) \in Natural}
+        {j in Natural, k-(j+1) in Natural}
         |- (x_1, .., x_j, x_{j+1}, x_{j+2}, ..., x_k) = (x_1, ..., x_k)
         '''
         from proveit._core_.expression.lambda_expr import (

@@ -46,9 +46,9 @@ class Label(Expression):
         '''
         Return a string representation of the Label.
         '''
-        if self.fence_when_forced:
-            kwargs['fence'] = (kwargs['force_fence'] if 'force_fence' in
-                               kwargs else False)
+        if self.fence_when_forced or kwargs.get('really_force_fence', False):
+            kwargs['fence'] = (kwargs.get('really_force_fence', False) or
+                               kwargs.get('force_fence', False))
             return maybe_fenced_string(self.string_format, **kwargs)
         return self.string_format
 
@@ -56,9 +56,9 @@ class Label(Expression):
         '''
         Return a latex representation of the Label.
         '''
-        if self.fence_when_forced:
-            kwargs['fence'] = (kwargs['force_fence'] if 'force_fence' in
-                               kwargs else False)
+        if self.fence_when_forced or kwargs.get('really_force_fence', False):
+            kwargs['fence'] = (kwargs.get('really_force_fence', False) or
+                               kwargs.get('force_fence', False))
             return maybe_fenced_latex(self.latex_format, **kwargs)
         return self.latex_format
 

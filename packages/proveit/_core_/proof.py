@@ -1347,7 +1347,7 @@ class Theorem(Proof):
             # Propagate to dependents.
             to_process = set(self._meaning_data._dependents)
             processed = {self}
-            while len(to_process) > 1:
+            while len(to_process) > 0:
                 dep_proof = to_process.pop()
                 if dep_proof in processed: continue
                 if dep_proof._meaning_data._non_allowances is None:
@@ -1424,6 +1424,60 @@ class Theorem(Proof):
                 # cancel
                 raise UnusableProof(Judgment.theorem_being_proven, self)
 
+class BasicDefinition(Proof):
+    '''
+    The self-sufficient proof for a basic conservative definition(s) that has
+    the Literal being defined on the left side without appearing on the right.
+    '''
+    def __init__(self, expr, theory, name, *,
+                 _proven_truth=None, _requirements=None,
+                 _marked_req_indices=None):
+        if not isinstance(theory, Theory):
+            raise TypeError("A BasicDefinition 'theory' must be a "
+                             "Theory object")
+        if not isinstance(name, str):
+            raise TypeError("A BasicDefinition 'name' must be a string")
+
+        self.theory = theory
+        self.name = name
+        if _proven_truth is not None:
+            # Via _regenerate_proof_object:
+            Proof.__init__(self, _proven_truth, _requirements,
+                           _marked_req_indices)
+            return
+        else:
+            Proof.__init__(self, Judgment(expr, frozenset()), [])
+
+    def _regenerate_proof_object(self, proven_truth, requirements,
+                                 marked_req_indices):
+        return BasicDefinition(
+                None, self.theory, self.name,
+                _proven_truth=proven_truth, _requirements=requirements,
+                _marked_req_indices=marked_req_indices)
+
+    def step_type(self):
+        return 'basic_definition'
+
+    def _generate_step_info(self, object_rep_fn):
+        return self.step_type() + '-' + str(self) + ':'
+
+    def _storedBasicDefinition(self):
+        from ._theory_storage import StoredBasicDefinition
+        return StoredBasicDefinition(self.theory, self.name)
+
+    def get_link(self):
+        '''
+        Return the HTML link to the property definition.
+        '''
+        return self._storedBasicDefinition().get_def_link()
+
+    def __str__(self):
+        return self.theory.name + '.' + self.name
+
+    def used_defining_properties(self):
+        return {self}
+
+
 class DefinitionExistence(Theorem):
     '''
     For conservative definitions, the unique existence of the 
@@ -1448,11 +1502,11 @@ class DefinitionExistence(Theorem):
 
     def step_type(self):
         if self.is_conjecture():
-            return 'conjectured existence'
-        return 'definition existence'
+            return 'conjectured_existence'
+        return 'definition_existence'
 
     def _generate_step_info(self, object_rep_fn):
-        # For these purposes, we should use 'definition existence' even 
+        # For these purposes, we should use 'definition_existence' even 
         # if the status is 'conjectured existence'.
         return 'definition_existence-' + str(self) + ':'
 
@@ -1461,6 +1515,7 @@ class DefinitionExistence(Theorem):
         _, hash_id = self.theory._theory_folder_storage('definitions')._retrieve(self)
         return StoredDefinitionExistence(self.theory, self.name,
                                          hash_id=hash_id)
+
 
 class DefiningProperty(Proof):
     '''
@@ -1611,7 +1666,7 @@ class ModusPonens(Proof):
             _marked_req_indices=marked_req_indices)
 
     def step_type(self):
-        return 'modus ponens'
+        return 'modus_ponens'
 
 
 class Deduction(Proof):
@@ -2664,7 +2719,7 @@ class Generalization(Proof):
     
     def step_type(self):
         if len(self.generalized_literals) > 0:
-            return 'literal generalization'
+            return 'literal_generalization'
         return 'generalization'
 
     @staticmethod
@@ -2716,12 +2771,12 @@ class _ShowProof:
                  ref_obj_id_groups):
         self._style_id = proof_id
         if '_' in step_info:
-            # Must be an axiom or theorem with the format
+            # Must be an axiom, theorem, or definition with the format
             # axiom-theory.name or theorem-theory.name
             self.step_type_str, full_name = step_info.split('-', 1)
             assert self.step_type_str in (
-                'axiom', 'defining_property', 'definition_existence', 
-                'theorem')
+                'axiom', 'basic_definition', 'defining_property', 
+                'definition_existence', 'theorem')
             full_name_segments = full_name.split('.')
             theory_name = '.'.join(full_name_segments[:-1])
             self.theory = Theory.get_theory(theory_name)

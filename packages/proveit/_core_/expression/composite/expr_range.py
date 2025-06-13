@@ -973,7 +973,7 @@ class ExprRange(Expression):
                         formatted_operator = ' ' + formatted_operator
                     formatted_operator = formatted_operator + ' '
                 if role == 'implicit':
-                    ellipsis = ('\ldots' if format_type == 'latex'
+                    ellipsis = (r'\ldots' if format_type == 'latex'
                                 else '...')
                     ellipsis = ellipsis * nested_range_depth
                     formatted_entries.append([formatted_operator, ellipsis])
