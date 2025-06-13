@@ -452,7 +452,7 @@ class TheoryStorage:
                 # Remove proofs that depended upon the removed theorem.
                 # Note the use of (obj) hash_id instead of expr_id here!
                 StoredSpecialStmt.remove_dependency_proofs(
-                        self.theory, kind, hash_id)
+                        self.theory, kind, old_name_to_expr_hash_id[name])
 
         # Now we write the new name-to-hash information.
         names = definitions.keys()
