@@ -18,11 +18,12 @@ from .theory import Theory
 
 class Proof:
 
-    # (Expression, sorted assumptions) pairs for which 
-    # derive_side_effects has been called.  We track this to make sure 
+    # Map expressions to (sorted assumption, defaults.conclude_automation)
+    # pairs to remember the conditions under which something was proven
+    # and side-effects were derived.  We track this to make sure 
     # we didn't miss anything while automation was disabled and then 
     # re-enabled.
-    sideeffect_processed = set()    
+    sideeffect_processed = dict()    
     
     @staticmethod
     def _clear_():
@@ -72,7 +73,8 @@ class Proof:
             return hex(obj._establish_and_get_meaning_id())
         self._meaning_data = meaning_data(self._generate_unique_rep(
             meaning_hexid_fn))
-        if not hasattr(self._meaning_data, 'required_proofs'):
+        if not hasattr(self._meaning_data, 'required_proofs') or (
+                not self.is_possibly_usable()):
             self._meaning_data.required_proofs = [
                 required_truth.proof() for required_truth in required_truths]
             # meanng data of proofs that directly require this one
@@ -304,11 +306,11 @@ class Proof:
             return # Side-effect automation is off, so don't do it.
         proven_truth = self.proven_truth
         
-        if proven_truth.proof() == self and self.is_possibly_usable(): 
-            key = (proven_truth.expr, defaults.sorted_assumptions,
-                   defaults.conclude_automation)
-            if key in Proof.sideeffect_processed:
-                return  # has already been processed
+        if proven_truth.proof() == self and self.is_possibly_usable():
+            expr = proven_truth.expr
+            key = (defaults.sorted_assumptions, defaults.conclude_automation)
+            if key in Proof.sideeffect_processed.get(expr, tuple()):
+                return # has already been processed
 
             # Don't bother with side effects if this proof was born 
             # obsolete or unusable.  May derive any side-effects that 
@@ -322,7 +324,7 @@ class Proof:
                     temp_defaults.replacements = []
                 #print(proven_truth)
                 proven_truth.derive_side_effects()
-            Proof.sideeffect_processed.add(key)
+            Proof.sideeffect_processed.setdefault(expr, set()).add(key)
 
     def _update_dependencies(self, newproof):
         '''
@@ -549,6 +551,10 @@ class Proof:
             is_defunct = (dependent.proven_truth.proof() == dependent)
             dependent._meaning_data._unusable_proof = source
             dependent.proven_truth._discard_proof(dependent)
+            # If this is proven again, we should do the side-effects again
+            # for good measure:
+            Proof.sideeffect_processed.pop(dependent.proven_truth.expr,
+                                           None)
             # Make the number of steps (and number of literal 
             # generalizations) as unknown as we go up through
             # the dependents.
