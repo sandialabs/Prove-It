@@ -1,1 +1,0 @@
-basic concepts involving vertices in a graph

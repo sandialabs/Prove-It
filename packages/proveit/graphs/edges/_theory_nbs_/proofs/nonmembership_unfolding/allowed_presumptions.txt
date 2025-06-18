@@ -1,2 +1,0 @@
-proveit.graphs.edges.nonmembership_def
-proveit.logic.equality.rhs_via_equality

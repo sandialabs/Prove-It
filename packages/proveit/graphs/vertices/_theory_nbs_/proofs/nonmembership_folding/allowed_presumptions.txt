@@ -1,2 +1,0 @@
-proveit.graphs.vertices.nonmembership_def
-proveit.logic.equality.lhs_via_equality

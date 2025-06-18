@@ -1,0 +1,1 @@
+walks, trails, paths, circuits, and cycles, as sequences of vertices within a graph
