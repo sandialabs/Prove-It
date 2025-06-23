@@ -66,4 +66,27 @@ class Graph(Function):
                 self, Graph._operator_, (V, E), styles=styles)
 
 
+class Connected(Function):
+    '''
+    Connected(G) is a propositional function (or predicate)
+    representing the claim that graph G is connected (i.e., that
+    for every pair (u, v) of vertices in G, there exists a u-v path
+    in G).
+    '''
+
+    # the literal operator of the Connected operation
+    _operator_ = Literal(string_format='Connected',
+                         latex_format=r'\textrm{Connected}',
+                         theory=__file__)
+
+    def __init__(self, G, *, styles=None):
+        '''
+        Represent the propositional function Connected(G),
+        claiming graph G is connected.
+        '''
+        self.graph = G
+        Function.__init__(
+                self, Connected._operator_, G, styles=styles)
+
+
 
