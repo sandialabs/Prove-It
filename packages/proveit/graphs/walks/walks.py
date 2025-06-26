@@ -86,6 +86,78 @@ class WalkLength(Function):
         return r'\left\|' + self.operand.latex() + r'\right\|'
 
 
+class Closed(Function):
+    '''
+    Closed(W) is a propositional function (or predicate)
+    claiming that walk W is closed (i.e., that the endvertices of
+    walk W are equal).
+    '''
+
+    # the literal operator of the Closed operation
+    _operator_ = Literal(string_format='Closed',
+                         latex_format=r'\textrm{Closed}',
+                         theory=__file__)
+
+    def __init__(self, W, *, styles=None):
+        '''
+        Represent the propositional function Closed(G),
+        claiming walk W is closed.
+        '''
+        self.walk = W
+        Function.__init__(
+                self, Closed._operator_, W, styles=styles)
+
+class EdgeSequence(Function):
+    '''
+    Given a walk W = Walk(S, G) consisting of vertex sequence S in
+    graph G, EdgeSeq(W) represents the sequence of edges traveled
+    along the walk, which for a simple graph is completely
+    determined by the vertex sequence S. The number of edges in
+    EdgeSequence(W) is the length of the walk W, represented with
+    WalkLength(W).
+    '''
+
+    # the literal operator of the EdgeSequence operation
+    _operator_ = Literal(string_format='EdgeSeq',
+                         latex_format=r'\mathrm{EdgeSeq}',
+                         theory=__file__)
+
+    def __init__(self, W, *, styles=None):
+        '''
+        Given a walk W = Walk(S, G) in graph G, represent the
+        sequence of edges traveled during the walk.
+        '''
+        self.walk = W
+        Function.__init__(
+                self, EdgeSequence._operator_, W, styles=styles)
+
+
+class EdgeSet(Function):
+    '''
+    Given a walk W = Walk(S, G) consisting of vertex sequence S in
+    graph G, EdgeSet(W) represents the set (not the sequence) of edges
+    traveled along the walk, which for a simple graph is completely
+    determined by the vertex sequence S. The sequence of edges traveled
+    in the walk W, represented by EdgeSequence(W), will have the same
+    edges as EdgeSet(W), but EdgeSequence(W) might have repeated
+    edges.
+    '''
+
+    # the literal operator of the EdgeSet operation
+    _operator_ = Literal(string_format='EdgeSet',
+                         latex_format=r'\mathrm{EdgeSet}',
+                         theory=__file__)
+
+    def __init__(self, W, *, styles=None):
+        '''
+        Given a walk W = Walk(S, G) in graph G, represent the
+        set of edges traveled during the walk.
+        '''
+        self.walk = W
+        Function.__init__(
+                self, EdgeSet._operator_, W, styles=styles)
+
+
 class Trail(Function):
     '''
     Trail(S, G) represents a trail in the simple undirected graph G
@@ -135,7 +207,7 @@ class Path(Function):
 
 class EndVertices(Function):
     '''
-    EndVertices(W) represent the set of endvertices or endpoints of
+    EndVertices(W) represents the set of endvertices or endpoints of
     the walk W (and recall that trails, paths, circuits, and cycles
     are special cases of walks). For example, given a walk
     W = Walk(S, G) in graph G with vertex sequence
@@ -158,48 +230,29 @@ class EndVertices(Function):
                 self, EndVertices._operator_, W, styles=styles)
 
 
-class HasEulerTrail(Function):
+class EulerianTrails(Function):
     '''
-    HasEulerTrail(G) is a propositional function (or predicate)
-    claiming that graph G has an Eulerian trail (i.e., G has a
-    walk that uses each and every edge of G exactly once).
+    EulerianTrails(G) represents the set of Eulerian trails in the
+    simple undirected graph G. An Eulerian trail in graph G is a u-v
+    walk that uses each and every edge of G exactly once, and such
+    an Eulerian trail will exist in G if and only if G is connected
+    with exactly two vertices of odd degree. The odd degree vertices
+    will then also be the u and v of the u-v walk.
     '''
 
-    # the literal operator of the HasEulerTrail operation
-    _operator_ = Literal(string_format='HasEulerTrail',
-                         latex_format=r'\textrm{HasEulerTrail}',
+    # the literal operator of the EulerianTrails operation
+    _operator_ = Literal(string_format='EulerianTrails',
+                         latex_format=r'\textrm{EulerianTrails}',
                          theory=__file__)
 
     def __init__(self, G, *, styles=None):
         '''
-        Represent the propositional function HasEulerTrail(G),
-        claiming graph G has an Eulerian trail.
+        Represent the set EulerianTrails(G) of all Eulerian trails
+        in graph G.
         '''
         self.graph = G
         Function.__init__(
-                self, HasEulerTrail._operator_, G, styles=styles)
-
-
-class HasEulerCircuit(Function):
-    '''
-    HasEulerCircuit(G) is a propositional function (or predicate)
-    claiming that graph G has an Eulerian circuit (i.e., G has a
-    closed walk that uses each and every edge of G exactly once).
-    '''
-
-    # the literal operator of the HasEulerCircuit operation
-    _operator_ = Literal(string_format='HasEulerCircuit',
-                         latex_format=r'\textrm{HasEulerCircuit}',
-                         theory=__file__)
-
-    def __init__(self, G, *, styles=None):
-        '''
-        Represent the propositional function HasEulerCircuit(G),
-        claiming graph G has an Eulerian circuit.
-        '''
-        self.graph = G
-        Function.__init__(
-                self, HasEulerCircuit._operator_, G, styles=styles)
+                self, EulerianTrails._operator_, G, styles=styles)
 
 
 # class Paths(Literal):
