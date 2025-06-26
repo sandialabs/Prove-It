@@ -1,4 +1,5 @@
-from .graph import Connected, Graph, Graphs
+from .graph import (Connected, Graph, Graphs, HasEulerianCircuit,
+          HasEulerianTrail, Order, Size)
 from .edges import Edges
 from .endpoints import Endpoints
 from .inclusion import NotSubgraph, Subgraph
@@ -8,8 +9,8 @@ from .paths import Path, Paths
 from .paths_of import PathsOf
 from .union import GraphUnion
 from .vertices import Degree, Vertices
-from .walks import (EndVertices, HasEulerCircuit, HasEulerTrail,
-          Path, Trail, Walk, WalkLength, Walks)
+from .walks import (Closed, EdgeSequence, EdgeSet, EndVertices,
+          EulerianTrails, Path, Trail, Walk, WalkLength, Walks)
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

@@ -66,6 +66,56 @@ class Graph(Function):
                 self, Graph._operator_, (V, E), styles=styles)
 
 
+class Order(Function):
+    '''
+    Order(G), denoted |G|, represents the order of graph G, giving
+    the number of vertices in graph G. This will be equivalent to
+    |Vertices(G)|.
+    '''
+    # literal operator of the Order operation.
+    _operator_ = Literal(string_format='Order', theory=__file__)
+
+    def __init__(self, G, *, styles=None):
+        '''
+        Represent Order(G), the order of graph G, equivalent
+        to the number of vertices in G.
+        '''
+        self.graph = G
+        Function.__init__(
+                self, Order._operator_, G, styles=styles)
+
+    def string(self, **kwargs):
+        return '|' + self.operand.string() + '|'
+
+    def latex(self, **kwargs):
+        return r'\left|' + self.operand.latex() + r'\right|'
+
+
+class Size(Function):
+    '''
+    Size(G), denoted ||G||, represents the size of graph G, meaning
+    the number of edges in graph G. This will be equivalent to
+    |Edges(G)|.
+    '''
+    # literal operator of the Size operation.
+    _operator_ = Literal(string_format='Size', theory=__file__)
+
+    def __init__(self, G, *, styles=None):
+        '''
+        Represent Size(G), the size of graph G, equivalent
+        to the number of edges in G.
+        '''
+        self.graph = G
+        Function.__init__(
+                self, Size._operator_, G, styles=styles)
+
+    def string(self, **kwargs):
+        return '||' + self.operand.string() + '||'
+
+    def latex(self, **kwargs):
+        return r'\left\|' + self.operand.latex() + r'\right\|'
+
+
 class Connected(Function):
     '''
     Connected(G) is a propositional function (or predicate)
@@ -89,4 +139,46 @@ class Connected(Function):
                 self, Connected._operator_, G, styles=styles)
 
 
+class HasEulerianTrail(Function):
+    '''
+    HasEulerTrail(G) is a propositional function (or predicate)
+    claiming that graph G has an Eulerian trail (i.e., G has a
+    walk that uses each and every edge of G exactly once).
+    '''
+
+    # the literal operator of the HasEulerTrail operation
+    _operator_ = Literal(string_format='HasEulerianTrail',
+                         latex_format=r'\textrm{HasEulerianTrail}',
+                         theory=__file__)
+
+    def __init__(self, G, *, styles=None):
+        '''
+        Represent the propositional function HasEulerianTrail(G),
+        claiming graph G has an Eulerian trail.
+        '''
+        self.graph = G
+        Function.__init__(
+                self, HasEulerianTrail._operator_, G, styles=styles)
+
+
+class HasEulerianCircuit(Function):
+    '''
+    HasEulerCircuit(G) is a propositional function (or predicate)
+    claiming that graph G has an Eulerian circuit (i.e., G has a
+    closed walk that uses each and every edge of G exactly once).
+    '''
+
+    # the literal operator of the HasEulerCircuit operation
+    _operator_ = Literal(string_format='HasEulerianCircuit',
+                         latex_format=r'\textrm{HasEulerianCircuit}',
+                         theory=__file__)
+
+    def __init__(self, G, *, styles=None):
+        '''
+        Represent the propositional function HasEulerianCircuit(G),
+        claiming graph G has an Eulerian circuit.
+        '''
+        self.graph = G
+        Function.__init__(
+                self, HasEulerianCircuit._operator_, G, styles=styles)
 
