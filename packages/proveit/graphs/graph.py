@@ -1,5 +1,5 @@
-from proveit import Function, Literal
-from proveit import E, V
+from proveit import equality_prover, Function, Literal
+from proveit import E, G, V
 from proveit.logic import ClassMembership
 
 class Graphs(Literal):
@@ -90,6 +90,16 @@ class Order(Function):
     def latex(self, **kwargs):
         return r'\left|' + self.operand.latex() + r'\right|'
 
+    @equality_prover('defined', 'define')
+    def definition(self, **defaults_config):
+        '''
+        From self = |G|, deduce and return the equality:
+        |G| = |Vertices(G)|.
+        '''
+        from . import graph_order_def
+        _G_sub = self.operand
+        return graph_order_def.instantiate({G:_G_sub}, auto_simplify=False)
+
 
 class Size(Function):
     '''
@@ -114,6 +124,16 @@ class Size(Function):
 
     def latex(self, **kwargs):
         return r'\left\|' + self.operand.latex() + r'\right\|'
+
+    @equality_prover('defined', 'define')
+    def definition(self, **defaults_config):
+        '''
+        From self = ||G||, deduce and return the equality:
+        ||G|| = |Edges(G)|.
+        '''
+        from . import graph_size_def
+        _G_sub = self.operand
+        return graph_size_def.instantiate({G:_G_sub}, auto_simplify=False)
 
 
 class Connected(Function):
