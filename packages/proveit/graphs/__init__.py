@@ -5,12 +5,12 @@ from .endpoints import Endpoints
 from .inclusion import NotSubgraph, Subgraph
 from .membership import (
       GraphMembership, GraphNonmembership, InGraph, NotInGraph)
-from .paths import Path, Paths
+# from .paths import Path, Paths
 from .paths_of import PathsOf
 from .union import GraphUnion
-from .vertices import Degree, Vertices
+from .vertices import AdjacentVertices, Degree, Vertices
 from .walks import (Closed, EdgeSequence, EdgeSet, EndVertices,
-          EulerianTrails, Path, Trail, Walk, WalkLength, Walks)
+          EulerianTrails, Path, Paths, Trail, Walk, WalkLength, Walks)
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

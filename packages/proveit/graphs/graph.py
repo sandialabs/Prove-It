@@ -157,6 +157,17 @@ class Connected(Function):
         self.graph = G
         Function.__init__(
                 self, Connected._operator_, G, styles=styles)
+    
+    @equality_prover('defined', 'define')
+    def definition(self, **defaults_config):
+        '''
+        From self = Connected(G), deduce and return the equality:
+        Connected(G) = A, where A represents the statement that,
+        for all vertices u, v in G, there exists a u-v path in G.
+        '''
+        from . import connected_def
+        _G_sub = self.operand
+        return connected_def.instantiate({G:_G_sub}, auto_simplify=False)
 
 
 class HasEulerianTrail(Function):
