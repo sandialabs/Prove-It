@@ -10,7 +10,7 @@ from .paths_of import PathsOf
 from .union import GraphUnion
 from .vertices import AdjacentVertices, Degree, Vertices
 from .walks import (Closed, EdgeSequence, EdgeSet, EndVertices,
-          EulerianTrails, Path, Paths, Trail, Walk, WalkLength, Walks)
+          EulerianTrails, Paths, Trails, WalkLength, Walks)
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
