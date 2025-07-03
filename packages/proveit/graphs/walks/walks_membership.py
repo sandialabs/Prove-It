@@ -1,14 +1,17 @@
-from proveit import e, E, V, equality_prover, prover
-from proveit.logic import SetMembership, SetNonmembership
-from proveit.graphs import Graph
+from proveit import (i, k, G, P, S, T, W, equality_prover, Function,
+        prover, relation_prover)
+from proveit.logic import Forall, InSet, SetMembership, SetNonmembership
+from proveit.logic.sets import Functions, Injections, SetOfAll
+from proveit.numbers import zero, one, Add, Interval, subtract
+from proveit.graphs import (AdjacentVertices, Edges, EdgeSequence,
+            Graph, Vertices, Walks)
 
 
 class WalksMembership(SetMembership):
     '''
     Defines methods that apply to membership in the set
-    of walks in the simple graph G, denoted Walks(G).
-
-    UNDER CONSTRUCTION
+    of length-k walks in the simple graph G, denoted Walks(k, G).
+    See related membership classes further below for Trails and Paths.
     '''
 
     def __init__(self, element, domain):
@@ -17,138 +20,282 @@ class WalksMembership(SetMembership):
     @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
         '''
-        From self = [elem in Edges(Graph(V,E))], deduce and return:
-            [elem in Edges(Graph(V,E))] = [elem in E]
+        From self = [elem in Walks(k, G)], deduce and return:
+        [elem in Walks(G)]
+        = elem in {S | Adjacent(S(i), S(i+1))}
+        for {S in Functions([0,...,k], Vertices(G))}
         '''
-        from . import edges_membership_def
+        from . import walks_membership_def
         element = self.element
-        _V_sub  = self.domain.graph.vertex_set
-        _E_sub  = self.domain.graph.edge_set
-        return edges_membership_def.instantiate(
-                {e:element, V:_V_sub, E:_E_sub },auto_simplify=False)
+        _G_sub  = self.domain.graph
+        _k_sub  = self.domain.length
+        return walks_membership_def.instantiate(
+                {G: _G_sub, k: _k_sub, W: element },auto_simplify=False)
 
     def as_defined(self):
         '''
-        From self = [elem in Edges(Graph(V,E))], return: [elem in E]
-        (i.e. an expression, not a Judgment)
+        From self = [elem in Walks(k, G)],
+        return the expression (NOT a judgment):
+        elem in {S | Adjacent(S(i), S(i+1))}
+        for {S in Functions([0,...,k], Vertices(G))}
         '''
-        if isinstance(self.domain.operand, Graph):
-            from proveit.logic import InSet
-            element = self.element
-            _E = self.domain.graph.edge_set
-            return InSet(element, _E)
-        else:
-            raise NotImplementedError(
-                "EdgesMembership.as_defined() was called on "
-                f"self = {self.expr} with domain = {self.expr.domain}, "
-                "but the method is implemented only for domains of the "
-                "form Edges(G) where G is an explicit Graph object "
-                "of the form G = Graph(V,E) with a named edge set E.")
+        element = self.element
+        _G      = self.domain.graph
+        _k      = self.domain.length
+        return InSet(element,
+               SetOfAll(S, S,
+               conditions = [
+                   Forall(i,
+                   AdjacentVertices(
+                           Function(S, i), Function(S, Add(i, one)), _G),
+                   domain = Interval(zero, subtract(_k, one)))],
+               domain = Functions(Interval(zero, _k), Vertices(_G))))
 
     @prover
     def unfold(self, **defaults_config):
         '''
-        From self = [elem in Edges(Graph(V,E))],
-        derive and return [elem in E], knowing or assuming self.
+        From self = [elem in Walks(k, G)], and knowing self,
+        derive and return:
+        elem in {S | Adjacent(S(i), S(i+1))}
+        for {S in Functions([0,...,k], Vertices(G))}.
         '''
-        from . import edges_membership_unfolding
+        from . import walks_membership_unfolding
         element = self.element
-        _V_sub  = self.domain.graph.vertex_set
-        _E_sub  = self.domain.graph.edge_set
-        return edges_membership_unfolding.instantiate(
-            {e:element, V:_V_sub, E:_E_sub}, auto_simplify=False)
+        _G_sub  = self.domain.graph
+        _k_sub  = self.domain.length
+        return walks_membership_unfolding.instantiate(
+            {G: _G_sub, k: _k_sub, W: element}, auto_simplify=False)
 
     @prover
     def conclude(self, **defaults_config):
         '''
-        Called on self = [elem in Edges(Graph(V,E))], and
-        knowing or assuming [elem in E] (and that E is a subset
-        of [V]^2, a subset of the set of 2-element subsets of V)
-        derive and return self.
+        Called on self = [W in Walks(k, G)], derive and return
+        self, knowing or assuming at least one of the following:
+        (1) W in Functions([0,...,k], Vertices(G)) AND
+            forall i in [0,..., k-1][AdjacentVertices(W(i), W(i+1), G)]
+        (2) elem in {S | Adjacent(S(i), S(i+1))}
+            for {S in Functions([0,...,k], Vertices(G))}
         '''
-        from . import edges_membership_folding
-        element = self.element
-        _V_sub  = self.domain.graph.vertex_set
-        _E_sub  = self.domain.graph.edge_set
-        return edges_membership_folding.instantiate(
-            {e:element, V:_V_sub, E:_E_sub}, auto_simplify=False)
+        _W = self.element
+        _G  = self.domain.graph
+        _k  = self.domain.length
+        functions_set = Functions(Interval(zero, _k), Vertices(_G))
+        adj_verts = Forall(
+            i, AdjacentVertices(Function(_W, i),
+                                Function(_W, Add(i, one)), _G),
+            domain = Interval(zero, subtract(_k, one)))
+        if (InSet(_W, functions_set).proven()
+            and adj_verts.proven()):
+            from . import walks_membership_folding_components
+            return walks_membership_folding_components.instantiate(
+                    {G: _G, k: _k, W: _W},
+                    auto_simplify=False)
+        
+        from . import walks_membership_folding
+        return walks_membership_folding.instantiate(
+            {G: _G, k: _k, W: _W}, auto_simplify=False)
+
+    @relation_prover
+    def deduce_in_bool(self, **defaults_config):
+        from . import walks_membership_is_bool
+        _G_sub = self.domain.graph
+        _k_sub = self.domain.length
+        _W_sub = self.element
+        return walks_membership_is_bool.instantiate(
+            {G:_G_sub, k:_k_sub, W:_W_sub}, auto_simplify=False)
 
 
-class EdgesNonmembership(SetNonmembership):
+class TrailsMembership(SetMembership):
     '''
-    Defines methods that apply to non-membership in the set
-    Edges(G(V,E)) of the edges E of graph G.
+    Defines methods that apply to membership in the set
+    of length-k trails in the simple graph G, denoted Trails(k, G).
+    See related membership classes above and below for Walks and Paths.
     '''
 
     def __init__(self, element, domain):
-        SetNonmembership.__init__(self, element, domain)
-
-    def side_effects(self, judgment):
-        '''
-        Currently no side-effects for EdgesNonmembership.
-        '''
-        return
-        yield
+        SetMembership.__init__(self, element, domain)
 
     @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
         '''
-        From self = [elem not in Edges(Graph(V,E))], deduce and
-        return: [elem not in Edges(Graph(V,E))] = [elem not in E].
+        From self = [elem in Trails(k, G)], deduce and return:
+        [elem in Trails(k, G)]
+        = elem in {W | EdgeSequence(W) in Injections([0, ..., k-1], Edges(G))}
+        for {W in Walks(k, G)}.
+        W being in Walks(k, G) takes care of the requirement that 
+        consecutive elements of the vertex sequence are adjacent in the
+        graph G.
         '''
-
-        from . import edges_nonmembership_def
+        from . import trails_membership_def
         element = self.element
-        _V_sub  = self.domain.graph.vertex_set
-        _E_sub  = self.domain.graph.edge_set
-        return edges_nonmembership_def.instantiate(
-                {e:element, V:_V_sub, E:_E_sub },auto_simplify=False)
+        _G_sub  = self.domain.graph
+        _k_sub  = self.domain.length
+        return trails_membership_def.instantiate(
+                {G: _G_sub, k: _k_sub, T: element },auto_simplify=False)
 
     def as_defined(self):
         '''
-        From self = [elem not in Edges(Graph(V,E))],
-        return: [elem not in E] (i.e. an expression, not a Judgment)
+        From self = [elem in Trails(k, G)],
+        return the expression (NOT a judgment):
+        elem in {W | EdgeSequence(W) in
+                 Injections([0, ..., k-1], Edges(G))}
+        for {W in Walks(k, G)}
         '''
-        if isinstance(self.domain.operand, Graph):
-            from proveit.logic import NotInSet
-            element = self.element
-            _E = self.domain.graph.edge_set
-            return NotInSet(element, _E)
-        else:
-            raise NotImplementedError(
-                "EdgesNonmembership.as_defined() was called on "
-                f"self = {self.expr} with domain = {self.expr.domain}, "
-                "but the method is implemented only for domains of the "
-                "form Edges(G) where G is an explicit Graph object "
-                "of the form G = Graph(V,E) with a named edge set E.")
+        element = self.element
+        _G      = self.domain.graph
+        _k      = self.domain.length
+        return InSet(element,
+               SetOfAll(W, W,
+               conditions = [
+                   InSet(EdgeSequence(W),
+                   Injections(Interval(zero, subtract(_k, one)), Edges(_G)))],
+               domain = Walks(_k, _G)))
 
     @prover
     def unfold(self, **defaults_config):
         '''
-        From self = [elem not in Edges(Graph(V,E))],
-        derive and return [elem not in E], knowing or assuming self,
-        (and that E is a subset of [V]^2, i.e., a subset of the set
-        of 2-element subsets of V).
+        From self = [elem in Trails(k, G)], and knowing or assuming
+        self, derive and return:
+        elem in {W | EdgeSequence(W) in
+                 Injections([0, ..., k-1], Edges(G))}
+                 for {W in Walks(k, G)}.
         '''
-        from . import edges_nonmembership_unfolding
+        from . import trails_membership_unfolding
         element = self.element
-        _V_sub  = self.domain.graph.vertex_set
-        _E_sub  = self.domain.graph.edge_set
-        return edges_nonmembership_unfolding.instantiate(
-            {e:element, V:_V_sub, E:_E_sub}, auto_simplify=False)
+        _G_sub  = self.domain.graph
+        _k_sub  = self.domain.length
+        return trails_membership_unfolding.instantiate(
+            {G: _G_sub, k: _k_sub, T: element}, auto_simplify=False)
 
     @prover
     def conclude(self, **defaults_config):
         '''
-        Called on self = [elem not in Edges(Graph(V,E))], and
-        knowing or assuming [elem not in E] (and that E is a subset
-        of [V]^2, a subset of the set of 2-element subsets of V)
-        derive and return self.
+        Called on self = [W in Trails(k, G)], derive and return
+        self, knowing or assuming at least one of the following:
+        (1) W in Walks(k, G) AND
+            EdgeSeq(W) in Injections([0,...,k-1], Edges(G))
+        (2) W in {W | EdgeSequence(W) in
+                 Injections([0, ..., k-1], Edges(G))}
+                 for {W in Walks(k, G)}
         '''
-        from . import edges_nonmembership_folding
+        _W = self.element
+        _G  = self.domain.graph
+        _k  = self.domain.length
+        injections_set = (
+            Injections(Interval(zero, subtract(_k, one)), Edges(_G)))
+        if (InSet(EdgeSequence(_W), injections_set).proven()
+            and InSet(_W, Walks(_k, _G)).proven()):
+            from . import trails_membership_folding_components
+            return trails_membership_folding_components.instantiate(
+                    {G: _G, k: _k, W: _W},
+                    auto_simplify=False)
+        
+        from . import trails_membership_folding
+        return trails_membership_folding.instantiate(
+            {G: _G, k: _k, W: _W}, auto_simplify=False)
+
+    @relation_prover
+    def deduce_in_bool(self, **defaults_config):
+        from . import trails_membership_is_bool
+        _G_sub = self.domain.graph
+        _k_sub = self.domain.length
+        _T_sub = self.element
+        return trails_membership_is_bool.instantiate(
+            {G:_G_sub, k:_k_sub, T:_T_sub}, auto_simplify=False)
+
+
+class PathsMembership(SetMembership):
+    '''
+    Defines methods that apply to membership in the set of length-k
+    paths in the simple graph G, denoted Paths(k, G). A path in G is
+    a walk in which no vertex (and thus no edge) is repeated.
+    See related membership classes above for Walks and Trails.
+    '''
+
+    def __init__(self, element, domain):
+        SetMembership.__init__(self, element, domain)
+
+    @equality_prover('defined', 'define')
+    def definition(self, **defaults_config):
+        '''
+        From self = [elem in Paths(k, G)], deduce and return:
+        [elem in Paths(k, G)]
+        = elem in {W | W in Injections([0, ..., k], Vertices(G))}
+                  for {W in Walks(k, G)}.
+        W being in Walks(k, G) takes care of the requirement that 
+        consecutive elements of the vertex sequence are adjacent in the
+        graph G.
+        '''
+        from . import paths_membership_def
         element = self.element
-        _V_sub  = self.domain.graph.vertex_set
-        _E_sub  = self.domain.graph.edge_set
-        return edges_nonmembership_folding.instantiate(
-            {e:element, V:_V_sub, E:_E_sub}, auto_simplify=False)
+        _G_sub  = self.domain.graph
+        _k_sub  = self.domain.length
+        return paths_membership_def.instantiate(
+                {G: _G_sub, k: _k_sub, P: element },auto_simplify=False)
+
+    def as_defined(self):
+        '''
+        From self = [elem in Paths(k, G)],
+        return the expression (NOT a judgment):
+        elem in {W | W in Injections([0, ..., k], Vertices(G))}
+                for {W in Walks(k, G)}.
+        '''
+        element = self.element
+        _G      = self.domain.graph
+        _k      = self.domain.length
+        return InSet(element,
+               SetOfAll(W, W,
+               conditions = [
+                   InSet(W,
+                   Injections(Interval(zero, _k), Vertices(_G)))],
+               domain = Walks(_k, _G)))
+
+    @prover
+    def unfold(self, **defaults_config):
+        '''
+        From self = [elem in Paths(k, G)], and knowing or assuming
+        self, derive and return:
+        elem in {W | W in Injections([0, ..., k], Vertices(G))}
+                for {W in Walks(k, G)}.
+        '''
+        from . import paths_membership_unfolding
+        element = self.element
+        _G_sub  = self.domain.graph
+        _k_sub  = self.domain.length
+        return paths_membership_unfolding.instantiate(
+            {G: _G_sub, k: _k_sub, P: element}, auto_simplify=False)
+
+    @prover # WORKING HERE
+    def conclude(self, **defaults_config):
+        '''
+        Called on self = [P in Paths(k, G)], derive and return
+        self, knowing or assuming at least one of the following:
+        (1) P in Walks(k, G) AND
+            P in Injections([0,...,k], Vertices(G))
+        (2) P in {W | W in Injections([0, ..., k], Vertices(G))}
+                 for {W in Walks(k, G)}
+        '''
+        _W = self.element
+        _G  = self.domain.graph
+        _k  = self.domain.length
+        injections_set = Injections(Interval(zero, _k), Vertices(_G))
+        if (InSet(_W, injections_set).proven()
+            and InSet(_W, Walks(_k, _G)).proven()):
+            from . import paths_membership_folding_components
+            return paths_membership_folding_components.instantiate(
+                    {G: _G, k: _k, W: _W},
+                    auto_simplify=False)
+        
+        from . import trails_membership_folding
+        return trails_membership_folding.instantiate(
+            {G: _G, k: _k, W: _W}, auto_simplify=False)
+
+    @relation_prover
+    def deduce_in_bool(self, **defaults_config):
+        from . import paths_membership_is_bool
+        _G_sub = self.domain.graph
+        _k_sub = self.domain.length
+        _P_sub = self.element
+        return paths_membership_is_bool.instantiate(
+            {G:_G_sub, k:_k_sub, P:_P_sub}, auto_simplify=False)
 

@@ -40,10 +40,9 @@ class Walks(Function):
         Function.__init__(
                 self, Walks._operator_, (k, G), styles=styles)
 
-#   membership objects/development under construction
-#     def membership_object(self, element):
-#         from .walks_membership import WalksMembership
-#         return WalksMembership(element, self)
+    def membership_object(self, element):
+        from .walks_membership import WalksMembership
+        return WalksMembership(element, self)
 
 #     def nonmembership_object(self, element):
 #         from .walks_membership import WalksNonmembership
@@ -73,14 +72,13 @@ class Trails(Function):
         Function.__init__(
                 self, Trails._operator_, (k, G), styles=styles)
 
-#   membership objects/development under construction
-#     def membership_object(self, element):
-#         from .walks_membership import WalksMembership
-#         return WalksMembership(element, self)
+    def membership_object(self, element):
+        from .walks_membership import TrailsMembership
+        return TrailsMembership(element, self)
 
-#     def nonmembership_object(self, element):
-#         from .walks_membership import WalksNonmembership
-#         return WalksNonmembership(element, self)
+    # def nonmembership_object(self, element):
+    #     from .walks_membership import WalksNonmembership
+    #     return WalksNonmembership(element, self)
 
 
 class Paths(Function):
@@ -106,10 +104,9 @@ class Paths(Function):
         Function.__init__(
                 self, Paths._operator_, (k, G), styles=styles)
 
-#   membership objects/development under construction
-#     def membership_object(self, element):
-#         from .walks_membership import WalksMembership
-#         return WalksMembership(element, self)
+    def membership_object(self, element):
+        from .walks_membership import PathsMembership
+        return PathsMembership(element, self)
 
 #     def nonmembership_object(self, element):
 #         from .walks_membership import WalksNonmembership
