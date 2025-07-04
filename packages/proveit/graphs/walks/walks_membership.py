@@ -120,11 +120,12 @@ class TrailsMembership(SetMembership):
         '''
         From self = [elem in Trails(k, G)], deduce and return:
         [elem in Trails(k, G)]
-        = elem in {W | EdgeSequence(W) in Injections([0, ..., k-1], Edges(G))}
+        = elem in
+        {W | EdgeSequence(W) in Injections([0, ..., k-1], Edges(G))}
         for {W in Walks(k, G)}.
         W being in Walks(k, G) takes care of the requirement that 
-        consecutive elements of the vertex sequence are adjacent in the
-        graph G.
+        consecutive elements of the vertex sequence are adjacent in
+        the graph G.
         '''
         from . import trails_membership_def
         element = self.element
@@ -285,9 +286,8 @@ class PathsMembership(SetMembership):
             return paths_membership_folding_components.instantiate(
                     {G: _G, k: _k, W: _W},
                     auto_simplify=False)
-        
-        from . import trails_membership_folding
-        return trails_membership_folding.instantiate(
+        from . import paths_membership_folding
+        return paths_membership_folding.instantiate(
             {G: _G, k: _k, W: _W}, auto_simplify=False)
 
     @relation_prover
