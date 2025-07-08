@@ -290,7 +290,6 @@ class EdgeSet(Function):
                 self, EdgeSet._operator_, W, styles=styles)
 
 
-
 class EndVertices(Function):
     '''
     EndVertices(W) represents the set of endvertices or endpoints of
@@ -314,6 +313,54 @@ class EndVertices(Function):
         self.walk = W
         Function.__init__(
                 self, EndVertices._operator_, W, styles=styles)
+
+
+class BeginningVertex(Function):
+    '''
+    BeginningVertex(W) represents the beginning vertex of walk W
+    (and recall that trails, paths, circuits, and cycles are all cases
+    of walks). Since a length-k walk W is actually a function:
+        W:[0,1,...,k] -> Vertices(G),
+    BeginningVertex(W) represents the value W(0).
+    '''
+
+    # the literal operator of the BeginningVertex(W) operation
+    _operator_ = Literal(string_format='BeginningVertex',
+                         latex_format=r'\textrm{BeginningVertex}',
+                         theory=__file__)
+
+    def __init__(self, W, *, styles=None):
+        '''
+        Represent BeginningVertex(W), the beginning vertex W(0) of
+        walk W in a graph G.
+        '''
+        self.walk = W
+        Function.__init__(
+                self, BeginningVertex._operator_, W, styles=styles)
+
+
+class EndingVertex(Function):
+    '''
+    EndingVertex(W) represents the ending vertex of walk W (and recall
+    that trails, paths, circuits, and cycles are all cases of walks).
+    Since a length-k walk W is actually a function:
+        W:[0,1,...,k] -> Vertices(G),
+    EndingVertex(W) represents the value W(k).
+    '''
+
+    # the literal operator of the EndingVertex(W) operation
+    _operator_ = Literal(string_format='EndingVertex',
+                         latex_format=r'\textrm{EndingVertex}',
+                         theory=__file__)
+
+    def __init__(self, W, *, styles=None):
+        '''
+        Represent EndingVertex(W), the ending vertex W(k) of length-k
+        walk W in graph G.
+        '''
+        self.walk = W
+        Function.__init__(
+                self, EndingVertex._operator_, W, styles=styles)
 
 
 class EulerianTrails(Function):

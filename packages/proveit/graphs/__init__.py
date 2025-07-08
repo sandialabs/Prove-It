@@ -9,8 +9,9 @@ from .membership import (
 from .paths_of import PathsOf
 from .union import GraphUnion
 from .vertices import AdjacentVertices, Degree, Vertices
-from .walks import (Circuits, Closed, Cycles, EdgeSequence, EdgeSet,
-          EndVertices, EulerianTrails, Paths, Trails, WalkLength, Walks)
+from .walks import (BeginningVertex, Circuits, Closed, Cycles,
+          EdgeSequence, EdgeSet, EndingVertex, EndVertices,
+          EulerianTrails, Paths, Trails, WalkLength, Walks)
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
