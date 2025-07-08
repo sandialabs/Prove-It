@@ -1,4 +1,4 @@
-from .walks import (BeginningVertex, Circuits, Closed, Cycles,
+from .walks import (BeginningVertex, Circuits, ClosedWalk, ClosedWalks, Cycles,
         EdgeSequence, EdgeSet, EndingVertex, EndVertices,
         EulerianTrails, Paths, Trails, WalkLength, Walks)
 

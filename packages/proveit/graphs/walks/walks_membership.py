@@ -105,6 +105,104 @@ class WalksMembership(SetMembership):
             {G:_G_sub, k:_k_sub, W:_W_sub}, auto_simplify=False)
 
 
+class ClosedWalksMembership(SetMembership):
+    '''
+    Defines methods that apply to membership in the set
+    of length-k closed walks in the simple graph G, denoted
+    ClosedWalks(k, G).
+    '''
+
+    def __init__(self, element, domain):
+        SetMembership.__init__(self, element, domain)
+
+    # @equality_prover('defined', 'define')
+    # def definition(self, **defaults_config):
+    #     '''
+    #     From self = [elem in Walks(k, G)], deduce and return:
+    #     [elem in Walks(G)]
+    #     = elem in {S | Adjacent(S(i), S(i+1))}
+    #     for {S in Functions([0,...,k], Vertices(G))}
+    #     '''
+    #     from . import walks_membership_def
+    #     element = self.element
+    #     _G_sub  = self.domain.graph
+    #     _k_sub  = self.domain.length
+    #     return walks_membership_def.instantiate(
+    #             {G: _G_sub, k: _k_sub, W: element },auto_simplify=False)
+
+    # def as_defined(self):
+    #     '''
+    #     From self = [elem in Walks(k, G)],
+    #     return the expression (NOT a judgment):
+    #     elem in {S | Adjacent(S(i), S(i+1))}
+    #     for {S in Functions([0,...,k], Vertices(G))}
+    #     '''
+    #     element = self.element
+    #     _G      = self.domain.graph
+    #     _k      = self.domain.length
+    #     return InSet(element,
+    #            SetOfAll(S, S,
+    #            conditions = [
+    #                Forall(i,
+    #                AdjacentVertices(
+    #                        Function(S, i), Function(S, Add(i, one)), _G),
+    #                domain = Interval(zero, subtract(_k, one)))],
+    #            domain = Functions(Interval(zero, _k), Vertices(_G))))
+
+    # @prover
+    # def unfold(self, **defaults_config):
+    #     '''
+    #     From self = [elem in Walks(k, G)], and knowing self,
+    #     derive and return:
+    #     elem in {S | Adjacent(S(i), S(i+1))}
+    #     for {S in Functions([0,...,k], Vertices(G))}.
+    #     '''
+    #     from . import walks_membership_unfolding
+    #     element = self.element
+    #     _G_sub  = self.domain.graph
+    #     _k_sub  = self.domain.length
+    #     return walks_membership_unfolding.instantiate(
+    #         {G: _G_sub, k: _k_sub, W: element}, auto_simplify=False)
+
+    # @prover
+    # def conclude(self, **defaults_config):
+    #     '''
+    #     Called on self = [W in Walks(k, G)], derive and return
+    #     self, knowing or assuming at least one of the following:
+    #     (1) W in Functions([0,...,k], Vertices(G)) AND
+    #         forall i in [0,..., k-1][AdjacentVertices(W(i), W(i+1), G)]
+    #     (2) elem in {S | Adjacent(S(i), S(i+1))}
+    #         for {S in Functions([0,...,k], Vertices(G))}
+    #     '''
+    #     _W = self.element
+    #     _G  = self.domain.graph
+    #     _k  = self.domain.length
+    #     functions_set = Functions(Interval(zero, _k), Vertices(_G))
+    #     adj_verts = Forall(
+    #         i, AdjacentVertices(Function(_W, i),
+    #                             Function(_W, Add(i, one)), _G),
+    #         domain = Interval(zero, subtract(_k, one)))
+    #     if (InSet(_W, functions_set).proven()
+    #         and adj_verts.proven()):
+    #         from . import walks_membership_folding_components
+    #         return walks_membership_folding_components.instantiate(
+    #                 {G: _G, k: _k, W: _W},
+    #                 auto_simplify=False)
+        
+    #     from . import walks_membership_folding
+    #     return walks_membership_folding.instantiate(
+    #         {G: _G, k: _k, W: _W}, auto_simplify=False)
+
+    @relation_prover
+    def deduce_in_bool(self, **defaults_config):
+        from . import walks_membership_is_bool
+        _G_sub = self.domain.graph
+        _k_sub = self.domain.length
+        _W_sub = self.element
+        return walks_membership_is_bool.instantiate(
+            {G:_G_sub, k:_k_sub, W:_W_sub}, auto_simplify=False)
+
+
 class TrailsMembership(SetMembership):
     '''
     Defines methods that apply to membership in the set

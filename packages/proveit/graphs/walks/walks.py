@@ -49,6 +49,40 @@ class Walks(Function):
 #         return WalksNonmembership(element, self)
 
 
+class ClosedWalks(Function):
+    '''
+    ClosedWalks(k, G) represents the set of closed walks of length k
+    in the simple undirected graph G. See the description in the Walks
+    class for details about walks more generally. A closed walk is a
+    walk in which the first and last vertex are the same. Closed walks
+    are important in part because ClosedWalks(k, G) is a superset for
+    Circuits(k, G) and Cycles(k, G).
+    '''
+
+    # the literal operator of the Walks operation
+    _operator_ = Literal(string_format='ClosedWalks',
+                         latex_format=r'\textrm{ClosedWalks}',
+                         theory=__file__)
+
+    def __init__(self, k, G, *, styles=None):
+        '''
+        Represent ClosedWalks(k, G), the set of all closed walks of
+        length k in graph G.
+        '''
+        self.graph = G
+        self.length = k
+        Function.__init__(
+                self, ClosedWalks._operator_, (k, G), styles=styles)
+
+    def membership_object(self, element):
+        from .walks_membership import ClosedWalksMembership
+        return ClosedWalksMembership(element, self)
+
+#     def nonmembership_object(self, element):
+#         from .walks_membership import WalksNonmembership
+#         return WalksNonmembership(element, self)
+
+
 class Trails(Function):
     '''
     Trails(k, G) represents the set of trails of length k in the
@@ -217,27 +251,27 @@ class WalkLength(Function):
         return r'\left\|' + self.operand.latex() + r'\right\|'
 
 
-class Closed(Function):
+class ClosedWalk(Function):
     '''
-    Closed(W) is a propositional function (or predicate)
+    ClosedWalk(W) is a propositional function (or predicate)
     claiming that walk W is closed (i.e., that the endvertices of
     walk W are equal). Recall that trails, paths, circuits, and
     cycles are all special cases of walks.
     '''
 
-    # the literal operator of the Closed operation
+    # the literal operator of the ClosedWalk() operation
     _operator_ = Literal(string_format='Closed',
                          latex_format=r'\textrm{Closed}',
                          theory=__file__)
 
     def __init__(self, W, *, styles=None):
         '''
-        Represent the propositional function Closed(G),
+        Represent the propositional function ClosedWalk(G),
         claiming walk W is closed.
         '''
         self.walk = W
         Function.__init__(
-                self, Closed._operator_, W, styles=styles)
+                self, ClosedWalk._operator_, W, styles=styles)
 
 class EdgeSequence(Function):
     '''
