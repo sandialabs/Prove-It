@@ -77,8 +77,8 @@ class Trails(Function):
         return TrailsMembership(element, self)
 
     # def nonmembership_object(self, element):
-    #     from .walks_membership import WalksNonmembership
-    #     return WalksNonmembership(element, self)
+    #     from .walks_membership import TrailsNonmembership
+    #     return TrailsNonmembership(element, self)
 
 
 class Paths(Function):
@@ -89,7 +89,7 @@ class Paths(Function):
     A path with endvertices u and v is often called a u-v path.
     '''
 
-    # the literal operator of the Walks operation
+    # the literal operator of the Paths operation
     _operator_ = Literal(string_format='Paths',
                          latex_format=r'\textrm{Paths}',
                          theory=__file__)
@@ -109,8 +109,80 @@ class Paths(Function):
         return PathsMembership(element, self)
 
 #     def nonmembership_object(self, element):
-#         from .walks_membership import WalksNonmembership
-#         return WalksNonmembership(element, self)
+#         from .walks_membership import PathsNonmembership
+#         return PathsNonmembership(element, self)
+
+
+class Circuits(Function):
+    '''
+    Circuits(k, G) represents the set of circuits of length k in
+    the simple undirected graph G. A circuit in a graph G is a closed
+    trail of length 3 or more in G. Because a circuit is a closed
+    trail, a circuit begins and ends at the same vertex without
+    repeating any edges, and a circuit can be described by choosing
+    any of its vertices as the beginning (and ending) vertex. See the
+    description above in the Walks class for more details about walks.
+    '''
+
+    # the literal operator of the Circuits operation
+    _operator_ = Literal(string_format='Circuits',
+                         latex_format=r'\textrm{Circuits}',
+                         theory=__file__)
+
+    def __init__(self, k, G, *, styles=None):
+        '''
+        Represent Circuits(k, G), the set of all circuits of
+        length k in graph G.
+        '''
+        self.graph = G
+        self.length = k
+        Function.__init__(
+                self, Circuits._operator_, (k, G), styles=styles)
+
+    def membership_object(self, element):
+        from .walks_membership import CircuitsMembership
+        return CircuitsMembership(element, self)
+
+#     def nonmembership_object(self, element):
+#         from .walks_membership import CircuitsNonmembership
+#         return CircuitsNonmembership(element, self)
+
+
+class Cycles(Function):
+    '''
+    Cycles(k, G) represents the set of cycles of length k in
+    the simple undirected graph G. A cycle in a graph G can be
+    thought of as a "closed path": a cycle is a circuit without 
+    repeating any vertices (except for the beginning and ending
+    vertices). A cycle of length k is often referred to as a k-cycle.
+    A 3-cycle is often simply referred to as a triangle. A cycle of
+    odd length is called an odd cycle; a cycle of even length is
+    called an even cycle. See the description above in the Walks
+    class for more details about walks.
+    '''
+
+    # the literal operator of the Cycles operation
+    _operator_ = Literal(string_format='Cycles',
+                         latex_format=r'\textrm{Cycles}',
+                         theory=__file__)
+
+    def __init__(self, k, G, *, styles=None):
+        '''
+        Represent Cycles(k, G), the set of all cycles of
+        length k (also called k-cycles) in graph G.
+        '''
+        self.graph = G
+        self.length = k
+        Function.__init__(
+                self, Cycles._operator_, (k, G), styles=styles)
+
+    def membership_object(self, element):
+        from .walks_membership import CyclesMembership
+        return CyclessMembership(element, self)
+
+#     def nonmembership_object(self, element):
+#         from .walks_membership import CyclesNonmembership
+#         return CyclesNonmembership(element, self)
 
 
 class WalkLength(Function):
@@ -149,7 +221,8 @@ class Closed(Function):
     '''
     Closed(W) is a propositional function (or predicate)
     claiming that walk W is closed (i.e., that the endvertices of
-    walk W are equal).
+    walk W are equal). Recall that trails, paths, circuits, and
+    cycles are all special cases of walks.
     '''
 
     # the literal operator of the Closed operation
