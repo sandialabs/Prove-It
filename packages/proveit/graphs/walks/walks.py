@@ -465,7 +465,7 @@ class EulerianTrails(Function):
 
     def __init__(self, G, *, styles=None):
         '''
-        Represent the set EulerianTrails(G) of all Eulerian trails
+        Represent EulerianTrails(G), the set of all Eulerian trails
         in graph G.
         '''
         self.graph = G

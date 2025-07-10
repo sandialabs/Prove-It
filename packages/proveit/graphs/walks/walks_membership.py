@@ -25,10 +25,6 @@ class WalksMembership(SetMembership):
         k in Natural and G in Graphs.
         '''
         yield self.element_length_derivation
-        
-        # Added but commented the following out while we debate the
-        # wisdom of further side-effects
-        # yield lambda: self.deduce_member_in_real(member)
 
     @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
@@ -530,7 +526,7 @@ class PathsMembership(SetMembership):
         return paths_membership_unfolding.instantiate(
             {G: _G_sub, k: _k_sub, P: element}, auto_simplify=False)
 
-    @prover # WORKING HERE
+    @prover
     def conclude(self, **defaults_config):
         '''
         Called on self = [P in Paths(k, G)], derive and return
