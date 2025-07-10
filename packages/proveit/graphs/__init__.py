@@ -9,7 +9,8 @@ from .membership import (
 from .paths_of import PathsOf
 from .union import GraphUnion
 from .vertices import AdjacentVertices, Degree, Vertices
-from .walks import (BeginningVertex, Circuits, ClosedWalk, ClosedWalks, Cycles,
+from .walks import (BeginningVertex, Circuits, ClosedTrails,
+          ClosedWalk, ClosedWalks, Cycles,
           EdgeSequence, EdgeSet, EndingVertex, EndVertices,
           EulerianTrails, Paths, Trails, WalkLength, Walks)
 

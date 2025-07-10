@@ -1,4 +1,4 @@
-from proveit import Function, Literal
+from proveit import equality_prover, Function, Literal
 from proveit.logic import ClassMembership
 from proveit.graphs import Graph
 
@@ -59,7 +59,7 @@ class ClosedWalks(Function):
     Circuits(k, G) and Cycles(k, G).
     '''
 
-    # the literal operator of the Walks operation
+    # the literal operator of the ClosedWalks operation
     _operator_ = Literal(string_format='ClosedWalks',
                          latex_format=r'\textrm{ClosedWalks}',
                          theory=__file__)
@@ -91,7 +91,7 @@ class Trails(Function):
     A trail with endvertices u and v is often called a u-v trail.
     '''
 
-    # the literal operator of the Walks operation
+    # the literal operator of the Trails operation
     _operator_ = Literal(string_format='Trails',
                          latex_format=r'\textrm{Trails}',
                          theory=__file__)
@@ -109,6 +109,39 @@ class Trails(Function):
     def membership_object(self, element):
         from .walks_membership import TrailsMembership
         return TrailsMembership(element, self)
+
+    # def nonmembership_object(self, element):
+    #     from .walks_membership import TrailsNonmembership
+    #     return TrailsNonmembership(element, self)
+
+
+class ClosedTrails(Function):
+    '''
+    ClosedTrails(k, G) represents the set of closed trails of length
+    k in the simple graph G. A trail is a walk in which no edge is
+    repeated; a _closed_ trail is a trail that begins and ends at the
+    same vertex, and can be conceptualized as a special case of a
+    closed walk.
+    '''
+
+    # the literal operator of the ClosedTrails operation
+    _operator_ = Literal(string_format='ClosedTrails',
+                         latex_format=r'\textrm{ClosedTrails}',
+                         theory=__file__)
+
+    def __init__(self, k, G, *, styles=None):
+        '''
+        Represent ClosedTrails(k, G), the set of all closed trails of
+        length k in graph G.
+        '''
+        self.graph = G
+        self.length = k
+        Function.__init__(
+                self, ClosedTrails._operator_, (k, G), styles=styles)
+
+    def membership_object(self, element):
+        from .walks_membership import ClosedTrailsMembership
+        return ClosedTrailsMembership(element, self)
 
     # def nonmembership_object(self, element):
     #     from .walks_membership import TrailsNonmembership
@@ -149,7 +182,7 @@ class Paths(Function):
 
 class Circuits(Function):
     '''
-    Circuits(k, G) represents the set of circuits of length k in
+    Circuits(k, G) represents the set of circuits of length k >= 3 in
     the simple undirected graph G. A circuit in a graph G is a closed
     trail of length 3 or more in G. Because a circuit is a closed
     trail, a circuit begins and ends at the same vertex without
@@ -347,6 +380,24 @@ class EndVertices(Function):
         self.walk = W
         Function.__init__(
                 self, EndVertices._operator_, W, styles=styles)
+
+    @equality_prover('defined', 'define')
+    def definition(self, **defaults_config):
+        '''
+        From self = [EndVertices(W)], deduce and return
+        the equality:
+            [EndVertices(W)]
+             = {BeginningVertex(W) = EndingVertex(W)}
+        '''
+        from . import endvertices_def
+        from proveit import k, G, W
+        from proveit.graphs import WalkLength
+        _W_sub  = self.operand
+        _k_sub  = WalkLength(self.operand)
+        # _G_sub  = _W_sub.graph
+
+        return endvertices_def.instantiate(
+                {k: _k_sub, W: _W_sub, G:G },auto_simplify=False)
 
 
 class BeginningVertex(Function):

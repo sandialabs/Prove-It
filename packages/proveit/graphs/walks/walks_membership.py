@@ -1,10 +1,11 @@
-from proveit import (i, k, G, P, S, T, W, equality_prover, Function,
+from proveit import (i, k, C, G, P, S, T, W, equality_prover, Function,
         prover, relation_prover)
 from proveit.logic import (Equals, Forall, InSet, SetMembership,
             SetNonmembership)
 from proveit.logic.sets import Functions, Injections, SetOfAll
 from proveit.numbers import zero, one, Add, Interval, subtract
-from proveit.graphs import (AdjacentVertices, BeginningVertex, Edges,
+from proveit.graphs import (AdjacentVertices, BeginningVertex,
+            ClosedWalks, Edges,
             EdgeSequence, EndingVertex, Graph, Vertices, Walks)
 
 
@@ -17,6 +18,17 @@ class WalksMembership(SetMembership):
 
     def __init__(self, element, domain):
         SetMembership.__init__(self, element, domain)
+
+    def side_effects(self, judgment):
+        '''
+        Yield side-effects when proving 'W in Walks(k, G)' for
+        k in Natural and G in Graphs.
+        '''
+        yield self.element_length_derivation
+        
+        # Added but commented the following out while we debate the
+        # wisdom of further side-effects
+        # yield lambda: self.deduce_member_in_real(member)
 
     @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
@@ -105,6 +117,20 @@ class WalksMembership(SetMembership):
         return walks_membership_is_bool.instantiate(
             {G:_G_sub, k:_k_sub, W:_W_sub}, auto_simplify=False)
 
+    @prover
+    def element_length_derivation(self, **defaults_config):
+        '''
+        Can't seem to make this work as an @equality_prover?
+        From self = (element in Walks(k, G)) derive and return that
+        WalkLength(element) = k.
+        '''
+        from . import walk_length_from_membership
+        _G_sub = self.domain.graph
+        _k_sub = self.domain.length
+        _W_sub = self.element
+        return walk_length_from_membership.instantiate(
+                {G: _G_sub, k: _k_sub, W: _W_sub}, auto_simplify=False)
+
 
 class ClosedWalksMembership(SetMembership):
     '''
@@ -115,6 +141,13 @@ class ClosedWalksMembership(SetMembership):
 
     def __init__(self, element, domain):
         SetMembership.__init__(self, element, domain)
+
+    def side_effects(self, judgment):
+        '''
+        Yield side-effects when proving 'W in ClosedWalks(k, G)' for
+        k in Natural and G in Graphs.
+        '''
+        yield self.derive_element_in_walks
 
     @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
@@ -186,6 +219,15 @@ class ClosedWalksMembership(SetMembership):
         return closed_walks_membership_is_bool.instantiate(
             {G:_G_sub, k:_k_sub, W:_W_sub}, auto_simplify=False)
 
+    @prover
+    def derive_element_in_walks(self, **defaults_config):
+        from . import closed_walks_within_walks
+        _G      = self.domain.graph
+        _k      = self.domain.length
+        return (closed_walks_within_walks.instantiate(
+            {G:_G, k:_k}, auto_simplify=False)
+            .derive_superset_membership(self.element, auto_simplify=False))
+
 
 class TrailsMembership(SetMembership):
     '''
@@ -196,6 +238,13 @@ class TrailsMembership(SetMembership):
 
     def __init__(self, element, domain):
         SetMembership.__init__(self, element, domain)
+
+    def side_effects(self, judgment):
+        '''
+        Yield side-effects when proving 'W in Trails(k, G)' for
+        k in Natural and G in Graphs.
+        '''
+        yield self.derive_element_in_walks
 
     @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
@@ -286,6 +335,132 @@ class TrailsMembership(SetMembership):
         return trails_membership_is_bool.instantiate(
             {G:_G_sub, k:_k_sub, T:_T_sub}, auto_simplify=False)
 
+    @prover
+    def derive_element_in_walks(self, **defaults_config):
+        from . import trails_within_walks
+        _G      = self.domain.graph
+        _k      = self.domain.length
+        return (trails_within_walks.instantiate(
+            {G:_G, k:_k}, auto_simplify=False)
+            .derive_superset_membership(self.element, auto_simplify=False))
+
+
+class ClosedTrailsMembership(SetMembership):
+    '''
+    Defines methods that apply to membership in the set of length-k
+    closed trails in the simple graph G, denoted ClosedTrails(k, G).
+    See related membership classes above and below for Trails, Walks,
+    etc.
+    '''
+
+    def __init__(self, element, domain):
+        SetMembership.__init__(self, element, domain)
+
+    def side_effects(self, judgment):
+        '''
+        Yield side-effects when proving 'W in ClosedTrails(k, G)' for
+        k in Natural and G in Graphs.
+        '''
+        yield self.derive_element_in_closed_walks
+
+    @equality_prover('defined', 'define')
+    def definition(self, **defaults_config):
+        '''
+        From self = [elem in ClosedTrails(k, G)], deduce and return:
+        [elem in ClosedTrails(k, G)]
+        = elem in
+        {W | EdgeSequence(W) in Injections([0, ..., k-1], Edges(G))}
+        for {W in ClosedWalks(k, G)}.
+        W being in ClosedWalks(k, G) takes care of the requirement that 
+        consecutive elements of the vertex sequence are adjacent in
+        the graph G.
+        '''
+        from . import closed_trails_membership_def
+        element = self.element
+        _G_sub  = self.domain.graph
+        _k_sub  = self.domain.length
+        return closed_trails_membership_def.instantiate(
+                {G: _G_sub, k: _k_sub, T: element },auto_simplify=False)
+
+    def as_defined(self):
+        '''
+        From self = [elem in ClosedTrails(k, G)],
+        return the expression (NOT a judgment):
+        elem in {W | EdgeSequence(W) in
+                 Injections([0, ..., k-1], Edges(G))}
+        for {W in ClosedWalks(k, G)}
+        '''
+        element = self.element
+        _G      = self.domain.graph
+        _k      = self.domain.length
+        return InSet(element,
+               SetOfAll(W, W,
+               conditions = [
+                   InSet(EdgeSequence(W),
+                   Injections(Interval(zero, subtract(_k, one)), Edges(_G)))],
+               domain = ClosedWalks(_k, _G)))
+
+    @prover
+    def unfold(self, **defaults_config):
+        '''
+        From self = [elem in ClsoedTrails(k, G)], and knowing or
+        assuming self, derive and return:
+        elem in {W | EdgeSequence(W) in
+                 Injections([0, ..., k-1], Edges(G))}
+                 for {W in ClosedWalks(k, G)}.
+        '''
+        from . import closed_trails_membership_unfolding
+        element = self.element
+        _G_sub  = self.domain.graph
+        _k_sub  = self.domain.length
+        return closed_trails_membership_unfolding.instantiate(
+            {G: _G_sub, k: _k_sub, T: element}, auto_simplify=False)
+
+    @prover
+    def conclude(self, **defaults_config):
+        '''
+        Called on self = [W in ClosedTrails(k, G)], derive and return
+        self, knowing or assuming at least one of the following:
+        (1) W in ClosedWalks(k, G) AND
+            EdgeSeq(W) in Injections([0,...,k-1], Edges(G))
+        (2) W in {W | EdgeSequence(W) in
+                 Injections([0, ..., k-1], Edges(G))}
+                 for {W in ClosedWalks(k, G)}
+        '''
+        _W = self.element
+        _G  = self.domain.graph
+        _k  = self.domain.length
+        injections_set = (
+            Injections(Interval(zero, subtract(_k, one)), Edges(_G)))
+        if (InSet(EdgeSequence(_W), injections_set).proven()
+            and InSet(_W, ClosedWalks(_k, _G)).proven()):
+            from . import closed_trails_membership_folding_components
+            return (closed_trails_membership_folding_components
+                    .instantiate({G: _G, k: _k, W: _W},
+                    auto_simplify=False))
+        
+        from . import closed_trails_membership_folding
+        return closed_trails_membership_folding.instantiate(
+            {G: _G, k: _k, W: _W}, auto_simplify=False)
+
+    @relation_prover
+    def deduce_in_bool(self, **defaults_config):
+        from . import closed_trails_membership_is_bool
+        _G_sub = self.domain.graph
+        _k_sub = self.domain.length
+        _T_sub = self.element
+        return closed_trails_membership_is_bool.instantiate(
+            {G:_G_sub, k:_k_sub, T:_T_sub}, auto_simplify=False)
+
+    @prover
+    def derive_element_in_closed_walks(self, **defaults_config):
+        from . import closed_trails_within_closed_walks
+        _G      = self.domain.graph
+        _k      = self.domain.length
+        return (closed_trails_within_closed_walks.instantiate(
+            {G:_G, k:_k}, auto_simplify=False)
+            .derive_superset_membership(self.element, auto_simplify=False))
+
 
 class PathsMembership(SetMembership):
     '''
@@ -297,6 +472,13 @@ class PathsMembership(SetMembership):
 
     def __init__(self, element, domain):
         SetMembership.__init__(self, element, domain)
+
+    def side_effects(self, judgment):
+        '''
+        Yield side-effects when proving 'W in Paths(k, G)' for
+        k in Natural and G in Graphs.
+        '''
+        yield self.derive_element_in_trails
 
     @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
@@ -380,4 +562,103 @@ class PathsMembership(SetMembership):
         _P_sub = self.element
         return paths_membership_is_bool.instantiate(
             {G:_G_sub, k:_k_sub, P:_P_sub}, auto_simplify=False)
+
+    @prover
+    def derive_element_in_trails(self, **defaults_config):
+        from . import paths_within_trails
+        _G      = self.domain.graph
+        _k      = self.domain.length
+        return (paths_within_trails.instantiate(
+            {G:_G, k:_k}, auto_simplify=False)
+            .derive_superset_membership(self.element, auto_simplify=False))
+
+
+class CircuitsMembership(SetMembership):
+    '''
+    Defines methods that apply to membership in the set of length-k
+    circuits in the simple graph G, denoted Circuits(k, G). A circuit
+    in G is a closed trail -- i.e., a closed walk in which no edge is
+    repeated.
+    '''
+
+    def __init__(self, element, domain):
+        SetMembership.__init__(self, element, domain)
+
+    def side_effects(self, judgment):
+        '''
+        Yield side-effects when proving 'C in Circuits(k, G)' for
+        Natural k >= 3 and G in Graphs.
+        '''
+        yield self.derive_element_in_closed_trails
+
+    @equality_prover('defined', 'define')
+    def definition(self, **defaults_config):
+        '''
+        From self = [elem in Circuits(k, G)], with k >= 3, deduce
+        and return:
+        [elem in Circuits(k, G)] = elem in ClosedWalks(k, G).
+        '''
+        from . import circuits_membership_def
+        element = self.element
+        _G_sub  = self.domain.graph
+        _k_sub  = self.domain.length
+        return circuits_membership_def.instantiate(
+                {G: _G_sub, k: _k_sub, C: element },auto_simplify=False)
+
+    def as_defined(self):
+        '''
+        From self = [elem in Circuits(k, G)], return the expression
+        (NOT a judgment):
+                           elem in ClosedWalks(k, G).
+        '''
+        element = self.element
+        _G      = self.domain.graph
+        _k      = self.domain.length
+        return InSet(element, ClosedWalks(_k, _G))
+
+    @prover
+    def unfold(self, **defaults_config):
+        '''
+        From self = [elem in Circuits(k, G)], and knowing or assuming
+        self and k >= 3, derive and return: elem ClosedWalks(k, G).
+        '''
+        from . import circuits_membership_unfolding
+        element = self.element
+        _G_sub  = self.domain.graph
+        _k_sub  = self.domain.length
+        return circuits_membership_unfolding.instantiate(
+            {G: _G_sub, k: _k_sub, C: element}, auto_simplify=False)
+
+    @prover
+    def conclude(self, **defaults_config):
+        '''
+        Called on self = [C in Circuits(k, G)], derive and return
+        self, knowing or assuming BOTH of the following:
+        (1) k >= 3
+        (2) C in ClosedTrails(k, G)
+        '''
+        _C = self.element
+        _G  = self.domain.graph
+        _k  = self.domain.length
+        from . import circuits_membership_folding
+        return circuits_membership_folding.instantiate(
+            {G: _G, k: _k, C: _C}, auto_simplify=False)
+
+    @relation_prover
+    def deduce_in_bool(self, **defaults_config):
+        from . import circuits_membership_is_bool
+        _G_sub = self.domain.graph
+        _k_sub = self.domain.length
+        _C_sub = self.element
+        return circuits_membership_is_bool.instantiate(
+            {G:_G_sub, k:_k_sub, C:_C_sub}, auto_simplify=False)
+
+    @prover
+    def derive_element_in_closed_trails(self, **defaults_config):
+        from . import circuits_within_closed_trails
+        _G      = self.domain.graph
+        _k      = self.domain.length
+        return (circuits_within_closed_trails.instantiate(
+            {G:_G, k:_k}, auto_simplify=False)
+            .derive_superset_membership(self.element, auto_simplify=False))
 
