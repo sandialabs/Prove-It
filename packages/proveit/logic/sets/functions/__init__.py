@@ -1,4 +1,5 @@
 from .functions import Functions
+from .restriction import Restriction 
 from .images import Image, InvImage
 from .injections import Injections
 from .surjections import Surjections
