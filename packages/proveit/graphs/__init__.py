@@ -1,7 +1,6 @@
 from .graph import (Connected, Graph, Graphs, HasEulerianCircuit,
           HasEulerianTrail, Order, Size)
 from .edges import Edges
-from .endpoints import Endpoints
 from .inclusion import NotSubgraph, Subgraph
 from .membership import (
       GraphMembership, GraphNonmembership, InGraph, NotInGraph)
