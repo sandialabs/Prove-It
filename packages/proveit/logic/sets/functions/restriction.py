@@ -10,6 +10,9 @@ class Restriction(Function):
     Restriction(f, S) is an element of the set of Functions(S, B).
     The axiomatic definition includes the constraint that S be a
     subset of the original domain A.
+    Future work: consider (re-)defining Restriction(f, S) to be
+    Restriction(f, A, B, S) so as to explicitly include the original
+    domain and co-domain of the function f.
     '''
 
     # The literal operator for the Restriction function
