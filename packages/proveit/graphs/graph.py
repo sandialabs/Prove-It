@@ -1,4 +1,4 @@
-from proveit import equality_prover, Function, Literal
+from proveit import equality_prover, Function, Literal, prover
 from proveit import E, G, V
 from proveit.logic import ClassMembership
 
@@ -119,6 +119,12 @@ class Size(Function):
         Function.__init__(
                 self, Size._operator_, G, styles=styles)
 
+    def side_effects(self, judgment):
+        '''
+        Yield side-effects when representing 'Size(G)'.
+        '''
+        yield self.derive_size_in_natural
+
     def string(self, **kwargs):
         return '||' + self.operand.string() + '||'
 
@@ -134,6 +140,14 @@ class Size(Function):
         from . import graph_size_def
         _G_sub = self.operand
         return graph_size_def.instantiate({G:_G_sub}, auto_simplify=False)
+
+    @prover
+    def derive_size_in_natural(self, **defaults_config):
+        from . import graph_size_in_natural
+        _G      = self.operand
+        return (graph_size_in_natural.instantiate(
+            {G:_G}, auto_simplify=False))
+
 
 
 class Connected(Function):
