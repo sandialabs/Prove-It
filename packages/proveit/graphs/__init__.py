@@ -11,7 +11,8 @@ from .vertices import AdjacentVertices, Degree, Vertices
 from .walks import (BeginningVertex, Circuits, ClosedTrails,
           ClosedWalk, ClosedWalks, Cycles,
           EdgeSequence, EdgeSet, EndingVertex, EndVertices,
-          EulerianTrails, Paths, Trails, WalkLength, Walks)
+          EulerianCircuits, EulerianTrails, Paths, Trails,
+          WalkLength, Walks)
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

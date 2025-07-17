@@ -1,6 +1,6 @@
 from proveit import equality_prover, Function, Literal
 from proveit.logic import ClassMembership
-from proveit.graphs import Graph
+from proveit.graphs import Graph,  Size
 
 class Walks(Function):
     '''
@@ -209,6 +209,41 @@ class Circuits(Function):
     def membership_object(self, element):
         from .walks_membership import CircuitsMembership
         return CircuitsMembership(element, self)
+
+#     def nonmembership_object(self, element):
+#         from .walks_membership import CircuitsNonmembership
+#         return CircuitsNonmembership(element, self)
+
+
+class EulerianCircuits(Function):
+    '''
+    EulerianCircuits(G) represents the set of Eulerian circuits
+    of the simple undirected graph G. An Eulerian circuit in G is
+    a circuit in G that uses every edge of G. Since it uses every
+    edge, there is no length parameter k that appears in other
+    types of walks. Because it is a circuit, we expect an Eulerian
+    circuit to be non-trivial: it should consist of at least 3 edges.
+    The set of EulerianCircuits(G) could be an empty set.
+    '''
+
+    # the literal operator of the EulerianCircuits operation
+    _operator_ = Literal(string_format='EulerianCircuits',
+                         latex_format=r'\textrm{EulerianCircuits}',
+                         theory=__file__)
+
+    def __init__(self, G, *, styles=None):
+        '''
+        Represent EulerianCircuits(G), the set of all Eulerian
+        circuits in graph G.
+        '''
+        self.graph = G
+        self.length = Size(G)
+        Function.__init__(
+                self, EulerianCircuits._operator_, G, styles=styles)
+
+    def membership_object(self, element):
+        from .walks_membership import EulerianCircuitsMembership
+        return EulerianCircuitsMembership(element, self)
 
 #     def nonmembership_object(self, element):
 #         from .walks_membership import CircuitsNonmembership

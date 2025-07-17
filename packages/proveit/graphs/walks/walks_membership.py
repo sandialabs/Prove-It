@@ -5,8 +5,8 @@ from proveit.logic import (Equals, Forall, InSet, SetMembership,
 from proveit.logic.sets import Functions, Injections, SetOfAll
 from proveit.numbers import zero, one, Add, Interval, subtract
 from proveit.graphs import (AdjacentVertices, BeginningVertex,
-            ClosedWalks, Edges,
-            EdgeSequence, EndingVertex, Graph, Vertices, Walks)
+            Circuits, ClosedWalks, Edges, EdgeSequence, EndingVertex,
+            Graph, Size, Vertices, Walks)
 
 
 class WalksMembership(SetMembership):
@@ -656,5 +656,86 @@ class CircuitsMembership(SetMembership):
         _k      = self.domain.length
         return (circuits_within_closed_trails.instantiate(
             {G:_G, k:_k}, auto_simplify=False)
+            .derive_superset_membership(self.element, auto_simplify=False))
+
+
+class EulerianCircuitsMembership(SetMembership):
+    '''
+    Defines methods that apply to membership in the set of Eulerian
+    circuits in the simple graph G, denoted EulerianCircuits(G). An
+    Eulieran circuit in G is a circuit that uses every edge (and thus
+    the length of an Eulerian circuit in G is always ||G||, i.e., the
+    number of edges in G (also called the size of G).
+    '''
+
+    def __init__(self, element, domain):
+        SetMembership.__init__(self, element, domain)
+
+    def side_effects(self, judgment):
+        '''
+        Yield side-effects when proving 'C in Circuits(k, G)' for
+        Natural k >= 3 and G in Graphs.
+        '''
+        yield self.derive_element_in_closed_walks
+
+    @equality_prover('defined', 'define')
+    def definition(self, **defaults_config):
+        '''
+        From self = [elem in EulerianCircuits(G)], deduce and return:
+        [elem in EulerianCircuits(G)] = [elem in Circuits(||G||, G)].
+        '''
+        from . import eulerian_circuits_membership_def
+        element = self.element
+        _G_sub  = self.domain.graph
+        return eulerian_circuits_membership_def.instantiate(
+                {G: _G_sub, C: element },auto_simplify=False)
+
+    def as_defined(self):
+        '''
+        From self = [elem in EulerianCircuits(G)], return the
+        expression (NOT a judgment): elem in Circuits(||G||, G).
+        '''
+        element = self.element
+        _G      = self.domain.graph
+        return InSet(element, Circuits(Size(_G), _G))
+
+    @prover
+    def unfold(self, **defaults_config):
+        '''
+        From self = [elem in EulerianCircuits(G)], and knowing or
+        assuming self, derive and return: elem Circuits(||G||, G).
+        '''
+        from . import eulerian_circuits_membership_unfolding
+        element = self.element
+        _G_sub  = self.domain.graph
+        return eulerian_circuits_membership_unfolding.instantiate(
+            {G: _G_sub, C: element}, auto_simplify=False)
+
+    @prover
+    def conclude(self, **defaults_config):
+        '''
+        From self = [C in EulerianCircuits(G)], derive and return
+        self, knowing or assuming that: C in Circuits(||G||, G).
+        '''
+        _C = self.element
+        _G  = self.domain.graph
+        from . import eulerian_circuits_membership_folding
+        return eulerian_circuits_membership_folding.instantiate(
+            {G: _G, C: _C}, auto_simplify=False)
+
+    @relation_prover
+    def deduce_in_bool(self, **defaults_config):
+        from . import eulerian_circuits_membership_is_bool
+        _G_sub = self.domain.graph
+        _C_sub = self.element
+        return eulerian_circuits_membership_is_bool.instantiate(
+            {G:_G_sub, C:_C_sub}, auto_simplify=False)
+
+    @prover
+    def derive_element_in_closed_walks(self, **defaults_config):
+        from . import eulerian_circuits_within_closed_walks
+        _G      = self.domain.graph
+        return (eulerian_circuits_within_closed_walks.instantiate(
+            {G:_G}, auto_simplify=False)
             .derive_superset_membership(self.element, auto_simplify=False))
 
