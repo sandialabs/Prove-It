@@ -1,4 +1,4 @@
-from .graph import (Connected, Graph, Graphs, HasEulerianCircuit,
+from .graph import (Connected, Graph, GraphsLiteral, HasEulerianCircuit,
           HasEulerianTrail, Order, Size)
 from .edges import Edges
 from .inclusion import NotSubgraph, Subgraph

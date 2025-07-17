@@ -2,13 +2,43 @@ from proveit import equality_prover, Function, Literal, prover
 from proveit import E, G, V
 from proveit.logic import ClassMembership
 
-class Graphs(Literal):
+# class Graphs(Literal):
+#     '''
+#     Graphs represents the (mathematical) class of graphs, to which
+#     any specific graph G = (V, E) of vertices and edges belongs.
+#     This class might not be necessary, but is modeled on the
+#     HilbertSpacesLiteral class in the linear_algebra/inner_products
+#     theory package.
+#     '''
+
+#     # the literal string for representing the class of Graphs
+#     def __init__(self, *, styles=None):
+#         Literal.__init__(self, string_format='Graphs', 
+#                          latex_format=r'\textrm{Graphs}',
+#                          styles=styles)
+
+#     def membership_object(self, element):
+#         return GraphsMembership(element, self)
+
+#     @property
+#     def is_proper_class(self):
+#         '''
+#         Graphs consitute a proper class (i.e. instead of a set).
+#         This indicates that InClass() should be used instead of
+#         InSet() when this is a domain.
+#         '''
+#         return True
+
+
+class GraphsLiteral(Literal):
     '''
     Graphs represents the (mathematical) class of graphs, to which
     any specific graph G = (V, E) of vertices and edges belongs.
     This class might not be necessary, but is modeled on the
     HilbertSpacesLiteral class in the linear_algebra/inner_products
-    theory package.
+    theory package, and something similar involving the EmptySet in
+    logic/sets. 'Graphs' is then defined in the graphs/common nb
+    as Graphs = GraphsLiteral.
     '''
 
     # the literal string for representing the class of Graphs
@@ -33,8 +63,9 @@ class Graphs(Literal):
 class GraphsMembership(ClassMembership):
 
     def __init__(self, element, domain):
+        from . import Graphs
         ClassMembership.__init__(self, element, domain)
-        if domain != Graphs():
+        if domain != Graphs:
             raise TypeError("domain expected to be Graphs, not %s"
                             %domain.__class__)
 
