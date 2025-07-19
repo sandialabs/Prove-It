@@ -2,11 +2,11 @@ from proveit import (i, k, C, G, P, S, T, W, equality_prover, Function,
         prover, relation_prover)
 from proveit.logic import (Equals, Forall, InSet, SetMembership,
             SetNonmembership)
-from proveit.logic.sets import Functions, Injections, SetOfAll
+from proveit.logic.sets import Functions, Injections, Restriction, SetOfAll
 from proveit.numbers import zero, one, Add, Interval, subtract
 from proveit.graphs import (AdjacentVertices, BeginningVertex,
             Circuits, ClosedWalks, Edges, EdgeSequence, EndingVertex,
-            Graph, Size, Vertices, Walks)
+            Graph, Paths, Size, Vertices, Walks)
 
 
 class WalksMembership(SetMembership):
@@ -737,5 +737,113 @@ class EulerianCircuitsMembership(SetMembership):
         _G      = self.domain.graph
         return (eulerian_circuits_within_closed_walks.instantiate(
             {G:_G}, auto_simplify=False)
+            .derive_superset_membership(self.element, auto_simplify=False))
+
+
+class CyclesMembership(SetMembership):
+    '''
+    Defines methods that apply to membership in the set of length-k
+    cycles in the simple graph G, denoted Cycles(k, G). A cycle in G
+    is circuit (i.e., a closed trail) in which no vertex is repeated.
+    '''
+
+    def __init__(self, element, domain):
+        SetMembership.__init__(self, element, domain)
+
+    def side_effects(self, judgment):
+        '''
+        Yield side-effects when proving 'C in Cycles(k, G)' for
+        Natural k >= 3 and G in Graphs.
+        '''
+        yield self.derive_element_in_circuits
+
+    @equality_prover('defined', 'define')
+    def definition(self, **defaults_config):
+        '''
+        From self = [elem in Cycles(k, G)], with k >= 3, deduce
+        and return:
+            [elem in Cycles(k, G)]
+                = elem in {W in Circuits(k, G) |
+                           W|_{0,1,...,k-1} in Paths(k-1, G)}.
+
+        That is, an elem in Cycles(k, G) is equal to an elem being in
+        the set of Circuits(k, G) whose restriction to domain
+        {0,1,...,k-1} gives a path of length (k-1) in G.
+        '''
+        from . import cycles_membership_def
+        element = self.element
+        _G_sub  = self.domain.graph
+        _k_sub  = self.domain.length
+        return cycles_membership_def.instantiate(
+                {G: _G_sub, k: _k_sub, C: element },auto_simplify=False)
+
+    def as_defined(self):
+        '''
+        From self = [elem in Cycles(k, G)], return the expression
+        (NOT a judgment):
+            elem in {W in Circuits(k, G) |
+                     W|_{0,1,...,k-1} in Paths(k-1, G)}.
+        '''
+        element = self.element
+        _G      = self.domain.graph
+        _k      = self.domain.length
+        return (InSet(element,
+                SetOfAll(W, W,
+                conditions = [
+                    InSet(Restriction(W, Interval(zero, subtract(_k, one))),
+                          Paths(subtract(_k, one), _G))],
+                domain = Circuits(_k, _G))))
+
+    @prover
+    def unfold(self, **defaults_config):
+        '''
+        From self = [elem in Cycles(k, G)], and knowing or assuming
+        self and k >= 3, derive and return:
+            elem in {W in Circuits(k, G) |
+                     W|_{0,1,...,k-1} in Paths(k-1, G)}.
+        '''
+        from . import cycles_membership_unfolding
+        element = self.element
+        _G_sub  = self.domain.graph
+        _k_sub  = self.domain.length
+        return cycles_membership_unfolding.instantiate(
+            {G: _G_sub, k: _k_sub, C: element}, auto_simplify=False)
+
+    @prover
+    def conclude(self, **defaults_config):
+        '''
+        Called on self = [C in Cycles(k, G)], derive and return
+        self, knowing or assuming BOTH of the following:
+        (1) k >= 3
+        (2) C in {W in Circuits(k, G) |
+                  W|_{0,1,...,k-1} in Paths(k-1, G)}
+        '''
+        _C = self.element
+        _G  = self.domain.graph
+        _k  = self.domain.length
+        from . import cycles_membership_folding
+        return cycles_membership_folding.instantiate(
+            {G: _G, k: _k, C: _C}, auto_simplify=False)
+
+    @relation_prover
+    def deduce_in_bool(self, **defaults_config):
+        from . import cycles_membership_is_bool
+        _G_sub = self.domain.graph
+        _k_sub = self.domain.length
+        _C_sub = self.element
+        return cycles_membership_is_bool.instantiate(
+            {G:_G_sub, k:_k_sub, C:_C_sub}, auto_simplify=False)
+
+    @prover
+    def derive_element_in_circuits(self, **defaults_config):
+        '''
+        Usually called as a side effect when proving C in Cycles(k, G):
+        derive C in Circuits(k, G).
+        '''
+        from . import cycles_within_circuits
+        _G      = self.domain.graph
+        _k      = self.domain.length
+        return (cycles_within_circuits.instantiate(
+            {G:_G, k:_k}, auto_simplify=False)
             .derive_superset_membership(self.element, auto_simplify=False))
 
