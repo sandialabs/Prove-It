@@ -69,7 +69,27 @@ class GraphsMembership(ClassMembership):
             raise TypeError("domain expected to be Graphs, not %s"
                             %domain.__class__)
 
+    def side_effects(self, judgment):
+        '''
+        Yield side-effects when proving or asusming 'G in Graphs',
+        the main side-effect being that ||G|| in Natural.
+        '''
+        yield self.derive_size_in_natural
+
     # def conclude(): see if and when needed
+
+    @prover
+    def derive_size_in_natural(self, **defaults_config):
+        '''
+        From (G in Graphs), derive ||G|| in Natural, i.e. derive the
+        fact that the size of G (the number of edges in G) is a
+        Natural number. Called as a side-effect.
+        '''
+        from . import graph_size_in_natural
+        _G = self.element
+        return graph_size_in_natural.instantiate(
+                {G:_G}, auto_simplify=False)
+
 
 class Graph(Function):
     '''
