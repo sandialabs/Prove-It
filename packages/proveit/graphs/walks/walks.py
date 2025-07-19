@@ -280,7 +280,7 @@ class Cycles(Function):
 
     def membership_object(self, element):
         from .walks_membership import CyclesMembership
-        return CyclessMembership(element, self)
+        return CyclesMembership(element, self)
 
 #     def nonmembership_object(self, element):
 #         from .walks_membership import CyclesNonmembership
