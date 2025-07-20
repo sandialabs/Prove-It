@@ -324,6 +324,10 @@ class NumberMembership(SetMembership):
 
         """
         # Try the 'deduce_in_number_set' method.
+        # The 'element.deduce_in_number_set()'' attempt (often?) leads
+        # to infinite loop of some sort, where a membership.conclude()
+        # leads to a NumberSet.conclude(), which then leads to a
+        # membership.conclude(), ad infinitum.
         if hasattr(element, 'deduce_in_number_set'):
             # Try to deduce membership directly in the desired number
             # set via 'deduce_in_number_set'.
@@ -346,6 +350,7 @@ class NumberMembership(SetMembership):
                 return membership.inner_expr().element.substitute(
                         element)
         """
+
         if hasattr(self, 'conclude_as_last_resort'):
             return self.conclude_as_last_resort()
         if hasattr(element, 'readily_provable_number_set'):

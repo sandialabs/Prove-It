@@ -1,4 +1,5 @@
 from .power_set import PowerSet
+from .k_elem_subsets import KElemSubsets
 
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

@@ -1,0 +1,2 @@
+proveit.logic.sets.power_set.not_in_power_set_equiv
+proveit.logic.equality.rhs_via_equality

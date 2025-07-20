@@ -1,0 +1,6 @@
+inclusion
+union
+membership
+paths
+paths_of
+walks

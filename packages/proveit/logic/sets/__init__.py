@@ -11,12 +11,13 @@ from .unification import Union, UnionAll
 from .intersection import Intersect, IntersectAll
 from .subtraction import Difference
 from .comprehension import SetOfAll
-from .power_set import PowerSet
+from .k_power_set import KPowerSet
+from .power_set import PowerSet, KElemSubsets
 from .cartesian_products import CartProd, CartExp
 from .disjointness import Disjoint, Distinct
 from .cardinality import Card
-from .functions import (Functions, Injections, Surjections, Bijections, 
-                        Image, InvImage)
+from .functions import (Functions, Injections, Restriction, Surjections,
+                        Bijections, Image, InvImage)
 
 def is_infinite_set(expr):
     if hasattr(expr, 'is_infinite_set'):
