@@ -39,6 +39,128 @@ class SurfaceCode(Function):
         Function.__init__(
                 self, SurfaceCode._operator_, n, styles=styles)
 
+
+class GraphOf(Function):
+    '''
+    For a given surface code configuration SC of data qubits,
+    measurement qubits, and their interconnections, GraphOf(c, SC)
+    represents the graph or graph component of the surface code
+    component c. For example, for a site operator s in some surface
+    code SC, GraphOf(s) represents the corresponding vertex
+    in the graph of the surface code. For a data qubit q in the
+    surface code, GraphOf(q) represents the corresponding edge in the
+    graph of the surface code. For the entire surface code SC,
+    GraphOf(C) represents the graph equivalent of the entire structure.
+    The graph-equivalent here being conceptualized is based on the
+    'merged boundary-points' graph.
+
+    May want to modify name eventually to distinguish two possible
+    types of graphical representations (one with merged boundary
+    points, one without).
+
+    Some of this conceptualization and wording needs serious work.
+    It may also be that we cannot use GraphOf() in this overloaded
+    way.
+    '''
+
+    # the literal operator for the GraphOf operation
+    _operator_ = Literal(
+            string_format='graph_of',
+            latex_format=r'\mathrm{graph\_of}\!', theory=__file__)
+
+    def __init__(self, c, SC, *, styles=None):
+        '''
+        Create GraphOf(c, SC), the graph equivalent of the surface code
+        structure or code component c in the context of the surface
+        code structure SC.
+        '''
+        Function.__init__(
+                self, GraphOf._operator_, (c, SC), styles=styles)
+
+
+class InteriorVertices(Function):
+    '''
+    Given a surface code configuration SC, InteriorVertices(E, SC)
+    represents the set of interior vertices of the GraphOf(E, SC) in
+    the GraphOf(SC, SC). E could be an error acting on or experienced
+    by the surface code configuation SC, or it could be a component
+    or set of components of the surface code configuration such as
+    a specific site or data qubit. InteriorVertices(E, SC) is a
+    short-cut for what should actually be
+    InteriorVertices(GraphOf(E, SC)).
+    The sets InteriorVertices(G) and BoundaryVertices(G) form a
+    partition of the set Vertices(G).
+    '''
+
+    # the literal operator for the InteriorVertices operation
+    _operator_ = Literal(
+            string_format='interior_vertices',
+            latex_format=r'\mathrm{interior\_vertices}\!', theory=__file__)
+
+    def __init__(self, E, SC, *, styles=None):
+        '''
+        Create InteriorVertices(E, SC), the set of interior vertices
+        associated with error or surface code component E in the
+        context of the surface code configuration SC.
+        '''
+        Function.__init__(
+                self, InteriorVertices._operator_, (E, SC), styles=styles)
+
+
+class BoundaryVertices(Function):
+    '''
+    Given a surface code configuration SC, BoundaryVertices(E, SC)
+    represents the set of boundary vertices of the GraphOf(E, SC) in
+    the GraphOf(SC, SC). E could be an error acting on or experienced
+    by the surface code configuation SC, or it could be a component
+    or set of components of the surface code configuration such as
+    a specific site or data qubit. BoundaryVertices(E, SC) is a
+    short-cut for what should actually be
+    BoundaryVertices(GraphOf(E, SC)).
+    The sets InteriorVertices(G) and BoundaryVertices(G) form a
+    partition of the set Vertices(G).
+    '''
+
+    # the literal operator for the InteriorVertices operation
+    _operator_ = Literal(
+            string_format='boundary_vertices',
+            latex_format=r'\mathrm{boundary\_vertices}\!', theory=__file__)
+
+    def __init__(self, E, SC, *, styles=None):
+        '''
+        Create BoundaryVertices(E, SC), the set of bunodary vertices
+        associated with error or surface code component E in the
+        context of the surface code configuration SC.
+        '''
+        Function.__init__(
+                self, BoundaryVertices._operator_, (E, SC), styles=styles)
+
+
+class SiteSyndrome(Function):
+    '''
+    Let E be an error, conceptualized as an element of the Pauli group
+    G_{n}, acting on or experienced by some surface code configuration
+    C. Then SiteSyndrome(E) represents the set of X checks or site
+    operators that signal one or more errors in the surface code
+    (i.e., the set of X site checks that “flip state” as a result of
+    the given error E).
+    '''
+
+    # the literal operator for the SiteSyndrome operation
+    _operator_ = Literal(
+            string_format='site_syndrome',
+            latex_format=r'\mathrm{site\_syndrome}\!', theory=__file__)
+
+    def __init__(self, E, SC, *, styles=None):
+        '''
+        Create SiteSyndrome(E, SC), the 'site syndrome' or set of X
+        checks signaling errors detected in the surface code SC in
+        response to the error E.
+        '''
+        Function.__init__(
+                self, SiteSyndrome._operator_, (E, SC), styles=styles)
+
+
 class LogicalHadamard(Function):
     '''
     LogicalHadamard(i, SC(n)) represents the surface code configuration

@@ -3,6 +3,8 @@ from .algebra import (Qmult, QmultCodomain, Bra, Ket,
                       NumBra, NumKet)
 from .quantum_ops import Meas, QubitRegisterSpace, RegisterU, RegisterSU
 
+from .QEC import GraphOf, Stabilizer
+
 # There is a tricky chicken-and-egg issue if we include these
 # imports.  Let's just exclude them for now.
 #from .circuits import (Gate, MultiQuditGate, Ghost,
