@@ -1,5 +1,6 @@
-from .graph import (Connected, Graph, GraphsLiteral, HasEulerianCircuit,
-          HasEulerianTrail, Order, Size)
+from .graph import (Connected, FiniteGraphsLiteral, Graph,
+          GraphsLiteral, HasEulerianCircuit, HasEulerianTrail,
+          Order, Size)
 from .edges import Edges
 from .inclusion import NotSubgraph, Subgraph
 from .membership import (
