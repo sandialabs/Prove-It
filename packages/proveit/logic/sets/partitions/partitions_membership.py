@@ -1,7 +1,8 @@
 from proveit import USE_DEFAULTS, equality_prover, prover
+from proveit import S, X
 from proveit.logic import SetMembership
-from proveit.numbers import num
-from proveit import m, A, x
+# from proveit.numbers import num
+# from proveit import m, A, x
 
 
 class PartitionsMembership(SetMembership):
@@ -17,63 +18,93 @@ class PartitionsMembership(SetMembership):
     def __init__(self, element, domain):
         SetMembership.__init__(self, element, domain)
 
-    # def side_effects(self, judgment):
-    #     '''
-    #     Unfold the enumerated set membership as a side-effect.
-    #     '''
-    #     yield self.unfold
+    def side_effects(self, judgment):
+        '''
+        No side-effects at this time.
+        '''
+        return
+        yield
 
-    # @equality_prover('defined', 'define')
-    # def definition(self, **defaults_config):
-    #     '''
-    #     Deduce and return 
-    #         [element in (A union B ...)] = 
-    #         [(element in A) or (element in B) ...]
-    #     where self = (A union B ...).
-    #     '''
-    #     from . import union_def
-    #     element = self.element
-    #     operands = self.domain.operands
-    #     _A = operands
-    #     _m = _A.num_elements()
-    #     return union_def.instantiate(
-    #             {m: _m, x: element, A: _A}, auto_simplify=False)
+    @equality_prover('defined', 'define')
+    def definition(self, **defaults_config):
+        '''
+        For self = [element in Partitions(S)], deduce and return the
+        equality:
+            [element in Partitions(S)] = 
+            [element in SetOfAll(P, P, conditions)_{P in Pow(Pow(S))}]
+        where the conditions are:
+            * no element of P is the empty set
+            * the elems of P are all mutually disjoint
+            * the union of all elems of P is S
+        '''
+        from . import partitions_membership_def
+        _X_sub = self.element
+        _S_sub  = self.domain.operand
+        return partitions_membership_def.instantiate(
+                {S: _S_sub, X: _X_sub}, auto_simplify=False)
 
-    # def as_defined(self):
-    #     '''
-    #     From self=[elem in (A U B U ...)], return
-    #     [(element in A) or (element in B) or ...].
-    #     '''
-    #     from proveit.logic import Or, InSet
-    #     element = self.element
-    #     return Or(*self.domain.operands.map_elements(
-    #             lambda subset : InSet(element, subset)))
+    def as_defined(self):
+        '''
+        For self = [element in Partitions(S)], return the expression
+        (NOT a judgment):
+            [element in SetOfAll(P, P, conditions)_{P in Pow(Pow(S))}]
+        where the conditions are:
+            * no element of P is the empty set
+            * the elems of P are all mutually disjoint
+            * the union of all elems of P is S
+        '''
+        from proveit import A, P
+        from proveit.logic import Equals, Forall, InSet, NotEquals
+        from proveit.logic.sets import (
+                Disjoint, EmptySet, PowerSet, SetOfAll, UnionAll)
+        _S = self.domain.operand
+        _X = self.element
+        return InSet(_X,
+               SetOfAll(P, P,
+               conditions = [Forall(A, NotEquals(A, EmptySet), domain = P),
+                             Disjoint(P),
+                             Equals(UnionAll(A, A, domain = P), S)],
+               domain = PowerSet(PowerSet(S))))
 
-    # @prover
-    # def unfold(self, **defaults_config):
-    #     '''
-    #     From [element in (A union B ...)], derive and return
-    #     [(element in A) or (element in B) ...],
-    #     where self represents [element in (A union B ...)].
-    #     '''
-    #     from . import membership_unfolding
-    #     element = self.element
-    #     operands = self.domain.operands
-    #     _A = operands
-    #     _m = _A.num_elements()
-    #     return membership_unfolding.instantiate(
-    #         {m: _m, x: element, A: _A}, auto_simplify=False)
+    @prover
+    def unfold(self, **defaults_config):
+        '''
+        Given self = [element in Partitions(S)] and knowing or
+        assuming self is True, derive and return
+            [element in SetOfAll(P, P, conditions)_{P in Pow(Pow(S))}]
+        where the conditions are:
+            * no element of P is the empty set
+            * the elems of P are all mutually disjoint
+            * the union of all elems of P is S
+        '''
+        from . import partitions_membership_unfolding
+        _S_sub = self.domain.operand
+        _X_sub = self.element
+        return partitions_membership_unfolding.instantiate(
+            {S: _S_sub, X:_X_sub}, auto_simplify=False)
 
-    # @prover
-    # def conclude(self, **defaults_config):
-    #     '''
-    #     Called on self = [elem in (A U B U ...)], and knowing or
-    #     assuming [[elem in A] OR [elem in B] OR ...], derive and
-    #     return self.
-    #     '''
-    #     from . import membership_folding
-    #     element = self.element
-    #     operands = self.domain.operands
-    #     _A = operands
-    #     _m = _A.num_elements()
-    #     return membership_folding.instantiate({m: _m, x: element, A: _A})
+    @prover
+    def conclude(self, **defaults_config):
+        '''
+        Called on self = [elem in Partitions(S)], and knowing or
+        assuming that:
+            [elem in SetOfAll(P, P, conditions)_{P in Pow(Pow(S))}]
+        where the conditions are:
+            * no element of P is the empty set
+            * the elems of P are all mutually disjoint
+            * the union of all elems of P is S,
+        derive and return self.
+        '''
+        from . import partitions_membership_folding
+        _S_sub = self.domain.operand
+        _X_sub = self.element
+        return partitions_membership_folding.instantiate({S: _S_sub, X:_X_sub})
+
+    @prover
+    def deduce_in_bool(self, **defaults_config):
+        from . import partitions_membership_is_bool
+        _S_sub = self.domain.operand
+        _X_sub = self.element
+        return partitions_membership_is_bool.instantiate(
+            {S: _S_sub, X:_X_sub})
+
