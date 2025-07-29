@@ -1,0 +1,1 @@
+Define the class of partitions of a set and related methods.

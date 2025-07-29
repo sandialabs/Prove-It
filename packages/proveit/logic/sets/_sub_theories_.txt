@@ -11,3 +11,4 @@ cartesian_products
 disjointness
 cardinality
 functions
+partitions
