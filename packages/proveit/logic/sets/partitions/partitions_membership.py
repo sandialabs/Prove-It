@@ -20,10 +20,12 @@ class PartitionsMembership(SetMembership):
 
     def side_effects(self, judgment):
         '''
-        No side-effects at this time.
+        Main side effect is to unfold the basic definition of
+        memberhip in the set of partitions. If P is an element of
+        Partitions(S), then P is a set of non-empty subsets of S
+        whose union is S.
         '''
-        return
-        yield
+        yield self.unfold
 
     @equality_prover('defined', 'define')
     def definition(self, **defaults_config):
