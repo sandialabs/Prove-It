@@ -53,7 +53,7 @@ class PartitionsMembership(SetMembership):
             * the elems of P are all mutually disjoint
             * the union of all elems of P is S
         '''
-        from proveit import A, P
+        from proveit import A, B, P
         from proveit.logic import Equals, Forall, InSet, NotEquals
         from proveit.logic.sets import (
                 Disjoint, EmptySet, PowerSet, SetOfAll, UnionAll)
@@ -61,9 +61,9 @@ class PartitionsMembership(SetMembership):
         _X = self.element
         return InSet(_X,
                SetOfAll(P, P,
-               conditions = [Forall(A, NotEquals(A, EmptySet), domain = P),
-                             Disjoint(P),
-                             Equals(UnionAll(A, A, domain = P), S)],
+               conditions = [Equals(UnionAll(A, A, domain = P), S),
+                             Forall(A, NotEquals(A, EmptySet), domain = P),
+                             Forall((A, B), Disjoint(A, B), domain = P)],
                domain = PowerSet(PowerSet(S))))
 
     @prover
