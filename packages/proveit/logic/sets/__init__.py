@@ -16,6 +16,7 @@ from .power_set import PowerSet, KElemSubsets
 from .cartesian_products import CartProd, CartExp
 from .disjointness import Disjoint, Distinct
 from .cardinality import Card
+from .partitions import Partitions
 from .functions import (Functions, Injections, Restriction, Surjections,
                         Bijections, Image, InvImage)
 
