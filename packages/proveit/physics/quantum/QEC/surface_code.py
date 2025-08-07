@@ -40,6 +40,103 @@ class SurfaceCode(Function):
                 self, SurfaceCode._operator_, n, styles=styles)
 
 
+class KitaevPlanarSC(Function):
+    '''
+    KitaevPlanarSC(n, k, d) denotes the set of all Kitaev-style
+    planar surface codes utilizing n data qubits to encode k logical
+    qubits all with a resulting code distance d.
+    As an example, the Kitaev-style planar code with the confuration:
+
+                            |_|_|_|_|
+                            |_|_|_|_|
+                            |_|_|_|_|
+                            |_|_|_|_|
+                            | | | | |
+
+    is an element of the set KitaevPlanarSC(41, 1, 5) of all Kitaev-
+    style planar surface codes utilizing 41 data qubits to encode
+    1 logical qubit with a code distance of 5.
+    '''
+
+    # the literal operator of the KitaevPlanarSC() operation
+    _operator_ = Literal(
+            string_format='K', latex_format=r'\mathcal{K}\!', theory=__file__)
+
+    def __init__(self, n, k, d, *, styles=None):
+        '''
+        Denote the set KitaevPlanarSC(n, k, d) of Kitaev-style planar
+        surface codes using n data qubits to encode k logical qubits
+        with a resulting code distance d.
+        '''
+        Function.__init__(
+                self, KitaevPlanarSC._operator_, (n, k, d), styles=styles)
+
+
+class Errors(Function):
+    '''
+    Given some surface code S, Errors(S) is the set of all possible
+    errors the surface code might experience. For a surface code
+    utilizing n data qubits, Errors(S) is currently conceptualized
+    as a special subset of all elements of the Pauli group G_{n},
+    consisting of n-tensor-fold Pauli group operators consisting of
+    n-fold tensor products of X, Y, Z, and I Pauli operators.
+    For example, given a surface code on 4 data qubits, an error
+    might look like (X x Y x Z x I) or (Z x I x Z x Z) (where we
+    use the small 'x' to indicate a tensor product).
+    '''
+
+    # the literal operator of the Errors(S) operation
+    _operator_ = Literal(
+            string_format='Errors',
+            latex_format=r'\mathrm{Errors}\!',
+            theory=__file__)
+
+    def __init__(self, S, *, styles=None):
+        '''
+        Denote the set Errors(S) of possible errors on the surface
+        code S.
+        '''
+        Function.__init__(
+                self, Errors._operator_, S, styles=styles)
+
+
+class ZErrorChains(Function):
+    '''
+    For a given surface code S, ZErrorChains(S) is the set of possible
+    Z-Error chains on S. Each Z-Error chain can be conceptualized in
+    several different ways, all basically equivalent to taking some
+    specially-labelled subset of the available data qubits:
+
+    (1) As a chain f: Q -> {0, 1}, assigning to each data qubit q in Q
+        a 0-1 label, with 0 interpreted as a Z error to on that qubit,
+        and 1 interpreted as the identity operator I appliedto that
+        qubit.
+    (2) As the set of data qubits experiencing Z errors.
+    (3) As a special subset of the data qubits (i.e. the ones then
+        experiencing Z errors).
+    (3) As an element of the power set of the set of data qubits of S.
+
+    The set ZErrorChains(S) of Z-Error chains on surface code S is a
+    subset of Errors(S) of all possible errors on S. For the code-
+    capcity model, the cardinality of ZErrorChains(S) is 2^{n}, where
+    n is the number of data qubits in the surface code S.
+    '''
+
+    # the literal operator of the ZErrorChains(S) operator
+    _operator_ = Literal(
+            string_format='ZErrorChains',
+            latex_format=r'\mathrm{ZErrorChains}\!',
+            theory=__file__)
+
+    def __init__(self, S, *, styles=None):
+        '''
+        Denote the set ZErrorChains(S) of possible Z_error chains
+        on the surface code S.
+        '''
+        Function.__init__(
+                self, ZErrorChains._operator_, S, styles=styles)
+
+
 class GraphOf(Function):
     '''
     For a given surface code configuration SC of data qubits,
@@ -94,8 +191,9 @@ class InteriorVertices(Function):
 
     # the literal operator for the InteriorVertices operation
     _operator_ = Literal(
-            string_format='interior_vertices',
-            latex_format=r'\mathrm{interior\_vertices}\!', theory=__file__)
+            string_format='int_verts',
+            # latex_format=r'\mathrm{interior\_vertices}\!', theory=__file__)
+            latex_format=r'\mathrm{int\_verts}\!', theory=__file__)
 
     def __init__(self, E, SC, *, styles=None):
         '''
@@ -123,8 +221,8 @@ class BoundaryVertices(Function):
 
     # the literal operator for the InteriorVertices operation
     _operator_ = Literal(
-            string_format='boundary_vertices',
-            latex_format=r'\mathrm{boundary\_vertices}\!', theory=__file__)
+            string_format='bound_verts',
+            latex_format=r'\mathrm{bound\_verts}\!', theory=__file__)
 
     def __init__(self, E, SC, *, styles=None):
         '''
