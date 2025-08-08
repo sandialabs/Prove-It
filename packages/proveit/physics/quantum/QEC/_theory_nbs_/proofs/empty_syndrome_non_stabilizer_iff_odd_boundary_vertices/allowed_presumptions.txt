@@ -2,3 +2,4 @@ proveit.physics.quantum.QEC.empty_site_syndrome_iff_all_even_interior_vertices
 proveit.logic.booleans.implication.eq_from_iff
 proveit.logic.booleans.conjunction.left_from_and
 proveit.logic.booleans.implication.right_from_iff
+proveit.physics.quantum.QEC.all_even_vertices_implies_stabilizer
