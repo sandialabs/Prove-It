@@ -2,33 +2,6 @@ from proveit import equality_prover, Function, Literal, prover
 from proveit import E, G, V
 from proveit.logic import ClassMembership
 
-# class Graphs(Literal):
-#     '''
-#     Graphs represents the (mathematical) class of graphs, to which
-#     any specific graph G = (V, E) of vertices and edges belongs.
-#     This class might not be necessary, but is modeled on the
-#     HilbertSpacesLiteral class in the linear_algebra/inner_products
-#     theory package.
-#     '''
-
-#     # the literal string for representing the class of Graphs
-#     def __init__(self, *, styles=None):
-#         Literal.__init__(self, string_format='Graphs', 
-#                          latex_format=r'\textrm{Graphs}',
-#                          styles=styles)
-
-#     def membership_object(self, element):
-#         return GraphsMembership(element, self)
-
-#     @property
-#     def is_proper_class(self):
-#         '''
-#         Graphs consitute a proper class (i.e. instead of a set).
-#         This indicates that InClass() should be used instead of
-#         InSet() when this is a domain.
-#         '''
-#         return True
-
 
 class GraphsLiteral(Literal):
     '''
@@ -38,7 +11,10 @@ class GraphsLiteral(Literal):
     HilbertSpacesLiteral class in the linear_algebra/inner_products
     theory package, and something similar involving the EmptySet in
     logic/sets. 'Graphs' is then defined in the graphs/common nb
-    as Graphs = GraphsLiteral.
+    as Graphs = GraphsLiteral(). This class of graphs includes both
+    finite and infinite graphs, but is initially conceptualized as
+    the class of simple graphs (i.e. no loops and no parallel edges).
+    See FiniteGraphsLiteral() for the class of finite graphs.
     '''
 
     # the literal string for representing the class of Graphs
@@ -53,9 +29,42 @@ class GraphsLiteral(Literal):
     @property
     def is_proper_class(self):
         '''
-        Graphs consitute a proper class (i.e. instead of a set).
+        The class of Graphs is a proper class (i.e., instead of a set).
         This indicates that InClass() should be used instead of
         InSet() when this is a domain.
+        '''
+        return True
+
+
+class FiniteGraphsLiteral(Literal):
+    '''
+    FiniteGraphsLiteral() represents the (mathematical) class of
+    finite graphs (i.e., graphs with a finite set of vertices and
+    a finite set of edges), to which any specific finite graph
+    G = (V, E) of vertices and edges belongs. This class of graphs
+    is initially conceptualized as the class of simple finite graphs
+    (i.e. no loops and no parallel edges).
+    The string 'FiniteGraphs' is then defined in the graphs/common nb
+    as FiniteGraphs = FiniteGraphsLiteral(), and should be imported
+    from there.
+    '''
+
+    # the literal string for representing the class FiniteGraphs
+    def __init__(self, *, styles=None):
+        Literal.__init__(self, string_format='FiniteGraphs', 
+                         latex_format=r'\textrm{FiniteGraphs}',
+                         styles=styles)
+
+    def membership_object(self, element):
+        return FiniteGraphsMembership(element, self)
+
+    @property
+    def is_proper_class(self):
+        '''
+        The class of finite graphs is a proper class (i.e. instead
+        of a set). This method is used to indicates that InClass()
+        should be used instead of InSet() when FiniteGraphs is being
+        used as a domain.
         '''
         return True
 
@@ -71,8 +80,9 @@ class GraphsMembership(ClassMembership):
 
     def side_effects(self, judgment):
         '''
-        Yield side-effects when proving or asusming 'G in Graphs',
+        Yield side-effects when proving or assuming 'G in Graphs',
         the main side-effect being that ||G|| in Natural.
+        This needs updated, since Graphs includes infinite graphs.
         '''
         yield self.derive_size_in_natural
 
@@ -84,6 +94,38 @@ class GraphsMembership(ClassMembership):
         From (G in Graphs), derive ||G|| in Natural, i.e. derive the
         fact that the size of G (the number of edges in G) is a
         Natural number. Called as a side-effect.
+        '''
+        from . import graph_size_in_natural
+        _G = self.element
+        return graph_size_in_natural.instantiate(
+                {G:_G}, auto_simplify=False)
+
+class FiniteGraphsMembership(ClassMembership):
+
+    def __init__(self, element, domain):
+        from . import FiniteGraphs
+        ClassMembership.__init__(self, element, domain)
+        if domain != FiniteGraphs:
+            raise TypeError(
+                f"Domain expected to be FiniteGraphs, not {domain.__class__}")
+
+    def side_effects(self, judgment):
+        '''
+        Yield side-effects when proving or assuming 'G in FiniteGraphs',
+        the main side-effect being that ||G|| in Natural.
+        Should extend this to also have |G| in Natural.
+        Should extend this to also have G in Graphs.
+        '''
+        yield self.derive_size_in_natural
+
+    # def conclude(): see if and when needed
+
+    @prover
+    def derive_size_in_natural(self, **defaults_config):
+        '''
+        From (G in FiniteGraphs), derive ||G|| in Natural, i.e.
+        derive the fact that the size of G (the number of edges in G)
+        is a Natural number. Called as a side-effect.
         '''
         from . import graph_size_in_natural
         _G = self.element
