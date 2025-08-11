@@ -3,3 +3,8 @@ proveit.logic.booleans.implication.eq_from_iff
 proveit.logic.booleans.conjunction.left_from_and
 proveit.logic.booleans.implication.right_from_iff
 proveit.physics.quantum.QEC.all_even_vertices_implies_stabilizer
+proveit.physics.quantum.QEC.deg_is_odd_xor_even
+proveit.logic.sets.inclusion.superset_membership_from_proper_subset
+proveit.numbers.number_sets.natural_numbers.nat_pos_within_nat
+proveit.physics.quantum.QEC.interior_vertices_subset_eq_of_all_vertices
+proveit.logic.sets.inclusion.inclusive_universal_quantification
