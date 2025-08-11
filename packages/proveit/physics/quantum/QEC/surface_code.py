@@ -88,7 +88,8 @@ class Errors(Function):
     # the literal operator of the Errors(S) operation
     _operator_ = Literal(
             string_format='Errors',
-            latex_format=r'\mathrm{Errors}\!',
+            # latex_format=r'\mathrm{Errors}\!',
+            latex_format=r'\mathrm{errs}\!',
             theory=__file__)
 
     def __init__(self, S, *, styles=None):
@@ -114,7 +115,7 @@ class ZErrorChains(Function):
     (2) As the set of data qubits experiencing Z errors.
     (3) As a special subset of the data qubits (i.e. the ones then
         experiencing Z errors).
-    (3) As an element of the power set of the set of data qubits of S.
+    (4) As an element of the power set of the set of data qubits of S.
 
     The set ZErrorChains(S) of Z-Error chains on surface code S is a
     subset of Errors(S) of all possible errors on S. For the code-
@@ -135,103 +136,6 @@ class ZErrorChains(Function):
         '''
         Function.__init__(
                 self, ZErrorChains._operator_, S, styles=styles)
-
-
-class GraphOf(Function):
-    '''
-    For a given surface code configuration SC of data qubits,
-    measurement qubits, and their interconnections, GraphOf(c, SC)
-    represents the graph or graph component of the surface code
-    component c. For example, for a site operator s in some surface
-    code SC, GraphOf(s) represents the corresponding vertex
-    in the graph of the surface code. For a data qubit q in the
-    surface code, GraphOf(q) represents the corresponding edge in the
-    graph of the surface code. For the entire surface code SC,
-    GraphOf(C) represents the graph equivalent of the entire structure.
-    The graph-equivalent here being conceptualized is based on the
-    'merged boundary-points' graph.
-
-    May want to modify name eventually to distinguish two possible
-    types of graphical representations (one with merged boundary
-    points, one without).
-
-    Some of this conceptualization and wording needs serious work.
-    It may also be that we cannot use GraphOf() in this overloaded
-    way.
-    '''
-
-    # the literal operator for the GraphOf operation
-    _operator_ = Literal(
-            string_format='graph_of',
-            latex_format=r'\mathrm{graph\_of}\!', theory=__file__)
-
-    def __init__(self, c, SC, *, styles=None):
-        '''
-        Create GraphOf(c, SC), the graph equivalent of the surface code
-        structure or code component c in the context of the surface
-        code structure SC.
-        '''
-        Function.__init__(
-                self, GraphOf._operator_, (c, SC), styles=styles)
-
-
-class InteriorVertices(Function):
-    '''
-    Given a surface code configuration SC, InteriorVertices(E, SC)
-    represents the set of interior vertices of the GraphOf(E, SC) in
-    the GraphOf(SC, SC). E could be an error acting on or experienced
-    by the surface code configuation SC, or it could be a component
-    or set of components of the surface code configuration such as
-    a specific site or data qubit. InteriorVertices(E, SC) is a
-    short-cut for what should actually be
-    InteriorVertices(GraphOf(E, SC)).
-    The sets InteriorVertices(G) and BoundaryVertices(G) form a
-    partition of the set Vertices(G).
-    '''
-
-    # the literal operator for the InteriorVertices operation
-    _operator_ = Literal(
-            string_format='int_verts',
-            # latex_format=r'\mathrm{interior\_vertices}\!', theory=__file__)
-            latex_format=r'\mathrm{int\_verts}\!', theory=__file__)
-
-    def __init__(self, E, SC, *, styles=None):
-        '''
-        Create InteriorVertices(E, SC), the set of interior vertices
-        associated with error or surface code component E in the
-        context of the surface code configuration SC.
-        '''
-        Function.__init__(
-                self, InteriorVertices._operator_, (E, SC), styles=styles)
-
-
-class BoundaryVertices(Function):
-    '''
-    Given a surface code configuration SC, BoundaryVertices(E, SC)
-    represents the set of boundary vertices of the GraphOf(E, SC) in
-    the GraphOf(SC, SC). E could be an error acting on or experienced
-    by the surface code configuation SC, or it could be a component
-    or set of components of the surface code configuration such as
-    a specific site or data qubit. BoundaryVertices(E, SC) is a
-    short-cut for what should actually be
-    BoundaryVertices(GraphOf(E, SC)).
-    The sets InteriorVertices(G) and BoundaryVertices(G) form a
-    partition of the set Vertices(G).
-    '''
-
-    # the literal operator for the InteriorVertices operation
-    _operator_ = Literal(
-            string_format='bound_verts',
-            latex_format=r'\mathrm{bound\_verts}\!', theory=__file__)
-
-    def __init__(self, E, SC, *, styles=None):
-        '''
-        Create BoundaryVertices(E, SC), the set of bunodary vertices
-        associated with error or surface code component E in the
-        context of the surface code configuration SC.
-        '''
-        Function.__init__(
-                self, BoundaryVertices._operator_, (E, SC), styles=styles)
 
 
 class SiteSyndrome(Function):
