@@ -414,17 +414,17 @@ class XOr(Operation):
         '''
         From (A xor B) as self, and assuming A => C, B => D, and
         A, B, C, and D are Boolean, derive and return the conclusion,
-        C xor D. Multiple variants are considered.
+        (C V D). Multiple variants are considered.
         '''
         from . import (constructive_dilemma, destructive_dilemma,
                        constructive_multi_dilemma, destructive_multi_dilemma)
-        from proveit.logic import Not, XOr
+        from proveit.logic import Not, Or
         from proveit import ExprTuple
-        assert (isinstance(conclusion, XOr) and
+        assert (isinstance(conclusion, Or) and
                 (conclusion.operands.num_entries()
                 == self.operands.num_entries())), \
-                ("derive_via_multi_dilemma requires conclusion to be an "
-                 "exclusive disjunction, XOr, with the same number of "
+                ("derive_via_multi_dilemma requires conclusion to be a "
+                 "disjunction (Or), with the same number of "
                  "operands as self.")
         with defaults.temporary() as temp_defaults:
             # temp_defaults.preserve_expr(conclusion)
@@ -462,7 +462,7 @@ class XOr(Operation):
                             {m: _m, A: _A, B: _B})
             # constructive case.
             if self.operands.is_double():
-                # From (A xor B), A => C, B => D, conclude C or D.
+                # From (A xor B), A => C, B => D, conclude (C V D).
                 return constructive_dilemma.instantiate(
                     {A: self.operands[0],
                      B: self.operands[1],
