@@ -369,6 +369,30 @@ class XOr(Operation):
             {A: left_operand, B: right_operand})
 
     @prover
+    def derive_not_right_if_left(self, **defaults_config):
+        '''
+        From (A xor B) and knowing or assuming A and in_bool(A),
+        derive Not(B).
+        '''
+        from . import not_right_if_left
+        assert self.operands.is_double()
+        left_operand, right_operand = self.operands
+        return not_right_if_left.instantiate(
+                {A: left_operand, B: right_operand})
+
+    @prover
+    def derive_not_left_if_right(self, **defaults_config):
+        '''
+        From (A xor B) and knowing or assuming B and in_bool(B),
+        derive Not(A).
+        '''
+        from . import not_left_if_right
+        assert self.operands.is_double()
+        left_operand, right_operand = self.operands
+        return not_left_if_right.instantiate(
+                {A: left_operand, B: right_operand})
+
+    @prover
     def derive_via_singular_dilemma(self, conclusion, **defaults_config):
         '''
         From (A xor B) as self, and assuming A => C, B => C, and
