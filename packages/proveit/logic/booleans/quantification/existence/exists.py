@@ -196,19 +196,54 @@ class Exists(OperationOverInstances):
                  y_1_to__n: existential.instance_params},
                 preserve_all=True).derive_consequent()
 
+    # Modified version further below; keep this version here
+    # temporarily until further testing implemented.
+    # @prover
+    # def unfold(self, **defaults_config):
+    #     '''
+    #     From this existential quantifier, derive the "unfolded"
+    #     version according to its definition (the negation of
+    #     a universal quantification).
+    #     '''
+    #     from proveit.logic.booleans.quantification.existence \
+    #         import exists_unfolding
+    #     _x = _y = self.instance_params
+    #     _n = _x.num_elements()
+    #     _P = Lambda(_x, self.operand.body.value)
+    #     _Q = Lambda(_x, self.operand.body.condition)
+    #     return exists_unfolding.instantiate(
+    #         {n: _n, P: _P, Q: _Q, x: _x, y: _y}).derive_consequent()
+
     @prover
     def unfold(self, **defaults_config):
         '''
-        From this existential quantifier, derive the "unfolded"
-        version according to its definition (the negation of
-        a universal quantification).
+        From this existential quantifier, and knowing or assuming
+        self to be TRUE, derive the "unfolded" version according
+        to its definition, producing the negation of a universal
+        quantification. For example, given
+
+            A = |- Exists((a,b), (a+b = 5), domain = NaturalPos),
+
+        A.unfold() produces:
+
+            |- Not(Forall((a, b in NaturalPos), [(a+b = 5) != T])).
+
+        As explained in the existence axioms notebook, the format here
+        (and the awkwardness of the conclusion) arises from the effort
+        to avoid the assumption that the operation always returns a
+        Boolean.
+
         '''
-        from proveit.logic.booleans.quantification.existence \
-            import exists_unfolding
+        from proveit.logic import TRUE
+        from proveit.logic.booleans.quantification.existence import (
+                exists_unfolding)
         _x = _y = self.instance_params
         _n = _x.num_elements()
-        _P = Lambda(_x, self.operand.body.value)
-        _Q = Lambda(_x, self.operand.body.condition)
+        _P = Lambda(_x, self.instance_expr)
+        if hasattr(self, 'condition'):
+            _Q = Lambda(_x, self.condition)
+        else:
+            _Q = Lambda(_x, TRUE)
         return exists_unfolding.instantiate(
             {n: _n, P: _P, Q: _Q, x: _x, y: _y}).derive_consequent()
 
