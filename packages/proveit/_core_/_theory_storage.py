@@ -382,7 +382,7 @@ class TheoryStorage:
             theory_folder_storage = \
                 self.theory._theory_folder_storage(folder)
             # get both the expr hash id and the obj hash id
-            # to be stored in the database 
+            # to be stored in the database
             hash_id = theory_folder_storage._prove_it_storage_id(obj)
             if kind == 'common':
                 expr_id = hash_id
@@ -467,7 +467,7 @@ class TheoryStorage:
             with open(name_to_expr_and_obj_hashes_file, 'w') as f:
                 for line in new_lines:
                     f.write(line + '\n')
-    
+
     def _update_name_to_kind(self, names, kind):
         kind_to_str = {'axiom':'an axiom', 'theorem':'a theorem',
                        'common':'a common expression'}
@@ -475,7 +475,7 @@ class TheoryStorage:
             if name in self._name_to_kind:
                 if self._name_to_kind[name] != kind:
                     raise ValueError("'%s' is an overused name, as %s and %s."
-                                     %(name, kind_to_str[kind], 
+                                     %(name, kind_to_str[kind],
                                        self._name_to_kind[name]))
             else:
                 self._name_to_kind[name] = kind
@@ -501,7 +501,7 @@ class TheoryStorage:
 
     def get_expression_axiom_and_theorem_names(self):
         return (self.get_common_expression_names() + self.get_axiom_names()
-                + self.get_theorem_names())        
+                + self.get_theorem_names())
 
     def get_expression_axiom_or_theorem_kind(self, name):
         '''
@@ -643,7 +643,7 @@ class TheoryStorage:
                 # Don't allow anything to be imported from the folder
                 # that is currently being generated.
                 raise KeyError("Self importing is not allowed")
-            
+
             expr_id = self._kindname_to_exprhash[(kind, name)]
             expr = theory_folder_storage.make_expression(expr_id)
 
@@ -799,7 +799,7 @@ class TheoryStorage:
             nb = template.read()
             nb = nb.replace('#THEOREM_NAME#', theorem_name)
             theory_links = self.theory.links(
-                os.path.join(self.directory, '_theory_nbs_', 
+                os.path.join(self.directory, '_theory_nbs_',
                              'proofs', theorem_name))
             nb = nb.replace('#THEORY#', theory_links)
         return nb
@@ -958,8 +958,8 @@ class TheoryFolderStorage:
         '''
         A special expression "address" consists of a kind ('common',
         'axiom', or 'theorem'), theory package, and the name of the
-        expression.  Provided that the given expression is one of the 
-        special expressions of this theory, return the address as a 
+        expression.  Provided that the given expression is one of the
+        special expressions of this theory, return the address as a
         tuple.
         '''
         kind = TheoryStorage._folder_to_kind(self.folder)
@@ -1993,7 +1993,7 @@ class TheoryFolderStorage:
                 styles,
                 sub_expressions):
             expr_class = expr_class_map[expr_class_str]
-            expr = expr_class._checked_make(expr_info, sub_expressions, 
+            expr = expr_class._checked_make(expr_info, sub_expressions,
                                             style_preferences=styles)
             return expr
         # Load the "special names" of the theory so we
@@ -2486,7 +2486,7 @@ def remove_if_exists(path):
             # Can happen with multi-processing.
             # Just continue.
             pass
-            
+
 
 
 class StoredTheorem(StoredSpecialStmt):
@@ -2670,9 +2670,9 @@ class StoredTheorem(StoredSpecialStmt):
         '''
         proof_path = os.path.join(self.theory.get_path(), '_theory_nbs_',
                                   'proofs', self.name)
-        allowances_filename = os.path.join(proof_path, 
+        allowances_filename = os.path.join(proof_path,
                                            'allowed_presumptions.txt')
-        disallowances_filename = os.path.join(proof_path, 
+        disallowances_filename = os.path.join(proof_path,
                                               'disallowed_presumptions.txt')
         allowances = set()
         disallowances = set()
@@ -2700,7 +2700,7 @@ class StoredTheorem(StoredSpecialStmt):
         filename = os.path.join(proof_path, 'disallowed_presumptions.txt')
         with open(filename, 'a') as f:
             f.write(presumption + '\n')
-    
+
     def clear_presumption_info(self):
         '''
         Clear the allowances and disallowances for this theorem.
@@ -2807,7 +2807,7 @@ class StoredTheorem(StoredSpecialStmt):
 
         stored_used_axioms = [Theory.get_stored_axiom(used_axiom_name) for
                               used_axiom_name in used_axiom_names]
-        stored_used_theorems = [Theory.get_stored_theorem(used_theorem_name) 
+        stored_used_theorems = [Theory.get_stored_theorem(used_theorem_name)
                                 for used_theorem_name in used_theorem_names]
 
         # record axioms/theorems that this theorem directly uses
@@ -2835,9 +2835,9 @@ class StoredTheorem(StoredSpecialStmt):
 
         # See if there are any axioms/theorems eliminated through the
         # use of a Literal generalization.
-        eliminated_axiom_names = [str(used_axiom) for used_axiom in 
+        eliminated_axiom_names = [str(used_axiom) for used_axiom in
                                   proof.eliminated_axioms()]
-        eliminated_theorem_names = [str(used_theorem) for used_theorem 
+        eliminated_theorem_names = [str(used_theorem) for used_theorem
                                     in proof.eliminated_theorems()]
         if len(eliminated_axiom_names)>0 or len(eliminated_theorem_names)>0:
             # record eliminated axioms/theorems
@@ -2967,10 +2967,10 @@ class StoredTheorem(StoredSpecialStmt):
     def all_requirements(self, *, dead_end_theorem_exprs=None,
                          excluded_names=None, sort_key=None):
         '''
-        Returns the axioms that are required (directly or indirectly) 
-        by the theorem.  Also, return the set of "dead-end" theorems 
-        that are required (directly or indirectly).  A "dead-end" 
-        theorem is either unproven or has an expression that matches 
+        Returns the axioms that are required (directly or indirectly)
+        by the theorem.  Also, return the set of "dead-end" theorems
+        that are required (directly or indirectly).  A "dead-end"
+        theorem is either unproven or has an expression that matches
         one in the optionally provided `dead_end_theorem_exprs`.
         Conservative definitions that are not logically necessary
         for the proof are extracted from these sets and returned on
@@ -2993,7 +2993,7 @@ class StoredTheorem(StoredSpecialStmt):
                         thm.proven_truth.expr,
                         required_axioms, required_deadend_theorems,
                         sort_key=sort_key))
-        return (axioms, theorems, 
+        return (axioms, theorems,
                 list(required_cons_defs) + cons_defs)
 
     @staticmethod
@@ -3002,7 +3002,7 @@ class StoredTheorem(StoredSpecialStmt):
         '''
         Returns the set of axioms that are required (directly or
         indirectly) by the theorems.  Also, return the set of "dead-end"
-        theorems that are required (directly or indirectly).  A 
+        theorems that are required (directly or indirectly).  A
         "dead-end" theorem is either unproven or has an expression that
         matches one in the optionally provided `dead_end_theorem_exprs`.
         Also returns the conservative definitions used indirectly.
@@ -3020,7 +3020,7 @@ class StoredTheorem(StoredSpecialStmt):
             if not isinstance(stored_theorem, StoredTheorem):
                 stored_theorem = stored_theorem._stored_theorem()
             eliminated_axiom_names, eliminated_theorem_names = (
-                stored_theorem.read_eliminated_axioms(), 
+                stored_theorem.read_eliminated_axioms(),
                 stored_theorem.read_eliminated_theorems())
             excluded_names = set(excluded_names)
             excluded_names.update(eliminated_axiom_names)
@@ -3053,9 +3053,9 @@ class StoredTheorem(StoredSpecialStmt):
                 continue
             if len(eliminated_axiom_names)==len(eliminated_theorem_names)==0:
                 _eliminated_axiom_names, _eliminated_theorem_names = (
-                    stored_theorem.read_eliminated_axioms(), 
+                    stored_theorem.read_eliminated_axioms(),
                     stored_theorem.read_eliminated_theorems())
-                if (len(_eliminated_axiom_names) > 0 or 
+                if (len(_eliminated_axiom_names) > 0 or
                         len(_eliminated_theorem_names) > 0):
                     # When there are eliminated axioms or theorems, we
                     # must call all_requirements recursively to make
@@ -3070,7 +3070,7 @@ class StoredTheorem(StoredSpecialStmt):
                             _required_cons_defs)
                     continue
             used_axiom_names, used_theorem_names = (
-                stored_theorem.read_used_axioms(), 
+                stored_theorem.read_used_axioms(),
                 stored_theorem.read_used_theorems())
             required_axioms.update({Theory.find_axiom(name) for name
                                     in used_axiom_names
@@ -3081,7 +3081,7 @@ class StoredTheorem(StoredSpecialStmt):
                         to_process.add(used_theorem_name)
         return (required_axioms, required_deadend_theorems,
                 required_conservative_definitions)
-    
+
     @staticmethod
     def _extract_conservative_definitions(
             expr, required_axioms, required_deadend_theorems, sort_key=None):
@@ -3089,14 +3089,14 @@ class StoredTheorem(StoredSpecialStmt):
         Given a collection of required axioms and required "deadend"
         theorems, extract those that are conservative extension
         definitions.
-        Returns 
+        Returns
         (conservative_defs, required_axioms, required_deadend_theorems)
-        where the conservative_defs have been removed from the required 
+        where the conservative_defs have been removed from the required
         axioms and deadend theorems.  The conservative_defs will
         be in an order in which a literal is not used in another
         definiition before it is defined.  If 'sort_key' is provided,
         it will be sorted according to the key apart from this
-        constraint.  The required_axioms and required_deadend_theorems 
+        constraint.  The required_axioms and required_deadend_theorems
         that are returned will also be sorted according to this key.
         '''
         from proveit import used_literals
@@ -3104,7 +3104,7 @@ class StoredTheorem(StoredSpecialStmt):
         # First see which literals are possibly defined conservatively,
         # disqualifying any with multiple definitions.
         lit_to_def = dict()
-        for req_stmt in itertools.chain(required_axioms, 
+        for req_stmt in itertools.chain(required_axioms,
                                         required_deadend_theorems):
             lit = req_stmt.proven_truth.conservative_definition_lit()
             if lit in active_lits:
@@ -3116,13 +3116,13 @@ class StoredTheorem(StoredSpecialStmt):
         # Count the number of occurrences of a defined literal
         # in required statements.
         lit_to_num_occurrences = {lit:0 for lit in lit_to_def.keys()}
-        for req_stmt in itertools.chain(required_axioms, 
-                                        required_deadend_theorems):            
+        for req_stmt in itertools.chain(required_axioms,
+                                        required_deadend_theorems):
             for lit in used_literals(req_stmt.proven_truth.expr):
                 if lit in lit_to_num_occurrences:
                     lit_to_num_occurrences[lit] += 1
         if sort_key is not None:
-            key_to_lit = {sort_key(lit_to_def[_lit]):_lit for _lit 
+            key_to_lit = {sort_key(lit_to_def[_lit]):_lit for _lit
                           in lit_to_num_occurrences.keys()}
             if len(key_to_lit) != len(lit_to_num_occurrences):
                 raise ValueError("sort keys must be unique")
@@ -3135,10 +3135,10 @@ class StoredTheorem(StoredSpecialStmt):
                 available_def_lits.append(lit)
         # Sort in reverse order so we can pop off the end.
         if sort_key is None:
-            available_def_lit_keys = deque(available_def_lits)     
+            available_def_lit_keys = deque(available_def_lits)
         else:
             available_def_lit_keys = deque(
-                    sorted([sort_key(lit_to_def[_lit]) for _lit 
+                    sorted([sort_key(lit_to_def[_lit]) for _lit
                             in available_def_lits]))
 
         # Successively add to the definitions as they are available
@@ -3162,7 +3162,7 @@ class StoredTheorem(StoredSpecialStmt):
                         if sort_key is None:
                             available_def_lit_keys.append(_lit)
                         else:
-                            bisect.insort(available_def_lit_keys, 
+                            bisect.insort(available_def_lit_keys,
                                           sort_key(lit_to_def[_lit]))
         # Reverse the order.
         conservative_defs = list(reversed(conservative_defs))
@@ -3177,7 +3177,7 @@ class StoredTheorem(StoredSpecialStmt):
                 if req_stmt not in conservative_defs_set]
         if sort_key is not None:
             required_axioms = sorted(required_axioms, key=sort_key)
-            required_deadend_theorems = sorted(required_deadend_theorems, 
+            required_deadend_theorems = sorted(required_deadend_theorems,
                                                key=sort_key)
         return (required_axioms, required_deadend_theorems,
                 conservative_defs)
@@ -3187,15 +3187,15 @@ class StoredTheorem(StoredSpecialStmt):
         Returns the set of theorems used to prove the theorem or to be presumed
         in the proof of the theorem, directly or indirectly (i.e., applied
         recursively); this theorem itself is also included.
-        If a set of 'names' is provided, this will add the 
-        names to that set and skip over anything that is already in the set, 
+        If a set of 'names' is provided, this will add the
+        names to that set and skip over anything that is already in the set,
         making the assumption that its dependents have already been
         included (e.g., if the same set is used in multiple calls to this
         method for different theorems).
         '''
         from .theory import Theory, TheoryException
         my_name = str(self)
-        if names is None: 
+        if names is None:
             names = set()
         elif my_name in names:
             return # already processed 'my_name', so nothing to do.
@@ -3213,7 +3213,7 @@ class StoredTheorem(StoredSpecialStmt):
                 # If it no longer exists (or is a theory rather than a
                 # theorem), skip it.
                 continue
-            names.add(next_theorem_name)            
+            names.add(next_theorem_name)
             if not stored_theorem.has_proof():
                 new_to_process, _ = (
                         stored_theorem.get_allowed_and_disallowed_presumptions())
