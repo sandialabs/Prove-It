@@ -8,3 +8,13 @@ proveit.logic.sets.inclusion.superset_membership_from_proper_subset
 proveit.numbers.number_sets.natural_numbers.nat_pos_within_nat
 proveit.physics.quantum.QEC.interior_vertices_subset_eq_of_all_vertices
 proveit.logic.sets.inclusion.inclusive_universal_quantification
+proveit.logic.booleans.exclusive_disjunction.not_right_if_left
+proveit.logic.booleans.in_bool_if_true
+proveit.logic.sets.membership.fold_not_in_set
+proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.booleans.implication.modus_tollens_denial
+proveit.logic.booleans.quantification.universality.forall_with_conditions__is_bool
+proveit.logic.sets.membership.unfold_not_in_set
+proveit.numbers.numerals.decimals.posnat1
+proveit.logic.booleans.not_equals_true
+proveit.logic.sets.membership.double_negated_membership
