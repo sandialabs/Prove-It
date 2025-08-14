@@ -254,14 +254,37 @@ class Exists(OperationOverInstances):
         equation with this existential quantifier on the left
         and a negated universal quantification on the right.
         '''
+        from proveit import defaults
+        from proveit.logic import Forall, Not, NotEquals, TRUE
         from proveit.logic.booleans.quantification.existence \
             import exists_def
         _x = _y = self.instance_params
         _n = _x.num_elements()
-        _P = Lambda(_x, self.operand.body.value)
-        _Q = Lambda(_x, self.operand.body.condition)
-        return exists_def.instantiate(
-            {n: _n, P: _P, Q: _Q, x: _x, y: _y}, preserve_expr=self)
+        _P = Lambda(_x, self.instance_expr)
+        if hasattr(self, 'condition'):
+            _Q = Lambda(_x, self.condition)
+        else:
+            _Q = Lambda(_x, TRUE)
+        # try constructing the rhs to preserve
+        if hasattr(self, 'condition'):
+            rhs_to_preserve = (
+                Not(Forall(_x,
+                    NotEquals(self.instance_expr, TRUE),
+                    conditions = [self.condition])))
+        else:
+            rhs_to_preserve = (
+                Not(Forall(_x,
+                    NotEquals(self.instance_expr, TRUE),
+                    )))
+        temp_exprs_to_preserve = set([self, rhs_to_preserve])
+        defaults.preserved_exprs.update(temp_exprs_to_preserve)
+        result = exists_def.instantiate(
+            # {n: _n, P: _P, Q: _Q, x: _x, y: _y}, preserve_expr=self)
+            {n: _n, P: _P, Q: _Q, x: _x, y: _y}
+            )
+        # revert preserved_exprs set to original
+        defaults.preserved_exprs.difference_update(temp_exprs_to_preserve)
+        return result
 
     @prover
     def deduce_not_exists(self, **defaults_config):
