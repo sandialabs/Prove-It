@@ -115,6 +115,7 @@ def _make_decorated_prover(func, automatic=False):
         def checked_truth(proven_truth):
             # Check that the proven_truth is a Judgment and has
             # appropriate assumptions.
+            from proveit._core_.proof import ProofFailure
             if proven_truth is None and is_conclude_method:
                 return proven_truth # we'll raise an exception later.
             if not isinstance(proven_truth, Judgment):
@@ -122,10 +123,10 @@ def _make_decorated_prover(func, automatic=False):
                                 "a proven Judgment, not %s of type %s."
                                 %(func, proven_truth, proven_truth.__class__))
             if not proven_truth.is_applicable():
-                raise TypeError("@prover method %s returned a Judgment, "
-                                "%s, that is not proven under the active "
-                                "assumptions: %s"
-                                %(func, proven_truth, defaults.assumptions)) 
+                raise ProofFailure(proven_truth.expr, defaults.assumptions,
+                                   "@prover method %s returned a Judgment, "
+                                   "%s, that is not applicable under given "
+                                   "assumptions") 
             return proven_truth
 
         if (automatic and not defaults.preserve_all) or (
@@ -421,7 +422,8 @@ def equality_prover(past_tense, present_tense, automatic=False):
                                 "method for an Expression type or it must "
                                 "have an 'expr' attribute."%func)            
             proven_truth = None
-            if is_simplification_method or is_evaluation_method:
+            if is_simplification_method or is_shallow_simplification_method or (
+                    is_evaluation_method):
                 from proveit.logic import is_irreducible_value
                 if is_irreducible_value(expr):
                     # Already irreducible.  Done.
@@ -435,8 +437,10 @@ def equality_prover(past_tense, present_tense, automatic=False):
             _no_eval_check = kwargs.pop('_no_eval_check', False)
             if (not _no_eval_check and (
                     is_evaluation_method or
-                    (defaults.simplify_with_known_evaluations 
-                     and is_simplification_method))):
+                    ((is_simplification_method or is_shallow_simplification_method)
+                     and 
+                     (defaults.simplify_with_known_evaluations or
+                      kwargs.get('must_evaluate', False)==True)))):
                 from proveit.logic import evaluate_truth
                 # See if there is a known evaluation (directly or
                 # indirectly and/or via canonical forms).
