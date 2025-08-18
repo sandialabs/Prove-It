@@ -231,57 +231,105 @@ class Exists(OperationOverInstances):
         As explained in the existence axioms notebook, the format here
         (and the awkwardness of the conclusion) arises from the effort
         to avoid the assumption that the operation always returns a
-        Boolean.
+        Boolean. On the other hand, if we have:
+
+            B = |- Exists(x, Not(P(x))),
+
+        then B.unfold() produces:
+
+            |- Not(Forall(x, P(x)))
 
         '''
-        from proveit.logic import TRUE
+        from proveit.logic import Not, TRUE
         from proveit.logic.booleans.quantification.existence import (
-                exists_unfolding)
+                exists_not_unfolding, exists_unfolding)
         _x = _y = self.instance_params
         _n = _x.num_elements()
-        _P = Lambda(_x, self.instance_expr)
+
+        # distinguish between Exists(x, P(x)) vs Exists(x, Not(P(x)))
+        _case_not = False
+        if isinstance(self.instance_expr, Not):
+            _case_not = True
+            _P = Lambda(_x, self.instance_expr.operand)
+        else:
+            _P = Lambda(_x, self.instance_expr)
+        # distinguish between cases with and w/out conditions
         if hasattr(self, 'condition'):
             _Q = Lambda(_x, self.condition)
         else:
             _Q = Lambda(_x, TRUE)
+        if _case_not:
+            return exists_not_unfolding.instantiate(
+            {n: _n, P: _P, Q: _Q, x: _x, y: _y}).derive_consequent()
         return exists_unfolding.instantiate(
             {n: _n, P: _P, Q: _Q, x: _x, y: _y}).derive_consequent()
+
+    # NEXT: update definition() method to also deal with the alternative
+    # existential Exists(x, Not(P(x))) 20250817
 
     @prover
     def definition(self, **defaults_config):
         '''
         Return definition of this existential quantifier as an
         equation with this existential quantifier on the left
-        and a negated universal quantification on the right.
+        and a negated universal quantification on the right. This
+        handles two separate cases (along with cases with and w/out
+        conditions):
+            Exists(x, P(x)) vs. Exists(x, Not(P(x))),
+        which return:
+            Not(Forall(x, P(x) != T)) and Not(Forall(x, P(x))),
+        respectively.
         '''
         from proveit import defaults
         from proveit.logic import Forall, Not, NotEquals, TRUE
-        from proveit.logic.booleans.quantification.existence \
-            import exists_def
+        from proveit.logic.booleans.quantification.existence import (
+            exists_def, exists_not_eq_not_forall)
         _x = _y = self.instance_params
         _n = _x.num_elements()
-        _P = Lambda(_x, self.instance_expr)
+
+        # distinguish between Exists(x, P(x)) vs Exists(x, Not(P(x)))
+        _case_not = False
+        if isinstance(self.instance_expr, Not):
+            _case_not = True
+            _P = Lambda(_x, self.instance_expr.operand)
+        else:
+            _P = Lambda(_x, self.instance_expr)
+        # distinguish between cases with and w/out conditions
         if hasattr(self, 'condition'):
             _Q = Lambda(_x, self.condition)
         else:
             _Q = Lambda(_x, TRUE)
         # try constructing the rhs to preserve
         if hasattr(self, 'condition'):
-            rhs_to_preserve = (
-                Not(Forall(_x,
-                    NotEquals(self.instance_expr, TRUE),
-                    conditions = [self.condition])))
+            if _case_not:
+                rhs_to_preserve = (
+                    Not(Forall(_x, self.instance_expr.operand,
+                        conditions = [self.condition])))
+            else:
+                rhs_to_preserve = (
+                    Not(Forall(_x,
+                        NotEquals(self.instance_expr, TRUE),
+                        conditions = [self.condition])))
         else:
-            rhs_to_preserve = (
-                Not(Forall(_x,
-                    NotEquals(self.instance_expr, TRUE),
-                    )))
+            if _case_not:
+                rhs_to_preserve = (
+                    Not(Forall(_x, self.instance_expr.operand,
+                        )))
+            else:
+                rhs_to_preserve = (
+                    Not(Forall(_x,
+                        NotEquals(self.instance_expr, TRUE),
+                        )))
         temp_exprs_to_preserve = set([self, rhs_to_preserve])
         defaults.preserved_exprs.update(temp_exprs_to_preserve)
-        result = exists_def.instantiate(
-            # {n: _n, P: _P, Q: _Q, x: _x, y: _y}, preserve_expr=self)
-            {n: _n, P: _P, Q: _Q, x: _x, y: _y}
-            )
+        if _case_not:
+            result = exists_not_eq_not_forall.instantiate(
+                {n: _n, P: _P, Q: _Q, x: _x, y: _y}
+                )
+        else:
+            result = exists_def.instantiate(
+                {n: _n, P: _P, Q: _Q, x: _x, y: _y}
+                )
         # revert preserved_exprs set to original
         defaults.preserved_exprs.difference_update(temp_exprs_to_preserve)
         return result
