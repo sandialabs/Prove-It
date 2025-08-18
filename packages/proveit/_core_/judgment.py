@@ -348,12 +348,16 @@ class Judgment:
                 'qed proof should not have any remaining assumptions')
         Judgment.qed_in_progress = True
         try:
-            proven_truth = self.expr.prove(assumptions=[])
-            if not proven_truth.is_usable():
-                defaults._proven_truth = proven_truth
-                proven_truth.raise_unusable_proof()
-            print("{} has been proven.".format(Judgment.theorem_being_proven))
-            Judgment.stored_theorem_being_proven._recordProof(proven_truth.proof())
+            with defaults.temporary() as tmp_defaults:
+                # Disable side-effects when executing %qed since
+                # this is the final act for this session.
+                tmp_defaults.sideeffect_automation = False
+                proven_truth = self.expr.prove(assumptions=[])
+                if not proven_truth.is_usable():
+                    defaults._proven_truth = proven_truth
+                    proven_truth.raise_unusable_proof()
+                print("{} has been proven.".format(Judgment.theorem_being_proven))
+                Judgment.stored_theorem_being_proven._recordProof(proven_truth.proof())
         finally:
             Judgment.qed_in_progress = False
         return proven_truth.proof()
@@ -571,20 +575,19 @@ class Judgment:
         theorem_being_proven = Judgment.theorem_being_proven
         theorem_expr = Judgment.theorem_being_proven.proven_truth.expr
         if theorem_expr.readily_provable():
-            if not Judgment.theorem_readily_provable:
-                Judgment.theorem_readily_provable = True
-                if theorem_expr.proven():
-                    proven_truth = theorem_expr.prove(automation=False)
-                    if proven_truth.is_usable():
-                        print(
-                            '%s has been proven. ' %
-                            theorem_being_proven.name,
-                            r'Now simply execute "%qed".')
-                else:
+            if theorem_expr.proven():
+                proven_truth = theorem_expr.prove(automation=False)
+                if proven_truth.is_usable():
                     print(
-                        '%s may now be readily provable (assuming required '
-                        'theorems are usable). '%theorem_being_proven.name,
-                        r'Simply execute "%qed".')
+                        '%s has been proven. ' %
+                        theorem_being_proven.name,
+                        r'Now simply execute "%qed".')
+            elif not Judgment.theorem_readily_provable:
+                Judgment.theorem_readily_provable = True
+                print(
+                    '%s may now be readily provable (assuming required '
+                    'theorems are usable). '%theorem_being_proven.name,
+                    r'Simply execute "%qed".')
 
     def __setattr__(self, attr, value):
         '''
@@ -839,7 +842,7 @@ class Judgment:
         from proveit.logic import Forall
         from .proof import Theorem, Instantiation, ProofFailure
         
-        if not self.is_possibly_usable():
+        if not self.is_usable():
             # If this Judgment is not usable, see if there is an alternate
             # under the set of assumptions that is usable.
             try:
