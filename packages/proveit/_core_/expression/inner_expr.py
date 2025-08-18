@@ -707,14 +707,13 @@ class InnerExpr:
         touched by the substitution.
         '''        
         from proveit import x, P
-        from proveit.logic import TRUE, FALSE
-        from proveit.logic.equality import (
-            substitute_truth, substitute_falsehood)
+        from proveit.logic import TRUE
+        from proveit.logic.equality import substitute_truth
         cur_inner_expr = self.expr_hierarchy[-1]
-        if cur_inner_expr in (TRUE, FALSE):
+        if cur_inner_expr == TRUE:
             # Determine which parameters, if any, are involved.
-            # If no parameters are involved, we can use
-            # substitute_truth or substitute_false as a simple proof.
+            # If no parameters are involved we can use 
+            # substitute_truth for aa simple proof.
             if len(self.parameters) > 0:
                 fvars = free_vars(equality_or_replacement)
                 involved_params = [param for param in self.parameters
@@ -722,18 +721,13 @@ class InnerExpr:
             else:
                 involved_params = tuple()
             if len(involved_params) == 0:
-                # Use substitute_truth or substitute_falsehood after
-                # we grab the 'replacement' from 
-                # 'equality_or_replacement'.
+                # Use substitute_truth after we grab the 
+                # 'replacement' from 'equality_or_replacement'.
                 equality = self._eq_from_equality_or_replacement(
                         equality_or_replacement, prove_equality=False)
                 replacement = equality.rhs
-                if cur_inner_expr == TRUE:            
-                    return substitute_truth.instantiate(
-                        {P: self.repl_lambda(), x: replacement})
-                elif cur_inner_expr == FALSE:
-                    return substitute_falsehood.instantiate(
-                        {P: self.repl_lambda(), x: replacement})
+                return substitute_truth.instantiate(
+                    {P: self.repl_lambda(), x: replacement})
         return self._substitution(equality_or_replacement, 
                                   return_proven_rhs=True)            
 
