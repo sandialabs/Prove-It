@@ -859,7 +859,7 @@ class Proof:
                 html += '<tr><td>&nbsp;</td><td colspan=4 style="text-align:left">' + \
                     proof._mapping('HTML') + '</td></tr>'
             elif proof.step_type() in {'axiom', 'theorem', 'conjecture',
-                                       'defining_property'}:
+                                       'basic_definition', 'defining_property'}:
                 html += '<tr><td>&nbsp;</td><td colspan=4 style-"text-align:left">'
                 html += '<a class="ProveItLink" href="%s">' % proof.get_link() + str(proof.theory) + \
                     '.' + proof.name + '</a>'
@@ -895,7 +895,8 @@ class Proof:
             out_str += '\n'
             if proof.step_type() == 'instantiation':
                 out_str += '\t' + proof._mapping('str') + '\n'
-            if proof.step_type() in ('axiom', 'theorem', 'conjecture'):
+            if proof.step_type() in ('axiom', 'theorem', 'conjecture',
+                                     'basic_definition', 'defining_property'):
                 out_str += '\t' + str(proof.theory) + '.' + proof.name + '\n'
         if any_marked:
             out_str += ('* equality replacement requirements\n')
@@ -1406,7 +1407,7 @@ class Theorem(Proof):
             # Query whether to allow, disallow, go up a level, 
             # or cancel.
             r = input("Do you wish to (a)llow, (d)isallow, go (u)p a level, "
-                  "or (c)ancel? ")
+                  "or (c)ancel or raise an (e)xception? ")
             if r[0].lower() == 'a':
                 # Add to allowances and return True.
                 Judgment.stored_theorem_being_proven.allow_presumption(
@@ -1429,6 +1430,8 @@ class Theorem(Proof):
             elif r[0].lower() == 'c':
                 # cancel
                 raise UnusableProof(Judgment.theorem_being_proven, self)
+            elif r[0].lower() == 'e':
+                raise Exception("Raising exception during allowance query")
 
 class BasicDefinition(Proof):
     '''
@@ -2310,6 +2313,7 @@ class Instantiation(Proof):
     
                     # Instantiate the condition.
                     subbed_cond = instantiate(condition)
+                    '''
                     if isinstance(subbed_cond, And):
                         # It is important to deal with a conjunction
                         # condition in this implicit manner here or we
@@ -2328,26 +2332,27 @@ class Instantiation(Proof):
                     else:
                         subbed_conds = [subbed_cond]
     
-                    for subbed_cond in subbed_conds:
-                        if isinstance(subbed_cond, ExprRange):
-                            # If the substituted condition "entry" is
-                            # a range, we need to wrap it in a
-                            # conjunction.
-                            subbed_cond = And(subbed_cond)
-                        try:
-                            requirements.append(subbed_cond.prove())
-                        except ProofFailure:
-                            Instantiation.unsatisfied_condition = subbed_cond
-                            Instantiation.condition_assumptions = tuple(
-                                    defaults.assumptions)
-                            raise_failure(
-                                    'Unsatisfied condition: %s. '
-                                    'For debugging purposes, this is '
-                                    'accessible via '
-                                    'Instantiation.unsatisfied_condition '
-                                    'with applicable assumptions in '
-                                    'Instantiation.condition_assumptions.'
-                                    % str(subbed_cond))
+                    #for subbed_cond in subbed_conds:
+                    if isinstance(subbed_cond, ExprRange):
+                        # If the substituted condition "entry" is
+                        # a range, we need to wrap it in a
+                        # conjunction.
+                        subbed_cond = And(subbed_cond)
+                    '''
+                    try:
+                        requirements.append(subbed_cond.prove())
+                    except ProofFailure:
+                        Instantiation.unsatisfied_condition = subbed_cond
+                        Instantiation.condition_assumptions = tuple(
+                                defaults.assumptions)
+                        raise_failure(
+                                'Unsatisfied condition: %s. '
+                                'For debugging purposes, this is '
+                                'accessible via '
+                                'Instantiation.unsatisfied_condition '
+                                'with applicable assumptions in '
+                                'Instantiation.condition_assumptions.'
+                                % str(subbed_cond))
 
         # Make final instantiations in the inner instance expression.
         # Add to the lambda-application parameters anything that has
@@ -2366,12 +2371,8 @@ class Generalization(Proof):
         A Generalization step wraps a Judgment (instance_truth) in one 
         or more Forall operations.  The number of Forall operations
         introduced is the number of lists in new_forall_var_lists.
-        The conditions are introduced in the order they are given at 
-        the outermost level that is applicable.  For example, if 
-        new_forall_param_lists is [[x, y], z]  and the new conditions 
-        are f(x, y) and g(y, z) and h(z), this will prove a statement 
-        of the form:
-            forall_{x, y ∈ ℤ | f(x, y)} forall_{z | g(y, z), h(z)} ...
+        The new_conditions must be in correspondence with the
+        new_forall_param_lists.
         
         In addition to ordinary Variable generalization, this also
         deals with Literal generalization.  If, for any of the new
@@ -2395,7 +2396,7 @@ class Generalization(Proof):
             ⊢ ∀_{a, b | a=2} (b = 8) => a + b = 1 
         '''
         from proveit import Judgment
-        from proveit.logic import Implies
+        from proveit.logic import Implies, And
         from proveit._core_.expression.expr import (
                 used_literals, free_vars)
         from proveit._core_.expression.label.literal import (
@@ -2503,10 +2504,17 @@ class Generalization(Proof):
                         [remaining_cond for applicable, remaining_cond
                          in zip(condition_applicability, remaining_conditions)
                          if not applicable]
-                # new conditions can eliminate corresponding assumptions
-                _conditions_set = set(_conditions)
-                assumptions = [assumption for assumption in assumptions
-                               if assumption not in _conditions_set]
+                # new conditions can eliminate one assumption
+                # (a conjunction if there are multiple conditions).
+                if len(_conditions) > 0:
+                    if len(_conditions) > 1:
+                        # consolidate into one condition, being explicit with
+                        # conjunctions.
+                        _condition = And(*_conditions)
+                    else:
+                        _condition = _conditions[0]
+                    assumptions = [assumption for assumption in assumptions
+                                   if assumption != _condition]
                 # create the new generalized expression
                 generalized_expr = Forall(
                     instance_param_or_params=new_forall_params,

@@ -230,8 +230,9 @@ class Forall(OperationOverInstances):
             inner_assumptions = \
                 [assumption for assumption in inner_assumptions if
                  free_vars(assumption).isdisjoint(new_vars)]
-            inner_assumptions += expr.conditions.entries
-            conditions += expr.conditions.entries
+            if hasattr(expr, 'condition'):
+                inner_assumptions.append(expr.condition)
+                conditions += expr.conditions.entries
             expr = expr.instance_expr
             with defaults.temporary() as temp_defaults:
                 temp_defaults.assumptions = inner_assumptions

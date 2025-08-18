@@ -1248,7 +1248,8 @@ def display_assignments(names, beginning_proof=False,
         # a cell.
         from proveit import Operation
         from proveit.logic import And, Forall, Exists
-        from proveit._core_.proof import (DefinitionExistence,
+        from proveit._core_.proof import (BasicDefinition,
+                                          DefinitionExistence,
                                           DefiningProperty)
         from proveit._core_.expression import used_literals
         
@@ -1264,10 +1265,20 @@ def display_assignments(names, beginning_proof=False,
         literals = [lit for lit in used_literals(combined_right_sides)
                     if lit in theory.literals 
                     and lit not in prove_it_magic.defined_literals]
+        
+        is_basic_def = False
+        if len(right_sides)==1:
+            from proveit.logic import Equals
+            if isinstance(combined_right_sides, Equals):
+                if combined_right_sides.lhs in literals:
+                    if combined_right_sides.lhs not in used_literals(
+                            combined_right_sides.rhs):
+                        is_basic_def = True
+            
         if len(literals) > 1:
             # Check for the special case of a Literal on the left side of an
-            # equation (along or as an operator) and not appearing on the 
-            # left side.  Only that Literal needs to be quantified over in 
+            # equation (alone or as an operator) and not appearing on the 
+            # right side.  Only that Literal needs to be quantified over in 
             # the definition existence.
             from proveit.logic import Equals
             if isinstance(combined_right_sides, Equals):
@@ -1289,15 +1300,21 @@ def display_assignments(names, beginning_proof=False,
         if len(existence_vars)==0:
             raise Exception("Not defining any undefined Literals of this "
                             "theory package")
-        existence = Exists(
-            existence_vars, combined_right_sides.literals_as_variables(*literals))
-        # Name the DefinitionExistence after the last-named
-        # DefiningProperty as a convention.
-        def_existence = DefinitionExistence(existence, theory, names[-1])
-        for name, right_side in zip(names, right_sides):
-            prove_it_magic.definitions[name] = DefiningProperty(
-                    right_side, theory, name, 
-                    def_existence=def_existence)
+        if is_basic_def:
+            assert len(names) == len(right_sides) == 1
+            name, right_side = names[0], right_sides[0]
+            prove_it_magic.definitions[name] = BasicDefinition(
+                    right_side, theory, name)
+        else:
+            existence = Exists(
+                existence_vars, combined_right_sides.literals_as_variables(*literals))
+            # Name the DefinitionExistence after the last-named
+            # DefiningProperty as a convention.
+            def_existence = DefinitionExistence(existence, theory, names[-1])
+            for name, right_side in zip(names, right_sides):
+                prove_it_magic.definitions[name] = DefiningProperty(
+                        right_side, theory, name, 
+                        def_existence=def_existence)
         # We now have definitions for the 'literals'.
         prove_it_magic.defined_literals.update(literals)
     
@@ -1316,6 +1333,7 @@ def display_assignments(names, beginning_proof=False,
 def assignment_html(name, right_side, beginning_proof=False,
                     beginning_existence_proof=False,
                     representative_name=None):
+    from proveit._core_.proof import DefiningProperty
     lhs_html = name + ':'
     name_kind_theory = None
     kind = prove_it_magic.kind
@@ -1348,7 +1366,8 @@ def assignment_html(name, right_side, beginning_proof=False,
             pass  # e.g., a new theorem.
         lhs_html = ('<a class="ProveItLink" href="%s">%s</a> (%s):<br>'
                     % (proof_notebook_relurl, name, status))
-    elif kind == 'defining_property' and name != '_':
+    elif kind == 'defining_property' and name != '_' and isinstance(
+            prove_it_magic.definitions[name], DefiningProperty):
         assert expr is not None, ("Expecting an expression for the "
                                   "defining property")
         proof_notebook_relurl = theory.thm_proof_notebook(
