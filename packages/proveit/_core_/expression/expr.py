@@ -956,7 +956,7 @@ class Expression(metaclass=ExprType):
                 try:
                     concluded_truth = self.operands[0].conclude_negation(
                         assumptions=assumptions)
-                except NotImplementedError:
+                except (NotImplementedError, ProofFailure):
                     pass  # that didn't work, try conclude on the Not expression itself
             if concluded_truth is None:
                 try:
@@ -1125,7 +1125,7 @@ class Expression(metaclass=ExprType):
         from proveit import ExprTuple
         from proveit.logic import Not
         if isinstance(self, ExprTuple):
-            return False # An ExprTuple cannot be true or false.
+            return True # An ExprTuple cannot be TRUE.
         
         # Not._readily_provable will call _readily_disprovable on
         # its operand.
@@ -1509,6 +1509,7 @@ class Expression(metaclass=ExprType):
 
         elif self in stored_replacements:
             # We've handled this one before, so reuse it.
+            #print("REUSE", self)
             return stored_replacements[self]
 
         # Recurse into the sub-expressions.
