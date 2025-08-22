@@ -196,24 +196,6 @@ class Exists(OperationOverInstances):
                  y_1_to__n: existential.instance_params},
                 preserve_all=True).derive_consequent()
 
-    # Modified version further below; keep this version here
-    # temporarily until further testing implemented.
-    # @prover
-    # def unfold(self, **defaults_config):
-    #     '''
-    #     From this existential quantifier, derive the "unfolded"
-    #     version according to its definition (the negation of
-    #     a universal quantification).
-    #     '''
-    #     from proveit.logic.booleans.quantification.existence \
-    #         import exists_unfolding
-    #     _x = _y = self.instance_params
-    #     _n = _x.num_elements()
-    #     _P = Lambda(_x, self.operand.body.value)
-    #     _Q = Lambda(_x, self.operand.body.condition)
-    #     return exists_unfolding.instantiate(
-    #         {n: _n, P: _P, Q: _Q, x: _x, y: _y}).derive_consequent()
-
     @prover
     def unfold(self, **defaults_config):
         '''
@@ -264,9 +246,6 @@ class Exists(OperationOverInstances):
         return exists_unfolding.instantiate(
             {n: _n, P: _P, Q: _Q, x: _x, y: _y}).derive_consequent()
 
-    # NEXT: update definition() method to also deal with the alternative
-    # existential Exists(x, Not(P(x))) 20250817
-
     @prover
     def definition(self, **defaults_config):
         '''
@@ -299,40 +278,16 @@ class Exists(OperationOverInstances):
             _Q = Lambda(_x, self.condition)
         else:
             _Q = Lambda(_x, TRUE)
-        # try constructing the rhs to preserve
-        if hasattr(self, 'condition'):
-            if _case_not:
-                rhs_to_preserve = (
-                    Not(Forall(_x, self.instance_expr.operand,
-                        conditions = [self.condition])))
-            else:
-                rhs_to_preserve = (
-                    Not(Forall(_x,
-                        NotEquals(self.instance_expr, TRUE),
-                        conditions = [self.condition])))
-        else:
-            if _case_not:
-                rhs_to_preserve = (
-                    Not(Forall(_x, self.instance_expr.operand,
-                        )))
-            else:
-                rhs_to_preserve = (
-                    Not(Forall(_x,
-                        NotEquals(self.instance_expr, TRUE),
-                        )))
-        temp_exprs_to_preserve = set([self, rhs_to_preserve])
-        defaults.preserved_exprs.update(temp_exprs_to_preserve)
+        
+        # now ready to instantiate thm based on _case_not
         if _case_not:
-            result = exists_not_eq_not_forall.instantiate(
-                {n: _n, P: _P, Q: _Q, x: _x, y: _y}
-                )
+            return exists_not_eq_not_forall.instantiate(
+                {n: _n, P: _P, Q: _Q, x: _x, y: _y},
+                preserve_all = True)
         else:
-            result = exists_def.instantiate(
-                {n: _n, P: _P, Q: _Q, x: _x, y: _y}
-                )
-        # revert preserved_exprs set to original
-        defaults.preserved_exprs.difference_update(temp_exprs_to_preserve)
-        return result
+            return exists_def.instantiate(
+                {n: _n, P: _P, Q: _Q, x: _x, y: _y},
+                preserve_all = True)
 
     @prover
     def deduce_not_exists(self, **defaults_config):
