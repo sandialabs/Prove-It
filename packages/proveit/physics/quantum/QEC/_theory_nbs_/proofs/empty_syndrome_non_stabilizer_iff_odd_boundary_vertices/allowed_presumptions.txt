@@ -18,3 +18,11 @@ proveit.logic.sets.membership.unfold_not_in_set
 proveit.numbers.numerals.decimals.posnat1
 proveit.logic.booleans.not_equals_true
 proveit.logic.sets.membership.double_negated_membership
+proveit.logic.booleans.quantification.existence.exists_not_eq_not_forall
+proveit.logic.booleans.implication.iff_via_both_true
+proveit.logic.equality.equals_reversal
+proveit.logic.equality.substitute_truth
+proveit.logic.equality.sub_left_side_into
+proveit.logic.booleans.exclusive_disjunction.right_if_not_left
+proveit.logic.booleans.quantification.existence.existence_by_example_with_conditions
+proveit.logic
