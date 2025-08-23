@@ -184,11 +184,12 @@ class Exists(OperationOverInstances):
             # the skolem_elim theorem being instantiated further below
             P_implies_alpha = _alpha.as_implication(
                 hypothesis=_P.apply(*skolem_constants))
-            # the generalization to further match theorem details
-            # can be handled through automation
-            # P_implies_alpha.generalize(
-            #         skolem_constants,
-            #         conditions=[_Q.apply(*skolem_constants)])
+            # Although the generalization to further match theorem
+            # details can be handled through automation, it can reduce
+            # computations to explicitly handle it here right now:
+            P_implies_alpha.generalize(
+                    skolem_constants,
+                    conditions=[_Q.apply(*skolem_constants)])
     
             return skolem_elim.instantiate(
                 {n: _n, P: _P, Q: _Q, alpha: _alpha,
