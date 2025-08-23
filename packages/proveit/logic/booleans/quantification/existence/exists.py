@@ -143,7 +143,7 @@ class Exists(OperationOverInstances):
         Exists.choose() method to produce the Skolem constant-based
         subset of assumptions you wish to eliminate from S.
         '''
-        from proveit import Lambda
+        from proveit import free_vars, Lambda
         from proveit import n, P, Q, alpha
         from proveit.logic import And
         from proveit.core_expr_types import (x_1_to_n, y_1_to_n)
@@ -157,6 +157,18 @@ class Exists(OperationOverInstances):
                            "Skolem constants to be eliminated must appear "
                            "exactly as specified in the original "
                            "Exists.choose() method.".format(skolem_constants))
+        # Since the Skolem constants appear to be correct, we check
+        # if any of the Skolem constants appear as free variables in
+        # the judgment, raising an error if so:
+        skolem_constants_remaining = (
+            set(skolem_constants).intersection(free_vars(judgment)) )
+        if skolem_constants_remaining != set():
+            raise ValueError(
+                    "In calling the Exists.eliminate() static method, which "
+                    "might have arisen from a judgment.eliminate() call, "
+                    f"the Skolem constant(s) {skolem_constants_remaining} "
+                    "still appear as free variable(s) in the target judgment "
+                    f"{judgment}, which is not allowed. ")
         existential = Exists.skolem_consts_to_existential[skolem_constants]
         skolem_assumptions = set(existential.choose(
             *skolem_constants, print_message=False))
