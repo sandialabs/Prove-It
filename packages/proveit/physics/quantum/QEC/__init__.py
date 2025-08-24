@@ -1,6 +1,6 @@
 from .graph_of import (BoundaryVertices, GraphOf, InteriorVertices,
-        MergedBoundsGraphOfSiteOp, MergedBoundsGraphOfSurfaceCode,
-        MergedBoundsGraphOfZError)
+        MergedBoundsGraphOfSurfaceCode,
+        MergedBoundsGraphOfZError)#, MergedBoundsGraphOfZErrorChainSiteOp, MergedBoundsGraphOfSiteOp, )
 from .graph_of_membership import InteriorVerticesMembership
 from .surface_code import (
         Errors, KitaevPlanarSC, LogicalHadamard,

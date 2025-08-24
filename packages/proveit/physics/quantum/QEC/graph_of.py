@@ -115,35 +115,71 @@ class MergedBoundsGraphOfZError(Function):
                 styles=styles)
 
 
-class MergedBoundsGraphOfSiteOp(Function):
-    '''
-    MergedBoundsGraphOfSiteOp(s, S) represents the vertex, in the
-    merged-bounds graph of surface code S, corresponding
-    to site operator s of surface code S. See above for some
-    description of the MergedBoundsGraphOfSurfaceCode(S). This is
-    really just a complicated way to refer to the graph vertex v that
-    corresponds to a specific site operator s in the overall surface
-    code S. Notice that MergedBoundsGraphOfSiteOp(s, S) is not a set
-    but instead an element of Vertices(MergedBoundsGraphOfSiteOp(s, S)).
-    '''
+# class MergedBoundsGraphOfSiteOp(Function):
+#     '''
+#     MergedBoundsGraphOfSiteOp(s, S) represents the vertex, in the
+#     merged-bounds graph of surface code S, corresponding
+#     to site operator s of surface code S. See above for some
+#     description of the MergedBoundsGraphOfSurfaceCode(S). This is
+#     really just a complicated way to refer to the graph vertex v that
+#     corresponds to a specific site operator s in the overall surface
+#     code S. Notice that MergedBoundsGraphOfSiteOp(s, S) is not a set
+#     but instead an element of
+#     Vertices(MergedBoundsGraphOfSurfaceCode(S).
+#     '''
 
-    # the literal operator for the MergedBoundsGraphOfSiteOp()
-    # operation, using the same notation as other merged-bounds
-    # graphical representations
-    _operator_ = Literal(
-            string_format='mb_graph',
-            latex_format=r'{{\mathcal{G}}_{mb}{\!}}',
-            theory=__file__)
+#     # the literal operator for the MergedBoundsGraphOfSiteOp()
+#     # operation, using the same notation as other merged-bounds
+#     # graphical representations
+#     _operator_ = Literal(
+#             string_format='mb_graph',
+#             latex_format=r'{{\mathcal{G}}_{mb}{\!}}',
+#             theory=__file__)
 
-    def __init__(self, s, S, *, styles=None):
-        '''
-        Represent MergedBoundsGraphOfSiteOp(E, S), the graph of
-        site operator s (i.e. a vertex) with respect to the
-        merged-boundary-points graph of surface code S.
-        '''
-        Function.__init__(
-                self, MergedBoundsGraphOfSiteOp._operator_, (s, S),
-                styles=styles)
+#     def __init__(self, s, S, *, styles=None):
+#         '''
+#         Represent MergedBoundsGraphOfSiteOp(s, S), the graph of
+#         site operator s (i.e. a vertex) with respect to the
+#         merged-boundary-points graph of surface code S.
+#         '''
+#         Function.__init__(
+#                 self, MergedBoundsGraphOfSiteOp._operator_, (s, S),
+#                 styles=styles)
+
+
+# class MergedBoundsGraphOfZErrorChainSiteOp(Function):
+#     '''
+#     MergedBoundsGraphOfZErrorChainSiteOp(s, E, S) represents the
+#     vertex, in the merged-bounds graph of Z-error chain E across
+#     surface code S, corresponding to site operator s of surface code S.
+#     See above for some description of the
+#     MergedBoundsGraphOfSurfaceCode(S).
+#     This is really just a complicated way to refer to the graph
+#     vertex v that corresponds to a specific site operator s in the
+#     overall surface code S and associated with the Z error chain E.
+#     Notice that MergedBoundsGraphOfZErrorChainSiteOp(s, E, S) is not
+#     a set but instead an element of
+#     Vertices(MergedBoundsGraphOfZError(E, S)).
+#     '''
+
+#     # the literal operator for the MergedBoundsGraphOfZErrorChainSiteOp()
+#     # operation, using the same notation as other merged-bounds
+#     # graphical representations
+#     _operator_ = Literal(
+#             string_format='mb_graph',
+#             latex_format=r'{{\mathcal{G}}_{mb}{\!}}',
+#             theory=__file__)
+
+#     def __init__(self, s, E, S, *, styles=None):
+#         '''
+#         Represent MergedBoundsGraphOfZErrorChainSiteOp(s, E, S),
+#         the graph of site operator s (i.e. a vertex) with respect
+#         to the merged-boundary-points graph of ZErroChain E across
+#         surface code S.
+#         '''
+#         Function.__init__(
+#                 self, MergedBoundsGraphOfZErrorChainSiteOp._operator_,
+#                 (s, E, S), styles=styles)
 
 
 class InteriorVertices(Function):

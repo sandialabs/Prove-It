@@ -183,7 +183,7 @@ class ZErrorChainSiteOps(Function):
         associated with the ZErrorChain E across the surface code S.
         '''
         Function.__init__(
-                self, SurfaceCodeSiteOps._operator_, (E, S), styles=styles)
+                self, ZErrorChainSiteOps._operator_, (E, S), styles=styles)
 
 
 class SiteSyndrome(Function):
