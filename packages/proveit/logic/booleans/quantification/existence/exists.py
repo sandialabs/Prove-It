@@ -278,16 +278,41 @@ class Exists(OperationOverInstances):
             _Q = Lambda(_x, self.condition)
         else:
             _Q = Lambda(_x, TRUE)
-        
-        # now ready to instantiate thm based on _case_not
-        if _case_not:
-            return exists_not_eq_not_forall.instantiate(
-                {n: _n, P: _P, Q: _Q, x: _x, y: _y},
-                preserve_all = True)
+
+        # Construct the rhs result to preserve (using
+        # 'preserve_all = TRUE' in the instantiation step further
+        # below tends to preserve too much, in particular preserving
+        # the "empty" condition _Q = Lambda(_x, TRUE) when we'd like
+        # it to be simplified away entirely).
+        if hasattr(self, 'condition'):
+            if _case_not:
+                rhs_to_preserve = (
+                    Not(Forall(_x, self.instance_expr.operand,
+                        conditions = [self.condition])))
+            else:
+                rhs_to_preserve = (
+                    Not(Forall(_x, 
+                        NotEquals(self.instance_expr, TRUE),
+                        conditions = [self.condition])))
         else:
-            return exists_def.instantiate(
-                {n: _n, P: _P, Q: _Q, x: _x, y: _y},
-                preserve_all = True)
+            if _case_not:
+                rhs_to_preserve = (
+                    Not(Forall(_x, self.instance_expr.operand)))
+            else:
+                rhs_to_preserve = (
+                    Not(Forall(_x,
+                        NotEquals(self.instance_expr, TRUE))))
+        
+        # now ready to instantiate thm based on _case_not, and
+        # explicitly preserving the expected rhs of the resulting eq.
+        with defaults.temporary() as temp_defaults:
+            temp_defaults.preserved_exprs = {self, rhs_to_preserve}
+            if _case_not:
+                return exists_not_eq_not_forall.instantiate(
+                    {n: _n, P: _P, Q: _Q, x: _x, y: _y})
+            else:
+                return exists_def.instantiate(
+                    {n: _n, P: _P, Q: _Q, x: _x, y: _y})
 
     @prover
     def deduce_not_exists(self, **defaults_config):
