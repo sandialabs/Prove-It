@@ -186,7 +186,7 @@ def _make_decorated_prover(func, automatic=False):
                     simplify_only_where_marked = False
                     marker_and_Marked_expr = None
                 new_proven_truth = (
-                    proven_truth.proof().regenerate_proof_object(
+                    proven_truth.proof().regenerate_proof_with_replacements(
                         simplify_only_where_marked, markers_and_marked_expr)
                     .proven_truth)
                 proven_truth = (new_proven_truth.inner_expr()
