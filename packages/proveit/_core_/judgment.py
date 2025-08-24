@@ -348,16 +348,12 @@ class Judgment:
                 'qed proof should not have any remaining assumptions')
         Judgment.qed_in_progress = True
         try:
-            with defaults.temporary() as tmp_defaults:
-                # Disable side-effects when executing %qed since
-                # this is the final act for this session.
-                tmp_defaults.sideeffect_automation = False
-                proven_truth = self.expr.prove(assumptions=[])
-                if not proven_truth.is_usable():
-                    defaults._proven_truth = proven_truth
-                    proven_truth.raise_unusable_proof()
-                print("{} has been proven.".format(Judgment.theorem_being_proven))
-                Judgment.stored_theorem_being_proven._recordProof(proven_truth.proof())
+            proven_truth = self.expr.prove(assumptions=[])
+            if not proven_truth.is_usable():
+                defaults._proven_truth = proven_truth
+                proven_truth.raise_unusable_proof()
+            print("{} has been proven.".format(Judgment.theorem_being_proven))
+            Judgment.stored_theorem_being_proven._recordProof(proven_truth.proof())
         finally:
             Judgment.qed_in_progress = False
         return proven_truth.proof()
@@ -367,6 +363,15 @@ class Judgment:
         Returns the most up-to-date proof of this Judgment.
         '''
         return self._meaning_data._proof
+    
+    def reprove(self, *, assumptions):
+        '''
+        Reprove under new assumptions.  The original assumptions should be
+        provable by these assumptions.
+        '''
+        proof = self.proof().regenerate_proof_under_new_assumptions(
+            assumptions=assumptions)
+        return proof.proven_truth
 
     def is_possibly_usable(self):
         '''
@@ -718,27 +723,47 @@ class Judgment:
         return new_style_judgment
 
     @staticmethod
-    def find_judgment(expression, assumptions):
+    def find_judgment(expression, assumptions, *,
+                      allow_indirect_proven_assumptions=False,
+                      allow_indirect_provable_assumptions=False):
         '''
         Try to find a Judgment for this expression that applies to
-        the given set of assumptions (its assumptions are a subset
-        of the given assumptions).  Return None if there is no match.
+        the given set of assumptions.  The Judgment applies to the given
+        assumptions if its assumptions are a subset of the given assumptions
+        or, if allow_indirect_proven_assumptions=True, it's assumptions are 
+        proven under the given assumptions or, if
+        allow_indirect_provable_assumptions is True, it's assumptions are 
+        provable under the given assumptions.
+        Return None if there is no match.
         '''
         if expression not in Judgment.expr_to_judgments:
             return None
         truths = Judgment.expr_to_judgments[expression]
         suitable_truths = []
+        
         for truth in truths:
             proof = truth.proof()
-            if (proof is not None and proof.is_possibly_usable() and
-                    truth.assumptions.issubset(assumptions)):
-                suitable_truths.append(truth)
+            if proof is not None and proof.is_possibly_usable():
+                if truth.assumptions.issubset(assumptions):
+                    suitable_truths.append(truth)
+                elif allow_indirect_proven_assumptions and all(
+                        _assumption.proven(assumptions=assumptions) for
+                        _assumption in truth.assumptions):
+                    suitable_truths.append(truth)
+                elif allow_indirect_provable_assumptions and all(
+                        _assumption.readily_provable(assumptions=assumptions)
+                        for _assumption in truth.assumptions):
+                    suitable_truths.append(truth)                    
         if len(suitable_truths) == 0:
             return None  # no suitable truth
-        # return one wih the shortest proof, and among those the fewest
+        # return one with the shortest proof, and among those the fewest
         # assumptions
         best_judgment = max(suitable_truths,
                             key=lambda truth: truth.proof()._goodness())
+        '''
+        Is this necessary?  with_matching_styles is used in
+        Expression.prove and seems like it's handling this job in any case.
+        
         # Make sure we get the desired style (and labels) for the
         # assumptions and 'truth'.
         # Although this looks vacuous, it will map an assumption of
@@ -752,6 +777,7 @@ class Judgment:
                            best_judgment.assumptions]
             return best_judgment.with_matching_styles(expression,
                                                       assumptions)
+        '''
         return best_judgment
 
     @staticmethod

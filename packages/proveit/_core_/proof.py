@@ -254,11 +254,11 @@ class Proof:
         # Derive obvious consequences from this truth.
         self._derive_side_effects()
 
-    def regenerate_proof_object(self, simplify_only_where_marked=False,
-                                markers_and_marked_expr=None):
+    def regenerate_proof_with_replacements(self, simplify_only_where_marked=False,
+                                           markers_and_marked_expr=None):
         '''
         Regenerate this proof object under active defaults which may
-        effect simplifications or replacements.
+        effect simplifications and other replacements.
         '''
         if len(defaults.replacements) == 0 and not defaults.auto_simplify:
             # The active defaults will not induce any changes.
@@ -291,6 +291,43 @@ class Proof:
             marked_req_indices.add(k)
         return self._regenerate_proof_object(
             proven_truth, all_requirements, marked_req_indices)
+
+    def regenerate_proof_under_new_assumptions(self, assumptions):
+        '''
+        Regenerate this proof object under new assumptions.  For this to
+        work, the original assumptions must be provable under the new
+        assumptions.
+        '''
+        if isinstance(self, Assumption):
+            # For an Assumption proof, prove it under the new assumptions 
+            # which are supposed to be provable under these new ones.
+            return self.proven_truth.expr.prove(assumptions=assumptions).proof()
+        if isinstance(self, Deduction):
+            # It's requirement gets to add the antecedent of the proven
+            # implication as an assumption.
+            requirement_assumptions = [*assumptions, 
+                                       self.proven_truth.expr.antecedent]
+        elif isinstance(self, Generalization):
+            # It's requirement gets to add the condition of the proven
+            # generalization as an assumption.
+            proven_expr = self.proven_truth.expr
+            if hasattr(proven_expr, 'condition'):
+                condition = proven_expr.condition
+                requirement_assumptions = [*assumptions, condition]
+        else:
+            requirement_assumptions = assumptions
+        
+        all_requirements = []
+        used_assumptions = set()
+        for required_truth in self.required_truths:
+            required_truth = required_truth.reprove(
+                assumptions=requirement_assumptions)
+            used_assumptions.update(required_truth.assumptions)
+            all_requirements.append(required_truth)
+        assumptions = [assumption for assumption in assumptions 
+                       if assumption in used_assumptions]
+        proven_truth = Judgment(self.proven_truth.expr, assumptions)
+        return self._regenerate_proof_object(proven_truth, all_requirements)
 
     def _regenerate_proof_object(self, proven_truth, requirements,
                                  marked_req_indices):
@@ -960,7 +997,7 @@ class Assumption(Proof):
         Assumption.all_assumptions[expr] = self
 
     def _regenerate_proof_object(self, proven_truth, requirements,
-                                 marked_req_indices):
+                                 marked_req_indices=None):
         return Assumption(
             None, _proven_truth=proven_truth, _requirements=requirements,
             _marked_req_indices=marked_req_indices)
@@ -1033,7 +1070,7 @@ class Axiom(Proof):
             Proof.__init__(self, Judgment(expr, frozenset()), [])
 
     def _regenerate_proof_object(self, proven_truth, requirements,
-                                 marked_req_indices):
+                                 marked_req_indices=None):
         return Axiom(None, self.theory, self.name,
                      _proven_truth=proven_truth, _requirements=requirements,
                      _marked_req_indices=marked_req_indices)
@@ -1095,7 +1132,7 @@ class Theorem(Proof):
         Theorem.all_theorems.append(self)
 
     def _regenerate_proof_object(self, proven_truth, requirements,
-                                 marked_req_indices):
+                                 marked_req_indices=None):
         return Theorem(None, self.theory, self.name,
                        _proven_truth=proven_truth, _requirements=requirements,
                        _marked_req_indices=marked_req_indices)
@@ -1458,7 +1495,7 @@ class BasicDefinition(Proof):
             Proof.__init__(self, Judgment(expr, frozenset()), [])
 
     def _regenerate_proof_object(self, proven_truth, requirements,
-                                 marked_req_indices):
+                                 marked_req_indices=None):
         return BasicDefinition(
                 None, self.theory, self.name,
                 _proven_truth=proven_truth, _requirements=requirements,
@@ -1503,7 +1540,7 @@ class DefinitionExistence(Theorem):
                          _marked_req_indices=_marked_req_indices)
 
     def _regenerate_proof_object(self, proven_truth, requirements,
-                                 marked_req_indices):
+                                 marked_req_indices=None):
         return DefiningProperty(
                 None, self.theory, self.name,
                 _proven_truth=proven_truth, _requirements=requirements,
@@ -1555,7 +1592,7 @@ class DefiningProperty(Proof):
                            [def_existence.proven_truth])
 
     def _regenerate_proof_object(self, proven_truth, requirements,
-                                 marked_req_indices):
+                                 marked_req_indices=None):
         return DefiningProperty(
                 None, self.theory, self.name,
                 _proven_truth=proven_truth, _requirements=requirements,
@@ -1669,7 +1706,7 @@ class ModusPonens(Proof):
             defaults.assumptions = prev_default_assumptions
 
     def _regenerate_proof_object(self, proven_truth, requirements,
-                                 marked_req_indices):
+                                 marked_req_indices=None):
         return ModusPonens(
             None, _proven_truth=proven_truth, _requirements=requirements,
             _marked_req_indices=marked_req_indices)
@@ -1716,7 +1753,7 @@ class Deduction(Proof):
             defaults.assumptions = prev_default_assumptions
 
     def _regenerate_proof_object(self, proven_truth, requirements,
-                                 marked_req_indices):
+                                 marked_req_indices=None):
         return Deduction(
             None, None, _proven_truth=proven_truth,
             _requirements=requirements, _marked_req_indices=marked_req_indices)
@@ -2044,7 +2081,7 @@ class Instantiation(Proof):
                        marked_req_indices)
 
     def _regenerate_proof_object(self, proven_truth, requirements,
-                                 marked_req_indices):
+                                 marked_req_indices=None):
         inst = Instantiation(
             None, None, None, None, self.mapping, self.mapping_key_order, 
             None, None, _proven_truth=proven_truth, _requirements=requirements,
