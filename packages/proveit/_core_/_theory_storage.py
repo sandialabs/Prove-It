@@ -1529,6 +1529,7 @@ class TheoryFolderStorage:
 
         if complete_special_expr_notebook:
             assert 'common' in template_name or 'special' in template_name
+        '''
         # Determine the appropriate hash folder to store the
         # expression notebook in.
         if kind == 'axiom':
@@ -1538,6 +1539,7 @@ class TheoryFolderStorage:
             # Store this "special" notebook with the hash for the
             # Theorem.
             hash_obj = obj = Theorem(expr, theory_folder_storage.theory, name)
+        '''
         obj_theory_folder_storage, hash_directory = \
             theory_folder_storage._retrieve(hash_obj)
         assert obj_theory_folder_storage == theory_folder_storage
