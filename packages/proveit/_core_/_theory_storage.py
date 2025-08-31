@@ -3632,14 +3632,8 @@ class StoredDefinitionExistence(StoredTheorem):
         existence for a set of defining properties ' __pv_it database
         entries.
         '''
-        from proveit._core_.proof import BasicDefinition
         if hash_id is None:
-            defining_property = theory.get_defining_property(name)
-            if isinstance(defining_property, BasicDefinition):
-                raise KeyError('BasicDefinition does not need an'
-                               ' existence proof')
-            obj_id = defining_property.required_proofs[0]._style_id
-            _, hash_id = TheoryFolderStorage.proveit_object_to_storage[obj_id]
+            hash_id = theory._storage.get_defining_property_hash(name)
         StoredTheorem.__init__(self, theory, name, hash_id=hash_id,
                                kind='def_existence')
 
