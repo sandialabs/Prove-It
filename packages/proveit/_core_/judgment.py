@@ -352,7 +352,7 @@ class Judgment:
             if not proven_truth.is_usable():
                 defaults._proven_truth = proven_truth
                 proven_truth.raise_unusable_proof()
-            print("{} has been proven.".format(Judgment.theorem_being_proven))
+            print("{} is now proven.".format(Judgment.theorem_being_proven))
             Judgment.stored_theorem_being_proven._recordProof(proven_truth.proof())
         finally:
             Judgment.qed_in_progress = False
