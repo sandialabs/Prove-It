@@ -2970,7 +2970,7 @@ class UnusableProof(ProofFailure):
             unusuable_proof_str = str(self.unusable_proof.proven_truth)
         if self.proving_theorem is not None:
             return unusuable_proof_str + ' is not usable while proving ' + \
-                str(self.proving_theorem) + ' (it has not been presumed)' + self.extra_msg
+                str(self.proving_theorem) + ' (it is not allowed)' + self.extra_msg
         else:
             return 'Cannot use disabled proof for ' + self.unusable_item_str
 
