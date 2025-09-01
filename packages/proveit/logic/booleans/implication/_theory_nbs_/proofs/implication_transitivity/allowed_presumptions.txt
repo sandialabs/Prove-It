@@ -1,0 +1,8 @@
+proveit.logic.booleans.implication.false_antecedent_implication
+proveit.logic.booleans.implication.falsified_antecedent_implication
+proveit.logic.booleans.conjunction.binary_conjunction_def
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.booleans.negation.fold_negation
+proveit.logic.booleans.negation.unfold_negation
+proveit.logic.booleans.negation.double_negation_elim

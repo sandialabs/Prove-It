@@ -364,7 +364,7 @@ class FalseLiteral(Literal, IrreducibleValue):
 
     @relation_prover
     def deduce_not_equal(self, other, **defaults_config):
-        from _.theorems_ import false_not_true
+        from . import false_not_true
         from . import TRUE, FALSE
         if other == TRUE:
             return false_not_true

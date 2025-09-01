@@ -1,0 +1,3 @@
+proveit.logic.booleans.implication.eq_from_iff
+proveit.logic.booleans.implication.iff_via_both_true
+proveit.logic.booleans.implication.iff_via_both_false

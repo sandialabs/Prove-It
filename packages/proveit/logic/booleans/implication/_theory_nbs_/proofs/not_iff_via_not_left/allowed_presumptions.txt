@@ -1,0 +1,4 @@
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.booleans.negation.unfold_negation
+proveit.logic.booleans.negation.fold_negation

@@ -3,3 +3,13 @@ proveit.logic.booleans.implication.negated_reflex
 proveit.logic.equality.substitute_falsehood
 proveit.logic.equality.substitute_truth
 proveit.logic.equality.sub_left_side_into
+proveit.logic.booleans.negation.unfold_negation
+proveit.logic.booleans.negation.fold_negation
+proveit.logic.booleans.conjunction.conjunction_intro
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.equality.equals_symmetry
+proveit.logic.booleans.eq_true_elim
+proveit.logic.booleans.negation.negation_intro
+proveit.logic.booleans.negation.double_negation_elim
+proveit.logic.equality.substitution

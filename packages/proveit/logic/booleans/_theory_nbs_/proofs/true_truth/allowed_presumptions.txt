@@ -1,7 +1,4 @@
-proveit.logic.booleans.negation.not_false
-proveit.logic.booleans.from_not_false
-proveit.logic.booleans.negation.negation_intro
-proveit.logic.equality.lhs_via_equality
+proveit.logic.booleans.negation.double_negation_elim
 proveit.logic.booleans.true_def
-proveit.logic.booleans.negation.not_f
-proveit.logic.equality.rhs_via_equality
+proveit.logic.booleans.negation.not_false
+proveit.logic.equality.equals_symmetry

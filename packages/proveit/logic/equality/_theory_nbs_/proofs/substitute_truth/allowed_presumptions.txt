@@ -1,1 +1,7 @@
 proveit.logic.equality.sub_left_side_into
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.equality.equals_symmetry
+proveit.logic.booleans.eq_true_elim
+proveit.logic.equality.substitute_in_true
+proveit.logic.booleans.conjunction.conjunction_intro

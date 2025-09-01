@@ -3,3 +3,6 @@ proveit.logic.equality.substitute_truth
 proveit.logic.equality.contradiction_via_falsification
 proveit.logic.booleans.negation.not_false
 proveit.logic.booleans.true_truth
+proveit.logic.booleans.true_def
+proveit.logic.booleans.negation.fold_negation
+proveit.logic.equality.fold_not_equals

@@ -1,4 +1,13 @@
-proveit.logic.equality.rhs_via_equality
 proveit.numbers.number_sets.natural_numbers.fold_forall_natural
-proveit.logic.booleans.conjunction.closure
-proveit.core_expr_types.conditionals.singular_conjunction_condition_reduction
+proveit.core_expr_types.tuples.range_from1_len_typical_eq
+proveit.core_expr_types.tuples.tuple_len_0_typical_eq
+proveit.logic.sets.inclusion.superset_membership_from_proper_subset
+proveit.numbers.addition.elim_zero_left
+proveit.numbers.number_sets.complex_numbers.real_within_complex
+proveit.numbers.number_sets.integers.nat_within_int
+proveit.numbers.number_sets.rational_numbers.int_within_rational
+proveit.numbers.number_sets.real_numbers.rational_within_real
+proveit.numbers.numerals.decimals.nat1
+proveit.logic.equality.equals_symmetry
+proveit.core_expr_types.tuples.extended_range_from1_len_typical_eq
+proveit.core_expr_types.tuples.range_from1_len_is_nat

@@ -1,0 +1,2 @@
+proveit.logic.booleans.negation.fold_negation
+proveit.logic.booleans.negation.negation_contradiction

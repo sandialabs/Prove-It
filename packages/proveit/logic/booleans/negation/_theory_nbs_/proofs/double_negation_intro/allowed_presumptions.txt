@@ -1,3 +1,13 @@
 proveit.logic.booleans.negation.negation_intro
 proveit.logic.equality.equals_transitivity
 proveit.logic.equality.substitution
+proveit.logic.booleans.negation.not_t
+proveit.logic.equality.equals_symmetry
+proveit.logic.booleans.eq_true_elim
+proveit.logic.booleans.negation.double_negation_elim
+proveit.logic.booleans.negation.unfold_negation
+proveit.logic.booleans.negation.fold_negation
+proveit.logic.equality.equals_transitivity_via_implications
+proveit.logic.booleans.conjunction.conjunction_intro
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and

@@ -1,0 +1,7 @@
+proveit.logic.booleans.conjunction.binary_conjunction_def
+proveit.logic.equality.equals_symmetry
+proveit.logic.equality.substitution
+proveit.logic.equality.equals_transitivity_via_implications
+proveit.logic.booleans.implication.split_deduction
+proveit.logic.booleans.implication.false_antecedent_implication
+proveit.logic.booleans.implication.falsified_antecedent_implication

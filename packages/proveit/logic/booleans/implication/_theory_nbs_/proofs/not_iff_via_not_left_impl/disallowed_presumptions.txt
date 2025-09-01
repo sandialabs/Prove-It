@@ -1,2 +1,6 @@
 proveit.logic.booleans.conjunction.nand_if_left_but_not_right
 proveit.logic.booleans.negation.not_false
+proveit.logic.booleans.in_bool_if_true
+proveit.logic.booleans.implication.not_iff_via_not_right_impl
+proveit.logic.booleans.conjunction.conjunction_eq_quantification
+proveit.logic.booleans.negation.negation_elim

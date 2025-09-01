@@ -61,8 +61,9 @@ class Implies(TransitiveRelation):
             # don't propogate further side-effects.
             yield self._derive_consequent_generically
         if self.consequent == FALSE:
-            # Not(A) given A=>FALSE or A given Not(A)=>FALSE
-            yield self.derive_via_contradiction
+            from proveit.logic.booleans.negation import Not
+            # Not(A) given A=>FALSE
+            yield Not(self.antecedent).conclude_as_folded
 
     def negation_side_effects(self, judgment):
         '''
@@ -184,26 +185,6 @@ class Implies(TransitiveRelation):
             return double_negate_consequent.instantiate(
                 {A: self.antecedent, B: self.consequent.operand.operand})
         return "Not of the form 'A => B'"
-
-
-    @equality_prover('shallow_simplified', 'shallow_simplify')
-    def shallow_simplification(self, *, must_evaluate=False,
-                               **defaults_config):
-        '''
-        If the operands that to TRUE or FALSE, we can 
-        evaluate this expression as TRUE or FALSE.
-        '''
-        # IMPORTANT: load in truth-table evaluations
-        from . import implies_t_t, implies_t_f, implies_f_t, implies_f_f  
-        try:
-            return Operation.shallow_simplification(
-                    self, must_evaluate=must_evaluate)
-        except NotImplementedError:
-            # Should have been able to do the evaluation from the
-            # loaded truth table.
-            # If it can't we are unable to evaluate it.
-            from proveit.logic import EvaluationError
-            raise EvaluationError(self)
 
     @prover
     def derive_consequent(self, **defaults_config):
@@ -351,10 +332,10 @@ class Implies(TransitiveRelation):
         Depending upon the form of self with respect to negation of the antecedent and/or consequent,
         will derive from self and return as follows:
 
-        * From [not(A) => not(B)], derive [B => A] assuming A in \mathcal{B}.
-        * From [not(A) => B], derive [not(B) => A] assuming A in \mathcal{B}, B in \mathcal{B}.
-        * From [A => not(B)], derive [B => not(A)] assuming A in \mathcal{B}.
-        * From [A => B], derive [not(B) => not(A)]` assuming A in \mathcal{B}, B in \mathcal{B}.
+        * From [not(A) => not(B)], derive [B => A].
+        * From [not(A) => B], derive [not(B) => A].
+        * From [A => not(B)], derive [B => not(A)].
+        * From [A => B], derive [not(B) => not(A)].
         '''
         from . import from_contraposition, to_contraposition, contrapose_neg_consequent, contrapose_neg_antecedent
         from proveit.logic import Not
@@ -385,6 +366,12 @@ class Implies(TransitiveRelation):
         from proveit.logic import TRUE, FALSE
         # load in truth-table evaluations
         from . import implies_t_f, implies_t_t, implies_f_t, implies_f_f
+        
+        for truth_table_thm in (implies_t_f, implies_t_t, implies_f_t, implies_f_f):
+            if self == truth_table_thm.expr.lhs:
+                print("truth table match")
+                return truth_table_thm # simple truth-table match
+        
         if must_evaluate:
             start_over = False
             for operand in self.operands:

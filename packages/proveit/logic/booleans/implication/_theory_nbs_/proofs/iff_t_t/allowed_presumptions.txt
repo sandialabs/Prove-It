@@ -1,1 +1,3 @@
 proveit.logic.booleans.implication.true_iff_true
+proveit.logic.equality.equals_symmetry
+proveit.logic.booleans.eq_true_elim

@@ -1,2 +1,4 @@
 proveit.logic.booleans.conjunction.left_from_and
 proveit.logic.equality.rhs_via_equality
+proveit.logic.booleans.implication.iff_implies_both
+proveit.logic.booleans.conjunction.right_from_and

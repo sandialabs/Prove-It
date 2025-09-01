@@ -1,0 +1,7 @@
+proveit.logic.booleans.implication.eq_from_iff
+proveit.logic.equality.equals_transitivity
+proveit.logic.booleans.eq_true_elim
+proveit.logic.booleans.negation.negation_intro
+proveit.logic.equality.substitute_truth
+proveit.logic.equality.sub_right_side_into
+proveit.logic.equality.substitute_in_true

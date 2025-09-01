@@ -1,1 +1,6 @@
 proveit.logic.booleans.implication.true_implies_false_negated
+proveit.logic.booleans.implication.eq_from_iff
+proveit.logic.equality.substitute_truth
+proveit.logic.equality.sub_right_side_into
+proveit.logic.equality.substitute_in_true
+proveit.logic.booleans.negation.negation_intro

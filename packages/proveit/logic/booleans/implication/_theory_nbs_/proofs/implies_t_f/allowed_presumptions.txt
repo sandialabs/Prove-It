@@ -1,2 +1,5 @@
 proveit.logic.equality.equals_reversal
 proveit.logic.booleans.negation.not_def
+proveit.logic.booleans.negation.not_t
+proveit.logic.booleans.negation.not_def_quantified
+proveit.logic.equality.equals_symmetry

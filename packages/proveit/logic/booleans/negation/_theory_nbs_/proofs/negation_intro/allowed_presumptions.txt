@@ -1,2 +1,10 @@
 proveit.logic.booleans.negation.not_false
+proveit.logic.equality.equals_symmetry
 proveit.logic.equality.sub_left_side_into
+proveit.logic.equality.substitute_truth
+proveit.logic.equality.substitute_in_true
+proveit.logic.booleans.conjunction.conjunction_intro
+proveit.logic.booleans.negation.unfold_negation
+proveit.logic.booleans.negation.fold_negation
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and

@@ -1,2 +1,7 @@
-proveit.logic.booleans.conjunction.and_if_both
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.equality.equals_symmetry
+proveit.logic.booleans.eq_true_elim
+proveit.logic.booleans.implication.iff_def_quantified
 proveit.logic.equality.lhs_via_equality
+proveit.logic.booleans.conjunction.conjunction_intro

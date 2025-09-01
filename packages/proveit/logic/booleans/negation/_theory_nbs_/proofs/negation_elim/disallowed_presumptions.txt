@@ -1,0 +1,2 @@
+proveit.logic.booleans.implication.eq_from_iff
+proveit.logic.booleans.conditioned_forall_over_bool_by_cases

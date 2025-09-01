@@ -1,0 +1,6 @@
+proveit.logic.equality.equals_symmetry
+proveit.logic.booleans.implication.iff_def
+proveit.logic.equality.substitution
+proveit.logic.booleans.eq_true_elim
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and

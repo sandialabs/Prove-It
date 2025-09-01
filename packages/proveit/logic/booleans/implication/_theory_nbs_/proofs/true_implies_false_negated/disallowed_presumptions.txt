@@ -1,0 +1,4 @@
+proveit.logic.booleans.in_bool_if_true
+proveit.logic.booleans.implication.not_iff_via_not_left_impl
+proveit.logic.booleans.implication.not_iff_via_not_right_impl
+proveit.logic.booleans.implication.negated_reflex

@@ -1,1 +1,2 @@
 proveit.logic.booleans.negation.fold_negation
+proveit.logic.booleans.negation.double_negation_elim

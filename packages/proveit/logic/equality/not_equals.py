@@ -217,8 +217,8 @@ class NotEquals(Relation):
         '''
         Return (x != y) = Not(x=y) where self represents (x != y).
         '''
-        from . import not_equals_def
-        return not_equals_def.instantiate({x: self.lhs, y: self.rhs})
+        from . import not_equals_def_quantified
+        return not_equals_def_quantified.instantiate({x: self.lhs, y: self.rhs})
 
     @prover
     def unfold(self, **defaults_config):

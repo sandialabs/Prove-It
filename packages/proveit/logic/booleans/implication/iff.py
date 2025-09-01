@@ -36,6 +36,8 @@ class Iff(TransitiveRelation):
         '''
         for side_effect in TransitiveRelation.side_effects(self, judgment):
             yield side_effect
+        # (A=>B and B=>A) from A<=>B:
+        yield self.derive_conjunction_of_implications
         yield self.derive_left_implication  # B=>A given A<=>B
         yield self.derive_right_implication  # A=>B given A<=>B
         yield self.derive_reversed  # B<=>A given A<=>B
@@ -125,6 +127,16 @@ class Iff(TransitiveRelation):
         raise ProofFailure(self, defaults.assumptions,
                            "Unable to automatically conclude by "
                            "standard means.")
+
+    @prover
+    def derive_conjunction_of_implications(self, **defaults_config):
+        '''
+        From (A<=>B) derive and return (A=>B and B=>A).
+        '''
+        from . import iff_implies_both
+        return iff_implies_both.instantiate(
+            {A: self.A, B: self.B})
+    
     @prover
     def derive_left_implication(self, **defaults_config):
         '''
@@ -204,18 +216,18 @@ class Iff(TransitiveRelation):
         '''
         Return (A <=> B) = [(A => B) and (B => A)] where self represents (A <=> B).
         '''
-        from . import iff_def
-        return iff_def.instantiate({A: self.A, B: self.B})
+        from . import iff_def_quantified
+        return iff_def_quantified.instantiate({A: self.A, B: self.B})
 
     @prover
     def conclude_by_definition(self, **defaults_config):
         '''
         Conclude (A <=> B) assuming both (A => B), (B => A).
         '''
-        from . import iff_def, iff_intro
+        from . import iff_def_quantified, iff_intro
         if iff_intro.is_usable():
             return iff_intro.instantiate({A: self.A, B: self.B})
-        return (iff_def.instantiate({A: self.A, B: self.B})
+        return (iff_def_quantified.instantiate({A: self.A, B: self.B})
                 .derive_left_via_equality())
 
     @equality_prover('shallow_simplified', 'shallow_simplify')

@@ -1,0 +1,2 @@
+proveit.logic.booleans.negation.not_def
+proveit.logic.equality.substitution

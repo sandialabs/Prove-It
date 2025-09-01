@@ -1,0 +1,2 @@
+proveit.logic.booleans.negation.unfold_negation
+proveit.logic.booleans.unfold_is_bool

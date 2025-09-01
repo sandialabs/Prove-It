@@ -71,8 +71,8 @@ class Not(Operation):
         '''
         Return Not(A) = (A ⇒ ⊥) where self represents Not(A).
         '''
-        from . import not_def
-        return not_def.instantiate({A: self.operand})
+        from . import not_def_quantified
+        return not_def_quantified.instantiate({A: self.operand})
 
     @prover
     def unfold(self, **defaults_config):

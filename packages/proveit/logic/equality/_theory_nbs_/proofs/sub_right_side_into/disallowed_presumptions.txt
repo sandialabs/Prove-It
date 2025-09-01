@@ -1,0 +1,6 @@
+proveit.logic.equality.substitute_truth
+proveit.logic.equality.substitute_in_true
+proveit.logic.booleans.in_bool_if_true
+proveit.logic.sets
+proveit.logic.booleans.conjunction.any_from_and
+proveit.logic.booleans.conjunction.from_unary_and

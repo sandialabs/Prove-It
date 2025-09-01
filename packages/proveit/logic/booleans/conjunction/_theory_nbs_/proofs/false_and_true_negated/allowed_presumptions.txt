@@ -1,1 +1,5 @@
 proveit.logic.booleans.negation.negation_intro
+proveit.logic.booleans.conjunction.and_f_t
+proveit.logic.booleans.negation.unfold_negation
+proveit.logic.booleans.conjunction.conjunction_intro
+proveit.logic.booleans.negation.fold_negation

@@ -613,29 +613,35 @@ class Equals(EquivRelation):
         the equations.  If "other" is not an equality, reverse roles and
         call 'apply_transitivity' from the "other" side.
         '''
-        from . import equals_transitivity
+        from . import equals_transitivity, equals_transitivity_via_implications
         other = as_expression(other)
         if not isinstance(other, Equals):
             # If the other relation is not "Equals", call from the "other"
             # side.
             return other.apply_transitivity(self)
         other_equality = other
+        if equals_transitivity.is_usable():
+            transitivity = equals_transitivity
+        else:
+            # If 'equals_transitivity' isn't usable, try the more basic
+            # form with implications.
+            transitivity = equals_transitivity_via_implications
         # We can assume that y=x will be a Judgment if x=y is a Judgment
         # because it is derived as a side-effect.
         if self.rhs == other_equality.lhs:
-            return equals_transitivity.instantiate(
+            instantiation = transitivity.instantiate(
                 {x: self.lhs, y: self.rhs, z: other_equality.rhs},
                 preserve_all=True)
         elif self.rhs == other_equality.rhs:
-            return equals_transitivity.instantiate(
+            instantiation = transitivity.instantiate(
                 {x: self.lhs, y: self.rhs, z: other_equality.lhs},
                 preserve_all=True)
         elif self.lhs == other_equality.lhs:
-            return equals_transitivity.instantiate(
+            instantiation = transitivity.instantiate(
                 {x: self.rhs, y: self.lhs, z: other_equality.rhs},
                 preserve_all=True)
         elif self.lhs == other_equality.rhs:
-            return equals_transitivity.instantiate(
+            instantiation = transitivity.instantiate(
                 {x: self.rhs, y: self.lhs, z: other_equality.lhs},
                 preserve_all=True)
         else:
@@ -644,6 +650,12 @@ class Equals(EquivRelation):
                 defaults.assumptions,
                 'Transitivity cannot be applied unless there is something in common in the equalities: %s vs %s' %
                 (str(self), str(other)))
+        
+        if transitivity == equals_transitivity_via_implications:
+            # When using the form with implications, we'll need to derive
+            # the consequent of the consequent.
+            return instantiation.derive_consequent().derive_consequent()
+        return instantiation
 
     @staticmethod
     @prover
@@ -765,13 +777,22 @@ class Equals(EquivRelation):
     @prover
     def conclude_boolean_equality(self, **defaults_config):
         '''
-        Prove and return self of the form 
+        Prove and return self of the form A=TRUE, A=FALSE, TRUE=A or FALSE=a
+        if A has a known evaluation, or
             A=TRUE given A,
-            A=FALSE given Not(A), or
+            A=FALSE given Not(A) and A in Booleans, or
             [Not(A)=FALSE] given A.
         '''
         from proveit.logic import TRUE, FALSE, Not
         from proveit.logic.booleans import eq_true_intro
+        if self.rhs not in (TRUE, FALSE) and self.lhs not in (TRUE, FALSE):
+            raise ValueError("'conclude_boolean_equality' only applicable if "
+                             "one side is TRUE or FALSE.")
+        try:
+            if Equals.get_known_evaluation(self.lhs).expr == self:
+                return Equals.get_known_evaluation(self.lhs)
+        except UnsatisfiedPrerequisites:
+            pass
         if self.rhs == TRUE:
             return eq_true_intro.instantiate({A: self.lhs})
         elif self.rhs == FALSE:
@@ -950,7 +971,7 @@ class Equals(EquivRelation):
         Note: auto-simplification may only affect sub-expressions
         touched by the substitution.
         '''
-        from . import sub_right_side_into
+        from . import sub_right_side_via_implications, sub_right_side_into
         from . import substitute_truth, substitute_in_true
         #, substitute_falsehood, substitute_in_false)
         from proveit.logic import TRUE, FALSE
@@ -1015,8 +1036,20 @@ class Equals(EquivRelation):
             """
         except BaseException:
             pass
-        return sub_right_side_into.instantiate(
-            {x: self.lhs, y: self.rhs, P: lambda_map}, **extra_kwargs)
+        
+        if sub_right_side_into.is_usable():
+            return sub_right_side_into.instantiate(
+                {x: self.lhs, y: self.rhs, P: lambda_map}, **extra_kwargs)
+        else:
+            # sub_right_side_into isn't usable so use
+            # sub_right_side_via_implications.
+            from proveit.logic import Implies
+            extra_kwargs['markers_and_marked_expr'] = (
+                lambda_map.parameter_vars,
+                Implies(lambda_map.apply(self.lhs), Implies(self, lambda_map.body)))
+            sub_via_implications = sub_right_side_via_implications.instantiate(
+                {x: self.lhs, y: self.rhs, P: lambda_map}, **extra_kwargs)
+            return sub_via_implications.derive_consequent().derive_consequent()
 
     @prover
     def derive_right_via_equality(self, **defaults_config):

@@ -1,3 +1,5 @@
 proveit.logic.booleans.negation.negation_contradiction
 proveit.logic.booleans.implication.not_true_via_contradiction
 proveit.logic.booleans.implication.untrue_antecedent_implication
+proveit.logic.booleans.negation.fold_negation
+proveit.logic.booleans.implication.falsified_antecedent_implication

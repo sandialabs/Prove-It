@@ -1,0 +1,14 @@
+proveit.logic.booleans.eq_true_elim
+proveit.logic.booleans.negation.negation_intro
+proveit.logic.booleans.conjunction.conjunction_eq_quantification
+proveit.logic.booleans.negation.falsified_negation_intro
+proveit.logic.equality.equals_transitivity
+proveit.logic.booleans.negation.fold_negation
+proveit.logic.equality.sub_right_side_into
+proveit.logic.equality.substitute_truth
+proveit.logic.equality.substitute_in_true
+proveit.logic.equality.sub_left_side_into
+proveit.logic.booleans.in_bool_if_true
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.booleans.implication.untrue_antecedent_implication

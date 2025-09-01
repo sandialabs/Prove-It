@@ -118,6 +118,9 @@ class And(Operation):
         should be provable.
         '''
         from proveit import ExprRange
+        from proveit.logic.booleans.conjunction import conjunction_intro
+        if not conjunction_intro.is_usable():
+            return False
         univ_quant = self._as_quantification()
         if univ_quant is not None:
             # See if the corresponding universal quantification is
@@ -643,6 +646,10 @@ class And(Operation):
         # load in truth-table evaluations
         from . import (and_t_t, and_t_f, and_f_t, and_f_f,
                        conjunction_eq_quantification)
+        
+        for truth_table_thm in (and_t_t, and_t_f, and_f_t, and_f_f):
+            if self == truth_table_thm.expr.lhs:
+                return truth_table_thm # simple truth-table match
 
         if self.operands.num_entries() == 0:
             from proveit.logic.booleans.conjunction import \
@@ -906,9 +913,10 @@ def compose(*expressions, **defaults_config):
             empty_conjunction
         return empty_conjunction
     if expressions.is_double():
-        from . import and_if_both
-        return and_if_both.instantiate(
+        from . import conjunction_intro
+        conj_via_impl = conjunction_intro.instantiate(
             {A: expressions[0], B: expressions[1]}, auto_simplify=False)
+        return conj_via_impl.derive_consequent().derive_consequent()
     elif expressions.contains_range():
         # If there are ranges, prove these portions separately
         # (grouped together) and then disassociate.

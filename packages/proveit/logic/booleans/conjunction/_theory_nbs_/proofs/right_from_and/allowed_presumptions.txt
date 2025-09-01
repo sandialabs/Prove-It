@@ -1,0 +1,5 @@
+proveit.logic.booleans.conjunction.binary_conjunction_def
+proveit.logic.equality.equals_symmetry
+proveit.logic.booleans.negation.unfold_negation
+proveit.logic.booleans.negation.fold_negation
+proveit.logic.booleans.negation.double_negation_elim

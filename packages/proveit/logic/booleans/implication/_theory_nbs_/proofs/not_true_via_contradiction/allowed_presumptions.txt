@@ -1,1 +1,4 @@
 proveit.logic.equality.fold_not_equals
+proveit.logic.booleans.negation.fold_negation
+proveit.logic.booleans.eq_true_elim
+proveit.logic.booleans.negation.negation_contradiction

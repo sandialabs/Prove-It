@@ -1,0 +1,4 @@
+proveit.logic.booleans.implication.invalid_implication
+proveit.logic.equality.equals_transitivity
+proveit.logic.booleans.negation.negation_intro
+proveit.logic.booleans.in_bool_if_true

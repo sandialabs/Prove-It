@@ -1,3 +1,12 @@
-proveit.logic.booleans.true_is_bool
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.booleans.negation.negation_intro
+proveit.logic.booleans.negation.not_f
+proveit.logic.booleans.eq_true_elim
+proveit.logic.equality.sub_right_side_into
+proveit.logic.equality.substitute_truth
+proveit.logic.equality.substitute_in_true
+proveit.logic.booleans.negation.unfold_negation
 proveit.logic.booleans.in_bool_if_true
-proveit.logic.booleans.negation.not_t
+proveit.logic.equality.sub_left_side_into
+proveit.logic.booleans.conjunction.binary_conjunction_def

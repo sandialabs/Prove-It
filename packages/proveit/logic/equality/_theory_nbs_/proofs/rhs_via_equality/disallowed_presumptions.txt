@@ -1,0 +1,3 @@
+proveit.logic.equality.substitute_truth
+proveit.logic.equality.substitute_in_true
+proveit.logic.booleans.in_bool_if_true

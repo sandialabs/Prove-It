@@ -1,3 +1,5 @@
 proveit.logic.booleans.true_truth
 proveit.logic.booleans.eq_true_elim
 proveit.logic.equality.not_equals_def
+proveit.logic.equality.not_equals_def_quantified
+proveit.logic.equality.lhs_via_equality

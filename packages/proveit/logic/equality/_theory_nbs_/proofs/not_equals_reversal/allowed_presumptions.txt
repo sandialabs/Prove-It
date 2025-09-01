@@ -1,0 +1,5 @@
+proveit.logic.equality.equals_symmetry
+proveit.logic.equality.unfold_not_equals
+proveit.logic.equality.not_equals_contradiction
+proveit.logic.booleans.negation.fold_negation
+proveit.logic.equality.fold_not_equals
