@@ -158,6 +158,10 @@ class InteriorVertices(Function):
         Function.__init__(
                 self, InteriorVertices._operator_, G, styles=styles)
 
+    def membership_object(self, element):
+        from .graph_of_membership import InteriorVerticesMembership
+        return InteriorVerticesMembership(element, self)
+
 
 class BoundaryVertices(Function):
     '''
