@@ -594,13 +594,24 @@ class TheoryStorage:
             with open(name_to_expr_and_obj_hashes_filename, 'r') as f:
                 for line in f.readlines():
                     name, expr_hash_id, obj_hash_id = line.split()
-                    special_expr_hash_ids[name] = expr_hash_id
+                    if kind=='def_existence':
+                        # The obj_hash_id above is for the DefiningProperty.
+                        # We want the associated DefinitionExistence.
+                        hash_path = theory_folder_storage._storagePath(obj_hash_id)
+                        with open(os.path.join(hash_path, 'unique_rep.pv_it'), 
+                                  'r') as f:
+                            # extract the unique representation from the pv_it file
+                            unique_rep = f.read()
+                            _ = theory_folder_storage._extractReferencedStorageIds(
+                                unique_rep)
+                            obj_hash_id = _[-1].split('.')[-1]
+                    else:
+                        special_expr_hash_ids[name] = expr_hash_id
+                        self._kindname_to_exprhash[(kind, name)] = expr_hash_id
+                        theory_folder_storage._objhash_to_names.setdefault(
+                            expr_hash_id, []).append(name)                        
                     special_obj_hash_ids[name] = obj_hash_id
-
-                    self._kindname_to_exprhash[(kind, name)] = expr_hash_id
                     self._kindname_to_objhash[(kind, name)]  = obj_hash_id
-                    theory_folder_storage._objhash_to_names.setdefault(
-                        expr_hash_id, []).append(name)
                     theory_folder_storage._objhash_to_names.setdefault(
                         obj_hash_id, []).append(name)
                     yield name
@@ -622,8 +633,7 @@ class TheoryStorage:
         '''
         Return the hash folder where information about a defining
         property of the given name is stored (stored on the 
-        'definitions' theory storage folder).
-        '''
+        'definitions' theory storage folder).        '''
         list(self._load_special_names('defining_property'))
         try:
             return self._special_obj_hash_ids['defining_property'][name]
@@ -632,6 +642,20 @@ class TheoryStorage:
                            "conservative definition in %s"
                            % (name, self.theory.name))
 
+    def get_definition_existence_hash(self, name):
+        '''
+        Return the hash folder where information about the existence
+        proof associated with a defining property of the given name is stored
+        (stored on the  'definitions' theory storage folder).
+        '''
+        list(self._load_special_names('def_existence'))
+        try:
+            return self._special_obj_hash_ids['def_existence'][name]        
+        except KeyError:
+            raise KeyError("%s not found as a defining property of a "
+                           "conservative definition in %s"
+                           % (name, self.theory.name))
+    
     def get_theorem_hash(self, name):
         '''
         Return the path where information about the theorem of the given
@@ -703,7 +727,8 @@ class TheoryStorage:
         return the corresponding object.
         '''
         from proveit._core_.proof import (Axiom, Theorem, 
-                                          BasicDefinition, DefiningProperty)
+                                          BasicDefinition, DefiningProperty,
+                                          DefinitionExistence)
         from .theory import Theory
         folder = TheoryStorage._kind_to_folder(kind)
 
@@ -754,10 +779,7 @@ class TheoryStorage:
             elif kind == 'def_existence':
                 obj_id = self._kindname_to_objhash[(kind, name)]
                 obj = theory_folder_storage.make_judgment_or_proof(obj_id)
-                if isinstance(obj, BasicDefinition):
-                    raise KeyError('BasicDefinition does not need an'
-                                   ' existence proof')
-                obj = obj.required_proofs[0]
+                assert isinstance(obj, DefinitionExistence)
             elif kind == 'theorem':
                 obj = Theorem(expr, self.theory, name)
                 if not isinstance(obj, Theorem):
@@ -2468,7 +2490,6 @@ class TheoryFolderStorage:
                             os.remove(complete_path)
                         except OSError:
                             unable_to_remove_warning(complete_path)
-
         for hashpath in paths_to_remove:
             try:
                 shutil.rmtree(hashpath)
@@ -3635,7 +3656,7 @@ class StoredDefinitionExistence(StoredTheorem):
         entries.
         '''
         if hash_id is None:
-            hash_id = theory._storage.get_defining_property_hash(name)
+            hash_id = theory._storage.get_definition_existence_hash(name)
         StoredTheorem.__init__(self, theory, name, hash_id=hash_id,
                                kind='def_existence')
 
