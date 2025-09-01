@@ -252,14 +252,13 @@ class Lambda(Expression):
                 
         # Assign canonical labels to the parameters using the first
         # non-contestable dummy variable (using the number of
-        # potentially-independent interanlly bound variables to
+        # potentially-independent internally bound variables to
         # determine what may be contestable), skipping over free 
         # variables that happen to match any of these dummy variables.
         canonical_parameters = parameters.canonically_labeled()
-        canonical_body = self.body.canonically_labeled()
-        canonical_body_free_vars = free_vars(canonical_body)
+        body_free_vars = free_vars(self.body)
         canonical_parameters_free_vars = free_vars(canonical_parameters)
-        lambda_free_vars = set(canonical_body_free_vars)
+        lambda_free_vars = set(body_free_vars)
         lambda_free_vars.update(canonical_parameters_free_vars)
         lambda_free_vars.difference_update(effective_param_vars)
         start_index = self.body._num_indep_internal_bound_vars
@@ -280,7 +279,7 @@ class Lambda(Expression):
         with defaults.temporary() as temp_defaults:
             # Don't auto-reduce or use automation when making the
             # canonical version.  Also, don't apply "consistent
-            # styles" -- we need use "canonical" styles.
+            # styles" -- we need to use "canonical" styles.
             temp_defaults.automation = False
             temp_defaults.auto_simplify = False
             temp_defaults.assumptions = tuple()
@@ -295,17 +294,19 @@ class Lambda(Expression):
                      in zip(effective_param_vars, canonical_param_vars)}
                 canonical_parameters = parameters.basic_replaced(
                     relabel_map).canonically_labeled()
-                canonical_body = canonical_body.basic_replaced(
+                canonical_body = self.body.basic_replaced(
                     relabel_map).canonically_labeled()
                 canonically_labeled = Lambda(canonical_parameters, 
-                                            canonical_body)
-            elif (self._style_data.styles == canonical_styles and
-                  canonical_body._style_id == self.body._style_id and
-                  canonical_parameters._style_id == self.parameters._style_id):
-                canonically_labeled = self
+                                             canonical_body)
             else:
-                canonically_labeled = Lambda(canonical_parameters, 
-                                            canonical_body)
+                canonical_body = self.body.canonically_labeled()
+                if self._style_data.styles == canonical_styles and (
+                        canonical_body._style_id == self.body._style_id and
+                        canonical_parameters._style_id == self.parameters._style_id):
+                    canonically_labeled = self
+                else:
+                    canonically_labeled = Lambda(canonical_parameters, 
+                                                canonical_body)
         self._canonically_labeled = canonically_labeled
         canonically_labeled._canonically_labeled = canonically_labeled
         return canonically_labeled
@@ -1355,16 +1356,6 @@ def extract_complete_param_replacements(parameters, parameter_vars, body,
         raise LambdaApplicationError(
             parameters, body, operands, [], str(e))
 
-    # Make sure all of the operands were consumed.
-    try:
-        next(operands_iter)
-        # All operands were not consumed.
-        raise LambdaApplicationError(parameters, body,
-                                     operands, [],
-                                     "Too many arguments")
-    except StopIteration:
-        pass  # Good.  All operands were consumed.
-
 
 def extract_param_replacements(parameters, parameter_vars,
                                operands_iter, param_to_num_operand_entries,
@@ -1374,14 +1365,16 @@ def extract_param_replacements(parameters, parameter_vars,
     tuple lengths.  If provided (not None), param_to_num_operand_entries
     indicates how many operand entries should correspond with each
     parameter to speed making matches and disambiguate which parameter
-    empty ranges belong to.  Add a repl_map entry to map each
-    parameter entry (or ExprTuple-wrapped entry) to corresponding
-    operand(s) (ExprTuple-wrapped as appropriate).
+    empty ranges belong to.  If is_complete is True then all of the parameters
+    and operands should be matched up.
+    Add a repl_map entry to map each parameter entry (or ExprTuple-wrapped
+    entry) to corresponding operand(s) (ExprTuple-wrapped as appropriate).
     '''
     from proveit import (ExprTuple, ExprRange, ProofFailure,
                          extract_var_tuple_indices)
     from proveit.logic import Equals
     from proveit.core_expr_types import Len
+
     # Loop through each parameter entry and match it with corresponding
     # operand(s).  Singular parameter entries match with singular
     # operand entries.  ExprRange parameter entries match with
@@ -1548,6 +1541,14 @@ def extract_param_replacements(parameters, parameter_vars,
         raise ValueError("Parameter/argument length mismatch "
                          "or unproven length equality for "
                          "correspondence with %s." % str(parameter))
+    
+    # Any remaining operands should be expression ranges of length 0.
+    if is_complete:
+        for operand in operands_iter:
+            from proveit.numbers import zero
+            len_req = Equals(Len(ExprTuple(operand)), zero)
+            requirements.append(len_req.prove())
+
 
 class ParameterCollisionError(Exception):
     def __init__(self, parameters, main_msg):
