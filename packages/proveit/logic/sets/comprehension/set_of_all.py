@@ -1,7 +1,7 @@
 from proveit import (
-        ExprTuple, equality_prover, Function, Literal, OperationOverInstances,
+        ExprTuple, Function, Literal, OperationOverInstances,
         Lambda, composite_expression, relation_prover, defaults)
-from proveit import f, n, x, y, A, Q, R, S
+from proveit import f, n, x, y, Q, R, S
 
 
 class SetOfAll(OperationOverInstances):
@@ -126,38 +126,6 @@ class SetOfAll(OperationOverInstances):
                     "has the same domain and instance mapping: %s vs %s"
                     %(self, subset))
         return subset.deduce_superset_eq_relation(self)
-
-
-    @equality_prover('superset_reduced', 'superset_reduce')
-    def superset_reduction(self, neg_set, **defaults_config):
-        '''
-        From self = {y | Q(y)}_{y, S}, and knowing or assuming that
-        Forall_{y in neg_set}(Not(Q(y))), deduce the equality of self with
-        the "reduced" superset form, returning:
-
-            |- {y | Q(y)}_{y, S} = {y | Q(y)}_{y, S - neg_set}.
-
-        'S' is the superset referred to in the method name.
-        Currently, the method functions only for the simple case
-        where we have a single instance parameter (and thus a single
-        domain). This can eventually be generalized, but will need a
-        more general underlying theorem.
-
-        '''
-        if not hasattr(self, 'instance_param'):
-            raise NotImplementedError(
-                    "SetOfAll.superset_reduction currently implemented only "
-                    "for SetOfAll cases with a single instance parameter. "
-                    "We admit this is a sad failure of imagination. ")
-        from . import comprehension_superset_reduction
-        _A_sub = neg_set
-        _S_sub = self.domain
-        _y_sub = self.instance_param
-        _Q_sub = Lambda(self.instance_param, self.non_domain_condition())
-        return comprehension_superset_reduction.instantiate(
-                {A:_A_sub, S:_S_sub, y:_y_sub, Q:_Q_sub}).derive_consequent()
-
-
 
     # The below must be updated
     # Being updated gradually by wdc starting 12/21/2021
