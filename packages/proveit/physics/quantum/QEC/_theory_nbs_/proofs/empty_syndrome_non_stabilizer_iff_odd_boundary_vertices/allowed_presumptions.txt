@@ -31,3 +31,4 @@ proveit.physics.quantum.QEC.error_vertex_is_interior_xor_boundary
 proveit.physics.quantum.QEC.not_even_eq_odd
 proveit.physics.quantum.QEC.z_errs_subseteq_errs
 proveit.graphs.even_number_of_odd_vertices
+proveit.graphs.deg_is_odd_xor_even
