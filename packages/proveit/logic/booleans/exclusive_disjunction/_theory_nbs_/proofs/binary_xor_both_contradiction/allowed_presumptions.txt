@@ -1,0 +1,2 @@
+proveit.logic.equality.substitute_truth
+proveit.logic.equality.contradiction_via_falsification
