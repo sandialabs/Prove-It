@@ -541,37 +541,25 @@ class And(Operation):
         conjunction.  Requires all of the operands to be in the
         BOOLEAN set.
         '''
-        from . import (nand_if_not_one, nand_if_not_left, nand_if_not_right,
-                       nand_if_neither, nand_if_right_but_not_left,
-                       nand_if_left_but_not_right)
         index = self.operands.index(false_operand)
         if self.operands.is_double():
+            from . import nand_if_not_left, nand_if_not_right
             _A, _B = self.operands
             if index == 0:
-                if self.operands[1].readily_disprovable():
-                    # May be a shorter proof
-                    nand_if_neither.instantiate({A:_A, B:_B})
-                elif self.operands[1].readily_provable():
-                    # May be a shorter proof
-                    nand_if_right_but_not_left.instantiate({A:_A, B:_B})
                 return nand_if_not_left.instantiate(
                     {A: self.operands[0], B: self.operands[1]})
             elif index == 1:
-                if self.operands[0].readily_disprovable():
-                    # May be a shorter proof
-                    nand_if_neither.instantiate({A:_A, B:_B})
-                elif self.operands[0].readily_provable():
-                    # May be a shorter proof
-                    nand_if_left_but_not_right.instantiate({A:_A, B:_B})
                 return nand_if_not_right.instantiate(
                     {A: self.operands[0], B: self.operands[1]})
-        _A = self.operands[:index]
-        _B = self.operands[index]
-        _C = self.operands[index + 1:]
-        _m = _A.num_elements()
-        _n = _C.num_elements()
-        return nand_if_not_one.instantiate(
-                {m: _m, n: _n, A: _A, B: _B, C: _C})
+        else:
+            from . import nand_if_not_one
+            _A = self.operands[:index]
+            _B = self.operands[index]
+            _C = self.operands[index + 1:]
+            _m = _A.num_elements()
+            _n = _C.num_elements()
+            return nand_if_not_one.instantiate(
+                    {m: _m, n: _n, A: _A, B: _B, C: _C})
 
     @prover
     def conclude_as_redundant(self, **defaults_config):

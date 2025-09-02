@@ -1,1 +1,5 @@
 proveit.logic.booleans.implication.iff_implies_right
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.booleans.implication.iff_implies_both
+proveit.logic.booleans.implication.iff_implies_left

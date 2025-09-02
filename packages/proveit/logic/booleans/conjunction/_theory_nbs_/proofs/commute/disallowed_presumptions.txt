@@ -1,0 +1,4 @@
+proveit.logic.booleans.in_bool_if_true
+proveit.logic.sets
+proveit.logic.booleans.conjunction.any_from_and
+proveit.logic.booleans.conjunction.from_unary_and

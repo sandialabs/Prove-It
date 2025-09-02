@@ -1,3 +1,7 @@
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.implication.not_iff_via_not_left_impl
 proveit.logic.booleans.negation.negation_elim
+proveit.logic.booleans.implication.iff_symmetry
+proveit.logic.booleans.implication.eq_from_iff
+proveit.logic.booleans.implication.eq_from_mutual_impl
+proveit.logic.booleans.conjunction.conjunction_eq_quantification

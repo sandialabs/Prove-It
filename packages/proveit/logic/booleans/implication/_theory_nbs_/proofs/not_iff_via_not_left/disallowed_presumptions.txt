@@ -3,3 +3,10 @@ proveit.logic.sets.inclusion.relax_proper_subset
 proveit.logic.booleans.conjunction.any_from_and
 proveit.logic.booleans.conjunction.from_unary_and
 proveit.logic.booleans.negation.negation_elim
+proveit.logic.booleans.implication.iff_symmetry
+proveit.logic.booleans.implication.eq_from_iff
+proveit.logic.booleans.implication.eq_from_mutual_impl
+proveit.logic.booleans.conjunction.conjunction_eq_quantification
+proveit.logic.booleans.conjunction.nand_if_not_one
+proveit.logic.booleans.implication.not_iff_via_not_left_impl
+proveit.logic.booleans.implication.not_iff_via_not_right_impl

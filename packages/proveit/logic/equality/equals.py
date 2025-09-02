@@ -1154,6 +1154,7 @@ class Equals(EquivRelation):
                 def min_key(judgment): return judgment.proof().num_steps()
                 return min(candidates, key=min_key)
         if defaults.conclude_automation:
+            from proveit.logic.booleans import in_bool
             # An evaluation isn't directly known, but we may know
             # something equal to this that has an evaluation and
             # therefore we have an evaluation by transitivity and/or
@@ -1164,7 +1165,7 @@ class Equals(EquivRelation):
                 eq_evaluation = None
                 if eq_expr.proven():
                     eq_evaluation = evaluate_truth(eq_expr)
-                elif eq_expr.disproven():
+                elif eq_expr.disproven() and in_bool(eq_expr).proven():
                     eq_evaluation = evaluate_falsehood(eq_expr)
                 elif eq_expr != expr: 
                     eq_evaluation = Equals.get_known_evaluation(eq_expr)

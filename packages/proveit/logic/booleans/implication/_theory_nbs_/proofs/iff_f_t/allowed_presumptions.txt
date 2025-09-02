@@ -1,2 +1,17 @@
 proveit.logic.booleans.negation.negation_intro
 proveit.logic.booleans.implication.not_iff_via_not_left_impl
+proveit.logic.booleans.implication.iff_def_quantified
+proveit.logic.equality.equals_symmetry
+proveit.logic.equality.substitution
+proveit.logic.equality.equals_transitivity
+proveit.logic.equality.equals_transitivity_via_implications
+proveit.logic.booleans.conjunction.conjunction_intro
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.booleans.eq_true_elim
+proveit.logic.booleans.negation.unfold_negation
+proveit.logic.booleans.negation.fold_negation
+proveit.logic.booleans.conjunction.and_f_t
+proveit.logic.booleans.implication.implies_f_t
+proveit.logic.booleans.implication.implies_t_f
+proveit.logic.booleans.conjunction.and_t_f

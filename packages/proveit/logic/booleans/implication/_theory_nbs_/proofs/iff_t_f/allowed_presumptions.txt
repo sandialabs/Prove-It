@@ -18,3 +18,7 @@ proveit.logic.booleans.implication.falsified_antecedent_implication
 proveit.logic.booleans.implication.untrue_antecedent_implication
 proveit.logic.booleans.implication.implies_t_f
 proveit.logic.booleans.implication.implies_f_t
+proveit.logic.equality.equals_transitivity
+proveit.logic.equality.equals_transitivity_via_implications
+proveit.logic.booleans.conjunction.and_f_t
+proveit.logic.booleans.implication.iff_via_both_false
