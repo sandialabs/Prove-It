@@ -1,0 +1,1 @@
+proveit.logic.booleans.exclusive_disjunction.xor_if_only_left

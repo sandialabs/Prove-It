@@ -1,11 +1,4 @@
-from .quantification import Forall, Exists, NotExists, UniqueExists
-from .booleans import in_bool, BooleanSet, TrueLiteral, FalseLiteral
-from .conjunction import And, compose
-from .disjunction import Or
-from .exclusive_disjunction import XOr
-from .negation import Not
-from .implication import Implies, Iff, conclude_via_implication
-
+from .xor_op import XOr
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.
 #  Make additions above, or add to sys.modules[__name__].__dict__ below.
