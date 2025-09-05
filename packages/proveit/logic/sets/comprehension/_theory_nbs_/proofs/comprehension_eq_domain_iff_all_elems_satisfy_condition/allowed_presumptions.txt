@@ -1,0 +1,9 @@
+proveit.logic.equality.sub_left_side_into
+proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.sets.comprehension.unfold_basic_comprehension
+proveit.logic.booleans.implication.eq_from_iff
+proveit.logic.booleans.implication.iff_intro
+proveit.logic.sets.comprehension.fold_basic_comprehension
+proveit.logic.sets.comprehension.in_superset_if_in_comprehension
+proveit.logic.sets.inclusion.fold_subset_eq
+proveit.logic.sets.comprehension.comprehension_is_subset
