@@ -377,6 +377,13 @@ class Theory:
         '''
         return self._storage.get_definition_existence(name)
 
+    def get_definition_extension(self, name):
+        '''
+        Return the DefinitionExistence associated with the defining
+        property of the given name in this theory.
+        '''
+        return self._storage.get_definition_extension(name)
+
     def generate_local_axioms(self):
         '''
         Yield each of the axioms contained at the local level
@@ -490,7 +497,8 @@ class Theory:
 
     @staticmethod
     def update_proving_name_if_needed(filename, theorem_name, *,
-                                      definition_existence_proof):
+                                      definition_existence_proof,
+                                      definition_extension_proof):
         '''
         Check if the notebook stored in 'filename' has the
         correct name following %proving.  If not, fix it.
@@ -502,6 +510,8 @@ class Theory:
             nb_str = _f.read()
         if definition_existence_proof:
             proving_str = '"%existence_proving '
+        elif definition_extension_proof:
+            proving_str = '"%extension_proving '
         else:
             proving_str = '"%proving '
         proving_str_idx = nb_str.find(proving_str)
@@ -532,7 +542,8 @@ class Theory:
         return theory_folder_storage.proof_notebook(proof)
 
     def thm_proof_notebook(self, theorem_name, expr, num_duplicates=0,
-                           definition_existence_proof=False):
+                           definition_existence_proof=False,
+                           definition_extension_proof=False):
         '''
         Return the path of the proof notebook for a theorem with the
         given name and expression, creating it if it does not already
@@ -541,15 +552,16 @@ class Theory:
         '''
         return self._storage.thm_proof_notebook(
                 theorem_name, expr, num_duplicates, 
-                definition_existence_proof)
+                definition_existence_proof, definition_extension_proof)
 
     def stash_extraneous_thm_proof_notebooks(
-            self, *, definition_existence_proofs=False):
+            self, *, definition_existence_proofs=False,
+            definition_extension_proofs=False):
         '''
         For any proof notebooks for theorem names not included in the
         theory, stash them or remove them if they are generic notebooks.
         '''
-        if definition_existence_proofs:
+        if definition_existence_proofs or definition_extension_proofs:
             # This is good enough for now.  Technically, only the
             # last of a defining property collection (in a cell of
             # a definitions notebook) will have an associated proof,
@@ -560,7 +572,8 @@ class Theory:
         else:
             thm_names = self.get_theorem_names()
         self._storage.stash_extraneous_thm_proof_notebooks(
-            thm_names, definition_existence_proofs=definition_existence_proofs)
+            thm_names, definition_existence_proofs=definition_existence_proofs,
+            definition_extension_proofs=definition_extension_proofs)
 
     @staticmethod
     def expression_notebook(expr, name_kind_theory=None,
@@ -590,6 +603,10 @@ class Theory:
         return Theory.get_stored_stmt(fullname, 'definition_existence')
 
     @staticmethod
+    def get_stored_definition_extension(fullname):
+        return Theory.get_stored_stmt(fullname, 'definition_extension')
+
+    @staticmethod
     def get_stored_theorem(fullname):
         '''
         Return the stored theorem of the given name, or stored
@@ -604,7 +621,8 @@ class Theory:
     def get_stored_stmt(fullname, kind):
         from ._theory_storage import (StoredAxiom, StoredTheorem,
                                       StoredDefiningProperty,
-                                      StoredDefinitionExistence)
+                                      StoredDefinitionExistence,
+                                      StoredDefinitionExtension)
         split_name = fullname.split('.')
         theory_name = '.'.join(split_name[:-1])
         stmt_name = split_name[-1]
@@ -615,6 +633,8 @@ class Theory:
             return StoredDefiningProperty(theory, stmt_name)
         elif kind == 'definition_existence':
             return StoredDefinitionExistence(theory, stmt_name)
+        elif kind == 'definition_extension':
+            return StoredDefinitionExtension(theory, stmt_name)
         elif kind == 'theorem':
             return StoredTheorem(theory, stmt_name)
         else:

@@ -1541,7 +1541,7 @@ class DefinitionExistence(Theorem):
 
     def _regenerate_proof_object(self, proven_truth, requirements,
                                  marked_req_indices=None):
-        return DefiningProperty(
+        return DefinitionExistence(
                 None, self.theory, self.name,
                 _proven_truth=proven_truth, _requirements=requirements,
                 _marked_req_indices=marked_req_indices)
@@ -1562,13 +1562,51 @@ class DefinitionExistence(Theorem):
         return StoredDefinitionExistence(self.theory, self.name,
                                          hash_id=hash_id)
 
+class DefinitionExtension(Theorem):
+    '''
+    We can extend a definition as long as the new properties
+    imply the original properties.  This must be proven
+    effectively as a Theorem.
+    '''
+
+    def __init__(self, expr, theory, name, *,
+                 _proven_truth=None, _requirements=None,
+                 _marked_req_indices=None):
+        Theorem.__init__(self, expr, theory, name, 
+                         _proven_truth=_proven_truth,
+                         _requirements=_requirements, 
+                         _marked_req_indices=_marked_req_indices)
+
+    def _regenerate_proof_object(self, proven_truth, requirements,
+                                 marked_req_indices=None):
+        return DefinitionExtension(
+                None, self.theory, self.name,
+                _proven_truth=proven_truth, _requirements=requirements,
+                _marked_req_indices=marked_req_indices)
+
+    def step_type(self):
+        if self.is_conjecture():
+            return 'conjectured_extension'
+        return 'definition_extension'
+
+    def _generate_step_info(self, object_rep_fn):
+        # For these purposes, we should use 'definition_existence' even 
+        # if the status is 'conjectured existence'.
+        return 'definition_extension-' + str(self) + ':'
+
+    def _stored_theorem(self):
+        from ._theory_storage import StoredDefinitionExtension
+        _, hash_id = self.theory._theory_folder_storage('definitions')._retrieve(self)
+        return StoredDefinitionExtension(self.theory, self.name,
+                                         hash_id=hash_id)
+
 
 class DefiningProperty(Proof):
     '''
     The proof for a defining property of conservative definition(s)
     is a direct consequence of the DefinitionExistence.
     '''
-    def __init__(self, expr, theory, name, *, def_existence,
+    def __init__(self, expr, theory, name, *, def_existence, def_extension=None,
                  _proven_truth=None, _requirements=None,
                  _marked_req_indices=None):
         if not isinstance(theory, Theory):
@@ -1588,8 +1626,12 @@ class DefiningProperty(Proof):
                            _marked_req_indices)
             return
         else:
-            Proof.__init__(self, Judgment(expr, frozenset()), 
-                           [def_existence.proven_truth])
+            if def_extension is not None:
+                required_truths = [def_existence.proven_truth,
+                                   def_extension.proven_truth]
+            else:
+                required_truths = [def_existence.proven_truth]
+            Proof.__init__(self, Judgment(expr, frozenset()), required_truths)
 
     def _regenerate_proof_object(self, proven_truth, requirements,
                                  marked_req_indices=None):
@@ -2827,7 +2869,7 @@ class _ShowProof:
             self.step_type_str, full_name = step_info.split('-', 1)
             assert self.step_type_str in (
                 'axiom', 'basic_definition', 'defining_property', 
-                'definition_existence', 'theorem')
+                'definition_existence', 'definition_extension', 'theorem')
             full_name_segments = full_name.split('.')
             theory_name = '.'.join(full_name_segments[:-1])
             self.theory = Theory.get_theory(theory_name)
@@ -2874,6 +2916,8 @@ class _ShowProof:
         elif self.step_type_str == 'theorem':
             return theorem_proof_link(self.theory, self.name)
         elif self.step_type_str == 'definition_existence':
+            return theorem_proof_link(self.theory, self.name)
+        elif self.step_type_str == 'definition_extension':
             return theorem_proof_link(self.theory, self.name)
         else:
             return self.theory_folder_storage.proof_notebook(self)

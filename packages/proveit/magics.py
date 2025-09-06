@@ -733,8 +733,26 @@ class ProveItMagicCommands:
             def_prop = self.theory.get_defining_property(theorem_name)
             proving_theorem = def_prop.required_proofs[0]
         proving_theorem_truth = proving_theorem.proven_truth
-        return proving_theorem_truth.begin_proof(
-                proving_theorem, definition_existence_proof=True)
+        return proving_theorem_truth.begin_proof(proving_theorem)
+
+    def extension_proving(self, theorem_name):
+        # the theory should be up a directory from the 
+        # proofs directory
+        import proveit
+        active_folder = '_proof_' + theorem_name
+        self.theory = Theory(
+            '..',
+            active_folder=active_folder,
+            owns_active_folder=True)
+        sys.path.append('..')
+        with proveit.defaults.temporary() as tmp_defaults:
+            # Disable automation when we are getting this theorem
+            # to be proven.
+            tmp_defaults.automation = False
+            def_prop = self.theory.get_defining_property(theorem_name)
+            proving_theorem = def_prop.required_proofs[1]
+        proving_theorem_truth = proving_theorem.proven_truth
+        return proving_theorem_truth.begin_proof(proving_theorem)
 
     def qed(self):
         import proveit
@@ -803,10 +821,12 @@ class ProveItMagicCommands:
             # stash proof notebooks that are not active theorems.
             self.theory.stash_extraneous_thm_proof_notebooks()
         elif folder == 'definitions':
-            # stash definition existence notebooks that are not active 
-            # theorems.
+            # stash definition existence and extension notebooks that are
+            # not active theorems.
             self.theory.stash_extraneous_thm_proof_notebooks(
                     definition_existence_proofs=True)            
+            self.theory.stash_extraneous_thm_proof_notebooks(
+                    definition_extension_proofs=True)            
         self.kind = None
         self.theory = None
 
@@ -951,6 +971,12 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         self.assignment_behavior_modifier = assignment_behavior_modifier
         assignment_behavior_modifier.display_assignments(ip)
         self.defined_literals = set()
+        self.defined_literal_groups = []
+        self.defining_property_groups = []
+        self.defining_property_group_names = []
+        # Maps a defining property group name to the defining group name
+        # that it is extending.
+        self.definition_extension_map = dict()
 
     @line_magic
     def display_assignments(self, line):
@@ -1122,6 +1148,21 @@ class ProveItMagic(Magics, ProveItMagicCommands):
                             beginning_existence_proof=True)
 
     @line_magic
+    def extension_proving(self, line):
+        theorem_name = line.strip()
+        begin_proof_result = ProveItMagicCommands.extension_proving(
+                self, theorem_name)
+        assert isinstance(
+            begin_proof_result, Expression), (
+                    "Expecting result of 'existence_proving' to be an "
+                    "expression")
+        # assign the theorem name to the theorem expression
+        # and display this assignment
+        self.shell.user_ns[theorem_name] = begin_proof_result
+        display_assignments([theorem_name], beginning_proof=True,
+                            beginning_extension_proof=True)
+
+    @line_magic
     def clear_presumption_info(self, line):
         if Judgment.theorem_being_proven is None:
             raise Exception("Cannot use the %clear_presumption_info"
@@ -1157,7 +1198,8 @@ class ProveItMagic(Magics, ProveItMagicCommands):
         ProveItMagicCommands.display_dependencies_latex(self, name, thm_judgment)
 
 def display_assignments(names, beginning_proof=False,
-                        beginning_existence_proof=False):
+                        beginning_existence_proof=False,
+                        beginning_extension_proof=False):
     from proveit import single_or_composite_expression, Judgment
     theory = prove_it_magic.theory
     processed_right_sides = []
@@ -1247,9 +1289,10 @@ def display_assignments(names, beginning_proof=False,
         # DefinitionExistence when multiple DefiningProperties appear in
         # a cell.
         from proveit import Operation
-        from proveit.logic import And, Forall, Exists
+        from proveit.logic import Implies, And, Forall, Exists
         from proveit._core_.proof import (BasicDefinition,
                                           DefinitionExistence,
+                                          DefinitionExtension,
                                           DefiningProperty)
         from proveit._core_.expression import used_literals
         
@@ -1262,31 +1305,46 @@ def display_assignments(names, beginning_proof=False,
  
         # Defining the used Literals on the right side that are
         # package literals that have not been defined yet.
-        literals = [lit for lit in used_literals(combined_right_sides)
-                    if lit in theory.literals 
-                    and lit not in prove_it_magic.defined_literals]
+        used_package_literals = set([
+            lit for lit in used_literals(combined_right_sides)
+            if lit in theory.literals])
+        if len(used_package_literals)==0:
+            raise Exception("Not defining any Literals belonging to this "
+                            "theory package")
         
+        literals = [lit for lit in used_package_literals
+                    if lit not in prove_it_magic.defined_literals]
         is_basic_def = False
-        if len(right_sides)==1:
+        if len(right_sides)==1 and len(literals)==1:
             from proveit.logic import Equals
             if isinstance(combined_right_sides, Equals):
                 if combined_right_sides.lhs in literals:
                     if combined_right_sides.lhs not in used_literals(
                             combined_right_sides.rhs):
                         is_basic_def = True
-            
+
+        properties_being_extended = None
+        if len(literals) == 0:
+            # Not defining any new literals.  Assume this is an extension
+            # of previously defined literals, whatever was last defined with
+            # an overlap with the used ones here.
+            for prev_lit_group, prev_defining_property_group, prev_name in zip(
+                    reversed(prove_it_magic.defined_literal_groups),
+                    reversed(prove_it_magic.defining_property_groups),
+                    reversed(prove_it_magic.defining_property_group_names)):
+                if not used_package_literals.isdisjoint(prev_lit_group):
+                    literals = used_package_literals.intersection(prev_lit_group)
+                    properties_being_extended = prev_defining_property_group
+                    prove_it_magic.definition_extension_map[names[-1]] = prev_name
+            assert properties_being_extended is not None, (
+                "Should have caught exception above")
+
         if len(literals) > 1:
-            # Check for the special case of a Literal on the left side of an
-            # equation (alone or as an operator) and not appearing on the 
-            # right side.  Only that Literal needs to be quantified over in 
-            # the definition existence.
+            # Check for the special case of an operation on the left side of
+            # an equation and not appearing on the right side.  We only need
+            # to define that Literal.
             from proveit.logic import Equals
-            if isinstance(combined_right_sides, Equals):
-                if combined_right_sides.lhs in literals:
-                    if combined_right_sides.lhs not in used_literals(
-                            combined_right_sides.rhs):
-                        literals = [combined_right_sides.lhs]
-            elif isinstance(combined_right_sides, Forall) and (
+            if isinstance(combined_right_sides, Forall) and (
                     isinstance(combined_right_sides.instance_expr, Equals) and
                     isinstance(combined_right_sides.instance_expr.lhs, Operation)
                     and (combined_right_sides.instance_expr.lhs.operands ==
@@ -1295,33 +1353,51 @@ def display_assignments(names, beginning_proof=False,
                     combined_right_sides.instance_expr.lhs._operator_ not in (
                         used_literals(combined_right_sides.instance_expr.rhs))):
                 literals = [combined_right_sides.instance_expr.lhs._operator_]
+        
         #print('num combined', len(right_sides), 'literals', literals)
-        existence_vars = [lit.as_variable() for lit in literals]
-        if len(existence_vars)==0:
+        def_vars = [lit.as_variable() for lit in literals]
+        if len(def_vars)==0:
             raise Exception("Not defining any undefined Literals of this "
                             "theory package")
+        defining_property_group = []
         if is_basic_def:
             assert len(names) == len(right_sides) == 1
             name, right_side = names[0], right_sides[0]
             prove_it_magic.definitions[name] = BasicDefinition(
                     right_side, theory, name)
+            defining_property_group.append(prove_it_magic.definitions[name])
         else:
             existence = Exists(
-                existence_vars, combined_right_sides.literals_as_variables(*literals))
+                def_vars, combined_right_sides.literals_as_variables(*literals))
             # Name the DefinitionExistence after the last-named
             # DefiningProperty as a convention.
             def_existence = DefinitionExistence(existence, theory, names[-1])
+            if properties_being_extended is None:
+                def_extension = None
+            else:
+                extension_implication = Implies(combined_right_sides,
+                                                properties_being_extended)
+                extension_criterion = Forall(
+                    def_vars, extension_implication.with_wrap_after_operator())
+                def_extension = DefinitionExtension(
+                    extension_criterion, theory, names[-1])
             for name, right_side in zip(names, right_sides):
                 prove_it_magic.definitions[name] = DefiningProperty(
                         right_side, theory, name, 
-                        def_existence=def_existence)
+                        def_existence=def_existence,
+                        def_extension=def_extension)
+                defining_property_group.append(prove_it_magic.definitions[name])
         # We now have definitions for the 'literals'.
         prove_it_magic.defined_literals.update(literals)
+        prove_it_magic.defined_literal_groups.append(literals)
+        prove_it_magic.defining_property_groups.append(combined_right_sides)
+        prove_it_magic.defining_property_group_names.append(names[-1])
     
     for name, right_side in zip(expr_names, exprs):
         display(HTML(assignment_html(
                 name, right_side, beginning_proof=beginning_proof,
                 beginning_existence_proof=beginning_existence_proof,
+                beginning_extension_proof=beginning_extension_proof,
                 representative_name=names[-1])))
 
     # While we are displaying assignments check if a theorem that 
@@ -1332,6 +1408,7 @@ def display_assignments(names, beginning_proof=False,
 
 def assignment_html(name, right_side, beginning_proof=False,
                     beginning_existence_proof=False,
+                    beginning_extension_proof=False,
                     representative_name=None):
     from proveit._core_.proof import DefiningProperty
     lhs_html = name + ':'
@@ -1382,12 +1459,34 @@ def assignment_html(name, right_side, beginning_proof=False,
                 status = 'conjectured existence with conjecture-based proof'
         except KeyError:
             pass  # e.g., a new theorem.
-        lhs_html = ('<a class="ProveItLink" href="%s">%s</a> (%s):<br>'
+        lhs_html = ('<a class="ProveItLink" href="%s">%s</a> (%s)'
                     % (proof_notebook_relurl, name, status))
+        if len(prove_it_magic.definitions[name].required_truths) > 1:
+            # This is an extended definition.
+            proof_notebook_relurl = theory.thm_proof_notebook(
+                representative_name, expr, num_duplicates,
+                definition_extension_proof=True)
+            status = 'conjectured extension without proof'  # default
+            try:
+                thm = theory.get_stored_definition_extension(theory.name + '.' + name)
+                if thm.is_complete():
+                    status = 'established definition extension'
+                elif thm.has_proof():
+                    status = 'conjectured extension with conjecture-based proof'
+            except KeyError:
+                pass  # e.g., a new theorem.
+            extended_def_name = prove_it_magic.definition_extension_map[name]
+            lhs_html += ('<br>an <a class="ProveItLink" href="%s">extension</a>'
+                         ' of %s (%s)'%
+                         (proof_notebook_relurl, extended_def_name,
+                          status))
+        lhs_html += ':<br>'
     if beginning_proof:
         html = 'With these <a href="allowed_presumptions.txt">allowed</a>/<a href="disallowed_presumptions.txt">disallowed</a> theorem/theory presumptions (e.g., to avoid circular dependencies), we begin our proof '
         if beginning_existence_proof:
             html += 'of existence for<br>'
+        elif beginning_extension_proof:
+            html += 'of extension for<br>'
         else:
             html += 'of<br>'
     else:
@@ -1398,6 +1497,8 @@ def assignment_html(name, right_side, beginning_proof=False,
         full_name = theory.name + '.' + name
         if beginning_existence_proof:
             stored_thm = theory.get_stored_definition_existence(full_name)
+        elif beginning_extension_proof:
+            stored_thm = theory.get_stored_definition_extension(full_name)            
         else:
             stored_thm = theory.get_stored_theorem(full_name)
         dependencies_notebook_path = os.path.join(

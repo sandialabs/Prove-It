@@ -26,8 +26,8 @@ from .judgment import Judgment, as_expression, as_expressions
 from .defaults import (defaults, USE_DEFAULTS, InvalidAssumptions,
                        SimplificationDirectives)
 from .theory import Theory, TheoryException
-from .proof import (Proof, Assumption, Axiom, Theorem,
-                    BasicDefinition, DefiningProperty, DefinitionExistence, 
+from .proof import (Proof, Assumption, Axiom, Theorem, BasicDefinition, 
+                    DefiningProperty, DefinitionExistence, DefinitionExtension,
                     ModusPonens, Deduction, Instantiation, Generalization)
 from .proof import (UnusableProof, ProofFailure, ModusPonensFailure,
                     InstantiationFailure, GeneralizationFailure,

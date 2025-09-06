@@ -285,7 +285,7 @@ class Judgment:
     def __hash__(self):
         return self._meaning_id
 
-    def begin_proof(self, theorem, definition_existence_proof=False):
+    def begin_proof(self, theorem):
         '''
         Begin a proof for a theorem.  Only use other theorems that
         are explicitly allowed as presumptions for this theorem.
