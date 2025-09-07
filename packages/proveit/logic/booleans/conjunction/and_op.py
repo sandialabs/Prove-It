@@ -613,6 +613,28 @@ class And(Operation):
             {i: _i_sub, j: _j_sub, k: _k_sub, P: _P_sub})
         return impl.derive_consequent()
 
+    @prover
+    def conclude_as_folded(self, **defaults_config):
+        '''
+        Conclude (A and B) from Not(A => Not(B))
+        Conclude (A_1 or A_2 and ... or A_n) from forall_{k in {1 .. n} A_k}.
+        '''
+        from . import fold_and
+        if self.operands.is_double():
+            _A, _B = self.operands
+            return fold_and.instantiate({A:_A, B:_B})
+
+    @prover
+    def unfold(self, **defaults_config):
+        '''
+        From (A or B) derive Not(A => Not(B)).
+        From (A_1 or A_2 and ... or A_n) derive forall_{k in {1 .. n} A_k}.
+        '''
+        from . import unfold_and
+        if self.operands.is_double():
+            _A, _B = self.operands
+            return unfold_and.instantiate({A:_A, B:_B})
+
     @equality_prover('shallow_simplified', 'shallow_simplify')
     def shallow_simplification(self, *, must_evaluate=False,
                                **defaults_config):

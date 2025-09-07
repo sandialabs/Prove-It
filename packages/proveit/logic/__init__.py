@@ -43,6 +43,7 @@ if proveit.defaults.running_theory_notebook is None:
     from .booleans.negation import not_f, not_t
     from .booleans.negation import not_false
     from .booleans.implication import true_implies_true, false_implies_true, false_implies_false
+    from .booleans.implication import implies_t_t, implies_f_t, implies_t_f, implies_f_f
     from .booleans import true_truth, boolean_def, false_not_true
     from .booleans import true_eq_true, false_eq_false, true_not_false, true_is_bool, false_is_bool
 

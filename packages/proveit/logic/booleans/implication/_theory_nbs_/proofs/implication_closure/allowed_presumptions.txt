@@ -6,3 +6,6 @@ proveit.logic.booleans.implication.true_implies_true
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.quantification.universality.bundle
 proveit.numbers.numerals.decimals.posnat1
+proveit.logic.booleans.implication.falsified_antecedent_implication
+proveit.logic.booleans.negation.unfold_negation
+proveit.logic.booleans.negation.fold_negation

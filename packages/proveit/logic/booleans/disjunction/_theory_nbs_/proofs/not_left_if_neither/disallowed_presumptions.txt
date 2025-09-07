@@ -1,1 +1,3 @@
 proveit.logic.booleans.disjunction.not_right_if_neither
+proveit.logic.booleans.unfold_is_bool
+proveit.logic.booleans.disjunction.or_if_any

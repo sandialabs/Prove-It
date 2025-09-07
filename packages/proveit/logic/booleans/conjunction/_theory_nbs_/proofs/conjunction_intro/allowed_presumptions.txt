@@ -5,3 +5,6 @@ proveit.logic.equality.equals_transitivity_via_implications
 proveit.logic.booleans.implication.split_deduction
 proveit.logic.booleans.implication.false_antecedent_implication
 proveit.logic.booleans.implication.falsified_antecedent_implication
+proveit.logic.booleans.conjunction.fold_and
+proveit.logic.booleans.negation.unfold_negation
+proveit.logic.booleans.negation.fold_negation

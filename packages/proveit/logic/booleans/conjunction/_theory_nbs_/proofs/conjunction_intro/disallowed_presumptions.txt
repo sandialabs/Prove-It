@@ -3,7 +3,6 @@ proveit.logic.booleans.negation.negation_intro
 proveit.logic.booleans.conjunction.conjunction_eq_quantification
 proveit.logic.booleans.negation.falsified_negation_intro
 proveit.logic.equality.equals_transitivity
-proveit.logic.booleans.negation.fold_negation
 proveit.logic.equality.sub_right_side_into
 proveit.logic.equality.substitute_truth
 proveit.logic.equality.substitute_in_true
@@ -12,3 +11,10 @@ proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.conjunction.left_from_and
 proveit.logic.booleans.conjunction.right_from_and
 proveit.logic.booleans.implication.untrue_antecedent_implication
+proveit.logic.booleans.implication.negated_true_antecedent_implication
+proveit.logic.booleans.implication.invalid_implication
+proveit.logic.booleans.implication.affirmation_via_contradiction
+proveit.logic.booleans.negation.negation_contradiction
+proveit.logic.booleans.implication.not_iff_via_not_left_impl
+proveit.logic.booleans.implication.not_iff_via_not_right_impl
+proveit.logic.booleans.implication.negated_reflex

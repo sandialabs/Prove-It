@@ -3,3 +3,4 @@ proveit.logic.equality.equals_symmetry
 proveit.logic.booleans.negation.unfold_negation
 proveit.logic.booleans.negation.fold_negation
 proveit.logic.booleans.negation.double_negation_elim
+proveit.logic.booleans.conjunction.unfold_and

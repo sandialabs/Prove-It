@@ -1,3 +1,0 @@
-proveit.logic.booleans.disjunction.true_or_false
-proveit.logic.equality.substitute_truth
-proveit.logic.equality.substitute_falsehood

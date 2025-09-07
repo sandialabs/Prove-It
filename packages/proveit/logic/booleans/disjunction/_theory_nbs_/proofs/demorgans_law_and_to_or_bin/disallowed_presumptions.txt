@@ -1,0 +1,2 @@
+proveit.logic.booleans.unfold_is_bool
+proveit.logic.booleans.disjunction.demorgans_law_and_to_or

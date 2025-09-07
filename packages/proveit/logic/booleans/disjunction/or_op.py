@@ -39,9 +39,9 @@ class Or(Operation):
         if operands.num_entries() == 0:
             Or.trivial_disjunctions.add(self)
             try:
-                from proveit.logic.booleans.disjunction import empty_disjunction
+                from proveit.logic.booleans.disjunction import empty_disjunction_eval
             except BaseException:
-                pass  # empty_disjunction not initially defined when doing a clean rebuild
+                pass  # empty_disjunction_eval not initially defined when doing a clean rebuild
         if operands.is_single():
             operand = operands[0]
             try:
@@ -57,8 +57,7 @@ class Or(Operation):
         Specifically, if any operand is provable, than the disjunction
         should be provable.
         '''
-        from . import (or_if_left, or_if_right, or_if_both,
-                       or_if_only_left, or_if_only_right)
+        from . import or_if_left, or_if_right
         from proveit.logic import And
         from proveit.numbers import LessEq
         operands = self.operands
@@ -69,14 +68,6 @@ class Or(Operation):
             if provableA and or_if_left.is_usable():
                 return True
             if provableB and or_if_right.is_usable():
-                return True
-            if provableA and provableB and or_if_both.is_usable():
-                return True
-            disprovableA = _A.readily_disprovable()
-            disprovableB = _B.readily_disprovable()
-            if provableA and disprovableB and or_if_only_left.is_usable():
-                return True
-            if disprovableA and provableB and or_if_only_right.is_usable():
                 return True
             return False
         existential_quant = self._as_quantification()
@@ -250,11 +241,11 @@ class Or(Operation):
     @prover
     def conclude_negation(self, **defaults_config):
         from . import false_or_false_negated, neither_intro, not_or_if_not_any
-        from . import empty_disjunction
+        from . import empty_disjunction_eval
         if self == false_or_false_negated.operand:
             return false_or_false_negated  # the negation of (FALSE or FALSE)
         elif self.operands.num_entries() == 0:
-            return empty_disjunction
+            return empty_disjunction_eval
         elif self.operands.is_double():
             return neither_intro.instantiate(
                 {A: self.operands[0], B: self.operands[1]})
@@ -266,34 +257,13 @@ class Or(Operation):
             # as a result, it simplifies A to be False during auto_simplification
 
     @prover
-    def conclude_via_both(self, **defaults_config):
-        from . import or_if_both
-        assert self.operands.is_double()
-        return or_if_both.instantiate(
-            {A: self.operands[0], B: self.operands[1]})
-
-    @prover
-    def conclude_via_only_left(self, **defaults_config):
-        from . import or_if_only_left
-        assert self.operands.is_double()
-        return or_if_only_left.instantiate(
-            {A: self.operands[0], B: self.operands[1]})
-
-    @prover
     def conclude_via_left(self, **defaults_config):
         '''
-        From A being (or assumed) True, conclude that (A V B) is True.
+        Conclude that (A V B) from A.
         '''
         from . import or_if_left
         assert self.operands.is_double()
         return or_if_left.instantiate(
-            {A: self.operands[0], B: self.operands[1]})
-
-    @prover
-    def conclude_via_only_right(self, **defaults_config):
-        from . import or_if_only_right
-        assert self.operands.is_double()
-        return or_if_only_right.instantiate(
             {A: self.operands[0], B: self.operands[1]})
 
     @prover
@@ -347,6 +317,32 @@ class Or(Operation):
         impl =  disjunction_from_quantification.instantiate(
             {i: _i_sub, j: _j_sub, k: _k_sub, P: _P_sub})
         return impl.derive_consequent()
+
+    @prover
+    def conclude_as_folded(self, **defaults_config):
+        '''
+        Conclude (A or B) from (Not(A) => B).
+        Conclude (A_1 or A_2 or ... or A_n) from exists_{k in {1 .. n} A_k}.
+        '''
+        from . import fold_or
+        if self.operands.is_double():
+            _A, _B = self.operands
+            return fold_or.instantiate({A:_A, B:_B})
+        else:
+            raise NotImplementedError()
+
+    @prover
+    def unfold(self, **defaults_config):
+        '''
+        From (A or B) derive (Not(A) => B).
+        From (A_1 or A_2 or ... or A_n) derive exists_{k in {1 .. n} A_k}.
+        '''
+        from . import unfold_or
+        if self.operands.is_double():
+            _A, _B = self.operands
+            return unfold_or.instantiate({A:_A, B:_B})
+        else:
+            raise NotImplementedError()
 
     def _build_canonical_form(self):
         '''
@@ -432,7 +428,7 @@ class Or(Operation):
                         {C: self.operands[0].operand,
                          D: self.operands[1].operand,
                          A: conclusion.operands[0].operand,
-                         B: conclusion.operands[1].operand})
+                         B: conclusion.operands[1].operand}).derive_consequent()
                 elif destructive_multi_dilemma.is_usable():
                     # raise NotImplementedError("Generalized destructive
                     # multi-dilemma not implemented yet.")
@@ -455,7 +451,7 @@ class Or(Operation):
                     {A: self.operands[0],
                      B: self.operands[1],
                      C: conclusion.operands[0],
-                     D: conclusion.operands[1]})
+                     D: conclusion.operands[1]}).derive_consequent()
             #raise NotImplementedError("Generalized constructive multi-dilemma not implemented yet.")
             _A = self.operands
             _B = conclusion.operands
@@ -655,7 +651,7 @@ class Or(Operation):
         from . import binary_or_contradiction, or_contradiction
         if self.operands.is_double():
             return binary_or_contradiction.instantiate(
-                {A: self.operands[0], B: self.operands[1]})
+                {A: self.operands[0], B: self.operands[1]}).derive_consequent()
         else:
             _A = self.operands
             _m = self.operands.num_elements()
@@ -721,28 +717,11 @@ class Or(Operation):
         '''
         from . import or_if_any, or_if_left, or_if_right
         index = self.operands.index(true_operand)
-        judgment = None
         if self.operands.is_double():
             if index == 0:
-                if self.operands[1].readily_provable():
-                    # May be a shorter proof
-                    judgment = self.conclude_via_both()
-                elif self.operands[1].readily_disprovable():
-                    # May be a shorter proof
-                    judgment = self.conclude_via_only_left()
-                if judgment is not None and not or_if_left.is_usable():
-                    return judgment
                 return or_if_left.instantiate(
                     {A: self.operands[0], B: self.operands[1]})
             elif index == 1:
-                if self.operands[0].readily_provable():
-                    # May be a shorter proof
-                    judgment = self.conclude_via_both()
-                elif self.operands[0].readily_disprovable():
-                    # May be a shorter proof
-                    judgment = self.conclude_via_only_right()    
-                if judgment is not None and not or_if_right.is_usable():
-                    return judgment
                 return or_if_right.instantiate(
                     {A: self.operands[0], B: self.operands[1]})
         _A, _B, _C = (self.operands[:index], self.operands[index],

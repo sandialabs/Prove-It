@@ -1,2 +1,5 @@
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.disjunction.demorgans_law_and_to_or_bin_explicit
+proveit.logic.booleans.negation.unfold_negation
+proveit.logic.booleans.conjunction.conjunction_intro
+proveit.logic.booleans.negation.fold_negation

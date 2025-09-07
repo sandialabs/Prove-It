@@ -1,0 +1,4 @@
+proveit.logic.booleans.eq_true_elim
+proveit.logic.booleans.negation
+proveit.logic.booleans.conjunction.binary_conjunction_def
+proveit.logic.equality.equals_symmetry

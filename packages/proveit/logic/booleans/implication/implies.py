@@ -103,6 +103,7 @@ class Implies(TransitiveRelation):
         from . import (
             true_implies_true, false_implies_true, false_implies_false,
             false_antecedent_implication, falsified_antecedent_implication,
+            negated_true_antecedent_implication,
             untrue_antecedent_implication)
         from proveit.logic import TRUE, FALSE, NotEquals
         if self.antecedent == self.consequent:
@@ -129,14 +130,22 @@ class Implies(TransitiveRelation):
             # prove the implication via untrue_antecedent_implication.
             return untrue_antecedent_implication.instantiate(
                 {A: self.antecedent, B: self.consequent})
+        elif (isinstance(self.antecedent, Not) and 
+              self.antecedent.operand.readily_provable()):
+            # Either the consequent or the antecedent is disprovable
+            # so we should try to prove the implication via
+            # falsified_antecedent_implication.
+            return negated_true_antecedent_implication.instantiate(
+                {A: self.antecedent.operand, B: self.consequent})
         elif (self.antecedent.readily_disprovable() or
               self.consequent.readily_disprovable()):
             # Either the consequent or the antecedent is disprovable
             # so we should try to prove the implication via
             # falsified_antecedent_implication.
+            # (Guaranteed if the antecedent is disprovable; if the
+            # consequent is disprovable the antecedent better be as well.)
             return falsified_antecedent_implication.instantiate(
                 {A: self.antecedent, B: self.consequent})
-
         with defaults.temporary() as tmp_defaults:
             tmp_defaults.assumptions = (
                     defaults.assumptions + (self.antecedent,))

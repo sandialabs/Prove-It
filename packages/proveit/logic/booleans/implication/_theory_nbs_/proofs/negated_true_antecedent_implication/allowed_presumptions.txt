@@ -1,0 +1,5 @@
+proveit.logic.booleans.implication.falsified_antecedent_implication
+proveit.logic.booleans.negation.double_negation_intro
+proveit.logic.booleans.negation.double_negation_elim
+proveit.logic.booleans.negation.unfold_negation
+proveit.logic.booleans.negation.fold_negation

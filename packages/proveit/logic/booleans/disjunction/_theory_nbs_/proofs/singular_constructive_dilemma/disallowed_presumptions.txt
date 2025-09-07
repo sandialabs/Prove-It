@@ -1,0 +1,5 @@
+proveit.logic.booleans.in_bool_if_true
+proveit.logic.booleans.disjunction.or_contradiction
+proveit.logic.booleans.disjunction.disjunction_eq_quantification
+proveit.logic.booleans.disjunction.not_or_if_not_any
+proveit.logic.booleans.negation.negation_elim

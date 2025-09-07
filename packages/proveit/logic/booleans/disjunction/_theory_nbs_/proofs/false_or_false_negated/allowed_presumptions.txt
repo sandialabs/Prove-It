@@ -1,1 +1,4 @@
 proveit.logic.booleans.negation.negation_intro
+proveit.logic.booleans.disjunction.or_f_f
+proveit.logic.booleans.negation.unfold_negation
+proveit.logic.booleans.negation.fold_negation

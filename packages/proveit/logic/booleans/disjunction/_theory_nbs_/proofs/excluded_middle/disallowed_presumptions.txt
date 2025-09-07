@@ -1,1 +1,2 @@
 proveit.logic.booleans.disjunction.multi_disjunction_def
+proveit.logic.booleans.in_bool_if_true

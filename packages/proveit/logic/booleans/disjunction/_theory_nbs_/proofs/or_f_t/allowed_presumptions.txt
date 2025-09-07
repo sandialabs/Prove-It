@@ -1,0 +1,15 @@
+proveit.logic.booleans.disjunction.or_if_right
+proveit.logic.booleans.disjunction.binary_disjunction_def
+proveit.logic.equality.equals_symmetry
+proveit.logic.equality.substitution
+proveit.logic.equality.equals_transitivity
+proveit.logic.equality.equals_transitivity_via_implications
+proveit.logic.booleans.conjunction.conjunction_intro
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and
+proveit.logic.booleans.eq_true_elim
+proveit.logic.equality.substitute_truth
+proveit.logic.equality.sub_right_side_into
+proveit.logic.equality.substitute_in_true
+proveit.logic.booleans.implication.implies_t_t
+proveit.logic.booleans.negation.not_f

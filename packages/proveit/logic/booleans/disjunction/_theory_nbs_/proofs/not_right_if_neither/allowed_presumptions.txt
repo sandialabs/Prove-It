@@ -1,3 +1,9 @@
 proveit.logic.booleans.disjunction.or_if_right
 proveit.logic.booleans.in_bool_if_true
 proveit.logic.booleans.implication.modus_tollens_denial
+proveit.logic.booleans.negation.unfold_negation
+proveit.logic.booleans.negation.fold_negation
+proveit.logic.booleans.implication.modus_tollens_affirmation
+proveit.logic.booleans.conjunction.conjunction_intro
+proveit.logic.booleans.conjunction.left_from_and
+proveit.logic.booleans.conjunction.right_from_and
