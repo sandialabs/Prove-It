@@ -537,24 +537,28 @@ class ProveItMagicCommands:
             HTML('<h3>All axioms contained within this theory</h3>'))
         self.display_all_contained_axioms(theory)
 
+        display(
+            HTML('<h3>All defining properties contained within this theory</h3>'))
+        self.display_all_contained_defining_properties(theory)
+
         #display(HTML('<h3>Theorems (or conjectures) contained (directly or indirectly) within this theory</h3>'))
         #display(HTML('Also see list of all contained <a href="contain_theorems.ipynb">theorems (or conjectures)</a>.'))
 
     def display_all_contained_axioms(self, theory):
         count = 0
-        for axiom in theory.generate_local_axioms():
+        for axiom in theory.generate_all_contained_axioms():
             self.display_special_stmt(axiom)
             count += 1
         if count == 0:
-            display(HTML('This theory contains no axioms directly.'))
-        for sub_theory in theory.generate_sub_theories():
-            display(HTML('<h4>%s</h4>' % sub_theory.name))
-            count = 0
-            for axiom in sub_theory.generate_all_contained_axioms():
-                self.display_special_stmt(axiom)
-                count += 1
-            if count == 0:
-                display(HTML('This sub-theory contains no axioms.'))
+            display(HTML('This theory contains no axioms.'))
+
+    def display_all_contained_defining_properties(self, theory):
+        count = 0
+        for defining_property in theory.generate_all_contained_defining_properties():
+            self.display_special_stmt(defining_property)
+            count += 1
+        if count == 0:
+            display(HTML('This theory contains no defining properties.'))
 
     def display_all_contained_theorems(self, theory):
         count = 0
@@ -832,14 +836,14 @@ class ProveItMagicCommands:
 
     def display_special_stmt(self, stmt, format_type='html'):
         '''
-        Given an Axiom or Theorem, display HTML with a link
-        to the definition.
+        Given an Axiom, Theorem, BasicDefinition, or DefiningProperty, 
+        display HTML with a link to the definition.
         '''
         expr = stmt.proven_truth.expr
         if format_type == 'html':
             display(
                 HTML(
-                    '<dt><a class="ProveItLink" href="%s">%s</a></dt><dd>%s</dd>' %
+                    '<dt><a class="ProveItLink" href="%s">%s</a></dt><br><dd>%s</dd>' %
                     (stmt.get_link(), str(stmt), expr._repr_html_())))
         elif format_type == 'latex':
             print(r'\item $' + expr.latex() + '$')

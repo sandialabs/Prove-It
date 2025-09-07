@@ -1265,20 +1265,21 @@ class Theorem(Proof):
 
     def all_requirements(self, *, sort_key=None):
         '''
-        Returns the axioms that are required (directly or indirectly) 
-        by the theorem.  Also, return the set of "dead-end" theorems 
-        that are required (directly or indirectly).  A "dead-end" 
-        theorem is either unproven or has an expression that matches 
-        one in the optionally provided `dead_end_theorem_exprs`.
-        Conservative definitions that are not logically necessary
-        for the proof are extracted from these sets and returned on
-        their own.
+        Returns the axioms and defining properties that are required 
+        (directly or indirectly) by the theorem as well as the set
+        of "dead-end" theorems that are required (directly or 
+        indirectly).  A "dead-end" theorem is either unproven or has 
+        an expression that matches one in the optionally provided 
+        `dead_end_theorem_exprs`.  For the defining properties,
+        only include the ones needed to define literals that appear
+        in the 'self' theorem, required axioms, required dead-end
+        theorems, or other required defining properties; ones that
+        are used to define a Literal that does not appear anywhere
+        are not logically required for the proof.
 
-        Returns the list of axioms, "dead-end" theorems, and
-        conservative definitions as a tuple.  These will be sorted
-        according to sort_key with the exception that a conservatively
-        defined literal will not appear before its definition in the
-        list of conservative definitions.
+        Returns the list of axioms, defining properties, "dead-end" 
+        theorems, and conservative definitions as a tuple.  These will
+        be sorted according to sort_key.
         '''
         return self._stored_theorem().all_requirements(sort_key=sort_key)
 
@@ -1510,7 +1511,7 @@ class BasicDefinition(Proof):
     def _storedBasicDefinition(self):
         from ._theory_storage import StoredBasicDefinition
         return StoredBasicDefinition(self.theory, self.name)
-
+    
     def get_link(self):
         '''
         Return the HTML link to the property definition.
@@ -1522,6 +1523,15 @@ class BasicDefinition(Proof):
 
     def used_defining_properties(self):
         return {self}
+
+    def direct_dependents(self):
+        '''
+        Returns the theorems that depend directly upon this axioms.
+        '''
+        return self._storedBasicDefinition().read_dependent_theorems()
+
+    def all_dependents(self):
+        return self._storedBasicDefinition().all_dependents()
 
 
 class DefinitionExistence(Theorem):
@@ -1562,6 +1572,15 @@ class DefinitionExistence(Theorem):
         return StoredDefinitionExistence(self.theory, self.name,
                                          hash_id=hash_id)
 
+    def direct_dependents(self):
+        '''
+        Returns the theorems that depend directly upon this axioms.
+        '''
+        return self._stored_theorem().read_dependent_theorems()
+
+    def all_dependents(self):
+        return self._stored_theorem().all_dependents()
+
 class DefinitionExtension(Theorem):
     '''
     We can extend a definition as long as the new properties
@@ -1600,13 +1619,23 @@ class DefinitionExtension(Theorem):
         return StoredDefinitionExtension(self.theory, self.name,
                                          hash_id=hash_id)
 
+    def direct_dependents(self):
+        '''
+        Returns the theorems that depend directly upon this axioms.
+        '''
+        return self._stored_theorem().read_dependent_theorems()
+
+    def all_dependents(self):
+        return self._stored_theorem().all_dependents()
+
 
 class DefiningProperty(Proof):
     '''
     The proof for a defining property of conservative definition(s)
     is a direct consequence of the DefinitionExistence.
     '''
-    def __init__(self, expr, theory, name, *, def_existence, def_extension=None,
+    def __init__(self, expr, theory, name, *, 
+                 def_existence=None, def_extension=None,
                  _proven_truth=None, _requirements=None,
                  _marked_req_indices=None):
         if not isinstance(theory, Theory):
@@ -1614,9 +1643,6 @@ class DefiningProperty(Proof):
                              "Theory object")
         if not isinstance(name, str):
             raise TypeError("A DefiningProperty 'name' must be a string")
-        if not isinstance(def_existence, DefinitionExistence):
-            raise TypeError("A DefiningProperty 'def_existence' must be "
-                            "a DefinitionExistence")
 
         self.theory = theory
         self.name = name
@@ -1626,6 +1652,9 @@ class DefiningProperty(Proof):
                            _marked_req_indices)
             return
         else:
+            if not isinstance(def_existence, DefinitionExistence):
+                raise TypeError("A DefiningProperty 'def_existence' must be "
+                                "a DefinitionExistence")
             if def_extension is not None:
                 required_truths = [def_existence.proven_truth,
                                    def_extension.proven_truth]
@@ -1661,6 +1690,15 @@ class DefiningProperty(Proof):
 
     def used_defining_properties(self):
         return {self}
+
+    def direct_dependents(self):
+        '''
+        Returns the theorems that depend directly upon this axioms.
+        '''
+        return self._storedDefiningProperty().read_dependent_theorems()
+
+    def all_dependents(self):
+        return self._storedDefiningProperty().all_dependents()
     
 def _checkImplication(implication_expr, antecedent_expr, consequent_expr):
     '''
@@ -2909,18 +2947,8 @@ class _ShowProof:
         return self.step_type_str
 
     def get_link(self):
-        from ._theory_storage import (axiom_specification_link, 
-                                      theorem_proof_link)
-        if self.step_type_str == 'axiom':
-            return axiom_specification_link(self.theory, self.name)
-        elif self.step_type_str == 'theorem':
-            return theorem_proof_link(self.theory, self.name)
-        elif self.step_type_str == 'definition_existence':
-            return theorem_proof_link(self.theory, self.name)
-        elif self.step_type_str == 'definition_extension':
-            return theorem_proof_link(self.theory, self.name)
-        else:
-            return self.theory_folder_storage.proof_notebook(self)
+        # Default link, overridden in derived classes.
+        return self.theory_folder_storage.proof_notebook(self)
 
     def _single_mapping(self, *args):
         return Instantiation._single_mapping(self, *args)

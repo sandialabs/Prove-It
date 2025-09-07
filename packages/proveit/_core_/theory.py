@@ -404,6 +404,26 @@ class Theory:
             for axiom in theory.generate_all_contained_axioms():
                 yield axiom
 
+    def generate_local_defining_properties(self):
+        '''
+        Yield each of the defining properties contained at the local level
+        of this theory.
+        '''
+        for name in self.get_defining_property_names():
+            yield self.get_defining_property(name)
+
+    def generate_all_contained_defining_properties(self):
+        '''
+        Yield each of the defining properties contained both at the local
+        level of this theory and recursively through contained
+        theorys.
+        '''
+        for axiom in self.generate_local_defining_properties():
+            yield axiom
+        for theory in self.generate_sub_theories():
+            for axiom in theory.generate_all_contained_defining_properties():
+                yield axiom
+
     @staticmethod
     def find_axiom(full_name):
         '''

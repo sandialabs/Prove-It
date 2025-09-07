@@ -433,7 +433,7 @@ class TheoryStorage:
             special_obj_hash_ids[name] = hash_id
 
             self._kindname_to_exprhash[(kind, name)] = expr_id
-            self._kindname_to_objhash[(kind, name)]  = hash_id
+            #self._kindname_to_objhash[(kind, name)]  = hash_id
             # Update the dict, setting 'name' as the value for
             # expr_id key. If the name (but not the content) had
             # changed for an axiom, theorem, or common expr, the
@@ -631,6 +631,10 @@ class TheoryStorage:
                                 # requirement of a DefiningProperty (if it
                                 # is an extension).
                                 obj_hash_id = subids[2].split('.')[-1]
+                            else:
+                                # Must be a BasicDefinition with no
+                                # associated Definition[Existence/Extension].
+                                continue
                     else:
                         special_expr_hash_ids[name] = expr_hash_id
                         self._kindname_to_exprhash[(kind, name)] = expr_hash_id
@@ -1954,9 +1958,8 @@ class TheoryFolderStorage:
                     stored_thm = theory.get_stored_definition_extension(full_name)
                     dependencies_filename = os.path.join(
                         stored_thm.path, 'dependencies.ipynb')
-            else:
-                dependencies_filename = os.path.join(full_hash_dir,
-                                                     'dependencies.ipynb')
+            dependencies_filename = os.path.join(full_hash_dir,
+                                                 'dependencies.ipynb')
             # Even if the dependencies file exists, write over it since
             # the expression notebook was rewritten.  This will
             # guarantee the file is overwritten if it needs to be (the
@@ -3182,12 +3185,15 @@ class StoredTheorem(StoredSpecialStmt):
                             for used_axiom in proof.used_axioms()]
         used_theorem_names = [str(used_theorem) for used_theorem
                               in proof.used_theorems()]
+        used_defining_property_names = [
+            str(used_defining_property) for used_defining_property
+            in proof.used_defining_properties()]
 
         # Remove used_by links that are obsolete because the proof has
-        # changed.  Note that defining properties don't have used_by
-        # links (the associated DefinitionExistence theorems do).
+        # changed.
         prev_used_axiom_names, prev_used_theorem_names = (
             self.read_used_axioms(), self.read_used_theorems())
+        prev_used_defining_property_names = self.read_used_defining_properties()
         for prev_used_axiom in prev_used_axiom_names:
             if prev_used_axiom not in used_axiom_names:
                 try:
@@ -3202,16 +3208,26 @@ class StoredTheorem(StoredSpecialStmt):
                         prev_used_theorem)._removeUsedByEntry(str(self))
                 except (KeyError, TheoryException):
                     pass  # don't worry if it has alread been removed
-
+        for prev_used_defining_property in prev_used_defining_property_names:
+            if prev_used_defining_property not in used_defining_property_names:
+                try:
+                    Theory.get_stored_defining_property(
+                        prev_used_defining_property)._removeUsedByEntry(str(self))
+                except (KeyError, TheoryException):
+                    pass  # don't worry if it has alread been removed
         stored_used_axioms = [Theory.get_stored_axiom(used_axiom_name) for
                               used_axiom_name in used_axiom_names]
         stored_used_theorems = [Theory.get_stored_theorem(used_theorem_name) 
                                 for used_theorem_name in used_theorem_names]
-
+        stored_used_defining_properties = [
+            Theory.get_stored_defining_property(used_defining_property_name)
+            for used_defining_property_name in used_defining_property_names]
+        
         # record axioms/theorems that this theorem directly uses
         for stored_used_stmts, used_stmts_filename in (
                 (stored_used_axioms, 'used_axioms.txt'),
-                (stored_used_theorems, 'used_theorems.txt')):
+                (stored_used_theorems, 'used_theorems.txt'),
+                (stored_used_defining_properties, 'used_defining_properties.txt')):
             with open(os.path.join(self.path, used_stmts_filename),
                       'w') as used_stmts_file:
                 for stored_used_stmt in sorted(stored_used_stmts,
@@ -3219,20 +3235,13 @@ class StoredTheorem(StoredSpecialStmt):
                     self.theory._storage._includeReference(
                         stored_used_stmt.theory)
                     used_stmts_file.write(str(stored_used_stmt) + '\n')
-        # record defining properties that this theorem directly uses
-        used_stmts_filename = 'used_defining_properties.txt'
-        with open(os.path.join(self.path, used_stmts_filename),
-                  'w') as used_stmts_file:
-            for defining_property in proof.used_defining_properties():
-                self.theory._storage._includeReference(
-                    defining_property.theory)
-                used_stmts_file.write(str(defining_property) + '\n')
 
         # for each used axiom/theorem, record that it is used by the
         # newly proven theorem
         for stored_used_stmts, prev_used_stmts in (
                 (stored_used_axioms, prev_used_axiom_names),
-                (stored_used_theorems, prev_used_theorem_names)):
+                (stored_used_theorems, prev_used_theorem_names),
+                (stored_used_defining_properties, prev_used_defining_property_names)):
             for stored_used_stmt in stored_used_stmts:
                 if str(stored_used_stmt) not in prev_used_stmts:
                     # Make sure there is a "used_by" sub-folder.
@@ -3390,7 +3399,7 @@ class StoredTheorem(StoredSpecialStmt):
                          excluded_names=None, sort_key=None):
         '''
         Returns the axioms and defining properties that are required 
-        (directly or indirectly) by the theorem.  Also, return the set
+        (directly or indirectly) by the theorem as well as the set
         of "dead-end" theorems that are required (directly or 
         indirectly).  A "dead-end" theorem is either unproven or has 
         an expression that matches one in the optionally provided 
@@ -3406,7 +3415,8 @@ class StoredTheorem(StoredSpecialStmt):
         be sorted according to sort_key.
         '''
         from proveit import used_literals
-        from proveit._core_.proof import DefinitionExistence
+        from proveit._core_.proof import (BasicDefinition, DefiningProperty,
+                                          DefinitionExistence)
         
         used_axioms, used_def_props, used_deadend_theorems = (
                 StoredTheorem.used_by_theorems(
@@ -3445,6 +3455,11 @@ class StoredTheorem(StoredSpecialStmt):
         # defining propertiers.
         lit_to_def_props = dict()
         for def_prop in used_def_props:
+            if not isinstance(def_prop, DefiningProperty):
+                assert isinstance(def_prop, BasicDefinition)
+                literal = def_prop.proven_truth.expr.lhs
+                lit_to_def_props.setdefault(literal, set()).add(def_prop)
+                continue
             def_existence = def_prop.required_proofs[0]
             assert isinstance(def_existence, DefinitionExistence)
             def_existence_expr = def_existence.proven_truth.expr
@@ -3497,6 +3512,7 @@ class StoredTheorem(StoredSpecialStmt):
         objects as a tuple.
         '''
         from .theory import Theory
+        from .proof import DefinitionExtension
         if excluded_names is None: excluded_names = frozenset()
         if len(theorems) == 1:
             # When there are axioms/theorems to be eliminated
@@ -3527,13 +3543,18 @@ class StoredTheorem(StoredSpecialStmt):
         used_deadend_theorems = set()
         processed = set()
         to_process = set([str(theorem) for theorem in theorems])
+        to_process = {Theory.find_theorem(theorem_name) for theorem_name
+                      in to_process if theorem_name not in excluded_names}
         while len(to_process) > 0:
-            next_theorem_name = to_process.pop()
-            if next_theorem_name in excluded_names:
-                continue # excluded
-            processed.add(next_theorem_name)
-            next_theorem = Theory.find_theorem(next_theorem_name)
-            stored_theorem = Theory.get_stored_theorem(next_theorem_name)
+            next_theorem = to_process.pop()
+            stored_theorem = next_theorem._stored_theorem()
+            if isinstance(stored_theorem, StoredDefinitionExistence):
+                # See if there is also a DefinitionExtension
+                def_prop = Theory.find_defining_property(str(next_theorem))
+                if len(def_prop.required_truths) > 1:
+                    def_extension = def_prop.required_truths[1]
+                    assert isinstance(def_extension, DefinitionExtension)
+                    to_process.add(def_extension)
             if (next_theorem.proven_truth.expr in dead_end_theorem_exprs or
                     not stored_theorem.has_proof()):
                 # This is a dead-end or unproven theorem.  Mark it
@@ -3577,7 +3598,7 @@ class StoredTheorem(StoredSpecialStmt):
             for used_theorem_name in used_theorem_names:
                 if used_theorem_name not in processed:
                     if used_theorem_name not in excluded_names:
-                        to_process.add(used_theorem_name)
+                        to_process.add(Theory.find_theorem(used_theorem_name))
         return (used_axioms, used_defining_properties,
                 used_deadend_theorems)
     
