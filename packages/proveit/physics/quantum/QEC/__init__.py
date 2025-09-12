@@ -1,11 +1,13 @@
 from .graph_of import (BoundaryVertices, GraphOf, InteriorVertices,
-        MergedBoundsGraphOfSurfaceCode, MergedBoundsGraphOfZError)
+        MergedBoundsGraphOfSiteOp, MergedBoundsGraphOfSurfaceCode,
+        MergedBoundsGraphOfZError)
 from .graph_of_membership import InteriorVerticesMembership
 from .surface_code import (
         Errors, KitaevPlanarSC, LogicalHadamard,
         ManhattanDistance, RoughBoundaryA, RoughBoundaryB,
         RoughBoundaries, SiteSyndrome, SmoothBoundaries,
-        SmoothBoundaryA, SmoothBoundaryB, SurfaceCode, ZErrorChains)
+        SmoothBoundaryA, SmoothBoundaryB, SurfaceCode,
+        SurfaceCodeSiteOps, ZErrorChains, ZErrorChainSiteOps)
 from .stabilizer import Stabilizer
 
 # KEEP THE FOLLOWING IN __init__.py FOR THEORY PACKAGES.

@@ -138,14 +138,63 @@ class ZErrorChains(Function):
                 self, ZErrorChains._operator_, S, styles=styles)
 
 
+class SurfaceCodeSiteOps(Function):
+    '''
+    SurfaceCodeSiteOps(S) is the set of site operators in the
+    surface code S (the 'sites' or 'vertices' appearing in the 
+    Kitaev-style planar surface code, or the X-site operators
+    measuring the parity among Z-errors on neighboring data qubits).
+    '''
+
+    # the literal operator of the SurfaceCodeSiteOps(S) operator
+    _operator_ = Literal(
+            string_format='SiteOps',
+            latex_format=r'\mathrm{SiteOps}\!',
+            theory=__file__)
+
+    def __init__(self, S, *, styles=None):
+        '''
+        Denote the set SurfaceCodeSiteOps(S) of all X site operators
+        in the surface code S.
+        '''
+        Function.__init__(
+                self, SurfaceCodeSiteOps._operator_, S, styles=styles)
+
+
+class ZErrorChainSiteOps(Function):
+    '''
+    ZErrorChainSiteOps(E, S) is the set of site operators associated
+    with the ZErrorChain E across the surface code S. Not sure yet if
+    we include ALL the site operators, or just the ones that neighbor
+    the data qubits with actual Z errors being experienced.
+    The printed notation is the same as that used above for the
+    SurfaceCodeSiteOps(S).
+    '''
+
+    # the literal operator of the ZErrorChainSiteOps(E, S) operator
+    _operator_ = Literal(
+            string_format='SiteOps',
+            latex_format=r'\mathrm{SiteOps}\!',
+            theory=__file__)
+
+    def __init__(self, E, S, *, styles=None):
+        '''
+        Denote the set ZErrorChainSiteOps(E, S) of all X site operators
+        associated with the ZErrorChain E across the surface code S.
+        '''
+        Function.__init__(
+                self, SurfaceCodeSiteOps._operator_, (E, S), styles=styles)
+
+
 class SiteSyndrome(Function):
     '''
     Let E be an error, conceptualized as an element of the Pauli group
     G_{n}, acting on or experienced by some surface code configuration
-    C. Then SiteSyndrome(E) represents the set of X checks or site
-    operators that signal one or more errors in the surface code
-    (i.e., the set of X site checks that “flip state” as a result of
-    the given error E).
+    C. Then SiteSyndrome(E, S) represents the set of X checks or site
+    operators in surface code S that signal one or more errors in the
+    surface code (i.e., the set of X site checks that “flip state” as
+    a result of the given error E). SiteSyndrome(E, S) should be a
+    (non-strict) subset of SurfaceCodeSiteOps(S) defined elsewhere.
     '''
 
     # the literal operator for the SiteSyndrome operation
