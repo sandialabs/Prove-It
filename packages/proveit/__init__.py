@@ -35,7 +35,7 @@ from ._core_ import (
 # Expression class methods:
 from .decorators import (prover, relation_prover, equality_prover, 
                          auto_prover, auto_relation_prover,
-                         auto_equality_prover)
+                         auto_equality_prover, display_provers)
 
 from .relation import (
     TransitiveRelation,
