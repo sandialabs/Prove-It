@@ -573,3 +573,24 @@ class InconsistentTenseNames(Exception):
                 "with another occurrence: %s vs %s.  It may be a typo."
                 %(self.func, self.previous_tenses, 
                   self.current_tenses))
+
+def display_provers(obj):
+    '''
+    Prints the @prover methods of a given object.
+    '''
+    # Currently, these are determined by having **defaults_config keyword
+    # arguments.  Maybe in the future we could implement @prover via classes
+    # and determine whether the method is an instance of that class; not
+    # worth the effort at the moment.
+    from inspect import signature, Parameter
+    for attr in dir(obj):
+        attr_obj = getattr(obj, attr)
+        if callable(attr_obj):
+            try:
+                sig = signature(attr_obj)
+                if ('defaults_config' in sig.parameters and 
+                    sig.parameters['defaults_config'].kind == Parameter.VAR_KEYWORD):
+                    print(attr)
+            except:
+                pass # If we can't get the signature, skip it.
+        
