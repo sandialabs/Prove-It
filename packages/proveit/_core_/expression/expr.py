@@ -1916,7 +1916,7 @@ class Expression(metaclass=ExprType):
         '''
         return self.basic_replaced({lit.as_variable():lit for lit in literals})
 
-    def _repr_html_(self, unofficial_name_kind_theory=None):
+    def _repr_html_(self, *, unofficial_name_kind_theory=None, special_object=None):
         '''
         Generate html to show a png compiled from the latex (that may be recalled
         from memory or storage if it was generated previously) with a link to
@@ -1936,7 +1936,8 @@ class Expression(metaclass=ExprType):
             self._style_data.png_url = png_url
         if self._style_data.png_url is not None:
             expr_notebook_rel_url = Theory.expression_notebook(
-                self, unofficial_name_kind_theory)
+                self, name_kind_theory=unofficial_name_kind_theory,
+                special_object=special_object)
             html = '<a class="ProveItLink" href="' + expr_notebook_rel_url + '">'
             if defaults.inline_pngs:
                 encoded_png = encodebytes(self._style_data.png).decode("utf-8")

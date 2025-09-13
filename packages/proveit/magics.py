@@ -801,11 +801,13 @@ class ProveItMagicCommands:
         if folder in ('axioms', 'definitions', 'theorems', 'common'):
             # Update the expression notebooks now that these have been registered
             # as special expressions.
-            for name, expr in self.definitions.items():
+            for name, obj in self.definitions.items():
                 # remake the expression notebooks using the special expressions
                 # of the theory
+                if folder != 'common': expr = obj.proven_truth.expr
                 theory.expression_notebook(expr, name_kind_theory=(
-                    name, kind, theory), complete_special_expr_notebook=True)
+                    name, kind, theory), special_object=obj,
+                    complete_special_expr_notebook=True)
 
             if len(self.definitions) == 0:
                 print(
@@ -1262,6 +1264,7 @@ def display_assignments(names, beginning_proof=False,
         if prove_it_magic.kind == 'axiom' or (
                 prove_it_magic.kind == 'theorem' or
                 prove_it_magic.kind == 'defining_property'):
+            from proveit._core_.proof import Axiom, Theorem
             # Axiom, DefiningProperty, and Theorem variables should 
             # all be bound though we will only check for variables that 
             # are entirely unbound because it would be challenging
@@ -1282,8 +1285,13 @@ def display_assignments(names, beginning_proof=False,
                         prove_it_magic.ran_finish and name in prove_it_magic.definitions):
                     raise ProveItMagicFailure(
                         "%s names must be unique regardless of capitalization" % prove_it_magic.kind)
+            if prove_it_magic.kind == 'axiom':
+                prove_it_magic.definitions[name] = Axiom(right_side, theory, name)
+            elif prove_it_magic.kind == 'theorem':
+                prove_it_magic.definitions[name] = Theorem(right_side, theory, name)
+        else:
+            prove_it_magic.definitions[name] = right_side            
         prove_it_magic.lower_case_names.add(name.lower())
-        prove_it_magic.definitions[name] = right_side
         if isinstance(right_side, Expression):
             prove_it_magic.expr_names.setdefault(
                 right_side, []).append(name)
@@ -1425,7 +1433,8 @@ def assignment_html(name, right_side, beginning_proof=False,
     if isinstance(right_side, Expression) and name_kind_theory is not None:
         expr = right_side
         right_side_str = right_side._repr_html_(
-            unofficial_name_kind_theory=name_kind_theory)
+            unofficial_name_kind_theory=name_kind_theory,
+            special_object=prove_it_magic.definitions[name])
     elif hasattr(right_side, '_repr_html_'):
         right_side_str = right_side._repr_html_()
     if right_side_str is None:

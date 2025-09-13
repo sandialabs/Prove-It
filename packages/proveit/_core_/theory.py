@@ -596,7 +596,7 @@ class Theory:
             definition_extension_proofs=definition_extension_proofs)
 
     @staticmethod
-    def expression_notebook(expr, name_kind_theory=None,
+    def expression_notebook(expr, *, name_kind_theory=None, special_object=None,
                             complete_special_expr_notebook=False):
         '''
         Return the path of the expression notebook, creating it if it
@@ -608,7 +608,7 @@ class Theory:
         '''
         # use the Storage object to generate/grab the expression notebook.
         return TheoryFolderStorage.expression_notebook(
-            expr, name_kind_theory, complete_special_expr_notebook)
+            expr, name_kind_theory, special_object, complete_special_expr_notebook)
 
     @staticmethod
     def get_stored_axiom(fullname):

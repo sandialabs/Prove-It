@@ -344,8 +344,8 @@ class TheoryStorage:
                                           DefiningProperty)
         if kind == 'axiom':
             # Convert definitions from expressions to Axiom Proofs.
-            definitions = {name: Axiom(expr, self.theory, name)
-                           for name, expr in definitions.items()}
+            for definition in definitions.values():
+                assert isinstance(definition, Axiom)
         elif kind == 'defining_property':
             for definition in definitions.values():
                 assert (isinstance(definition, DefiningProperty) or
@@ -353,9 +353,9 @@ class TheoryStorage:
         elif kind == 'theorem':
             # Convert definitions from expressions to Theorem
             # Proofs.
-            definitions = {name: Theorem(expr, self.theory, name)
-                           for name, expr in definitions.items()}
-
+            for definition in definitions.values():
+                assert isinstance(definition, Theorem)
+        
         # "Retrieve" the proofs to make sure they are stored
         # for future needs.
         #folder = TheoryStorage._kind_to_folder(kind)
@@ -1570,7 +1570,7 @@ class TheoryFolderStorage:
                 self.proof_notebook(prove_it_object)
 
     @staticmethod
-    def expression_notebook(expr, name_kind_theory=None,
+    def expression_notebook(expr, name_kind_theory=None, special_object=None,
                             complete_special_expr_notebook=False):
         '''
         Return the path of the expression notebook, creating it if it
@@ -1581,19 +1581,13 @@ class TheoryFolderStorage:
         called yet in the special expressions notebook).
         '''
         from proveit import Expression
-        from proveit._core_.proof import (Axiom, Theorem, 
-                                          BasicDefinition, DefiningProperty)
         from json import JSONDecodeError
 
-        obj = expr # unless we change it below
-        hash_obj = expr # determines where to put this expression_notebook
+        assert isinstance(expr, Expression)
+        # hash_obj determines where to put this expression_notebook
+        obj = expr if special_object is None else special_object 
         if name_kind_theory is not None:
             name, kind, theory = name_kind_theory
-            if kind == 'defining_property' and complete_special_expr_notebook:
-                assert (isinstance(expr, DefiningProperty) or
-                        isinstance(expr, BasicDefinition))
-                hash_obj = expr = obj.proven_truth.expr
-        assert isinstance(expr, Expression)
 
         if complete_special_expr_notebook:
             theory_folder_storage = \
@@ -1634,19 +1628,10 @@ class TheoryFolderStorage:
 
         if complete_special_expr_notebook:
             assert 'common' in template_name or 'special' in template_name
-        '''
         # Determine the appropriate hash folder to store the
         # expression notebook in.
-        if kind == 'axiom':
-            # Store this "special" notebook with the hash for the Axiom.
-            hash_obj = obj = Axiom(expr, theory_folder_storage.theory, name)
-        elif kind == 'theorem':
-            # Store this "special" notebook with the hash for the
-            # Theorem.
-            hash_obj = obj = Theorem(expr, theory_folder_storage.theory, name)
-        '''
         obj_theory_folder_storage, hash_directory = \
-            theory_folder_storage._retrieve(hash_obj)
+            theory_folder_storage._retrieve(obj)
         assert obj_theory_folder_storage == theory_folder_storage
         full_hash_dir = os.path.join(theory_folder_storage.path,
                                      hash_directory)
