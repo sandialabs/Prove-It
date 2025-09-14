@@ -366,13 +366,15 @@ class Judgment:
         '''
         return self._meaning_data._proof
     
-    def reprove(self, *, assumptions):
+    def reprove(self, *, assumptions, new_style_expr=None):
         '''
         Reprove under new assumptions.  The original assumptions should be
-        provable by these assumptions.
+        provable by these assumptions.  If provided, the new_style_expr
+        should have the same meaning as the original proven expression
+        but with a new style to be used.
         '''
         proof = self.proof().regenerate_proof_under_new_assumptions(
-            assumptions=assumptions)
+            assumptions=assumptions, new_style_expr=new_style_expr)
         return proof.proven_truth
 
     def is_possibly_usable(self):
@@ -690,40 +692,25 @@ class Judgment:
             raise ValueError(
                 "Cannot match styles when expressions are do "
                 "not have the same meaning: %s ≠ %s."%(self.expr, expr))
+        
         new_style_expr = expr
-        # storing the assumptions in a trivial dictionary will be useful
-        # for popping them out.
-        assumptions_dict = {
-            assumption: assumption for assumption in assumptions}
         new_style_assumptions = []
-        for assumption in self.assumptions:
-            if assumption in assumptions_dict:
-                new_style_assumptions.append(
-                        assumptions_dict.pop(assumption))
-            else:
-                new_style_assumptions.append(assumption)
+        for assumption in assumptions:
+            if assumption in self.assumptions:
+                new_style_assumptions.append(assumptions)
         if ((new_style_expr._style_id == self.expr._style_id) and
+                tuple(self.assumptions) == tuple(new_style_assumptions) and
                 all(new_style_assumption._style_id == old_assumption._style_id
                     for new_style_assumption, old_assumption in zip(
                             new_style_assumptions, self.assumptions))):
             # Nothing has changed.
             return self
         
-        new_style_judgment = \
-            Judgment(new_style_expr, new_style_assumptions,
-                     num_lit_gen=self.num_lit_gen)
-        proof = new_style_judgment.proof()
-        if proof is not None and proof.proven_truth==self:
-            # Update the style for the proof if there is one
-            # corresponding to this Judgment (as opposed to one
-            # that has more assumptions than necessary).
-            new_style_proof = copy(proof)
-            new_style_proof.proven_truth = self
-            self._meaning_data._expr_proofs.insert(
-                    new_style_proof)
-            new_style_judgment._meaning_data._proof = \
-                new_style_proof
-        return new_style_judgment
+        if self.proof() is not None:
+            return self.reprove(assumptions=assumptions, new_style_expr=expr)
+        
+        return Judgment(new_style_expr, new_style_assumptions,
+                        num_lit_gen=self.num_lit_gen)
 
     @staticmethod
     def find_judgment(expression, assumptions, *,

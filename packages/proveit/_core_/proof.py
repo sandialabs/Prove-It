@@ -14,6 +14,7 @@ from proveit._core_.judgment import Judgment
 from proveit._core_._unique_data import meaning_data, style_data
 from .defaults import defaults, USE_DEFAULTS
 from .theory import Theory
+from proveit.util import OrderedSet
 
 
 class Proof:
@@ -280,30 +281,37 @@ class Proof:
         return self._regenerate_proof_object(
             proven_truth, all_requirements, marked_req_indices)
 
-    def regenerate_proof_under_new_assumptions(self, assumptions):
+    def regenerate_proof_under_new_assumptions(self, assumptions, *,
+                                               new_style_expr=None):
         '''
         Regenerate this proof object under new assumptions.  For this to
         work, the original assumptions must be provable under the new
-        assumptions.
+        assumptions.  If provided, the new_style_expr should have the same 
+        meaning as the original proven expression but with a new style to 
+        be used.
         '''
+        proven_expr = self.proven_truth.expr
         if isinstance(self, Assumption):
             # For an Assumption proof, prove it under the new assumptions 
             # which are supposed to be provable under these new ones.
-            return self.proven_truth.expr.prove(assumptions=assumptions).proof()
+            return proven_expr.prove(assumptions=assumptions).proof()
         if isinstance(self, Deduction):
             # It's requirement gets to add the antecedent of the proven
             # implication as an assumption.
             requirement_assumptions = [*assumptions, 
                                        self.proven_truth.expr.antecedent]
-        elif isinstance(self, Generalization):
+        elif isinstance(self, Generalization) and hasattr(proven_expr, 'condition'):
             # It's requirement gets to add the condition of the proven
             # generalization as an assumption.
-            proven_expr = self.proven_truth.expr
-            if hasattr(proven_expr, 'condition'):
-                condition = proven_expr.condition
-                requirement_assumptions = [*assumptions, condition]
+            condition = proven_expr.condition
+            requirement_assumptions = [*assumptions, condition]
         else:
             requirement_assumptions = assumptions
+        if new_style_expr is not None:
+            if proven_expr != new_style_expr:
+                raise ValueError("'new_style_expr' must match the original "
+                                 "expression in meaning.")
+            proven_expr = new_style_expr
         
         all_requirements = []
         used_assumptions = set()
@@ -314,7 +322,7 @@ class Proof:
             all_requirements.append(required_truth)
         assumptions = [assumption for assumption in assumptions 
                        if assumption in used_assumptions]
-        proven_truth = Judgment(self.proven_truth.expr, assumptions)
+        proven_truth = Judgment(proven_expr, assumptions)
         return self._regenerate_proof_object(proven_truth, all_requirements)
 
     def _regenerate_proof_object(self, proven_truth, requirements,
@@ -1634,7 +1642,8 @@ class Instantiation(Proof):
                     # previously, though, so we might need to derive
                     # side-effects again.
                     inst._derive_side_effects()
-                    return inst
+                    return inst.with_matching_styles(
+                        inst.expr, defaults.assumptions)
         inst = Instantiation(orig_judgment, num_forall_eliminations,
                              repl_map, equiv_alt_expansions,
                              mapping, mapping_key_order,
@@ -1857,24 +1866,23 @@ class Instantiation(Proof):
 
         # Remove duplicates in the requirements.
         requirements = list(OrderedDict.fromkeys(requirements))
+        # Make the 'original judgment' be the 1st requirement.
+        requirements.insert(0, orig_judgment)
     
         # Remove any unnecessary assumptions (but keep the order
         # that was provided).  Note that some assumptions of
         # requirements may not be in the 'applied_assumptions'
         # if they made use of internal assumptions from a
         # Conditional and can be eliminated.
-        applied_assumptions = defaults.assumptions
-        assumptions = list(orig_judgment.assumptions)
+        used_assumptions = set()
         for requirement in requirements:
-            for assumption in requirement.assumptions:
-                if assumption in applied_assumptions:
-                    assumptions.append(assumption)
-        assumptions = list(OrderedDict.fromkeys(assumptions))
+            used_assumptions.update(requirement.assumptions)
+        assumptions = tuple(assumption for assumption in defaults.assumptions
+                            if assumption in used_assumptions)
+        assert orig_judgment.assumptions.issubset(assumptions)
 
         self.mapping_key_order = mapping_key_order
         self.mapping = mapping
-        # Make the 'original judgment' be the 1st requirement.
-        requirements.insert(0, orig_judgment)
         num_lit_gen = sum(requirement.num_lit_gen for requirement
                           in requirements)
         instantiated_truth = Judgment(instantiated_expr, assumptions,
@@ -2209,7 +2217,8 @@ class Generalization(Proof):
     def __init__(
             self, instance_truth, new_forall_param_lists,
             new_conditions=tuple(), new_antecedent=None, *, 
-            _proven_truth=None, _requirements=None, _marked_req_indices=None):
+            _proven_truth=None, _requirements=None, 
+            _generalized_literals=None, _marked_req_indices=None):
         '''
         A Generalization step wraps a Judgment (instance_truth) in one 
         or more Forall operations.  The number of Forall operations
@@ -2255,6 +2264,7 @@ class Generalization(Proof):
         if _proven_truth is not None:
             # Via _regenerate_proof_object:
             self.instance_truth = _requirements[0]
+            self.generalized_literals = _generalized_literals
             Proof.__init__(self, _proven_truth, _requirements,
                            _marked_req_indices)
             return
@@ -2413,16 +2423,17 @@ class Generalization(Proof):
             defaults.assumptions = prev_default_assumptions
 
     def _regenerate_proof_object(self, proven_truth, requirements,
-                                 marked_req_indices):
+                                 marked_req_indices=None):
         gen = Generalization(
             None, None, _proven_truth=proven_truth, _requirements=requirements,
+            _generalized_literals=self.generalized_literals,
             _marked_req_indices=marked_req_indices)
         gen.new_forall_vars = self.new_forall_vars
         gen.new_conditions = self.new_conditions
-        gen.generalized_literals = self.generalized_literals
-        gen._eliminated_proof_steps = self._eliminated_proof_steps
-        gen._eliminated_axioms = self._eliminated_axioms
-        gen._eliminated_theorems = self._eliminated_theorems
+        if len(self.generalized_literals) > 0:
+            gen._eliminated_proof_steps = self._eliminated_proof_steps
+            gen._eliminated_axioms = self._eliminated_axioms
+            gen._eliminated_theorems = self._eliminated_theorems
         return gen
 
     def _append_eliminated_requirements_and_check_violation(
