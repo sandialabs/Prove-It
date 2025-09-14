@@ -920,7 +920,8 @@ class Expression(metaclass=ExprType):
                                              allow_indirect_proven_assumptions=True)
         if found_truth is not None:
             # Reprove under new assumptions.
-            found_truth = found_truth.reprove(assumptions=assumptions)
+            found_truth = found_truth.reprove(assumptions=assumptions,
+                                              new_style_expr=self)
             found_truth.with_matching_styles(
                 self, assumptions)  # give it the appropriate style
             # found an existing Judgment that does the job!
@@ -934,7 +935,8 @@ class Expression(metaclass=ExprType):
             for _assumption in found_truth.assumptions:
                 _assumption.prove(assumptions=assumptions)
             # Reprove under new assumptions.
-            found_truth = found_truth.reprove(assumptions=assumptions)
+            found_truth = found_truth.reprove(assumptions=assumptions,
+                                              new_style_expr=self)
             found_truth.with_matching_styles(
                 self, assumptions)  # give it the appropriate style
             # found an existing Judgment that does the job!
