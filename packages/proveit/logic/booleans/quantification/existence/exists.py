@@ -212,16 +212,50 @@ class Exists(OperationOverInstances):
     @prover
     def unfold(self, **defaults_config):
         '''
-        From this existential quantifier, derive the "unfolded"
-        version according to its definition (the negation of
-        a universal quantification).
+        From this existential quantifier, and knowing or assuming
+        self to be TRUE, derive the "unfolded" version according
+        to its definition, producing the negation of a universal
+        quantification. For example, given
+
+            A = |- Exists((a,b), (a+b = 5), domain = NaturalPos),
+
+        A.unfold() produces:
+
+            |- Not(Forall((a, b in NaturalPos), [(a+b = 5) != T])).
+
+        As explained in the existence axioms notebook, the format here
+        (and the awkwardness of the conclusion) arises from the effort
+        to avoid the assumption that the operation always returns a
+        Boolean. On the other hand, if we have:
+
+            B = |- Exists(x, Not(P(x))),
+
+        then B.unfold() produces:
+
+            |- Not(Forall(x, P(x)))
+
         '''
-        from proveit.logic.booleans.quantification.existence \
-            import exists_unfolding
+        from proveit.logic import Not, TRUE
+        from proveit.logic.booleans.quantification.existence import (
+                exists_not_unfolding, exists_unfolding)
         _x = _y = self.instance_params
         _n = _x.num_elements()
-        _P = Lambda(_x, self.operand.body.value)
-        _Q = Lambda(_x, self.operand.body.condition)
+
+        # distinguish between Exists(x, P(x)) vs Exists(x, Not(P(x)))
+        _case_not = False
+        if isinstance(self.instance_expr, Not):
+            _case_not = True
+            _P = Lambda(_x, self.instance_expr.operand)
+        else:
+            _P = Lambda(_x, self.instance_expr)
+        # distinguish between cases with and w/out conditions
+        if hasattr(self, 'condition'):
+            _Q = Lambda(_x, self.condition)
+        else:
+            _Q = Lambda(_x, TRUE)
+        if _case_not:
+            return exists_not_unfolding.instantiate(
+            {n: _n, P: _P, Q: _Q, x: _x, y: _y}).derive_consequent()
         return exists_unfolding.instantiate(
             {n: _n, P: _P, Q: _Q, x: _x, y: _y}).derive_consequent()
 
@@ -230,16 +264,68 @@ class Exists(OperationOverInstances):
         '''
         Return definition of this existential quantifier as an
         equation with this existential quantifier on the left
-        and a negated universal quantification on the right.
+        and a negated universal quantification on the right. This
+        handles two separate cases (along with cases with and w/out
+        conditions):
+            Exists(x, P(x)) vs. Exists(x, Not(P(x))),
+        which return:
+            Not(Forall(x, P(x) != T)) and Not(Forall(x, P(x))),
+        respectively.
         '''
-        from proveit.logic.booleans.quantification.existence \
-            import exists_def
+        from proveit import defaults
+        from proveit.logic import Forall, Not, NotEquals, TRUE
+        from proveit.logic.booleans.quantification.existence import (
+            exists_def, exists_not_eq_not_forall)
         _x = _y = self.instance_params
         _n = _x.num_elements()
-        _P = Lambda(_x, self.operand.body.value)
-        _Q = Lambda(_x, self.operand.body.condition)
-        return exists_def.instantiate(
-            {n: _n, P: _P, Q: _Q, x: _x, y: _y}, preserve_expr=self)
+
+        # distinguish between Exists(x, P(x)) vs Exists(x, Not(P(x)))
+        _case_not = False
+        if isinstance(self.instance_expr, Not):
+            _case_not = True
+            _P = Lambda(_x, self.instance_expr.operand)
+        else:
+            _P = Lambda(_x, self.instance_expr)
+        # distinguish between cases with and w/out conditions
+        if hasattr(self, 'condition'):
+            _Q = Lambda(_x, self.condition)
+        else:
+            _Q = Lambda(_x, TRUE)
+
+        # Construct the rhs result to preserve (using
+        # 'preserve_all = TRUE' in the instantiation step further
+        # below tends to preserve too much, in particular preserving
+        # the "empty" condition _Q = Lambda(_x, TRUE) when we'd like
+        # it to be simplified away entirely).
+        if hasattr(self, 'condition'):
+            if _case_not:
+                rhs_to_preserve = (
+                    Not(Forall(_x, self.instance_expr.operand,
+                        conditions = [self.condition])))
+            else:
+                rhs_to_preserve = (
+                    Not(Forall(_x, 
+                        NotEquals(self.instance_expr, TRUE),
+                        conditions = [self.condition])))
+        else:
+            if _case_not:
+                rhs_to_preserve = (
+                    Not(Forall(_x, self.instance_expr.operand)))
+            else:
+                rhs_to_preserve = (
+                    Not(Forall(_x,
+                        NotEquals(self.instance_expr, TRUE))))
+        
+        # now ready to instantiate thm based on _case_not, and
+        # explicitly preserving the expected rhs of the resulting eq.
+        with defaults.temporary() as temp_defaults:
+            temp_defaults.preserved_exprs = {self, rhs_to_preserve}
+            if _case_not:
+                return exists_not_eq_not_forall.instantiate(
+                    {n: _n, P: _P, Q: _Q, x: _x, y: _y})
+            else:
+                return exists_def.instantiate(
+                    {n: _n, P: _P, Q: _Q, x: _x, y: _y})
 
     @prover
     def deduce_not_exists(self, **defaults_config):
