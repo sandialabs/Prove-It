@@ -317,8 +317,10 @@ class TrueLiteral(Literal, IrreducibleValue):
             return true_not_false
         if other == TRUE:
             raise ProofFailure(
+                self, defaults.assumptions,
                 "Cannot prove TRUE != TRUE since that statement is false")
         raise ProofFailure(
+            self, defaults.assumptions,
             "Inequality between TRUE and a non-boolean not defined")
 
     def readily_in_bool(self):
