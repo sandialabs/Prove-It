@@ -1377,6 +1377,8 @@ class Judgment:
             self.raise_unusable_proof()
         html = ''
         proof = self.proof()
+        if all(_thm.is_fully_proven() for _thm in proof.used_theorems()):
+            html += '&#128522;' # smiley face
         html += '<span style="font-size:20px;">'
         html += ', '.join(assumption._repr_html_() for assumption
                           in self.assumptions)
