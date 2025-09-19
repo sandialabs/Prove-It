@@ -87,7 +87,7 @@ class InClass(Relation):
     @staticmethod
     def reversed_operator_str(formatType):
         '''
-        Reversing \in gives \ni.  Reversing "in" gives "contains".
+        Reversing \\in gives \\ni.  Reversing "in" gives "contains".
         '''
         if formatType=='latex':
             return '\ni_{C}'
@@ -168,11 +168,9 @@ class InClass(Relation):
         
         # Try a known evaluation.
         if not is_irreducible_value(element):
-            try:
-                elem_eval = Equals.get_known_evaluation(element).rhs
-            except UnsatisfiedPrerequisites:
-                return None
-            return type(self)(elem_eval, self.domain).readily_provable()
+            elem_eval = Equals.readily_provable_evaluation(element)
+            if elem_eval is not None:
+                return type(self)(elem_eval, self.domain).readily_provable()
 
         if check_directly_known_elem_equality:
             # Check the first directly known equality of the element to

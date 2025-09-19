@@ -1115,6 +1115,23 @@ class Equals(EquivRelation):
         return Operation.shallow_simplification(self)
 
     @staticmethod
+    def readily_provable_evaluation(expr):
+        '''
+        Return a readily provable evaluation for the expression (under the 
+        current default assumptions) or None if there is none.
+        '''
+        if is_irreducible_value(expr):
+            return expr
+        if expr in Equals.known_evaluation_sets:
+            evaluations = Equals.known_evaluation_sets[expr]
+            for judgment in evaluations:
+                if judgment.is_applicable(defaults.assumptions):
+                    # Found existing evaluation suitable for the
+                    # assumptions
+                    return judgment.rhs
+        return None
+    
+    @staticmethod
     @prover
     def get_known_evaluation(expr, **defaults_config):
         '''
